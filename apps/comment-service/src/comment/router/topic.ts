@@ -1,7 +1,23 @@
-import { AdspId, EventService, UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
-import { NotFoundError, createValidationHandler, decodeAfter } from '@core-services/core-common';
+import axios from 'axios';
+import {
+  AdspId,
+  EventService,
+  ServiceDirectory,
+  TokenProvider,
+  UnauthorizedUserError,
+  adspId,
+  isAllowedUser,
+} from '@abgov/adsp-service-sdk';
+import {
+  InvalidOperationError,
+  NotFoundError,
+  UnauthorizedError,
+  createValidationHandler,
+  decodeAfter,
+} from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
+import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDeleted, topicUpdated } from '../events';
 import { TopicEntity, TopicTypeEntity } from '../model';
@@ -14,6 +30,8 @@ interface TopicRouterProps {
   logger: Logger;
   eventService: EventService;
   repository: TopicRepository;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 type TopicTypeResponse = Omit<TopicType, 'tenantId'>;
@@ -42,6 +60,142 @@ function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
     commenters: topic.commenters,
     securityClassification: topic.securityClassification,
     requiresAttention: topic.requiresAttention,
+  };
+}
+
+export function createTopicType(
+  apiId: AdspId,
+  logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to create a topic type.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('create topic type', user);
+      }
+
+      const { id, name, readRoles, readerRoles, writeRoles = [] } = req.body;
+      const resolvedReaderRoles = readerRoles || readRoles || [];
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+
+      const existingTypeWithName = Object.values(types || {}).find((type) => type.name === name && type.id !== id);
+      if (types?.[id] || existingTypeWithName) {
+        throw new InvalidOperationError(`Topic type '${name}' already exists.`, {
+          statusCode: HttpStatusCodes.CONFLICT,
+        });
+      }
+
+      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+      const configurationUrl = new URL(`v2/configuration/${apiId.namespace}/${apiId.service}`, configurationServiceUrl);
+      const token = await tokenProvider.getAccessToken();
+      const topicType = {
+        id,
+        name,
+        adminRoles: [],
+        readerRoles: resolvedReaderRoles,
+        commenterRoles: writeRoles,
+      };
+
+      await axios.patch(
+        configurationUrl.href,
+        {
+          operation: 'UPDATE',
+          update: {
+            [id]: topicType,
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        }
+      );
+
+      res.send({ id });
+
+      logger.info(`Topic type ${name} (ID: ${id}) created by user ${user.name} (ID: ${user.id}).`, {
+        context: 'comment-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteTopicType(
+  apiId: AdspId,
+  logger: Logger,
+  repository: TopicRepository,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to delete a topic type.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('delete topic type', user);
+      }
+
+      const topicTypeId = req.params.topicTypeId;
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+
+      if (!types?.[topicTypeId]) {
+        throw new NotFoundError('topic type', topicTypeId);
+      }
+
+      const associatedTopics = await repository.countTopicsByType(tenantId, topicTypeId);
+
+      if (associatedTopics > 0) {
+        res.status(HttpStatusCodes.CONFLICT).send({
+          errorMessage: `Topic type '${topicTypeId}' cannot be deleted because ${associatedTopics} topic(s) are associated with it.`,
+          topics: associatedTopics,
+        });
+        return;
+      }
+
+      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+      const configurationUrl = new URL(`v2/configuration/${apiId.namespace}/${apiId.service}`, configurationServiceUrl);
+      const token = await tokenProvider.getAccessToken();
+
+      await axios.patch(
+        configurationUrl.href,
+        {
+          operation: 'DELETE',
+          property: topicTypeId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        }
+      );
+
+      res.send({ deleted: true, id: topicTypeId });
+
+      logger.info(`Topic type ${topicTypeId} deleted by user ${user.name} (ID: ${user.id}).`, {
+        context: 'comment-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
   };
 }
 
@@ -322,8 +476,35 @@ export function deleteTopicComment(apiId: AdspId, logger: Logger, eventService: 
   };
 }
 
-export function createTopicRouter({ apiId, logger, eventService, repository }: TopicRouterProps): Router {
+export function createTopicRouter({
+  apiId,
+  logger,
+  eventService,
+  repository,
+  directory,
+  tokenProvider,
+}: TopicRouterProps): Router {
   const router = Router();
+
+  router.post(
+    '/topic-types',
+    createValidationHandler(
+      body('id').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+      body('name').isString().isLength({ min: 1, max: 50 }),
+      body('readRoles').optional().isArray(),
+      body('readRoles.*').optional().isString(),
+      body('readerRoles').optional().isArray(),
+      body('readerRoles.*').optional().isString(),
+      body('writeRoles').optional().isArray(),
+      body('writeRoles.*').optional().isString()
+    ),
+    createTopicType(apiId, logger, directory, tokenProvider)
+  );
+  router.delete(
+    '/topic-types/:topicTypeId',
+    createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
+    deleteTopicType(apiId, logger, repository, directory, tokenProvider)
+  );
 
   router.get(
     '/topics',
@@ -395,6 +576,7 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
       param('topicId').isInt(),
       body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
       body('content').isString().isLength({ min: 1 }),
+      body('context').optional().isObject(),
       body('requiresAttention').optional({ nullable: true }).isBoolean()
     ),
     getTopic(repository),
@@ -409,7 +591,13 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
   );
   router.patch(
     '/topics/:topicId/comments/:commentId',
-    createValidationHandler(param('topicId').isInt(), param('commentId').isInt()),
+    createValidationHandler(
+      param('topicId').isInt(),
+      param('commentId').isInt(),
+      body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
+      body('content').optional().isString().isLength({ min: 1 }),
+      body('context').optional().isObject()
+    ),
     getTopic(repository),
     updateTopicComment(apiId, logger, eventService)
   );

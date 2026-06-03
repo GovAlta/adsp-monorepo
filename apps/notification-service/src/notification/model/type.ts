@@ -293,11 +293,6 @@ export class NotificationTypeEntity implements NotificationType {
         subtitle: eventNotification.templates[channel].subtitle ?? '',
       };
 
-      if (!configurationService?.email?.fromEmail) {
-        logger.warn('Configuration not ready, retrying...');
-        throw new Error('Configuration not ready');
-      }
-
       return {
         tenantId: event.tenantId.toString(),
         type: {

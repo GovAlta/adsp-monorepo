@@ -1,6 +1,7 @@
 import { adspId, AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { createTool } from '@mastra/core/tools';
+import type { ToolExecutionContext } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
 import { parseTemplate } from 'url-template';
 import { Logger } from 'winston';
@@ -31,7 +32,8 @@ export function createApiRequestTool(
     inputSchema: inputSchema as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     outputSchema: outputSchema as any,
-    execute: async (inputData: Record<string, unknown>, { requestContext }: { requestContext: AdspRequestContext }) => {
+    execute: async (inputData: Record<string, unknown>, context: ToolExecutionContext) => {
+      const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
       const user = requestContext.get('user');
 

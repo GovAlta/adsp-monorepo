@@ -4,14 +4,27 @@ import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import {
-  onBlurForDateControl,
-  onChangeForDateTimeControl,
-  onKeyPressForDateControl,
-} from '../../util/inputControlUtils';
-import { GoabInputOnChangeDetail, GoabInputOnKeyPressDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
+import { onBlurForDateControl, onChangeForDateTimeControl } from '../../util/inputControlUtils';
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
+
+export const toDateTimeLocalInputValue = (value: unknown): string => {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value as string);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(
+    date.getMinutes(),
+  )}:${pad(date.getSeconds())}`;
+};
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isVisited, errors, label, setIsVisited } = props;
@@ -26,7 +39,8 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={data ? new Date(data).toISOString().slice(0, 10) : ''}
+      value={toDateTimeLocalInputValue(data)}
+      step={1}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       readonly={readOnly}
@@ -37,14 +51,6 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
         onChangeForDateTimeControl({
           name: detail.name,
           value: detail.value,
-          controlProps: props as ControlProps,
-        });
-      }}
-      onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
-        onKeyPressForDateControl({
-          name: detail.name,
-          value: detail.value,
-          key: detail.key,
           controlProps: props as ControlProps,
         });
       }}

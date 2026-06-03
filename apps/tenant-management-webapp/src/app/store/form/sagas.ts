@@ -92,8 +92,9 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { getTaskQueues } from '@store/task/action';
 import { FetchFileTypeService } from '@store/file/actions';
 import { fetchCalendars } from '@store/calendar/actions';
-import { AGENT_RESPONSE_ACTION, AgentResponseAction } from '../agent/actions';
+import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_RESULT } from '../agent/actions';
 import { getConfigurationDefinitions } from '../configuration/action';
+import { markFormPreviewStale, clearFormPreviewStale } from './action';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -609,14 +610,30 @@ export function* refreshDefinition(): SagaIterator {
   }
 }
 
-export function* refreshDefinitionOnAgentResponse({ threadId, done }: AgentResponseAction): SagaIterator {
+const MUTATION_TOOLS = new Set([
+  'formConfigurationUpdateTool',
+  'formDataUpdateTool',
+  'dataRegisterCreateTool',
+  'dataRegisterUpdateTool',
+]);
+
+function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
+  return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
+}
+
+export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponseAction): SagaIterator {
+  // Mark preview stale on any mutation tool result
+  if (isMutationToolResult(chunk)) {
+    yield put(markFormPreviewStale());
+  }
+
+  // Full refresh when stream completes and preview was marked stale
   if (done) {
-    const threads = yield select((state: RootState) => state.agent.threads);
-    const thread = threads[threadId];
-    if (thread?.agent === 'formGenerationAgent') {
+    const isPreviewMarkedStale: boolean = yield select((state: RootState) => state.form.previewStale);
+    if (isPreviewMarkedStale) {
       yield call(refreshDefinition);
-      // Refresh data register definitions; its saga chains getRegisterDataAction() on success.
       yield put(getConfigurationDefinitions());
+      yield put(clearFormPreviewStale());
     }
   }
 }

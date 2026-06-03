@@ -4,6 +4,41 @@ import { Knex } from 'knex';
 import { TopicCriteria, Comment, CommentCriteria, TopicEntity, TopicRepository, TopicTypeEntity } from '../comment';
 import { CommentRecord, TopicRecord } from './types';
 
+type TopicCriteriaMapper = {
+  column: string;
+  map: (value: NonNullable<TopicCriteria[keyof TopicCriteria]>) => unknown;
+};
+
+const TopicCriteriaMappers: Partial<Record<keyof TopicCriteria, TopicCriteriaMapper>> = {
+  tenantIdEquals: {
+    column: 'tenant',
+    map: (value) => value.toString(),
+  },
+  resourceIdEquals: {
+    column: 'resource',
+    map: (value) => value.toString(),
+  },
+  typeIdEquals: {
+    column: 'type',
+    map: (value) => value,
+  },
+  requiresAttention: {
+    column: 'requiresAttention',
+    map: () => true,
+  },
+};
+
+function mapTopicCriteria(criteria?: TopicCriteria): Record<string, unknown> {
+  return Object.entries(criteria || {}).reduce((queryCriteria, [key, value]) => {
+    const mapper = TopicCriteriaMappers[key as keyof TopicCriteria];
+    if (mapper && value) {
+      queryCriteria[mapper.column] = mapper.map(value);
+    }
+
+    return queryCriteria;
+  }, {});
+}
+
 export class PostgresTopicRepository implements TopicRepository {
   constructor(private knex: Knex) {}
 
@@ -40,6 +75,7 @@ export class PostgresTopicRepository implements TopicRepository {
           },
           title: record.title,
           content: record.content,
+          context: record.context || {},
         }
       : null;
   }
@@ -55,26 +91,7 @@ export class PostgresTopicRepository implements TopicRepository {
     let query = this.knex<TopicRecord>('topics');
     query = query.offset(skip).limit(topChecked);
 
-    if (criteria) {
-      const queryCriteria: Record<string, unknown> = {};
-      if (criteria.tenantIdEquals) {
-        queryCriteria.tenant = criteria.tenantIdEquals.toString();
-      }
-
-      if (criteria.resourceIdEquals) {
-        queryCriteria.resource = criteria.resourceIdEquals.toString();
-      }
-
-      if (criteria.typeIdEquals) {
-        queryCriteria.type = criteria.typeIdEquals;
-      }
-
-      if (criteria.requiresAttention) {
-        queryCriteria.requiresAttention = true;
-      }
-
-      query.where(queryCriteria);
-    }
+    query.where(mapTopicCriteria(criteria));
 
     const rows = await query.orderBy('id', 'asc');
 
@@ -92,6 +109,22 @@ export class PostgresTopicRepository implements TopicRepository {
     const [record] = await this.knex<TopicRecord>('topics').limit(1).where({ id, tenant: tenantId.toString() });
 
     return this.mapRecord(types, record);
+  }
+
+  async countTopics(criteria?: TopicCriteria): Promise<number> {
+    let query = this.knex<TopicRecord>('topics');
+
+    query = query.where(mapTopicCriteria(criteria));
+
+    const [result] = await query.count<{ count: string | number }[]>({ count: '*' });
+    return Number(result?.count ?? 0);
+  }
+
+  countTopicsByType(tenantId: AdspId, typeId: string): Promise<number> {
+    return this.countTopics({
+      tenantIdEquals: tenantId,
+      typeIdEquals: typeId,
+    });
   }
 
   async getComment(entity: TopicEntity, commentId: number): Promise<Comment> {
@@ -206,6 +239,7 @@ export class PostgresTopicRepository implements TopicRepository {
           id: comment.id,
           title: comment.title,
           content: comment.content,
+          context: comment.context || {},
           createdById: comment.createdBy.id,
           createdByName: comment.createdBy.name,
           createdOn: comment.createdOn,

@@ -11,6 +11,8 @@ export interface TopicRepository {
     after?: string,
     criteria?: TopicCriteria
   ): Promise<Results<TopicEntity>>;
+  countTopics(criteria?: TopicCriteria): Promise<number>;
+  countTopicsByType(tenantId: AdspId, typeId: string): Promise<number>;
   getComment(entity: TopicEntity, commentId: number): Promise<Comment>;
   getComments(top: number, after?: string, criteria?: CommentCriteria): Promise<Results<Comment>>;
 

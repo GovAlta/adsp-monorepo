@@ -1,6 +1,11 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoADateTimeControl, GoAInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
+import {
+  GoADateTimeControl,
+  GoAInputDateTimeProps,
+  GoADateTimeInput,
+  toDateTimeLocalInputValue,
+} from './InputDateTimeControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -91,20 +96,28 @@ describe('input date time controls', () => {
       expect(input.getAttribute('name')).toBe('mytestInput-input');
     });
 
-    it('can create control with data', () => {
-      const props = { ...staticProps, data: '01/01/2025 01:01:00 AM' };
-      const { baseElement } = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateTimeInput {...props} />
-        </JsonFormsContext.Provider>
-      );
-      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+    it('formats data for datetime-local input', () => {
+      const value = toDateTimeLocalInputValue('01/01/2025 01:01:59 AM');
 
-      expect(input.getAttribute('value')).toBe('2025-01-01');
+      expect(value).toBe('2025-01-01T01:01:59');
     });
 
-    it('can trigger keyPress event', async () => {
-      const props = { ...staticProps, uischema: uiSchema };
+    it('can create control with data', () => {
+      const props = { ...staticProps, data: '01/01/2025 01:01:59 AM' };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateTimeInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+
+      expect(input.getAttribute('value')).toBe('2025-01-01T01:01:59');
+      expect(input.getAttribute('step')).toBe('1');
+    });
+
+    it('does not update form data on keyPress while manual input is incomplete', async () => {
+      const handleChange = jest.fn();
+      const props = { ...staticProps, uischema: uiSchema, handleChange };
 
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
@@ -113,10 +126,11 @@ describe('input date time controls', () => {
       );
 
       const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
-      const pressed = fireEvent(input, new CustomEvent('_keyPress', { detail: { key: '1', code: 49, charCode: 49 } }));
+      const pressed = fireEvent(input, new CustomEvent('_keyPress', { detail: { key: 'c', value: 'c' } }));
 
       expect(pressed).toBe(true);
       expect(input).toBeInTheDocument();
+      expect(handleChange).not.toHaveBeenCalled();
     });
 
     it('can trigger on Blur event', async () => {

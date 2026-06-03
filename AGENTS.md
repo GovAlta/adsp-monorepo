@@ -115,6 +115,14 @@ Nx CLI is installed local to the project. Use `npx` to run `nx` cli commands.
 
 > **📚 Full Nx reference**: See [.github/agents/nx.md](.github/agents/nx.md) for comprehensive Nx commands, troubleshooting, and best practices.
 
+> **🧪 Unit testing standards**: See [architecture/unit-testing-standards.md](architecture/unit-testing-standards.md) for Jest patterns, mock conventions, naming rules, and coverage thresholds.
+
+> **🧹 Clean code rules**: See [architecture/clean-code-rules.md](architecture/clean-code-rules.md) for the canonical clean code rule set (shared by agents and PR review).
+
+> **🏗️ Service design patterns**: See [architecture/service-design-patterns.md](architecture/service-design-patterns.md) for deciding where to build new features (service vs. gateway).
+
+> **🤖 Agent workflow**: Use `@adsp-code` (orchestrator) to plan → implement → review → test. Or invoke specialists directly: `@adsp-plan`, `@adsp-impl`, `@clean-code`, `@unit-testing`.
+
 **Quick commands:**
 ```bash
 nx build <project-name>        # Build a project
@@ -171,17 +179,17 @@ refactor(tenant-management-api): extract tenant resolution middleware
 When building services, leverage the `adsp-service-sdk`:
 
 ```typescript
-import { 
-  AdspId, 
-  initializePlatform, 
-  ServiceDirectory 
+import {
+  AdspId,
+  initializePlatform,
+  ServiceDirectory
 } from '@abgov/adsp-service-sdk';
 
 // Initialize platform connection
-const { 
-  directory, 
-  tenantService, 
-  configurationHandler 
+const {
+  directory,
+  tenantService,
+  configurationHandler
 } = await initializePlatform({
   serviceId: AdspId.parse('urn:ads:platform:my-service'),
   // ... other options
@@ -345,6 +353,35 @@ When working in this codebase:
 5. **Consider multi-tenancy**: Always scope operations to tenant context
 6. **Event-driven**: Signal domain events for state changes
 7. **Document changes**: Keep docs in sync with code changes
+
+### Agent Workflow
+
+The recommended workflow for implementing features:
+
+```
+@adsp-jira  (optional first step — frame the problem as a ticket)
+     ↓
+@adsp-code (orchestrator)
+  ├── @adsp-plan     → decides WHERE to build (also handles spikes)
+  ├── @adsp-impl     → writes production code
+  ├── @clean-code    → reviews code quality
+  └── @unit-testing  → writes unit tests
+```
+
+You can invoke `@adsp-code` for the full orchestrated workflow, or call any specialist directly:
+- `@adsp-jira` — frames a raw problem into a Story, Bug, or Spike ticket draft
+- `@adsp-plan` — planning and spike investigation only (no code)
+- `@adsp-impl` — implementation only (assumes placement is decided)
+- `@clean-code` — review only (no code changes)
+- `@unit-testing` — test writing only
+
+### Shared Knowledge (`architecture/`)
+
+All standards are centralized in the `architecture/` folder at the repo root:
+- `architecture/service-design-patterns.md` — where to build features
+- `architecture/clean-code-rules.md` — code quality rules (used by agents AND GitHub PR review)
+- `architecture/unit-testing-standards.md` — testing conventions
+- `architecture/jira-ticket-templates.md` — ticket templates for Story, Bug, and Spike
 
 For questions about specific services, check:
 - Service README (if exists)

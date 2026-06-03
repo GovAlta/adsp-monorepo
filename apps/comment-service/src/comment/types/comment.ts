@@ -5,6 +5,7 @@ export interface Comment {
   id: number;
   title?: string;
   content: string;
+  context: Record<string, unknown>;
   createdBy: {
     id: string;
     name: string;

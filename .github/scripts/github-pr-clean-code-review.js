@@ -30,14 +30,31 @@ function loadConfig() {
     function_length_limit: 50,
     languages: ['ts', 'tsx', 'js', 'jsx'],
     suppressions: [],
+    disabled_rules: [],
   };
   if (fs.existsSync(configPath)) {
     try {
       const raw = fs.readFileSync(configPath, 'utf8');
       const lines = raw.split('\n');
+      let inDisabledRules = false;
       lines.forEach((line) => {
+        if (/^\s*disabled_rules\s*:/.test(line)) {
+          inDisabledRules = true;
+          return;
+        }
+        if (inDisabledRules) {
+          const listMatch = line.match(/^\s+-\s+"?([^"\s]+)"?\s*$/);
+          if (listMatch) {
+            defaults.disabled_rules.push(listMatch[1]);
+            return;
+          }
+          if (line.trim() && !line.trim().startsWith('#') && !/^\s/.test(line)) {
+            inDisabledRules = false;
+          }
+        }
         const match = line.match(/^\s*(\w+):\s*(.+)/);
         if (match) {
+          inDisabledRules = false;
           const key = match[1].trim();
           const val = match[2].trim();
           if (key === 'function_length_limit') defaults.function_length_limit = parseInt(val, 10);
@@ -94,82 +111,45 @@ async function getJiraTicket(prTitle, prBody) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Build the system prompt with all 18 Clean Code rules
+// Build the system prompt with all Clean Code rules
+// Reads canonical rules from architecture/clean-code-rules.md
 // ─────────────────────────────────────────────────────────────
 function buildSystemPrompt(config, jiraContext) {
   const jiraSection = jiraContext
     ? `\nJIRA CONTEXT:\nThe following Jira ticket(s) are associated with this PR: ${jiraContext}. Use this as additional context to verify whether the code correctly implements the requirements described in the ticket.\n`
     : '';
 
+  // Load canonical rules from architecture/clean-code-rules.md
+  let rulesContent = '';
+  const rulesPath = path.join(process.cwd(), 'architecture', 'clean-code-rules.md');
+  try {
+    rulesContent = fs.readFileSync(rulesPath, 'utf8');
+  } catch (e) {
+    console.warn(`Could not read ${rulesPath}, falling back to inline rules`);
+    rulesContent =
+      'Apply standard clean code rules: naming, function length, SRP, DRY, error handling, no side effects.';
+  }
+
+  // Apply config overrides
+  if (config.function_length_limit !== 50) {
+    rulesContent = rulesContent.replace(
+      /No function should exceed 50 lines/g,
+      `No function should exceed ${config.function_length_limit} lines`,
+    );
+  }
+
+  // Remove disabled rules from the prompt
+  if (config.disabled_rules && config.disabled_rules.length > 0) {
+    for (const rule of config.disabled_rules) {
+      // Remove the rule section (### 2.X ...) — best effort
+      const rulePattern = new RegExp(`### ${rule.replace('.', '\\.')}[^#]*(?=###|---|$)`, 's');
+      rulesContent = rulesContent.replace(rulePattern, '');
+    }
+  }
+
   return `You are a Clean Code AI reviewer. Review the provided code and identify violations of the following rules.
 
-RULES:
-NAMING STABILITY PRINCIPLE:
-Naming comments are SUGGESTION severity only — never ERROR or WARNING.
-Do not flag a name merely because another name is also reasonable.
-Do not reverse a previous naming suggestion unless it was clearly wrong.
-If both names are acceptable, prefer the existing name to avoid churn.
-Prefer stable, readable code over theoretically perfect names.
-
-2.1  Function Names: Only flag a function name when it is clearly misleading, ambiguous in its local scope, or likely to cause a real maintenance problem. Do not suggest a rename merely because another name is also reasonable. Before flagging, compare the name against its local context, nearby function names, and existing project naming conventions. If the current name is acceptable in context, do not comment. Every naming suggestion must include: (1) why the existing name is harmful or confusing, (2) why the proposed name is better, (3) whether the change is required or optional polish. If the reason is preference only, do not leave the comment. Never reverse a previous naming suggestion unless the original was clearly wrong. If both names are acceptable, prefer the existing name to avoid churn.
-2.2  File Names: Flag if the file name does not clearly reflect its purpose (comment at line 1).
-2.3  Function Length: No function should exceed ${config.function_length_limit} lines. For React/TSX, suggest extracting loops or conditional blocks into separate components. REACT GUIDANCE: Do not suggest moving a React hook call itself out of a component. For long hook bodies, apply the dependency burden rule — only suggest extraction if the extracted code has a clean boundary with few parameters. Do not count JSX return blocks toward function length when rendering is the component's primary purpose.
-2.4  Long Conditionals: Complex conditions should be wrapped in a named function that describes what is being tested.
-2.5  Reusability: Flag duplicate or near-duplicate logic that could be extracted into a shared reusable function.
-2.6  Encapsulation: If multiple functions operate on the same data, suggest creating a class or interface to encapsulate them.
-2.7  Minimize Coupling: Each file should have one clear purpose. Flag files with mixed concerns.
-2.8  Maximize Cohesion: If a single task is spread across multiple functions unnecessarily, suggest consolidation.
-2.9  Meaningful Names: Variables, classes, and constants must have intention-revealing names. No magic numbers. No single-letter variables except loop counters. Only suggest a rename when the current name is clearly misleading or ambiguous in its local scope — not because another name might also be reasonable. Check the surrounding context before flagging: if the scope already makes the meaning clear, the name is acceptable. Every naming suggestion must justify why the existing name causes confusion and why the new name is concretely better. If both names are acceptable, prefer the existing name. Apply the stability principle: prefer stable readable code over theoretically perfect names. Avoid suggestions that would cause churn without improving correctness, clarity, or maintainability.
-2.10 Functions Do One Thing: A function must do one thing only (Single Responsibility Principle). Flag functions doing multiple things. REACT GUIDANCE: Do not flag React components merely for combining state, effects, and rendering — this is correct React design. Only flag Rule 2.10 for non-React functions doing clearly unrelated things, or for React components where concerns are so mixed that splitting would genuinely improve clarity without increasing coupling.
-2.11 Comments: Flag redundant comments that restate what the code does. Flag outdated or misleading comments. Do not comment bad code — rewrite it. Comments that explain design decisions are acceptable and encouraged — e.g. why something was implemented one way instead of another.
-2.13 Error Handling: Use exceptions instead of returning error codes. Never suppress or silently ignore errors.
-2.14 DRY Principle: Flag any duplicated logic. If the same logic appears more than once, extract it.
-2.15 Classes Single Responsibility: Classes should have one reason to change. Flag classes with multiple concerns.
-2.16 Unit Tests: Flag any exported function or class that has no corresponding test.
-2.17 Testable Code: Flag functions that are too large or tightly coupled to be independently testable.
-2.18 No Hidden Side Effects: Flag functions that modify external state unexpectedly or produce outputs not indicated by their name.
-
-REACT PATTERNS — REVIEW GUIDANCE:
-React hooks (useEffect, useMemo, useCallback, useState, useRef, useContext)
-must never be moved to a regular helper file or non-hook function.
-Hook calls must always remain inside a React component or a custom hook.
-
-For useEffect, useMemo, useCallback bodies — review the code INSIDE
-the hook separately using these rules:
-
-- If the logic inside is pure and does not depend heavily on component
-  state, props, refs, or dispatch functions → suggest extracting it to
-  a helper function.
-- If the effect represents a reusable behaviour with clear inputs and
-  outputs → suggest extracting it to a custom hook.
-- If the effect is tightly coupled to many local variables → do not
-  suggest extraction unless you can show a clean function signature.
-- If extraction would require passing many variables just to recreate
-  the component's local scope → prefer suggesting smaller internal
-  helper functions or simplifying the effect in place.
-- Avoid vague comments like "move this useEffect elsewhere."
-
-DEPENDENCY BURDEN RULE — apply before suggesting any extraction:
-If the extracted function would require many parameters, many setters,
-refs, dispatch functions, or locally scoped callbacks — do not recommend
-moving it to another file.
-Instead suggest one of:
-- split the effect into multiple effects by responsibility
-- create small named helper functions inside the component
-- reduce the number of responsibilities in the effect
-- derive values before the effect runs
-- move pure transformation logic out, while leaving side-effect
-  orchestration in place
-Do not suggest extraction unless the extracted code has a clean boundary.
-
-GENERAL REACT RULES:
-- JSX return blocks — rendering is the component's primary responsibility,
-  do not flag for length unless the component has clearly unrelated concerns
-- Components combining state + effects + rendering — this is correct React
-  design, not an SRP violation
-- Backend service functions making one axios call, logging, and returning
-  data — intentionally simple, do not flag for complexity or length unless
-  they genuinely exceed the function_length_limit
+${rulesContent}
 
 SEVERITY LEVELS:
 - ERROR: Rules 2.13, 2.14, 2.18
@@ -270,6 +250,72 @@ ${violation.message}
 💡 **Suggestion:** ${violation.suggestion}
 
 <sub>To suppress: add \`// clean-code-ignore: ${violation.rule}\` on this line</sub>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// RULE-19: Check each changed source file has a colocated test file
+// ─────────────────────────────────────────────────────────────
+function isTestFile(filename) {
+  return /\.(test|spec)\.[jt]sx?$/.test(filename);
+}
+
+function deriveTestFilePaths(filename) {
+  const ext = path.extname(filename);
+  const base = filename.slice(0, -ext.length);
+  return [`${base}.test${ext}`, `${base}.spec${ext}`];
+}
+
+async function testFileExistsInRepo(octokit, filePath) {
+  try {
+    await octokit.rest.repos.getContent({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: filePath,
+      ref: HEAD_SHA,
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function checkMissingTestFiles(octokit, changedFiles, config, { checkRepoFile = testFileExistsInRepo } = {}) {
+  if (config.disabled_rules && config.disabled_rules.includes('RULE-19')) {
+    return [];
+  }
+
+  const prFilenames = new Set(changedFiles.map((f) => f.filename));
+  const missingTestComments = [];
+
+  for (const file of changedFiles) {
+    if (isTestFile(file.filename)) continue;
+    if (!file.patch) continue;
+
+    const expectedTestPaths = deriveTestFilePaths(file.filename);
+
+    const existsInPr = expectedTestPaths.some((p) => prFilenames.has(p));
+    if (existsInPr) continue;
+
+    const repoChecks = await Promise.all(expectedTestPaths.map((p) => checkRepoFile(octokit, p)));
+    if (repoChecks.some(Boolean)) continue;
+
+    const lineToPosition = buildLineToPositionMap(file.patch);
+    const positions = Object.values(lineToPosition);
+    if (positions.length === 0) continue;
+
+    missingTestComments.push({
+      path: file.filename,
+      position: Math.min(...positions),
+      body: formatComment({
+        rule: 'RULE-19',
+        severity: 'WARNING',
+        message: 'No unit test file found for this file. Please add or update tests.',
+        suggestion: `Create a test file at ${expectedTestPaths[0]} colocated with this file.`,
+      }),
+    });
+  }
+
+  return missingTestComments;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -420,8 +466,11 @@ async function main() {
   const systemPrompt = buildSystemPrompt(config, jiraContext);
   const { reviewComments, hasBlockingViolations } = await processFilesForReview(changedFiles, systemPrompt);
 
-  console.log(`\n📝 Posting review with ${reviewComments.length} comment(s)...`);
-  await postReviewSummary(octokit, reviewComments, hasBlockingViolations);
+  const missingTestComments = await checkMissingTestFiles(octokit, changedFiles, config);
+  const allComments = [...reviewComments, ...missingTestComments];
+
+  console.log(`\n📝 Posting review with ${allComments.length} comment(s)...`);
+  await postReviewSummary(octokit, allComments, hasBlockingViolations);
   console.log('✅ Clean Code Review complete.');
 
   if (hasBlockingViolations) {
@@ -443,4 +492,7 @@ module.exports = {
   loadConfig,
   buildSystemPrompt,
   processFilesForReview,
+  isTestFile,
+  deriveTestFilePaths,
+  checkMissingTestFiles,
 };

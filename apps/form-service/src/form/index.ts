@@ -5,7 +5,7 @@ import { FileService } from '../file';
 import { NotificationService } from '../notification';
 import { scheduleFormJobs } from './jobs';
 import { FormSubmissionRepository, Repositories } from './repository';
-import { createFormRouter } from './router';
+import { createFormRouter, createFormDefinitionRouter } from './router';
 import { QueueTaskService } from '../task';
 import { CommentService } from './comment';
 import { PdfService } from './pdf';
@@ -55,10 +55,18 @@ export const applyFormMiddleware = (
     formSubmissionRepository: submissionRepository,
     pdfService,
     calendarService,
-  }: FormMiddlewareProps
+  }: FormMiddlewareProps,
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
   scheduleFormJobs({ apiId, logger, repository, eventService, fileService, notificationService });
+
+  const definitionRouter = createFormDefinitionRouter({
+    directory,
+    tokenProvider,
+    tenantService,
+    calendarService,
+  });
+  app.use('/form/v1', definitionRouter);
 
   const router = createFormRouter({
     apiId,
@@ -67,14 +75,12 @@ export const applyFormMiddleware = (
     directory,
     tokenProvider,
     eventService,
-    tenantService,
     queueTaskService,
     notificationService,
     fileService,
     commentService,
     submissionRepository,
     pdfService,
-    calendarService,
   });
   app.use('/form/v1', router);
 

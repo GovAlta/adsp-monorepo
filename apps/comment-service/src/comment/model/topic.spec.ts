@@ -18,6 +18,8 @@ describe('TopicEntity', () => {
   const repositoryMock = {
     getTopic: jest.fn(),
     getTopics: jest.fn(),
+    countTopics: jest.fn(),
+    countTopicsByType: jest.fn(),
     getComment: jest.fn(),
     getComments: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
@@ -310,11 +312,12 @@ describe('TopicEntity', () => {
       const comment = {
         title: 'test',
         content: 'testing',
+        context: { pinned: true, metadata: { reason: 'important' } },
       };
       repositoryMock.saveComment.mockResolvedValueOnce(comment);
 
       const commenter = { ...user, roles: ['test-commenter'] } as User;
-      const result = await entity.postComment(commenter, comment as Comment);
+      const result = await entity.postComment(commenter, comment as unknown as Comment);
       expect(result).toBe(comment);
       expect(repositoryMock.saveComment).toHaveBeenCalledWith(
         entity,
@@ -325,6 +328,24 @@ describe('TopicEntity', () => {
           createdOn: expect.any(Date),
           lastUpdatedBy: commenter,
           lastUpdatedOn: expect.any(Date),
+        })
+      );
+    });
+
+    it('can create comment with default empty context', async () => {
+      const comment = {
+        title: 'test',
+        content: 'testing',
+      };
+      repositoryMock.saveComment.mockResolvedValueOnce(comment);
+
+      const commenter = { ...user, roles: ['test-commenter'] } as User;
+      const result = await entity.postComment(commenter, comment as Comment);
+      expect(result).toBe(comment);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        entity,
+        expect.objectContaining({
+          context: {},
         })
       );
     });
@@ -429,6 +450,7 @@ describe('TopicEntity', () => {
         id: 1,
         title: 'test',
         content: 'testing',
+        context: { pinned: false },
         createdBy: {
           id: user.id,
         },
@@ -438,10 +460,11 @@ describe('TopicEntity', () => {
       const update = {
         title: 'new title',
         content: 'new content',
+        context: { pinned: true, metadata: { reason: 'review' } },
       };
 
       const commenter = { ...user, roles: ['test-commenter'] } as User;
-      const result = await entity.updateComment(commenter, comment as Comment, update);
+      const result = await entity.updateComment(commenter, comment as unknown as Comment, update);
       expect(result).toBe(comment);
       expect(repositoryMock.saveComment).toHaveBeenCalledWith(
         entity,
@@ -450,6 +473,33 @@ describe('TopicEntity', () => {
           id: 1,
           lastUpdatedBy: commenter,
           lastUpdatedOn: expect.any(Date),
+        })
+      );
+    });
+
+    it('does not replace context when update omits context', async () => {
+      const comment = {
+        id: 1,
+        title: 'test',
+        content: 'testing',
+        context: { pinned: true },
+        createdBy: {
+          id: user.id,
+        },
+      };
+      repositoryMock.saveComment.mockResolvedValueOnce(comment);
+
+      const update = {
+        content: 'new content',
+      };
+
+      const commenter = { ...user, roles: ['test-commenter'] } as User;
+      await entity.updateComment(commenter, comment as unknown as Comment, update);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        entity,
+        expect.objectContaining({
+          context: { pinned: true },
+          content: 'new content',
         })
       );
     });

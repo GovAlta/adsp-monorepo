@@ -2,14 +2,23 @@ components:
   schemas:
     FormDefinition:
       type: object
+      required:
+        - id
+        - name
+        - anonymousApply
+        - applicantRoles
+        - assessorRoles
       properties:
         id:
           type: string
+          maxLength: 50
         name:
           type: string
         description:
           type: string
         anonymousApply:
+          type: boolean
+        oneFormPerApplicant:
           type: boolean
         applicantRoles:
           type: array
@@ -23,22 +32,49 @@ components:
           type: array
           items:
             type: string
+        formDraftUrlTemplate:
+          type: string
         dataSchema:
           type: object
         uiSchema:
           type: object
         dispositionStates:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+        submissionRecords:
+          type: boolean
+        submissionPdfTemplate:
+          type: string
+        scheduledIntakes:
+          type: boolean
+        supportTopic:
+          type: boolean
+        securityClassification:
+          type: string
+          enum: [public, 'protected a', 'protected b', 'protected c']
+        queueTaskToProcess:
           type: object
           properties:
-            id:
+            queueNameSpace:
               type: string
-            status:
+            queueName:
               type: string
-            description:
+        customSubmissionEvent:
+          type: object
+          properties:
+            namespace:
               type: string
-        generatesPdf:
-          type: boolean
-        submissionRecords:
+            name:
+              type: string
+        dryRun:
           type: boolean
     Form:
       type: object
@@ -239,6 +275,27 @@ components:
                       type: string
                     size:
                       type: number
+  post:
+    tags:
+      - Form
+    description: Creates a new form definition. Requires the form-service admin role.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormDefinition'
+    responses:
+      201:
+        description: Successfully created the form definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      401:
+        description: User is not authorized to create form definitions.
+      409:
+        description: Form definition with the specified ID already exists.
 
 /form/v1/definitions/{definitionId}:
   get:
@@ -265,6 +322,52 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+  put:
+    tags:
+      - Form
+    description: Updates an existing form definition. Requires the form-service admin role.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition to update.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormDefinition'
+    responses:
+      200:
+        description: Successfully updated the form definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      401:
+        description: User is not authorized to update form definitions.
+      404:
+        description: Form definition not found.
+  delete:
+    tags:
+      - Form
+    description: Deletes a form definition. Requires the form-service admin role.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition to delete.
+        required: true
+        in: path
+        schema:
+          type: string
+    responses:
+      204:
+        description: Successfully deleted the form definition.
+      401:
+        description: User is not authorized to delete form definitions.
+      404:
+        description: Form definition not found.
 
 /form/v1/forms:
   get:

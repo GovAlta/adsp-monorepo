@@ -134,6 +134,7 @@ When('the user enters {string} in a date time picker labelled {string}', functio
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
   formsObj.formDropdown(label).shadow().find('input').click({ force: true });
   formsObj.formDropdown(label).shadow().find('goa-popover').find('li').contains(value).click({ force: true });
+  cy.wait(1000); // Wait for the dropdown to process the input
 });
 
 When(
@@ -470,11 +471,7 @@ Then('the user views section title of {string} on task list page', function (sec
 Then(
   'the user views an error message of {string} under the control labelled {string}',
   function (errorMsg, textFieldLabel) {
-    formsObj
-      .formTextFieldFormItem(textFieldLabel)
-      .shadow()
-      .find('[class^="error-msg"]')
-      .should('contain.text', errorMsg);
+    formsObj.formFormItem(textFieldLabel).shadow().find('[class^="error-msg"]').should('contain.text', errorMsg);
   }
 );
 
@@ -616,3 +613,36 @@ When(
       .click({ force: true });
   }
 );
+
+Then('the user {string} the text field labelled {string}', function (viewOrNot, label) {
+  const field = formsObj.formTextField(label);
+  if (viewOrNot === 'views') {
+    field.should('be.visible');
+  } else if (viewOrNot === 'should not view') {
+    field.should('not.be.visible');
+  } else {
+    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user enters {string} in the integer field labelled {string}', function (value: string, label) {
+  formsObj
+    .formFormItem(label)
+    .find('goa-input')
+    .shadow()
+    .find('input')
+    .focus()
+    .click({ force: true })
+    .type('{selectall}{del}', { force: true }) // select all, then delete due to clear() doesn't work with this control
+    .type(value, { force: true, delay: 200 });
+});
+
+Then('the user views the text field of {string} is {string}', function (label, enabledOrNot) {
+  if (enabledOrNot === 'enabled') {
+    formsObj.formTextField(label).shadow().find('input').should('be.enabled');
+  } else if (enabledOrNot === 'disabled') {
+    formsObj.formTextField(label).shadow().find('input').should('not.be.enabled');
+  } else {
+    expect(enabledOrNot).to.be.oneOf(['enabled', 'disabled']);
+  }
+});
