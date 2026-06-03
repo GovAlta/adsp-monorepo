@@ -14,6 +14,9 @@ import {
   UPDATE_JOBS,
   UPDATE_TEMP_TEMPLATE,
   FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION,
+  MARK_PDF_PREVIEW_STALE_ACTION,
+  CLEAR_PDF_PREVIEW_STALE_ACTION,
+  SAVE_UPDATED_PDF_TEMPLATE_ACTION,
 } from './action';
 import { PdfState } from './model';
 
@@ -31,10 +34,21 @@ export const defaultState: PdfState = {
   currentId: '',
   tempTemplate: null,
   openEditor: null,
+  previewStale: false,
+  currentlyGeneratedPDFData: {},
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
   switch (action.type) {
+      case SAVE_UPDATED_PDF_TEMPLATE_ACTION: {
+        return {
+          ...state,
+          currentlyGeneratedPDFData: {
+            ...state.currentlyGeneratedPDFData,
+            ...action.payload,
+          },
+        };
+      }
     case FETCH_PDF_TEMPLATES_SUCCESS_ACTION:
       return {
         ...state,
@@ -153,6 +167,18 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       return {
         ...state,
         socketChannel: action.socketChannel,
+      };
+    }
+    case MARK_PDF_PREVIEW_STALE_ACTION: {
+      return {
+        ...state,
+        previewStale: true,
+      };
+    }
+    case CLEAR_PDF_PREVIEW_STALE_ACTION: {
+      return {
+        ...state,
+        previewStale: false,
       };
     }
     default:

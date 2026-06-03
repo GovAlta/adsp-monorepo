@@ -60,6 +60,18 @@ const defaultState: AgentState = {
         'passed via the runtime context rather than via the input.',
     },
     {
+      id: 'pdfConfigurationRetrievalTool',
+      description:
+        'Tool for getting PDF configuration. Note that pdfConfigurationId is ' +
+        'passed via the runtime context rather than via the input.',
+    },
+    {
+      id: 'pdfConfigurationUpdateTool',
+      description:
+        'Tool for updating PDF configuration. Note that pdfConfigurationId is ' +
+        'passed via the runtime context rather than via the input.',
+    },
+    {
       id: 'rendererCatalogTool',
       description:
         'Tool for validating that schema and UI combinations have matching JSONForms renderers. ' +
