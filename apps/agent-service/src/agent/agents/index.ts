@@ -6,9 +6,11 @@ import {
   builderPrototypeCoderAgent,
   builderWorkspaceAnalystAgent,
 } from './builder';
+import { pdfGenerationAgent } from './pdf';
 
 export const CoreAgents: AgentConfigurations = {
   formGenerationAgent,
+  pdfGenerationAgent,
   formUpdateAgent,
   pdfFormAnalysisAgent,
   builderWorkspaceAnalystAgent,

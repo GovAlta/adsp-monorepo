@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   TemplateEditorContainerPdf,
   EditTemplateActions,
@@ -22,9 +22,13 @@ import { PDFConfigForm } from './PDFConfigForm';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { DeleteModal } from '@components/DeleteModal';
-import { LogoutModal } from '@components/LogoutModal';
 import { GoabBadge } from '@abgov/react-components';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
+import { connectAgent, disconnectAgent, messageAgent, startThread } from '@store/agent/actions';
+import { messagesSelector } from '@store/agent/selectors';
+import { EditorAgentChat } from '@core-services/app-common';
+import { UserContent } from '@core-services/app-common';
+
 import {
   deletePdfFilesService,
   getPdfTemplates,
@@ -34,7 +38,7 @@ import {
   updateTempTemplate,
 } from '@store/pdf/action';
 
-import { RootState } from '@store/index';
+import { RootState, AppDispatch } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
@@ -62,15 +66,26 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
 };
 
 export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => {
+  const dispatch = useDispatch<AppDispatch>();
+
   const { height } = useWindowDimensions();
   const [threadId] = useState(uuid());
-  const dispatch = useDispatch();
+
+  const thread = useSelector((state: RootState) => threadSelector(state, threadId));
+  const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
+
+  useEffect(() => {
+    if (!thread) {
+      dispatch(startThread('pdfGenerationAgent', threadId));
+    }
+  }, [dispatch, thread]);
+
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
 
-  const pdfTemplate = useSelector((state) => selectCorePdfTemplateById(state, id) || selectPdfTemplateById(state, id));
+  const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id) || selectCorePdfTemplateById(state, id));
 
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
 
@@ -88,6 +103,19 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const [EditorError, setEditorError] = useState<Record<string, string>>({
     testData: null,
   });
+  const handleAgentSend = useCallback(
+    (tid: string, context: Record<string, unknown>, content: UserContent) => {
+      dispatch(messageAgent(tid, context, content));
+    },
+    [dispatch],
+  );
+
+  useEffect(() => {
+    dispatch(connectAgent());
+    return () => {
+      dispatch(disconnectAgent());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (!pdfTemplate) {
@@ -99,7 +127,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   //eslint-disable-next-line
   useEffect(() => {
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  }, [pdfTemplate]);
+  }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (saveModal.closeEditor) {
@@ -202,20 +230,22 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
               <Tabs activeIndex={0}>
                 <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
                   <GoabFormItem error={errors?.header ?? ''} label="">
-                    {pdfTemplate && (
-                      <MonacoDivBody>
-                        <MonacoEditor
-                          height={monacoHeight}
-                          language={'handlebars'}
-                          value={tmpTemplate?.header}
-                          data-testid="templateForm-header"
-                          onChange={(value) => {
-                            setTmpTemplate({ ...tmpTemplate, header: value });
-                          }}
-                          {...bodyEditorConfig}
-                        />
-                      </MonacoDivBody>
-                    )}
+                    <div>
+                      {pdfTemplate && (
+                        <MonacoDivBody>
+                          <MonacoEditor
+                            height={monacoHeight}
+                            language={'handlebars'}
+                            value={tmpTemplate?.header}
+                            data-testid="templateForm-header"
+                            onChange={(value) => {
+                              setTmpTemplate({ ...tmpTemplate, header: value });
+                            }}
+                            {...bodyEditorConfig}
+                          />
+                        </MonacoDivBody>
+                      )}
+                    </div>
                   </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
@@ -301,28 +331,14 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   data-testid="form-editor-agent-tab"
                   isTightContent={true}
                 >
-                  <DefinitionAgentChat
-                    definitionId={tmpTemplate.id}
+                  <EditorAgentChat
                     threadId={threadId}
-                    height={height - 200}
-                    disabled={!agentConnected}
+                    context={{ pdfDefinitionId: tmpTemplate.id }}
+                    messages={messages}
+                    height={height - 400}
+                    disabled={!agentConnected || !thread}
+                    onSend={handleAgentSend}
                   />
-                </Tab>
-
-                <Tab testId={`pdf-edit-ai`} label={<PdfEditorLabelWrapper>AI</PdfEditorLabelWrapper>}>
-                  <GoabFormItem error={errors?.body ?? null} label="">
-                    <MonacoDivBody style={{ height: monacoHeight }}>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={tmpTemplate?.additionalStyles}
-                        data-testid="templateForm-css"
-                        onChange={(value) => {
-                          setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
-                  </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
                   <GeneratorStyling style={{ height: fileHistHeight }}>

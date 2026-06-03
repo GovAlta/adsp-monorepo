@@ -8,6 +8,13 @@ import '@testing-library/jest-dom';
 import { TemplateEditor } from './TemplateEditor';
 import { getPdfTemplates } from '@store/pdf/action';
 import { PreviewTemplate } from './PreviewTemplate';
+
+jest.mock('@store/agent/actions', () => ({
+  connectAgent: () => ({ type: 'agent/connectAgent' }),
+  disconnectAgent: () => ({ type: 'agent/disconnectAgent' }),
+  startThread: () => ({ type: 'agent/startThread' }),
+}));
+
 describe('Test pdf template preview', () => {
   const mockStore = configureStore([]);
 
@@ -98,6 +105,11 @@ describe('Test pdf template preview', () => {
     const store = mockStore({
       agent: {
         connected: false,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+        downloadedFiles: {},
+        fileMetadata: {},
       },
       notifications: {
         notifications: [],
@@ -141,6 +153,11 @@ describe('Test pdf template preview', () => {
     const store = mockStore({
       agent: {
         connected: false,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+        downloadedFiles: {},
+        fileMetadata: {},
       },
       notifications: {
         notifications: [],
