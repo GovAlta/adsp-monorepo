@@ -12,6 +12,8 @@ import {
   createTopicRouter,
   deleteTopic,
   deleteTopicComment,
+  getTopicType,
+  getTopicTypes,
   getTopic,
   getTopicComment,
   getTopicComments,
@@ -297,6 +299,220 @@ describe('topic', () => {
       const next = jest.fn();
 
       const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+    });
+  });
+
+  describe('getTopicTypes', () => {
+    it('can create handler', () => {
+      const handler = getTopicTypes();
+      expect(handler).toBeTruthy();
+    });
+
+    it('gets topic types for user with topic setter role', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+
+      const handler = getTopicTypes();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getConfiguration).toHaveBeenCalledWith(tenantId);
+      expect(res.send).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: type.id,
+          name: type.name,
+          adminRoles: type.adminRoles,
+          readerRoles: type.readerRoles,
+          commenterRoles: type.commenterRoles,
+        }),
+      ]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('gets empty topic types when none exist', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce(null);
+
+      const handler = getTopicTypes();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with forbidden when user does not have topic setter role', async () => {
+      const req = {
+        user: { ...user, roles: [] },
+        tenant: {
+          id: tenantId,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getTopicTypes();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('calls next with unauthorized when no user is available', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getTopicTypes();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+    });
+  });
+
+  describe('getTopicType', () => {
+    it('can create handler', () => {
+      const handler = getTopicType();
+      expect(handler).toBeTruthy();
+    });
+
+    it('gets topic type for user with topic setter role', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+
+      const handler = getTopicType();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getConfiguration).toHaveBeenCalledWith(tenantId);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: type.id,
+          name: type.name,
+          adminRoles: type.adminRoles,
+          readerRoles: type.readerRoles,
+          commenterRoles: type.commenterRoles,
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with not found when topic type does not exist', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({});
+
+      const handler = getTopicType();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('calls next with forbidden when user does not have topic setter role', async () => {
+      const req = {
+        user: { ...user, roles: [] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getTopicType();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('calls next with unauthorized when no user is available', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getTopicType();
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
