@@ -8,6 +8,7 @@ export {
   LimitToOne,
   retry,
   toKebabName,
+  toKebabCase,
 } from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole } from './access';
 export type { TokenProvider, User } from './access';
