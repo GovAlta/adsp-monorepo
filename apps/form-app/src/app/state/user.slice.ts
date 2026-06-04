@@ -6,6 +6,7 @@ import { ConfigState } from './config.slice';
 import { FeedbackMessage } from './feedback.slice';
 import { AppState } from './store';
 import { isAxiosErrorPayload } from './util';
+import { isUUID } from '../lib/keycloak';
 
 export const USER_FEATURE_KEY = 'user';
 
@@ -87,10 +88,16 @@ export const initializeTenant = createAsyncThunk(
       return null;
     }
 
+    //handle if we are passing the the tenant name or realm id to look up.
+    let paramsToUse = isUUID(name)
+      ? {
+          realm: name,
+        }
+      : {
+          name: name.replace(/-/g, ' '),
+        };
     const { data } = await axios.get<{ results: Tenant[] }>(new URL('/api/tenant/v2/tenants', url).href, {
-      params: {
-        name: name.replace(/-/g, ' '),
-      },
+      params: paramsToUse,
     });
 
     const tenant = data?.results?.[0];
@@ -104,7 +111,7 @@ export const initializeTenant = createAsyncThunk(
       dispatch(initializeUser(tenant));
       return tenant;
     }
-  }
+  },
 );
 
 export const initializeUser = createAsyncThunk(
@@ -123,13 +130,13 @@ export const initializeUser = createAsyncThunk(
             ...roles,
             ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
           ],
-          client.tokenParsed.realm_access?.roles || []
+          client.tokenParsed.realm_access?.roles || [],
         ),
       };
     } else {
       return null;
     }
-  }
+  },
 );
 
 export const loginUserWithIDP = createAsyncThunk(
@@ -147,7 +154,7 @@ export const loginUserWithIDP = createAsyncThunk(
 
     // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
-  }
+  },
 );
 
 export const loginUser = createAsyncThunk(
@@ -162,7 +169,7 @@ export const loginUser = createAsyncThunk(
 
     // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
-  }
+  },
 );
 
 export const logoutUser = createAsyncThunk(
@@ -174,7 +181,7 @@ export const logoutUser = createAsyncThunk(
     await client.logout({
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
-  }
+  },
 );
 
 const initialUserState: UserState = {

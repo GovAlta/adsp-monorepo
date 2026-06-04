@@ -8,6 +8,7 @@ import { ConfigState } from '../config.slice';
 import { AppState } from '../store';
 import { isAxiosErrorPayload } from '../util';
 import { FeedbackMessage } from '../types';
+import { isUUID } from '../../lib/keycloak';
 
 export const USER_FEATURE_KEY = 'user';
 
@@ -67,7 +68,7 @@ function updateSessionTimeout(dispatch: Dispatch) {
     const tilExpiresAlert = expires.diff(DateTime.now()).minus(120000);
     sessionTimeout = setTimeout(
       () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), alert: true })),
-      tilExpiresAlert.as('milliseconds')
+      tilExpiresAlert.as('milliseconds'),
     );
   }
 }
@@ -95,11 +96,17 @@ export const initializeTenant = createAsyncThunk(
     if (!url) {
       return null;
     }
+    //handle if we are passing the the tenant name or realm id to look up.
+    let paramsToUse = isUUID(name)
+      ? {
+          realm: name,
+        }
+      : {
+          name: name.replace(/-/g, ' '),
+        };
 
     const { data } = await axios.get<{ results: Tenant[] }>(new URL('/api/tenant/v2/tenants', url).href, {
-      params: {
-        name: name.replace(/-/g, ' '),
-      },
+      params: paramsToUse,
     });
 
     const tenant = data?.results?.[0];
@@ -113,7 +120,7 @@ export const initializeTenant = createAsyncThunk(
       dispatch(initializeUser(tenant));
       return tenant;
     }
-  }
+  },
 );
 
 export const initializeUser = createAsyncThunk(
@@ -134,13 +141,13 @@ export const initializeUser = createAsyncThunk(
             ...roles,
             ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
           ],
-          client.tokenParsed.realm_access?.roles || []
+          client.tokenParsed.realm_access?.roles || [],
         ),
       };
     } else {
       return null;
     }
-  }
+  },
 );
 
 const getIdpHint = (): string => {
@@ -171,7 +178,7 @@ export const loginUser = createAsyncThunk(
 
     // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
-  }
+  },
 );
 
 export const logoutUser = createAsyncThunk(
@@ -183,7 +190,7 @@ export const logoutUser = createAsyncThunk(
     await client.logout({
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
-  }
+  },
 );
 
 const initialUserState: UserState = {
@@ -191,7 +198,7 @@ const initialUserState: UserState = {
   tenant: null,
   user: undefined,
   sessionExpiresAt: null,
-  alertSessionExpiresAt: null
+  alertSessionExpiresAt: null,
 };
 
 export const renewSession = createAsyncThunk('user/renew-session', async (_, { dispatch }) => {
@@ -247,5 +254,5 @@ export const sessionExpirySelector = createSelector(
   (expiresAt) => ({
     secondsTilExpiry: expiresAt && Math.round(DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds')),
     showAlert: !!expiresAt,
-  })
+  }),
 );

@@ -60,9 +60,9 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
         criteria.idEquals = user.tenantId.resource.replace('/tenants/', '');
       }
 
-      // For anonymous users, the supported operation is a query including name criteria.
-      if (!user && !criteria.nameEquals) {
-        throw new UnauthorizedError('Request must include name criteria.');
+      // For anonymous users, the supported operation is a query including name OR realm id criteria.
+      if (!user && !criteria.nameEquals && !criteria.nameEquals && !criteria.realmEquals) {
+        throw new UnauthorizedError('Request must include id or name criteria.');
       }
 
       // FIXME: accessing a non-injected dependency makes this hard to test
@@ -104,7 +104,7 @@ export function getTenant(logger: Logger, repository: TenantRepository): Request
 export function updateTenantName(
   logger: Logger,
   repository: TenantRepository,
-  eventService: EventService
+  eventService: EventService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -140,7 +140,7 @@ export function updateTenantName(
 export function deleteTenant(
   realmService: RealmService,
   repository: TenantRepository,
-  eventService: EventService
+  eventService: EventService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -170,7 +170,7 @@ export function createTenant(
   logger: Logger,
   tenantRepository: TenantRepository,
   realmService: RealmService,
-  eventService: EventService
+  eventService: EventService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -203,7 +203,7 @@ export function createTenant(
         }
         logger.info(
           `Creating tenant '${name}' with existing realm '${existingRealm}' for admin ${email}...`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } else {
         //create new realm
@@ -256,10 +256,10 @@ export const createTenantV2Router = ({
             isEmail: true,
           },
         },
-        ['query']
-      )
+        ['query'],
+      ),
     ),
-    getTenants(logger, tenantRepository)
+    getTenants(logger, tenantRepository),
   );
   router.post(
     '/tenants',
@@ -283,10 +283,10 @@ export const createTenantV2Router = ({
             isEmail: true,
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
-    createTenant(logger, tenantRepository, realmService, eventService)
+    createTenant(logger, tenantRepository, realmService, eventService),
   );
 
   router.get('/tenants/:id', assertAuthenticatedHandler, getTenant(logger, tenantRepository));
@@ -294,7 +294,7 @@ export const createTenantV2Router = ({
     '/tenants/:id',
     assertAuthenticatedHandler,
     requireTenantServiceAdmin,
-    deleteTenant(realmService, tenantRepository, eventService)
+    deleteTenant(realmService, tenantRepository, eventService),
   );
 
   router.patch(
@@ -311,10 +311,10 @@ export const createTenantV2Router = ({
             matches: { options: /^[0-9a-zA-Z _]{1,50}$/ },
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
-    updateTenantName(logger, tenantRepository, eventService)
+    updateTenantName(logger, tenantRepository, eventService),
   );
 
   return router;
