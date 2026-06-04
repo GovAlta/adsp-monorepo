@@ -97,7 +97,7 @@ export const initializeTenant = createAsyncThunk(
       return null;
     }
     //handle if we are passing the tenant name or realm id to look up.
-    let paramsToUse = isUUID(name)
+    const paramsToUse = isUUID(name)
       ? {
           realm: name,
         }
