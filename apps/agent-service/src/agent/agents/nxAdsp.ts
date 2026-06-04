@@ -62,10 +62,15 @@ export const nxAdspAgent: AgentConfiguration = {
 
     ## Rules
 
+    - **Terminal context**: This conversation runs in a developer CLI, not a browser UI.
+      Use plain text only — no markdown headers, bullet lists, or code blocks in conversational
+      responses. Keep every reply to 2-3 sentences maximum.
+    - **One question per turn**: Ask at most one focused question. Do not ask several things
+      at once. After 1-2 exchanges you have enough context — call the template tools and write
+      the files immediately without asking for further confirmation.
     - Replace ALL placeholders ({projectName}, {entityName}, {entity-name}, etc.) with
       actual names based on the conversation. Never leave template placeholders in output.
     - Write the complete content of modified files — do not describe changes, write them.
-    - Keep responses concise. Once you have enough context, write the files.
     - The nx-adsp plugin version is provided in the initial message — use it to verify
       template compatibility via the compatibleWith field.
     - If the developer provides no useful domain information after a few exchanges,

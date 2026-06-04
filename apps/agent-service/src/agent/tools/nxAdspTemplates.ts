@@ -110,7 +110,7 @@ app.post('/{projectName}/v1/{entities}', async (req, res) => {
   await eventService.send({
     namespace: '{projectName}',
     name: '{entity-name}-created',
-    tenantId: (req.user as { tenantId?: string })?.tenantId,
+    // tenantId is omitted — the SDK derives it from the service configuration
     payload: { id: entity.id },
   });
   res.status(201).json(entity);
