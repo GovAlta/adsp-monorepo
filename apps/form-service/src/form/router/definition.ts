@@ -6,6 +6,7 @@ import {
   ServiceDirectory,
   UnauthorizedUserError,
   adspId,
+  toKebabCase,
 } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
@@ -31,8 +32,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { top: topValue, after } = req.query;
-      const top = topValue ? parseInt(topValue as string) : 20;
+      const { top: topValue, after, name } = req.query;
 
       if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin)) {
         throw new UnauthorizedUserError('access definitions', user);
@@ -40,6 +40,27 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
+
+      const params: Record<string, string> = {
+        includeActive: 'true',
+      };
+
+      if (topValue) {
+        params.top = topValue as string;
+      }
+
+      if (tenantId) {
+        params.tenantId = tenantId.toString();
+      }
+
+      if (after) {
+        params.after = after as string;
+      }
+
+      if (name) {
+        params.criteria = JSON.stringify({ nameContains: name });
+      }
+
       const { data } = await axios.get<
         Results<{
           latest: { revision: number; configuration: FormDefinition };
@@ -47,12 +68,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         }>
       >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
-        params: {
-          top,
-          after,
-          tenantId: tenantId?.toString(),
-          includeActive: true,
-        },
+        params,
       });
 
       res.send({
@@ -130,7 +146,16 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
         throw new UnauthorizedUserError('create form definition', user);
       }
 
-      const definition: FormDefinition = req.body;
+      const generatedId = req.body.id || toKebabCase(req.body.name);
+
+      if (!generatedId) {
+        throw new InvalidOperationError('Form definition ID could not be generated from the provided name.');
+      }
+
+      const definition: FormDefinition = {
+        ...req.body,
+        id: generatedId,
+      };
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
@@ -246,9 +271,10 @@ export function createFormDefinitionRouter({
     assertAuthenticatedHandler,
     createValidationHandler(
       body('id')
+        .optional()
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
       body('anonymousApply').isBoolean(),
       body('applicantRoles').isArray(),
@@ -262,7 +288,7 @@ export function createFormDefinitionRouter({
       param('definitionId')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
     ),
     getFormDefinition(tenantService, calendarService),
   );
@@ -273,7 +299,7 @@ export function createFormDefinitionRouter({
       param('definitionId')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
     ),
     updateFormDefinition(directory, tokenProvider),
   );
@@ -284,7 +310,7 @@ export function createFormDefinitionRouter({
       param('definitionId')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
     ),
     deleteFormDefinition(directory, tokenProvider),
   );

@@ -3,7 +3,6 @@ components:
     FormDefinition:
       type: object
       required:
-        - id
         - name
         - anonymousApply
         - applicantRoles
@@ -12,6 +11,7 @@ components:
         id:
           type: string
           maxLength: 50
+          description: Unique identifier for the form definition. If not provided, will be auto-generated from the name in kebab-case format.
         name:
           type: string
         description:
@@ -240,7 +240,7 @@ components:
   get:
     tags:
       - Form
-    description: Retrieves form definitions.
+    description: Retrieves form definitions with optional name search.
     parameters:
       - name: top
         description: Number of definitions to return in a page.
@@ -250,6 +250,12 @@ components:
           type: number
       - name: after
         description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: name
+        description: Search for form definitions by name (partial match, case-insensitive).
         in: query
         required: false
         schema:
@@ -265,7 +271,7 @@ components:
                 results:
                   type: array
                   items:
-                  $ref: '#/components/schemas/FormDefinition'
+                    $ref: '#/components/schemas/FormDefinition'
                 page:
                   type: object
                   properties:
@@ -278,7 +284,7 @@ components:
   post:
     tags:
       - Form
-    description: Creates a new form definition. Requires the form-service admin role.
+    description: Creates a new form definition. Requires the form-service admin role. If the 'id' field is not provided in the request body, it will be auto-generated from the 'name' field in kebab-case format.
     requestBody:
       required: true
       content:
