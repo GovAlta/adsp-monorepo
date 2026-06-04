@@ -1,6 +1,5 @@
 import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload, UpdatePDFResponse } from './model';
 import { FileItem } from '../file/models';
-import { CLEAR_FORM_PREVIEW_STALE_ACTION } from '../form/action';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
 export const FETCH_CORE_PDF_TEMPLATES_ACTION = 'pdf/FETCH_CORE_PDF_TEMPLATES_ACTION';
@@ -97,7 +96,7 @@ export interface SocketChannelAction {
 export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
-  skipSave?: boolean;
+  agentTemplate?: any;
 }
 
 export interface DeletePdfFilesServiceAction {
@@ -251,10 +250,10 @@ export const getCorePdfTemplatesSuccess = (
   payload: results,
 });
 
-export const generatePdf = (payload: PdfGenerationPayload, skipSave?: boolean): GeneratePdfAction => ({
+export const generatePdf = (payload: PdfGenerationPayload, agentTemplate?: any): GeneratePdfAction => ({
   type: GENERATE_PDF_ACTION,
   payload: payload,
-  skipSave: skipSave,
+  agentTemplate: agentTemplate,
 });
 
 export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => ({
@@ -333,8 +332,6 @@ export const showCurrentFilePdfSuccess = (file: Blob, id: string): ShowCurrentFi
 export const markPdfPreviewStale = (): MarkPdfPreviewStaleAction => ({
   type: MARK_PDF_PREVIEW_STALE_ACTION,
 });
-
-
 
 export const clearPdfPreviewStale = (): ClearPdfPreviewStaleAction => ({
   type: CLEAR_PDF_PREVIEW_STALE_ACTION,

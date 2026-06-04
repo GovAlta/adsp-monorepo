@@ -338,7 +338,7 @@ function* emitResponse(socket) {
   yield apply(socket, socket.emit, ['message received']);
 }
 
-export function* generatePdf({ payload , skipSave }: GeneratePdfAction): SagaIterator {
+export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   let tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
@@ -355,8 +355,8 @@ export function* generatePdf({ payload , skipSave }: GeneratePdfAction): SagaIte
 
   if (pdfServiceUrl && token && baseUrl) {
     try {
-      if (skipSave) {
-        tempTemplate = pdfTemplates[tempTemplate.id];
+      if (agentTemplate) {
+        tempTemplate = agentTemplate;
       }
 
       const pdfTemplate = {
@@ -367,7 +367,7 @@ export function* generatePdf({ payload , skipSave }: GeneratePdfAction): SagaIte
 
       const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
 
-      if (!skipSave) {
+      if (!agentTemplate) {
         const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
         yield call(generatePdfApi, token, url, saveBody);
       }
@@ -388,7 +388,6 @@ export function* generatePdf({ payload , skipSave }: GeneratePdfAction): SagaIte
       const body: CreatePdfConfig = { operation: 'generate', ...pdfData };
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
-
       yield put(generatePdfSuccess(pdfResponse, saveBody.update));
       yield put(
         UpdateIndicator({
@@ -453,7 +452,7 @@ export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponse
         fileName: `${currentlyGeneratedPDFData.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
       };
 
-      yield put(generatePdfAction(payload, true));
+      yield put(generatePdfAction(payload, currentlyGeneratedPDFData));
     }
   }
 }
