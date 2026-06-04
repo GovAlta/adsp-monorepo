@@ -39,3 +39,6 @@ export const getRealm = async (name: string, host: string): Promise<string | nul
   }
   return data.results[0].realm;
 };
+
+export const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const isUUID = (id: string) => uuidRegex.test(id);
