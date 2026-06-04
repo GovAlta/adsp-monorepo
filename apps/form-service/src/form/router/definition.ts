@@ -248,7 +248,7 @@ export function createFormDefinitionRouter({
       body('id')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
       body('anonymousApply').isBoolean(),
       body('applicantRoles').isArray(),
@@ -262,7 +262,7 @@ export function createFormDefinitionRouter({
       param('definitionId')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
     ),
     getFormDefinition(tenantService, calendarService),
   );
@@ -273,7 +273,7 @@ export function createFormDefinitionRouter({
       param('definitionId')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
     ),
     updateFormDefinition(directory, tokenProvider),
   );
@@ -284,7 +284,7 @@ export function createFormDefinitionRouter({
       param('definitionId')
         .isString()
         .isLength({ min: 1, max: 50 })
-        .matches(/^[a-z0-9-]+$/),
+        .matches(/^[a-zA-Z0-9-]+$/),
     ),
     deleteFormDefinition(directory, tokenProvider),
   );
