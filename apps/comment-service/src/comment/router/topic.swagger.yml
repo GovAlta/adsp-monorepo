@@ -210,6 +210,70 @@ components:
         description: User not permitted for requested operation.
       404:
         description: Topic type not found.
+  patch:
+    tags:
+      - Topic
+    description: Updates a topic type for the tenant.
+    parameters:
+      - name: topic-type-id
+        description: ID of the topic type to update.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the topic type.
+                example: Case
+              readRoles:
+                type: array
+                description: Optional roles allowed to read topics of this type.
+                items:
+                  type: string
+              writeRoles:
+                type: array
+                description: Optional roles allowed to write comments on topics of this type.
+                items:
+                  type: string
+    responses:
+      200:
+        description: Topic type updated successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                adminRoles:
+                  type: array
+                  items:
+                    type: string
+                readerRoles:
+                  type: array
+                  items:
+                    type: string
+                commenterRoles:
+                  type: array
+                  items:
+                    type: string
+                securityClassification:
+                  type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
   delete:
     tags:
       - Topic

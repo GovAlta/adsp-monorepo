@@ -18,6 +18,7 @@ import {
   getTopicComment,
   getTopicComments,
   getTopics,
+  updateTopicType,
   updateTopic,
   updateTopicComment,
 } from './topic';
@@ -517,6 +518,215 @@ describe('topic', () => {
 
       expect(res.send).not.toHaveBeenCalled();
       expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+    });
+  });
+
+  describe('updateTopicType', () => {
+    const axiosMock = axios as jest.Mocked<typeof axios>;
+
+    beforeEach(() => {
+      directoryMock.getServiceUrl.mockReset();
+      tokenProviderMock.getAccessToken.mockReset();
+      axiosMock.patch.mockReset();
+      loggerMock.info.mockReset();
+    });
+
+    it('can create handler', () => {
+      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('updates topic type configuration for user with topic setter role', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        body: {
+          name: 'Updated test',
+          readRoles: ['updated-reader'],
+          writeRoles: ['updated-writer'],
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        'http://configuration-service/v2/configuration/platform/comment-service',
+        {
+          operation: 'UPDATE',
+          update: {
+            test: {
+              id: type.id,
+              name: 'Updated test',
+              adminRoles: type.adminRoles,
+              readerRoles: ['updated-reader'],
+              commenterRoles: ['updated-writer'],
+              securityClassification: type.securityClassification,
+            },
+          },
+        },
+        {
+          headers: { Authorization: 'Bearer service-token' },
+          params: { tenantId: tenantId.toString() },
+        }
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: type.id,
+          name: 'Updated test',
+          readerRoles: ['updated-reader'],
+          commenterRoles: ['updated-writer'],
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('updates only specified topic type fields', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        body: {
+          name: 'Updated test',
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          update: {
+            test: expect.objectContaining({
+              name: 'Updated test',
+              readerRoles: type.readerRoles,
+              commenterRoles: type.commenterRoles,
+            }),
+          },
+        }),
+        expect.any(Object)
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Updated test',
+          readerRoles: type.readerRoles,
+          commenterRoles: type.commenterRoles,
+        })
+      );
+    });
+
+    it('calls next with not found when topic type does not exist', async () => {
+      const req = {
+        user: { ...user, roles: [ServiceRoles.TopicSetter] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        body: {
+          name: 'Updated test',
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({});
+
+      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('calls next with forbidden when user does not have topic setter role', async () => {
+      const req = {
+        user: { ...user, roles: [] },
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        body: {
+          name: 'Updated test',
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('calls next with unauthorized when no user is available', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          topicTypeId: type.id,
+        },
+        body: {
+          name: 'Updated test',
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getConfiguration).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     });
   });
