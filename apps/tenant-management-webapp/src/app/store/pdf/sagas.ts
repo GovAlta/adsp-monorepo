@@ -342,7 +342,6 @@ export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): Sag
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   let tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
-  const pdfTemplates: Record<string, PdfTemplate> = (yield select((state: RootState) => state.pdf.pdfTemplates));
 
   const token: string = yield call(getAccessToken);
 

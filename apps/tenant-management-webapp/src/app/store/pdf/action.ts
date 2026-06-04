@@ -96,7 +96,7 @@ export interface SocketChannelAction {
 export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
-  agentTemplate?: any;
+  agentTemplate?: PdfTemplate;
 }
 
 export interface DeletePdfFilesServiceAction {
@@ -250,7 +250,7 @@ export const getCorePdfTemplatesSuccess = (
   payload: results,
 });
 
-export const generatePdf = (payload: PdfGenerationPayload, agentTemplate?: any): GeneratePdfAction => ({
+export const generatePdf = (payload: PdfGenerationPayload, agentTemplate?: PdfTemplate): GeneratePdfAction => ({
   type: GENERATE_PDF_ACTION,
   payload: payload,
   agentTemplate: agentTemplate,

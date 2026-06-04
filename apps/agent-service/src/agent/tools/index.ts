@@ -8,7 +8,9 @@ import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
 import { createDataRegisterTools } from './dataRegister';
 import { createPdfConfigurationTools } from './pdfConfiguration';
+import { createNxAdspTemplateTools } from './nxAdspTemplates';
 
+// clean-code-ignore: RULE-19
 interface ToolsProps {
   logger: Logger;
   directory: ServiceDirectory;
@@ -41,6 +43,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
       tokenProvider,
     });
 
+  const { listNxAdspTemplatesTool, getNxAdspTemplateTool } = createNxAdspTemplateTools();
+
   return {
     fileDownloadTool,
     fileCopyTool,
@@ -57,6 +61,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     dataRegisterCreateTool,
     dataRegisterGetTool,
     dataRegisterUpdateTool,
+    listNxAdspTemplatesTool,
+    getNxAdspTemplateTool,
   };
 }
 

@@ -432,11 +432,6 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         event,
       };
 
-      if (!configuration?.email?.fromEmail) {
-        logger.warn('Configuration not ready, retrying...');
-        throw new Error('Configuration not ready');
-      }
-
       const template = eventNotification.templates[channel];
 
       const message = this.templateService.generateMessage(
