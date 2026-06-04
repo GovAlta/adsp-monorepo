@@ -116,6 +116,102 @@ app.post('/{projectName}/v1/{entities}', async (req, res) => {
   res.status(201).json(entity);
 });`,
   },
+
+  'express-service-configuration': {
+    id: 'express-service-configuration',
+    compatibleWith: COMPATIBLE_PLUGIN_VERSION,
+    description:
+      'Add a service configuration schema to initializeService. Tenants configure the service ' +
+      'via the ADSP tenant admin app; the configuration is accessible in route handlers via req.getConfiguration().',
+    newFiles: {
+      'src/configuration.ts': `// Service configuration schema and types.
+// Tenants configure this service via the ADSP tenant admin app.
+// The schema is validated against what tenants can store.
+
+export interface {ServiceName}Configuration {
+  // Add your configuration properties here.
+  setting: string;
+}
+
+export const configurationSchema = {
+  type: 'object',
+  properties: {
+    setting: {
+      type: 'string',
+      description: 'Example configuration setting.',
+    },
+  },
+  additionalProperties: false,
+};
+`,
+    },
+    integrationChanges: {
+      'src/main.ts': {
+        description:
+          'Import the schema and type, add a configuration block to initializeService, ' +
+          'and enable configuration invalidation so the service reloads config when tenants update it.',
+        pattern: `// Add import at top:
+import { {ServiceName}Configuration, configurationSchema } from './configuration';
+
+// Add inside the initializeService({}) config object:
+configuration: {
+  description: 'Configuration for {projectName}.',
+  schema: configurationSchema,
+},
+enableConfigurationInvalidation: true,`,
+      },
+    },
+    usageExample: `// Access configuration in a route handler:
+app.get('/{projectName}/v1/config', async (req, res) => {
+  const [configuration] = await req.getConfiguration<{ServiceName}Configuration>();
+  res.json(configuration || {});
+});`,
+  },
+
+  'express-service-file-types': {
+    id: 'express-service-file-types',
+    compatibleWith: COMPATIBLE_PLUGIN_VERSION,
+    description:
+      'Add file type definitions to initializeService. File types control who can upload and ' +
+      'download files in the ADSP file service for this service.',
+    newFiles: {
+      'src/fileTypes.ts': `import { FileType } from '@abgov/adsp-service-sdk';
+
+// File type definitions for {projectName}.
+// readRoles and updateRoles use the role strings defined in roles.ts.
+// Remove the SecurityClassification import/field if not needed.
+
+export const {EntityName}FileType: FileType = {
+  id: '{entity-name}-file',
+  name: '{EntityName} file',
+  anonymousRead: false,
+  readRoles: ['{projectName}-user'],
+  updateRoles: ['{projectName}-admin'],
+};
+`,
+    },
+    integrationChanges: {
+      'src/main.ts': {
+        description:
+          'Import file type definitions and add them to the fileTypes array in initializeService. ' +
+          'Also destructure tokenProvider from capabilities to call the file service.',
+        pattern: `// Add import at top:
+import { {EntityName}FileType } from './fileTypes';
+
+// Add inside the initializeService({}) config object:
+fileTypes: [{EntityName}FileType],
+
+// Update capabilities destructuring to include tokenProvider:
+const { logger, tenantStrategy, traceHandler, configurationHandler, healthCheck, tokenProvider } = capabilities;`,
+      },
+    },
+    usageExample: `// Use the file service via the directory to get the upload URL:
+const fileServiceUrl = await directory.getServiceUrl(AdspId.parse('urn:ads:platform:file-service'));
+
+// Upload a file (multipart/form-data) using tokenProvider for auth:
+const token = await tokenProvider.getAccessToken();
+// POST to \`\${fileServiceUrl}/file/v1/files\` with Authorization: Bearer \${token}`,
+  },
 };
 
 const templateSummarySchema = z.object({
