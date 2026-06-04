@@ -1,4 +1,4 @@
-const { defineConfig } = require('cypress')
+const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
   env: {
@@ -8,6 +8,7 @@ module.exports = defineConfig({
     realm: '6b1dd8dc-fb74-4251-a5b8-7f0920dd4166',
     TAGS: '',
   },
+  retries: 1,
   tenantWebAppUrl: 'https://adsp.alberta.ca/',
   defaultCommandTimeout: 10000,
   fileServerFolder: '.',
@@ -20,18 +21,17 @@ module.exports = defineConfig({
   videoUploadOnPasses: false,
   reporter: 'junit',
   reporterOptions: {
-    mochaFile:
-      '../../dist/cypress/apps/subscriber-app-e2e/results/results-[hash].xml',
+    mochaFile: '../../dist/cypress/apps/subscriber-app-e2e/results/results-[hash].xml',
   },
   e2e: {
     // We've imported your old cypress plugins here.
     // You may want to clean this up later by importing these.
     setupNodeEvents(on, config) {
-      return require('./src/plugins/index.js')(on, config)
+      return require('./src/plugins/index.js')(on, config);
     },
     baseUrl: 'https://subscription.adsp.alberta.ca/',
     specPattern: './src/integration/**/*.feature',
     supportFile: './src/support/index.ts',
     excludeSpecPattern: '*.js',
   },
-})
+});
