@@ -126,6 +126,38 @@ describe('definition router', () => {
       );
       expect(next).not.toHaveBeenCalled();
     });
+
+    it('can get definitions with name search', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      axiosMock.get.mockResolvedValue({
+        data: {
+          results: [{ latest: { revision: 1, configuration: definition }, active: null }],
+          page: { size: 1 },
+        },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: { name: 'test-form' },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            criteria: JSON.stringify({ nameContains: 'test-form' }),
+          }),
+        }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   describe('createFormDefinition', () => {
@@ -223,6 +255,45 @@ describe('definition router', () => {
       );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'new-def' }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can auto-generate id from name when id not provided', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      const newDefinition = {
+        name: 'My New Form',
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+      };
+      // Existence check returns 404 — definition does not exist yet.
+      axiosMock.get.mockResolvedValue({ status: 404, data: {} });
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 1, configuration: { ...newDefinition, id: 'my-new-form' } } },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: newDefinition,
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('my-new-form'),
+        expect.objectContaining({
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({ id: 'my-new-form', name: 'My New Form' }),
+        }),
+        expect.any(Object),
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-new-form', name: 'My New Form' }));
       expect(next).not.toHaveBeenCalled();
     });
   });
