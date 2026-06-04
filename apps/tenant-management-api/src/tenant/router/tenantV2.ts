@@ -62,7 +62,7 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
 
       // For anonymous users, the supported operation is a query including name OR realm id criteria.
       if (!user && !criteria.nameEquals && !criteria.nameEquals && !criteria.realmEquals) {
-        throw new UnauthorizedError('Request must include id or name criteria.');
+        throw new UnauthorizedError('Request must include realm id or name criteria.');
       }
 
       // FIXME: accessing a non-injected dependency makes this hard to test
