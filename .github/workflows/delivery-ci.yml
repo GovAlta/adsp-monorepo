@@ -132,7 +132,7 @@ jobs:
       name: Dev-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app, subscriber-app]
+        app: [tenant-management-webapp, status-app, subscriber-app, form-app, form-admin-app]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -193,7 +193,7 @@ jobs:
       name: Staging-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app, subscriber-app]
+        app: [tenant-management-webapp, status-app, subscriber-app, form-app, form-admin-app]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
