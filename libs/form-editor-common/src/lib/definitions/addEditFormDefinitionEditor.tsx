@@ -85,7 +85,7 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { EditorAgentChat } from '@core-services/app-common';
+import { AgentChat } from '@core-services/app-common';
 import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
 import { messageAgent, startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
@@ -592,15 +592,16 @@ export function AddEditFormDefinitionEditor({
                   data-testid="form-editor-agent-tab"
                   isTightContent={true}
                 >
-                  <EditorAgentChat
-                    threadId={threadId}
-                    context={{ formDefinitionId: definition.id }}
-                    messages={messages}
-                    height={EditorHeight}
-                    disabled={!agentConnected || !thread}
-                    onSend={handleAgentSend}
-                    onAttachmentUpload={handleAgentAttachmentUpload}
-                  />
+                  <div style={{ height: EditorHeight }}>
+                    <AgentChat
+                      threadId={threadId}
+                      context={{ formDefinitionId: definition.id }}
+                      messages={messages}
+                      disabled={!agentConnected || !thread}
+                      onSend={handleAgentSend}
+                      onAttachmentUpload={handleAgentAttachmentUpload}
+                    />
+                  </div>
                 </Tab>
               )}
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>

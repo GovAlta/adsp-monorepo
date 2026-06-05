@@ -26,7 +26,7 @@ import { GoabBadge } from '@abgov/react-components';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { connectAgent, disconnectAgent, messageAgent, startThread } from '@store/agent/actions';
 import { messagesSelector } from '@store/agent/selectors';
-import { EditorAgentChat } from '@core-services/app-common';
+import { AgentChat } from '@core-services/app-common';
 import { UserContent } from '@core-services/app-common';
 
 import {
@@ -330,14 +330,15 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   data-testid="form-editor-agent-tab"
                   isTightContent={true}
                 >
-                  <EditorAgentChat
-                    threadId={threadId}
-                    context={{ pdfDefinitionId: tmpTemplate.id }}
-                    messages={messages}
-                    height={height - 400}
-                    disabled={!agentConnected || !thread}
-                    onSend={handleAgentSend}
-                  />
+                  <div style={{ height: height - 400 }}>
+                    <AgentChat
+                      threadId={threadId}
+                      context={{ pdfDefinitionId: tmpTemplate.id }}
+                      messages={messages}
+                      disabled={!agentConnected || !thread}
+                      onSend={handleAgentSend}
+                    />
+                  </div>
                 </Tab>
                 <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
                   <GeneratorStyling style={{ height: fileHistHeight }}>
