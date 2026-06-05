@@ -20,7 +20,28 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
   const pdfConfigurationRetrievalTool = createTool({
     id: 'get-pdf-configuration',
     description:
-      'Retrieve the JSON PDF configuration. The PDF definition ID comes from request context (no input required).',
+     `
+      Retrieve the current PDF template configuration for the PDF definition in the request context.
+
+      This tool provides the complete existing template, including:
+      - HTML body template
+      - Header template
+      - Footer template
+      - CSS styles
+      - Template variables (sample/test data)
+      - Template metadata and settings
+
+      Use this tool whenever you need to understand, review, analyze, troubleshoot, explain, modify, improve, or update a PDF template.
+
+      IMPORTANT:
+      - Call this tool before making any changes to a PDF template.
+      - Call this tool before answering questions about the template structure or content.
+      - Call this tool before updating headers, footers, styles, variables, or HTML.
+      - The current configuration provides the required context for all template modifications.
+      - Do not assume template contents. Retrieve the existing configuration first.
+
+      No input is required. The PDF definition ID is automatically provided through request context.
+      `,
     inputSchema: z.object({}),
     outputSchema: z.object({
       name: z.string(),
@@ -84,7 +105,30 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
    */
   const pdfConfigurationUpdateTool = createTool({
     id: 'update-pdf-configuration',
-    description: 'Update the JSON PDF configuration template and related settings.',
+    description: `
+      Save changes to the current PDF template configuration.
+
+      Use this tool after reviewing the existing template configuration and making modifications to it.
+
+      This tool writes updates back to the PDF configuration API and persists changes to:
+      - HTML body template
+      - Header template
+      - Footer template
+      - CSS styles
+      - Template variables (sample/test data)
+      - Template metadata and settings
+
+      IMPORTANT:
+      - Use get-pdf-configuration first to retrieve the current template.
+      - Review the existing configuration before making changes.
+      - Only update fields that were intentionally modified.
+      - Use this tool whenever the user asks to save, apply, update, modify, fix, improve, or persist template changes.
+      - Changes made by the assistant are not stored until this tool is called.
+      - This tool is the final step in the template editing workflow and writes the updated configuration back to the API.
+
+      The PDF definition ID is automatically provided through request context.
+      Provide only the fields that should be changed.
+      `,
     inputSchema: z.object({
       name: z.string().optional(),
       description: z.string().optional(),

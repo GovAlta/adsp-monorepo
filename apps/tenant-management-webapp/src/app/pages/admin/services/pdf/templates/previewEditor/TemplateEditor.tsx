@@ -45,7 +45,6 @@ import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
 import { CustomLoader } from '@components/CustomLoader';
 import useWindowDimensions from '@lib/useWindowDimensions';
-import { DefinitionAgentChat } from './AgentChat';
 import { v4 as uuid } from 'uuid';
 
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
