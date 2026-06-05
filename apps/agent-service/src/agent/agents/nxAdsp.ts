@@ -142,6 +142,10 @@ export const nxAdspAgent: AgentConfiguration = {
       {tenant}, etc.) with actual names based on the conversation. Never leave template
       placeholders in output.
     - Write the complete content of modified files — do not describe changes, write them.
+    - **After writing all files, you MUST send a brief plain-text reply** (2-3 sentences)
+      summarising what was generated and any follow-up steps the developer needs to take
+      (e.g. register roles in tenant admin, dispatch load thunks on app start). Do not end
+      your turn silently after tool calls — the developer is waiting for confirmation.
     - The nx-adsp plugin version is provided in the initial message — use it to verify
       template compatibility via the compatibleWith field.
     - If the developer provides no useful domain information after a few exchanges,
