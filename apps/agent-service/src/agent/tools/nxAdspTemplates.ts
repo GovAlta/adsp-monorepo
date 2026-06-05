@@ -93,19 +93,16 @@ export const {entityName}CreatedDefinition: DomainEventDefinition = {
     integrationChanges: {
       'src/main.ts': {
         description:
-          'Import event definitions from ./events, add them to the events array in initializeService, ' +
-          'and destructure eventService from capabilities. ' +
-          'The SDK automatically sets the namespace from serviceId.',
+          'Import event definitions from ./events and add them to the events array in initializeService. ' +
+          'The SDK automatically sets the namespace from serviceId. ' +
+          'Add eventService to the capabilities destructuring only when writing route handlers that publish events.',
         pattern: `// Add import at top:
 import { {entityName}CreatedDefinition } from './events';
 
 // Add inside the initializeService({}) config object:
 events: [
   {entityName}CreatedDefinition,
-],
-
-// Update capabilities destructuring to include eventService:
-const { logger, tenantStrategy, traceHandler, configurationHandler, healthCheck, eventService } = capabilities;`,
+],`,
       },
     },
     usageExample: `// Publish a domain event in a route handler:
@@ -152,10 +149,11 @@ export const configurationSchema = {
     integrationChanges: {
       'src/main.ts': {
         description:
-          'Import the schema and type, add a configuration block to initializeService, ' +
-          'and enable configuration invalidation so the service reloads config when tenants update it.',
+          'Import configurationSchema, add a configuration block to initializeService, ' +
+          'and enable configuration invalidation so the service reloads config when tenants update it. ' +
+          'Import the {ServiceName}Configuration type only in route handlers that call req.getServiceConfiguration.',
         pattern: `// Add import at top:
-import { {ServiceName}Configuration, configurationSchema } from './configuration';
+import { configurationSchema } from './configuration';
 
 // Add inside the initializeService({}) config object:
 configuration: {
@@ -771,15 +769,12 @@ export const {EntityName}FileType: FileType = {
       'src/main.ts': {
         description:
           'Import file type definitions and add them to the fileTypes array in initializeService. ' +
-          'Also destructure tokenProvider from capabilities to call the file service.',
+          'Add tokenProvider to the capabilities destructuring only in route handlers that call the file service.',
         pattern: `// Add import at top:
 import { {EntityName}FileType } from './fileTypes';
 
 // Add inside the initializeService({}) config object:
-fileTypes: [{EntityName}FileType],
-
-// Update capabilities destructuring to include tokenProvider:
-const { logger, tenantStrategy, traceHandler, configurationHandler, healthCheck, tokenProvider } = capabilities;`,
+fileTypes: [{EntityName}FileType],`,
       },
     },
     usageExample: `// Use the file service via the directory to get the upload URL:
