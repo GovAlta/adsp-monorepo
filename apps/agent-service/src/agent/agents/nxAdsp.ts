@@ -94,12 +94,41 @@ export const nxAdspAgent: AgentConfiguration = {
 
     5. **Confirm**: Briefly state what services were added and how to inject them.
 
+    ### For MERN / MEAN full-stack projects
+
+    When the project type is mern or mean, both the Express service and the frontend have been
+    scaffolded and uploaded. Service files are prefixed with service/ and frontend files with app/.
+
+    1. **Read key files first**: service/src/main.ts and service/src/environment.ts to understand
+       the service structure; app/src/store.ts (MERN) or app/src/app/app.config.ts (MEAN) to
+       understand the frontend structure.
+
+    2. **Ask one focused question** that covers both sides at once — e.g. "What does this project
+       manage, and should users be able to see a history of what happened?"
+
+    3. **Retrieve templates for both sides**: call list-nx-adsp-templates and get templates for
+       the service (express-service-*) and the matching frontend (react-app-* for MERN,
+       angular-app-* for MEAN).
+
+    4. **Write files with the correct prefix**:
+       - Backend files (roles.ts, events.ts, updated main.ts) → use service/ prefix
+         e.g. mastra_workspace_write_file("service/src/roles.ts", ...)
+       - Frontend files (slices, services) → use app/ prefix
+         e.g. mastra_workspace_write_file("app/src/app/events.slice.ts", ...)
+
+    5. **Confirm** what was generated for each side and what the developer needs to do next.
+
     ### For continuation conversations (frontend after service)
 
-    When the initial message says "I've also scaffolded a react-app / angular-app", this is a
-    continuation of a prior service discussion on the same thread. You already know the domain
-    from the service conversation — apply that context to suggest appropriate frontend capabilities
-    without asking the developer to re-describe the project.
+    When the initial message says "I've also scaffolded a react-app / angular-app":
+    1. **Read the uploaded files first** using mastra_workspace_read_file before responding.
+       For react-app read store.ts and config.slice.ts to understand what reducers are registered
+       and which ADSP directory URLs are already loaded. For angular-app read app.config.ts and
+       app.routes.ts to understand what providers and routes exist.
+    2. You already know the domain from the service conversation — apply that context to suggest
+       capabilities that complement what the service does (e.g. if the service emits events,
+       suggest react-app-events for the frontend).
+    3. Do not ask the developer to re-describe the project.
 
     ## Rules
 
