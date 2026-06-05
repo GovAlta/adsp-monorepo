@@ -48,15 +48,21 @@ export const nxAdspAgent: AgentConfiguration = {
        - "What significant things happen that other systems should know about?"
        - "Who should have access — administrators only, or regular users too?"
 
-    3. **Retrieve relevant templates**: Call list-nx-adsp-templates, then get-nx-adsp-template
-       for each capability that fits. Use only templates with id starting with express-service-.
+    3. **Retrieve capability code via tools**: Call list-nx-adsp-templates, then
+       get-nx-adsp-template for each capability that fits. The tool returns the complete file
+       content and integration patterns — you do NOT need any external files or a generator run.
+       Use only templates with id starting with express-service-.
 
-    4. **Write files to workspace**: For each template's newFiles, write them using the EXACT
-       file names from the template (e.g. src/roles.ts, src/events.ts, src/configuration.ts,
-       src/fileTypes.ts). Do NOT invent domain-specific file names like src/case-events.ts or
-       src/case-config.ts — the file names must match what main.ts imports. Then write the full
-       updated main.ts using the integration patterns from the template.
-       - Use the correct SDK types: DomainEventDefinition (not generic — no <T>),
+    4. **Write files to workspace using the tool output**:
+       - Each template has a "newFiles" field mapping file paths to file content.
+         Write each file to the workspace using mastra_workspace_write_file with the EXACT path
+         from the template (e.g. src/roles.ts, src/events.ts, src/configuration.ts, src/fileTypes.ts).
+         Replace {projectName}, {entityName}, {ServiceName} placeholders with domain-specific names
+         but do NOT change the file path itself — keep src/events.ts, not src/case-events.ts.
+       - Each template also has an "integrationChanges" field showing what to add to main.ts.
+         Read main.ts from the workspace, apply the integration patterns, then write the full
+         updated main.ts.
+       - Correct SDK types in the tool output: DomainEventDefinition (not generic — no <T>),
          EventService (not DomainEventService), FileType.
        - enableConfigurationInvalidation: true belongs in the FIRST argument to initializeService
          (the service config object), NOT in the second argument (platform options with logLevel).
@@ -113,20 +119,21 @@ export const nxAdspAgent: AgentConfiguration = {
     2. **Ask one focused question** that covers both sides at once — e.g. "What does this project
        manage, and should users be able to see a history of what happened?"
 
-    3. **Retrieve templates for both sides**: call list-nx-adsp-templates and get templates for
-       the service (express-service-*) and the matching frontend (react-app-* for MERN,
-       angular-app-* for MEAN).
+    3. **Retrieve capability code via tools**: call list-nx-adsp-templates and get-nx-adsp-template
+       for the service (express-service-*) and the matching frontend (react-app-* for MERN,
+       angular-app-* for MEAN). The tools return the complete file content — you do NOT need
+       any external files or a generator run.
 
-    4. **Write files with the correct prefix and exact template file names**:
-       - Backend files use the EXACT names from the template's newFiles
-         (src/roles.ts, src/events.ts, src/configuration.ts, src/fileTypes.ts) with service/ prefix.
-         e.g. mastra_workspace_write_file("service/src/roles.ts", ...)
-         Do NOT create domain-specific files like service/src/case-events.ts.
-       - Frontend slice files use the template names with app/ prefix.
-         e.g. mastra_workspace_write_file("app/src/app/events.slice.ts", ...)
-       - After writing backend capability files, write service/src/main.ts with the integration
-         pattern from the template. enableConfigurationInvalidation belongs in the FIRST
-         initializeService argument, not the second.
+    4. **Write files using the tool output, with the correct workspace prefix**:
+       - Each template has a "newFiles" field mapping file paths to content. Add the workspace
+         prefix and write using that exact path — do NOT change the filename itself.
+         e.g. template has "src/events.ts" → write to "service/src/events.ts"
+         e.g. template has "src/app/events.slice.ts" → write to "app/src/app/events.slice.ts"
+         Do NOT invent names like service/src/case-events.ts.
+       - Replace all {placeholders} in the content with domain-specific names.
+       - After writing backend new files, read service/src/main.ts and write the updated version
+         using the template's "integrationChanges" patterns. enableConfigurationInvalidation belongs
+         in the FIRST initializeService argument, not the second (platform options) argument.
        - After writing frontend slice files, read app/src/store.ts and write the updated version
          registering all new reducers.
 
