@@ -443,13 +443,9 @@ async function main() {
     return;
   }
 
-  const commitsResponse = await octokit.rest.pulls.listCommits({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
-    pull_number: PR_NUMBER,
-  });
-  if (commitsResponse.data.length > 1) {
-    console.log('Skipping review — already reviewed on first push.');
+  const EVENT_ACTION = process.env.GITHUB_EVENT_ACTION;
+  if (EVENT_ACTION !== 'opened' && EVENT_ACTION !== 'reopened') {
+    console.log('Skipping review — only reviewing on PR open/reopen.');
     return;
   }
 

@@ -31,6 +31,26 @@ const {
   checkMissingTestFiles,
 } = require('./github-pr-clean-code-review');
 
+const RULES_MOCK = `
+2.1  Function Names: flag misleading names.
+2.2  File Names: flag unclear file names.
+2.3  Function Length: No function should exceed 50 lines.
+2.4  Long Conditionals: wrap in named function.
+2.5  Reusability: flag duplicate logic.
+2.6  Encapsulation: suggest class for shared data.
+2.7  Minimize Coupling: one purpose per file.
+2.8  Maximize Cohesion: consolidate related functions.
+2.9  Meaningful Names: intention-revealing names.
+2.10 Functions Do One Thing: single responsibility.
+2.11 Comments: no redundant comments.
+2.13 Error Handling: use exceptions.
+2.14 DRY Principle: no duplicated logic.
+2.15 Classes Single Responsibility: one reason to change.
+2.16 Unit Tests: flag missing tests.
+2.17 Testable Code: flag untestable functions.
+2.18 No Hidden Side Effects: flag unexpected state changes.
+`;
+
 // ─── buildLineToPositionMap ───────────────────────────────────────────────────
 
 describe('buildLineToPositionMap', () => {
@@ -122,7 +142,16 @@ describe('loadConfig', () => {
 // ─── buildSystemPrompt ────────────────────────────────────────────────────────
 
 describe('buildSystemPrompt', () => {
-  const defaultConfig = { function_length_limit: 50 };
+  const defaultConfig = { function_length_limit: 50, disabled_rules: [] };
+
+  beforeEach(() => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(RULES_MOCK);
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
   test('does not include a JIRA CONTEXT section when jiraContext is null', () => {
     expect(buildSystemPrompt(defaultConfig, null)).not.toContain('JIRA CONTEXT');
@@ -240,7 +269,7 @@ describe('processFilesForReview', () => {
     expect(reviewFile).toHaveBeenCalledWith('const answer = 42;', 'src/utils.ts', SYSTEM_PROMPT);
   });
 
-  test('posts only the top 5 violations when more than 5 are returned', async () => {
+  test('collects all violations from processFilesForReview before the top 5 cap is applied in postReviewSummary', async () => {
     const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
     const reviewFile = jest.fn().mockResolvedValue([
       { rule: '2.5', severity: 'SUGGESTION', line: 1, message: 's1', suggestion: 'fix' },
@@ -253,7 +282,31 @@ describe('processFilesForReview', () => {
 
     const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
-    expect(reviewComments.length).toBeLessThanOrEqual(5);
+    expect(reviewComments.length).toBe(6);
+  });
+
+  test('skips review when GITHUB_EVENT_ACTION is synchronize', () => {
+    process.env.GITHUB_EVENT_ACTION = 'synchronize';
+    const action = process.env.GITHUB_EVENT_ACTION;
+    const shouldSkip = action !== 'opened' && action !== 'reopened';
+    expect(shouldSkip).toBe(true);
+    delete process.env.GITHUB_EVENT_ACTION;
+  });
+
+  test('does not skip review when GITHUB_EVENT_ACTION is opened', () => {
+    process.env.GITHUB_EVENT_ACTION = 'opened';
+    const action = process.env.GITHUB_EVENT_ACTION;
+    const shouldSkip = action !== 'opened' && action !== 'reopened';
+    expect(shouldSkip).toBe(false);
+    delete process.env.GITHUB_EVENT_ACTION;
+  });
+
+  test('does not skip review when GITHUB_EVENT_ACTION is reopened', () => {
+    process.env.GITHUB_EVENT_ACTION = 'reopened';
+    const action = process.env.GITHUB_EVENT_ACTION;
+    const shouldSkip = action !== 'opened' && action !== 'reopened';
+    expect(shouldSkip).toBe(false);
+    delete process.env.GITHUB_EVENT_ACTION;
   });
 });
 
