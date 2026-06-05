@@ -308,6 +308,51 @@ describe('processFilesForReview', () => {
     expect(shouldSkip).toBe(false);
     delete process.env.GITHUB_EVENT_ACTION;
   });
+
+  test('on synchronize, filters out files already reviewed by the bot', () => {
+    const allFiles = [
+      { filename: 'src/existing.ts', patch: '@@ -0,0 +1 @@\n+const a = 1;' },
+      { filename: 'src/new.ts', patch: '@@ -0,0 +1 @@\n+const b = 2;' },
+    ];
+    const botComments = [
+      { user: { type: 'Bot' }, path: 'src/existing.ts' },
+    ];
+
+    const alreadyReviewedFiles = new Set(
+      botComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path)
+    );
+    const newFiles = allFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
+
+    expect(newFiles).toHaveLength(1);
+    expect(newFiles[0].filename).toBe('src/new.ts');
+  });
+
+  test('on synchronize, exits early when all files have already been reviewed by the bot', () => {
+    const allFiles = [{ filename: 'src/existing.ts', patch: '@@ -0,0 +1 @@\n+const a = 1;' }];
+    const botComments = [{ user: { type: 'Bot' }, path: 'src/existing.ts' }];
+
+    const alreadyReviewedFiles = new Set(
+      botComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path)
+    );
+    const newFiles = allFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
+
+    expect(newFiles).toHaveLength(0);
+  });
+
+  test('on synchronize, does not treat human reviewer comments as already reviewed', () => {
+    const allFiles = [{ filename: 'src/feature.ts', patch: '@@ -0,0 +1 @@\n+const c = 3;' }];
+    const mixedComments = [
+      { user: { type: 'User' }, path: 'src/feature.ts' },
+    ];
+
+    const alreadyReviewedFiles = new Set(
+      mixedComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path)
+    );
+    const newFiles = allFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
+
+    expect(newFiles).toHaveLength(1);
+    expect(newFiles[0].filename).toBe('src/feature.ts');
+  });
 });
 
 // ─── isTestFile ───────────────────────────────────────────────────────────────
