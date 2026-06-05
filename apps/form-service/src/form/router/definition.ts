@@ -136,7 +136,7 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
       const token = await tokenProvider.getAccessToken();
 
       // Check if definition already exists — return 409 if so.
-      const existingDefinitionResponse = await axios.get<{ latest?: { configuration: FormDefinition } }>(
+      const existingDefinitionResponse = await axios.get<FormDefinition>(
         new URL(`v2/configuration/form-service/${definition.id}/latest`, configurationApiUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -144,10 +144,7 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
           validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
         },
       );
-      if (
-        existingDefinitionResponse.status === HttpStatusCodes.OK &&
-        existingDefinitionResponse.data?.latest?.configuration
-      ) {
+      if (existingDefinitionResponse.status === HttpStatusCodes.OK && existingDefinitionResponse.data?.id) {
         throw new InvalidOperationError(`Form definition with ID '${definition.id}' already exists.`, {
           statusCode: HttpStatusCodes.CONFLICT,
         });

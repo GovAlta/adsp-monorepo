@@ -169,7 +169,7 @@ describe('definition router', () => {
       directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       axiosMock.get.mockResolvedValue({
         status: 200,
-        data: { latest: { configuration: { id: 'existing-def' } } },
+        data: { id: 'existing-def' },
       });
 
       const req = {
