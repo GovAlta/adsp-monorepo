@@ -155,7 +155,8 @@ export const configurationSchema = {
         pattern: `// Add import at top:
 import { configurationSchema } from './configuration';
 
-// Add inside the initializeService({}) config object:
+// Add inside the FIRST argument of initializeService (the service configuration object,
+// NOT the second platform-options argument that contains logLevel etc.):
 configuration: {
   description: 'Configuration for {projectName}.',
   schema: configurationSchema,
