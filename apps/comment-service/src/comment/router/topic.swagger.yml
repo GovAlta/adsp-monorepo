@@ -19,6 +19,8 @@ components:
           type: array
           items:
             type: string
+        securityClassification:
+          type: string
     Topic:
       type: object
       properties:
@@ -95,26 +97,7 @@ components:
             schema:
               type: array
               items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  name:
-                    type: string
-                  adminRoles:
-                    type: array
-                    items:
-                      type: string
-                  readerRoles:
-                    type: array
-                    items:
-                      type: string
-                  commenterRoles:
-                    type: array
-                    items:
-                      type: string
-                  securityClassification:
-                    type: string
+                $ref: "#/components/schemas/TopicType"
       401:
         description: Not authenticated.
       403:
@@ -184,26 +167,7 @@ components:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                name:
-                  type: string
-                adminRoles:
-                  type: array
-                  items:
-                    type: string
-                readerRoles:
-                  type: array
-                  items:
-                    type: string
-                commenterRoles:
-                  type: array
-                  items:
-                    type: string
-                securityClassification:
-                  type: string
+              $ref: "#/components/schemas/TopicType"
       401:
         description: Not authenticated.
       403:
@@ -248,26 +212,7 @@ components:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                name:
-                  type: string
-                adminRoles:
-                  type: array
-                  items:
-                    type: string
-                readerRoles:
-                  type: array
-                  items:
-                    type: string
-                commenterRoles:
-                  type: array
-                  items:
-                    type: string
-                securityClassification:
-                  type: string
+              $ref: "#/components/schemas/TopicType"
       401:
         description: Not authenticated.
       403:
@@ -301,6 +246,8 @@ components:
         description: Not authenticated.
       403:
         description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
       409:
         description: Topic type has associated topics that must be deleted first.
         content:
