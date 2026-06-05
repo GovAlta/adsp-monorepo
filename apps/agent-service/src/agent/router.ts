@@ -238,7 +238,7 @@ export function onIoConnection(logger: Logger) {
             const threadId = threadIdValue || uuid();
             const messageId = messageIdValue || uuid();
 
-            const aiAgent = (await getConfiguration()).getAgent(agent);
+            const aiAgent = await (await getConfiguration()).getAgent(agent);
             if (!aiAgent) {
               throw new NotFoundError('agent', agent);
             }
@@ -413,7 +413,7 @@ export function onIoConnection(logger: Logger) {
             throw new InvalidValueError('workspaceTarball', 'workspaceTarball must be a URN string.');
           }
 
-          const aiAgent = (await getConfiguration()).getAgent(agent);
+          const aiAgent = await (await getConfiguration()).getAgent(agent);
           if (!aiAgent) {
             throw new NotFoundError('agent', agent);
           }
@@ -500,7 +500,7 @@ export function onIoConnection(logger: Logger) {
             throw new InvalidValueError('deletes', 'deletes must be an array of file paths.');
           }
 
-          const aiAgent = (await getConfiguration()).getAgent(agent);
+          const aiAgent = await (await getConfiguration()).getAgent(agent);
           if (!aiAgent) {
             throw new NotFoundError('agent', agent);
           }
@@ -536,7 +536,7 @@ export function onIoConnection(logger: Logger) {
           const { agent, threadId: threadIdValue } = payload;
           const threadId = threadIdValue || uuid();
 
-          const aiAgent = (await getConfiguration()).getAgent(agent);
+          const aiAgent = await (await getConfiguration()).getAgent(agent);
           if (!aiAgent) {
             throw new NotFoundError('agent', agent);
           }
@@ -616,7 +616,7 @@ const AGENT_KEY = 'agent';
 export const getAgents: RequestHandler = async function (req, res, next) {
   try {
     const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
-    const agents = configuration.getAgents();
+    const agents = await configuration.getAgents();
     res.send({ agents });
   } catch (err) {
     next(err);
@@ -627,7 +627,7 @@ export const getAgent: RequestHandler = async function (req, res, next) {
   try {
     const { agentId } = req.params;
     const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
-    const agent = configuration.getAgent(agentId);
+    const agent = await configuration.getAgent(agentId);
     if (!agent) {
       throw new NotFoundError('Agent', agentId);
     }
