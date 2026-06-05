@@ -7,6 +7,21 @@ import '@testing-library/jest-dom';
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';
 
+jest.mock('../previewEditor/TemplateEditor', () => ({
+  TemplateEditor: ({ saveAndReset, resetToSavedAction }: any) => (
+    <div data-testid="template-editor-mock">
+      <div data-testid="templated-editor-title" />
+      <div data-testid="templated-editor-subtitle" />
+      <goa-button testId="template-form-close" onClick={() => resetToSavedAction?.()}>
+        Cancel
+      </goa-button>
+      <goa-button testId="template-form-save" onClick={() => saveAndReset?.()}>
+        Save
+      </goa-button>
+    </div>
+  ),
+}));
+
 describe('NotificationTypes Page', () => {
   const mockStore = configureStore([]);
 
