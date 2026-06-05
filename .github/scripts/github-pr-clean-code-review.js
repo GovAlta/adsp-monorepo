@@ -443,9 +443,9 @@ async function main() {
     return;
   }
 
-  const EVENT_ACTION = process.env.GITHUB_EVENT_ACTION;
-  if (EVENT_ACTION !== 'opened' && EVENT_ACTION !== 'reopened') {
-    console.log('Skipping review — only reviewing on PR open/reopen.');
+  const PR_EVENT_ACTION = process.env.GITHUB_EVENT_ACTION;
+  if (PR_EVENT_ACTION !== 'opened' && PR_EVENT_ACTION !== 'reopened') {
+    console.log('Skipping review - reviews are only triggered on PR open or reopen events to avoid redundant checks on subsequent pushes.');
     return;
   }
 
