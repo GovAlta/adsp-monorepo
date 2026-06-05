@@ -225,6 +225,66 @@ export function updateFormDefinition(directory: ServiceDirectory, tokenProvider:
   };
 }
 
+export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('patch form definition', user);
+      }
+
+      if (!/^[a-zA-Z0-9-]{1,50}$/.test(definitionId)) {
+        throw new InvalidOperationError('Invalid form definition ID.');
+      }
+
+      const encodedDefinitionId = encodeURIComponent(definitionId);
+
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+
+      const existingDefinitionResponse = await axios.get(
+        new URL(`v2/configuration/form-service/${encodedDefinitionId}/latest`, configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
+        },
+      );
+
+      if (existingDefinitionResponse.status === HttpStatusCodes.NOT_FOUND || !existingDefinitionResponse.data) {
+        throw new NotFoundError('form definition', definitionId);
+      }
+
+      const existingDefinition = existingDefinitionResponse.data;
+
+      const patchedDefinition: FormDefinition = {
+        ...existingDefinition,
+        ...(req.body.name !== undefined ? { name: req.body.name } : {}),
+        ...(req.body.description !== undefined ? { description: req.body.description } : {}),
+        ...(req.body.dataSchema !== undefined ? { dataSchema: req.body.dataSchema } : {}),
+        ...(req.body.uiSchema !== undefined ? { uiSchema: req.body.uiSchema } : {}),
+        id: definitionId,
+      };
+
+      const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
+        new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
+        { operation: 'REPLACE', configuration: patchedDefinition },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        },
+      );
+
+      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function deleteFormDefinition(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -303,6 +363,23 @@ export function createFormDefinitionRouter({
     ),
     updateFormDefinition(directory, tokenProvider),
   );
+
+  router.patch(
+    '/definitions/:definitionId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      body('name').optional().isString().isLength({ min: 1 }),
+      body('description').optional().isString(),
+      body('dataSchema').optional().isObject(),
+      body('uiSchema').optional().isObject(),
+    ),
+    patchFormDefinition(directory, tokenProvider),
+  );
+
   router.delete(
     '/definitions/:definitionId',
     assertAuthenticatedHandler,

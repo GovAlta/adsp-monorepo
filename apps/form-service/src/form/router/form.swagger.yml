@@ -76,6 +76,20 @@ components:
               type: string
         dryRun:
           type: boolean
+    FormDefinitionPatch:
+      type: object
+      description: Partial update payload for a form definition. Only provided fields will be updated; omitted fields will not be changed.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        dataSchema:
+          type: object
+        uiSchema:
+          type: object
+      additionalProperties: false
     Form:
       type: object
       properties:
@@ -328,6 +342,34 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+  patch:
+    tags:
+      - Form
+    description: Partially updates an existing form definition. Requires the form-service admin role. Only the provided fields are changed; omitted fields are left unchanged.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition to patch.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormDefinitionPatch'
+    responses:
+      200:
+        description: Successfully patched the form definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      401:
+        description: User is not authorized to patch form definitions.
+      404:
+        description: Form definition not found.
   put:
     tags:
       - Form
