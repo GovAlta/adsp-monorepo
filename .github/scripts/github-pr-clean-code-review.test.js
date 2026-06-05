@@ -327,7 +327,7 @@ describe('processFilesForReview', () => {
     expect(newFiles[0].filename).toBe('src/new.ts');
   });
 
-  test('on synchronize, exits early when all files have already been reviewed by the bot', () => {
+  test('exits early if all files already reviewed on synchronize', () => {
     const allFiles = [{ filename: 'src/existing.ts', patch: '@@ -0,0 +1 @@\n+const a = 1;' }];
     const botComments = [{ user: { type: 'Bot' }, path: 'src/existing.ts' }];
 
@@ -339,7 +339,7 @@ describe('processFilesForReview', () => {
     expect(newFiles).toHaveLength(0);
   });
 
-  test('on synchronize, does not treat human reviewer comments as already reviewed', () => {
+  test('ignores human comments when filtering reviewed files', () => {
     const allFiles = [{ filename: 'src/feature.ts', patch: '@@ -0,0 +1 @@\n+const c = 3;' }];
     const mixedComments = [
       { user: { type: 'User' }, path: 'src/feature.ts' },
