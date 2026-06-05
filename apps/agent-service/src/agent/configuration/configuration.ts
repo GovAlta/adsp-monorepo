@@ -111,6 +111,15 @@ export class AgentServiceConfiguration {
   private mastra!: Mastra;
   private brokers: Record<string, AgentBroker> = {};
   private readonly knownMcpServers: ReturnType<typeof loadKnownMcpServerSecrets>;
+
+  /**
+   * Resolves when broker initialization is complete. Callers that need agents
+   * to be available (e.g. socket event handlers) should await this before
+   * calling getAgent(), since initializeBrokers() is async and the constructor
+   * cannot await it.
+   */
+  private readonly ready: Promise<void>;
+
   constructor(
     private logger: Logger,
     private directory: ServiceDirectory,
@@ -122,7 +131,7 @@ export class AgentServiceConfiguration {
   ) {
     this.knownMcpServers = loadKnownMcpServerSecrets(environment.AGENT_MCP_SERVER_CREDENTIALS_FILE, this.logger);
     const configuration = { ...tenant, ...core };
-    this.initializeBrokers(tenantId, configuration);
+    this.ready = this.initializeBrokers(tenantId, configuration);
   }
 
   private async initializeBrokers(tenantId: AdspId, configuration: AgentConfigurations) {
@@ -310,11 +319,13 @@ export class AgentServiceConfiguration {
     }
   }
 
-  public getAgent(agent: string) {
+  public async getAgent(agent: string) {
+    await this.ready;
     return this.brokers[agent];
   }
 
-  public getAgents() {
+  public async getAgents() {
+    await this.ready;
     return Object.entries(this.brokers).map(([key, broker]) => ({
       id: key,
       name: broker.Agent.name,

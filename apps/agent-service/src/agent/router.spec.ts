@@ -67,7 +67,7 @@ describe('onIoConnection workspace socket events', () => {
         }),
     };
 
-    const getAgent = jest.fn().mockReturnValue(mockBroker);
+    const getAgent = jest.fn().mockResolvedValue(mockBroker);
     const mockConfiguration = { getAgent };
 
     const eventHandlers: Record<string, (...args: unknown[]) => Promise<void>> = {};
@@ -411,7 +411,7 @@ describe('onIoConnection workspace socket events', () => {
 
     it('emits error when agent is not found', async () => {
       const { socket, eventHandlers, getAgent } = await connect();
-      getAgent.mockReturnValue(undefined);
+      getAgent.mockResolvedValue(undefined);
 
       await eventHandlers['workspace-init']({
         agent: 'unknown-agent',
@@ -536,7 +536,7 @@ describe('onIoConnection workspace socket events', () => {
 
     it('emits error when agent is not found', async () => {
       const { socket, eventHandlers, getAgent } = await connect();
-      getAgent.mockReturnValue(undefined);
+      getAgent.mockResolvedValue(undefined);
 
       await eventHandlers['workspace-update']({
         agent: 'unknown-agent',
@@ -631,7 +631,7 @@ describe('onIoConnection workspace socket events', () => {
 
     it('emits error when agent is not found', async () => {
       const { socket, eventHandlers, getAgent } = await connect();
-      getAgent.mockReturnValue(undefined);
+      getAgent.mockResolvedValue(undefined);
 
       await eventHandlers['workspace-read']({
         agent: 'unknown-agent',
