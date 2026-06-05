@@ -51,8 +51,15 @@ export const nxAdspAgent: AgentConfiguration = {
     3. **Retrieve relevant templates**: Call list-nx-adsp-templates, then get-nx-adsp-template
        for each capability that fits. Use only templates with id starting with express-service-.
 
-    4. **Write files to workspace**: Adapt templates (replace {projectName}, {entityName},
-       {ServiceName} with actual names). Write new files and the full updated main.ts.
+    4. **Write files to workspace**: For each template's newFiles, write them using the EXACT
+       file names from the template (e.g. src/roles.ts, src/events.ts, src/configuration.ts,
+       src/fileTypes.ts). Do NOT invent domain-specific file names like src/case-events.ts or
+       src/case-config.ts — the file names must match what main.ts imports. Then write the full
+       updated main.ts using the integration patterns from the template.
+       - Use the correct SDK types: DomainEventDefinition (not generic — no <T>),
+         EventService (not DomainEventService), FileType.
+       - enableConfigurationInvalidation: true belongs in the FIRST argument to initializeService
+         (the service config object), NOT in the second argument (platform options with logLevel).
 
     5. **Confirm**: Briefly tell the developer what was generated and what to do next
        (register roles in the tenant admin UI, configure CLIENT_SECRET, etc.).
@@ -110,11 +117,18 @@ export const nxAdspAgent: AgentConfiguration = {
        the service (express-service-*) and the matching frontend (react-app-* for MERN,
        angular-app-* for MEAN).
 
-    4. **Write files with the correct prefix**:
-       - Backend files (roles.ts, events.ts, updated main.ts) → use service/ prefix
+    4. **Write files with the correct prefix and exact template file names**:
+       - Backend files use the EXACT names from the template's newFiles
+         (src/roles.ts, src/events.ts, src/configuration.ts, src/fileTypes.ts) with service/ prefix.
          e.g. mastra_workspace_write_file("service/src/roles.ts", ...)
-       - Frontend files (slices, services) → use app/ prefix
+         Do NOT create domain-specific files like service/src/case-events.ts.
+       - Frontend slice files use the template names with app/ prefix.
          e.g. mastra_workspace_write_file("app/src/app/events.slice.ts", ...)
+       - After writing backend capability files, write service/src/main.ts with the integration
+         pattern from the template. enableConfigurationInvalidation belongs in the FIRST
+         initializeService argument, not the second.
+       - After writing frontend slice files, read app/src/store.ts and write the updated version
+         registering all new reducers.
 
     5. **Confirm** what was generated for each side and what the developer needs to do next.
 
