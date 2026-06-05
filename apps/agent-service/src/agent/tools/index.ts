@@ -36,7 +36,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
       tokenProvider,
     });
 
-  const { notificationTemplateProposalTool } = await createNotificationTemplateTools({
+  const { emailNotificationGenerateTool } = await createNotificationTemplateTools({
     logger,
     directory,
     tokenProvider,
@@ -56,7 +56,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     dataRegisterCreateTool,
     dataRegisterGetTool,
     dataRegisterUpdateTool,
-    notificationTemplateProposalTool,
+    emailNotificationGenerateTool,
   };
 }
 

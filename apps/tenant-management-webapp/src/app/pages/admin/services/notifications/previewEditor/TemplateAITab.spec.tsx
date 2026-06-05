@@ -21,6 +21,7 @@ jest.mock('@store/agent/actions', () => ({
 
 let capturedMessages: unknown[] = [];
 jest.mock('@core-services/app-common', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   AgentChat: (props: any) => {
     capturedMessages = props.messages;
     return <div data-testid="agent-chat" data-thread-id={props.threadId} data-disabled={props.disabled} />;
@@ -33,7 +34,7 @@ const mockDispatch = jest.fn();
 const mockUseSelector = useSelector as jest.Mock;
 const mockUseDispatch = useDispatch as jest.Mock;
 
-const PROPOSAL_TOOL_NAME = 'notificationTemplateProposalTool';
+const PROPOSAL_TOOL_NAME = 'emailNotificationGenerateTool';
 
 function buildToolCall(result: EmailTemplateProposal | null) {
   return {
@@ -49,7 +50,8 @@ function buildAgentMessage(
     id: string;
     from: string;
     streaming: boolean;
-    toolCalls: Array<{ toolCallId: string; toolName: string; args: Record<string, unknown>; result?: unknown }>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toolCalls: Array<{ toolCallId: string; toolName: string; args: any; result?: unknown }>;
   }> = {},
 ) {
   return {
@@ -82,6 +84,7 @@ function makeBaseProps(overrides: Partial<React.ComponentProps<typeof TemplateAI
         subtitle: '',
         body: '<p>Welcome!</p>',
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     handlebarsVariables: ['firstName', 'serviceName'],
     notificationType: 'welcome-notification',
@@ -234,6 +237,7 @@ describe('TemplateAITab', () => {
 
       render(<TemplateAITab {...props} />);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapped = capturedMessages[0] as any;
       expect(mapped.toolCalls[0].toolName).toBe('Apply template changes');
       expect(mapped.toolCalls[0].args).toEqual({});
@@ -252,6 +256,7 @@ describe('TemplateAITab', () => {
 
       render(<TemplateAITab {...props} />);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapped = capturedMessages[0] as any;
       expect(mapped.toolCalls[0].toolName).toBe('someOtherTool');
       expect(mapped.toolCalls[0].args).toEqual({ x: 1 });

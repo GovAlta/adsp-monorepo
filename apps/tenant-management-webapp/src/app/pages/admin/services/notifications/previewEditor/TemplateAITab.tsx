@@ -13,7 +13,7 @@ export interface EmailTemplateProposal {
   body?: string;
 }
 
-const PROPOSAL_TOOL_NAME = 'notificationTemplateProposalTool';
+const PROPOSAL_TOOL_NAME = 'emailNotificationGenerateTool';
 
 interface TemplateAITabProps {
   threadId: string;

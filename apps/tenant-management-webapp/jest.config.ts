@@ -1,5 +1,11 @@
 /* eslint-disable */
+import { createRequire } from 'node:module';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 export default {
   displayName: 'tenant-management-webapp',

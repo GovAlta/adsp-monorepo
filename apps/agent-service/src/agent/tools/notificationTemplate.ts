@@ -19,8 +19,8 @@ export async function createNotificationTemplateTools({
 }: NotificationTemplateToolsProps) {
   const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
 
-  const notificationTemplateProposalTool = createTool({
-    id: 'notification-template-proposal',
+  const emailNotificationGenerateTool = createTool({
+    id: 'email-notification-generate',
     description:
       'Propose and save specific email template content (subject line, title, subtitle, or body HTML). ' +
       'ONLY call this tool when you have concrete template text to propose. ' +
@@ -47,7 +47,7 @@ export async function createNotificationTemplateTools({
 
       if (!notificationTypeId || !notificationType) {
         logger.warn('Cannot save template: missing notificationTypeId or notificationType in context.', {
-          context: 'notificationTemplateProposalTool',
+          context: 'emailNotificationGenerateTool',
           tenant: tenantId?.toString(),
         });
         return { ...proposal, saved: false, reason: 'Missing notification type context for save.' };
@@ -69,7 +69,7 @@ export async function createNotificationTemplateTools({
 
         if (!typeConfig) {
           logger.warn(`Notification type '${notificationTypeId}' not found in configuration.`, {
-            context: 'notificationTemplateProposalTool',
+            context: 'emailNotificationGenerateTool',
             tenant: tenantId?.toString(),
           });
           return { ...proposal, saved: false, reason: `Notification type '${notificationTypeId}' not found.` };
@@ -82,7 +82,7 @@ export async function createNotificationTemplateTools({
 
         if (eventIndex < 0) {
           logger.warn(`Event '${notificationType}' not found in notification type '${notificationTypeId}'.`, {
-            context: 'notificationTemplateProposalTool',
+            context: 'emailNotificationGenerateTool',
             tenant: tenantId?.toString(),
           });
           return { ...proposal, saved: false, reason: `Event '${notificationType}' not found.` };
@@ -128,7 +128,7 @@ export async function createNotificationTemplateTools({
         );
 
         logger.info(`Saved email template for event '${notificationType}' in type '${notificationTypeId}'.`, {
-          context: 'notificationTemplateProposalTool',
+          context: 'emailNotificationGenerateTool',
           tenant: tenantId?.toString(),
         });
 
@@ -136,7 +136,7 @@ export async function createNotificationTemplateTools({
       } catch (err) {
         const message = isAxiosError(err) ? err.response?.data?.message || err.message : (err as Error).message;
         logger.error(`Failed to save notification template: ${message}`, {
-          context: 'notificationTemplateProposalTool',
+          context: 'emailNotificationGenerateTool',
           tenant: tenantId?.toString(),
         });
         return { ...proposal, saved: false, reason: message };
@@ -144,5 +144,5 @@ export async function createNotificationTemplateTools({
     },
   });
 
-  return { notificationTemplateProposalTool };
+  return { emailNotificationGenerateTool };
 }

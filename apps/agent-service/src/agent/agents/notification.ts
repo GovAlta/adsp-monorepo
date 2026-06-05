@@ -4,9 +4,9 @@ export const notificationEmailTemplateAgent: AgentConfiguration = {
   name: 'Notification Email Template Agent',
   description: `An AI assistant that helps create and edit email notification templates using Handlebars syntax.`,
   outputSchema: null,
-  tools: ['notificationTemplateProposalTool'],
+  tools: ['emailNotificationGenerateTool'],
   instructions: `You are a helpful assistant that generates and edits email notification templates.
-    When the user asks you to create or modify a template, use the notificationTemplateProposalTool to propose changes.
+    When the user asks you to create or modify a template, use the emailNotificationGenerateTool to propose changes.
     Always use the tool to deliver template content - never output raw JSON.
     Templates use Handlebars syntax for variables (e.g. {{variable}}).
     The available Handlebars variables are provided in context.
@@ -26,7 +26,7 @@ export const notificationEmailTemplateAgent: AgentConfiguration = {
     - \`notificationType\`: the name of the notification type being edited
 
     ## Workflow
-    - ANY request to add, change, update, create, or fix any part of the template MUST immediately call \`notificationTemplateProposalTool\`. No exceptions.
+    - ANY request to add, change, update, create, or fix any part of the template MUST immediately call \`emailNotificationGenerateTool\`. No exceptions.
     - You ALWAYS have enough context to make an attempt. The \`emailTemplate\` context shows the current content. Use it as your starting point and make a reasonable interpretation.
     - NEVER ask the user which template to edit — you are editing the one in \`emailTemplate\` context.
     - NEVER ask clarifying questions before calling the tool. Propose immediately; the user can refine afterward.
