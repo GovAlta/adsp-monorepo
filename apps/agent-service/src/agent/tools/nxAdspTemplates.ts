@@ -122,7 +122,7 @@ app.post('/{projectName}/v1/{entities}', async (req, res) => {
     compatibleWith: COMPATIBLE_PLUGIN_VERSION,
     description:
       'Add a service configuration schema to initializeService. Tenants configure the service ' +
-      'via the ADSP tenant admin app; the configuration is accessible in route handlers via req.getConfiguration().',
+      'via the ADSP tenant admin app; the configuration is accessible in route handlers via req.getServiceConfiguration().',
     newFiles: {
       'src/configuration.ts': `// Service configuration schema and types.
 // Tenants configure this service via the ADSP tenant admin app.
@@ -162,8 +162,9 @@ enableConfigurationInvalidation: true,`,
       },
     },
     usageExample: `// Access configuration in a route handler:
+// req.getServiceConfiguration is injected by the ADSP SDK middleware — use ! to suppress TS2722.
 app.get('/{projectName}/v1/config', async (req, res) => {
-  const [configuration] = await req.getConfiguration<{ServiceName}Configuration>();
+  const [configuration] = await req.getServiceConfiguration!<{ServiceName}Configuration, {ServiceName}Configuration>();
   res.json(configuration || {});
 });`,
   },
