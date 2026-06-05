@@ -8,6 +8,13 @@ import '@testing-library/jest-dom';
 import { TemplateEditor } from './TemplateEditor';
 import { getPdfTemplates } from '@store/pdf/action';
 import { PreviewTemplate } from './PreviewTemplate';
+
+jest.mock('@store/agent/actions', () => ({
+  connectAgent: () => ({ type: 'agent/connectAgent' }),
+  disconnectAgent: () => ({ type: 'agent/disconnectAgent' }),
+  startThread: () => ({ type: 'agent/startThread' }),
+}));
+
 describe('Test pdf template preview', () => {
   const mockStore = configureStore([]);
 
@@ -43,7 +50,7 @@ describe('Test pdf template preview', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <PDFConfigForm template={templateMock}></PDFConfigForm>
-      </Provider>
+      </Provider>,
     );
     const configTable = await queryByTestId('pdf-config-form');
     expect(configTable).toHaveTextContent(templateMock.name);
@@ -89,13 +96,21 @@ describe('Test pdf template preview', () => {
             />
           </Routes>
         </MemoryRouter>
-      </Provider>
+      </Provider>,
     );
     expect(await queryByTestId('pdf-edit-template-container')).toBeDefined();
   });
 
   it('Can create template editor without pdf template in redux', async () => {
     const store = mockStore({
+      agent: {
+        connected: false,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+        downloadedFiles: {},
+        fileMetadata: {},
+      },
       notifications: {
         notifications: [],
       },
@@ -128,7 +143,7 @@ describe('Test pdf template preview', () => {
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id-wrong']}>
           <TemplateEditor modalOpen={true} />
         </MemoryRouter>
-      </Provider>
+      </Provider>,
     );
     // invoke getPdfTemplates if the template with the given id is not found.
     expect(store.dispatch).toHaveBeenCalledWith(getPdfTemplates());
@@ -136,6 +151,14 @@ describe('Test pdf template preview', () => {
 
   it('Can switch among different editor tags', async () => {
     const store = mockStore({
+      agent: {
+        connected: false,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+        downloadedFiles: {},
+        fileMetadata: {},
+      },
       notifications: {
         notifications: [],
       },
@@ -170,7 +193,7 @@ describe('Test pdf template preview', () => {
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
           <TemplateEditor modelOpen={true} errors={null} />
         </MemoryRouter>
-      </Provider>
+      </Provider>,
     );
     /**
      * The order here here is important. We must click the tab btn first, then check whether the tab is defined or not
@@ -323,7 +346,7 @@ describe('Test pdf template preview', () => {
             ></Route>
           </Routes>
         </MemoryRouter>
-      </Provider>
+      </Provider>,
     );
 
     expect(await queryByTestId('form-save')).toBeDefined();

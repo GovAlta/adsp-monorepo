@@ -28,6 +28,9 @@ export const DELETE_PDF_FILES_SERVICE = 'pdf/DELETE_PDF_FILES_SERVICE';
 export const DELETE_PDF_FILE_SERVICE = 'pdf/DELETE_PDF_FILE_SERVICE';
 export const UPDATE_JOBS = 'pdf/UPDATE_JOBS';
 export const UPDATE_TEMP_TEMPLATE = 'pdf/UPDATE_TEMP_TEMPLATE';
+export const MARK_PDF_PREVIEW_STALE_ACTION = 'pdf/MARK_PDF_PREVIEW_STALE_ACTION';
+export const CLEAR_PDF_PREVIEW_STALE_ACTION = 'pdf/CLEAR_PDF_PREVIEW_STALE_ACTION';
+export const SAVE_UPDATED_PDF_TEMPLATE_ACTION = 'pdf/SAVE_UPDATED_PDF_TEMPLATE_ACTION';
 
 export const SOCKET_CHANNEL = 'pdf/SOCKET_CHANNEL';
 
@@ -35,6 +38,17 @@ export const ADD_TO_STREAM = 'pdf/ADD_TO_STREAM';
 
 export interface FetchPdfTemplatesAction {
   type: typeof FETCH_PDF_TEMPLATES_ACTION;
+}
+export interface MarkPdfPreviewStaleAction {
+  type: typeof MARK_PDF_PREVIEW_STALE_ACTION;
+}
+export interface ClearPdfPreviewStaleAction {
+  type: typeof CLEAR_PDF_PREVIEW_STALE_ACTION;
+}
+
+export interface SaveUpdatedPdfTemplateAction {
+  type: typeof SAVE_UPDATED_PDF_TEMPLATE_ACTION;
+  payload: Record<string, object>;
 }
 
 export interface FetchCorePdfTemplatesAction {
@@ -82,6 +96,7 @@ export interface SocketChannelAction {
 export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
+  agentTemplate?: PdfTemplate;
 }
 
 export interface DeletePdfFilesServiceAction {
@@ -176,6 +191,10 @@ export type PdfActionTypes =
   | SetPdfDisplayFileIdAction
   | UpdateJobsAction
   | UpdateTempTemplateAction
+  | StreamPdfSocketAction
+  | MarkPdfPreviewStaleAction
+  | ClearPdfPreviewStaleAction
+  | SaveUpdatedPdfTemplateAction
   | UpdatePdfResponseAction;
 
 export const updatePdfTemplate = (template: PdfTemplate, options?: string): UpdatePdfTemplatesAction => ({
@@ -231,9 +250,10 @@ export const getCorePdfTemplatesSuccess = (
   payload: results,
 });
 
-export const generatePdf = (payload: PdfGenerationPayload): GeneratePdfAction => ({
+export const generatePdf = (payload: PdfGenerationPayload, agentTemplate?: PdfTemplate): GeneratePdfAction => ({
   type: GENERATE_PDF_ACTION,
   payload: payload,
+  agentTemplate: agentTemplate,
 });
 
 export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => ({
@@ -307,4 +327,17 @@ export const showCurrentFilePdfSuccess = (file: Blob, id: string): ShowCurrentFi
   type: SHOW_CURRENT_FILE_PDF_SUCCESS,
   file,
   id,
+});
+
+export const markPdfPreviewStale = (): MarkPdfPreviewStaleAction => ({
+  type: MARK_PDF_PREVIEW_STALE_ACTION,
+});
+
+export const clearPdfPreviewStale = (): ClearPdfPreviewStaleAction => ({
+  type: CLEAR_PDF_PREVIEW_STALE_ACTION,
+});
+
+export const saveUpdatedPdfTemplate = (template: Record<string, object>): SaveUpdatedPdfTemplateAction => ({
+  type: SAVE_UPDATED_PDF_TEMPLATE_ACTION,
+  payload: template,
 });

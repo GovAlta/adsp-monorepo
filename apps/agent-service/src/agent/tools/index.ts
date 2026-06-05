@@ -7,6 +7,7 @@ import { createDocumentTools } from './document';
 import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
 import { createDataRegisterTools } from './dataRegister';
+import { createPdfConfigurationTools } from './pdfConfiguration';
 import { createNxAdspTemplateTools } from './nxAdspTemplates';
 
 // clean-code-ignore: RULE-19
@@ -21,6 +22,11 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
   const { documentExtractTool } = await createDocumentTools({ logger, directory, tokenProvider });
 
   const { formConfigurationRetrievalTool, formConfigurationUpdateTool } = await createFormConfigurationTools({
+    logger,
+    directory,
+    tokenProvider,
+  });
+  const { pdfConfigurationRetrievalTool, pdfConfigurationUpdateTool } = await createPdfConfigurationTools({
     logger,
     directory,
     tokenProvider,
@@ -45,6 +51,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     documentExtractTool,
     formConfigurationRetrievalTool,
     formConfigurationUpdateTool,
+    pdfConfigurationRetrievalTool,
+    pdfConfigurationUpdateTool,
     formDataRetrievalTool,
     formDataUpdateTool,
     schemaDefinitionTool,

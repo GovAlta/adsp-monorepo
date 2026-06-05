@@ -50,7 +50,7 @@ export interface UpdatePDFResponse {
 
 export interface PdfGenerationPayload {
   templateId: string;
-  data: { definition: FormDefinition; content?: Record<string, unknown> };
+  data: { definition: string; content?: Record<string, unknown> };
   fileName: string;
   inputData?: Record<string, SchemaType>;
 }
@@ -105,6 +105,38 @@ export interface PdfState {
   socketChannel: boolean;
   tempTemplate: PdfTemplate;
   openEditor: string;
+  previewStale: boolean;
+  currentlyGeneratedPDFData: PdfTemplateDefinition;
+}
+
+export interface PdfTemplateDefinition {
+  id?: string;
+  name?: string;
+  description?: string;
+
+  template?: string;
+
+  startWithDefault?: boolean;
+
+  additionalStyles?: string;
+  header?: string;
+  footer?: string;
+
+  variables?: PdfTemplateVariables | string;
+}
+
+export interface PdfTemplateVariables {
+  schoolName?: string;
+  schoolYear?: string;
+
+  teachers?: Teacher[];
+}
+
+export interface Teacher {
+  name: string;
+  grade: string;
+  email?: string;
+  phone?: string;
 }
 
 export const defaultPdfTemplate: PdfTemplate = {

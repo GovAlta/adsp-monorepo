@@ -6,11 +6,13 @@ import {
   builderPrototypeCoderAgent,
   builderWorkspaceAnalystAgent,
 } from './builder';
+import { pdfGenerationAgent } from './pdf';
 import { nxAdspAgent } from './nxAdsp';
 
 // clean-code-ignore: RULE-19
 export const CoreAgents: AgentConfigurations = {
   formGenerationAgent,
+  pdfGenerationAgent,
   formUpdateAgent,
   pdfFormAnalysisAgent,
   builderWorkspaceAnalystAgent,
