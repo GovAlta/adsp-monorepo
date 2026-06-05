@@ -72,6 +72,8 @@ app.get('/{projectName}/v1/admin-resource', (req, res) => {
       'Add domain event definitions and event service integration for publishing domain events to the ADSP event service.',
     newFiles: {
       'src/events.ts': `import { DomainEventDefinition } from '@abgov/adsp-service-sdk';
+// SDK constraint: DomainEventDefinition is a plain interface, NOT generic (no <T>).
+// Only import DomainEventDefinition here — do not import EventService or DomainEventService.
 
 // Domain event definitions for {projectName}.
 // Event names use kebab-case. The namespace is set by the SDK from the serviceId.
@@ -127,7 +129,8 @@ app.post('/{projectName}/v1/{entities}', async (req, res) => {
     newFiles: {
       'src/configuration.ts': `// Service configuration schema and types.
 // Tenants configure this service via the ADSP tenant admin app.
-// The schema is validated against what tenants can store.
+// SDK constraint: there is no ConfigurationDefinition<T> type — export a plain configurationSchema object.
+// The configuration type ({ServiceName}Configuration) is only needed in route handler type annotations.
 
 export interface {ServiceName}Configuration {
   // Add your configuration properties here.
@@ -752,10 +755,11 @@ onFileSelected(event: Event): void {
       'download files in the ADSP file service for this service.',
     newFiles: {
       'src/fileTypes.ts': `import { FileType } from '@abgov/adsp-service-sdk';
+// SDK constraint: FileType has no description field.
+// Valid fields: id, name, anonymousRead, readRoles, updateRoles, rules (optional), securityClassification (optional).
 
 // File type definitions for {projectName}.
 // readRoles and updateRoles use the role strings defined in roles.ts.
-// Remove the SecurityClassification import/field if not needed.
 
 export const {EntityName}FileType: FileType = {
   id: '{entity-name}-file',

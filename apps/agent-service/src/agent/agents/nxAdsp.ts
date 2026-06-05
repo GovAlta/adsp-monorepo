@@ -53,19 +53,27 @@ export const nxAdspAgent: AgentConfiguration = {
        content and integration patterns — you do NOT need any external files or a generator run.
        Use only templates with id starting with express-service-.
 
-    4. **Write files to workspace using the tool output**:
-       - Each template has a "newFiles" field mapping file paths to file content.
-         Write each file to the workspace using mastra_workspace_write_file with the EXACT path
-         from the template (e.g. src/roles.ts, src/events.ts, src/configuration.ts, src/fileTypes.ts).
-         Replace {projectName}, {entityName}, {ServiceName} placeholders with domain-specific names
-         but do NOT change the file path itself — keep src/events.ts, not src/case-events.ts.
-       - Each template also has an "integrationChanges" field showing what to add to main.ts.
-         Read main.ts from the workspace, apply the integration patterns, then write the full
-         updated main.ts.
-       - Correct SDK types in the tool output: DomainEventDefinition (not generic — no <T>),
-         EventService (not DomainEventService), FileType.
-       - enableConfigurationInvalidation: true belongs in the FIRST argument to initializeService
-         (the service config object), NOT in the second argument (platform options with logLevel).
+    4. **Write or edit capability files using the tool output**:
+       Each template has a "newFiles" field (files to create) and an "integrationChanges" field
+       (changes to make in main.ts). For each newFile path:
+
+       a. Check whether the file already exists in the workspace using mastra_workspace_read_file.
+
+       b. **File does not exist**: Use mastra_workspace_write_file with the template content,
+          substituting {projectName}, {entityName}, {ServiceName} etc. with domain values.
+          Make NO other changes — the template content is the complete correct file.
+          Do NOT add extra imports, wrapper types, helper functions, or interfaces beyond
+          what the template shows. The inline comments in the template explain the constraints.
+
+       c. **File already exists**: Use mastra_workspace_edit_file to add the new capability
+          alongside existing content. Follow the template pattern for what to add but do not
+          replace content that is already there. For example, if events.ts already has
+          caseCreatedDefinition and you are adding caseUpdatedDefinition, insert the new
+          definition — do not rewrite the file.
+
+       For integrationChanges, read main.ts, apply the pattern, then write the updated main.ts.
+       enableConfigurationInvalidation: true is a top-level property in the FIRST initializeService
+       argument — not inside the configuration object and not in the second (logLevel) argument.
 
     5. **Confirm**: Briefly tell the developer what was generated and what to do next
        (register roles in the tenant admin UI, configure CLIENT_SECRET, etc.).
@@ -81,11 +89,14 @@ export const nxAdspAgent: AgentConfiguration = {
     3. **Retrieve relevant templates**: Call list-nx-adsp-templates, then get-nx-adsp-template
        for each capability. Use only templates with id starting with react-app-.
 
-    4. **Write files to workspace**: For each template:
-       - Write new slice files (e.g., src/app/events.slice.ts) using mastra_workspace_write_file.
-       - Read the current store.ts and write the updated version with new reducer imports and entries.
-       - Replace ALL placeholders ({projectName}, {ServiceName}, {tenant}) with actual values
-         from the conversation and the initial message context.
+    4. **Write or edit slice files**: For each template's newFile path:
+       - Check if the slice file already exists (mastra_workspace_read_file).
+       - If it does NOT exist: write with template content + placeholder substitution only.
+         Make no other changes — the template is the complete correct file.
+       - If it EXISTS: use mastra_workspace_edit_file to add the new capability alongside
+         existing slices. Do not replace or rewrite existing content.
+       - Always read store.ts and write the updated version adding the new reducer import and
+         entry. Do not remove existing reducers.
 
     5. **Confirm**: Briefly state what slices were added and remind the developer to dispatch
        the load thunks on app startup.
