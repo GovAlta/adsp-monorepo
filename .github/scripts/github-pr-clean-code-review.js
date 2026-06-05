@@ -443,14 +443,35 @@ async function main() {
     return;
   }
 
-  const commitsResponse = await octokit.rest.pulls.listCommits({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
-    pull_number: PR_NUMBER,
-  });
-  if (commitsResponse.data.length > 1) {
-    console.log('Skipping review — already reviewed on first push.');
-    return;
+  const PR_EVENT_ACTION = process.env.GITHUB_EVENT_ACTION;
+  const isSynchronize = PR_EVENT_ACTION !== 'opened' && PR_EVENT_ACTION !== 'reopened';
+
+  if (isSynchronize) {
+    // On synchronize — only review files not yet reviewed
+    // to avoid re-flagging files the developer is actively fixing
+    const existingComments = await octokit.rest.pulls.listReviewComments({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      pull_number: PR_NUMBER,
+    });
+
+    const alreadyReviewedFiles = new Set(
+      existingComments.data
+        .filter((c) => c.user && c.user.type === 'Bot')
+        .map((c) => c.path)
+    );
+
+    const newFiles = changedFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
+
+    if (newFiles.length === 0) {
+      console.log('Skipping review — all changed files already reviewed.');
+      return;
+    }
+
+    console.log(`📂 New files since last review: ${newFiles.length}`);
+    // Only review the new files on this synchronize push
+    changedFiles.length = 0;
+    changedFiles.push(...newFiles);
   }
 
   const prData = await octokit.rest.pulls.get({
