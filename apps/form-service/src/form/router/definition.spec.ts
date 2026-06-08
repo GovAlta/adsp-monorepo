@@ -3,6 +3,7 @@ import { ValidationService } from '@core-services/core-common';
 import * as HttpStatusCodes from 'http-status-codes';
 import axios from 'axios';
 import { Request, Response } from 'express';
+import { Logger } from 'winston';
 import { FormDefinitionEntity } from '../model';
 import { FormServiceRoles } from '..';
 import {
@@ -61,6 +62,13 @@ describe('definition router', () => {
     getTenantByRealm: jest.fn(),
   };
 
+  const loggerMock = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
   beforeEach(() => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
@@ -75,6 +83,7 @@ describe('definition router', () => {
       tokenProvider: tokenProviderMock,
       tenantService: tenantServiceMock,
       calendarService: calendarServiceMock,
+      logger: loggerMock as unknown as Logger,
     });
     expect(router).toBeTruthy();
   });
@@ -163,7 +172,7 @@ describe('definition router', () => {
 
   describe('createFormDefinition', () => {
     it('can create handler', () => {
-      const handler = createFormDefinition(directoryMock, tokenProviderMock);
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
       expect(handler).toBeTruthy();
     });
 
@@ -176,7 +185,7 @@ describe('definition router', () => {
       const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
       const next = jest.fn();
 
-      const handler = createFormDefinition(directoryMock, tokenProviderMock);
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -198,22 +207,16 @@ describe('definition router', () => {
     });
 
     it('can return 409 if definition already exists', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.get.mockResolvedValue({
-        status: 200,
-        data: { id: 'existing-def' },
-      });
-
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        body: { id: 'existing-def', name: 'Existing', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
+        body: { id: 'test', name: 'Existing', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
         tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([definition]),
       };
       const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
       const next = jest.fn();
 
-      const handler = createFormDefinition(directoryMock, tokenProviderMock);
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(
@@ -232,8 +235,7 @@ describe('definition router', () => {
         applicantRoles: [],
         assessorRoles: [],
       };
-      // Existence check returns 404 — definition does not exist yet.
-      axiosMock.get.mockResolvedValue({ status: 404, data: {} });
+      // Existence check returns null — definition does not exist yet.
       axiosMock.patch.mockResolvedValue({
         data: { latest: { revision: 1, configuration: newDefinition } },
       });
@@ -242,11 +244,12 @@ describe('definition router', () => {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
         body: newDefinition,
         tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
       };
       const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
       const next = jest.fn();
 
-      const handler = createFormDefinition(directoryMock, tokenProviderMock);
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -268,8 +271,6 @@ describe('definition router', () => {
         applicantRoles: [],
         assessorRoles: [],
       };
-      // Existence check returns 404 — definition does not exist yet.
-      axiosMock.get.mockResolvedValue({ status: 404, data: {} });
       axiosMock.patch.mockResolvedValue({
         data: { latest: { revision: 1, configuration: { ...newDefinition, id: 'my-new-form' } } },
       });
@@ -278,11 +279,12 @@ describe('definition router', () => {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
         body: newDefinition,
         tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
       };
       const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
       const next = jest.fn();
 
-      const handler = createFormDefinition(directoryMock, tokenProviderMock);
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
