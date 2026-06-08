@@ -173,7 +173,6 @@ export function createFormDefinition(
       } catch (err) {
         logger.warn(`Failed to check existing form definition '${definition.id}': ${err}`);
       } finally {
-        // Proceed with creation check.
       }
 
       if (existingFormId) {
