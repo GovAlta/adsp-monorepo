@@ -22,7 +22,7 @@ const templates: Record<string, NxAdspTemplate> = {
   'express-service-roles': {
     id: 'express-service-roles',
     compatibleWith: COMPATIBLE_PLUGIN_VERSION,
-    description: 'Add service role definitions to SDK initialization for role-based access control.',
+    description: 'Define who can access the service. Use when different users need different levels of access (e.g. admin vs standard user). Skip for fully public services with no authentication requirements.',
     newFiles: {
       'src/roles.ts': `// Service role definitions.
 // Role strings follow the pattern: '{service-name}:{role-name}'.
@@ -69,7 +69,9 @@ app.get('/{projectName}/v1/admin-resource', (req, res) => {
     id: 'express-service-events',
     compatibleWith: COMPATIBLE_PLUGIN_VERSION,
     description:
-      'Add domain event definitions and event service integration for publishing domain events to the ADSP event service.',
+      'Emit domain events when significant things happen (record created, status changed, etc.). ' +
+      'Use when other systems need to react to changes or when users need an audit history. ' +
+      'Skip for read-only or query-only services.',
     newFiles: {
       'src/events.ts': `import { DomainEventDefinition } from '@abgov/adsp-service-sdk';
 // SDK constraint: DomainEventDefinition is a plain interface, NOT generic (no <T>).
@@ -90,6 +92,18 @@ export const {entityName}CreatedDefinition: DomainEventDefinition = {
     required: ['id'],
   },
 };
+
+export const {entityName}UpdatedDefinition: DomainEventDefinition = {
+  name: '{entity-name}-updated',
+  description: 'Signalled when a {entityName} is updated.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID of the updated {entityName}.' },
+    },
+    required: ['id'],
+  },
+};
 `,
     },
     integrationChanges: {
@@ -99,11 +113,12 @@ export const {entityName}CreatedDefinition: DomainEventDefinition = {
           'The SDK automatically sets the namespace from serviceId. ' +
           'Add eventService to the capabilities destructuring only when writing route handlers that publish events.',
         pattern: `// Add import at top:
-import { {entityName}CreatedDefinition } from './events';
+import { {entityName}CreatedDefinition, {entityName}UpdatedDefinition } from './events';
 
 // Add inside the initializeService({}) config object:
 events: [
   {entityName}CreatedDefinition,
+  {entityName}UpdatedDefinition,
 ],`,
       },
     },
@@ -124,8 +139,9 @@ app.post('/{projectName}/v1/{entities}', async (req, res) => {
     id: 'express-service-configuration',
     compatibleWith: COMPATIBLE_PLUGIN_VERSION,
     description:
-      'Add a service configuration schema to initializeService. Tenants configure the service ' +
-      'via the ADSP tenant admin app; the configuration is accessible in route handlers via req.getServiceConfiguration().',
+      'Let tenants customise service behaviour through the ADSP tenant admin UI. ' +
+      'Use when different tenants need different settings (e.g. allowed statuses, intake channels, workflow steps). ' +
+      'Skip if all tenants use identical behaviour.',
     newFiles: {
       'src/configuration.ts': `// Service configuration schema and types.
 // Tenants configure this service via the ADSP tenant admin app.
@@ -181,12 +197,14 @@ app.get('/{projectName}/v1/config', async (req, res) => {
     id: 'react-app-roles',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add a hasRole() helper to user.slice.ts for checking Keycloak resource roles. ' +
-      'Use it in components to conditionally show UI based on the user\'s roles in the service client.',
+      'Gate UI elements by Keycloak role. Use when the backend has express-service-roles and you need to ' +
+      'show/hide UI based on whether the user is an admin or standard user. ' +
+      'This template has NO newFiles — it only edits the existing user.slice.ts by adding hasRole() after getAccessToken. ' +
+      'Always use edit_file for this template, never write_file.',
     integrationChanges: {
       'src/app/user.slice.ts': {
         description:
-          'Export a hasRole() function that reads resource_access from the parsed Keycloak token. ' +
+          'EDIT (do not replace) user.slice.ts: add hasRole() after the existing getAccessToken function. ' +
           'The clientId defaults to the app\'s own client ID but can be overridden for service-specific roles.',
         pattern: `// Add after the existing getAccessToken export:
 export function hasRole(role: string, clientId = environment.access.client_id): boolean {
@@ -209,8 +227,9 @@ import { hasRole } from './user.slice';
     id: 'react-app-events',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add an events Redux slice that fetches domain events from the ADSP event service. ' +
-      'The event service URL is discovered from the directory loaded by config.slice.',
+      'Show a timeline of domain events so users can see what happened to a record. ' +
+      'Use when the backend has express-service-events and users need audit history or activity feeds. ' +
+      'Skip if the backend has no events or users do not need history.',
     newFiles: {
       'src/app/events.slice.ts': `import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { getAccessToken } from './user.slice';
@@ -314,8 +333,8 @@ useEffect(() => {
     id: 'react-app-configuration',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add a configuration Redux slice that fetches the service configuration from the ADSP ' +
-      'configuration service. Tenants set values via the ADSP tenant admin app.',
+      'Load tenant-specific settings from the ADSP configuration service so the frontend adapts per tenant. ' +
+      'Use when the backend has express-service-configuration and the UI needs to reflect tenant settings.',
     newFiles: {
       'src/app/configuration.slice.ts': `import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { getAccessToken } from './user.slice';
@@ -407,8 +426,9 @@ dispatch(loadConfiguration());`,
     id: 'react-app-file-upload',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add a files Redux slice for uploading and downloading files via the ADSP file service. ' +
-      'File types must be registered on the backend service; this slice manages the upload flow.',
+      'Let users upload and attach documents via the ADSP file service. ' +
+      'Use when the backend has express-service-file-types and users need to manage attachments. ' +
+      'Skip if there is no file management requirement.',
     newFiles: {
       'src/app/files.slice.ts': `import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { getAccessToken } from './user.slice';
@@ -514,8 +534,8 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     id: 'angular-app-roles',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add a hasRole() helper using the injected Keycloak instance for checking resource roles. ' +
-      'Use it in components to conditionally render UI based on the user\'s Keycloak roles.',
+      'Gate Angular UI elements by Keycloak role. Use when the backend has express-service-roles and ' +
+      'you need to show/hide components based on user role. Edits protected.component.ts — does not add new files.',
     integrationChanges: {
       'src/app/protected/protected.component.ts': {
         description:
@@ -542,8 +562,8 @@ hasRole(role: string, clientId = environment.access.client_id): boolean {
     id: 'angular-app-events',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add an EventService that fetches domain events from the ADSP event service using HttpClient. ' +
-      'Bearer token is automatically attached by the includeBearerTokenInterceptor configured in app.config.ts.',
+      'Show domain event history in the Angular app. Use when the backend has express-service-events and ' +
+      'users need to see a timeline of changes. Bearer token is attached automatically by the HTTP interceptor.',
     newFiles: {
       'src/app/events/events.service.ts': `import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
@@ -624,8 +644,8 @@ export class MyComponent implements OnInit {
     id: 'angular-app-configuration',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add a ConfigurationService that fetches the service configuration from the ADSP configuration service. ' +
-      'Tenants set values via the ADSP tenant admin app; bearer token is attached automatically.',
+      'Load tenant-specific settings from the ADSP configuration service. ' +
+      'Use when the backend has express-service-configuration and the Angular app needs to adapt per tenant.',
     newFiles: {
       'src/app/configuration/configuration.service.ts': `import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
@@ -683,8 +703,8 @@ ngOnInit() {
     id: 'angular-app-file-upload',
     compatibleWith: COMPATIBLE_FRONTEND_PLUGIN_VERSION,
     description:
-      'Add a FileService for uploading and downloading files via the ADSP file service. ' +
-      'File types must be registered on the backend service. Bearer token is attached automatically.',
+      'Let users upload and attach documents in Angular via the ADSP file service. ' +
+      'Use when the backend has express-service-file-types and users need to manage attachments.',
     newFiles: {
       'src/app/files/files.service.ts': `import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
@@ -751,8 +771,9 @@ onFileSelected(event: Event): void {
     id: 'express-service-file-types',
     compatibleWith: COMPATIBLE_PLUGIN_VERSION,
     description:
-      'Add file type definitions to initializeService. File types control who can upload and ' +
-      'download files in the ADSP file service for this service.',
+      'Register file types so users can upload and attach documents via the ADSP file service. ' +
+      'Use when users need to attach files to records (e.g. supporting documents, evidence, correspondence). ' +
+      'Skip if the service has no file management.',
     newFiles: {
       'src/fileTypes.ts': `import { FileType } from '@abgov/adsp-service-sdk';
 // SDK constraint: FileType has no description field.
@@ -835,10 +856,11 @@ export function createGetNxAdspTemplateTool() {
   return createTool({
     id: 'get-nx-adsp-template',
     description:
-      'Get a code template for an nx-adsp ADSP service capability. ' +
-      'Templates include new files to create and changes to make to existing integration files (main.ts, etc.). ' +
-      'Adapt the patterns to the specific project — replace placeholder names like {projectName} and {entityName} ' +
-      'with the actual names from the conversation.',
+      'Get the complete code for an nx-adsp ADSP capability. Returns: ' +
+      '"newFiles" (files to create, keyed by path — use write_file if absent, edit_file if present), ' +
+      '"integrationChanges" (edits to make to main.ts or store.ts — always use edit_file), ' +
+      '"usageExample" (how to use the capability in route handlers or components). ' +
+      'Replace {placeholders} with domain values. Do not invent SDK types not shown in the template.',
     inputSchema: z.object({
       templateId: z.string().describe('Template ID from list-nx-adsp-templates.'),
     }),
