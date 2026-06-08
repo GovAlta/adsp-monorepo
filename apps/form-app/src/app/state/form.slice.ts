@@ -407,18 +407,14 @@ export const updateForm = createAsyncThunk(
     }
 
     return { data: nextData, files: nextFiles, errors };
-  }
+  },
 );
 
 export const applyServerFormUpdate = createAsyncThunk(
   'form/apply-server-form-update',
   async (
-    {
-      id,
-      data,
-      files,
-    }: { id?: string; data?: Record<string, unknown>; files?: Record<string, string> },
-    { getState, dispatch }
+    { id, data, files }: { id?: string; data?: Record<string, unknown>; files?: Record<string, string> },
+    { getState, dispatch },
   ) => {
     const { form, file } = getState() as AppState;
     const formId = id || form.form?.id;
@@ -438,7 +434,7 @@ export const applyServerFormUpdate = createAsyncThunk(
     const digest = formId ? await hashData({ id: formId, data: nextData, files: nextFiles }) : null;
 
     return { data: nextData, files: nextFiles, digest };
-  }
+  },
 );
 
 export const saveForm = createAsyncThunk(
@@ -687,7 +683,16 @@ export const formSlice = createSlice({
         state.busy.loading = false;
       })
       .addCase(updateForm.pending, (state, { meta }) => {
-        state.data = meta.arg.data ?? state.data;
+        const updatedFormData  = {
+          ...state.data,
+          ...(meta.arg.data ?? {}),
+        };
+
+        // clean-code-ignore: 2.14
+        if (!_.isEqual(updatedFormData, state.data)) {
+          state.data = updatedFormData;
+        }
+
         state.files = meta.arg.files ?? state.files;
         state.errors = meta.arg.errors || [];
       })

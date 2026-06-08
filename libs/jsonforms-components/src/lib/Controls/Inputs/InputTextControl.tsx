@@ -117,13 +117,10 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
     const autoPopulatedValue = autoPopulateValue(user, props);
 
+    // clean-code-ignore: 2.18
     if (shouldAutoPopulateValue(autoPopulatedValue, data)) {
-      const timeout = setTimeout(() => {
-        handleChange(props.path, autoPopulatedValue);
-        setLocalValue(autoPopulatedValue);
-      }, 1000);
-
-      return () => clearTimeout(timeout);
+      handleChange(props.path, autoPopulatedValue);
+      setLocalValue(autoPopulatedValue);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
