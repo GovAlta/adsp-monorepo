@@ -19,6 +19,7 @@ import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
+import { Logger } from 'winston';
 import { FormDefinitionEntity } from '../model';
 import { mapFormDefinition } from '../mapper';
 import { FormServiceRoles } from '../roles';
@@ -136,7 +137,11 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
   };
 }
 
-export function createFormDefinition(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+export function createFormDefinition(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  logger: Logger,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -161,15 +166,17 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
       const token = await tokenProvider.getAccessToken();
 
       // Check if definition already exists — return 409 if so.
-      const existingDefinitionResponse = await axios.get<FormDefinition>(
-        new URL(`v2/configuration/form-service/${definition.id}/latest`, configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-        },
-      );
-      if (existingDefinitionResponse.status === HttpStatusCodes.OK && existingDefinitionResponse.data?.id) {
+      let existingFormId = undefined;
+      try {
+        const [existing] = await req.getServiceConfiguration<FormDefinitionEntity>(definition.id, tenantId);
+        existingFormId = existing?.id;
+      } catch (err) {
+        logger.warn(`Failed to check existing form definition '${definition.id}': ${err}`);
+      } finally {
+        // Proceed with creation check.
+      }
+
+      if (existingFormId) {
         throw new InvalidOperationError(`Form definition with ID '${definition.id}' already exists.`, {
           statusCode: HttpStatusCodes.CONFLICT,
         });
@@ -252,6 +259,7 @@ interface FormDefinitionRouterProps {
   tokenProvider: TokenProvider;
   tenantService: TenantService;
   calendarService: CalendarService;
+  logger: Logger;
 }
 
 export function createFormDefinitionRouter({
@@ -259,6 +267,7 @@ export function createFormDefinitionRouter({
   tokenProvider,
   tenantService,
   calendarService,
+  logger,
 }: FormDefinitionRouterProps): Router {
   const router = Router();
 
@@ -277,7 +286,7 @@ export function createFormDefinitionRouter({
       body('applicantRoles').isArray(),
       body('assessorRoles').isArray(),
     ),
-    createFormDefinition(directory, tokenProvider),
+    createFormDefinition(directory, tokenProvider, logger),
   );
   router.get(
     '/definitions/:definitionId',
