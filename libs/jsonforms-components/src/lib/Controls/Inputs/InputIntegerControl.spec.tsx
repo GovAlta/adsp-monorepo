@@ -82,6 +82,28 @@ describe('input number controls', () => {
       expect(ageInput.getAttribute('name')).toBe('mytestInput-input');
     });
 
+    it('renders placeholder from componentProps', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            componentProps: {
+              placeholder: 'Enter your age',
+            },
+          },
+        },
+      };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoabInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
+
+      expect(ageInput).toHaveAttribute('placeholder', 'Enter your age');
+    });
+
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(
