@@ -1,3 +1,4 @@
+@value
 Feature: Value
 
   @TEST_CS-3384 @REQ_CS-2898 @regression
