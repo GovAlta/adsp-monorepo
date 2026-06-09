@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoabFormItem, GoabGrid } from '@abgov/react-components';
-import { AddressIndent, TextWrap } from './styled-components';
+import { AddressIndent, LabelDiv, TextWrap } from './styled-components';
 
 interface AddressInputsProps {
   data: Record<string, string>;
@@ -75,15 +75,15 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
             error={!isAlbertaAddress && data?.subdivisionCode === undefined ? 'Province is required' : ''}
             requirement="required"
           >
-            {isAlbertaAddress && <div data-testid="address-form-province-view">Alberta</div>}
+            {isAlbertaAddress && <LabelDiv data-testid="address-form-province-view">Alberta</LabelDiv>}
             {!isAlbertaAddress && (
-              <div data-testid="address-form-province-view">
+              <LabelDiv data-testid="address-form-province-view">
                 {provinces.find((p) => p.value === data?.subdivisionCode)?.label}
-              </div>
+              </LabelDiv>
             )}
           </GoabFormItem>
           <GoabFormItem label="Country">
-            <div data-testid="address-form-country">Canada</div>
+            <LabelDiv data-testid="address-form-country">Canada</LabelDiv>
           </GoabFormItem>
         </GoabGrid>
       </AddressIndent>

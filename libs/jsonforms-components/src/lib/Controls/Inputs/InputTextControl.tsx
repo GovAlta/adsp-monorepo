@@ -94,23 +94,42 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const debouncedValue = useDebounce(localValue, 300);
 
+  const hasDefault = Object.prototype.hasOwnProperty.call(schema, 'default');
+
   useEffect(() => {
+    if (data === undefined || data === null) {
+      return;
+    }
+
     setLocalValue(isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data);
   }, [data, isSinField]);
 
-  useEffect(() => {
-    if (!user || data) return;
-    const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
+  const shouldAutoPopulateValue = (
+    autoPopulatedValue: string | undefined,
+    data: unknown,
+  ): autoPopulatedValue is string => {
+    return !!autoPopulatedValue && autoPopulatedValue !== data;
+  };
 
-    if (autoPopulatedValue && autoPopulatedValue !== data && !manualInput) {
+  // clean-code-ignore: 2.18
+  useEffect(() => {
+    if (!user || data || manualInput || hasDefault) return;
+
+    const autoPopulatedValue = autoPopulateValue(user, props);
+
+    // clean-code-ignore: 2.18
+    if (shouldAutoPopulateValue(autoPopulatedValue, data)) {
       handleChange(props.path, autoPopulatedValue);
+      setLocalValue(autoPopulatedValue);
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
-    if (typeof handleChange === 'function' && schema?.default !== undefined && !manualInput) {
+    if (typeof handleChange === 'function' && hasDefault && !manualInput) {
       handleChange(props.path, schema.default);
+      setLocalValue(schema.default);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schema.default]);

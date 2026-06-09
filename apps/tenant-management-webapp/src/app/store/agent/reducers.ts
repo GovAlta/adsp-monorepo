@@ -3,6 +3,7 @@ import {
   AGENT_RESPONSE_ACTION,
   AgentActionTypes,
   AgentResponseAction,
+  CLEAR_THREAD_ACTION,
   CONNECT_AGENT_ACTION,
   CONNECT_AGENT_SUCCESS_ACTION,
   DELETE_AGENT_SUCCESS_ACTION,
@@ -57,6 +58,18 @@ const defaultState: AgentState = {
       id: 'formConfigurationUpdateTool',
       description:
         'Tool for updating Form Definition configuration. Note that formDefinitionId is ' +
+        'passed via the runtime context rather than via the input.',
+    },
+    {
+      id: 'pdfConfigurationRetrievalTool',
+      description:
+        'Tool for getting PDF configuration. Note that pdfConfigurationId is ' +
+        'passed via the runtime context rather than via the input.',
+    },
+    {
+      id: 'pdfConfigurationUpdateTool',
+      description:
+        'Tool for updating PDF configuration. Note that pdfConfigurationId is ' +
         'passed via the runtime context rather than via the input.',
     },
     {
@@ -263,6 +276,24 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
           },
         },
       };
+    case CLEAR_THREAD_ACTION: {
+      // Remove messages for this thread
+      const threadMessageIds = state.threadMessages[action.threadId] || [];
+      const newMessages = { ...state.messages };
+      for (const id of threadMessageIds) {
+        delete newMessages[id];
+      }
+      const newThreadMessages = { ...state.threadMessages };
+      delete newThreadMessages[action.threadId];
+      const newThreads = { ...state.threads };
+      delete newThreads[action.threadId];
+      return {
+        ...state,
+        threads: newThreads,
+        threadMessages: newThreadMessages,
+        messages: newMessages,
+      };
+    }
     case MESSAGE_AGENT_ACTION:
       return {
         ...state,
@@ -299,13 +330,6 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
       } else {
         const message = messages[action.messageId];
         messages[action.messageId] = processResponseChunk(message as AgentMessage, action);
-      }
-
-      if (action.done && action.output !== undefined) {
-        messages[action.messageId] = {
-          ...(messages[action.messageId] as AgentMessage),
-          output: action.output,
-        };
       }
 
       return { ...state, threadMessages, messages };

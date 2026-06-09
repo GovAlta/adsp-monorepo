@@ -166,7 +166,7 @@ export class TopicEntity implements Topic {
 
   public async postComment(
     user: User,
-    comment: Pick<Comment, 'title' | 'content'>,
+    comment: Pick<Comment, 'title' | 'content'> & Partial<Pick<Comment, 'context'>>,
     requiresAttention?: boolean
   ): Promise<Comment> {
     if (!this.canComment(user)) {
@@ -177,6 +177,7 @@ export class TopicEntity implements Topic {
     const created = await this.repository.saveComment(this, {
       title: comment.title,
       content: comment.content,
+      context: comment.context || {},
       topicId: this.id,
       id: undefined,
       createdBy: user,
@@ -195,7 +196,7 @@ export class TopicEntity implements Topic {
   public async updateComment(
     user: User,
     comment: Comment,
-    update: Partial<Pick<Comment, 'title' | 'content'>>
+    update: Partial<Pick<Comment, 'title' | 'content' | 'context'>>
   ): Promise<Comment> {
     if (!this.canModifyComment(user, comment)) {
       throw new UnauthorizedUserError('update comment', user);
@@ -207,6 +208,10 @@ export class TopicEntity implements Topic {
 
     if (update.content !== undefined) {
       comment.content = update.content;
+    }
+
+    if (update.context !== undefined) {
+      comment.context = update.context || {};
     }
 
     comment.lastUpdatedBy = user;

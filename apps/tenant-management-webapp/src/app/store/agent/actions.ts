@@ -14,6 +14,7 @@ export const DISCONNECT_AGENT_ACTION = 'agent/DISCONNECT_AGENT';
 export const DISCONNECT_AGENT_SUCCESS_ACTION = 'agent/DISCONNECT_AGENT_SUCCESS';
 
 export const START_THREAD_ACTION = 'agent/START_THREAD';
+export const CLEAR_THREAD_ACTION = 'agent/CLEAR_THREAD';
 export const MESSAGE_AGENT_ACTION = 'agent/MESSAGE_AGENT';
 export const AGENT_RESPONSE_ACTION = 'agent/AGENT_RESPONSE';
 
@@ -51,6 +52,11 @@ export interface StartThreadAction {
   type: typeof START_THREAD_ACTION;
   threadId: string;
   agent: string;
+}
+
+export interface ClearThreadAction {
+  type: typeof CLEAR_THREAD_ACTION;
+  threadId: string;
 }
 
 export interface MessageAgentAction {
@@ -158,7 +164,6 @@ export interface AgentResponseAction {
     | ErrorChunk
     | TripwireChunk;
   done: boolean;
-  output?: unknown | null;
 }
 
 export interface GetAgentsAction {
@@ -211,6 +216,7 @@ export type AgentActionTypes =
   | DisconnectAgentAction
   | DisconnectAgentSuccessAction
   | StartThreadAction
+  | ClearThreadAction
   | MessageAgentAction
   | AgentResponseAction
   | GetAgentsAction
@@ -240,6 +246,20 @@ interface QueuedMessage {
 }
 let queuedMessages: QueuedMessage[] = [];
 
+// Throttle stream chunk dispatches to one batch per animation frame to prevent
+// "Maximum update depth exceeded" when chunks arrive faster than React can render.
+let pendingChunks: Array<{ threadId: string; messageId: string; chunk: unknown; done: boolean }> = [];
+let rafId: number | null = null;
+
+function flushStreamChunks(dispatch: Dispatch) {
+  const chunks = pendingChunks;
+  pendingChunks = [];
+  rafId = null;
+  for (const { threadId, messageId, chunk, done } of chunks) {
+    dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done });
+  }
+}
+
 function clearGraceTimer() {
   if (disconnectGraceTimer !== null) {
     clearTimeout(disconnectGraceTimer);
@@ -260,6 +280,7 @@ export function connectAgent() {
     const { config } = getState();
 
     socket = io(config.serviceUrls?.agentServiceApiUrl || 'localhost:3380', {
+      transports: ['websocket'],
       withCredentials: true,
       reconnection: true,
       reconnectionDelay: 1000,
@@ -321,8 +342,16 @@ export function connectAgent() {
     });
 
     socket.on('stream', (message) => {
-      const { threadId, messageId, chunk, done, output } = message;
-      dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done, output });
+      const { threadId, messageId, chunk, done } = message;
+      // Heartbeat chunks are keep-alive signals to prevent proxy timeouts; ignore them.
+      if (chunk?.type === 'heartbeat') {
+        return;
+      }
+      // Batch chunk dispatches to one per animation frame to avoid overwhelming React.
+      pendingChunks.push({ threadId, messageId, chunk, done });
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => flushStreamChunks(dispatch));
+      }
     });
     socket.on('error', (err) => {
       dispatch(ErrorNotification({ message: err }));
@@ -344,6 +373,10 @@ export function disconnectAgent() {
 
 export function startThread(agent: string, threadId: string) {
   return { type: START_THREAD_ACTION, agent, threadId };
+}
+
+export function clearThread(threadId: string) {
+  return { type: CLEAR_THREAD_ACTION, threadId };
 }
 
 export function messageAgent(threadId: string, context: Record<string, unknown>, content: UserContent) {

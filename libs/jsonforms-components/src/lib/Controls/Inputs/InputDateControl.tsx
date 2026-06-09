@@ -10,8 +10,13 @@ import {
   ensureGoaDatePointerCursor,
 } from '../../util/inputControlUtils';
 import { standardizeDate } from '../../util/dateUtils';
-import { GoabInputOnChangeDetail, GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
-import { useEffect } from 'react';
+import {
+  GoabInputOnChangeDetail,
+  GoabInputOnBlurDetail,
+  GoabInputOnFocusDetail,
+  GoabInputOnKeyPressDetail,
+} from '@abgov/ui-components-common';
+import { useEffect, useState } from 'react';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
@@ -40,6 +45,16 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   const inputName = appliedUiSchemaOptions?.name || `${id || label}-input`;
   const allowPastDate = uischema?.options?.allowPastDate;
   const allowFutureDate = uischema?.options?.allowFutureDate;
+  const componentProps = reformatDateProps(uischema?.options?.componentProps);
+  const {
+    onFocus: componentOnFocus,
+    onBlur: componentOnBlur,
+    onChange: componentOnChange,
+    onKeyPress: componentOnKeyPress,
+    ...additionalComponentProps
+  } = componentProps;
+  const [isFocused, setIsFocused] = useState(false);
+  const inputType = componentProps?.placeholder && !data && !isFocused ? 'text' : 'date';
 
   let minDate = uischema?.options?.componentProps?.min;
   let maxDate = uischema?.options?.componentProps?.max;
@@ -61,11 +76,12 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
     const host = document.querySelector<HTMLElement>(`goa-input[name="${inputName}"]`);
     host?.shadowRoot?.querySelector('input[type="date"]');
     ensureGoaDatePointerCursor(host);
-  }, [inputName]);
+  }, [inputName, inputType]);
 
   return (
     <GoabInput
-      type="date"
+      {...additionalComponentProps}
+      type={inputType}
       error={isVisited && errors.length > 0}
       width={width}
       name={inputName}
@@ -76,6 +92,10 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       ariaLabel={`appliedUiSchemaOptions?.name date`}
       min={minDate ? standardizeDate(minDate) || undefined : undefined}
       max={maxDate ? standardizeDate(maxDate) || undefined : undefined}
+      onFocus={(detail: GoabInputOnFocusDetail) => {
+        setIsFocused(true);
+        componentOnFocus?.(detail);
+      }}
       onChange={(detail: GoabInputOnChangeDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
@@ -85,6 +105,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
           value: detail.value,
           controlProps: props as ControlProps,
         });
+        componentOnChange?.(detail);
       }}
       onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
         onKeyPressForDateControl({
@@ -93,8 +114,10 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
           key: detail.key,
           controlProps: props as ControlProps,
         });
+        componentOnKeyPress?.(detail);
       }}
       onBlur={(detail: GoabInputOnBlurDetail) => {
+        setIsFocused(false);
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
@@ -104,8 +127,8 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
           value: detail.value,
           controlProps: props as ControlProps,
         });
+        componentOnBlur?.(detail);
       }}
-      {...reformatDateProps(uischema?.options?.componentProps)}
     />
   );
 };

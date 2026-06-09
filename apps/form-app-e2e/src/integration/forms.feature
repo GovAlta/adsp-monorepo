@@ -238,3 +238,46 @@ Feature: Form app
     And the user views the summary of "Standard controls" with "British Columbia" as "required" "Province" under "Canadian mailing address" for standard postal address control
     And the user views the summary of "Standard controls" with "V6E 1C1" as "required" "Postal code" under "Canadian mailing address" for standard postal address control
     And the user views the summary of "Standard controls" with "111 111 118" as "not required" "Social insurance number"
+
+  # TEST DATA: regression-control-examples is created with all types of control examples
+  @TEST_CS-3993 @regression
+  Scenario: As a form user, I can use rule to dynamically change the form based on user input
+    Given an anonymous applicant goes to "regression-control-examples" application
+    Then the user views an anonymous form draft of "regression-control-examples"
+    # Test Hide/Show rule based on radio button input
+    When the user clicks "Dynamic elements" task on task list page
+    And the user selects "Yes" radio button for the question of "Value a"
+    Then the user "should not view" the text field labelled "Hide on true"
+    And the user "views" the text field labelled "Show on true"
+    When the user enters "YesValueA" in a text field labelled "Show on true"
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Dynamic elements" with "YesValueA" as "not required" "Show on true"
+    When the user clicks Back to application overview link on the form page
+    And the user clicks "Dynamic elements" task on task list page
+    And the user selects "No" radio button for the question of "Value a"
+    Then the user "should not view" the text field labelled "Show on true"
+    And the user "views" the text field labelled "Hide on true"
+    When the user enters "NoValueA" in a text field labelled "Hide on true"
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Dynamic elements" with "NoValueA" as "not required" "Hide on true"
+    # Test Enable/Disable rule based on integer input
+    When the user clicks Back to application overview link on the form page
+    And the user clicks "Dynamic elements" task on task list page
+    When the user enters "1" in the integer field labelled "Value a"
+    Then the user views the text field of "Enable on even number" is "disabled"
+    And the user views the text field of "Disable on even number" is "enabled"
+    When the user enters "OddNumber1" in a text field labelled "Disable on even number"
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Dynamic elements" with "OddNumber1" as "not required" "Disable on even number"
+    When the user clicks Back to application overview link on the form page
+    And the user clicks "Dynamic elements" task on task list page
+    And the user enters "2" in the integer field labelled "Value a"
+    Then the user views the text field of "Enable on even number" is "enabled"
+    And the user views the text field of "Disable on even number" is "disabled"
+    When the user enters "EvenNumber2" in a text field labelled "Enable on even number"
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Dynamic elements" with "EvenNumber2" as "not required" "Enable on even number"

@@ -26,7 +26,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
 
   return (
     <div>
-      <Band title="Sign in to apply">Sign in to start or continue an application.</Band>
+      <Band title="Sign in to apply">Please sign in with your alberta.ca account.</Band>
       <Container vs={3} hs={1}>
         <Grid>
           <GridItem md={1} />

@@ -44,7 +44,11 @@ jobs:
       - uses: snok/install-poetry@v1
         with:
           version: '1.6.1'
+      - run: rm -rf /tmp/.dotnet/shm
       - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - name: Get last successful commit
         id: last_successful_commit
         uses: nrwl/nx-set-shas@v5
@@ -128,7 +132,7 @@ jobs:
       name: Dev-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app, subscriber-app]
+        app: [tenant-management-webapp, status-app, subscriber-app, form-app, form-admin-app]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -189,7 +193,7 @@ jobs:
       name: Staging-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app, subscriber-app]
+        app: [tenant-management-webapp, status-app, subscriber-app, form-app, form-admin-app]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

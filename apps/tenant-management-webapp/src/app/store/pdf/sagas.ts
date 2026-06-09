@@ -36,6 +36,11 @@ import {
   DELETE_PDF_FILE_SERVICE,
   DELETE_PDF_FILES_SERVICE,
   updateJobs,
+  clearPdfPreviewStale,
+  markPdfPreviewStale,
+  getPdfTemplates,
+  saveUpdatedPdfTemplate,
+  generatePdf as generatePdfAction,
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
@@ -51,6 +56,7 @@ import {
   createPdfJobApi,
 } from './api';
 import { fetchServiceMetrics } from '@store/common';
+import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_RESULT } from '../agent/actions';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -332,10 +338,10 @@ function* emitResponse(socket) {
   yield apply(socket, socket.emit, ['message received']);
 }
 
-export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
+export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
+  let tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
 
   const token: string = yield call(getAccessToken);
 
@@ -348,15 +354,22 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
 
   if (pdfServiceUrl && token && baseUrl) {
     try {
-      // save first
+      if (agentTemplate) {
+        tempTemplate = agentTemplate;
+      }
+
       const pdfTemplate = {
         [tempTemplate.id]: {
           ...tempTemplate,
         },
       };
+
       const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
-      yield call(generatePdfApi, token, url, saveBody);
+
+      if (!agentTemplate) {
+        const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+        yield call(generatePdfApi, token, url, saveBody);
+      }
 
       const combinedData = payload.data;
       if (payload.inputData) {
@@ -408,6 +421,41 @@ export function* fetchPdfMetrics(): SagaIterator {
   });
 }
 
+const MUTATION_TOOLS = new Set([
+  'pdfConfigurationUpdateTool',
+  'pdfDataUpdateTool'
+]);
+
+function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
+  return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
+}
+
+
+export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponseAction): SagaIterator {
+  if (isMutationToolResult(chunk)) {
+    yield put(markPdfPreviewStale());
+      const chunkPayload  = chunk?.payload as unknown as { result: Record<string, object> };
+    yield put(saveUpdatedPdfTemplate(chunkPayload.result));
+  }
+
+  if (done) {
+    const currentlyGeneratedPDFData = yield select((state: RootState) => state.pdf?.currentlyGeneratedPDFData);
+    const isPreviewMarkedStale: boolean = yield select((state: RootState) => state.pdf.previewStale);
+    if (isPreviewMarkedStale) {
+      yield put(getPdfTemplates());
+      yield put(clearPdfPreviewStale());
+
+      const payload = {
+        templateId: currentlyGeneratedPDFData.id,
+        data: currentlyGeneratedPDFData.variables ? JSON.parse(currentlyGeneratedPDFData.variables) : {},
+        fileName: `${currentlyGeneratedPDFData.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+      };
+
+      yield put(generatePdfAction(payload, currentlyGeneratedPDFData));
+    }
+  }
+}
+
 export function* watchPdfSagas(): Generator {
   yield takeEvery(FETCH_PDF_TEMPLATES_ACTION, fetchPdfTemplates);
   yield takeEvery(FETCH_CORE_PDF_TEMPLATES_ACTION, fetchCorePdfTemplates);
@@ -420,4 +468,5 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);
   yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
   yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
+  yield takeEvery(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
 }

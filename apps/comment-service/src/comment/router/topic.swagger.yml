@@ -7,6 +7,20 @@ components:
           type: string
         name:
           type: string
+        adminRoles:
+          type: array
+          items:
+            type: string
+        readerRoles:
+          type: array
+          items:
+            type: string
+        commenterRoles:
+          type: array
+          items:
+            type: string
+        securityClassification:
+          type: string
     Topic:
       type: object
       properties:
@@ -45,6 +59,10 @@ components:
           type: string
         content:
           type: string
+        context:
+          type: object
+          description: Arbitrary JSON context data associated with the comment.
+          additionalProperties: true
         createdBy:
           type: object
           properties:
@@ -65,6 +83,182 @@ components:
         lastUpdatedOn:
           type: string
           format: date-time
+
+/comment/v1/topic-types:
+  get:
+    tags:
+      - Topic
+    description: Retrieves all topic types for the tenant.
+    responses:
+      200:
+        description: Topic types retrieved successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/TopicType"
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+  post:
+    tags:
+      - Topic
+    description: Creates a new topic type for the tenant.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID of the topic type.
+                example: case
+              name:
+                type: string
+                description: Name of the topic type.
+                example: Case
+              readRoles:
+                type: array
+                description: Optional roles allowed to read topics of this type.
+                items:
+                  type: string
+              writeRoles:
+                type: array
+                description: Optional roles allowed to write comments on topics of this type.
+                items:
+                  type: string
+            required: [id, name]
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      409:
+        description: Topic type name already exists.
+
+/comment/v1/topic-types/{topic-type-id}:
+  get:
+    tags:
+      - Topic
+    description: Retrieves a specific topic type for the tenant.
+    parameters:
+      - name: topic-type-id
+        description: ID of the topic type to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Topic type retrieved successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopicType"
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
+  patch:
+    tags:
+      - Topic
+    description: Updates a topic type for the tenant.
+    parameters:
+      - name: topic-type-id
+        description: ID of the topic type to update.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the topic type.
+                example: Case
+              readRoles:
+                type: array
+                description: Optional roles allowed to read topics of this type.
+                items:
+                  type: string
+              writeRoles:
+                type: array
+                description: Optional roles allowed to write comments on topics of this type.
+                items:
+                  type: string
+    responses:
+      200:
+        description: Topic type updated successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopicType"
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
+  delete:
+    tags:
+      - Topic
+    description: Permanently deletes a topic type for the tenant.
+    parameters:
+      - name: topic-type-id
+        description: ID of the topic type to delete.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Topic type deleted successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+                id:
+                  type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
+      409:
+        description: Topic type has associated topics that must be deleted first.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                errorMessage:
+                  type: string
+                topics:
+                  type: integer
 
 /comment/v1/topics:
   get:
@@ -379,6 +573,10 @@ components:
               content:
                 type: string
                 description: Content of the comment.
+              context:
+                type: object
+                description: Optional arbitrary JSON context data associated with the comment.
+                additionalProperties: true
     responses:
       200:
         description: Request completed successfully.
@@ -454,6 +652,10 @@ components:
               content:
                 type: string
                 description: Content of the comment.
+              context:
+                type: object
+                description: Optional arbitrary JSON context data. When supplied, it replaces the existing context.
+                additionalProperties: true
     responses:
       200:
         description: Request completed successfully.

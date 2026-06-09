@@ -293,11 +293,6 @@ export class NotificationTypeEntity implements NotificationType {
         subtitle: eventNotification.templates[channel].subtitle ?? '',
       };
 
-      if (!configurationService?.email?.fromEmail) {
-        logger.warn('Configuration not ready, retrying...');
-        throw new Error('Configuration not ready');
-      }
-
       return {
         tenantId: event.tenantId.toString(),
         type: {
@@ -436,11 +431,6 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         ...messageContext,
         event,
       };
-
-      if (!configuration?.email?.fromEmail) {
-        logger.warn('Configuration not ready, retrying...');
-        throw new Error('Configuration not ready');
-      }
 
       const template = eventNotification.templates[channel];
 

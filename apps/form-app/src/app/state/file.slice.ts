@@ -24,7 +24,7 @@ async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<Fil
     new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}`, fileServiceUrl).href,
     {
       headers: { Authorization: `Bearer ${token}` },
-    }
+    },
   );
 
   return data;
@@ -50,7 +50,7 @@ export const loadFileMetadata = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const downloadFile = createAsyncThunk(
@@ -78,7 +78,7 @@ export const downloadFile = createAsyncThunk(
         {
           responseType: 'blob',
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const mimeType = headers['content-type']?.toString();
 
@@ -100,7 +100,7 @@ export const downloadFile = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const downloadFormPdf = createAsyncThunk('file/download-form-pdf', async (urn: string, { rejectWithValue }) => {
@@ -159,14 +159,14 @@ export const checkPdfFile = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const uploadAnonymousFile = createAsyncThunk(
   'file/upload-anonymous-file',
   async (
     { typeId, file }: { typeId: string; file: File; recordId: string; propertyId: string },
-    { dispatch, getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue },
   ) => {
     try {
       const { config, user } = getState() as AppState;
@@ -212,14 +212,14 @@ export const uploadAnonymousFile = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const uploadFile = createAsyncThunk(
   'file/upload-file',
   async (
     { typeId, file, recordId, propertyId }: { typeId: string; file: File; recordId: string; propertyId: string },
-    { dispatch, getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue },
   ) => {
     try {
       const { config } = getState() as AppState;
@@ -242,7 +242,7 @@ export const uploadFile = createAsyncThunk(
             const progress = Math.floor((loaded * 100) / total);
             dispatch(fileActions.setUploadProgress({ name: file.name, progress }));
           },
-        }
+        },
       );
 
       // Keep the file in data URL form in the state, so we don't need to download again.
@@ -264,14 +264,14 @@ export const uploadFile = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const deleteFile = createAsyncThunk(
   'file/delete-file',
   async (
     { urn, anonymousApply }: { urn: string; propertyId: string; anonymousApply: boolean },
-    { getState, rejectWithValue }
+    { getState, rejectWithValue },
   ) => {
     try {
       const { config, file } = getState() as AppState;
@@ -297,7 +297,7 @@ export const deleteFile = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 interface FileState {
@@ -311,6 +311,7 @@ interface FileState {
     metadata: Record<string, boolean>;
     uploading: boolean;
     loading: boolean;
+    loaded: boolean;
   };
 }
 
@@ -325,6 +326,7 @@ const initialFileState: FileState = {
     metadata: {},
     uploading: false,
     loading: false,
+    loaded: false,
   },
 };
 
@@ -347,10 +349,12 @@ const fileSlice = createSlice({
 
         state.busy.loading = false;
         state.busy.metadata[meta.arg.propertyId] = false;
+        state.busy.loaded = true;
       })
       .addCase(loadFileMetadata.rejected, (state, { meta }) => {
         state.busy.metadata[meta.arg.propertyId] = false;
         state.busy.loading = false;
+        state.busy.loaded = true;
       })
       .addCase(downloadFile.pending, (state, { meta }) => {
         state.busy.download[meta.arg] = true;
@@ -427,17 +431,17 @@ export const metaDataSelector = (state: AppState) => state.file.metadata;
 export const fileMetadataSelector = createSelector(
   (state: AppState) => state.file.metadata,
   (_state: AppState, urn: string) => urn,
-  (metadata, urn) => metadata[urn]
+  (metadata, urn) => metadata[urn],
 );
 
 export const fileDataUrlSelector = createSelector(
   (state: AppState) => state.file.files,
   (_state: AppState, urn: string) => urn,
-  (files, urn) => files[urn]
+  (files, urn) => files[urn],
 );
 export const checkExistingPdfFile = createSelector(
   (state: AppState) => state.file.pdfFileExists,
-  (file) => file
+  (file) => file,
 );
 
 export const fileMetaDataSelector = (state: AppState) => state.file.metadata;
@@ -446,5 +450,5 @@ export const fileBusySelector = (state: AppState) => state.file.busy;
 export const fileLoadingSelector = createSelector(
   (state: AppState) => state.file.busy,
   (_state: AppState, urn: string) => urn,
-  (busy, urn) => busy.metadata[urn] || busy.download[urn]
+  (busy, urn) => busy.metadata[urn] || busy.download[urn],
 );

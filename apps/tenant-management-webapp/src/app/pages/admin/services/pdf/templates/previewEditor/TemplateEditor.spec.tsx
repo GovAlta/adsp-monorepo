@@ -4,6 +4,14 @@ import { TemplateEditor } from './TemplateEditor';
 import { Provider } from 'react-redux';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
+jest.mock('socket.io-client', () => ({
+  io: jest.fn(() => ({
+    on: jest.fn(),
+    emit: jest.fn(),
+    disconnect: jest.fn(),
+  })),
+}));
 jest.mock('react-router-dom', () => ({
   useParams: () => ({
     id: 'A-file-server-image-test',
@@ -16,8 +24,21 @@ jest.mock('react-router-dom', () => ({
 }));
 
 describe('Pdf Component', () => {
-  const mockStore = configureStore([]);
+  const mockStore = configureStore([thunk]);
   const store = mockStore({
+    config: {
+      serviceUrls: {
+        agentServiceApiUrl: 'https://mock-agent-service-api-url.com',
+      },
+    },
+    agent: {
+      connected: false,
+      threads: {},
+      threadMessages: {},
+      messages: {},
+      downloadedFiles: {},
+      fileMetadata: {},
+    },
     pdf: {
       pdfTemplates: {
         'A-file-server-image-test': {
@@ -83,7 +104,7 @@ describe('Pdf Component', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <TemplateEditor {...mockErrors} />
-      </Provider>
+      </Provider>,
     );
     const saveButton = baseElement.querySelector("goa-button[testId='template-form-save']");
     fireEvent.click(saveButton);

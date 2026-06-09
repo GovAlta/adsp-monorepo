@@ -2,14 +2,23 @@ components:
   schemas:
     FormDefinition:
       type: object
+      required:
+        - name
+        - anonymousApply
+        - applicantRoles
+        - assessorRoles
       properties:
         id:
           type: string
+          maxLength: 50
+          description: Unique identifier for the form definition. If not provided, will be auto-generated from the name in kebab-case format.
         name:
           type: string
         description:
           type: string
         anonymousApply:
+          type: boolean
+        oneFormPerApplicant:
           type: boolean
         applicantRoles:
           type: array
@@ -23,23 +32,64 @@ components:
           type: array
           items:
             type: string
+        formDraftUrlTemplate:
+          type: string
         dataSchema:
           type: object
         uiSchema:
           type: object
         dispositionStates:
-          type: object
-          properties:
-            id:
-              type: string
-            status:
-              type: string
-            description:
-              type: string
-        generatesPdf:
-          type: boolean
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
         submissionRecords:
           type: boolean
+        submissionPdfTemplate:
+          type: string
+        scheduledIntakes:
+          type: boolean
+        supportTopic:
+          type: boolean
+        securityClassification:
+          type: string
+          enum: [public, 'protected a', 'protected b', 'protected c']
+        queueTaskToProcess:
+          type: object
+          properties:
+            queueNameSpace:
+              type: string
+            queueName:
+              type: string
+        customSubmissionEvent:
+          type: object
+          properties:
+            namespace:
+              type: string
+            name:
+              type: string
+        dryRun:
+          type: boolean
+    FormDefinitionPatch:
+      type: object
+      description: Partial update payload for a form definition. Only provided fields will be updated; omitted fields will not be changed.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        dataSchema:
+          type: object
+        uiSchema:
+          type: object
+      additionalProperties: false
     Form:
       type: object
       properties:
@@ -204,7 +254,7 @@ components:
   get:
     tags:
       - Form
-    description: Retrieves form definitions.
+    description: Retrieves form definitions with optional name search.
     parameters:
       - name: top
         description: Number of definitions to return in a page.
@@ -214,6 +264,12 @@ components:
           type: number
       - name: after
         description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: name
+        description: Search for form definitions by name (partial match, case-insensitive).
         in: query
         required: false
         schema:
@@ -229,7 +285,7 @@ components:
                 results:
                   type: array
                   items:
-                  $ref: '#/components/schemas/FormDefinition'
+                    $ref: '#/components/schemas/FormDefinition'
                 page:
                   type: object
                   properties:
@@ -239,6 +295,27 @@ components:
                       type: string
                     size:
                       type: number
+  post:
+    tags:
+      - Form
+    description: Creates a new form definition. Requires the form-service admin role. If the 'id' field is not provided in the request body, it will be auto-generated from the 'name' field in kebab-case format.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormDefinition'
+    responses:
+      201:
+        description: Successfully created the form definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      401:
+        description: User is not authorized to create form definitions.
+      409:
+        description: Form definition with the specified ID already exists.
 
 /form/v1/definitions/{definitionId}:
   get:
@@ -265,6 +342,80 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+  patch:
+    tags:
+      - Form
+    description: Partially updates an existing form definition. Requires the form-service admin role. Only the provided fields are changed; omitted fields are left unchanged.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition to patch.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormDefinitionPatch'
+    responses:
+      200:
+        description: Successfully patched the form definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      401:
+        description: User is not authorized to patch form definitions.
+      404:
+        description: Form definition not found.
+  put:
+    tags:
+      - Form
+    description: Updates an existing form definition. Requires the form-service admin role.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition to update.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormDefinition'
+    responses:
+      200:
+        description: Successfully updated the form definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      401:
+        description: User is not authorized to update form definitions.
+      404:
+        description: Form definition not found.
+  delete:
+    tags:
+      - Form
+    description: Deletes a form definition. Requires the form-service admin role.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition to delete.
+        required: true
+        in: path
+        schema:
+          type: string
+    responses:
+      204:
+        description: Successfully deleted the form definition.
+      401:
+        description: User is not authorized to delete form definitions.
+      404:
+        description: Form definition not found.
 
 /form/v1/forms:
   get:

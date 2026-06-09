@@ -164,7 +164,7 @@ function disconnectExpiredSocket(socket: Socket, logger: Logger, user: User, ten
 }
 
 export function onIoConnection(logger: Logger) {
-  return async (socket: Socket): Promise<void> => {
+  return (socket: Socket): void => {
     try {
       const req = socket.request as Request;
       const user = req.user;
@@ -212,9 +212,18 @@ export function onIoConnection(logger: Logger) {
         user: `${user.name} (ID: ${user.id})`,
       });
 
-      const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
+      // Lazy configuration loader — fetches once and caches the promise so
+      // concurrent event handlers share the same in-flight request.
+      // All socket.on() handlers are registered synchronously below, so no
+      // client events are dropped while configuration is loading.
+      let configurationPromise: Promise<AgentServiceConfiguration> | null = null;
+      const getConfiguration = () => {
+        if (!configurationPromise) {
+          configurationPromise = req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
+        }
+        return configurationPromise;
+      };
 
-      socket.send(`Connected as user ${user.name} (ID: ${user.id}) for tenant ${tenant.name}...`);
       socket.on('message', async (payload) => {
         try {
           if (isUserTokenExpired(user)) {
@@ -229,7 +238,7 @@ export function onIoConnection(logger: Logger) {
             const threadId = threadIdValue || uuid();
             const messageId = messageIdValue || uuid();
 
-            const aiAgent = configuration.getAgent(agent);
+            const aiAgent = await (await getConfiguration()).getAgent(agent);
             if (!aiAgent) {
               throw new NotFoundError('agent', agent);
             }
@@ -261,6 +270,21 @@ export function onIoConnection(logger: Logger) {
             const replyId = uuid();
 
             streaming = true;
+            // Send periodic heartbeats during streaming to prevent reverse proxy
+            // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
+            // during long LLM thinking or tool execution gaps.
+            const streamStartTime = Date.now();
+            const heartbeatInterval = setInterval(() => {
+              if (socket.connected) {
+                socket.emit('stream', {
+                  agent,
+                  threadId,
+                  messageId: replyId,
+                  replyTo: messageId,
+                  chunk: { type: 'heartbeat', payload: { timestamp: Date.now() } },
+                });
+              }
+            }, 15_000);
             try {
               if (rawChunks === true) {
                 const projector = await aiAgent.createProjector(user, threadId);
@@ -320,6 +344,7 @@ export function onIoConnection(logger: Logger) {
               }
 
               let output: unknown;
+              const streamLoopDurationMs = Date.now() - streamStartTime;
               try {
                 output = await result.object;
               } catch (err) {
@@ -334,6 +359,18 @@ export function onIoConnection(logger: Logger) {
                 );
               }
 
+              const totalDurationMs = Date.now() - streamStartTime;
+              logger.info(
+                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${totalDurationMs - streamLoopDurationMs}ms`,
+                {
+                  context: 'AgentRouter',
+                  tenant: tenant?.id?.toString(),
+                  user: `${user.name} (ID: ${user.id})`,
+                  totalDurationMs,
+                  streamLoopDurationMs,
+                },
+              );
+
               socket.emit('stream', {
                 agent,
                 threadId,
@@ -343,6 +380,7 @@ export function onIoConnection(logger: Logger) {
                 done: true,
               });
             } finally {
+              clearInterval(heartbeatInterval);
               streaming = false;
 
               // If a token-expiry disconnect was deferred while the stream was
@@ -375,7 +413,7 @@ export function onIoConnection(logger: Logger) {
             throw new InvalidValueError('workspaceTarball', 'workspaceTarball must be a URN string.');
           }
 
-          const aiAgent = configuration.getAgent(agent);
+          const aiAgent = await (await getConfiguration()).getAgent(agent);
           if (!aiAgent) {
             throw new NotFoundError('agent', agent);
           }
@@ -462,7 +500,7 @@ export function onIoConnection(logger: Logger) {
             throw new InvalidValueError('deletes', 'deletes must be an array of file paths.');
           }
 
-          const aiAgent = configuration.getAgent(agent);
+          const aiAgent = await (await getConfiguration()).getAgent(agent);
           if (!aiAgent) {
             throw new NotFoundError('agent', agent);
           }
@@ -498,7 +536,7 @@ export function onIoConnection(logger: Logger) {
           const { agent, threadId: threadIdValue } = payload;
           const threadId = threadIdValue || uuid();
 
-          const aiAgent = configuration.getAgent(agent);
+          const aiAgent = await (await getConfiguration()).getAgent(agent);
           if (!aiAgent) {
             throw new NotFoundError('agent', agent);
           }
@@ -527,6 +565,22 @@ export function onIoConnection(logger: Logger) {
           user: `${user.name} (ID: ${user.id})`,
         });
       });
+
+      // All socket.on() handlers are now registered. Pre-warm configuration
+      // and send the readiness signal once it resolves. Clients wait for this
+      // message before sending workspace-update or message events.
+      void getConfiguration()
+        .then(() => {
+          socket.send(`Connected as user ${user.name} (ID: ${user.id}) for tenant ${tenant.name}...`);
+        })
+        .catch((err) => {
+          logger.warn(`Configuration load failed for user ${user.name} (ID: ${user.id}): ${err}`, {
+            context: 'AgentRouter',
+            tenant: tenant?.id?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          });
+          socket.disconnect(true);
+        });
     } catch (err) {
       logger.warn(`Error encountered on socket.io connection. ${err}`);
       socket.disconnect(true);
@@ -562,7 +616,7 @@ const AGENT_KEY = 'agent';
 export const getAgents: RequestHandler = async function (req, res, next) {
   try {
     const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
-    const agents = configuration.getAgents();
+    const agents = await configuration.getAgents();
     res.send({ agents });
   } catch (err) {
     next(err);
@@ -573,7 +627,7 @@ export const getAgent: RequestHandler = async function (req, res, next) {
   try {
     const { agentId } = req.params;
     const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
-    const agent = configuration.getAgent(agentId);
+    const agent = await configuration.getAgent(agentId);
     if (!agent) {
       throw new NotFoundError('Agent', agentId);
     }

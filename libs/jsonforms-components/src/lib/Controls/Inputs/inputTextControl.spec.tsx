@@ -104,6 +104,30 @@ describe('Input Text Control tests', () => {
     isValid: true,
     required: false,
   };
+
+  it('renders placeholder from componentProps', () => {
+    const props = {
+      ...staticProps,
+      data: '',
+      uischema: {
+        ...staticProps.uischema,
+        options: {
+          ...staticProps.uischema.options,
+          componentProps: {
+            placeholder: 'Enter your first name',
+          },
+        },
+      },
+    };
+    const { baseElement } = render(
+      <JsonFormsContext.Provider value={mockContextValue}>
+        <GoAInputText {...props} />
+      </JsonFormsContext.Provider>
+    );
+    const input = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+    expect(input).toHaveAttribute('placeholder', 'Enter your first name');
+  });
   const emptyBooleanProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: { type: 'boolean' },
@@ -270,7 +294,7 @@ describe('Input Text Control tests', () => {
       expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
-    it('does not update SIN input when alphabet characters are entered', async () => {
+    it('does not update SIN input when alphabet characters are entered (defaults enforced)', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
@@ -293,7 +317,7 @@ describe('Input Text Control tests', () => {
       });
 
       expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
-      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('1324567');
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('123456789');
     });
 
     it('prevents alphabet key presses for SIN input', async () => {

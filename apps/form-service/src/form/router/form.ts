@@ -5,7 +5,6 @@ import {
   isAllowedUser,
   startBenchmark,
   UnauthorizedUserError,
-  TenantService,
   TokenProvider,
   ServiceDirectory,
   adspId,
@@ -15,7 +14,6 @@ import {
   createValidationHandler,
   InvalidOperationError,
   NotFoundError,
-  Results,
 } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
@@ -37,11 +35,11 @@ import {
   submissionDispositioned,
   customFormSubmitted,
 } from '../events';
-import { mapForm, mapFormDefinition, mapFormSubmission, mapFormWithFormSubmission } from '../mapper';
+import { mapForm, mapFormSubmission, mapFormWithFormSubmission } from '../mapper';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { ExportServiceRoles, FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormDefinition, FormStatus, FormSubmissionCriteria, Intake } from '../types';
+import { Form, FormCriteria, FormStatus, FormSubmissionCriteria } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -51,9 +49,6 @@ import {
   SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { PdfService } from '../pdf';
-import { CalendarService } from '../calendar';
-
-const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -92,100 +87,6 @@ export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSu
       } else {
         res.send(mapForm(apiId, form, includeData));
       }
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const user = req.user;
-      const tenantId = req.tenant?.id;
-      const { top: topValue, after } = req.query;
-      const top = topValue ? parseInt(topValue as string) : 20;
-
-      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin)) {
-        throw new UnauthorizedUserError('access definitions', user);
-      }
-
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-      const { data } = await axios.get<
-        Results<{
-          latest: { revision: number; configuration: FormDefinition };
-          active: { revision: number; configuration: FormDefinition };
-        }>
-      >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          top,
-          after,
-          tenantId: tenantId?.toString(),
-          includeActive: true,
-        },
-      });
-
-      res.send({
-        ...data,
-        results: data.results.map(({ latest, active }) =>
-          active
-            ? mapFormDefinition(active.configuration, active.revision)
-            : mapFormDefinition(latest.configuration, latest.revision),
-        ),
-      });
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const user = req.user;
-      const { definitionId } = req.params;
-
-      // This endpoint allows anonymous requests and needs to support resolving tenant context via a query param in that case.
-      if (!req.tenant) {
-        const { tenantId: tenantIdValue } = req.query;
-        const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : null;
-        req.tenant = tenantId ? await tenantService.getTenant(tenantId) : null;
-      }
-
-      if (!req.tenant) {
-        throw new InvalidOperationError('Cannot determine tenant context of request.');
-      }
-
-      const { version } = req.query;
-
-      let definition: FormDefinitionEntity;
-
-      if (version) {
-        [definition] = await req.getServiceConfigurationRevision<FormDefinitionEntity>(
-          version as string,
-          definitionId,
-          req.tenant.id,
-        );
-      } else {
-        [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
-      }
-
-      if (!definition) {
-        throw new NotFoundError('form definition', definitionId);
-      }
-
-      if (!definition.canAccessDefinition(user)) {
-        throw new UnauthorizedUserError('access definition', user);
-      }
-
-      let intake: Intake;
-      if (definition.scheduledIntakes) {
-        intake = await calendarService.getScheduledIntake(definition);
-      }
-
-      res.send(mapFormDefinition(definition, definition.revision, intake));
     } catch (err) {
       next(err);
     }
@@ -837,14 +738,12 @@ interface FormRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   eventService: EventService;
-  tenantService: TenantService;
   notificationService: NotificationService;
   queueTaskService: QueueTaskService;
   fileService: FileService;
   commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
   pdfService: PdfService;
-  calendarService: CalendarService;
 }
 
 export function createFormRouter({
@@ -854,23 +753,14 @@ export function createFormRouter({
   directory,
   tokenProvider,
   eventService,
-  tenantService,
   notificationService,
   queueTaskService,
   fileService,
   commentService,
   submissionRepository,
   pdfService,
-  calendarService,
 }: FormRouterProps): Router {
   const router = Router();
-
-  router.get('/definitions', getFormDefinitions(directory, tokenProvider));
-  router.get(
-    '/definitions/:definitionId',
-    createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
-    getFormDefinition(tenantService, calendarService),
-  );
 
   router.get(
     '/forms',

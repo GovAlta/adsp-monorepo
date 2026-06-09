@@ -21,7 +21,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10'
+      - run: rm -rf /tmp/.dotnet/shm
       - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - shell: bash
         run: echo "ALL_APPS=$(npx nx show projects --type=app | tr "\n" ", ")" >> $GITHUB_ENV
       - name: Delete ADSP containers older than a week

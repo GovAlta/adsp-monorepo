@@ -16,7 +16,7 @@ import {
   GoabBadge,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -85,10 +85,12 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { DefinitionAgentChat } from './DefinitionAgentChat';
-import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
-import { startThread } from '@store/agent/actions';
+import { AgentChat } from '@core-services/app-common';
+import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
+import { messageAgent, startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
+import { Attachment, UserContent } from '@core-services/app-common';
+import { AnyAction } from 'redux';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 
@@ -419,15 +421,43 @@ export function AddEditFormDefinitionEditor({
     return null;
   };
 
-  const agentConnected = useSelector(agentConnectedSelector);
+  // Agent chat state
   const [threadId] = useState(uuid());
+  const agentName = 'formGenerationAgent';
+  const resourceId = definition?.id;
 
+  const agentConnected = useSelector(agentConnectedSelector);
   const thread = useSelector((state: RootState) => threadSelector(state, threadId));
+  const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
+
   useEffect(() => {
     if (formAIEnabled && !thread) {
-      dispatch(startThread('formGenerationAgent', threadId));
+      dispatch(startThread(agentName, threadId));
     }
-  }, [dispatch, formAIEnabled, thread]);
+  }, [dispatch, formAIEnabled, agentName, thread, threadId]);
+
+  const handleAgentSend = useCallback(
+    (tid: string, context: Record<string, unknown>, content: UserContent) => {
+      dispatch(messageAgent(tid, context, content));
+    },
+    [dispatch],
+  );
+
+  const handleAgentAttachmentUpload = useCallback(
+    async (file: File): Promise<Attachment> => {
+      const type = file.type.startsWith('image/') ? 'image' : 'file';
+      const { uploadedFile, dataUrl } = await dispatch(
+        UploadFileService({ type: 'agent-attachments', file, recordId: resourceId }) as unknown as AnyAction,
+      );
+      return {
+        urn: uploadedFile.urn,
+        filename: uploadedFile.filename || file.name,
+        type,
+        thumbnailUrl: type === 'image' ? dataUrl : undefined,
+      };
+    },
+    [dispatch, resourceId],
+  );
 
   return (
     <FormEditor>
@@ -562,12 +592,16 @@ export function AddEditFormDefinitionEditor({
                   data-testid="form-editor-agent-tab"
                   isTightContent={true}
                 >
-                  <DefinitionAgentChat
-                    definitionId={definition.id}
-                    threadId={threadId}
-                    height={EditorHeight}
-                    disabled={!agentConnected}
-                  />
+                  <div style={{ height: EditorHeight }}>
+                    <AgentChat
+                      threadId={threadId}
+                      context={{ formDefinitionId: definition.id }}
+                      messages={messages}
+                      disabled={!agentConnected || !thread}
+                      onSend={handleAgentSend}
+                      onAttachmentUpload={handleAgentAttachmentUpload}
+                    />
+                  </div>
                 </Tab>
               )}
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
