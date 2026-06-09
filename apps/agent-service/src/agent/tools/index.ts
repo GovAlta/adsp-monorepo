@@ -8,6 +8,7 @@ import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
 import { createDataRegisterTools } from './dataRegister';
 import { createNotificationTemplateTools } from './notificationTemplate';
+import { createNxAdspTemplateTools } from './nxAdspTemplates';
 
 interface ToolsProps {
   logger: Logger;
@@ -42,6 +43,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     tokenProvider,
   });
 
+  const { listNxAdspTemplatesTool, getNxAdspTemplateTool } = createNxAdspTemplateTools();
+
   return {
     fileDownloadTool,
     fileCopyTool,
@@ -57,6 +60,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     dataRegisterGetTool,
     dataRegisterUpdateTool,
     emailNotificationGenerateTool,
+    listNxAdspTemplatesTool,
+    getNxAdspTemplateTool,
   };
 }
 

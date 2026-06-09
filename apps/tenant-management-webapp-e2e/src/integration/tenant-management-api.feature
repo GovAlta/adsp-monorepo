@@ -1,3 +1,4 @@
+@tenant-management-api
 Feature: Tenant Management API
 
     @smoke-test @regression @api
