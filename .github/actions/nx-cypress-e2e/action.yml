@@ -37,7 +37,7 @@ runs:
     - name: E2E Test
       uses: cypress-io/github-action@v7
       env:
-        cypress_TAGS: ${{ inputs.tags }}
+        CYPRESS_TAGS: ${{ inputs.tags }}
         cypress_coreApiClientSecret: ${{ inputs.core-api-client-secret }}
         cypress_coreApiUserPassword: ${{ inputs.core-api-user-password }}
         cypress_clientSecret: ${{ inputs.api-client-secret }}
