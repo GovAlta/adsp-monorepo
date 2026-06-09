@@ -286,8 +286,8 @@ components:
     description: Marks multiple files for deletion. File deletion is not immediate, but files will eventually disappear.
     parameters:
       - name: files
-        description: File IDs to delete, provided as a bracketed comma-separated list.
-        example: '[53fca659-362d-407f-9c4d-c2c8c6427bdb, ced3fbdd-7597-455e-84c6-1d0b3d03a274]'
+        description: File IDs to delete, provided as a comma-separated query string.
+        example: '53fca659-362d-407f-9c4d-c2c8c6427bdb,ced3fbdd-7597-455e-84c6-1d0b3d03a274'
         in: query
         required: true
         schema:
