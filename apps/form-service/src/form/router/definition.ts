@@ -158,6 +158,8 @@ export function createFormDefinition(
       }
 
       const definition: FormDefinition = {
+        applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
+        assessorRoles: [],
         ...req.body,
         id: generatedId,
       };
@@ -345,6 +347,10 @@ export function createFormDefinitionRouter({
       body('anonymousApply').isBoolean(),
       body('applicantRoles').isArray(),
       body('assessorRoles').isArray(),
+      body('formDraftUrlTemplate')
+        .optional()
+        .isString()
+        .matches(/^https?:\/\/.{0,500}$/),
     ),
     createFormDefinition(directory, tokenProvider, logger),
   );
@@ -366,6 +372,10 @@ export function createFormDefinitionRouter({
         .isString()
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-]+$/),
+      body('formDraftUrlTemplate')
+        .optional()
+        .isString()
+        .matches(/^https?:\/\/.{0,500}$/),
     ),
     updateFormDefinition(directory, tokenProvider),
   );
@@ -382,6 +392,10 @@ export function createFormDefinitionRouter({
       body('description').optional().isString(),
       body('dataSchema').optional().isObject(),
       body('uiSchema').optional().isObject(),
+      body('formDraftUrlTemplate')
+        .optional()
+        .isString()
+        .matches(/^https?:\/\/.{0,500}$/),
     ),
     patchFormDefinition(directory, tokenProvider),
   );
