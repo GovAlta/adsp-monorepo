@@ -38,8 +38,10 @@ components:
             type: string
         formDraftUrlTemplate:
           type: string
-          pattern: '^https?://.{0,500}$'
-          description: Optional URL template for linking applicants back to their draft. Use '{{id}}' as a placeholder for the form ID (e.g. https://example.com/form/{{id}}).
+          minLength: 6
+          maxLength: 150
+          pattern: '^https?://.+$'
+          description: Optional URL template for linking applicants back to their draft. Use '{{id}}' as a placeholder for the form ID (e.g. https://example.com/form/{{id}}). Must be between 6 and 150 characters.
         dataSchema:
           type: object
         uiSchema:

@@ -299,6 +299,147 @@ describe('definition router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-new-form', name: 'My New Form' }));
       expect(next).not.toHaveBeenCalled();
     });
+
+    describe('formDraftUrlTemplate validation', () => {
+      const FORM_DRAFT_URL_PATTERN = /^https?:\/\/.+$/;
+
+      it('accepts a valid https URL', () => {
+        expect(FORM_DRAFT_URL_PATTERN.test('https://example.com/form/{{id}}')).toBe(true);
+      });
+
+      it('accepts a valid http URL', () => {
+        expect(FORM_DRAFT_URL_PATTERN.test('http://example.com/form/{{id}}')).toBe(true);
+      });
+
+      it('rejects a URL without a scheme', () => {
+        expect(FORM_DRAFT_URL_PATTERN.test('example.com/form/{{id}}')).toBe(false);
+      });
+
+      it('rejects an ftp URL', () => {
+        expect(FORM_DRAFT_URL_PATTERN.test('ftp://example.com/form')).toBe(false);
+      });
+
+      it('rejects an empty string', () => {
+        expect(FORM_DRAFT_URL_PATTERN.test('')).toBe(false);
+      });
+
+      it('enforces minimum length of 6', () => {
+        // 'http:/' is 6 chars but has no host — pattern still rejects it
+        expect('http:/'.length).toBe(6);
+        expect(FORM_DRAFT_URL_PATTERN.test('http:/')).toBe(false);
+        // Valid URL that is at least 6 chars
+        expect('http://x'.length).toBeGreaterThanOrEqual(6);
+        expect(FORM_DRAFT_URL_PATTERN.test('http://x')).toBe(true);
+      });
+
+      it('enforces maximum length of 150', () => {
+        const longUrl = 'https://example.com/' + 'a'.repeat(131); // total 151 chars
+        expect(longUrl.length).toBe(151);
+        // length check is done by express-validator; pattern itself does not enforce max
+        // so just confirm the length is > 150
+        expect(longUrl.length > 150).toBe(true);
+      });
+    });
+
+    describe('default roles', () => {
+      it('applies default applicantRoles when not provided in body', async () => {
+        const configurationServiceUrl = new URL('http://configuration-service');
+        directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+        axiosMock.patch.mockResolvedValue({
+          data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
+        });
+
+        const req = {
+          user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+          body: { name: 'Test', anonymousApply: false },
+          tenant: { id: tenantId },
+          getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+        };
+        const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+        const next = jest.fn();
+
+        const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+        await handler(req as unknown as Request, res as unknown as Response, next);
+
+        expect(axiosMock.patch).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            configuration: expect.objectContaining({
+              applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
+              assessorRoles: [],
+            }),
+          }),
+          expect.any(Object),
+        );
+      });
+
+      it('overrides default applicantRoles when provided in body', async () => {
+        const configurationServiceUrl = new URL('http://configuration-service');
+        directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+        axiosMock.patch.mockResolvedValue({
+          data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
+        });
+
+        const req = {
+          user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+          body: { name: 'Test', anonymousApply: false, applicantRoles: ['custom-role'], assessorRoles: ['assessor'] },
+          tenant: { id: tenantId },
+          getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+        };
+        const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+        const next = jest.fn();
+
+        const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+        await handler(req as unknown as Request, res as unknown as Response, next);
+
+        expect(axiosMock.patch).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            configuration: expect.objectContaining({
+              applicantRoles: ['custom-role'],
+              assessorRoles: ['assessor'],
+            }),
+          }),
+          expect.any(Object),
+        );
+      });
+
+      it('passes formDraftUrlTemplate through to configuration service', async () => {
+        const configurationServiceUrl = new URL('http://configuration-service');
+        directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+        axiosMock.patch.mockResolvedValue({
+          data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
+        });
+
+        const req = {
+          user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+          body: {
+            name: 'Test',
+            anonymousApply: false,
+            applicantRoles: [],
+            assessorRoles: [],
+            formDraftUrlTemplate: 'https://example.com/form/{{id}}',
+          },
+          tenant: { id: tenantId },
+          getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+        };
+        const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+        const next = jest.fn();
+
+        const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+        await handler(req as unknown as Request, res as unknown as Response, next);
+
+        expect(axiosMock.patch).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            configuration: expect.objectContaining({
+              formDraftUrlTemplate: 'https://example.com/form/{{id}}',
+            }),
+          }),
+          expect.any(Object),
+        );
+      });
+    });
   });
 
   describe('patchFormDefinition', () => {

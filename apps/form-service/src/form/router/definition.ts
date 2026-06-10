@@ -350,7 +350,8 @@ export function createFormDefinitionRouter({
       body('formDraftUrlTemplate')
         .optional()
         .isString()
-        .matches(/^https?:\/\/.{0,500}$/),
+        .isLength({ min: 6, max: 150 })
+        .matches(/^https?:\/\/.+$/),
     ),
     createFormDefinition(directory, tokenProvider, logger),
   );
@@ -375,7 +376,8 @@ export function createFormDefinitionRouter({
       body('formDraftUrlTemplate')
         .optional()
         .isString()
-        .matches(/^https?:\/\/.{0,500}$/),
+        .isLength({ min: 6, max: 150 })
+        .matches(/^https?:\/\/.+$/),
     ),
     updateFormDefinition(directory, tokenProvider),
   );
@@ -395,7 +397,8 @@ export function createFormDefinitionRouter({
       body('formDraftUrlTemplate')
         .optional()
         .isString()
-        .matches(/^https?:\/\/.{0,500}$/),
+        .isLength({ min: 6, max: 150 })
+        .matches(/^https?:\/\/.+$/),
     ),
     patchFormDefinition(directory, tokenProvider),
   );
