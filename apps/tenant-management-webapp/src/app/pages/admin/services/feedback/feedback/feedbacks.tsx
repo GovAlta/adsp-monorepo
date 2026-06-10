@@ -222,7 +222,8 @@ export const FeedbacksList = (): JSX.Element => {
               type="secondary"
               trailingIcon="expand"
               onClick={() => setExpandView(true)}
-              disabled={!selectedSite}
+              disabled={!selectedSite || feedbacks.length === 0}
+              testId="expand-feedback-view"
             >
               Expand view
             </GoabButton>
