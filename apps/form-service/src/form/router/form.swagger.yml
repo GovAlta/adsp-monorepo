@@ -18,14 +18,18 @@ components:
           type: string
         anonymousApply:
           type: boolean
+          default: false
+          description: Whether anonymous (unauthenticated) applicants can submit the form. Defaults to false.
         oneFormPerApplicant:
           type: boolean
         applicantRoles:
           type: array
+          description: Roles allowed to submit the form. Defaults to ['urn:ads:platform:form-service:form-applicant'] when not provided.
           items:
             type: string
         assessorRoles:
           type: array
+          description: Roles allowed to assess submitted forms. Defaults to [] when not provided.
           items:
             type: string
         clerkRoles:
@@ -34,6 +38,10 @@ components:
             type: string
         formDraftUrlTemplate:
           type: string
+          minLength: 6
+          maxLength: 500
+          pattern: '^https?://.+$'
+          description: Optional URL template for linking applicants back to their draft. Use '{{id}}' as a placeholder for the form ID (e.g. https://example.com/form/{{id}}). Must be between 6 and 500 characters.
         dataSchema:
           type: object
         uiSchema:
@@ -298,13 +306,38 @@ components:
   post:
     tags:
       - Form
-    description: Creates a new form definition. Requires the form-service admin role. If the 'id' field is not provided in the request body, it will be auto-generated from the 'name' field in kebab-case format.
+    description: |
+      Creates a new form definition. Requires the form-service admin role.
+
+      **Defaults applied when fields are omitted:**
+      - `id`: auto-generated from `name` in kebab-case if not provided
+      - `anonymousApply`: `false`
+      - `applicantRoles`: `["urn:ads:platform:form-service:form-applicant"]`
+      - `assessorRoles`: `[]`
     requestBody:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FormDefinition'
+          example:
+            name: My Application Form
+            description: A form for submitting applications.
+            anonymousApply: false
+            applicantRoles:
+              - urn:ads:platform:form-service:form-applicant
+            assessorRoles: []
+            formDraftUrlTemplate: 'https://example.com/form/{{id}}'
+            oneFormPerApplicant: true
+            dataSchema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+              required:
+                - firstName
     responses:
       201:
         description: Successfully created the form definition.
@@ -312,6 +345,8 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+      400:
+        description: Validation failed (e.g. invalid formDraftUrlTemplate format).
       401:
         description: User is not authorized to create form definitions.
       409:
