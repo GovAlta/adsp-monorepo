@@ -57,6 +57,7 @@ export interface FeatureFlags {
   Event: boolean;
   File: boolean;
   Notification: boolean;
+  NotificationEmailAI: boolean;
   PDF: boolean;
   Script: boolean;
   SharePoint: boolean;

@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useCallback, useEffect, useState } from 'react';
+import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid } from 'uuid';
@@ -85,6 +85,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
 
   const agentConnected = useSelector(agentConnectedSelector);
+  const notificationEmailAIEnabled = useSelector(
+    (state: RootState) => state.config.featureFlags?.NotificationEmailAI === true,
+  );
   const thread = useSelector((state: RootState) => threadSelector(state, aiThreadId));
   const [appliedProposalId, setAppliedProposalId] = useState<string | null>(null);
   const [aiDraft, setAiDraft] = useState('');
@@ -137,24 +140,31 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen, templates]);
 
-  // Connect/disconnect agent on component lifecycle (form agent pattern)
+  // The socket is opened lazily when the user lands on the AI (Email) tab (see
+  // the Tabs changeTabCallback below). Here we only ensure it's torn down when
+  // the editor unmounts.
   useEffect(() => {
-    dispatch(connectAgent());
+    if (!notificationEmailAIEnabled) return;
     return () => {
       dispatch(disconnectAgent());
     };
-  }, [dispatch]);
+  }, [dispatch, notificationEmailAIEnabled]);
+
+  // Tracks whether the agent socket has been requested for the current modal
+  // session so we only connect once, on the first visit to the AI tab.
+  const agentConnectionRequested = useRef(false);
 
   // Start a fresh thread each time the modal opens (form agent pattern)
   useEffect(() => {
-    if (modelOpen) {
+    if (notificationEmailAIEnabled && modelOpen) {
       const newThreadId = uuid();
       setAiThreadId(newThreadId);
       dispatch(startThread(agentName, newThreadId));
       setAppliedProposalId(null);
       setAiDraft('');
+      agentConnectionRequested.current = false;
     }
-  }, [modelOpen, dispatch, agentName]);
+  }, [modelOpen, dispatch, agentName, notificationEmailAIEnabled]);
 
   const switchTabPreview = (value) => {
     setPreview(value);
@@ -222,6 +232,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           changeTabCallback={(index: number) => {
             if (index < validChannels.length) {
               switchTabPreview(validChannels[index]);
+            } else if (notificationEmailAIEnabled && !agentConnectionRequested.current) {
+              // AI (Email) tab selected — open the socket lazily on first visit.
+              agentConnectionRequested.current = true;
+              dispatch(connectAgent());
             }
           }}
         >
@@ -355,7 +369,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
             </Tab>
           ))}
-          {hasEmailChannel && (
+          {hasEmailChannel && notificationEmailAIEnabled && (
             <Tab label="AI (Email)">
               <TemplateAITab
                 threadId={aiThreadId}

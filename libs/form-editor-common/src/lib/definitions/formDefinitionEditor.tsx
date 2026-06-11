@@ -18,7 +18,7 @@ import { modifiedDefinitionSelector } from '@store/form/selectors';
 import { rolesSelector } from '@store/access/selectors';
 import { selectRegisterData } from '@store/configuration/selectors';
 import { PageIndicator } from '@components/Indicator';
-import { connectAgent, disconnectAgent } from '@store/agent/actions';
+import { disconnectAgent } from '@store/agent/actions';
 
 export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
@@ -46,9 +46,11 @@ export const FormDefinitionEditor = (): JSX.Element => {
     dispatch(initializeFormEditor());
   }, [dispatch]);
 
+  // The socket is opened lazily when the user lands on the AI tab (see
+  // AddEditFormDefinitionEditor). Here we only ensure it's torn down when the
+  // editor is closed.
   useEffect(() => {
     if (formAIEnabled) {
-      dispatch(connectAgent());
       return () => {
         dispatch(disconnectAgent());
       };
