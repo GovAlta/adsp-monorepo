@@ -73,6 +73,7 @@ describe('definition router', () => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
     axiosMock.delete.mockReset();
+    jest.mocked(axiosMock.isAxiosError).mockReturnValue(false);
     directoryMock.getServiceUrl.mockReset();
     tokenProviderMock.getAccessToken.mockReturnValue(Promise.resolve('token'));
   });
@@ -300,6 +301,34 @@ describe('definition router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('calls next with 400 when configuration service rejects the patch', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { data: { errorMessage: 'Schema validation failed.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.patch.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: 'Test', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     describe('formDraftUrlTemplate validation', () => {
       const FORM_DRAFT_URL_PATTERN = /^https?:\/\/.+$/;
 
@@ -349,9 +378,16 @@ describe('definition router', () => {
           data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
         });
 
+        // express-validator's .default() middleware injects these values into req.body before
+        // the handler runs; simulate that here by providing the defaulted values.
         const req = {
           user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-          body: { name: 'Test', anonymousApply: false },
+          body: {
+            name: 'Test',
+            anonymousApply: false,
+            applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
+            assessorRoles: [],
+          },
           tenant: { id: tenantId },
           getServiceConfiguration: jest.fn().mockResolvedValue([null]),
         };
@@ -697,6 +733,37 @@ describe('definition router', () => {
         }),
       );
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with 400 when configuration service rejects the patch', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: { id: 'test', name: 'Test' } });
+
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { data: { errorMessage: 'Schema validation failed.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.patch.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { name: 'Patched' },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = patchFormDefinition(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
+      expect(res.send).not.toHaveBeenCalled();
     });
   });
 
