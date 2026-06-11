@@ -97,9 +97,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
   const formConfigurationUpdateTool = createTool({
     id: 'update-form-configuration',
     description:
-      'Update the JSON form configuration. The form definition ID comes from request context. Typically update both dataSchema and uiSchema together in a single call.',
+      'Update the JSON form configuration. The form definition ID comes from request context. Typically update both dataSchema and uiSchema together in a single call. The form definition name cannot be changed through this tool.',
     inputSchema: z.object({
-      name: z.string().optional().describe('The name of the form.'),
       description: z.string().optional().describe('The description of the form.'),
       dataSchema: z.object({}).passthrough().optional().describe('The data schema for the JSON form.'),
       uiSchema: z.object({}).passthrough().optional().describe('The UI schema for the JSON form.'),
@@ -121,7 +120,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       inputData,
       context: ToolExecutionContext,
     ) => {
-      const { name, dataSchema, uiSchema, anonymousApply } = inputData;
+      const { dataSchema, uiSchema, anonymousApply } = inputData;
 
       const requestContext = context.requestContext as AdspRequestContext<{ formDefinitionId: string }>;
       const tenantId = requestContext.get('tenantId');
@@ -139,7 +138,6 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
             operation: 'UPDATE',
             update: {
               id: formDefinitionId,
-              name,
               dataSchema,
               uiSchema,
               anonymousApply,

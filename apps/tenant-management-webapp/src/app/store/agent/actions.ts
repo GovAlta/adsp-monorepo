@@ -273,7 +273,10 @@ export function connectAgent() {
 
     clearGraceTimer();
 
-    if (socket?.connected) {
+    // Tear down any existing socket regardless of its connection state. A socket
+    // that never connected is still actively retrying (reconnection: true), and
+    // guarding on `connected` would leave that retry loop running as a zombie.
+    if (socket) {
       socket.disconnect();
     }
 
@@ -365,7 +368,10 @@ export function disconnectAgent() {
     queuedMessages = [];
     dispatch({ type: DISCONNECT_AGENT_ACTION });
 
-    if (socket?.connected) {
+    // Disconnect whenever a socket exists, not only when it is connected.
+    // `socket.disconnect()` also aborts any in-progress reconnection attempts,
+    // which is exactly what a never-connected (failing) socket is doing.
+    if (socket) {
       socket.disconnect();
     }
   };
