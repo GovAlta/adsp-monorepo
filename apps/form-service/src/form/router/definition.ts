@@ -158,8 +158,6 @@ export function createFormDefinition(
       }
 
       const definition: FormDefinition = {
-        applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
-        assessorRoles: [],
         ...req.body,
         id: generatedId,
       };
@@ -184,14 +182,24 @@ export function createFormDefinition(
         });
       }
 
-      const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definition.id}`, configurationApiUrl).href,
-        { operation: 'REPLACE', configuration: definition },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
+      let data: { latest: { revision: number; configuration: FormDefinition } };
+      try {
+        const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
+          new URL(`v2/configuration/form-service/${definition.id}`, configurationApiUrl).href,
+          { operation: 'REPLACE', configuration: definition },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { tenantId: tenantId?.toString() },
+          },
+        );
+        data = response.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
+          throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
+        }
+        throw err;
+      }
 
       res.status(HttpStatusCodes.CREATED).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
@@ -242,10 +250,6 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         throw new UnauthorizedUserError('patch form definition', user);
       }
 
-      if (!/^[a-zA-Z0-9-]{1,50}$/.test(definitionId)) {
-        throw new InvalidOperationError('Invalid form definition ID.');
-      }
-
       const encodedDefinitionId = encodeURIComponent(definitionId);
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
@@ -275,14 +279,24 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         id: definitionId,
       };
 
-      const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
-        { operation: 'REPLACE', configuration: patchedDefinition },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
+      let data: { latest: { revision: number; configuration: FormDefinition } };
+      try {
+        const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
+          new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
+          { operation: 'REPLACE', configuration: patchedDefinition },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { tenantId: tenantId?.toString() },
+          },
+        );
+        data = response.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
+          throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
+        }
+        throw err;
+      }
 
       res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
@@ -344,9 +358,12 @@ export function createFormDefinitionRouter({
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
-      body('anonymousApply').isBoolean(),
-      body('applicantRoles').isArray(),
-      body('assessorRoles').isArray(),
+      body('anonymousApply').optional().default(false).isBoolean(),
+      body('description').optional().isString(),
+      body('dataSchema').optional().isObject(),
+      body('uiSchema').optional().isObject(),
+      body('applicantRoles').optional().default(['urn:ads:platform:form-service:form-applicant']).isArray(),
+      body('assessorRoles').optional().default([]).isArray(),
       body('formDraftUrlTemplate')
         .optional()
         .isString()
