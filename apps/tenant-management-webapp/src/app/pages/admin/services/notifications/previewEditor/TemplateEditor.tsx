@@ -141,14 +141,20 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen, templates]);
 
   // The socket is opened lazily when the user lands on the AI (Email) tab (see
-  // the Tabs changeTabCallback below). Here we only ensure it's torn down when
-  // the editor unmounts.
+  // the Tabs changeTabCallback below). The host modal keeps this component
+  // mounted and only toggles CSS display, so closing the modal does NOT unmount
+  // us. Tear the socket down when the modal closes (modelOpen -> false), and
+  // also on unmount (e.g. navigating away entirely) as a safety net.
   useEffect(() => {
     if (!notificationEmailAIEnabled) return;
+    if (!modelOpen) {
+      dispatch(disconnectAgent());
+      return;
+    }
     return () => {
       dispatch(disconnectAgent());
     };
-  }, [dispatch, notificationEmailAIEnabled]);
+  }, [dispatch, notificationEmailAIEnabled, modelOpen]);
 
   // Tracks whether the agent socket has been requested for the current modal
   // session so we only connect once, on the first visit to the AI tab.
