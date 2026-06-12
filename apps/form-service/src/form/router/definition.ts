@@ -358,12 +358,12 @@ export function createFormDefinitionRouter({
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
-      body('anonymousApply').optional().default(false).isBoolean(),
-      body('description').optional().isString(),
+      body('anonymousApply').default(false).isBoolean(),
+      body('description').default('').isString(),
       body('dataSchema').optional().isObject(),
       body('uiSchema').optional().isObject(),
-      body('applicantRoles').optional().default(['urn:ads:platform:form-service:form-applicant']).isArray(),
-      body('assessorRoles').optional().default([]).isArray(),
+      body('applicantRoles').default(['urn:ads:platform:form-service:form-applicant']).isArray(),
+      body('assessorRoles').default([]).isArray(),
       body('formDraftUrlTemplate')
         .optional()
         .isString()
