@@ -10,8 +10,8 @@ components:
       properties:
         id:
           type: string
-          maxLength: 50
-          description: Unique identifier for the form definition. If not provided, will be auto-generated from the name in kebab-case format.
+          readOnly: true
+          description: Unique identifier for the form definition. Always auto-generated from the name in kebab-case format. Cannot be set by the client.
         name:
           type: string
         description:
@@ -24,12 +24,12 @@ components:
           type: boolean
         applicantRoles:
           type: array
-          description: Roles allowed to submit the form. Defaults to ['urn:ads:platform:form-service:form-applicant'] when not provided.
+          description: Roles allowed to submit the form.
           items:
             type: string
         assessorRoles:
           type: array
-          description: Roles allowed to assess submitted forms. Defaults to [] when not provided.
+          description: Roles allowed to assess submitted forms.
           items:
             type: string
         clerkRoles:
@@ -84,6 +84,18 @@ components:
               type: string
         dryRun:
           type: boolean
+    FormDefinitionCreate:
+      type: object
+      description: Payload for creating a new form definition. Only name and description are accepted; all other fields are set to defaults.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+      additionalProperties: false
     FormDefinitionPatch:
       type: object
       description: Partial update payload for a form definition. Only provided fields will be updated; omitted fields will not be changed.
@@ -309,35 +321,19 @@ components:
     description: |
       Creates a new form definition. Requires the form-service admin role.
 
-      **Defaults applied when fields are omitted:**
-      - `id`: auto-generated from `name` in kebab-case if not provided
+      Only `name` and `description` are accepted in the request body. All other fields are set automatically:
+      - `id`: auto-generated from `name` in kebab-case
       - `anonymousApply`: `false`
-      - `applicantRoles`: `["urn:ads:platform:form-service:form-applicant"]`
+      - `applicantRoles`: `[]`
       - `assessorRoles`: `[]`
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/FormDefinition'
+            $ref: '#/components/schemas/FormDefinitionCreate'
           example:
             name: My Application Form
-            description: A form for submitting applications.
-            anonymousApply: false
-            applicantRoles:
-              - urn:ads:platform:form-service:form-applicant
-            assessorRoles: []
-            formDraftUrlTemplate: 'https://example.com/form/{{id}}'
-            oneFormPerApplicant: true
-            dataSchema:
-              type: object
-              properties:
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-              required:
-                - firstName
     responses:
       201:
         description: Successfully created the form definition.
@@ -346,11 +342,11 @@ components:
             schema:
               $ref: '#/components/schemas/FormDefinition'
       400:
-        description: Validation failed (e.g. invalid formDraftUrlTemplate format).
+        description: Validation failed or ID could not be generated from the provided name.
       401:
         description: User is not authorized to create form definitions.
       409:
-        description: Form definition with the specified ID already exists.
+        description: Form definition with the generated ID already exists.
 
 /form/v1/definitions/{definitionId}:
   get:

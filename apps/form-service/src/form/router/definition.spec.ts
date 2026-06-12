@@ -180,7 +180,7 @@ describe('definition router', () => {
     it('can call next with unauthorized for non-admin', async () => {
       const req = {
         user: { tenantId, id: 'tester', roles: ['test-applicant'] },
-        body: { id: 'test', name: 'test', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
+        body: { name: 'test' },
         tenant: { id: tenantId },
       };
       const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
@@ -192,25 +192,10 @@ describe('definition router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
-    it('can reject id with path traversal characters', async () => {
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        body: { id: '../../etc/passwd', name: 'bad', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
-        tenant: { id: tenantId },
-      };
-      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
-      const next = jest.fn();
-
-      // The route validator would block this before reaching the handler.
-      // Verify the handler also rejects it by checking the id fails the safe pattern.
-      const unsafeId = req.body.id;
-      expect(/^[a-z0-9-]+$/.test(unsafeId)).toBe(false);
-    });
-
     it('can return 409 if definition already exists', async () => {
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        body: { id: 'test', name: 'Existing', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
+        body: { name: 'Test' },
         tenant: { id: tenantId },
         getServiceConfiguration: jest.fn().mockResolvedValue([definition]),
       };
@@ -229,21 +214,23 @@ describe('definition router', () => {
     it('can create a definition', async () => {
       const configurationServiceUrl = new URL('http://configuration-service');
       directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      const newDefinition = {
-        id: 'new-def',
+      const createdDefinition = {
+        id: 'new-definition',
         name: 'New Definition',
+        description: '',
         anonymousApply: false,
         applicantRoles: [],
         assessorRoles: [],
+        clerkRoles: [],
+        dataSchema: {},
       };
-      // Existence check returns null — definition does not exist yet.
       axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: newDefinition } },
+        data: { latest: { revision: 1, configuration: createdDefinition } },
       });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        body: newDefinition,
+        body: { name: 'New Definition' },
         tenant: { id: tenantId },
         getServiceConfiguration: jest.fn().mockResolvedValue([null]),
       };
@@ -254,50 +241,12 @@ describe('definition router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.stringContaining('new-def'),
-        expect.objectContaining({ operation: 'REPLACE', configuration: newDefinition }),
+        expect.stringContaining('new-definition'),
+        expect.objectContaining({ operation: 'REPLACE', configuration: createdDefinition }),
         expect.any(Object),
       );
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'new-def' }));
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can auto-generate id from name when id not provided', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      const newDefinition = {
-        name: 'My New Form',
-        anonymousApply: false,
-        applicantRoles: [],
-        assessorRoles: [],
-      };
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: { ...newDefinition, id: 'my-new-form' } } },
-      });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        body: newDefinition,
-        tenant: { id: tenantId },
-        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
-      };
-      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.stringContaining('my-new-form'),
-        expect.objectContaining({
-          operation: 'REPLACE',
-          configuration: expect.objectContaining({ id: 'my-new-form', name: 'My New Form' }),
-        }),
-        expect.any(Object),
-      );
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-new-form', name: 'My New Form' }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'new-definition' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -313,7 +262,7 @@ describe('definition router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        body: { name: 'Test', anonymousApply: false, applicantRoles: [], assessorRoles: [] },
+        body: { name: 'Test' },
         tenant: { id: tenantId },
         getServiceConfiguration: jest.fn().mockResolvedValue([null]),
       };
@@ -370,111 +319,176 @@ describe('definition router', () => {
       });
     });
 
-    describe('default roles', () => {
-      it('applies default applicantRoles when not provided in body', async () => {
-        const configurationServiceUrl = new URL('http://configuration-service');
-        directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-        axiosMock.patch.mockResolvedValue({
-          data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
-        });
-
-        // express-validator's .default() middleware injects these values into req.body before
-        // the handler runs; simulate that here by providing the defaulted values.
-        const req = {
-          user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-          body: {
-            name: 'Test',
-            anonymousApply: false,
-            applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
-            assessorRoles: [],
-          },
-          tenant: { id: tenantId },
-          getServiceConfiguration: jest.fn().mockResolvedValue([null]),
-        };
-        const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
-        const next = jest.fn();
-
-        const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
-        await handler(req as unknown as Request, res as unknown as Response, next);
-
-        expect(axiosMock.patch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            configuration: expect.objectContaining({
-              applicantRoles: ['urn:ads:platform:form-service:form-applicant'],
-              assessorRoles: [],
-            }),
-          }),
-          expect.any(Object),
-        );
+    it('always sets anonymousApply=false, applicantRoles=[], assessorRoles=[] regardless of body', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
       });
 
-      it('overrides default applicantRoles when provided in body', async () => {
-        const configurationServiceUrl = new URL('http://configuration-service');
-        directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-        axiosMock.patch.mockResolvedValue({
-          data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
-        });
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: 'Test' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
 
-        const req = {
-          user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-          body: { name: 'Test', anonymousApply: false, applicantRoles: ['custom-role'], assessorRoles: ['assessor'] },
-          tenant: { id: tenantId },
-          getServiceConfiguration: jest.fn().mockResolvedValue([null]),
-        };
-        const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
-        const next = jest.fn();
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
-        const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
-        await handler(req as unknown as Request, res as unknown as Response, next);
-
-        expect(axiosMock.patch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            configuration: expect.objectContaining({
-              applicantRoles: ['custom-role'],
-              assessorRoles: ['assessor'],
-            }),
-          }),
-          expect.any(Object),
-        );
-      });
-
-      it('passes formDraftUrlTemplate through to configuration service', async () => {
-        const configurationServiceUrl = new URL('http://configuration-service');
-        directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-        axiosMock.patch.mockResolvedValue({
-          data: { latest: { revision: 1, configuration: { id: 'test-def', name: 'Test' } } },
-        });
-
-        const req = {
-          user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-          body: {
-            name: 'Test',
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          configuration: expect.objectContaining({
             anonymousApply: false,
             applicantRoles: [],
             assessorRoles: [],
-            formDraftUrlTemplate: 'https://example.com/form/{{id}}',
-          },
-          tenant: { id: tenantId },
-          getServiceConfiguration: jest.fn().mockResolvedValue([null]),
-        };
-        const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
-        const next = jest.fn();
-
-        const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
-        await handler(req as unknown as Request, res as unknown as Response, next);
-
-        expect(axiosMock.patch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            configuration: expect.objectContaining({
-              formDraftUrlTemplate: 'https://example.com/form/{{id}}',
-            }),
           }),
-          expect.any(Object),
-        );
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it('derives kebab-case id from multi-word name', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 1, configuration: { id: 'my-application-form', name: 'My Application Form' } } },
       });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: 'My Application Form' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('my-application-form'),
+        expect.objectContaining({ configuration: expect.objectContaining({ id: 'my-application-form' }) }),
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with invalid operation error when name cannot produce a valid id', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: '   ' },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('accepts description from body and ignores all other extra fields', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: {
+          name: 'Test',
+          description: 'A test form',
+          anonymousApply: true,
+          applicantRoles: ['custom-role'],
+          assessorRoles: ['assessor'],
+          formDraftUrlTemplate: 'https://example.com/form/{{id}}',
+          dataSchema: { type: 'object' },
+        },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          operation: 'REPLACE',
+          configuration: {
+            id: 'test',
+            name: 'Test',
+            description: 'A test form',
+            anonymousApply: false,
+            applicantRoles: [],
+            assessorRoles: [],
+            clerkRoles: [],
+            dataSchema: {},
+          },
+        },
+        expect.any(Object),
+      );
+    });
+
+    it('defaults description to empty string when not provided', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: 'Test' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ configuration: expect.objectContaining({ description: '' }) }),
+        expect.any(Object),
+      );
+    });
+
+    it('proceeds to create when the existence check throws', async () => {
+      const configurationServiceUrl = new URL('http://configuration-service');
+      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: 'Test' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockRejectedValue(new Error('config service unavailable')),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('test'));
+      expect(axiosMock.patch).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(next).not.toHaveBeenCalled();
     });
   });
 

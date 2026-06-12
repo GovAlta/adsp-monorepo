@@ -151,15 +151,21 @@ export function createFormDefinition(
         throw new UnauthorizedUserError('create form definition', user);
       }
 
-      const generatedId = req.body.id || toKebabCase(req.body.name);
+      const generatedId = toKebabCase(req.body.name);
 
       if (!generatedId) {
         throw new InvalidOperationError('Form definition ID could not be generated from the provided name.');
       }
 
       const definition: FormDefinition = {
-        ...req.body,
         id: generatedId,
+        name: req.body.name,
+        description: req.body.description ?? '',
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+        clerkRoles: [],
+        dataSchema: {},
       };
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
@@ -352,23 +358,8 @@ export function createFormDefinitionRouter({
     '/definitions',
     assertAuthenticatedHandler,
     createValidationHandler(
-      body('id')
-        .optional()
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
-      body('anonymousApply').optional().default(false).isBoolean(),
       body('description').optional().isString(),
-      body('dataSchema').optional().isObject(),
-      body('uiSchema').optional().isObject(),
-      body('applicantRoles').optional().default(['urn:ads:platform:form-service:form-applicant']).isArray(),
-      body('assessorRoles').optional().default([]).isArray(),
-      body('formDraftUrlTemplate')
-        .optional()
-        .isString()
-        .isLength({ min: 6, max: 500 })
-        .isURL({ protocols: ['http', 'https'], require_protocol: true }),
     ),
     createFormDefinition(directory, tokenProvider, logger),
   );
