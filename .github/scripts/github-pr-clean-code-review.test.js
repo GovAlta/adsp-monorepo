@@ -23,7 +23,6 @@ const fs = require('fs');
 const {
   buildLineToPositionMap,
   buildAnnotatedDiff,
-  groupCommentsByFile,
   formatComment,
   loadConfig,
   buildSystemPrompt,
@@ -104,33 +103,6 @@ describe('buildAnnotatedDiff', () => {
 
   test('returns an empty string when patch is undefined', () => {
     expect(buildAnnotatedDiff(undefined)).toBe('');
-  });
-});
-
-// ─── groupCommentsByFile ──────────────────────────────────────────────────────
-
-describe('groupCommentsByFile', () => {
-  test('groups multiple comments for the same file under one key', () => {
-    const comments = [
-      { path: 'src/a.ts', body: 'first' },
-      { path: 'src/a.ts', body: 'second' },
-    ];
-    const grouped = groupCommentsByFile(comments);
-    expect(grouped['src/a.ts']).toEqual(['first', 'second']);
-  });
-
-  test('keeps comments for different files under separate keys', () => {
-    const comments = [
-      { path: 'src/a.ts', body: 'comment a' },
-      { path: 'src/b.ts', body: 'comment b' },
-    ];
-    const grouped = groupCommentsByFile(comments);
-    expect(Object.keys(grouped)).toHaveLength(2);
-    expect(grouped['src/b.ts']).toEqual(['comment b']);
-  });
-
-  test('returns an empty object for an empty input array', () => {
-    expect(groupCommentsByFile([])).toEqual({});
   });
 });
 
@@ -317,29 +289,26 @@ describe('processFilesForReview', () => {
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('moves a violation with no diff position to generalComments instead of dropping it', async () => {
+  test('excludes a violation with no diff position from reviewComments', async () => {
     const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
     const mockReviewFile = jest.fn().mockResolvedValue([
       { rule: '2.3', severity: 'WARNING', line: 99, message: 'too long', suggestion: 'split' },
     ]);
 
-    const { reviewComments, generalComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
+    const { reviewComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(reviewComments).toHaveLength(0);
-    expect(generalComments).toHaveLength(1);
-    expect(generalComments[0].path).toBe('src/test.ts');
   });
 
-  test('sets hasBlockingViolations for an ERROR violation moved to generalComments', async () => {
+  test('sets hasBlockingViolations for an ERROR violation with no diff position', async () => {
     const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
     const mockReviewFile = jest.fn().mockResolvedValue([
       { rule: '2.13', severity: 'ERROR', line: 99, message: 'no error handling', suggestion: 'throw' },
     ]);
 
-    const { hasBlockingViolations, generalComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
+    const { hasBlockingViolations } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(hasBlockingViolations).toBe(true);
-    expect(generalComments).toHaveLength(1);
   });
 
   test('calls the mock review function with the annotated diff, filename, and system prompt', async () => {

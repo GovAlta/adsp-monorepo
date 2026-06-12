@@ -418,7 +418,6 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 function routeViolations(violations, lineToPosition, filename) {
   const inline = [];
-  const general = [];
   let hasBlockingViolations = false;
 
   for (const violation of violations) {
@@ -426,18 +425,17 @@ function routeViolations(violations, lineToPosition, filename) {
 
     const position = lineToPosition[violation.line];
     if (!position) {
-      general.push({ path: filename, body: formatComment(violation) });
+      console.log(`  ⚠️  No diff position for ${filename} line ${violation.line} (${violation.rule}) — skipping inline placement`);
     } else {
       inline.push({ path: filename, position, body: formatComment(violation) });
     }
   }
 
-  return { inline, general, hasBlockingViolations };
+  return { inline, hasBlockingViolations };
 }
 
 async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
-  const generalComments = [];
   let hasBlockingViolations = false;
 
   for (const file of changedFiles) {
@@ -463,49 +461,17 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     console.log(`  ⚠️  ${violations.length} violation(s) in ${file.filename}`);
 
-    const { inline, general, hasBlockingViolations: blocking } = routeViolations(
+    const { inline, hasBlockingViolations: blocking } = routeViolations(
       violations,
       buildLineToPositionMap(file.patch),
       file.filename,
     );
 
     reviewComments.push(...inline);
-    generalComments.push(...general);
     if (blocking) hasBlockingViolations = true;
   }
 
-  return { reviewComments, hasBlockingViolations, generalComments };
-}
-
-// ─────────────────────────────────────────────────────────────
-// Post violations that could not be placed inline as PR thread comments
-// ─────────────────────────────────────────────────────────────
-function groupCommentsByFile(comments) {
-  const commentsByFile = {};
-  for (const c of comments) {
-    if (!commentsByFile[c.path]) commentsByFile[c.path] = [];
-    commentsByFile[c.path].push(c.body);
-  }
-  return commentsByFile;
-}
-
-async function postGeneralComments(octokit, generalComments) {
-  if (generalComments.length === 0) return;
-
-  const separator = '\n\n---\n\n';
-  const commentsByFile = groupCommentsByFile(generalComments);
-  const sections = Object.entries(commentsByFile).map(
-    ([file, bodies]) => `**File: \`${file}\`**\n\n${bodies.join(separator)}`,
-  );
-
-  const body = `⚠️ **Clean Code — Violations found but could not be placed inline**\n\n${sections.join(separator)}`;
-
-  await octokit.rest.issues.createComment({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
-    issue_number: PR_NUMBER,
-    body,
-  });
+  return { reviewComments, hasBlockingViolations };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -567,14 +533,13 @@ async function main() {
   }
 
   const systemPrompt = buildSystemPrompt(config, jiraContext);
-  const { reviewComments, hasBlockingViolations, generalComments } = await processFilesForReview(changedFiles, systemPrompt);
+  const { reviewComments, hasBlockingViolations } = await processFilesForReview(changedFiles, systemPrompt);
 
   const missingTestComments = await checkMissingTestFiles(octokit, changedFiles, config);
   const allComments = [...reviewComments, ...missingTestComments];
 
   console.log(`\n📝 Posting review with ${allComments.length} comment(s)...`);
   await postReviewSummary(octokit, allComments, hasBlockingViolations);
-  await postGeneralComments(octokit, generalComments);
   console.log('✅ Clean Code Review complete.');
 
   if (hasBlockingViolations) {
@@ -594,7 +559,6 @@ module.exports = {
   buildLineToPositionMap,
   buildAnnotatedDiff,
   routeViolations,
-  groupCommentsByFile,
   formatComment,
   loadConfig,
   buildSystemPrompt,
