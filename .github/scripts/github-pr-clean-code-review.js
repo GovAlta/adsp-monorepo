@@ -158,12 +158,16 @@ SEVERITY LEVELS:
 
 SUPPRESSION: If a line contains the comment // clean-code-ignore: RULE_ID (e.g. // clean-code-ignore: 2.3), skip that rule for that line.
 
+DIFF FORMAT: The code you are reviewing is a unified diff patch. Lines starting with + are newly added lines. Lines starting with - are removed lines. Lines with no prefix are unchanged context lines.
+
+IMPORTANT: Only flag violations on added lines (lines starting with +). Do not flag violations on removed lines (-) or unchanged context lines. For the "line" field, use the new-file line number: find the @@ -old,n +new,n @@ hunk header and count forward from the number after + for each added or context line in that hunk.
+
 RESPONSE FORMAT:
 Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. Each item:
 {
   "rule": "2.X",
   "severity": "ERROR" | "WARNING" | "SUGGESTION",
-  "line": <line number as integer>,
+  "line": <new-file line number as integer>,
   "message": "<clear description of the violation>",
   "suggestion": "<specific actionable fix>"
 }
@@ -381,6 +385,7 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
+  const generalComments = [];
   let hasBlockingViolations = false;
 
   for (const file of changedFiles) {
@@ -411,9 +416,13 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     for (const v of violations) {
       const position = lineToPosition[v.line];
-      if (!position) continue;
 
       if (v.severity === 'ERROR') hasBlockingViolations = true;
+
+      if (!position) {
+        generalComments.push({ path: file.filename, body: formatComment(v) });
+        continue;
+      }
 
       reviewComments.push({
         path: file.filename,
@@ -423,7 +432,33 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
     }
   }
 
-  return { reviewComments, hasBlockingViolations };
+  return { reviewComments, hasBlockingViolations, generalComments };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Post violations that could not be placed inline as PR thread comments
+// ─────────────────────────────────────────────────────────────
+async function postGeneralComments(octokit, generalComments) {
+  if (generalComments.length === 0) return;
+
+  const byFile = {};
+  for (const c of generalComments) {
+    if (!byFile[c.path]) byFile[c.path] = [];
+    byFile[c.path].push(c.body);
+  }
+
+  const sections = Object.entries(byFile).map(
+    ([file, bodies]) => `**\`${file}\`**\n\n${bodies.join('\n\n---\n\n')}`,
+  );
+
+  const body = `⚠️ **Clean Code — Violations found but could not be placed inline**\n\nThese violations were detected on unchanged lines and have no diff position to attach to:\n\n${sections.join('\n\n---\n\n')}`;
+
+  await octokit.rest.issues.createComment({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    issue_number: PR_NUMBER,
+    body,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -485,13 +520,14 @@ async function main() {
   }
 
   const systemPrompt = buildSystemPrompt(config, jiraContext);
-  const { reviewComments, hasBlockingViolations } = await processFilesForReview(changedFiles, systemPrompt);
+  const { reviewComments, hasBlockingViolations, generalComments } = await processFilesForReview(changedFiles, systemPrompt);
 
   const missingTestComments = await checkMissingTestFiles(octokit, changedFiles, config);
   const allComments = [...reviewComments, ...missingTestComments];
 
   console.log(`\n📝 Posting review with ${allComments.length} comment(s)...`);
   await postReviewSummary(octokit, allComments, hasBlockingViolations);
+  await postGeneralComments(octokit, generalComments);
   console.log('✅ Clean Code Review complete.');
 
   if (hasBlockingViolations) {

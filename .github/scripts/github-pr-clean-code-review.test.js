@@ -260,6 +260,32 @@ describe('processFilesForReview', () => {
     expect(reviewComments).toHaveLength(0);
   });
 
+  test('moves a violation with no diff position to generalComments instead of dropping it', async () => {
+    // Line 99 is not in the diff so it has no position — should go to generalComments
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const reviewFile = jest.fn().mockResolvedValue([
+      { rule: '2.3', severity: 'WARNING', line: 99, message: 'too long', suggestion: 'split' },
+    ]);
+
+    const { reviewComments, generalComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+
+    expect(reviewComments).toHaveLength(0);
+    expect(generalComments).toHaveLength(1);
+    expect(generalComments[0].path).toBe('src/test.ts');
+  });
+
+  test('sets hasBlockingViolations for an ERROR violation moved to generalComments', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const reviewFile = jest.fn().mockResolvedValue([
+      { rule: '2.13', severity: 'ERROR', line: 99, message: 'no error handling', suggestion: 'throw' },
+    ]);
+
+    const { hasBlockingViolations, generalComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+
+    expect(hasBlockingViolations).toBe(true);
+    expect(generalComments).toHaveLength(1);
+  });
+
   test('calls reviewFile with the patch content, filename, and system prompt', async () => {
     const changedFiles = [{ filename: 'src/utils.ts', patch: 'const answer = 42;' }];
     const reviewFile = jest.fn().mockResolvedValue([]);
