@@ -158,9 +158,12 @@ SEVERITY LEVELS:
 
 SUPPRESSION: If a line contains the comment // clean-code-ignore: RULE_ID (e.g. // clean-code-ignore: 2.3), skip that rule for that line.
 
-DIFF FORMAT: The code you are reviewing is a unified diff patch. Lines starting with + are newly added lines. Lines starting with - are removed lines. Lines with no prefix are unchanged context lines.
+DIFF FORMAT: The code you are reviewing has been pre-processed for clarity. Each line is prefixed with its new-file line number and a type marker:
+- [LN+] is a newly added line with new-file line number N — ONLY flag violations on these lines
+- [LN ] is an unchanged context line — do NOT flag violations on these lines
+Removed lines have been omitted entirely.
 
-IMPORTANT: Only flag violations on added lines (lines starting with +). Do not flag violations on removed lines (-) or unchanged context lines. For the "line" field, use the new-file line number: find the @@ -old,n +new,n @@ hunk header and count forward from the number after + for each added or context line in that hunk.
+IMPORTANT: Only report violations on [LN+] lines. Use the number N from the [LN+] prefix exactly as the "line" value in your response. Do not report violations on [LN ] context lines.
 
 RESPONSE FORMAT:
 Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. Each item:
@@ -239,6 +242,36 @@ function buildLineToPositionMap(patch) {
     }
   }
   return map;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pre-process patch into an annotated diff for the AI
+// Added lines are labelled [LN+], context lines [LN ].
+// Removed lines are omitted — no value in showing the AI deleted code.
+// ─────────────────────────────────────────────────────────────
+function buildAnnotatedDiff(patch) {
+  if (!patch) return '';
+  const lines = patch.split('\n');
+  const annotated = [];
+  let currentLine = 0;
+
+  for (const line of lines) {
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
+      if (match) currentLine = parseInt(match[1], 10) - 1;
+      annotated.push(line);
+    } else if (line.startsWith('+')) {
+      currentLine++;
+      annotated.push(`[L${currentLine}+] ${line.slice(1)}`);
+    } else if (line.startsWith('-')) {
+      // omit removed lines
+    } else {
+      currentLine++;
+      annotated.push(`[L${currentLine} ] ${line}`);
+    }
+  }
+
+  return annotated.join('\n');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -383,6 +416,25 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 // Process each changed file: call the AI model and collect review comments
 // ─────────────────────────────────────────────────────────────
+function routeViolations(violations, lineToPosition, filename) {
+  const inline = [];
+  const general = [];
+  let hasBlockingViolations = false;
+
+  for (const violation of violations) {
+    if (violation.severity === 'ERROR') hasBlockingViolations = true;
+
+    const position = lineToPosition[violation.line];
+    if (!position) {
+      general.push({ path: filename, body: formatComment(violation) });
+    } else {
+      inline.push({ path: filename, position, body: formatComment(violation) });
+    }
+  }
+
+  return { inline, general, hasBlockingViolations };
+}
+
 async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
   const generalComments = [];
@@ -391,15 +443,14 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
   for (const file of changedFiles) {
     console.log(`  Reviewing: ${file.filename}`);
 
-    const content = file.patch;
-    if (!content) {
+    if (!file.patch) {
       console.log(`  No diff available for ${file.filename}, skipping.`);
       continue;
     }
 
     let violations = [];
     try {
-      violations = await reviewFile(content, file.filename, systemPrompt);
+      violations = await reviewFile(buildAnnotatedDiff(file.patch), file.filename, systemPrompt);
     } catch (e) {
       console.warn(`  Error reviewing ${file.filename}:`, e.message);
       continue;
@@ -412,24 +463,15 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     console.log(`  ⚠️  ${violations.length} violation(s) in ${file.filename}`);
 
-    const lineToPosition = buildLineToPositionMap(file.patch);
+    const { inline, general, hasBlockingViolations: blocking } = routeViolations(
+      violations,
+      buildLineToPositionMap(file.patch),
+      file.filename,
+    );
 
-    for (const v of violations) {
-      const position = lineToPosition[v.line];
-
-      if (v.severity === 'ERROR') hasBlockingViolations = true;
-
-      if (!position) {
-        generalComments.push({ path: file.filename, body: formatComment(v) });
-        continue;
-      }
-
-      reviewComments.push({
-        path: file.filename,
-        position,
-        body: formatComment(v),
-      });
-    }
+    reviewComments.push(...inline);
+    generalComments.push(...general);
+    if (blocking) hasBlockingViolations = true;
   }
 
   return { reviewComments, hasBlockingViolations, generalComments };
@@ -438,20 +480,25 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 // ─────────────────────────────────────────────────────────────
 // Post violations that could not be placed inline as PR thread comments
 // ─────────────────────────────────────────────────────────────
+function groupCommentsByFile(comments) {
+  const commentsByFile = {};
+  for (const c of comments) {
+    if (!commentsByFile[c.path]) commentsByFile[c.path] = [];
+    commentsByFile[c.path].push(c.body);
+  }
+  return commentsByFile;
+}
+
 async function postGeneralComments(octokit, generalComments) {
   if (generalComments.length === 0) return;
 
-  const byFile = {};
-  for (const c of generalComments) {
-    if (!byFile[c.path]) byFile[c.path] = [];
-    byFile[c.path].push(c.body);
-  }
-
-  const sections = Object.entries(byFile).map(
-    ([file, bodies]) => `**\`${file}\`**\n\n${bodies.join('\n\n---\n\n')}`,
+  const separator = '\n\n---\n\n';
+  const commentsByFile = groupCommentsByFile(generalComments);
+  const sections = Object.entries(commentsByFile).map(
+    ([file, bodies]) => `**File: \`${file}\`**\n\n${bodies.join(separator)}`,
   );
 
-  const body = `⚠️ **Clean Code — Violations found but could not be placed inline**\n\nThese violations were detected on unchanged lines and have no diff position to attach to:\n\n${sections.join('\n\n---\n\n')}`;
+  const body = `⚠️ **Clean Code — Violations found but could not be placed inline**\n\n${sections.join(separator)}`;
 
   await octokit.rest.issues.createComment({
     owner: REPO_OWNER,
@@ -545,6 +592,9 @@ if (require.main === module) {
 
 module.exports = {
   buildLineToPositionMap,
+  buildAnnotatedDiff,
+  routeViolations,
+  groupCommentsByFile,
   formatComment,
   loadConfig,
   buildSystemPrompt,
