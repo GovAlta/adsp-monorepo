@@ -5,7 +5,7 @@ export const configurationSchema = {
     name: { type: 'string' },
     description: { type: 'string' },
     formDraftUrlTemplate: { type: 'string', pattern: '^http[s]?://.{0,500}$' },
-    anonymousApply: { type: 'boolean', default: false },
+    anonymousApply: { type: 'boolean' },
     oneFormPerApplicant: { type: 'boolean', default: true },
     applicantRoles: { type: 'array', items: { type: 'string' } },
     assessorRoles: { type: 'array', items: { type: 'string' } },
@@ -18,7 +18,7 @@ export const configurationSchema = {
     securityClassification: {
       type: 'string',
       enum: ['public', 'protected a', 'protected b', 'protected c'],
-      default: 'protected b',
+      default: 'protected a',
     },
     programName: {
       anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
