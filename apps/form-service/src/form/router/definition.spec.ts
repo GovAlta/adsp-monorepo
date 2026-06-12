@@ -75,8 +75,13 @@ describe('definition router', () => {
     axiosMock.delete.mockReset();
     jest.mocked(axiosMock.isAxiosError).mockReturnValue(false);
     directoryMock.getServiceUrl.mockReset();
+    directoryMock.getServiceUrl.mockResolvedValue(new URL('http://configuration-service'));
     tokenProviderMock.getAccessToken.mockReturnValue(Promise.resolve('token'));
   });
+
+  function mockPatchSuccess(configuration: Record<string, unknown>, revision = 1): void {
+    axiosMock.patch.mockResolvedValue({ data: { latest: { revision, configuration } } });
+  }
 
   it('can create router', () => {
     const router = createFormDefinitionRouter({
@@ -112,8 +117,6 @@ describe('definition router', () => {
     });
 
     it('can get definitions', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       axiosMock.get.mockResolvedValue({
         data: {
           results: [{ latest: { revision: 1, configuration: definition }, active: null }],
@@ -139,8 +142,6 @@ describe('definition router', () => {
     });
 
     it('can get definitions with name search', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       axiosMock.get.mockResolvedValue({
         data: {
           results: [{ latest: { revision: 1, configuration: definition }, active: null }],
@@ -212,8 +213,6 @@ describe('definition router', () => {
     });
 
     it('can create a definition', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       const createdDefinition = {
         id: 'new-definition',
         name: 'New Definition',
@@ -224,9 +223,7 @@ describe('definition router', () => {
         clerkRoles: [],
         dataSchema: {},
       };
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: createdDefinition } },
-      });
+      mockPatchSuccess(createdDefinition);
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -251,8 +248,6 @@ describe('definition router', () => {
     });
 
     it('calls next with 400 when configuration service rejects the patch', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
         response: { data: { errorMessage: 'Schema validation failed.' } },
@@ -320,11 +315,7 @@ describe('definition router', () => {
     });
 
     it('always sets anonymousApply=false, applicantRoles=[], assessorRoles=[] regardless of body', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
-      });
+      mockPatchSuccess({ id: 'test', name: 'Test' });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -352,11 +343,7 @@ describe('definition router', () => {
     });
 
     it('derives kebab-case id from multi-word name', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: { id: 'my-application-form', name: 'My Application Form' } } },
-      });
+      mockPatchSuccess({ id: 'my-application-form', name: 'My Application Form' });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -394,18 +381,35 @@ describe('definition router', () => {
       expect(axiosMock.patch).not.toHaveBeenCalled();
     });
 
-    it('accepts description from body and ignores all other extra fields', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
-      });
+    it('passes description from body to the configuration service', async () => {
+      mockPatchSuccess({ id: 'test', name: 'Test' });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        body: { name: 'Test', description: 'A test form' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createFormDefinition(directoryMock, tokenProviderMock, loggerMock as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ configuration: expect.objectContaining({ description: 'A test form' }) }),
+        expect.any(Object),
+      );
+    });
+
+    it('ignores extra body fields and sends only the permitted fields', async () => {
+      mockPatchSuccess({ id: 'test', name: 'Test' });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
         body: {
           name: 'Test',
-          description: 'A test form',
           anonymousApply: true,
           applicantRoles: ['custom-role'],
           assessorRoles: ['assessor'],
@@ -428,7 +432,7 @@ describe('definition router', () => {
           configuration: {
             id: 'test',
             name: 'Test',
-            description: 'A test form',
+            description: '',
             anonymousApply: false,
             applicantRoles: [],
             assessorRoles: [],
@@ -441,11 +445,7 @@ describe('definition router', () => {
     });
 
     it('defaults description to empty string when not provided', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
-      });
+      mockPatchSuccess({ id: 'test', name: 'Test' });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -467,11 +467,7 @@ describe('definition router', () => {
     });
 
     it('proceeds to create when the existence check throws', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test' } } },
-      });
+      mockPatchSuccess({ id: 'test', name: 'Test' });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -517,9 +513,6 @@ describe('definition router', () => {
     });
 
     it('can call next with not found when definition does not exist', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
       axiosMock.get.mockResolvedValue({
         status: 404,
         data: {},
@@ -554,9 +547,6 @@ describe('definition router', () => {
     });
 
     it('can patch only provided fields and preserve existing definition values', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
       const existingDefinition = {
         id: 'test',
         name: 'Original Name',
@@ -588,19 +578,8 @@ describe('definition router', () => {
         description: 'Patched description',
       };
 
-      axiosMock.get.mockResolvedValue({
-        status: HttpStatusCodes.OK,
-        data: existingDefinition,
-      });
-
-      axiosMock.patch.mockResolvedValue({
-        data: {
-          latest: {
-            revision: 2,
-            configuration: expectedPatchedDefinition,
-          },
-        },
-      });
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(expectedPatchedDefinition, 2);
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -650,9 +629,6 @@ describe('definition router', () => {
     });
 
     it('can patch dataSchema and uiSchema', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
       const existingDefinition = {
         id: 'test',
         name: 'Original Name',
@@ -687,19 +663,8 @@ describe('definition router', () => {
         uiSchema: patchedUiSchema,
       };
 
-      axiosMock.get.mockResolvedValue({
-        status: HttpStatusCodes.OK,
-        data: existingDefinition,
-      });
-
-      axiosMock.patch.mockResolvedValue({
-        data: {
-          latest: {
-            revision: 2,
-            configuration: expectedPatchedDefinition,
-          },
-        },
-      });
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(expectedPatchedDefinition, 2);
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -750,9 +715,6 @@ describe('definition router', () => {
     });
 
     it('calls next with 400 when configuration service rejects the patch', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
       axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: { id: 'test', name: 'Test' } });
 
       const axiosError = Object.assign(new Error('Bad Request'), {
@@ -804,8 +766,6 @@ describe('definition router', () => {
     });
 
     it('can update a definition', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       const updated = {
         id: 'test',
         name: 'Updated Name',
@@ -813,9 +773,7 @@ describe('definition router', () => {
         applicantRoles: [],
         assessorRoles: [],
       };
-      axiosMock.patch.mockResolvedValue({
-        data: { latest: { revision: 2, configuration: updated } },
-      });
+      mockPatchSuccess(updated, 2);
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -861,8 +819,6 @@ describe('definition router', () => {
     });
 
     it('can delete a definition', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       axiosMock.delete.mockResolvedValue({});
 
       const req = {
