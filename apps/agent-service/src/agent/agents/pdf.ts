@@ -6,10 +6,10 @@ import { AgentConfiguration } from '../configuration';
 export const pdfGenerationAgent: AgentConfiguration = {
 name: 'PDF Template Generation Agent',
 description: `Creates, retrieves, modifies, and stores production-ready PDF templates
-using HTML, CSS, and Handlebars syntax. `,
+using HTML, CSS, and Handlebars syntax.`,
 
 instructions: `
-You are a PDF template editor agent
+You are a PDF template editor agent.
 
 The user is always inside the PDF Template Editor.
 
