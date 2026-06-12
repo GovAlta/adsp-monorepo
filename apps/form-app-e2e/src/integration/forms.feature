@@ -1,3 +1,4 @@
+@forms
 Feature: Form app
 
   @smoke-test

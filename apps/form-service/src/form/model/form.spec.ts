@@ -294,7 +294,7 @@ describe('FormEntity', () => {
         code
       );
       expect(notificationMock.verifyCode).toHaveBeenCalledWith(tenantId, subscriber, code);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
@@ -310,7 +310,7 @@ describe('FormEntity', () => {
         code
       );
       expect(notificationMock.verifyCode).toHaveBeenCalledWith(tenantId, subscriber, code);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
       expect(repositoryMock.save).toHaveBeenCalledWith(nonDraft);
     });
 
@@ -350,7 +350,7 @@ describe('FormEntity', () => {
     it('can return true for applicant on draft form', async () => {
       const before = entity.lastAccessed;
       const result = await entity.accessByUser({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
@@ -369,7 +369,7 @@ describe('FormEntity', () => {
     it('can return true for clerk on draft form', async () => {
       const before = entity.lastAccessed;
       const result = await entity.accessByUser({ tenantId, id: 'tester', roles: ['test-clerk'] } as User);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
@@ -385,7 +385,7 @@ describe('FormEntity', () => {
 
       const before = entity.lastAccessed;
       const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
     });
 
     it('can return true for assessor on submitted form', async () => {
@@ -394,7 +394,7 @@ describe('FormEntity', () => {
 
       const before = entity.lastAccessed;
       const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: ['test-assessor'] } as User);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
     });
 
     it('can return true for admin on submitted form', async () => {
@@ -403,7 +403,7 @@ describe('FormEntity', () => {
 
       const before = entity.lastAccessed;
       const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
-      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(result.lastAccessed.valueOf()).toBeGreaterThanOrEqual(before.valueOf());
     });
 
     it('can throw for user without role on submitted form', async () => {

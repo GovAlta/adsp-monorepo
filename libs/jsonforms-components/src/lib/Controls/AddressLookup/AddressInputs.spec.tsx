@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { AddressInputs } from './AddressInputs';
 import { Address } from './types';
 describe('AddressInputs', () => {
@@ -35,6 +36,26 @@ describe('AddressInputs', () => {
     expect(province?.getAttribute('value')).toBe(defaultAddress.subdivisionCode);
     const postalCode = baseElement.querySelector("goa-input[testId='address-form-postal-code']");
     expect(postalCode?.getAttribute('value')).toBe(defaultAddress.postalCode);
+  });
+
+  it('renders field-specific placeholders', () => {
+    const { baseElement } = render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={false}
+      />
+    );
+
+    expect(baseElement.querySelector("goa-input[testId='address-form-address2']")).toHaveAttribute(
+      'placeholder',
+      'Unit number, suite, apartment',
+    );
+    expect(baseElement.querySelector("goa-input[testId='address-form-postal-code']")).toHaveAttribute(
+      'placeholder',
+      'A0A 0A0',
+    );
   });
 
   it('calls handleInputChange on user input in address2', () => {

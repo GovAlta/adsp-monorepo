@@ -74,7 +74,6 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     const newOptions = [{ label: placeholder, value: '' }, ...staticOptions, ...filteredDynamicOptions];
 
     return newOptions;
-    // eslint-disable-next-line
   }, [registerData, options, valuePath, labelPath]);
 
   const width = uischema?.options?.componentProps?.width || '100%';
@@ -112,14 +111,15 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           width={width}
           testId={`jsonforms-${path}-dropdown`}
         >
-          {mergedOptions.map((item) => {
+          {mergedOptions.map((item, index) => {
             const displayLabel = item.label.trim() === '' ? '\u00A0' : item.label;
             return (
               <GoabDropdownItem
                 testId={`jsonforms-${path}-dropdown-${item.label}`}
-                key={item.value}
+                key={`${item.label}-${item.value}-${index}`}
                 label={displayLabel}
                 value={item.value}
+                mountType={item.label === placeholder ? 'prepend' : 'append'}
               />
             );
           })}

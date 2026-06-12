@@ -1,3 +1,4 @@
+@status-notice
 Feature: public site for service status and notice
   @TEST_CS-590  @REQ_CS-540 @smoke-test @regression
   Scenario: As an interested member of the public, I can go to a common site for service status to see service status information

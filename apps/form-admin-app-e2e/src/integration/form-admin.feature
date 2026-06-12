@@ -1,3 +1,4 @@
+@form-admin
 Feature: Form admin app
 
   @smoke-test

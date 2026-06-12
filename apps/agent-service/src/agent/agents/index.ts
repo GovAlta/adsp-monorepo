@@ -8,6 +8,7 @@ import {
 } from './builder';
 import { pdfGenerationAgent } from './pdf';
 import { nxAdspAgent } from './nxAdsp';
+import { notificationEmailTemplateAgent } from './notification';
 
 // clean-code-ignore: RULE-19
 export const CoreAgents: AgentConfigurations = {
@@ -20,4 +21,5 @@ export const CoreAgents: AgentConfigurations = {
   builderPreviewReliabilityAgent,
   builderAgent,
   nxAdspAgent,
+  notificationEmailTemplateAgent,
 };

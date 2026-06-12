@@ -10,7 +10,6 @@ export * from './components/Recaptcha';
 export * from './components/RowSkeleton';
 export * from './components/RowLoadMore';
 export * from './components/AgentChat';
-export * from './components/EditorAgentChat';
 
 export * from './types/agent';
 export * from './utils';

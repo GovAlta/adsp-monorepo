@@ -174,6 +174,7 @@ describe('Feedbacks Components', () => {
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(screen.getAllByText('No feedbacks found')).toBeTruthy();
+    expect(baseElement.querySelector("goa-button[testId='expand-feedback-view']")).toBeDisabled();
   });
 
   it('should open full screen when "Expand View" button is clicked', async () => {

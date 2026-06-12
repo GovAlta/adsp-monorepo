@@ -104,31 +104,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     setLocalValue(isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data);
   }, [data, isSinField]);
 
-  const shouldAutoPopulateValue = (
-    autoPopulatedValue: string | undefined,
-    data: unknown,
-  ): autoPopulatedValue is string => {
-    return !!autoPopulatedValue && autoPopulatedValue !== data;
-  };
-
-  // clean-code-ignore: 2.18
-  useEffect(() => {
-    if (!user || data || manualInput || hasDefault) return;
-
-    const autoPopulatedValue = autoPopulateValue(user, props);
-
-    if (shouldAutoPopulateValue(autoPopulatedValue, data)) {
-      const timeout = setTimeout(() => {
-        handleChange(props.path, autoPopulatedValue);
-        setLocalValue(autoPopulatedValue);
-      }, 1000);
-
-      return () => clearTimeout(timeout);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   useEffect(() => {
     if (typeof handleChange === 'function' && hasDefault && !manualInput) {
       handleChange(props.path, schema.default);

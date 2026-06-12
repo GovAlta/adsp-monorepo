@@ -1,5 +1,15 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
+import useWindowDimensions from '@lib/useWindowDimensions';
+import { useDispatch, useSelector } from 'react-redux';
+import { v4 as uuid } from 'uuid';
 import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
+import { AppDispatch, RootState } from '@store/index';
+import { connectAgent, disconnectAgent, startThread } from '@store/agent/actions';
+import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
+import { TemplateAITab, EmailTemplateProposal } from './TemplateAITab';
+import { UploadFileService } from '@store/file/actions';
+import { Attachment } from '@core-services/app-common';
+import { AnyAction } from 'redux';
 
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
@@ -36,6 +46,8 @@ interface TemplateEditorProps {
   // eslint-disable-next-line
   errors?: any;
   serviceName?: string;
+  notificationTypeId?: string;
+  onAISaved?: (proposal: EmailTemplateProposal) => void;
   // eslint-disable-next-line
   eventSuggestion?: any;
 }
@@ -59,11 +71,26 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   validateEventTemplateFields,
   errors,
   serviceName,
+  notificationTypeId,
+  onAISaved,
   eventSuggestion,
 }) => {
+  const [aiThreadId, setAiThreadId] = useState<string>(uuid());
+  const agentName = 'notificationEmailTemplateAgent';
+  const dispatch = useDispatch<AppDispatch>();
+  const { height } = useWindowDimensions();
+  const editorHeight = height - 200;
   const monaco = useMonaco();
   const bodyEditorHintText =
     "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
+
+  const agentConnected = useSelector(agentConnectedSelector);
+  const notificationEmailAIEnabled = useSelector(
+    (state: RootState) => state.config.featureFlags?.NotificationEmailAI === true,
+  );
+  const thread = useSelector((state: RootState) => threadSelector(state, aiThreadId));
+  const [appliedProposalId, setAppliedProposalId] = useState<string | null>(null);
+  const [aiDraft, setAiDraft] = useState('');
 
   useEffect(() => {
     if (monaco) {
@@ -113,12 +140,70 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen, templates]);
 
+  // The socket is opened lazily when the user lands on the AI (Email) tab (see
+  // the Tabs changeTabCallback below). The host modal keeps this component
+  // mounted and only toggles CSS display, so closing the modal does NOT unmount
+  // us. Tear the socket down when the modal closes (modelOpen -> false), and
+  // also on unmount (e.g. navigating away entirely) as a safety net.
+  useEffect(() => {
+    if (!notificationEmailAIEnabled) return;
+    if (!modelOpen) {
+      dispatch(disconnectAgent());
+      return;
+    }
+    return () => {
+      dispatch(disconnectAgent());
+    };
+  }, [dispatch, notificationEmailAIEnabled, modelOpen]);
+
+  // Tracks whether the agent socket has been requested for the current modal
+  // session so we only connect once, on the first visit to the AI tab.
+  const agentConnectionRequested = useRef(false);
+
+  // Start a fresh thread each time the modal opens (form agent pattern)
+  useEffect(() => {
+    if (notificationEmailAIEnabled && modelOpen) {
+      const newThreadId = uuid();
+      setAiThreadId(newThreadId);
+      dispatch(startThread(agentName, newThreadId));
+      setAppliedProposalId(null);
+      setAiDraft('');
+      agentConnectionRequested.current = false;
+    }
+  }, [modelOpen, dispatch, agentName, notificationEmailAIEnabled]);
+
   const switchTabPreview = (value) => {
     setPreview(value);
   };
 
   const tabNames = { sms: 'SMS', bot: 'Bot', email: 'Email' };
   const titleNames = { sms: ' SMS', bot: ' bot', email: 'n email' };
+
+  const hasEmailChannel = validChannels.includes('email');
+
+  const getHandlebarsVariables = (): string[] => {
+    if (!eventSuggestion) return [];
+    return eventSuggestion
+      .map((s: { label?: string; insertText?: string }) => s.label || s.insertText || '')
+      .filter(Boolean);
+  };
+
+  const handleAttachmentUpload = useCallback(
+    async (file: File): Promise<Attachment> => {
+      const type = file.type.startsWith('image/') ? 'image' : 'file';
+      const { uploadedFile, dataUrl } = await dispatch(
+        UploadFileService({ type: 'agent-attachments', file, recordId: aiThreadId }) as unknown as AnyAction,
+      );
+      return {
+        urn: uploadedFile.urn,
+        filename: uploadedFile.filename || file.name,
+        type,
+        thumbnailUrl: type === 'image' ? dataUrl : undefined,
+      };
+    },
+    [dispatch, aiThreadId],
+  );
+
   const saveChangesAction = () => {
     saveCurrentTemplate();
   };
@@ -148,7 +233,18 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainer>
       <GoabFormItem label="">
-        <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(validChannels[index])}>
+        <Tabs
+          activeIndex={activeIndex}
+          changeTabCallback={(index: number) => {
+            if (index < validChannels.length) {
+              switchTabPreview(validChannels[index]);
+            } else if (notificationEmailAIEnabled && !agentConnectionRequested.current) {
+              // AI (Email) tab selected — open the socket lazily on first visit.
+              agentConnectionRequested.current = true;
+              dispatch(connectAgent());
+            }
+          }}
+        >
           {radioOptions.map((item, key) => (
             <Tab
               data-testid={`${item.display}-tab`}
@@ -279,6 +375,31 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
             </Tab>
           ))}
+          {hasEmailChannel && notificationEmailAIEnabled && (
+            <Tab label="AI (Email)">
+              <TemplateAITab
+                threadId={aiThreadId}
+                templates={templates}
+                handlebarsVariables={getHandlebarsVariables()}
+                notificationType={serviceName ?? ''}
+                notificationTypeId={notificationTypeId}
+                height={editorHeight}
+                disabled={!agentConnected || !thread}
+                appliedProposalId={appliedProposalId}
+                draft={aiDraft}
+                onDraftChange={setAiDraft}
+                onApply={(id) => setAppliedProposalId(id)}
+                onProposal={(proposal: EmailTemplateProposal) => {
+                  if (proposal.subject !== undefined) onSubjectChange(proposal.subject, 'email');
+                  if (proposal.title !== undefined) onTitleChange(proposal.title, 'email');
+                  if (proposal.subtitle !== undefined) onSubtitleChange(proposal.subtitle, 'email');
+                  if (proposal.body !== undefined) onBodyChange(proposal.body, 'email');
+                  onAISaved?.(proposal);
+                }}
+                onAttachmentUpload={handleAttachmentUpload}
+              />
+            </Tab>
+          )}
         </Tabs>
       </GoabFormItem>
       <EditTemplateActions>

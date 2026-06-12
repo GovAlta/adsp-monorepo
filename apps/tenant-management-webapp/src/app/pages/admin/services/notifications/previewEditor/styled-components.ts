@@ -5,10 +5,19 @@ import { SmsPreviewPortal } from './smsPreviewPortal';
 
 // Edit Template components
 export const TemplateEditorContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   width: 40%;
+  min-height: calc(100vh - 8rem);
   padding-right: 1rem;
   margin-top: 4rem;
   overflow: hidden;
+
+  > div:first-child {
+    flex: 1;
+    min-height: 0;
+  }
+
   &:hover {
     overflow: auto;
   }
@@ -54,8 +63,10 @@ export const MonacoDivBody = styled.div`
 
 export const EditTemplateActions = styled.div`
   display: flex;
-  justify-content: right;
+  justify-content: flex-end;
   gap: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
 `;
 
 // preview template components

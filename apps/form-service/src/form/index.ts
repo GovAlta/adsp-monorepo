@@ -65,6 +65,7 @@ export const applyFormMiddleware = (
     tokenProvider,
     tenantService,
     calendarService,
+    logger,
   });
   app.use('/form/v1', definitionRouter);
 

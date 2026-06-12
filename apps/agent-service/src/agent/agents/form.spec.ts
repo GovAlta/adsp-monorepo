@@ -337,6 +337,45 @@ describe('formGenerationAgent', () => {
     expect(instructions).toContain('cheat-sheet.html');
   });
 
+  // --- CS-4960: preserving the existing form definition ---
+  describe('preserving the existing form definition (CS-4960)', () => {
+    it('includes the Preserving the Existing Form Definition section', () => {
+      const instructions = formGenerationAgent.instructions;
+      expect(instructions).toContain('Preserving the Existing Form Definition');
+    });
+
+    it('explains that the update tool REPLACES the dataSchema and uiSchema rather than merging', () => {
+      const instructions = formGenerationAgent.instructions;
+      expect(instructions).toContain('REPLACES the dataSchema and uiSchema');
+      expect(instructions).toContain('it does NOT merge them');
+    });
+
+    it('instructs never to delete existing content unless explicitly asked', () => {
+      const instructions = formGenerationAgent.instructions;
+      expect(instructions).toContain(
+        'NEVER delete or remove any existing field, property, UI element, validation, rule, or help content unless the user EXPLICITLY asks you to remove it.',
+      );
+    });
+
+    it('instructs never to completely rewrite or replace an existing schema unless explicitly asked', () => {
+      const instructions = formGenerationAgent.instructions;
+      expect(instructions).toContain('NEVER completely rewrite or "replace" an existing schema.');
+      expect(instructions).toContain(
+        'Only rewrite a schema from scratch if the user EXPLICITLY asks you to start over or replace the whole form.',
+      );
+    });
+
+    it('instructs never to change the name of the form definition', () => {
+      const instructions = formGenerationAgent.instructions;
+      expect(instructions).toContain('NEVER change the name of the form definition.');
+    });
+
+    it('instructs never to create a new form definition', () => {
+      const instructions = formGenerationAgent.instructions;
+      expect(instructions).toContain('NEVER create a new form definition.');
+    });
+  });
+
   it('has the correct tools configured', () => {
     expect(formGenerationAgent.tools).toEqual([
       'schemaDefinitionTool',

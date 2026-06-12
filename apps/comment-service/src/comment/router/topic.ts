@@ -185,6 +185,74 @@ export function createTopicType(
   };
 }
 
+export function updateTopicType(
+  apiId: AdspId,
+  logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to update a topic type.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('update topic type', user);
+      }
+
+      const topicTypeId = req.params.topicTypeId;
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+      const type = types?.[topicTypeId];
+      if (!type) {
+        throw new NotFoundError('topic type', topicTypeId);
+      }
+
+      const { name, readRoles, readerRoles, writeRoles } = req.body;
+      const topicType = {
+        id: type.id,
+        name: name ?? type.name,
+        adminRoles: type.adminRoles,
+        readerRoles: readerRoles ?? readRoles ?? type.readerRoles,
+        commenterRoles: writeRoles ?? type.commenterRoles,
+        securityClassification: type.securityClassification,
+      };
+
+      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+      const configurationUrl = new URL(`v2/configuration/${apiId.namespace}/${apiId.service}`, configurationServiceUrl);
+      const token = await tokenProvider.getAccessToken();
+
+      await axios.patch(
+        configurationUrl.href,
+        {
+          operation: 'UPDATE',
+          update: {
+            [topicTypeId]: topicType,
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        }
+      );
+
+      res.send(mapTopicType({ ...topicType, tenantId }));
+
+      logger.info(`Topic type ${topicTypeId} updated by user ${user.name} (ID: ${user.id}).`, {
+        context: 'comment-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function deleteTopicType(
   apiId: AdspId,
   logger: Logger,
@@ -558,6 +626,20 @@ export function createTopicRouter({
     '/topic-types/:topicTypeId',
     createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
     getTopicType()
+  );
+  router.patch(
+    '/topic-types/:topicTypeId',
+    createValidationHandler(
+      param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+      body('name').optional().isString().isLength({ min: 1, max: 50 }),
+      body('readRoles').optional().isArray(),
+      body('readRoles.*').optional().isString(),
+      body('readerRoles').optional().isArray(),
+      body('readerRoles.*').optional().isString(),
+      body('writeRoles').optional().isArray(),
+      body('writeRoles.*').optional().isString()
+    ),
+    updateTopicType(apiId, logger, directory, tokenProvider)
   );
   router.delete(
     '/topic-types/:topicTypeId',

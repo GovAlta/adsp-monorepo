@@ -26,6 +26,8 @@ interface AgentChatProps {
   threadId: string;
   context: Record<string, unknown>;
   messages: Message[];
+  draft?: string;
+  onDraftChange?: (value: string) => void;
   onSend: (threadId: string, context: Record<string, unknown>, content: UserContent) => void;
   onAttachmentUpload?: (file: File) => Promise<Attachment>;
 }
@@ -81,14 +83,35 @@ const ContainerDiv = styled.div`
   & > :first-child {
     overflow: auto;
     flex: 1;
+    min-height: 0;
 
-    > :last-child {
+    & .message-list {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .message-list > :last-child {
       padding-top: var(--goa-space-l);
     }
   }
 
   & > :last-child {
     flex: 0;
+  }
+
+  & .message-list .activity-indicator {
+    padding: var(--goa-space-m) var(--goa-space-xs) 0 var(--goa-space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--goa-space-xs);
+
+    & span {
+      color: var(--goa-color-text-secondary);
+      font-style: italic;
+      font-size: var(--goa-font-size-1);
+    }
   }
 
   & .content {
@@ -348,7 +371,6 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
   const hasReasoning = Boolean(message.reasoning?.content?.trim());
   const hasToolCalls = message.toolCalls.length > 0;
   const hasErrors = Boolean(message.errors?.length);
-  const hasStructuredOutput = message.output !== undefined;
   const hasPendingToolCall = message.toolCalls.some((toolCall) => !toolCall.result && !toolCall.error);
 
   // Show explicit feedback if the stream has started but no visible output has arrived yet.
@@ -372,13 +394,6 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
       {message.toolCalls.map((toolCall) => (
         <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} />
       ))}
-      {hasStructuredOutput && (
-        <div className="structured-output">
-          <GoabDetails heading="Structured output">
-            <pre>{JSON.stringify(message.output, null, 2)}</pre>
-          </GoabDetails>
-        </div>
-      )}
       {showStreamingContinuation && (
         <div className="activity-indicator" data-kind="continuing">
           <span>Generating response...</span>
@@ -406,23 +421,6 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
   & .activity-indicator[data-kind='continuing'] {
     margin-top: 0;
   }
-
-  & .structured-output {
-    margin: 0 var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
-
-    & pre {
-      background: var(--goa-color-greyscale-100);
-      border: 1px solid var(--goa-color-greyscale-200);
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: var(--goa-font-size-1);
-      line-height: var(--goa-space-m);
-      padding: var(--goa-space-m);
-      margin: 0;
-      overflow: auto;
-      max-height: 250px;
-    }
-  }
 `);
 
 // ========================================
@@ -434,11 +432,21 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   threadId,
   context,
   messages,
+  draft: draftProp,
+  onDraftChange,
   onSend,
   onAttachmentUpload,
 }) => {
-  // State
-  const [draft, setDraft] = useState('');
+  // State — use internal state when no controlled draft is provided
+  const [draftInternal, setDraftInternal] = useState('');
+  const draft = draftProp !== undefined ? draftProp : draftInternal;
+  const setDraft = (value: string) => {
+    if (onDraftChange) {
+      onDraftChange(value);
+    } else {
+      setDraftInternal(value);
+    }
+  };
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -511,16 +519,23 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
     <ContainerDiv>
       {/* Message list */}
       <div ref={scrollContainerRef} onScroll={onScroll}>
-        <AgentMessageItem message={welcomeMessage} />
-        {messages.map((message) =>
-          message.from === 'user' ? (
-            <UserMessageItem key={message.id} message={message} />
-          ) : (
-            <AgentMessageItem key={message.id} message={message} />
-          ),
-        )}
-        {isWaitingForResponse && <GoabSkeleton type="text" mb="l" mr="4xl" />}
-        <div ref={targetElementRef} />
+        <div className="message-list">
+          <AgentMessageItem message={welcomeMessage} />
+          {messages.map((message) =>
+            message.from === 'user' ? (
+              <UserMessageItem key={message.id} message={message} />
+            ) : (
+              <AgentMessageItem key={message.id} message={message} />
+            ),
+          )}
+          {isWaitingForResponse && (
+            <div className="activity-indicator" data-kind="thinking">
+              <span>Thinking...</span>
+              <GoabSkeleton type="text" mb="l" mr="4xl" />
+            </div>
+          )}
+          <div ref={targetElementRef} />
+        </div>
       </div>
 
       {/* Input form */}
