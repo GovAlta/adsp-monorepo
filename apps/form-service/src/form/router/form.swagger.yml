@@ -894,3 +894,19 @@ components:
               properties:
                 deleted:
                   type: boolean
+/form/v1/registers:
+  get:
+    tags:
+      - Form
+    description: Retrieves all data registers for the tenant.
+    responses:
+      201:
+        description: Successfully retrieved data registers.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DataRegister'
+      401:
+        description: User is not authorized to retrieve data registers.
