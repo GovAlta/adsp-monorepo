@@ -22,6 +22,7 @@ const fs = require('fs');
 
 const {
   buildLineToPositionMap,
+  buildAnnotatedDiff,
   formatComment,
   loadConfig,
   buildSystemPrompt,
@@ -73,6 +74,35 @@ describe('buildLineToPositionMap', () => {
   test('does not map removed lines to any diff position', () => {
     const patch = '@@ -1,2 +1,1 @@\n-removed line\n context';
     expect(buildLineToPositionMap(patch)).toEqual({});
+  });
+});
+
+// ─── buildAnnotatedDiff ───────────────────────────────────────────────────────
+
+describe('buildAnnotatedDiff', () => {
+  test('labels an added line with [LN+] and the correct new-file line number', () => {
+    const patch = '@@ -0,0 +1 @@\n+const x = 1;';
+    expect(buildAnnotatedDiff(patch)).toContain('[L1+] const x = 1;');
+  });
+
+  test('labels a context line with [LN ] and the correct new-file line number', () => {
+    const patch = '@@ -1,2 +1,2 @@\n context\n+added';
+    const annotated = buildAnnotatedDiff(patch);
+    expect(annotated).toContain('[L1 ]  context');
+    expect(annotated).toContain('[L2+] added');
+  });
+
+  test('omits removed lines entirely', () => {
+    const patch = '@@ -1,2 +1,1 @@\n-removed line\n context';
+    expect(buildAnnotatedDiff(patch)).not.toContain('removed line');
+  });
+
+  test('returns an empty string when patch is null', () => {
+    expect(buildAnnotatedDiff(null)).toBe('');
+  });
+
+  test('returns an empty string when patch is undefined', () => {
+    expect(buildAnnotatedDiff(undefined)).toBe('');
   });
 });
 
@@ -199,44 +229,43 @@ describe('buildSystemPrompt', () => {
 
 describe('processFilesForReview', () => {
   const SYSTEM_PROMPT = 'test system prompt';
-  // Patch where new-file line 1 maps to diff position 2 — ensures a violation
-  // on line 1 is included in reviewComments rather than silently dropped.
+  // @@-hunk-header = diff position 1; first + line = position 2, so line 1 maps to a valid inline position.
   const PATCH_WITH_LINE_1_ADDED = '@@ -0,0 +1 @@\n+const x = 1;';
 
   test('skips a file and returns no reviewComments when patch is null', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: null }];
-    const reviewFile = jest.fn();
+    const files = [{ filename: 'src/test.ts', patch: null }];
+    const mockReviewFile = jest.fn();
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    const { reviewComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('does not call reviewFile when patch is null', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: null }];
-    const reviewFile = jest.fn();
+  test('does not invoke the mock review function when patch is null', async () => {
+    const files = [{ filename: 'src/test.ts', patch: null }];
+    const mockReviewFile = jest.fn();
 
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
-    expect(reviewFile).not.toHaveBeenCalled();
+    expect(mockReviewFile).not.toHaveBeenCalled();
   });
 
   test('sets hasBlockingViolations to true when a violation with ERROR severity is returned', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const reviewFile = jest
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest
       .fn()
       .mockResolvedValue([
         { rule: '2.13', severity: 'ERROR', line: 1, message: 'error suppressed', suggestion: 'throw' },
       ]);
 
-    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    const { hasBlockingViolations } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(hasBlockingViolations).toBe(true);
   });
 
   test('does not set hasBlockingViolations for WARNING severity violations', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const reviewFile = jest.fn().mockResolvedValue([
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest.fn().mockResolvedValue([
       {
         rule: '2.7',
         severity: 'WARNING',
@@ -246,32 +275,58 @@ describe('processFilesForReview', () => {
       },
     ]);
 
-    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    const { hasBlockingViolations } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(hasBlockingViolations).toBe(false);
   });
 
-  test('returns empty reviewComments when reviewFile returns no violations', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const reviewFile = jest.fn().mockResolvedValue([]);
+  test('returns empty reviewComments when the mock returns no violations', async () => {
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest.fn().mockResolvedValue([]);
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    const { reviewComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('calls reviewFile with the patch content, filename, and system prompt', async () => {
-    const changedFiles = [{ filename: 'src/utils.ts', patch: 'const answer = 42;' }];
-    const reviewFile = jest.fn().mockResolvedValue([]);
+  test('excludes a violation with no diff position from reviewComments', async () => {
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest.fn().mockResolvedValue([
+      { rule: '2.3', severity: 'WARNING', line: 99, message: 'too long', suggestion: 'split' },
+    ]);
 
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    const { reviewComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
-    expect(reviewFile).toHaveBeenCalledWith('const answer = 42;', 'src/utils.ts', SYSTEM_PROMPT);
+    expect(reviewComments).toHaveLength(0);
+  });
+
+  test('sets hasBlockingViolations for an ERROR violation with no diff position', async () => {
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest.fn().mockResolvedValue([
+      { rule: '2.13', severity: 'ERROR', line: 99, message: 'no error handling', suggestion: 'throw' },
+    ]);
+
+    const { hasBlockingViolations } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
+
+    expect(hasBlockingViolations).toBe(true);
+  });
+
+  test('calls the mock review function with the annotated diff, filename, and system prompt', async () => {
+    const files = [{ filename: 'src/utils.ts', patch: 'const answer = 42;' }];
+    const mockReviewFile = jest.fn().mockResolvedValue([]);
+
+    await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
+
+    expect(mockReviewFile).toHaveBeenCalledWith(
+      expect.stringContaining('const answer = 42;'),
+      'src/utils.ts',
+      SYSTEM_PROMPT
+    );
   });
 
   test('collects all violations from processFilesForReview before the top 5 cap is applied in postReviewSummary', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const reviewFile = jest.fn().mockResolvedValue([
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest.fn().mockResolvedValue([
       { rule: '2.5', severity: 'SUGGESTION', line: 1, message: 's1', suggestion: 'fix' },
       { rule: '2.6', severity: 'SUGGESTION', line: 1, message: 's2', suggestion: 'fix' },
       { rule: '2.7', severity: 'WARNING', line: 1, message: 'w1', suggestion: 'fix' },
@@ -280,7 +335,7 @@ describe('processFilesForReview', () => {
       { rule: '2.14', severity: 'ERROR', line: 1, message: 'e2', suggestion: 'fix' },
     ]);
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+    const { reviewComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(reviewComments.length).toBe(6);
   });

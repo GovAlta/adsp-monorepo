@@ -158,12 +158,19 @@ SEVERITY LEVELS:
 
 SUPPRESSION: If a line contains the comment // clean-code-ignore: RULE_ID (e.g. // clean-code-ignore: 2.3), skip that rule for that line.
 
+DIFF FORMAT: The code you are reviewing has been pre-processed for clarity. Each line is prefixed with its new-file line number and a type marker:
+- [LN+] is a newly added line with new-file line number N — ONLY flag violations on these lines
+- [LN ] is an unchanged context line — do NOT flag violations on these lines
+Removed lines have been omitted entirely.
+
+IMPORTANT: Only report violations on [LN+] lines. Use the number N from the [LN+] prefix exactly as the "line" value in your response. Do not report violations on [LN ] context lines.
+
 RESPONSE FORMAT:
 Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. Each item:
 {
   "rule": "2.X",
   "severity": "ERROR" | "WARNING" | "SUGGESTION",
-  "line": <line number as integer>,
+  "line": <new-file line number as integer>,
   "message": "<clear description of the violation>",
   "suggestion": "<specific actionable fix>"
 }
@@ -235,6 +242,36 @@ function buildLineToPositionMap(patch) {
     }
   }
   return map;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pre-process patch into an annotated diff for the AI
+// Added lines are labelled [LN+], context lines [LN ].
+// Removed lines are omitted — no value in showing the AI deleted code.
+// ─────────────────────────────────────────────────────────────
+function buildAnnotatedDiff(patch) {
+  if (!patch) return '';
+  const lines = patch.split('\n');
+  const annotated = [];
+  let currentLine = 0;
+
+  for (const line of lines) {
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
+      if (match) currentLine = parseInt(match[1], 10) - 1;
+      annotated.push(line);
+    } else if (line.startsWith('+')) {
+      currentLine++;
+      annotated.push(`[L${currentLine}+] ${line.slice(1)}`);
+    } else if (line.startsWith('-')) {
+      // omit removed lines
+    } else {
+      currentLine++;
+      annotated.push(`[L${currentLine} ] ${line}`);
+    }
+  }
+
+  return annotated.join('\n');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -379,6 +416,24 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 // Process each changed file: call the AI model and collect review comments
 // ─────────────────────────────────────────────────────────────
+function routeViolations(violations, lineToPosition, filename) {
+  const inline = [];
+  let hasBlockingViolations = false;
+
+  for (const violation of violations) {
+    if (violation.severity === 'ERROR') hasBlockingViolations = true;
+
+    const position = lineToPosition[violation.line];
+    if (!position) {
+      console.log(`  ⚠️  No diff position for ${filename} line ${violation.line} (${violation.rule}) — skipping inline placement`);
+    } else {
+      inline.push({ path: filename, position, body: formatComment(violation) });
+    }
+  }
+
+  return { inline, hasBlockingViolations };
+}
+
 async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
   let hasBlockingViolations = false;
@@ -386,15 +441,14 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
   for (const file of changedFiles) {
     console.log(`  Reviewing: ${file.filename}`);
 
-    const content = file.patch;
-    if (!content) {
+    if (!file.patch) {
       console.log(`  No diff available for ${file.filename}, skipping.`);
       continue;
     }
 
     let violations = [];
     try {
-      violations = await reviewFile(content, file.filename, systemPrompt);
+      violations = await reviewFile(buildAnnotatedDiff(file.patch), file.filename, systemPrompt);
     } catch (e) {
       console.warn(`  Error reviewing ${file.filename}:`, e.message);
       continue;
@@ -407,20 +461,14 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     console.log(`  ⚠️  ${violations.length} violation(s) in ${file.filename}`);
 
-    const lineToPosition = buildLineToPositionMap(file.patch);
+    const { inline, hasBlockingViolations: blocking } = routeViolations(
+      violations,
+      buildLineToPositionMap(file.patch),
+      file.filename,
+    );
 
-    for (const v of violations) {
-      const position = lineToPosition[v.line];
-      if (!position) continue;
-
-      if (v.severity === 'ERROR') hasBlockingViolations = true;
-
-      reviewComments.push({
-        path: file.filename,
-        position,
-        body: formatComment(v),
-      });
-    }
+    reviewComments.push(...inline);
+    if (blocking) hasBlockingViolations = true;
   }
 
   return { reviewComments, hasBlockingViolations };
@@ -509,6 +557,8 @@ if (require.main === module) {
 
 module.exports = {
   buildLineToPositionMap,
+  buildAnnotatedDiff,
+  routeViolations,
   formatComment,
   loadConfig,
   buildSystemPrompt,
