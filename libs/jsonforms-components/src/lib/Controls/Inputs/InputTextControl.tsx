@@ -113,7 +113,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   // clean-code-ignore: 2.18
   useEffect(() => {
-    if (!user || data || manualInput || hasDefault) return;
+    if (!user || data || manualInput || hasDefault || !uischema?.options?.autoPopulate) return;
 
     const autoPopulatedValue = autoPopulateValue(user, props);
 
@@ -127,7 +127,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, uischema?.options?.autoPopulate]);
 
   useEffect(() => {
     if (typeof handleChange === 'function' && hasDefault && !manualInput) {

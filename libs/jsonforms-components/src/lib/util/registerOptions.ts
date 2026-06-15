@@ -12,6 +12,7 @@ export const OPTION_DEFINITIONS = defineFields({
   enablePhone: { schema: true },
   placeholder: { schema: 'Please select something' },
   emailFirst: { schema: true },
+  autoPopulate: { schema: 'firstName' },
   noDataMessage: { schema: 'no data' },
   detail: { name: 'maxItems', schema: { maxItems: 42 } },
   componentProps: { name: 'readOnly', schema: { readOnly: true } },

@@ -235,20 +235,56 @@ describe('GoAEmailInput additional coverage no defaults', () => {
     required: true,
   };
 
-  it('calls autoPopulateValue when user and rootSchema.properties exist', () => {
-    jest.mock('../../util/autoPopulate', () => ({
-      autoPopulateValue: jest.fn(() => 'auto@example.com'),
-    }));
+  it('auto-populates email when configured in the UI schema', () => {
+    jest.clearAllMocks();
     const mockUser = { email: 'user@example.com' };
+    const handleChange = jest.fn();
 
     (useRegisterUser as jest.Mock).mockReturnValue(mockUser);
 
     render(
       <JsonFormRegisterProvider defaultRegisters={undefined}>
-        <GoAEmailInput {...staticProps} />
+        <GoAEmailInput
+          {...staticProps}
+          schema={{ type: 'string', format: 'email' }}
+          data=""
+          handleChange={handleChange}
+          uischema={{
+            ...staticProps.uischema,
+            options: { autoPopulate: 'email' },
+          }}
+        />
       </JsonFormRegisterProvider>,
     );
 
-    expect(autoPopulateValue).toHaveBeenCalledWith(mockUser, staticProps);
+    expect(autoPopulateValue).toHaveBeenCalledWith(
+      mockUser,
+      expect.objectContaining({
+        uischema: expect.objectContaining({ options: { autoPopulate: 'email' } }),
+      }),
+    );
+    expect(handleChange).toHaveBeenCalledWith('theEmail', 'auto@example.com');
+  });
+
+  it('does not infer email auto-population from the field path', () => {
+    jest.clearAllMocks();
+    const mockUser = { email: 'user@example.com' };
+    const handleChange = jest.fn();
+
+    (useRegisterUser as jest.Mock).mockReturnValue(mockUser);
+
+    render(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <GoAEmailInput
+          {...staticProps}
+          schema={{ type: 'string', format: 'email' }}
+          data=""
+          handleChange={handleChange}
+        />
+      </JsonFormRegisterProvider>,
+    );
+
+    expect(autoPopulateValue).not.toHaveBeenCalled();
+    expect(handleChange).not.toHaveBeenCalled();
   });
 });

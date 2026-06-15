@@ -87,14 +87,15 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
 
   useEffect(() => {
     if (!user || data) return;
-    const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
+    const autoPopulatedValue =
+      schema.default || (uischema?.options?.autoPopulate && user ? autoPopulateValue(user, props) : undefined);
 
     if (autoPopulatedValue && autoPopulatedValue !== data && !manualInput) {
       handleChange(props.path, autoPopulatedValue);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema, user]);
+  }, [schema, user, uischema?.options?.autoPopulate]);
 
   useEffect(() => {
     if (typeof handleChange === 'function' && schema?.default !== undefined) {

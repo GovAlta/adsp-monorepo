@@ -1,82 +1,60 @@
-import { autoPopulateValue, autoPopulatePropertiesMonaco, USER_FIELD_DEFINITIONS } from './autoPopulate';
+import { AUTO_POPULATE_SOURCES, autoPopulatePropertiesMonaco, autoPopulateValue } from './autoPopulate';
 import { User } from '../Context/register';
 
-describe('USER_FIELD_DEFINITIONS', () => {
+describe('autoPopulateValue', () => {
   const mockUser: User = {
     name: 'John Doe',
     email: 'john@example.com',
   } as User;
 
-  describe('autoPopulateValue', () => {
-    it('returns full name for fullName', () => {
-      expect(autoPopulateValue(mockUser, { path: 'fullName' })).toBe('John Doe');
-    });
-
-    it('returns full name for name alias', () => {
-      expect(autoPopulateValue(mockUser, { path: 'name' })).toBe('John Doe');
-    });
-
-    it('returns first name', () => {
-      expect(autoPopulateValue(mockUser, { path: 'firstName' })).toBe('John');
-    });
-
-    it('returns first name for givenName alias', () => {
-      expect(autoPopulateValue(mockUser, { path: 'givenName' })).toBe('John');
-    });
-
-    it('returns last name', () => {
-      expect(autoPopulateValue(mockUser, { path: 'lastName' })).toBe('Doe');
-    });
-
-    it('returns last name for surname alias', () => {
-      expect(autoPopulateValue(mockUser, { path: 'surname' })).toBe('Doe');
-    });
-
-    it('returns email', () => {
-      expect(autoPopulateValue(mockUser, { path: 'email' })).toBe('john@example.com');
-    });
-
-    it('returns email for alias fields', () => {
-      expect(autoPopulateValue(mockUser, { path: 'emailAddress' })).toBe('john@example.com');
-      expect(autoPopulateValue(mockUser, { path: 'primaryEmail' })).toBe('john@example.com');
-    });
-
-    it('returns empty string if email is missing', () => {
-      const userWithoutEmail = { name: 'John Doe' } as User;
-      expect(autoPopulateValue(userWithoutEmail, { path: 'email' })).toBe('');
-    });
-
-    it('handles single name (no last name)', () => {
-      const user = { name: 'Prince' } as User;
-      expect(autoPopulateValue(user, { path: 'firstName' })).toBe('Prince');
-      expect(autoPopulateValue(user, { path: 'lastName' })).toBe('');
-    });
-
-    it('returns undefined for unknown field', () => {
-      expect(autoPopulateValue(mockUser, { path: 'unknownField' })).toBeUndefined();
-    });
+  it('returns the configured first name regardless of the field path', () => {
+    expect(
+      autoPopulateValue(mockUser, {
+        uischema: { options: { autoPopulate: 'firstName' } },
+      }),
+    ).toBe('John');
   });
 
-  describe('autoPopulatePropertiesMonaco', () => {
-    it('creates an entry for each field definition', () => {
-      const keys = Object.keys(USER_FIELD_DEFINITIONS);
-      expect(autoPopulatePropertiesMonaco).toHaveLength(keys.length);
-    });
+  it('returns the configured last name', () => {
+    expect(
+      autoPopulateValue(
+        { ...mockUser, name: 'John Michael Doe' },
+        { uischema: { options: { autoPopulate: 'lastName' } } },
+      ),
+    ).toBe('Doe');
+  });
 
-    it('generates labels with auto suffix', () => {
-      const item = autoPopulatePropertiesMonaco.find((i) => i.label.includes('fullName'));
-      expect(item?.label).toBe('fullName (auto from user profile)');
-    });
+  it('returns the configured email address', () => {
+    expect(
+      autoPopulateValue(mockUser, {
+        uischema: { options: { autoPopulate: 'email' } },
+      }),
+    ).toBe('john@example.com');
+  });
 
-    it('generates valid insertText JSON structure', () => {
-      const item = autoPopulatePropertiesMonaco.find((i) => i.label.includes('email'));
-      expect(item?.insertText).toContain('"type": "string"');
-      expect(item?.insertText).toContain('"format": "email"');
-    });
+  it('does not infer a value from the field name without a directive', () => {
+    expect(autoPopulateValue(mockUser, {})).toBeUndefined();
+  });
 
-    it('includes properly formatted key in insertText', () => {
-      const item = autoPopulatePropertiesMonaco.find((i) => i.label.startsWith('firstName'));
-      expect(item?.insertText.startsWith('firstName"')).toBe(true);
-    });
+  it('ignores unsupported directives', () => {
+    expect(
+      autoPopulateValue(mockUser, {
+        uischema: { options: { autoPopulate: 'fullName' } },
+      }),
+    ).toBeUndefined();
+  });
+
+  it('handles a user with a single name', () => {
+    const user = { name: 'Prince' } as User;
+    expect(autoPopulateValue(user, { uischema: { options: { autoPopulate: 'firstName' } } })).toBe('Prince');
+    expect(autoPopulateValue(user, { uischema: { options: { autoPopulate: 'lastName' } } })).toBe('');
+  });
+
+  it('supports only the accepted profile fields', () => {
+    expect(AUTO_POPULATE_SOURCES).toEqual(['firstName', 'lastName', 'email']);
+  });
+
+  it('does not suggest convention-based data-schema properties', () => {
+    expect(autoPopulatePropertiesMonaco).toEqual([]);
   });
 });

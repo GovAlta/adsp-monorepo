@@ -703,7 +703,8 @@ describe('Input Text Control tests', () => {
     });
   });
 
-  it('autoPopulates value when user exists and data is empty', async () => {
+  it('auto-populates an empty field when configured in the UI schema', async () => {
+    jest.useFakeTimers();
     const handleChangeMock = jest.fn();
 
     (useRegisterUser as jest.Mock).mockReturnValue({ name: 'Test User' });
@@ -713,6 +714,13 @@ describe('Input Text Control tests', () => {
       ...staticProps,
       data: undefined,
       handleChange: handleChangeMock,
+      uischema: {
+        ...staticProps.uischema,
+        options: {
+          ...staticProps.uischema.options,
+          autoPopulate: 'firstName',
+        },
+      },
     };
 
     render(
@@ -722,7 +730,27 @@ describe('Input Text Control tests', () => {
     );
 
     await act(async () => {
-      await Promise.resolve();
+      jest.advanceTimersByTime(1000);
     });
+
+    expect(autoPopulateValue).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ path: 'firstName' }));
+    expect(handleChangeMock).toHaveBeenCalledWith('firstName', 'AUTO_VALUE');
+    jest.useRealTimers();
+  });
+
+  it('does not infer auto-population from the field name', () => {
+    const handleChangeMock = jest.fn();
+
+    (useRegisterUser as jest.Mock).mockReturnValue({ name: 'Test User' });
+    (autoPopulateValue as jest.Mock).mockReturnValue('AUTO_VALUE');
+
+    render(
+      <JsonFormsContext.Provider value={mockContextValue}>
+        <GoAInputText {...staticProps} data={undefined} handleChange={handleChangeMock} />
+      </JsonFormsContext.Provider>,
+    );
+
+    expect(autoPopulateValue).not.toHaveBeenCalled();
+    expect(handleChangeMock).not.toHaveBeenCalled();
   });
 });
