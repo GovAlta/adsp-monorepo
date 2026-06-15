@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { createRequire } from 'node:module';
 
-const _require = createRequire(__filename);
+const require = createRequire(import.meta.url);
 
 export default {
   displayName: 'form-service',
@@ -17,7 +17,7 @@ export default {
     ],
   },
   moduleNameMapper: {
-    '^uuid$': _require.resolve('uuid'),
+    '^uuid$': require.resolve('uuid'),
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/form-service',
