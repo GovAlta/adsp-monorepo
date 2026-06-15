@@ -117,15 +117,12 @@ const getAutoPopulatedData = (definition, user?: User): AutoPopulatedValue[] => 
 };
 
 const mergeMissingData = (data, autoPopulatedData: AutoPopulatedValue[]) => {
-  const mergedData = _.cloneDeep(data ?? {});
+  const defaults = autoPopulatedData.reduce(
+    (values, { path, value }) => _.set(values, path, value),
+    {} as Record<string, unknown>,
+  );
 
-  for (const { path, value } of autoPopulatedData) {
-    if (_.get(mergedData, path) === undefined) {
-      _.set(mergedData, path, value);
-    }
-  }
-
-  return mergedData;
+  return _.defaultsDeep({}, data ?? {}, defaults);
 };
 
 const createMiddleware = (definition, user?: User) => (state, action, defaultReducer) => {
