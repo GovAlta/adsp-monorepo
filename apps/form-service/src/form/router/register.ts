@@ -43,7 +43,10 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 
       // Fetch the actual entries from the data namespace
       const dataResponse = await axios.get(
-        new URL(`v2/configuration/${namespace}/${name}/latest`, configurationApiUrl).href,
+        new URL(
+          `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
+          configurationApiUrl,
+        ).href,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
@@ -116,7 +119,8 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       // Replace the entries data
       const { data: entriesData } = await axios.patch(
-        new URL(`v2/configuration/${namespace}/${name}`, configurationApiUrl).href,
+        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
+          .href,
         { operation: 'REPLACE', configuration: entries ?? [] },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -147,8 +151,14 @@ export function createRegisterRouter({ directory, tokenProvider }: RegisterRoute
     '/registers/:namespace/:name',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('namespace').isString().isLength({ min: 1, max: 100 }),
-      param('name').isString().isLength({ min: 1, max: 100 }),
+      param('namespace')
+        .isString()
+        .isLength({ min: 1, max: 100 })
+        .matches(/^[a-zA-Z0-9-_]+$/),
+      param('name')
+        .isString()
+        .isLength({ min: 1, max: 100 })
+        .matches(/^[a-zA-Z0-9-_]+$/),
     ),
     getRegister(directory, tokenProvider),
   );
@@ -157,8 +167,14 @@ export function createRegisterRouter({ directory, tokenProvider }: RegisterRoute
     '/registers/:namespace/:name',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('namespace').isString().isLength({ min: 1, max: 100 }),
-      param('name').isString().isLength({ min: 1, max: 100 }),
+      param('namespace')
+        .isString()
+        .isLength({ min: 1, max: 100 })
+        .matches(/^[a-zA-Z0-9-_]+$/),
+      param('name')
+        .isString()
+        .isLength({ min: 1, max: 100 })
+        .matches(/^[a-zA-Z0-9-_]+$/),
       body('description').optional().isString(),
       body('entries').optional().isArray(),
     ),

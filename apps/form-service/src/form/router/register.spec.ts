@@ -11,6 +11,7 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('register router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const configurationServiceUrl = new URL('http://configuration-service');
 
   const directoryMock = {
     getServiceUrl: jest.fn(),
@@ -30,8 +31,16 @@ describe('register router', () => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
     directoryMock.getServiceUrl.mockReset();
+    directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
     tokenProviderMock.getAccessToken.mockReturnValue(Promise.resolve('token'));
   });
+
+  // Mocks both config-service GET calls for getRegister: platform config then entries data.
+  function mockGetResponses(dataResponse: object) {
+    axiosMock.get
+      .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } })
+      .mockResolvedValueOnce(dataResponse);
+  }
 
   it('can create router', () => {
     const router = createRegisterRouter({ directory: directoryMock, tokenProvider: tokenProviderMock });
@@ -61,8 +70,6 @@ describe('register router', () => {
     });
 
     it('can return 404 when register not found in platform config', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       axiosMock.get.mockResolvedValue({ data: { configuration: {} } });
 
       const req = {
@@ -81,12 +88,7 @@ describe('register router', () => {
     });
 
     it('can return 404 when data endpoint returns 404', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
-      axiosMock.get
-        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } })
-        .mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: null });
+      mockGetResponses({ status: HttpStatusCodes.NOT_FOUND, data: null });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -104,15 +106,7 @@ describe('register router', () => {
     });
 
     it('can return register on success', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
-      axiosMock.get
-        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } })
-        .mockResolvedValueOnce({
-          status: HttpStatusCodes.OK,
-          data: { configuration: ['Monday', 'Tuesday', 'Wednesday'] },
-        });
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: ['Monday', 'Tuesday', 'Wednesday'] } });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -135,9 +129,6 @@ describe('register router', () => {
     });
 
     it('can return empty description when definition has no description', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
       axiosMock.get
         .mockResolvedValueOnce({
           data: {
@@ -164,12 +155,7 @@ describe('register router', () => {
     });
 
     it('can call config service with tenant id', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-
-      axiosMock.get
-        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } })
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: [] } });
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: [] } });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -190,6 +176,12 @@ describe('register router', () => {
   });
 
   describe('updateRegister', () => {
+    beforeEach(() => {
+      axiosMock.get.mockResolvedValue({
+        data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
+      });
+    });
+
     it('can create handler', () => {
       const handler = updateRegister(directoryMock, tokenProviderMock);
       expect(handler).toBeTruthy();
@@ -213,8 +205,6 @@ describe('register router', () => {
     });
 
     it('can return 404 when register does not exist', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
       axiosMock.get.mockResolvedValue({ data: { configuration: {} } });
 
       const req = {
@@ -234,11 +224,6 @@ describe('register router', () => {
     });
 
     it('can update entries without changing description', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.get.mockResolvedValue({
-        data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
-      });
       axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: ['Monday', 'Tuesday'] } } });
 
       const req = {
@@ -270,11 +255,6 @@ describe('register router', () => {
     });
 
     it('can update both description and entries', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.get.mockResolvedValue({
-        data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
-      });
       axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: ['Mon', 'Tue'] } } });
 
       const req = {
@@ -311,11 +291,6 @@ describe('register router', () => {
     });
 
     it('can update with empty entries array', async () => {
-      const configurationServiceUrl = new URL('http://configuration-service');
-      directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-      axiosMock.get.mockResolvedValue({
-        data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
-      });
       axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: [] } } });
 
       const req = {
