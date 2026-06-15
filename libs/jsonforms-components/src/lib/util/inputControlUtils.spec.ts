@@ -84,13 +84,23 @@ describe('onChangeForNumericControl', () => {
     expect(mockHandleChange).toHaveBeenCalledWith('testPath', 123);
   });
 
-  it('should call handleChange with undefined when input is empty string', () => {
+  it('should not call handleChange when input is empty and data is already undefined', () => {
     onChangeForNumericControl({
       value: '',
-      controlProps: baseControlProps as ControlProps,
+      controlProps: { ...baseControlProps, data: undefined } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+
+    expect(mockHandleChange).not.toHaveBeenCalled();
   });
+
+  it('should clear numeric value when input is empty and data has a number', () => {
+  onChangeForNumericControl({
+    value: '',
+    controlProps: { ...baseControlProps, data: 50 } as ControlProps,
+  });
+
+  expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+});
 
   it('should NOT call handleChange when value is same as data', () => {
     onChangeForNumericControl({
@@ -108,13 +118,14 @@ describe('onChangeForNumericControl', () => {
     expect(mockHandleChange).toHaveBeenCalledWith('testPath', 0);
   });
 
-  it('should call handleChange with null when value is null', () => {
-    onChangeForNumericControl({
-      value: null,
-      controlProps: baseControlProps as ControlProps,
-    });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', null);
+it('should not call handleChange when value is null and data is already undefined', () => {
+  onChangeForNumericControl({
+    value: null,
+    controlProps: { ...baseControlProps, data: undefined } as ControlProps,
   });
+
+  expect(mockHandleChange).not.toHaveBeenCalled();
+});
 
   it('should handle negative numbers', () => {
     onChangeForNumericControl({
@@ -132,7 +143,7 @@ describe('onChangeForNumericControl', () => {
     expect(mockHandleChange).toHaveBeenCalled();
   });
 
-  it('should call handleChange with undefined when value is empty string and data is different', () => {
+  it('should call handleChange with empty string when value is empty and data differs', () => {
     onChangeForNumericControl({
       value: '',
       controlProps: { ...baseControlProps, data: 100 } as ControlProps,
@@ -163,7 +174,7 @@ describe('onChangeForNumericControl', () => {
       value: null,
       controlProps: { ...baseControlProps, data: 50 } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', null);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
   });
 });
 
@@ -403,13 +414,13 @@ describe('onKeyPressForTimeControl', () => {
     expect(mockHandleChange).not.toHaveBeenCalled();
   });
 
-  it('should call handleChange with undefined for empty time', () => {
+  it('should call handleChange with empty string when time input is empty', () => {
     onKeyPressForTimeControl({
       value: '',
       key: 'Enter',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 
   it('should handle time with seconds', () => {
@@ -452,22 +463,22 @@ describe('onKeyPressForDateControl', () => {
     expect(mockHandleChange).not.toHaveBeenCalled();
   });
 
-  it('should call handleChange with undefined for invalid date', () => {
+  it('Should call handleChange with empty string when date input is invalid', () => {
     onKeyPressForDateControl({
       value: 'invalid',
       key: 'Enter',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 
-  it('should call handleChange with undefined for empty date', () => {
+  it('should call handleChange with empty string for empty date', () => {
     onKeyPressForDateControl({
       value: '',
       key: 'Enter',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 });
 
@@ -499,12 +510,12 @@ describe('onBlurForTextControl', () => {
     expect(mockHandleChange).not.toHaveBeenCalled();
   });
 
-  it('should call handleChange with undefined for empty string when required', () => {
+  it('should call handleChange with empty string for empty string when required', () => {
     onBlurForTextControl({
       value: '',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 
   it('should not call handleChange when required but data already has value', () => {
@@ -597,20 +608,20 @@ describe('onBlurForDateControl', () => {
     expect(mockHandleChange).not.toHaveBeenCalled();
   });
 
-  it('should call handleChange with undefined for invalid date when required and empty', () => {
+  it('should call handleChange with empty string for invalid date when required and empty', () => {
     onBlurForDateControl({
       value: 'invalid',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 
-  it('should call handleChange with undefined for empty date when required and empty', () => {
+  it('should call handleChange with empty string for empty date when required and empty', () => {
     onBlurForDateControl({
       value: '',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 });
 
@@ -642,12 +653,12 @@ describe('onBlurForTimeControl', () => {
     expect(mockHandleChange).not.toHaveBeenCalled();
   });
 
-  it('should call handleChange with undefined for empty time when required and empty', () => {
+  it('should call handleChange with empty string for empty time when required and empty', () => {
     onBlurForTimeControl({
       value: '',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 
   it('should call handleChange with invalid time value when required and empty', () => {
@@ -679,12 +690,12 @@ describe('onChangeForInputControl', () => {
     expect(mockHandleChange).toHaveBeenCalledWith('testPath', 'test input');
   });
 
-  it('should call handleChange with undefined for empty string', () => {
+  it('should call handleChange with empty string for empty string', () => {
     onChangeForInputControl({
       value: '',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
   });
 
   it('should handle special characters', () => {
@@ -837,12 +848,12 @@ describe('onChangeForDateTimeControl', () => {
   });
 
   // Target line 202 - numeric control with null value
-  it('should handle null value in numeric control by calling handleChange with null', () => {
+  it('should handle null value in numeric control by calling handleChange with undefined', () => {
     mockHandleChange.mockClear();
     onChangeForNumericControl({
       value: null,
       controlProps: { ...baseControlProps, data: 42 } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', null);
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
   });
 });

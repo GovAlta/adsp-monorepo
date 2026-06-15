@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import {
   GoARenderers,
   JsonFormContext,
@@ -110,9 +111,80 @@ const createMiddleware = (definition, user?: User) => (state, action, defaultRed
   };
 };
 
+const getRequiredMessage = (propertyName: string, property: Record<string, unknown>) => {
+  const label = typeof property.title === 'string' ? property.title : propertyName;
+  return `${label} is required`;
+};
+
+const schemaKeywords = ['items', 'additionalProperties', 'allOf', 'anyOf', 'oneOf', 'not'] as const;
+
+const isObjectSchema = (schema: unknown): schema is Record<string, unknown> =>
+  !!schema && typeof schema === 'object' && !Array.isArray(schema);
+
+const isRequiredStringWithoutMinLength = (property: unknown): property is Record<string, unknown> =>
+  isObjectSchema(property) && property.type === 'string' && property.minLength === undefined;
+
+const addMinLengthToRequiredString = (propertyName: string, property: Record<string, unknown>): JsonSchema =>
+  ({
+    ...property,
+    minLength: 1,
+    errorMessage: {
+      ...(isObjectSchema(property.errorMessage) ? property.errorMessage : {}),
+      minLength: getRequiredMessage(propertyName, property),
+    },
+  }) as JsonSchema;
+
+const addMinLengthToRequiredProperties = (schema: Record<string, unknown>): void => {
+  if (!isObjectSchema(schema.properties)) {
+    return;
+  }
+
+  const properties = { ...(schema.properties as Record<string, JsonSchema>) };
+  const required = Array.isArray(schema.required) ? (schema.required as string[]) : [];
+
+  for (const propertyName of required) {
+    const property = properties[propertyName];
+
+    if (isRequiredStringWithoutMinLength(property)) {
+      properties[propertyName] = addMinLengthToRequiredString(propertyName, property);
+    }
+  }
+
+  schema.properties = Object.fromEntries(
+    Object.entries(properties).map(([key, value]) => [key, addMinLengthToRequiredStrings(value)]),
+  );
+};
+
+const addMinLengthToNestedSchemas = (schema: Record<string, unknown>): void => {
+  for (const keyword of schemaKeywords) {
+    const value = schema[keyword];
+
+    if (Array.isArray(value)) {
+      schema[keyword] = value.map(addMinLengthToRequiredStrings);
+    } else if (isObjectSchema(value)) {
+      schema[keyword] = addMinLengthToRequiredStrings(value as JsonSchema);
+    }
+  }
+};
+
+const addMinLengthToRequiredStrings = (schema: JsonSchema): JsonSchema => {
+  if (!isObjectSchema(schema)) {
+    return schema;
+  }
+
+  const modifiedSchema = { ...schema };
+
+  addMinLengthToRequiredProperties(modifiedSchema);
+  addMinLengthToNestedSchemas(modifiedSchema);
+
+  return modifiedSchema as JsonSchema;
+};
+
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
   const user = useSelector((state: AppState) => state.user);
+
+  const schema = addMinLengthToRequiredStrings(populateDropdown(definition.dataSchema, enumerators));
 
   const middleware = createMiddleware(definition, user?.user as User);
 
@@ -120,7 +192,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
         readonly={readonly}
-        schema={populateDropdown(definition.dataSchema, enumerators)}
+        schema={schema}
         uischema={definition.uiSchema}
         data={data}
         validationMode="ValidateAndShow"

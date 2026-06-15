@@ -24,7 +24,6 @@ import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 import { useDebounce } from '../../util/useDebounce';
 
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
-import { autoPopulateValue } from '../../util/autoPopulate';
 
 type GoAEmailControlProps = ControlProps & WithInputProps;
 type ExtendedJsonSchema = JsonSchema & {
@@ -85,16 +84,6 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
 
   const finalErrors = splitErrors.join('\n');
 
-  useEffect(() => {
-    if (!user || data) return;
-    const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
-
-    if (autoPopulatedValue && autoPopulatedValue !== data && !manualInput) {
-      handleChange(props.path, autoPopulatedValue);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema, user]);
 
   useEffect(() => {
     if (typeof handleChange === 'function' && schema?.default !== undefined) {

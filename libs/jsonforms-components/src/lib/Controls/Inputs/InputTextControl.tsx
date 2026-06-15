@@ -17,7 +17,6 @@ import {
   GoabInputOnKeyPressDetail,
 } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
-import { autoPopulateValue } from '../../util/autoPopulate';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
