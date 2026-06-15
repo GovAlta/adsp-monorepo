@@ -43,4 +43,5 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_EVENT_ACTION: ${{ github.event.action }}
         run: node .github/scripts/github-pr-clean-code-review.js

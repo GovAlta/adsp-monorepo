@@ -283,7 +283,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       htmlPayload.subtitle = templates[currentChannel].subtitle ? templates[currentChannel].subtitle : '';
       const msg = generateMessage(
         getTemplateBody(templates[currentChannel]?.body, currentChannel, htmlPayload),
-        htmlPayload
+        htmlPayload,
       );
       setBodyPreview(msg);
       setTemplateEditErrors({
@@ -301,7 +301,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const nonCoreCopiedNotifications: Record<string, NotificationItem> = Object.assign(
     {},
-    notification?.notificationTypes
+    notification?.notificationTypes,
   );
 
   if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
@@ -322,7 +322,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
-      (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
+      (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`,
     );
     if (definitionEventIndex > -1) {
       selectedType.events[definitionEventIndex] = {
@@ -439,7 +439,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 .filter((value) => value !== 'anonymousRead')
                                 .map(
                                   (roles, ix) =>
-                                    roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                                    roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', '),
                                 )}{' '}
                           </b>
                         </div>
@@ -570,7 +570,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           {notificationType?.subscriberRoles
                             .filter((value) => value !== 'anonymousRead')
                             .map(
-                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', '),
                             )}{' '}
                         </b>
                       </div>
@@ -711,7 +711,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           const updatedEvents = selectedType.events.filter(
             (event) =>
               `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
-              (!coreEvent || event.customized)
+              (!coreEvent || event.customized),
           );
 
           const newType = JSON.parse(JSON.stringify(selectedType));
@@ -778,60 +778,65 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               initialChannel={currentChannel}
               validChannels={selectedType.sortedChannels}
               serviceName={serviceName}
+              notificationTypeId={selectedType.id}
               onSubjectChange={(value, channel) => {
-                let newTemplates = structuredClone(templates);
-                if (templates[channel]) {
-                  newTemplates[channel].subject = value;
-                } else {
-                  newTemplates = { ...templates, [channel]: { subject: value } };
-                }
-                setTemplates(newTemplates);
+                setTemplates((prev) => {
+                  const newTemplates = structuredClone(prev);
+                  if (newTemplates[channel]) {
+                    newTemplates[channel].subject = value;
+                  } else {
+                    newTemplates[channel] = { subject: value };
+                  }
+                  return newTemplates;
+                });
                 setSubject(value);
               }}
               onTitleChange={(value, channel) => {
-                let newTemplates = structuredClone(templates);
-                if (templates[channel]) {
-                  newTemplates[channel].title = value;
-                } else {
-                  newTemplates = { ...templates, [channel]: { title: value } };
-                }
-
-                setTemplates(newTemplates);
+                setTemplates((prev) => {
+                  const newTemplates = structuredClone(prev);
+                  if (newTemplates[channel]) {
+                    newTemplates[channel].title = value;
+                  } else {
+                    newTemplates[channel] = { title: value };
+                  }
+                  return newTemplates;
+                });
                 setTitle(value);
               }}
               onSubtitleChange={(value, channel) => {
-                let newTemplates = structuredClone(templates);
-                if (templates[channel]) {
-                  newTemplates[channel].subtitle = value;
-                } else {
-                  newTemplates = { ...templates, [channel]: { subtitle: value } };
-                }
-
-                setTemplates(newTemplates);
+                setTemplates((prev) => {
+                  const newTemplates = structuredClone(prev);
+                  if (newTemplates[channel]) {
+                    newTemplates[channel].subtitle = value;
+                  } else {
+                    newTemplates[channel] = { subtitle: value };
+                  }
+                  return newTemplates;
+                });
                 setSubtitle(value);
               }}
               onBodyChange={(value, channel) => {
-                let newTemplates = structuredClone(templates);
-                if (templates[channel]) {
-                  newTemplates[channel].body = value;
-                } else {
-                  newTemplates = { ...templates, [channel]: { body: value } };
-                }
-
-                setTemplates(newTemplates);
-
+                setTemplates((prev) => {
+                  const newTemplates = structuredClone(prev);
+                  if (newTemplates[channel]) {
+                    newTemplates[channel].body = value;
+                  } else {
+                    newTemplates[channel] = { body: value };
+                  }
+                  return newTemplates;
+                });
                 setBody(value);
               }}
               setPreview={(channel) => {
                 if (templates && templates[channel] && templates[channel]?.additionalStyles) {
                   const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
-                    templates[channel]?.body
+                    templates[channel]?.body,
                   );
                   setBodyPreview(
                     generateMessage(
                       getTemplateBody(combinedPreview, channel, { ...htmlPayload, ...{ title, subtitle } }),
-                      { ...htmlPayload, ...{ title, subtitle } }
-                    )
+                      { ...htmlPayload, ...{ title, subtitle } },
+                    ),
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                   setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
@@ -840,8 +845,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   setBodyPreview(
                     generateMessage(
                       getTemplateBody(templates[channel]?.body, channel, { ...htmlPayload, ...{ title, subtitle } }),
-                      { ...htmlPayload, ...{ title, subtitle } }
-                    )
+                      { ...htmlPayload, ...{ title, subtitle } },
+                    ),
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                   setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
@@ -860,6 +865,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               eventSuggestion={getEventSuggestion()}
               savedTemplates={savedTemplates}
               eventTemplateFormState={eventTemplateFormState}
+              onAISaved={(proposal) => {
+                setSavedTemplates((prev) => {
+                  const updated = structuredClone(prev);
+                  if (!updated.email) updated.email = { subject: '', body: '' };
+                  if (proposal.subject !== undefined) updated.email.subject = proposal.subject;
+                  if (proposal.title !== undefined) updated.email.title = proposal.title;
+                  if (proposal.subtitle !== undefined) updated.email.subtitle = proposal.subtitle;
+                  if (proposal.body !== undefined) updated.email.body = proposal.body;
+                  return updated;
+                });
+                // Refresh Redux store so reopening the modal loads the saved data.
+                dispatch(FetchNotificationConfigurationService());
+              }}
             />
             <PreviewTemplateContainer>
               <PreviewTemplate

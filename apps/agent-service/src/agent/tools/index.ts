@@ -8,9 +8,9 @@ import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
 import { createDataRegisterTools } from './dataRegister';
 import { createPdfConfigurationTools } from './pdfConfiguration';
+import { createNotificationTemplateTools } from './notificationTemplate';
 import { createNxAdspTemplateTools } from './nxAdspTemplates';
 
-// clean-code-ignore: RULE-19
 interface ToolsProps {
   logger: Logger;
   directory: ServiceDirectory;
@@ -43,6 +43,12 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
       tokenProvider,
     });
 
+  const { emailNotificationGenerateTool } = await createNotificationTemplateTools({
+    logger,
+    directory,
+    tokenProvider,
+  });
+
   const { listNxAdspTemplatesTool, getNxAdspTemplateTool } = createNxAdspTemplateTools();
 
   return {
@@ -61,6 +67,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     dataRegisterCreateTool,
     dataRegisterGetTool,
     dataRegisterUpdateTool,
+    emailNotificationGenerateTool,
     listNxAdspTemplatesTool,
     getNxAdspTemplateTool,
   };

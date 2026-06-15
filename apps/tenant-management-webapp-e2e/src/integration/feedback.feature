@@ -1,3 +1,4 @@
+@feedback
 Feature: Feedback
 
   @TEST_CS-3339 @TEST_CS-4311 @REQ_CS-3019 @REQ_CS-4305 @regression

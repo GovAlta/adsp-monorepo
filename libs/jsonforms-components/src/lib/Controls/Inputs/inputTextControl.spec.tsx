@@ -104,6 +104,30 @@ describe('Input Text Control tests', () => {
     isValid: true,
     required: false,
   };
+
+  it('renders placeholder from componentProps', () => {
+    const props = {
+      ...staticProps,
+      data: '',
+      uischema: {
+        ...staticProps.uischema,
+        options: {
+          ...staticProps.uischema.options,
+          componentProps: {
+            placeholder: 'Enter your first name',
+          },
+        },
+      },
+    };
+    const { baseElement } = render(
+      <JsonFormsContext.Provider value={mockContextValue}>
+        <GoAInputText {...props} />
+      </JsonFormsContext.Provider>
+    );
+    const input = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+    expect(input).toHaveAttribute('placeholder', 'Enter your first name');
+  });
   const emptyBooleanProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: { type: 'boolean' },

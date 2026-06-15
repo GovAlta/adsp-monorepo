@@ -50,7 +50,13 @@
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build",
+        {
+          "projects": ["jsonforms-components"],
+          "target": "generate-renderer-catalog"
+        }
+      ],
       "options": {
         "buildTarget": "agent-service:build",
         "runBuildTargetDependencies": false,

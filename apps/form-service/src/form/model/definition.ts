@@ -34,7 +34,7 @@ export class FormDefinitionEntity implements FormDefinition {
   submissionRecords: boolean;
   submissionPdfTemplate: string;
   supportTopic: boolean;
-  formDraftUrlTemplate: string;
+  formDraftUrlTemplate?: string;
   dataSchema: Record<string, unknown>;
   uiSchema: Record<string, unknown>;
   queueTaskToProcess?: QueueTaskToProcess;

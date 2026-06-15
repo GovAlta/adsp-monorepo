@@ -85,9 +85,9 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { EditorAgentChat } from '@core-services/app-common';
+import { AgentChat } from '@core-services/app-common';
 import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
-import { messageAgent, startThread } from '@store/agent/actions';
+import { messageAgent, startThread, connectAgent } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
 import { Attachment, UserContent } from '@core-services/app-common';
 import { AnyAction } from 'redux';
@@ -164,6 +164,9 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
 };
 
 const NO_TASK_CREATED_OPTION = `No task created`;
+
+// Tab order in the editor: Data schema (0), UI schema (1), AI (2, when enabled).
+const AI_TAB_INDEX = 2;
 
 export function AddEditFormDefinitionEditor({
   definition,
@@ -436,6 +439,16 @@ export function AddEditFormDefinitionEditor({
     }
   }, [dispatch, formAIEnabled, agentName, thread, threadId]);
 
+  // Open the agent socket lazily — only once the user actually lands on the AI
+  // tab, rather than immediately when the editor opens.
+  const agentConnectionRequested = useRef(false);
+  useEffect(() => {
+    if (formAIEnabled && activeIndex === AI_TAB_INDEX && !agentConnectionRequested.current) {
+      agentConnectionRequested.current = true;
+      dispatch(connectAgent());
+    }
+  }, [formAIEnabled, activeIndex, dispatch]);
+
   const handleAgentSend = useCallback(
     (tid: string, context: Record<string, unknown>, content: UserContent) => {
       dispatch(messageAgent(tid, context, content));
@@ -592,15 +605,16 @@ export function AddEditFormDefinitionEditor({
                   data-testid="form-editor-agent-tab"
                   isTightContent={true}
                 >
-                  <EditorAgentChat
-                    threadId={threadId}
-                    context={{ formDefinitionId: definition.id }}
-                    messages={messages}
-                    height={EditorHeight}
-                    disabled={!agentConnected || !thread}
-                    onSend={handleAgentSend}
-                    onAttachmentUpload={handleAgentAttachmentUpload}
-                  />
+                  <div style={{ height: EditorHeight }}>
+                    <AgentChat
+                      threadId={threadId}
+                      context={{ formDefinitionId: definition.id }}
+                      messages={messages}
+                      disabled={!agentConnected || !thread}
+                      onSend={handleAgentSend}
+                      onAttachmentUpload={handleAgentAttachmentUpload}
+                    />
+                  </div>
                 </Tab>
               )}
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
