@@ -35,7 +35,6 @@ describe('register router', () => {
     tokenProviderMock.getAccessToken.mockReturnValue(Promise.resolve('token'));
   });
 
-  // Mocks both config-service GET calls for getRegister: platform config then entries data.
   function mockGetResponses(dataResponse: object) {
     axiosMock.get
       .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } })
