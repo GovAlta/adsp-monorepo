@@ -18,6 +18,7 @@ import {
   updateFormSubmissionDisposition,
   validateCriteria,
   findDataRegisters,
+  createDataRegister,
 } from './form';
 import { getFormDefinitions } from './definition';
 
@@ -263,6 +264,7 @@ describe('form router', () => {
 
   beforeEach(() => {
     axiosMock.get.mockClear();
+    axiosMock.patch.mockClear();
 
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
@@ -2686,6 +2688,206 @@ describe('form router', () => {
 
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('createDataRegister', () => {
+    it('can create handler', () => {
+      const handler = createDataRegister(directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('creates data register definition and configuration', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+
+      const req = {
+        user,
+        tenant: { id: tenantId },
+        body: {
+          name: 'test-register',
+          description: 'Test register',
+          entries: ['one', 'two'],
+        },
+      };
+
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
+      axiosMock.patch
+        .mockResolvedValueOnce({
+          data: {
+            latest: {
+              revision: 1,
+              configuration: {},
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            latest: {
+              revision: 1,
+              configuration: ['one', 'two'],
+            },
+          },
+        });
+
+      const handler = createDataRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(directoryMock.getServiceUrl.mock.calls[0][0].toString()).toBe('urn:ads:platform:configuration-service:v2');
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      expect(axiosMock.patch).toHaveBeenCalledTimes(2);
+
+      expect(axiosMock.patch.mock.calls[0][0]).toContain('/configuration/platform/configuration-service');
+      expect(axiosMock.patch.mock.calls[0][1]).toEqual({
+        operation: 'UPDATE',
+        update: {
+          'data-register:test-register': {
+            configurationSchema: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+            },
+            description: 'Test register',
+          },
+        },
+      });
+      expect(axiosMock.patch.mock.calls[0][2]).toEqual({
+        headers: { Authorization: 'Bearer token' },
+        params: { tenantId: tenantId.toString() },
+      });
+
+      expect(axiosMock.patch.mock.calls[1][0]).toContain('/configuration/data-register/test-register');
+      expect(axiosMock.patch.mock.calls[1][1]).toEqual({
+        operation: 'REPLACE',
+        configuration: ['one', 'two'],
+      });
+      expect(axiosMock.patch.mock.calls[1][2]).toEqual({
+        headers: { Authorization: 'Bearer token' },
+        params: { tenantId: tenantId.toString() },
+      });
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.send).toHaveBeenCalledWith({
+        namespace: 'data-register',
+        name: 'test-register',
+        description: 'Test register',
+        entries: ['one', 'two'],
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('defaults optional description and entries when creating a data register', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+
+      const req = {
+        user,
+        tenant: { id: tenantId },
+        body: {
+          name: 'empty-register',
+        },
+      };
+
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
+      axiosMock.patch
+        .mockResolvedValueOnce({
+          data: {
+            latest: {
+              revision: 1,
+              configuration: {},
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            latest: {
+              revision: 1,
+              configuration: [],
+            },
+          },
+        });
+
+      const handler = createDataRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch.mock.calls[0][1]).toEqual({
+        operation: 'UPDATE',
+        update: {
+          'data-register:empty-register': {
+            configurationSchema: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+            },
+            description: '',
+          },
+        },
+      });
+      expect(axiosMock.patch.mock.calls[1][1]).toEqual({
+        operation: 'REPLACE',
+        configuration: [],
+      });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.send).toHaveBeenCalledWith({
+        namespace: 'data-register',
+        name: 'empty-register',
+        description: '',
+        entries: [],
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with unauthorized error for non-admin users', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-applicant'],
+      };
+
+      const req = {
+        user,
+        tenant: { id: tenantId },
+        body: {
+          name: 'test-register',
+        },
+      };
+
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const handler = createDataRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(directoryMock.getServiceUrl).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next.mock.calls[0][0]).toBeInstanceOf(UnauthorizedUserError);
     });
   });
 });

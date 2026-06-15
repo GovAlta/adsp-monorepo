@@ -631,6 +631,163 @@ export function findDataRegisters(directory: ServiceDirectory, tokenProvider: To
     }
   };
 }
+
+interface DataRegisterDefinition {
+  description?: string;
+  configurationSchema?: unknown;
+  anonymousRead?: boolean;
+}
+
+interface DataRegisterCreateRequest {
+  namespace?: string;
+  name: string;
+  description?: string;
+  entries?: string[];
+}
+
+interface ConfigurationPatchResponse<T> {
+  latest: {
+    revision: number;
+    configuration: T;
+  };
+}
+
+interface DataRegisterResponse {
+  namespace: string;
+  name: string;
+  description: string;
+  entries: string[];
+}
+
+interface ConfigurationUpdateOperation<T> {
+  operation: 'UPDATE';
+  update: Record<string, T>;
+}
+
+interface ConfigurationReplaceOperation<T> {
+  operation: 'REPLACE';
+  configuration: T;
+}
+
+const defaultDataRegisterNamespace = 'data-register';
+
+const dataRegisterConfigurationSchema = {
+  type: 'array',
+  items: {
+    type: 'string',
+  },
+};
+
+const patchConfigurationResource = async <T>(
+  configurationApiUrl: URL,
+  token: string,
+  tenantId: string,
+  resourcePath: string,
+  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<string[]>,
+): Promise<ConfigurationPatchResponse<T>> => {
+  const { data } = await axios.patch<ConfigurationPatchResponse<T>>(
+    new URL(resourcePath, configurationApiUrl).href,
+
+    sendData,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId },
+    },
+  );
+
+  return data;
+};
+
+const getDataRegisterDefinitionKey = (name: string, namespace = defaultDataRegisterNamespace): string =>
+  `${namespace}:${name}`;
+
+const getDataRegisterResourcePath = (name: string, namespace = defaultDataRegisterNamespace): string =>
+  `v2/configuration/${namespace}/${name}`;
+
+const createDataRegisterDefinitionPatch = (
+  name: string,
+  description: string,
+  namespace = defaultDataRegisterNamespace,
+): ConfigurationUpdateOperation<DataRegisterDefinition> => ({
+  operation: 'UPDATE',
+  update: {
+    [getDataRegisterDefinitionKey(name, namespace)]: {
+      configurationSchema: dataRegisterConfigurationSchema,
+      description,
+    },
+  },
+});
+
+const createDataRegisterConfigurationPatch = (entries: string[]): ConfigurationReplaceOperation<string[]> => ({
+  operation: 'REPLACE',
+  configuration: entries,
+});
+
+const mapDataRegisterResponse = (
+  name: string,
+  description: string,
+  entries: string[],
+  namespace = defaultDataRegisterNamespace,
+): DataRegisterResponse => ({
+  namespace,
+  name,
+  description,
+  entries,
+});
+
+export function createDataRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant.id;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('create data register', user);
+      }
+
+      const {
+        namespace = defaultDataRegisterNamespace,
+        name,
+        description = '',
+        entries = [],
+      } = req.body as DataRegisterCreateRequest;
+      const tenantIdValue = tenantId?.toString();
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+      const definitionPatch = createDataRegisterDefinitionPatch(name, description, namespace);
+
+      await patchConfigurationResource<string[]>(
+        configurationApiUrl,
+        token,
+        tenantIdValue,
+        `v2/configuration/platform/configuration-service`,
+        definitionPatch,
+      );
+
+      const configurationPatch = createDataRegisterConfigurationPatch(entries);
+
+      const registerConfigurationResponse = await patchConfigurationResource<string[]>(
+        configurationApiUrl,
+        token,
+        tenantIdValue,
+        getDataRegisterResourcePath(name, namespace),
+        configurationPatch,
+      );
+
+      const response = mapDataRegisterResponse(
+        name,
+        description,
+        registerConfigurationResponse.latest.configuration,
+        namespace,
+      );
+
+      res.status(HttpStatusCodes.CREATED).send(response);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export interface FormEntityWithJobId extends FormEntity {
   jobId?: string;
 }
@@ -970,6 +1127,30 @@ export function createFormRouter({
   );
 
   router.get('/registers', assertAuthenticatedHandler, findDataRegisters(directory, tokenProvider));
+
+  router.post(
+    '/registers',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      body().isObject(),
+      body('name')
+        .exists()
+        .withMessage('name is required')
+        .bail()
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      body('namespace')
+        .optional()
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      body('description').optional().isString(),
+      body('entries').optional().isArray(),
+      body('entries.*').optional().isString(),
+    ),
+    createDataRegister(directory, tokenProvider),
+  );
 
   router.get(
     '/forms/:formId/submissions',
