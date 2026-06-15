@@ -23,6 +23,7 @@ const fs = require('fs');
 const {
   buildLineToPositionMap,
   buildAnnotatedDiff,
+  buildChangedLineSet,
   formatComment,
   loadConfig,
   buildSystemPrompt,
@@ -103,6 +104,54 @@ describe('buildAnnotatedDiff', () => {
 
   test('returns an empty string when patch is undefined', () => {
     expect(buildAnnotatedDiff(undefined)).toBe('');
+  });
+});
+
+// ─── buildChangedLineSet ──────────────────────────────────────────────────────
+
+describe('buildChangedLineSet', () => {
+  test('returns the file line number of an added line', () => {
+    // @@ says new file starts at line 1; after 1 context line the + line is at file line 2.
+    const patch = '@@ -1,3 +1,4 @@\n context\n+added line\n context';
+    expect(buildChangedLineSet(patch).has(2)).toBe(true);
+  });
+
+  test('returns an empty set when patch is null', () => {
+    expect(buildChangedLineSet(null).size).toBe(0);
+  });
+
+  test('returns an empty set when patch is undefined', () => {
+    expect(buildChangedLineSet(undefined).size).toBe(0);
+  });
+
+  test('does not include removed lines', () => {
+    const patch = '@@ -1,2 +1,1 @@\n-removed line\n context';
+    expect(buildChangedLineSet(patch).size).toBe(0);
+  });
+
+  test('does not include context lines', () => {
+    const patch = '@@ -1,2 +1,3 @@\n context\n+added\n context';
+    const set = buildChangedLineSet(patch);
+    expect(set.has(1)).toBe(false); // context
+    expect(set.has(3)).toBe(false); // context
+    expect(set.has(2)).toBe(true);  // only the + line
+  });
+
+  test('handles a new-file patch starting at line 1 with no context', () => {
+    // Typical new-file diff: @@ -0,0 +1 @@\n+line
+    const patch = '@@ -0,0 +1 @@\n+const x = 1;';
+    expect(buildChangedLineSet(patch).has(1)).toBe(true);
+  });
+
+  test('handles multi-hunk patches and tracks line numbers across hunks', () => {
+    // First hunk: + line at file line 2. Second hunk: + line at file line 88.
+    const patch =
+      '@@ -1,3 +1,4 @@\n context\n+hunk1\n context\n context\n' +
+      '@@ -85,3 +86,4 @@\n context\n context\n+hunk2\n context';
+    const set = buildChangedLineSet(patch);
+    expect(set.has(2)).toBe(true);
+    expect(set.has(88)).toBe(true);
+    expect(set.size).toBe(2);
   });
 });
 
@@ -261,6 +310,19 @@ describe('processFilesForReview', () => {
     const { hasBlockingViolations } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
     expect(hasBlockingViolations).toBe(true);
+  });
+
+  test('review comment uses line and side instead of position', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const reviewFile = jest
+      .fn()
+      .mockResolvedValue([{ rule: '2.13', severity: 'ERROR', line: 1, message: 'msg', suggestion: 'fix' }]);
+
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+
+    expect(reviewComments[0].line).toBe(1);
+    expect(reviewComments[0].side).toBe('RIGHT');
+    expect(reviewComments[0]).not.toHaveProperty('position');
   });
 
   test('does not set hasBlockingViolations for WARNING severity violations', async () => {
@@ -456,6 +518,9 @@ describe('checkMissingTestFiles', () => {
     expect(comments).toHaveLength(1);
     expect(comments[0].body).toContain('RULE-19');
     expect(comments[0].path).toBe('src/auth.service.ts');
+    expect(comments[0].line).toBe(1);
+    expect(comments[0].side).toBe('RIGHT');
+    expect(comments[0]).not.toHaveProperty('position');
   });
 
   test('returns no comments when a matching test file is in the PR diff', async () => {
