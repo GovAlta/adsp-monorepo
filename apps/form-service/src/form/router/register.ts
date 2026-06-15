@@ -7,13 +7,15 @@ import { body, param } from 'express-validator';
 import { FormServiceRoles } from '../roles';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
+const DATA_REGISTER_NAMESPACE = 'data-register';
 
 export function getRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { namespace, name } = req.params;
+      const { name } = req.params;
+      const namespace = DATA_REGISTER_NAMESPACE;
 
       if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin)) {
         throw new UnauthorizedUserError('get register', user);
@@ -72,7 +74,8 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { namespace, name } = req.params;
+      const { name } = req.params;
+      const namespace = DATA_REGISTER_NAMESPACE;
 
       if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
         throw new UnauthorizedUserError('update register', user);
@@ -139,6 +142,60 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
   };
 }
 
+export function findDataRegisters(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = req.tenant?.id;
+
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+
+      // Fetch register definitions (descriptions) from platform/configuration-service
+      const { data: platformData } = await axios.get(
+        new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        },
+      );
+
+      const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
+
+      // Fetch all entries across the data-register namespace
+      const { data: registersData } = await axios.get(
+        new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}`, configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
+        },
+      );
+
+      const results = (registersData?.results ?? []) as {
+        name: string;
+        namespace: string;
+        latest?: { configuration?: unknown[] };
+      }[];
+
+      const registers = results.map((result) => {
+        const definitionKey = `${result.namespace}:${result.name}`;
+        const definition = platformConfig[definitionKey] as Record<string, unknown> | undefined;
+
+        return {
+          name: result.name,
+          namespace: result.namespace,
+          description: (definition?.description as string) ?? '',
+          entries: result.latest?.configuration ?? [],
+        };
+      });
+
+      res.send(registers);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface RegisterRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
@@ -147,14 +204,12 @@ interface RegisterRouterProps {
 export function createRegisterRouter({ directory, tokenProvider }: RegisterRouterProps): Router {
   const router = Router();
 
+  router.get('/registers', assertAuthenticatedHandler, findDataRegisters(directory, tokenProvider));
+
   router.get(
-    '/registers/:namespace/:name',
+    '/registers/:name',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('namespace')
-        .isString()
-        .isLength({ min: 1, max: 100 })
-        .matches(/^[a-zA-Z0-9-_]+$/),
       param('name')
         .isString()
         .isLength({ min: 1, max: 100 })
@@ -164,13 +219,9 @@ export function createRegisterRouter({ directory, tokenProvider }: RegisterRoute
   );
 
   router.patch(
-    '/registers/:namespace/:name',
+    '/registers/:name',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('namespace')
-        .isString()
-        .isLength({ min: 1, max: 100 })
-        .matches(/^[a-zA-Z0-9-_]+$/),
       param('name')
         .isString()
         .isLength({ min: 1, max: 100 })

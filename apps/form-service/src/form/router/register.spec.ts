@@ -4,7 +4,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { FormServiceRoles } from '..';
-import { createRegisterRouter, getRegister, updateRegister } from './register';
+import { createRegisterRouter, findDataRegisters, getRegister, updateRegister } from './register';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -56,7 +56,7 @@ describe('register router', () => {
     it('can call next with unauthorized for non-admin', async () => {
       const req = {
         user: { tenantId, id: 'tester', roles: ['test-applicant'] },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -74,7 +74,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { namespace: 'data-register', name: 'missing' },
+        params: { name: 'missing' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -92,7 +92,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -110,7 +110,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -141,7 +141,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { namespace: 'data-register', name: 'simple' },
+        params: { name: 'simple' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -159,7 +159,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -190,7 +190,7 @@ describe('register router', () => {
     it('can call next with unauthorized for non-admin', async () => {
       const req = {
         user: { tenantId, id: 'tester', roles: ['test-applicant'] },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         body: { entries: ['Monday'] },
         tenant: { id: tenantId },
       };
@@ -209,7 +209,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { namespace: 'data-register', name: 'missing' },
+        params: { name: 'missing' },
         body: { entries: ['Monday'] },
         tenant: { id: tenantId },
       };
@@ -228,7 +228,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         body: { entries: ['Monday', 'Tuesday'] },
         tenant: { id: tenantId },
       };
@@ -259,7 +259,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         body: { description: 'Updated description', entries: ['Mon', 'Tue'] },
         tenant: { id: tenantId },
       };
@@ -295,7 +295,7 @@ describe('register router', () => {
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { namespace: 'data-register', name: 'weekdays' },
+        params: { name: 'weekdays' },
         body: { entries: [] },
         tenant: { id: tenantId },
       };
@@ -307,6 +307,143 @@ describe('register router', () => {
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
       expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findDataRegisters', () => {
+    it('can create handler', () => {
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get all registers', async () => {
+      axiosMock.get
+        .mockResolvedValueOnce({
+          data: {
+            configuration: { 'data-register:weekdays': weekdaysDefinition },
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              {
+                name: 'weekdays',
+                namespace: 'data-register',
+                latest: { configuration: ['Monday', 'Tuesday'] },
+              },
+            ],
+          },
+        });
+
+      const req = {
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([
+        {
+          name: 'weekdays',
+          namespace: 'data-register',
+          description: 'Days of the week',
+          entries: ['Monday', 'Tuesday'],
+        },
+      ]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can return empty array when no registers exist', async () => {
+      axiosMock.get
+        .mockResolvedValueOnce({ data: { configuration: {} } })
+        .mockResolvedValueOnce({ data: { results: [] } });
+
+      const req = {
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can return empty array when results field is absent from response', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: { configuration: {} } }).mockResolvedValueOnce({ data: {} }); // no results key — exercises ?. ?? [] fallback
+
+      const req = { tenant: { id: tenantId } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can default description to empty string when no platform config definition exists', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: { configuration: {} } }).mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              name: 'weekdays',
+              namespace: 'data-register',
+              latest: { configuration: ['Monday'] },
+            },
+          ],
+        },
+      });
+
+      const req = { tenant: { id: tenantId } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([expect.objectContaining({ description: '', name: 'weekdays' })]);
+    });
+
+    it('can default entries to empty array when latest configuration is absent', async () => {
+      axiosMock.get
+        .mockResolvedValueOnce({
+          data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ name: 'weekdays', namespace: 'data-register', latest: {} }],
+          },
+        });
+
+      const req = { tenant: { id: tenantId } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([expect.objectContaining({ entries: [] })]);
+    });
+
+    it('can call next with error on failure', async () => {
+      axiosMock.get.mockRejectedValueOnce(new Error('network error'));
+
+      const req = {
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 });
