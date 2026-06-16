@@ -3,7 +3,13 @@ import { render } from '@testing-library/react';
 import { ErrorObject } from 'ajv';
 import { extractNames, extractNestedFields, isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { objectListReducer } from './arrayData/reducer';
-import { ADD_DATA_ACTION, SET_DATA_ACTION, INCREMENT_ACTION, DELETE_ACTION, ObjectArrayActions } from './arrayData/actions';
+import {
+  ADD_DATA_ACTION,
+  SET_DATA_ACTION,
+  INCREMENT_ACTION,
+  DELETE_ACTION,
+  ObjectArrayActions,
+} from './arrayData/actions';
 
 describe('extractNestedFields', () => {
   it('should skip non-array fields and return empty object for them', () => {
@@ -151,6 +157,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'name',
       isRequired: true,
@@ -166,6 +173,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'date',
       isRequired: false,
@@ -180,6 +188,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'name',
       isRequired: true,
@@ -202,6 +211,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [nestedError],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'name',
       isRequired: false,
@@ -217,6 +227,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'person',
       isRequired: true,
@@ -233,6 +244,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'note',
       isRequired: false,
@@ -249,6 +261,7 @@ describe('renderCellColumn', () => {
       error: 'Invalid',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'name',
       isRequired: false,
@@ -264,6 +277,7 @@ describe('renderCellColumn', () => {
       error: '',
       errors: [],
       index: 0,
+      count: 0,
       rowPath: 'messages',
       element: 'count',
       isRequired: false,

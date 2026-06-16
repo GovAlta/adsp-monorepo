@@ -5,6 +5,7 @@ import { GoabIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';
+import { NoneGivenTableText } from '../Inputs/style-component';
 
 const jsonPreviewStyle: React.CSSProperties = {
   display: 'block',
@@ -81,7 +82,7 @@ export const extractNames = (obj: unknown, names: Record<string, string> = {}): 
 function getHeaderLabel(
   headName: string,
   itemsSchema: Record<string, unknown>,
-  columnLabels?: Record<string, string>
+  columnLabels?: Record<string, string>,
 ): string {
   if (columnLabels?.[headName]) {
     return columnLabels[headName];
@@ -140,11 +141,20 @@ export const renderCellColumn = ({
   element,
   isRequired,
 }: RenderCellColumnProps) => {
-  const renderWarningCell = (data?: string) => {
+  const renderWarningCell = (error?: string) => {
     return (
       <HilightCellWarning>
+        {!data ? (
+          <>
+            <NoneGivenTableText>(none given)</NoneGivenTableText>
+            <br />
+          </>
+        ) : (
+          data
+        )}
         <ObjectArrayWarningIconDiv>
           <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
+          {error ? error : ''}
         </ObjectArrayWarningIconDiv>
       </HilightCellWarning>
     );
