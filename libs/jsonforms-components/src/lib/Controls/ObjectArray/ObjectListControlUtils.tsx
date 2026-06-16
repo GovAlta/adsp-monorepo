@@ -24,10 +24,10 @@ export const extractNestedFields = (properties: DataObject, propertyKeys: string
   propertyKeys.forEach((key) => {
     if (properties[key].type === 'array') {
       const propItems = (properties[key] && properties[key].items?.properties) || [];
-      const propReqItems = (properties[key].items && properties[key].items?.required) || [];
+      const propReqItems = (properties[key].items && (properties[key].items?.required as unknown as string[])) || [];
       nestedItems[key] = {
         properties: [...Object.keys(propItems)],
-        required: [...Object.keys(propReqItems)],
+        required: [...propReqItems],
       };
     }
   });
@@ -132,6 +132,17 @@ export const isObjectArrayEmpty = (currentData: string) => {
   return result;
 };
 
+export const renderNoneGivenText = (data: string | undefined) => {
+  return !data ? (
+    <>
+      <NoneGivenTableText>(none given)</NoneGivenTableText>
+      <br />
+    </>
+  ) : (
+    data
+  );
+};
+
 export const renderCellColumn = ({
   data,
   error,
@@ -144,14 +155,7 @@ export const renderCellColumn = ({
   const renderWarningCell = (error?: string) => {
     return (
       <HilightCellWarning>
-        {!data ? (
-          <>
-            <NoneGivenTableText>(none given)</NoneGivenTableText>
-            <br />
-          </>
-        ) : (
-          data
-        )}
+        {renderNoneGivenText(data)}
         <ObjectArrayWarningIconDiv>
           <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
           {error ? error : ''}
