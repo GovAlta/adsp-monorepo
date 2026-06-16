@@ -1,5 +1,12 @@
-import { AUTO_POPULATE_SOURCES, autoPopulatePropertiesMonaco, autoPopulateValue } from './autoPopulate';
+import {
+  AUTO_POPULATE_SOURCES,
+  autoPopulatePropertiesMonaco,
+  autoPopulateValue,
+  createAutoPopulateMiddleware,
+  mergeAutoPopulatedData,
+} from './autoPopulate';
 import { User } from '../Context/register';
+import { INIT } from '@jsonforms/core';
 
 describe('autoPopulateValue', () => {
   const mockUser: User = {
@@ -56,5 +63,58 @@ describe('autoPopulateValue', () => {
 
   it('does not suggest convention-based data-schema properties', () => {
     expect(autoPopulatePropertiesMonaco).toEqual([]);
+  });
+});
+
+describe('auto-populate middleware', () => {
+  const mockUser: User = {
+    name: 'John Doe',
+    email: 'john@example.com',
+  } as User;
+
+  const uiSchema = {
+    type: 'VerticalLayout',
+    elements: [
+      {
+        type: 'Control',
+        scope: '#/properties/applicantFirstName',
+        options: { autoPopulate: 'firstName' },
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/contact/properties/email',
+        options: { autoPopulate: 'email' },
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/unconfiguredFirstName',
+      },
+    ],
+  };
+
+  it('adds configured values without relying on input control side effects', () => {
+    const middleware = createAutoPopulateMiddleware(uiSchema, mockUser);
+
+    const state = middleware(
+      { data: {} },
+      { type: INIT },
+      () => ({ data: {} }),
+    );
+
+    expect(state.data).toEqual({
+      applicantFirstName: 'John',
+      contact: {
+        email: 'john@example.com',
+      },
+    });
+  });
+
+  it('does not overwrite existing values', () => {
+    expect(
+      mergeAutoPopulatedData(
+        { applicantFirstName: 'Existing' },
+        [{ path: 'applicantFirstName', value: 'John' }],
+      ),
+    ).toEqual({ applicantFirstName: 'Existing' });
   });
 });

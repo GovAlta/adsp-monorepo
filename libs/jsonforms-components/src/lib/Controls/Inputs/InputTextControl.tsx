@@ -9,7 +9,6 @@ import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/regist
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { sinTitle } from '../../common/Constants';
-import { useRegisterUser } from '../../Context/register';
 import {
   GoabInputOnChangeDetail,
   GoabInputOnBlurDetail,
@@ -17,7 +16,6 @@ import {
   GoabInputOnKeyPressDetail,
 } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
-import { autoPopulateValue } from '../../util/autoPopulate';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -85,7 +83,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
 
-  const user = useRegisterUser();
   const isSinField = schema.title === sinTitle;
 
   const initialValue = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
@@ -103,31 +100,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
     setLocalValue(isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data);
   }, [data, isSinField]);
-
-  const shouldAutoPopulateValue = (
-    autoPopulatedValue: string | undefined,
-    data: unknown,
-  ): autoPopulatedValue is string => {
-    return !!autoPopulatedValue && autoPopulatedValue !== data;
-  };
-
-  // clean-code-ignore: 2.18
-  useEffect(() => {
-    if (!user || data || manualInput || hasDefault || !uischema?.options?.autoPopulate) return;
-
-    const autoPopulatedValue = autoPopulateValue(user, props);
-
-    if (shouldAutoPopulateValue(autoPopulatedValue, data)) {
-      const timeout = setTimeout(() => {
-        handleChange(props.path, autoPopulatedValue);
-        setLocalValue(autoPopulatedValue);
-      }, 1000);
-
-      return () => clearTimeout(timeout);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, uischema?.options?.autoPopulate]);
 
   useEffect(() => {
     if (typeof handleChange === 'function' && hasDefault && !manualInput) {

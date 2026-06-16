@@ -1,4 +1,6 @@
 import { User } from '../Context/register';
+import { ControlElement, INIT, Middleware, toDataPath, UISchemaElement, UPDATE_CORE } from '@jsonforms/core';
+import * as _ from 'lodash';
 
 export const AUTO_POPULATE_SOURCES = ['firstName', 'lastName', 'email'] as const;
 
@@ -41,6 +43,21 @@ type AutoPopulateProps = {
   };
 };
 
+type UISchemaElementWithChildren = UISchemaElement & {
+  elements?: UISchemaElement[];
+};
+
+interface AutoPopulatedValue {
+  path: string;
+  value: unknown;
+}
+
+const AUTO_POPULATE_ACTION_TYPES = new Set<string>([INIT, UPDATE_CORE]);
+
+const isEmptyAutoPopulateTarget = (value: unknown) => value === undefined || value === null || value === '';
+
+const shouldAutoPopulate = (actionType: string) => AUTO_POPULATE_ACTION_TYPES.has(actionType);
+
 const isAutoPopulateSource = (value: unknown): value is AutoPopulateSource =>
   typeof value === 'string' && AUTO_POPULATE_SOURCES.includes(value as AutoPopulateSource);
 
@@ -59,6 +76,65 @@ export const autoPopulateValue = (user: User, props: AutoPopulateProps): string 
 
   return values[source];
 };
+
+export const getAutoPopulateControls = (element?: UISchemaElement): ControlElement[] => {
+  if (!element) {
+    return [];
+  }
+
+  const controls = element.type === 'Control' && element.options?.autoPopulate ? [element as ControlElement] : [];
+  const children = (element as UISchemaElementWithChildren).elements ?? [];
+
+  return [...controls, ...children.flatMap(getAutoPopulateControls)];
+};
+
+export const getAutoPopulatedData = (uischema: UISchemaElement | undefined, user?: User): AutoPopulatedValue[] => {
+  if (!user) {
+    return [];
+  }
+
+  return getAutoPopulateControls(uischema)
+    .map((control) => ({
+      path: toDataPath(control.scope),
+      value: autoPopulateValue(user, { uischema: control }),
+    }))
+    .filter(({ path, value }) => Boolean(path) && value !== undefined && value !== null);
+};
+
+export const mergeAutoPopulatedData = (data: unknown, autoPopulatedData: AutoPopulatedValue[]) => {
+  if (autoPopulatedData.length === 0) {
+    return data;
+  }
+
+  const defaults = autoPopulatedData.reduce(
+    (values, { path, value }) => _.set(values, path, value),
+    {} as Record<string, unknown>,
+  );
+  const normalizedData = _.cloneDeep(data ?? {});
+
+  autoPopulatedData.forEach(({ path, value }) => {
+    if (isEmptyAutoPopulateTarget(_.get(normalizedData, path)) && value !== undefined && value !== null) {
+      _.unset(normalizedData, path);
+    }
+  });
+
+  return _.defaultsDeep({}, normalizedData, defaults);
+};
+
+export const createAutoPopulateMiddleware =
+  (uischema: UISchemaElement | undefined, user?: User): Middleware =>
+  (state, action, defaultReducer) => {
+    const newState = defaultReducer(state, action);
+
+    if (!shouldAutoPopulate(action.type)) {
+      return newState;
+    }
+
+    return {
+      ...newState,
+      data: mergeAutoPopulatedData(newState.data, getAutoPopulatedData(uischema, user)),
+    };
+  };
 
 /**
  * Retained for compatibility with consumers of the previous data-schema
