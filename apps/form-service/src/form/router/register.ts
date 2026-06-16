@@ -24,26 +24,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
 
-      // Fetch the register definition (includes description) from platform/configuration-service
-      const { data: platformData } = await axios.get(
-        new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
-
-      const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
-      const registerKey = `${namespace}:${name}`;
-      const registerDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
-
-      if (!registerDefinition) {
-        throw new NotFoundError('data register', name);
-      }
-
-      const description = (registerDefinition.description as string) || '';
-
-      // Fetch the actual entries from the data namespace
+      // Fetch the actual entries — this is the source of truth for existence
       const dataResponse = await axios.get(
         new URL(
           `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
@@ -61,6 +42,19 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
       }
 
       const entries = (dataResponse.data?.configuration ?? []) as unknown[];
+
+      const { data: platformData } = await axios.get(
+        new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        },
+      );
+
+      const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
+      const registerKey = `${namespace}:${name}`;
+      const registerDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
+      const description = (registerDefinition?.description as string) || '';
 
       res.send({ namespace, name, description, entries });
     } catch (err) {
@@ -84,7 +78,24 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
 
-      // Verify the register exists
+      // Verify the register exists before updating
+      const existsCheck = await axios.get(
+        new URL(
+          `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
+          configurationApiUrl,
+        ).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
+        },
+      );
+
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND) {
+        throw new NotFoundError('data register', name);
+      }
+
+      // Fetch platform config for current description
       const { data: platformData } = await axios.get(
         new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
         {
@@ -95,11 +106,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
       const registerKey = `${namespace}:${name}`;
-      const existingDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
-
-      if (!existingDefinition) {
-        throw new NotFoundError('data register', name);
-      }
+      const existingDefinition = (platformConfig[registerKey] as Record<string, unknown>) ?? {};
 
       const { description, entries } = req.body as { description?: string; entries?: unknown[] };
 

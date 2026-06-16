@@ -35,11 +35,11 @@ describe('register router', () => {
     tokenProviderMock.getAccessToken.mockReturnValue(Promise.resolve('token'));
   });
 
-  // Mocks both config-service GET calls for getRegister: platform config then entries data.
+  // Mocks both config-service GET calls for getRegister: entries data first, then platform config.
   function mockGetResponses(dataResponse: object) {
     axiosMock.get
-      .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } })
-      .mockResolvedValueOnce(dataResponse);
+      .mockResolvedValueOnce(dataResponse)
+      .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
   }
 
   it('can create router', () => {
@@ -69,8 +69,8 @@ describe('register router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
-    it('can return 404 when register not found in platform config', async () => {
-      axiosMock.get.mockResolvedValue({ data: { configuration: {} } });
+    it('can return 404 when entries data endpoint returns 404', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: null });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -130,14 +130,14 @@ describe('register router', () => {
 
     it('can return empty description when definition has no description', async () => {
       axiosMock.get
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: ['A', 'B'] } })
         .mockResolvedValueOnce({
           data: {
             configuration: {
               'data-register:simple': { configurationSchema: { type: 'array', items: { type: 'string' } } },
             },
           },
-        })
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: ['A', 'B'] } });
+        });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -173,13 +173,29 @@ describe('register router', () => {
         expect.objectContaining({ params: expect.objectContaining({ tenantId: tenantId.toString() }) }),
       );
     });
+
+    it('accepts OK and NOT_FOUND on entries endpoint validateStatus', async () => {
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: [] } });
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        params: { name: 'weekdays' },
+        tenant: { id: tenantId },
+      };
+      const handler = getRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, { send: jest.fn() } as unknown as Response, jest.fn());
+      const { validateStatus } = axiosMock.get.mock.calls[0][1] as { validateStatus: (s: number) => boolean };
+      expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
+      expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
+      expect(validateStatus(500)).toBe(false);
+    });
   });
 
   describe('updateRegister', () => {
     beforeEach(() => {
-      axiosMock.get.mockResolvedValue({
-        data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
-      });
+      // First GET: existence check (returns OK), Second GET: platform config with descriptions
+      axiosMock.get
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: [] } })
+        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
     });
 
     it('can create handler', () => {
@@ -205,7 +221,8 @@ describe('register router', () => {
     });
 
     it('can return 404 when register does not exist', async () => {
-      axiosMock.get.mockResolvedValue({ data: { configuration: {} } });
+      axiosMock.get.mockReset();
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: null });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
@@ -307,6 +324,22 @@ describe('register router', () => {
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('accepts OK and NOT_FOUND on existence check validateStatus', async () => {
+      axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: [] } } });
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { name: 'weekdays' },
+        body: { entries: [] },
+        tenant: { id: tenantId },
+      };
+      const handler = updateRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, { send: jest.fn() } as unknown as Response, jest.fn());
+      const { validateStatus } = axiosMock.get.mock.calls[0][1] as { validateStatus: (s: number) => boolean };
+      expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
+      expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
+      expect(validateStatus(500)).toBe(false);
     });
   });
 
@@ -444,6 +477,20 @@ describe('register router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it('accepts OK and NOT_FOUND on data-register endpoint validateStatus', async () => {
+      axiosMock.get
+        .mockResolvedValueOnce({ data: { configuration: {} } })
+        .mockResolvedValueOnce({ data: { results: [] } });
+      const req = { tenant: { id: tenantId } };
+      const handler = findDataRegisters(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, { send: jest.fn() } as unknown as Response, jest.fn());
+      // validateStatus is on the second GET call (the data-register namespace listing)
+      const { validateStatus } = axiosMock.get.mock.calls[1][1] as { validateStatus: (s: number) => boolean };
+      expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
+      expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
+      expect(validateStatus(500)).toBe(false);
     });
   });
 });
