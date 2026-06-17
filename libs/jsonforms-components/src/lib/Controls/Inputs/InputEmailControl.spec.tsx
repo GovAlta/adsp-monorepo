@@ -4,17 +4,8 @@ import '@testing-library/jest-dom';
 import { GoAEmailInput, GoAEmailControl } from './InputEmailControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
-import { JsonFormRegisterProvider, useRegisterUser } from '../../Context/register';
-import { autoPopulateValue } from '../../util/autoPopulate';
+import { JsonFormRegisterProvider } from '../../Context/register';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
-
-jest.mock('../../Context/register', () => {
-  const actual = jest.requireActual('../../Context/register');
-  return {
-    ...actual,
-    useRegisterUser: jest.fn(),
-  };
-});
 
 const mockContextValue = {
   errors: [],
@@ -111,6 +102,31 @@ describe('GoAEmailInput control', () => {
     expect(handleChange).toHaveBeenCalled();
   });
 
+  it('syncs the displayed value when data changes from the parent', () => {
+    const handleChange = jest.fn();
+    const props = { ...staticProps, data: '', handleChange };
+
+    const { baseElement, rerender } = render(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAEmailInput {...props} />
+        </JsonFormsContext.Provider>
+      </JsonFormRegisterProvider>,
+    );
+
+    rerender(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAEmailInput {...props} data="auto@example.com" />
+        </JsonFormsContext.Provider>
+      </JsonFormRegisterProvider>,
+    );
+
+    const input = baseElement.querySelector("goa-input[testId='myEmailId-input']");
+    expect(input?.getAttribute('value')).toBe('auto@example.com');
+    expect(handleChange).not.toHaveBeenCalledWith('theEmail', '');
+  });
+
   it('marks visited on blur', () => {
     const { baseElement } = render(
       <JsonFormRegisterProvider defaultRegisters={undefined}>
@@ -132,10 +148,6 @@ describe('GoAEmailInput control', () => {
     expect(blurred).toBe(true);
   });
 });
-
-jest.mock('../../util/autoPopulate', () => ({
-  autoPopulateValue: jest.fn(() => 'auto@example.com'),
-}));
 
 describe('GoAEmailInput additional coverage', () => {
   const uiSchema: ControlElement = {
@@ -235,20 +247,43 @@ describe('GoAEmailInput additional coverage no defaults', () => {
     required: true,
   };
 
-  it('calls autoPopulateValue when user and rootSchema.properties exist', () => {
-    jest.mock('../../util/autoPopulate', () => ({
-      autoPopulateValue: jest.fn(() => 'auto@example.com'),
-    }));
-    const mockUser = { email: 'user@example.com' };
-
-    (useRegisterUser as jest.Mock).mockReturnValue(mockUser);
+  it('does not auto-populate email in the control', () => {
+    jest.clearAllMocks();
+    const handleChange = jest.fn();
 
     render(
       <JsonFormRegisterProvider defaultRegisters={undefined}>
-        <GoAEmailInput {...staticProps} />
+        <GoAEmailInput
+          {...staticProps}
+          schema={{ type: 'string', format: 'email' }}
+          data=""
+          handleChange={handleChange}
+          uischema={{
+            ...staticProps.uischema,
+            options: { autoPopulate: 'email' },
+          }}
+        />
       </JsonFormRegisterProvider>,
     );
 
-    expect(autoPopulateValue).toHaveBeenCalledWith(mockUser, staticProps);
+    expect(handleChange).not.toHaveBeenCalled();
+  });
+
+  it('does not infer email auto-population from the field path', () => {
+    jest.clearAllMocks();
+    const handleChange = jest.fn();
+
+    render(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <GoAEmailInput
+          {...staticProps}
+          schema={{ type: 'string', format: 'email' }}
+          data=""
+          handleChange={handleChange}
+        />
+      </JsonFormRegisterProvider>,
+    );
+
+    expect(handleChange).not.toHaveBeenCalled();
   });
 });

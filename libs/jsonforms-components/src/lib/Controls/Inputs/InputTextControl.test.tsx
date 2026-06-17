@@ -8,8 +8,7 @@ import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util
 import { JsonFormsContext } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { fetchRegisterConfigFromOptions } from './InputTextControl';
-import { JsonFormsRegisterContext, useRegisterUser } from '../../Context/register';
-import { autoPopulateValue } from '../../util/autoPopulate';
+import { JsonFormsRegisterContext } from '../../Context/register';
 
 const mockContextValue = {
   errors: [],
@@ -20,15 +19,6 @@ const mockContextValue = {
 const TestComponent: React.FC<{ props: any }> = ({ props }) => {
   return <>{checkFieldValidity(props)}</>;
 };
-
-jest.mock('../../Context/register', () => ({
-  ...jest.requireActual('../../Context/register'),
-  useRegisterUser: jest.fn(),
-}));
-
-jest.mock('../../util/autoPopulate', () => ({
-  autoPopulateValue: jest.fn(),
-}));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -703,16 +693,20 @@ describe('Input Text Control tests', () => {
     });
   });
 
-  it('autoPopulates value when user exists and data is empty', async () => {
+  it('does not auto-populate an empty field in the control', () => {
     const handleChangeMock = jest.fn();
-
-    (useRegisterUser as jest.Mock).mockReturnValue({ name: 'Test User' });
-    (autoPopulateValue as jest.Mock).mockReturnValue('AUTO_VALUE');
 
     const props = {
       ...staticProps,
       data: undefined,
       handleChange: handleChangeMock,
+      uischema: {
+        ...staticProps.uischema,
+        options: {
+          ...staticProps.uischema.options,
+          autoPopulate: 'firstName',
+        },
+      },
     };
 
     render(
@@ -721,8 +715,18 @@ describe('Input Text Control tests', () => {
       </JsonFormsContext.Provider>,
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    expect(handleChangeMock).not.toHaveBeenCalled();
+  });
+
+  it('does not infer auto-population from the field name', () => {
+    const handleChangeMock = jest.fn();
+
+    render(
+      <JsonFormsContext.Provider value={mockContextValue}>
+        <GoAInputText {...staticProps} data={undefined} handleChange={handleChangeMock} />
+      </JsonFormsContext.Provider>,
+    );
+
+    expect(handleChangeMock).not.toHaveBeenCalled();
   });
 });
