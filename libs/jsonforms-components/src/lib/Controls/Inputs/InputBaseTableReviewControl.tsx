@@ -227,6 +227,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
       reviewText === '' ||
       (Array.isArray(reviewText) && reviewText.length === 0));
 
+  function handleChangeClick(): void {
+    context?.goToPage(stepId, uischema.scope);
+    window.dispatchEvent(
+      new CustomEvent('GoAJsonForm:review:change', { detail: { scope: uischema.scope }, bubbles: true }),
+    );
+  }
+
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
       <PageReviewContainer colSpan={3}>
@@ -236,10 +243,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-            <GoabButton type="tertiary" size="compact" onClick={() =>{
-              context?.goToPage(stepId, uischema.scope);
-              window.dispatchEvent(new CustomEvent('GoAJsonForm:review:change', { detail: { scope: uischema.scope }, bubbles: true }));
-              }}>
+            <GoabButton type="tertiary" size="compact" onClick={handleChangeClick}>
               Change
             </GoabButton>
           )}
