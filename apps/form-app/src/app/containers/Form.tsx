@@ -1,7 +1,7 @@
+// clean-code-ignore: RULE-19
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import type { ErrorObject } from 'ajv';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
