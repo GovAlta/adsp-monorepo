@@ -1,14 +1,16 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useReducer } from 'react';
 
+export const REVIEW_CHANGE_ACTION = 'jsonforms/review/change';
+
 export interface ReviewChangeState {
   stepId: number | undefined;
   scope: string;
 }
 
-type ReviewChangeAction = { type: 'REVIEW_CHANGE'; payload: ReviewChangeState };
+export type ReviewChangeAction = { type: typeof REVIEW_CHANGE_ACTION; payload: ReviewChangeState };
 
 function reviewReducer(_state: ReviewChangeState | null, action: ReviewChangeAction): ReviewChangeState | null {
-  if (action.type === 'REVIEW_CHANGE') {
+  if (action.type === REVIEW_CHANGE_ACTION) {
     return action.payload;
   }
   return null;
@@ -32,7 +34,7 @@ export const ReviewRenderProvider = ({ children, onReviewChange }: ReviewRenderP
 
   const onChangeDispatch = useCallback(
     (stepId: number | undefined, scope: string): void => {
-      dispatch({ type: 'REVIEW_CHANGE', payload: { stepId, scope } });
+      dispatch({ type: REVIEW_CHANGE_ACTION, payload: { stepId, scope } });
       onReviewChange?.(stepId, scope);
     },
     [onReviewChange],
