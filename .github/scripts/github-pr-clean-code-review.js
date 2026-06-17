@@ -220,7 +220,10 @@ async function reviewWithGitHubModels(fileContent, fileName, systemPrompt) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Map violations to PR diff positions
+// Map violations to PR diff positions (kept for backwards compat / tests)
+// NOTE: This function counts @@ hunk headers as position 1, which is
+// incorrect per GitHub's API ("line just below hunk header is position 1").
+// Use buildChangedLineSet + line/side params instead.
 // ─────────────────────────────────────────────────────────────
 function buildLineToPositionMap(patch) {
   if (!patch) return {};
@@ -245,7 +248,7 @@ function buildLineToPositionMap(patch) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Pre-process patch into an annotated diff for the AI
+// Pre-process patch into an annotated diff for the AI.
 // Added lines are labelled [LN+], context lines [LN ].
 // Removed lines are omitted — no value in showing the AI deleted code.
 // ─────────────────────────────────────────────────────────────
@@ -272,6 +275,30 @@ function buildAnnotatedDiff(patch) {
   }
 
   return annotated.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Return the set of file line numbers that were added (+) in this diff.
+// Used with the line/side GitHub review comment API to avoid position
+// arithmetic entirely (GitHub counts @@ headers inconsistently).
+// ─────────────────────────────────────────────────────────────
+function buildChangedLineSet(patch) {
+  if (!patch) return new Set();
+  const set = new Set();
+  let currentLine = 0;
+
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
+      if (match) currentLine = parseInt(match[1], 10) - 1;
+    } else if (line.startsWith('+')) {
+      currentLine++;
+      set.add(currentLine);
+    } else if (!line.startsWith('-')) {
+      currentLine++;
+    }
+  }
+  return set;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -336,13 +363,13 @@ async function checkMissingTestFiles(octokit, changedFiles, config, { checkRepoF
     const repoChecks = await Promise.all(expectedTestPaths.map((p) => checkRepoFile(octokit, p)));
     if (repoChecks.some(Boolean)) continue;
 
-    const lineToPosition = buildLineToPositionMap(file.patch);
-    const positions = Object.values(lineToPosition);
-    if (positions.length === 0) continue;
+    const changedLines = buildChangedLineSet(file.patch);
+    if (changedLines.size === 0) continue;
 
     missingTestComments.push({
       path: file.filename,
-      position: Math.min(...positions),
+      line: Math.min(...changedLines),
+      side: 'RIGHT',
       body: formatComment({
         rule: 'RULE-19',
         severity: 'WARNING',
@@ -416,18 +443,17 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 // Process each changed file: call the AI model and collect review comments
 // ─────────────────────────────────────────────────────────────
-function routeViolations(violations, lineToPosition, filename) {
+function routeViolations(violations, changedLines, filename) {
   const inline = [];
   let hasBlockingViolations = false;
 
   for (const violation of violations) {
     if (violation.severity === 'ERROR') hasBlockingViolations = true;
 
-    const position = lineToPosition[violation.line];
-    if (!position) {
-      console.log(`  ⚠️  No diff position for ${filename} line ${violation.line} (${violation.rule}) — skipping inline placement`);
+    if (!changedLines.has(violation.line)) {
+      console.log(`  ⚠️  Line ${violation.line} not in diff for ${filename} (${violation.rule}) — skipping`);
     } else {
-      inline.push({ path: filename, position, body: formatComment(violation) });
+      inline.push({ path: filename, line: violation.line, side: 'RIGHT', body: formatComment(violation) });
     }
   }
 
@@ -463,7 +489,7 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     const { inline, hasBlockingViolations: blocking } = routeViolations(
       violations,
-      buildLineToPositionMap(file.patch),
+      buildChangedLineSet(file.patch),
       file.filename,
     );
 
@@ -558,6 +584,7 @@ if (require.main === module) {
 module.exports = {
   buildLineToPositionMap,
   buildAnnotatedDiff,
+  buildChangedLineSet,
   routeViolations,
   formatComment,
   loadConfig,
