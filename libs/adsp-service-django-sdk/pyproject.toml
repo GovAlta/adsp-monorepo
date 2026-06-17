@@ -26,6 +26,7 @@ include = "adsp_service_django_sdk"
 python = ">=3.10,<3.12"
 django = "^4.2.30"
 idna = ">=3.15"
+cryptography = ">=48.0.1"
 
 [tool.poetry.dependencies.adsp-py-common]
 path = "../adsp-py-common"

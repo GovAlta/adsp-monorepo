@@ -5,13 +5,22 @@ import {
   ContextProviderFactory,
   JsonFormRegisterProvider,
   createDefaultAjv,
-  USER_FIELD_DEFINITIONS,
   autoPopulateValue,
   User,
 } from '@abgov/jsonforms-components';
 import { GoabBadge } from '@abgov/react-components';
-import { JsonSchema4, JsonSchema7, INIT, UPDATE_CORE, UPDATE_DATA } from '@jsonforms/core';
+import {
+  ControlElement,
+  JsonSchema4,
+  JsonSchema7,
+  INIT,
+  UISchemaElement,
+  UPDATE_CORE,
+  UPDATE_DATA,
+  toDataPath,
+} from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
+import * as _ from 'lodash';
 import { FunctionComponent, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -73,28 +82,47 @@ export const populateDropdown = (schema, enumerators) => {
   return newSchema as JsonSchema;
 };
 
-const getAutoPopulateKeys = (definition) =>
-  Object.keys(definition.dataSchema.properties ?? {}).filter((key) =>
-    Object.keys(USER_FIELD_DEFINITIONS).includes(key),
-  );
+type UISchemaElementWithChildren = UISchemaElement & {
+  elements?: UISchemaElement[];
+};
 
-const getAutoPopulatedData = (definition, user?: User) =>
-  Object.fromEntries(
-    getAutoPopulateKeys(definition)
-      .map((key) => [key, autoPopulateValue(user, { path: key })])
-      .filter(([, value]) => value !== undefined && value !== null),
-  );
+interface AutoPopulatedValue {
+  path: string;
+  value: unknown;
+}
 
-const mergeMissingData = (data, autoPopulatedData) => {
-  const mergedData = { ...(data ?? {}) };
-
-  for (const [key, value] of Object.entries(autoPopulatedData)) {
-    if (mergedData[key] === undefined) {
-      mergedData[key] = value;
-    }
+const getAutoPopulateControls = (element?: UISchemaElement): ControlElement[] => {
+  if (!element) {
+    return [];
   }
 
-  return mergedData;
+  const controls =
+    element.type === 'Control' && element.options?.autoPopulate ? [element as ControlElement] : [];
+  const children = (element as UISchemaElementWithChildren).elements ?? [];
+
+  return [...controls, ...children.flatMap(getAutoPopulateControls)];
+};
+
+const getAutoPopulatedData = (definition, user?: User): AutoPopulatedValue[] => {
+  if (!user) {
+    return [];
+  }
+
+  return getAutoPopulateControls(definition.uiSchema)
+    .map((uischema) => ({
+      path: toDataPath(uischema.scope),
+      value: autoPopulateValue(user, { uischema }),
+    }))
+    .filter(({ path, value }) => Boolean(path) && value !== undefined && value !== null);
+};
+
+const mergeMissingData = (data, autoPopulatedData: AutoPopulatedValue[]) => {
+  const defaults = autoPopulatedData.reduce(
+    (values, { path, value }) => _.set(values, path, value),
+    {} as Record<string, unknown>,
+  );
+
+  return _.defaultsDeep({}, data ?? {}, defaults);
 };
 
 const createMiddleware = (definition, user?: User) => (state, action, defaultReducer) => {

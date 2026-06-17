@@ -18,7 +18,6 @@ import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputC
 import { FormFieldWrapper } from './style-component';
 import { Visible } from '../../util';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
-import { useRegisterUser } from '../../Context/register';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 import { useDebounce } from '../../util/useDebounce';
@@ -39,7 +38,6 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
-  const user = useRegisterUser();
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
@@ -49,6 +47,14 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const [localValue, setLocalValue] = useState<string>(data);
 
   const debouncedValue = useDebounce(localValue, 300);
+
+  useEffect(() => {
+    if (data === undefined || data === null) {
+      return;
+    }
+
+    setLocalValue(data);
+  }, [data]);
 
   /* istanbul ignore next */
   useEffect(() => {
@@ -63,7 +69,6 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
     }
   }, [debouncedValue]);
 
-  const [manualInput, setManualInput] = useState<boolean>(false);
   const [isVisited, setIsVisited] = useState(false);
 
   useEffect(() => {
@@ -83,7 +88,6 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   splitErrors[splintIndex] = `${primaryLabel} is required`;
 
   const finalErrors = splitErrors.join('\n');
-
 
   useEffect(() => {
     if (typeof handleChange === 'function' && schema?.default !== undefined) {
@@ -112,7 +116,6 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
               disabled={!enabled}
               readonly={readOnly}
               onChange={(detail: GoabInputOnChangeDetail) => {
-                setManualInput(true);
                 if (!isVisited) {
                   setIsVisited(true);
                 }

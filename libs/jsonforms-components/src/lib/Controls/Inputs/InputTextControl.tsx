@@ -9,7 +9,6 @@ import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/regist
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { sinTitle } from '../../common/Constants';
-import { useRegisterUser } from '../../Context/register';
 import {
   GoabInputOnChangeDetail,
   GoabInputOnBlurDetail,
@@ -84,7 +83,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
 
-  const user = useRegisterUser();
   const isSinField = schema.title === sinTitle;
 
   const initialValue = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
