@@ -5,6 +5,8 @@ import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
+import { JsonSchema7, JsonSchema } from '@jsonforms/core';
+import { ErrorObject } from 'ajv';
 import { useJsonForms } from '@jsonforms/react';
 import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
 import { getStepStatus } from './util';
@@ -116,6 +118,8 @@ export const JsonFormsStepperContextProvider = ({
       isProvided: true,
       stepperDispatch,
       selectStepperState: () => {
+        const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, schema);
+        stepperState.isValid = stepperState.isValid && emptyRequiredStringErrors.length === 0; 
         return {
           ...stepperState,
           categories: stepperState.categories?.map((c) => {
@@ -223,4 +227,68 @@ export const JsonFormsStepperContextProvider = ({
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
+};
+
+
+export const getEmptyRequiredStringErrors = (
+  data: unknown,
+  schema: JsonSchema,
+  instancePath = '',
+  schemaPath = '#',
+): ErrorObject[] => {
+  if (!schema || typeof schema !== 'object') {
+    return [];
+  }
+
+  const required = schema.required ?? [];
+  const properties = schema.properties ?? {};
+  const errors: ErrorObject[] = [];
+
+  for (const propertyName of required) {
+    const propertySchema = properties[propertyName];
+
+    if (
+      propertySchema &&
+      typeof propertySchema === 'object' &&
+      !Array.isArray(propertySchema) &&
+      propertySchema.type === 'string' &&
+      data &&
+      typeof data === 'object' &&
+      !Array.isArray(data) &&
+      (data as Record<string, unknown>)[propertyName] === ''
+    ) {
+      errors.push({
+        instancePath: `${instancePath}/${propertyName}`,
+        schemaPath: `${schemaPath}/requiredString`,
+        keyword: 'requiredString',
+        params: { propertyName },
+        message: 'is required',
+        schema: true,
+        parentSchema: schema,
+        data: '',
+      } as ErrorObject);
+    }
+  }
+
+  for (const [propertyName, propertySchema] of Object.entries(properties)) {
+    if (!propertySchema || typeof propertySchema !== 'object' || Array.isArray(propertySchema)) {
+      continue;
+    }
+
+    const propertyData =
+      data && typeof data === 'object' && !Array.isArray(data)
+        ? (data as Record<string, unknown>)[propertyName]
+        : undefined;
+
+    errors.push(
+      ...getEmptyRequiredStringErrors(
+        propertyData,
+        propertySchema as JsonSchema7,
+        `${instancePath}/${propertyName}`,
+        `${schemaPath}/properties/${propertyName}`,
+      ),
+    );
+  }
+
+  return errors;
 };
