@@ -34,7 +34,7 @@ readme = 'README.md'
 
     [tool.poetry.dependencies.pyjwt]
     extras = [ "crypto" ]
-    version = "^2.12.1"
+    version = "^2.13.0"
 
   [tool.poetry.group.dev.dependencies]
   flake8 = "^7.3.0"
