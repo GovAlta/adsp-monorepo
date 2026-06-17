@@ -91,6 +91,10 @@ const createStepperContextInitData = (
 
 export const JsonFormsStepperContext = createContext<JsonFormsStepperContextProps | undefined>(undefined);
 
+const isFormValid = (ajvValid: boolean, emptyRequiredStringErrors: ErrorObject[]): boolean => {
+  return ajvValid && emptyRequiredStringErrors.length === 0;
+};
+
 export const JsonFormsStepperContextProvider = ({
   children,
   StepperProps,
@@ -119,7 +123,7 @@ export const JsonFormsStepperContextProvider = ({
       stepperDispatch,
       selectStepperState: () => {
         const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, schema);
-        stepperState.isValid = stepperState.isValid && emptyRequiredStringErrors.length === 0; 
+        stepperState.isValid = isFormValid(stepperState.isValid, emptyRequiredStringErrors);
         return {
           ...stepperState,
           categories: stepperState.categories?.map((c) => {
@@ -229,66 +233,87 @@ export const JsonFormsStepperContextProvider = ({
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
 
+const isSchemaObject = (schema: unknown): schema is JsonSchema7 => {
+  return !!schema && typeof schema === 'object' && !Array.isArray(schema);
+};
 
-export const getEmptyRequiredStringErrors = (
-  data: unknown,
+const getObjectData = (data: unknown): Record<string, unknown> => {
+  return data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+};
+
+const isRequiredStringSchema = (schema: unknown): schema is JsonSchema7 => {
+  return isSchemaObject(schema) && schema.type === 'string';
+};
+
+const createRequiredStringError = (
   schema: JsonSchema,
-  instancePath = '',
-  schemaPath = '#',
-): ErrorObject[] => {
-  if (!schema || typeof schema !== 'object') {
-    return [];
-  }
+  propertyName: string,
+  instancePath: string,
+  schemaPath: string,
+): ErrorObject =>
+  ({
+    instancePath: `${instancePath}/${propertyName}`,
+    schemaPath: `${schemaPath}/requiredString`,
+    keyword: 'requiredString',
+    params: { propertyName },
+    message: 'is required',
+    schema: true,
+    parentSchema: schema,
+    data: '',
+  }) as ErrorObject;
 
+const addEmptyRequiredStringErrors = (
+  data: Record<string, unknown>,
+  schema: JsonSchema,
+  instancePath: string,
+  schemaPath: string,
+  errors: ErrorObject[],
+): void => {
   const required = schema.required ?? [];
   const properties = schema.properties ?? {};
-  const errors: ErrorObject[] = [];
 
   for (const propertyName of required) {
     const propertySchema = properties[propertyName];
 
-    if (
-      propertySchema &&
-      typeof propertySchema === 'object' &&
-      !Array.isArray(propertySchema) &&
-      propertySchema.type === 'string' &&
-      data &&
-      typeof data === 'object' &&
-      !Array.isArray(data) &&
-      (data as Record<string, unknown>)[propertyName] === ''
-    ) {
-      errors.push({
-        instancePath: `${instancePath}/${propertyName}`,
-        schemaPath: `${schemaPath}/requiredString`,
-        keyword: 'requiredString',
-        params: { propertyName },
-        message: 'is required',
-        schema: true,
-        parentSchema: schema,
-        data: '',
-      } as ErrorObject);
+    if (isRequiredStringSchema(propertySchema) && data[propertyName] === '') {
+      errors.push(createRequiredStringError(schema, propertyName, instancePath, schemaPath));
     }
   }
+};
+
+const collectEmptyRequiredStringErrors = (
+  data: unknown,
+  schema: JsonSchema,
+  instancePath: string,
+  schemaPath: string,
+  errors: ErrorObject[],
+): void => {
+  if (!isSchemaObject(schema)) {
+    return;
+  }
+
+  const objectData = getObjectData(data);
+  const properties = schema.properties ?? {};
+
+  addEmptyRequiredStringErrors(objectData, schema, instancePath, schemaPath, errors);
 
   for (const [propertyName, propertySchema] of Object.entries(properties)) {
-    if (!propertySchema || typeof propertySchema !== 'object' || Array.isArray(propertySchema)) {
+    if (!isSchemaObject(propertySchema)) {
       continue;
     }
 
-    const propertyData =
-      data && typeof data === 'object' && !Array.isArray(data)
-        ? (data as Record<string, unknown>)[propertyName]
-        : undefined;
-
-    errors.push(
-      ...getEmptyRequiredStringErrors(
-        propertyData,
-        propertySchema as JsonSchema7,
-        `${instancePath}/${propertyName}`,
-        `${schemaPath}/properties/${propertyName}`,
-      ),
+    collectEmptyRequiredStringErrors(
+      objectData[propertyName],
+      propertySchema,
+      `${instancePath}/${propertyName}`,
+      `${schemaPath}/properties/${propertyName}`,
+      errors,
     );
   }
+};
 
+export const getEmptyRequiredStringErrors = (data: unknown, schema: JsonSchema): ErrorObject[] => {
+  const errors: ErrorObject[] = [];
+  collectEmptyRequiredStringErrors(data, schema, '', '#', errors);
   return errors;
 };
