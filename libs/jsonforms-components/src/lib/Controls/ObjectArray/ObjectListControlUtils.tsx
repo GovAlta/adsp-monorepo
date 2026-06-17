@@ -5,6 +5,7 @@ import { GoabIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';
+import { NoneGivenTableText } from '../Inputs/style-component';
 
 const jsonPreviewStyle: React.CSSProperties = {
   display: 'block',
@@ -23,10 +24,10 @@ export const extractNestedFields = (properties: DataObject, propertyKeys: string
   propertyKeys.forEach((key) => {
     if (properties[key].type === 'array') {
       const propItems = (properties[key] && properties[key].items?.properties) || [];
-      const propReqItems = (properties[key].items && properties[key].items?.required) || [];
+      const propReqItems = (properties[key].items && (properties[key].items?.required as unknown as string[])) || [];
       nestedItems[key] = {
         properties: [...Object.keys(propItems)],
-        required: [...Object.keys(propReqItems)],
+        required: [...propReqItems],
       };
     }
   });
@@ -81,7 +82,7 @@ export const extractNames = (obj: unknown, names: Record<string, string> = {}): 
 function getHeaderLabel(
   headName: string,
   itemsSchema: Record<string, unknown>,
-  columnLabels?: Record<string, string>
+  columnLabels?: Record<string, string>,
 ): string {
   if (columnLabels?.[headName]) {
     return columnLabels[headName];
@@ -131,6 +132,17 @@ export const isObjectArrayEmpty = (currentData: string) => {
   return result;
 };
 
+export const renderNoneGivenText = (data: string | undefined) => {
+  return !data ? (
+    <>
+      <NoneGivenTableText>(none given)</NoneGivenTableText>
+      <br />
+    </>
+  ) : (
+    data
+  );
+};
+
 export const renderCellColumn = ({
   data,
   error,
@@ -140,11 +152,13 @@ export const renderCellColumn = ({
   element,
   isRequired,
 }: RenderCellColumnProps) => {
-  const renderWarningCell = (data?: string) => {
+  const renderWarningCell = (error?: string) => {
     return (
       <HilightCellWarning>
+        {renderNoneGivenText(data)}
         <ObjectArrayWarningIconDiv>
           <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
+          {error ? error : ''}
         </ObjectArrayWarningIconDiv>
       </HilightCellWarning>
     );
