@@ -61,7 +61,7 @@ export const onKeyPressForTimeControl = (props: EventKeyPressControlProps) => {
   const { handleChange, path } = controlProps;
 
   if (isNotKeyPressTabOrShift(key)) {
-    handleChange(path, value === '' ? undefined : value);
+    handleChange(path, value);
   }
 };
 
@@ -76,7 +76,7 @@ export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
 
   if (isNotKeyPressTabOrShift(key)) {
     value = standardizeDate(value) || '';
-    handleChange(path, value === '' ? undefined : value);
+    handleChange(path, value);
   }
 };
 
@@ -88,7 +88,7 @@ export const onBlurForTextControl = (props: EventBlurControlProps) => {
   const { value, controlProps } = props;
   const { handleChange, path } = controlProps;
   if (isRequiredAndHasNoData(controlProps)) {
-    handleChange(path, value === '' ? undefined : value);
+    handleChange(path, value);
   }
 };
 
@@ -121,7 +121,7 @@ export const onBlurForDateControl = (props: EventBlurControlProps) => {
   if (isRequiredAndHasNoData(controlProps)) {
     value = standardizeDate(value) || '';
 
-    handleChange(path, value === '' ? undefined : value);
+    handleChange(path, value);
   }
 };
 
@@ -135,7 +135,7 @@ export const onBlurForTimeControl = (props: EventBlurControlProps) => {
   const { handleChange, path } = controlProps;
 
   if (isRequiredAndHasNoData(controlProps)) {
-    handleChange(path, value === '' ? undefined : value);
+    handleChange(path, value);
   }
 };
 
@@ -151,7 +151,7 @@ export const onChangeForDateControl = (props: EventChangeControlProps) => {
   if (value && value !== null) {
     value = standardizeDate(value) || '';
     if (value !== data) {
-      handleChange(path, value === '' ? undefined : value);
+      handleChange(path, value);
     }
   }
 };
@@ -165,7 +165,7 @@ export const onChangeForInputControl = (props: EventChangeControlProps) => {
   const { controlProps } = props;
   const { handleChange, path } = controlProps;
 
-  handleChange(path, value === '' ? undefined : value);
+  handleChange(path, value);
 };
 
 /**
@@ -180,32 +180,32 @@ export const onChangeForDateTimeControl = (props: EventChangeControlProps) => {
   if (value && value !== null) {
     value = isValidDate(value) ? new Date(value)?.toISOString() : '';
     if (data !== value) {
-      handleChange(path, value === '' ? undefined : value);
+      handleChange(path, value);
     }
   }
 };
+
+const toNumericControlValue = (value: string | number | Date | null | undefined): number | undefined => {
+  if (value === '' || value === null || value === undefined || value instanceof Date) {
+    return undefined;
+  }
+
+  return +value;
+};
+
 
 /**
  * Helper function to process onChange event for Number/Integer controls.
  * @param props - EventChangeControlProps
  */
 export const onChangeForNumericControl = (props: EventChangeControlProps) => {
-  const { value } = props;
-  const { controlProps } = props;
+  const { value, controlProps } = props;
   const { handleChange, path, data } = controlProps;
 
-  if (value && value !== null) {
-    //Prevents handleChange from executing if the data has not changed
-    //so the component will not re render.
-    if (data !== +value) {
-      let newValue: number | undefined = undefined;
-      if (value !== '') {
-        newValue = +value;
-      }
-      handleChange(path, newValue);
-    }
-  } else {
-    handleChange(path, value === '' ? undefined : value);
+  const newValue = toNumericControlValue(value);
+
+  if (data !== newValue) {
+    handleChange(path, newValue);
   }
 };
 

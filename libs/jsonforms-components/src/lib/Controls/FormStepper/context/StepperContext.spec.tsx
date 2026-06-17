@@ -9,6 +9,7 @@ import Ajv, { ErrorObject } from 'ajv';
 import { stepperReducer } from './reducer';
 import { subErrorInParent, hasDataInScopes } from './util';
 import { hasMeaningfulValue } from './util';
+import { getEmptyRequiredStringErrors } from './index';
 
 describe('Test jsonforms stepper context', () => {
   const ajvInstance = new Ajv({ allErrors: true, verbose: true, strict: false });
@@ -490,5 +491,166 @@ describe('Test jsonforms stepper context', () => {
     ).toBe(true);
 
     expect(hasDataInScopes({}, ['#/properties/whichOfThemApplies'])).toBe(false);
+  });
+
+  it('marks the form invalid when a required string is present but empty', async () => {
+    const ComponentWithValidity = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext);
+      const { selectStepperState, selectCategory } = ctx as JsonFormsStepperContextProps;
+      const state = selectStepperState();
+
+      return (
+        <div>
+          <div data-testid="form-valid">{state.isValid ? 'valid' : 'invalid'}</div>
+          <div data-testid="category-status">{selectCategory(0).status}</div>
+        </div>
+      );
+    };
+
+    render(
+      <JsonFormsStepperContextProvider
+        StepperProps={{ ...stepperBaseProps, schema: schemaWithRequired, data: { firstName: '' } }}
+        children={<ComponentWithValidity />}
+      />,
+    );
+
+    expect(screen.getByTestId('form-valid').textContent).toBe('invalid');
+    expect(screen.getByTestId('category-status').textContent).toBe('InProgress');
+  });
+
+  it('counts only visible completed categories included in the task list', async () => {
+    const multiCategoryUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'First name',
+          elements: [{ type: 'Control', scope: '#/properties/firstName' }],
+        },
+        {
+          type: 'Category',
+          label: 'Last name',
+          options: { showInTaskList: false },
+          elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+        },
+      ],
+      options: {
+        variant: 'stepper',
+      },
+    };
+
+    const ComponentWithCompletedCount = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext);
+      const { selectNumberOfCompletedCategories } = ctx as JsonFormsStepperContextProps;
+
+      return <div data-testid="completed-count">{selectNumberOfCompletedCategories()}</div>;
+    };
+
+    render(
+      <JsonFormsStepperContextProvider
+        StepperProps={{
+          ...stepperBaseProps,
+          uischema: multiCategoryUischema,
+          data: { firstName: 'Jane', lastName: 'Smith' },
+        }}
+        children={<ComponentWithCompletedCount />}
+      />,
+    );
+
+    expect(screen.getByTestId('completed-count').textContent).toBe('1');
+  });
+
+  it('dispatches context actions with the expected payloads', async () => {
+    const ComponentWithActions = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext);
+      const { goToTableOfContext, setVisited, validatePage, toggleShowReviewLink } =
+        ctx as JsonFormsStepperContextProps;
+
+      return (
+        <div>
+          <button data-testid="go-to-review" onClick={() => goToTableOfContext()}>
+            Review
+          </button>
+          <button data-testid="set-visited" onClick={() => setVisited(0)}>
+            Visited
+          </button>
+          <button data-testid="validate-page" onClick={() => validatePage(0)}>
+            Validate
+          </button>
+          <button data-testid="toggle-review-link" onClick={() => toggleShowReviewLink(0)}>
+            Toggle
+          </button>
+        </div>
+      );
+    };
+
+    render(<JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={<ComponentWithActions />} />);
+
+    mockDispatch.mockClear();
+
+    fireEvent.click(screen.getByTestId('go-to-review'));
+    fireEvent.click(screen.getByTestId('set-visited'));
+    fireEvent.click(screen.getByTestId('validate-page'));
+    fireEvent.click(screen.getByTestId('toggle-review-link'));
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'page/to/index', payload: { id: 2 } });
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'set/visited', payload: { id: 0 } });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'update/category',
+        payload: expect.objectContaining({ id: 0, ajv: ajvInstance, schema, data: undefined }),
+      }),
+    );
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'toggle/category/review-link', payload: { id: 0 } });
+  });
+
+  it('returns requiredString errors for nested empty required strings only', async () => {
+    const nestedSchema = {
+      type: 'object',
+      required: ['firstName', 'age'],
+      properties: {
+        firstName: { type: 'string' },
+        age: { type: 'number' },
+        mailingAddress: {
+          type: 'object',
+          required: ['city', 'province', 'postalCode'],
+          properties: {
+            city: { type: 'string' },
+            province: { type: 'string' },
+            postalCode: { type: 'string' },
+          },
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+    };
+
+    const errors = getEmptyRequiredStringErrors(
+      {
+        firstName: '',
+        age: '',
+        mailingAddress: {
+          city: '',
+          province: 'AB',
+        },
+        tags: [],
+      },
+      nestedSchema,
+    );
+
+    expect(errors).toHaveLength(2);
+    expect(errors.map((error) => error.instancePath)).toEqual(['/firstName', '/mailingAddress/city']);
+    expect(errors.map((error) => error.schemaPath)).toEqual([
+      '#/requiredString',
+      '#/properties/mailingAddress/requiredString',
+    ]);
+    expect(errors.every((error) => error.keyword === 'requiredString' && error.message === 'is required')).toBe(true);
+  });
+
+  it('returns no requiredString errors for non-object schemas or non-object data', async () => {
+    expect(getEmptyRequiredStringErrors('', schemaWithRequired)).toEqual([]);
+    expect(getEmptyRequiredStringErrors({}, true as unknown as typeof schemaWithRequired)).toEqual([]);
   });
 });
