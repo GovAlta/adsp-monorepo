@@ -30,6 +30,7 @@ readme = 'README.md'
   more-itertools = "^10.8.0"
   urnparse = "^0.2.2"
   idna = ">=3.15"
+  cryptography = ">=48.0.1"
 
     [tool.poetry.dependencies.pyjwt]
     extras = [ "crypto" ]
