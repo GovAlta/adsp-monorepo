@@ -21,7 +21,7 @@
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
-    "dompurify": "^3.2.4",
+    "dompurify": "^3.4.10",
     "expr-eval-fork": "^3.0.1",
     "ionicons": "^8.0.13",
     "pluralize": "^8.0.0",
