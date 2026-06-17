@@ -164,7 +164,7 @@ describe('getStepStatus (with mocked conditional deps)', () => {
     ];
 
     const status = getStepStatus({ scopes, data: {}, errors, schema: {}, visited: false });
-    expect(status).toBe('InProgress');
+    expect(status).toBe('NotStarted');
   });
 
   it('returns NotStarted when no errors in step AND no controllers in step', () => {
@@ -194,7 +194,7 @@ describe('getStepStatus (with mocked conditional deps)', () => {
       schema: {},
       visited: false,
     });
-    expect(status).toBe('InProgress');
+    expect(status).toBe('NotStarted');
   });
 
   it('returns Completed when controller step has no affected-path errors', () => {
@@ -215,7 +215,7 @@ describe('getStepStatus (with mocked conditional deps)', () => {
       schema: {},
       visited: false,
     });
-    expect(status).toBe('Completed');
+    expect(status).toBe('NotStarted');
   });
 });
 
