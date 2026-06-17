@@ -3,6 +3,8 @@ import {
   autoPopulatePropertiesMonaco,
   autoPopulateValue,
   createAutoPopulateMiddleware,
+  getAutoPopulateControls,
+  getAutoPopulatedData,
   mergeAutoPopulatedData,
 } from './autoPopulate';
 import { User } from '../Context/register';
@@ -66,6 +68,26 @@ describe('autoPopulateValue', () => {
   });
 });
 
+describe('getAutoPopulateControls', () => {
+  it('returns empty array when element is undefined', () => {
+    expect(getAutoPopulateControls(undefined)).toEqual([]);
+  });
+});
+
+describe('getAutoPopulatedData', () => {
+  it('returns empty array when user is undefined', () => {
+    const uiSchema = { type: 'VerticalLayout', elements: [] };
+    expect(getAutoPopulatedData(uiSchema, undefined)).toEqual([]);
+  });
+});
+
+describe('mergeAutoPopulatedData', () => {
+  it('returns original data unchanged when autoPopulatedData is empty', () => {
+    const data = { foo: 'bar' };
+    expect(mergeAutoPopulatedData(data, [])).toBe(data);
+  });
+});
+
 describe('auto-populate middleware', () => {
   const mockUser: User = {
     name: 'John Doe',
@@ -107,6 +129,15 @@ describe('auto-populate middleware', () => {
         email: 'john@example.com',
       },
     });
+  });
+
+  it('does not modify state for unrelated action types', () => {
+    const middleware = createAutoPopulateMiddleware(uiSchema, mockUser);
+    const existingState = { data: { applicantFirstName: 'Existing' } };
+
+    const state = middleware(existingState, { type: 'SOME_OTHER_ACTION' }, () => existingState);
+
+    expect(state).toBe(existingState);
   });
 
   it('does not overwrite existing values', () => {
