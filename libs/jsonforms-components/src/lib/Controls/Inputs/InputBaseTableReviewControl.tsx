@@ -227,11 +227,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
       reviewText === '' ||
       (Array.isArray(reviewText) && reviewText.length === 0));
 
+  function notifyReviewChange(scope: string): void {
+    window.dispatchEvent(new CustomEvent('GoAJsonForm:review:change', { detail: { scope }, bubbles: true }));
+  }
+
   function handleChangeClick(): void {
     context?.goToPage(stepId, uischema.scope);
-    window.dispatchEvent(
-      new CustomEvent('GoAJsonForm:review:change', { detail: { scope: uischema.scope }, bubbles: true }),
-    );
+    notifyReviewChange(uischema.scope);
   }
 
   return (
