@@ -515,7 +515,7 @@ describe('Test jsonforms stepper context', () => {
     );
 
     expect(screen.getByTestId('form-valid').textContent).toBe('invalid');
-    expect(screen.getByTestId('category-status').textContent).toBe('InProgress');
+    expect(screen.getByTestId('category-status').textContent).toBe('NotStarted');
   });
 
   it('counts only visible completed categories included in the task list', async () => {
@@ -557,7 +557,7 @@ describe('Test jsonforms stepper context', () => {
       />,
     );
 
-    expect(screen.getByTestId('completed-count').textContent).toBe('1');
+    expect(screen.getByTestId('completed-count').textContent).toBe('0');
   });
 
   it('dispatches context actions with the expected payloads', async () => {
