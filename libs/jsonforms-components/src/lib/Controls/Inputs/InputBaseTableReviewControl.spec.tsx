@@ -723,6 +723,63 @@ describe('InputBaseTableReviewControl', () => {
     expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
+  it('dispatches GoAJsonForm:review:change window event with scope when Change button is clicked', () => {
+    const mockGoToPage = jest.fn();
+    const contextValue: JsonFormsStepperContextProps = {
+      goToPage: mockGoToPage,
+    } as unknown as JsonFormsStepperContextProps;
+    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+    const scope = '#/properties/firstName';
+
+    const { baseElement } = render(
+      <JsonFormsStepperContext.Provider value={contextValue}>
+        <table>
+          <tbody>
+            <GoAInputBaseTableReview
+              data="John"
+              visible={true}
+              label="First name"
+              path="firstName"
+              schema={{ type: 'string' }}
+              uischema={{
+                type: 'Control',
+                scope,
+                label: 'First name',
+                options: { stepId: 0 },
+              }}
+              enabled={true}
+              errors=""
+              cells={[]}
+              required={false}
+              id="firstName"
+              rootSchema={{ type: 'object', properties: {} }}
+              config={{}}
+              renderers={[]}
+              handleChange={jest.fn()}
+            />
+          </tbody>
+        </table>
+      </JsonFormsStepperContext.Provider>,
+    );
+
+    const changeButton = baseElement.querySelector('goa-button');
+    expect(changeButton).toBeInTheDocument();
+    fireEvent(changeButton!, new CustomEvent('_click'));
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'GoAJsonForm:review:change',
+        bubbles: true,
+      }),
+    );
+    const dispatched = dispatchSpy.mock.calls
+      .map((args) => args[0] as CustomEvent)
+      .find((e) => e.type === 'GoAJsonForm:review:change');
+    expect(dispatched?.detail).toEqual({ scope });
+
+    dispatchSpy.mockRestore();
+  });
+
   it('does not show (none given) for unchecked required boolean (shows error instead)', () => {
     const { getByTestId } = render(
       <table>

@@ -236,7 +236,10 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-            <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId, uischema.scope)}>
+            <GoabButton type="tertiary" size="compact" onClick={() =>{
+              context?.goToPage(stepId, uischema.scope);
+              window.dispatchEvent(new CustomEvent('GoAJsonForm:review:change', { detail: { scope: uischema.scope }, bubbles: true }));
+              }}>
               Change
             </GoabButton>
           )}
