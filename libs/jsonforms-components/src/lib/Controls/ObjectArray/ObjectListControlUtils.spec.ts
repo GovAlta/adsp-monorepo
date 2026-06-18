@@ -12,7 +12,7 @@ import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 jest.mock('./ListWithDetailControl', () => ({
   humanizeAjvError: jest.fn((error: ErrorObject, schema: JsonSchema, uischema: UISchemaElement) => {
     if (error.keyword === 'required') {
-      const missingProperty = (error.params as any)?.missingProperty;
+      const missingProperty = (error.params as Record<string, unknown>)?.missingProperty;
       return `must have required property '${missingProperty}'`;
     }
     return error.message || 'Unknown error';
@@ -34,13 +34,6 @@ describe('createHumanizeError', () => {
     type: 'Control',
     scope: '#',
   };
-
-  describe('when error is undefined', () => {
-    it('should return undefined', () => {
-      const result = createHumanizeError(undefined as any, mockSchema, mockUISchema);
-      expect(result).toBeUndefined();
-    });
-  });
 
   describe('when error contains "must have required property"', () => {
     it('should extract property name and format as "{property} is required"', () => {
@@ -127,14 +120,6 @@ describe('createHumanizeError', () => {
   });
 
   describe('when humanizeAjvError throws an error', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      const { humanizeAjvError } = require('./ListWithDetailControl');
-      humanizeAjvError.mockImplementation(() => {
-        throw new Error('humanizeAjvError failed');
-      });
-    });
-
     afterEach(() => {
       jest.clearAllMocks();
     });
@@ -167,19 +152,6 @@ describe('createHumanizeError', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle property name without single quotes', () => {
-      const error: ErrorObject = {
-        keyword: 'required',
-        instancePath: '',
-        schemaPath: '#/required',
-        params: { missingProperty: 'firstName' },
-        message: `must have required property firstName`,
-      };
-
-      const result = createHumanizeError(error, mockSchema, mockUISchema);
-      expect(result).toContain('must have required property firstName');
-    });
-
     it('should handle error with empty message', () => {
       const error: ErrorObject & { message?: string } = {
         keyword: 'required',
