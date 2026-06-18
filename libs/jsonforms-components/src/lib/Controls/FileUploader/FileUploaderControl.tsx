@@ -61,6 +61,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const noDownloadButtonInReview = uischema?.options?.format?.review?.noDownloadButton;
   const noDeleteButton = uischema?.options?.format?.review?.noDeleteButton;
   const [deleteHide, setDeleteHide] = useState(false);
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
   const fileListLength = (fileList && fileList[path as string]?.length) || 0;
 
   const maxFiles = uischema?.options?.componentProps?.maximum ?? 1;
@@ -146,8 +147,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const helpText = uischema?.options?.help;
   const sentenceCaseLabel = label;
 
-  const DownloadFileWidget = ({ index }: { index: number }): JSX.Element => {
-    const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+  const renderFileItem = (index: number): JSX.Element => {
+    const showFileDeleteConfirmation = deleteConfirmIndex === index;
     return (
       <div>
         {readOnly ? (
@@ -181,7 +182,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                   title="Delete"
                   type="trash"
                   onClick={() => {
-                    setShowFileDeleteConfirmation(true);
+                    setDeleteConfirmIndex(index);
                   }}
                 />
               )}
@@ -190,15 +191,17 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
               isOpen={showFileDeleteConfirmation}
               title="Delete file"
               content={`Delete file ${getFile(index)?.filename} ?`}
-              onCancel={() => setShowFileDeleteConfirmation(false)}
+              onCancel={() => setDeleteConfirmIndex(null)}
               onDelete={() => {
-                setShowFileDeleteConfirmation(false);
+                setDeleteConfirmIndex(null);
                 deleteFile(getFile(index));
-                setDeleteHide(true);
-                const handleFunction = () => {
-                  handleChange(path, undefined);
-                };
-                setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
+                if (!isMultiFile) {
+                  setDeleteHide(true);
+                  const handleFunction = () => {
+                    handleChange(path, undefined);
+                  };
+                  setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
+                }
                 setUploadError(undefined);
               }}
             />
@@ -237,11 +240,12 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
             <div>
               {fileList && isMultiFile
                 ? (fileList[path as string] || []).map((_: File, index: number) => (
-                    <DownloadFileWidget key={index} index={index} />
+                    <React.Fragment key={index}>{renderFileItem(index)}</React.Fragment>
                   ))
                 : !deleteHide &&
                   getFile(fileListLength - 1) &&
-                  fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
+                  fileListLength >= 0 &&
+                  renderFileItem(fileListLength - 1)}
             </div>
           )}
         </div>
