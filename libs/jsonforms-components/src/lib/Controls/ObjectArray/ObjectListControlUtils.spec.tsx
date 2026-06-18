@@ -677,7 +677,7 @@ describe('renderCellColumn', () => {
       }
     });
 
-    test('renders object array as table when no errors and not required', () => {
+    test('renders object array as defined', () => {
       // Arrange
       const arrayData = [
         { id: 1, name: 'John' },
