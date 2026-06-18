@@ -152,14 +152,16 @@ export const renderCellColumn = ({
   element,
   isRequired,
 }: RenderCellColumnProps) => {
-  const renderWarningCell = (error?: string) => {
+  const renderWarningCell = (error?: string | undefined) => {
     return (
       <HilightCellWarning>
         {renderNoneGivenText(data)}
-        <ObjectArrayWarningIconDiv>
-          <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
-          {error ? error : ''}
-        </ObjectArrayWarningIconDiv>
+        {error && (
+          <ObjectArrayWarningIconDiv>
+            <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
+            {error ? error : ''}
+          </ObjectArrayWarningIconDiv>
+        )}
       </HilightCellWarning>
     );
   };
@@ -167,6 +169,8 @@ export const renderCellColumn = ({
   if ((data === undefined && isRequired) || (error !== '' && error !== undefined)) {
     const message = error || (isRequired && data === undefined ? 'Required' : data);
     return renderWarningCell(message);
+  } else if (data === undefined && !isRequired) {
+    return renderWarningCell('');
   } else if (data !== undefined && isRequired && error) {
     return renderWarningCell(error);
   }
@@ -194,7 +198,9 @@ export const renderCellColumn = ({
         const dayValue = 'day' in dateObj ? dateObj.day : dateObj.date;
         return `${dateObj.year}-${dateObj.month}-${dayValue}`;
       }
-      return <pre style={jsonPreviewStyle}>{JSON.stringify(data, null, 2)}</pre>;
+      const val = <pre style={jsonPreviewStyle}>{JSON.stringify(data, null, 2)}</pre>;
+      console.log('val', val);
+      return val;
     } else if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(data) || nestedErrors.length > 0)) {

@@ -1212,7 +1212,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
           {listTitle && (
             <MarginTop>
               <ObjectArrayTitle>
-                {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                {listTitle} <span>{additionalProps.required && ' (required)'}</span>
                 {this.state.maxItemsError && (
                   <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
                 )}
