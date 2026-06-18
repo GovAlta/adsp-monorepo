@@ -213,7 +213,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     : false;
 
   return (
-    <NonEmptyCellStyle>
+    <NonEmptyCellStyle data-testid={`${rowPath}-ObjectListOuterWrapper`}>
       {!isInReview &&
         (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
           return (
@@ -232,8 +232,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
       {properties && Object.keys(properties).length > 0 && (
         <>
           {isInReview ? (
-            <div style={{ padding: '0.75rem 0' }}>
-              {range(count || 0).map((i) => {
+            <div style={{ padding: '0.75rem 0' }} data-testid={`${rowPath}.objectListWrapper`}>
+              {range(count || 0).map((i, key) => {
                 const rowData = data && data[i];
                 if (!rowData) return null;
                 const hasAnyValue = Object.keys(tableKeys).some((key) => {
@@ -245,7 +245,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 );
                 if (!hasAnyValue && !hasRowErrors) return null;
                 return (
-                  <div key={i} style={{ marginBottom: '1.5rem' }}>
+                  <div key={i} style={{ marginBottom: '1.5rem' }} data-testid={`${rowPath}.objectList-${key}`}>
                     {Object.entries(tableKeys).map(([key, label]) => {
                       const value = rowData[key];
                       const isRequiredField = required?.includes(key) ?? false;
@@ -273,7 +273,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       }
 
                       return (
-                        <div key={key} style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}>
+                        <div
+                          key={key}
+                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}
+                          data-testid={`#/properties/${key}-input-${i}-row`}
+                        >
                           <strong style={{ width: '50%', flexShrink: 0 }}>
                             {properties?.[key]?.title ||
                               (label !== key
