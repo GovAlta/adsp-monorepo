@@ -253,6 +253,73 @@ describe('FileUploaderControl tests', () => {
     expect(modal).not.toBeNull();
   });
 
+  it('does not call handleChange with undefined when deleting from multi-file upload (CS-5038)', async () => {
+    jest.useFakeTimers();
+    const handleChange = jest.fn();
+    const MultiFileContext = ContextProviderFactory();
+    const multiFileList = {
+      supportingDoc: [
+        { urn: 'urn:file-1', filename: 'file1.pdf' },
+        { urn: 'urn:file-2', filename: 'file2.pdf' },
+      ],
+    };
+    const multiFileUiSchema: ControlElement = {
+      type: 'Control',
+      scope: '#/properties/supportingDoc',
+      label: 'Uploader',
+      options: {
+        componentProps: {
+          maximum: 3,
+        },
+      },
+    };
+
+    const { baseElement } = render(
+      <MultiFileContext
+        fileManagement={{
+          fileList: multiFileList,
+          uploadFile: mockUpload,
+          downloadFile: mockDownload,
+          deleteFile: mockDelete,
+        }}
+      >
+        <FileUploader
+          data={['urn:file-1', 'urn:file-2']}
+          path="supportingDoc"
+          handleChange={handleChange}
+          uischema={multiFileUiSchema}
+          schema={{ type: 'array', items: { type: 'string', format: 'file-urn' } }}
+          required={false}
+          label="Uploader"
+          visible={true}
+        />
+      </MultiFileContext>,
+    );
+
+    await act(async () => {
+      await jest.runAllTimers();
+    });
+
+    handleChange.mockClear();
+
+    // Click delete on the first file's trash icon
+    const deleteButtons = baseElement.querySelectorAll('goa-icon-button[icon="trash"]');
+    expect(deleteButtons.length).toBe(2);
+    fireEvent(deleteButtons[0]!, new CustomEvent('_click'));
+
+    const deleteConfirm = baseElement.querySelector("goa-button[testId='delete-confirm']");
+    fireEvent(deleteConfirm!, new CustomEvent('_click'));
+
+    await act(async () => {
+      await jest.runAllTimers();
+    });
+
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    // Bug CS-5038: handleChange must NOT be called with undefined in multi-file mode,
+    // which would clear all remaining file URNs.
+    expect(handleChange).not.toHaveBeenCalledWith('supportingDoc', undefined);
+  });
+
   it('does not clear a newly added empty uploader row on mount', async () => {
     jest.useFakeTimers();
     const handleChange = jest.fn();
@@ -277,7 +344,7 @@ describe('FileUploaderControl tests', () => {
           label="Uploader"
           visible={true}
         />
-      </EmptyFileListContext>
+      </EmptyFileListContext>,
     );
 
     await act(async () => {
