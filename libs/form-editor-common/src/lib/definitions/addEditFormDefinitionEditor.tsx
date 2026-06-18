@@ -47,6 +47,7 @@ import {
   updateFormDefinition,
   updateEditorFormDefinition,
   getFormDefinitions,
+  openEditorForDefinition,
 } from '@store/form/action';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { isFormUpdatedSelector, schemaErrorSelector } from '@store/form/selectors';
@@ -89,7 +90,7 @@ import { AgentChat } from '@core-services/app-common';
 import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
 import { messageAgent, startThread, connectAgent } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
-import { Attachment, UserContent } from '@core-services/app-common';
+import { Attachment, UserContent, AgentMessage, ToolCall } from '@core-services/app-common';
 import { AnyAction } from 'redux';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
@@ -167,6 +168,7 @@ const NO_TASK_CREATED_OPTION = `No task created`;
 
 // Tab order in the editor: Data schema (0), UI schema (1), AI (2, when enabled).
 const AI_TAB_INDEX = 2;
+const PATCH_TOOL_NAME = 'patch-form-schema';
 
 export function AddEditFormDefinitionEditor({
   definition,
@@ -471,6 +473,27 @@ export function AddEditFormDefinitionEditor({
     },
     [dispatch, resourceId],
   );
+
+  // Track the last patch message we reloaded for, so remounts don't re-fire.
+  const appliedPatchId = useRef<string | null>(null);
+
+  const latestPatchMessage =
+    [...messages]
+      .reverse()
+      .find(
+        (m): m is AgentMessage =>
+          m.from === 'agent' &&
+          !(m as AgentMessage).streaming &&
+          (m as AgentMessage).toolCalls?.some(
+            (tc: ToolCall) => tc.toolName === PATCH_TOOL_NAME && tc.result != null,
+          ),
+      ) ?? null;
+
+  useEffect(() => {
+    if (!latestPatchMessage || latestPatchMessage.id === appliedPatchId.current) return;
+    appliedPatchId.current = latestPatchMessage.id;
+    dispatch(openEditorForDefinition(definition.id));
+  }, [latestPatchMessage, definition.id, dispatch]);
 
   return (
     <FormEditor>
