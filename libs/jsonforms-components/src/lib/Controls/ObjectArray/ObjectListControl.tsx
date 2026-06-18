@@ -49,7 +49,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { createHumanizeError, extractNames, renderCellColumn } from './ObjectListControlUtils';
 import {
   FixTableHeaderAlignment,
   ListWithDetailWarningIconDiv,
@@ -358,34 +358,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           }
 
                           // Create a human-friendly error message for rendering
-                          let humanMessage: string | undefined;
-                          if (error) {
-                            try {
-                              humanMessage = humanizeAjvError(
-                                error as ErrorObject,
-                                schema,
-                                uischema as UISchemaElement,
-                              );
-                              if (
-                                typeof humanMessage === 'string' &&
-                                (humanMessage.includes('must have required property') ||
-                                  humanMessage.includes(REQUIRED_PROPERTY_ERROR))
-                              ) {
-                                const propertyMatch = humanMessage.match(/'([^']+)'/);
-                                if (propertyMatch && propertyMatch[1]) {
-                                  humanMessage = prettify(propertyMatch[1]) + ' is required';
-                                }
-                              }
-                            } catch (err) {
-                              const raw = (error as unknown as { message?: string }).message as string;
-                              const propertyMatch = raw?.match(/'([^']+)'/);
-                              if (propertyMatch && propertyMatch[1]) {
-                                humanMessage = prettify(propertyMatch[1]) + ' is required';
-                              } else {
-                                humanMessage = raw;
-                              }
-                            }
-                          }
+                          let humanMessage: string | undefined = createHumanizeError(
+                            error as ErrorObject,
+                            schema,
+                            uischema as UISchemaElement,
+                          );
 
                           if (
                             (error as unknown as { message?: string })?.message?.includes('must NOT have fewer') &&

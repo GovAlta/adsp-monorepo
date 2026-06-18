@@ -6,6 +6,9 @@ import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-componen
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';
 import { NoneGivenTableText } from '../Inputs/style-component';
+import { humanizeAjvError } from './ListWithDetailControl';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 const jsonPreviewStyle: React.CSSProperties = {
   display: 'block',
@@ -35,11 +38,12 @@ export const extractNestedFields = (properties: DataObject, propertyKeys: string
   return nestedItems;
 };
 
-function prettify(prop: string): string {
+export function prettify(prop: string): string {
   return prop
     .replace(/([A-Z])/g, ' $1')
     .replace(/[_-]/g, ' ')
-    .replace(/^./, (c) => c.toUpperCase());
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
 }
 
 /**
@@ -198,9 +202,7 @@ export const renderCellColumn = ({
         const dayValue = 'day' in dateObj ? dateObj.day : dateObj.date;
         return `${dateObj.year}-${dateObj.month}-${dayValue}`;
       }
-      const val = <pre style={jsonPreviewStyle}>{JSON.stringify(data, null, 2)}</pre>;
-      console.log('val', val);
-      return val;
+      return <pre style={jsonPreviewStyle}>{JSON.stringify(data, null, 2)}</pre>;
     } else if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(data) || nestedErrors.length > 0)) {
@@ -219,4 +221,36 @@ export const renderCellColumn = ({
   }
 
   return null;
+};
+
+export const createHumanizeError = (
+  error: ErrorObject,
+  schema: JsonSchema,
+  uischema: UISchemaElement,
+): string | undefined => {
+  let humanMessage: string | undefined;
+  if (error) {
+    try {
+      humanMessage = humanizeAjvError(error as ErrorObject, schema, uischema as UISchemaElement);
+      if (
+        typeof humanMessage === 'string' &&
+        (humanMessage.includes('must have required property') || humanMessage.includes(REQUIRED_PROPERTY_ERROR))
+      ) {
+        const propertyMatch = humanMessage.match(/'([^']+)'/);
+        if (propertyMatch && propertyMatch[1]) {
+          humanMessage = prettify(propertyMatch[1]) + ' is required';
+        }
+      }
+    } catch (err) {
+      const raw = (error as unknown as { message?: string }).message as string;
+      const propertyMatch = raw?.match(/'([^']+)'/);
+      if (propertyMatch && propertyMatch[1]) {
+        humanMessage = prettify(propertyMatch[1]) + ' is required';
+      } else {
+        humanMessage = raw;
+      }
+    }
+  }
+
+  return humanMessage;
 };

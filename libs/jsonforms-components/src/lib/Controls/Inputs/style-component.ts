@@ -75,7 +75,7 @@ export const NoneGivenText = styled.span`
 
 export const NoneGivenTableText = styled.span`
   padding-top: var(--goa-space-l);
-  padding-left: var(--goa-space-m);
+  padding-left: var(--goa-space-xs);
   color: var(--goa-color-greyscale-700);
   font-style: italic;
 `;
