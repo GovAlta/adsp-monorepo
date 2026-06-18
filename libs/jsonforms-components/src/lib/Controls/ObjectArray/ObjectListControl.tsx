@@ -213,7 +213,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     : false;
 
   return (
-    <NonEmptyCellStyle>
+    <NonEmptyCellStyle data-testid={`${rowPath}-ObjectListOuterWrapper`}>
       {!isInReview &&
         (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
           return (
@@ -232,8 +232,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
       {properties && Object.keys(properties).length > 0 && (
         <>
           {isInReview ? (
-            <div style={{ padding: '0.75rem 0' }}>
-              {range(count || 0).map((i) => {
+            <div style={{ padding: '0.75rem 0' }} data-testid={`${rowPath}.objectListWrapper`}>
+              {range(count || 0).map((i, key) => {
                 const rowData = data && data[i];
                 if (!rowData) return null;
                 const hasAnyValue = Object.keys(tableKeys).some((key) => {
@@ -245,7 +245,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 );
                 if (!hasAnyValue && !hasRowErrors) return null;
                 return (
-                  <div key={i} style={{ marginBottom: '1.5rem' }}>
+                  <div key={i} style={{ marginBottom: '1.5rem' }} data-testid={`${rowPath}.objectList-${key}`}>
                     {Object.entries(tableKeys).map(([key, label]) => {
                       const value = rowData[key];
                       const isRequiredField = required?.includes(key) ?? false;
@@ -274,7 +274,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       }
 
                       return (
-                        <div key={key} style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}>
+                        <div
+                          key={key}
+                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}
+                          data-testid={`#/properties/${key}-input-${i}-row`}
+                        >
                           <strong style={{ width: '50%', flexShrink: 0 }}>
                             {properties?.[key]?.title ||
                               (label !== key
@@ -285,10 +289,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                     .replace(/^./, (c) => c.toUpperCase()))}
                             {isRequiredField && <RequiredSpan> (required)</RequiredSpan>} :
                           </strong>
-                          <span
-                            style={{ marginLeft: '1rem' }}
-                            data-testid={`#/properties/${key}-input-${i}-review`}
-                          >
+                          <span style={{ marginLeft: '1rem' }} data-testid={`#/properties/${key}-input-${i}-review`}>
                             {renderCellColumn({
                               data: isEmptyValue ? undefined : (value as unknown as string),
                               error: reviewError,
@@ -308,173 +309,180 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               })}
             </div>
           ) : (
-          <FixTableHeaderAlignment>
-            <GoabTable width="100%">
-              <thead>
-                <tr key={0}>
-                  {Object.entries(tableKeys).map(([value, index]) => {
-                    const currentProperty = properties[value];
+            <FixTableHeaderAlignment>
+              <GoabTable width="100%">
+                <thead>
+                  <tr key={0}>
+                    {Object.entries(tableKeys).map(([value, index]) => {
+                      const currentProperty = properties[value];
+                      return (
+                        <th key={index}>
+                          <p>
+                            {currentProperty?.title || index}
+                            {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
+                          </p>
+                        </th>
+                      );
+                    })}
+                    <th>
+                      <p>Actions</p>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {range(count || 0).map((num, i) => {
+                    const errorRow = errors?.find((error: ErrorObject) =>
+                      error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`),
+                    ) as { message: string };
+
                     return (
-                      <th key={index}>
-                        <p>
-                          {currentProperty?.title || index}
-                          {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
-                        </p>
-                      </th>
-                    );
-                  })}
-                  <th>
-                    <p>Actions</p>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {range(count || 0).map((num, i) => {
-                  const errorRow = errors?.find((error: ErrorObject) =>
-                    error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`),
-                  ) as { message: string };
+                      <tr key={`${rowPath}-${i}-${num}`}>
+                        {Object.keys(properties).map((element, ix) => {
+                          const dataObject = properties[element];
+                          const schemaName = element;
+                          const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
 
-                  return (
-                    <tr key={`${rowPath}-${i}-${num}`}>
-                      {Object.keys(properties).map((element, ix) => {
-                        const dataObject = properties[element];
-                        const schemaName = element;
-                        const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
+                          //Get out of the loop to not render extra blank columns at the end of the table
+                          if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
 
-                        //Get out of the loop to not render extra blank columns at the end of the table
-                        if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
+                          const error = (
+                            errors?.filter(
+                              (e: ErrorObject) =>
+                                e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
+                                e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`,
+                            ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
+                          ).find((y) => {
+                            return y?.message?.includes(element) || y.instancePath.includes(element);
+                          }) as { message: string };
 
-                        const error = (
-                          errors?.filter(
-                            (e: ErrorObject) =>
-                              e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                              e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`,
-                          ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
-                        ).find((y) => {
-                          return y?.message?.includes(element) || y.instancePath.includes(element);
-                        }) as { message: string };
+                          function prettify(prop: string) {
+                            return prop
+                              .replace(/([A-Z])/g, ' $1')
+                              .replace(/[_-]/g, ' ')
+                              .replace(/^./, (c) => c.toUpperCase());
+                          }
 
-                        function prettify(prop: string) {
-                          return prop
-                            .replace(/([A-Z])/g, ' $1')
-                            .replace(/[_-]/g, ' ')
-                            .replace(/^./, (c) => c.toUpperCase());
-                        }
-
-                        // Create a human-friendly error message for rendering
-                        let humanMessage: string | undefined;
-                        if (error) {
-                          try {
-                            humanMessage = humanizeAjvError(error as ErrorObject, schema, uischema as UISchemaElement);
-                            if (
-                              typeof humanMessage === 'string' &&
-                              (humanMessage.includes('must have required property') ||
-                                humanMessage.includes(REQUIRED_PROPERTY_ERROR))
-                            ) {
-                              const propertyMatch = humanMessage.match(/'([^']+)'/);
+                          // Create a human-friendly error message for rendering
+                          let humanMessage: string | undefined;
+                          if (error) {
+                            try {
+                              humanMessage = humanizeAjvError(
+                                error as ErrorObject,
+                                schema,
+                                uischema as UISchemaElement,
+                              );
+                              if (
+                                typeof humanMessage === 'string' &&
+                                (humanMessage.includes('must have required property') ||
+                                  humanMessage.includes(REQUIRED_PROPERTY_ERROR))
+                              ) {
+                                const propertyMatch = humanMessage.match(/'([^']+)'/);
+                                if (propertyMatch && propertyMatch[1]) {
+                                  humanMessage = prettify(propertyMatch[1]) + ' is required';
+                                }
+                              }
+                            } catch (err) {
+                              const raw = (error as unknown as { message?: string }).message as string;
+                              const propertyMatch = raw?.match(/'([^']+)'/);
                               if (propertyMatch && propertyMatch[1]) {
                                 humanMessage = prettify(propertyMatch[1]) + ' is required';
+                              } else {
+                                humanMessage = raw;
                               }
                             }
-                          } catch (err) {
-                            const raw = (error as unknown as { message?: string }).message as string;
-                            const propertyMatch = raw?.match(/'([^']+)'/);
-                            if (propertyMatch && propertyMatch[1]) {
-                              humanMessage = prettify(propertyMatch[1]) + ' is required';
-                            } else {
-                              humanMessage = raw;
-                            }
                           }
-                        }
 
-                        if (
-                          (error as unknown as { message?: string })?.message?.includes('must NOT have fewer') &&
-                          required.find((r) => r === schemaName) &&
-                          (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
-                        ) {
-                          humanMessage = `${capitalizeFirstLetter(schemaName)} is required`;
-                        }
+                          if (
+                            (error as unknown as { message?: string })?.message?.includes('must NOT have fewer') &&
+                            required.find((r) => r === schemaName) &&
+                            (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
+                          ) {
+                            humanMessage = `${capitalizeFirstLetter(schemaName)} is required`;
+                          }
 
-                        return (
-                          <td key={ix}>
-                            <GoabFormItem error={humanMessage ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                              {dataObject.enum ? (
-                                <GoabDropdown
-                                  id={schemaName}
-                                  name={schemaName}
-                                  value={currentData != null ? String(currentData) : ''}
-                                  testId={`#/properties/${schemaName}-select-${i}`}
-                                  onChange={(detail: GoabDropdownOnChangeDetail) => {
-                                    const selectedValue = Array.isArray(detail.value) ? detail.value[0] : detail.value;
-                                    const coerced =
-                                      dataObject.type === 'number' && selectedValue !== ''
-                                        ? Number(selectedValue)
-                                        : selectedValue;
-                                    handleChange(rowPath, { [num]: { [schemaName]: coerced } });
-                                  }}
-                                  width="100%"
-                                  ariaLabel={schemaName}
-                                  error={!!humanMessage}
-                                >
-                                  {!required?.includes(schemaName) && (
-                                    <GoabDropdownItem value="" label={`-- Select ${schemaName} --`} />
-                                  )}
-                                  {dataObject.enum.map((opt: string | number) => (
-                                    <GoabDropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
-                                  ))}
-                                </GoabDropdown>
-                              ) : dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
-                                <GoabInput
-                                  error={humanMessage ? humanMessage.length > 0 : false}
-                                  type={dataObject.type === 'number' ? 'number' : 'text'}
-                                  id={schemaName}
-                                  name={schemaName}
-                                  value={currentData}
-                                  testId={`#/properties/${schemaName}-input-${i}`}
-                                  onChange={(detail: GoabInputOnChangeDetail) => {
-                                    handleChange(rowPath, {
-                                      [num]: {
-                                        [detail.name]:
-                                          dataObject.type === 'number' ? parseInt(detail.value) : detail.value,
-                                      },
-                                    });
-                                  }}
-                                  ariaLabel={schemaName}
-                                  width="100%"
-                                />
-                              ) : (
-                                <GoabCallout
-                                  type="important"
-                                  size="medium"
-                                  testId="form-support-callout"
-                                  heading="Not supported"
-                                >
-                                  Only string, number, and enum are supported inside arrays
-                                </GoabCallout>
-                              )}
-                            </GoabFormItem>
+                          return (
+                            <td key={ix}>
+                              <GoabFormItem error={humanMessage ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                                {dataObject.enum ? (
+                                  <GoabDropdown
+                                    id={schemaName}
+                                    name={schemaName}
+                                    value={currentData != null ? String(currentData) : ''}
+                                    testId={`#/properties/${schemaName}-select-${i}`}
+                                    onChange={(detail: GoabDropdownOnChangeDetail) => {
+                                      const selectedValue = Array.isArray(detail.value)
+                                        ? detail.value[0]
+                                        : detail.value;
+                                      const coerced =
+                                        dataObject.type === 'number' && selectedValue !== ''
+                                          ? Number(selectedValue)
+                                          : selectedValue;
+                                      handleChange(rowPath, { [num]: { [schemaName]: coerced } });
+                                    }}
+                                    width="100%"
+                                    ariaLabel={schemaName}
+                                    error={!!humanMessage}
+                                  >
+                                    {!required?.includes(schemaName) && (
+                                      <GoabDropdownItem value="" label={`-- Select ${schemaName} --`} />
+                                    )}
+                                    {dataObject.enum.map((opt: string | number) => (
+                                      <GoabDropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
+                                    ))}
+                                  </GoabDropdown>
+                                ) : dataObject.type === 'number' ||
+                                  (dataObject.type === 'string' && !dataObject.enum) ? (
+                                  <GoabInput
+                                    error={humanMessage ? humanMessage.length > 0 : false}
+                                    type={dataObject.type === 'number' ? 'number' : 'text'}
+                                    id={schemaName}
+                                    name={schemaName}
+                                    value={currentData}
+                                    testId={`#/properties/${schemaName}-input-${i}`}
+                                    onChange={(detail: GoabInputOnChangeDetail) => {
+                                      handleChange(rowPath, {
+                                        [num]: {
+                                          [detail.name]:
+                                            dataObject.type === 'number' ? parseInt(detail.value) : detail.value,
+                                        },
+                                      });
+                                    }}
+                                    ariaLabel={schemaName}
+                                    width="100%"
+                                  />
+                                ) : (
+                                  <GoabCallout
+                                    type="important"
+                                    size="medium"
+                                    testId="form-support-callout"
+                                    heading="Not supported"
+                                  >
+                                    Only string, number, and enum are supported inside arrays
+                                  </GoabCallout>
+                                )}
+                              </GoabFormItem>
+                            </td>
+                          );
+                        })}
+                        {!isInReview && (
+                          <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
+                            <div aria-hidden="true">
+                              <GoabIconButton
+                                icon="trash"
+                                title="trash button"
+                                testId="trash-icon-button"
+                                aria-label={`remove-element-${num}`}
+                                onClick={() => openDeleteDialog(num)}
+                              ></GoabIconButton>
+                            </div>
                           </td>
-                        );
-                      })}
-                      {!isInReview && (
-                        <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                          <div aria-hidden="true">
-                            <GoabIconButton
-                              icon="trash"
-                              title="trash button"
-                              testId="trash-icon-button"
-                              aria-label={`remove-element-${num}`}
-                              onClick={() => openDeleteDialog(num)}
-                            ></GoabIconButton>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </GoabTable>
-          </FixTableHeaderAlignment>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </GoabTable>
+            </FixTableHeaderAlignment>
           )}
           {hasAnyErrors && isInReview && (
             <GoabFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoabFormItem>
