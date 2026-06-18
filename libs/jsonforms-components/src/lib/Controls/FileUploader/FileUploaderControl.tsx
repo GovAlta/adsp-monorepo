@@ -238,7 +238,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                 : !deleteHide && getFile(fileListLength - 1) && fileListLength >= 0
                   ? [fileListLength - 1]
                   : []
-              ).map((index) => (
+              ).map((index: number) => (
                 <React.Fragment key={index}>{renderFileItem(index)}</React.Fragment>
               ))}
             </div>
