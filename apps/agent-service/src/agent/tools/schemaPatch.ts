@@ -20,13 +20,17 @@ const jsonPatchOpSchema = z.object({
   from: z.string().optional(),
 });
 
-/** Validates ops against doc then applies them in place. Throws on the first validation error. */
-function validateAndApplyOps(doc: Record<string, unknown>, ops: Operation[], schemaName: string): void {
+/** Validates ops then returns a new patched document. Throws on the first validation error. */
+function validateAndApplyOps(
+  doc: Record<string, unknown>,
+  ops: Operation[],
+  schemaName: string,
+): Record<string, unknown> {
   const error = validate(ops, doc);
   if (error) {
     throw new Error(`Invalid ${schemaName} patch operation: ${error.message}`);
   }
-  applyPatch(doc, ops);
+  return applyPatch(doc, ops, undefined, false).newDocument as Record<string, unknown>;
 }
 
 /**
@@ -102,12 +106,11 @@ Use formConfigurationRetrievalTool + formConfigurationUpdateTool for those cases
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Deep-clone so we never mutate the fetched object
-      const dataSchema = JSON.parse(JSON.stringify(current.dataSchema ?? {}));
-      const uiSchema = JSON.parse(JSON.stringify(current.uiSchema ?? {}));
+      let dataSchema = current.dataSchema ?? {};
+      let uiSchema = current.uiSchema ?? {};
 
       if (inputData.dataSchemaOps?.length) {
-        validateAndApplyOps(dataSchema, inputData.dataSchemaOps as Operation[], 'dataSchema');
+        dataSchema = validateAndApplyOps(dataSchema, inputData.dataSchemaOps as Operation[], 'dataSchema');
         logger.debug(`Applied ${inputData.dataSchemaOps.length} dataSchema patch op(s).`, {
           context: 'formSchemaPatchTool',
           tenant: tenantId?.toString(),
@@ -118,7 +121,7 @@ Use formConfigurationRetrievalTool + formConfigurationUpdateTool for those cases
       // Sort uiSchema removes descending to avoid pointer shifts before applying
       if (inputData.uiSchemaOps?.length) {
         const sortedOps = sortRemoveOps(inputData.uiSchemaOps);
-        validateAndApplyOps(uiSchema, sortedOps as Operation[], 'uiSchema');
+        uiSchema = validateAndApplyOps(uiSchema, sortedOps as Operation[], 'uiSchema');
         logger.debug(`Applied ${inputData.uiSchemaOps.length} uiSchema patch op(s).`, {
           context: 'formSchemaPatchTool',
           tenant: tenantId?.toString(),
