@@ -158,12 +158,19 @@ SEVERITY LEVELS:
 
 SUPPRESSION: If a line contains the comment // clean-code-ignore: RULE_ID (e.g. // clean-code-ignore: 2.3), skip that rule for that line.
 
+DIFF FORMAT: The code you are reviewing has been pre-processed for clarity. Each line is prefixed with its new-file line number and a type marker:
+- [LN+] is a newly added line with new-file line number N — ONLY flag violations on these lines
+- [LN ] is an unchanged context line — do NOT flag violations on these lines
+Removed lines have been omitted entirely.
+
+IMPORTANT: Only report violations on [LN+] lines. Use the number N from the [LN+] prefix exactly as the "line" value in your response. Do not report violations on [LN ] context lines.
+
 RESPONSE FORMAT:
 Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. Each item:
 {
   "rule": "2.X",
   "severity": "ERROR" | "WARNING" | "SUGGESTION",
-  "line": <line number as integer>,
+  "line": <new-file line number as integer>,
   "message": "<clear description of the violation>",
   "suggestion": "<specific actionable fix>"
 }
@@ -213,7 +220,10 @@ async function reviewWithGitHubModels(fileContent, fileName, systemPrompt) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Map violations to PR diff positions
+// Map violations to PR diff positions (kept for backwards compat / tests)
+// NOTE: This function counts @@ hunk headers as position 1, which is
+// incorrect per GitHub's API ("line just below hunk header is position 1").
+// Use buildChangedLineSet + line/side params instead.
 // ─────────────────────────────────────────────────────────────
 function buildLineToPositionMap(patch) {
   if (!patch) return {};
@@ -235,6 +245,60 @@ function buildLineToPositionMap(patch) {
     }
   }
   return map;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pre-process patch into an annotated diff for the AI.
+// Added lines are labelled [LN+], context lines [LN ].
+// Removed lines are omitted — no value in showing the AI deleted code.
+// ─────────────────────────────────────────────────────────────
+function buildAnnotatedDiff(patch) {
+  if (!patch) return '';
+  const lines = patch.split('\n');
+  const annotated = [];
+  let currentLine = 0;
+
+  for (const line of lines) {
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
+      if (match) currentLine = parseInt(match[1], 10) - 1;
+      annotated.push(line);
+    } else if (line.startsWith('+')) {
+      currentLine++;
+      annotated.push(`[L${currentLine}+] ${line.slice(1)}`);
+    } else if (line.startsWith('-')) {
+      // omit removed lines
+    } else {
+      currentLine++;
+      annotated.push(`[L${currentLine} ] ${line}`);
+    }
+  }
+
+  return annotated.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Return the set of file line numbers that were added (+) in this diff.
+// Used with the line/side GitHub review comment API to avoid position
+// arithmetic entirely (GitHub counts @@ headers inconsistently).
+// ─────────────────────────────────────────────────────────────
+function buildChangedLineSet(patch) {
+  if (!patch) return new Set();
+  const set = new Set();
+  let currentLine = 0;
+
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)/);
+      if (match) currentLine = parseInt(match[1], 10) - 1;
+    } else if (line.startsWith('+')) {
+      currentLine++;
+      set.add(currentLine);
+    } else if (!line.startsWith('-')) {
+      currentLine++;
+    }
+  }
+  return set;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -299,13 +363,13 @@ async function checkMissingTestFiles(octokit, changedFiles, config, { checkRepoF
     const repoChecks = await Promise.all(expectedTestPaths.map((p) => checkRepoFile(octokit, p)));
     if (repoChecks.some(Boolean)) continue;
 
-    const lineToPosition = buildLineToPositionMap(file.patch);
-    const positions = Object.values(lineToPosition);
-    if (positions.length === 0) continue;
+    const changedLines = buildChangedLineSet(file.patch);
+    if (changedLines.size === 0) continue;
 
     missingTestComments.push({
       path: file.filename,
-      position: Math.min(...positions),
+      line: Math.min(...changedLines),
+      side: 'RIGHT',
       body: formatComment({
         rule: 'RULE-19',
         severity: 'WARNING',
@@ -379,6 +443,23 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 // Process each changed file: call the AI model and collect review comments
 // ─────────────────────────────────────────────────────────────
+function routeViolations(violations, changedLines, filename) {
+  const inline = [];
+  let hasBlockingViolations = false;
+
+  for (const violation of violations) {
+    if (violation.severity === 'ERROR') hasBlockingViolations = true;
+
+    if (!changedLines.has(violation.line)) {
+      console.log(`  ⚠️  Line ${violation.line} not in diff for ${filename} (${violation.rule}) — skipping`);
+    } else {
+      inline.push({ path: filename, line: violation.line, side: 'RIGHT', body: formatComment(violation) });
+    }
+  }
+
+  return { inline, hasBlockingViolations };
+}
+
 async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
   let hasBlockingViolations = false;
@@ -386,15 +467,14 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
   for (const file of changedFiles) {
     console.log(`  Reviewing: ${file.filename}`);
 
-    const content = file.patch;
-    if (!content) {
+    if (!file.patch) {
       console.log(`  No diff available for ${file.filename}, skipping.`);
       continue;
     }
 
     let violations = [];
     try {
-      violations = await reviewFile(content, file.filename, systemPrompt);
+      violations = await reviewFile(buildAnnotatedDiff(file.patch), file.filename, systemPrompt);
     } catch (e) {
       console.warn(`  Error reviewing ${file.filename}:`, e.message);
       continue;
@@ -407,20 +487,14 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     console.log(`  ⚠️  ${violations.length} violation(s) in ${file.filename}`);
 
-    const lineToPosition = buildLineToPositionMap(file.patch);
+    const { inline, hasBlockingViolations: blocking } = routeViolations(
+      violations,
+      buildChangedLineSet(file.patch),
+      file.filename,
+    );
 
-    for (const v of violations) {
-      const position = lineToPosition[v.line];
-      if (!position) continue;
-
-      if (v.severity === 'ERROR') hasBlockingViolations = true;
-
-      reviewComments.push({
-        path: file.filename,
-        position,
-        body: formatComment(v),
-      });
-    }
+    reviewComments.push(...inline);
+    if (blocking) hasBlockingViolations = true;
   }
 
   return { reviewComments, hasBlockingViolations };
@@ -509,6 +583,9 @@ if (require.main === module) {
 
 module.exports = {
   buildLineToPositionMap,
+  buildAnnotatedDiff,
+  buildChangedLineSet,
+  routeViolations,
   formatComment,
   loadConfig,
   buildSystemPrompt,

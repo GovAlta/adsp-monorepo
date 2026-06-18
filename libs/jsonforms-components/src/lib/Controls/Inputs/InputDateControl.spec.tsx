@@ -97,6 +97,71 @@ describe('input date controls', () => {
       expect(myDateId.getAttribute('name')).toBe('mytestInput-input');
     });
 
+    it('displays componentProps placeholder while the date is empty', () => {
+      const onFocus = jest.fn();
+      const onBlur = jest.fn();
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            componentProps: {
+              ...staticProps.uischema.options?.componentProps,
+              placeholder: 'Choose a date',
+              onFocus,
+              onBlur,
+            },
+          },
+        },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+
+      expect(input).toHaveAttribute('placeholder', 'Choose a date');
+      expect(input).toHaveAttribute('type', 'text');
+
+      fireEvent(input, new CustomEvent('_focus', { detail: { name: 'myDateId-input', value: '' } }));
+      expect(input).toHaveAttribute('type', 'date');
+      expect(onFocus).toHaveBeenCalled();
+
+      fireEvent(input, new CustomEvent('_blur', { detail: { name: 'myDateId-input', value: '' } }));
+      expect(input).toHaveAttribute('type', 'text');
+      expect(onBlur).toHaveBeenCalled();
+    });
+
+    it('keeps the date input type when a value is present', () => {
+      const props = {
+        ...staticProps,
+        data: '2000-01-01',
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            componentProps: {
+              ...staticProps.uischema.options?.componentProps,
+              placeholder: 'Choose a date',
+            },
+          },
+        },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+
+      expect(input).toHaveAttribute('placeholder', 'Choose a date');
+      expect(input).toHaveAttribute('type', 'date');
+    });
+
     it('calls onBlur for input date control', () => {
       const props = {
         ...staticProps,

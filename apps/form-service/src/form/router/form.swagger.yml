@@ -10,22 +10,26 @@ components:
       properties:
         id:
           type: string
-          maxLength: 50
-          description: Unique identifier for the form definition. If not provided, will be auto-generated from the name in kebab-case format.
+          readOnly: true
+          description: Unique identifier for the form definition. Always auto-generated from the name in kebab-case format. Cannot be set by the client.
         name:
           type: string
         description:
           type: string
         anonymousApply:
           type: boolean
+          default: false
+          description: Whether anonymous (unauthenticated) applicants can submit the form. Defaults to false.
         oneFormPerApplicant:
           type: boolean
         applicantRoles:
           type: array
+          description: Roles allowed to submit the form.
           items:
             type: string
         assessorRoles:
           type: array
+          description: Roles allowed to assess submitted forms.
           items:
             type: string
         clerkRoles:
@@ -34,6 +38,10 @@ components:
             type: string
         formDraftUrlTemplate:
           type: string
+          minLength: 6
+          maxLength: 500
+          pattern: '^https?://.+$'
+          description: Optional URL template for linking applicants back to their draft. Use '{{id}}' as a placeholder for the form ID (e.g. https://example.com/form/{{id}}). Must be between 6 and 500 characters.
         dataSchema:
           type: object
         uiSchema:
@@ -76,6 +84,18 @@ components:
               type: string
         dryRun:
           type: boolean
+    FormDefinitionCreate:
+      type: object
+      description: Payload for creating a new form definition. Only name and description are accepted; all other fields are set to defaults.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+      additionalProperties: false
     FormDefinitionPatch:
       type: object
       description: Partial update payload for a form definition. Only provided fields will be updated; omitted fields will not be changed.
@@ -298,13 +318,22 @@ components:
   post:
     tags:
       - Form
-    description: Creates a new form definition. Requires the form-service admin role. If the 'id' field is not provided in the request body, it will be auto-generated from the 'name' field in kebab-case format.
+    description: |
+      Creates a new form definition. Requires the form-service admin role.
+
+      Only `name` and `description` are accepted in the request body. All other fields are set automatically:
+      - `id`: auto-generated from `name` in kebab-case
+      - `anonymousApply`: `false`
+      - `applicantRoles`: `[]`
+      - `assessorRoles`: `[]`
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/FormDefinition'
+            $ref: '#/components/schemas/FormDefinitionCreate'
+          example:
+            name: My Application Form
     responses:
       201:
         description: Successfully created the form definition.
@@ -312,10 +341,12 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+      400:
+        description: Validation failed or ID could not be generated from the provided name.
       401:
         description: User is not authorized to create form definitions.
       409:
-        description: Form definition with the specified ID already exists.
+        description: Form definition with the generated ID already exists.
 
 /form/v1/definitions/{definitionId}:
   get:
@@ -894,19 +925,3 @@ components:
               properties:
                 deleted:
                   type: boolean
-/form/v1/registers:
-  get:
-    tags:
-      - Form
-    description: Retrieves all data registers for the tenant.
-    responses:
-      201:
-        description: Successfully retrieved data registers.
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/DataRegister'
-      401:
-        description: User is not authorized to retrieve data registers.

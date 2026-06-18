@@ -151,15 +151,21 @@ export function createFormDefinition(
         throw new UnauthorizedUserError('create form definition', user);
       }
 
-      const generatedId = req.body.id || toKebabCase(req.body.name);
+      const generatedId = toKebabCase(req.body.name);
 
       if (!generatedId) {
         throw new InvalidOperationError('Form definition ID could not be generated from the provided name.');
       }
 
       const definition: FormDefinition = {
-        ...req.body,
         id: generatedId,
+        name: req.body.name,
+        description: req.body.description ?? '',
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+        clerkRoles: [],
+        dataSchema: {},
       };
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
@@ -182,14 +188,24 @@ export function createFormDefinition(
         });
       }
 
-      const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definition.id}`, configurationApiUrl).href,
-        { operation: 'REPLACE', configuration: definition },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
+      let data: { latest: { revision: number; configuration: FormDefinition } };
+      try {
+        const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
+          new URL(`v2/configuration/form-service/${definition.id}`, configurationApiUrl).href,
+          { operation: 'REPLACE', configuration: definition },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { tenantId: tenantId?.toString() },
+          },
+        );
+        data = response.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
+          throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
+        }
+        throw err;
+      }
 
       res.status(HttpStatusCodes.CREATED).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
@@ -240,10 +256,6 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         throw new UnauthorizedUserError('patch form definition', user);
       }
 
-      if (!/^[a-zA-Z0-9-]{1,50}$/.test(definitionId)) {
-        throw new InvalidOperationError('Invalid form definition ID.');
-      }
-
       const encodedDefinitionId = encodeURIComponent(definitionId);
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
@@ -273,14 +285,24 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         id: definitionId,
       };
 
-      const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
-        { operation: 'REPLACE', configuration: patchedDefinition },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
+      let data: { latest: { revision: number; configuration: FormDefinition } };
+      try {
+        const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
+          new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
+          { operation: 'REPLACE', configuration: patchedDefinition },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { tenantId: tenantId?.toString() },
+          },
+        );
+        data = response.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
+          throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
+        }
+        throw err;
+      }
 
       res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
@@ -336,15 +358,8 @@ export function createFormDefinitionRouter({
     '/definitions',
     assertAuthenticatedHandler,
     createValidationHandler(
-      body('id')
-        .optional()
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
-      body('anonymousApply').isBoolean(),
-      body('applicantRoles').isArray(),
-      body('assessorRoles').isArray(),
+      body('description').optional().isString(),
     ),
     createFormDefinition(directory, tokenProvider, logger),
   );
@@ -366,6 +381,11 @@ export function createFormDefinitionRouter({
         .isString()
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-]+$/),
+      body('formDraftUrlTemplate')
+        .optional()
+        .isString()
+        .isLength({ min: 6, max: 500 })
+        .isURL({ protocols: ['http', 'https'], require_protocol: true }),
     ),
     updateFormDefinition(directory, tokenProvider),
   );
@@ -382,6 +402,11 @@ export function createFormDefinitionRouter({
       body('description').optional().isString(),
       body('dataSchema').optional().isObject(),
       body('uiSchema').optional().isObject(),
+      body('formDraftUrlTemplate')
+        .optional()
+        .isString()
+        .isLength({ min: 6, max: 500 })
+        .isURL({ protocols: ['http', 'https'], require_protocol: true }),
     ),
     patchFormDefinition(directory, tokenProvider),
   );

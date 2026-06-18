@@ -933,7 +933,7 @@ describe('file router', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('can delete multiple files from bracketed query parameter', async () => {
+    it('can delete multiple files from a comma-separated query parameter', async () => {
       const firstFile = createFile('file-1');
       const secondFile = createFile('file-2');
       const req = {
@@ -943,7 +943,7 @@ describe('file router', () => {
           name: 'Tester',
           roles: ['test-updater'],
         },
-        query: { files: '[file-1, file-2]' },
+        query: { files: 'file-1,file-2' },
       };
       const res = {
         send: jest.fn(),

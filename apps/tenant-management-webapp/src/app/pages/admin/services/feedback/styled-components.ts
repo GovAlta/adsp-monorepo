@@ -154,10 +154,11 @@ export const FeedbackHeader = styled.div`
 `;
 
 export const FullScreenModalWrapper = styled.div`
-  position: absolute;
+  position: fixed;
   top: 5.75rem;
+  right: 0;
+  bottom: 0;
   left: 0;
-  width: 100vw;
 
   background: #fff;
   padding: 0.5rem 2rem;

@@ -146,17 +146,15 @@
       "bad": {
         "toolInput": {
           "formDefinitionId": "my-form-id",
-          "name": "My Form",
           "dataSchema": {}
         }
       },
       "good": {
         "toolInput": {
-          "name": "My Form",
           "dataSchema": {}
         }
       },
-      "explanation": "formDefinitionId comes from request context automatically. Including it in tool input causes an error. Only pass name, dataSchema, uiSchema, anonymousApply, applicantRoles, and assessorRoles."
+      "explanation": "formDefinitionId comes from request context automatically. Including it in tool input causes an error. Only pass dataSchema, uiSchema, anonymousApply, applicantRoles, and assessorRoles. The form name cannot be changed and must not be passed."
     }
   ],
 

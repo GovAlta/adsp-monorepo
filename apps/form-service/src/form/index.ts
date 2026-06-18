@@ -5,7 +5,7 @@ import { FileService } from '../file';
 import { NotificationService } from '../notification';
 import { scheduleFormJobs } from './jobs';
 import { FormSubmissionRepository, Repositories } from './repository';
-import { createFormRouter, createFormDefinitionRouter } from './router';
+import { createFormRouter, createFormDefinitionRouter, createRegisterRouter } from './router';
 import { QueueTaskService } from '../task';
 import { CommentService } from './comment';
 import { PdfService } from './pdf';
@@ -84,6 +84,9 @@ export const applyFormMiddleware = (
     pdfService,
   });
   app.use('/form/v1', router);
+
+  const registerRouter = createRegisterRouter({ directory, tokenProvider });
+  app.use('/form/v1', registerRouter);
 
   return app;
 };
