@@ -14,7 +14,6 @@ interface FileUploadAdditionalProps {
 }
 
 export type FileUploaderLayoutRendererProps = ControlProps & WithClassname & FileUploadAdditionalProps;
-const DELAY_DELETE_TIMEOUT_MS = 5;
 
 export const FileUploaderReview = (props: FileUploaderLayoutRendererProps) => {
   return FileUploader({ ...props, isStepperReview: true });
@@ -197,10 +196,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                 deleteFile(getFile(index));
                 if (!isMultiFile) {
                   setDeleteHide(true);
-                  const handleFunction = () => {
-                    handleChange(path, undefined);
-                  };
-                  setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
                 }
                 setUploadError(undefined);
               }}
@@ -238,14 +233,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
             </GoabModal>
           ) : (
             <div>
-              {fileList && isMultiFile
-                ? (fileList[path as string] || []).map((_: File, index: number) => (
-                    <React.Fragment key={index}>{renderFileItem(index)}</React.Fragment>
-                  ))
-                : !deleteHide &&
-                  getFile(fileListLength - 1) &&
-                  fileListLength >= 0 &&
-                  renderFileItem(fileListLength - 1)}
+              {(fileList && isMultiFile
+                ? (fileList[path as string] || []).map((_: unknown, i: number) => i)
+                : !deleteHide && getFile(fileListLength - 1) && fileListLength >= 0
+                  ? [fileListLength - 1]
+                  : []
+              ).map((index) => (
+                <React.Fragment key={index}>{renderFileItem(index)}</React.Fragment>
+              ))}
             </div>
           )}
         </div>
