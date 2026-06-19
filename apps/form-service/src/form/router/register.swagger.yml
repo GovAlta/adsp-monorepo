@@ -16,11 +16,9 @@ components:
           description: Human-readable description of what the register contains.
         entries:
           type: array
-          description: List of values stored in the register. Items may be strings or objects.
+          description: List of string values stored in the register.
           items:
-            oneOf:
-              - type: string
-              - type: object
+            type: string
     DataRegisterUpdate:
       type: object
       description: Partial update payload for a data register. Only provided fields will be updated.
@@ -30,11 +28,9 @@ components:
           description: Updated description for the register.
         entries:
           type: array
-          description: Replacement list of values for the register.
+          description: Replacement list of string values for the register.
           items:
-            oneOf:
-              - type: string
-              - type: object
+            type: string
       additionalProperties: false
 
 /form/v1/registers:
