@@ -37,11 +37,11 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
         },
       );
 
-      if (dataResponse.status === HttpStatusCodes.NOT_FOUND) {
+      if (dataResponse.status === HttpStatusCodes.NOT_FOUND || dataResponse.data?.configuration == null) {
         throw new NotFoundError('data register', name);
       }
 
-      const entries = (dataResponse.data?.configuration ?? []) as unknown[];
+      const entries = dataResponse.data.configuration as unknown[];
 
       const { data: platformData } = await axios.get(
         new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
@@ -247,7 +247,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND) {
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || existsCheck.data?.configuration == null) {
         throw new NotFoundError('data register', name);
       }
 

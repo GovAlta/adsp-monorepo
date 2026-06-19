@@ -178,6 +178,24 @@ describe('register router', () => {
       expect(res.send).not.toHaveBeenCalled();
     });
 
+    it('can return 404 when configuration service returns null configuration (register not created)', async () => {
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: null } });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        params: { name: 'nonexistent' },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     it('can return register on success', async () => {
       mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: ['Monday', 'Tuesday', 'Wednesday'] } });
 
@@ -357,6 +375,26 @@ describe('register router', () => {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
         params: { name: 'missing' },
         body: { entries: ['Monday'] },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = updateRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('can return 404 when configuration service returns null configuration (register not created)', async () => {
+      axiosMock.get.mockReset();
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: null } });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { name: 'nonexistent' },
+        body: { entries: ['x'] },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
