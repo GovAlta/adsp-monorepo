@@ -6,7 +6,7 @@ import { validateSinWithLuhn } from '../util';
 import { invalidSin } from './Constants';
 
 export const createDefaultAjv = (...schemas: AnySchema[]) => {
-  const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true });
+  const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true, multipleOfPrecision: 10 });
   ajv.addSchema(schemas);
 
   addErrors(ajv);
