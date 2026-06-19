@@ -56,6 +56,17 @@ describe('pdf', () => {
     },
   };
 
+  const createMockResponse = (): Partial<Response> => {
+  const res: Partial<Response> = {
+    status: jest.fn(),
+    send: jest.fn(),
+    json: jest.fn(),
+  };
+
+  (res.status as jest.Mock).mockReturnValue(res);
+  return res;
+};
+
   beforeEach(() => {
     eventServiceMock.send.mockReset();
     queueServiceMock.enqueue.mockReset();
@@ -87,15 +98,9 @@ describe('pdf', () => {
     expect(router).toBeTruthy();
   });
 
+  // clean-code-ignore: 2.3
   describe('createPdfTemplate', () => {
-    const createResponse = () => {
-      const res = {
-        status: jest.fn(),
-        send: jest.fn(),
-      };
-      res.status.mockReturnValue(res);
-      return res;
-    };
+
 
     it('creates an empty PDF template', async () => {
       const req = {
@@ -103,7 +108,7 @@ describe('pdf', () => {
         body: { name: 'new-template', description: 'New template description' },
         getConfiguration: jest.fn().mockResolvedValue([configuration]),
       };
-      const res = createResponse();
+      const res = createMockResponse();
       const next = jest.fn();
 
       serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
@@ -144,7 +149,7 @@ describe('pdf', () => {
         }
       );
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
-      expect(res.send).toHaveBeenCalledWith({
+      expect(res.json).toHaveBeenCalledWith({
         id: 'new-template',
         name: 'new-template',
         description: 'New template description',
@@ -153,13 +158,13 @@ describe('pdf', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('defaults the description to an empty string', async () => {
+    it('creates a dashed template ID from a name containing spaces', async () => {
       const req = {
         tenant: { id: tenantId },
-        body: { name: 'new-template' },
+        body: { name: 'we are the mushrooms', description: '' },
         getConfiguration: jest.fn().mockResolvedValue([{}]),
       };
-      const res = createResponse();
+      const res = createMockResponse();
       const next = jest.fn();
 
       serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
@@ -172,7 +177,54 @@ describe('pdf', () => {
         next
       );
 
-      expect(res.send).toHaveBeenCalledWith({
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('v2/configuration/platform/pdf-service'),
+        {
+          operation: 'UPDATE',
+          update: {
+            'we-are-the-mushrooms': {
+              id: 'we-are-the-mushrooms',
+              name: 'we are the mushrooms',
+              description: '',
+              template: '',
+            },
+          },
+        },
+        {
+          headers: { Authorization: 'Bearer test-token' },
+          params: { tenantId: tenantId.toString() },
+        }
+      );
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(res.json).toHaveBeenCalledWith({
+        id: 'we-are-the-mushrooms',
+        name: 'we are the mushrooms',
+        description: '',
+        template: '',
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('defaults the description to an empty string', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        body: { name: 'new-template' },
+        getConfiguration: jest.fn().mockResolvedValue([{}]),
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(res.json).toHaveBeenCalledWith({
         id: 'new-template',
         name: 'new-template',
         description: '',
@@ -181,13 +233,21 @@ describe('pdf', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('returns conflict when a template with the same name exists', async () => {
+    it('returns conflict when a template with the generated ID exists', async () => {
+      const existingConfiguration = {
+        'we-are-the-mushrooms': {
+          id: 'we-are-the-mushrooms',
+          name: 'Existing template',
+          description: '',
+          template: '',
+        },
+      };
       const req = {
         tenant: { id: tenantId },
-        body: { name: 'test' },
-        getConfiguration: jest.fn().mockResolvedValue([configuration]),
+        body: { name: 'we are the mushrooms' },
+        getConfiguration: jest.fn().mockResolvedValue([existingConfiguration]),
       };
-      const res = createResponse();
+      const res = createMockResponse();
       const next = jest.fn();
 
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
@@ -197,7 +257,9 @@ describe('pdf', () => {
       );
 
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
-      expect(res.send).toHaveBeenCalledWith({ error: "PDF template 'test' already exists." });
+      expect(res.send).toHaveBeenCalledWith({
+        error: "PDF template 'we are the mushrooms' already exists.",
+      });
       expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
       expect(tokenProviderMock.getAccessToken).not.toHaveBeenCalled();
       expect(axiosMock.patch).not.toHaveBeenCalled();
@@ -211,7 +273,7 @@ describe('pdf', () => {
         body: { name: 'new-template' },
         getConfiguration: jest.fn().mockResolvedValue([{}]),
       };
-      const res = createResponse();
+      const res = createMockResponse();
       const next = jest.fn();
 
       serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
@@ -226,7 +288,7 @@ describe('pdf', () => {
 
       expect(next).toHaveBeenCalledWith(error);
       expect(res.status).not.toHaveBeenCalled();
-      expect(res.send).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
   });
 

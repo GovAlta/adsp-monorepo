@@ -40,3 +40,17 @@ export interface PdfTemplate {
   startWithDefault?: boolean;
   logger: Logger;
 }
+
+
+export interface PdfTemplateConfiguration {
+  id: string;
+  name: string;
+  description: string;
+  template: string;
+}
+
+
+export interface ConfigurationUpdateOperation<T> {
+  operation: 'UPDATE';
+  update: Record<string, T>;
+}
