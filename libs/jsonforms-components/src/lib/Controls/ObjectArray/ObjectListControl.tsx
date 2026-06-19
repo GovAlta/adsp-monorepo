@@ -49,7 +49,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { createHumanizeError, extractNames, renderCellColumn } from './ObjectListControlUtils';
 import {
   FixTableHeaderAlignment,
   ListWithDetailWarningIconDiv,
@@ -261,7 +261,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         );
                       });
                       const isEmptyValue = value === undefined || value === null || (value as unknown) === '';
-                      if (isEmptyValue && !isRequiredField && !fieldError) return null;
 
                       let reviewError = '';
                       if (fieldError) {
@@ -318,7 +317,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       return (
                         <th key={index}>
                           <p>
-                            {currentProperty?.title || index}
+                            {currentProperty?.title || index}{' '}
                             {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
                           </p>
                         </th>
@@ -363,34 +362,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           }
 
                           // Create a human-friendly error message for rendering
-                          let humanMessage: string | undefined;
-                          if (error) {
-                            try {
-                              humanMessage = humanizeAjvError(
-                                error as ErrorObject,
-                                schema,
-                                uischema as UISchemaElement,
-                              );
-                              if (
-                                typeof humanMessage === 'string' &&
-                                (humanMessage.includes('must have required property') ||
-                                  humanMessage.includes(REQUIRED_PROPERTY_ERROR))
-                              ) {
-                                const propertyMatch = humanMessage.match(/'([^']+)'/);
-                                if (propertyMatch && propertyMatch[1]) {
-                                  humanMessage = prettify(propertyMatch[1]) + ' is required';
-                                }
-                              }
-                            } catch (err) {
-                              const raw = (error as unknown as { message?: string }).message as string;
-                              const propertyMatch = raw?.match(/'([^']+)'/);
-                              if (propertyMatch && propertyMatch[1]) {
-                                humanMessage = prettify(propertyMatch[1]) + ' is required';
-                              } else {
-                                humanMessage = raw;
-                              }
-                            }
-                          }
+                          let humanMessage: string | undefined = createHumanizeError(
+                            error as ErrorObject,
+                            schema,
+                            uischema as UISchemaElement,
+                          );
 
                           if (
                             (error as unknown as { message?: string })?.message?.includes('must NOT have fewer') &&
@@ -814,7 +790,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                 style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center' }}
               >
                 <ReviewLabel>
-                  {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                  {listTitle}
+                  <span>{additionalProps.required && '(required)'}</span>
                   {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
                 </ReviewLabel>
                 {uischema.options?.stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
@@ -854,7 +831,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
       <ToolBarHeader>
         {listTitle && (
           <ObjectArrayTitle>
-            {listTitle} <span>{additionalProps.required && '(required)'}</span>
+            {listTitle}
+            <span>{additionalProps.required && '(required)'}</span>
             {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
           </ObjectArrayTitle>
         )}
