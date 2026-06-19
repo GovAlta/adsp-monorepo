@@ -4,7 +4,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { FormServiceRoles } from '..';
-import { createRegisterRouter, findDataRegisters, getRegister, updateRegister } from './register';
+import { createRegisterRouter, findDataRegisters, getRegister, updateRegister, createDataRegister } from './register';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -41,6 +41,79 @@ describe('register router', () => {
       .mockResolvedValueOnce(dataResponse)
       .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
   }
+
+  type MockResponse = Response & {
+    status: jest.Mock;
+    send: jest.Mock;
+  };
+
+  const createRegisterRequest = (body: Record<string, unknown>, roles = [FormServiceRoles.Admin]) =>
+    ({
+      user: {
+        tenantId,
+        id: 'tester',
+        roles,
+      },
+      tenant: { id: tenantId },
+      body,
+    }) as unknown as Request;
+
+  const createMockResponse = (): MockResponse =>
+    ({
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    }) as unknown as MockResponse;
+
+  const mockCreateDataRegisterPatchResponses = (entries: string[]) => {
+    directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
+    axiosMock.patch
+      .mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: {} } } })
+      .mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: entries } } });
+  };
+
+  const expectDefinitionPatch = (name: string, description: string) => {
+    expect(axiosMock.patch.mock.calls[0][0]).toContain('/configuration/platform/configuration-service');
+    expect(axiosMock.patch.mock.calls[0][1]).toEqual({
+      operation: 'UPDATE',
+      update: {
+        [`data-register:${name}`]: {
+          configurationSchema: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+          description,
+        },
+      },
+    });
+    expect(axiosMock.patch.mock.calls[0][2]).toEqual({
+      headers: { Authorization: 'Bearer token' },
+      params: { tenantId: tenantId.toString() },
+    });
+  };
+
+  const expectEntriesPatch = (name: string, entries: string[]) => {
+    expect(axiosMock.patch.mock.calls[1][0]).toContain(`/configuration/data-register/${name}`);
+    expect(axiosMock.patch.mock.calls[1][1]).toEqual({
+      operation: 'REPLACE',
+      configuration: entries,
+    });
+    expect(axiosMock.patch.mock.calls[1][2]).toEqual({
+      headers: { Authorization: 'Bearer token' },
+      params: { tenantId: tenantId.toString() },
+    });
+  };
+
+  const expectCreateRegisterResponse = (res: MockResponse, name: string, description: string, entries: string[]) => {
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      namespace: 'data-register',
+      name,
+      description,
+      entries,
+    });
+  };
 
   it('can create router', () => {
     const router = createRegisterRouter({ directory: directoryMock, tokenProvider: tokenProviderMock });
@@ -187,6 +260,62 @@ describe('register router', () => {
       expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
       expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
       expect(validateStatus(500)).toBe(false);
+    });
+  });
+
+  describe('createDataRegister create', () => {
+    // clean-code-ignore: 2.3
+    it('can create handler', () => expect(createDataRegister(directoryMock, tokenProviderMock)).toBeTruthy());
+
+    it('creates data register definition and configuration', async () => {
+      const req = createRegisterRequest({
+        name: 'test-register',
+        description: 'Test register',
+        entries: ['one', 'two'],
+      });
+      const res = createMockResponse();
+      const next = jest.fn();
+      mockCreateDataRegisterPatchResponses(['one', 'two']);
+
+      await createDataRegister(directoryMock, tokenProviderMock)(req, res, next);
+
+      expect(directoryMock.getServiceUrl.mock.calls[0][0].toString()).toBe('urn:ads:platform:configuration-service:v2');
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      expect(axiosMock.patch).toHaveBeenCalledTimes(2);
+      expectDefinitionPatch('test-register', 'Test register');
+      expectEntriesPatch('test-register', ['one', 'two']);
+      expectCreateRegisterResponse(res, 'test-register', 'Test register', ['one', 'two']);
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createDataRegister defaults and authorization', () => {
+    it('defaults optional description and entries when creating a data register', async () => {
+      const req = createRegisterRequest({ name: 'empty-register' });
+      const res = createMockResponse();
+      const next = jest.fn();
+      mockCreateDataRegisterPatchResponses([]);
+
+      await createDataRegister(directoryMock, tokenProviderMock)(req, res, next);
+
+      expectDefinitionPatch('empty-register', '');
+      expectEntriesPatch('empty-register', []);
+      expectCreateRegisterResponse(res, 'empty-register', '', []);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with unauthorized error for non-admin users', async () => {
+      const req = createRegisterRequest({ name: 'test-register' });
+      req.user.roles = ['test-applicant'];
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await createDataRegister(directoryMock, tokenProviderMock)(req, res, next);
+
+      expect(directoryMock.getServiceUrl).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next.mock.calls[0][0]).toBeInstanceOf(UnauthorizedUserError);
     });
   });
 

@@ -51,6 +51,8 @@ import {
 import { PdfService } from '../pdf';
 import * as HttpStatusCodes from 'http-status-codes';
 
+const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
+
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
     id: entity.id,
@@ -58,6 +60,22 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
     files: Object.entries(entity.files || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
   };
 }
+
+const getConfigurationResource = async <T>(
+  configurationApiUrl: URL,
+  token: string,
+  tenantId: string,
+  resourcePath: string,
+  validateStatus?: (status: number) => boolean,
+): Promise<T> => {
+  const { data } = await axios.get(new URL(resourcePath, configurationApiUrl).href, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { tenantId },
+    validateStatus,
+  });
+
+  return data;
+};
 
 export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSubmissionRepository): RequestHandler {
   return async (req, res, next) => {
@@ -557,219 +575,6 @@ export function updateFormData(logger: Logger, fileService: FileService): Reques
   };
 }
 
-export function findDataRegisters(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const tenantId = req.tenant.id?.toString();
-
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-
-      const tenantConfigurationResponse = await getConfigurationResource<{
-        latest?: {
-          configuration?: Record<
-            string,
-            {
-              description?: string;
-              configurationSchema?: unknown;
-            }
-          >;
-        };
-      }>(configurationApiUrl, token, tenantId, 'v2/configuration/platform/configuration-service');
-
-      const tenantConfigDefinition = tenantConfigurationResponse.latest?.configuration;
-
-      const dataRegisterResponse = await getConfigurationResource<{
-        results?: {
-          name: string;
-          namespace: string;
-          latest: {
-            configuration: string[];
-          };
-        }[];
-      }>(
-        configurationApiUrl,
-        token,
-        tenantId,
-        'v2/configuration/data-register',
-        (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-      );
-
-      const formattedDataRegisters = (dataRegisterResponse.results ?? []).map((result) => {
-        const definitionKey = `${result.namespace}:${result.name}`;
-        const definition = tenantConfigDefinition?.[definitionKey];
-
-        return {
-          name: result.name,
-          namespace: result.namespace,
-          description: definition?.description ?? '',
-          entries: result.latest.configuration,
-        };
-      });
-
-      res.status(HttpStatusCodes.OK).send(formattedDataRegisters);
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-interface DataRegisterDefinition {
-  description?: string;
-  configurationSchema?: unknown;
-  anonymousRead?: boolean;
-}
-
-interface DataRegisterCreateRequest {
-  namespace?: string;
-  name: string;
-  description?: string;
-  entries?: string[];
-}
-
-interface ConfigurationPatchResponse<T> {
-  latest: {
-    revision: number;
-    configuration: T;
-  };
-}
-
-interface DataRegisterResponse {
-  namespace: string;
-  name: string;
-  description: string;
-  entries: string[];
-}
-
-interface ConfigurationUpdateOperation<T> {
-  operation: 'UPDATE';
-  update: Record<string, T>;
-}
-
-interface ConfigurationReplaceOperation<T> {
-  operation: 'REPLACE';
-  configuration: T;
-}
-
-const defaultDataRegisterNamespace = 'data-register';
-
-const dataRegisterConfigurationSchema = {
-  type: 'array',
-  items: {
-    type: 'string',
-  },
-};
-
-const patchConfigurationResource = async <T>(
-  configurationApiUrl: URL,
-  token: string,
-  tenantId: string,
-  resourcePath: string,
-  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<string[]>,
-): Promise<ConfigurationPatchResponse<T>> => {
-  const { data } = await axios.patch<ConfigurationPatchResponse<T>>(
-    new URL(resourcePath, configurationApiUrl).href,
-
-    sendData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId },
-    },
-  );
-
-  return data;
-};
-
-const getDataRegisterDefinitionKey = (name: string, namespace = defaultDataRegisterNamespace): string =>
-  `${namespace}:${name}`;
-
-const getDataRegisterResourcePath = (name: string, namespace = defaultDataRegisterNamespace): string =>
-  `v2/configuration/${namespace}/${name}`;
-
-const createDataRegisterDefinitionPatch = (
-  name: string,
-  description: string,
-  namespace = defaultDataRegisterNamespace,
-): ConfigurationUpdateOperation<DataRegisterDefinition> => ({
-  operation: 'UPDATE',
-  update: {
-    [getDataRegisterDefinitionKey(name, namespace)]: {
-      configurationSchema: dataRegisterConfigurationSchema,
-      description,
-    },
-  },
-});
-
-const createDataRegisterConfigurationPatch = (entries: string[]): ConfigurationReplaceOperation<string[]> => ({
-  operation: 'REPLACE',
-  configuration: entries,
-});
-
-const mapDataRegisterResponse = (
-  name: string,
-  description: string,
-  entries: string[],
-  namespace = defaultDataRegisterNamespace,
-): DataRegisterResponse => ({
-  namespace,
-  name,
-  description,
-  entries,
-});
-
-export function createDataRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const user = req.user;
-      const tenantId = req.tenant.id;
-
-      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
-        throw new UnauthorizedUserError('create data register', user);
-      }
-
-      const {
-        namespace = defaultDataRegisterNamespace,
-        name,
-        description = '',
-        entries = [],
-      } = req.body as DataRegisterCreateRequest;
-      const tenantIdValue = tenantId?.toString();
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-      const definitionPatch = createDataRegisterDefinitionPatch(name, description, namespace);
-
-      await patchConfigurationResource<string[]>(
-        configurationApiUrl,
-        token,
-        tenantIdValue,
-        `v2/configuration/platform/configuration-service`,
-        definitionPatch,
-      );
-
-      const configurationPatch = createDataRegisterConfigurationPatch(entries);
-
-      const registerConfigurationResponse = await patchConfigurationResource<string[]>(
-        configurationApiUrl,
-        token,
-        tenantIdValue,
-        getDataRegisterResourcePath(name, namespace),
-        configurationPatch,
-      );
-
-      const response = mapDataRegisterResponse(
-        name,
-        description,
-        registerConfigurationResponse.latest.configuration,
-        namespace,
-      );
-
-      res.status(HttpStatusCodes.CREATED).send(response);
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
 export interface FormEntityWithJobId extends FormEntity {
   jobId?: string;
 }
@@ -1106,32 +911,6 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(param('submissionId').isUUID()),
     deleteFormSubmission(apiId, eventService, submissionRepository),
-  );
-
-  router.get('/registers', assertAuthenticatedHandler, findDataRegisters(directory, tokenProvider));
-
-  router.post(
-    '/registers',
-    assertAuthenticatedHandler,
-    createValidationHandler(
-      body().isObject(),
-      body('name')
-        .exists()
-        .withMessage('name is required')
-        .bail()
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
-      body('namespace')
-        .optional()
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
-      body('description').optional().isString(),
-      body('entries').optional().isArray(),
-      body('entries.*').optional().isString(),
-    ),
-    createDataRegister(directory, tokenProvider),
   );
 
   router.get(
