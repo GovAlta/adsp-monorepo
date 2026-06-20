@@ -24,7 +24,7 @@ import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { ServiceRoles } from '../roles';
-import { ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
+import { ConfigurationDeleteOperation, ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -160,6 +160,34 @@ export function createPdfTemplate(
   };
 }
 
+export function deletePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { templateId } = req.params;
+      const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
+      const configurationApiUrl = await directory.getServiceUrl(configurationServiceId);
+      const token = await tokenProvider.getAccessToken();
+
+      const patch: ConfigurationDeleteOperation = { operation: 'DELETE', property: templateId };
+      await axios.patch(
+        new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href,
+        patch,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: req.tenant.id.toString() },
+        },
+      );
+
+      res.status(HttpStatusCodes.CREATED).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function generatePdf(
   serviceId: AdspId,
   repository: JobRepository<FileResult>,
@@ -281,6 +309,12 @@ export function createPdfRouter({
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
     getTemplate('params'),
     (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
+  );
+  router.delete(
+    '/templates/:templateId',
+    createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
+    getTemplate('params'),
+    deletePdfTemplate(directory, tokenProvider),
   );
   router.post(
     '/jobs',

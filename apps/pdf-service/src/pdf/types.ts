@@ -54,3 +54,8 @@ export interface ConfigurationUpdateOperation<T> {
   operation: 'UPDATE';
   update: Record<string, T>;
 }
+
+export interface ConfigurationDeleteOperation {
+  operation: 'DELETE';
+  property: string;
+}
