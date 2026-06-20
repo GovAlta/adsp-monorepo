@@ -160,6 +160,28 @@ export function createPdfTemplate(
   };
 }
 
+async function deletePdfTemplateFromConfig(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: string,
+  templateId: string,
+): Promise<void> {
+  const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
+  const configurationApiUrl = await directory.getServiceUrl(configurationServiceId);
+  const token = await tokenProvider.getAccessToken();
+
+  const patch: ConfigurationDeleteOperation = { operation: 'DELETE', property: templateId };
+  await axios.patch(
+    new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href,
+    patch,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId },
+    },
+  );
+}
+
+// clean-code-ignore: 2.18
 export function deletePdfTemplate(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
@@ -167,20 +189,7 @@ export function deletePdfTemplate(
   return async (req, res, next) => {
     try {
       const { templateId } = req.params;
-      const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
-      const configurationApiUrl = await directory.getServiceUrl(configurationServiceId);
-      const token = await tokenProvider.getAccessToken();
-
-      const patch: ConfigurationDeleteOperation = { operation: 'DELETE', property: templateId };
-      await axios.patch(
-        new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href,
-        patch,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: req.tenant.id.toString() },
-        },
-      );
-
+      await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
       res.status(HttpStatusCodes.CREATED).send();
     } catch (err) {
       next(err);

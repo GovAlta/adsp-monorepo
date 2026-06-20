@@ -451,6 +451,69 @@ describe('pdf', () => {
       expect(next).toHaveBeenCalledWith(error);
       expect(res.status).not.toHaveBeenCalled();
     });
+
+    it('calls next when serviceDirectory lookup fails', async () => {
+      const error = new Error('Directory lookup failed');
+      const req = {
+        tenant: { id: tenantId },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when token provider fails', async () => {
+      const error = new Error('Token fetch failed');
+      const req = {
+        tenant: { id: tenantId },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when tenant is missing', async () => {
+      const req = {
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(res.status).not.toHaveBeenCalled();
+    });
   });
 
   describe('generatePdf', () => {

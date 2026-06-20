@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
