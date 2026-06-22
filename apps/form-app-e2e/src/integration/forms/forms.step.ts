@@ -326,7 +326,7 @@ Then(
   function (sectionName, arrayElement: string, arrayLabel) {
     const allEntries: string[] = [];
     formsObj
-      .formSummaryPageListWithDetailItems(sectionName, arrayLabel)
+      .formSummaryPageObjectListItems(sectionName, arrayLabel)
       .each(($row) => {
         cy.wrap($row)
           .find('span[data-testid*="-review"]')
@@ -337,6 +337,36 @@ Then(
       })
       .then(() => {
         expect(allEntries).to.include(arrayElement);
+      });
+  }
+);
+
+Then(
+  'the user views the summary of {string} with all entries {string} as {string}',
+  function (sectionName, arrayElements: string, arrayLabel) {
+    const allEntries: string[] = [];
+    formsObj
+      .formSummaryPageObjectListItems(sectionName, arrayLabel)
+      .each(($row) => {
+        cy.wrap($row)
+          .find('span[data-testid*="-review"]')
+          .then(($spans) => {
+            const joinedRowData = [...$spans].map((span) => Cypress.$(span).text().trim()).join(':');
+            allEntries.push(joinedRowData);
+          });
+      })
+      .then(() => {
+        const normalize = (value: string) =>
+          value
+            .replace(/\s*:\s*/g, ':')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const expectedEntries = arrayElements
+          .split(';')
+          .map((entry) => normalize(entry))
+          .filter(Boolean);
+        const actualEntries = allEntries.map((entry) => normalize(entry));
+        expect(actualEntries).to.deep.equal(expectedEntries);
       });
   }
 );
@@ -645,4 +675,43 @@ Then('the user views the text field of {string} is {string}', function (label, e
   } else {
     expect(enabledOrNot).to.be.oneOf(['enabled', 'disabled']);
   }
+});
+
+//Value array is separated by semicolon, e.g. "valueA1, valueB1; valueA2, valueB2"
+When('the user enters {string} in {string} object array control', function (valueArray: string, label: string) {
+  // Split the value array string into an array of values
+  const valueArraySplit = valueArray.split(';').map((item) => item.trim());
+  valueArraySplit.forEach((value, index) => {
+    const valueParts = value.split(',').map((part) => part.trim());
+    formsObj.formObjectListAddButton(label).shadow().find('button').click({ force: true });
+    cy.wait(1000); // Wait for the object list to add a new row
+    valueParts.forEach((part, partIndex) => {
+      formsObj
+        .formObjectListFormItem(label, String(index + 1), String(partIndex + 1))
+        .find('goa-input')
+        .shadow()
+        .find('input')
+        .type(part, { force: true, delay: 200 });
+    });
+  });
+});
+
+// Only text fields are supported in the list with detail for now, so the valueParts are all typed into text fields. Value array is separated by semicolon, e.g. "valueA1, valueB1; valueA2, valueB2"
+When('the user enters {string} in {string} List with detail control', function (valueArray: string, label: string) {
+  // Split the value array string into an array of values
+  const valueArraySplit = valueArray.split(';').map((item) => item.trim());
+  valueArraySplit.forEach((value) => {
+    const valueParts = value.split(',').map((part) => part.trim());
+    formsObj.formListWithDetailButtonWithListLabel(label).shadow().find('button').click({ force: true });
+    cy.wait(1000); // Wait for the list with detail to add a new row
+    valueParts.forEach((part, partIndex) => {
+      formsObj
+        .formListWithDetailFormItem(label, String(partIndex + 1))
+        .find('goa-input')
+        .shadow()
+        .find('input')
+        .type(part, { force: true, delay: 200 });
+    });
+    formsObj.formListWithDetailContinueButton().shadow().find('button').click({ force: true });
+  });
 });

@@ -282,3 +282,16 @@ Feature: Form app
     And the user clicks Back to application overview link on the form page
     And the user clicks "Summary" task on task list page
     Then the user views the summary of "Dynamic elements" with "EvenNumber2" as "not required" "Enable on even number"
+
+  # TEST DATA: regression-control-examples is created with all types of control examples
+  @TEST_CS-4006 @regression
+  Scenario: As a form user, I can use object lists in a form
+    Given an anonymous applicant goes to "regression-control-examples" application
+    Then the user views an anonymous form draft of "regression-control-examples"
+    When the user clicks "Object lists" task on task list page
+    And the user enters "example1, description1; example2, description2" in "Examples" object array control
+    And the user enters "reference1, desc1; reference2, desc2" in "References" List with detail control
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Object lists" with all entries "example1:description1;example2:description2" as "Examples"
+    And the user views the summary of "Object lists" with all entries "reference1:desc1;reference2:desc2" as "References"
