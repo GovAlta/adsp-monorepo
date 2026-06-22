@@ -207,7 +207,15 @@ When('the user clicks submit button in the form', function () {
 });
 
 When('the user clicks list with detail button labelled as {string} in the form', function (label) {
-  formsObj.formListWithDetailButton(label).shadow().find('button').click({ force: true });
+  formsObj
+    .formListWithDetailButton(label)
+    .should('exist')
+    .shadow()
+    .find('button')
+    .should('be.visible')
+    .should('not.be.disabled')
+    .scrollIntoView()
+    .click({ force: true });
   cy.wait(1000);
 });
 
