@@ -64,6 +64,10 @@ export class MongoTenantRepository implements TenantRepository {
       if (criteria.nameEquals) {
         query.name = { $regex: `^${criteria.nameEquals}$`, $options: 'i' };
       }
+
+      if (criteria.activeOnly) {
+        query.status = { $ne: 'provisioning' };
+      }
     }
 
     const docs = (await this.tenantModel.find(query)) || [];
@@ -80,6 +84,7 @@ export class MongoTenantRepository implements TenantRepository {
       name: doc.name,
       realm: doc.realm,
       adminEmail: doc.adminEmail,
+      status: doc.status || 'active',
     });
   }
 
@@ -88,6 +93,7 @@ export class MongoTenantRepository implements TenantRepository {
       name: entity.name,
       realm: entity.realm,
       adminEmail: entity.adminEmail,
+      status: entity.status,
     };
   }
 }

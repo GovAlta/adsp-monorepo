@@ -162,7 +162,7 @@ export const renderCellColumn = ({
         {renderNoneGivenText(data)}
         {error && (
           <ObjectArrayWarningIconDiv>
-            <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
+            <GoabIcon type="warning" title="warning" size="small" theme="filled" mt="2xs"></GoabIcon>
             {error ? error : ''}
           </ObjectArrayWarningIconDiv>
         )}

@@ -105,6 +105,7 @@ describe('pdf', () => {
     it('creates an empty PDF template', async () => {
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         body: { name: 'new-template', description: 'New template description' },
         getConfiguration: jest.fn().mockResolvedValue([configuration]),
       };
@@ -161,6 +162,7 @@ describe('pdf', () => {
     it('creates a dashed template ID from a name containing spaces', async () => {
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         body: { name: 'we are the mushrooms', description: '' },
         getConfiguration: jest.fn().mockResolvedValue([{}]),
       };
@@ -208,6 +210,7 @@ describe('pdf', () => {
     it('defaults the description to an empty string', async () => {
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         body: { name: 'new-template' },
         getConfiguration: jest.fn().mockResolvedValue([{}]),
       };
@@ -244,6 +247,7 @@ describe('pdf', () => {
       };
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         body: { name: 'we are the mushrooms' },
         getConfiguration: jest.fn().mockResolvedValue([existingConfiguration]),
       };
@@ -270,6 +274,7 @@ describe('pdf', () => {
       const error = new Error('Configuration update failed');
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         body: { name: 'new-template' },
         getConfiguration: jest.fn().mockResolvedValue([{}]),
       };

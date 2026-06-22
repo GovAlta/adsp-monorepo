@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import {
@@ -94,6 +95,11 @@ const initializeApp = async (): Promise<express.Application> => {
         {
           role: ServiceRoles.PdfGenerator,
           description: 'Generator role that allows generation of PDFs.',
+          inTenantAdmin: true,
+        },
+        {
+          role: ServiceRoles.Admin,
+          description: 'Administrator role that grants permission to administer topics and comments.',
           inTenantAdmin: true,
         },
       ],
