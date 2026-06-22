@@ -390,9 +390,10 @@ describe('pdf', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('deletes a PDF template and returns 201', async () => {
+    it('deletes a PDF template and returns 204', async () => {
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
       };
       const res = createMockResponse();
@@ -424,15 +425,38 @@ describe('pdf', () => {
           params: { tenantId: tenantId.toString() },
         }
       );
-      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
       expect(res.send).toHaveBeenCalledWith();
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with unauthorized when user does not have Admin role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
+      expect(tokenProviderMock.getAccessToken).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it('calls next when the configuration delete fails', async () => {
       const error = new Error('Configuration delete failed');
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
       };
       const res = createMockResponse();
@@ -456,6 +480,7 @@ describe('pdf', () => {
       const error = new Error('Directory lookup failed');
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
       };
       const res = createMockResponse();
@@ -477,6 +502,7 @@ describe('pdf', () => {
       const error = new Error('Token fetch failed');
       const req = {
         tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
       };
       const res = createMockResponse();
@@ -497,6 +523,7 @@ describe('pdf', () => {
 
     it('calls next when tenant is missing', async () => {
       const req = {
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
       };
       const res = createMockResponse();

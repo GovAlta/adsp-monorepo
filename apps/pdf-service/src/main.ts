@@ -87,6 +87,11 @@ const initializeApp = async (): Promise<express.Application> => {
         ),
       roles: [
         {
+          role: ServiceRoles.Admin,
+          description: 'Admin role that allows management of PDF templates.',
+          inTenantAdmin: true,
+        },
+        {
           role: ServiceRoles.PdfGenerator,
           description: 'Generator role that allows generation of PDFs.',
           inTenantAdmin: true,

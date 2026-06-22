@@ -188,9 +188,16 @@ export function deletePdfTemplate(
 ): RequestHandler {
   return async (req, res, next) => {
     try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('delete pdf template', user);
+      }
+
       const { templateId } = req.params;
       await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
-      res.status(HttpStatusCodes.CREATED).send();
+      res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(err);
     }

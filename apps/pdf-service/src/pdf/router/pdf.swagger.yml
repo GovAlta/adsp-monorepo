@@ -136,7 +136,7 @@ components:
         schema:
           type: string
     responses:
-      201:
+      204:
         description: The PDF template was successfully deleted.
       404:
         description: Template not found.
