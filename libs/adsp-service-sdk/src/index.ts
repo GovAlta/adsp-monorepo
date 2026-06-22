@@ -9,8 +9,9 @@ export {
   retry,
   toKebabName,
   toKebabCase,
+  createErrorHandler,
 } from './utils';
-export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole } from './access';
+export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole, authorize } from './access';
 export type { TokenProvider, User } from './access';
 export type { GoAErrorExtra } from './utils';
 export type { ServiceDirectory } from './directory';
