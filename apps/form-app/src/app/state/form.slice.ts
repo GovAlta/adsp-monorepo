@@ -683,10 +683,7 @@ export const formSlice = createSlice({
         state.busy.loading = false;
       })
       .addCase(updateForm.pending, (state, { meta }) => {
-        const updatedFormData  = {
-          ...state.data,
-          ...(meta.arg.data ?? {}),
-        };
+        const updatedFormData = meta.arg.data;
 
         // clean-code-ignore: 2.14
         if (!_.isEqual(updatedFormData, state.data)) {

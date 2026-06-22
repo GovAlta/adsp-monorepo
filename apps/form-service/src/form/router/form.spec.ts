@@ -262,6 +262,7 @@ describe('form router', () => {
 
   beforeEach(() => {
     axiosMock.get.mockClear();
+    axiosMock.patch.mockClear();
 
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();

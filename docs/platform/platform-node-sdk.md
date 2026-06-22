@@ -350,6 +350,64 @@ Parse and convert urns:
 ```
 
 ### Role-based authorization
+The SDK provides an `authorize` middleware factory for enforcing role-based access control on Express routes. It uses the roles resolved from the JWT bearer token by the Passport strategies, so role names match what is configured in the Keycloak client.
+
+Protecting a route with a required role:
+```typescript
+  import { authorize } from '@abgov/adsp-service-sdk';
+
+  app.post(
+    '/my-resource',
+    authenticateHandler,
+    tenantHandler,
+    authorize('my-service-admin'),
+    (req, res) => { res.send('OK') }
+  );
+```
+
+When the authenticated user lacks the required role, `authorize` passes an `UnauthorizedUserError` to Express's `next()`, which `createErrorHandler` maps to a 403 response automatically.
+
+Multiple roles can be specified; the user must have at least one:
+```typescript
+  app.delete(
+    '/my-resource/:id',
+    authenticateHandler,
+    authorize('my-service-admin', 'my-service-editor'),
+    deleteHandler,
+  );
+```
+
+### Error handling
+The SDK provides a `createErrorHandler` factory that normalizes error responses across GoA services. It recognizes `GoAError` subclasses (including `UnauthorizedUserError`) and maps their `statusCode` to the HTTP response status. Internal server errors (5xx) have their message masked in production to prevent information disclosure.
+
+Mount `createErrorHandler` last in the Express middleware chain:
+```typescript
+  import { createErrorHandler } from '@abgov/adsp-service-sdk';
+
+  const {
+    logger,
+    ...sdkCapabilities,
+  } = await initializePlatform(parameters);
+
+  // ... routes and other middleware ...
+
+  app.use(createErrorHandler(logger));
+```
+
+When a logger is provided, errors are logged with the HTTP status code, request path and method, and correlation ID from the `x-correlation-id` request header.
+
+Throwing a typed error from a route handler:
+```typescript
+  import { GoAError } from '@abgov/adsp-service-sdk';
+
+  app.get('/my-resource/:id', authenticateHandler, authorize('my-service-user'), async (req, res) => {
+    const resource = await findResource(req.params.id);
+    if (!resource) {
+      throw new GoAError('Resource not found', { statusCode: 404 });
+    }
+    res.json(resource);
+  });
+```
 
 ### Platform health check
 Include platform service checks in the service health check endpoint:

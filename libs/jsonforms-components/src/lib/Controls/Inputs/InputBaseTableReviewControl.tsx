@@ -22,11 +22,13 @@ import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useReviewContext } from '../../Context/ReviewRenderContext';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const context = useContext(JsonFormsStepperContext);
+  const reviewCtx = useReviewContext();
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
   const propLabel = typeof label === 'string' ? label : '';
@@ -212,6 +214,11 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
 
   // eslint-disable-next-line
   const stepId = uischema.options?.stepId;
+
+  function handleChangeClick(): void {
+    context?.goToPage(stepId, uischema.scope);
+    reviewCtx?.onChangeDispatch(stepId, uischema.scope);
+  }
   const showInlineValue =
     reviewText === null ||
     reviewText === undefined ||
@@ -236,7 +243,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-            <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId, uischema.scope)}>
+            <GoabButton type="tertiary" size="compact" onClick={handleChangeClick}>
               Change
             </GoabButton>
           )}

@@ -138,6 +138,7 @@ export const defaultFeaturesVisible = {
   Event: true,
   File: true,
   Notification: true,
+  NotificationEmailAI: true,
   PDF: true,
   Script: true,
   SharePoint: false,

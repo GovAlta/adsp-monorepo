@@ -10,4 +10,5 @@ export interface TenantCriteria {
   nameEquals?: string;
   realmEquals?: string;
   adminEmailEquals?: string;
+  activeOnly?: boolean;
 }

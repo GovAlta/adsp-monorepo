@@ -41,6 +41,12 @@ export class TenantApi {
     return res.data;
   }
 
+  async getTenantById(id: string): Promise<Tenant> {
+    const url = `/api/tenant/v2/tenants/${id}`;
+    const { data } = await this.http.get<Tenant>(url);
+    return data;
+  }
+
   async fetchTenantByRealm(realm: string): Promise<Tenant> {
     const url = '/api/tenant/v2/tenants';
     const { data } = await this.http.get<TenantsResponse>(url, { params: { realm } });

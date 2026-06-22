@@ -5,7 +5,10 @@ import {
   isAllowedUser,
   ServiceDirectory,
   UnauthorizedUserError,
+  TokenProvider
 } from '@abgov/adsp-service-sdk';
+import * as HttpStatusCodes from 'http-status-codes';
+import axios from 'axios';
 import {
   createValidationHandler,
   InvalidOperationError,
@@ -21,6 +24,7 @@ import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { ServiceRoles } from '../roles';
+import { ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -30,6 +34,7 @@ export interface RouterProps {
   eventService: EventService;
   fileService: FileService;
   directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 function mapPdfTemplate({ id, name, description, template }: PdfTemplateEntity) {
@@ -66,6 +71,96 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
       req[TEMPLATE] = template;
 
       next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+
+const toTemplateId = (name: string): string =>
+  name.trim().toLowerCase().replace(/\s+/g, '-');
+
+const createPdfTemplatePatch = (
+  id: string,
+  name: string,
+  description = '',
+): ConfigurationUpdateOperation<PdfTemplateConfiguration> => ({
+  operation: 'UPDATE',
+  update: {
+    [id]: {
+      id,
+      name,
+      description,
+      template: '',
+    },
+  },
+});
+
+const isTemplateIdAlreadyInUse = (
+  configuration: Record<string, PdfTemplateEntity>,
+  name: string,
+): boolean => Boolean(configuration[name]);
+
+async function savePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: string,
+  patch: ReturnType<typeof createPdfTemplatePatch>,
+): Promise<void> {
+  const configurationServiceId =
+    adspId`urn:ads:platform:configuration-service:v2`;
+  const configurationApiUrl =
+    await directory.getServiceUrl(configurationServiceId);
+  const token = await tokenProvider.getAccessToken();
+
+  await axios.patch(
+    new URL(
+      'v2/configuration/platform/pdf-service',
+      configurationApiUrl,
+    ).href,
+    patch,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId },
+    },
+  );
+}
+
+export function createPdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('create pdf template', user);
+      }
+      const { name, description = '' } = req.body;
+      const id = toTemplateId(name);
+      const [configuration] =
+        await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+
+      if (isTemplateIdAlreadyInUse(configuration, id)) {
+        return res.status(HttpStatusCodes.CONFLICT).send({
+          error: `PDF template '${name}' already exists.`,
+        });
+      }
+
+      const patch = createPdfTemplatePatch(id, name, description);
+
+      await savePdfTemplate(
+        directory,
+        tokenProvider,
+        req.tenant.id.toString(),
+        patch,
+      );
+
+      res.status(HttpStatusCodes.CREATED).json(patch.update[id]);
     } catch (err) {
       next(err);
     }
@@ -161,10 +256,33 @@ export function createPdfRouter({
   fileService,
   queueService,
   logger,
+  directory,
+  tokenProvider
 }: RouterProps): Router {
   const router = Router();
 
   router.get('/templates', getTemplates);
+  router.post(
+    '/templates',
+    createValidationHandler(
+      body('name')
+        .exists()
+        .withMessage('name is required')
+        .bail()
+        .isString()
+        .withMessage('name must be a string')
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 50 })
+        .withMessage('name must be between 1 and 50 characters')
+        .matches(/^[a-zA-Z0-9 -]+$/)
+        .withMessage(
+          'name can contain only letters, numbers, spaces, and hyphens',
+        ),
+      body('description').optional().isString(),
+    ),
+    createPdfTemplate(directory, tokenProvider),
+  );
   router.get(
     '/templates/:templateId',
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),

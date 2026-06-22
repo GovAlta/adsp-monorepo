@@ -49,6 +49,9 @@ import {
   SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { PdfService } from '../pdf';
+import * as HttpStatusCodes from 'http-status-codes';
+
+const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -57,6 +60,22 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
     files: Object.entries(entity.files || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
   };
 }
+
+const getConfigurationResource = async <T>(
+  configurationApiUrl: URL,
+  token: string,
+  tenantId: string,
+  resourcePath: string,
+  validateStatus?: (status: number) => boolean,
+): Promise<T> => {
+  const { data } = await axios.get(new URL(resourcePath, configurationApiUrl).href, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { tenantId },
+    validateStatus,
+  });
+
+  return data;
+};
 
 export function mapFormForSubmission(apiId: AdspId, submissionRepository: FormSubmissionRepository): RequestHandler {
   return async (req, res, next) => {

@@ -18,6 +18,7 @@ declare global {
 export type { User } from './user';
 
 export { isAllowedUser, AssertRole, AssertCoreRole, UnauthorizedUserError, hasRequiredRole } from './assert';
+export { authorize } from './middleware';
 export { createRealmStrategy } from './createRealmStrategy';
 export { createTenantStrategy } from './createTenantStrategy';
 export type { TokenProvider } from './tokenProvider';
