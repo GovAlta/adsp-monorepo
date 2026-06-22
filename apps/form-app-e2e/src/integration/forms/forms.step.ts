@@ -207,6 +207,7 @@ When('the user clicks submit button in the form', function () {
 });
 
 When('the user clicks list with detail button labelled as {string} in the form', function (label) {
+  cy.wait(1000);
   formsObj
     .formListWithDetailButton(label)
     .should('exist')
