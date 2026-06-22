@@ -133,6 +133,13 @@ export function createPdfTemplate(
 ): RequestHandler {
   return async (req, res, next) => {
     try {
+
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('create pdf template', user);
+      }
       const { name, description = '' } = req.body;
       const id = toTemplateId(name);
       const [configuration] =
