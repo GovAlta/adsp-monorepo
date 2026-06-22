@@ -8,6 +8,7 @@ import { JsonForms } from '@jsonforms/react';
 import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context/StepperContext';
 import { invalidSin } from '../../common/Constants';
+import { ReviewRenderProvider } from '../../Context/ReviewRenderContext';
 
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
@@ -754,5 +755,46 @@ describe('InputBaseTableReviewControl', () => {
     );
 
     expect(getByTestId('review-value-').textContent).toBe('');
+  });
+
+  it('calls onReviewChange with stepId and scope when Change button is clicked', () => {
+    const onReviewChange = jest.fn();
+    const mockGoToPage = jest.fn();
+    const contextValue = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
+    const scope = '#/properties/firstName';
+
+    const { baseElement } = render(
+      <ReviewRenderProvider onReviewChange={onReviewChange}>
+        <JsonFormsStepperContext.Provider value={contextValue}>
+          <table>
+            <tbody>
+              <GoAInputBaseTableReview
+                data="Jane"
+                visible={true}
+                label="First name"
+                path="firstName"
+                schema={{ type: 'string' }}
+                uischema={{ type: 'Control', scope, options: { stepId: 2 } }}
+                enabled={true}
+                errors=""
+                cells={[]}
+                required={false}
+                id="firstName"
+                rootSchema={{ type: 'object', properties: {} }}
+                config={{}}
+                renderers={[]}
+                handleChange={jest.fn()}
+              />
+            </tbody>
+          </table>
+        </JsonFormsStepperContext.Provider>
+      </ReviewRenderProvider>,
+    );
+
+    const changeButton = baseElement.querySelector('goa-button');
+    fireEvent(changeButton!, new CustomEvent('_click'));
+
+    expect(mockGoToPage).toHaveBeenCalledWith(2, scope);
+    expect(onReviewChange).toHaveBeenCalledWith(2, scope);
   });
 });

@@ -5,6 +5,8 @@ import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
+import { JsonSchema7, JsonSchema } from '@jsonforms/core';
+import { ErrorObject } from 'ajv';
 import { useJsonForms } from '@jsonforms/react';
 import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
 import { getStepStatus } from './util';
@@ -89,6 +91,10 @@ const createStepperContextInitData = (
 
 export const JsonFormsStepperContext = createContext<JsonFormsStepperContextProps | undefined>(undefined);
 
+const isFormValid = (ajvValid: boolean, emptyRequiredStringErrors: ErrorObject[]): boolean => {
+  return ajvValid && emptyRequiredStringErrors.length === 0;
+};
+
 export const JsonFormsStepperContextProvider = ({
   children,
   StepperProps,
@@ -116,6 +122,8 @@ export const JsonFormsStepperContextProvider = ({
       isProvided: true,
       stepperDispatch,
       selectStepperState: () => {
+        const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, schema);
+        stepperState.isValid = isFormValid(stepperState.isValid, emptyRequiredStringErrors);
         return {
           ...stepperState,
           categories: stepperState.categories?.map((c) => {
@@ -223,4 +231,89 @@ export const JsonFormsStepperContextProvider = ({
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
+};
+
+const isSchemaObject = (schema: unknown): schema is JsonSchema7 => {
+  return !!schema && typeof schema === 'object' && !Array.isArray(schema);
+};
+
+const getObjectData = (data: unknown): Record<string, unknown> => {
+  return data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+};
+
+const isRequiredStringSchema = (schema: unknown): schema is JsonSchema7 => {
+  return isSchemaObject(schema) && schema.type === 'string';
+};
+
+const createRequiredStringError = (
+  schema: JsonSchema,
+  propertyName: string,
+  instancePath: string,
+  schemaPath: string,
+): ErrorObject =>
+  ({
+    instancePath: `${instancePath}/${propertyName}`,
+    schemaPath: `${schemaPath}/requiredString`,
+    keyword: 'requiredString',
+    params: { propertyName },
+    message: 'is required',
+    schema: true,
+    parentSchema: schema,
+    data: '',
+  }) as ErrorObject;
+
+const addEmptyRequiredStringErrors = (
+  data: Record<string, unknown>,
+  schema: JsonSchema,
+  instancePath: string,
+  schemaPath: string,
+  errors: ErrorObject[],
+): void => {
+  const required = schema.required ?? [];
+  const properties = schema.properties ?? {};
+
+  for (const propertyName of required) {
+    const propertySchema = properties[propertyName];
+
+    if (isRequiredStringSchema(propertySchema) && data[propertyName] === '') {
+      errors.push(createRequiredStringError(schema, propertyName, instancePath, schemaPath));
+    }
+  }
+};
+
+const collectEmptyRequiredStringErrors = (
+  data: unknown,
+  schema: JsonSchema,
+  instancePath: string,
+  schemaPath: string,
+  errors: ErrorObject[],
+): void => {
+  if (!isSchemaObject(schema)) {
+    return;
+  }
+
+  const objectData = getObjectData(data);
+  const properties = schema.properties ?? {};
+
+  addEmptyRequiredStringErrors(objectData, schema, instancePath, schemaPath, errors);
+
+  for (const [propertyName, propertySchema] of Object.entries(properties)) {
+    if (!isSchemaObject(propertySchema)) {
+      continue;
+    }
+
+    collectEmptyRequiredStringErrors(
+      objectData[propertyName],
+      propertySchema,
+      `${instancePath}/${propertyName}`,
+      `${schemaPath}/properties/${propertyName}`,
+      errors,
+    );
+  }
+};
+
+export const getEmptyRequiredStringErrors = (data: unknown, schema: JsonSchema): ErrorObject[] => {
+  const errors: ErrorObject[] = [];
+  collectEmptyRequiredStringErrors(data, schema, '', '#', errors);
+  return errors;
 };

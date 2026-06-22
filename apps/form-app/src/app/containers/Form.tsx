@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +25,7 @@ import { LogoutModal } from '../components/LogoutModal';
 import { SubmittedForm } from '../components/SubmittedForm';
 import { FormSupportPane } from './FormSupportPane';
 import { UserNotAuthorized } from '../components/UserNotAuthorized';
+import { getEmptyRequiredStringErrors } from 'libs/jsonforms-components/src/lib/Controls/FormStepper/context';
 
 interface FormProps {
   className?: string;
@@ -39,8 +41,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
   const fileBusy = useSelector(fileBusySelector);
-  const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
+  const ajvValid = useSelector(canSubmitSelector);
+  const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, definition.dataSchema);
+  const canSubmit = ajvValid && emptyRequiredStringErrors.length === 0;
 
   useEffect(() => {
     if (document.body.style.overflow === 'hidden') {

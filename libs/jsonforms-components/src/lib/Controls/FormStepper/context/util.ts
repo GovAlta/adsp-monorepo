@@ -89,39 +89,54 @@ export function getStepStatus(opts: {
   visited: boolean;
 }): 'Completed' | 'InProgress' | 'NotStarted' {
   const { scopes, errors, schema, data, visited } = opts;
+
+  if (!visited) {
+    return 'NotStarted';
+  }
+
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
-  const started = isStepStarted(normalizedScopes, data);
   const incompleteInStep = getIncompletePaths(errors, scopes);
 
   if (incompleteInStep.length > 0) {
     return 'InProgress';
   }
+
   const required = schema.required || [];
+
   if (anyRequiredFieldEmpty(scopes, data, required, schema)) {
     return 'InProgress';
   }
+
   const deps = buildConditionalDeps(schema);
   const controllersInStep = normalizedScopes.filter((s) => deps.has(s));
 
-  if (controllersInStep.length === 0) return visited || started ? 'Completed' : 'NotStarted';
+  if (controllersInStep.length === 0) {
+    return 'Completed';
+  }
 
   const affected = new Set<string>();
-  for (const c of controllersInStep) {
-    for (const p of deps.get(c) || []) affected.add(p);
+
+  for (const controller of controllersInStep) {
+    for (const path of deps.get(controller) || []) {
+      affected.add(path);
+    }
   }
-  if (affected.size === 0) return visited || started ? 'Completed' : 'NotStarted';
+
+  if (affected.size === 0) {
+    return 'Completed';
+  }
 
   const affectedPaths = [...affected];
 
   for (const err of errors || []) {
-    for (const cand of collectErrorCandidates(err)) {
-      if (affectedPaths.some((p) => isUnder(cand, p))) {
+    for (const candidate of collectErrorCandidates(err)) {
+      if (affectedPaths.some((path) => isUnder(candidate, path))) {
         return 'InProgress';
       }
     }
   }
 
-  return visited || started ? 'Completed' : 'NotStarted';
+  return 'Completed';
 }
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
   return errorPaths.some((ePath) => {

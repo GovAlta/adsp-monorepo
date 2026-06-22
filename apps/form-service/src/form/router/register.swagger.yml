@@ -1,0 +1,148 @@
+components:
+  schemas:
+    DataRegister:
+      type: object
+      required:
+        - name
+      properties:
+        namespace:
+          type: string
+          description: Namespace of the data register (e.g. data-register).
+        name:
+          type: string
+          description: Name of the data register.
+        description:
+          type: string
+          description: Human-readable description of what the register contains.
+        entries:
+          type: array
+          description: List of string values stored in the register.
+          items:
+            type: string
+    DataRegisterUpdate:
+      type: object
+      description: Partial update payload for a data register. Only provided fields will be updated.
+      properties:
+        description:
+          type: string
+          description: Updated description for the register.
+        entries:
+          type: array
+          description: Replacement list of string values for the register.
+          items:
+            type: string
+      additionalProperties: false
+
+/form/v1/registers:
+  get:
+    tags:
+      - Form
+    description: >
+      Retrieves all data registers in the data-register namespace,
+      including their descriptions and entries.
+      Requires an authenticated user.
+    responses:
+      200:
+        description: Successfully retrieved the list of data registers.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DataRegister'
+            example:
+              - namespace: data-register
+                name: weekdays
+                description: Days of the week
+                entries:
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+      401:
+        description: User is not authenticated.
+
+/form/v1/registers/{name}:
+  get:
+    tags:
+      - Form
+    description: >
+      Retrieves a data register by name from the data-register namespace,
+      including its description and entries.
+      Requires the form-service admin role.
+    parameters:
+      - name: name
+        description: Name of the data register.
+        required: true
+        in: path
+        schema:
+          type: string
+          pattern: '^[a-zA-Z0-9\-_]+$'
+    responses:
+      200:
+        description: Successfully retrieved the data register.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRegister'
+            example:
+              namespace: data-register
+              name: weekdays
+              description: Days of the week
+              entries:
+                - Monday
+                - Tuesday
+                - Wednesday
+                - Thursday
+                - Friday
+      401:
+        description: User is not authenticated.
+      403:
+        description: User is not authorized. Requires form-service admin role.
+      404:
+        description: Data register with the specified namespace and name was not found.
+  patch:
+    tags:
+      - Form
+    description: >
+      Updates the description and/or entries of an existing data register in the data-register namespace.
+      Requires the form-service admin role.
+      Only provided fields are changed; omitted fields are left unchanged.
+    parameters:
+      - name: name
+        description: Name of the data register.
+        required: true
+        in: path
+        schema:
+          type: string
+          pattern: '^[a-zA-Z0-9\-_]+$'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataRegisterUpdate'
+          example:
+            description: Updated list of weekdays
+            entries:
+              - Monday
+              - Tuesday
+              - Wednesday
+              - Thursday
+              - Friday
+    responses:
+      200:
+        description: Successfully updated the data register.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRegister'
+      400:
+        description: Request body does not match the expected format.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User is not authorized. Requires form-service admin role.
+      404:
+        description: Data register with the specified namespace and name was not found.

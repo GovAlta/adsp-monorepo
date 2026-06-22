@@ -174,6 +174,30 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
+  <tr>
+    <td>Text populated from the logged-in user</td>
+    <td>
+      An empty text field populated from the logged-in user's profile. Set
+      <code>autoPopulate</code> to <code>firstName</code>, <code>lastName</code>, or
+      <code>email</code>. Fields without this UI-schema option are not populated.
+    </td>
+    <td><pre><code>
+{
+  "applicantGivenName": {
+    "type": "string"
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/applicantGivenName",
+  "options": {
+    "autoPopulate": "firstName"
+  }
+}
+    </code></pre></td>
+  </tr>
    <tr>
     <td>
         Limited text

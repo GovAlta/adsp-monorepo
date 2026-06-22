@@ -1,4 +1,11 @@
-import { GoARenderers, GoAReviewRenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
+import {
+  GoARenderers,
+  GoAReviewRenderers,
+  GoACells,
+  JsonFormRegisterProvider,
+  createAutoPopulateMiddleware,
+  User,
+} from '@abgov/jsonforms-components';
 import { GoabCallout } from '@abgov/react-components';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
@@ -17,14 +24,6 @@ interface JSONFormPreviewerProps {
   useReviewRenderers?: boolean;
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  roles: string[];
-  preferredUsername: string;
-}
-
 export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false }: JSONFormPreviewerProps): JSX.Element => {
   // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema);
@@ -36,7 +35,8 @@ export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false }
   const dataList = useSelector((state: RootState) => state.configuration?.dataList);
   const user = useSelector((state: RootState) => state.session.userInfo);
 
-  const newUser = { ...user, roles: [], id: null } as User; // Create a new user object with the same properties as the original user, but with an empty roles array and null id
+  const newUser = user ? ({ ...user, roles: [], id: '' } as User) : undefined; // Create a new user object with the same properties as the original user, but with an empty roles array
+  const autoPopulateMiddleware = createAutoPopulateMiddleware(uiSchema, newUser);
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
@@ -56,6 +56,7 @@ export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false }
           cells={GoACells}
           onChange={onChange}
           data={data}
+          middleware={autoPopulateMiddleware}
           validationMode={'ValidateAndShow'}
           //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
           schema={{ ...dataSchema }}

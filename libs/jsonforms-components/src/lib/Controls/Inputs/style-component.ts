@@ -72,6 +72,13 @@ export const NoneGivenText = styled.span`
   color: var(--goa-color-greyscale-700);
   font-style: italic;
 `;
+
+export const NoneGivenTableText = styled.span`
+  padding-top: var(--goa-space-l);
+  color: var(--goa-color-greyscale-700);
+  font-style: italic;
+`;
+
 export const H4Large = styled.h4`
   margin: 0 0 0.25rem 0;
   fontsize: larger;

@@ -21,7 +21,7 @@
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
-    "dompurify": "^3.2.4",
+    "dompurify": "^3.4.9",
     "expr-eval-fork": "^3.0.1",
     "ionicons": "^8.0.13",
     "pluralize": "^8.0.0",
@@ -32,7 +32,7 @@
     "xss": "^1.0.15"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.0",
+    "@babel/core": "^7.29.6",
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-react": "^7.24.0",
     "@babel/preset-typescript": "^7.24.0",
@@ -57,6 +57,10 @@
     "qs": "6.15.2",
     "uuid": "11.1.1",
     "fast-uri": "3.1.2",
-    "@babel/plugin-transform-modules-systemjs": "7.29.4"
+    "@babel/plugin-transform-modules-systemjs": "7.29.4",
+    "shell-quote": "1.8.4",
+    "launch-editor": "2.14.1",
+    "form-data": "4.0.6",
+    "react-router": "6.30.4"
   }
 }
