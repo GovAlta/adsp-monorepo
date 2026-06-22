@@ -430,7 +430,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
   async deleteRealm({ realm }: Tenant): Promise<boolean> {
     if (!realm) {
-      throw new InvalidOperationError('Tenant realm not specified.');
+      return true;
     }
 
     const client = await this.createAdminClient();

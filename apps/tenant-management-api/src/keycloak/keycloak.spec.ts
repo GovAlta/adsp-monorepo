@@ -105,8 +105,8 @@ describe('KeycloakRealmService', () => {
       );
     });
 
-    it('can throw for no realm', async () => {
-      await expect(service.deleteRealm({ ...tenant, realm: null })).rejects.toThrow(InvalidOperationError);
+    it('can succeed for no realm', async () => {
+      await expect(service.deleteRealm({ ...tenant, realm: null })).resolves.toBe(true);
     });
 
     it('can return false for delete realm error', async () => {
