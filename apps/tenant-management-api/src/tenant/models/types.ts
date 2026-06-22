@@ -1,3 +1,5 @@
+export type TenantStatus = 'provisioning' | 'active';
+
 export interface Tenant {
   id: string;
   /**
@@ -12,4 +14,5 @@ export interface Tenant {
   realm: string;
   adminEmail: string;
   name: string;
+  status?: TenantStatus;
 }

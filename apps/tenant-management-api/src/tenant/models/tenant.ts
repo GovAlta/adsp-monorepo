@@ -1,6 +1,6 @@
 import { New } from '@core-services/core-common';
 import { TenantRepository } from '../repository';
-import { Tenant } from './types';
+import { Tenant, TenantStatus } from './types';
 
 // TODO: This may be a case of anemic entity anti-pattern; there are no behaviors encapsulated in the entity.
 export class TenantEntity implements Tenant {
@@ -9,9 +9,16 @@ export class TenantEntity implements Tenant {
   adminEmail: string;
   createdBy: string;
   name: string;
+  status: TenantStatus;
 
-  static create(repository: TenantRepository, name: string, realm: string, adminEmail: string): Promise<TenantEntity> {
-    const entity = new TenantEntity(repository, { name, adminEmail, realm });
+  static create(
+    repository: TenantRepository,
+    name: string,
+    realm: string,
+    adminEmail: string,
+    status: TenantStatus = 'active',
+  ): Promise<TenantEntity> {
+    const entity = new TenantEntity(repository, { name, adminEmail, realm, status });
     return repository.save(entity);
   }
 
@@ -24,6 +31,7 @@ export class TenantEntity implements Tenant {
     this.realm = tenant.realm;
     this.adminEmail = tenant.adminEmail;
     this.name = tenant.name;
+    this.status = tenant.status || 'active';
   }
 
   save(): Promise<TenantEntity> {
