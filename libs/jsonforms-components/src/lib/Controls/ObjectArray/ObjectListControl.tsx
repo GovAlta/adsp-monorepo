@@ -275,7 +275,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       return (
                         <div
                           key={key}
-                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}
+                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'flex-start' }}
                           data-testid={`#/properties/${key}-input-${i}-row`}
                         >
                           <strong style={{ width: '50%', flexShrink: 0 }}>
