@@ -5,6 +5,15 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import { FormServiceRoles } from '../roles';
+import {
+  DataRegisterDefinition,
+  DataRegisterCreateRequest,
+  DataRegisterUpdateRequest,
+  ConfigurationPatchResponse,
+  DataRegisterResponse,
+  ConfigurationUpdateOperation,
+  ConfigurationReplaceOperation,
+} from './types';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 const DATA_REGISTER_NAMESPACE = 'data-register';
@@ -54,7 +63,12 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
       const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
       const registerKey = `${namespace}:${name}`;
       const registerDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
-      const description = (registerDefinition?.description as string) || '';
+
+      if (!registerDefinition) {
+        throw new NotFoundError('data register', name);
+      }
+
+      const description = (registerDefinition.description as string) || '';
 
       res.send({ namespace, name, description, entries });
     } catch (err) {
@@ -69,43 +83,6 @@ const dataRegisterConfigurationSchema = {
     type: 'string',
   },
 };
-
-interface DataRegisterDefinition {
-  description?: string;
-  configurationSchema?: unknown;
-  anonymousRead?: boolean;
-}
-
-interface DataRegisterCreateRequest {
-  namespace?: string;
-  name: string;
-  description?: string;
-  entries?: string[];
-}
-
-interface ConfigurationPatchResponse<T> {
-  latest: {
-    revision: number;
-    configuration: T;
-  };
-}
-
-interface DataRegisterResponse {
-  namespace: string;
-  name: string;
-  description: string;
-  entries: string[];
-}
-
-interface ConfigurationUpdateOperation<T> {
-  operation: 'UPDATE';
-  update: Record<string, T>;
-}
-
-interface ConfigurationReplaceOperation<T> {
-  operation: 'REPLACE';
-  configuration: T;
-}
 
 const getDataRegisterDefinitionKey = (name: string, namespace = defaultDataRegisterNamespace): string =>
   `${namespace}:${name}`;
@@ -262,9 +239,13 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
       const registerKey = `${namespace}:${name}`;
-      const existingDefinition = (platformConfig[registerKey] as Record<string, unknown>) ?? {};
+      const existingDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
 
-      const { description, entries } = req.body as { description?: string; entries?: string[] };
+      if (!existingDefinition) {
+        throw new NotFoundError('data register', name);
+      }
+
+      const { description, entries } = req.body as DataRegisterUpdateRequest;
 
       // Update description in the platform/configuration-service definition if provided
       if (description !== undefined) {
