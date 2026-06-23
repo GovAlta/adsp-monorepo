@@ -128,7 +128,7 @@ components:
                 description: Description of the template's purpose.
                 example: A template for rendering a user name
     responses:
-      200:
+      201:
         description: PDF template successfully created.
         content:
           application/json:
