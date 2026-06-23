@@ -114,6 +114,8 @@ If you need to understand the surrounding structure first, use formConfiguration
 ## Tool required inputs (MANDATORY — check before every call)
 - formSchemaIndex:              call with {}. Use at session start.
 - formSchemaPatch:              must include at least one of dataSchemaOps or uiSchemaOps (RFC 6902 arrays).
+                               Use "add" when the target path does not exist yet (new subfield, new property).
+                               Use "replace" ONLY when the path already exists — "replace" on a missing path throws an error.
 - formConfigurationRetrievalTool: call with {}. Use only when full schema context is needed.
 - formConfigurationUpdateTool:  include at least one field to update; usually include both dataSchema and uiSchema together.
 - rendererCatalogTool:          must include schema. Use for fields with uncertain renderer support (objects, arrays, file-urn).

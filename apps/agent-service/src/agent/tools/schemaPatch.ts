@@ -67,6 +67,11 @@ USE THIS instead of formConfigurationUpdateTool when making targeted changes to 
 - Adding a control to an existing category
 - Removing a field from both schemas
 
+IMPORTANT — choosing the right op:
+- Use "add" when the path does not exist yet (new property, new subfield like /description, new array item)
+- Use "replace" ONLY when the path already exists in the current schema
+- Using "replace" on a non-existent path will throw an error — if unsure, use "add"
+
 DO NOT use this tool for:
 - Adding a brand new Category to the form
 - Restructuring the top-level layout
