@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const React = require('react');
 // Minimal stub: renders children as plain text so MarkdownComponent tests can assert on content
 const ReactMarkdown = ({ children }) => React.createElement('div', { 'data-testid': 'react-markdown' }, children);
