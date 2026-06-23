@@ -55,6 +55,10 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 
       assertRegisterExists(dataResponse.status, name);
 
+      if (!dataResponse.data?.latest) {
+        throw new NotFoundError('data register', name);
+      }
+
       const entries = (dataResponse.data?.latest?.configuration ?? []) as DataRegisterEntry[];
 
       const { data: platformData } = await axios.get(
@@ -219,7 +223,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND) {
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || !existsCheck.data?.latest) {
         throw new NotFoundError('data register', name);
       }
 

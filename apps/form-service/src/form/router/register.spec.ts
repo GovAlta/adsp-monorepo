@@ -362,9 +362,9 @@ describe('register router', () => {
 
   describe('updateRegister', () => {
     beforeEach(() => {
-      // First GET: existence check (returns OK), Second GET: platform config with descriptions
+      // First GET: existence check (returns OK with latest), Second GET: platform config with descriptions
       axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: [] } })
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { latest: { configuration: [] } } })
         .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
     });
 
