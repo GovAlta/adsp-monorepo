@@ -22,6 +22,7 @@ const DATA_REGISTER_NAMESPACE = 'data-register';
 const getDataRegisterResourcePath = (name: string, namespace = DATA_REGISTER_NAMESPACE): string =>
   `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
 
+// clean-code-ignore: 2.18 — intentionally throws NotFoundError as its sole purpose; the 'assert' prefix is a well-known convention for guard functions that throw on failure
 const assertRegisterExists = (status: number, name: string): void => {
   if (status === HttpStatusCodes.NOT_FOUND) {
     throw new NotFoundError('data register', name);
@@ -54,6 +55,10 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
       );
 
       assertRegisterExists(dataResponse.status, name);
+
+      if (!dataResponse.data?.latest) {
+        throw new NotFoundError('data register', name);
+      }
 
       const entries = (dataResponse.data?.latest?.configuration ?? []) as DataRegisterEntry[];
 
@@ -101,7 +106,9 @@ const createDataRegisterDefinitionPatch = (
   },
 });
 
-const createDataRegisterConfigurationPatch = (entries: DataRegisterEntry[]): ConfigurationReplaceOperation<DataRegisterEntry[]> => ({
+const createDataRegisterConfigurationPatch = (
+  entries: DataRegisterEntry[],
+): ConfigurationReplaceOperation<DataRegisterEntry[]> => ({
   operation: 'REPLACE',
   configuration: entries,
 });
@@ -219,7 +226,8 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND) {
+      // clean-code-ignore: 2.18 — throws NotFoundError intentionally; null latest means the register was never created in the configuration service
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || !existsCheck.data?.latest) {
         throw new NotFoundError('data register', name);
       }
 
