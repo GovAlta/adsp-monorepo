@@ -9,8 +9,8 @@ export default {
   moduleNameMapper: {
     //Need to stub mdx-js and ignore running tests against mdx-js library
     '@mdx-js/mdx': '../../libs/jsonforms-components/src/lib/.jest/mdx-js-stub.js',
-    'react-markdown': '../../libs/.jest/react-markdown-stub.js',
-    'rehype-sanitize': '../../libs/src/lib/.jest/rehype-sanitize-stub.js',
+    'react-markdown': '../../libs/jsonforms-components/src/lib/.jest/react-markdown-stub.js',
+    'rehype-sanitize': '../../libs/jsonforms-components/src/lib/.jest/rehype-sanitize-stub.js',
   },
 
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
