@@ -18,6 +18,15 @@ import {
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 const DATA_REGISTER_NAMESPACE = 'data-register';
 
+const getDataRegisterResourcePath = (name: string, namespace = DATA_REGISTER_NAMESPACE): string =>
+  `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+
+const assertRegisterExists = (status: number, name: string): void => {
+  if (status === HttpStatusCodes.NOT_FOUND) {
+    throw new NotFoundError('data register', name);
+  }
+};
+
 export function getRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -35,8 +44,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 
       // Fetch the actual entries — this is the source of truth for existence
       const dataResponse = await axios.get(
-        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
-          .href,
+        new URL(getDataRegisterResourcePath(name, namespace), configurationApiUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
@@ -44,9 +52,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
         },
       );
 
-      if (dataResponse.status === HttpStatusCodes.NOT_FOUND) {
-        throw new NotFoundError('data register', name);
-      }
+      assertRegisterExists(dataResponse.status, name);
 
       const entries = (dataResponse.data?.latest?.configuration ?? []) as string[];
 
@@ -79,9 +85,6 @@ const dataRegisterConfigurationSchema = {
 
 const getDataRegisterDefinitionKey = (name: string, namespace = defaultDataRegisterNamespace): string =>
   `${namespace}:${name}`;
-
-const getDataRegisterResourcePath = (name: string, namespace = defaultDataRegisterNamespace): string =>
-  `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
 
 const createDataRegisterDefinitionPatch = (
   name: string,
@@ -253,8 +256,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       // Replace the entries data
       const { data: entriesData } = await axios.patch(
-        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
-          .href,
+        new URL(getDataRegisterResourcePath(name, namespace), configurationApiUrl).href,
         { operation: 'REPLACE', configuration: entries ?? [] },
         {
           headers: { Authorization: `Bearer ${token}` },
