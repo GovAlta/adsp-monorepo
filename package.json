@@ -133,6 +133,7 @@
     "react-error-boundary": "4.0.12",
     "redis": "^3.1.2",
     "rehype-raw": "^6.1.1",
+    "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^3.0.1",
     "response-time": "^2.3.4",
     "rxjs": "7.8.2",
