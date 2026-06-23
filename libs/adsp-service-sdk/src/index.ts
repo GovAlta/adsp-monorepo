@@ -10,6 +10,8 @@ export {
   toKebabName,
   toKebabCase,
   createErrorHandler,
+  createValidationHandler,
+  ValidationFailedError,
 } from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole, authorize } from './access';
 export type { TokenProvider, User } from './access';
