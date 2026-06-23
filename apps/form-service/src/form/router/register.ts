@@ -35,10 +35,8 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 
       // Fetch the actual entries — this is the source of truth for existence
       const dataResponse = await axios.get(
-        new URL(
-          `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
-          configurationApiUrl,
-        ).href,
+        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
+          .href,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
@@ -46,11 +44,11 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
         },
       );
 
-      if (dataResponse.status === HttpStatusCodes.NOT_FOUND || dataResponse.data?.configuration == null) {
+      if (dataResponse.status === HttpStatusCodes.NOT_FOUND) {
         throw new NotFoundError('data register', name);
       }
 
-      const entries = dataResponse.data.configuration as string[];
+      const entries = (dataResponse.data?.latest?.configuration ?? []) as string[];
 
       const { data: platformData } = await axios.get(
         new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
@@ -208,10 +206,8 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       // Verify the register exists before updating
       const existsCheck = await axios.get(
-        new URL(
-          `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
-          configurationApiUrl,
-        ).href,
+        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
+          .href,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
@@ -219,7 +215,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || existsCheck.data?.configuration == null) {
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND) {
         throw new NotFoundError('data register', name);
       }
 

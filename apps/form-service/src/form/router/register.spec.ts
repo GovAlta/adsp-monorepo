@@ -178,12 +178,12 @@ describe('register router', () => {
       expect(res.send).not.toHaveBeenCalled();
     });
 
-    it('can return 404 when configuration service returns null configuration (register not created)', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: null } });
+    it('can return empty entries when configuration service returns null latest configuration (register exists, no entries)', async () => {
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { latest: { configuration: null } } });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'nonexistent' },
+        params: { name: 'weekdays' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -192,12 +192,15 @@ describe('register router', () => {
       const handler = getRegister(directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(res.send).not.toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('can return register on success', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: ['Monday', 'Tuesday', 'Wednesday'] } });
+      mockGetResponses({
+        status: HttpStatusCodes.OK,
+        data: { latest: { configuration: ['Monday', 'Tuesday', 'Wednesday'] } },
+      });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -221,7 +224,7 @@ describe('register router', () => {
 
     it('can return empty description when definition has no description', async () => {
       axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: ['A', 'B'] } })
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { latest: { configuration: ['A', 'B'] } } })
         .mockResolvedValueOnce({
           data: {
             configuration: {
@@ -245,12 +248,14 @@ describe('register router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can return 404 when configuration field is absent from data response (register does not exist)', async () => {
-      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: {} }); // no configuration field
+    it('can return empty entries when configuration field is absent from data response (register exists, no entries)', async () => {
+      axiosMock.get
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { latest: {} } }) // no configuration in latest
+        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'nonexistent' },
+        params: { name: 'weekdays' },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
@@ -259,12 +264,12 @@ describe('register router', () => {
       const handler = getRegister(directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(res.send).not.toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('can call config service with tenant id', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: [] } });
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { latest: { configuration: [] } } });
 
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
@@ -284,7 +289,7 @@ describe('register router', () => {
     });
 
     it('accepts OK and NOT_FOUND on entries endpoint validateStatus', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: [] } });
+      mockGetResponses({ status: HttpStatusCodes.OK, data: { latest: { configuration: [] } } });
       const req = {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
         params: { name: 'weekdays' },
@@ -393,26 +398,6 @@ describe('register router', () => {
         user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
         params: { name: 'missing' },
         body: { entries: ['Monday'] },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(axiosMock.patch).not.toHaveBeenCalled();
-    });
-
-    it('can return 404 when configuration service returns null configuration (register not created)', async () => {
-      axiosMock.get.mockReset();
-      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { configuration: null } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { name: 'nonexistent' },
-        body: { entries: ['x'] },
         tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
