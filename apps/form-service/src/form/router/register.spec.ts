@@ -245,6 +245,24 @@ describe('register router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('can return 404 when configuration field is absent from data response (register does not exist)', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: {} }); // no configuration field
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        params: { name: 'nonexistent' },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getRegister(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     it('can call config service with tenant id', async () => {
       mockGetResponses({ status: HttpStatusCodes.OK, data: { configuration: [] } });
 

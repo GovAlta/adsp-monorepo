@@ -46,7 +46,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
         },
       );
 
-      if (dataResponse.status === HttpStatusCodes.NOT_FOUND || dataResponse.data?.configuration === null) {
+      if (dataResponse.status === HttpStatusCodes.NOT_FOUND || dataResponse.data?.configuration == null) {
         throw new NotFoundError('data register', name);
       }
 
@@ -219,7 +219,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || existsCheck.data?.configuration === null) {
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || existsCheck.data?.configuration == null) {
         throw new NotFoundError('data register', name);
       }
 
