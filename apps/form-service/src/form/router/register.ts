@@ -7,6 +7,7 @@ import { body, param } from 'express-validator';
 import { FormServiceRoles } from '../roles';
 import {
   DataRegisterDefinition,
+  DataRegisterEntry,
   DataRegisterCreateRequest,
   DataRegisterUpdateRequest,
   ConfigurationPatchResponse,
@@ -17,6 +18,15 @@ import {
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 const DATA_REGISTER_NAMESPACE = 'data-register';
+
+const getDataRegisterResourcePath = (name: string, namespace = DATA_REGISTER_NAMESPACE): string =>
+  `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+
+const assertRegisterExists = (status: number, name: string): void => {
+  if (status === HttpStatusCodes.NOT_FOUND) {
+    throw new NotFoundError('data register', name);
+  }
+};
 
 export function getRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
@@ -35,10 +45,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 
       // Fetch the actual entries — this is the source of truth for existence
       const dataResponse = await axios.get(
-        new URL(
-          `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
-          configurationApiUrl,
-        ).href,
+        new URL(getDataRegisterResourcePath(name, namespace), configurationApiUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
@@ -46,11 +53,9 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
         },
       );
 
-      if (dataResponse.status === HttpStatusCodes.NOT_FOUND || dataResponse.data?.configuration == null) {
-        throw new NotFoundError('data register', name);
-      }
+      assertRegisterExists(dataResponse.status, name);
 
-      const entries = dataResponse.data.configuration as string[];
+      const entries = (dataResponse.data?.latest?.configuration ?? []) as DataRegisterEntry[];
 
       const { data: platformData } = await axios.get(
         new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
@@ -75,15 +80,12 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 const dataRegisterConfigurationSchema = {
   type: 'array',
   items: {
-    type: 'string',
+    anyOf: [{ type: 'string' }, { type: 'object' }],
   },
 };
 
 const getDataRegisterDefinitionKey = (name: string, namespace = defaultDataRegisterNamespace): string =>
   `${namespace}:${name}`;
-
-const getDataRegisterResourcePath = (name: string, namespace = defaultDataRegisterNamespace): string =>
-  `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
 
 const createDataRegisterDefinitionPatch = (
   name: string,
@@ -99,7 +101,7 @@ const createDataRegisterDefinitionPatch = (
   },
 });
 
-const createDataRegisterConfigurationPatch = (entries: string[]): ConfigurationReplaceOperation<string[]> => ({
+const createDataRegisterConfigurationPatch = (entries: DataRegisterEntry[]): ConfigurationReplaceOperation<DataRegisterEntry[]> => ({
   operation: 'REPLACE',
   configuration: entries,
 });
@@ -107,7 +109,7 @@ const createDataRegisterConfigurationPatch = (entries: string[]): ConfigurationR
 const mapDataRegisterResponse = (
   name: string,
   description: string,
-  entries: string[],
+  entries: DataRegisterEntry[],
   namespace = defaultDataRegisterNamespace,
 ): DataRegisterResponse => ({
   namespace,
@@ -121,7 +123,7 @@ const patchConfigurationResource = async <T>(
   token: string,
   tenantId: string,
   resourcePath: string,
-  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<string[]>,
+  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<DataRegisterEntry[]>,
 ): Promise<ConfigurationPatchResponse<T>> => {
   const { data } = await axios.patch<ConfigurationPatchResponse<T>>(
     new URL(resourcePath, configurationApiUrl).href,
@@ -169,7 +171,7 @@ export function createDataRegister(directory: ServiceDirectory, tokenProvider: T
 
       const configurationPatch = createDataRegisterConfigurationPatch(entries);
 
-      const registerConfigurationResponse = await patchConfigurationResource<string[]>(
+      const registerConfigurationResponse = await patchConfigurationResource<DataRegisterEntry[]>(
         configurationApiUrl,
         token,
         tenantIdValue,
@@ -208,10 +210,8 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       // Verify the register exists before updating
       const existsCheck = await axios.get(
-        new URL(
-          `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/latest`,
-          configurationApiUrl,
-        ).href,
+        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
+          .href,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
@@ -219,7 +219,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || existsCheck.data?.configuration == null) {
+      if (existsCheck.status === HttpStatusCodes.NOT_FOUND) {
         throw new NotFoundError('data register', name);
       }
 
@@ -257,8 +257,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       // Replace the entries data
       const { data: entriesData } = await axios.patch(
-        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
-          .href,
+        new URL(getDataRegisterResourcePath(name, namespace), configurationApiUrl).href,
         { operation: 'REPLACE', configuration: entries ?? [] },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -266,7 +265,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      const updatedEntries = (entriesData?.latest?.configuration ?? entries ?? []) as string[];
+      const updatedEntries = (entriesData?.latest?.configuration ?? entries ?? []) as DataRegisterEntry[];
       const updatedDescription =
         description !== undefined ? description : (existingDefinition.description as string) || '';
 
@@ -309,7 +308,7 @@ export function findDataRegisters(directory: ServiceDirectory, tokenProvider: To
       const results = (registersData?.results ?? []) as {
         name: string;
         namespace: string;
-        latest?: { configuration?: string[] };
+        latest?: { configuration?: DataRegisterEntry[] };
       }[];
 
       const registers = results.map((result) => {
@@ -372,7 +371,6 @@ export function createRegisterRouter({ directory, tokenProvider }: RegisterRoute
         .matches(/^[a-zA-Z0-9-]+$/),
       body('description').optional().isString(),
       body('entries').optional().isArray(),
-      body('entries.*').optional().isString(),
     ),
     createDataRegister(directory, tokenProvider),
   );
