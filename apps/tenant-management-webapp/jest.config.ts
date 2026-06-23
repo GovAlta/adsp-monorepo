@@ -1,12 +1,20 @@
 /* eslint-disable */
-import path from 'path';
-
 export default {
   displayName: 'tenant-management-webapp',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
-    '^.+\\.[tj]sx?$': ['babel-jest', { configFile: path.join(__dirname, 'babel-jest.config.json') }],
+    '^.+\\.[tj]sx?$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+          '@babel/preset-typescript',
+          ['@babel/preset-react', { runtime: 'automatic' }],
+        ],
+        plugins: ['@babel/plugin-transform-class-static-block'],
+      },
+    ],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
   coverageDirectory: '../../coverage/apps/tenant-management-webapp',
@@ -18,7 +26,7 @@ export default {
     '^@lib(.*)$': '<rootDir>/src/app/lib/$1',
     '^@pages(.*)$': '<rootDir>/src/app/pages/$1',
     '^@store(.*)$': '<rootDir>/src/app/store/$1',
-    '^uuid$': require.resolve('uuid'),
+    '^uuid$': '<rootDir>/../../node_modules/uuid/dist/cjs/index.js',
     //Need to stub mdx-js and ignore running tests against mdx-js library
     '@mdx-js/mdx': '<rootDir>/../../libs/jsonforms-components/src/lib/.jest/mdx-js-stub.js',
     'react-markdown': '<rootDir>/../../libs/jsonforms-components/src/lib/.jest/react-markdown-stub.js',
