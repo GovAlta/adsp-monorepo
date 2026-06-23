@@ -1,3 +1,45 @@
+export interface DataRegisterDefinition {
+  description?: string;
+  configurationSchema?: unknown;
+  anonymousRead?: boolean;
+}
+
+export interface DataRegisterCreateRequest {
+  namespace?: string;
+  name: string;
+  description?: string;
+  entries?: string[];
+}
+
+export interface DataRegisterUpdateRequest {
+  description?: string;
+  entries?: string[];
+}
+
+export interface ConfigurationPatchResponse<T> {
+  latest: {
+    revision: number;
+    configuration: T;
+  };
+}
+
+export interface DataRegisterResponse {
+  namespace: string;
+  name: string;
+  description: string;
+  entries: string[];
+}
+
+export interface ConfigurationUpdateOperation<T> {
+  operation: 'UPDATE';
+  update: Record<string, T>;
+}
+
+export interface ConfigurationReplaceOperation<T> {
+  operation: 'REPLACE';
+  configuration: T;
+}
+
 export const SEND_CODE_OPERATION = 'send-code';
 export const UNLOCK_FORM_OPERATION = 'unlock';
 export const SUBMIT_FORM_OPERATION = 'submit';
