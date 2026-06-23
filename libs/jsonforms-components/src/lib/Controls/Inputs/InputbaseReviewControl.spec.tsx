@@ -115,7 +115,6 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    console.log('reviewControl.textContent', reviewControl.textContent);
     expect(reviewControl.textContent).toContain('No (test) (required)');
     expect(reviewControl.textContent).toContain('test is required');
   });

@@ -60,15 +60,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       setEndTime(getTimeFromGMT(currentEndDate));
       setMessage(notice.message);
 
-      let parsedApplications = [];
-      try {
-        parsedApplications = notice.tennantServRef;
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setSelectedApplications(parsedApplications);
-        setIsAllApplications(notice.isAllApplications);
-      }
+      setSelectedApplications(notice.tennantServRef ?? []);
+      setIsAllApplications(notice.isAllApplications);
     }
   }, [props.noticeId]); // eslint-disable-line react-hooks/exhaustive-deps
 

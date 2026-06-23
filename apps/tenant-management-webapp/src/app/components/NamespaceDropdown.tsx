@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useId, useMemo, useRef } from 'react';
 import { GoabInput } from '@abgov/react-components';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import styled from 'styled-components';
@@ -37,15 +37,17 @@ const DropdownList = styled.ul`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
-const DropdownItem = styled.li<{ isHighlighted: boolean }>`
+const DropdownItem = styled.li<{ $isHighlighted: boolean }>`
   padding: 8px 12px;
   cursor: pointer;
-  background: ${(props) => (props.isHighlighted ? 'var(--color-gray-100, #f5f5f5)' : 'white')};
+  background: ${(props) => (props.$isHighlighted ? 'var(--color-gray-100, #f5f5f5)' : 'white')};
 
   &:hover {
     background: var(--color-gray-100, #f5f5f5);
   }
 `;
+
+const EMPTY_NAMESPACES: string[] = [];
 
 export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   value,
@@ -54,28 +56,41 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   disabled = false,
   error,
   testId = 'namespace-dropdown',
-  existingNamespaces = [],
-  excludedNamespaces = [],
+  existingNamespaces = EMPTY_NAMESPACES,
+  excludedNamespaces = EMPTY_NAMESPACES,
   label = 'Namespace',
 }) => {
+  const id = useId();
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredNamespaces, setFilteredNamespaces] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState(value);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = `${id}-namespace-options`;
 
-  const uniqueNamespaces = Array.from(new Set(existingNamespaces))
-    .filter((ns) => !excludedNamespaces.includes(ns))
-    .sort();
+  const uniqueNamespaces = useMemo(
+    () =>
+      Array.from(new Set(existingNamespaces))
+        .filter((ns) => !excludedNamespaces.includes(ns))
+        .sort(),
+    [existingNamespaces, excludedNamespaces]
+  );
+
+  const filteredNamespaces = useMemo(
+    () =>
+      inputValue
+        ? uniqueNamespaces.filter((ns) => ns.toLowerCase().includes(inputValue.toLowerCase()))
+        : uniqueNamespaces,
+    [inputValue, uniqueNamespaces]
+  );
+
+  const activeOptionId =
+    isOpen && highlightedIndex >= 0 && highlightedIndex < filteredNamespaces.length
+      ? `${listboxId}-${highlightedIndex}`
+      : undefined;
 
   useEffect(() => {
-    if (value) {
-      const filtered = uniqueNamespaces.filter((ns) => ns.toLowerCase().includes(value.toLowerCase()));
-      setFilteredNamespaces(filtered);
-    } else {
-      setFilteredNamespaces(uniqueNamespaces);
-    }
-  }, [value, existingNamespaces.join(','), excludedNamespaces.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+    setInputValue(value);
+  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,14 +107,22 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   }, []);
 
   const handleInputChange = (detail: GoabInputOnChangeDetail) => {
+    setInputValue(detail.value);
     onChange(detail.value);
     setIsOpen(true);
     setHighlightedIndex(-1);
   };
 
-  const handleInputFocus = () => {
-    if (!disabled && existingNamespaces.length > 0) {
+  const openDropdown = () => {
+    if (!disabled && filteredNamespaces.length > 0) {
       setIsOpen(true);
+    }
+  };
+
+  const openDropdownWithKeyboard = () => {
+    if (!disabled && filteredNamespaces.length > 0) {
+      setIsOpen(true);
+      setHighlightedIndex(0);
     }
   };
 
@@ -114,6 +137,7 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   };
 
   const handleSelectNamespace = (namespace: string) => {
+    setInputValue(namespace);
     onChange(namespace);
     setIsOpen(false);
     setHighlightedIndex(-1);
@@ -121,8 +145,8 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
-      if (e.key === 'ArrowDown' && existingNamespaces.length > 0) {
-        setIsOpen(true);
+      if (e.key === 'ArrowDown' && filteredNamespaces.length > 0) {
+        openDropdownWithKeyboard();
         e.preventDefault();
       }
       return;
@@ -161,29 +185,45 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
 
   return (
     <DropdownContainer ref={containerRef}>
-      <div onKeyDown={handleKeyDown}>
+      <div
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls={listboxId}
+        aria-activedescendant={activeOptionId}
+        aria-disabled={disabled}
+        aria-expanded={isOpen && !disabled && filteredNamespaces.length > 0}
+        aria-haspopup="listbox"
+        aria-label={label}
+        onKeyDown={handleKeyDown}
+        onMouseDown={openDropdown}
+        onTouchStart={openDropdown}
+      >
         <GoabInput
           type="text"
           name="namespace"
-          value={value}
+          value={inputValue}
           disabled={disabled}
+          error={Boolean(error)}
           testId={testId}
-          aria-label="namespace"
+          ariaLabel={label}
           width="100%"
           onChange={handleInputChange}
-          onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           autoComplete="off"
         />
       </div>
       {isOpen && !disabled && filteredNamespaces.length > 0 && (
-        <DropdownList>
+        <DropdownList id={listboxId} role="listbox" aria-label={`${label} options`}>
           {filteredNamespaces.map((namespace, index) => (
             <DropdownItem
+              id={`${listboxId}-${index}`}
               key={namespace}
-              isHighlighted={index === highlightedIndex}
+              $isHighlighted={index === highlightedIndex}
+              aria-selected={index === highlightedIndex}
               onClick={() => handleSelectNamespace(namespace)}
+              onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setHighlightedIndex(index)}
+              role="option"
             >
               {namespace}
             </DropdownItem>

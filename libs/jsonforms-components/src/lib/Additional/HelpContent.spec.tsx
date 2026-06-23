@@ -92,7 +92,6 @@ describe('Help Content Control', () => {
     expect(sectionHeader?.innerHTML).toBe(`${helpSchema.elements[0].label}<br>`);
     const sectionContent = mainWrapper!.querySelector('div :scope div > p');
     expect(sectionContent).not.toBeNull();
-    console.log(sectionContent?.outerHTML);
     expect(sectionContent?.innerHTML).toBe(helpSchema.elements[0].options.help);
   });
   it('will render detailed help content with markdown', () => {

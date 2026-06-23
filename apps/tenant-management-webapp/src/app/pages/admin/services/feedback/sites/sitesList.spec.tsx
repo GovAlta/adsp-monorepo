@@ -70,7 +70,6 @@ describe('SitesListComponent', () => {
     );
 
     const editButtons = baseElement.querySelectorAll("goa-icon-button[testId='site-edit']");
-    console.log('editButtons', editButtons);
     expect(editButtons).toHaveLength(2);
   });
 });

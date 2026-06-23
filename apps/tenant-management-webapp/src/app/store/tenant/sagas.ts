@@ -157,8 +157,6 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
     const realm = action.payload;
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
-    console.log('Run keycloak check sso');
-
     const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
     if (session) {
       yield put(SessionLoginSuccess(session));
