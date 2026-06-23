@@ -133,6 +133,8 @@ Effects and condition patterns are demonstrated in the rules examples below.
 Key guidance:
 - Choose effect based on DEFAULT state: use SHOW when hidden-by-default, HIDE when visible-by-default. Same logic for ENABLE vs DISABLE.
 - CRITICAL: If a field has a SHOW/HIDE rule AND is required in the dataSchema, you MUST use conditional validation (if/then). Otherwise hidden fields block form submission.
+- Enum casing in SHOW/HIDE conditions: before writing a "const" value in a rule condition, check the field's enum values in the dataSchema (visible in formSchemaIndex dataProperties) to use the exact casing stored — e.g. "yes"/"no" not "Yes"/"No". Never assume casing.
+- Gating rule path: when adding a SHOW rule to gate a group/container of questions, place the rule on the parent layout element itself (e.g. /elements/12/elements/0/elements/1/rule), NOT on its first child (/elements/0/rule). The rule belongs on the wrapper, not the children.
 
 Proactive prompt when adding SHOW/HIDE: Ask the user — "Should this field be required when visible? If so, I'll add conditional validation (if/then) so it's only required when shown."
 
