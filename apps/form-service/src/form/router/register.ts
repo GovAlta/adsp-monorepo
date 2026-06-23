@@ -63,12 +63,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
       const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
       const registerKey = `${namespace}:${name}`;
       const registerDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
-
-      if (!registerDefinition) {
-        throw new NotFoundError('data register', name);
-      }
-
-      const description = (registerDefinition.description as string) || '';
+      const description = (registerDefinition?.description as string) || '';
 
       res.send({ namespace, name, description, entries });
     } catch (err) {
@@ -239,11 +234,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
 
       const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
       const registerKey = `${namespace}:${name}`;
-      const existingDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
-
-      if (!existingDefinition) {
-        throw new NotFoundError('data register', name);
-      }
+      const existingDefinition = (platformConfig[registerKey] as Record<string, unknown>) ?? {};
 
       const { description, entries } = req.body as DataRegisterUpdateRequest;
 
