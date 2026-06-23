@@ -1,3 +1,5 @@
+export type DataRegisterEntry = string | Record<string, unknown>;
+
 export interface DataRegisterDefinition {
   description?: string;
   configurationSchema?: unknown;
@@ -8,12 +10,12 @@ export interface DataRegisterCreateRequest {
   namespace?: string;
   name: string;
   description?: string;
-  entries?: string[];
+  entries?: DataRegisterEntry[];
 }
 
 export interface DataRegisterUpdateRequest {
   description?: string;
-  entries?: string[];
+  entries?: DataRegisterEntry[];
 }
 
 export interface ConfigurationPatchResponse<T> {
@@ -27,7 +29,7 @@ export interface DataRegisterResponse {
   namespace: string;
   name: string;
   description: string;
-  entries: string[];
+  entries: DataRegisterEntry[];
 }
 
 export interface ConfigurationUpdateOperation<T> {

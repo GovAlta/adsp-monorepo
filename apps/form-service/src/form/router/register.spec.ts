@@ -80,7 +80,7 @@ describe('register router', () => {
           configurationSchema: {
             type: 'array',
             items: {
-              type: 'string',
+              anyOf: [{ type: 'string' }, { type: 'object' }],
             },
           },
           description,

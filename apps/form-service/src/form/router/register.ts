@@ -7,6 +7,7 @@ import { body, param } from 'express-validator';
 import { FormServiceRoles } from '../roles';
 import {
   DataRegisterDefinition,
+  DataRegisterEntry,
   DataRegisterCreateRequest,
   DataRegisterUpdateRequest,
   ConfigurationPatchResponse,
@@ -54,7 +55,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 
       assertRegisterExists(dataResponse.status, name);
 
-      const entries = (dataResponse.data?.latest?.configuration ?? []) as string[];
+      const entries = (dataResponse.data?.latest?.configuration ?? []) as DataRegisterEntry[];
 
       const { data: platformData } = await axios.get(
         new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
@@ -79,7 +80,7 @@ export function getRegister(directory: ServiceDirectory, tokenProvider: TokenPro
 const dataRegisterConfigurationSchema = {
   type: 'array',
   items: {
-    type: 'string',
+    anyOf: [{ type: 'string' }, { type: 'object' }],
   },
 };
 
@@ -100,7 +101,7 @@ const createDataRegisterDefinitionPatch = (
   },
 });
 
-const createDataRegisterConfigurationPatch = (entries: string[]): ConfigurationReplaceOperation<string[]> => ({
+const createDataRegisterConfigurationPatch = (entries: DataRegisterEntry[]): ConfigurationReplaceOperation<DataRegisterEntry[]> => ({
   operation: 'REPLACE',
   configuration: entries,
 });
@@ -108,7 +109,7 @@ const createDataRegisterConfigurationPatch = (entries: string[]): ConfigurationR
 const mapDataRegisterResponse = (
   name: string,
   description: string,
-  entries: string[],
+  entries: DataRegisterEntry[],
   namespace = defaultDataRegisterNamespace,
 ): DataRegisterResponse => ({
   namespace,
@@ -122,7 +123,7 @@ const patchConfigurationResource = async <T>(
   token: string,
   tenantId: string,
   resourcePath: string,
-  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<string[]>,
+  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<DataRegisterEntry[]>,
 ): Promise<ConfigurationPatchResponse<T>> => {
   const { data } = await axios.patch<ConfigurationPatchResponse<T>>(
     new URL(resourcePath, configurationApiUrl).href,
@@ -170,7 +171,7 @@ export function createDataRegister(directory: ServiceDirectory, tokenProvider: T
 
       const configurationPatch = createDataRegisterConfigurationPatch(entries);
 
-      const registerConfigurationResponse = await patchConfigurationResource<string[]>(
+      const registerConfigurationResponse = await patchConfigurationResource<DataRegisterEntry[]>(
         configurationApiUrl,
         token,
         tenantIdValue,
@@ -264,7 +265,7 @@ export function updateRegister(directory: ServiceDirectory, tokenProvider: Token
         },
       );
 
-      const updatedEntries = (entriesData?.latest?.configuration ?? entries ?? []) as string[];
+      const updatedEntries = (entriesData?.latest?.configuration ?? entries ?? []) as DataRegisterEntry[];
       const updatedDescription =
         description !== undefined ? description : (existingDefinition.description as string) || '';
 
@@ -307,7 +308,7 @@ export function findDataRegisters(directory: ServiceDirectory, tokenProvider: To
       const results = (registersData?.results ?? []) as {
         name: string;
         namespace: string;
-        latest?: { configuration?: string[] };
+        latest?: { configuration?: DataRegisterEntry[] };
       }[];
 
       const registers = results.map((result) => {
@@ -370,7 +371,6 @@ export function createRegisterRouter({ directory, tokenProvider }: RegisterRoute
         .matches(/^[a-zA-Z0-9-]+$/),
       body('description').optional().isString(),
       body('entries').optional().isArray(),
-      body('entries.*').optional().isString(),
     ),
     createDataRegister(directory, tokenProvider),
   );
