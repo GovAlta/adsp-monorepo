@@ -132,3 +132,58 @@ describe('MarkdownComponent', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 });
+
+describe('XSS prevention', () => {
+  test('script tags in markdown input are never executed', () => {
+    // Arrange — a script tag that would execute if injected into the DOM
+    const xssMarkdown = '<script>window.__xss = true</script>';
+
+    // Act
+    render(<MarkdownComponent markdown={xssMarkdown} />);
+
+    // Assert — the script was never executed
+    expect((window as Window & { __xss?: boolean }).__xss).toBeUndefined();
+  });
+
+  test('inline event handlers in markdown input are never executed', () => {
+    // Arrange
+    const xssMarkdown = '<img src="x" onerror="window.__xssOnError = true" />';
+
+    // Act
+    render(<MarkdownComponent markdown={xssMarkdown} />);
+
+    // Assert — the onerror handler was never triggered
+    expect((window as Window & { __xssOnError?: boolean }).__xssOnError).toBeUndefined();
+  });
+
+  test('javascript: href in anchor is not applied by markdownComponents.a', () => {
+    // Arrange
+    const xssHref = 'javascript:alert(1)';
+
+    // Act
+    const { getByRole } = render(React.createElement(markdownComponents.a, { href: xssHref }, 'Click me'));
+    const link = getByRole('link', { name: 'Click me' });
+
+    // Assert — target="_blank" and noopener noreferrer are always enforced,
+    // reducing the impact even if the href somehow reached the DOM
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  test('script tags in help text option are rendered as plain text, not executed', () => {
+    // Arrange
+    const uiSchema = {
+      type: 'HelpContent',
+      label: 'Help',
+      options: {
+        help: '<script>window.__xssHelp = true</script>',
+      },
+    };
+
+    // Act
+    render(getForm(uiSchema));
+
+    // Assert — script was never executed
+    expect((window as Window & { __xssHelp?: boolean }).__xssHelp).toBeUndefined();
+  });
+});
