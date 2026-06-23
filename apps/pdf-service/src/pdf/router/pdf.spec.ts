@@ -5,7 +5,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { PDF_GENERATION_QUEUED } from '../events';
 import { ServiceRoles } from '../roles';
-import { createPdfRouter, createPdfTemplate, generatePdf, getGeneratedFile, getTemplate, getTemplates } from './pdf';
+import { createPdfRouter, createPdfTemplate, deletePdfTemplate, generatePdf, getGeneratedFile, getTemplate, getTemplates } from './pdf';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -386,6 +386,165 @@ describe('pdf', () => {
       const handler = getTemplate('params');
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+  });
+
+  describe('deletePdfTemplate', () => {
+    it('can create handler', () => {
+      const handler = deletePdfTemplate(serviceDirectoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('deletes a PDF template and returns 204', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(serviceDirectoryMock.getServiceUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespace: 'platform',
+          service: 'configuration-service',
+          api: 'v2',
+        }),
+      );
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('v2/configuration/platform/pdf-service'),
+        { operation: 'DELETE', property: 'test' },
+        {
+          headers: { Authorization: 'Bearer test-token' },
+          params: { tenantId: tenantId.toString() },
+        }
+      );
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
+      expect(res.send).toHaveBeenCalledWith();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with unauthorized when user does not have Admin role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
+      expect(tokenProviderMock.getAccessToken).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when the configuration delete fails', async () => {
+      const error = new Error('Configuration delete failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when serviceDirectory lookup fails', async () => {
+      const error = new Error('Directory lookup failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when token provider fails', async () => {
+      const error = new Error('Token fetch failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when tenant is missing', async () => {
+      const req = {
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 

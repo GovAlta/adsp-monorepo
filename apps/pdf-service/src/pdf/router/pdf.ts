@@ -24,7 +24,7 @@ import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { ServiceRoles } from '../roles';
-import { ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
+import { ConfigurationDeleteOperation, ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -167,6 +167,50 @@ export function createPdfTemplate(
   };
 }
 
+async function deletePdfTemplateFromConfig(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: string,
+  templateId: string,
+): Promise<void> {
+  const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
+  const configurationApiUrl = await directory.getServiceUrl(configurationServiceId);
+  const token = await tokenProvider.getAccessToken();
+
+  const patch: ConfigurationDeleteOperation = { operation: 'DELETE', property: templateId };
+  await axios.patch(
+    new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href,
+    patch,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId },
+    },
+  );
+}
+
+// clean-code-ignore: 2.18
+export function deletePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('delete pdf template', user);
+      }
+
+      const { templateId } = req.params;
+      await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
+      res.status(HttpStatusCodes.NO_CONTENT).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function generatePdf(
   serviceId: AdspId,
   repository: JobRepository<FileResult>,
@@ -288,6 +332,12 @@ export function createPdfRouter({
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
     getTemplate('params'),
     (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
+  );
+  router.delete(
+    '/templates/:templateId',
+    createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
+    getTemplate('params'),
+    deletePdfTemplate(directory, tokenProvider),
   );
   router.post(
     '/jobs',

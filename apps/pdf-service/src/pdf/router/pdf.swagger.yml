@@ -154,6 +154,22 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Template"
+  delete:
+    tags:
+      - Templates
+    description: Delete the specified PDF template.
+    parameters:
+      - name: templateId
+        description: ID of template to delete.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      204:
+        description: The PDF template was successfully deleted.
+      404:
+        description: Template not found.
 
 /pdf/v1/jobs:
   post:
