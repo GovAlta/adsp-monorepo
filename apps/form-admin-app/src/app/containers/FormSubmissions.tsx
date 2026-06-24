@@ -176,7 +176,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   const value = submission.values[path];
                   return (
                     <DataValueCell key={path}>
-                      {value != null && typeof value === 'object' ? JSON.stringify(value) : (value as string)}
+                      {value !== null && typeof value === 'object' ? JSON.stringify(value) : (value as string)}
                     </DataValueCell>
                   );
                 })}
