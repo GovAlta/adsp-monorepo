@@ -76,7 +76,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   formActions.setSubmissionCriteria({
                     ...criteria,
                     tag: value,
-                  })
+                  }),
                 )
               }
             />
@@ -88,15 +88,15 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   typeof criteria['dispositioned'] !== 'boolean'
                     ? ''
                     : criteria['dispositioned'] === true
-                    ? 'dispositioned'
-                    : 'not dispositioned'
+                      ? 'dispositioned'
+                      : 'not dispositioned'
                 }
                 onChange={(detail: GoabDropdownOnChangeDetail) =>
                   dispatch(
                     formActions.setSubmissionCriteria({
                       ...criteria,
                       dispositioned: detail.value === '' ? undefined : detail.value === 'dispositioned',
-                    })
+                    }),
                   )
                 }
               >
@@ -121,7 +121,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                         ...criteria?.dataCriteria,
                         [path]: value || undefined,
                       },
-                    })
+                    }),
                   )
                 }
               />
@@ -172,9 +172,14 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 <td>
                   <Tags urn={submission.urn} onTag={() => setShowTagSubmission({ name: '', urn: submission.urn })} />
                 </td>
-                {dataValues.map(({ path }) => (
-                  <DataValueCell key={path}>{submission.values[path]}</DataValueCell>
-                ))}
+                {dataValues.map(({ path }) => {
+                  const value = submission.values[path];
+                  return (
+                    <DataValueCell key={path}>
+                      {value != null && typeof value === 'object' ? JSON.stringify(value) : (value as string)}
+                    </DataValueCell>
+                  );
+                })}
                 <td>
                   <GoabButtonGroup alignment="end">
                     <GoabButton type="secondary" size="compact" onClick={() => navigate(submission.id)}>

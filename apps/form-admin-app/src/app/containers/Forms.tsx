@@ -68,9 +68,14 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
       <td>
         <Tags urn={form.urn} onTag={onTag} />
       </td>
-      {dataValues.map(({ path }) => (
-        <DataValueCell key={path}>{form.values[path]}</DataValueCell>
-      ))}
+      {dataValues.map(({ path }) => {
+        const value = form.values[path];
+        return (
+          <DataValueCell key={path}>
+            {value != null && typeof value === 'object' ? JSON.stringify(value) : (value as string)}
+          </DataValueCell>
+        );
+      })}
       <td>
         <GoabButtonGroup alignment="end">
           <GoabButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
@@ -128,7 +133,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                   formActions.setFormCriteria({
                     ...criteria,
                     tag: value,
-                  })
+                  }),
                 )
               }
             />
@@ -142,7 +147,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                     formActions.setFormCriteria({
                       ...criteria,
                       statusEquals: detail.value,
-                    })
+                    }),
                   )
                 }
               >
@@ -168,7 +173,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                         ...criteria?.dataCriteria,
                         [path]: value || undefined,
                       },
-                    })
+                    }),
                   )
                 }
               />
