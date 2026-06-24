@@ -7,9 +7,10 @@ import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Visible } from '../util';
 import { RenderLink } from './LinkControl';
-import { compileSync, createProcessor, evaluateSync } from '@mdx-js/mdx';
-import * as runtime from 'react/jsx-runtime';
-import './HelpContent.css';
+import { compileSync } from '@mdx-js/mdx';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import './HelpContent';
 
 interface OptionProps {
   ariaLabel?: string;
@@ -47,10 +48,18 @@ interface MdxMarkdownResponse {
 }
 
 export const markdownComponents = {
-  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+  // Destructure node out (react-markdown internal prop) so it is not forwarded to the DOM element.
+  a: ({ node, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { node?: unknown }) => (
     <a {...props} target="_blank" rel="noopener noreferrer" />
   ),
 };
+
+// rehype-sanitize strips dangerous HTML (script tags, event-handler attributes, javascript: hrefs, etc.)
+// from the HAST tree before rendering. defaultSchema allows standard HTML but blocks XSS vectors.
+// Cast required: react-markdown vendors its own copy of unified, causing a type mismatch with the
+// top-level unified package even though the runtime behaviour is identical.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rehypePlugins: any[] = [[rehypeSanitize, defaultSchema]];
 
 const HelpContentReviewComponent = (): JSX.Element => {
   return <> </>;
@@ -60,7 +69,7 @@ const checkMarkDownIsValid = (markdown: string): MdxMarkdownResponse => {
   let isValid = true;
   let error: string = '';
   try {
-    compileSync(markdown, {});
+    compileSync(markdown, { rehypePlugins: [[rehypeSanitize, defaultSchema]] });
   } catch (err) {
     if (err instanceof Error) {
       error = err.message;
@@ -73,8 +82,11 @@ const checkMarkDownIsValid = (markdown: string): MdxMarkdownResponse => {
 export const MarkdownComponent = ({ markdown }: MdxMarkdown): JSX.Element => {
   const response = checkMarkDownIsValid(markdown);
   if (response.isValid) {
-    const { default: MDXContent } = evaluateSync(markdown, { ...runtime, Fragment: React.Fragment });
-    return React.createElement(MDXContent, { components: markdownComponents });
+    return (
+      <ReactMarkdown rehypePlugins={rehypePlugins} components={markdownComponents}>
+        {markdown}
+      </ReactMarkdown>
+    );
   }
   return <InvalidMarkdown>Help content markdown is invalid: {response.error} </InvalidMarkdown>;
 };
