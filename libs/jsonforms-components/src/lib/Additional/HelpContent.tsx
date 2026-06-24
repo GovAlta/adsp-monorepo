@@ -69,6 +69,8 @@ const checkMarkDownIsValid = (markdown: string): MdxMarkdownResponse => {
   let isValid = true;
   let error: string = '';
   try {
+    // clean-code-ignore: 2.14
+    // to allow testing the compile and catching the error
     compileSync(markdown, { rehypePlugins: [[rehypeSanitize, defaultSchema]] });
   } catch (err) {
     if (err instanceof Error) {
@@ -79,6 +81,7 @@ const checkMarkDownIsValid = (markdown: string): MdxMarkdownResponse => {
   }
   return { isValid, error };
 };
+
 export const MarkdownComponent = ({ markdown }: MdxMarkdown): JSX.Element => {
   const response = checkMarkDownIsValid(markdown);
   if (response.isValid) {
