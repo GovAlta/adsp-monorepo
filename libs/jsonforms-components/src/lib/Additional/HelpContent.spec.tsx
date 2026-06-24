@@ -156,8 +156,9 @@ describe('XSS prevention', () => {
     expect((window as Window & { __xssOnError?: boolean }).__xssOnError).toBeUndefined();
   });
 
-  test('javascript: href in anchor is not applied by markdownComponents.a', () => {
+  test('a javascript: href in anchor is not applied by markdownComponents.a', () => {
     // Arrange
+    // eslint-disable-next-line no-script-url
     const xssHref = 'javascript:alert(1)';
 
     // Act
