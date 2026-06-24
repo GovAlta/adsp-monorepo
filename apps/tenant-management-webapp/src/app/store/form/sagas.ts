@@ -615,6 +615,7 @@ const MUTATION_TOOLS = new Set([
   'formDataUpdateTool',
   'dataRegisterCreateTool',
   'dataRegisterUpdateTool',
+  'formSchemaPatch',
 ]);
 
 function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
