@@ -104,6 +104,36 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Template"
+  post:
+    tags:
+      - Templates
+    description: Creates a new PDF template for the tenant.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+                description: Name of the template. Can contain letters, numbers, spaces, and hyphens.
+                minLength: 1
+                maxLength: 50
+                example: My Template
+              description:
+                type: string
+                description: Description of the template's purpose.
+                example: A template for rendering a user name
+    responses:
+      201:
+        description: PDF template successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Template"
 
 /pdf/v1/templates/{templateId}:
   get:
@@ -124,6 +154,22 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Template"
+  delete:
+    tags:
+      - Templates
+    description: Delete the specified PDF template.
+    parameters:
+      - name: templateId
+        description: ID of template to delete.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      204:
+        description: The PDF template was successfully deleted.
+      404:
+        description: Template not found.
 
 /pdf/v1/jobs:
   post:

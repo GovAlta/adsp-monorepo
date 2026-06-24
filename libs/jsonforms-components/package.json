@@ -17,7 +17,9 @@
     "ajv-formats": "^3.0.1",
     "@mdx-js/mdx": "^3.1.0",
     "expr-eval-fork": "^3.0.1",
-    "pluralize": "^8.0.0"
+    "pluralize": "^8.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "react-markdown": "^8.0.3"
   },
   "dependencies": {
     "axios": "^1.15.2",

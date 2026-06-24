@@ -19,6 +19,11 @@ export const tenantSchema: Schema = new Schema(
       type: String,
       required: true,
     },
+    status: {
+      type: String,
+      enum: ['provisioning', 'active'],
+      default: 'active',
+    },
   },
   { timestamps: true }
 );

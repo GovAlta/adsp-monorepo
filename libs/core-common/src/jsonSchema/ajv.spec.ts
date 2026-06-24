@@ -134,6 +134,16 @@ describe('ValidationService', () => {
     service.setSchema('test', schema);
   });
 
+  it('validates phone format', () => {
+    const service = new AjvValidationService(logger);
+    const schema = { type: 'object', properties: { phone: { type: 'string', format: 'phone' } } };
+    service.setSchema('test', schema);
+
+    service.validate('test', 'test', { phone: '(780) 123-4567' });
+    service.validate('test', 'test', { phone: '7801234567' });
+    expect(() => service.validate('test', 'test', { phone: 'notaphone' })).toThrow(/Value not valid for/);
+  });
+
   it('removes empty enum to prevent comparison against third party content', () => {
     const service = new AjvValidationService(logger);
     const schema = {
