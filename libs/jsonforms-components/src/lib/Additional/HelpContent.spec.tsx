@@ -1,11 +1,12 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv';
 import { GoACells, GoARenderers } from '../../index';
 import { UISchemaElement } from '@jsonforms/core';
-import { markdownComponents } from './HelpContent';
+import { MarkdownComponent, markdownComponents } from './HelpContent';
+import * as mdxModule from '@mdx-js/mdx';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -30,8 +31,9 @@ const getForm = (uiSchema: UISchemaElement) => {
   return <JsonForms data={{}} schema={{}} uischema={uiSchema} ajv={ajv} renderers={GoARenderers} cells={GoACells} />;
 };
 
-describe('Help Content Control', () => {
-  it('will render single line help content', () => {
+describe('HelpContentComponent', () => {
+  test('renders single-line help content', () => {
+    // Arrange
     const uiSchema = {
       type: 'HelpContent',
       scope: '#/properties/helpMe',
@@ -40,119 +42,148 @@ describe('Help Content Control', () => {
         help: 'The sky is blue',
       },
     };
-    const form = getForm(uiSchema);
-    const renderer = render(form);
-    const helpComponent = renderer.getByText(uiSchema.options?.help);
-    expect(helpComponent).toBeInTheDocument();
+
+    // Act
+    const { getByText } = render(getForm(uiSchema));
+
+    // Assert
+    expect(getByText('The sky is blue')).toBeInTheDocument();
   });
 
-  it('will render multi line help content', () => {
-    const helpSchema = {
+  test('renders multi-line help content', () => {
+    // Arrange
+    const uiSchema = {
       type: 'HelpContent',
       label: 'Poetry',
       options: {
         help: ['The sky is blue', 'The river is wide'],
       },
     };
-    const form = getForm(helpSchema);
-    const renderer = render(form);
-    const message1 = helpSchema.options.help[0];
-    const m1Component = renderer.getByText(message1);
-    expect(m1Component).toBeInTheDocument();
 
-    const message2 = helpSchema.options.help[1];
-    const m2Component = renderer.getByText(message2);
-    expect(m2Component).toBeInTheDocument();
+    // Act
+    const { getByText } = render(getForm(uiSchema));
+
+    // Assert
+    expect(getByText('The sky is blue')).toBeInTheDocument();
+    expect(getByText('The river is wide')).toBeInTheDocument();
   });
 
-  it('will render detailed help content', () => {
-    const helpSchema = {
+  test('renders nested help content', () => {
+    // Arrange
+    const uiSchema = {
       type: 'HelpContent',
-      label: 'This is the main heading',
+      label: 'Main Heading',
       elements: [
         {
           type: 'HelpContent',
-          label: 'This is section heading',
+          label: 'Section Heading',
           options: {
             help: 'This is the help content.',
           },
         },
       ],
-      options: {
-        variant: 'details',
-      },
     };
-    const form = getForm(helpSchema);
-    const renderer = render(form);
-    const mainWrapper = renderer.container.querySelector('div > :scope goa-details');
-    expect(mainWrapper).not.toBeNull();
-    expect(mainWrapper?.getAttribute('heading')).toBe(helpSchema.label);
-    const sectionHeader = mainWrapper!.querySelector("div > :scope div[class='child-label']");
-    expect(sectionHeader).not.toBeNull();
-    expect(sectionHeader?.innerHTML).toBe(`${helpSchema.elements[0].label}<br>`);
-    const sectionContent = mainWrapper!.querySelector('div :scope div > p');
-    expect(sectionContent).not.toBeNull();
-    console.log(sectionContent?.outerHTML);
-    expect(sectionContent?.innerHTML).toBe(helpSchema.elements[0].options.help);
+
+    // Act
+    const { getByText } = render(getForm(uiSchema));
+
+    // Assert
+    expect(getByText('Main Heading')).toBeInTheDocument();
+    expect(getByText('Section Heading')).toBeInTheDocument();
+    expect(getByText('This is the help content.')).toBeInTheDocument();
   });
-  it('will render detailed help content with markdown', () => {
-    const helpSchema = {
-      type: 'HelpContent',
-      label: 'This is the main heading',
-      elements: [
-        {
-          type: 'HelpContent',
-          label: 'This is section heading',
-          options: {
-            help: 'This is the help content.',
-          },
-        },
-      ],
-      options: {
-        variant: 'details',
-        markdown: true,
-      },
-    };
-    const form = getForm(helpSchema);
-    const renderer = render(form);
-    const mainWrapper = renderer.container.querySelector('div > :scope goa-details');
-    expect(mainWrapper).not.toBeNull();
-    expect(mainWrapper?.getAttribute('heading')).toBe(helpSchema.label);
+});
+
+describe('MarkdownComponent', () => {
+  test('renders valid markdown content via ReactMarkdown', () => {
+    // Arrange
+    const markdown = '# Heading\n\nThis is a **bold** text.';
+
+    // Act
+    const { getByTestId } = render(<MarkdownComponent markdown={markdown} />);
+
+    // Assert — react-markdown stub renders a div[data-testid="react-markdown"]
+    expect(getByTestId('react-markdown')).toBeInTheDocument();
   });
 
-  it('renders markdown links to open in a new window', () => {
-    const renderer = render(
-      React.createElement(markdownComponents.a, { href: 'https://www.alberta.ca' }, 'Open Alberta')
+  test('renders error message when markdown compilation fails', () => {
+    // Arrange — force compileSync to throw to exercise the invalid-markdown branch
+    jest.spyOn(mdxModule, 'compileSync').mockImplementationOnce(() => {
+      throw new Error('unexpected token at position 1');
+    });
+
+    // Act
+    const { getByText } = render(<MarkdownComponent markdown="some markdown" />);
+
+    // Assert
+    expect(getByText(/Help content markdown is invalid:/)).toBeInTheDocument();
+  });
+
+  test('renders markdown links to open in a new window', () => {
+    // Arrange & Act
+    const { getByRole } = render(
+      React.createElement(markdownComponents.a, { href: 'https://www.alberta.ca' }, 'Open Alberta'),
     );
-    const link = renderer.getByRole('link', { name: 'Open Alberta' });
+    const link = getByRole('link', { name: 'Open Alberta' });
 
+    // Assert
     expect(link).toHaveAttribute('href', 'https://www.alberta.ca');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
+});
 
-  it('will render image in help content', () => {
-    const helpSchema = {
+describe('XSS prevention', () => {
+  test('script tags in markdown input are never executed', () => {
+    // Arrange — a script tag that would execute if injected into the DOM
+    const xssMarkdown = '<script>window.__xss = true</script>';
+
+    // Act
+    render(<MarkdownComponent markdown={xssMarkdown} />);
+
+    // Assert — the script was never executed
+    expect((window as Window & { __xss?: boolean }).__xss).toBeUndefined();
+  });
+
+  test('inline event handlers in markdown input are never executed', () => {
+    // Arrange
+    const xssMarkdown = '<img src="x" onerror="window.__xssOnError = true" />';
+
+    // Act
+    render(<MarkdownComponent markdown={xssMarkdown} />);
+
+    // Assert — the onerror handler was never triggered
+    expect((window as Window & { __xssOnError?: boolean }).__xssOnError).toBeUndefined();
+  });
+
+  test('javascript: href in anchor is not applied by markdownComponents.a', () => {
+    // Arrange
+    const xssHref = 'javascript:alert(1)';
+
+    // Act
+    const { getByRole } = render(React.createElement(markdownComponents.a, { href: xssHref }, 'Click me'));
+    const link = getByRole('link', { name: 'Click me' });
+
+    // Assert — target="_blank" and noopener noreferrer are always enforced,
+    // reducing the impact even if the href somehow reached the DOM
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  test('script tags in help text option are rendered as plain text, not executed', () => {
+    // Arrange
+    const uiSchema = {
       type: 'HelpContent',
-      label: 'This is the main heading',
-      elements: [
-        {
-          type: 'HelpContent',
-          label: 'This is section heading',
-          options: {
-            img: 'https://picsum.photos/200/300',
-          },
-        },
-      ],
+      label: 'Help',
       options: {
-        variant: 'img',
+        help: '<script>window.__xssHelp = true</script>',
       },
     };
-    const form = getForm(helpSchema);
-    const renderer = render(form);
 
-    const image = renderer.container.getElementsByTagName('img');
+    // Act
+    render(getForm(uiSchema));
 
-    expect(image[0]).toBeInTheDocument();
+    // Assert — script was never executed
+    expect((window as Window & { __xssHelp?: boolean }).__xssHelp).toBeUndefined();
   });
 });

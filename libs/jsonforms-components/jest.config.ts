@@ -7,9 +7,9 @@ export default {
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
   moduleNameMapper: {
-    //Need to stub mdx-js and ignore running tests against mdx-js library
+    // clean-code-ignore: RULE-19
+    // @mdx-js/mdx, react-markdown and rehype-sanitize are ESM-only; stub them so Jest (babel-jest) can parse tests.
     '@mdx-js/mdx': '<rootDir>/src/lib/.jest/mdx-js-stub.js',
-    // react-markdown and rehype-sanitize are ESM-only; stub them so Jest (babel-jest) can parse tests.
     'react-markdown': '<rootDir>/src/lib/.jest/react-markdown-stub.jsx',
     'rehype-sanitize': '<rootDir>/src/lib/.jest/rehype-sanitize-stub.js',
   },
