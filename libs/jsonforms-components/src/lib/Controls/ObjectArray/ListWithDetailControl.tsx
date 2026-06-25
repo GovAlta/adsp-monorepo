@@ -698,7 +698,6 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
 
     case VALIDATION_KEYWORDS.TYPE:
       return `${label} must be a ${error.params.type}`;
-      0;
     default:
       return error.message ?? `${label} is invalid`;
   }
