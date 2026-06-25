@@ -1,6 +1,7 @@
 import {
   adspId,
   AdspId,
+  Channel, // clean-code-ignore: 2.9
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -66,6 +67,10 @@ export const createProcessEventJob =
 
       const types = configuration?.getEventNotificationTypes(event) || [];
 
+      if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) { // clean-code-ignore: 2.10
+        throw new Error(`Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}`);
+      }
+
       let count = 0;
       if (types.length > 0) {
         const tenant = await tenantService.getTenant(tenantId);
@@ -79,7 +84,7 @@ export const createProcessEventJob =
               subscriptionRepository,
               configuration,
               event,
-              { tenant }
+              { tenant },
             );
 
             for (const notification of notifications) {
@@ -96,7 +101,7 @@ export const createProcessEventJob =
               {
                 ...LOG_CONTEXT,
                 tenant: tenantId?.toString(),
-              }
+              },
             );
           } catch (err) {
             eventService.send(notificationGenerationFailed(generationId, event, type, err.message));

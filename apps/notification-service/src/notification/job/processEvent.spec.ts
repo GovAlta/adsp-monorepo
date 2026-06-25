@@ -60,6 +60,9 @@ describe('createProcessEventJob', () => {
 
   beforeEach(() => {
     queueServiceMock.enqueue.mockReset();
+    configurationServiceMock.getConfiguration.mockReset();
+    tokenProviderMock.getAccessToken.mockReset();
+    repositoryMock.getSubscriptions.mockReset();
   });
 
   it('can create job', () => {
@@ -359,6 +362,101 @@ describe('createProcessEventJob', () => {
         true,
         (err) => {
           expect(err).toBeFalsy();
+          done();
+        },
+      );
+    });
+
+    it('signals retry when email fromEmail is not configured', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+      });
+
+      const type = {
+        id: 'test',
+        name: 'Test Type',
+        description: '',
+        publicSubscribe: true,
+        subscriberRoles: [],
+        channels: [Channel.email],
+        events: [{ namespace: 'test', name: 'test-run', templates: { [Channel.email]: { subject: '', body: '' } } }],
+      };
+      const configuration = new NotificationConfiguration(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        { test: type },
+        {},
+        tenantId,
+      );
+      // Deliberately omit configuration.email.fromEmail to simulate config not ready
+
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
+
+      job(
+        { tenantId, namespace: 'test', name: 'test-run', timestamp: new Date(), payload: {}, traceparent: '123' },
+        true,
+        (err) => {
+          expect(err).toBeTruthy();
+          expect((err as Error).message).toContain(`${tenantId}`);
+          expect((err as Error).message).toContain('test:test-run');
+          expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+          done();
+        },
+      );
+    });
+
+    it('does not signal retry when matched types have no email channel', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+      });
+
+      const type = {
+        id: 'test-sms',
+        name: 'Test SMS Type',
+        description: '',
+        publicSubscribe: true,
+        subscriberRoles: [],
+        channels: [Channel.sms],
+        events: [{ namespace: 'test', name: 'test-run', templates: { [Channel.sms]: { subject: '', body: '' } } }],
+      };
+      const configuration = new NotificationConfiguration(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        { 'test-sms': type },
+        {},
+        tenantId,
+      );
+      // Omit configuration.email.fromEmail — should not matter for SMS-only types
+
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [], page: {} });
+
+      job(
+        { tenantId, namespace: 'test', name: 'test-run', timestamp: new Date(), payload: {}, traceparent: '123' },
+        true,
+        (err) => {
+          expect(err).toBeFalsy();
+          expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
           done();
         },
       );
