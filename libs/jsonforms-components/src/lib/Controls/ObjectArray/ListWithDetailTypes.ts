@@ -103,26 +103,9 @@ export interface TableRowsProp {
   listTitle?: string;
   errors: string;
 }
+
 export interface SummaryDisplayProps {
   rowData: Record<string, unknown> | undefined;
   uischema?: UISchemaElement;
   schema?: JsonSchema;
-}
-
-export interface TableRowsProp {
-  data: number;
-  path: string;
-  schema: JsonSchema;
-  uischema: ControlElement;
-  //eslint-disable-next-line
-  config?: any;
-  enabled: boolean;
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  translations: ArrayTranslations;
-  currentIndex: number;
-  setCurrentIndex: (index: number) => void;
-  setCurrentListPage: (index: number) => void;
-  currentListPage: number;
-  listTitle?: string;
-  errors: string;
 }
