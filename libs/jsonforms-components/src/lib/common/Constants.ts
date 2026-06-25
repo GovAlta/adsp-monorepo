@@ -11,6 +11,17 @@ export const ADDRESS_LOOKUP_LABELS = {
   country: 'Country',
 } as const;
 
+export const VALIDATION_KEYWORDS = {
+  REQUIRED: 'required',
+  MIN_LENGTH: 'minLength',
+  MAX_LENGTH: 'maxLength',
+  FORMAT: 'format',
+  MINIMUM: 'minimum',
+  MAXIMUM: 'maximum',
+  TYPE: 'type',
+  ERROR_MESSAGE: 'errorMessage',
+};
+
 export const getAddressLookupFieldLabel = (fieldName: string): string => {
   return ADDRESS_LOOKUP_LABELS[fieldName as keyof typeof ADDRESS_LOOKUP_LABELS] || fieldName;
 };

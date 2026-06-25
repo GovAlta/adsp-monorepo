@@ -5,7 +5,6 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
-  GoabGrid,
   GoabIcon,
   GoabIconButton,
   GoabInput,
@@ -26,7 +25,6 @@ import range from 'lodash/range';
 import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
-import { humanizeAjvError } from './ListWithDetailControl';
 import {
   ADD_DATA_ACTION,
   Categories,
@@ -56,7 +54,6 @@ import {
   NonEmptyCellStyle,
   ObjectArrayTitle,
   RequiredSpan,
-  TableTHHeader,
   TextCenter,
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
