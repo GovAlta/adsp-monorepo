@@ -799,7 +799,7 @@ const MainTab = ({
   const rowData = getDataAtPath(core?.data, childPath);
 
   function resolveField(e: any): string {
-    if (e.keyword === 'required') {
+    if (e.keyword === VALIDATION_KEYWORDS.REQUIRED) {
       return e.params.missingProperty;
     } else if (e.keyword === VALIDATION_KEYWORDS.ERROR_MESSAGE && e.params?.errors[0].params.missingProperty) {
       return e.params.errors[0].params.missingProperty;
