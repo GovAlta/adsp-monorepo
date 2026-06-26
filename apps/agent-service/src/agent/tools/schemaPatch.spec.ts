@@ -241,26 +241,28 @@ describe('createSchemaPatchTools', () => {
   });
 
   describe('error handling', () => {
-    it('throws a descriptive error when a dataSchema patch operation is invalid', async () => {
+    it('silently skips a remove op targeting a non-existent dataSchema path', async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: currentSchema });
+      mockedAxios.patch.mockResolvedValueOnce({ data: {} });
 
-      await expect(
-        tools.formSchemaPatch.execute(
-          { dataSchemaOps: [{ op: 'remove', path: '/required/99' }] },
-          ctx,
-        ),
-      ).rejects.toThrow('Invalid dataSchema patch operation');
+      const result = await tools.formSchemaPatch.execute(
+        { dataSchemaOps: [{ op: 'remove', path: '/required/99' }] },
+        ctx,
+      );
+
+      expect(result.success).toBe(true);
     });
 
-    it('throws a descriptive error when a uiSchema patch operation is invalid', async () => {
+    it('silently skips a remove op targeting a non-existent uiSchema path', async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: currentSchema });
+      mockedAxios.patch.mockResolvedValueOnce({ data: {} });
 
-      await expect(
-        tools.formSchemaPatch.execute(
-          { uiSchemaOps: [{ op: 'remove', path: '/elements/99' }] },
-          ctx,
-        ),
-      ).rejects.toThrow('Invalid uiSchema patch operation');
+      const result = await tools.formSchemaPatch.execute(
+        { uiSchemaOps: [{ op: 'remove', path: '/elements/99' }] },
+        ctx,
+      );
+
+      expect(result.success).toBe(true);
     });
 
     it('throws a schema validation error on 400 from the config service', async () => {
