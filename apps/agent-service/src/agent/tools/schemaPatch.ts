@@ -26,11 +26,21 @@ function validateAndApplyOps(
   ops: Operation[],
   schemaName: string,
 ): Record<string, unknown> {
-  const error = validate(ops, doc);
+  // Silently drop remove ops targeting a path that doesn't exist — the agent
+  // sometimes generates a remove for a field that is already absent, which
+  // would throw OPERATION_PATH_UNRESOLVABLE and waste a retry round-trip.
+  const safeOps = ops.filter((op) => {
+    if (op.op !== 'remove') return true;
+    return !validate([op], doc);
+  });
+
+  if (safeOps.length === 0) return doc;
+
+  const error = validate(safeOps, doc);
   if (error) {
     throw new Error(`Invalid ${schemaName} patch operation: ${error.message}`);
   }
-  return applyPatch(doc, ops, undefined, false).newDocument as Record<string, unknown>;
+  return applyPatch(doc, safeOps, undefined, false).newDocument as Record<string, unknown>;
 }
 
 /**
