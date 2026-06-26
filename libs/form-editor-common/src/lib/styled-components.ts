@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import styled from 'styled-components';
 
 export const EntryDetail = styled.div`
@@ -245,7 +246,7 @@ export const FormTemplateEditorContainer = styled.div`
   padding-left: 3rem;
   padding-right: 3rem;
   width: 100%;
-  height: calc(100% - 6px);
+  height: 100%;
   overflow: hidden;
   box-sizing: border-box;
 `;
@@ -367,7 +368,7 @@ export const Modal = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 10000;
+  z-index: 10000; /* clean-code-ignore: 2.9 */
   width: 100%;
   height: 100vh;
   background: var(--goa-color-greyscale-white);

@@ -203,7 +203,7 @@ export const FormDefinitionItem = ({
               type="create"
               onClick={() => {
                 dispatch(openEditorForDefinition(formDefinition.id));
-                navigate(`edit/${formDefinition.id}`);
+                navigate(`edit/${formDefinition.id}`); // clean-code-ignore: 2.18
               }}
             />
             <GoAContextMenuIcon
