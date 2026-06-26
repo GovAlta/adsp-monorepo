@@ -29,6 +29,8 @@ interface ProcessEventJobProps {
 }
 
 const LOG_CONTEXT = { context: 'ProcessEventJob' };
+const EMAIL_CONFIG_RETRY_DELAY_MS = 2000;
+const EMAIL_CONFIG_MAX_RETRIES = 5;
 export const createProcessEventJob =
   ({
     logger,
@@ -60,15 +62,35 @@ export const createProcessEventJob =
     const generationId = uuid();
     try {
       const token = await tokenProvider.getAccessToken();
-      const configuration = await configurationService.getConfiguration<
+      let configuration = await configurationService.getConfiguration<
         NotificationConfiguration,
         NotificationConfiguration
       >(serviceId, token, tenantId);
 
-      const types = configuration?.getEventNotificationTypes(event) || [];
+      let types = configuration?.getEventNotificationTypes(event) || [];
 
-      if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) { // clean-code-ignore: 2.10
-        throw new Error(`Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}`);
+      let configAttempts = 0;
+      while (
+        types.some((type) => type.channels.includes(Channel.email)) &&
+        !configuration?.email?.fromEmail &&
+        configAttempts < EMAIL_CONFIG_MAX_RETRIES
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, EMAIL_CONFIG_RETRY_DELAY_MS));
+        configuration = await configurationService.getConfiguration<
+          NotificationConfiguration,
+          NotificationConfiguration
+        >(serviceId, token, tenantId);
+        types = configuration?.getEventNotificationTypes(event) || [];
+        configAttempts++;
+      }
+
+      console.log(configAttempts + '> configattempts');
+
+      if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) {
+        // clean-code-ignore: 2.10
+        throw new Error(
+          `Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}`,
+        );
       }
 
       let count = 0;

@@ -24,6 +24,7 @@ describe('createProcessEventJob', () => {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
     getServiceConfigurationRevision: jest.fn(),
+    getNamedServiceConfiguration: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -367,52 +368,151 @@ describe('createProcessEventJob', () => {
       );
     });
 
-    it('signals retry when email fromEmail is not configured', (done) => {
-      const job = createProcessEventJob({
-        logger,
-        serviceId: adspId`urn:ads:platform:notification-service`,
-        tokenProvider: tokenProviderMock,
-        configurationService: configurationServiceMock,
-        eventService: eventServiceMock,
-        tenantService: tenantServiceMock,
-        directory: directoryMock,
-        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
-      });
+    it('signals retry when email fromEmail is not configured after retries exhausted', async () => {
+      jest.useFakeTimers();
+      try {
+        const job = createProcessEventJob({
+          logger,
+          serviceId: adspId`urn:ads:platform:notification-service`,
+          tokenProvider: tokenProviderMock,
+          configurationService: configurationServiceMock,
+          eventService: eventServiceMock,
+          tenantService: tenantServiceMock,
+          directory: directoryMock,
+          subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+          queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+        });
 
-      const type = {
-        id: 'test',
-        name: 'Test Type',
-        description: '',
-        publicSubscribe: true,
-        subscriberRoles: [],
-        channels: [Channel.email],
-        events: [{ namespace: 'test', name: 'test-run', templates: { [Channel.email]: { subject: '', body: '' } } }],
-      };
-      const configuration = new NotificationConfiguration(
-        logger,
-        templateServiceMock,
-        attachmentServiceMock,
-        { test: type },
-        {},
-        tenantId,
-      );
-      // Deliberately omit configuration.email.fromEmail to simulate config not ready
+        const type = {
+          id: 'test',
+          name: 'Test Type',
+          description: '',
+          publicSubscribe: true,
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [{ namespace: 'test', name: 'test-run', templates: { [Channel.email]: { subject: '', body: '' } } }],
+        };
+        const configuration = new NotificationConfiguration(
+          logger,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: type },
+          {},
+          tenantId,
+        );
+        // Deliberately omit configuration.email.fromEmail to simulate config never becoming ready
 
-      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
-      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
+        tokenProviderMock.getAccessToken.mockResolvedValue('token');
+        configurationServiceMock.getConfiguration.mockResolvedValue(configuration);
 
-      job(
-        { tenantId, namespace: 'test', name: 'test-run', timestamp: new Date(), payload: {}, traceparent: '123' },
-        true,
-        (err) => {
-          expect(err).toBeTruthy();
-          expect((err as Error).message).toContain(`${tenantId}`);
-          expect((err as Error).message).toContain('test:test-run');
-          expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
-          done();
-        },
-      );
+        let capturedErr: unknown;
+        const jobDone = new Promise<void>((resolve) => {
+          job(
+            { tenantId, namespace: 'test', name: 'test-run', timestamp: new Date(), payload: {}, traceparent: '123' },
+            true,
+            (err) => {
+              capturedErr = err;
+              resolve();
+            },
+          );
+        });
+
+        await jest.runAllTimersAsync();
+        await jobDone;
+
+        expect(capturedErr).toBeTruthy();
+        expect((capturedErr as Error).message).toContain(`${tenantId}`);
+        expect((capturedErr as Error).message).toContain('test:test-run');
+        expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('retries and succeeds when email fromEmail becomes available', async () => {
+      jest.useFakeTimers();
+      try {
+        const job = createProcessEventJob({
+          logger,
+          serviceId: adspId`urn:ads:platform:notification-service`,
+          tokenProvider: tokenProviderMock,
+          configurationService: configurationServiceMock,
+          eventService: eventServiceMock,
+          tenantService: tenantServiceMock,
+          directory: directoryMock,
+          subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+          queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+        });
+
+        const type = {
+          id: 'test',
+          name: 'Test Type',
+          description: '',
+          publicSubscribe: true,
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [{ namespace: 'test', name: 'test-run', templates: { [Channel.email]: { subject: '', body: '' } } }],
+        };
+
+        const configWithoutEmail = new NotificationConfiguration(
+          logger,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: type },
+          {},
+          tenantId,
+        );
+        const configWithEmail = new NotificationConfiguration(
+          logger,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: type },
+          {},
+          tenantId,
+        );
+        configWithEmail.email = { fromEmail: 'no-reply@test.com' };
+
+        tokenProviderMock.getAccessToken.mockResolvedValue('token');
+        configurationServiceMock.getConfiguration
+          .mockResolvedValueOnce(configWithoutEmail)
+          .mockResolvedValueOnce(configWithEmail);
+
+        const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+          id: 'test',
+          tenantId,
+          addressAs: 'Tester',
+          channels: [{ channel: Channel.email, address: 'test@testco.org', verified: false }],
+        });
+        const subscription = new SubscriptionEntity(
+          repositoryMock as unknown as SubscriptionRepository,
+          { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
+          null,
+          subscriber,
+        );
+        repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
+
+        let capturedErr: unknown;
+        const jobDone = new Promise<void>((resolve) => {
+          job(
+            { tenantId, namespace: 'test', name: 'test-run', timestamp: new Date(), payload: {}, traceparent: '123' },
+            true,
+            (err) => {
+              capturedErr = err;
+              resolve();
+            },
+          );
+        });
+
+        await jest.runAllTimersAsync();
+        await jobDone;
+
+        expect(capturedErr).toBeFalsy();
+        expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+          expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' }),
+        );
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('does not signal retry when matched types have no email channel', (done) => {
