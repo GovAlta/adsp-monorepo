@@ -134,9 +134,7 @@ export const FormDefinitions = ({
     }
 
     return () => {
-      const currentHref = location.pathname;
-      const redirectHref = window.location.href;
-      if (currentHref !== redirectHref && !redirectHref.includes('?headless')) {
+      if (!window.location.href.includes('/edit/')) {
         dispatch(setSelectedTag(null));
       }
     };
@@ -306,10 +304,7 @@ export const FormDefinitions = ({
         initialValue={defaultFormDefinition}
         onSave={(definition, tags) => {
           setOpenAddFormDefinition(false);
-          navigate({
-            pathname: `edit/${definition.id}`,
-            search: '?headless=true',
-          });
+          navigate(`edit/${definition.id}`);
           dispatch(updateFormDefinition(definition));
           dispatch(openEditorForDefinition(definition.id, definition));
 

@@ -22,7 +22,6 @@ export function PrivateApp(): JSX.Element {
 
   const urlParams = new URLSearchParams(window.location.search);
   const realmFromParams = urlParams.get('realm');
-  const isHeadlessPage = urlParams.get('headless') === 'true';
   const realm = realmFromParams || localStorage.getItem('realm');
 
   if (realmFromParams) {
@@ -40,31 +39,18 @@ export function PrivateApp(): JSX.Element {
       {!ready && <CenterWidthPageLoader />}
       {ready && (
         <HeaderCtx.Provider value={{ setTitle }}>
-          {isHeadlessPage !== true && (
-            <>
-              <ScrollBarFixTop>
-                <FixedContainer>
-                  <Header serviceName={title} admin={true} />
-                  <NotificationBanner />
-                  <LogoutModal />
-                </FixedContainer>
-              </ScrollBarFixTop>
-              <ScrollBarFixMain notifications={notifications}>
-                <Container>
-                  <Outlet />
-                </Container>
-              </ScrollBarFixMain>
-            </>
-          )}
-          {isHeadlessPage === true && (
-            <>
+          <ScrollBarFixTop>
+            <FixedContainer>
+              <Header serviceName={title} admin={true} />
               <NotificationBanner />
-              <Container>
-                <Outlet />
-              </Container>
               <LogoutModal />
-            </>
-          )}
+            </FixedContainer>
+          </ScrollBarFixTop>
+          <ScrollBarFixMain notifications={notifications}>
+            <Container>
+              <Outlet />
+            </Container>
+          </ScrollBarFixMain>
         </HeaderCtx.Provider>
       )}
     </>

@@ -245,7 +245,7 @@ export const FormTemplateEditorContainer = styled.div`
   padding-left: 3rem;
   padding-right: 3rem;
   width: 100%;
-  height: 100vh;
+  height: calc(100% - 6px);
   overflow: hidden;
   box-sizing: border-box;
 `;
@@ -365,8 +365,12 @@ export const TemplateEditorContainerForm = styled.div`
 export const Modal = styled.div`
   display: block;
   position: fixed;
+  top: 0;
   left: 0;
+  z-index: 10000;
   width: 100%;
+  height: 100vh;
+  background: var(--goa-color-greyscale-white);
 `;
 
 export const PreviewTemplateContainer = styled.div`
