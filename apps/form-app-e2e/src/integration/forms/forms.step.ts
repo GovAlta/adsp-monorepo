@@ -200,9 +200,15 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
     });
 });
 
-When('the user clicks submit button in the form', function () {
+When('the user clicks submit button on form summary page', function () {
   cy.wait(2000);
-  formsObj.formSubmitButton().shadow().find('button').click({ force: true });
+  formsObj.formSummaryPageSubmitButton().shadow().find('button').click({ force: true });
+  cy.wait(5000);
+});
+
+When('the user clicks submit button on the form page', function () {
+  cy.wait(2000);
+  formsObj.formPageSubmitButton().shadow().find('button').click({ force: true });
   cy.wait(5000);
 });
 
@@ -437,7 +443,7 @@ Then(
 );
 
 Then('the user views the submit button is disabled on summary page', function () {
-  formsObj.formSubmitButton().shadow().find('button').should('be.disabled');
+  formsObj.formSummaryPageSubmitButton().shadow().find('button').should('be.disabled');
 });
 
 When('the user clicks Download PDF copy link on form submission confirmation page', function () {
@@ -723,4 +729,24 @@ When('the user enters {string} in {string} List with detail control', function (
     });
     formsObj.formListWithDetailContinueButton().shadow().find('button').click({ force: true });
   });
+});
+
+Then('the user views the text field labelled {string} is required', function (label) {
+  formsObj.formFormItem(label).invoke('attr', 'requirement').should('eq', 'required');
+});
+
+Then('the user views the text field labelled {string} is not required', function (label) {
+  formsObj.formFormItem(label).should('not.have.attr', 'requirement');
+});
+
+Then('the user views the submit button is {string} on the form page', function (enabledOrNot: 'enabled' | 'disabled') {
+  if (enabledOrNot === 'enabled') {
+    cy.wait(1000); // Wait for button to change status
+    formsObj.formPageSubmitButton().shadow().find('button').should('be.enabled');
+  } else if (enabledOrNot === 'disabled') {
+    cy.wait(1000); // Wait for button to change status
+    formsObj.formPageSubmitButton().shadow().find('button').should('not.be.enabled');
+  } else {
+    expect(enabledOrNot).to.be.oneOf(['enabled', 'disabled']);
+  }
 });
