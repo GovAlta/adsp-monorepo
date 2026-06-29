@@ -84,8 +84,6 @@ export const createProcessEventJob =
         configAttempts++;
       }
 
-      console.log(configAttempts + '> configattempts');
-
       if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) {
         // clean-code-ignore: 2.10
         throw new Error(
