@@ -1,8 +1,15 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { GoabInputMultiLineTextProps, MultiLineText } from './InputMultiLineTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
+import { JsonFormsContext } from '@jsonforms/react';
+import { GoAInputBaseControl } from './InputBaseControl';
+
+const mockContextValue = {
+  errors: [],
+  data: {},
+};
 
 describe('Input Text Control tests', () => {
   const textBoxUiSchema: ControlElement = {
@@ -119,6 +126,29 @@ describe('Input Text Control tests', () => {
 
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'test' } }));
       expect(input.getAttribute('value')).toBe('test');
+    });
+
+    it('shows required validation after an empty multiline text input loses focus', async () => {
+      const props = {
+        ...staticProps,
+        data: undefined,
+        errors: '',
+        required: true,
+        schema: { type: 'string' },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputBaseControl {...props} input={MultiLineText} />
+        </JsonFormsContext.Provider>,
+      );
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
+
+      fireEvent(input!, new CustomEvent('_blur', { detail: { name: 'test', value: '' } }));
+
+      await waitFor(() => {
+        expect(baseElement.querySelector('goa-form-item[error="My First name is required"]')).toBeInTheDocument();
+      });
     });
   });
 });

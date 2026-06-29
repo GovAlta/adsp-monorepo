@@ -14,7 +14,11 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onChangeForInputControl } from '../../util/inputControlUtils';
-import { GoabTextAreaOnChangeDetail, GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+import {
+  GoabTextAreaOnBlurDetail,
+  GoabTextAreaOnChangeDetail,
+  GoabTextAreaOnKeyPressDetail,
+} from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
 export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -63,6 +67,15 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
       onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+        const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
+
+        setTextAreaValue(newValue);
+
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
+      }}
+      onBlur={(detail: GoabTextAreaOnBlurDetail) => {
         const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
 
         setTextAreaValue(newValue);

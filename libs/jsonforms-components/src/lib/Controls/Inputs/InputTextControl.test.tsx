@@ -1,4 +1,4 @@
-import { fireEvent, render, act } from '@testing-library/react';
+import { fireEvent, render, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { GoAInputTextProps, GoAInputText, formatSin } from './InputTextControl';
@@ -176,6 +176,29 @@ describe('Input Text Control tests', () => {
       const blurred = fireEvent.blur(input!);
 
       expect(blurred).toBe(true);
+    });
+
+    it('shows required validation after an empty text input loses focus', async () => {
+      const props = {
+        ...staticProps,
+        data: undefined,
+        errors: '',
+        required: true,
+        schema: { type: 'string' },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputBaseControl {...props} input={GoAInputText} />
+        </JsonFormsContext.Provider>,
+      );
+      const input = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      fireEvent(input!, new CustomEvent('_blur', { detail: { name: 'firstName', value: '' } }));
+
+      await waitFor(() => {
+        expect(baseElement.querySelector('goa-form-item[error="My First name is required"]')).toBeInTheDocument();
+      });
     });
 
     it('calls onChange for input text control', () => {

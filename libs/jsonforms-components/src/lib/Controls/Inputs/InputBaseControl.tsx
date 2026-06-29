@@ -107,7 +107,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         >
           <GoabFormItem
             requirement={uischema?.options?.componentProps?.requirement ?? (requiredNow ? 'required' : undefined)}
-            error={currentCategory?.isVisited === true || hasValue ? modifiedErrors : undefined}
+            error={currentCategory?.isVisited === true || isVisited || hasValue ? modifiedErrors : undefined}
             testId={isStepperReview === true ? `review-base-${path}` : path}
             label={props?.noLabel === true ? '' : labelToUpdate}
             helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
