@@ -83,6 +83,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
                 for (let i = 0; i < extracted.images.length; i++) {
                   const img = extracted.images[i];
                   parts.push({ type: 'text', text: `Diagram ${i + 1}:` });
+                  // SDK declares ImagePart.image as URL but accepts data URI strings at runtime; cast is intentional.
                   parts.push({ type: 'image', image: `data:${img.mimeType};base64,${img.data}` as unknown as URL, mediaType: img.mimeType });
                 }
               }
@@ -100,7 +101,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
               ];
             }
           } catch (err) {
-            this.logger.warn(`Failed to extract text from document '${filename}': ${err.message}`, {
+            this.logger.warn(`Failed to extract text from document '${filename}': ${err instanceof Error ? err.message : String(err)}`, {
               context: 'FileServiceDownloadProcessor',
               tenant: tenantId?.toString(),
             });

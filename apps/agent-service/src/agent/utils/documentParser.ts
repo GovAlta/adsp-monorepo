@@ -125,6 +125,7 @@ export async function extractDocumentText(
 
       // Replace the empty <img src=""> placeholders with positional markers so the
       // agent knows where each diagram belongs without seeing broken image tags.
+      // diagramIndex increments per match so each img tag maps to a sequentially numbered marker.
       let diagramIndex = 0;
       const htmlWithMarkers = normalizeLigatures(result.value).replace(/<img[^>]*\/?>/gi, () => {
         diagramIndex++;

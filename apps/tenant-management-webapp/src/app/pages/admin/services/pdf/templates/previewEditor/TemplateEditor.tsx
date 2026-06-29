@@ -109,6 +109,13 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     [dispatch],
   );
 
+  const notifyAttachmentUploadError = useCallback(
+    (err: unknown) => {
+      dispatch(ErrorNotification({ message: err instanceof Error ? err.message : String(err) }));
+    },
+    [dispatch],
+  );
+
   const handleAttachmentUpload = useCallback(
     async (file: File): Promise<Attachment> => {
       try {
@@ -127,11 +134,11 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
           thumbnailUrl: type === 'image' ? dataUrl : undefined,
         };
       } catch (err) {
-        dispatch(ErrorNotification({ message: err }));
+        notifyAttachmentUploadError(err);
         throw err;
       }
     },
-    [dispatch, tmpTemplate.id],
+    [dispatch, tmpTemplate.id, notifyAttachmentUploadError],
   );
 
   useEffect(() => {
