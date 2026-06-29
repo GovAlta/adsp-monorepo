@@ -50,6 +50,8 @@ export interface PdfTemplateConfiguration { // clean-code-ignore: RULE-19
   template: string;
   header?: string;
   footer?: string;
+  additionalStyles?: string;
+  variables?: string;
 }
 
 

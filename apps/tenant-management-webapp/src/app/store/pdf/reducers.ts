@@ -3,6 +3,7 @@ import {
   FETCH_PDF_METRICS_SUCCESS_ACTION,
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   PdfActionTypes,
+  CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION,
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
@@ -63,6 +64,15 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       //Intentionally don't want to cause an immediate refresh on update, as it refreshed the preview pane on text input
       state.tempTemplate = action.payload;
       return state;
+    case CREATE_PDF_TEMPLATE_SUCCESS_ACTION:
+      return {
+        ...state,
+        pdfTemplates: {
+          ...state.pdfTemplates,
+          [action.template.id]: action.template,
+        },
+        openEditor: action.template.id,
+      };
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,

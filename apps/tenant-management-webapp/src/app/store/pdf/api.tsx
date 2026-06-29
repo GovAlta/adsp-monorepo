@@ -32,3 +32,12 @@ export const createPdfJobApi = async (token: string, url: string, body: CreatePd
   const res = await axios.post(url, body, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };
+
+export const createPdfTemplateApi = async (
+  token: string,
+  url: string,
+  body: { name: string; description: string; template?: string; header?: string; footer?: string; additionalStyles?: string; variables?: string }
+) => {
+  const res = await axios.post(url, body, { headers: { Authorization: `Bearer ${token}` } });
+  return res.data;
+};

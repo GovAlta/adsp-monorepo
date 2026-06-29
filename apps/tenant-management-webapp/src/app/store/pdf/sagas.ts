@@ -10,6 +10,9 @@ import {
   FETCH_PDF_TEMPLATES_ACTION,
   FETCH_CORE_PDF_TEMPLATES_ACTION,
   getPdfTemplatesSuccess,
+  CreatePdfTemplateAction,
+  createPdfTemplateSuccess,
+  CREATE_PDF_TEMPLATE_ACTION,
   UpdatePdfTemplatesAction,
   updatePdfTemplateSuccess,
   updatePdfTemplateSuccessNoRefresh,
@@ -49,6 +52,7 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
 import {
   fetchPdfTemplatesApi,
+  createPdfTemplateApi,
   updatePDFTemplateApi,
   fetchPdfFileApi,
   deletePdfFileApi,
@@ -196,6 +200,33 @@ const connect = (pushServiceUrl, stream) => {
     return socket;
   });
 };
+
+export function* createPdfTemplateSaga({ template }: CreatePdfTemplateAction): SagaIterator {
+  const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
+
+  yield put(UpdateElementIndicator({ show: true }));
+
+  const token: string = yield call(getAccessToken);
+  if (pdfServiceUrl && token) {
+    try {
+      const url = `${pdfServiceUrl}/pdf/v1/templates`;
+      const createdTemplate = yield call(createPdfTemplateApi, token, url, {
+        name: template.name,
+        description: template.description,
+        template: template.template,
+        header: template.header,
+        footer: template.footer,
+        additionalStyles: template.additionalStyles,
+        variables: template.variables,
+      });
+      yield put(createPdfTemplateSuccess(createdTemplate));
+      yield put(UpdateElementIndicator({ show: false }));
+    } catch (err) {
+      yield put(UpdateElementIndicator({ show: false }));
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
 
 export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -459,6 +490,7 @@ export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponse
 export function* watchPdfSagas(): Generator {
   yield takeEvery(FETCH_PDF_TEMPLATES_ACTION, fetchPdfTemplates);
   yield takeEvery(FETCH_CORE_PDF_TEMPLATES_ACTION, fetchCorePdfTemplates);
+  yield takeEvery(CREATE_PDF_TEMPLATE_ACTION, createPdfTemplateSaga);
   yield takeEvery(UPDATE_PDF_TEMPLATE_ACTION, updatePdfTemplate);
   yield takeEvery(FETCH_PDF_METRICS_ACTION, fetchPdfMetrics);
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);

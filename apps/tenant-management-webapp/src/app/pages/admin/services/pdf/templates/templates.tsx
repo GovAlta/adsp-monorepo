@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
 import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
+import { getPdfTemplates, createPdfTemplate, updatePdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
@@ -96,7 +96,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
         onClose={reset}
         initialValue={defaultPdfTemplate}
         onSave={(template) => {
-          dispatch(updatePdfTemplate(template));
+          dispatch(createPdfTemplate(template));
         }}
       />
 

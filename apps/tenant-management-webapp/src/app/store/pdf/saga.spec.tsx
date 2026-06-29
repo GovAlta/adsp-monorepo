@@ -1,8 +1,9 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchPdfTemplates, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
-import { fetchPdfTemplatesApi, deletePdfFileApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
+import { fetchPdfTemplates, createPdfTemplateSaga, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
+import { fetchPdfTemplatesApi, createPdfTemplateApi, deletePdfFileApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
+  CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
@@ -63,6 +64,43 @@ const storeState = {
     tempTemplate: mockTemplates,
   },
 };
+
+it('Create Pdf template', () => {
+  const templateToCreate = {
+    id: 'new-template',
+    name: 'New Template',
+    description: 'A new template',
+    template: '',
+    header: '',
+    footer: '',
+    additionalStyles: '',
+  };
+
+  const createdTemplate = {
+    id: 'new-template',
+    name: 'New Template',
+    description: 'A new template',
+    template: '',
+  };
+
+  return expectSaga(createPdfTemplateSaga, { type: 'pdf/CREATE_PDF_TEMPLATE_ACTION', template: templateToCreate })
+    .withState(storeState)
+    .provide({
+      call(effect, next) {
+        if (effect.fn === createPdfTemplateApi) {
+          return createdTemplate;
+        }
+        return next();
+      },
+    })
+    .put.like({
+      action: {
+        type: CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
+        template: createdTemplate,
+      },
+    })
+    .run();
+});
 
 it('Delete Pdf template', () => {
   const templateToDelete = {
