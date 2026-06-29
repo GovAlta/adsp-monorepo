@@ -47,7 +47,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return input;
   }
 
-  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<Array<TextPart | FilePart | ImagePart>> {
+  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<Array<TextPart | FilePart | ImagePart> | undefined> {
     const data = content.type === 'file' ? content.data : content.image;
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);
@@ -68,10 +68,26 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
                 ? `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form structure was extracted from the embedded XML:`
                 : `Provided document has filename '${filename}' and file service URN of: ${urn}`;
 
-              return [
+              const contentLabel = extracted.format === 'html' ? 'Extracted HTML content' : 'Extracted text content';
+
+              const parts: Array<TextPart | FilePart | ImagePart> = [
                 { type: 'text', text: prefix },
-                { type: 'text', text: `Extracted text content from '${filename}':\n\n${extracted.text}` },
+                { type: 'text', text: `${contentLabel} from '${filename}':\n\n${extracted.text}` },
               ];
+
+              if (extracted.images?.length) {
+                parts.push({
+                  type: 'text',
+                  text: `The document contains ${extracted.images.length} embedded diagram(s). Each [DIAGRAM_N] marker in the HTML above shows where diagram N appears in the document. Reproduce each diagram in HTML/CSS at its marker position. The diagrams are provided as vision images below:`,
+                });
+                for (let i = 0; i < extracted.images.length; i++) {
+                  const img = extracted.images[i];
+                  parts.push({ type: 'text', text: `Diagram ${i + 1}:` });
+                  parts.push({ type: 'image', image: `data:${img.mimeType};base64,${img.data}` as unknown as URL, mediaType: img.mimeType });
+                }
+              }
+
+              return parts;
             }
 
             // XFA form detected but no content could be extracted
@@ -108,7 +124,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     const { data, metadata } = await this.fileServiceClient.getFileAndMetadata(tenantId, resourceId);
 
     this.logger.info(`File downloaded by agent: ${resourceId}`, {
-      context: 'fileDownloadTool',
+      context: 'FileServiceDownloadProcessor',
       tenant: tenantId?.toString(),
     });
 

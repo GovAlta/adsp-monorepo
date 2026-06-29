@@ -15,19 +15,17 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoabButton, GoabFormItem, GoabButtonGroup, GoabCircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabButtonGroup, GoabCircularProgress, GoabBadge } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { DeleteModal } from '@components/DeleteModal';
-import { GoabBadge } from '@abgov/react-components';
-import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
+import { agentConnectedSelector, threadSelector, messagesSelector } from '@store/agent/selectors';
 import { connectAgent, disconnectAgent, messageAgent, startThread } from '@store/agent/actions';
-import { messagesSelector } from '@store/agent/selectors';
-import { AgentChat } from '@core-services/app-common';
-import { UserContent } from '@core-services/app-common';
+import { ErrorNotification } from '@store/notifications/actions';
+import { AgentChat, Attachment, UserContent } from '@core-services/app-common';
 
 import {
   deletePdfFilesService,
@@ -39,7 +37,7 @@ import {
 } from '@store/pdf/action';
 
 import { RootState, AppDispatch } from '@store/index';
-import { FetchFileService } from '@store/file/actions';
+import { FetchFileService, UploadFileService } from '@store/file/actions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
@@ -48,6 +46,8 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { v4 as uuid } from 'uuid';
 
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
+
+const resolveAttachmentType = (file: File): Attachment['type'] => (file.type.startsWith('image/') ? 'image' : 'file');
 
 interface TemplateEditorProps {
   //eslint-disable-next-line
@@ -107,6 +107,31 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       dispatch(messageAgent(tid, context, content));
     },
     [dispatch],
+  );
+
+  const handleAttachmentUpload = useCallback(
+    async (file: File): Promise<Attachment> => {
+      try {
+        const type = resolveAttachmentType(file);
+        const { uploadedFile, dataUrl } = await dispatch(
+          UploadFileService({
+            type: 'agent-attachments',
+            file,
+            recordId: tmpTemplate.id,
+          })
+        );
+        return {
+          urn: uploadedFile.urn,
+          filename: uploadedFile.filename || file.name,
+          type,
+          thumbnailUrl: type === 'image' ? dataUrl : undefined,
+        };
+      } catch (err) {
+        dispatch(ErrorNotification({ message: err }));
+        throw err;
+      }
+    },
+    [dispatch, tmpTemplate.id],
   );
 
   useEffect(() => {
@@ -337,6 +362,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                       messages={messages}
                       disabled={!agentConnected || !thread}
                       onSend={handleAgentSend}
+                      onAttachmentUpload={handleAttachmentUpload}
                     />
                   </div>
                 </Tab>
