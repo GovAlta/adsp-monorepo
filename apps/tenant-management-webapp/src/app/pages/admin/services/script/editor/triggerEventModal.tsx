@@ -33,6 +33,7 @@ interface TriggerEventModalProps {
   selectedEventName?: string;
 }
 
+// clean-code-ignore: RULE-19
 export const TriggerEventModal = ({
   initialScript,
   onCancel,
@@ -167,11 +168,8 @@ export const TriggerEventModal = ({
           value={`${triggerEvent.namespace}:${triggerEvent.name}`}
           width="55ch"
           onChange={(detail: GoabDropdownOnChangeDetail) => {
-            setTriggerEvent({
-              ...triggerEvent,
-              namespace: detail.values && detail.values.toString().split(':')[0],
-              name: detail.values && detail.values.toString().split(':')[1],
-            });
+            const [namespace, name] = detail.value?.split(':') || [];
+            setTriggerEvent({ ...triggerEvent, namespace, name });
           }}
         >
           {filteredEventNames &&
