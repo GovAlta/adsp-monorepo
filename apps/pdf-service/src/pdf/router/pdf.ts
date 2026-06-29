@@ -37,12 +37,14 @@ export interface RouterProps {
   tokenProvider: TokenProvider;
 }
 
-function mapPdfTemplate({ id, name, description, template }: PdfTemplateEntity) {
+function mapPdfTemplate({ id, name, description, template, header, footer }: PdfTemplateEntity) {
   return {
     id,
     name,
     description,
     template,
+    header,
+    footer,
   };
 }
 
@@ -186,6 +188,46 @@ async function deletePdfTemplateFromConfig(
       params: { tenantId },
     },
   );
+}
+
+// clean-code-ignore: 2.3 2.10
+export function updatePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('update pdf template', user);
+      }
+
+      const template: PdfTemplateEntity = req[TEMPLATE];
+      const { template: templateBody, header, footer } = req.body;
+
+      const updated: PdfTemplateConfiguration = {
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        template: templateBody !== undefined ? templateBody : template.template,
+        header: header !== undefined ? header : template.header,
+        footer: footer !== undefined ? footer : template.footer,
+      };
+
+      const patch: ConfigurationUpdateOperation<PdfTemplateConfiguration> = {
+        operation: 'UPDATE',
+        update: { [template.id]: updated },
+      };
+
+      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
+
+      res.status(HttpStatusCodes.CREATED).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 // clean-code-ignore: 2.18
@@ -332,6 +374,17 @@ export function createPdfRouter({
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
     getTemplate('params'),
     (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
+  );
+  router.patch(
+    '/templates/:templateId',
+    createValidationHandler(
+      param('templateId').isString().isLength({ min: 1, max: 50 }),
+      body('template').optional().isString(),
+      body('header').optional().isString(),
+      body('footer').optional().isString(),
+    ),
+    getTemplate('params'),
+    updatePdfTemplate(directory, tokenProvider),
   );
   router.delete(
     '/templates/:templateId',
