@@ -824,7 +824,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   }
 
   const content = (
-    <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
+    <Visible $visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
         {listTitle && (
           <ObjectArrayTitle>

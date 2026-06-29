@@ -21,7 +21,7 @@ export const renderLayoutElements = (
   path?: string,
   enabled?: boolean,
   renderers?: JsonFormsRendererRegistryEntry[],
-  cells?: JsonFormsCellRendererRegistryEntry[]
+  cells?: JsonFormsCellRendererRegistryEntry[],
 ) => {
   return elements.map((child, index) => (
     <JsonFormsDispatch
@@ -72,7 +72,7 @@ export const LayoutRenderer = ({
   } else {
     if (direction === 'row') {
       return (
-        <Visible visible={visible}>
+        <Visible $visible={visible}>
           <GoabGrid minChildWidth={width || '10ch'}>
             {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
           </GoabGrid>
@@ -80,7 +80,7 @@ export const LayoutRenderer = ({
       );
     } else {
       return (
-        <Visible visible={visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Visible>
+        <Visible $visible={visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Visible>
       );
     }
   }
@@ -101,13 +101,13 @@ export const ReviewLayoutRenderer = ({
   } else {
     if (direction === 'row') {
       return (
-        <Visible visible={visible}>
+        <Visible $visible={visible}>
           <ReviewGrid>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</ReviewGrid>
         </Visible>
       );
     } else {
       return (
-        <Visible visible={visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Visible>
+        <Visible $visible={visible}>{renderLayoutElements(elements, schema, path, enabled, renderers, cells)}</Visible>
       );
     }
   }

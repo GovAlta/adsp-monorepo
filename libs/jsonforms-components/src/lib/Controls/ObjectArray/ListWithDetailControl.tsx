@@ -1148,7 +1148,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
     const editMode = this.state.currentListPage !== 0 && !withLeftTab;
 
     return (
-      <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
+      <Visible $visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
           {listTitle && (
             <MarginTop>

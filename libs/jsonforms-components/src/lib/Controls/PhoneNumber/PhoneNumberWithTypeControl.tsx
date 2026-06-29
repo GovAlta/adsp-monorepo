@@ -33,7 +33,7 @@ export const PhoneNumberWithTypeControl = (props: ControlProps): JSX.Element => 
   useEffect(() => {
     const nextData = normalizePhoneData(data);
     setFormData((currentData) =>
-      currentData.type === nextData.type && currentData.number === nextData.number ? currentData : nextData
+      currentData.type === nextData.type && currentData.number === nextData.number ? currentData : nextData,
     );
   }, [data]);
 
@@ -51,7 +51,7 @@ export const PhoneNumberWithTypeControl = (props: ControlProps): JSX.Element => 
   };
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <PhoneGrid>
         <GoabFormItem label="Phone type" requirement={required ? 'required' : undefined}>
           <GoabDropdown
