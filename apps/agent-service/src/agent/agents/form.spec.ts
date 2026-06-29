@@ -220,34 +220,31 @@ describe('formGenerationAgent', () => {
 
   it('includes HelpContent behavioral rules section', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('## HelpContent Behavioral Rules');
+    expect(instructions).toContain('## HelpContent Rules');
   });
 
   it('instructs to default to markdown true for HelpContent', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('ALWAYS set');
     expect(instructions).toContain('"markdown": true');
-    expect(instructions).toContain('unless the user specifically requests otherwise');
+    expect(instructions).toContain('unless the user requests otherwise');
   });
 
   it('instructs to offer help text when adding new fields', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Offer Help Text When Adding Fields');
-    expect(instructions).toContain("ask the user if they'd like to include help text");
+    expect(instructions).toContain('When adding a new field, briefly ask if they want help text');
   });
 
   it('instructs to consolidate adjacent HelpContent elements', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Consolidate Adjacent HelpContent');
-    expect(instructions).toContain('adjacent help content blocks');
-    expect(instructions).toContain('consolidate them into a single HelpContent element');
+    expect(instructions).toContain('Check for adjacent HelpContent elements after any uiSchema update');
+    expect(instructions).toContain('offer to consolidate');
   });
 
   it('instructs to clean up HelpContent when deleting controls', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Clean Up HelpContent When Deleting Controls');
-    expect(instructions).toContain('adjacent help content');
-    expect(instructions).toContain('Would you like me to remove that help content too');
+    expect(instructions).toContain('When removing a Control, check for adjacent HelpContent');
+    expect(instructions).toContain('ask whether to remove it too');
   });
 
   it('includes Data Registers behavioral section', () => {
@@ -258,14 +255,14 @@ describe('formGenerationAgent', () => {
 
   it('instructs to suggest data registers for reusable dropdown values', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Would you like to create a data register');
-    expect(instructions).toContain('reused in other forms');
+    expect(instructions).toContain('Data registers are a non-standard ADSP extension');
+    expect(instructions).toContain('shared across forms');
   });
 
-  it('instructs to check existing registers after user confirms values', () => {
+  it('instructs to check existing registers before creating a new one', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('dataRegisterListTool');
-    expect(instructions).toContain('Check for existing registers FIRST');
+    expect(instructions).toContain('Check for existing registers with similar names');
   });
 
   it('documents label/value mapping for object registers', () => {
@@ -276,57 +273,54 @@ describe('formGenerationAgent', () => {
 
   it('instructs to collect register values from user before calling any tools', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Collecting Data Register Values from the User');
-    expect(instructions).toContain('MANDATORY before creating');
+    expect(instructions).toContain('Creating a new register (MANDATORY flow)');
     expect(instructions).toContain('NEVER guess or infer register values');
-    expect(instructions).toContain('Simple list');
-    expect(instructions).toContain('Label/value pairs');
+    expect(instructions).toContain('simple list (label = value)');
+    expect(instructions).toContain('label/value pairs');
   });
 
-  it('provides example prompts for both register data formats', () => {
+  it('describes both register data formats', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Monday, Tuesday, Wednesday, Thursday, Friday');
-    expect(instructions).toContain('Education');
-    expect(instructions).toContain('Label property');
-    expect(instructions).toContain('Value property');
+    expect(instructions).toContain('simple list (label = value)');
+    expect(instructions).toContain('label/value pairs');
   });
 
   it('instructs to confirm register details before creating', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Confirm before creating');
     expect(instructions).toContain('Does this look right');
+    expect(instructions).toContain('wire it into your form');
   });
 
   it('instructs never to guess register values', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('NEVER guess or infer register values');
-    expect(instructions).toContain('do not make up placeholder data');
   });
 
   it('includes data register tool input requirements', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('dataRegisterCreateTool: must include name and data');
-    expect(instructions).toContain('dataRegisterGetTool: must include name');
-    expect(instructions).toContain('dataRegisterUpdateTool: must include name and data');
+    expect(instructions).toContain('dataRegisterCreateTool');
+    expect(instructions).toContain('dataRegisterGetTool');
+    expect(instructions).toContain('dataRegisterUpdateTool');
+    expect(instructions).toContain('must include name and data');
   });
 
   it('instructs to retrieve current values and confirm before updating registers', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).toContain('Updating Data Register Values (MANDATORY before updating)');
+    expect(instructions).toContain('Updating an existing register (MANDATORY flow)');
     expect(instructions).toContain('dataRegisterGetTool');
-    expect(instructions).toContain('Confirm before updating');
+    expect(instructions).toContain('Does this look right');
     expect(instructions).toContain(
-      'NEVER call `dataRegisterUpdateTool` without first retrieving the current values and getting user confirmation',
+      'NEVER call dataRegisterUpdateTool without first retrieving current values',
     );
   });
 
   it('retains core instruction sections alongside examples', () => {
     const instructions = formGenerationAgent.instructions;
-    // Workflow
-    expect(instructions).toContain('## Workflow');
+    // Session workflow
+    expect(instructions).toContain('## Session start');
     expect(instructions).toContain('formConfigurationRetrievalTool');
-    // Tool usage
-    expect(instructions).toContain('Tool Usage');
+    // Tool required inputs
+    expect(instructions).toContain('## Tool required inputs');
     expect(instructions).toContain('formConfigurationUpdateTool');
     expect(instructions).toContain('schemaDefinitionTool');
     expect(instructions).toContain('fileDownloadTool');
@@ -339,15 +333,15 @@ describe('formGenerationAgent', () => {
 
   // --- CS-4960: preserving the existing form definition ---
   describe('preserving the existing form definition (CS-4960)', () => {
-    it('includes the Preserving the Existing Form Definition section', () => {
+    it('includes the schema integrity constraints section', () => {
       const instructions = formGenerationAgent.instructions;
-      expect(instructions).toContain('Preserving the Existing Form Definition');
+      expect(instructions).toContain('Schema integrity');
     });
 
-    it('explains that the update tool REPLACES the dataSchema and uiSchema rather than merging', () => {
+    it('explains that the update tool REPLACES rather than merging', () => {
       const instructions = formGenerationAgent.instructions;
-      expect(instructions).toContain('REPLACES the dataSchema and uiSchema');
-      expect(instructions).toContain('it does NOT merge them');
+      expect(instructions).toContain('NEVER send only new or changed fields to formConfigurationUpdateTool');
+      expect(instructions).toContain('it REPLACES, not merges');
     });
 
     it('instructs never to delete existing content unless explicitly asked', () => {
@@ -359,10 +353,8 @@ describe('formGenerationAgent', () => {
 
     it('instructs never to completely rewrite or replace an existing schema unless explicitly asked', () => {
       const instructions = formGenerationAgent.instructions;
-      expect(instructions).toContain('NEVER completely rewrite or "replace" an existing schema.');
-      expect(instructions).toContain(
-        'Only rewrite a schema from scratch if the user EXPLICITLY asks you to start over or replace the whole form.',
-      );
+      expect(instructions).toContain('NEVER completely rewrite or replace an existing schema.');
+      expect(instructions).toContain('explicitly asks to start over');
     });
 
     it('instructs never to change the name of the form definition', () => {
@@ -378,6 +370,8 @@ describe('formGenerationAgent', () => {
 
   it('has the correct tools configured', () => {
     expect(formGenerationAgent.tools).toEqual([
+      'formSchemaIndex',
+      'formSchemaPatch',
       'schemaDefinitionTool',
       'formConfigurationRetrievalTool',
       'formConfigurationUpdateTool',
