@@ -1,7 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
 import { RootState, store } from '../index';
-import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
+import { select, call, put, takeEvery, takeLatest, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -63,11 +63,11 @@ export function* fetchPdfTemplates(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading template...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
@@ -78,14 +78,14 @@ export function* fetchPdfTemplates(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -95,11 +95,11 @@ export function* fetchCorePdfTemplates(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading template...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
@@ -111,14 +111,14 @@ export function* fetchCorePdfTemplates(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -143,6 +143,10 @@ export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProc
 
   if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
     yield put(generatePdfSuccess(action.payload));
+  }
+
+  if (action.payload.name === 'pdf-generation-failed') {
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaIterator {
@@ -219,7 +223,7 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
         yield put(
           updatePdfTemplateSuccessNoRefresh({
             ...latest.configuration,
-          })
+          }),
         );
       } else {
         yield put(
@@ -227,8 +231,8 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
             {
               ...latest.configuration,
             },
-            { templateId: template.id }
-          )
+            { templateId: template.id },
+          ),
         );
       }
       yield put(UpdateElementIndicator({ show: false }));
@@ -254,7 +258,7 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -275,7 +279,7 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
       yield put(
         deletePdfTemplateSuccess({
           ...latest.configuration,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -349,7 +353,7 @@ export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): Sag
     UpdateIndicator({
       show: true,
       message: 'Processing may take a while. Please wait...',
-    })
+    }),
   );
 
   if (pdfServiceUrl && token && baseUrl) {
@@ -388,17 +392,12 @@ export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): Sag
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
       yield put(generatePdfSuccess(pdfResponse, saveBody.update));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -416,25 +415,21 @@ export function* fetchPdfMetrics(): SagaIterator {
         generationDuration: metrics[durationMetric]?.values[0]
           ? parseInt(metrics[durationMetric]?.values[0].avg)
           : null,
-      })
+      }),
     );
   });
 }
 
-const MUTATION_TOOLS = new Set([
-  'pdfConfigurationUpdateTool',
-  'pdfDataUpdateTool'
-]);
+const MUTATION_TOOLS = new Set(['pdfConfigurationUpdateTool', 'pdfDataUpdateTool']);
 
 function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
   return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
 }
 
-
 export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponseAction): SagaIterator {
   if (isMutationToolResult(chunk)) {
     yield put(markPdfPreviewStale());
-      const chunkPayload  = chunk?.payload as unknown as { result: Record<string, object> };
+    const chunkPayload = chunk?.payload as unknown as { result: Record<string, object> };
     yield put(saveUpdatedPdfTemplate(chunkPayload.result));
   }
 
@@ -466,7 +461,7 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
   yield takeEvery(DELETE_PDF_FILE_SERVICE, deletePdfFileService);
   yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);
-  yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
+  yield takeLatest(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
   yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
   yield takeEvery(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
 }
