@@ -129,7 +129,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   }, [stepperState?.targetScope, uischema.scope]);
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <div ref={controlRef}>
         <NameInputs
           firstName={formData.firstName}

@@ -18,7 +18,7 @@ export const GoAGroupControlComponent = (props: LayoutProps & withIsStepper): JS
   const accent = componentProps?.accent as GoabContainerAccent | undefined;
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       {accent === 'thick' && (
         <GoabContainer heading={group.label} {...componentProps}>
           {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}

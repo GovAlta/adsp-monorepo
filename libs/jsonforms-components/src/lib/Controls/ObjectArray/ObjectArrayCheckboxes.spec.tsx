@@ -4,8 +4,8 @@ import '@testing-library/jest-dom';
 import { PrimitiveArrayControl } from './ObjectArray';
 
 jest.mock('../../util', () => ({
-  Visible: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
-    visible ? <>{children}</> : null,
+  Visible: ({ $visible, children }: { $visible?: boolean; children: React.ReactNode }) =>
+    $visible !== false ? <>{children}</> : null,
   getLabelText: (_scope: string, label: string) => label,
 }));
 

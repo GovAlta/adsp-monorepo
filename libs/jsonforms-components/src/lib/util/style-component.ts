@@ -8,8 +8,8 @@ export const VerticalLayout = styled.div`
 `;
 
 export const Visible = styled.div<{
-  visible: boolean | undefined;
+  $visible?: boolean;
 }>`
-  display: ${(p) => (p.visible ? 'block' : 'none')};
+  display: ${(p) => (p.$visible !== false ? 'block' : 'none')};
   width: 100%;
 `;

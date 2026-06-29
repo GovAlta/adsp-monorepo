@@ -21,7 +21,7 @@ export const PhoneNumberControl = (props: PhoneNumberControlProps): JSX.Element 
   };
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <GoabFormItem
         label={schema?.title || 'Phone number'}
         requirement={required ? 'required' : undefined}

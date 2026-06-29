@@ -78,7 +78,7 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
       currentData.middleName === nextData.middleName &&
       currentData.lastName === nextData.lastName
         ? currentData
-        : nextData
+        : nextData,
     );
   }, [data]);
 
@@ -118,7 +118,7 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
   }, [stepperState?.targetScope, uischema.scope]);
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <div ref={controlRef}>
         <NameInputs
           firstName={nameData.firstName}

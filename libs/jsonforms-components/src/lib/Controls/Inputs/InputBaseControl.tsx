@@ -99,7 +99,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
-      <Visible visible={visible}>
+      <Visible $visible={visible}>
         <FormFieldWrapper
           ref={controlRef}
           className="jsonforms-elements-wrapper"
