@@ -42,7 +42,7 @@ const GoACalloutController = (props: ControlProps) => {
 
   const calloutProps = uischema?.options?.componentProps || {};
 
-  return <Visible visible={showCallout}>{callout(calloutProps)}</Visible>;
+  return <Visible $visible={showCallout}>{callout(calloutProps)}</Visible>;
 };
 
 /* istanbul ignore next */

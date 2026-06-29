@@ -6,7 +6,7 @@ import * as jsonforms from '@jsonforms/react';
 
 jest.mock('../../util', () => ({
   //eslint-disable-next-line
-  Visible: ({ visible, children }: any) => (visible ? children : null),
+  Visible: ({ $visible, children }: any) => ($visible !== false ? children : null),
 }));
 
 jest.mock('@jsonforms/react', () => {

@@ -203,10 +203,7 @@ export const FormDefinitionItem = ({
               type="create"
               onClick={() => {
                 dispatch(openEditorForDefinition(formDefinition.id));
-                navigate({
-                  pathname: `edit/${formDefinition.id}`,
-                  search: '?headless=true',
-                });
+                navigate(`edit/${formDefinition.id}`); // clean-code-ignore: 2.18
               }}
             />
             <GoAContextMenuIcon

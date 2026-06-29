@@ -98,7 +98,7 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   }, [schema.default, data]);
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <JsonFormRegisterProvider defaultRegisters={undefined}>
         <FormFieldWrapper>
           <GoabFormItem

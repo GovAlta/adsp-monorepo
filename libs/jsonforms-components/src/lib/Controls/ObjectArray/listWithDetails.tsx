@@ -24,12 +24,15 @@ const getDataAtPath = (data: unknown, path: string) =>
   path
     .replace(/\[(\d+)\]/g, '.$1')
     .split('.')
-    .reduce<unknown>((acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), data);
+    .reduce<unknown>(
+      (acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined),
+      data,
+    );
 
 const collectFileFields = (
   schema: JsonSchema | undefined,
   value: unknown,
-  currentPath: string
+  currentPath: string,
 ): Array<{ path: string; urn: string }> => {
   if (!schema || value === undefined || value === null) {
     return [];
@@ -41,12 +44,18 @@ const collectFileFields = (
 
   if (schema.type === 'object' && !Array.isArray(schema.properties) && schema.properties && typeof value === 'object') {
     return Object.entries(schema.properties).flatMap(([key, propertySchema]) =>
-      collectFileFields(propertySchema as JsonSchema, (value as Record<string, unknown>)[key], composePaths(currentPath, key))
+      collectFileFields(
+        propertySchema as JsonSchema,
+        (value as Record<string, unknown>)[key],
+        composePaths(currentPath, key),
+      ),
     );
   }
 
   if (schema.type === 'array' && Array.isArray(value) && schema.items && !Array.isArray(schema.items)) {
-    return value.flatMap((item, index) => collectFileFields(schema.items as JsonSchema, item, composePaths(currentPath, `${index}`)));
+    return value.flatMap((item, index) =>
+      collectFileFields(schema.items as JsonSchema, item, composePaths(currentPath, `${index}`)),
+    );
   }
 
   return [];
@@ -72,7 +81,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
       setName(name);
       setRowData(rowIndex);
     },
-    [setOpen, setPath, setRowData]
+    [setOpen, setPath, setRowData],
   );
   const deleteCancel = useCallback(() => setOpen(false), [setOpen]);
 
@@ -95,13 +104,14 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
             return fields.concat(
               files
                 .filter((file): file is UploadedFile => Boolean((file as UploadedFile | undefined)?.urn))
-                .map((file) => ({ path: filePath, urn: file.urn }))
+                .map((file) => ({ path: filePath, urn: file.urn })),
             );
           },
-          []
+          [],
         );
         const allFileFields = [...fileFields, ...fileListFields].filter(
-          (field, index, fields) => fields.findIndex((candidate) => candidate.path === field.path && candidate.urn === field.urn) === index
+          (field, index, fields) =>
+            fields.findIndex((candidate) => candidate.path === field.path && candidate.urn === field.urn) === index,
         );
 
         allFileFields.forEach(({ path: fieldPath, urn }) => {
@@ -128,7 +138,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
   }, [core?.data, deleteTrigger, fileList, handleChange, path, props.data, props.schema, removeItems, rowData]);
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <ListWithDetailControl
         {...props}
         openDeleteDialog={openDeleteDialog}

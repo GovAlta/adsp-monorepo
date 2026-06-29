@@ -207,7 +207,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   };
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <FileUploaderStyle className="FileUploader">
         <GoabFormItem label={sentenceCaseLabel} requirement={required ? 'required' : undefined} error={uploadError} />
         {!readOnly && (
