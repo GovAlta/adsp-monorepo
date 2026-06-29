@@ -43,11 +43,13 @@ export interface PdfTemplate {
 }
 
 
-export interface PdfTemplateConfiguration {
+export interface PdfTemplateConfiguration { // clean-code-ignore: RULE-19
   id: string;
   name: string;
   description: string;
   template: string;
+  header?: string;
+  footer?: string;
 }
 
 
