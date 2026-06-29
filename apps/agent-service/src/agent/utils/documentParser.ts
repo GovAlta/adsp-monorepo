@@ -3,6 +3,9 @@ import * as mammoth from 'mammoth';
 import { extractXfaFields } from './xfaExtractor';
 import { Logger } from 'winston';
 
+const MAX_EXTRACTED_IMAGES = 10;
+const VISION_SUPPORTED_MIMES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+
 const PDF_MIME = 'application/pdf';
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 // DOCX files are ZIP archives; file-service may report this MIME type instead of the DOCX-specific one.
@@ -10,8 +13,15 @@ const ZIP_MIME = 'application/zip';
 
 export const EXTRACTABLE_MIMES = [PDF_MIME, DOCX_MIME, ZIP_MIME];
 
+export interface ExtractedImage {
+  data: string; // base64
+  mimeType: string;
+}
+
 export interface DocumentExtractResult {
   text: string;
+  format?: 'html' | 'text';
+  images?: ExtractedImage[];
   pageCount?: number;
   xfaForm?: boolean;
 }
@@ -36,6 +46,21 @@ function resolveDocxMime(mimeType: string, filename?: string): string {
     }
   }
   return mimeType;
+}
+
+const LIGATURE_MAP: Record<string, string> = {
+  'ﬀ': 'ff',
+  'ﬁ': 'fi',
+  'ﬂ': 'fl',
+  'ﬃ': 'ffi',
+  'ﬄ': 'ffl',
+  'ﬅ': 'st',
+  'ﬆ': 'st',
+};
+
+function normalizeLigatures(text: string): string {
+  // Unicode range U+FB00–U+FB06: Latin ligatures ﬀ ﬁ ﬂ ﬃ ﬄ ﬅ ﬆ
+  return text.replace(/[ﬀ-ﬆ]/g, (ch) => LIGATURE_MAP[ch] ?? ch);
 }
 
 // XFA/dynamic PDF forms embed content as XML, not standard PDF text.
@@ -86,8 +111,32 @@ export async function extractDocumentText(
     }
     case DOCX_MIME: {
       const buffer = Buffer.from(data);
-      const result = await mammoth.extractRawText({ buffer });
-      return { text: result.value };
+      const extractedImages: ExtractedImage[] = [];
+
+      const result = await mammoth.convertToHtml({ buffer }, {
+        convertImage: mammoth.images.imgElement(async (image) => {
+          if (VISION_SUPPORTED_MIMES.has(image.contentType) && extractedImages.length < MAX_EXTRACTED_IMAGES) {
+            const base64 = await image.readAsBase64String();
+            extractedImages.push({ data: base64, mimeType: image.contentType });
+          }
+          return { src: '' };
+        }),
+      });
+
+      // Replace the empty <img src=""> placeholders with positional markers so the
+      // agent knows where each diagram belongs without seeing broken image tags.
+      // diagramIndex increments per match so each img tag maps to a sequentially numbered marker.
+      let diagramIndex = 0;
+      const htmlWithMarkers = normalizeLigatures(result.value).replace(/<img[^>]*\/?>/gi, () => {
+        diagramIndex++;
+        return `<div class="diagram-placeholder">[DIAGRAM_${diagramIndex}]</div>`;
+      });
+
+      return {
+        text: htmlWithMarkers,
+        format: 'html',
+        images: extractedImages.length > 0 ? extractedImages : undefined,
+      };
     }
     default:
       return null;

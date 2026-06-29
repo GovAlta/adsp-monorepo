@@ -26,10 +26,13 @@ jest.mock('pdf-parse', () => ({
 }));
 
 jest.mock('mammoth', () => ({
-  extractRawText: jest.fn().mockResolvedValue({
+  convertToHtml: jest.fn().mockResolvedValue({
     value: 'Extracted DOCX text content\nSection 1\nSection 2',
     messages: [],
   }),
+  images: {
+    imgElement: jest.fn().mockReturnValue({ __mammothBrand: 'ImageConverter' }),
+  },
 }));
 
 describe('documentParser', () => {
