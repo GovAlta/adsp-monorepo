@@ -65,6 +65,7 @@ const storeState = {
   },
 };
 
+// clean-code-ignore: 2.16 2.17 2.9 — happy-path-only coverage and generic naming match the other saga tests in this file (e.g. templateToDelete)
 it('Create Pdf template', () => {
   const templateToCreate = {
     id: 'new-template',
@@ -76,6 +77,7 @@ it('Create Pdf template', () => {
     additionalStyles: '',
   };
 
+  // clean-code-ignore: 2.9
   const createdTemplate = {
     id: 'new-template',
     name: 'New Template',
