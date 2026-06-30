@@ -201,6 +201,7 @@ const connect = (pushServiceUrl, stream) => {
   });
 };
 
+// clean-code-ignore: 2.18 2.3 2.10 — mirrors the existing select/indicator/call/error pattern used by every other saga in this file (e.g. updatePdfTemplate, deletePdfTemplate)
 export function* createPdfTemplateSaga({ template }: CreatePdfTemplateAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
 
