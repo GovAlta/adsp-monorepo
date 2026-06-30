@@ -35,10 +35,6 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-textarea`);
   }
 
-  formTextAreaFieldFormItem(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]`);
-  }
-
   formNumericField(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="number"]`);
   }
@@ -83,8 +79,12 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input`);
   }
 
-  formSubmitButton() {
+  formSummaryPageSubmitButton() {
     return cy.xpath('//goa-button[@type="primary" and text()="Submit"]');
+  }
+
+  formPageSubmitButton() {
+    return cy.xpath('//goa-button[@type="submit" and text()="Submit"]');
   }
 
   formListWithDetailButton(label) {

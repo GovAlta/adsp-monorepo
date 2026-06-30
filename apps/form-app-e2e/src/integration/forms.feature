@@ -36,7 +36,7 @@ Feature: Form app
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     # And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-    When the user clicks submit button in the form
+    the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
     When the user clicks Download PDF copy link on form submission confirmation page
     Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
@@ -60,7 +60,7 @@ Feature: Form app
     And the user enters "Smith" in list with detail element text field labelled "Last Name"
     And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    And the user clicks submit button in the form
+    And the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
 
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
@@ -87,7 +87,6 @@ Feature: Form app
     Given the user deletes any existing form from "Auto Test" for "autotest-open-intake"
     When an authenticated user is logged in to see "autotest-open-intake" application
     Then the user views a drafted form for "autotest-open-intake"
-
 
   # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
   @TEST_CS-4567 @REQ_CS-2954 @regression
@@ -144,7 +143,7 @@ Feature: Form app
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-    When the user clicks submit button in the form
+    the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
     Then the new form is deleted
@@ -295,3 +294,33 @@ Feature: Form app
     And the user clicks "Summary" task on task list page
     Then the user views the summary of "Object lists" with all entries "example1:description1;example2:description2" as "Examples"
     And the user views the summary of "Object lists" with all entries "reference1:desc1;reference2:desc2" as "References"
+
+  # TEST DATA: autotest-general-complaint is created with conditional required fields
+  @TEST_CS-4044 @regression
+  Scenario: As a form user, I should be able to submit a form with conditional required fields
+    Given an anonymous applicant goes to "autotest-general-complaint" application
+    Then the user views an anonymous form draft of "autotest-general-complaint"
+    # Fill in all required fields other than the field to test conditional required fields
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user enters "Smith" in a text field labelled "Last name"
+    And the user selects "Email" radio button for the question of "Prefered contact method and follow-up"
+    And the user selects "Highway issues" radio button for the question of "Category"
+    And the user enters "MyTextAreaText" in a text area field labelled "Please provide the details of the complaint"
+    And the user "selects" a checkbox labelled "I agree that the information provided is accurate to the best of my knowledge. (required)"
+    # Test else condition of conditional required flow
+    And the user selects "No" radio button for the question of "Are you submitting a complaint on behalf of someone else?"
+    Then the user views the text field labelled "Email address" is required
+    And the user views the submit button is "disabled" on the form page
+    When the user enters "myEmail@email.com" in a text field labelled "Email address"
+    Then the user views the submit button is "enabled" on the form page
+    # Test then condition of conditional required flow
+    When the user selects "Yes" radio button for the question of "Are you submitting a complaint on behalf of someone else?"
+    Then the user views the text field labelled "Email address" is not required
+    And the user views the text field labelled "Affected person first name" is required
+    And the user views the text field labelled "Affected person last name" is required
+    When the user enters "Mary" in a text field labelled "Affected person first name"
+    And the user enters "Jones" in a text field labelled "Affected person last name"
+    And the user "selects" a checkbox labelled "I certify that I have obtained the appropriate consent and/or legal authority to submit this complaint on behalf of the affected person."
+    Then the user views the submit button is "enabled" on the form page
+    When the user clicks submit button on the form page
+    Then the user views a callout with a message of "We're processing your application"
