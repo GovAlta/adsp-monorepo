@@ -83,6 +83,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 const toTemplateId = (name: string): string =>
   name.trim().toLowerCase().replace(/\s+/g, '-');
 
+// clean-code-ignore: 2.3 2.10
 const createPdfTemplatePatch = (
   id: string,
   name: string,

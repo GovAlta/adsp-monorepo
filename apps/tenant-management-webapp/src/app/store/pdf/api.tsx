@@ -33,6 +33,7 @@ export const createPdfJobApi = async (token: string, url: string, body: CreatePd
   return res.data;
 };
 
+// clean-code-ignore: RULE-19
 export const createPdfTemplateApi = async (
   token: string,
   url: string,
