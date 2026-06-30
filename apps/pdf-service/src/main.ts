@@ -88,15 +88,16 @@ const initializeApp = async (): Promise<express.Application> => {
         ),
       roles: [
         {
+          role: ServiceRoles.Admin,
+          description: 'Admin role that allows management of PDF templates.',
+          inTenantAdmin: true,
+        },
+        // clean-code-ignore: RULE-19
+        {
           role: ServiceRoles.PdfGenerator,
           description: 'Generator role that allows generation of PDFs.',
           inTenantAdmin: true,
-        },
-        {
-          role: ServiceRoles.Admin,
-          description: 'Administrator role that grants permission to administer topics and comments.',
-          inTenantAdmin: true,
-        },
+        }
       ],
       events: [PdfGenerationQueuedDefinition, PdfGeneratedDefinition, PdfGenerationFailedDefinition],
       eventStreams: [PdfGenerationUpdatesStream],

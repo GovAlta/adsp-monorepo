@@ -91,6 +91,10 @@ class FormsPage {
     return cy.xpath(`//goa-button[contains(@testid, "object-array-toolbar") and text()="${label}"]`);
   }
 
+  formListWithDetailButtonWithListLabel(label) {
+    return cy.xpath(`//goa-button[contains(@testid, "object-array-toolbar") and contains(@testid, "${label}")]`);
+  }
+
   formListWithDetailDependantTextField(label) {
     return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
   }
@@ -114,9 +118,9 @@ class FormsPage {
   }
 
   //pageName is case sensitive and arrayName is lower case
-  formSummaryPageListWithDetailItems(pageName, arrayName) {
+  formSummaryPageObjectListItems(pageName, arrayName) {
     return cy.xpath(
-      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::goa-table/table/tbody/tr/td/div[2]//div[@style="margin-bottom: 1.5rem;"]`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::goa-table/table/tbody/tr/td/div[2]//div[contains(@data-testid, "objectList-")]`
     );
   }
 
@@ -303,6 +307,22 @@ class FormsPage {
   formCanadianPostalAddressPostalCodeField(label) {
     return cy.xpath(
       `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Postal code"]/goa-input`
+    );
+  }
+
+  formObjectListAddButton(label) {
+    return cy.xpath(`//h3[text()="${label}"]/following-sibling::div//goa-button[contains(@testid,"${label}")]`);
+  }
+
+  formObjectListFormItem(label, rowNumber, fieldNumber) {
+    return cy.xpath(
+      `(//h3[text()="${label}"]/ancestor::div[contains(@data-testid,"object-list-wrapper")]//tbody/tr[${rowNumber}]//goa-form-item)[${fieldNumber}]`
+    );
+  }
+
+  formListWithDetailFormItem(label, index) {
+    return cy.xpath(
+      `(//h3[text()="${label}"]/ancestor::div[contains(@data-testid,"object-list-wrapper")]//goa-form-item)[${index}]`
     );
   }
 }

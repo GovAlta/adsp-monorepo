@@ -45,7 +45,7 @@ const GoACalculation = (props: ControlProps) => {
   const showError = !!error && (isConfigError || hasInteracted);
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <GoabFormItem label={label} error={showError ? error : ''}>
         <GoabInput
           name={`computed-input-${id}`}

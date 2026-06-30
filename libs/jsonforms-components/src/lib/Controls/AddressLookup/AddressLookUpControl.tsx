@@ -322,7 +322,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <div ref={addressContainerRef}>
         {renderHelp()}
         <h3>{label}</h3>

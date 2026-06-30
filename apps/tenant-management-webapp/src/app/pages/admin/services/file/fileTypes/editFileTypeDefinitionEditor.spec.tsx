@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, fireEvent, waitFor, queryByTestId } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import { EditFileTypeDefinitionEditor } from './editFileTypeDefinitionEditor';
-import { ScriptItem } from '@store/script/models';
 import { Provider } from 'react-redux';
+import { FETCH_FILE_TYPE } from '@store/file/actions';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';
 jest.mock('react-router-dom', () => ({
@@ -15,14 +16,14 @@ jest.mock('react-router-dom', () => ({
   }),
   useRouteMatch: () => ({ url: '/form/edit/A-really-really-long-formservice' }),
 }));
-describe('ScriptEditor Component', () => {
+describe('EditFileTypeDefinitionEditor', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
     fileService: {
       fileTypes: [
         {
-          id: '12345edfg',
-          name: '12345edfg',
+          id: '122',
+          name: 'test-file-type',
           updateRoles: [],
           readRoles: [],
           anonymousRead: false,
@@ -65,6 +66,44 @@ describe('ScriptEditor Component', () => {
     scriptService: { scriptResponse: null },
     session: SESSION_INIT,
   });
+
+  test('fetches file type information when the editor is reloaded without store data', () => {
+    const reloadedStore = mockStore({
+      fileService: {
+        fileTypes: null,
+      },
+      notifications: { notifications: [] },
+      pushService: {},
+      tenant: {
+        realmRoles: [],
+      },
+      scriptService: { scriptResponse: null },
+      serviceRoles: {},
+      session: SESSION_INIT,
+    });
+
+    render(
+      <Provider store={reloadedStore}>
+        <EditFileTypeDefinitionEditor />
+      </Provider>
+    );
+
+    expect(reloadedStore.getActions()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: FETCH_FILE_TYPE })])
+    );
+  });
+
+  test('renders file type information from route id when data is available', () => {
+    const { getByTestId } = render(
+      <Provider store={store}>
+        <EditFileTypeDefinitionEditor />
+      </Provider>
+    );
+
+    expect(getByTestId('fileType-name')).toHaveTextContent('test-file-type');
+    expect(getByTestId('fileType-Id')).toHaveTextContent('122');
+  });
+
   test('Save button does not route', async () => {
     const { baseElement } = render(
       <Provider store={store}>

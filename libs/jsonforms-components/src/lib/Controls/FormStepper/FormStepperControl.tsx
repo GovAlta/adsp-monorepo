@@ -36,7 +36,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => 
     () => ({
       ...props, // this ensures direction, enabled, visible, locale, t come through
     }),
-    [props]
+    [props],
   );
   /**
    * StepperCtx can only be provided once to prevent issues from categorization in categorization
@@ -81,7 +81,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
 
   return (
     <div data-testid="form-stepper-test-wrapper">
-      <Visible visible={visible}>
+      <Visible $visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           {
             <GoabFormStepper

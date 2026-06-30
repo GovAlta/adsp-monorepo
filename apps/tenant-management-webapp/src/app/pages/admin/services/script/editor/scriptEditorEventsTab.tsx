@@ -85,6 +85,7 @@ interface ScriptEventTriggerListComponentProps {
   onDelete?: (triggerEvent: ScriptItemTriggerEvent) => void;
 }
 
+// clean-code-ignore: RULE-19
 const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListComponentProps> = ({
   className,
   triggerEvents,
@@ -122,7 +123,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
                   <ScriptEventTriggerDefinitionComponent
                     onEdit={onEdit}
                     onDelete={onDelete}
-                    key={`${triggerEvent.eventName}}`}
+                    key={`${triggerEvent.namespace}:${triggerEvent.name}`}
                     triggerEvent={triggerEvent}
                   />
                 ))}

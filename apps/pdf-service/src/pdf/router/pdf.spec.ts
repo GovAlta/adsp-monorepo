@@ -5,7 +5,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { PDF_GENERATION_QUEUED } from '../events';
 import { ServiceRoles } from '../roles';
-import { createPdfRouter, createPdfTemplate, generatePdf, getGeneratedFile, getTemplate, getTemplates } from './pdf';
+import { createPdfRouter, createPdfTemplate, deletePdfTemplate, generatePdf, getGeneratedFile, getTemplate, getTemplates, updatePdfTemplate } from './pdf';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -295,6 +295,29 @@ describe('pdf', () => {
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
     });
+
+    it('calls next with unauthorized when user does not have Admin role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [] },
+        body: { name: 'new-template' },
+        getConfiguration: jest.fn().mockResolvedValue([{}]),
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
+      expect(tokenProviderMock.getAccessToken).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
   });
 
   describe('getTemplates', () => {
@@ -386,6 +409,334 @@ describe('pdf', () => {
       const handler = getTemplate('params');
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+  });
+
+  describe('updatePdfTemplate', () => {
+    const existingTemplate = {
+      id: 'test',
+      name: 'Test template',
+      description: 'This is a test.',
+      template: '<p>Old body</p>',
+      header: '<h1>Old header</h1>',
+      footer: '<p>Old footer</p>',
+    };
+
+    it('can create handler', () => {
+      const handler = updatePdfTemplate(serviceDirectoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('updates a PDF template and returns 201', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body</p>', header: '<h1>New header</h1>', footer: '<p>New footer</p>' },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('v2/configuration/platform/pdf-service'),
+        {
+          operation: 'UPDATE',
+          update: {
+            test: {
+              id: 'test',
+              name: 'Test template',
+              description: 'This is a test.',
+              template: '<p>New body</p>',
+              header: '<h1>New header</h1>',
+              footer: '<p>New footer</p>',
+            },
+          },
+        },
+        {
+          headers: { Authorization: 'Bearer test-token' },
+          params: { tenantId: tenantId.toString() },
+        }
+      );
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(res.json).toHaveBeenCalledWith({
+        id: 'test',
+        name: 'Test template',
+        description: 'This is a test.',
+        template: '<p>New body</p>',
+        header: '<h1>New header</h1>',
+        footer: '<p>New footer</p>',
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('preserves existing fields not included in the request body', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body only</p>' },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          template: '<p>New body only</p>',
+          header: '<h1>Old header</h1>',
+          footer: '<p>Old footer</p>',
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with unauthorized when user does not have Admin role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body</p>' },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when the configuration update fails', async () => {
+      const error = new Error('Configuration update failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body</p>' },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockRejectedValueOnce(error);
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('calls next when tenant is missing', async () => {
+      const req = {
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body</p>' },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(res.status).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deletePdfTemplate', () => {
+    it('can create handler', () => {
+      const handler = deletePdfTemplate(serviceDirectoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('deletes a PDF template and returns 204', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(serviceDirectoryMock.getServiceUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespace: 'platform',
+          service: 'configuration-service',
+          api: 'v2',
+        }),
+      );
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('v2/configuration/platform/pdf-service'),
+        { operation: 'DELETE', property: 'test' },
+        {
+          headers: { Authorization: 'Bearer test-token' },
+          params: { tenantId: tenantId.toString() },
+        }
+      );
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
+      expect(res.send).toHaveBeenCalledWith();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with unauthorized when user does not have Admin role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
+      expect(tokenProviderMock.getAccessToken).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when the configuration delete fails', async () => {
+      const error = new Error('Configuration delete failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when serviceDirectory lookup fails', async () => {
+      const error = new Error('Directory lookup failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when token provider fails', async () => {
+      const error = new Error('Token fetch failed');
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('calls next when tenant is missing', async () => {
+      const req = {
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 
