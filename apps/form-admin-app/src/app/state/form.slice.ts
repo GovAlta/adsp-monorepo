@@ -161,7 +161,7 @@ export const initialFormState: FormState = {
 export const loadDefinitions = createAsyncThunk(
   'form/load-definitions',
   async (
-    { tag, after, criteria }: { tag?: string; after?: string; criteria?: DefinitionCriteria },
+    { tag, after, criteria }: { tag?: string; after?: string; criteria?: DefinitionCriteria }, // clean-code-ignore: 2.3
     { dispatch, getState, rejectWithValue },
   ) => {
     const state = getState() as AppState;

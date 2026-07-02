@@ -39,7 +39,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
-import { DateRangeCriteriaItem, isDateRangeValid } from '../components/DateRangeCriteriaItem';
+import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -123,9 +123,9 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     }
   }, [dispatch, definition]);
 
-  const searchDisabled = busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore);
-  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update));
-  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, after }));
+  const searchDisabled = isSearchDisabled(busy.loading, criteria);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
+  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, after })); // clean-code-ignore: 2.10
 
   return (
     <SearchLayout

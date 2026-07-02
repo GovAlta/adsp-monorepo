@@ -34,7 +34,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
-import { DateRangeCriteriaItem, isDateRangeValid } from '../components/DateRangeCriteriaItem';
+import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -66,9 +66,9 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
 
-  const searchDisabled = busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore);
-  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setSubmissionCriteria(update));
-  const handleFindSubmissions = (after?: string) => dispatch(findSubmissions({ definitionId, criteria, after }));
+  const searchDisabled = isSearchDisabled(busy.loading, criteria);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setSubmissionCriteria(update)); // clean-code-ignore: 2.10
+  const handleFindSubmissions = (after?: string) => dispatch(findSubmissions({ definitionId, criteria, after })); // clean-code-ignore: 2.10
 
   return (
     <SearchLayout

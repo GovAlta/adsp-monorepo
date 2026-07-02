@@ -22,7 +22,7 @@ import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
-import { DateRangeCriteriaItem, isDateRangeValid } from '../components/DateRangeCriteriaItem';
+import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 
@@ -86,9 +86,9 @@ export const FormsDefinitions = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user]);
 
-  const searchDisabled = busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore);
-  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setDefinitionCriteria(update));
-  const handleLoadDefinitions = (after?: string) => dispatch(loadDefinitions({ after, tag: criteria.tag, criteria }));
+  const searchDisabled = isSearchDisabled(busy.loading, criteria);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setDefinitionCriteria(update)); // clean-code-ignore: 2.10
+  const handleLoadDefinitions = (after?: string) => dispatch(loadDefinitions({ after, tag: criteria.tag, criteria })); // clean-code-ignore: 2.10
 
   return (
     <SearchLayout

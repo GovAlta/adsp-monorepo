@@ -16,6 +16,11 @@ export const isDateRangeValid = (fromValue?: string, toValue?: string): boolean 
   return isRangeOpenEnded || new Date(fromValue) <= new Date(toValue);
 };
 
+export const isSearchDisabled = (
+  loading: boolean,
+  criteria: { createDateAfter?: string; createDateBefore?: string },
+): boolean => loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore);
+
 interface DateCriteriaInputProps {
   label: string;
   name: string;
