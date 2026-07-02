@@ -108,20 +108,6 @@ export class MongoFormRepository implements FormRepository {
     try {
       const updateDoc = this.toDoc(entity);
       const { data, files, status, lastAccessed, locked, submitted, hash, ...insertDoc } = updateDoc;
-      const query: Record<string, unknown> = {
-        tenantId: entity.tenantId.toString(),
-        id: entity.id,
-      };
-
-      if (entity?.definition?.revision !== undefined && entity?.definition?.revision !== null) {
-        query.id = `${query.id}-v${Number(entity?.definition?.revision)}`;
-      }
-
-      const _insert = {
-        ...insertDoc,
-        ...(query.version !== undefined ? { version: query.version } : {}),
-      };
-
       const doc = await this.model.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
         { $setOnInsert: insertDoc, $set: { data, files, status, lastAccessed, locked, submitted, hash } },
