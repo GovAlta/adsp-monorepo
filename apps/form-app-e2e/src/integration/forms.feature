@@ -36,7 +36,7 @@ Feature: Form app
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     # And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-    the user clicks submit button on form summary page
+    When the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
     When the user clicks Download PDF copy link on form submission confirmation page
     Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
@@ -143,7 +143,7 @@ Feature: Form app
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-    the user clicks submit button on form summary page
+    When the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
     Then the new form is deleted
