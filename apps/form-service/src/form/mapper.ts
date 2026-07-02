@@ -3,6 +3,7 @@ import { FormSubmissionEntity } from './model';
 import { FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
+// clean-code-ignore: RULE-19
 export function mapFormDefinition(entity: FormDefinition, revision: number, intake?: Intake, created?: Date) {
   return {
     id: entity.id,

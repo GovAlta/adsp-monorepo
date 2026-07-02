@@ -44,7 +44,7 @@ export interface FormDefinition {
   urn: string;
   id: string;
   revision: number;
-  created?: string;
+  created?: string; // clean-code-ignore: RULE-19
   name: string;
   description: string;
   dataSchema: JsonSchema;

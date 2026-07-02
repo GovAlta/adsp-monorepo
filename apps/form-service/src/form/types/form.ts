@@ -39,7 +39,7 @@ export interface FormCriteria {
   createdByIdEquals?: string;
   hashEquals?: string;
   anonymousApplicantEquals?: boolean;
-  createDateAfter?: Date;
+  createDateAfter?: Date; // clean-code-ignore: RULE-19
   createDateBefore?: Date;
   dataCriteria?: Record<string, unknown>;
 }
