@@ -86,6 +86,10 @@ export const FormsDefinitions = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user]);
 
+  const searchDisabled = busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setDefinitionCriteria(update));
+  const handleLoadDefinitions = (after?: string) => dispatch(loadDefinitions({ after, tag: criteria.tag, criteria }));
+
   return (
     <SearchLayout
       searchForm={
@@ -96,41 +100,23 @@ export const FormsDefinitions = () => {
                 fromValue={criteria.createDateAfter}
                 toValue={criteria.createDateBefore}
                 disabled={!!criteria.tag}
-                onChangeFrom={(value) =>
-                  dispatch(
-                    formActions.setDefinitionCriteria({
-                      ...criteria,
-                      createDateAfter: value,
-                    }),
-                  )
-                }
-                onChangeTo={(value) =>
-                  dispatch(
-                    formActions.setDefinitionCriteria({
-                      ...criteria,
-                      createDateBefore: value,
-                    }),
-                  )
-                }
+                onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
+                onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
               />
               <TagSearchFilter
                 value={criteria.tag}
-                onChange={(value) => dispatch(formActions.setDefinitionCriteria({ ...criteria, tag: value }))}
+                onChange={(value) => updateCriteria({ ...criteria, tag: value })}
               />
             </SearchFormItemsContainer>
             <GoabButtonGroup alignment="end" mt="l">
               <GoabButton
                 type="secondary"
                 disabled={busy.loading}
-                onClick={() => dispatch(formActions.setDefinitionCriteria(getDefaultDefinitionCriteria()))}
+                onClick={() => updateCriteria(getDefaultDefinitionCriteria())}
               >
                 Reset filter
               </GoabButton>
-              <GoabButton
-                type="primary"
-                disabled={busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore)}
-                onClick={() => dispatch(loadDefinitions({ tag: criteria.tag, criteria }))}
-              >
+              <GoabButton type="primary" disabled={searchDisabled} onClick={() => handleLoadDefinitions()}>
                 Load definitions
               </GoabButton>
             </GoabButtonGroup>
@@ -169,7 +155,7 @@ export const FormsDefinitions = () => {
               columns={4}
               next={next}
               loading={busy.loading}
-              onLoadMore={(after) => dispatch(loadDefinitions({ after, tag: criteria.tag, criteria }))}
+              onLoadMore={handleLoadDefinitions}
             />
           </tbody>
         </GoabTable>

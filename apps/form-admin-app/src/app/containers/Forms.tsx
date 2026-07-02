@@ -123,6 +123,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     }
   }, [dispatch, definition]);
 
+  const searchDisabled = busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update));
+  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, after }));
+
   return (
     <SearchLayout
       searchForm={
@@ -132,46 +136,17 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               fromValue={criteria.createDateAfter}
               toValue={criteria.createDateBefore}
               disabled={!!criteria.tag}
-              onChangeFrom={(value) =>
-                dispatch(
-                  formActions.setFormCriteria({
-                    ...criteria,
-                    createDateAfter: value,
-                  }),
-                )
-              }
-              onChangeTo={(value) =>
-                dispatch(
-                  formActions.setFormCriteria({
-                    ...criteria,
-                    createDateBefore: value,
-                  }),
-                )
-              }
+              onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
+              onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
             />
-            <TagSearchFilter
-              value={criteria.tag}
-              onChange={(value) =>
-                dispatch(
-                  formActions.setFormCriteria({
-                    ...criteria,
-                    tag: value,
-                  }),
-                )
-              }
-            />
+            <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             <GoabFormItem label="Status" mr="m">
               <GoabDropdown
                 name="form-status"
                 disabled={!!criteria.tag}
                 value={criteria.statusEquals}
                 onChange={(detail: GoabDropdownOnChangeDetail) =>
-                  dispatch(
-                    formActions.setFormCriteria({
-                      ...criteria,
-                      statusEquals: detail.value,
-                    }),
-                  )
+                  updateCriteria({ ...criteria, statusEquals: detail.value })
                 }
               >
                 <GoabDropdownItem value="" label="<No status filter>" />
@@ -189,15 +164,13 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 disabled={!!criteria.tag}
                 value={criteria?.dataCriteria?.[path]?.toString() || ''}
                 onChange={(value) =>
-                  dispatch(
-                    formActions.setFormCriteria({
-                      ...criteria,
-                      dataCriteria: {
-                        ...criteria?.dataCriteria,
-                        [path]: value || undefined,
-                      },
-                    }),
-                  )
+                  updateCriteria({
+                    ...criteria,
+                    dataCriteria: {
+                      ...criteria?.dataCriteria,
+                      [path]: value || undefined,
+                    },
+                  })
                 }
               />
             ))}
@@ -208,18 +181,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 Export to file
               </GoabButton>
             )}
-            <GoabButton
-              type="secondary"
-              onClick={() => dispatch(formActions.setFormCriteria(getDefaultFormCriteria()))}
-            >
+            <GoabButton type="secondary" onClick={() => updateCriteria(getDefaultFormCriteria())}>
               Reset filter
             </GoabButton>
-            <GoabButton
-              type="primary"
-              leadingIcon="search"
-              disabled={busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore)}
-              onClick={() => dispatch(findForms({ definitionId, criteria }))}
-            >
+            <GoabButton type="primary" leadingIcon="search" disabled={searchDisabled} onClick={() => handleFindForms()}>
               Find forms
             </GoabButton>
           </GoabButtonGroup>
@@ -257,7 +222,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               columns={4 + dataValues.length}
               next={next}
               loading={busy.loading}
-              onLoadMore={(after) => dispatch(findForms({ definitionId, criteria, after }))}
+              onLoadMore={handleFindForms}
             />
           </tbody>
         </GoabTable>

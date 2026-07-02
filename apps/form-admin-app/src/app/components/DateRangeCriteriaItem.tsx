@@ -11,8 +11,39 @@ interface DateRangeCriteriaItemProps {
   onChangeTo: (value?: string) => void;
 }
 
-export const isDateRangeValid = (fromValue?: string, toValue?: string): boolean =>
-  !fromValue || !toValue || new Date(fromValue) <= new Date(toValue);
+export const isDateRangeValid = (fromValue?: string, toValue?: string): boolean => {
+  const isRangeOpenEnded = !fromValue || !toValue;
+  return isRangeOpenEnded || new Date(fromValue) <= new Date(toValue);
+};
+
+interface DateCriteriaInputProps {
+  label: string;
+  name: string;
+  value?: string;
+  disabled?: boolean;
+  error?: string;
+  onChange: (value?: string) => void;
+}
+
+const DateCriteriaInput: FunctionComponent<DateCriteriaInputProps> = ({
+  label,
+  name,
+  value,
+  disabled,
+  error,
+  onChange,
+}) => (
+  <GoabFormItem label={label} mr="m" error={error}>
+    <GoabInput
+      type="date"
+      name={name}
+      value={value ? value.slice(0, 10) : ''}
+      disabled={disabled}
+      error={!!error}
+      onChange={(detail: GoabInputOnChangeDetail) => onChange(detail.value || undefined)}
+    />
+  </GoabFormItem>
+);
 
 export const DateRangeCriteriaItem: FunctionComponent<DateRangeCriteriaItemProps> = ({
   fromValue,
@@ -25,29 +56,21 @@ export const DateRangeCriteriaItem: FunctionComponent<DateRangeCriteriaItemProps
 
   return (
     <>
-      <GoabFormItem label="From date" mr="m">
-        <GoabInput
-          type="date"
-          name="date-criteria-from"
-          value={fromValue ? fromValue.slice(0, 10) : ''}
-          disabled={disabled}
-          onChange={(detail: GoabInputOnChangeDetail) =>
-            onChangeFrom(detail.value ? toDateRangeStart(detail.value) : undefined)
-          }
-        />
-      </GoabFormItem>
-      <GoabFormItem label="To date" mr="m" error={rangeValid ? '' : 'To date must not be before from date.'}>
-        <GoabInput
-          type="date"
-          name="date-criteria-to"
-          value={toValue ? toValue.slice(0, 10) : ''}
-          disabled={disabled}
-          error={!rangeValid}
-          onChange={(detail: GoabInputOnChangeDetail) =>
-            onChangeTo(detail.value ? toDateRangeEnd(detail.value) : undefined)
-          }
-        />
-      </GoabFormItem>
+      <DateCriteriaInput
+        label="From date"
+        name="date-criteria-from"
+        value={fromValue}
+        disabled={disabled}
+        onChange={(value) => onChangeFrom(value ? toDateRangeStart(value) : undefined)}
+      />
+      <DateCriteriaInput
+        label="To date"
+        name="date-criteria-to"
+        value={toValue}
+        disabled={disabled}
+        error={rangeValid ? '' : 'To date must not be before from date.'}
+        onChange={(value) => onChangeTo(value ? toDateRangeEnd(value) : undefined)}
+      />
     </>
   );
 };
