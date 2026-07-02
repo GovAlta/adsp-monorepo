@@ -37,11 +37,7 @@ describe('MongoFormSubmissionRepository', () => {
 
   beforeAll(async () => {
     mongoose = await connect(process.env.MONGO_URL);
-    repo = new MongoFormSubmissionRepository(
-      logger,
-      mockDefinitionRepository as never,
-      mockFormRepository as never
-    );
+    repo = new MongoFormSubmissionRepository(logger, mockDefinitionRepository as never, mockFormRepository as never);
     // Get reference to the model that was created in the repository
     submissionModel = model('formSubmission');
   });
@@ -49,7 +45,7 @@ describe('MongoFormSubmissionRepository', () => {
   beforeEach(async () => {
     await submissionModel.deleteMany({});
     jest.clearAllMocks();
-    
+
     // Reset mock implementations
     mockDefinitionRepository.getDefinition.mockResolvedValue(mockDefinition);
     mockFormRepository.get.mockResolvedValue(null);
@@ -66,13 +62,13 @@ describe('MongoFormSubmissionRepository', () => {
   function createSubmission(overrides: Partial<FormSubmissionEntity> = {}): FormSubmissionEntity {
     const now = new Date();
     const formId = overrides.formId || 'form-123';
-    
+
     // Create a minimal form object since toDoc uses entity.form?.id
     const mockForm = {
       id: formId,
       dryRun: overrides.dryRun || false,
     } as FormEntity;
-    
+
     return {
       id: generateId(),
       tenantId,
@@ -152,7 +148,7 @@ describe('MongoFormSubmissionRepository', () => {
           created: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
           createdBy: { id: 'user-1', name: 'Alice' },
           formData: { category: 'support', priority: 'high' },
-        })
+        }),
       );
 
       await repo.save(
@@ -170,7 +166,7 @@ describe('MongoFormSubmissionRepository', () => {
             reason: 'Valid request',
             date: new Date(baseDate.getTime()),
           },
-        })
+        }),
       );
 
       await repo.save(
@@ -182,7 +178,7 @@ describe('MongoFormSubmissionRepository', () => {
           created: baseDate,
           createdBy: { id: 'user-1', name: 'Alice' },
           formData: { category: 'support', priority: 'medium' },
-        })
+        }),
       );
 
       await repo.save(
@@ -200,7 +196,7 @@ describe('MongoFormSubmissionRepository', () => {
             reason: 'Incomplete data',
             date: new Date(baseDate.getTime() + 2 * 24 * 60 * 60 * 1000),
           },
-        })
+        }),
       );
     });
 
@@ -253,6 +249,17 @@ describe('MongoFormSubmissionRepository', () => {
       });
       expect(results.results).toHaveLength(1);
       expect(results.results[0].id).toBe('sub-4');
+    });
+
+    it('should find submissions created within a date range', async () => {
+      const results = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        formIdEquals: testFormId,
+        createDateAfter: new Date('2024-01-14T00:00:00Z'),
+        createDateBefore: new Date('2024-01-15T00:00:00Z'),
+      });
+      expect(results.results).toHaveLength(1);
+      expect(results.results[0].id).toBe('sub-2');
     });
 
     it('should find submissions by createdBy name', async () => {
@@ -325,9 +332,9 @@ describe('MongoFormSubmissionRepository', () => {
     });
 
     it('should sort by created date descending', async () => {
-      const results = await repo.find(10, null, { 
+      const results = await repo.find(10, null, {
         tenantIdEquals: tenantId,
-        formIdEquals: testFormId, 
+        formIdEquals: testFormId,
       });
       const dates = results.results.map((r) => new Date(r.created).getTime());
 
@@ -337,7 +344,7 @@ describe('MongoFormSubmissionRepository', () => {
     });
 
     it('should paginate results', async () => {
-      const page1 = await repo.find(2, null, { 
+      const page1 = await repo.find(2, null, {
         tenantIdEquals: tenantId,
         formIdEquals: testFormId,
       });
@@ -345,7 +352,7 @@ describe('MongoFormSubmissionRepository', () => {
       expect(page1.page.next).toBeTruthy();
       expect(page1.page.size).toBe(2);
 
-      const page2 = await repo.find(2, page1.page.next, { 
+      const page2 = await repo.find(2, page1.page.next, {
         tenantIdEquals: tenantId,
         formIdEquals: testFormId,
       });
@@ -368,7 +375,7 @@ describe('MongoFormSubmissionRepository', () => {
 
     it('should throw error without tenant context', () => {
       expect(() => repo.find(10, null, { formIdEquals: testFormId } as never)).toThrow(
-        'Cannot retrieve submissions without tenant context.'
+        'Cannot retrieve submissions without tenant context.',
       );
     });
   });

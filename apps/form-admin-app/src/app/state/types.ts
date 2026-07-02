@@ -44,6 +44,7 @@ export interface FormDefinition {
   urn: string;
   id: string;
   revision: number;
+  created?: string;
   name: string;
   description: string;
   dataSchema: JsonSchema;

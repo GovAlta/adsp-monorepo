@@ -51,12 +51,11 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       query.submissionStatus = criteria.submissionStatusEquals;
     }
 
-    if (criteria?.createDateBefore) {
-      query.created = { $lt: new Date(criteria.createDateBefore).toISOString() };
-    }
-
-    if (criteria?.createDateAfter) {
-      query.created = { $gt: new Date(criteria.createDateAfter).toISOString() };
+    if (criteria?.createDateAfter || criteria?.createDateBefore) {
+      query.created = {
+        ...(criteria.createDateAfter ? { $gte: new Date(criteria.createDateAfter).toISOString() } : {}),
+        ...(criteria.createDateBefore ? { $lte: new Date(criteria.createDateBefore).toISOString() } : {}),
+      };
     }
 
     if (criteria?.createdByIdEquals) {

@@ -794,6 +794,11 @@ export function createFormRouter({
         },
         ['query'],
       ),
+      query('criteria')
+        .optional()
+        .custom(async (value: string) => {
+          validateCriteria(value);
+        }),
     ),
     findForms(apiId, repository),
   );

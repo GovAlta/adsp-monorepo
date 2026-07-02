@@ -14,7 +14,7 @@ export class MongoFormRepository implements FormRepository {
   constructor(
     private logger: Logger,
     private definitionRepository: FormDefinitionRepository,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {
     this.model = model<Document & FormDoc>('form', formSchema);
     this.model.on('index', (err: unknown) => {
@@ -61,6 +61,13 @@ export class MongoFormRepository implements FormRepository {
       query.anonymousApplicant = criteria.anonymousApplicantEquals;
     }
 
+    if (criteria?.createDateAfter || criteria?.createDateBefore) {
+      query.created = {
+        ...(criteria.createDateAfter ? { $gte: new Date(criteria.createDateAfter) } : {}),
+        ...(criteria.createDateBefore ? { $lte: new Date(criteria.createDateBefore) } : {}),
+      };
+    }
+
     if (criteria?.dataCriteria) {
       Object.entries(criteria.dataCriteria).forEach(([property, value]) => {
         query[`data.${property}`] = value;
@@ -101,10 +108,24 @@ export class MongoFormRepository implements FormRepository {
     try {
       const updateDoc = this.toDoc(entity);
       const { data, files, status, lastAccessed, locked, submitted, hash, ...insertDoc } = updateDoc;
+      const query: Record<string, unknown> = {
+        tenantId: entity.tenantId.toString(),
+        id: entity.id,
+      };
+
+      if (entity?.definition?.revision !== undefined && entity?.definition?.revision !== null) {
+        query.id = `${query.id}-v${Number(entity?.definition?.revision)}`;
+      }
+
+      const _insert = {
+        ...insertDoc,
+        ...(query.version !== undefined ? { version: query.version } : {}),
+      };
+
       const doc = await this.model.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
         { $setOnInsert: insertDoc, $set: { data, files, status, lastAccessed, locked, submitted, hash } },
-        { upsert: true, new: true, lean: true }
+        { upsert: true, new: true, lean: true },
       );
 
       return this.fromDoc(doc);
@@ -152,7 +173,7 @@ export class MongoFormRepository implements FormRepository {
       data: entity.data,
       files: Object.entries(entity.files).reduce(
         (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
-        {}
+        {},
       ),
       dryRun: entity.dryRun,
       registeredId: entity.registeredId,
@@ -191,11 +212,11 @@ export class MongoFormRepository implements FormRepository {
         securityClassification: doc.securityClassification,
         files: Object.entries(doc.files).reduce(
           (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
-          {}
+          {},
         ),
         dryRun: doc.dryRun,
       },
-      doc.hash
+      doc.hash,
     );
   };
 }

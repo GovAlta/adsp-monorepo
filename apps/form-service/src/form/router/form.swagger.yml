@@ -12,6 +12,11 @@ components:
           type: string
           readOnly: true
           description: Unique identifier for the form definition. Always auto-generated from the name in kebab-case format. Cannot be set by the client.
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Date the form definition (latest revision) was created.
         name:
           type: string
         description:
@@ -294,6 +299,20 @@ components:
         required: false
         schema:
           type: string
+      - name: createDateAfter
+        description: Only include definitions created on or after this date (ISO-8601).
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: createDateBefore
+        description: Only include definitions created on or before this date (ISO-8601).
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
     responses:
       200:
         description: Successfully retrieved form definitions.

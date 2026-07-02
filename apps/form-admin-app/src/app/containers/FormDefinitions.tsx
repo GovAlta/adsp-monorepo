@@ -15,11 +15,14 @@ import {
   Resource,
   definitionCriteriaSelector,
   formActions,
+  getDefaultDefinitionCriteria,
 } from '../state';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
+import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { DateRangeCriteriaItem, isDateRangeValid } from '../components/DateRangeCriteriaItem';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 
@@ -78,7 +81,7 @@ export const FormsDefinitions = () => {
 
   useEffect(() => {
     if (user?.roles.includes('urn:ads:platform:form-service:form-admin') && definitions.length < 1) {
-      dispatch(loadDefinitions({ tag: criteria.tag }));
+      dispatch(loadDefinitions({ tag: criteria.tag, criteria }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user]);
@@ -88,22 +91,45 @@ export const FormsDefinitions = () => {
       searchForm={
         user?.roles.includes('urn:ads:platform:form-service:form-admin') ? (
           <form>
-            <TagSearchFilter
-              value={criteria.tag}
-              onChange={(value) => dispatch(formActions.setDefinitionCriteria({ tag: value }))}
-            />
+            <SearchFormItemsContainer>
+              <DateRangeCriteriaItem
+                fromValue={criteria.createDateAfter}
+                toValue={criteria.createDateBefore}
+                disabled={!!criteria.tag}
+                onChangeFrom={(value) =>
+                  dispatch(
+                    formActions.setDefinitionCriteria({
+                      ...criteria,
+                      createDateAfter: value,
+                    }),
+                  )
+                }
+                onChangeTo={(value) =>
+                  dispatch(
+                    formActions.setDefinitionCriteria({
+                      ...criteria,
+                      createDateBefore: value,
+                    }),
+                  )
+                }
+              />
+              <TagSearchFilter
+                value={criteria.tag}
+                onChange={(value) => dispatch(formActions.setDefinitionCriteria({ ...criteria, tag: value }))}
+              />
+            </SearchFormItemsContainer>
             <GoabButtonGroup alignment="end" mt="l">
               <GoabButton
                 type="secondary"
                 disabled={busy.loading}
-                onClick={() => dispatch(formActions.setDefinitionCriteria({}))}
+                onClick={() => dispatch(formActions.setDefinitionCriteria(getDefaultDefinitionCriteria()))}
               >
                 Reset filter
               </GoabButton>
               <GoabButton
                 type="primary"
-                disabled={busy.loading}
-                onClick={() => dispatch(loadDefinitions({ tag: criteria.tag }))}
+                disabled={busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore)}
+                onClick={() => dispatch(loadDefinitions({ tag: criteria.tag, criteria }))}
               >
                 Load definitions
               </GoabButton>
@@ -143,7 +169,7 @@ export const FormsDefinitions = () => {
               columns={4}
               next={next}
               loading={busy.loading}
-              onLoadMore={(after) => dispatch(loadDefinitions({ after }))}
+              onLoadMore={(after) => dispatch(loadDefinitions({ after, tag: criteria.tag, criteria }))}
             />
           </tbody>
         </GoabTable>

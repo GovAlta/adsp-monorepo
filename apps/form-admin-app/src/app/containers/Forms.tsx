@@ -31,6 +31,7 @@ import {
   Resource,
   directoryBusySelector,
   tagResource,
+  getDefaultFormCriteria,
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -38,6 +39,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
+import { DateRangeCriteriaItem, isDateRangeValid } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -126,6 +128,27 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
       searchForm={
         <form>
           <SearchFormItemsContainer>
+            <DateRangeCriteriaItem
+              fromValue={criteria.createDateAfter}
+              toValue={criteria.createDateBefore}
+              disabled={!!criteria.tag}
+              onChangeFrom={(value) =>
+                dispatch(
+                  formActions.setFormCriteria({
+                    ...criteria,
+                    createDateAfter: value,
+                  }),
+                )
+              }
+              onChangeTo={(value) =>
+                dispatch(
+                  formActions.setFormCriteria({
+                    ...criteria,
+                    createDateBefore: value,
+                  }),
+                )
+              }
+            />
             <TagSearchFilter
               value={criteria.tag}
               onChange={(value) =>
@@ -187,14 +210,14 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             )}
             <GoabButton
               type="secondary"
-              onClick={() => dispatch(formActions.setFormCriteria({ statusEquals: 'submitted' }))}
+              onClick={() => dispatch(formActions.setFormCriteria(getDefaultFormCriteria()))}
             >
               Reset filter
             </GoabButton>
             <GoabButton
               type="primary"
               leadingIcon="search"
-              disabled={busy.loading}
+              disabled={busy.loading || !isDateRangeValid(criteria.createDateAfter, criteria.createDateBefore)}
               onClick={() => dispatch(findForms({ definitionId, criteria }))}
             >
               Find forms
