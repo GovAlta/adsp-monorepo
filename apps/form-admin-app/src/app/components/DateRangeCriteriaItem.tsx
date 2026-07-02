@@ -42,6 +42,7 @@ const DateCriteriaInput: FunctionComponent<DateCriteriaInputProps> = ({
     <GoabInput
       type="date"
       name={name}
+      testId={name}
       value={value ? value.slice(0, 10) : ''}
       disabled={disabled}
       error={!!error}
