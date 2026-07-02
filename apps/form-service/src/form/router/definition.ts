@@ -64,7 +64,8 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         ...(createDateBefore ? { createDateBefore: createDateBefore as string } : {}),
       };
 
-      if (Object.keys(criteria).length > 0) {
+      const hasCriteria = Object.keys(criteria).length > 0;
+      if (hasCriteria) {
         params.criteria = JSON.stringify(criteria);
       }
 

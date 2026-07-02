@@ -251,6 +251,16 @@ describe('MongoFormSubmissionRepository', () => {
       expect(results.results[0].id).toBe('sub-4');
     });
 
+    it('should throw for an invalid create date criteria value', () => {
+      expect(() =>
+        repo.find(10, null, {
+          tenantIdEquals: tenantId,
+          formIdEquals: testFormId,
+          createDateAfter: 'not-a-date' as never,
+        })
+      ).toThrow(/valid date/);
+    });
+
     it('should find submissions created within a date range', async () => {
       const results = await repo.find(10, null, {
         tenantIdEquals: tenantId,

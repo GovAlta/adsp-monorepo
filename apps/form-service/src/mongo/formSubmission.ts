@@ -12,6 +12,25 @@ import {
 import { formSubmissionSchema } from './schema';
 import { FormSubmissionDoc } from './types';
 
+function asValidDateString(value: Date | string): string {
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    throw new InvalidOperationError('Date criteria value must be a valid date.');
+  }
+  return date.toISOString();
+}
+
+function hasCreateDateCriteria(criteria: FormSubmissionCriteria): boolean {
+  return !!(criteria?.createDateAfter || criteria?.createDateBefore);
+}
+
+function toCreateDateQuery(criteria: FormSubmissionCriteria): Record<string, string> {
+  return {
+    ...(criteria.createDateAfter ? { $gte: asValidDateString(criteria.createDateAfter) } : {}),
+    ...(criteria.createDateBefore ? { $lte: asValidDateString(criteria.createDateBefore) } : {}),
+  };
+}
+
 export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   private submissionModel: Model<Document & FormSubmissionDoc>;
 
@@ -51,11 +70,8 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       query.submissionStatus = criteria.submissionStatusEquals;
     }
 
-    if (criteria?.createDateAfter || criteria?.createDateBefore) {
-      query.created = {
-        ...(criteria.createDateAfter ? { $gte: new Date(criteria.createDateAfter).toISOString() } : {}),
-        ...(criteria.createDateBefore ? { $lte: new Date(criteria.createDateBefore).toISOString() } : {}),
-      };
+    if (hasCreateDateCriteria(criteria)) {
+      query.created = toCreateDateQuery(criteria);
     }
 
     if (criteria?.createdByIdEquals) {
