@@ -176,6 +176,7 @@ describe('Input Text Control tests', () => {
       const baseControl = render(<GoAInputBaseControl {...props} input={GoAInputText} />);
       expect(baseControl).toBeDefined();
     });
+
   });
 
   describe('text control events', () => {

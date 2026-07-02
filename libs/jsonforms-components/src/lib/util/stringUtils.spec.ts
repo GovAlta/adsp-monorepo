@@ -882,9 +882,14 @@ describe('getControlLabelText blank label (CS-4826)', () => {
     expect(result).toBe('');
   });
 
-  it('returns empty string when uischema.label is whitespace-only', () => {
+  it('preserves whitespace-only uischema.label so required text can render', () => {
     const result = getControlLabelText(makeProps('   '));
-    expect(result).toBe('');
+    expect(result).toBe('   ');
+  });
+
+  it('trims leading and trailing whitespace when uischema.label has visible text', () => {
+    const result = getControlLabelText(makeProps('  My custom label  '));
+    expect(result).toBe('My custom label');
   });
 
   it('returns empty string when label is "" even if options.text is set (boolean checkbox case)', () => {

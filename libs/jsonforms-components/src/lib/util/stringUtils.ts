@@ -53,7 +53,7 @@ const getExplicitControlLabel = (props: ControlProps): string | undefined => {
   // auto-generated label (and prevents options.text from leaking into the form-item label).
   const uiLabel = props.uischema?.label;
   if (typeof uiLabel === 'string') {
-    return uiLabel.trim();
+    return uiLabel.trim() === '' ? uiLabel : uiLabel.trim();
   }
 
   if (typeof uiLabel === 'object' && uiLabel !== null && 'text' in uiLabel) {

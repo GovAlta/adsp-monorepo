@@ -75,4 +75,27 @@ describe('Input Boolean Radio Control', () => {
     fireEvent(radioGroup!, new CustomEvent('_change', { detail: { name: 'bob', value: 'No' } }));
     expect(radioGroup!.getAttribute('value')).toBe('No');
   });
+
+  it('shows required text for required radio with whitespace-only label', () => {
+    const requiredSchema = {
+      ...dataSchema,
+      required: ['radio'],
+    };
+    const whitespaceLabelUiSchema = {
+      ...uiSchema,
+      label: ' ',
+      options: {
+        radio: true,
+        componentProps: {
+          orientation: 'vertical',
+        },
+      },
+    } as UISchemaElement;
+
+    const { baseElement } = render(getForm(requiredSchema, whitespaceLabelUiSchema));
+    const formItem = baseElement.querySelector('goa-form-item');
+
+    expect(formItem).toHaveAttribute('label', '\u00A0');
+    expect(formItem).toHaveAttribute('requirement', 'required');
+  });
 });
