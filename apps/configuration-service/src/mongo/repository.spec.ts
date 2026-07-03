@@ -135,6 +135,7 @@ describe('MongoConfigurationRepository', () => {
       );
     });
 
+    // clean-code-ignore: 2.16
     it('can find with createDateAfter/createDateBefore criteria', async () => {
       const criteria: ConfigurationEntityCriteria = {
         tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
