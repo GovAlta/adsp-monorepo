@@ -608,6 +608,36 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
+    it('can find forms with date range criteria', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: {
+          criteria: JSON.stringify({ createDateAfter: '2024-01-01', createDateBefore: '2024-01-31' }),
+        },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ createDateAfter: '2024-01-01', createDateBefore: '2024-01-31' }),
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
     it('can call next with invalid operation for bad criteria', async () => {
       const user = {
         tenantId,
