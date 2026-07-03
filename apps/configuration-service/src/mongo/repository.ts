@@ -71,6 +71,17 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       },
     ];
 
+    if (criteria.createDateAfter || criteria.createDateBefore) {
+      pipeline.push({
+        $match: {
+          created: {
+            ...(criteria.createDateAfter ? { $gte: new Date(criteria.createDateAfter) } : {}),
+            ...(criteria.createDateBefore ? { $lte: new Date(criteria.createDateBefore) } : {}),
+          },
+        },
+      });
+    }
+
     const match: Record<string, unknown> = {};
     const orConditions: Record<string, unknown>[] = [];
 
@@ -81,6 +92,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         key !== 'registeredIdEquals' &&
         key !== 'nameContains' &&
         key !== 'useOr' &&
+        key !== 'createDateAfter' &&
+        key !== 'createDateBefore' &&
         !key.startsWith('$') && // Prevent operator injection in keys
         value !== undefined &&
         value !== null &&

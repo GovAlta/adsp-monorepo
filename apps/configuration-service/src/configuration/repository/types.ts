@@ -6,5 +6,7 @@ export interface ConfigurationEntityCriteria {
   tenantIdEquals?: AdspId;
   registeredIdEquals?: string;
   useOr?: boolean;
+  createDateAfter?: Date;
+  createDateBefore?: Date;
   [key: string]: unknown;
 }
