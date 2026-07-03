@@ -25,6 +25,7 @@ import {
   Resource,
   directoryBusySelector,
   tagResource,
+  getDefaultSubmissionCriteria,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
@@ -33,6 +34,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
+import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -64,22 +66,23 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
 
+  const searchDisabled = isSearchDisabled(busy.loading, criteria);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setSubmissionCriteria(update)); // clean-code-ignore: 2.10
+  const handleFindSubmissions = (after?: string) => dispatch(findSubmissions({ definitionId, criteria, after })); // clean-code-ignore: 2.10
+
   return (
     <SearchLayout
       searchForm={
         <form>
           <SearchFormItemsContainer>
-            <TagSearchFilter
-              value={criteria.tag}
-              onChange={(value) =>
-                dispatch(
-                  formActions.setSubmissionCriteria({
-                    ...criteria,
-                    tag: value,
-                  }),
-                )
-              }
+            <DateRangeCriteriaItem
+              fromValue={criteria.createDateAfter}
+              toValue={criteria.createDateBefore}
+              disabled={!!criteria.tag}
+              onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
+              onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
             />
+            <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             <GoabFormItem label="Disposition" mr="m">
               <GoabDropdown
                 name="submission-disposition"
@@ -92,12 +95,10 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                       : 'not dispositioned'
                 }
                 onChange={(detail: GoabDropdownOnChangeDetail) =>
-                  dispatch(
-                    formActions.setSubmissionCriteria({
-                      ...criteria,
-                      dispositioned: detail.value === '' ? undefined : detail.value === 'dispositioned',
-                    }),
-                  )
+                  updateCriteria({
+                    ...criteria,
+                    dispositioned: detail.value === '' ? undefined : detail.value === 'dispositioned',
+                  })
                 }
               >
                 <GoabDropdownItem value="" label="<No disposition filter>" />
@@ -114,15 +115,13 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 disabled={!!criteria.tag}
                 value={criteria?.dataCriteria?.[path]?.toString() || ''}
                 onChange={(value) =>
-                  dispatch(
-                    formActions.setSubmissionCriteria({
-                      ...criteria,
-                      dataCriteria: {
-                        ...criteria?.dataCriteria,
-                        [path]: value || undefined,
-                      },
-                    }),
-                  )
+                  updateCriteria({
+                    ...criteria,
+                    dataCriteria: {
+                      ...criteria?.dataCriteria,
+                      [path]: value || undefined,
+                    },
+                  })
                 }
               />
             ))}
@@ -133,17 +132,14 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 Export to file
               </GoabButton>
             )}
-            <GoabButton
-              type="secondary"
-              onClick={() => dispatch(formActions.setSubmissionCriteria({ dispositioned: false }))}
-            >
+            <GoabButton type="secondary" onClick={() => updateCriteria(getDefaultSubmissionCriteria())}>
               Reset filter
             </GoabButton>
             <GoabButton
               type="primary"
               leadingIcon="search"
-              disabled={busy.loading}
-              onClick={() => dispatch(findSubmissions({ definitionId, criteria }))}
+              disabled={searchDisabled}
+              onClick={() => handleFindSubmissions()}
             >
               Find submissions
             </GoabButton>
@@ -194,7 +190,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               columns={4 + dataValues.length}
               next={next}
               loading={busy.loading}
-              onLoadMore={(after) => dispatch(findSubmissions({ definitionId, criteria, after }))}
+              onLoadMore={handleFindSubmissions}
             />
           </tbody>
         </GoabTable>

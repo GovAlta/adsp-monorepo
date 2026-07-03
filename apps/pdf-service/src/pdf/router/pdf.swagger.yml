@@ -127,6 +127,21 @@ components:
                 type: string
                 description: Description of the template's purpose.
                 example: A template for rendering a user name
+              template:
+                type: string
+                description: Initial HTML body content for the template.
+              header:
+                type: string
+                description: Initial HTML header content for the template.
+              footer:
+                type: string
+                description: Initial HTML footer content for the template.
+              additionalStyles:
+                type: string
+                description: Initial CSS styles shared across template, header, and footer.
+              variables:
+                type: string
+                description: Initial variable assignments for the template.
     responses:
       201:
         description: PDF template successfully created.

@@ -83,10 +83,16 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 const toTemplateId = (name: string): string =>
   name.trim().toLowerCase().replace(/\s+/g, '-');
 
+// clean-code-ignore: 2.3 2.10
 const createPdfTemplatePatch = (
   id: string,
   name: string,
   description = '',
+  template = '',
+  header?: string,
+  footer?: string,
+  additionalStyles?: string,
+  variables?: string,
 ): ConfigurationUpdateOperation<PdfTemplateConfiguration> => ({
   operation: 'UPDATE',
   update: {
@@ -94,7 +100,11 @@ const createPdfTemplatePatch = (
       id,
       name,
       description,
-      template: '',
+      template,
+      ...(header !== undefined && { header }),
+      ...(footer !== undefined && { footer }),
+      ...(additionalStyles !== undefined && { additionalStyles }),
+      ...(variables !== undefined && { variables }),
     },
   },
 });
@@ -142,7 +152,7 @@ export function createPdfTemplate(
       if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('create pdf template', user);
       }
-      const { name, description = '' } = req.body;
+      const { name, description = '', template = '', header, footer, additionalStyles, variables } = req.body;
       const id = toTemplateId(name);
       const [configuration] =
         await req.getConfiguration<Record<string, PdfTemplateEntity>>();
@@ -153,7 +163,7 @@ export function createPdfTemplate(
         });
       }
 
-      const patch = createPdfTemplatePatch(id, name, description);
+      const patch = createPdfTemplatePatch(id, name, description, template, header, footer, additionalStyles, variables);
 
       await savePdfTemplate(
         directory,
@@ -366,6 +376,11 @@ export function createPdfRouter({
           'name can contain only letters, numbers, spaces, and hyphens',
         ),
       body('description').optional().isString(),
+      body('template').optional().isString(),
+      body('header').optional().isString(),
+      body('footer').optional().isString(),
+      body('additionalStyles').optional().isString(),
+      body('variables').optional().isString(),
     ),
     createPdfTemplate(directory, tokenProvider),
   );

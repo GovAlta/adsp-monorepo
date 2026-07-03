@@ -3,7 +3,8 @@ import { FormSubmissionEntity } from './model';
 import { FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
-export function mapFormDefinition(entity: FormDefinition, revision: number, intake?: Intake) {
+// clean-code-ignore: RULE-19
+export function mapFormDefinition(entity: FormDefinition, revision: number, intake?: Intake, created?: Date) {
   return {
     id: entity.id,
     revision,
@@ -23,6 +24,7 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     scheduledIntakes: entity.scheduledIntakes,
     supportTopic: entity.supportTopic,
     registeredId: entity.registeredId,
+    created,
     intake,
   };
 }
@@ -68,7 +70,7 @@ export function mapFormWithFormSubmission(
   apiId: AdspId,
   entity: FormEntityWithJobId,
   submissionEntity: FormSubmissionEntity,
-  includeData = false
+  includeData = false,
 ) {
   const result = mapForm(apiId, entity, includeData);
   return {

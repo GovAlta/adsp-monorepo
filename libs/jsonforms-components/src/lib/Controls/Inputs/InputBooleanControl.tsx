@@ -4,8 +4,9 @@ import { GoabCheckbox } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { getLastSegmentFromPointer, convertToReadableFormat } from '../../util/stringUtils';
 import { WithInputProps } from './type';
-import { CheckboxWrapper } from './style-component';
+import { CheckboxWrapper, RequiredTextLabel } from './style-component';
 import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
+import React from 'react';
 export const BooleanComponent = ({
   data,
   enabled,
@@ -18,7 +19,7 @@ export const BooleanComponent = ({
   schema,
   isVisited,
 }: ControlProps & WithInputProps) => {
-  const getRequiredLabelText = () => {
+  const getRequiredLabelText = (): React.ReactNode => {
     let label = '';
     if (uischema?.options?.text) {
       label = uischema?.options?.text;
@@ -29,18 +30,22 @@ export const BooleanComponent = ({
     } else if (uischema?.label) {
       label = uischema?.label as string;
     }
-    return `${label}${required ? ' (required)' : ''}`;
+
+    return (
+      <>
+        {label}
+        {required ? <RequiredTextLabel> (required) </RequiredTextLabel> : ''}
+      </>
+    );
   };
 
   const text = getRequiredLabelText();
-
   return (
     <CheckboxWrapper>
       <GoabCheckbox
         error={isVisited && errors.length > 0}
         testId={`${path}-checkbox-test-id`}
         disabled={!enabled}
-        text={text && text !== 'undefined' ? text : convertToReadableFormat(getLastSegmentFromPointer(uischema.scope))}
         name={`${path}`}
         checked={data}
         onChange={(detail: GoabCheckboxOnChangeDetail) => {
@@ -48,7 +53,9 @@ export const BooleanComponent = ({
         }}
         {...uischema?.options?.componentProps}
         mb="none"
-      />
+      >
+        {text && text !== undefined ? text : convertToReadableFormat(getLastSegmentFromPointer(uischema.scope))}
+      </GoabCheckbox>
     </CheckboxWrapper>
   );
 };
