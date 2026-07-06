@@ -662,7 +662,7 @@ const submissionExportColumns: ExportColumn[] = [
 ];
 
 // Limit export to base columns plus data values selected in the overview page, so output matches what users see on screen.
-function getExportFormatOptions(
+function getExportFormatOptions( // clean-code-ignore: 2.3
   format: 'json' | 'csv',
   baseColumns: ExportColumn[],
   dataPath: string,

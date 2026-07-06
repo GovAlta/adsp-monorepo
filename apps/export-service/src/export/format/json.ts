@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { pipeline, Transform, TransformCallback, TransformOptions } from 'stream';
+import { PassThrough, pipeline, Transform, TransformCallback, TransformOptions } from 'stream';
 import { ExportFormatter } from './types';
 
 class PickFieldsTransform extends Transform {
@@ -49,7 +49,10 @@ interface JsonFormatterOptions {
 export const json: ExportFormatter<JsonFormatterOptions> = {
   extension: 'json',
   applyTransform: (options, records, callback) =>
-    options?.fields?.length
-      ? pipeline(records, new PickFieldsTransform(options.fields), new JsonStringifyTransform(options.pretty), callback)
-      : pipeline(records, new JsonStringifyTransform(options.pretty), callback),
+    pipeline(
+      records,
+      options?.fields?.length ? new PickFieldsTransform(options.fields) : new PassThrough({ objectMode: true }),
+      new JsonStringifyTransform(options?.pretty),
+      callback
+    ),
 };
