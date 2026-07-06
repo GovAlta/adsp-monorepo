@@ -1,0 +1,261 @@
+import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import axios from 'axios';
+import Keycloak from 'keycloak-js';
+import { v4 as uuidv4 } from 'uuid';
+import { ConfigState } from './config.slice';
+import { FeedbackMessage } from './feedback.slice';
+import { AppState } from './store';
+import { isAxiosErrorPayload } from './util';
+import { isUUID } from '../lib/keycloak';
+
+export const USER_FEATURE_KEY = 'user';
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+}
+
+interface Tenant {
+  id: string;
+  name: string;
+  realm: string;
+}
+
+export interface UserState {
+  tenant: Tenant;
+  initialized: boolean;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    roles: string[];
+  };
+}
+
+let client: Keycloak;
+
+export const getKeycloakExpiry = () => {
+  if (client) {
+    return client?.refreshTokenParsed?.exp || 0;
+  }
+
+  return 0;
+};
+
+async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
+  if (client?.realm !== realm) {
+    client = new Keycloak({
+      url: `${config.environment.access.url}/auth`,
+      clientId: config.environment.access.client_id,
+      realm,
+    });
+
+    try {
+      await client.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
+      });
+      client.onAuthLogout = () => {
+        dispatch(userActions.clearUser());
+      };
+    } catch (err) {
+      // Keycloak client throws undefined in certain cases.
+    }
+  }
+
+  return client;
+}
+
+export async function getAccessToken(): Promise<string> {
+  let token = null;
+  if (client) {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const exp = client?.tokenParsed?.exp || 0;
+      if (exp - now < 60) {
+        await client.updateToken(60);
+      }
+      token = client.token;
+    } catch (err) {
+      // If we're unable to update token, return no value and the request will fail on 401.
+    }
+  }
+  return token;
+}
+
+export const initializeTenant = createAsyncThunk(
+  'user/initialize-tenant',
+  async (name: string, { getState, dispatch, rejectWithValue }) => {
+    const { config } = getState() as AppState;
+    const url = config.directory['urn:ads:platform:tenant-service'];
+    if (!url) {
+      return null;
+    }
+
+    //handle if we are passing the tenant name or realm id to look up.
+    const paramsToUse = isUUID(name)
+      ? {
+          realm: name,
+        }
+      : {
+          name: name.replace(/-/g, ' '),
+        };
+    const { data } = await axios.get<{ results: Tenant[] }>(new URL('/api/tenant/v2/tenants', url).href, {
+      params: paramsToUse,
+    });
+
+    const tenant = data?.results?.[0];
+    if (!tenant) {
+      return rejectWithValue({
+        id: uuidv4(),
+        level: 'error',
+        message: `Tenant "${name}" not found.`,
+      } as FeedbackMessage);
+    } else {
+      dispatch(initializeUser(tenant));
+      return tenant;
+    }
+  },
+);
+
+export const initializeUser = createAsyncThunk(
+  'user/initialize-user',
+  async (tenant: Tenant, { getState, dispatch }): Promise<UserProfile | null> => {
+    const { config } = getState() as AppState;
+    const keycloak = await initializeKeycloakClient(dispatch, tenant.realm, config);
+
+    console.log('keycloak', keycloak);
+    if (!keycloak?.tokenParsed) {
+      return null;
+    }
+
+    const tokenParsed = keycloak.tokenParsed as Record<string, unknown>;
+    const realmRoles = ((tokenParsed.realm_access as { roles?: string[] } | undefined)?.roles ?? []).filter(Boolean);
+    const resourceAccess = (tokenParsed.resource_access as Record<string, { roles?: string[] }> | undefined) ?? {};
+
+    return {
+      id: String(tokenParsed.sub ?? ''),
+      name: String(tokenParsed.name ?? tokenParsed.preferred_username ?? tokenParsed.email ?? ''),
+      email: String(tokenParsed.email ?? ''),
+      roles: Object.entries(resourceAccess).reduce<string[]>(
+        (roles, [resourceClient, resource]) => [
+          ...roles,
+          ...(resource.roles?.map((clientRole) => `${resourceClient}:${clientRole}`) ?? []),
+        ],
+        realmRoles,
+      ),
+    };
+  },
+);
+
+export const loginUserWithIDP = createAsyncThunk(
+  'user/login-idp',
+  async ({ realm, idpFromUrl, from }: { realm: string; idpFromUrl: string; from: string }, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+
+    const client = await initializeKeycloakClient(dispatch, realm, config);
+    Promise.all([
+      client.login({
+        idpHint: idpFromUrl,
+        redirectUri: from === '/' ? new URL(`/auth/callback?from=${'/'}`, window.location.href).href : from,
+      }),
+    ]);
+
+    // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
+    return await client.loadUserProfile();
+  },
+);
+
+const getIdpHint = (): string => {
+  const location: string = window.location.href;
+  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
+  let idp = 'core';
+  if (skipSSO && !idpFromUrl) {
+    idp = ' ';
+  }
+
+  return idp;
+};
+
+const ALLOWED_TENANTS = ['autotest'];
+export const loginUser = createAsyncThunk(
+  'user/login',
+  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+
+    if (!ALLOWED_TENANTS.includes(tenant.name)) return null;
+
+    const idpHint = getIdpHint();
+
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    await client.login({
+      idpHint,
+      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.origin).href,
+    });
+
+    // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
+    return await client.loadUserProfile();
+  },
+);
+
+export const logoutUser = createAsyncThunk(
+  'user/logout',
+  async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
+    const { config } = getState() as AppState;
+
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    await client.logout({
+      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.origin).href,
+    });
+  },
+);
+
+const initialUserState: UserState = {
+  initialized: false,
+  tenant: null,
+  user: null,
+};
+
+const userSlice = createSlice({
+  name: USER_FEATURE_KEY,
+  initialState: initialUserState,
+  reducers: {
+    clearUser: (state) => {
+      state.user = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(initializeTenant.fulfilled, (state, { payload }) => {
+        state.tenant = payload;
+      })
+      .addCase(initializeUser.fulfilled, (state, { payload }) => {
+        state.user = payload;
+        state.initialized = true;
+      })
+      .addCase(loginUserWithIDP.fulfilled, (state, { payload }) => {
+        state.user = payload as typeof state.user;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+      })
+      .addMatcher(isRejectedWithValue(), (state, { payload }) => {
+        if (isAxiosErrorPayload(payload) && payload.status === 401) {
+          state.user = null;
+        }
+      });
+  },
+});
+
+export const userReducer = userSlice.reducer;
+export const userActions = userSlice.actions;
+
+export const tenantSelector = (state: AppState) => state.user.tenant;
+
+export const userSelector = (state: AppState) => state.user;

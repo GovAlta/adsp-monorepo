@@ -1,0 +1,83 @@
+{
+  "name": "sandbox-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/sandbox-app/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "compiler": "babel",
+        "outputPath": "dist/apps/sandbox-app",
+        "index": "apps/sandbox-app/src/index.html",
+        "baseHref": "/",
+        "main": "apps/sandbox-app/src/main.tsx",
+        "tsConfig": "apps/sandbox-app/tsconfig.app.json",
+        "assets": ["apps/sandbox-app/src/favicon.ico", "apps/sandbox-app/src/assets"],
+        "styles": ["apps/sandbox-app/src/styles.scss"],
+        "scripts": [],
+        "webpackConfig": "apps/sandbox-app/webpack.config.js"
+      },
+      "configurations": {
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        },
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/sandbox-app/src/environments/environment.ts",
+              "with": "apps/sandbox-app/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "sandbox-app:build",
+        "hmr": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "sandbox-app:build:development"
+        },
+        "production": {
+          "buildTarget": "sandbox-app:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "serve-static": {
+      "executor": "@nx/web:file-server",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "sandbox-app:build",
+        "spa": true
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/sandbox-app/jest.config.ts"
+      }
+    }
+  }
+}
