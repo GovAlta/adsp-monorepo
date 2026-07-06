@@ -2,23 +2,28 @@ import { ToolDefinition } from './types';
 
 const QUICKSTART = `# Getting started with @abgov/adsp-service-sdk (Node)
 
-## 1. Initialize the SDK
+The SDK has two entry points for two different kinds of service. Most product teams building on ADSP want
+**\`initializeService\`** — use that unless you are specifically building a new cross-tenant platform capability
+(the kind that lives in the ADSP core-services monorepo itself, e.g. directory-service, configuration-service).
 
-For a multi-tenant platform service, call \`initializePlatform\` once at startup:
+## 1. Initialize the SDK (tenant service)
+
+Call \`initializeService\` once at startup, with your tenant's realm:
 
 \`\`\`typescript
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializeService } from '@abgov/adsp-service-sdk';
 
 const serviceId = AdspId.parse(environment.CLIENT_ID);
 const {
   coreStrategy,
   tenantStrategy,
   ...sdkCapabilities
-} = await initializePlatform(
+} = await initializeService(
   {
-    displayName: 'My platform service',
-    description: 'Example of a platform service.',
+    displayName: 'My tenant service',
+    description: 'Example of a service built on top of ADSP.',
     serviceId,
+    realm: environment.TENANT_REALM,
     accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
     clientSecret: environment.CLIENT_SECRET,
     directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -31,24 +36,28 @@ const {
 );
 \`\`\`
 
-For a single-tenant service, use \`initializeService\` instead (same options, minus \`ignoreServiceAud\`; it resolves the
-service's own tenant automatically and omits \`tenantService\`/\`tenantHandler\` from what it returns).
+\`realm\` is your tenant's Keycloak realm — visible in Tenant Admin, or the realm you created your service client
+under. (If you're instead building a cross-tenant platform service, use \`initializePlatform\` — same options minus
+\`realm\`, which is fixed to \`"core"\`; it additionally returns \`tenantService\`/\`tenantHandler\` since it serves many
+tenants.)
 
 ## 2. What you get back
 
-\`initializePlatform\` returns capabilities you wire into your Express app:
+Both entry points return capabilities you wire into your Express app:
 
 | Capability | Purpose |
 |---|---|
 | \`directory\` | Look up other service/API URLs by ADSP URN |
-| \`tenantService\` | Look up tenant records |
 | \`configurationService\` | Retrieve tenant/core configuration |
 | \`eventService\` | Send domain events |
 | \`tokenProvider\` | Get this service's own access token |
 | \`coreStrategy\` / \`tenantStrategy\` | Passport strategies to validate incoming tokens |
-| \`tenantHandler\` / \`configurationHandler\` | Express middleware setting \`req.tenant\` / \`req.getConfiguration()\` |
+| \`configurationHandler\` | Express middleware setting \`req.getConfiguration()\` |
 | \`healthCheck\` | Function to check platform dependency health |
 | \`metricsHandler\` / \`traceHandler\` | Request instrumentation middleware |
+
+(\`initializePlatform\` additionally returns \`tenantService\` and \`tenantHandler\`, since a platform service serves
+many tenants and needs to resolve which one a request belongs to.)
 
 ## 3. Registering what your service needs
 
@@ -72,9 +81,10 @@ export function createQuickstartTool(): ToolDefinition[] {
     {
       name: 'get_platform_quickstart',
       description:
-        'Returns the canonical initializePlatform usage pattern for a new Node ADSP service, a summary of the ' +
-        'capabilities it returns, and pointers to further docs. Use this first for the most common question: how to ' +
-        'start using ADSP from a Node service.',
+        'Returns the canonical initializeService usage pattern for a new Node service built on top of ADSP (the ' +
+        'common case for product teams), notes the initializePlatform variant for cross-tenant platform services, ' +
+        'and summarizes the capabilities returned. Use this first for the most common question: how to start using ' +
+        'ADSP from a Node service.',
       inputSchema: { type: 'object', properties: {} },
       handler: () => ({ content: [{ type: 'text', text: QUICKSTART }] }),
     },
