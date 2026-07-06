@@ -19,6 +19,7 @@
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
+      "inputs": ["production", "^production", "{workspaceRoot}/docs/**/*.md"],
       "options": {
         "outputPath": "dist/libs/adsp-sdk-mcp-server",
         "tsConfig": "libs/adsp-sdk-mcp-server/tsconfig.lib.json",
