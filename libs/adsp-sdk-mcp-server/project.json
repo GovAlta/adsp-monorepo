@@ -1,0 +1,40 @@
+{
+  "name": "adsp-sdk-mcp-server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-sdk-mcp-server/src",
+  "projectType": "library",
+  "tags": [],
+  "implicitDependencies": ["adsp-service-sdk"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/adsp-sdk-mcp-server"],
+      "options": {
+        "jestConfig": "libs/adsp-sdk-mcp-server/jest.config.ts"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/adsp-sdk-mcp-server",
+        "tsConfig": "libs/adsp-sdk-mcp-server/tsconfig.lib.json",
+        "packageJson": "libs/adsp-sdk-mcp-server/package.json",
+        "main": "libs/adsp-sdk-mcp-server/src/main.ts",
+        "assets": [
+          "libs/adsp-sdk-mcp-server/*.md",
+          { "input": "docs", "glob": "**/*.md", "output": "assets/docs" }
+        ]
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/adsp-sdk-mcp-server/.releaserc.json"
+      }
+    }
+  }
+}
