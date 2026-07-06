@@ -209,6 +209,76 @@ describe('export', () => {
     );
   });
 
+  it('can process export json with fields format option', async () => {
+    const job = createExportJob({
+      logger: loggerMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      repository: repositoryMock,
+      fileService: fileServiceMock,
+    });
+
+    directoryMock.getResourceUrl.mockResolvedValue(new URL('http://test-service/test/v1/tests'));
+    axiosMock.get.mockResolvedValueOnce({
+      data: {
+        results: [
+          { id: 'test-1', name: 'Test 1', extra: { nested: true } },
+          { id: 'test-2', name: 'Test 2', other: { deep: { nested: 'value' } } },
+        ],
+        page: {},
+      },
+    });
+
+    const result = {
+      id: 'exported-1',
+      urn: 'urn:ads:platform:file-service:v1:/files/exported-1',
+      filename: 'exported.csv',
+    };
+    const decoder = new TextDecoder();
+    let exported = '';
+    fileServiceMock.upload.mockImplementationOnce(
+      async (_tenantId, _fileType, _recordId, _filename, content: Readable) => {
+        return new Promise((resolve, reject) => {
+          content.on('data', (chunk: unknown) => {
+            exported += decoder.decode(chunk as Buffer);
+          });
+          content.on('error', (err) => reject(err));
+          content.on('end', () => resolve(result));
+          content.read();
+        });
+      }
+    );
+
+    const item = {
+      tenantId: tenantId.toString(),
+      jobId: 'export-1',
+      timestamp: new Date(),
+      resourceId: adspId`${apiId}:/tests`.toString(),
+      requestedBy: { id: 'tester', name: 'Tester' },
+      params: {},
+      resultsPath: 'results',
+      filename: 'exported',
+      fileType: 'export',
+      format: 'json',
+      formatOptions: { fields: ['id', 'other.deep.nested'] },
+    };
+    await job(item);
+
+    expect(exported).toBe('[\n{"id":"test-1"},\n{"id":"test-2","other":{"deep":{"nested":"value"}}}\n]\n');
+    expect(fileServiceMock.upload).toHaveBeenCalledWith(
+      expect.any(AdspId),
+      item.fileType,
+      item.jobId,
+      item.filename + '.json',
+      expect.any(Readable)
+    );
+    expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'completed', result);
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ExportCompletedDefinition.name })
+    );
+  });
+
   it('can process export csv', async () => {
     const job = createExportJob({
       logger: loggerMock,
@@ -277,6 +347,131 @@ describe('export', () => {
     expect(eventServiceMock.send).toHaveBeenCalledWith(
       expect.objectContaining({ name: ExportCompletedDefinition.name })
     );
+  });
+
+  it('can process export csv with column headers', async () => {
+    const job = createExportJob({
+      logger: loggerMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      repository: repositoryMock,
+      fileService: fileServiceMock,
+    });
+
+    directoryMock.getResourceUrl.mockResolvedValue(new URL('http://test-service/test/v1/tests'));
+    axiosMock.get.mockResolvedValueOnce({
+      data: {
+        results: [
+          { id: 'test-1', name: 'Test 1', extra: { nested: true } },
+          { id: 'test-2', name: 'Test 2', other: { deep: { nested: 'value' } } },
+        ],
+        page: {},
+      },
+    });
+
+    const result = {
+      id: 'exported-1',
+      urn: 'urn:ads:platform:file-service:v1:/files/exported-1',
+      filename: 'exported.csv',
+    };
+    const decoder = new TextDecoder();
+    let exported = '';
+    fileServiceMock.upload.mockImplementationOnce(
+      async (_tenantId, _fileType, _recordId, _filename, content: Readable) => {
+        return new Promise((resolve, reject) => {
+          content.on('data', (chunk: unknown) => {
+            exported += decoder.decode(chunk as Buffer);
+          });
+          content.on('error', (err) => reject(err));
+          content.on('end', () => resolve(result));
+          content.read();
+        });
+      }
+    );
+
+    const item = {
+      tenantId: tenantId.toString(),
+      jobId: 'export-1',
+      timestamp: new Date(),
+      resourceId: adspId`${apiId}:/tests`.toString(),
+      requestedBy: { id: 'tester', name: 'Tester' },
+      params: {},
+      resultsPath: 'results',
+      filename: 'exported',
+      fileType: 'export',
+      format: 'csv',
+      formatOptions: {
+        columns: [
+          { key: 'id', header: 'ID' },
+          { key: 'name', header: 'Name' },
+          { key: 'other.deep.nested', header: 'Nested value' },
+        ],
+      },
+    };
+    await job(item);
+
+    expect(exported).toBe('ID,Name,Nested value\ntest-1,Test 1,\ntest-2,Test 2,value\n');
+    expect(fileServiceMock.upload).toHaveBeenCalledWith(
+      expect.any(AdspId),
+      item.fileType,
+      item.jobId,
+      item.filename + '.csv',
+      expect.any(Readable)
+    );
+    expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'completed', result);
+    expect(eventServiceMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ExportCompletedDefinition.name })
+    );
+  });
+
+  it('can record job failure on pipeline error', async () => {
+    const job = createExportJob({
+      logger: loggerMock,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      repository: repositoryMock,
+      fileService: fileServiceMock,
+    });
+
+    directoryMock.getResourceUrl.mockResolvedValue(new URL('http://test-service/test/v1/tests'));
+    axiosMock.get.mockResolvedValueOnce({
+      data: {
+        // Non-object record causes the csv stringifier to error in the pipeline.
+        results: ['not a record'],
+        page: {},
+      },
+    });
+
+    fileServiceMock.upload.mockImplementationOnce(
+      async (_tenantId, _fileType, _recordId, _filename, content: Readable) => {
+        return new Promise((resolve, reject) => {
+          content.on('data', () => {});
+          content.on('error', (err) => reject(err));
+          content.on('end', () => resolve(null));
+          content.read();
+        });
+      }
+    );
+
+    const item = {
+      tenantId: tenantId.toString(),
+      jobId: 'export-1',
+      timestamp: new Date(),
+      resourceId: adspId`${apiId}:/tests`.toString(),
+      requestedBy: { id: 'tester', name: 'Tester' },
+      params: {},
+      resultsPath: 'results',
+      filename: 'exported',
+      fileType: 'export',
+      format: 'csv',
+      formatOptions: { columns: ['id'] },
+    };
+    await job(item);
+
+    expect(repositoryMock.update).toHaveBeenCalledWith('export-1', 'failed');
+    expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: ExportFailedDefinition.name }));
   });
 
   it('can retry on request failure', async () => {
