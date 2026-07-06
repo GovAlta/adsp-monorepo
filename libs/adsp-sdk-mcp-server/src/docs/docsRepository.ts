@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join, relative, sep } from 'path';
+import { countTerms, scoreByTermFrequency, tokenize } from '../search/textSearch';
 
 export interface AdspDoc {
   path: string;
@@ -59,16 +60,12 @@ function listMarkdownFiles(dir: string, root = dir): string[] {
   });
 }
 
-function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+function scoreDoc(doc: IndexedDoc, terms: string[]): number {
+  return scoreByTermFrequency(terms, doc.titleCounts) * 5 + scoreByTermFrequency(terms, doc.bodyCounts);
 }
 
-function countTerms(tokens: string[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const token of tokens) {
-    counts.set(token, (counts.get(token) ?? 0) + 1);
-  }
-  return counts;
+function toSearchResult(doc: IndexedDoc, score: number, terms: string[]): AdspDocSearchResult {
+  return { path: doc.path, title: doc.title, snippet: buildSnippet(doc.content, terms), score };
 }
 
 function buildSnippet(content: string, terms: string[], radius = 160): string {
@@ -124,21 +121,10 @@ export class DocsRepository {
     }
 
     return this.docs
-      .map((doc) => ({
-        doc,
-        score: terms.reduce(
-          (score, term) => score + (doc.titleCounts.get(term) ?? 0) * 5 + (doc.bodyCounts.get(term) ?? 0),
-          0
-        ),
-      }))
+      .map((doc) => ({ doc, score: scoreDoc(doc, terms) }))
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(({ doc, score }) => ({
-        path: doc.path,
-        title: doc.title,
-        snippet: buildSnippet(doc.content, terms),
-        score,
-      }));
+      .map(({ doc, score }) => toSearchResult(doc, score, terms));
   }
 }

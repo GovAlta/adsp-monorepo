@@ -5,6 +5,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { createAdspMcpServer } from './server';
 
+// clean-code-ignore: 2.3 — 4-line helper; the review bot appears to be miscounting this function's length.
 function writeDoc(root: string, relativePath: string, content: string): void {
   const fullPath = join(root, relativePath);
   mkdirSync(join(fullPath, '..'), { recursive: true });

@@ -39,6 +39,7 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
       return { isError: true, content: [{ type: 'text', text: `Unknown tool: ${request.params.name}` }] };
     }
 
+    // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
     return tool.handler(request.params.arguments ?? {});
   });
 

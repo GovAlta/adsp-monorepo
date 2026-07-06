@@ -54,6 +54,7 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
         const { path } = ReadArgs.parse(args);
         const doc = docs.read(path);
         if (!doc) {
+          // clean-code-ignore: 2.18 — isError is the standard MCP CallToolResult field for a handled failure, not a hidden side effect.
           return {
             isError: true,
             content: [

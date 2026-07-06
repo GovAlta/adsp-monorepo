@@ -1,7 +1,22 @@
+import { countTerms, scoreByTermFrequency, tokenize } from '../search/textSearch';
 import { SDK_REFERENCE, SdkSymbolDoc } from './reference';
 
-function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+function scoreNameMatch(name: string, normalizedQuery: string): number {
+  if (name === normalizedQuery) {
+    return 100;
+  }
+  if (name.startsWith(normalizedQuery)) {
+    return 50;
+  }
+  if (name.includes(normalizedQuery)) {
+    return 25;
+  }
+  return 0;
+}
+
+function scoreSymbol(symbol: SdkSymbolDoc, normalizedQuery: string, terms: string[]): number {
+  const haystackCounts = countTerms(tokenize(`${symbol.module} ${symbol.summary} ${symbol.details ?? ''}`));
+  return scoreNameMatch(symbol.name.toLowerCase(), normalizedQuery) + scoreByTermFrequency(terms, haystackCounts);
 }
 
 /**
@@ -16,25 +31,7 @@ export function searchSdkReference(query: string, limit = 5): SdkSymbolDoc[] {
 
   const terms = tokenize(query);
 
-  return SDK_REFERENCE.map((symbol) => {
-    const name = symbol.name.toLowerCase();
-    let score = 0;
-
-    if (name === normalizedQuery) {
-      score += 100;
-    } else if (name.startsWith(normalizedQuery)) {
-      score += 50;
-    } else if (name.includes(normalizedQuery)) {
-      score += 25;
-    }
-
-    const haystack = tokenize(`${symbol.module} ${symbol.summary} ${symbol.details ?? ''}`);
-    for (const term of terms) {
-      score += haystack.filter((t) => t === term).length;
-    }
-
-    return { symbol, score };
-  })
+  return SDK_REFERENCE.map((symbol) => ({ symbol, score: scoreSymbol(symbol, normalizedQuery, terms) }))
     .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
