@@ -79,10 +79,11 @@ describe('adsp-sdk-mcp-server', () => {
     expect(results[0].name).toBe('initializePlatform');
   });
 
-  it('get_platform_quickstart returns the initializePlatform usage snippet', async () => {
+  it('get_platform_quickstart returns the initializeService usage snippet, with initializePlatform noted as the platform-service variant', async () => {
     const result = await client.callTool({ name: 'get_platform_quickstart', arguments: {} });
     const [content] = result.content as { type: 'text'; text: string }[];
 
+    expect(content.text).toContain('initializeService');
     expect(content.text).toContain('initializePlatform');
     expect(content.text).toContain('@abgov/adsp-service-sdk');
   });

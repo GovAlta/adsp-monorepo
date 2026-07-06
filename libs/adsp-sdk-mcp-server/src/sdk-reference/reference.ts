@@ -19,10 +19,49 @@ export interface SdkSymbolDoc {
 export const SDK_REFERENCE: SdkSymbolDoc[] = [
   // initialize
   {
+    name: 'initializeService',
+    kind: 'function',
+    module: 'initialize',
+    summary:
+      "SDK's main entry point for a tenant service — the typical way a product team consumes this SDK, since " +
+      'platform services already live in the ADSP core-services monorepo and use initializePlatform instead.',
+    details:
+      'async initializeService(options: Omit<PlatformOptions, "ignoreServiceAud">, logOptions: Logger | LogOptions): ' +
+      'Promise<Capabilities>\n\n' +
+      'Unlike the root initializePlatform (which fixes realm to "core"), options.realm here is your tenant\'s realm ' +
+      '(visible in Tenant Admin, or the realm name you set up your service client under in Keycloak). Resolves the ' +
+      "service's single tenant via tenantService.getTenants()[0] and returns a reshaped capability set: same as " +
+      'PlatformCapabilities but without tenantService/tenantHandler, and clearCached is reshaped to ' +
+      '(serviceId: AdspId) => void (tenant is implicit).',
+    example:
+      "import { AdspId, initializeService } from '@abgov/adsp-service-sdk';\n\n" +
+      "const serviceId = AdspId.parse(environment.CLIENT_ID);\n" +
+      "const { coreStrategy, tenantStrategy, ...sdkCapabilities } = await initializeService(\n" +
+      "  {\n" +
+      "    displayName: 'My tenant service',\n" +
+      "    description: 'Example of a service built on top of ADSP.',\n" +
+      "    serviceId,\n" +
+      "    realm: environment.TENANT_REALM,\n" +
+      "    accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),\n" +
+      "    clientSecret: environment.CLIENT_SECRET,\n" +
+      "    directoryUrl: new URL(environment.DIRECTORY_URL),\n" +
+      "    configurationSchema,\n" +
+      "    events: [],\n" +
+      "    roles: [],\n" +
+      "    notifications: [],\n" +
+      "  },\n" +
+      "  { logger }\n" +
+      ");",
+    seeAlso: ['initializePlatform', 'ServiceRegistration'],
+  },
+  {
     name: 'initializePlatform',
     kind: 'function',
     module: 'initialize',
-    summary: "SDK's main entry point for a multi-tenant platform service; sets up all core capabilities.",
+    summary:
+      'Entry point for a multi-tenant platform service (the kind that lives in the ADSP core-services monorepo ' +
+      'alongside directory-service, configuration-service, etc). Most product teams building on ADSP want ' +
+      'initializeService instead — use this only if you are building a new cross-tenant platform capability.',
     details:
       'async initializePlatform(options: PlatformOptions, logOptions: Logger | LogOptions, services?: Partial<PlatformServices>): Promise<PlatformCapabilities>\n\n' +
       'Fixes realm to "core". options extends ServiceRegistration with: clientSecret, directoryUrl, accessServiceUrl, ' +
@@ -34,38 +73,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'metricsHandler, traceHandler, tracerProvider? (only if tracing enabled), meterProvider? (only if metrics enabled), logger.\n\n' +
       'Also triggers a fire-and-forget registration of roles/events/configuration schema/notifications/etc with the ' +
       'relevant platform services (see ServiceRegistration).',
-    example:
-      "import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';\n\n" +
-      "const serviceId = AdspId.parse(environment.CLIENT_ID);\n" +
-      "const { coreStrategy, tenantStrategy, ...sdkCapabilities } = await initializePlatform(\n" +
-      "  {\n" +
-      "    displayName: 'My platform service',\n" +
-      "    description: 'Example of a platform service.',\n" +
-      "    serviceId,\n" +
-      "    accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),\n" +
-      "    clientSecret: environment.CLIENT_SECRET,\n" +
-      "    directoryUrl: new URL(environment.DIRECTORY_URL),\n" +
-      "    configurationSchema,\n" +
-      "    events: [],\n" +
-      "    roles: [],\n" +
-      "    notifications: [],\n" +
-      "  },\n" +
-      "  { logger }\n" +
-      ");",
     seeAlso: ['initializeService', 'ServiceRegistration'],
-  },
-  {
-    name: 'initializeService',
-    kind: 'function',
-    module: 'initialize',
-    summary: 'Entry point for a single-tenant (tenant-scoped) service; thin wrapper over initializePlatform.',
-    details:
-      'async initializeService(options: Omit<PlatformOptions, "ignoreServiceAud">, logOptions: Logger | LogOptions): ' +
-      'Promise<Capabilities>\n\n' +
-      'Resolves the service\'s single tenant via tenantService.getTenants()[0] and returns a reshaped capability set: ' +
-      'same as PlatformCapabilities but without tenantService/tenantHandler, and clearCached is reshaped to ' +
-      '(serviceId: AdspId) => void (tenant is implicit).',
-    seeAlso: ['initializePlatform'],
   },
 
   // access

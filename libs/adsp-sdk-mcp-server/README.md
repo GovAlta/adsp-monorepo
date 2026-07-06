@@ -12,10 +12,16 @@ and exposes them over stdio via four tools:
 - `read_adsp_doc` — read the full content of a doc page found via search.
 - `search_sdk_reference` — search `@abgov/adsp-service-sdk` by symbol name, module, or keyword; returns full symbol
   details (kind, description, option/return shape, example, deprecated flag).
-- `get_platform_quickstart` — the canonical `initializePlatform` usage pattern and a capabilities summary, for the
-  most common question: how to start using ADSP from a Node service.
+- `get_platform_quickstart` — the canonical `initializeService` usage pattern (the common case for a tenant service
+  built on top of ADSP) and a capabilities summary, for the most common question: how to start using ADSP from a
+  Node service.
 
 This package covers the Node SDK only. Other language SDKs (`.NET`, Django, Flask, Spring) are out of scope for now.
+
+The SDK has two entry points for two different kinds of service: `initializeService` for tenant services (the
+primary audience for this package — product teams building on top of ADSP) and `initializePlatform` for cross-tenant
+platform services (the ones that live in this monorepo, e.g. `directory-service`, `configuration-service`). Content
+here is weighted toward `initializeService` accordingly.
 
 ## Usage
 
