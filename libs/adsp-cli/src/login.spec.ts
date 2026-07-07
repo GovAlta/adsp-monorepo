@@ -28,17 +28,19 @@ jest.mock('enquirer', () => ({ prompt: mockPrompt }));
 
 jest.mock('./tenants', () => ({
   findTenantByName: jest.fn(),
+  findTenantByRealm: jest.fn(),
   listTenants: jest.fn(),
 }));
 
 // Imported after the mocks above so login.ts picks up the mocked modules.
 import { getAccessToken, getStatus, loginInteractive, logout } from './login';
-import { findTenantByName, listTenants } from './tenants';
+import { findTenantByName, findTenantByRealm, listTenants } from './tenants';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
 import { getCacheFilePath, setCachedToken } from './tokenCache';
 import { AuthorizationCode } from 'simple-oauth2';
 
 const mockFindTenantByName = findTenantByName as jest.Mock;
+const mockFindTenantByRealm = findTenantByRealm as jest.Mock;
 const mockListTenants = listTenants as jest.Mock;
 const mockAuthorizationCode = AuthorizationCode as unknown as jest.Mock;
 
@@ -87,6 +89,7 @@ describe('login', () => {
     mockOpen.mockReset().mockResolvedValue(undefined);
     mockPrompt.mockReset();
     mockFindTenantByName.mockReset();
+    mockFindTenantByRealm.mockReset();
     mockListTenants.mockReset();
   });
 
@@ -215,6 +218,33 @@ describe('login', () => {
       expect(result).toEqual({ realm: REALM, token: 'fresh-access-token', reused: false });
       expect(mockFindTenantByName).not.toHaveBeenCalled();
       expect(mockListTenants).not.toHaveBeenCalled();
+      expect(mockFindTenantByRealm).toHaveBeenCalledWith(expect.any(String), REALM);
+      expect(readConfig()).toEqual({ tenantRealm: REALM });
+    });
+
+    it('best-effort resolves and persists the tenant name via a reverse lookup, since --realm alone does not have it', async () => {
+      mockFindTenantByRealm.mockResolvedValue({ name: 'my-tenant', realm: REALM });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive({ realm: REALM });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
+      await loginPromise;
+
+      expect(readConfig()).toEqual({ tenantRealm: REALM, tenantName: 'my-tenant' });
+    });
+
+    it('still logs in successfully when the reverse tenant-name lookup fails', async () => {
+      mockFindTenantByRealm.mockRejectedValue(new Error('network error'));
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive({ realm: REALM });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
+
+      const result = await loginPromise;
+
+      expect(result).toEqual({ realm: REALM, token: 'fresh-access-token', reused: false });
       expect(readConfig()).toEqual({ tenantRealm: REALM });
     });
 
@@ -341,7 +371,8 @@ describe('login', () => {
       expect(result).toEqual({ realm: REALM, token: 'fresh-access-token', reused: false });
       expect(mockFindTenantByName).toHaveBeenCalledWith(expect.any(String), 'my-tenant');
       expect(mockListTenants).not.toHaveBeenCalled();
-      expect(readConfig()).toEqual({ tenantRealm: REALM });
+      expect(readConfig()).toEqual({ tenantRealm: REALM, tenantName: 'my-tenant' });
+      expect(mockFindTenantByRealm).not.toHaveBeenCalled();
     });
 
     it('throws when the tenant name is not found', async () => {
@@ -390,7 +421,8 @@ describe('login', () => {
       expect(mockPrompt).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'autocomplete', choices: ['tenant-a', 'tenant-b'] })
       );
-      expect(readConfig()).toEqual({ tenantRealm: 'realm-a' });
+      expect(readConfig()).toEqual({ tenantRealm: 'realm-a', tenantName: 'tenant-a' });
+      expect(mockFindTenantByRealm).not.toHaveBeenCalled();
     });
 
     it('short-circuits entirely when the persisted realm already has a valid cached token', async () => {
@@ -604,6 +636,25 @@ describe('login', () => {
         env: 'test',
         envSource: 'config',
       });
+    });
+
+    it('reports the persisted tenant name when the realm itself came from that same persisted config', () => {
+      writeConfig({ tenantRealm: REALM, tenantName: 'My Tenant' });
+      setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
+
+      expect(getStatus()).toMatchObject({ realm: REALM, tenantName: 'My Tenant' });
+    });
+
+    it('does not report a tenant name when ADSP_TENANT_REALM overrides the persisted realm, even if config has one', () => {
+      writeConfig({ tenantRealm: 'other-realm', tenantName: 'Some Other Tenant' });
+      process.env.ADSP_TENANT_REALM = REALM;
+      setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
+
+      const status = getStatus();
+
+      expect(status.realm).toBe(REALM);
+      expect(status.realmSource).toBe('env');
+      expect(status.tenantName).toBeUndefined();
     });
   });
 

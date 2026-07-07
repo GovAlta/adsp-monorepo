@@ -40,6 +40,24 @@ export async function findTenantByName(directoryServiceUrl: string, name: string
 }
 
 /**
+ * Anonymous reverse lookup of a tenant by realm — the exact-name lookup's realm-keyed
+ * counterpart, for resolving a display name when only the realm is known (e.g. `login --realm`).
+ */
+export async function findTenantByRealm(directoryServiceUrl: string, realm: string): Promise<Tenant | null> {
+  const tenantServiceUrl = await resolveTenantServiceUrl(directoryServiceUrl);
+  const url = new URL('v2/tenants', tenantServiceUrl);
+  url.searchParams.set('realm', realm);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new HttpRequestError(response.status, `Tenant service request failed with status ${response.status}.`);
+  }
+
+  const data = (await response.json()) as TenantsResponse;
+  return data.results?.[0] ?? null;
+}
+
+/**
  * Full tenant list — requires an authenticated (core-realm) token. Used for the interactive
  * tenant-picker flow when the caller doesn't already know their tenant name or realm.
  */
