@@ -18,3 +18,16 @@ export interface ToolDefinition {
    */
   handler: (args: Record<string, unknown>) => Promise<CallToolResult> | CallToolResult;
 }
+
+export interface LiveToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: JsonSchemaObject;
+  /**
+   * Unlike ToolDefinition.handler, this MAY make network calls and read local files (e.g. an
+   * ADSP API call authenticated via a cached CLI login token) — it is not required to be a pure,
+   * side-effect-free lookup. Kept as a distinct type so that invariant stays true and checkable
+   * for every ToolDefinition-typed tool in this package.
+   */
+  handler: (args: Record<string, unknown>) => Promise<CallToolResult> | CallToolResult;
+}

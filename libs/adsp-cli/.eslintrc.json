@@ -5,7 +5,7 @@
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "parserOptions": {
-        "project": ["libs/adsp-sdk-mcp-server/tsconfig.*?.json"]
+        "project": ["libs/adsp-cli/tsconfig.*?.json"]
       },
       "rules": {}
     },
@@ -21,12 +21,7 @@
       "files": ["*.json"],
       "parser": "jsonc-eslint-parser",
       "rules": {
-        "@nx/dependency-checks": [
-          "error",
-          {
-            "ignoredDependencies": ["@abgov/adsp-cli"]
-          }
-        ]
+        "@nx/dependency-checks": "error"
       }
     }
   ]
