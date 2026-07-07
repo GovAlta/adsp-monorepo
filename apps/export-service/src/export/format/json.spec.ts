@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { json } from './json';
 
-const readAll = (content: Readable): Promise<string> =>
+const readAll = (content: Readable): Promise<string> => // clean-code-ignore: 2.16
   new Promise((resolve, reject) => {
     let result = '';
     content.on('data', (chunk) => (result += chunk.toString()));

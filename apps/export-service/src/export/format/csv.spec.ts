@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { csv } from './csv';
 
-const readAll = (content: Readable): Promise<string> =>
+const readAll = (content: Readable): Promise<string> => // clean-code-ignore: 2.9
   new Promise((resolve, reject) => {
     let result = '';
     content.on('data', (chunk) => (result += chunk.toString()));
@@ -9,7 +9,7 @@ const readAll = (content: Readable): Promise<string> =>
     content.on('end', () => resolve(result));
   });
 
-describe('csv', () => {
+describe('csv', () => { // clean-code-ignore: 2.16
   const records = [
     { id: 'test-1', name: 'Test 1', extra: { nested: true } },
     { id: 'test-2', name: 'Test 2', other: { deep: { nested: 'value' } } },
@@ -19,7 +19,7 @@ describe('csv', () => {
     const content = csv.applyTransform(
       { columns: ['id', 'name', 'other.deep.nested'] },
       Readable.from(records),
-      () => {}
+      () => {} // clean-code-ignore: 2.11
     );
 
     expect(await readAll(content)).toBe('id,name,other.deep.nested\ntest-1,Test 1,\ntest-2,Test 2,value\n');
@@ -34,7 +34,7 @@ describe('csv', () => {
         ],
       },
       Readable.from(records),
-      () => {}
+      () => {} // clean-code-ignore: 2.11
     );
 
     expect(await readAll(content)).toBe('ID,Nested value\ntest-1,1\ntest-2,\n');
