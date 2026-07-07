@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { userSelector } from '../state';
@@ -18,7 +18,7 @@ import { StatusServiceMain } from './services/StatusServiceMain';
 import { ValueServiceMain } from './services/ValueServiceMain';
 import { TaskServiceMain } from './services/TaskServiceMain';
 import { FileServiceMain } from './services/FileServiceMain';
-import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
+import { GoabAppFooter, GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { ScriptServiceMain } from './services/ScriptServiceMain';
 import { CacheServiceMain } from './services/CacheServiceMain';
 import { DirectoryServiceMain } from './services/DirectoryServiceMain';
@@ -26,6 +26,9 @@ import { CalendarServiceMain } from './services/CalendarServiceMain';
 import { SharepointServiceMain } from './services/SharepointServiceMain';
 import { EventServiceMain } from './services/EventServiceMain';
 import { ConfigurationServiceMain } from './services/ConfigurationServiceMain';
+import { FeedbackOverlay } from './services/feedback/FeedbackOverlay';
+import { JsonformsExampleOne } from './services/jsonforms/JsonformsExampleOne';
+import { DesignSystemsMain } from './services/DesignSystemsMain';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -62,11 +65,17 @@ export const SandBoxTenant = () => {
               <Route path="/services/calendar" element={<CalendarServiceMain tenantName={tenantName} />} />
               <Route path="/services/configuration" element={<ConfigurationServiceMain tenantName={tenantName} />} />
               <Route path="/services/directory" element={<DirectoryServiceMain tenantName={tenantName} />} />
+              <Route path="/services/design-systems" element={<DesignSystemsMain tenantName={tenantName} />} />
               <Route path="/services/event" element={<EventServiceMain tenantName={tenantName} />} />
               <Route path="/services/file" element={<FileServiceMain tenantName={tenantName} />} />
               <Route path="/services/form" element={<FormServiceMain tenantName={tenantName} />} />
+
               <Route path="/services/feedback" element={<FeedbackServiceMain tenantName={tenantName} />} />
+              <Route path="/services/feedback/overlay" element={<FeedbackOverlay />} />
+
               <Route path="/services/jsonforms" element={<JsonformsMain tenantName={tenantName} />} />
+              <Route path="/services/jsonforms/example1/:definitionId" element={<JsonformsExampleOne />} />
+
               <Route path="/services/notification" element={<NotificationServiceMain tenantName={tenantName} />} />
               <Route path="/services/pdf" element={<PDFServiceMain tenantName={tenantName} />} />
               <Route path="/services/script" element={<ScriptServiceMain tenantName={tenantName} />} />
@@ -80,6 +89,7 @@ export const SandBoxTenant = () => {
           </section>
         )}
       </main>
+      <GoabAppFooter />
     </React.Fragment>
   );
 };

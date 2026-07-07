@@ -1,4 +1,11 @@
-import { GoabAppHeader, GoabButton, GoabButtonGroup, GoabCallout, GoabMicrositeHeader } from '@abgov/react-components';
+import {
+  GoabAppFooter,
+  GoabAppHeader,
+  GoabButton,
+  GoabButtonGroup,
+  GoabCallout,
+  GoabMicrositeHeader,
+} from '@abgov/react-components';
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
@@ -38,10 +45,11 @@ export const Landing: FunctionComponent = () => {
         url="https://www.alberta.ca/"
         heading="Alberta Digital Service Platform - Sandbox app"
       ></GoabAppHeader>
-      <Band title="Sandbox">This is a sandbox application</Band>
+      <Band title="Sandbox app">This is a sandbox application</Band>
       <Main>
         <div></div>
       </Main>
+      <GoabAppFooter />
     </React.Fragment>
   );
 };

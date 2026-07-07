@@ -1,14 +1,14 @@
 import styled from 'styled-components';
 
 export const ServiceContainer = styled.div`
-  margin: 2rem;
+  margin: var(--goa-space-xl);
   display: flex;
   flex-wrap: wrap;
-  gap: 16px; /* Your desired spacing between items */
+  gap: var(--goa-space-m);
 `;
 
 export const FlexItem = styled.div`
-  flex: 0 0 calc((100% - (16px * 3)) / 3);
+  flex: 0 0 calc((100% - (var(--goa-space-m) * 3)) / 3);
   box-sizing: border-box; /* Ensures padding doesn't break the layout */
 `;
 

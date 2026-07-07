@@ -13,7 +13,7 @@ export const ConfigurationServiceMain = ({ tenantName }: ServiceMainProps) => {
         type="non-interactive"
         width={'full'}
         testId={'ConfigurationServiceContainer'}
-        heading={'configuration Service'}
+        heading={'Configuration Service'}
       >
         <GoabText size="body-m" mb="none">
           The following contains POC or samples for the Configuration service.

@@ -29,7 +29,7 @@ export const SignIn: FunctionComponent<SignInProps> = ({ roles }) => {
   useAdspFeedbackWidget();
   return (
     <div>
-      <Band title="Sandbox app"></Band>
+      <Band title="Sandbox app">This is a sandbox application</Band>
       <Container vs={3} hs={1}>
         <Grid>
           <GridItem md={1} />

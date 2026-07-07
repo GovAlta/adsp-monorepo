@@ -1,4 +1,4 @@
-import { GoabContainer } from '@abgov/react-components';
+import { GoabAppFooter, GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FlexItem, ServiceContainer } from './styled-components';
@@ -49,6 +49,13 @@ const SERVICES: ServiceInfo[] = [
     show: true,
     description: 'Directory related services',
     url: '/directory',
+  },
+  {
+    id: 'DesignSystems',
+    name: 'Design systems',
+    show: true,
+    description: 'Design systems ui components',
+    url: '/design-systems',
   },
   {
     id: 'EventService',
@@ -151,13 +158,14 @@ export default function Services() {
   return (
     <>
       <Header />
-      <Band title="Sandbox services">Services available for POC</Band>
+      <Band title="Sandbox services">Services/libraries available for POC</Band>
       <ServiceContainer>
         {sortServices(SERVICES, 'name').map((service) => {
           return (
             <FlexItem>
               <GoabContainer
                 accent="thick"
+                key={`${service.id}`}
                 type="non-interactive"
                 width={'full'}
                 testId={service.id}
@@ -173,6 +181,7 @@ export default function Services() {
           );
         })}
       </ServiceContainer>
+      <GoabAppFooter />
     </>
   );
 }

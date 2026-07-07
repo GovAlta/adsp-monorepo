@@ -16,7 +16,7 @@ function addScripts(feedbackConfig: FeedbackConfig) {
 function loadScripts() {
   addScripts({
     async: true,
-    src: environment.feedback.url,
+    src: environment.feedback.url ?? '',
   });
 }
 
