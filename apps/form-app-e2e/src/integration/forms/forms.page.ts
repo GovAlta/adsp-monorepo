@@ -75,6 +75,10 @@ class FormsPage {
     return cy.xpath(`//goa-checkbox[contains(normalize-space(.), "${label}")]`);
   }
 
+  formCheckboxWithLabel(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-checkbox`);
+  }
+
   formSocialInsuranceNumberField(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input`);
   }
@@ -210,8 +214,8 @@ class FormsPage {
     return cy.xpath('//h3[contains(text(),"Step")]');
   }
 
-  formBackToOverviewLink() {
-    return cy.xpath('//div[@class="back-link" and text()="Back to application overview"]');
+  formBackToOverviewLink(label) {
+    return cy.xpath(`//div[@class="back-link" and text()="${label}"]`);
   }
 
   formTaskListStepPageNextButton() {
@@ -323,6 +327,12 @@ class FormsPage {
   formListWithDetailFormItem(label, index) {
     return cy.xpath(
       `(//h3[text()="${label}"]/ancestor::div[contains(@data-testid,"object-list-wrapper")]//goa-form-item)[${index}]`
+    );
+  }
+
+  formSummaryFieldChangeLink(pageName, label) {
+    return cy.xpath(
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//goa-button[text()="Change"]`
     );
   }
 }

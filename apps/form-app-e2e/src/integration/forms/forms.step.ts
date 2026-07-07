@@ -498,9 +498,9 @@ Then('the user views Step {string} of {string} on the form page', function (curr
   formsObj.formStepIndicator().should('have.text', `Step ${currentStep} of ${totalSteps}`);
 });
 
-When('the user clicks Back to application overview link on the form page', function () {
+When('the user clicks {string} link on the form page', function (linkText) {
   cy.wait(1000); // Wait for the page to save data to avoid losing the last data input
-  formsObj.formBackToOverviewLink().click({ force: true });
+  formsObj.formBackToOverviewLink(linkText).click({ force: true });
 });
 
 When('the user clicks Next button on a tasklist step page', function () {
@@ -749,4 +749,48 @@ Then('the user views the submit button is {string} on the form page', function (
   } else {
     expect(enabledOrNot).to.be.oneOf(['enabled', 'disabled']);
   }
+});
+
+When(
+  'the user clicks change link for {string} field of {string} on summary page',
+  function (fieldLabel: string, sectionLabel: string) {
+    formsObj.formSummaryFieldChangeLink(sectionLabel, fieldLabel).shadow().find('button').click({ force: true });
+  }
+);
+
+Then('the user views {string} text field is focused and brought into view on the form page', function (label) {
+  formsObj
+    .formFormItem(label)
+    .find('goa-input')
+    .shadow()
+    .find('input, textarea')
+    .should('be.focused')
+    .then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+
+      cy.window().then((win) => {
+        expect(rect.top).to.be.gte(0);
+        expect(rect.left).to.be.gte(0);
+        expect(rect.bottom).to.be.lte(win.innerHeight);
+        expect(rect.right).to.be.lte(win.innerWidth);
+      });
+    });
+});
+
+Then('the user views {string} checkbox is focused and brought into view on the form page', function (label) {
+  formsObj
+    .formCheckboxWithLabel(label)
+    .shadow()
+    .find('input[type="checkbox"]')
+    .should('be.focused')
+    .then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+
+      cy.window().then((win) => {
+        expect(rect.top).to.be.gte(0);
+        expect(rect.left).to.be.gte(0);
+        expect(rect.bottom).to.be.lte(win.innerHeight);
+        expect(rect.right).to.be.lte(win.innerWidth);
+      });
+    });
 });
