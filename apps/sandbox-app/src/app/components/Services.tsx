@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { FlexItem, ServiceContainer } from './styled-components';
 import { Band } from '@core-services/app-common';
 import Header from './Header';
-import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
+import { useFeedbackWidget } from '../util/useFeedbackWidget';
 
 interface ServiceInfo {
   id: string;
@@ -154,7 +154,7 @@ const sortServices = (services: ServiceInfo[], key: keyof ServiceInfo, direction
 
 export default function Services() {
   const location = useLocation();
-  useAdspFeedbackWidget();
+  useFeedbackWidget();
   return (
     <>
       <Header />

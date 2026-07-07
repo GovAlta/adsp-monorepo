@@ -6,7 +6,7 @@ import { Landing } from './components/Landing';
 import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
 import { SandboxAuthCallback } from './containers/SandboxAuthCallback';
-import { useAdspFeedbackWidget } from './util/useFeedbackWidget';
+import { useFeedbackWidget } from './util/useFeedbackWidget';
 import Services from './components/Services';
 import './util/feedback-script-loader.ts';
 
@@ -19,7 +19,7 @@ declare global {
   }
 }
 export function App() {
-  useAdspFeedbackWidget();
+  useFeedbackWidget();
   return (
     <div className={styles.app}>
       <Routes>

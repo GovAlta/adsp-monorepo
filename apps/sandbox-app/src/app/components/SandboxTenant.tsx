@@ -7,7 +7,7 @@ import { Band } from '@core-services/app-common';
 import { SignIn } from './SignIn';
 
 import Header from './Header';
-import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
+import { useFeedbackWidget } from '../util/useFeedbackWidget';
 import { FormServiceMain } from './services/FormServiceMain';
 import { AgentServiceMain } from './services/AgentServiceMain';
 import { FeedbackServiceMain } from './services/FeedbackServiceMain';
@@ -36,7 +36,7 @@ export const SandBoxTenant = () => {
   const navigate = useNavigate();
   const { user } = useSelector(userSelector);
 
-  useAdspFeedbackWidget();
+  useFeedbackWidget();
   return (
     <React.Fragment>
       <Header />

@@ -9,22 +9,7 @@ import {
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-//import { useFeedbackLinkHandler } from '../util/feedbackUtils';
-import {
-  AppDispatch,
-  configInitializedSelector,
-  formSelector,
-  initializeTenant,
-  loginUser,
-  logoutUser,
-  tenantSelector,
-  userSelector,
-} from '../state';
-import { dispatch } from '@abgov/ui-components-common';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
-import { Tenant } from '../lib/keycloak';
-import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
+import { useFeedbackWidget } from '../util/useFeedbackWidget';
 
 const Main = styled.main`
   overflow: auto;
@@ -36,7 +21,7 @@ const AccountActionsDiv = styled.div`
 `;
 
 export const Landing: FunctionComponent = () => {
-  useAdspFeedbackWidget();
+  useFeedbackWidget();
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" />

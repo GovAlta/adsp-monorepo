@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { DEFAULT_TENANT } from './feedbackUtils';
 
-export const getAdspFeedbackContext = () => {
+export const getFeedbackContext = () => {
   const sandboxSite = `${document.location.protocol}//${document.location.host}`;
   const sandboxView = document.location.pathname;
 
@@ -22,12 +22,12 @@ function updateWidgetVisibility(show: boolean) {
   }
 }
 
-export const useAdspFeedbackWidget = () => {
+export const useFeedbackWidget = () => {
   useEffect(() => {
     if (globalThis.adspFeedback !== undefined) {
       globalThis.adspFeedback.initialize({
         tenant: DEFAULT_TENANT,
-        getContext: () => getAdspFeedbackContext(),
+        getContext: () => getFeedbackContext(),
       });
     }
     updateWidgetVisibility(true);

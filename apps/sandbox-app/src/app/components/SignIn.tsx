@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { AppDispatch, configInitializedSelector, loginUser, tenantSelector, userSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
+import { useFeedbackWidget } from '../util/useFeedbackWidget';
 
 const Placeholder = styled.div`
   padding: 48px;
@@ -26,7 +26,7 @@ export const SignIn: FunctionComponent<SignInProps> = ({ roles }) => {
     dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
   };
 
-  useAdspFeedbackWidget();
+  useFeedbackWidget();
   return (
     <div>
       <Band title="Sandbox app">This is a sandbox application</Band>
