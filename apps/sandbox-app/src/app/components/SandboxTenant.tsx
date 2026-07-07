@@ -1,28 +1,37 @@
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
-import { AppDispatch, configInitializedSelector, tenantSelector, userSelector } from '../state';
-import { DEFAULT_TENANT, useFeedbackLinkHandler } from '../util/feedbackUtils';
+import { useSelector } from 'react-redux';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { userSelector } from '../state';
+import { DEFAULT_TENANT } from '../util/feedbackUtils';
 import { Band } from '@core-services/app-common';
 import { SignIn } from './SignIn';
-import PDFServiceMain from './services/AgentServiceMain';
-import AgentServiceMain from './services/AgentServiceMain';
-import FormServiceMain from './services/FormServiceMain';
-import NotificationServiceMain from './services/NotificationServiceMain';
+
 import Header from './Header';
-import FeedbackServiceMain from './services/FeedbackServiceMain';
-import JsonformsMain from './services/JsonformsMain';
 import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
-import StatusServiceMain from './services/StatusServiceMain';
+import { FormServiceMain } from './services/FormServiceMain';
+import { AgentServiceMain } from './services/AgentServiceMain';
+import { FeedbackServiceMain } from './services/FeedbackServiceMain';
+import { NotificationServiceMain } from './services/NotificationServiceMain';
+import { PDFServiceMain } from './services/PDFServiceMain';
+import { JsonformsMain } from './services/JsonformsMain';
+import { StatusServiceMain } from './services/StatusServiceMain';
+import { ValueServiceMain } from './services/ValueServiceMain';
+import { TaskServiceMain } from './services/TaskServiceMain';
+import { FileServiceMain } from './services/FileServiceMain';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
+import { ScriptServiceMain } from './services/ScriptServiceMain';
+import { CacheServiceMain } from './services/CacheServiceMain';
+import { DirectoryServiceMain } from './services/DirectoryServiceMain';
+import { CalendarServiceMain } from './services/CalendarServiceMain';
+import { SharepointServiceMain } from './services/SharepointServiceMain';
+import { EventServiceMain } from './services/EventServiceMain';
+import { ConfigurationServiceMain } from './services/ConfigurationServiceMain';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   const location = useLocation();
-  const dispatch = useDispatch<AppDispatch>();
-  const tenant = useSelector(tenantSelector);
-
-  const configInitialized = useSelector(configInitializedSelector);
-  const { initialized: userInitialized, user } = useSelector(userSelector);
+  const navigate = useNavigate();
+  const { user } = useSelector(userSelector);
 
   useAdspFeedbackWidget();
   return (
@@ -35,14 +44,36 @@ export const SandBoxTenant = () => {
         ) : (
           <section>
             <Band title="Sandbox services">Services available for POC</Band>
+            {user && (
+              <GoabButtonGroup alignment="end" mr={'xl'} mt="l">
+                <GoabButton
+                  type="tertiary"
+                  onClick={() => {
+                    navigate(`/${tenantName}/services`);
+                  }}
+                >
+                  Back to services
+                </GoabButton>
+              </GoabButtonGroup>
+            )}
             <Routes>
-              <Route path="/services/agent" element={<AgentServiceMain />} />
-              <Route path="/services/form" element={<FormServiceMain />} />
-              <Route path="/services/feedback" element={<FeedbackServiceMain />} />
-              <Route path="/services/jsonforms" element={<JsonformsMain />} />
-              <Route path="/services/notification" element={<NotificationServiceMain />} />
-              <Route path="/services/pdf" element={<PDFServiceMain />} />
-              <Route path="/services/status" element={<StatusServiceMain />} />
+              <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
+              <Route path="/services/cache" element={<CacheServiceMain tenantName={tenantName} />} />
+              <Route path="/services/calendar" element={<CalendarServiceMain tenantName={tenantName} />} />
+              <Route path="/services/configuration" element={<ConfigurationServiceMain tenantName={tenantName} />} />
+              <Route path="/services/directory" element={<DirectoryServiceMain tenantName={tenantName} />} />
+              <Route path="/services/event" element={<EventServiceMain tenantName={tenantName} />} />
+              <Route path="/services/file" element={<FileServiceMain tenantName={tenantName} />} />
+              <Route path="/services/form" element={<FormServiceMain tenantName={tenantName} />} />
+              <Route path="/services/feedback" element={<FeedbackServiceMain tenantName={tenantName} />} />
+              <Route path="/services/jsonforms" element={<JsonformsMain tenantName={tenantName} />} />
+              <Route path="/services/notification" element={<NotificationServiceMain tenantName={tenantName} />} />
+              <Route path="/services/pdf" element={<PDFServiceMain tenantName={tenantName} />} />
+              <Route path="/services/script" element={<ScriptServiceMain tenantName={tenantName} />} />
+              <Route path="/services/sharepoint" element={<SharepointServiceMain tenantName={tenantName} />} />
+              <Route path="/services/status" element={<StatusServiceMain tenantName={tenantName} />} />
+              <Route path="/services/task" element={<TaskServiceMain tenantName={tenantName} />} />
+              <Route path="/services/value" element={<ValueServiceMain tenantName={tenantName} />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/" element={<Navigate to={`/${tenantName}`} replace />} />
             </Routes>

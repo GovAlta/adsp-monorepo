@@ -5,20 +5,20 @@ import { ServiceMainProps } from './types';
 import { Routes } from 'react-router-dom';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
-export const FeedbackServiceMain = ({ tenantName }: ServiceMainProps) => {
+export const TaskServiceMain = ({ tenantName }: ServiceMainProps) => {
   return (
     <ServiceContainer>
       <GoabContainer
         accent="thick"
         type="non-interactive"
         width={'full'}
-        testId={'feedbackServiceContainer'}
-        heading={'Feedback Service'}
+        testId={'taskServiceContainer'}
+        heading={'Task service'}
       >
         <GoabText size="body-m" mb="none">
-          The following contains POC or samples for the Feedback service.
+          The following contains POC or samples for the Task service.
         </GoabText>
-        <DefaultServiceListTemplate prefix="Feedback service item " />
+        <DefaultServiceListTemplate prefix="Task service item " />
       </GoabContainer>
       <Routes></Routes>
     </ServiceContainer>

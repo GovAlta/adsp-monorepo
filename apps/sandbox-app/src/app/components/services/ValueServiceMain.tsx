@@ -1,8 +1,11 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
-import { GoabContainer } from '@abgov/react-components';
+import { GoabContainer, GoabText } from '@abgov/react-components';
+import { ServiceMainProps } from './types';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
-function ValueServiceMain() {
+export const ValueServiceMain = ({ tenantName }: ServiceMainProps) => {
   return (
     <ServiceContainer>
       <GoabContainer
@@ -12,10 +15,12 @@ function ValueServiceMain() {
         testId={'valueServiceContainer'}
         heading={'Value service'}
       >
-        Status Testing
+        <GoabText size="body-m" mb="none">
+          The following contains POC or samples for the Task service.
+        </GoabText>
+        <DefaultServiceListTemplate prefix="Value service item " />
       </GoabContainer>
+      <Routes></Routes>
     </ServiceContainer>
   );
-}
-
-export default ValueServiceMain;
+};

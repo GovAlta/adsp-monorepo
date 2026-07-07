@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { DEFAULT_TENANT } from './feedbackUtils';
 
 export const getAdspFeedbackContext = () => {
-  const sandboxSite = `https://adsp-dev.gov.ab.ca`;
+  const sandboxSite = `${document.location.protocol}//${document.location.host}`;
   const sandboxView = document.location.pathname;
 
   return Promise.resolve({
@@ -22,7 +22,6 @@ function updateWidgetVisibility(show: boolean) {
   }
 }
 
-//Use this to display the ADSP feedback widget without needing certain constraints
 export const useAdspFeedbackWidget = () => {
   useEffect(() => {
     if (globalThis.adspFeedback !== undefined) {

@@ -1,8 +1,11 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
-import { GoabContainer } from '@abgov/react-components';
+import { GoabContainer, GoabText } from '@abgov/react-components';
+import { Routes } from 'react-router-dom';
+import { ServiceMainProps } from './types';
+import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
-function FormServiceMain() {
+export const FormServiceMain = ({ tenantName }: ServiceMainProps) => {
   return (
     <ServiceContainer>
       <GoabContainer
@@ -10,12 +13,14 @@ function FormServiceMain() {
         type="non-interactive"
         width={'full'}
         testId={'formServiceContainer'}
-        heading={'Form Service'}
+        heading={'Form service'}
       >
-        Testing
+        <GoabText size="body-m" mb="none">
+          The following contains POC or samples for the Form service.
+        </GoabText>
+        <DefaultServiceListTemplate prefix="Form service item " />
       </GoabContainer>
+      <Routes></Routes>
     </ServiceContainer>
   );
-}
-
-export default FormServiceMain;
+};

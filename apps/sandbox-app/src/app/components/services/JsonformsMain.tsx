@@ -1,8 +1,11 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
-import { GoabContainer } from '@abgov/react-components';
+import { GoabContainer, GoabText } from '@abgov/react-components';
+import { Routes } from 'react-router-dom';
+import { ServiceMainProps } from './types';
+import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
-function JsonformsMain() {
+export const JsonformsMain = ({ tenantName }: ServiceMainProps) => {
   return (
     <ServiceContainer>
       <GoabContainer
@@ -12,10 +15,12 @@ function JsonformsMain() {
         testId={'JsonformsContainer'}
         heading={'Jsonforms library'}
       >
-        Jsonforms Testing
+        <GoabText size="body-m" mb="none">
+          The following contains POC or samples for the Jsonforms library.
+        </GoabText>
+        <DefaultServiceListTemplate prefix="Jsonforms item " />
       </GoabContainer>
+      <Routes></Routes>
     </ServiceContainer>
   );
-}
-
-export default JsonformsMain;
+};

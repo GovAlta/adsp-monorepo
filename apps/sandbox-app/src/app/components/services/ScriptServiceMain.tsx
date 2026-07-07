@@ -1,24 +1,24 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
-import { ServiceMainProps } from './types';
 import { Routes } from 'react-router-dom';
+import { ServiceMainProps } from './types';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
-export const FeedbackServiceMain = ({ tenantName }: ServiceMainProps) => {
+export const ScriptServiceMain = ({ tenantName }: ServiceMainProps) => {
   return (
     <ServiceContainer>
       <GoabContainer
         accent="thick"
         type="non-interactive"
         width={'full'}
-        testId={'feedbackServiceContainer'}
-        heading={'Feedback Service'}
+        testId={'scriptServiceContainer'}
+        heading={'Script Service'}
       >
         <GoabText size="body-m" mb="none">
-          The following contains POC or samples for the Feedback service.
+          The following contains POC or samples for the Script service.
         </GoabText>
-        <DefaultServiceListTemplate prefix="Feedback service item " />
+        <DefaultServiceListTemplate prefix="Script service item " />
       </GoabContainer>
       <Routes></Routes>
     </ServiceContainer>

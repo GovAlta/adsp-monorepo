@@ -23,11 +23,39 @@ const SERVICES: ServiceInfo[] = [
     url: '/agent',
   },
   {
-    id: 'ValueService',
-    name: 'Value service',
+    id: 'CacheService',
+    name: 'Cache service',
     show: true,
-    description: 'Value related services',
-    url: '/value',
+    description: 'Cache related services',
+    url: '/cache',
+  },
+  {
+    id: 'CalendarService',
+    name: 'Calendar service',
+    show: true,
+    description: 'Calendar related services',
+    url: '/calendar',
+  },
+  {
+    id: 'ConfigurationService',
+    name: 'Configuration service',
+    show: true,
+    description: 'Configuration related services',
+    url: '/configuration',
+  },
+  {
+    id: 'DirectoryService',
+    name: 'Directory service',
+    show: true,
+    description: 'Directory related services',
+    url: '/directory',
+  },
+  {
+    id: 'EventService',
+    name: 'Event service',
+    show: true,
+    description: 'Event related services',
+    url: '/event',
   },
   {
     id: 'FormService',
@@ -42,6 +70,13 @@ const SERVICES: ServiceInfo[] = [
     show: true,
     description: 'PDF related services',
     url: '/pdf',
+  },
+  {
+    id: 'SharepointService',
+    name: 'Sharepoint service',
+    show: true,
+    description: 'Sharepoint related services',
+    url: '/sharepoint',
   },
   {
     id: 'ScriptService',
@@ -84,6 +119,20 @@ const SERVICES: ServiceInfo[] = [
     show: true,
     description: 'Status related services',
     url: '/status',
+  },
+  {
+    id: 'Task service',
+    name: 'Task service',
+    show: true,
+    description: 'Task related services',
+    url: '/task',
+  },
+  {
+    id: 'ValueService',
+    name: 'Value service',
+    show: true,
+    description: 'Value related services',
+    url: '/value',
   },
 ];
 

@@ -1,8 +1,11 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
-import { GoabContainer } from '@abgov/react-components';
+import { GoabContainer, GoabText } from '@abgov/react-components';
+import { ServiceMainProps } from './types';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
-function AgentServiceMain() {
+export const AgentServiceMain = ({ tenantName }: ServiceMainProps) => {
   return (
     <ServiceContainer>
       <GoabContainer
@@ -12,10 +15,13 @@ function AgentServiceMain() {
         testId={'agentServiceContainer'}
         heading={'Agent Service'}
       >
-        Testing
+        <GoabText size="body-m" mb="none">
+          The following contains POC or samples for the agent service.
+        </GoabText>
+        <DefaultServiceListTemplate prefix="Agent item " />
       </GoabContainer>
+
+      <Routes>{/* <Route path="/" element={<Navigate to={`/${tenantName}/services`} replace />} /> */}</Routes>
     </ServiceContainer>
   );
-}
-
-export default AgentServiceMain;
+};

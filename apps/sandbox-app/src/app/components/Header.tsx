@@ -29,7 +29,7 @@ export default function Header() {
 
   return (
     <>
-      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" />
       <GoabAppHeader url="/" heading={'Alberta Digital Service Platform - Sandbox app'}>
         <>
           <span style={{ display: 'none' }}></span>
