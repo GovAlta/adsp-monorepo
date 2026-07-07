@@ -5,7 +5,7 @@ import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
 import { EnvironmentName, resolveEnvironmentName, resolveEnvironmentUrls, resolveTenantRealm } from './environments';
 import { generatePkcePair } from './pkce';
-import { findTenantByName, listTenants } from './tenants';
+import { findTenantByName, findTenantByRealm, listTenants, Tenant } from './tenants';
 import { CacheEntry, getCacheFilePath, getCachedToken, hasScopes, isExpired, setCachedToken } from './tokenCache';
 
 export type AccessTokenResult = { status: 'ok'; token: string } | { status: 'not-authenticated' };
@@ -198,7 +198,7 @@ async function getOrLogin(accessServiceUrl: string, realm: string, scopes: strin
   return { token: await browserLogin(accessServiceUrl, realm, scopes), reused: false };
 }
 
-async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string): Promise<string> {
+async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string): Promise<Tenant> {
   const tenants = await listTenants(directoryServiceUrl, coreToken);
   if (tenants.length === 0) {
     throw new Error('No tenants found.');
@@ -217,7 +217,21 @@ async function promptForTenantRealm(directoryServiceUrl: string, coreToken: stri
   if (!picked) {
     throw new Error(`Tenant '${pickedName}' not found.`);
   }
-  return picked.realm;
+  return picked;
+}
+
+/**
+ * Best-effort reverse lookup for a --realm login, which doesn't already know the tenant's
+ * display name the way --tenant/the interactive picker do. Never throws — a lookup failure just
+ * leaves the name unresolved rather than blocking the login itself.
+ */
+async function resolveTenantName(directoryServiceUrl: string, realm: string): Promise<string | undefined> {
+  try {
+    const found = await findTenantByRealm(directoryServiceUrl, realm);
+    return found?.name;
+  } catch {
+    return undefined;
+  }
 }
 
 export interface LoginResult {
@@ -261,6 +275,7 @@ export async function loginInteractive(
   const { accessServiceUrl, directoryServiceUrl } = resolveEnvironmentUrls(options.env);
   const scopes = ['email', ...(options.scopes ?? [])];
   let realm = options.realm;
+  let tenantName: string | undefined;
 
   if (!realm && !options.tenant && !options.scopes?.length && !options.env) {
     const current = resolveTenantRealm();
@@ -278,15 +293,24 @@ export async function loginInteractive(
       throw new Error(`Tenant '${options.tenant}' not found.`);
     }
     realm = found.realm;
+    tenantName = found.name;
   }
 
   if (!realm) {
     const core = await getOrLogin(accessServiceUrl, CORE_REALM, scopes);
-    realm = await promptForTenantRealm(directoryServiceUrl, core.token);
+    const picked = await promptForTenantRealm(directoryServiceUrl, core.token);
+    realm = picked.realm;
+    tenantName = picked.name;
+  }
+
+  // --realm logins don't already know the display name the other two modes do — best-effort
+  // resolve it so it can still be persisted/reported by `status`.
+  if (!tenantName) {
+    tenantName = await resolveTenantName(directoryServiceUrl, realm);
   }
 
   const final = await getOrLogin(accessServiceUrl, realm, scopes);
-  writeConfig({ tenantRealm: realm, env: options.env ?? readConfig()?.env });
+  writeConfig({ tenantRealm: realm, tenantName, env: options.env ?? readConfig()?.env });
 
   return { realm, token: final.token, reused: final.reused };
 }
@@ -295,6 +319,8 @@ export interface LoginStatus {
   authenticated: boolean;
   realm?: string;
   realmSource?: 'env' | 'config';
+  /** The tenant's display name, when it was resolvable at login time — see loginInteractive. */
+  tenantName?: string;
   tokenState?: 'valid' | 'expired' | 'missing';
   env: EnvironmentName;
   envSource: 'env' | 'config' | 'default';
@@ -302,15 +328,16 @@ export interface LoginStatus {
 
 /**
  * Pure, read-only snapshot of the current session — no network calls, no cache mutation.
- * Used by the CLI's `status` command.
+ * Used by the CLI's `status` command, and exported for library consumers (e.g. nx-adsp's
+ * generator templates, which use the tenant name/realm) that want the same information.
  */
 export function getStatus(): LoginStatus {
+  const config = readConfig();
   const validEnvVar = process.env.ADSP_ENV === 'dev' || process.env.ADSP_ENV === 'test' || process.env.ADSP_ENV === 'prod';
-  const persistedEnv = readConfig()?.env;
   const envStatus: Pick<LoginStatus, 'env' | 'envSource'> = validEnvVar
     ? { env: resolveEnvironmentName(), envSource: 'env' }
-    : persistedEnv
-    ? { env: persistedEnv, envSource: 'config' }
+    : config?.env
+    ? { env: config.env, envSource: 'config' }
     : { env: 'prod', envSource: 'default' };
 
   const realmResolution = resolveTenantRealm();
@@ -321,11 +348,16 @@ export function getStatus(): LoginStatus {
   const { accessServiceUrl } = resolveEnvironmentUrls();
   const cached = getCachedToken(accessServiceUrl, realmResolution.tenantRealm);
   const tokenState = !cached ? 'missing' : isExpired(cached) ? 'expired' : 'valid';
+  const realmSource: 'env' | 'config' = process.env.ADSP_TENANT_REALM ? 'env' : 'config';
 
   return {
     authenticated: tokenState === 'valid',
     realm: realmResolution.tenantRealm,
-    realmSource: process.env.ADSP_TENANT_REALM ? 'env' : 'config',
+    realmSource,
+    // Only trust the persisted tenantName when the realm itself came from that same persisted
+    // config — if ADSP_TENANT_REALM overrode the realm, config.json's tenantName may belong to a
+    // different (stale) realm entirely.
+    tenantName: realmSource === 'config' ? config?.tenantName : undefined,
     tokenState,
     ...envStatus,
   };

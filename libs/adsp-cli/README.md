@@ -94,7 +94,7 @@ for the one-time manual setup steps. `--realm`/`--tenant` logins are unaffected 
 | Command | Auth required | Description |
 |---|---|---|
 | `login [--realm <realm> \| --tenant <name>] [--scope <name>]... [--env <dev\|test\|prod>]` | Interactive (opens a browser) | See above. |
-| `status` | No | Prints the current environment and realm (and where each came from — `ADSP_ENV`/`ADSP_TENANT_REALM`, persisted login, or default) and the cached token's state (`valid` / `expired` / `missing`). Read-only — no network calls. |
+| `status` | No | Prints the current environment and realm (and where each came from — `ADSP_ENV`/`ADSP_TENANT_REALM`, persisted login, or default), the tenant's display name when known, and the cached token's state (`valid` / `expired` / `missing`). Read-only — no network calls. |
 | `logout` | No | Clears `~/.adsp-cli/config.json` and `~/.adsp-cli/token-cache.json`. Safe to run when already logged out. |
 | `token` | Yes (`getAccessToken()`) | Prints the raw access token to stdout — refreshed first if expired, same as any other command. Handy for scripting, e.g. `curl -H "Authorization: Bearer $(adsp token)" ...`. |
 | `tenants [name]` | No (with `name`) / core-realm session (without) | With a name: anonymous exact-name lookup, no login needed. Without: lists every tenant — requires a cached core-realm token (established by a prior no-args `login`); this command never triggers an interactive login itself. |
@@ -127,4 +127,14 @@ const serviceUrls = await getServiceUrls(directoryServiceUrl);
 
 // Or, for the common "which roles can I assign" case directly:
 const roles = await getServiceRoles(result.token, directoryServiceUrl);
+```
+
+`getStatus()` (same function backing the `status` command) is also exported, for consumers that want the
+current realm/tenant name/environment without shelling out — e.g. generator templates that need to embed which
+tenant/realm they were scaffolded against:
+
+```typescript
+import { getStatus } from '@abgov/adsp-cli';
+
+const { realm, tenantName, env } = getStatus();
 ```

@@ -4,7 +4,7 @@ jest.mock('./directory', () => ({
 
 import { getServiceUrls } from './directory';
 import { HttpRequestError } from './httpError';
-import { findTenantByName, listTenants } from './tenants';
+import { findTenantByName, findTenantByRealm, listTenants } from './tenants';
 
 const mockGetServiceUrls = getServiceUrls as jest.Mock;
 
@@ -53,6 +53,37 @@ describe('findTenantByName', () => {
 
     await expect(findTenantByName('https://directory-service.example.com', 'my-tenant')).rejects.toThrow(
       'was not found in the directory'
+    );
+  });
+});
+
+describe('findTenantByRealm', () => {
+  it('GETs by realm with no Authorization header (anonymous)', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [{ name: 'my-tenant', realm: 'my-realm' }] }),
+    });
+    global.fetch = fetchMock as never;
+
+    const tenant = await findTenantByRealm('https://directory-service.example.com', 'my-realm');
+
+    expect(tenant).toEqual({ name: 'my-tenant', realm: 'my-realm' });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe(`${TENANT_SERVICE_URL}/v2/tenants?realm=my-realm`);
+    expect(init).toBeUndefined();
+  });
+
+  it('returns null when no tenant matches', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [] }) }) as never;
+
+    expect(await findTenantByRealm('https://directory-service.example.com', 'unknown-realm')).toBeNull();
+  });
+
+  it('throws an HttpRequestError carrying the status on a non-ok response', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as never;
+
+    await expect(findTenantByRealm('https://directory-service.example.com', 'my-realm')).rejects.toBeInstanceOf(
+      HttpRequestError
     );
   });
 });

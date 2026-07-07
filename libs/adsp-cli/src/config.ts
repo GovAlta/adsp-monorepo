@@ -5,6 +5,8 @@ import type { EnvironmentName } from './environments';
 
 export interface CliConfig {
   tenantRealm: string;
+  /** The tenant's display name, when it was resolvable at login time (see login.ts's loginInteractive). */
+  tenantName?: string;
   env?: EnvironmentName;
 }
 

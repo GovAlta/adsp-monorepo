@@ -92,7 +92,7 @@ function runStatus(): void {
       : 'no cached token — run `adsp login`';
 
   // eslint-disable-next-line no-console
-  console.log(`Realm: ${status.realm} (from ${sourceLabel})`);
+  console.log(`Realm: ${status.realm}${status.tenantName ? ` (${status.tenantName})` : ''} (from ${sourceLabel})`);
   // eslint-disable-next-line no-console
   console.log(`Token: ${tokenLabel}`);
 }
