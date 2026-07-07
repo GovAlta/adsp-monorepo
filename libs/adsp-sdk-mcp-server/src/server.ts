@@ -4,6 +4,7 @@ import { join } from 'path';
 import { DocsRepository } from './docs/docsRepository';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
+import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
 
 export interface CreateAdspMcpServerOptions {
@@ -16,7 +17,12 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   const docsRoot = options.docsRoot ?? join(__dirname, '..', 'assets', 'docs');
   const docs = new DocsRepository(docsRoot);
 
-  const tools = [...createDocsTools(docs), ...createSdkTools(), ...createQuickstartTool()];
+  const tools = [
+    ...createDocsTools(docs),
+    ...createSdkTools(),
+    ...createQuickstartTool(),
+    ...createServiceRolesTools(),
+  ];
   const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
 
   // Deliberately using the low-level Server (McpServer is recommended for typical cases) rather than an oversight:
