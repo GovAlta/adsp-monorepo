@@ -10,6 +10,9 @@ export const environment = envalid.cleanEnv(
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access.adsp-dev.gov.ab.ca' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3351 }),
+    HTTPS_PORT: envalid.num({ default: 8443 }),
+    TLS_CERT: envalid.str({ default: '/etc/serving-cert/tls.crt' }),
+    TLS_KEY: envalid.str({ default: '/etc/serving-cert/tls.key' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:secret-service' }),
   },
   {
