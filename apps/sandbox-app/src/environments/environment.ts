@@ -10,5 +10,8 @@ export const environment = {
     url: 'https://access.adsp-dev.gov.ab.ca',
     client_id: 'urn:ads:platform:sandbox-app',
   },
+  feedback: {
+    url: 'https://feedback-service.adsp-dev.gov.ab.ca/feedback/v1/script/adspFeedback.js',
+  },
   recaptchaKey: '',
 };

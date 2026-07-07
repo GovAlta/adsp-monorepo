@@ -13,6 +13,7 @@ import Header from './Header';
 import FeedbackServiceMain from './services/FeedbackServiceMain';
 import JsonformsMain from './services/JsonformsMain';
 import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
+import StatusServiceMain from './services/StatusServiceMain';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -41,6 +42,7 @@ export const SandBoxTenant = () => {
               <Route path="/services/jsonforms" element={<JsonformsMain />} />
               <Route path="/services/notification" element={<NotificationServiceMain />} />
               <Route path="/services/pdf" element={<PDFServiceMain />} />
+              <Route path="/services/status" element={<StatusServiceMain />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/" element={<Navigate to={`/${tenantName}`} replace />} />
             </Routes>

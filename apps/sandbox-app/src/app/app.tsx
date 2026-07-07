@@ -8,6 +8,7 @@ import { Login } from './components/Login';
 import { SandboxAuthCallback } from './containers/SandboxAuthCallback';
 import { useAdspFeedbackWidget } from './util/useFeedbackWidget';
 import Services from './components/Services';
+import './util/feedback-script-loader.ts';
 
 declare global {
   interface Window {

@@ -28,7 +28,7 @@ export const useAdspFeedbackWidget = () => {
     if (globalThis.adspFeedback !== undefined) {
       globalThis.adspFeedback.initialize({
         tenant: DEFAULT_TENANT,
-        getContext: () => getAdspFeedbackContext(''),
+        getContext: () => getAdspFeedbackContext(),
       });
     }
     updateWidgetVisibility(true);
