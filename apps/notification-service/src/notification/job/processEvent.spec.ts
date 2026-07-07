@@ -368,7 +368,7 @@ describe('createProcessEventJob', () => {
       );
     });
 
-    it('signals retry when email fromEmail is not configured after retries exhausted', async () => {
+    it('logs an error and continues when email fromEmail is not configured after retries exhausted', async () => {
       jest.useFakeTimers();
       try {
         const job = createProcessEventJob({
@@ -404,6 +404,7 @@ describe('createProcessEventJob', () => {
 
         tokenProviderMock.getAccessToken.mockResolvedValue('token');
         configurationServiceMock.getConfiguration.mockResolvedValue(configuration);
+        repositoryMock.getSubscriptions.mockResolvedValue({ results: [], page: {} });
 
         let capturedErr: unknown;
         const jobDone = new Promise<void>((resolve) => {
@@ -420,9 +421,11 @@ describe('createProcessEventJob', () => {
         await jest.runAllTimersAsync();
         await jobDone;
 
-        expect(capturedErr).toBeTruthy();
-        expect((capturedErr as Error).message).toContain(`${tenantId}`);
-        expect((capturedErr as Error).message).toContain('test:test-run');
+        expect(capturedErr).toBeFalsy();
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining(`Configuration not ready: email fromEmail is not set for tenant ${tenantId}`),
+          expect.anything(),
+        );
         expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
       } finally {
         jest.useRealTimers();
