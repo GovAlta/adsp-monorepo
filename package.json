@@ -49,6 +49,7 @@
     "@mastra/memory": "^1.7.0",
     "@mastra/pg": "^1.8.0",
     "@mdx-js/mdx": "^3.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@octokit/rest": "^22.0.1",
     "@opentelemetry/core": "1.23.0",
     "@opentelemetry/exporter-metrics-otlp-http": "^0.50.0",

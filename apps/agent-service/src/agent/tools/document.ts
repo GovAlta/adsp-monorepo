@@ -20,8 +20,10 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
     id: 'extract-document',
     description:
       'Extracts text content from a PDF or DOCX file uploaded to the file service. ' +
-      'Use this when you need to read the textual content of a document. ' +
-      'For non-PDF/DOCX files, falls back to UTF-8 text decoding.',
+      'Use this ONLY to read the textual content of a PDF or DOCX document. ' +
+      'Do NOT use this for images (JPG, PNG, etc.) — uploaded images are already provided ' +
+      'to you as visual content, so read them directly instead of calling this tool. ' +
+      'For other non-PDF/DOCX text-based files, falls back to UTF-8 text decoding.',
     inputSchema: z.object({
       fileId: z
         .string()
@@ -49,6 +51,18 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
         context: 'documentExtractTool',
         tenant: tenantId?.toString(),
       });
+
+      // Images are provided to the model directly as visual content. UTF-8 decoding
+      // raw image bytes produces binary garbage, so refuse and redirect to vision.
+      if (metadata.mimeType?.startsWith('image/')) {
+        return {
+          text:
+            `'${metadata.filename}' is an image (${metadata.mimeType}). It has already been provided to you ` +
+            `as visual content — read it directly to extract its data or build the form. Do not call this tool for images.`,
+          filename: metadata.filename,
+          mimeType: metadata.mimeType,
+        };
+      }
 
       if (isExtractableDocument(metadata.mimeType, metadata.filename)) {
         const result = await extractDocumentText(data, metadata.mimeType, metadata.filename, logger);
