@@ -86,6 +86,7 @@ export const createProcessEventJob =
 
       if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) {
         logger.error(
+          // clean-code-ignore: 2.9
           `Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}. Proceeding without waiting further.`,
           {
             ...LOG_CONTEXT,

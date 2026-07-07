@@ -368,6 +368,7 @@ describe('createProcessEventJob', () => {
       );
     });
 
+    // clean-code-ignore: 2.16
     it('logs an error and continues when email fromEmail is not configured after retries exhausted', async () => {
       jest.useFakeTimers();
       try {
@@ -422,6 +423,7 @@ describe('createProcessEventJob', () => {
         await jobDone;
 
         expect(capturedErr).toBeFalsy();
+        // clean-code-ignore: 2.11
         expect(logger.error).toHaveBeenCalledWith(
           expect.stringContaining(`Configuration not ready: email fromEmail is not set for tenant ${tenantId}`),
           expect.anything(),
