@@ -2,7 +2,7 @@ import { GoabAppHeader, GoabButton, GoabButtonGroup, GoabCallout, GoabMicrositeH
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { useFeedbackLinkHandler } from '../util/feedbackUtils';
+//import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -17,6 +17,7 @@ import { dispatch } from '@abgov/ui-components-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { Tenant } from '../lib/keycloak';
+import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
 
 const Main = styled.main`
   overflow: auto;
@@ -28,17 +29,7 @@ const AccountActionsDiv = styled.div`
 `;
 
 export const Landing: FunctionComponent = () => {
-  const { tenant: tenantName } = useParams<{ tenant: string }>();
-  const location = useLocation();
-  const dispatch = useDispatch<AppDispatch>();
-  const tenant = useSelector(tenantSelector);
-  const userForm = useSelector(formSelector);
-
-  const configInitialized = useSelector(configInitializedSelector);
-  const { initialized: userInitialized, user } = useSelector(userSelector);
-
-  useFeedbackLinkHandler();
-
+  useAdspFeedbackWidget();
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" />

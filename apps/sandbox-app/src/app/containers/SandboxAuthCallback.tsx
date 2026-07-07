@@ -22,7 +22,6 @@ export const SandboxAuthCallback = () => {
 
   // Tenant name is the first path segment of the 'from' URL (e.g. /my-tenant/...)
   const tenantName = from?.split('/')?.[1].replace('/', '');
-  console.log('tenantName', tenantName);
 
   const tenant = useSelector(tenantSelector);
   const dispatch = useDispatch<AppDispatch>();

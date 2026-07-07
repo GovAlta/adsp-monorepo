@@ -1,7 +1,10 @@
 import { GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
+import { FlexItem, ServiceContainer } from './styled-components';
+import { Band } from '@core-services/app-common';
+import Header from './Header';
+import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
 
 interface ServiceInfo {
   id: string;
@@ -48,7 +51,7 @@ const SERVICES: ServiceInfo[] = [
     url: '/script',
   },
   {
-    id: 'Jsonforms ',
+    id: 'Jsonforms',
     name: 'Jsonforms',
     show: true,
     description: 'Jsonforms library',
@@ -76,8 +79,8 @@ const SERVICES: ServiceInfo[] = [
     url: '/notification',
   },
   {
-    id: 'Status Service',
-    name: 'Status  service',
+    id: 'Status service',
+    name: 'Status service',
     show: true,
     description: 'Status related services',
     url: '/status',
@@ -93,42 +96,34 @@ const sortServices = (services: ServiceInfo[], key: keyof ServiceInfo, direction
   });
 };
 
-const ServiceContainer = styled.div`
-  margin: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px; /* Your desired spacing between items */
-`;
-
-const FlexItem = styled.div`
-  flex: 0 0 calc((100% - (16px * 3)) / 3);
-  box-sizing: border-box; /* Ensures padding doesn't break the layout */
-`;
-
 export default function Services() {
   const location = useLocation();
-
+  useAdspFeedbackWidget();
   return (
-    <ServiceContainer>
-      {SERVICES.map((service) => {
-        return (
-          <FlexItem>
-            <GoabContainer
-              accent="thick"
-              type="non-interactive"
-              width={'full'}
-              testId={service.id}
-              heading={
-                <h3>
-                  <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
-                </h3>
-              }
-            >
-              {service.description}
-            </GoabContainer>
-          </FlexItem>
-        );
-      })}
-    </ServiceContainer>
+    <>
+      <Header />
+      <Band title="Sandbox services">Services available for POC</Band>
+      <ServiceContainer>
+        {sortServices(SERVICES, 'name').map((service) => {
+          return (
+            <FlexItem>
+              <GoabContainer
+                accent="thick"
+                type="non-interactive"
+                width={'full'}
+                testId={service.id}
+                heading={
+                  <h3>
+                    <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
+                  </h3>
+                }
+              >
+                {service.description}
+              </GoabContainer>
+            </FlexItem>
+          );
+        })}
+      </ServiceContainer>
+    </>
   );
 }

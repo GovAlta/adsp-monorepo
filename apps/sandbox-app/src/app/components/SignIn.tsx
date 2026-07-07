@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { AppDispatch, configInitializedSelector, loginUser, tenantSelector, userSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useAdspFeedbackWidget } from '../util/useFeedbackWidget';
 
 const Placeholder = styled.div`
   padding: 48px;
@@ -25,6 +26,7 @@ export const SignIn: FunctionComponent<SignInProps> = ({ roles }) => {
     dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
   };
 
+  useAdspFeedbackWidget();
   return (
     <div>
       <Band title="Sandbox services">Services available</Band>
@@ -33,7 +35,7 @@ export const SignIn: FunctionComponent<SignInProps> = ({ roles }) => {
           <GridItem md={1} />
           <GridItem md={10}>
             <div>
-              {!userInitialized && user && configInitialized ? (
+              {!userInitialized && !user && configInitialized ? (
                 <Placeholder>
                   <GoabCallout heading="Not authorized" type="information">
                     You do not have a permitted role to access this sandbox.

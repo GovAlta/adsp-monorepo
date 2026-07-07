@@ -7,6 +7,7 @@ import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
 import { SandboxAuthCallback } from './containers/SandboxAuthCallback';
 import { useAdspFeedbackWidget } from './util/useFeedbackWidget';
+import Services from './components/Services';
 
 declare global {
   interface Window {
@@ -16,15 +17,15 @@ declare global {
     };
   }
 }
-
 export function App() {
   useAdspFeedbackWidget();
   return (
     <div className={styles.app}>
       <Routes>
         <Route path="/auth/callback" element={<SandboxAuthCallback />} />
+        <Route path="/:tenant/services" element={<Services />} />
         <Route path="/:tenant/*" element={<SandBoxTenant />} />
-        <Route path="/:realm/login" element={<Login />} />
+        <Route path="/:tenant/login" element={<Login />} />
         <Route path="*" element={<Landing />} />
       </Routes>
     </div>

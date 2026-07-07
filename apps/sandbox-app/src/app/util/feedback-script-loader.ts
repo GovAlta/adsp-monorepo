@@ -40,7 +40,7 @@ function loadScripts() {
   } else if (isDEV()) {
     addScripts({
       async: true,
-      src: 'https://feedback-service.adsp-dev.alberta.ca/feedback/v1/script/adspFeedback.js',
+      src: 'https://feedback-service.adsp-dev.gov.ab.ca/feedback/v1/script/adspFeedback.js',
     });
   } else {
     //Production feedback script url

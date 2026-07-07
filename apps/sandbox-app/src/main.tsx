@@ -4,15 +4,14 @@ import { Provider } from 'react-redux';
 import '@abgov/web-components';
 import App from './app/app';
 import { initializeConfig, store } from './app/state';
-import './app/util/feedback-script-loader';
+import './app/util/feedback-script-loader.ts';
 import './styles.scss';
 
 const root = createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
+    <BrowserRouter></BrowserRouter>
   </Provider>,
 );
 

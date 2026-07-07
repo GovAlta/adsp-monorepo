@@ -127,7 +127,6 @@ export const initializeUser = createAsyncThunk(
     const { config } = getState() as AppState;
     const keycloak = await initializeKeycloakClient(dispatch, tenant.realm, config);
 
-    console.log('keycloak', keycloak);
     if (!keycloak?.tokenParsed) {
       return null;
     }

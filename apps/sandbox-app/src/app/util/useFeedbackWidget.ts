@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-export const getAdspFeedbackContext = (id?: string) => {
-  const condoTribunalSite = `https://adsp-dev.gov.ab.ca`;
-  const condoTribunalView = document.location.pathname;
+import { DEFAULT_TENANT } from './feedbackUtils';
+
+export const getAdspFeedbackContext = () => {
+  const sandboxSite = `https://adsp-dev.gov.ab.ca`;
+  const sandboxView = document.location.pathname;
 
   return Promise.resolve({
-    site: condoTribunalSite,
-    view: condoTribunalView,
-    correlationId: id ?? '',
+    site: sandboxSite,
+    view: sandboxView,
   });
 };
 
@@ -26,11 +27,11 @@ export const useAdspFeedbackWidget = () => {
   useEffect(() => {
     if (globalThis.adspFeedback !== undefined) {
       globalThis.adspFeedback.initialize({
-        tenant: 'autotest',
-        getContext: () => getAdspFeedbackContext('test'),
+        tenant: DEFAULT_TENANT,
+        getContext: () => getAdspFeedbackContext(''),
       });
-      updateWidgetVisibility(true);
     }
+    updateWidgetVisibility(true);
     // Destructor function to clean up
     return () => {
       updateWidgetVisibility(false);

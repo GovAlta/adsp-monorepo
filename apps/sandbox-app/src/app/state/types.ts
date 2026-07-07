@@ -10,3 +10,5 @@ export interface PagedResults<T> {
     next: string;
   };
 }
+
+export const ALLOWED_TENANTS = ['autotest'];
