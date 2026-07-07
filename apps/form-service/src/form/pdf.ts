@@ -83,7 +83,6 @@ html {
 .body {
   padding: 0 0;
   margin: 0 0 0 0;
-  white-space: nowrap;
   border-top: 1px solid lightgrey;
 }
 
@@ -125,6 +124,9 @@ html {
 .content .flex-1 {
   margin-bottom: 0.75rem;
   flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .content .font-size-11 {
   font-size: 11pt;

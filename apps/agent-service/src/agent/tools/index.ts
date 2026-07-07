@@ -10,6 +10,7 @@ import { createDataRegisterTools } from './dataRegister';
 import { createPdfConfigurationTools } from './pdfConfiguration';
 import { createNotificationTemplateTools } from './notificationTemplate';
 import { createNxAdspTemplateTools } from './nxAdspTemplates';
+import { createAdspSdkReferenceTools } from './adspSdkReference';
 import { createSchemaIndexTools } from './schemaIndex';
 import { createSchemaPatchTools } from './schemaPatch';
 
@@ -53,6 +54,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
 
   const { listNxAdspTemplatesTool, getNxAdspTemplateTool } = createNxAdspTemplateTools();
 
+  const { searchAdspDocsTool, readAdspDocTool, searchAdspSdkReferenceTool } = createAdspSdkReferenceTools({ logger });
+
   const { formSchemaIndex } = await createSchemaIndexTools({ logger, directory, tokenProvider });
   const { formSchemaPatch } = await createSchemaPatchTools({ logger, directory, tokenProvider });
 
@@ -75,6 +78,9 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     emailNotificationGenerateTool,
     listNxAdspTemplatesTool,
     getNxAdspTemplateTool,
+    searchAdspDocsTool,
+    readAdspDocTool,
+    searchAdspSdkReferenceTool,
     formSchemaIndex,
     formSchemaPatch,
   };

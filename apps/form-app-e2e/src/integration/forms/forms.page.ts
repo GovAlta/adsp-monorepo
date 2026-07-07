@@ -72,7 +72,7 @@ class FormsPage {
   }
 
   formCheckbox(label) {
-    return cy.xpath(`//goa-checkbox[@text="${label}"]`);
+    return cy.xpath(`//goa-checkbox[contains(normalize-space(.), "${label}")]`);
   }
 
   formSocialInsuranceNumberField(label) {

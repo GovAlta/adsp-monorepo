@@ -36,32 +36,32 @@ Feature: Form app
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     # And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-    the user clicks submit button on form summary page
+    When the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
     When the user clicks Download PDF copy link on form submission confirmation page
     Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
     When the user sends a delete form request
     Then the new form is deleted
 
-  # Anonymous submission is pretected by reCAPTCHA and Cypress test will fail to pass CAPTCHA validation
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
-  @TEST_CS-3570 @REQ_CS-3484 @REQ_CS-3485 @regression @ignore
+  @TEST_CS-3570 @REQ_CS-3484 @REQ_CS-3485 @regression
   Scenario: As an anonymous applicant, I can view and submit an anonymous application
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
-    When the user enters "Joe" in a text field labelled "First Name"
-    And the user enters "Smith" in a text field labelled "Last Name"
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user enters "Smith" in a text field labelled "Last name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
     And the user selects "Not Married" radio button for the question of "Are you married?"
     And the user clicks list with detail button labelled as "Add child" in the form
-    And the user enters "John" in list with detail element text field labelled "First Name"
-    And the user enters "Smith" in list with detail element text field labelled "Last Name"
+    And the user enters "John" in list with detail element text field labelled "First name"
+    And the user enters "Smith" in list with detail element text field labelled "Last name"
     And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    And the user clicks submit button on form summary page
-    Then the user views a callout with a message of "We're processing your application"
+  # Anonymous submission is pretected by reCAPTCHA and Cypress test will fail to pass CAPTCHA validation
+  # And the user clicks submit button on form summary page
+  # Then the user views a callout with a message of "We're processing your application"
 
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
   @TEST_CS-3571 @REQ_CS-3484 @REQ_CS-3485 @regression @prod
@@ -143,7 +143,7 @@ Feature: Form app
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-    the user clicks submit button on form summary page
+    When the user clicks submit button on form summary page
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
     Then the new form is deleted
@@ -189,7 +189,8 @@ Feature: Form app
     # And the user enters "2020-01-10T23:10:00" in a date time picker labelled "Value c"
     And the user enters "Option B" in a dropdown labelled "Data schema enumeration"
     And the user enters "Designer" in a dropdown labelled "Register based enumeration"
-    And the user enters "border" in a dropdown labelled "API based enumeration"
+    # External Dog breed API isn't available any more. Need to have a new API for testing API based enumeration control.
+    # And the user enters "border" in a dropdown labelled "API based enumeration"
     # File upload operations get request rejected because captcha verification not successful (401)
     # And the user uploads a file of "test.pdf" using file upload button for "File A"
     # And the user uploads a file of "test-doc.txt" using drag and drop zone for "File B"
@@ -207,7 +208,7 @@ Feature: Form app
     And the user views the summary of "Controls" with "Option B" as "not required" "Data schema enumeration"
     And the user views the summary of "Controls" with "Designer" as "not required" "Register based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "Register based enumeration"
-    And the user views the summary of "Controls" with "border" as "not required" "API based enumeration"
+    # And the user views the summary of "Controls" with "border" as "not required" "API based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "API based enumeration"
 
   # TEST DATA: regression-control-examples is created with all types of control examples
@@ -306,7 +307,7 @@ Feature: Form app
     And the user selects "Email" radio button for the question of "Prefered contact method and follow-up"
     And the user selects "Highway issues" radio button for the question of "Category"
     And the user enters "MyTextAreaText" in a text area field labelled "Please provide the details of the complaint"
-    And the user "selects" a checkbox labelled "I agree that the information provided is accurate to the best of my knowledge. (required)"
+    And the user "selects" a checkbox labelled "I agree that the information provided is accurate to the best of my knowledge."
     # Test else condition of conditional required flow
     And the user selects "No" radio button for the question of "Are you submitting a complaint on behalf of someone else?"
     Then the user views the text field labelled "Email address" is required
@@ -322,5 +323,6 @@ Feature: Form app
     And the user enters "Jones" in a text field labelled "Affected person last name"
     And the user "selects" a checkbox labelled "I certify that I have obtained the appropriate consent and/or legal authority to submit this complaint on behalf of the affected person."
     Then the user views the submit button is "enabled" on the form page
-    When the user clicks submit button on the form page
-    Then the user views a callout with a message of "We're processing your application"
+# Due to ReCAPTCHA validation, the test cannot submit the form successfully. The following steps are commented out to avoid test failure.
+# When the user clicks submit button on the form page
+# Then the user views a callout with a message of "We're processing your application"

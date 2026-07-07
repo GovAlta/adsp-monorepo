@@ -18,7 +18,7 @@ import {
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { RequestHandler, Router } from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { FormDefinitionEntity } from '../model';
 import { mapFormDefinition } from '../mapper';
@@ -33,7 +33,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { top: topValue, after, name } = req.query;
+      const { top: topValue, after, name, createDateAfter, createDateBefore } = req.query;
 
       if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin)) {
         throw new UnauthorizedUserError('access definitions', user);
@@ -58,14 +58,21 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         params.after = after as string;
       }
 
-      if (name) {
-        params.criteria = JSON.stringify({ nameContains: name });
+      const criteria: Record<string, string> = {
+        ...(name ? { nameContains: name as string } : {}),
+        ...(createDateAfter ? { createDateAfter: createDateAfter as string } : {}),
+        ...(createDateBefore ? { createDateBefore: createDateBefore as string } : {}),
+      };
+
+      const hasCriteria = Object.keys(criteria).length > 0;
+      if (hasCriteria) {
+        params.criteria = JSON.stringify(criteria);
       }
 
       const { data } = await axios.get<
         Results<{
-          latest: { revision: number; configuration: FormDefinition };
-          active: { revision: number; configuration: FormDefinition };
+          latest: { revision: number; configuration: FormDefinition; created?: string };
+          active: { revision: number; configuration: FormDefinition; created?: string };
         }>
       >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
@@ -76,8 +83,13 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         ...data,
         results: data.results.map(({ latest, active }) =>
           active
-            ? mapFormDefinition(active.configuration, active.revision)
-            : mapFormDefinition(latest.configuration, latest.revision),
+            ? mapFormDefinition(active.configuration, active.revision, undefined, latest.created as unknown as Date)
+            : mapFormDefinition(
+                latest.configuration,
+                latest.revision,
+                undefined,
+                latest.created as unknown as Date,
+              ),
         ),
       });
     } catch (err) {
@@ -353,7 +365,14 @@ export function createFormDefinitionRouter({
 }: FormDefinitionRouterProps): Router {
   const router = Router();
 
-  router.get('/definitions', getFormDefinitions(directory, tokenProvider));
+  router.get(
+    '/definitions',
+    createValidationHandler(
+      query('createDateAfter').optional().isISO8601(),
+      query('createDateBefore').optional().isISO8601(),
+    ),
+    getFormDefinitions(directory, tokenProvider),
+  );
   router.post(
     '/definitions',
     assertAuthenticatedHandler,
