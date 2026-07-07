@@ -106,13 +106,17 @@ export function createExportJob({
 
       const { extension, applyTransform } = await getFormatter(format);
       const records = Readable.from(results);
+      // Note: On error the pipeline destroys its streams, so the upload consuming the content stream fails
+      // and the job is recorded as failed; throwing here would crash the process instead.
       const content = applyTransform(formatOptions, records, (err) => {
         if (err) {
-          logger.warn(`Error encountered in stream pipeline for export job (ID: ${jobId}) of ${result.urn}: ${err}`, {
-            context: 'ExportJob',
-            tenantId,
-          });
-          throw err;
+          logger.warn(
+            `Error encountered in stream pipeline for export job (ID: ${jobId}) of ${resourceIdValue}: ${err}`,
+            {
+              context: 'ExportJob',
+              tenantId: tenantIdValue,
+            }
+          );
         }
       });
 
