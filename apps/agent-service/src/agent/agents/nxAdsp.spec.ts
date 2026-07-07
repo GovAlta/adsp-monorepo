@@ -21,6 +21,12 @@ describe('nxAdspAgent', () => {
     expect(nxAdspAgent.tools).toContain('getNxAdspTemplateTool');
   });
 
+  it('references the ADSP SDK reference lookup tools', () => {
+    expect(nxAdspAgent.tools).toContain('searchAdspDocsTool');
+    expect(nxAdspAgent.tools).toContain('readAdspDocTool');
+    expect(nxAdspAgent.tools).toContain('searchAdspSdkReferenceTool');
+  });
+
   it('has userRoles defined', () => {
     expect(nxAdspAgent.userRoles).toBeDefined();
     expect(nxAdspAgent.userRoles?.length).toBeGreaterThan(0);

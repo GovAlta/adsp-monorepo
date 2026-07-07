@@ -8,6 +8,7 @@ import _ from 'lodash';
 import { DateTime } from 'luxon';
 import { AppState } from './store';
 import {
+  FeedbackMessage,
   FormSubmission,
   FORM_SERVICE_ID,
   PagedResults,
@@ -616,6 +617,13 @@ export const getExportJobStatus = createAsyncThunk(
         case 'completed':
           dispatch(downloadFile(data.result.urn));
           break;
+        case 'failed':
+          return rejectWithValue({
+            id: jobId,
+            level: 'error',
+            message: 'Export failed to complete. Try the export again.',
+            in: 'form/get-export-job-status',
+          } as FeedbackMessage);
       }
 
       return data;
@@ -632,6 +640,44 @@ export const getExportJobStatus = createAsyncThunk(
   },
 );
 
+interface ExportColumn {
+  key: string;
+  header: string;
+}
+
+const formExportColumns: ExportColumn[] = [
+  { key: 'id', header: 'ID' },
+  { key: 'status', header: 'Status' },
+  { key: 'created', header: 'Created on' },
+  { key: 'submitted', header: 'Submitted on' },
+];
+
+const submissionExportColumns: ExportColumn[] = [
+  { key: 'id', header: 'ID' },
+  { key: 'formId', header: 'Form ID' },
+  { key: 'created', header: 'Created on' },
+  { key: 'updated', header: 'Updated on' },
+  { key: 'disposition.status', header: 'Disposition status' },
+  { key: 'disposition.reason', header: 'Disposition reason' },
+];
+
+// Limit export to base columns plus data values selected in the overview page, so output matches what users see on screen.
+function getExportFormatOptions( // clean-code-ignore: 2.3
+  format: 'json' | 'csv',
+  baseColumns: ExportColumn[],
+  dataPath: string,
+  dataValues: DataValue[],
+) {
+  const columns = [
+    ...baseColumns,
+    ...dataValues
+      .filter(({ selected }) => !!selected)
+      .map(({ name, path }) => ({ key: `${dataPath}.${path}`, header: name })),
+  ];
+
+  return format === 'csv' ? { columns } : { fields: columns.map(({ key }) => key) };
+}
+
 export const exportForms = createAsyncThunk(
   'form/export-forms',
   async (
@@ -639,7 +685,7 @@ export const exportForms = createAsyncThunk(
     { dispatch, getState, rejectWithValue },
   ) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, form } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
       const token = await getAccessToken();
 
@@ -648,6 +694,7 @@ export const exportForms = createAsyncThunk(
         {
           resourceId: 'urn:ads:platform:form-service:v1:/forms',
           format,
+          formatOptions: getExportFormatOptions(format, formExportColumns, 'data', form.dataValues[definitionId] || []),
           fileType: 'form-export',
           params: {
             includeData: true,
@@ -689,7 +736,7 @@ export const exportSubmissions = createAsyncThunk(
     { dispatch, getState, rejectWithValue },
   ) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, form } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
       const token = await getAccessToken();
 
@@ -698,6 +745,12 @@ export const exportSubmissions = createAsyncThunk(
         {
           resourceId: 'urn:ads:platform:form-service:v1:/submissions',
           format,
+          formatOptions: getExportFormatOptions(
+            format,
+            submissionExportColumns,
+            'formData',
+            form.dataValues[definitionId] || [],
+          ),
           fileType: 'form-export',
           params: {
             criteria: JSON.stringify({
@@ -974,6 +1027,9 @@ const formSlice = createSlice({
           }
           state.busy.exporting = false;
         }
+      })
+      .addCase(getExportJobStatus.rejected, (state) => {
+        state.busy.exporting = false;
       })
       .addCase(findFormPdf.pending, (state) => {
         state.busy.findPdf = true;
