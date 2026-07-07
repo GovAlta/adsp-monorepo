@@ -90,7 +90,6 @@ describe('Cell controls', () => {
     const { container } = render(<GoATimeCell {...props}></GoATimeCell>);
     const element = container.querySelector('goa-input');
     expect(element).toBeInTheDocument();
-    console.log(element?.outerHTML);
     expect(element?.getAttribute('type')).toBe('date');
   });
 });
