@@ -160,12 +160,11 @@ export default function Services() {
       <Header />
       <Band title="Sandbox services">Services/libraries available for POC</Band>
       <ServiceContainer>
-        {sortServices(SERVICES, 'name').map((service) => {
+        {sortServices(SERVICES, 'name').map((service, i) => {
           return (
-            <FlexItem>
+            <FlexItem key={`${service.id}_${i}`}>
               <GoabContainer
                 accent="thick"
-                key={`${service.id}`}
                 type="non-interactive"
                 width={'full'}
                 testId={service.id}
