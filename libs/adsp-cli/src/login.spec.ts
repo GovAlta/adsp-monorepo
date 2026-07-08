@@ -425,6 +425,31 @@ describe('login', () => {
       expect(mockFindTenantByRealm).not.toHaveBeenCalled();
     });
 
+    it('never sends the caller-requested extra scope to the core listing login, only to the final tenant-realm login', async () => {
+      mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a' }]);
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive({ scopes: ['adsp-cli-admin'] });
+
+      // First browser round-trip: core realm login — must stay scoped to 'email' only, since
+      // core's adsp-cli client has no adsp-cli-admin scope registered.
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+
+      // Second browser round-trip: the resolved tenant realm — this is where the elevated scope belongs.
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      await loginPromise;
+
+      const [coreAuthorizeArgs, tenantAuthorizeArgs] = mockAuthClient.authorizeURL.mock.calls
+        .slice(-2)
+        .map(([args]) => args);
+      expect(coreAuthorizeArgs.scope).toEqual(['email']);
+      expect(tenantAuthorizeArgs.scope).toEqual(['email', 'adsp-cli-admin']);
+    });
+
     it('short-circuits entirely when the persisted realm already has a valid cached token', async () => {
       writeConfig({ tenantRealm: REALM });
       setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);

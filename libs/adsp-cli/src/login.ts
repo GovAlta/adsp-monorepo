@@ -297,7 +297,10 @@ export async function loginInteractive(
   }
 
   if (!realm) {
-    const core = await getOrLogin(accessServiceUrl, CORE_REALM, scopes);
+    // Only ever 'email' here, never the caller's extra requested scopes — core's adsp-cli client
+    // doesn't have (and doesn't need) scopes like adsp-cli-admin registered; that scope is only
+    // meaningful on the tenant-realm login below, once a realm is actually known.
+    const core = await getOrLogin(accessServiceUrl, CORE_REALM, ['email']);
     const picked = await promptForTenantRealm(directoryServiceUrl, core.token);
     realm = picked.realm;
     tenantName = picked.name;
