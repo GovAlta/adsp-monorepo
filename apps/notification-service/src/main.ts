@@ -24,7 +24,7 @@ import {
   applyNotificationMiddleware,
   configurationSchema,
   NotificationConfiguration,
-  NotificationConfigRetriedDefinition,
+  NotificationConfigRetriedDefinition, // clean-code-ignore: RULE-19
   NotificationGenerationFailedDefinition,
   NotificationSendFailedDefinition,
   NotificationSentDefinition,
