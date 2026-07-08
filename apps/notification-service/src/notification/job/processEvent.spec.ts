@@ -25,6 +25,7 @@ describe('createProcessEventJob', () => {
     getServiceConfiguration: jest.fn(),
     getServiceConfigurationRevision: jest.fn(),
     getNamedServiceConfiguration: jest.fn(),
+    clearCached: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -62,6 +63,7 @@ describe('createProcessEventJob', () => {
   beforeEach(() => {
     queueServiceMock.enqueue.mockReset();
     configurationServiceMock.getConfiguration.mockReset();
+    configurationServiceMock.clearCached.mockReset();
     tokenProviderMock.getAccessToken.mockReset();
     repositoryMock.getSubscriptions.mockReset();
   });
@@ -514,6 +516,11 @@ describe('createProcessEventJob', () => {
         expect(capturedErr).toBeFalsy();
         expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
           expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' }),
+        );
+        expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(
+          tenantId,
+          'platform',
+          'notification-service',
         );
       } finally {
         jest.useRealTimers();

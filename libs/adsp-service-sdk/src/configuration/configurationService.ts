@@ -55,6 +55,16 @@ export interface ConfigurationService {
     name?: string,
     tenantId?: AdspId,
   ): Promise<R>;
+
+  /**
+   * Clears the cached configuration value for a service/tenant, so the next retrieval bypasses the cache.
+   *
+   * @param {AdspId} tenantId
+   * @param {string} namespace
+   * @param {string} name
+   * @memberof ConfigurationService
+   */
+  clearCached?(tenantId: AdspId, namespace: string, name: string): void;
 }
 
 interface Revision<C> {

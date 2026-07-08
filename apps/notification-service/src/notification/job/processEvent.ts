@@ -76,12 +76,19 @@ export const createProcessEventJob =
         configAttempts < EMAIL_CONFIG_MAX_RETRIES
       ) {
         await new Promise((resolve) => setTimeout(resolve, EMAIL_CONFIG_RETRY_DELAY_MS));
+        configAttempts++;
+        logger.debug(
+          `Retrying configuration retrieval (${configAttempts}/${EMAIL_CONFIG_MAX_RETRIES}) for tenant ${tenantId} since email fromEmail is not yet set...`,
+          { ...LOG_CONTEXT, tenant: tenantId?.toString() },
+        );
+        // Cached configuration won't reflect a concurrent update until a push-service invalidation event
+        // arrives, so force a bypass here instead of retrying against the same cached value.
+        configurationService.clearCached?.(tenantId, serviceId.namespace, serviceId.service);
         configuration = await configurationService.getConfiguration<
           NotificationConfiguration,
           NotificationConfiguration
         >(serviceId, token, tenantId);
         types = configuration?.getEventNotificationTypes(event) || [];
-        configAttempts++;
       }
 
       if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) {
