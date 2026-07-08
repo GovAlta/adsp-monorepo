@@ -14,7 +14,7 @@ import { Logger } from 'winston';
 import type { Notification, NotificationWorkItem } from '../types';
 import type { SubscriptionRepository } from '../repository';
 import { NotificationConfiguration } from '../configuration';
-import { notificationGenerationFailed, notificationsGenerated } from '../events';
+import { notificationConfigRetried, notificationGenerationFailed, notificationsGenerated } from '../events';
 
 interface ProcessEventJobProps {
   logger: Logger;
@@ -91,7 +91,14 @@ export const createProcessEventJob =
         types = configuration?.getEventNotificationTypes(event) || [];
       }
 
-      if (types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail) {
+      const emailConfigStillMissing =
+        types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail;
+
+      if (configAttempts > 0) {
+        eventService.send(notificationConfigRetried(generationId, event, configAttempts, !emailConfigStillMissing));
+      }
+
+      if (emailConfigStillMissing) {
         logger.error(
           // clean-code-ignore: 2.9
           `Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}. Proceeding without waiting further.`,

@@ -1,5 +1,26 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`events notificationConfigRetried should generate notification-config-retried event correctly 1`] = `
+{
+  "context": {
+    "generationId": "123",
+  },
+  "correlationId": "123",
+  "name": "notification-config-retried",
+  "payload": {
+    "event": {
+      "name": "test-event",
+      "namespace": "test-namespace",
+      "timestamp": "2024-07-11T12:00:00Z",
+    },
+    "resolved": true,
+    "retries": 3,
+  },
+  "tenantId": undefined,
+  "timestamp": Any<Date>,
+}
+`;
+
 exports[`events notificationGenerationFailed should generate notification-generation-failed event correctly 1`] = `
 {
   "context": {
