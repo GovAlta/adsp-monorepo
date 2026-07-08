@@ -35,7 +35,8 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         NUGET_API_KEY: ${{ inputs.github_token }}
-      run: npx nx affected --target=release --base=${{ inputs.affected-base }}
+      # Avoid parallel releases since releases may tag the same ref.
+      run: npx nx affected --target=release --base=${{ inputs.affected-base }} --parallel=1
     # Set affected apps to output.
     - id: nx-affected
       name: Set affected-apps
