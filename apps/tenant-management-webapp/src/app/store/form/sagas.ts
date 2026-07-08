@@ -523,7 +523,6 @@ export function* fetchAllTags(): SagaIterator {
 
 export function* fetchResourcesByTag({ tag, next, criteria }: FetchResourcesByTagAction): SagaIterator {
   if (!tag) {
-    console.log('Skipping fetchResourcesByTag - No tag selected');
     yield put({
       type: FETCH_RESOURCES_BY_TAG_SUCCESS,
       payload: { tag: '', resources: [] },

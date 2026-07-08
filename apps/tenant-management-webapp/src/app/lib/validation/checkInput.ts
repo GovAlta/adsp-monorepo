@@ -166,8 +166,7 @@ export const isValidRegexString = (patternStr: string): Validator => {
       }
 
       return '';
-    } catch (err) {
-      console.log('should have failed with err');
+    } catch {
       return `${capitalize(patternStr)} is invalid for regular expression.`;
     }
   };
