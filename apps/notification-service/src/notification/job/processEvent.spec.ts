@@ -25,6 +25,7 @@ describe('createProcessEventJob', () => {
     getServiceConfiguration: jest.fn(),
     getServiceConfigurationRevision: jest.fn(),
     getNamedServiceConfiguration: jest.fn(),
+    clearCached: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -62,8 +63,10 @@ describe('createProcessEventJob', () => {
   beforeEach(() => {
     queueServiceMock.enqueue.mockReset();
     configurationServiceMock.getConfiguration.mockReset();
+    configurationServiceMock.clearCached.mockReset();
     tokenProviderMock.getAccessToken.mockReset();
     repositoryMock.getSubscriptions.mockReset();
+    eventServiceMock.send.mockReset();
   });
 
   it('can create job', () => {
@@ -429,6 +432,12 @@ describe('createProcessEventJob', () => {
           expect.anything(),
         );
         expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'notification-config-retried',
+            payload: expect.objectContaining({ retries: 5, resolved: false }),
+          }),
+        );
       } finally {
         jest.useRealTimers();
       }
@@ -515,6 +524,17 @@ describe('createProcessEventJob', () => {
         expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
           expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' }),
         );
+        expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(
+          tenantId,
+          'platform',
+          'notification-service',
+        );
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'notification-config-retried',
+            payload: expect.objectContaining({ retries: 1, resolved: true }),
+          }),
+        );
       } finally {
         jest.useRealTimers();
       }
@@ -562,6 +582,9 @@ describe('createProcessEventJob', () => {
         (err) => {
           expect(err).toBeFalsy();
           expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+          expect(eventServiceMock.send).not.toHaveBeenCalledWith(
+            expect.objectContaining({ name: 'notification-config-retried' }),
+          );
           done();
         },
       );
