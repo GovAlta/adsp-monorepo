@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { DEFAULT_TENANT } from './feedbackUtils';
+import { DEFAULT_TENANT } from '../utils/feedbackUtils';
 
 export const getFeedbackContext = () => {
   const sandboxSite = `${document.location.protocol}//${document.location.host}`;

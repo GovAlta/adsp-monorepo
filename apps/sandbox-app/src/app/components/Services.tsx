@@ -1,16 +1,15 @@
-import { GoabAppFooter, GoabCircularProgress, GoabContainer } from '@abgov/react-components';
+import { GoabAppFooter, GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { CenteredProgress, FlexItem, ServiceContainer } from './styled-components';
-import styled from 'styled-components';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FlexItem, ServiceContainer } from './styled-components';
+
 import { Band } from '@core-services/app-common';
 import Header from './Header';
-import { useFeedbackWidget } from '../utils/useFeedbackWidget';
+import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { useSelector } from 'react-redux';
 import { userSelector } from '../state';
 
 import { DEFAULT_TENANT } from '../utils/feedbackUtils';
-import { LoadingIndicator } from './LoadingIndicator';
 
 interface ServiceInfo {
   id: string;

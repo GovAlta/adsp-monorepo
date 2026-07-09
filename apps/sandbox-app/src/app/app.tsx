@@ -6,7 +6,7 @@ import { Landing } from './components/Landing';
 import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
 import { SandboxAuthCallback } from './containers/SandboxAuthCallback';
-import { useFeedbackWidget } from './utils/useFeedbackWidget';
+import { useFeedbackWidget } from './hooks/useFeedbackWidget';
 import Services from './components/Services';
 import './utils/feedback-script-loader';
 

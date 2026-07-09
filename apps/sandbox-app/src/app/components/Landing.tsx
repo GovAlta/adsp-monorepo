@@ -1,15 +1,8 @@
-import {
-  GoabAppFooter,
-  GoabAppHeader,
-  GoabButton,
-  GoabButtonGroup,
-  GoabCallout,
-  GoabMicrositeHeader,
-} from '@abgov/react-components';
+import { GoabAppFooter, GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { Band } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { useFeedbackWidget } from '../utils/useFeedbackWidget';
+import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 
 const Main = styled.main`
   overflow: auto;

@@ -25,7 +25,8 @@ The Sandbox application is to allow developers on the ADSP team to create POC, s
 
 ## Step 1 – Create the Main component file
 
-Create a new file inside `apps/sandbox-app/src/app/components/services/` named `<YourService>Main.tsx`.
+Create a new file inside `apps/sandbox-app/src/app/components/services/` named `<YourService>Main.tsx` if a service or library does
+not exist.
 
 The component must accept `ServiceMainProps` (imported from `./types`).
 
@@ -312,7 +313,7 @@ After this step, `AppState` (inferred from `store.getState`) will automatically 
 
 | Step | File changed                                                                                                                 |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Create `apps/sandbox-app/src/app/components/services/<yourService>/<YourService>Main.tsx`                                    |
+| 1    | _(if needed)_ Create `apps/sandbox-app/src/app/components/services/<yourService>/<YourService>Main.tsx`                      |
 | 2    | `apps/sandbox-app/src/app/util/servicePageUtils.ts` — add `add<YourService>Pages()` function                                 |
 | 3    | Create `apps/sandbox-app/src/app/components/services/<yourService>/<YourService>ExampleOne.tsx`                              |
 | 4    | _(if needed)_ `apps/sandbox-app/src/app/components/Services.tsx` — add entry to `SERVICES` array                             |

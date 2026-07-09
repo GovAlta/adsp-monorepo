@@ -15,7 +15,7 @@ import { Band } from '@core-services/app-common';
 import { SignIn } from './SignIn';
 
 import Header from './Header';
-import { useFeedbackWidget } from '../utils/useFeedbackWidget';
+import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { FormServiceMain } from './services/FormServiceMain';
 import { AgentServiceMain } from './services/AgentServiceMain';
 import { FeedbackServiceMain } from './services/FeedbackServiceMain';
@@ -40,7 +40,6 @@ import { DesignSystemsMain } from './services/DesignSystemsMain';
 import { DesignSystemsExampleOne } from './services/design-systems/DesignSystemsExampleOne';
 import { FeedbackNotification } from './FeedbackNotification';
 import { DEFAULT_TENANT } from '../utils/feedbackUtils';
-import { CenteredProgress } from './styled-components';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();

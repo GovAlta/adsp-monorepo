@@ -2,14 +2,7 @@ import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, memo } from 'react';
 import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
 import { useLocation } from 'react-router-dom';
-import {
-  AppDispatch,
-  authenticatedUserSelector,
-  configInitializedSelector,
-  loginUser,
-  tenantSelector,
-  userInitializedSelector,
-} from '../state';
+import { AppDispatch, authenticatedUserSelector, loginUser, tenantSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
