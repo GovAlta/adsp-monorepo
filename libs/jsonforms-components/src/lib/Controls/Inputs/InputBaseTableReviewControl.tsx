@@ -186,6 +186,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
   // as empty, so an unchecked required checkbox still falls through to the boolean-specific handling
   // below instead of being clobbered here.
   if (required && isNilOrEmptyValue(data, true)) {
+    // clean-code-ignore: 2.18
     activeError = `${labelToUpdate} is required`;
   }
 
