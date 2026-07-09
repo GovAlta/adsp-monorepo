@@ -7,7 +7,7 @@ import { Band } from '@core-services/app-common';
 import Header from './Header';
 import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { useSelector } from 'react-redux';
-import { authenticatedUserSelector, userSelector } from '../state';
+import { authenticatedUserSelector, environmentSelector, userSelector } from '../state';
 
 import { DEFAULT_TENANT } from '../utils/feedbackUtils';
 
@@ -181,6 +181,7 @@ export default function Services() {
   const navigate = useNavigate();
   const { user, initialized: userInitialized } = useSelector(userSelector);
   const authenticatedUser = useSelector(authenticatedUserSelector);
+  const environment = useSelector(environmentSelector);
 
   useEffect(() => {
     if (!user && userInitialized) {
@@ -188,7 +189,7 @@ export default function Services() {
     }
   }, [navigate, user, userInitialized]);
 
-  useFeedbackWidget();
+  useFeedbackWidget(environment.tenantName);
   return (
     <>
       <Header />

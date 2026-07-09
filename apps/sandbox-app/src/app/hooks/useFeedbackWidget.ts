@@ -35,5 +35,5 @@ export const useFeedbackWidget = (tenantName?: string) => {
     return () => {
       updateWidgetVisibility(false);
     };
-  }, []);
+  }, [tenantName]);
 };

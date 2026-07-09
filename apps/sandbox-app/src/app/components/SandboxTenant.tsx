@@ -60,7 +60,7 @@ export const SandBoxTenant = () => {
     }
   }, [authenticatedUser, environment.tenantName, location.pathname, navigate]);
 
-  useFeedbackWidget();
+  useFeedbackWidget(environment.tenantName);
   return (
     <React.Fragment>
       <Header />
