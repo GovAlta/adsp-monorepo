@@ -169,6 +169,29 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
   },
 };
 
+const NOTIFICATION_CONFIG_RETRIED = 'notification-config-retried';
+export const NotificationConfigRetriedDefinition: DomainEventDefinition = {
+  name: NOTIFICATION_CONFIG_RETRIED,
+  description:
+    'Signalled when notification generation retried configuration retrieval because the email fromEmail ' +
+    'setting was not yet available, indicating whether it resolved before generation proceeded.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      event: {
+        type: 'object',
+        properties: {
+          namespace: { type: 'string' },
+          name: { type: 'string' },
+          timestamp: { type: 'string', format: 'date-time' },
+        },
+      },
+      retries: { type: 'integer' },
+      resolved: { type: 'boolean' },
+    },
+  },
+};
+
 const SUBSCRIBER_CREATED = 'subscriber-created';
 export const SubscriberCreatedDefinition: DomainEventDefinition = {
   name: SUBSCRIBER_CREATED,
@@ -393,6 +416,31 @@ export const notificationSendFailed = (
   payload: {
     ...mapNotification(notification),
     error,
+  },
+});
+
+export const notificationConfigRetried = (
+  generationId: string,
+  { correlationId = null, tenantId, context = {}, namespace, name, timestamp }: ProcessedEvent,
+  retries: number,
+  resolved: boolean
+): DomainEvent => ({
+  name: NOTIFICATION_CONFIG_RETRIED,
+  timestamp: new Date(),
+  correlationId: correlationId || generationId,
+  tenantId,
+  context: {
+    ...context,
+    generationId,
+  },
+  payload: {
+    event: {
+      namespace,
+      name,
+      timestamp,
+    },
+    retries,
+    resolved,
   },
 });
 

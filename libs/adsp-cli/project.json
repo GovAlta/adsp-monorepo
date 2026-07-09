@@ -1,0 +1,36 @@
+{
+  "name": "adsp-cli",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-cli/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/adsp-cli"],
+      "options": {
+        "jestConfig": "libs/adsp-cli/jest.config.ts"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/adsp-cli",
+        "tsConfig": "libs/adsp-cli/tsconfig.lib.json",
+        "packageJson": "libs/adsp-cli/package.json",
+        "main": "libs/adsp-cli/src/index.ts",
+        "assets": ["libs/adsp-cli/*.md"]
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/adsp-cli/.releaserc.json"
+      }
+    }
+  }
+}

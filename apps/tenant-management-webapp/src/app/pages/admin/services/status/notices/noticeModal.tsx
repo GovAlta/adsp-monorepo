@@ -64,7 +64,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       try {
         parsedApplications = notice.tennantServRef;
       } catch (e) {
-        console.log(e);
+        console.error(e);
       } finally {
         setSelectedApplications(parsedApplications);
         setIsAllApplications(notice.isAllApplications);

@@ -4,10 +4,12 @@ import {
   notificationsGenerated,
   notificationSent,
   notificationSendFailed,
+  notificationConfigRetried,
   NotificationsGeneratedDefinition,
   NotificationGenerationFailedDefinition,
   NotificationSentDefinition,
   NotificationSendFailedDefinition,
+  NotificationConfigRetriedDefinition,
   SubscriberCreatedDefinition,
   SubscriberUpdatedDefinition,
   SubscriberDeletedDefinition,
@@ -70,6 +72,26 @@ describe('events', () => {
       };
 
       const result = notificationGenerationFailed(generationId, event as any, type as any, 'Oh noes!');
+      expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
+    });
+  });
+
+  describe('notificationConfigRetried', () => {
+    it('is valid json schema', () => {
+      const service = new AjvValidationService(logger as unknown as Logger);
+      service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
+      service.validate('test', 'payload', NotificationConfigRetriedDefinition.payloadSchema);
+    });
+
+    it('should generate notification-config-retried event correctly', () => {
+      const generationId = '123';
+      const event = {
+        namespace: 'test-namespace',
+        name: 'test-event',
+        timestamp: '2024-07-11T12:00:00Z',
+      };
+
+      const result = notificationConfigRetried(generationId, event as any, 3, true);
       expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
     });
   });

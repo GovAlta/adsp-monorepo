@@ -1,0 +1,17 @@
+{
+  "name": "@abgov/adsp-cli",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "Government of Alberta - CLI and client library for authenticating against ADSP and calling its live APIs.",
+  "repository": "https://github.com/GovAlta/adsp-monorepo",
+  "bin": {
+    "adsp": "./src/main.js"
+  },
+  "dependencies": {
+    "enquirer": "^2.3.6",
+    "express": "^4.22.1",
+    "open": "^8.4.0",
+    "simple-oauth2": "^5.0.0",
+    "tslib": "^2.3.0"
+  }
+}

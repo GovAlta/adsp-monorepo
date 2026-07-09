@@ -15,7 +15,7 @@ class FlattenObjectTransform extends Transform {
 }
 
 interface CsvFormatterOptions {
-  columns: string[];
+  columns: (string | { key: string; header?: string })[];
 }
 
 export const csv: ExportFormatter<CsvFormatterOptions> = {
