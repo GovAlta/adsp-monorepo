@@ -13,6 +13,8 @@ export const useFeedbackScript = (tenantName?: string) => {
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
     if (existing) return;
 
+    // clean-code-ignore: 2.18
+    // Updating the DOM script tag with feedback url based on the environment we are on.
     const script = document.createElement('script');
     script.async = true;
     script.src = src;
@@ -22,6 +24,7 @@ export const useFeedbackScript = (tenantName?: string) => {
         getContext: () => getFeedbackContext(),
       });
     };
+    // clean-code-ignore: 2.18
     document.head.appendChild(script);
   }, [environment.feedback?.url, tenantName]);
 };
