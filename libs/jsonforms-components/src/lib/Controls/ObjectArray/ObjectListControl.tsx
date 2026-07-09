@@ -54,6 +54,7 @@ import {
   NonEmptyCellStyle,
   ObjectArrayTitle,
   RequiredSpan,
+  ReviewItemFrame,
   TextCenter,
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
@@ -242,7 +243,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 );
                 if (!hasAnyValue && !hasRowErrors) return null;
                 return (
-                  <div key={i} style={{ marginBottom: '1.5rem' }} data-testid={`${rowPath}.objectList-${key}`}>
+                  <ReviewItemFrame key={i} data-testid={`${rowPath}.objectList-${key}`}>
                     {Object.entries(tableKeys).map(([key, label]) => {
                       const value = rowData[key];
                       const isRequiredField = required?.includes(key) ?? false;
@@ -300,7 +301,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         </div>
                       );
                     })}
-                  </div>
+                  </ReviewItemFrame>
                 );
               })}
             </div>
