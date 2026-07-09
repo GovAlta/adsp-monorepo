@@ -18,6 +18,14 @@ export const ToolBarHeader = styled.div`
   margin-bottom: var(--goa-space-s);
 `;
 
+export const ReviewItemFrame = styled.div`
+  border: 1px solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-m);
+  padding: var(--goa-space-m) var(--goa-space-l);
+  margin-bottom: var(--goa-space-l);
+  background-color: var(--goa-color-greyscale-white);
+`;
+
 export const ObjectArrayTitle = styled.h3`
   margin-bottom: var(--goa-space-s);
 
