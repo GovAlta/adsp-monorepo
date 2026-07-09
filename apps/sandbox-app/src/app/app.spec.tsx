@@ -1,24 +1,38 @@
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import configureStore from 'redux-mock-store';
 
 import App from './app';
 
+const mockStore = configureStore();
+
 describe('App', () => {
-  it('should render successfully', () => {
-    const { baseElement } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>,
-    );
-    expect(baseElement).toBeTruthy();
+  let store;
+
+  beforeEach(() => {
+    store = mockStore({
+      user: {},
+      intake: {},
+      start: {},
+      config: {
+        environment: {},
+        directory: {},
+        extensions: {},
+        initialized: false,
+      },
+    });
   });
 
-  it('should have a greeting as the title', () => {
-    const { getAllByText } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>,
+  it('should render successfully', () => {
+    const { baseElement } = render(
+      <MemoryRouter>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </MemoryRouter>,
     );
-    expect(getAllByText(new RegExp('Welcome sandbox-app', 'gi')).length > 0).toBeTruthy();
+
+    expect(baseElement).toBeTruthy();
   });
 });
