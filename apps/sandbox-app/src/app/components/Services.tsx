@@ -1,13 +1,13 @@
-import { GoabAppFooter, GoabContainer } from '@abgov/react-components';
+import { GoabAppFooter, GoabCircularProgress, GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FlexItem, ServiceContainer } from './styled-components';
+import { CenteredProgress, FlexItem, ServiceContainer } from './styled-components';
 
 import { Band } from '@core-services/app-common';
 import Header from './Header';
 import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { useSelector } from 'react-redux';
-import { userSelector } from '../state';
+import { authenticatedUserSelector, userSelector } from '../state';
 
 import { DEFAULT_TENANT } from '../utils/feedbackUtils';
 
@@ -162,6 +162,7 @@ export default function Services() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, initialized: userInitialized } = useSelector(userSelector);
+  const authenticatedUser = useSelector(authenticatedUserSelector);
 
   useEffect(() => {
     if (!user && userInitialized) {
@@ -175,6 +176,11 @@ export default function Services() {
       <Header />
       <Band title="Sandbox application">Services/libraries available for POC</Band>
 
+      {authenticatedUser === null && (
+        <CenteredProgress>
+          <GoabCircularProgress variant="inline" size="large" message="Loading services..." visible={true} />
+        </CenteredProgress>
+      )}
       <ServiceContainer>
         {user &&
           sortServices(SERVICES, 'name').map((service, i) => {

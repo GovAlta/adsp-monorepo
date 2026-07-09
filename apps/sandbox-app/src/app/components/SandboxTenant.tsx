@@ -5,10 +5,8 @@ import {
   AppDispatch,
   authenticatedUserSelector,
   configInitializedSelector,
+  environmentSelector,
   initializeTenant,
-  userBusySelector,
-  userInitializedSelector,
-  userSelector,
 } from '../state';
 
 import { Band } from '@core-services/app-common';
@@ -39,7 +37,6 @@ import { JsonformsExampleOne } from './services/jsonforms/JsonformsExampleOne';
 import { DesignSystemsMain } from './services/DesignSystemsMain';
 import { DesignSystemsExampleOne } from './services/design-systems/DesignSystemsExampleOne';
 import { FeedbackNotification } from './FeedbackNotification';
-import { DEFAULT_TENANT } from '../utils/feedbackUtils';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -47,10 +44,9 @@ export const SandBoxTenant = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const authenticatedUser = useSelector(authenticatedUserSelector);
-  const userInitialized = useSelector(userInitializedSelector);
   const configInitialized = useSelector(configInitializedSelector);
-  const userBusy = useSelector(userBusySelector);
-  const user = useSelector(userSelector);
+
+  const environment = useSelector(environmentSelector);
 
   useEffect(() => {
     if (configInitialized) {
@@ -59,23 +55,24 @@ export const SandBoxTenant = () => {
   }, [configInitialized, dispatch, tenantName]);
 
   useEffect(() => {
-    if (authenticatedUser && location.pathname.endsWith(`/${DEFAULT_TENANT}`)) {
-      navigate(`/${DEFAULT_TENANT}/services`);
+    if (authenticatedUser && location.pathname.endsWith(`/${environment.tenantName}`)) {
+      navigate(`/${environment.tenantName}/services`);
     }
-  }, [authenticatedUser, location.pathname, navigate]);
+  }, [authenticatedUser, environment.tenantName, location.pathname, navigate]);
 
   useFeedbackWidget();
   return (
     <React.Fragment>
       <Header />
+      <FeedbackNotification />
       <main>
-        {authenticatedUser === null && user !== null && !userBusy ? (
+        {authenticatedUser === null ? (
           <SignIn />
         ) : (
           authenticatedUser && (
             <section>
               <Band title="Sandbox services">Services/libraries available for POC</Band>
-              {authenticatedUser && !location.pathname.endsWith(`${DEFAULT_TENANT}`) && (
+              {authenticatedUser && !location.pathname.endsWith(`${environment.tenantName}`) && (
                 <GoabButtonGroup alignment="end" mr={'xl'} mt="l">
                   <GoabButton
                     type="tertiary"
@@ -121,7 +118,6 @@ export const SandBoxTenant = () => {
             </section>
           )
         )}
-        <FeedbackNotification />
       </main>
       <GoabAppFooter />
     </React.Fragment>

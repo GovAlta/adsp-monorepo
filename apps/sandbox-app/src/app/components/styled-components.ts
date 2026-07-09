@@ -21,3 +21,10 @@ export const AccountActionsDiv = styled.div`
 export const Placeholder = styled.div`
   padding: 48px;
 `;
+
+export const CenteredProgress = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 400px);
+`;

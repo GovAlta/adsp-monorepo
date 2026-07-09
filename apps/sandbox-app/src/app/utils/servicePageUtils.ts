@@ -9,12 +9,6 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/example1/control-examples`,
       testId: 'jsonformsExample1',
     },
-    {
-      id: 'jsonformsExample1',
-      name: 'Jsonforms Example 2',
-      url: `${prefix}/example2`,
-      testId: 'jsonformsExample2',
-    },
   ];
 
   return jsonformsPages;

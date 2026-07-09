@@ -1,8 +1,15 @@
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
-import { FunctionComponent, memo } from 'react';
-import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
+import { FunctionComponent, memo, useEffect, useState } from 'react';
+import { GoabButton, GoabButtonGroup, GoabCallout, GoabCircularProgress } from '@abgov/react-components';
 import { useLocation } from 'react-router-dom';
-import { AppDispatch, authenticatedUserSelector, loginUser, tenantSelector } from '../state';
+import {
+  AppDispatch,
+  authenticatedUserSelector,
+  directorySelector,
+  environmentSelector,
+  loginUser,
+  tenantSelector,
+} from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
@@ -19,6 +26,9 @@ export const SignIn: FunctionComponent<SignInProps> = memo(() => {
   const location = useLocation();
   const tenant = useSelector(tenantSelector);
   const authenticatedUser = useSelector(authenticatedUserSelector);
+  const environment = useSelector(environmentSelector);
+  const directory = useSelector(directorySelector);
+
   const onSignInStart = () => {
     dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
   };
@@ -38,12 +48,13 @@ export const SignIn: FunctionComponent<SignInProps> = memo(() => {
                   </GoabCallout>
                 </Placeholder>
               )}
-
-              <GoabButtonGroup alignment="end">
-                <GoabButton type="primary" data-testid="sandbox-start-sign-in" onClick={onSignInStart}>
-                  Sign in
-                </GoabButton>
-              </GoabButtonGroup>
+              {authenticatedUser === null && window.location.href.endsWith(`/${environment.tenantName}`) && (
+                <GoabButtonGroup alignment="end">
+                  <GoabButton type="primary" data-testid="sandbox-sign-in" onClick={onSignInStart}>
+                    Sign in
+                  </GoabButton>
+                </GoabButtonGroup>
+              )}
             </div>
           </GridItem>
           <GridItem md={1} />

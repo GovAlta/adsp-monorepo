@@ -22,11 +22,11 @@ function updateWidgetVisibility(show: boolean) {
   }
 }
 
-export const useFeedbackWidget = () => {
+export const useFeedbackWidget = (tenantName?: string) => {
   useEffect(() => {
     if (globalThis.adspFeedback !== undefined) {
       globalThis.adspFeedback.initialize({
-        tenant: DEFAULT_TENANT,
+        tenant: tenantName ?? DEFAULT_TENANT,
         getContext: () => getFeedbackContext(),
       });
     }

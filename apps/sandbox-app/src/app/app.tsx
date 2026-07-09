@@ -5,10 +5,13 @@ import { Landing } from './components/Landing';
 
 import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
-import { SandboxAuthCallback } from './containers/SandboxAuthCallback';
+
 import { useFeedbackWidget } from './hooks/useFeedbackWidget';
 import Services from './components/Services';
 import './utils/feedback-script-loader';
+import { useSelector } from 'react-redux';
+import { environmentSelector } from './state';
+import { AuthCallback } from '@core-services/app-common';
 
 declare global {
   interface Window {
@@ -19,11 +22,12 @@ declare global {
   }
 }
 export function App() {
-  useFeedbackWidget();
+  const environment = useSelector(environmentSelector);
+  useFeedbackWidget(environment.tenantName);
   return (
     <div className={styles.app}>
       <Routes>
-        <Route path="/auth/callback" element={<SandboxAuthCallback />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/:tenant/services" element={<Services />} />
         <Route path="/:tenant/login" element={<Login />} />
         <Route path="/:tenant/signin" element={<Login />} />
