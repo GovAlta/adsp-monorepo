@@ -19,15 +19,15 @@ const Placeholder = styled.div`
 
 interface SignInProps {
   roles?: string[];
+  url: string;
 }
 
-export const SignIn: FunctionComponent<SignInProps> = memo(() => {
+export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const tenant = useSelector(tenantSelector);
   const authenticatedUser = useSelector(authenticatedUserSelector);
   const environment = useSelector(environmentSelector);
-  const directory = useSelector(directorySelector);
 
   const onSignInStart = () => {
     dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
@@ -48,7 +48,7 @@ export const SignIn: FunctionComponent<SignInProps> = memo(() => {
                   </GoabCallout>
                 </Placeholder>
               )}
-              {authenticatedUser === null && window.location.href.endsWith(`/${environment.tenantName}`) && (
+              {authenticatedUser === null && url.endsWith(`/${environment.tenantName}`) && (
                 <GoabButtonGroup alignment="end">
                   <GoabButton type="primary" data-testid="sandbox-sign-in" onClick={onSignInStart}>
                     Sign in
@@ -62,4 +62,4 @@ export const SignIn: FunctionComponent<SignInProps> = memo(() => {
       </Container>
     </div>
   );
-});
+};

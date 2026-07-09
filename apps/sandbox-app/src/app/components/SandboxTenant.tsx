@@ -67,7 +67,7 @@ export const SandBoxTenant = () => {
       <FeedbackNotification />
       <main>
         {authenticatedUser === null ? (
-          <SignIn />
+          <SignIn url={window.location.href} />
         ) : (
           authenticatedUser && (
             <section>
@@ -112,7 +112,7 @@ export const SandBoxTenant = () => {
                 <Route path="/services/task" element={<TaskServiceMain tenantName={tenantName} />} />
                 <Route path="/services/value" element={<ValueServiceMain tenantName={tenantName} />} />
 
-                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signin" element={<SignIn url={window.location.href} />} />
                 <Route path="/" element={<Navigate to={`/${tenantName}`} replace />} />
               </Routes>
             </section>
