@@ -202,25 +202,27 @@ export default function Services() {
       )}
       <ServiceContainer>
         {user &&
-          sortServices(SERVICES, 'name').map((service, i) => {
-            return (
-              <FlexItem key={`${service.id}_${i}`}>
-                <GoabContainer
-                  accent="thick"
-                  type="non-interactive"
-                  width={'full'}
-                  testId={service.id}
-                  heading={
-                    <h3>
-                      <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
-                    </h3>
-                  }
-                >
-                  {service.description}
-                </GoabContainer>
-              </FlexItem>
-            );
-          })}
+          sortServices(SERVICES, 'name')
+            .filter((y) => y.show)
+            .map((service, i) => {
+              return (
+                <FlexItem key={`${service.id}_${i}`}>
+                  <GoabContainer
+                    accent="thick"
+                    type="non-interactive"
+                    width={'full'}
+                    testId={service.id}
+                    heading={
+                      <h3>
+                        <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
+                      </h3>
+                    }
+                  >
+                    {service.description}
+                  </GoabContainer>
+                </FlexItem>
+              );
+            })}
       </ServiceContainer>
       <GoabAppFooter />
     </>

@@ -19,7 +19,7 @@ export const addFeedbackServicePages = (tenantName: string) => {
   const feedbackPages: ServicePage[] = [
     {
       id: 'feedbackCSSLeak',
-      name: 'Feedback overlay',
+      name: 'Feedback css leak',
       url: `${prefix}/cssLeak`,
       testId: 'feedbackCSSLeak',
     },

@@ -12,7 +12,7 @@ export const DirectoryServiceMain = ({ tenantName }: ServiceMainProps) => {
         type="non-interactive"
         width={'full'}
         testId={'directoryServiceContainer'}
-        heading={'Directory Service'}
+        heading={'Directory service'}
       >
         <GoabText size="body-m" mb="none">
           The following contains POC or samples for the Directory service.
