@@ -19,7 +19,7 @@ export const DefaultServiceListTemplate = ({ prefix, tenantName }: DefaultServic
     <ul>
       {Array.from({ length: ITEM_COUNT }).map((_, y) => {
         return (
-          <li id={`listItem_${y}`}>
+          <li id={`listItem_${y}`} key={`listItem_${y}`}>
             <Link to={`#`}>
               {listPrefix} {y + 1}
             </Link>

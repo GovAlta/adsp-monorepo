@@ -20,8 +20,8 @@ export const ServiceListTemplate = ({ servicePages }: ServiceListTemplateProps) 
     <ul>
       {servicePages.map((page, y) => {
         return (
-          <li id={`${page.id}_${y}`}>
-            <Link id={`${page.id}`} to={`${page.url}`} data-testId={`${page.testId}`}>
+          <li id={`${page.id}_${y}`} key={`${page.id}_${y}`}>
+            <Link id={`${page.id}`} to={`${page.url}`} data-testid={`${page.testId}`}>
               {page.name}
             </Link>
           </li>
