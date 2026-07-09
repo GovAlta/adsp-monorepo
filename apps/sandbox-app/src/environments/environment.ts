@@ -8,7 +8,11 @@ export const environment = {
   },
   access: {
     url: 'https://access.adsp-dev.gov.ab.ca',
-    client_id: 'urn:ads:platform:form-app',
+    client_id: 'urn:ads:platform:sandbox-app',
   },
+  feedback: {
+    url: 'https://feedback-service.adsp-dev.gov.ab.ca/feedback/v1/script/adspFeedback.js',
+  },
+  tenantName: 'autotest',
   recaptchaKey: '',
 };
