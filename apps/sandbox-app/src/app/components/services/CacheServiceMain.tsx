@@ -2,7 +2,6 @@ import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
-import { Routes } from 'react-router-dom';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
 export const CacheServiceMain = ({ tenantName }: ServiceMainProps) => {
@@ -20,8 +19,6 @@ export const CacheServiceMain = ({ tenantName }: ServiceMainProps) => {
         </GoabText>
         <DefaultServiceListTemplate prefix="Cache service item " />
       </GoabContainer>
-
-      <Routes></Routes>
     </ServiceContainer>
   );
 };

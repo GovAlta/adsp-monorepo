@@ -1,7 +1,6 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
-import { Navigate, Route, Routes } from 'react-router-dom';
 import { ServiceMainProps } from './types';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
@@ -20,7 +19,6 @@ export const PDFServiceMain = ({ tenantName }: ServiceMainProps) => {
         </GoabText>
         <DefaultServiceListTemplate prefix="PDF service item " />
       </GoabContainer>
-      <Routes></Routes>
     </ServiceContainer>
   );
 };

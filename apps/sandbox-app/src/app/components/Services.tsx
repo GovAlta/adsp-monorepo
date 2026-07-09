@@ -12,10 +12,28 @@ import { authenticatedUserSelector, userSelector } from '../state';
 import { DEFAULT_TENANT } from '../utils/feedbackUtils';
 
 interface ServiceInfo {
+  /**
+   * Id of the service
+   */
   id: string;
+  /**
+   * Name for service
+   */
   name: string;
+
+  /**
+   * Description for the service
+   */
   description: string;
+
+  /**
+   * To show or not show the service on the sandbox
+   */
   show: boolean;
+
+  /**
+   * The route url for the service.
+   */
   url: string;
 }
 

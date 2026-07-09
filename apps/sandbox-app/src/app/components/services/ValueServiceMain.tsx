@@ -2,7 +2,6 @@ import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
-import { Navigate, Route, Routes } from 'react-router-dom';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
 export const ValueServiceMain = ({ tenantName }: ServiceMainProps) => {
@@ -20,7 +19,6 @@ export const ValueServiceMain = ({ tenantName }: ServiceMainProps) => {
         </GoabText>
         <DefaultServiceListTemplate prefix="Value service item " />
       </GoabContainer>
-      <Routes></Routes>
     </ServiceContainer>
   );
 };
