@@ -525,6 +525,87 @@ describe('InputBaseTableReviewControl', () => {
     expect(errorFormItem).toBeInTheDocument();
   });
 
+  it('shows required error for a required boolean field left unanswered (null), not the raw AJV enum message', () => {
+    // Distinct from the unchecked-checkbox case above (data === false, a legitimate "No" answer):
+    // data is null here, meaning the user never answered at all. Confirms the required-priority
+    // override (data is nil, so isNilOrEmptyValue treats it as empty) and the boolean-specific
+    // "must be equal" -> required conversion don't fight each other over the same message.
+    const { baseElement } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data={null}
+            visible={true}
+            label=""
+            path="isAttestationAccepted"
+            schema={{ type: 'boolean' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/isAttestationAccepted',
+              label: '',
+              options: { text: 'Is attestation accepted' },
+            }}
+            enabled={true}
+            errors={'Is Attestation Accepted must be equal to one of the allowed values'}
+            cells={[]}
+            required={true}
+            id="isAttestationAccepted"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    const errorFormItem = baseElement.querySelector('goa-form-item[error="Is attestation accepted is required"]');
+    expect(errorFormItem).toBeInTheDocument();
+    expect(
+      baseElement.querySelector('goa-form-item[error*="must be equal to one of the allowed values"]'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows required error instead of another validation rule error for an empty required field', () => {
+    const { baseElement } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data=""
+            visible={true}
+            label="First name"
+            path="firstName"
+            schema={{
+              type: 'string',
+              minLength: 2,
+              errorMessage: { minLength: 'First name must be at least 2 characters.' },
+            }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/firstName',
+              label: 'First name',
+            }}
+            enabled={true}
+            errors={'First name must be at least 2 characters.'}
+            cells={[]}
+            required={true}
+            id="firstName"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    const errorFormItem = baseElement.querySelector('goa-form-item[error="First name is required"]');
+    expect(errorFormItem).toBeInTheDocument();
+    expect(
+      baseElement.querySelector('goa-form-item[error="First name must be at least 2 characters."]'),
+    ).not.toBeInTheDocument();
+  });
+
   it('suppresses placeholder enum validation error for register-backed dropdown review values', () => {
     const { baseElement } = render(
       <table>

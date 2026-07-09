@@ -180,6 +180,15 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     activeError = errors;
   }
 
+  // A required field with no user-entered value should always show the required error, even when
+  // another AJV rule (e.g. minLength) also fires against the empty value — required takes priority
+  // over any other validation message. isNilOrEmptyValue deliberately doesn't treat boolean `false`
+  // as empty, so an unchecked required checkbox still falls through to the boolean-specific handling
+  // below instead of being clobbered here.
+  if (required && isNilOrEmptyValue(data, true)) {
+    activeError = `${labelToUpdate} is required`;
+  }
+
   const isRegisterBackedEnumFalsePositive =
     uischema?.options?.register !== undefined &&
     !isNilOrEmptyValue(data, true) &&
@@ -198,10 +207,6 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
   // "must be equal to one of the allowed values" error and show a friendly message instead.
   if (schema?.type === 'boolean' && activeError && activeError.toLowerCase().includes('must be equal')) {
     activeError = data === false ? `${labelToUpdate} is required` : undefined;
-  }
-
-  if (required && isNilOrEmptyValue(data, true) && !activeError) {
-    activeError = `${labelToUpdate} is required`;
   }
 
   // If a required checkbox is unchecked, show only the validation message in
