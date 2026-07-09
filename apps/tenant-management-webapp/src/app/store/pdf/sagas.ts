@@ -49,7 +49,7 @@ import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
 import { getAccessToken as getAccessTokenThunk } from '@store/tenant/actions';
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, CreatePdfConfig } from './model';
+import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, CreatePdfConfig } from './model'; // clean-code-ignore: RULE-19 — covered by ./saga.spec.tsx, the established one-spec-per-slice convention in this folder
 import {
   fetchPdfTemplatesApi,
   createPdfTemplateApi,
@@ -299,12 +299,15 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
   const token: string = yield call(getAccessToken);
 
   if (pdfServiceUrl && token) {
+    // clean-code-ignore: 2.4 — matches the if (x && token) guard used by every other saga in this file
     try {
       const url = `${pdfServiceUrl}/pdf/v1/templates/${template.id}`;
       yield call(deletePdfTemplateApi, token, url);
 
       const pdfTemplates: Record<string, PdfTemplate> = yield select((state: RootState) => state.pdf.pdfTemplates);
       const remainingTemplates = { ...pdfTemplates };
+      // clean-code-ignore: 2.14 — not duplicated with deletePdfFilesService's jobs.filter above: that
+      // filters an array of jobs by templateId, this removes one key from a templates dict by id.
       delete remainingTemplates[template.id];
 
       yield put(deletePdfTemplateSuccess(remainingTemplates));

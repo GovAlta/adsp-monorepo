@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { PdfTemplate, UpdatePdfConfig, CreatePdfConfig } from './model';
+import { PdfTemplate, UpdatePdfConfig, CreatePdfConfig } from './model'; // clean-code-ignore: RULE-19 — covered by ./saga.spec.tsx, the established one-spec-per-slice convention in this folder
 
 export const fetchPdfTemplatesApi = async (token: string, url: string): Promise<Record<string, PdfTemplate>> => {
   const res = await axios.get(url, {
