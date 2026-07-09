@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
+import { PdfTemplate, UpdatePdfConfig, CreatePdfConfig } from './model'; // clean-code-ignore: RULE-19 — covered by ./saga.spec.tsx, the established one-spec-per-slice convention in this folder
 
 export const fetchPdfTemplatesApi = async (token: string, url: string): Promise<Record<string, PdfTemplate>> => {
   const res = await axios.get(url, {
@@ -18,9 +18,8 @@ export const fetchPdfFileApi = async (token: string, url: string) => {
   return res.data;
 };
 
-export const deletePdfFileApi = async (token: string, url: string, body: DeletePdfConfig) => {
-  const res = await axios.patch(url, body, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
+export const deletePdfTemplateApi = async (token: string, url: string): Promise<void> => {
+  await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
 };
 
 export const generatePdfApi = async (token: string, url: string, body: UpdatePdfConfig) => {

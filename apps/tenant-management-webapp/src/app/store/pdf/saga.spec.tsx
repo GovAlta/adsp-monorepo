@@ -1,6 +1,6 @@
 import { expectSaga } from 'redux-saga-test-plan';
 import { fetchPdfTemplates, createPdfTemplateSaga, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
-import { fetchPdfTemplatesApi, createPdfTemplateApi, deletePdfFileApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
+import { fetchPdfTemplatesApi, createPdfTemplateApi, deletePdfTemplateApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
@@ -62,6 +62,10 @@ const storeState = {
   },
   pdf: {
     tempTemplate: mockTemplates,
+    pdfTemplates: {
+      'pdf-to-delete': mockTemplates['mock-template'],
+      'mock-template': mockTemplates['mock-template'],
+    },
   },
 };
 
@@ -114,12 +118,9 @@ it('Delete Pdf template', () => {
     .withState(storeState)
     .provide({
       call(effect, next) {
-        if (effect.fn === deletePdfFileApi) {
-          return {
-            latest: {
-              configuration: mockTemplates['mock-template'],
-            },
-          };
+        if (effect.fn === deletePdfTemplateApi) {
+          expect(effect.args[1]).toBe('http://mock-pdf-servie.com/pdf/v1/templates/pdf-to-delete');
+          return undefined;
         }
         return next();
       },
@@ -127,7 +128,7 @@ it('Delete Pdf template', () => {
     .put.like({
       action: {
         type: DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
-        payload: mockTemplates['mock-template'],
+        payload: { 'mock-template': mockTemplates['mock-template'] },
       },
     })
     .run();

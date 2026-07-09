@@ -155,10 +155,6 @@ export interface UpdatePdfConfig {
   operation: string;
   update: Record<string, PdfTemplate>;
 }
-export interface DeletePdfConfig {
-  operation: string;
-  property: string;
-}
 
 export interface CreatePdfConfig {
   operation: string;
