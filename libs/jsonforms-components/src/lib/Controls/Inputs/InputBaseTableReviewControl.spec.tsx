@@ -1,4 +1,4 @@
-import { Dispatch } from 'react';
+import { ComponentProps, Dispatch } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
@@ -407,6 +407,30 @@ const stepperBasePropsReview: TestProps = {
 };
 
 describe('InputBaseTableReviewControl', () => {
+  const renderReviewRow = (
+    props: Partial<ComponentProps<typeof GoAInputBaseTableReview>> &
+      Pick<ComponentProps<typeof GoAInputBaseTableReview>, 'data' | 'path' | 'schema' | 'uischema' | 'required'>,
+  ) =>
+    render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            visible={true}
+            label=""
+            enabled={true}
+            errors=""
+            cells={[]}
+            id="test"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+            {...props}
+          />
+        </tbody>
+      </table>,
+    );
+
   it('renders without crashing', () => {
     expect(stepperBasePropsReview).toBeDefined();
   });
@@ -523,6 +547,56 @@ describe('InputBaseTableReviewControl', () => {
     expect(getByTestId('review-value-').textContent).toBe('');
     const errorFormItem = baseElement.querySelector('goa-form-item[error="Is attestation accepted is required"]');
     expect(errorFormItem).toBeInTheDocument();
+  });
+
+  it('shows required error for a required boolean field left unanswered (null), not the raw AJV enum message', () => {
+    // Distinct from the unchecked-checkbox case above (data === false, a legitimate "No" answer):
+    // data is null here, meaning the user never answered at all. Confirms the required-priority
+    // override (data is nil, so isNilOrEmptyValue treats it as empty) and the boolean-specific
+    // "must be equal" -> required conversion don't fight each other over the same message.
+    const { baseElement } = renderReviewRow({
+      data: null,
+      path: 'isAttestationAccepted',
+      schema: { type: 'boolean' },
+      uischema: {
+        type: 'Control',
+        scope: '#/properties/isAttestationAccepted',
+        label: '',
+        options: { text: 'Is attestation accepted' },
+      },
+      errors: 'Is Attestation Accepted must be equal to one of the allowed values',
+      required: true,
+      id: 'isAttestationAccepted',
+    });
+
+    const errorFormItem = baseElement.querySelector('goa-form-item[error="Is attestation accepted is required"]');
+    expect(errorFormItem).toBeInTheDocument();
+    expect(
+      baseElement.querySelector('goa-form-item[error*="must be equal to one of the allowed values"]'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows required error instead of another validation rule error for an empty required field', () => {
+    const { baseElement } = renderReviewRow({
+      data: '',
+      label: 'First name',
+      path: 'firstName',
+      schema: {
+        type: 'string',
+        minLength: 2,
+        errorMessage: { minLength: 'First name must be at least 2 characters.' },
+      },
+      uischema: { type: 'Control', scope: '#/properties/firstName', label: 'First name' },
+      errors: 'First name must be at least 2 characters.',
+      required: true,
+      id: 'firstName',
+    });
+
+    const errorFormItem = baseElement.querySelector('goa-form-item[error="First name is required"]');
+    expect(errorFormItem).toBeInTheDocument();
+    expect(
+      baseElement.querySelector('goa-form-item[error="First name must be at least 2 characters."]'),
+    ).not.toBeInTheDocument();
   });
 
   it('suppresses placeholder enum validation error for register-backed dropdown review values', () => {
