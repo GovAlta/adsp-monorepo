@@ -13,6 +13,5 @@ export const environment = {
   feedback: {
     url: 'https://feedback-service.adsp-dev.gov.ab.ca/feedback/v1/script/adspFeedback.js',
   },
-  tenantName: '',
-  recaptchaKey: '',
+  tenantName: 'autotest',
 };
