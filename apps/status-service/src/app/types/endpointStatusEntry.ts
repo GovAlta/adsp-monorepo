@@ -5,6 +5,7 @@ export interface EndpointStatusEntry {
   responseTime: number;
   status: number | string;
   applicationId: string;
+  tenantId: string;
 }
 
 export interface EndpointStatusEntryRepositoryOptions {
