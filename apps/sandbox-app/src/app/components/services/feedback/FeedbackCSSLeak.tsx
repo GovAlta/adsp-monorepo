@@ -1,4 +1,4 @@
-export const FeedbackOverlay = () => {
+export const FeedbackCSSLeak = () => {
   return (
     <>
       <h1 className="title">Host application heading</h1>

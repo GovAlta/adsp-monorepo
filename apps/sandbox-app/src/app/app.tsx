@@ -6,9 +6,9 @@ import { Landing } from './components/Landing';
 import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
 import { SandboxAuthCallback } from './containers/SandboxAuthCallback';
-import { useFeedbackWidget } from './util/useFeedbackWidget';
+import { useFeedbackWidget } from './utils/useFeedbackWidget';
 import Services from './components/Services';
-import './util/feedback-script-loader.ts';
+import './utils/feedback-script-loader';
 
 declare global {
   interface Window {
@@ -25,8 +25,9 @@ export function App() {
       <Routes>
         <Route path="/auth/callback" element={<SandboxAuthCallback />} />
         <Route path="/:tenant/services" element={<Services />} />
-        <Route path="/:tenant/*" element={<SandBoxTenant />} />
         <Route path="/:tenant/login" element={<Login />} />
+        <Route path="/:tenant/signin" element={<Login />} />
+        <Route path="/:tenant/*" element={<SandBoxTenant />} />
         <Route path="*" element={<Landing />} />
       </Routes>
     </div>

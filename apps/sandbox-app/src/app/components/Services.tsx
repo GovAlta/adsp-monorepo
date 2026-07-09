@@ -1,10 +1,16 @@
-import { GoabAppFooter, GoabContainer } from '@abgov/react-components';
+import { GoabAppFooter, GoabCircularProgress, GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FlexItem, ServiceContainer } from './styled-components';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { CenteredProgress, FlexItem, ServiceContainer } from './styled-components';
+import styled from 'styled-components';
 import { Band } from '@core-services/app-common';
 import Header from './Header';
-import { useFeedbackWidget } from '../util/useFeedbackWidget';
+import { useFeedbackWidget } from '../utils/useFeedbackWidget';
+import { useSelector } from 'react-redux';
+import { userSelector } from '../state';
+
+import { DEFAULT_TENANT } from '../utils/feedbackUtils';
+import { LoadingIndicator } from './LoadingIndicator';
 
 interface ServiceInfo {
   id: string;
@@ -14,6 +20,7 @@ interface ServiceInfo {
   url: string;
 }
 
+// This contains the list of services/libraries that we can create exammples for.
 const SERVICES: ServiceInfo[] = [
   {
     id: 'AgentService',
@@ -154,31 +161,42 @@ const sortServices = (services: ServiceInfo[], key: keyof ServiceInfo, direction
 
 export default function Services() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, initialized: userInitialized } = useSelector(userSelector);
+
+  useEffect(() => {
+    if (!user && userInitialized) {
+      navigate(`/${DEFAULT_TENANT}`);
+    }
+  }, [navigate, user, userInitialized]);
+
   useFeedbackWidget();
   return (
     <>
       <Header />
-      <Band title="Sandbox services">Services/libraries available for POC</Band>
+      <Band title="Sandbox application">Services/libraries available for POC</Band>
+
       <ServiceContainer>
-        {sortServices(SERVICES, 'name').map((service, i) => {
-          return (
-            <FlexItem key={`${service.id}_${i}`}>
-              <GoabContainer
-                accent="thick"
-                type="non-interactive"
-                width={'full'}
-                testId={service.id}
-                heading={
-                  <h3>
-                    <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
-                  </h3>
-                }
-              >
-                {service.description}
-              </GoabContainer>
-            </FlexItem>
-          );
-        })}
+        {user &&
+          sortServices(SERVICES, 'name').map((service, i) => {
+            return (
+              <FlexItem key={`${service.id}_${i}`}>
+                <GoabContainer
+                  accent="thick"
+                  type="non-interactive"
+                  width={'full'}
+                  testId={service.id}
+                  heading={
+                    <h3>
+                      <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
+                    </h3>
+                  }
+                >
+                  {service.description}
+                </GoabContainer>
+              </FlexItem>
+            );
+          })}
       </ServiceContainer>
       <GoabAppFooter />
     </>

@@ -12,6 +12,9 @@ interface ServiceListTemplateProps {
   servicePages: ServicePage[];
 }
 
+/**
+ * Use this component to render a list of examples for a Spike or POC you want to test or verify
+ */
 export const ServiceListTemplate = ({ servicePages }: ServiceListTemplateProps) => {
   return (
     <ul>

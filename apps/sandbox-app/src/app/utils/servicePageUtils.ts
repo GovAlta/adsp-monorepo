@@ -24,18 +24,26 @@ export const addFeedbackServicePages = (tenantName: string) => {
   const prefix = `/${tenantName}/services/feedback`;
   const feedbackPages: ServicePage[] = [
     {
-      id: 'feedbackOverlay',
+      id: 'feedbackCSSLeak',
       name: 'Feedback overlay',
-      url: `${prefix}/overlay`,
-      testId: 'feedbackOverlayLink',
-    },
-    {
-      id: 'feedbackOverlay2',
-      name: 'Feedback overlay2',
-      url: `${prefix}/overlay`,
-      testId: 'feedbackOverlayLink2',
+      url: `${prefix}/cssLeak`,
+      testId: 'feedbackCSSLeak',
     },
   ];
 
   return feedbackPages;
+};
+
+export const addDesignSystemPages = (tenantName: string) => {
+  const prefix = `/${tenantName}/services/design-systems`;
+  const jsonformsPages: ServicePage[] = [
+    {
+      id: 'designSystemsExample1',
+      name: 'Design systems Example 1',
+      url: `${prefix}/example1`,
+      testId: 'designSystemsExample1',
+    },
+  ];
+
+  return jsonformsPages;
 };

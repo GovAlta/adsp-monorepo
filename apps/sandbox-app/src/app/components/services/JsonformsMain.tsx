@@ -5,7 +5,7 @@ import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
 
 import { ServiceListTemplate, ServicePage } from './ServiceListTemplate';
-import { addJsonformsPages } from '../../util/servicePageUtils';
+import { addJsonformsPages } from '../../utils/servicePageUtils';
 
 export const JsonformsMain = ({ tenantName }: ServiceMainProps) => {
   const pages = addJsonformsPages(tenantName);

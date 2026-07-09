@@ -16,7 +16,14 @@
         "baseHref": "/",
         "main": "apps/sandbox-app/src/main.tsx",
         "tsConfig": "apps/sandbox-app/tsconfig.app.json",
-        "assets": ["apps/sandbox-app/src/favicon.ico", "apps/sandbox-app/src/assets"],
+        "assets": [
+          "apps/sandbox-app/src/favicon.ico",
+          "apps/sandbox-app/src/assets",
+          {
+            "glob": "silent-check-sso.html",
+            "input": "apps/sandbox-app/src/",
+            "output": "./"
+          }],
         "styles": ["apps/sandbox-app/src/styles.scss"],
         "scripts": [],
         "webpackConfig": "apps/sandbox-app/webpack.config.js"

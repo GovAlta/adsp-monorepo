@@ -2,10 +2,12 @@ import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
-import { Routes } from 'react-router-dom';
-import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
+import { addDesignSystemPages } from '../../utils/servicePageUtils';
+import { ServiceListTemplate } from './ServiceListTemplate';
 
 export const DesignSystemsMain = ({ tenantName }: ServiceMainProps) => {
+  const pages = addDesignSystemPages(tenantName);
+
   return (
     <ServiceContainer>
       <GoabContainer
@@ -18,10 +20,8 @@ export const DesignSystemsMain = ({ tenantName }: ServiceMainProps) => {
         <GoabText size="body-m" mb="none">
           The following contains POC or samples for the Design system ui components.
         </GoabText>
-        <DefaultServiceListTemplate prefix="Design systems item " />
+        <ServiceListTemplate servicePages={pages} />
       </GoabContainer>
-
-      <Routes></Routes>
     </ServiceContainer>
   );
 };

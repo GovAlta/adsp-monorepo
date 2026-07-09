@@ -26,6 +26,7 @@ interface Tenant {
 export interface UserState {
   tenant: Tenant;
   initialized: boolean;
+  busy: boolean;
   user: {
     id: string;
     name: string;
@@ -56,7 +57,6 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
       await client.init({
         onLoad: 'check-sso',
         pkceMethod: 'S256',
-        silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
       });
       client.onAuthLogout = () => {
         dispatch(userActions.clearUser());
@@ -125,28 +125,24 @@ export const initializeUser = createAsyncThunk(
   'user/initialize-user',
   async (tenant: Tenant, { getState, dispatch }): Promise<UserProfile | null> => {
     const { config } = getState() as AppState;
-    const keycloak = await initializeKeycloakClient(dispatch, tenant.realm, config);
 
-    if (!keycloak?.tokenParsed) {
+    const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+    if (client.tokenParsed) {
+      return {
+        id: client.tokenParsed.sub,
+        name: client.tokenParsed['name'],
+        email: client.tokenParsed['email'],
+        roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
+          (roles, [client, clientAccess]) => [
+            ...roles,
+            ...(clientAccess.roles?.map((clientRole) => `${client}:${clientRole}`) || []),
+          ],
+          client.tokenParsed.realm_access?.roles || [],
+        ),
+      };
+    } else {
       return null;
     }
-
-    const tokenParsed = keycloak.tokenParsed as Record<string, unknown>;
-    const realmRoles = ((tokenParsed.realm_access as { roles?: string[] } | undefined)?.roles ?? []).filter(Boolean);
-    const resourceAccess = (tokenParsed.resource_access as Record<string, { roles?: string[] }> | undefined) ?? {};
-
-    return {
-      id: String(tokenParsed.sub ?? ''),
-      name: String(tokenParsed.name ?? tokenParsed.preferred_username ?? tokenParsed.email ?? ''),
-      email: String(tokenParsed.email ?? ''),
-      roles: Object.entries(resourceAccess).reduce<string[]>(
-        (roles, [resourceClient, resource]) => [
-          ...roles,
-          ...(resource.roles?.map((clientRole) => `${resourceClient}:${clientRole}`) ?? []),
-        ],
-        realmRoles,
-      ),
-    };
   },
 );
 
@@ -219,6 +215,7 @@ const initialUserState: UserState = {
   initialized: false,
   tenant: null,
   user: null,
+  busy: false,
 };
 
 const userSlice = createSlice({
@@ -231,18 +228,27 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(initializeTenant.pending, (state) => {
+        state.busy = true;
+      })
       .addCase(initializeTenant.fulfilled, (state, { payload }) => {
         state.tenant = payload;
+        state.busy = false;
+      })
+      .addCase(initializeUser.pending, (state) => {
+        state.busy = true;
       })
       .addCase(initializeUser.fulfilled, (state, { payload }) => {
         state.user = payload;
         state.initialized = true;
+        state.busy = false;
       })
       .addCase(loginUserWithIDP.fulfilled, (state, { payload }) => {
         state.user = payload as typeof state.user;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+        state.tenant = null;
       })
       .addMatcher(isRejectedWithValue(), (state, { payload }) => {
         if (isAxiosErrorPayload(payload) && payload.status === 401) {
@@ -258,3 +264,6 @@ export const userActions = userSlice.actions;
 export const tenantSelector = (state: AppState) => state.user.tenant;
 
 export const userSelector = (state: AppState) => state.user;
+export const userBusySelector = (state: AppState) => state.user.busy;
+export const userInitializedSelector = (state: AppState) => state.user.initialized;
+export const authenticatedUserSelector = (state: AppState) => state.user.user;

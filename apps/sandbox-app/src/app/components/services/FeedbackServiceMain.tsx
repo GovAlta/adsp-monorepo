@@ -4,7 +4,7 @@ import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
 
 import { ServiceListTemplate, ServicePage } from './ServiceListTemplate';
-import { addFeedbackServicePages } from '../../util/servicePageUtils';
+import { addFeedbackServicePages } from '../../utils/servicePageUtils';
 
 export const FeedbackServiceMain = ({ tenantName }: ServiceMainProps) => {
   const pages = addFeedbackServicePages(tenantName);

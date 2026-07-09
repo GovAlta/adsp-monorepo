@@ -13,6 +13,7 @@ function addScripts(feedbackConfig: FeedbackConfig) {
   document.head.appendChild(feedbackscript);
 }
 
+//loads the correct feedback url based on the environment
 function loadScripts() {
   addScripts({
     async: true,

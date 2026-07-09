@@ -16,8 +16,7 @@ const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[
 const isUUID = (id: string) => uuidRegex.test(id);
 
 export const Login = () => {
-  const realm = useParams<{ realm: string }>().realm;
-  const definitionId = useParams<{ definitionId: string }>().definitionId;
+  const realm = useParams<{ tenant: string }>().tenant;
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -43,13 +42,9 @@ export const Login = () => {
   );
 
   const tenantLogin = useCallback(
-    async (realm: string, definitionId?: string) => {
+    async (realm: string) => {
       let loginRedirectUrl = window.location.origin;
-      if (definitionId) {
-        loginRedirectUrl = `${window.location.origin}/${realm}`;
-      } else {
-        loginRedirectUrl = `${window.location.origin}/${realm}`;
-      }
+      loginRedirectUrl = `${window.location.origin}/${realm}/services`;
 
       const tenantApi = directory['urn:ads:platform:tenant-service'];
       const updatedRealm = isUUID(realm) ? realm : await getRealm(realm, tenantApi);
@@ -69,9 +64,9 @@ export const Login = () => {
     }
 
     if (realm && Object.keys(environment).length > 0) {
-      tenantLogin(realm, definitionId);
+      tenantLogin(realm);
     }
-  }, [dispatch, configInitialized, realm, definitionId, environment, tenantLogin]);
+  }, [dispatch, configInitialized, realm, environment, tenantLogin]);
 
   return null;
 };
