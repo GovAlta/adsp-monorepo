@@ -155,11 +155,21 @@ class FileServiceClient implements IFileServiceClient {
     };
   }
 
+  // Returns undefined on a cache miss; null is a cached "type not found" result.
+  private getCachedFileTypeInfo(cacheKey: string): FileTypeInfo | null | undefined {
+    const cached = this.fileTypeCache.get(cacheKey);
+    return cached && Date.now() - cached.retrievedAt < FILE_TYPE_CACHE_TTL_MS ? cached.info : undefined;
+  }
+
+  private cacheFileTypeInfo(cacheKey: string, info: FileTypeInfo | null): void {
+    this.fileTypeCache.set(cacheKey, { info, retrievedAt: Date.now() });
+  }
+
   public async getFileTypeInfo(tenantId: AdspId, typeName: string): Promise<FileTypeInfo | null> {
     const cacheKey = `${tenantId}:${typeName}`;
-    const cached = this.fileTypeCache.get(cacheKey);
-    if (cached && Date.now() - cached.retrievedAt < FILE_TYPE_CACHE_TTL_MS) {
-      return cached.info;
+    const cached = this.getCachedFileTypeInfo(cacheKey);
+    if (cached !== undefined) {
+      return cached;
     }
 
     try {
@@ -191,7 +201,7 @@ class FileServiceClient implements IFileServiceClient {
           }
         : null;
 
-      this.fileTypeCache.set(cacheKey, { info, retrievedAt: Date.now() });
+      this.cacheFileTypeInfo(cacheKey, info);
       return info;
     } catch (err) {
       this.logger.warn(
