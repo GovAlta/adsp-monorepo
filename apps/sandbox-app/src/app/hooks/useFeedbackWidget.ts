@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { DEFAULT_TENANT } from '../utils/feedbackUtils';
 
+export { DEFAULT_TENANT };
+
 export const getFeedbackContext = () => {
   const sandboxSite = `${document.location.protocol}//${document.location.host}`;
   const sandboxView = document.location.pathname;
@@ -31,7 +33,6 @@ export const useFeedbackWidget = (tenantName?: string) => {
       });
     }
     updateWidgetVisibility(true);
-    // Destructor function to clean up
     return () => {
       updateWidgetVisibility(false);
     };

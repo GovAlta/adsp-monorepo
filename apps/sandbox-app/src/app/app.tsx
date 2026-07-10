@@ -7,8 +7,8 @@ import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
 
 import { useFeedbackWidget } from './hooks/useFeedbackWidget';
+import { useFeedbackScript } from './hooks/useFeedbackScript';
 import Services from './components/Services';
-import './utils/feedback-script-loader';
 import { useSelector } from 'react-redux';
 import { environmentSelector } from './state';
 import { AuthCallback } from '@core-services/app-common';
@@ -23,6 +23,7 @@ declare global {
 }
 export function App() {
   const environment = useSelector(environmentSelector);
+  useFeedbackScript(environment.tenantName);
   useFeedbackWidget(environment.tenantName);
   return (
     <div className={styles.app}>
