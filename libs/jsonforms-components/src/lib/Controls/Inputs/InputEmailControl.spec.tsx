@@ -211,9 +211,22 @@ describe('GoAEmailInput additional coverage', () => {
     expect(input).toBeInTheDocument();
   });
 
-  it('sets default value if data !== schema.default', () => {
+  it('sets default value only when data is undefined', () => {
     const handleChangeMock = jest.fn();
-    const propsWithData = { ...staticProps, data: 'something else', handleChange: handleChangeMock };
+    const propsWithoutData = { ...staticProps, data: undefined, handleChange: handleChangeMock };
+
+    render(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <GoAEmailInput {...propsWithoutData} />
+      </JsonFormRegisterProvider>,
+    );
+
+    expect(handleChangeMock).toHaveBeenCalledWith(propsWithoutData.path, propsWithoutData.schema.default);
+  });
+
+  it('does not replace existing draft data with schema default', () => {
+    const handleChangeMock = jest.fn();
+    const propsWithData = { ...staticProps, data: 'saved.user@example.com', handleChange: handleChangeMock };
 
     render(
       <JsonFormRegisterProvider defaultRegisters={undefined}>
@@ -221,7 +234,42 @@ describe('GoAEmailInput additional coverage', () => {
       </JsonFormRegisterProvider>,
     );
 
-    expect(handleChangeMock).toHaveBeenCalledWith(propsWithData.path, propsWithData.schema.default);
+    expect(handleChangeMock).not.toHaveBeenCalledWith(propsWithData.path, propsWithData.schema.default);
+  });
+
+  it('does not reapply default after the user clears the field', () => {
+    const handleChangeMock = jest.fn();
+    const propsWithClearedData = { ...staticProps, data: '', handleChange: handleChangeMock };
+
+    render(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <GoAEmailInput {...propsWithClearedData} />
+      </JsonFormRegisterProvider>,
+    );
+
+    expect(handleChangeMock).not.toHaveBeenCalled();
+  });
+
+  it('does not apply changed schema default over existing data during rerender', () => {
+    const handleChangeMock = jest.fn();
+    const propsWithData = { ...staticProps, data: 'saved.user@example.com', handleChange: handleChangeMock };
+
+    const { rerender } = render(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <GoAEmailInput {...propsWithData} />
+      </JsonFormRegisterProvider>,
+    );
+
+    rerender(
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <GoAEmailInput
+          {...propsWithData}
+          schema={{ ...propsWithData.schema, default: 'changed-default@example.com' }}
+        />
+      </JsonFormRegisterProvider>,
+    );
+
+    expect(handleChangeMock).not.toHaveBeenCalled();
   });
 });
 

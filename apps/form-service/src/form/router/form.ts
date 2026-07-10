@@ -750,6 +750,12 @@ export const validateCriteria = (value: string) => {
   }
 };
 
+// Note: async so that the validation passes on the resolved promise unless validateCriteria throws;
+// a sync custom validator would fail on the undefined return value.
+export const validateCriteriaValue = async (value: string) => {
+  validateCriteria(value);
+};
+
 interface FormRouterProps {
   apiId: AdspId;
   logger: Logger;
@@ -794,6 +800,7 @@ export function createFormRouter({
         },
         ['query'],
       ),
+      query('criteria').optional().custom(validateCriteriaValue),
     ),
     findForms(apiId, repository),
   );
@@ -890,11 +897,7 @@ export function createFormRouter({
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after').optional().isString(),
-      query('criteria')
-        .optional()
-        .custom(async (value: string) => {
-          validateCriteria(value);
-        }),
+      query('criteria').optional().custom(validateCriteriaValue),
     ),
     findSubmissions(apiId, submissionRepository),
   );
@@ -920,11 +923,7 @@ export function createFormRouter({
       param('formId').isUUID(),
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after').optional().isString(),
-      query('criteria')
-        .optional()
-        .custom(async (value: string) => {
-          validateCriteria(value);
-        }),
+      query('criteria').optional().custom(validateCriteriaValue),
     ),
     findFormSubmissions(apiId, submissionRepository, repository),
   );

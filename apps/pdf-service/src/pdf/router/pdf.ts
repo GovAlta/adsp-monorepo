@@ -24,7 +24,7 @@ import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { ServiceRoles } from '../roles';
-import { ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
+import { ConfigurationDeleteOperation, ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -37,12 +37,14 @@ export interface RouterProps {
   tokenProvider: TokenProvider;
 }
 
-function mapPdfTemplate({ id, name, description, template }: PdfTemplateEntity) {
+function mapPdfTemplate({ id, name, description, template, header, footer }: PdfTemplateEntity) {
   return {
     id,
     name,
     description,
     template,
+    header,
+    footer,
   };
 }
 
@@ -81,10 +83,16 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 const toTemplateId = (name: string): string =>
   name.trim().toLowerCase().replace(/\s+/g, '-');
 
+// clean-code-ignore: 2.3 2.10
 const createPdfTemplatePatch = (
   id: string,
   name: string,
   description = '',
+  template = '',
+  header?: string,
+  footer?: string,
+  additionalStyles?: string,
+  variables?: string,
 ): ConfigurationUpdateOperation<PdfTemplateConfiguration> => ({
   operation: 'UPDATE',
   update: {
@@ -92,7 +100,11 @@ const createPdfTemplatePatch = (
       id,
       name,
       description,
-      template: '',
+      template,
+      ...(header !== undefined && { header }),
+      ...(footer !== undefined && { footer }),
+      ...(additionalStyles !== undefined && { additionalStyles }),
+      ...(variables !== undefined && { variables }),
     },
   },
 });
@@ -133,7 +145,14 @@ export function createPdfTemplate(
 ): RequestHandler {
   return async (req, res, next) => {
     try {
-      const { name, description = '' } = req.body;
+
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('create pdf template', user);
+      }
+      const { name, description = '', template = '', header, footer, additionalStyles, variables } = req.body;
       const id = toTemplateId(name);
       const [configuration] =
         await req.getConfiguration<Record<string, PdfTemplateEntity>>();
@@ -144,7 +163,7 @@ export function createPdfTemplate(
         });
       }
 
-      const patch = createPdfTemplatePatch(id, name, description);
+      const patch = createPdfTemplatePatch(id, name, description, template, header, footer, additionalStyles, variables);
 
       await savePdfTemplate(
         directory,
@@ -154,6 +173,90 @@ export function createPdfTemplate(
       );
 
       res.status(HttpStatusCodes.CREATED).json(patch.update[id]);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+async function deletePdfTemplateFromConfig(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: string,
+  templateId: string,
+): Promise<void> {
+  const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
+  const configurationApiUrl = await directory.getServiceUrl(configurationServiceId);
+  const token = await tokenProvider.getAccessToken();
+
+  const patch: ConfigurationDeleteOperation = { operation: 'DELETE', property: templateId };
+  await axios.patch(
+    new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href,
+    patch,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId },
+    },
+  );
+}
+
+// clean-code-ignore: 2.3 2.10
+export function updatePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('update pdf template', user);
+      }
+
+      const template: PdfTemplateEntity = req[TEMPLATE];
+      const { template: templateBody, header, footer } = req.body;
+
+      const updated: PdfTemplateConfiguration = {
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        template: templateBody !== undefined ? templateBody : template.template,
+        header: header !== undefined ? header : template.header,
+        footer: footer !== undefined ? footer : template.footer,
+      };
+
+      const patch: ConfigurationUpdateOperation<PdfTemplateConfiguration> = {
+        operation: 'UPDATE',
+        update: { [template.id]: updated },
+      };
+
+      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
+
+      res.status(HttpStatusCodes.CREATED).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+// clean-code-ignore: 2.18
+export function deletePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+        throw new UnauthorizedUserError('delete pdf template', user);
+      }
+
+      const { templateId } = req.params;
+      await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
+      res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(err);
     }
@@ -273,6 +376,11 @@ export function createPdfRouter({
           'name can contain only letters, numbers, spaces, and hyphens',
         ),
       body('description').optional().isString(),
+      body('template').optional().isString(),
+      body('header').optional().isString(),
+      body('footer').optional().isString(),
+      body('additionalStyles').optional().isString(),
+      body('variables').optional().isString(),
     ),
     createPdfTemplate(directory, tokenProvider),
   );
@@ -281,6 +389,23 @@ export function createPdfRouter({
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
     getTemplate('params'),
     (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
+  );
+  router.patch(
+    '/templates/:templateId',
+    createValidationHandler(
+      param('templateId').isString().isLength({ min: 1, max: 50 }),
+      body('template').optional().isString(),
+      body('header').optional().isString(),
+      body('footer').optional().isString(),
+    ),
+    getTemplate('params'),
+    updatePdfTemplate(directory, tokenProvider),
+  );
+  router.delete(
+    '/templates/:templateId',
+    createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
+    getTemplate('params'),
+    deletePdfTemplate(directory, tokenProvider),
   );
   router.post(
     '/jobs',

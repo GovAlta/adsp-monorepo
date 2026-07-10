@@ -1,18 +1,14 @@
+import merge from 'lodash/merge';
 import isEmpty from 'lodash/isEmpty';
-import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
-import { toDataPath } from '@jsonforms/core';
-
 import range from 'lodash/range';
-import React, { useRef, useLayoutEffect } from 'react';
-import { Resolve } from '@jsonforms/core';
-import type { ErrorObject } from 'ajv';
-
+import { JsonFormsStateContext, useJsonForms, JsonFormsDispatch } from '@jsonforms/react';
 import {
+  toDataPath,
+  Resolve,
   ArrayLayoutProps,
   ControlElement,
   JsonSchema,
   Paths,
-  JsonFormsRendererRegistryEntry,
   JsonFormsCellRendererRegistryEntry,
   ArrayTranslations,
   UISchemaElement,
@@ -20,10 +16,11 @@ import {
   LabelDescription,
 } from '@jsonforms/core';
 
+import React, { useRef, useLayoutEffect } from 'react';
+import type { ErrorObject } from 'ajv';
 import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
-import merge from 'lodash/merge';
-import { JsonFormsDispatch } from '@jsonforms/react';
+
 import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem, GoabTable } from '@abgov/react-components';
 import {
   ToolBarHeader,
@@ -46,7 +43,15 @@ import {
   TableContentContainer,
 } from './styled-components';
 import { Visible } from '../../util';
-import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR, VALIDATION_KEYWORDS } from '../../common/Constants';
+import {
+  EmptyListProps,
+  NonEmptyCellProps,
+  NonEmptyRowComponentProps,
+  OwnPropsOfNonEmptyCell,
+  TableRowsProp,
+} from './ListWithDetailTypes';
+import { prettify } from './ObjectListControlUtils';
 
 const getItemsTitle = (schema?: JsonSchema): string | undefined => {
   const items = schema?.items;
@@ -165,12 +170,6 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
   return [''];
 };
 
-export interface EmptyListProps {
-  numColumns: number;
-  noDataMessage: string;
-  translations: ArrayTranslations;
-}
-
 const EmptyList = ({ numColumns, noDataMessage }: EmptyListProps) => (
   <GoabGrid minChildWidth="60ch" mt="l" mb="l">
     <TextCenter>
@@ -179,20 +178,6 @@ const EmptyList = ({ numColumns, noDataMessage }: EmptyListProps) => (
   </GoabGrid>
 );
 
-interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
-  rootSchema?: JsonSchema;
-  errors: string;
-  enabled: boolean;
-}
-interface OwnPropsOfNonEmptyCell {
-  rowPath: string;
-  propName?: string;
-  schema: JsonSchema;
-  enabled: boolean;
-  renderers?: JsonFormsRendererRegistryEntry[];
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  uischema?: ControlElement;
-}
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
   const path = ownProps.rowPath + (ownProps.schema?.type === 'object' ? '.' + ownProps.propName : '');
   const errors = '';
@@ -208,21 +193,8 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
   };
 };
 
-interface NonEmptyRowComponentProps {
-  propName?: string;
-  schema: JsonSchema;
-  rootSchema?: JsonSchema;
-  rowPath: string;
-  errors: string;
-  enabled: boolean;
-  renderers?: JsonFormsRendererRegistryEntry[];
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  isValid: boolean;
-  uischema?: ControlElement | Layout;
-}
-
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(props: NonEmptyRowComponentProps) {
-  const { schema, errors, enabled, renderers, cells, rowPath, isValid, uischema } = props;
+  const { schema, enabled, renderers, cells, rowPath, uischema } = props;
   const propNames = getValidColumnProps(schema);
   const propScopes = (uischema as ControlElement)?.scope
     ? propNames.map((name) => {
@@ -426,13 +398,6 @@ function getValue(obj: unknown, path: string): unknown {
       }
       return undefined;
     }, obj);
-}
-
-function prettify(prop: string) {
-  return prop
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/[_-]/g, ' ')
-    .replace(/^./, (c) => c.toUpperCase());
 }
 
 function findLabelForPath(path: string, uiSchema?: UISchemaElement, schema?: JsonSchema): string {
@@ -702,16 +667,6 @@ export function findControlLabel(uischema: UISchemaElement, scope: string): stri
   return;
 }
 
-const VALIDATION_KEYWORDS = {
-  REQUIRED: 'required',
-  MIN_LENGTH: 'minLength',
-  MAX_LENGTH: 'maxLength',
-  FORMAT: 'format',
-  MINIMUM: 'minimum',
-  MAXIMUM: 'maximum',
-  TYPE: 'type',
-};
-
 export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischema?: UISchemaElement): string {
   const path = getEffectiveInstancePath(error);
   const label = resolveLabel(path, schema, uischema);
@@ -743,7 +698,6 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
 
     case VALIDATION_KEYWORDS.TYPE:
       return `${label} must be a ${error.params.type}`;
-
     default:
       return error.message ?? `${label} is invalid`;
   }
@@ -845,9 +799,9 @@ const MainTab = ({
   const rowData = getDataAtPath(core?.data, childPath);
 
   function resolveField(e: any): string {
-    if (e.keyword === 'required') {
+    if (e.keyword === VALIDATION_KEYWORDS.REQUIRED) {
       return e.params.missingProperty;
-    } else if (e.keyword === 'errorMessage' && e.params?.errors[0].params.missingProperty) {
+    } else if (e.keyword === VALIDATION_KEYWORDS.ERROR_MESSAGE && e.params?.errors[0].params.missingProperty) {
       return e.params.errors[0].params.missingProperty;
     }
 
@@ -861,17 +815,20 @@ const MainTab = ({
     fields: Record<string, string>;
     row?: string;
   };
+
   const fieldErrors = core?.errors
     ?.filter((e) => e.instancePath === rowBase || e.instancePath.startsWith(rowBase + '/'))
     .reduce<FieldErrors>(
       (acc, e) => {
         const field = resolveField(e);
 
-        if (e.keyword === 'errorMessage' && e.params?.errors) {
+        if (e.keyword === VALIDATION_KEYWORDS.ERROR_MESSAGE && e.params?.errors) {
           const nestedErrors = e.params.errors as ErrorObject[];
           if (field) {
             try {
-              acc.fields[field] = nestedErrors.map((ne) => humanizeAjvError(ne, core.schema, core.uischema)).join(', ');
+              acc.fields[field] = e.message
+                ? e.message
+                : nestedErrors.map((ne) => humanizeAjvError(ne, core.schema, core.uischema)).join(', ');
             } catch (err) {
               // Fallback: if nestedErrors contain a missingProperty, use it
               const missingFromNested = nestedErrors?.[0]?.params?.missingProperty;
@@ -970,23 +927,7 @@ const MainTab = ({
 };
 
 export const NonEmptyList = React.memo(NonEmptyRowComponent);
-interface TableRowsProp {
-  data: number;
-  path: string;
-  schema: JsonSchema;
-  uischema: ControlElement;
-  //eslint-disable-next-line
-  config?: any;
-  enabled: boolean;
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  translations: ArrayTranslations;
-  currentIndex: number;
-  setCurrentIndex: (index: number) => void;
-  setCurrentListPage: (index: number) => void;
-  currentListPage: number;
-  listTitle?: string;
-  errors: string;
-}
+
 const ObjectArrayList = ({
   data,
   path,
@@ -1207,7 +1148,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
     const editMode = this.state.currentListPage !== 0 && !withLeftTab;
 
     return (
-      <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
+      <Visible $visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
           {listTitle && (
             <MarginTop>

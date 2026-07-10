@@ -25,6 +25,11 @@ export const nxAdspAgent: AgentConfiguration = {
     - list-nx-adsp-templates: list available templates
     - get-nx-adsp-template: get the full file content and integration patterns for one template
 
+    Reference lookup tools — use to cross-check or supplement template content against the
+    live SDK when a template doesn't cover something, or you're unsure it's current:
+    - search-adsp-sdk-reference: search the actual SDK symbol reference by name/keyword
+    - search-adsp-docs / read-adsp-doc: search/read platform docs for concepts a template doesn't cover
+
     ## Workflow
 
     1. **Read key files** to understand the current workspace:
@@ -63,6 +68,12 @@ export const nxAdspAgent: AgentConfiguration = {
     - Replace ALL {placeholders} with domain values. Never leave them in output.
     - If the developer provides no domain detail, use reasonable defaults from the project name.
   `,
-  tools: ['listNxAdspTemplatesTool', 'getNxAdspTemplateTool'],
+  tools: [
+    'listNxAdspTemplatesTool',
+    'getNxAdspTemplateTool',
+    'searchAdspDocsTool',
+    'readAdspDocTool',
+    'searchAdspSdkReferenceTool',
+  ],
   userRoles: ['urn:ads:platform:agent-service:agent-user'],
 };

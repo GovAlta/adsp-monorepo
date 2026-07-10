@@ -1,4 +1,4 @@
-import { AdspId, adspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -66,7 +66,7 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
       }
 
       // FIXME: accessing a non-injected dependency makes this hard to test
-      const tenants = await repository.find(criteria);
+      const tenants = await repository.find({ ...criteria, activeOnly: true });
 
       res.send({
         results: tenants.map((tenant) => mapTenant(tenant, !user)),
@@ -166,6 +166,32 @@ export function deleteTenant(
   };
 }
 
+async function provisionRealm(
+  entity: TenantEntity,
+  clients: ServiceClient[],
+  realmService: RealmService,
+  eventService: EventService,
+  user: User,
+  logger: Logger,
+): Promise<void> {
+  try {
+    await realmService.createRealm(clients, { realm: entity.realm, adminEmail: entity.adminEmail, name: entity.name });
+    entity.status = 'active';
+    await entity.save();
+    const tenant = mapTenant(entity);
+    eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
+    logger.info(`Provisioned tenant '${entity.name}' with realm '${entity.realm}'.`, LOG_CONTEXT);
+  } catch (err) {
+    logger.error(`Failed to provision tenant '${entity.name}': ${err.message}`, LOG_CONTEXT);
+    try {
+      await realmService.deleteRealm(entity);
+    } catch (deleteErr) {
+      logger.error(`Failed to cleanup realm for '${entity.name}': ${deleteErr.message}`, LOG_CONTEXT);
+    }
+    await entity.delete();
+  }
+}
+
 export function createTenant(
   logger: Logger,
   tenantRepository: TenantRepository,
@@ -177,7 +203,6 @@ export function createTenant(
       const user = req.user;
       const { name, realm: existingRealm, adminEmail }: New<Tenant> = req.body;
 
-      let realm = existingRealm;
       const email = adminEmail || user.email;
 
       // Non admins are not permitted to specify realm or admin.
@@ -205,22 +230,27 @@ export function createTenant(
           `Creating tenant '${name}' with existing realm '${existingRealm}' for admin ${email}...`,
           LOG_CONTEXT,
         );
+
+        const entity = await TenantEntity.create(tenantRepository, name, existingRealm, email);
+        const tenant = mapTenant(entity);
+        eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
+        logger.info(`Created tenant '${name}' with existing realm '${existingRealm}' for admin ${email}.`, LOG_CONTEXT);
+        res.send(tenant);
       } else {
-        //create new realm
         logger.info(`Creating tenant '${name}' with new realm for admin ${email}...`, LOG_CONTEXT);
 
-        realm = uuidv4();
+        const realm = uuidv4();
         const [_, clients] = await req.getConfiguration<ServiceClient[]>();
-        await realmService.createRealm(clients || [], { realm, adminEmail: email, name });
+
+        const entity = await TenantEntity.create(tenantRepository, name, realm, email, 'provisioning');
+        const tenant = mapTenant(entity);
+
+        res.status(202).send(tenant);
+
+        provisionRealm(entity, clients || [], realmService, eventService, user, logger).catch((err) => {
+          logger.error(`Unhandled error during tenant provisioning: ${err.message}`, LOG_CONTEXT);
+        });
       }
-
-      const entity = await TenantEntity.create(tenantRepository, name, realm, email);
-      const tenant = mapTenant(entity);
-
-      eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
-      logger.info(`Created tenant '${name}' with realm '${realm}' for admin ${email}.`, LOG_CONTEXT);
-
-      res.send(tenant);
     } catch (err) {
       logger.error(`Error creating new tenant ${err.message}`, LOG_CONTEXT);
       next(err);

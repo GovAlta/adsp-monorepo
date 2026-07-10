@@ -200,14 +200,29 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
     });
 });
 
-When('the user clicks submit button in the form', function () {
+When('the user clicks submit button on form summary page', function () {
   cy.wait(2000);
-  formsObj.formSubmitButton().shadow().find('button').click({ force: true });
+  formsObj.formSummaryPageSubmitButton().shadow().find('button').click({ force: true });
+  cy.wait(5000);
+});
+
+When('the user clicks submit button on the form page', function () {
+  cy.wait(2000);
+  formsObj.formPageSubmitButton().shadow().find('button').click({ force: true });
   cy.wait(5000);
 });
 
 When('the user clicks list with detail button labelled as {string} in the form', function (label) {
-  formsObj.formListWithDetailButton(label).shadow().find('button').click({ force: true });
+  cy.wait(1000);
+  formsObj
+    .formListWithDetailButton(label)
+    .should('exist')
+    .shadow()
+    .find('button')
+    .should('be.visible')
+    .should('not.be.disabled')
+    .scrollIntoView()
+    .click({ force: true });
   cy.wait(1000);
 });
 
@@ -326,7 +341,7 @@ Then(
   function (sectionName, arrayElement: string, arrayLabel) {
     const allEntries: string[] = [];
     formsObj
-      .formSummaryPageListWithDetailItems(sectionName, arrayLabel)
+      .formSummaryPageObjectListItems(sectionName, arrayLabel)
       .each(($row) => {
         cy.wrap($row)
           .find('span[data-testid*="-review"]')
@@ -337,6 +352,36 @@ Then(
       })
       .then(() => {
         expect(allEntries).to.include(arrayElement);
+      });
+  }
+);
+
+Then(
+  'the user views the summary of {string} with all entries {string} as {string}',
+  function (sectionName, arrayElements: string, arrayLabel) {
+    const allEntries: string[] = [];
+    formsObj
+      .formSummaryPageObjectListItems(sectionName, arrayLabel)
+      .each(($row) => {
+        cy.wrap($row)
+          .find('span[data-testid*="-review"]')
+          .then(($spans) => {
+            const joinedRowData = [...$spans].map((span) => Cypress.$(span).text().trim()).join(':');
+            allEntries.push(joinedRowData);
+          });
+      })
+      .then(() => {
+        const normalize = (value: string) =>
+          value
+            .replace(/\s*:\s*/g, ':')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const expectedEntries = arrayElements
+          .split(';')
+          .map((entry) => normalize(entry))
+          .filter(Boolean);
+        const actualEntries = allEntries.map((entry) => normalize(entry));
+        expect(actualEntries).to.deep.equal(expectedEntries);
       });
   }
 );
@@ -398,7 +443,7 @@ Then(
 );
 
 Then('the user views the submit button is disabled on summary page', function () {
-  formsObj.formSubmitButton().shadow().find('button').should('be.disabled');
+  formsObj.formSummaryPageSubmitButton().shadow().find('button').should('be.disabled');
 });
 
 When('the user clicks Download PDF copy link on form submission confirmation page', function () {
@@ -453,9 +498,9 @@ Then('the user views Step {string} of {string} on the form page', function (curr
   formsObj.formStepIndicator().should('have.text', `Step ${currentStep} of ${totalSteps}`);
 });
 
-When('the user clicks Back to application overview link on the form page', function () {
+When('the user clicks {string} link on the form page', function (linkText) {
   cy.wait(1000); // Wait for the page to save data to avoid losing the last data input
-  formsObj.formBackToOverviewLink().click({ force: true });
+  formsObj.formBackToOverviewLink(linkText).click({ force: true });
 });
 
 When('the user clicks Next button on a tasklist step page', function () {
@@ -645,4 +690,112 @@ Then('the user views the text field of {string} is {string}', function (label, e
   } else {
     expect(enabledOrNot).to.be.oneOf(['enabled', 'disabled']);
   }
+});
+
+//Value array is separated by semicolon, e.g. "valueA1, valueB1; valueA2, valueB2"
+When('the user enters {string} in {string} object array control', function (valueArray: string, label: string) {
+  // Split the value array string into an array of values
+  const valueArraySplit = valueArray.split(';').map((item) => item.trim());
+  valueArraySplit.forEach((value, index) => {
+    const valueParts = value.split(',').map((part) => part.trim());
+    formsObj.formObjectListAddButton(label).shadow().find('button').click({ force: true });
+    cy.wait(1000); // Wait for the object list to add a new row
+    valueParts.forEach((part, partIndex) => {
+      formsObj
+        .formObjectListFormItem(label, String(index + 1), String(partIndex + 1))
+        .find('goa-input')
+        .shadow()
+        .find('input')
+        .type(part, { force: true, delay: 200 });
+    });
+  });
+});
+
+// Only text fields are supported in the list with detail for now, so the valueParts are all typed into text fields. Value array is separated by semicolon, e.g. "valueA1, valueB1; valueA2, valueB2"
+When('the user enters {string} in {string} List with detail control', function (valueArray: string, label: string) {
+  // Split the value array string into an array of values
+  const valueArraySplit = valueArray.split(';').map((item) => item.trim());
+  valueArraySplit.forEach((value) => {
+    const valueParts = value.split(',').map((part) => part.trim());
+    formsObj.formListWithDetailButtonWithListLabel(label).shadow().find('button').click({ force: true });
+    cy.wait(1000); // Wait for the list with detail to add a new row
+    valueParts.forEach((part, partIndex) => {
+      formsObj
+        .formListWithDetailFormItem(label, String(partIndex + 1))
+        .find('goa-input')
+        .shadow()
+        .find('input')
+        .type(part, { force: true, delay: 200 });
+    });
+    formsObj.formListWithDetailContinueButton().shadow().find('button').click({ force: true });
+  });
+});
+
+Then('the user views the text field labelled {string} is required', function (label) {
+  formsObj.formFormItem(label).invoke('attr', 'requirement').should('eq', 'required');
+});
+
+Then('the user views the text field labelled {string} is not required', function (label) {
+  formsObj.formFormItem(label).should('not.have.attr', 'requirement');
+});
+
+Then('the user views the submit button is {string} on the form page', function (enabledOrNot: 'enabled' | 'disabled') {
+  if (enabledOrNot === 'enabled') {
+    cy.wait(1000); // Wait for button to change status
+    formsObj.formPageSubmitButton().shadow().find('button').should('be.enabled');
+  } else if (enabledOrNot === 'disabled') {
+    cy.wait(1000); // Wait for button to change status
+    formsObj.formPageSubmitButton().shadow().find('button').should('not.be.enabled');
+  } else {
+    expect(enabledOrNot).to.be.oneOf(['enabled', 'disabled']);
+  }
+});
+
+When(
+  'the user clicks change link for {string} field of {string} on summary page',
+  function (fieldLabel: string, sectionLabel: string) {
+    formsObj.formSummaryFieldChangeLink(sectionLabel, fieldLabel).shadow().find('button').click({ force: true });
+  }
+);
+
+Then('the user views {string} text field is focused and brought into view on the form page', function (label) {
+  formsObj
+    .formFormItem(label)
+    .find('goa-input')
+    .shadow()
+    .find('input, textarea')
+    .should('be.focused')
+    .then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+
+      cy.window().then((win) => {
+        expect(rect.top).to.be.gte(0);
+        expect(rect.left).to.be.gte(0);
+        expect(rect.bottom).to.be.lte(win.innerHeight);
+        expect(rect.right).to.be.lte(win.innerWidth);
+      });
+    });
+});
+
+Then('the user views {string} checkbox is focused and brought into view on the form page', function (label) {
+  formsObj
+    .formCheckboxWithLabel(label)
+    .shadow()
+    .find('input[type="checkbox"]')
+    .should('be.focused')
+    .then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+
+      cy.window().then((win) => {
+        expect(rect.top).to.be.gte(0);
+        expect(rect.left).to.be.gte(0);
+        expect(rect.bottom).to.be.lte(win.innerHeight);
+        expect(rect.right).to.be.lte(win.innerWidth);
+      });
+    });
+});
+
+When('the user clicks a text field labelled {string} and clicks outside the field', function (label) {
+  formsObj.formTextField(label).shadow().find('input').focus();
+  cy.get('body').click(); // Click outside the field
 });

@@ -9,6 +9,10 @@ export const FETCH_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_PDF_TEMPLATES_SUCCE
 export const DELETE_PDF_TEMPLATE_ACTION = 'pdf/DELETE_PDF_TEMPLATE_ACTION';
 export const DELETE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/DELETE_PDF_TEMPLATE_SUCCESS_ACTION';
 
+// clean-code-ignore: RULE-19
+export const CREATE_PDF_TEMPLATE_ACTION = 'pdf/CREATE_PDF_TEMPLATE_ACTION';
+export const CREATE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/CREATE_PDF_TEMPLATE_SUCCESS_ACTION';
+
 export const UPDATE_PDF_TEMPLATE_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_ACTION';
 export const UPDATE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_SUCCESS_ACTION';
 export const UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION';
@@ -128,6 +132,16 @@ export interface StreamPdfSocketAction {
   disconnect: boolean;
 }
 
+export interface CreatePdfTemplateAction {
+  type: typeof CREATE_PDF_TEMPLATE_ACTION;
+  template: PdfTemplate;
+}
+
+export interface CreatePdfTemplateSuccessAction {
+  type: typeof CREATE_PDF_TEMPLATE_SUCCESS_ACTION;
+  template: PdfTemplate;
+}
+
 export interface UpdatePdfTemplatesAction {
   type: typeof UPDATE_PDF_TEMPLATE_ACTION;
   template: PdfTemplate;
@@ -178,6 +192,8 @@ export interface FetchPdfMetricsSuccessAction {
 }
 
 export type PdfActionTypes =
+  | CreatePdfTemplateAction
+  | CreatePdfTemplateSuccessAction
   | FetchPdfTemplatesSuccessAction
   | FetchCorePdfTemplatesSuccessAction
   | FetchPdfTemplatesAction
@@ -203,6 +219,16 @@ export type PdfActionTypes =
   | SaveUpdatedPdfTemplateAction
   | UpdatePdfTemplateFromAgentAction
   | UpdatePdfResponseAction;
+
+export const createPdfTemplate = (template: PdfTemplate): CreatePdfTemplateAction => ({
+  type: CREATE_PDF_TEMPLATE_ACTION,
+  template,
+});
+
+export const createPdfTemplateSuccess = (template: PdfTemplate): CreatePdfTemplateSuccessAction => ({
+  type: CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  template,
+});
 
 export const updatePdfTemplate = (template: PdfTemplate, options?: string): UpdatePdfTemplatesAction => ({
   type: UPDATE_PDF_TEMPLATE_ACTION,

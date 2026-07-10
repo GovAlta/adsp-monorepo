@@ -22,7 +22,7 @@ export const RenderStepElements = (props: StepProps): JSX.Element => {
 
   return (
     <Visible
-      visible={props.visible}
+      $visible={props.visible}
       data-testid={`${props?.path || props.category?.label}-categories-${props.categoryIndex}`}
     >
       {props.category.elements.map((uiSchema, index) => {

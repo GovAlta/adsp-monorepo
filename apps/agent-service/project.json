@@ -18,7 +18,8 @@
       "inputs": [
         "production",
         "^production",
-        "{workspaceRoot}/dist/libs/jsonforms-components/renderer-catalog.json"
+        "{workspaceRoot}/dist/libs/jsonforms-components/renderer-catalog.json",
+        "{workspaceRoot}/docs/**/*.md"
       ],
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
@@ -33,6 +34,11 @@
             "glob": "renderer-catalog.json",
             "input": "dist/libs/jsonforms-components",
             "output": "."
+          },
+          {
+            "input": "docs",
+            "glob": "**/*.md",
+            "output": "assets/docs"
           }
         ],
         "webpackConfig": "apps/agent-service/webpack.config.js",

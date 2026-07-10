@@ -61,7 +61,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       props.logger?.info(`Successfully finished the check endpoint job.`);
     } catch (error) {
       props.logger?.error(
-        `Error checking endpoint ${props?.app?.url} of tenant ${props?.app?.tenantId}: ${error.message}.`
+        `Error checking endpoint ${props?.app?.url} of tenant ${props?.app?.tenantId}: ${error.message}.`,
       );
       props.logger?.error(`Error Job: `, error);
     }
@@ -72,8 +72,8 @@ async function checkEndpoint(
   getEndpointResponse: GetEndpointResponse,
   url: string,
   appKey: string,
-  logger: Logger
-): Promise<EndpointStatusEntry> {
+  logger: Logger,
+): Promise<Omit<EndpointStatusEntry, 'tenantId'>> {
   const start = Date.now();
   try {
     const { status } = await getEndpointResponse(url);
@@ -105,7 +105,7 @@ async function checkEndpoint(
 
 export const getNewEndpointStatus = (
   current: EndpointStatusType,
-  samples: EndpointStatusEntry[]
+  samples: EndpointStatusEntry[],
 ): EndpointStatusType => {
   const failed = samples.filter((sample) => !sample.ok).length;
 
@@ -125,7 +125,11 @@ export const getNewEndpointStatus = (
   return current;
 };
 
-async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry, tenantId: AdspId) {
+async function saveStatus(
+  props: CreateCheckEndpointProps,
+  statusEntry: Omit<EndpointStatusEntry, 'tenantId'>,
+  tenantId: AdspId,
+) {
   const {
     app,
     serviceStatusRepository,
@@ -138,8 +142,10 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     serviceId,
   } = props;
   // create endpoint status entry before determining if the state is changed
-
-  await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
+  await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, {
+    ...statusEntry,
+    tenantId: tenantId.toString(),
+  });
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
 
   const user = {
@@ -151,7 +157,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   const { webhooks } = await configurationService.getConfiguration<PushServiceConfiguration, PushServiceConfiguration>(
     adspId`urn:ads:platform:push-service`,
     token,
-    app.tenantId
+    app.tenantId,
   );
 
   const { applicationWebhookIntervals } = await configurationService.getConfiguration<
@@ -175,7 +181,8 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
           const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
             app.url,
             app.appKey,
-            waitTimeInterval
+            tenantId.toString(),
+            waitTimeInterval,
           );
 
           let switchOffCount = 0;
@@ -224,7 +231,8 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
     app.url,
     app.appKey,
-    ENTRY_SAMPLE_SIZE
+    tenantId.toString(),
+    ENTRY_SAMPLE_SIZE,
   );
 
   const status = await serviceStatusRepository.get(app.appKey);
@@ -264,13 +272,13 @@ const updateAppStatus = async (
   tokenProvider: TokenProvider,
   webhook: Webhooks,
   key: string,
-  serviceId: AdspId
+  serviceId: AdspId,
 ) => {
   const token = await tokenProvider.getAccessToken();
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
   const pushConfiguration = new URL(
     `/configuration/v2/configuration/${serviceId.namespace}/push-service?tenantId=${tenantId}`,
-    baseUrl
+    baseUrl,
   );
 
   const response = await axios.patch(
@@ -283,7 +291,7 @@ const updateAppStatus = async (
     },
     {
       headers: { Authorization: `Bearer ${token}` },
-    }
+    },
   );
 
   return response;
@@ -302,7 +310,8 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
       const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
         app.url,
         app.appKey,
-        QUERY_SIZE
+        app.tenantId.toString(),
+        QUERY_SIZE,
       );
 
       //Get first and last date time to make sure the time is 5 minutes apart.

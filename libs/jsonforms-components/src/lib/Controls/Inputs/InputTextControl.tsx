@@ -102,12 +102,12 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   }, [data, isSinField]);
 
   useEffect(() => {
-    if (typeof handleChange === 'function' && hasDefault && !manualInput) {
+    if (typeof handleChange === 'function' && hasDefault && data === undefined && !manualInput) {
       handleChange(props.path, schema.default);
       setLocalValue(schema.default);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema.default]);
+  }, [schema.default, data]);
 
   /* istanbul ignore next */
   useEffect(() => {

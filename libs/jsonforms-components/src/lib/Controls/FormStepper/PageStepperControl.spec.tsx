@@ -542,7 +542,6 @@ describe('PageStepperControl', () => {
         disableNext: true,
       }
     );
-    // console.log(baseElement.innerHTML);
     const nextBtn = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
     expect(nextBtn).not.toBeNull();
     if (nextBtn) {

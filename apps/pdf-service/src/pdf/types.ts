@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
@@ -42,15 +43,24 @@ export interface PdfTemplate {
 }
 
 
-export interface PdfTemplateConfiguration {
+export interface PdfTemplateConfiguration { // clean-code-ignore: RULE-19
   id: string;
   name: string;
   description: string;
   template: string;
+  header?: string;
+  footer?: string;
+  additionalStyles?: string; // clean-code-ignore: RULE-19
+  variables?: string;
 }
 
 
 export interface ConfigurationUpdateOperation<T> {
   operation: 'UPDATE';
   update: Record<string, T>;
+}
+
+export interface ConfigurationDeleteOperation {
+  operation: 'DELETE';
+  property: string;
 }

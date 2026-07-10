@@ -31,6 +31,7 @@ import {
   Resource,
   directoryBusySelector,
   tagResource,
+  getDefaultFormCriteria,
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -38,6 +39,7 @@ import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
+import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -68,9 +70,14 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
       <td>
         <Tags urn={form.urn} onTag={onTag} />
       </td>
-      {dataValues.map(({ path }) => (
-        <DataValueCell key={path}>{form.values[path]}</DataValueCell>
-      ))}
+      {dataValues.map(({ path }) => {
+        const value = form.values[path];
+        return (
+          <DataValueCell key={path}>
+            {value !== null && typeof value === 'object' ? JSON.stringify(value) : (value as string)}
+          </DataValueCell>
+        );
+      })}
       <td>
         <GoabButtonGroup alignment="end">
           <GoabButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
@@ -116,34 +123,30 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     }
   }, [dispatch, definition]);
 
+  const searchDisabled = isSearchDisabled(busy.loading, criteria);
+  const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
+  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, after })); // clean-code-ignore: 2.10
+
   return (
     <SearchLayout
       searchForm={
         <form>
           <SearchFormItemsContainer>
-            <TagSearchFilter
-              value={criteria.tag}
-              onChange={(value) =>
-                dispatch(
-                  formActions.setFormCriteria({
-                    ...criteria,
-                    tag: value,
-                  })
-                )
-              }
+            <DateRangeCriteriaItem
+              fromValue={criteria.createDateAfter}
+              toValue={criteria.createDateBefore}
+              disabled={!!criteria.tag}
+              onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
+              onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
             />
+            <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             <GoabFormItem label="Status" mr="m">
               <GoabDropdown
                 name="form-status"
                 disabled={!!criteria.tag}
                 value={criteria.statusEquals}
                 onChange={(detail: GoabDropdownOnChangeDetail) =>
-                  dispatch(
-                    formActions.setFormCriteria({
-                      ...criteria,
-                      statusEquals: detail.value,
-                    })
-                  )
+                  updateCriteria({ ...criteria, statusEquals: detail.value })
                 }
               >
                 <GoabDropdownItem value="" label="<No status filter>" />
@@ -161,15 +164,13 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 disabled={!!criteria.tag}
                 value={criteria?.dataCriteria?.[path]?.toString() || ''}
                 onChange={(value) =>
-                  dispatch(
-                    formActions.setFormCriteria({
-                      ...criteria,
-                      dataCriteria: {
-                        ...criteria?.dataCriteria,
-                        [path]: value || undefined,
-                      },
-                    })
-                  )
+                  updateCriteria({
+                    ...criteria,
+                    dataCriteria: {
+                      ...criteria?.dataCriteria,
+                      [path]: value || undefined,
+                    },
+                  })
                 }
               />
             ))}
@@ -180,18 +181,10 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 Export to file
               </GoabButton>
             )}
-            <GoabButton
-              type="secondary"
-              onClick={() => dispatch(formActions.setFormCriteria({ statusEquals: 'submitted' }))}
-            >
+            <GoabButton type="secondary" onClick={() => updateCriteria(getDefaultFormCriteria())}>
               Reset filter
             </GoabButton>
-            <GoabButton
-              type="primary"
-              leadingIcon="search"
-              disabled={busy.loading}
-              onClick={() => dispatch(findForms({ definitionId, criteria }))}
-            >
+            <GoabButton type="primary" leadingIcon="search" disabled={searchDisabled} onClick={() => handleFindForms()}>
               Find forms
             </GoabButton>
           </GoabButtonGroup>
@@ -229,7 +222,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               columns={4 + dataValues.length}
               next={next}
               loading={busy.loading}
-              onLoadMore={(after) => dispatch(findForms({ definitionId, criteria, after }))}
+              onLoadMore={handleFindForms}
             />
           </tbody>
         </GoabTable>

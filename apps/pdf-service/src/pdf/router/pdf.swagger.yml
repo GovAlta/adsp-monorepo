@@ -104,6 +104,51 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Template"
+  post:
+    tags:
+      - Templates
+    description: Creates a new PDF template for the tenant.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+                description: Name of the template. Can contain letters, numbers, spaces, and hyphens.
+                minLength: 1
+                maxLength: 50
+                example: My Template
+              description:
+                type: string
+                description: Description of the template's purpose.
+                example: A template for rendering a user name
+              template:
+                type: string
+                description: Initial HTML body content for the template.
+              header:
+                type: string
+                description: Initial HTML header content for the template.
+              footer:
+                type: string
+                description: Initial HTML footer content for the template.
+              additionalStyles:
+                type: string
+                description: Initial CSS styles shared across template, header, and footer.
+              variables:
+                type: string
+                description: Initial variable assignments for the template.
+    responses:
+      201:
+        description: PDF template successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Template"
 
 /pdf/v1/templates/{templateId}:
   get:
@@ -124,6 +169,65 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Template"
+  patch:
+    tags:
+      - Templates
+    description: Update the template body, header, and/or footer of an existing PDF template. Only the fields included in the request body are updated; all other fields are left unchanged.
+    parameters:
+      - name: templateId
+        description: ID of template to update.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              template:
+                type: string
+                description: The template body, designed with HTML/CSS.
+                example: <p>Their name is {{data.user.name}}</p>
+              header:
+                type: string
+                description: Page header, designed with HTML/CSS.
+                example: <h1>What is their name?</h1>
+              footer:
+                type: string
+                description: Page footer, designed with HTML/CSS.
+                example: <p>Thank you, thank you very much</p>
+    responses:
+      201:
+        description: The PDF template was successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Template"
+      400:
+        description: Request body does not match the expected schema.
+      403:
+        description: User does not have the pdf-admin role.
+      404:
+        description: Template not found.
+  delete:
+    tags:
+      - Templates
+    description: Delete the specified PDF template.
+    parameters:
+      - name: templateId
+        description: ID of template to delete.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      204:
+        description: The PDF template was successfully deleted.
+      404:
+        description: Template not found.
 
 /pdf/v1/jobs:
   post:

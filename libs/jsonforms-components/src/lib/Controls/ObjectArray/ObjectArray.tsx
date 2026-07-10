@@ -28,7 +28,7 @@ export const ArrayControl = (props: CombinedProps) => {
   const { visible, handleChange } = props;
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <ObjectArrayControl {...props} handleChange={handleChange} />
     </Visible>
   );
@@ -40,7 +40,7 @@ export const GoAPrimitiveArrayTester: RankedTester = rankWith(2, isPrimitiveArra
 export const ArrayControlBase = (props: ControlProps) => {
   const { visible } = props;
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <ArrayControl arraySchema={{}} {...props} addItem={() => () => {}} />
     </Visible>
   );
@@ -149,7 +149,7 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
     const checkboxOptions = getPrimitiveArrayOptions(schema);
 
     return (
-      <Visible visible={visible}>
+      <Visible $visible={visible}>
         <h4>{prettyLabel}</h4>
         <div>
           {checkboxOptions.map((option) => {
@@ -190,7 +190,7 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
   }
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <div style={{ marginBottom: '8px' }}>
         <GoabButton type="secondary" disabled={!enabled} onClick={() => addItem()}>
           Add {prettyLabel.toLowerCase()}

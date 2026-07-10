@@ -8,6 +8,7 @@ import _ from 'lodash';
 import { DateTime } from 'luxon';
 import { AppState } from './store';
 import {
+  FeedbackMessage,
   FormSubmission,
   FORM_SERVICE_ID,
   PagedResults,
@@ -26,24 +27,43 @@ import { getResourcesTags, getTaggedResources } from './directory.slice';
 export const FORM_FEATURE_KEY = 'form';
 
 interface DefinitionCriteria {
+  createDateAfter?: string;
+  createDateBefore?: string;
   tag?: string;
 }
 
 interface FormSubmissionCriteria {
   dispositioned?: boolean;
-  createdAfter?: string;
-  createdBefore?: string;
+  createDateAfter?: string;
+  createDateBefore?: string;
   dataCriteria?: Record<string, unknown>;
   tag?: string;
 }
 
 interface FormCriteria {
   statusEquals?: string;
-  createdAfter?: string;
-  createdBefore?: string;
+  createDateAfter?: string;
+  createDateBefore?: string;
   dataCriteria?: Record<string, unknown>;
   tag?: string;
 }
+
+export const toDateRangeStart = (value: string): string => new Date(`${value}T00:00:00.000Z`).toISOString();
+export const toDateRangeEnd = (value: string): string => new Date(`${value}T23:59:59.999Z`).toISOString();
+
+export const getDefaultDefinitionCriteria = (): DefinitionCriteria => ({
+  createDateAfter: toDateRangeStart(DateTime.utc().minus({ weeks: 2 }).toISODate()),
+});
+
+export const getDefaultFormCriteria = (): FormCriteria => ({
+  statusEquals: 'submitted',
+  createDateAfter: toDateRangeStart(DateTime.utc().minus({ weeks: 2 }).toISODate()),
+});
+
+export const getDefaultSubmissionCriteria = (): FormSubmissionCriteria => ({
+  dispositioned: false,
+  createDateAfter: toDateRangeStart(DateTime.utc().minus({ weeks: 2 }).toISODate()),
+});
 
 interface DataValue {
   name: string;
@@ -121,9 +141,9 @@ export const initialFormState: FormState = {
     forms: [],
     submissions: [],
   },
-  definitionCriteria: {},
-  formCriteria: { statusEquals: 'submitted' },
-  submissionCriteria: { dispositioned: false },
+  definitionCriteria: getDefaultDefinitionCriteria(),
+  formCriteria: getDefaultFormCriteria(),
+  submissionCriteria: getDefaultSubmissionCriteria(),
   next: {
     definitions: null,
     forms: null,
@@ -141,7 +161,10 @@ export const initialFormState: FormState = {
 
 export const loadDefinitions = createAsyncThunk(
   'form/load-definitions',
-  async ({ tag, after }: { tag?: string; after?: string }, { dispatch, getState, rejectWithValue }) => {
+  async (
+    { tag, after, criteria }: { tag?: string; after?: string; criteria?: DefinitionCriteria }, // clean-code-ignore: 2.3
+    { dispatch, getState, rejectWithValue },
+  ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
 
@@ -149,7 +172,7 @@ export const loadDefinitions = createAsyncThunk(
       let result: PagedResults<FormDefinition>;
       if (tag) {
         const { results, page } = await dispatch(
-          getTaggedResources({ value: dashify(tag), after, includeRepresents: true, type: 'configuration' })
+          getTaggedResources({ value: dashify(tag), after, includeRepresents: true, type: 'configuration' }),
         ).unwrap();
 
         const definitions = [];
@@ -171,7 +194,12 @@ export const loadDefinitions = createAsyncThunk(
         const requestUrl = new URL('/form/v1/definitions', directory[FORM_SERVICE_ID]);
         const { data } = await axios.get<PagedResults<FormDefinition>>(requestUrl.href, {
           headers: { Authorization: `Bearer ${accessToken}` },
-          params: { top: 50, after },
+          params: {
+            top: 50,
+            after,
+            createDateAfter: criteria?.createDateAfter,
+            createDateBefore: criteria?.createDateBefore,
+          },
         });
 
         result = {
@@ -201,14 +229,14 @@ export const loadDefinitions = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const findForms = createAsyncThunk(
   'form/find-forms',
   async (
     { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormCriteria },
-    { dispatch, getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue },
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
@@ -223,7 +251,7 @@ export const findForms = createAsyncThunk(
             includeRepresents: true,
             type: 'form',
             params: { includeData: true },
-          })
+          }),
         ).unwrap();
 
         result = {
@@ -267,14 +295,14 @@ export const findForms = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const findSubmissions = createAsyncThunk(
   'form/find-submissions',
   async (
     { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria },
-    { dispatch, getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue },
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
@@ -283,7 +311,7 @@ export const findSubmissions = createAsyncThunk(
       let result: PagedResults<FormSubmission>;
       if (criteria?.tag) {
         const { results, page } = await dispatch(
-          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'submission' })
+          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'submission' }),
         ).unwrap();
 
         result = {
@@ -323,7 +351,7 @@ export const findSubmissions = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const selectDefinition = createAsyncThunk('form/select-definition', (definitionId: string, { dispatch }) => {
@@ -371,7 +399,7 @@ export const loadDefinition = createAsyncThunk(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (data.dataSchema) {
         // Try to resolve refs since Json forms doesn't handle remote refs.
@@ -397,7 +425,7 @@ export const loadDefinition = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 function getDataValuePreferenceKey(tenantId: string, definitionId: string) {
@@ -438,14 +466,14 @@ export const initializeDataValues = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const updateDataValue = createAsyncThunk(
   'form/update-data-value',
   async (
     { definitionId, path, selected }: { definitionId: string; path: string; selected: boolean },
-    { getState, rejectWithValue }
+    { getState, rejectWithValue },
   ) => {
     try {
       const { form, user } = getState() as AppState;
@@ -461,7 +489,7 @@ export const updateDataValue = createAsyncThunk(
       savePreferences(
         user.tenant.id,
         definitionId,
-        definitionDataValues.filter(({ selected }) => selected).map(({ path }) => path)
+        definitionDataValues.filter(({ selected }) => selected).map(({ path }) => path),
       );
 
       return definitionDataValues;
@@ -475,7 +503,7 @@ export const updateDataValue = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const loadForm = createAsyncThunk(
@@ -506,7 +534,7 @@ export const loadForm = createAsyncThunk(
         }
 
         const fileLoadPromises = Object.values(dataFiles).flatMap((urns) =>
-          urns.split(';').map((urn) => dispatch(loadFileMetadata(urn as string)))
+          urns.split(';').map((urn) => dispatch(loadFileMetadata(urn as string))),
         );
         await Promise.all(fileLoadPromises);
       }
@@ -527,7 +555,7 @@ export const loadForm = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const loadSubmission = createAsyncThunk(
@@ -542,7 +570,7 @@ export const loadSubmission = createAsyncThunk(
         new URL(`/form/v1/submissions/${submissionId}`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data.formFiles) {
@@ -567,7 +595,7 @@ export const loadSubmission = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const getExportJobStatus = createAsyncThunk(
@@ -589,6 +617,13 @@ export const getExportJobStatus = createAsyncThunk(
         case 'completed':
           dispatch(downloadFile(data.result.urn));
           break;
+        case 'failed':
+          return rejectWithValue({
+            id: jobId,
+            level: 'error',
+            message: 'Export failed to complete. Try the export again.',
+            in: 'form/get-export-job-status',
+          } as FeedbackMessage);
       }
 
       return data;
@@ -602,17 +637,55 @@ export const getExportJobStatus = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
+
+interface ExportColumn {
+  key: string;
+  header: string;
+}
+
+const formExportColumns: ExportColumn[] = [
+  { key: 'id', header: 'ID' },
+  { key: 'status', header: 'Status' },
+  { key: 'created', header: 'Created on' },
+  { key: 'submitted', header: 'Submitted on' },
+];
+
+const submissionExportColumns: ExportColumn[] = [
+  { key: 'id', header: 'ID' },
+  { key: 'formId', header: 'Form ID' },
+  { key: 'created', header: 'Created on' },
+  { key: 'updated', header: 'Updated on' },
+  { key: 'disposition.status', header: 'Disposition status' },
+  { key: 'disposition.reason', header: 'Disposition reason' },
+];
+
+// Limit export to base columns plus data values selected in the overview page, so output matches what users see on screen.
+function getExportFormatOptions( // clean-code-ignore: 2.3
+  format: 'json' | 'csv',
+  baseColumns: ExportColumn[],
+  dataPath: string,
+  dataValues: DataValue[],
+) {
+  const columns = [
+    ...baseColumns,
+    ...dataValues
+      .filter(({ selected }) => !!selected)
+      .map(({ name, path }) => ({ key: `${dataPath}.${path}`, header: name })),
+  ];
+
+  return format === 'csv' ? { columns } : { fields: columns.map(({ key }) => key) };
+}
 
 export const exportForms = createAsyncThunk(
   'form/export-forms',
   async (
     { definitionId, criteria, format }: { definitionId: string; criteria: FormCriteria; format: 'json' | 'csv' },
-    { dispatch, getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue },
   ) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, form } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
       const token = await getAccessToken();
 
@@ -621,6 +694,7 @@ export const exportForms = createAsyncThunk(
         {
           resourceId: 'urn:ads:platform:form-service:v1:/forms',
           format,
+          formatOptions: getExportFormatOptions(format, formExportColumns, 'data', form.dataValues[definitionId] || []),
           fileType: 'form-export',
           params: {
             includeData: true,
@@ -632,7 +706,7 @@ export const exportForms = createAsyncThunk(
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       setTimeout(() => dispatch(getExportJobStatus(data.id)), 2000);
@@ -648,7 +722,7 @@ export const exportForms = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const exportSubmissions = createAsyncThunk(
@@ -659,10 +733,10 @@ export const exportSubmissions = createAsyncThunk(
       criteria,
       format,
     }: { definitionId: string; criteria: FormSubmissionCriteria; format: 'json' | 'csv' },
-    { dispatch, getState, rejectWithValue }
+    { dispatch, getState, rejectWithValue },
   ) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, form } = getState() as AppState;
       const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
       const token = await getAccessToken();
 
@@ -671,6 +745,12 @@ export const exportSubmissions = createAsyncThunk(
         {
           resourceId: 'urn:ads:platform:form-service:v1:/submissions',
           format,
+          formatOptions: getExportFormatOptions(
+            format,
+            submissionExportColumns,
+            'formData',
+            form.dataValues[definitionId] || [],
+          ),
           fileType: 'form-export',
           params: {
             criteria: JSON.stringify({
@@ -681,7 +761,7 @@ export const exportSubmissions = createAsyncThunk(
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       setTimeout(() => dispatch(getExportJobStatus(data.id)), 2000);
@@ -697,7 +777,7 @@ export const exportSubmissions = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const findFormPdf = createAsyncThunk(
@@ -720,14 +800,14 @@ export const findFormPdf = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const updateFormDisposition = createAsyncThunk(
   'form/update-form-disposition',
   async (
     { submissionUrn, status, reason }: { submissionUrn: string; status: string; reason: string },
-    { getState, rejectWithValue }
+    { getState, rejectWithValue },
   ) => {
     try {
       const { config } = getState() as AppState;
@@ -737,7 +817,7 @@ export const updateFormDisposition = createAsyncThunk(
       const { data } = await axios.post<FormSubmission>(
         new URL(`/form/v1${submissionUrn}`, formServiceUrl).href,
         { dispositionStatus: status, dispositionReason: reason },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       return data;
@@ -751,7 +831,7 @@ export const updateFormDisposition = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const runFormOperation = createAsyncThunk(
@@ -765,7 +845,7 @@ export const runFormOperation = createAsyncThunk(
       const { data } = await axios.post<Form>(
         new URL(`/form/v1${urn.resource}`, formServiceUrl).href,
         { operation },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       return { ...data, status: FormStatus[data.status] };
@@ -779,7 +859,7 @@ export const runFormOperation = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 const formSlice = createSlice({
@@ -828,7 +908,7 @@ const formSlice = createSlice({
         state.busy.loading = false;
         state.definitions = payload.results.reduce(
           (definitions, definition) => ({ ...definitions, [definition.id]: definition }),
-          state.definitions as Record<string, FormDefinition>
+          state.definitions as Record<string, FormDefinition>,
         );
         state.results.definitions = [
           ...(payload.page.after ? state.results.definitions : []),
@@ -885,7 +965,7 @@ const formSlice = createSlice({
         state.busy.loading = false;
         state.forms = payload.results.reduce(
           (results, form) => ({ ...results, [form.id]: form }),
-          state.forms as Record<string, Form>
+          state.forms as Record<string, Form>,
         );
         state.results.forms = [
           ...(payload.page.after ? state.results.forms : []),
@@ -903,7 +983,7 @@ const formSlice = createSlice({
         state.busy.loading = false;
         state.submissions = payload.results.reduce(
           (results, form) => ({ ...results, [form.id]: form }),
-          state.submissions as Record<string, FormSubmission>
+          state.submissions as Record<string, FormSubmission>,
         );
         state.results.submissions = [
           ...(payload.page.after ? state.results.submissions : []),
@@ -947,6 +1027,9 @@ const formSlice = createSlice({
           }
           state.busy.exporting = false;
         }
+      })
+      .addCase(getExportJobStatus.rejected, (state) => {
+        state.busy.exporting = false;
       })
       .addCase(findFormPdf.pending, (state) => {
         state.busy.findPdf = true;
@@ -994,7 +1077,7 @@ export const definitionsSelector = createSelector(
   (state: AppState) => state.form.results.definitions,
   (definitions, results) => {
     return results.map((result) => definitions[result]).filter((result) => !!result);
-  }
+  },
 );
 
 export const definitionSelector = createSelector(
@@ -1013,17 +1096,17 @@ export const definitionSelector = createSelector(
           },
         }
       : undefined;
-  }
+  },
 );
 
 export const dataValuesSelector = createSelector(
   (state: AppState) => state.form.dataValues,
   (state: AppState) => state.form.selectedDefinition,
-  (dataValues, selected) => dataValues[selected] || []
+  (dataValues, selected) => dataValues[selected] || [],
 );
 
 export const selectedDataValuesSelector = createSelector(dataValuesSelector, (values) =>
-  values.filter(({ selected }) => !!selected)
+  values.filter(({ selected }) => !!selected),
 );
 
 export const formsSelector = createSelector(
@@ -1040,7 +1123,7 @@ export const formsSelector = createSelector(
         submitted: submitted ? DateTime.fromISO(submitted) : null,
         values: values.reduce((values, value) => ({ ...values, [value.path]: _.get(result.data, value.path) }), {}),
       }));
-  }
+  },
 );
 
 export const submissionsSelector = createSelector(
@@ -1057,7 +1140,7 @@ export const submissionsSelector = createSelector(
         updated: updated ? DateTime.fromISO(updated) : null,
         values: values.reduce((values, value) => ({ ...values, [value.path]: _.get(result.formData, value.path) }), {}),
       }));
-  }
+  },
 );
 
 export const formSelector = createSelector(
@@ -1068,7 +1151,7 @@ export const formSelector = createSelector(
     const selectedIndex = results.indexOf(selected);
     const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
     return { form: forms[selected], next };
-  }
+  },
 );
 
 export const formFilesSelector = createSelector(
@@ -1088,7 +1171,7 @@ export const formFilesSelector = createSelector(
           ...files,
           [root]: fileItems,
         };
-      }, {})
+      }, {}),
 );
 
 export const submissionSelector = createSelector(
@@ -1099,7 +1182,7 @@ export const submissionSelector = createSelector(
     const selectedIndex = results.indexOf(selected);
     const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
     return { submission: submissions[selected], next };
-  }
+  },
 );
 
 export const submissionFilesSelector = createSelector(
@@ -1120,7 +1203,7 @@ export const submissionFilesSelector = createSelector(
           [root]: fileItems,
         };
       }, {});
-  }
+  },
 );
 
 export const formBusySelector = (state: AppState) => state.form.busy;
@@ -1149,7 +1232,7 @@ export const canSetToDraftSelector = createSelector(
   (state: AppState) => state.user.user,
   (definition, user) =>
     (definition && !definition.anonymousApply && user?.roles?.includes('urn:ads:platform:form-service:form-admin')) ||
-    !!user.roles?.find((role) => definition?.assessorRoles?.includes(role))
+    !!user.roles?.find((role) => definition?.assessorRoles?.includes(role)),
 );
 
 export const formsExportSelector = createSelector(
@@ -1161,7 +1244,7 @@ export const formsExportSelector = createSelector(
     filename: state.result?.filename,
     dataUri: state.result?.urn ? files[state.result.urn] : null,
     working: exporting || (state.result?.urn && downloading[state.result.urn]),
-  })
+  }),
 );
 
 export const submissionsExportSelector = createSelector(
@@ -1173,7 +1256,7 @@ export const submissionsExportSelector = createSelector(
     filename: state.result?.filename,
     dataUri: state.result?.urn ? files[state.result.urn] : null,
     working: exporting || (state.result?.urn && downloading[state.result.urn]),
-  })
+  }),
 );
 
 export const pdfSelector = createSelector(
@@ -1183,5 +1266,5 @@ export const pdfSelector = createSelector(
   (metadata, pdfs, urn) => {
     const pdf = pdfs[urn];
     return pdf ? metadata[pdf] : null;
-  }
+  },
 );

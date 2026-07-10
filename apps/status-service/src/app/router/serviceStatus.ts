@@ -132,7 +132,7 @@ export const createNewApplication =
         monitorOnly,
         status,
         tenant,
-        user
+        user,
       );
       res.status(201).json(newApp);
     } catch (err) {
@@ -272,7 +272,7 @@ export const getApplicationEntries =
   (
     logger: Logger,
     applicationRepo: ApplicationRepo,
-    endpointStatusEntryRepository: EndpointStatusEntryRepository
+    endpointStatusEntryRepository: EndpointStatusEntryRepository,
   ): RequestHandler =>
   async (req, res, next) => {
     const { tenantId } = req.user as User;
@@ -290,7 +290,12 @@ export const getApplicationEntries =
         throw new NotFoundError('Status application', appKey);
       }
 
-      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, app.appKey, top);
+      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+        app.url,
+        app.appKey,
+        tenantId.toString(),
+        top,
+      );
       res.send(entries.map(mapEndpointStatusEntry));
     } catch (err) {
       logger.error(`Failed to get application: ${err.message}`);
@@ -327,7 +332,7 @@ export const testWebhook =
     logger: Logger,
     webhookRepo: WebhookRepo,
     applicationRepo: ApplicationRepo,
-    eventService: EventService
+    eventService: EventService,
   ): RequestHandler =>
   async (req, res, next) => {
     try {
@@ -353,8 +358,8 @@ export const testWebhook =
       await delay(2000);
       res.json(
         `event is sent - app: ${JSON.stringify(app)}, user: ${JSON.stringify(user)}, webhook: ${JSON.stringify(
-          webhook
-        )}`
+          webhook,
+        )}`,
       );
     } catch (err) {
       logger.error(`Failed to send event: ${err.message}`);
@@ -380,7 +385,7 @@ export function createServiceStatusRouter({
     serviceId,
     directory,
     tokenProvider,
-    configurationService
+    configurationService,
   );
 
   const webhookRepo = new WebhookRepo(
@@ -389,7 +394,7 @@ export function createServiceStatusRouter({
     serviceId,
     directory,
     tokenProvider,
-    configurationService
+    configurationService,
   );
 
   // Get the service for the tenant
@@ -402,35 +407,35 @@ export function createServiceStatusRouter({
   router.patch(
     '/applications/:appKey/disable',
     assertAuthenticatedHandler,
-    disableApplication(logger, applicationRepo)
+    disableApplication(logger, applicationRepo),
   );
   // add application
   router.post(
     '/applications',
     assertAuthenticatedHandler,
-    createNewApplication(logger, applicationRepo, tenantService)
+    createNewApplication(logger, applicationRepo, tenantService),
   );
   router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(logger, applicationRepo));
   router.delete(
     '/applications/:appKey',
     assertAuthenticatedHandler,
-    deleteApplication(logger, applicationRepo, eventService)
+    deleteApplication(logger, applicationRepo, eventService),
   );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,
-    updateApplicationStatus(logger, applicationRepo, eventService)
+    updateApplicationStatus(logger, applicationRepo, eventService),
   );
 
   router.patch(
     '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
-    toggleApplication(logger, applicationRepo, eventService)
+    toggleApplication(logger, applicationRepo, eventService),
   );
 
   router.get(
     '/applications/:appKey/endpoint-status-entries',
-    getApplicationEntries(logger, applicationRepo, endpointStatusEntryRepository)
+    getApplicationEntries(logger, applicationRepo, endpointStatusEntryRepository),
   );
 
   router.get('/applications/endpoint-status-entries', getAllApplicationEntries(logger, endpointStatusEntryRepository));
@@ -438,7 +443,7 @@ export function createServiceStatusRouter({
   router.get(
     '/webhook/:id/test/:eventName',
     assertAuthenticatedHandler,
-    testWebhook(logger, webhookRepo, applicationRepo, eventService)
+    testWebhook(logger, webhookRepo, applicationRepo, eventService),
   );
 
   return router;

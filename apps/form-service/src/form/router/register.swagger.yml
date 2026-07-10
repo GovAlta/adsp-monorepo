@@ -19,6 +19,26 @@ components:
           description: List of string values stored in the register.
           items:
             type: string
+    DataRegisterCreate:
+      type: object
+      required:
+        - name
+      properties:
+        namespace:
+          type: string
+          description: Namespace of the data register. Defaults to data-register.
+        name:
+          type: string
+          description: Name of the data register.
+        description:
+          type: string
+          description: Human-readable description of what the register contains.
+        entries:
+          type: array
+          description: Initial list of string values stored in the register.
+          items:
+            type: string
+      additionalProperties: false
     DataRegisterUpdate:
       type: object
       description: Partial update payload for a data register. Only provided fields will be updated.
@@ -62,6 +82,52 @@ components:
                   - Friday
       401:
         description: User is not authenticated.
+  post:
+    tags:
+      - Form
+    description: >
+      Creates a new data register by adding its definition to the configuration-service
+      platform configuration and creating the register entries in the data-register namespace.
+      Requires the form-service admin role.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataRegisterCreate'
+          example:
+            namespace: data-register
+            name: weekdays
+            description: Days of the week
+            entries:
+              - Monday
+              - Tuesday
+              - Wednesday
+              - Thursday
+              - Friday
+    responses:
+      201:
+        description: Successfully created the data register.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRegister'
+            example:
+              namespace: data-register
+              name: weekdays
+              description: Days of the week
+              entries:
+                - Monday
+                - Tuesday
+                - Wednesday
+                - Thursday
+                - Friday
+      400:
+        description: Request body does not match the expected format.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User is not authorized. Requires form-service admin role.
 
 /form/v1/registers/{name}:
   get:

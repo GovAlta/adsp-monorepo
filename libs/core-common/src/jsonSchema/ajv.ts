@@ -27,6 +27,7 @@ export class AjvValidationService implements ValidationService {
         return true;
       },
     });
+    this.ajv.addFormat('phone', /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/);
     this.ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
     this.ajv.addFormat('computed', /^[a-zA-Z0-9._-]+$/);
     this.ajv.addSchema(standardV1JsonSchema);

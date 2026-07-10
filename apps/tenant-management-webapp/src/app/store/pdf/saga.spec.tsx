@@ -1,8 +1,9 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchPdfTemplates, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
-import { fetchPdfTemplatesApi, deletePdfFileApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
+import { fetchPdfTemplates, createPdfTemplateSaga, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
+import { fetchPdfTemplatesApi, createPdfTemplateApi, deletePdfTemplateApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
+  CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
@@ -61,8 +62,51 @@ const storeState = {
   },
   pdf: {
     tempTemplate: mockTemplates,
+    pdfTemplates: {
+      'pdf-to-delete': mockTemplates['mock-template'],
+      'mock-template': mockTemplates['mock-template'],
+    },
   },
 };
+
+// clean-code-ignore: 2.16 2.17 2.9 — happy-path-only coverage and generic naming match the other saga tests in this file (e.g. templateToDelete)
+it('Create Pdf template', () => {
+  const templateToCreate = {
+    id: 'new-template',
+    name: 'New Template',
+    description: 'A new template',
+    template: '',
+    header: '',
+    footer: '',
+    additionalStyles: '',
+  };
+
+  // clean-code-ignore: 2.9
+  const createdTemplate = {
+    id: 'new-template',
+    name: 'New Template',
+    description: 'A new template',
+    template: '',
+  };
+
+  return expectSaga(createPdfTemplateSaga, { type: 'pdf/CREATE_PDF_TEMPLATE_ACTION', template: templateToCreate })
+    .withState(storeState)
+    .provide({
+      call(effect, next) {
+        if (effect.fn === createPdfTemplateApi) {
+          return createdTemplate;
+        }
+        return next();
+      },
+    })
+    .put.like({
+      action: {
+        type: CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
+        template: createdTemplate,
+      },
+    })
+    .run();
+});
 
 it('Delete Pdf template', () => {
   const templateToDelete = {
@@ -74,12 +118,9 @@ it('Delete Pdf template', () => {
     .withState(storeState)
     .provide({
       call(effect, next) {
-        if (effect.fn === deletePdfFileApi) {
-          return {
-            latest: {
-              configuration: mockTemplates['mock-template'],
-            },
-          };
+        if (effect.fn === deletePdfTemplateApi) {
+          expect(effect.args[1]).toBe('http://mock-pdf-servie.com/pdf/v1/templates/pdf-to-delete');
+          return undefined;
         }
         return next();
       },
@@ -87,7 +128,7 @@ it('Delete Pdf template', () => {
     .put.like({
       action: {
         type: DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
-        payload: mockTemplates['mock-template'],
+        payload: { 'mock-template': mockTemplates['mock-template'] },
       },
     })
     .run();

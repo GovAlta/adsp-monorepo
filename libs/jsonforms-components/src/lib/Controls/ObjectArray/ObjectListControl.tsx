@@ -5,7 +5,6 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
-  GoabGrid,
   GoabIcon,
   GoabIconButton,
   GoabInput,
@@ -26,7 +25,6 @@ import range from 'lodash/range';
 import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
-import { humanizeAjvError } from './ListWithDetailControl';
 import {
   ADD_DATA_ACTION,
   Categories,
@@ -56,7 +54,7 @@ import {
   NonEmptyCellStyle,
   ObjectArrayTitle,
   RequiredSpan,
-  TableTHHeader,
+  ReviewItemFrame,
   TextCenter,
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
@@ -245,7 +243,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 );
                 if (!hasAnyValue && !hasRowErrors) return null;
                 return (
-                  <div key={i} style={{ marginBottom: '1.5rem' }} data-testid={`${rowPath}.objectList-${key}`}>
+                  <ReviewItemFrame key={i} data-testid={`${rowPath}.objectList-${key}`}>
                     {Object.entries(tableKeys).map(([key, label]) => {
                       const value = rowData[key];
                       const isRequiredField = required?.includes(key) ?? false;
@@ -275,7 +273,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       return (
                         <div
                           key={key}
-                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}
+                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'flex-start' }}
                           data-testid={`#/properties/${key}-input-${i}-row`}
                         >
                           <strong style={{ width: '50%', flexShrink: 0 }}>
@@ -303,7 +301,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         </div>
                       );
                     })}
-                  </div>
+                  </ReviewItemFrame>
                 );
               })}
             </div>
@@ -827,7 +825,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   }
 
   const content = (
-    <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
+    <Visible $visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
         {listTitle && (
           <ObjectArrayTitle>

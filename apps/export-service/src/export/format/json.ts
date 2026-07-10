@@ -1,5 +1,17 @@
-import { pipeline, Transform, TransformCallback, TransformOptions } from 'stream';
+import * as _ from 'lodash';
+import { PassThrough, pipeline, Transform, TransformCallback, TransformOptions } from 'stream';
 import { ExportFormatter } from './types';
+
+class PickFieldsTransform extends Transform {
+  constructor(private fields: string[], options?: TransformOptions) {
+    super({ ...options, objectMode: true });
+  }
+
+  override _transform(chunk: unknown, _encoding: BufferEncoding, callback: TransformCallback): void {
+    this.push(_.pick(chunk, this.fields));
+    callback();
+  }
+}
 
 class JsonStringifyTransform extends Transform {
   private firstChunk = true;
@@ -31,10 +43,16 @@ class JsonStringifyTransform extends Transform {
 
 interface JsonFormatterOptions {
   pretty?: boolean;
+  fields?: string[];
 }
 
 export const json: ExportFormatter<JsonFormatterOptions> = {
   extension: 'json',
   applyTransform: (options, records, callback) =>
-    pipeline(records, new JsonStringifyTransform(options.pretty), callback),
+    pipeline(
+      records,
+      options?.fields?.length ? new PickFieldsTransform(options.fields) : new PassThrough({ objectMode: true }),
+      new JsonStringifyTransform(options?.pretty),
+      callback
+    ),
 };

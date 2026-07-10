@@ -40,6 +40,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private feedbackCloseErrorButton: Ref<HTMLButtonElement> = createRef();
   private feedbackCloseSuccessButton: Ref<HTMLButtonElement> = createRef();
   private cancelButtonRef: Ref<HTMLButtonElement> = createRef();
+  private rootRef: Ref<HTMLDivElement> = createRef();
 
   private ratingErrorText: Ref<HTMLSpanElement> = createRef();
   private issueSelectionErrorText: Ref<HTMLSpanElement> = createRef();
@@ -50,6 +51,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private techWarningRef: Ref<HTMLSpanElement> = createRef();
 
   private ratings = ratings;
+  private previousBodyOverflow?: string;
 
   constructor() {
     const site = `${document.location.protocol}//${document.location.host}`;
@@ -75,6 +77,24 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
   }
 
+  private getWidgetElements<T extends Element>(selector: string): NodeListOf<T> {
+    return (this.rootRef.value ?? document).querySelectorAll<T>(selector);
+  }
+
+  private lockBodyScroll() {
+    if (this.previousBodyOverflow === undefined) {
+      this.previousBodyOverflow = document.body.style.overflow;
+    }
+    document.body.style.overflow = 'hidden';
+  }
+
+  private unlockBodyScroll() {
+    if (this.previousBodyOverflow !== undefined) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      this.previousBodyOverflow = undefined;
+    }
+  }
+
   private openStartForm() {
     this.startRef?.value?.setAttribute('data-show', 'true');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
@@ -83,7 +103,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     this.firstFocusableElement = this.feedbackStartCloseImg;
     document.addEventListener('keydown', this.trapTabKey);
     document.addEventListener('keydown', this.handleEscapeKey);
-    document.body.classList.add('modal-open');
+    this.lockBodyScroll();
     this.onDimChange(true);
   }
 
@@ -148,7 +168,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
       this.startRef?.value?.setAttribute('data-show', 'false');
       this.onDimChange(false);
-      document.body.classList.remove('modal-open');
+      this.unlockBodyScroll();
     }
   };
 
@@ -158,19 +178,19 @@ export class AdspFeedback implements AdspFeedbackApi {
     this.feedbackFormRef?.value?.setAttribute('data-show', 'false');
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.onDimChange(false);
-    document.body.classList.remove('modal-open');
+    this.unlockBodyScroll();
   }
   private closeErrorForm() {
     this.closeFeedbackForm();
     this.feedbackFormRef?.value?.setAttribute('data-error', 'false');
     this.reset();
-    document.body.classList.remove('modal-open');
+    this.unlockBodyScroll();
   }
   private closeAllFeedback() {
     this.closeFeedbackForm();
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.reset();
-    document.body.classList.remove('modal-open');
+    this.unlockBodyScroll();
   }
 
   private onIssueChange(event: Event) {
@@ -424,20 +444,20 @@ export class AdspFeedback implements AdspFeedbackApi {
   private updateHover = (index: number, isHovering: boolean) => {
     const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
-    const images = document.querySelectorAll('.rating');
+    const images = this.getWidgetElements<HTMLImageElement>('.rating');
     const image = images[index] as HTMLImageElement;
     image.src =
       isHovering && this.selectedRating !== index
         ? rating.svgHover
         : this.selectedRating === index
-        ? rating.svgClick
-        : rating.svgDefault;
+          ? rating.svgClick
+          : rating.svgDefault;
 
-    const texts = document.querySelectorAll('.ratingText');
+    const texts = this.getWidgetElements<HTMLElement>('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
     if (!isSmallScreen) {
-      const tooltips = document.querySelectorAll('.tooltip-text');
+      const tooltips = this.getWidgetElements<HTMLElement>('.tooltip-text');
       const tooltip = tooltips[index] as HTMLImageElement;
       tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
       tooltip.style.opacity = isHovering ? '1' : '0';
@@ -451,11 +471,11 @@ export class AdspFeedback implements AdspFeedbackApi {
   private clearRating = (index: number) => {
     if (index > -1) {
       const rating = this.ratings[index];
-      const images = document.querySelectorAll('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.rating');
       const image = images[index] as HTMLImageElement;
       image.src = rating.svgDefault;
 
-      const texts = document.querySelectorAll('.ratingText');
+      const texts = this.getWidgetElements<HTMLElement>('.ratingText');
       const text = texts[index] as HTMLImageElement;
       text.style.color = '#333333';
     }
@@ -463,7 +483,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private defaultRating = () => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
-      const images = document.querySelectorAll('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.rating');
       const image = images[i] as HTMLImageElement;
 
       image.src = rating.svgDefault;
@@ -472,7 +492,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private errorsOnRating = (isError: boolean) => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
-      const images = document.querySelectorAll('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.rating');
       const image = images[i] as HTMLImageElement;
       if (isError) {
         image.src = rating.svgError;
@@ -499,7 +519,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private handleTextInput = (
     inputRef: Ref<HTMLTextAreaElement>,
     countRef: Ref<HTMLSpanElement>,
-    warningRef: Ref<HTMLSpanElement>
+    warningRef: Ref<HTMLSpanElement>,
   ) => {
     const el = inputRef.value;
     if (!el) return;
@@ -529,7 +549,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
 
     this.updateHover(index, false);
-    const images = document.querySelectorAll('.rating');
+    const images = this.getWidgetElements<HTMLImageElement>('.rating');
     const ratingNew = this.ratings[index];
     const imageNew = images[index] as HTMLImageElement;
     imageNew.src = ratingNew.svgClick;
@@ -537,13 +557,13 @@ export class AdspFeedback implements AdspFeedbackApi {
       const rating = this.ratings[this.selectedRating];
       const image = images[this.selectedRating] as HTMLImageElement;
       image.src = rating.svgDefault;
-      const texts = document.querySelectorAll('.ratingText');
+      const texts = this.getWidgetElements<HTMLElement>('.ratingText');
       const text = texts[this.selectedRating] as HTMLImageElement;
       text.style.color = '#333333';
     }
     this.selectedRating = index;
     this.lastFocusableElement = this.sendButtonRef;
-    const texts = document.querySelectorAll('.ratingText');
+    const texts = this.getWidgetElements<HTMLElement>('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
   };
@@ -579,10 +599,11 @@ export class AdspFeedback implements AdspFeedbackApi {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const head = document.querySelector('head');
-    if (head) {
+    if (head && !document.getElementById('adsp-feedback-widget-styles')) {
+      const styleContainer = document.createElement('div');
       render(
-        html`<style>
-          .overlay {
+        html`<style id="adsp-feedback-widget-styles">
+          .adsp-fb-root .overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -592,32 +613,45 @@ export class AdspFeedback implements AdspFeedbackApi {
             z-index: 1000; /* Ensure it overlays other content */
             visibility: hidden;
           }
-          img:focus-visible {
+          .adsp-fb img:focus-visible {
             border-radius: 0.25rem;
             outline: #feba35 solid 3px;
           }
-          body.modal-open {
-            overflow: hidden;
-          }
-          .feedback-close-button:hover,
-          .feedback-close-button:active,
-          .feedback-close-button:focus {
+          .adsp-fb .feedback-close-button:hover,
+          .adsp-fb .feedback-close-button:active,
+          .adsp-fb .feedback-close-button:focus {
             background-color: #f1f1f1;
             border-radius: 0.25rem;
           }
 
-          .feedback-close-button:active {
+          .adsp-fb .feedback-close-button:active {
             transform: translateY(2px);
           }
 
           .adsp-fb {
             z-index: 999;
             font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
-            line-height: var(--goa-line-height-2);
-            font-size: var(--goa-font-size-4);
+            line-height: 1.5;
+            font-size: 1.125rem;
+            color: #333333;
+          }
+          .adsp-fb *,
+          .adsp-fb *::before,
+          .adsp-fb *::after {
+            box-sizing: border-box;
+            font-family: inherit;
           }
           .adsp-fb h3 {
+            color: #333333;
+            font-family: inherit;
             margin-top: 0px !important;
+          }
+          .adsp-fb p,
+          .adsp-fb label,
+          .adsp-fb span {
+            color: #333333;
+            font-family: inherit;
+            font-size: 1.125rem;
           }
           .adsp-fb > *[data-show]:not([data-show='true']) {
             display: none;
@@ -626,6 +660,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             z-index: 10;
             background: #0081a2;
             color: #ffffff;
+            font-size: 1.125rem;
             position: fixed;
             right: 0;
             top: 60vh;
@@ -635,6 +670,10 @@ export class AdspFeedback implements AdspFeedbackApi {
             border-radius: 0 0.25rem 0.25rem 0;
             transform: rotate(-180deg);
             display: block;
+          }
+          .adsp-fb .adsp-fb-badge span {
+            color: #ffffff;
+            font-size: inherit;
           }
           .adsp-fb .adsp-fb-badge:hover {
             border-color: #004f84;
@@ -688,6 +727,13 @@ export class AdspFeedback implements AdspFeedbackApi {
             padding: 0 0 24px 24px;
             transition: transform 0.001ms;
           }
+          .adsp-fb .adsp-fb-form label {
+            font-weight: 400;
+            line-height: 24px;
+          }
+          .adsp-fb .adsp-fb-form b {
+            font-weight: 700;
+          }
           .adsp-fb .adsp-fb-content {
             max-height: 465px;
             overflow-y: auto;
@@ -715,7 +761,7 @@ export class AdspFeedback implements AdspFeedbackApi {
               padding-left: 0px;
             }
           }
-          .tooltip-text {
+          .adsp-fb .tooltip-text {
             visibility: hidden;
             margin-left: 25px;
             background-color: #666666;
@@ -733,7 +779,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             transition: opacity 0.3s;
             -webkit-transition: opacity 0.3s;
           }
-          .tooltip-text:before {
+          .adsp-fb .tooltip-text:before {
             content: '';
             position: absolute;
             top: -10px;
@@ -745,10 +791,10 @@ export class AdspFeedback implements AdspFeedbackApi {
             -webkit-transform: translateX(-50%);
             border-color: transparent transparent #666666 transparent;
           }
-          .tooltip-text.modified:before {
+          .adsp-fb .tooltip-text.modified:before {
             left: 40%;
           }
-          .ratingText {
+          .adsp-fb .ratingText {
             display: none;
           }
           .adsp-fb .adsp-fb-form-comment {
@@ -760,11 +806,14 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
           }
           .adsp-fb .adsp-fb-form-comment span {
-            color: var(--color-gray-600);
+            color: var(--color-gray-600, #666666);
             font-size: 14px;
           }
 
           .adsp-fb .adsp-fb-form-comment textarea {
+            font-family: inherit;
+            font-size: 1rem;
+            color: #333333;
             margin-top: 12px;
             margin-left: 3px;
             resize: none;
@@ -777,13 +826,13 @@ export class AdspFeedback implements AdspFeedbackApi {
             outline: none;
           }
           .adsp-fb .adsp-fb-form-comment textarea:hover {
-            box-shadow: 0 0 0 var(--goa-border-width-m) var(--goa-color-interactive-hover);
+            box-shadow: 0 0 0 var(--goa-border-width-m, 2px) var(--goa-color-interactive-hover, #004f84);
           }
           .adsp-fb .adsp-fb-form-comment textarea:focus {
-            box-shadow: 0 0 0 3px var(--goa-color-interactive-focus);
+            box-shadow: 0 0 0 3px var(--goa-color-interactive-focus, #feba35);
           }
           .adsp-fb .adsp-fb-form-comment textarea.error {
-            box-shadow: 0 0 0 var(--goa-border-width-m) red;
+            box-shadow: 0 0 0 var(--goa-border-width-m, 2px) red;
             border: 1px solid red;
           }
           .adsp-fb .adsp-fb-form-comment textarea::placeholder {
@@ -927,51 +976,58 @@ export class AdspFeedback implements AdspFeedbackApi {
             visibility: visible;
             transition: visibility 0s 0.1s;
           }
-          .radios {
+          .adsp-fb .radios {
             margin-top: 16px;
             margin-bottom: 16px;
             display: flex;
             flex-direction: row;
           }
-          .radio-span {
+          .adsp-fb .radio-span {
             display: flex;
             align-items: center;
           }
-          .radio-span:focus-visible {
+          .adsp-fb .radio-span:focus-visible {
             border-radius: 0.25rem;
             border: 1px solid #feba35;
             outline: #feba35 solid 1px;
           }
-          .rating {
+          .adsp-fb .rating {
             cursor: pointer;
             transform: translateZ(0);
             will-change: transform, color;
             transition: transform 0.3s ease-in-out color 0.3s ease;
-            transition: -webkit-transform 0.3s ease-in-out, color 0.3s ease;
+            transition:
+              -webkit-transform 0.3s ease-in-out,
+              color 0.3s ease;
           }
 
-          .title {
+          .adsp-fb .title {
+            color: #333333;
+            font-size: var(--fs-xl, 1.5rem);
             font-weight: 700;
-            line-height: 24px;
+            line-height: 1.5rem
             text-align: left;
             margin-bottom: 0px;
           }
 
-          .help-text {
+          .adsp-fb .help-text {
+            color: #333333;
+            font-size: 1.125rem;
+            font-weight: 400;
             margin-top: 4px;
             margin-bottom: 12px;
             line-height: 28px;
           }
-          .radio-container {
+          .adsp-fb .radio-container {
             display: flex;
             flex-direction: column;
             cursor: pointer;
           }
-          .radio-container span {
-            color: var(--color-gray-600);
+          .adsp-fb .radio-container span {
+            color: var(--color-gray-600, #666666);
             font-size: 14px;
           }
-          .radio {
+          .adsp-fb .radio {
             appearance: none;
             width: 24px;
             height: 24px;
@@ -982,58 +1038,60 @@ export class AdspFeedback implements AdspFeedbackApi {
             transition: box-shadow 100ms ease-in-out;
             cursor: pointer;
           }
-          .radio *,
-          .radio *:before,
-          .radio *:after {
+          .adsp-fb .radio *,
+          .adsp-fb .radio *:before,
+          .adsp-fb .radio *:after {
             box-sizing: border-box;
           }
 
-          .radio::not(:checked) {
+          .adsp-fb .radio::not(:checked) {
             border: 1px solid #666666;
           }
 
-          .radio:checked:hover {
+          .adsp-fb .radio:checked:hover {
             border: 7px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
 
-          .radio:hover,
-          .radio:focus-visible,
-          .radio:focus:active {
+          .adsp-fb .radio:hover,
+          .adsp-fb .radio:focus-visible,
+          .adsp-fb .radio:focus:active {
             outline: initial;
             border: 1px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
 
-          .radio:hover:active,
-          .radio:hover:focus {
+          .adsp-fb .radio:hover:active,
+          .adsp-fb .radio:hover:focus {
             box-shadow: 0 0 0 3px #feba35;
           }
 
-          .radio:checked {
+          .adsp-fb .radio:checked {
             border: 7px solid #0070c4;
           }
-          .radio.error {
+          .adsp-fb .radio.error {
             border: 1px solid red;
             box-shadow: 0 0 0 1px red;
           }
-          .radio-label {
+          .adsp-fb .radio-label {
+            color: #333333;
+            font-size: 1.125rem;
             padding: 0 8px;
             font-weight: normal;
             cursor: pointer;
           }
-          .errorText {
+          .adsp-fb .errorText {
             color: #333333;
             font-size: 18px;
           }
-          .errorButton {
+          .adsp-fb .errorButton {
             padding-top: 4px;
           }
-          .successButton {
+          .adsp-fb .successButton {
             margin-top: 24px;
           }
 
-          .styled-hr {
+          .adsp-fb .styled-hr {
             border: none;
             height: 1px;
             background-color: #ccc;
@@ -1041,54 +1099,85 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
 
           /* Top-facing shadow */
-          .styled-hr-top {
+          .adsp-fb .styled-hr-top {
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
           }
 
           /* Bottom-facing shadow */
-          .styled-hr-bottom {
+          .adsp-fb .styled-hr-bottom {
             box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
           }
 
-          .hr-width {
+          .adsp-fb .hr-width {
             width: 98%;
             margin: 0;
           }
-          .full-width-hr-container {
+          .adsp-fb .full-width-hr-container {
             margin-left: -24px;
           }
 
-          .p-error {
-            margin-left: 36px;
-            margin-right: 36px;
+          .adsp-fb .p-error {
+            color: #333333;
+            font-size: 1.125rem;
+            font-weight: 400;
+
             line-height: 28px;
+            margin: 0 1.5rem 1rem 1.5rem;
           }
-          .h3-sub-title {
+          .adsp-fb h3.h3-error {
+            margin: 0 !important;
+            margin-block-start: 0 !important;
+            margin-block-end: 0 !important;
+          }
+          .adsp-fb .h3-sub-title {
+            color: #333333;
+            font-size: var(--fs-xl, 1.5rem);
+            font-weight: var(--fw-regular, 400);
+            line-height: var(--lh-lg, 2rem);
+            margin-top: 0;
+            margin-bottom: 0;
             padding-top: 36px !important;
-            margin-top: 0;
           }
-          .h3-success {
-            margin-top: 0;
+          .adsp-fb .h3-success {
+            color: #333333;
+            font-size: 1.5rem;
+            font-weight: 400;
+            line-height: 2rem;
+            margin-bottom: 0;
           }
-          .p-content {
+          .adsp-fb .h3-success img {
+            vertical-align: baseline;
+          }
+          .adsp-fb .p-content {
+            color: #333333;
+            font-size: 1.125rem;
+            font-weight: 400;
             line-height: 28px;
+            margin: 0;
             > a,
             > a:link,
             > a:visited {
               color: #0070c4;
             }
           }
-          .inline-error {
+
+          .adsp-fb .adsp-fb-sent .p-content a {
+            color: #0070c4;
+            text-decoration: underline;
+          }
+          .adsp-fb .adsp-fb-sent button.adsp-fb-form-primary {
+          }
+          .adsp-fb .inline-error {
             display: none;
             align-items: center;
             color: red;
             gap: 0.5rem;
           }
-          .inline-error.visible {
+          .adsp-fb .inline-error.visible {
             display: flex;
             visibility: visible;
           }
-          .inline-error p {
+          .adsp-fb .inline-error p {
             margin: 0;
             color: red;
           }
@@ -1118,7 +1207,7 @@ export class AdspFeedback implements AdspFeedbackApi {
               max-height: 100%;
               overflow-x: hidden;
             }
-            .adsp-fb-main {
+            .adsp-fb .adsp-fb-main {
               overflow-y: auto;
             }
             .adsp-fb .adsp-fb-content {
@@ -1159,18 +1248,18 @@ export class AdspFeedback implements AdspFeedbackApi {
                 padding-right: 8px;
               }
             }
-            tooltip-text {
+            .adsp-fb .tooltip-text {
               visibility: hidden;
               opacity: 0;
             }
-            .ratingText {
+            .adsp-fb .ratingText {
               padding-top: 12px;
               cursor: pointer;
               margin-bottom: 0px !important;
               display: block;
               padding: 0;
             }
-            .ratingText :hover {
+            .adsp-fb .ratingText:hover {
               color: #004f84;
             }
           }
@@ -1180,7 +1269,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
           }
 
-          .char-count {
+          .adsp-fb .char-count {
             display: block;
             font-size: 14px;
             color: #666;
@@ -1188,7 +1277,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-top: 4px;
           }
 
-          .char-warning {
+          .adsp-fb .char-warning {
             display: none;
             font-size: 14px;
             color: red;
@@ -1196,19 +1285,20 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-top: 4px;
           }
 
-          .char-warning.visible {
+          .adsp-fb .char-warning.visible {
             display: block;
           }
         </style>`,
-        head
+        styleContainer,
       );
+      head.append(...Array.from(styleContainer.childNodes));
     }
 
     const body = document.querySelector('body');
     if (body) {
       render(
         html`
-          <div>
+          <div ${ref(this.rootRef)} class="adsp-fb-root">
             <div class="adsp-fb">
               <div
                 tabindex="0"
@@ -1446,7 +1536,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <div>
                         <img src=${blueUnderLineSvg} width="50px" alt="Blue Line" />
                         <div>
-                          <h3>We are experiencing a problem</h3>
+                          <h3 class="h3-error">We are experiencing a problem</h3>
                           <p class="p-error">
                             we are experiencing an issue trying to load this page. Please try again in a few minutes. We
                             apologize for the inconvenience.
@@ -1474,7 +1564,7 @@ export class AdspFeedback implements AdspFeedbackApi {
           </div>
         `,
         body,
-        { host: this }
+        { host: this },
       );
     }
   }

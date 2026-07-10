@@ -35,10 +35,6 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-textarea`);
   }
 
-  formTextAreaFieldFormItem(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]`);
-  }
-
   formNumericField(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="number"]`);
   }
@@ -76,19 +72,31 @@ class FormsPage {
   }
 
   formCheckbox(label) {
-    return cy.xpath(`//goa-checkbox[@text="${label}"]`);
+    return cy.xpath(`//goa-checkbox[contains(normalize-space(.), "${label}")]`);
+  }
+
+  formCheckboxWithLabel(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-checkbox`);
   }
 
   formSocialInsuranceNumberField(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input`);
   }
 
-  formSubmitButton() {
+  formSummaryPageSubmitButton() {
     return cy.xpath('//goa-button[@type="primary" and text()="Submit"]');
+  }
+
+  formPageSubmitButton() {
+    return cy.xpath('//goa-button[@type="submit" and text()="Submit"]');
   }
 
   formListWithDetailButton(label) {
     return cy.xpath(`//goa-button[contains(@testid, "object-array-toolbar") and text()="${label}"]`);
+  }
+
+  formListWithDetailButtonWithListLabel(label) {
+    return cy.xpath(`//goa-button[contains(@testid, "object-array-toolbar") and contains(@testid, "${label}")]`);
   }
 
   formListWithDetailDependantTextField(label) {
@@ -114,9 +122,9 @@ class FormsPage {
   }
 
   //pageName is case sensitive and arrayName is lower case
-  formSummaryPageListWithDetailItems(pageName, arrayName) {
+  formSummaryPageObjectListItems(pageName, arrayName) {
     return cy.xpath(
-      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::goa-table/table/tbody/tr/td/div[2]//div[@style="margin-bottom: 1.5rem;"]`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::goa-table/table/tbody/tr/td/div[2]//div[contains(@data-testid, "objectList-")]`
     );
   }
 
@@ -206,8 +214,8 @@ class FormsPage {
     return cy.xpath('//h3[contains(text(),"Step")]');
   }
 
-  formBackToOverviewLink() {
-    return cy.xpath('//div[@class="back-link" and text()="Back to application overview"]');
+  formBackToOverviewLink(label) {
+    return cy.xpath(`//div[@class="back-link" and text()="${label}"]`);
   }
 
   formTaskListStepPageNextButton() {
@@ -303,6 +311,28 @@ class FormsPage {
   formCanadianPostalAddressPostalCodeField(label) {
     return cy.xpath(
       `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Postal code"]/goa-input`
+    );
+  }
+
+  formObjectListAddButton(label) {
+    return cy.xpath(`//h3[text()="${label}"]/following-sibling::div//goa-button[contains(@testid,"${label}")]`);
+  }
+
+  formObjectListFormItem(label, rowNumber, fieldNumber) {
+    return cy.xpath(
+      `(//h3[text()="${label}"]/ancestor::div[contains(@data-testid,"object-list-wrapper")]//tbody/tr[${rowNumber}]//goa-form-item)[${fieldNumber}]`
+    );
+  }
+
+  formListWithDetailFormItem(label, index) {
+    return cy.xpath(
+      `(//h3[text()="${label}"]/ancestor::div[contains(@data-testid,"object-list-wrapper")]//goa-form-item)[${index}]`
+    );
+  }
+
+  formSummaryFieldChangeLink(pageName, label) {
+    return cy.xpath(
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//goa-button[text()="Change"]`
     );
   }
 }

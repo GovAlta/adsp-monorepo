@@ -14,6 +14,18 @@ import { renamePrefixProperties } from './prefix';
 import { activeRevisionSchema, revisionSchema } from './schema';
 import { ActiveRevisionDoc, ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
 
+const NON_FILTERABLE_CRITERIA_KEYS = new Set([
+  'tenantIdEquals', 'namespaceEquals', 'registeredIdEquals', 'nameContains', 'useOr', 'createDateAfter', 'createDateBefore',
+]);
+
+const isFilterableKey = (key: string, value: unknown): boolean =>
+  !NON_FILTERABLE_CRITERIA_KEYS.has(key) && !key.startsWith('$') && value !== undefined && value !== null && value !== '';
+
+const buildCreatedDateFilter = (after?: Date, before?: Date): Record<string, Date> => ({
+  ...(after ? { $gte: new Date(after) } : {}),
+  ...(before ? { $lte: new Date(before) } : {}),
+});
+
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
   private activeRevisionModel: Model<ActiveRevisionDoc>;
@@ -71,21 +83,19 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       },
     ];
 
+    if (criteria.createDateAfter || criteria.createDateBefore) {
+      pipeline.push({
+        $match: {
+          created: buildCreatedDateFilter(criteria.createDateAfter, criteria.createDateBefore),
+        },
+      });
+    }
+
     const match: Record<string, unknown> = {};
     const orConditions: Record<string, unknown>[] = [];
 
     Object.entries(criteria).forEach(([key, value]) => {
-      if (
-        key !== 'tenantIdEquals' &&
-        key !== 'namespaceEquals' &&
-        key !== 'registeredIdEquals' &&
-        key !== 'nameContains' &&
-        key !== 'useOr' &&
-        !key.startsWith('$') && // Prevent operator injection in keys
-        value !== undefined &&
-        value !== null &&
-        value !== ''
-      ) {
+      if (isFilterableKey(key, value)) { // clean-code-ignore: 2.14
         const condition: Record<string, unknown> = {};
         // Strict type checking to prevent object injection (e.g. { $ne: ... })
         if (typeof value === 'string') {

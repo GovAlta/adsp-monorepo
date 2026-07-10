@@ -1,0 +1,16 @@
+{
+  "name": "@abgov/adsp-sdk-mcp-server",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "Government of Alberta - MCP server for ADSP documentation and Node SDK reference lookup.",
+  "repository": "https://github.com/GovAlta/adsp-monorepo",
+  "bin": {
+    "adsp-sdk-mcp-server": "./src/main.js"
+  },
+  "dependencies": {
+    "@abgov/adsp-cli": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "tslib": "^2.3.0",
+    "zod": "^3.25.76"
+  }
+}

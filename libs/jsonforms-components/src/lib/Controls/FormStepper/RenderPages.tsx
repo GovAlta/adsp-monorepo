@@ -73,7 +73,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
   return (
     <div data-testid="form-stepper-test-wrapper" ref={topElementRef}>
-      <Visible visible={visible}>
+      <Visible $visible={visible}>
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
             <BackButton
@@ -86,7 +86,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
               testId="back-to-tasks"
             />
             {!isOnReview && (
-              <Visible visible={true} key={`page-${category?.id}`}>
+              <Visible $visible={true} key={`page-${category?.id}`}>
                 <div data-testid={`step_${activeId}-content-pages`} style={{ marginTop: '1.5rem' }}>
                   <PageRenderPadding>
                     <h3>

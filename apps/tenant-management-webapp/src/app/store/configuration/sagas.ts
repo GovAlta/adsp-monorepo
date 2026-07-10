@@ -486,7 +486,6 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
               error: 'JSON schema could not be validated',
             });
 
-            console.log('returning early due to json schema validation failure for service: ', service);
             return;
           }
         }

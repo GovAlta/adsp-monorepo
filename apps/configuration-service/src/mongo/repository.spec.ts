@@ -135,6 +135,47 @@ describe('MongoConfigurationRepository', () => {
       );
     });
 
+    // clean-code-ignore: 2.16
+    it('can find with createDateAfter/createDateBefore criteria', async () => {
+      const criteria: ConfigurationEntityCriteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+        createDateAfter: new Date('2024-01-01T00:00:00.000Z'),
+        createDateBefore: new Date('2024-01-31T23:59:59.999Z'),
+      };
+
+      const aggregateMock = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      await repository.find(criteria);
+
+      expect(revisionModelMock.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: {
+              created: {
+                $gte: new Date('2024-01-01T00:00:00.000Z'),
+                $lte: new Date('2024-01-31T23:59:59.999Z'),
+              },
+            },
+          }),
+        ])
+      );
+
+      // Date criteria should not leak into the generic configuration.* matching.
+      expect(revisionModelMock.aggregate).not.toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({ 'configuration.createDateAfter': expect.anything() }),
+          }),
+        ])
+      );
+    });
+
     it('prevents Operator Injection (e.g. $where) in criteria keys', async () => {
       const criteria = {
         tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),

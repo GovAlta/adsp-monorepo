@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery, takeLatest } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLatest, delay } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
 import {
@@ -100,6 +100,8 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
   }
 }
 
+const TENANT_POLL_INTERVAL_MS = 3000;
+
 export function* createTenant(action: CreateTenantAction): SagaIterator {
   const state: RootState = yield select();
   const token = yield call(getAccessToken);
@@ -107,8 +109,18 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
   const name = action.payload;
 
   try {
-    const result = yield call([api, api.createTenant], name);
-    yield put(CreateTenantSuccess(result.realm));
+    let tenant = yield call([api, api.createTenant], name);
+
+    if (tenant.status === 'provisioning') {
+      // Extract raw MongoDB ID from the URN (urn:ads:platform:tenant-service:v2:/tenants/:id)
+      const rawId = tenant.id.split('/').pop();
+      while (tenant.status === 'provisioning') {
+        yield delay(TENANT_POLL_INTERVAL_MS);
+        tenant = yield call([api, api.getTenantById], rawId);
+      }
+    }
+
+    yield put(CreateTenantSuccess(tenant.realm));
   } catch (err) {
     if (err.message.includes('Invalid value')) {
       yield put(
@@ -145,8 +157,6 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
     const realm = action.payload;
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
-    console.log('Run keycloak check sso');
-
     const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
     if (session) {
       yield put(SessionLoginSuccess(session));
@@ -161,8 +171,6 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
   try {
     const realm = action.payload;
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
-
-    console.debug('Checkout keycloak SSO');
 
     const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
     if (!session) {

@@ -398,6 +398,7 @@ describe('createTenantV2Router', () => {
       };
       const res = {
         send: jest.fn(),
+        status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
       const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
@@ -406,11 +407,80 @@ describe('createTenantV2Router', () => {
       repositoryMock.find.mockResolvedValueOnce([]);
 
       req.getConfiguration.mockResolvedValueOnce([[], []]);
-      repositoryMock.save.mockResolvedValueOnce(new TenantEntity(repositoryMock, tenant));
+      repositoryMock.save.mockResolvedValueOnce(new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' }));
       await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.status).toHaveBeenCalledWith(202);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` })
+        expect.objectContaining({ id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}`, status: 'provisioning' })
       );
+    });
+
+    it('can provision tenant realm and mark active', async () => {
+      const req = {
+        body: {
+          name: tenant.name,
+        },
+        user: { isCore: true, roles: [TenantServiceRoles.BetaTester], email: 'beta-tester@test.co' },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.find.mockResolvedValueOnce([]);
+      req.getConfiguration.mockResolvedValueOnce([[], []]);
+
+      const provisioningEntity = new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' });
+      repositoryMock.save.mockResolvedValueOnce(provisioningEntity);
+      realmServiceMock.createRealm.mockResolvedValueOnce(undefined);
+      repositoryMock.save.mockResolvedValueOnce(new TenantEntity(repositoryMock, { ...tenant, status: 'active' }));
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Flush pending promises so the detached provisionRealm task completes
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(realmServiceMock.createRealm).toHaveBeenCalled();
+      expect(eventServiceMock.send).toHaveBeenCalled();
+    });
+
+    it('can clean up tenant entity on provisioning failure', async () => {
+      const req = {
+        body: {
+          name: tenant.name,
+        },
+        user: { isCore: true, roles: [TenantServiceRoles.BetaTester], email: 'beta-tester@test.co' },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.find.mockResolvedValueOnce([]);
+      req.getConfiguration.mockResolvedValueOnce([[], []]);
+
+      const provisioningEntity = new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' });
+      repositoryMock.save.mockResolvedValueOnce(provisioningEntity);
+      realmServiceMock.createRealm.mockRejectedValueOnce(new Error('Keycloak unavailable'));
+      realmServiceMock.deleteRealm.mockResolvedValueOnce(true);
+      repositoryMock.delete.mockResolvedValueOnce(true);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Flush pending promises so the detached provisionRealm task completes
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(realmServiceMock.deleteRealm).toHaveBeenCalled();
+      expect(repositoryMock.delete).toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
     });
 
     it('can call next with bad request for duplicate tenant name', async () => {

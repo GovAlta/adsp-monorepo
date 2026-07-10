@@ -170,6 +170,88 @@ describe('definition router', () => {
       );
       expect(next).not.toHaveBeenCalled();
     });
+
+    it('can get definitions with date range criteria', async () => {
+      axiosMock.get.mockResolvedValue({
+        data: {
+          results: [{ latest: { revision: 1, configuration: definition }, active: null }],
+          page: { size: 1 },
+        },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: { createDateAfter: '2024-01-01', createDateBefore: '2024-01-31' },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            criteria: JSON.stringify({ createDateAfter: '2024-01-01', createDateBefore: '2024-01-31' }),
+          }),
+        }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('does not set criteria param when no search criteria are provided', async () => {
+      axiosMock.get.mockResolvedValue({
+        data: {
+          results: [{ latest: { revision: 1, configuration: definition }, active: null }],
+          page: { size: 1 },
+        },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: {},
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.not.objectContaining({ criteria: expect.anything() }),
+        }),
+      );
+    });
+
+    it('includes the created date of the latest revision on results', async () => {
+      const created = '2024-01-15T10:00:00.000Z';
+      axiosMock.get.mockResolvedValue({
+        data: {
+          results: [{ latest: { revision: 1, configuration: definition, created }, active: null }],
+          page: { size: 1 },
+        },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: {},
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ results: expect.arrayContaining([expect.objectContaining({ created })]) }),
+      );
+    });
   });
 
   describe('createFormDefinition', () => {

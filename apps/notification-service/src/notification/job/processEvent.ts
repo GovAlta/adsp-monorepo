@@ -1,6 +1,7 @@
 import {
   adspId,
   AdspId,
+  Channel, // clean-code-ignore: 2.9
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -13,7 +14,7 @@ import { Logger } from 'winston';
 import type { Notification, NotificationWorkItem } from '../types';
 import type { SubscriptionRepository } from '../repository';
 import { NotificationConfiguration } from '../configuration';
-import { notificationGenerationFailed, notificationsGenerated } from '../events';
+import { notificationConfigRetried, notificationGenerationFailed, notificationsGenerated } from '../events';
 
 interface ProcessEventJobProps {
   logger: Logger;
@@ -28,6 +29,8 @@ interface ProcessEventJobProps {
 }
 
 const LOG_CONTEXT = { context: 'ProcessEventJob' };
+const EMAIL_CONFIG_RETRY_DELAY_MS = 2000;
+const EMAIL_CONFIG_MAX_RETRIES = 5;
 export const createProcessEventJob =
   ({
     logger,
@@ -59,12 +62,52 @@ export const createProcessEventJob =
     const generationId = uuid();
     try {
       const token = await tokenProvider.getAccessToken();
-      const configuration = await configurationService.getConfiguration<
+      let configuration = await configurationService.getConfiguration<
         NotificationConfiguration,
         NotificationConfiguration
       >(serviceId, token, tenantId);
 
-      const types = configuration?.getEventNotificationTypes(event) || [];
+      let types = configuration?.getEventNotificationTypes(event) || [];
+
+      let configAttempts = 0;
+      while (
+        types.some((type) => type.channels.includes(Channel.email)) &&
+        !configuration?.email?.fromEmail &&
+        configAttempts < EMAIL_CONFIG_MAX_RETRIES
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, EMAIL_CONFIG_RETRY_DELAY_MS));
+        configAttempts++;
+        logger.debug(
+          `Retrying configuration retrieval (${configAttempts}/${EMAIL_CONFIG_MAX_RETRIES}) for tenant ${tenantId} since email fromEmail is not yet set...`,
+          { ...LOG_CONTEXT, tenant: tenantId?.toString() },
+        );
+        // Cached configuration won't reflect a concurrent update until a push-service invalidation event
+        // arrives, so force a bypass here instead of retrying against the same cached value.
+        configurationService.clearCached?.(tenantId, serviceId.namespace, serviceId.service);
+        configuration = await configurationService.getConfiguration<
+          NotificationConfiguration,
+          NotificationConfiguration
+        >(serviceId, token, tenantId);
+        types = configuration?.getEventNotificationTypes(event) || [];
+      }
+
+      const emailConfigStillMissing =
+        types.some((type) => type.channels.includes(Channel.email)) && !configuration?.email?.fromEmail;
+
+      if (configAttempts > 0) {
+        eventService.send(notificationConfigRetried(generationId, event, configAttempts, !emailConfigStillMissing));
+      }
+
+      if (emailConfigStillMissing) {
+        logger.error(
+          // clean-code-ignore: 2.9
+          `Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}. Proceeding without waiting further.`,
+          {
+            ...LOG_CONTEXT,
+            tenant: tenantId?.toString(),
+          },
+        );
+      }
 
       let count = 0;
       if (types.length > 0) {
@@ -79,7 +122,7 @@ export const createProcessEventJob =
               subscriptionRepository,
               configuration,
               event,
-              { tenant }
+              { tenant },
             );
 
             for (const notification of notifications) {
@@ -96,7 +139,7 @@ export const createProcessEventJob =
               {
                 ...LOG_CONTEXT,
                 tenant: tenantId?.toString(),
-              }
+              },
             );
           } catch (err) {
             eventService.send(notificationGenerationFailed(generationId, event, type, err.message));

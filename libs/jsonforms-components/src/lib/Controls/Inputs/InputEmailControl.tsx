@@ -90,14 +90,15 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const finalErrors = splitErrors.join('\n');
 
   useEffect(() => {
-    if (typeof handleChange === 'function' && schema?.default !== undefined) {
+    if (typeof handleChange === 'function' && schema?.default !== undefined && data === undefined) {
       handleChange(props.path, schema.default);
+      setLocalValue(schema.default as string);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema.default]);
+  }, [schema.default, data]);
 
   return (
-    <Visible visible={visible}>
+    <Visible $visible={visible}>
       <JsonFormRegisterProvider defaultRegisters={undefined}>
         <FormFieldWrapper>
           <GoabFormItem

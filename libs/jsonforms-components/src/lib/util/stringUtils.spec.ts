@@ -211,6 +211,18 @@ describe('stringUtils string tests', () => {
     expect(checkFieldValidity(props, {})).toBe('');
   });
 
+  it('shows required error instead of another validation rule error for an empty required field', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: '',
+      required: true,
+      schema: { type: 'string', minLength: 2 },
+      errors: 'must NOT have fewer than 2 characters',
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('My First name is required');
+  });
+
   it('When allOf should have at least one If condition', () => {
     const schema = schemaAllOfIfThenProps.rootSchema as JsonSchema7;
     const ifConditions = schema.allOf?.filter((y) => y.if !== undefined);
@@ -882,9 +894,14 @@ describe('getControlLabelText blank label (CS-4826)', () => {
     expect(result).toBe('');
   });
 
-  it('returns empty string when uischema.label is whitespace-only', () => {
+  it('preserves whitespace-only uischema.label so required text can render', () => {
     const result = getControlLabelText(makeProps('   '));
-    expect(result).toBe('');
+    expect(result).toBe('   ');
+  });
+
+  it('trims leading and trailing whitespace when uischema.label has visible text', () => {
+    const result = getControlLabelText(makeProps('  My custom label  '));
+    expect(result).toBe('My custom label');
   });
 
   it('returns empty string when label is "" even if options.text is set (boolean checkbox case)', () => {

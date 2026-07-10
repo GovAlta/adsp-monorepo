@@ -1,4 +1,4 @@
-import { fireEvent, render, act } from '@testing-library/react';
+import { fireEvent, render, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { GoAInputTextProps, GoAInputText, formatSin } from './InputTextControl';
@@ -178,6 +178,29 @@ describe('Input Text Control tests', () => {
       expect(blurred).toBe(true);
     });
 
+    it('shows required validation after an empty text input loses focus', async () => {
+      const props = {
+        ...staticProps,
+        data: undefined,
+        errors: '',
+        required: true,
+        schema: { type: 'string' },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputBaseControl {...props} input={GoAInputText} />
+        </JsonFormsContext.Provider>,
+      );
+      const input = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      fireEvent(input!, new CustomEvent('_blur', { detail: { name: 'firstName', value: '' } }));
+
+      await waitFor(() => {
+        expect(baseElement.querySelector('goa-form-item[error="My First name is required"]')).toBeInTheDocument();
+      });
+    });
+
     it('calls onChange for input text control', () => {
       const props = {
         ...staticProps,
@@ -260,7 +283,7 @@ describe('Input Text Control tests', () => {
       expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
-    it('does not update SIN input when alphabet characters are entered (defaults enforced)', async () => {
+    it('does not update SIN input when alphabet characters are entered', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
@@ -283,7 +306,7 @@ describe('Input Text Control tests', () => {
       });
 
       expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
-      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('123456789');
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('1324567');
     });
 
     it('prevents alphabet key presses for SIN input', async () => {
@@ -690,6 +713,84 @@ describe('Input Text Control tests', () => {
 
       expect(option).toBeInTheDocument();
       expect(option?.getAttribute('label')).toBe('Display label');
+    });
+
+    it('sets default value only when data is undefined', () => {
+      const handleChangeMock = jest.fn();
+      const props = {
+        ...staticProps,
+        data: undefined,
+        schema: { type: 'string', default: 'Default User' },
+        handleChange: handleChangeMock,
+      };
+
+      render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+
+      expect(handleChangeMock).toHaveBeenCalledWith('firstName', 'Default User');
+    });
+
+    it('does not replace existing draft data with schema default', () => {
+      const handleChangeMock = jest.fn();
+      const props = {
+        ...staticProps,
+        data: 'Saved User',
+        schema: { type: 'string', default: 'Default User' },
+        handleChange: handleChangeMock,
+      };
+
+      render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+
+      expect(handleChangeMock).not.toHaveBeenCalledWith('firstName', 'Default User');
+    });
+
+    it('does not reapply default after the user clears the field', () => {
+      const handleChangeMock = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        schema: { type: 'string', default: 'Default User' },
+        handleChange: handleChangeMock,
+      };
+
+      render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+
+      expect(handleChangeMock).not.toHaveBeenCalled();
+    });
+
+    it('does not apply changed schema default over existing data during rerender', () => {
+      const handleChangeMock = jest.fn();
+      const props = {
+        ...staticProps,
+        data: 'Saved User',
+        schema: { type: 'string', default: 'Default User' },
+        handleChange: handleChangeMock,
+      };
+
+      const { rerender } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+
+      rerender(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} schema={{ type: 'string', default: 'Changed Default' }} />
+        </JsonFormsContext.Provider>,
+      );
+
+      expect(handleChangeMock).not.toHaveBeenCalled();
     });
   });
 

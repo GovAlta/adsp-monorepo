@@ -34,6 +34,14 @@ export interface WithInput {
   skipInitialValidation?: boolean;
 }
 
+const getFormItemLabel = (label: string, noLabel?: boolean): string => {
+  if (noLabel === true || label === '') {
+    return '';
+  }
+
+  return label.trim() === '' ? '\u00A0' : label;
+};
+
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
   const { uischema, visible, label, input, required, errors, path, isStepperReview, skipInitialValidation } = props;
   const InnerComponent = input;
@@ -99,7 +107,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
 
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
-      <Visible visible={visible}>
+      <Visible $visible={visible}>
         <FormFieldWrapper
           ref={controlRef}
           className="jsonforms-elements-wrapper"
@@ -107,9 +115,9 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         >
           <GoabFormItem
             requirement={uischema?.options?.componentProps?.requirement ?? (requiredNow ? 'required' : undefined)}
-            error={currentCategory?.isVisited === true || hasValue ? modifiedErrors : undefined}
+            error={currentCategory?.isVisited === true || isVisited || hasValue ? modifiedErrors : undefined}
             testId={isStepperReview === true ? `review-base-${path}` : path}
-            label={props?.noLabel === true ? '' : labelToUpdate}
+            label={getFormItemLabel(labelToUpdate, props?.noLabel)}
             helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
           >
             <InnerComponent
