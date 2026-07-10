@@ -69,6 +69,8 @@ Feature: Form app
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
     When the user enters "Joe" in a text field labelled "First name"
+    And the user clicks a text field labelled "Last name" and clicks outside the field to trigger validation
+    Then the user views an error message of "Last name is required" under the control labelled "Last name"
     # And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
