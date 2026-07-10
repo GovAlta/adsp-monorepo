@@ -795,10 +795,7 @@ Then('the user views {string} checkbox is focused and brought into view on the f
     });
 });
 
-When(
-  'the user clicks a text field labelled {string} and clicks outside the field to trigger validation',
-  function (label) {
-    formsObj.formTextField(label).shadow().find('input').focus();
-    cy.get('body').click(); // Click outside the field to trigger validation
-  }
-);
+When('the user clicks a text field labelled {string} and clicks outside the field', function (label) {
+  formsObj.formTextField(label).shadow().find('input').focus();
+  cy.get('body').click(); // Click outside the field to trigger validation
+});
