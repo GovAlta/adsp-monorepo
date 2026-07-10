@@ -23,6 +23,9 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
   const environment = useSelector(environmentSelector);
   const isServicesUrl = (path: string): boolean => /\/services(\/.*)?$/.test(path);
 
+  const shouldShowSignInButton = () => {
+    return authenticatedUser === null && (url.endsWith(`/${environment.tenantName}`) || isServicesUrl(url));
+  };
   const onSignInStart = () => {
     if (!isServicesUrl(url)) {
       dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
@@ -46,7 +49,7 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
                   </GoabCallout>
                 </Placeholder>
               )}
-              {authenticatedUser === null && (url.endsWith(`/${environment.tenantName}`) || isServicesUrl(url)) && (
+              {shouldShowSignInButton() && (
                 <GoabButtonGroup alignment="end">
                   <GoabButton type="primary" data-testid="sandbox-sign-in" onClick={onSignInStart}>
                     Sign in
