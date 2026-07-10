@@ -9,6 +9,7 @@ describe('handleFeedbackClick', () => {
     } as unknown as MouseEvent;
 
     // Reset the global window.adspFeedback object before each test
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).adspFeedback = undefined;
   });
 
@@ -18,6 +19,7 @@ describe('handleFeedbackClick', () => {
 
   test('prevents the default link behavior', () => {
     // Arrange
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).adspFeedback = { openFeedbackForm: jest.fn() };
 
     // Act
@@ -30,6 +32,7 @@ describe('handleFeedbackClick', () => {
   test('calls openFeedbackForm when adspFeedback and openFeedbackForm are defined', () => {
     // Arrange
     const openFeedbackFormMock = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).adspFeedback = { openFeedbackForm: openFeedbackFormMock };
 
     // Act
@@ -55,6 +58,7 @@ describe('handleFeedbackClick', () => {
 
   test('logs an error when openFeedbackForm is missing from adspFeedback', () => {
     // Arrange
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).adspFeedback = {}; // adspFeedback exists but openFeedbackForm is missing
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
