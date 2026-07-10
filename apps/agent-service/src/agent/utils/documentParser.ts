@@ -4,6 +4,12 @@ import { extractXfaFields } from './xfaExtractor';
 import { Logger } from 'winston';
 
 const MAX_EXTRACTED_IMAGES = 10;
+const MAX_RENDERED_PAGES = 10;
+// Rendered wide enough for the LLM to read text and judge layout, small enough to keep vision token cost bounded.
+const PAGE_RENDER_WIDTH = 1024;
+// Page renders are sent as base64 vision parts and replayed from thread memory on later turns;
+// cap the total bytes so graphics-heavy documents cannot push requests past provider limits.
+const MAX_TOTAL_RENDER_BYTES = 4 * 1024 * 1024;
 const VISION_SUPPORTED_MIMES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 
 const PDF_MIME = 'application/pdf';
@@ -22,6 +28,9 @@ export interface DocumentExtractResult {
   text: string;
   format?: 'html' | 'text';
   images?: ExtractedImage[];
+  // Full-page visual renders (PDF only) so the LLM can see layout, colors, fonts, and
+  // field placement that plain text extraction strips out. Capped at MAX_RENDERED_PAGES.
+  pageImages?: ExtractedImage[];
   pageCount?: number;
   xfaForm?: boolean;
 }
@@ -79,6 +88,42 @@ function isXfaPlaceholder(text: string): boolean {
   return XFA_PLACEHOLDER_PATTERNS.every((pattern) => normalized.includes(pattern));
 }
 
+// Render pages as images so the LLM can see the visual design (orientation, margins,
+// columns, colors, fonts, field placement) that text extraction cannot convey.
+// Returns undefined on failure: text extraction already succeeded by this point, so
+// rendering degrades to text-only rather than failing the upload.
+async function renderPdfPageImages(
+  parser: PDFParse,
+  totalPages: number,
+  filename?: string,
+  logger?: Logger,
+): Promise<ExtractedImage[] | undefined> {
+  try {
+    const screenshots = await parser.getScreenshot({
+      first: Math.min(totalPages, MAX_RENDERED_PAGES),
+      desiredWidth: PAGE_RENDER_WIDTH,
+      imageDataUrl: false,
+    });
+
+    const pageImages: ExtractedImage[] = [];
+    let totalRenderBytes = 0;
+    for (const page of screenshots.pages) {
+      totalRenderBytes += page.data.byteLength;
+      if (totalRenderBytes > MAX_TOTAL_RENDER_BYTES && pageImages.length > 0) {
+        logger?.info(`Stopped page rendering for '${filename}' at ${pageImages.length} page(s); size cap reached.`);
+        break;
+      }
+      pageImages.push({ data: Buffer.from(page.data).toString('base64'), mimeType: 'image/png' });
+    }
+    return pageImages.length ? pageImages : undefined;
+  } catch (err) {
+    logger?.warn(
+      `Failed to render PDF pages as images for '${filename}': ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return undefined;
+  }
+}
+
 export async function extractDocumentText(
   data: Uint8Array,
   mimeType: string,
@@ -104,7 +149,9 @@ export async function extractDocumentText(
           }
           return { text: '', pageCount: result.total, xfaForm: true };
         }
-        return { text: result.text, pageCount: result.total };
+
+        const pageImages = await renderPdfPageImages(parser, result.total, filename, logger);
+        return { text: result.text, pageCount: result.total, pageImages };
       } finally {
         await parser.destroy();
       }

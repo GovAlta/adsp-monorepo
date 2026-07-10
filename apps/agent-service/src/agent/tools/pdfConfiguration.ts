@@ -1,9 +1,51 @@
 import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
+import * as Handlebars from 'handlebars';
 import type { Logger } from 'winston';
 import z from 'zod';
 import { AdspRequestContext } from '../types';
+
+// Reject invalid content before it is persisted; the pdf-service compiles these fields with
+// Handlebars at generation time, so a bad save surfaces as a broken template for the user.
+// The thrown message includes the parse error so the agent can correct and retry.
+function validateTemplateInput(inputData: {
+  template?: string;
+  header?: string;
+  footer?: string;
+  variables?: string;
+}): void {
+  const issues: string[] = [];
+
+  const handlebarsFields: Array<[string, string | undefined]> = [
+    ['template', inputData.template],
+    ['header', inputData.header],
+    ['footer', inputData.footer],
+  ];
+  for (const [field, value] of handlebarsFields) {
+    if (value) {
+      try {
+        Handlebars.parse(value);
+      } catch (err) {
+        issues.push(`${field}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
+
+  if (inputData.variables) {
+    try {
+      JSON.parse(inputData.variables);
+    } catch (err) {
+      issues.push(`variables is not valid JSON: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  if (issues.length > 0) {
+    throw new Error(
+      `Configuration was NOT saved. Fix the following syntax errors and call the tool again with ALL the fields from this attempt (fields omitted on the retry keep their previously saved values, so any other changes in this attempt would be silently lost):\n${issues.join('\n\n')}`,
+    );
+  }
+}
 
 interface PdfConfigurationToolsProps {
   directory: ServiceDirectory;
@@ -163,6 +205,8 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
       }
       const { template, variables, additionalStyles, header, footer } = inputData;
 
+      validateTemplateInput(inputData);
+
       const pdfDefinitionId = requestContext.get('pdfDefinitionId');
       const tenantId = requestContext.get('tenantId');
 
@@ -177,11 +221,13 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
 
       const currentPdfDefinition = data.latest.configuration[pdfDefinitionId];
 
-      if (template) currentPdfDefinition.template = template;
-      if (variables) currentPdfDefinition.variables = variables;
-      if (additionalStyles) currentPdfDefinition.additionalStyles = additionalStyles;
-      if (header) currentPdfDefinition.header = header;
-      if (footer) currentPdfDefinition.footer = footer;
+      // Compare against undefined so empty strings clear a field (e.g. replacing a
+      // default header/footer or old CSS on full template replacement).
+      if (template !== undefined) currentPdfDefinition.template = template;
+      if (variables !== undefined) currentPdfDefinition.variables = variables;
+      if (additionalStyles !== undefined) currentPdfDefinition.additionalStyles = additionalStyles;
+      if (header !== undefined) currentPdfDefinition.header = header;
+      if (footer !== undefined) currentPdfDefinition.footer = footer;
       currentPdfDefinition.id = pdfDefinitionId;
 
       try {

@@ -26,6 +26,7 @@ import {
   PdfGenerationUpdatesStream,
   PdfServiceWorkItem,
   PdfTemplate,
+  PdfTemplateAssetsType,
   PdfTemplateEntity,
   ServiceRoles,
 } from './pdf';
@@ -94,7 +95,7 @@ const initializeApp = async (): Promise<express.Application> => {
       ],
       events: [PdfGenerationQueuedDefinition, PdfGeneratedDefinition, PdfGenerationFailedDefinition],
       eventStreams: [PdfGenerationUpdatesStream],
-      fileTypes: [GeneratedPdfType],
+      fileTypes: [GeneratedPdfType, PdfTemplateAssetsType],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

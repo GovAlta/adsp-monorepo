@@ -17,6 +17,7 @@ import {
   MARK_PDF_PREVIEW_STALE_ACTION,
   CLEAR_PDF_PREVIEW_STALE_ACTION,
   SAVE_UPDATED_PDF_TEMPLATE_ACTION,
+  UPDATE_PDF_TEMPLATE_FROM_AGENT_ACTION,
 } from './action';
 import { PdfState } from './model';
 
@@ -49,6 +50,15 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
           },
         };
       }
+    case UPDATE_PDF_TEMPLATE_FROM_AGENT_ACTION: {
+      return {
+        ...state,
+        pdfTemplates: {
+          ...state.pdfTemplates,
+          [action.payload.id]: action.payload,
+        },
+      };
+    }
     case FETCH_PDF_TEMPLATES_SUCCESS_ACTION:
       return {
         ...state,
