@@ -23,6 +23,7 @@ describe('servicePageUtils', () => {
 
     test('returns an empty array when tenantName is an empty string', () => {
       // Arrange
+      // clean-code-ignore: 2.14
       const tenantName = '';
 
       // Act
@@ -61,6 +62,7 @@ describe('servicePageUtils', () => {
 
     test('returns an empty array when tenantName is an empty string', () => {
       // Arrange
+      // clean-code-ignore: 2.14
       const tenantName = '';
 
       // Act
@@ -99,6 +101,7 @@ describe('servicePageUtils', () => {
 
     test('returns an empty array when tenantName is an empty string', () => {
       // Arrange
+      // clean-code-ignore: 2.14
       const tenantName = '';
 
       // Act
