@@ -50,6 +50,13 @@ const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 const resolveAttachmentType = (file: File): Attachment['type'] => (file.type.startsWith('image/') ? 'image' : 'file');
 
+// Images may be embedded in the template and fetched anonymously by the PDF renderer (via the
+// fileId helper), so they go to the pdf-template-assets type (anonymous read, no retention),
+// falling back to agent-attachments where that type is not registered. Documents are design
+// references for the agent only and stay in the protected agent-attachments type.
+const getFileTypesForAttachment = (type: Attachment['type']): string[] =>
+  type === 'image' ? ['pdf-template-assets', 'agent-attachments'] : ['agent-attachments'];
+
 interface TemplateEditorProps {
   //eslint-disable-next-line
   errors?: any;
@@ -120,11 +127,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const handleAttachmentUpload = useCallback(
     async (file: File): Promise<Attachment> => {
       const type = resolveAttachmentType(file);
-      // Images may be embedded in the template and fetched anonymously by the PDF renderer
-      // (via the fileId helper), so they go to the pdf-template-assets type (anonymous read,
-      // no retention). Documents are design references for the agent only and stay in the
-      // protected agent-attachments type.
-      const fileTypes = type === 'image' ? ['pdf-template-assets', 'agent-attachments'] : ['agent-attachments'];
+      const fileTypes = getFileTypesForAttachment(type);
       for (let i = 0; i < fileTypes.length; i++) {
         try {
           const { uploadedFile, dataUrl } = await dispatch(

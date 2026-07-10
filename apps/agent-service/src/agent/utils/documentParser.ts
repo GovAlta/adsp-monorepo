@@ -92,6 +92,7 @@ function isXfaPlaceholder(text: string): boolean {
 // columns, colors, fonts, field placement) that text extraction cannot convey.
 // Returns undefined on failure: text extraction already succeeded by this point, so
 // rendering degrades to text-only rather than failing the upload.
+// clean-code-ignore: 2.18 — diagnostic logging via the injected logger is the established pattern in this module, not hidden state mutation.
 async function renderPdfPageImages(
   parser: PDFParse,
   totalPages: number,

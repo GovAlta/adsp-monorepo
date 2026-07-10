@@ -223,11 +223,12 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
 
       // Compare against undefined so empty strings clear a field (e.g. replacing a
       // default header/footer or old CSS on full template replacement).
-      if (template !== undefined) currentPdfDefinition.template = template;
-      if (variables !== undefined) currentPdfDefinition.variables = variables;
-      if (additionalStyles !== undefined) currentPdfDefinition.additionalStyles = additionalStyles;
-      if (header !== undefined) currentPdfDefinition.header = header;
-      if (footer !== undefined) currentPdfDefinition.footer = footer;
+      const fieldUpdates = { template, variables, additionalStyles, header, footer };
+      for (const [field, value] of Object.entries(fieldUpdates)) {
+        if (value !== undefined) {
+          currentPdfDefinition[field] = value;
+        }
+      }
       currentPdfDefinition.id = pdfDefinitionId;
 
       try {
