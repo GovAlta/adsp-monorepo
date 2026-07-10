@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoabFormItem, GoabInput, GoabSpinner } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabSpinner } from '@abgov/react-components-ds1';
 import { Address, Suggestion } from './types';
 import { handleAddressKeyDown } from './utils';
 import {

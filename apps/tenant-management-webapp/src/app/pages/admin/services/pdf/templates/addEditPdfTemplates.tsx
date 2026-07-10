@@ -76,7 +76,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(templateIds, 'template'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
@@ -89,7 +89,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId="form-cancel"
             type="secondary"
             onClick={() => {
@@ -99,7 +99,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="form-save"
             disabled={!template.name || validators.haveErrors()}
@@ -138,6 +138,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             testId="pdf-template-name"
             aria-label="pdf-template-name"
             width="100%"
+            mb="m"
             onChange={(detail: GoabInputOnChangeDetail) => {
               const validations = {
                 name: detail.value,
@@ -148,7 +149,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               setTemplate(
                 isEdit
                   ? { ...template, name: detail.value }
-                  : { ...template, name: detail.value, id: toKebabName(detail.value) }
+                  : { ...template, name: detail.value, id: toKebabName(detail.value) },
               );
             }}
             onBlur={() => {
@@ -203,6 +204,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             ariaLabel={'populate-template-checkbox'}
             checked={template.startWithDefault}
             testId={'populate-template'}
+            mt="m"
             onChange={() => {
               template.startWithDefault = !template.startWithDefault;
               if (template.startWithDefault) {

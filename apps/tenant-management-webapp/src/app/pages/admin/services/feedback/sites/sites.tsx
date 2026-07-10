@@ -58,7 +58,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
 
   return (
     <section>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-site"
         onClick={() => {
           setSelectedSite(defaultFeedbackSite);

@@ -104,7 +104,7 @@ export const CalendarEvents = (): JSX.Element => {
         <>
           <CalendarDropdown calendars={calendars} onSelect={onCalendarSelect} />
           <br />
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="add-calendar-event-button"
             disabled={!selectedCalendar || readOnlyCalendars.includes(selectedCalendar)}
@@ -123,7 +123,7 @@ export const CalendarEvents = (): JSX.Element => {
           {calendars && <EventListFilter calenderName={selectedCalendar} />}
           <EventAddEditModal calendarName={selectedCalendar} />
 
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="export-calendar-event-button"
             disabled={!selectedEvents || selectedEvents?.length === 0}

@@ -6,7 +6,7 @@ import {
   GoabFormItem,
   GoabIcon,
   GoabTable,
-} from '@abgov/react-components';
+} from '@abgov/react-components-ds1';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

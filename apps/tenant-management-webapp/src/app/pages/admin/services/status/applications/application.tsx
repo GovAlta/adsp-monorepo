@@ -30,7 +30,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
     state.serviceStatus.endpointHealth[app.appKey] &&
     state.serviceStatus.endpointHealth[app.appKey].url === app.endpoint?.url
       ? state.serviceStatus.endpointHealth[app.appKey].entries
-      : []
+      : [],
   );
 
   if (app.endpoint) {
@@ -80,8 +80,8 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
     maintenance: 'important',
     'reported-issues': 'emergency',
     outage: 'emergency',
-    pending: 'light',
-    disabled: 'light',
+    pending: 'default',
+    disabled: 'default',
   };
 
   return (
@@ -91,7 +91,6 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         <div>
           <AppStatus>
             <GoabButton
-              type="tertiary"
               size="compact"
               testId="status-application-change-status"
               onClick={() => setShowStatusForm(true)}
@@ -120,7 +119,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <AppHealth>
         <HealthBar data-testid="endpoint" displayCount={30} app={app}></HealthBar>
         <GoabButton
-          type="tertiary"
+          type="text"
           size="compact"
           onClick={() => {
             dispatch(
@@ -128,7 +127,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
                 tenantId: app.tenantId,
                 appKey: app.appKey,
                 enabled: !app.enabled,
-              })
+              }),
             );
           }}
         >
@@ -146,6 +145,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           dispatch(saveApplication(application));
         }}
         ariaLabel={`monitor-only-checkbox`}
+        mb="m"
       >
         Monitor only (the application will not be publicly displayed)
       </GoabCheckbox>
@@ -160,6 +160,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           dispatch(saveApplication(application));
         }}
         ariaLabel={`autoChangeStatus-checkbox`}
+        mb="m"
       >
         Change status when site is unresponsive
       </GoabCheckbox>
@@ -211,11 +212,16 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         </GoabFormItem>
 
         <GoabButtonGroup alignment="end">
-          <GoabButton testId="application-cancel-button" type="secondary" onClick={cancelManualStatusChange}>
+          <GoabButton
+            size="compact"
+            testId="application-cancel-button"
+            type="secondary"
+            onClick={cancelManualStatusChange}
+          >
             Cancel
           </GoabButton>
 
-          <GoabButton testId="application-save-button" type="primary" onClick={doManualStatusChange}>
+          <GoabButton size="compact" testId="application-save-button" type="primary" onClick={doManualStatusChange}>
             Save
           </GoabButton>
         </GoabButtonGroup>

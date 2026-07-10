@@ -79,7 +79,7 @@ const FormDefinitions = (): JSX.Element => {
       dispatch(formActions.setCriteria(nextQuery));
       dispatch(formActions.setPage(1));
     }, 1000),
-    [dispatch]
+    [dispatch],
   );
 
   const onNameChange = (_name: string, value: string) => {
@@ -143,7 +143,7 @@ const FormDefinitions = (): JSX.Element => {
           registeredId: criteria.registeredId,
           program: criteria.program,
           ministry: criteria.ministry,
-        })
+        }),
       );
     }
   }, [dispatch, configInitialized, userInitialized, authenticated, page, currentCursor, criteria]);
@@ -153,6 +153,7 @@ const FormDefinitions = (): JSX.Element => {
       <div className={styles.header}>
         <h1>Form Definitions</h1>
         <GoabButton
+          size="compact"
           type="primary"
           onClick={() => {
             navigate('new');
@@ -221,7 +222,7 @@ const FormDefinitions = (): JSX.Element => {
             ))}
           </GoabDropdown>
           <GoabSpacer vSpacing="m" />
-          <GoabButton type="tertiary" onClick={resetFilters} width="100%">
+          <GoabButton size="compact" type="text" onClick={resetFilters} width="100%">
             Clear all
           </GoabButton>
         </div>
@@ -292,6 +293,7 @@ const FormDefinitions = (): JSX.Element => {
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               type="secondary"
               onClick={() => {
                 setShowDeleteModal(false);
@@ -302,6 +304,7 @@ const FormDefinitions = (): JSX.Element => {
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               type="primary"
               variant="destructive"
               onClick={async () => {

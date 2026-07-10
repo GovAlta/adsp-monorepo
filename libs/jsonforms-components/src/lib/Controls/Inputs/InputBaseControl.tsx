@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { GoabFormItem } from '@abgov/react-components';
+import { GoabFormItem } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { checkFieldValidity, getControlLabelText } from '../../util/stringUtils';
 import { Visible } from '../../util';

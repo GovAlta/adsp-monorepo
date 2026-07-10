@@ -1,4 +1,4 @@
-import { GoabBadge, GoabButton, GoabButtonGroup, GoabCallout, GoabTable } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabButtonGroup, GoabCallout, GoabTable } from '@abgov/react-components-ds1';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -103,10 +103,7 @@ export const FormsDefinitions = () => {
                 onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
                 onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
               />
-              <TagSearchFilter
-                value={criteria.tag}
-                onChange={(value) => updateCriteria({ ...criteria, tag: value })}
-              />
+              <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             </SearchFormItemsContainer>
             <GoabButtonGroup alignment="end" mt="l">
               <GoabButton
@@ -151,12 +148,7 @@ export const FormsDefinitions = () => {
               />
             ))}
             <RowSkeleton columns={4} show={busy.loading} />
-            <RowLoadMore
-              columns={4}
-              next={next}
-              loading={busy.loading}
-              onLoadMore={handleLoadDefinitions}
-            />
+            <RowLoadMore columns={4} next={next} loading={busy.loading} onLoadMore={handleLoadDefinitions} />
           </tbody>
         </GoabTable>
       </ContentContainer>

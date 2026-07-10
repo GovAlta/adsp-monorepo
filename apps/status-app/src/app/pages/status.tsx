@@ -300,7 +300,7 @@ const ServiceStatusPage = (): JSX.Element => {
                       </GridItem>
                     </Grid>
                     <GoAFormActionOverwrite>
-                      <GoabButton type="primary" testId="subscribe" onClick={onSave}>
+                      <GoabButton size="compact" type="primary" testId="subscribe" onClick={onSave}>
                         Submit
                       </GoabButton>
                     </GoAFormActionOverwrite>

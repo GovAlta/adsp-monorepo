@@ -92,7 +92,7 @@ export const ResourceTypePage = (): JSX.Element => {
 
   return (
     <section>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-resource-type"
         onClick={() => {
           setOpenAddResourceType(true);

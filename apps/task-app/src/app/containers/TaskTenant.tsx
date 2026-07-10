@@ -88,27 +88,34 @@ export const TaskTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  const serviceDisplayName = tenant?.name || tenantName;
+  const headerTitle = serviceDisplayName
+    ? `${serviceDisplayName} - Task management`
+    : 'Alberta Digital Service Platform - Task management';
+
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
+      <GoabAppHeader url="/" heading={headerTitle}>
         {userInitialized && (
           <span>
             <span>{user?.name}</span>
             {user ? (
               <GoabButton
+                size="compact"
                 mt="s"
                 mr="s"
-                type="tertiary"
+                type="text"
                 onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
               >
                 Sign out
               </GoabButton>
             ) : (
               <GoabButton
+                size="compact"
                 mt="s"
                 mr="s"
-                type="tertiary"
+                type="text"
                 onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
               >
                 Sign in

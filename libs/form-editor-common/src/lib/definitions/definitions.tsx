@@ -235,6 +235,7 @@ export const FormDefinitions = ({
           </GoabFormItem>
         </SearchInputWrapper>
         <GoabButton
+          size="compact"
           type="secondary"
           mb={'m'}
           testId="form-definition-search-btn"
@@ -285,6 +286,7 @@ export const FormDefinitions = ({
 
       {showFormDefinitions && (
         <GoabButton
+          size="compact"
           testId="add-definition"
           onClick={() => {
             setOpenAddFormDefinition(true);
@@ -342,9 +344,10 @@ export const FormDefinitions = ({
                 {getNextEntries() && (
                   <LoadMoreWrapper>
                     <GoabButton
+                      size="compact"
                       testId="form-event-load-more-btn"
                       key="form-event-load-more-btn"
-                      type="tertiary"
+                      type="text"
                       onClick={onNext}
                     >
                       Load more

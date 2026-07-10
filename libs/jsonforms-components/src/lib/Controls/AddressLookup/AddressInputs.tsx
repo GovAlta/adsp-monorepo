@@ -1,6 +1,6 @@
 import React from 'react';
 import { Address } from './types';
-import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem, GoabDropdown } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem, GoabDropdown } from '@abgov/react-components-ds1';
 import { LabelDiv } from './styled-components';
 import {
   GoabInputOnChangeDetail,
@@ -102,7 +102,10 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
       </GoabGrid>
       <br />
       <GoabGrid minChildWidth="18rem" gap="s">
-        <GoabFormItem label="Province" requirement={requiredFields?.includes('subdivisionCode') ? 'required' : 'optional'}>
+        <GoabFormItem
+          label="Province"
+          requirement={requiredFields?.includes('subdivisionCode') ? 'required' : 'optional'}
+        >
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
             <GoabDropdown

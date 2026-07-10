@@ -62,7 +62,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   return (
     <>
       <MarginAdjustment>{getClientId()}</MarginAdjustment>
-      <GoabTable width="100%">
+      <GoabTable width="100%" mt="s">
         <thead>
           <tr>
             {/* Cannot use class to change the width */}

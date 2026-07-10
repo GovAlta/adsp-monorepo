@@ -101,7 +101,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
       maxWidth="500px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             onClick={() => {
               onCancel();
@@ -111,7 +111,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             onClick={() => {
               onSave(parsedData, newName, newDescription);

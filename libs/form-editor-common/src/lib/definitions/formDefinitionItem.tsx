@@ -77,7 +77,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
             ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
             .map((tag) => (
               <TagBadgePadding>
-                <GoabBadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs" icon={false} />
+                <GoabBadge type="default" content={tag.label} testId={tag.label} mb="xs" mr="xs" icon={false} />
               </TagBadgePadding>
             ))}
         </DetailsTagWrapper>

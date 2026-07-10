@@ -9,7 +9,7 @@ import {
   GoabIconButton,
   GoabSpacer,
   GoabTable,
-} from '@abgov/react-components';
+} from '@abgov/react-components-ds1';
 import { RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -67,7 +67,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             recordId: definition.urn,
             activeOn: now,
           },
-        })
+        }),
       );
 
       dispatch(
@@ -77,7 +77,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             recordId: definition.urn,
             startsAfter: now,
           },
-        })
+        }),
       );
     }
   }, [dispatch, canGetIntakeCalendar, definition]);
@@ -220,7 +220,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                       description:
                         `Open intake event for ${definition.name} (ID: ${definition.id}). ` +
                         `During this event, applicants can create and submit the ${definition.name} form`,
-                    })
+                    }),
                   );
                   setShowScheduleIntake(false);
                 }}

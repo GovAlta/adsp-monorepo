@@ -88,6 +88,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               type="information"
               testId="notice-card-mode"
               icon={false}
+              emphasis="subtle"
             />
           )}
           {props.mode === 'published' && (
@@ -98,6 +99,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               type="success"
               testId="notice-card-mode"
               icon={false}
+              emphasis="subtle"
             />
           )}
           {props.mode === 'archived' && (
@@ -106,7 +108,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               content={'Archived'}
               data-testid="notice-card-mode"
               testId="notice-card-mode"
-              type="midtone"
+              type="default"
               icon={false}
             />
           )}

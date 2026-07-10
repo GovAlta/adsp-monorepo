@@ -14,7 +14,7 @@ export const RowLoadMore: FunctionComponent<RowLoadMoreProps> = ({ next, columns
       <tr>
         <td colSpan={columns}>
           <GoabButtonGroup alignment="center">
-            <GoabButton type="tertiary" disabled={loading} onClick={() => onLoadMore(next)}>
+            <GoabButton size="compact" type="text" disabled={loading} onClick={() => onLoadMore(next)}>
               Load more
             </GoabButton>
           </GoabButtonGroup>

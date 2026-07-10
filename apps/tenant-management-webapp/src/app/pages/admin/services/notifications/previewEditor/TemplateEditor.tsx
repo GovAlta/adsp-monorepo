@@ -259,10 +259,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     item.subject?.length !== 0 ? (
                       <div>
                         <div className="mobile">
-                          <GoabBadge content="" type="information" icon={false} />
+                          <GoabBadge content="" type="information" icon={false} emphasis="subtle" />
                         </div>
                         <div className="desktop">
-                          <GoabBadge content="Unsaved" type="information" icon={false} />
+                          <GoabBadge content="Unsaved" type="information" icon={false} emphasis="subtle" />
                         </div>
                       </div>
                     ) : (
@@ -284,7 +284,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               <h3 data-testid="modal-title">{`${mainTitle}${titleNames[item.name] || ''} template--${serviceName}`}</h3>
 
               <>
-                <GoabFormItem error={errors['subject'] ?? ''} label="Subject">
+                <GoabFormItem error={errors['subject'] ?? ''} label="Subject" mb="s">
                   <MonacoDiv data-testid="templated-editor-subject">
                     <MonacoEditor
                       language={item.name === 'slack' ? 'markdown' : 'handlebars'}
@@ -298,7 +298,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </MonacoDiv>
                 </GoabFormItem>
 
-                <GoabFormItem error={errors['title'] ?? ''} label="Title">
+                <GoabFormItem error={errors['title'] ?? ''} label="Title" mb="s">
                   <MonacoDiv data-testid="templated-editor-title">
                     <MonacoEditor
                       language={item.name === 'slack' ? 'markdown' : 'handlebars'}
@@ -312,7 +312,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </MonacoDiv>
                 </GoabFormItem>
 
-                <GoabFormItem error={errors['subtitle'] ?? ''} label="Subtitle">
+                <GoabFormItem error={errors['subtitle'] ?? ''} label="Subtitle" mb="s">
                   <MonacoDiv data-testid="templated-editor-subtitle">
                     <MonacoEditor
                       language={item.name === 'slack' ? 'markdown' : 'handlebars'}
@@ -405,6 +405,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       <EditTemplateActions>
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             onClick={() => {
               if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
                 setSaveModal(true);
@@ -419,6 +420,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             {eventTemplateFormState.cancelOrBackActionText}
           </GoabButton>
           <GoabButton
+            size="compact"
             onClick={() => {
               saveAndReset(true);
             }}

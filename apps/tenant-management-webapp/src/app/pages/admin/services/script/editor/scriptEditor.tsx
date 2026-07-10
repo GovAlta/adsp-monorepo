@@ -108,7 +108,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
   const roles = useSelector(selectRoleList);
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1],
   );
   useEffect(() => {
     if (monaco) {
@@ -356,6 +356,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   });
                 }}
                 ariaLabel={`script-use-service-account-checkbox`}
+                mb="m"
               />
             </div>
             <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
@@ -402,7 +403,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           </div>
           <EditScriptActions>
             <div>
-              <GoabButton
+              <GoabButton size="compact"
                 onClick={() => {
                   setCustomIndicator(true);
                   updateScript();
@@ -416,7 +417,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 Save
               </GoabButton>
             </div>
-            <GoabButton
+            <GoabButton size="compact"
               onClick={() => {
                 if (hasChanged()) {
                   setSaveModal(true);
@@ -472,7 +473,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </GoabFormItem>
               </div>
               <div className="execute-button">
-                <GoabButton
+                <GoabButton size="compact"
                   onClick={() => {
                     const testItem: ScriptItem = {
                       testInputs: {

@@ -85,7 +85,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   return (
     <>
       <br />
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-definition"
         onClick={() => {
           setOpenAddDefinition(true);

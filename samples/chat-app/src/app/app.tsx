@@ -22,14 +22,14 @@ export function App({ userManager }: AppProps) {
 
   return (
     <div className={styles.app}>
-      <GoabMicrositeHeader type="beta" />
+      <GoabMicrositeHeader type="beta" feedbackUrl="#" feedbackUrlTarget="self" headerUrlTarget="self" />
       <GoabAppHeader heading="ADSP Chat Example" url="/">
         {user ? (
-          <GoabButton onClick={() => userManager.signoutRedirect()}>
+          <GoabButton size="compact" onClick={() => userManager.signoutRedirect()}>
             Sign Out
           </GoabButton>
         ) : (
-          <GoabButton onClick={() => userManager.signinRedirect()}>
+          <GoabButton size="compact" onClick={() => userManager.signinRedirect()}>
             Sign In
           </GoabButton>
         )}

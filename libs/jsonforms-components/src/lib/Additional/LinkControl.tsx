@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { isValidHref, isMailToHref } from '../Context/register/util';
-import { GoabFormItem, GoabIconButton } from '@abgov/react-components';
+import { GoabFormItem, GoabIconButton } from '@abgov/react-components-ds1';
 
 import { GoAContextMenuIcon } from '../Controls/FileUploader/ContextMenu';
 

@@ -39,7 +39,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         Targets are configured as service or API URNs and must be registered in directory service, and an associated TTL
         can be set.
       </Padding>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-cache-target"
         onClick={() => {
           setOpenAddDefinition(true);

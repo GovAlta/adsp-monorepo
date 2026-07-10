@@ -30,7 +30,7 @@ export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
 };
 
 export const GoAContextMenuText: FC<ContextMenuTextProps> = (props) => {
-  return <GoabButton type="tertiary" onClick={props.onClick} testId={props.testId} size="compact" />;
+  return <GoabButton type="text" onClick={props.onClick} testId={props.testId} size="compact" />;
 };
 
 export const GoAContextMenu = styled.div`

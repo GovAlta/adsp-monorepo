@@ -400,7 +400,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             <hr className="styled-hr styled-hr-bottom" />
             <PdfEditActionLayout>
               <GoabButtonGroup alignment="start">
-                <GoabButton
+                <GoabButton size="compact"
                   disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
                   onClick={() => {
                     setCustomIndicator(true);
@@ -411,7 +411,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                 >
                   Save
                 </GoabButton>
-                <GoabButton
+                <GoabButton size="compact"
                   onClick={() => {
                     if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
                       setSaveModal({ visible: true, closeEditor: false });

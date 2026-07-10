@@ -1,4 +1,4 @@
-import { GoabIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components-ds1';
 import { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
@@ -140,7 +140,7 @@ const FormSupportPaneComponent: FunctionComponent<FormSupportPaneProps> = ({ cla
                       id: update.id || form.id,
                       data: update.data || data,
                       files: update.files || files,
-                    })
+                    }),
                   );
                 }}
               />

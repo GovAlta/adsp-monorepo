@@ -13,11 +13,12 @@ export const TabletMessage = ({ goBack }: TabletMessageProps) => {
       <h3>Please rotate your device</h3>
       <h3>For the best experience, please use a Desktop</h3>
       <GoabButton
+        size="compact"
         onClick={() => {
           goBack();
         }}
         testId="back-to-previous"
-        type="tertiary"
+        type="text"
       >
         Go back
       </GoabButton>

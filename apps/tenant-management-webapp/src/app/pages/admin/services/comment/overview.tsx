@@ -29,7 +29,7 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
       testId="comment-service-overview"
       description={description}
       addButton={
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-definition"
           onClick={() => {
             setOpenAddTopicTypes(true);

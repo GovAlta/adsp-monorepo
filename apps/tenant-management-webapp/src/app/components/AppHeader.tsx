@@ -21,6 +21,8 @@ interface HeaderProps {
 const SignoutBadgeWrapper = styled.div`
   display: inline-block;
   position: relative;
+  padding-right: 0.5rem;
+  font-weight: var(--fw-regular);
 `;
 
 const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
@@ -54,7 +56,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           {(authenticated || props.admin) && (
             <div>
               {displayName && <SignoutBadgeWrapper>{displayName}</SignoutBadgeWrapper>}
-              <GoabButton type="tertiary" testId="sign-out-btn" onClick={() => dispatch(TenantLogout())}>
+              <GoabButton size="compact" type="text" testId="sign-out-btn" onClick={() => dispatch(TenantLogout())}>
                 Sign out
               </GoabButton>
             </div>
@@ -62,7 +64,8 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 
           {!authenticated && !props.admin && (
             <GoabButton
-              type="tertiary"
+              size="compact"
+              type="text"
               testId="sign-ing-btn"
               onClick={() => {
                 const idpHint = getIdpHint();
@@ -79,11 +82,15 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 };
 
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
+  const headerServiceName = serviceName.trim() || 'Alberta Digital Service Platform';
+
   return (
     <HeaderContainer>
       <GoabMicrositeHeader type="live" headerUrlTarget="self" />
-      <GoabAppHeader url="/" heading={serviceName}>
-        <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
+      <GoabAppHeader url="/" heading={headerServiceName}>
+        <div slot="utilities">
+          <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
+        </div>
       </GoabAppHeader>
     </HeaderContainer>
   );

@@ -63,7 +63,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     badCharsCheck,
     namespaceCheck(),
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', isNotEmptyCheck('name'), wordMaxLengthCheck(180, 'Description'))
     .add('description', 'description', isNotEmptyCheck('name'), wordMaxLengthCheck(180, 'Description'))
@@ -100,8 +100,9 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
       testId="add-task-modal"
       open={open}
       actions={
-        <GoabButtonGroup alignment="end">
+        <GoabButtonGroup alignment="end" mt="m">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="task-modal-cancel"
             onClick={() => {
@@ -113,6 +114,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="task-modal-save"
             disabled={!task.name || !task.description || !task.priority || validators.haveErrors()}
@@ -127,7 +129,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
       }
     >
       <div>
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name']} label="Name" mb="s">
           <GoabInput
             type="text"
             name="name"
@@ -143,7 +145,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           />
         </GoabFormItem>
 
-        <GoabFormItem label="Description">
+        <GoabFormItem label="Description" mb="s">
           <DescriptionItem>
             <GoabTextArea
               name="description"

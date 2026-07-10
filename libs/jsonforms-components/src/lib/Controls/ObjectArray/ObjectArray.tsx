@@ -14,7 +14,7 @@ import { ObjectArrayControl } from './ObjectListControl';
 import { Visible } from '../../util';
 import { composePaths } from '@jsonforms/core';
 
-import { GoabButton, GoabIconButton, GoabCheckbox } from '@abgov/react-components';
+import { GoabButton, GoabIconButton, GoabCheckbox } from '@abgov/react-components-ds1';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { getLabelText } from '../../util';
 import pluralize from 'pluralize';
@@ -168,6 +168,7 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
                 checked={checked}
                 disabled={!enabled}
                 testId={`${value}-checkbox`}
+                mt="s"
                 onChange={(detail: GoabCheckboxOnChangeDetail) => {
                   let newValue = [...items];
 

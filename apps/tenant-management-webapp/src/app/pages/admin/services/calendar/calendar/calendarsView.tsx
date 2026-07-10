@@ -66,11 +66,13 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
     <section>
       <div>
         <GoabButton
+          size="compact"
           testId="add-calendar-btn"
           onClick={() => {
             setSelectedCalendarName(undefined);
             setOpenEditCalendar(true);
           }}
+          mt="s"
         >
           Add calendar
         </GoabButton>

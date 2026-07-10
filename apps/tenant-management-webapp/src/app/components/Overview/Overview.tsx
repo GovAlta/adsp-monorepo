@@ -35,7 +35,7 @@ interface OverviewProps {
 
 export const createAddButtonComponent = (config: AddButtonConfig, service: string): ReactNode => {
   return (
-    <GoabButton
+    <GoabButton size="compact"
       type="primary"
       disabled={config?.disabled === true}
       onClick={config?.onClickCallback}

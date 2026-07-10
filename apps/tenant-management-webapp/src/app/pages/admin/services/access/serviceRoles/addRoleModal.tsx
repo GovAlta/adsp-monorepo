@@ -50,7 +50,7 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
       testId="add-service-role-confirmation-modal"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="add-service-role-modal-cancel-btn"
             key="add-service-role-modal-cancel"
@@ -60,7 +60,7 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="add-service-role-modal-ok-btn"
             key="add-service-role-modal-ok"

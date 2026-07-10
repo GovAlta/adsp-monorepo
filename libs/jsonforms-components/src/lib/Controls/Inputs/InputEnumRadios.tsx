@@ -16,7 +16,7 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components';
+import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components-ds1';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;

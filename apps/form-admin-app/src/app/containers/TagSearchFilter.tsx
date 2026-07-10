@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
+import { GoabFormItem, GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, getTags, tagsSelector } from '../state';

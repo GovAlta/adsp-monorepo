@@ -111,7 +111,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
       heading={title}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="queue-modal-cancel"
             onClick={() => {
@@ -121,7 +121,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="queue-modal-save"
             disabled={!queue.name || validators.haveErrors()}

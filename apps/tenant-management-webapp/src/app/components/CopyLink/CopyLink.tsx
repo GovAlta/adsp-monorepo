@@ -65,7 +65,7 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
           <p className="url-tooltip message">{link}</p>
         </CopyLinkToolTipWrapper>
       )}
-      <GoabButton
+      <GoabButton size="compact"
         type="secondary"
         leadingIcon="link"
         testId="copy-link-button"

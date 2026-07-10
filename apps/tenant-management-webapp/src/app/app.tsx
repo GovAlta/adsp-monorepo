@@ -23,6 +23,7 @@ import PublicApp from './publicApp';
 import styled from 'styled-components';
 import { GoabAppHeader } from '@abgov/react-components';
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 import { useScripts } from '@core-services/app-common';
 import { SelectTenant } from '@pages/public/SelectTenant';
 

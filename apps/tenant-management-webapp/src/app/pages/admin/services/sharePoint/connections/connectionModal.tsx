@@ -100,10 +100,11 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
       heading={title}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type={'secondary'} testId="connection-modal-cancel" onClick={handleCancelClick}>
+          <GoabButton size="compact" type={'secondary'} testId="connection-modal-cancel" onClick={handleCancelClick}>
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="connection-modal-save"
             disabled={
@@ -127,7 +128,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
         style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
         <ConnectionPadding>
-          <GoabFormItem error={errors?.['name']} label="Sharepoint connection name">
+          <GoabFormItem error={errors?.['name']} label="Sharepoint connection name" mb="s">
             <GoabInput
               type="text"
               name="form-definition-name"
@@ -172,7 +173,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
               }}
             />
           </GoabFormItem>
-          <GoabFormItem label="Definition ID">
+          <GoabFormItem label="Definition ID" mb="s">
             <GoabInput
               name="form-definition-id"
               value={connection?.id}

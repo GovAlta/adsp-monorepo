@@ -40,7 +40,7 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
     .build();
@@ -90,6 +90,7 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               type="secondary"
               testId="file-type-modal-cancel"
               onClick={() => {
@@ -99,6 +100,7 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               type="primary"
               disabled={!fileType?.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
               testId="file-type-modal-save"
@@ -124,7 +126,7 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
         }
       >
         <>
-          <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabFormItem error={errors?.['name']} label="Name" mb="s">
             <GoabInput
               type="text"
               name="name"

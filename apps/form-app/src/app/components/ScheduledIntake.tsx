@@ -1,4 +1,4 @@
-import { GoabCallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components-ds1';
 import { FunctionComponent, ReactNode, useEffect } from 'react';
 import { FormDefinition } from '../state';
 import { FormNotAvailable } from './FormNoAvailable';

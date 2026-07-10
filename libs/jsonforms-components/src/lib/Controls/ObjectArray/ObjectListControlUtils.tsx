@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { GoabTable } from '@abgov/react-components';
 import { DataObject, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
-import { GoabIcon } from '@abgov/react-components';
+import { GoabIcon } from '@abgov/react-components-ds1';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';

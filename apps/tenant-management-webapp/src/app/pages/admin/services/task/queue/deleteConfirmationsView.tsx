@@ -58,7 +58,7 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
         heading="Queue current in use"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               type="secondary"
               testId="queue-delete-modal-cancel-btn"
               onClick={() => {

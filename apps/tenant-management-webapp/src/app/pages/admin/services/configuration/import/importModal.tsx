@@ -29,8 +29,9 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
       open={isOpen}
       heading="The following configuration will be impacted!"
       actions={
-        <GoabButtonGroup alignment="end">
+        <GoabButtonGroup alignment="end" mt="m">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="import-configuration-modal-cancel"
             onClick={() => {
@@ -40,6 +41,7 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="import-configuration-modal-confirm"
             onClick={() => {

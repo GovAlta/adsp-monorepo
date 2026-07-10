@@ -76,7 +76,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
     (state: RootState) => state.serviceRoles,
     (serviceRoles) => {
       return serviceRoles?.keycloak || {};
-    }
+    },
   );
 
   const keyCloakClientRoles = useSelector(selectServiceKeyCloakRoles);
@@ -152,7 +152,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
     .build();
@@ -270,6 +270,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                         });
                       }}
                       text={'Make public (read only)'}
+                      mt="s"
                     />
                   </div>
                 </DropDownZIndex>
@@ -307,6 +308,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       });
                     }}
                     text={'Active retention policy'}
+                    mb="l"
                   />
                   <RetentionPeriodText>Enter retention period</RetentionPeriodText>
                 </RetentionPolicyWrapper>
@@ -335,14 +337,15 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                 disabled={fileType?.rules?.retention?.active !== true}
                 aria-label="goa-input-delete-in-days"
                 leadingContent="Days"
-                width="265px"
+                width="25rem"
               />
             </EditorPadding>
             <FinalButtonPadding>
               <hr className="hr-resize-bottom" />
-              <br />
-              <GoabButtonGroup alignment="start">
+
+              <GoabButtonGroup alignment="start" mt="m">
                 <GoabButton
+                  size="compact"
                   type="primary"
                   testId="form-save"
                   disabled={areObjectsEqual(initialFileType, fileType) || validators.haveErrors()}
@@ -355,7 +358,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                       elements.forEach((e) => {
                         if (e) {
                           elementNames = elementNames.concat(
-                            e.roleNames?.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                            e.roleNames?.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName)),
                           );
                         }
                       });
@@ -364,7 +367,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                         return elementNames.includes(readRole);
                       });
                       const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) =>
-                        elementNames.includes(updateRole)
+                        elementNames.includes(updateRole),
                       );
 
                       //Default to Protected A if there was no security classification
@@ -382,6 +385,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   Save
                 </GoabButton>
                 <GoabButton
+                  size="compact"
                   testId="form-cancel"
                   type="secondary"
                   onClick={() => {

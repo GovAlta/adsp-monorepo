@@ -168,7 +168,7 @@ export const ConfigurationEditor = (): JSX.Element => {
             <hr className="styled-hr styled-hr-bottom" />
             <EditActionLayout>
               <GoabButtonGroup alignment="start">
-                <GoabButton
+                <GoabButton size="compact"
                   disabled={
                     !isConfigurationUpdated(tmpTemplate, configurationTemplate) ||
                     EditorError?.testData !== null ||
@@ -182,7 +182,7 @@ export const ConfigurationEditor = (): JSX.Element => {
                 >
                   Save
                 </GoabButton>
-                <GoabButton
+                <GoabButton size="compact"
                   onClick={() => {
                     if (isConfigurationUpdated(tmpTemplate, configurationTemplate)) {
                       setSaveModal({ visible: true, closeEditor: false });

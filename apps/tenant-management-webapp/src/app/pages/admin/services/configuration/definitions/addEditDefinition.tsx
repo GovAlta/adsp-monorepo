@@ -130,8 +130,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
         open={open}
         heading={isEdit ? 'Edit definition' : 'Add definition'}
         actions={
-          <GoabButtonGroup alignment="end">
+          <GoabButtonGroup alignment="end" mt="m">
             <GoabButton
+              size="compact"
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -143,6 +144,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               type="primary"
               testId="form-save"
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
@@ -159,7 +161,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           </GoabButtonGroup>
         }
       >
-        <GoabFormItem error={errors?.['namespace']} label="Namespace">
+        <GoabFormItem error={errors?.['namespace']} label="Namespace" mb="s">
           <NamespaceDropdown
             value={definition.namespace}
             disabled={isEdit}
@@ -183,7 +185,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name">
+        <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name" mb="s">
           <GoabInput
             type="text"
             name="name"
@@ -210,7 +212,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           />
         </GoabFormItem>
 
-        <GoabFormItem error={errors?.['description']} label="Description">
+        <GoabFormItem error={errors?.['description']} label="Description" mb="s">
           <GoabTextArea
             name="description"
             value={definition.description}

@@ -289,7 +289,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                           {isEmailVerified !== undefined && isEmailVerified === false && (
                             <div>
                               {codeEmailExists ? (
-                                <GoabBadge type="midtone" content="Pending" icon={false} />
+                                <GoabBadge type="default" content="Pending" icon={false} />
                               ) : (
                                 <GoabBadge type="important" content="Not verified" icon={false} />
                               )}
@@ -314,7 +314,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                           {isSmsVerified !== undefined && isSmsVerified === false && (
                             <div>
                               {codeSMSExists ? (
-                                <GoabBadge type="midtone" content="Pending" icon={false} />
+                                <GoabBadge type="default" content="Pending" icon={false} />
                               ) : (
                                 <GoabBadge type="important" content="Not verified" icon={false} />
                               )}

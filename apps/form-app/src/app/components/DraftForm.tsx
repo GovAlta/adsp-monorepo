@@ -5,23 +5,16 @@ import {
   ContextProviderFactory,
   JsonFormRegisterProvider,
   createDefaultAjv,
-  autoPopulateValue,
   User,
+  createAutoPopulateMiddleware,
+  getAutoPopulatedData,
+  mergeAutoPopulatedData,
 } from '@abgov/jsonforms-components';
-import { GoabBadge } from '@abgov/react-components';
-import {
-  ControlElement,
-  JsonSchema4,
-  JsonSchema7,
-  INIT,
-  UISchemaElement,
-  UPDATE_CORE,
-  UPDATE_DATA,
-  toDataPath,
-} from '@jsonforms/core';
+import { GoabBadge } from '@abgov/react-components-ds1';
+import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import * as _ from 'lodash';
-import { FunctionComponent, useContext } from 'react';
+import { FunctionComponent, useContext, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
@@ -59,16 +52,6 @@ interface DraftFormProps {
   onSave: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
 }
 
-const JsonFormsActionType = {
-  Init: INIT,
-  UpdateCore: UPDATE_CORE,
-  UpdateData: UPDATE_DATA,
-} as const;
-
-const AUTO_POPULATE_ACTION_TYPES = new Set<string>([JsonFormsActionType.Init, JsonFormsActionType.UpdateCore]);
-
-const shouldAutoPopulate = (actionType: string) => AUTO_POPULATE_ACTION_TYPES.has(actionType);
-
 export const populateDropdown = (schema, enumerators) => {
   const newSchema = JSON.parse(JSON.stringify(schema));
 
@@ -82,67 +65,9 @@ export const populateDropdown = (schema, enumerators) => {
   return newSchema as JsonSchema;
 };
 
-type UISchemaElementWithChildren = UISchemaElement & {
-  elements?: UISchemaElement[];
-};
-
-interface AutoPopulatedValue {
-  path: string;
-  value: unknown;
-}
-
-const getAutoPopulateControls = (element?: UISchemaElement): ControlElement[] => {
-  if (!element) {
-    return [];
-  }
-
-  const controls =
-    element.type === 'Control' && element.options?.autoPopulate ? [element as ControlElement] : [];
-  const children = (element as UISchemaElementWithChildren).elements ?? [];
-
-  return [...controls, ...children.flatMap(getAutoPopulateControls)];
-};
-
-const getAutoPopulatedData = (definition, user?: User): AutoPopulatedValue[] => {
-  if (!user) {
-    return [];
-  }
-
-  return getAutoPopulateControls(definition.uiSchema)
-    .map((uischema) => ({
-      path: toDataPath(uischema.scope),
-      value: autoPopulateValue(user, { uischema }),
-    }))
-    .filter(({ path, value }) => Boolean(path) && value !== undefined && value !== null);
-};
-
-const mergeMissingData = (data, autoPopulatedData: AutoPopulatedValue[]) => {
-  const defaults = autoPopulatedData.reduce(
-    (values, { path, value }) => _.set(values, path, value),
-    {} as Record<string, unknown>,
-  );
-
-  return _.defaultsDeep({}, data ?? {}, defaults);
-};
-
-const createMiddleware = (definition, user?: User) => (state, action, defaultReducer) => {
-  const newState = { ...defaultReducer(state, action) };
-
-  if (!shouldAutoPopulate(action.type)) {
-    return newState;
-  }
-
-  return {
-    ...newState,
-    data: mergeMissingData(newState.data, getAutoPopulatedData(definition, user)),
-  };
-};
-
-const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
+const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-  const user = useSelector((state: AppState) => state.user);
-
-  const middleware = createMiddleware(definition, user?.user as User);
+  const middleware = createAutoPopulateMiddleware(definition.uiSchema, user);
 
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
@@ -184,12 +109,26 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onSubmit,
   onSave,
 }) => {
+  const user = useSelector((state: AppState) => state.user);
+  const resolvedUser = user?.user as User;
+  const autoPopulatedData = useMemo(
+    () => getAutoPopulatedData(definition.uiSchema, resolvedUser),
+    [definition.uiSchema, resolvedUser],
+  );
+  const populatedData = useMemo(() => mergeAutoPopulatedData(data, autoPopulatedData), [data, autoPopulatedData]);
+
+  useEffect(() => {
+    if (autoPopulatedData.length > 0 && !_.isEqual(data ?? {}, populatedData)) {
+      onChange({ data: populatedData });
+    }
+  }, [autoPopulatedData.length, data, onChange, populatedData]);
+
   const onSubmitFunction = () => {
     onSubmit(form);
   };
 
   const onSaveFunction = () => {
-    onSave({ data });
+    onSave({ data: populatedData });
   };
 
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
@@ -282,7 +221,13 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         }}
         formUrl="https://form.adsp-uat.alberta.ca"
       >
-        <JsonFormsWrapper definition={definition} data={data} onChange={onChange} readonly={submitting} />
+        <JsonFormsWrapper
+          definition={definition}
+          data={populatedData}
+          onChange={onChange}
+          readonly={submitting}
+          user={resolvedUser}
+        />
       </ContextProvider>
     </div>
   );

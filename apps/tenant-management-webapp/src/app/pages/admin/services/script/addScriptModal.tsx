@@ -119,6 +119,7 @@ export const AddScriptModal = ({
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="script-modal-cancel"
             onClick={() => {
@@ -132,6 +133,7 @@ export const AddScriptModal = ({
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="script-modal-save"
             disabled={script.name === '' || (validators && validators.haveErrors())}
@@ -145,7 +147,7 @@ export const AddScriptModal = ({
       }
     >
       <div ref={scrollPaneRef} className="roles-scroll-pane" style={{ padding: '0 3px 0 3px' }}>
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name']} label="Name" mb="m">
           <GoabInput
             type="text"
             name="name"

@@ -107,7 +107,7 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
         </div>
       </FeedbackOverviewSection>
       <br />
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-feedback"
         onClick={() => {
           setActiveEdit(true);

@@ -51,7 +51,7 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
       open={open}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="comment-modal-cancel"
             onClick={() => {
@@ -62,7 +62,7 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="comment-modal-save"
             disabled={!comment?.content || validators.haveErrors()}

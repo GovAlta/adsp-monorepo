@@ -120,6 +120,7 @@ export const TasksList = (): JSX.Element => {
         <div>
           <ButtonPadding>
             <GoabButton
+              size="compact"
               testId="add-queue-btn"
               disabled={selectedTask === ''}
               onClick={() => {
@@ -155,7 +156,13 @@ export const TasksList = (): JSX.Element => {
           )}
           {next && (
             <LoadMoreWrapper>
-              <GoabButton testId="task-load-more-btn" key="task-load-more-btn" type="tertiary" onClick={onNext}>
+              <GoabButton
+                size="compact"
+                testId="task-load-more-btn"
+                key="task-load-more-btn"
+                type="text"
+                onClick={onNext}
+              >
                 Load more
               </GoabButton>
             </LoadMoreWrapper>

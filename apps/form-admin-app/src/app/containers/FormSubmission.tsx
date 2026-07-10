@@ -5,7 +5,7 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabTextArea,
-} from '@abgov/react-components';
+} from '@abgov/react-components-ds1';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -120,6 +120,7 @@ export const FormSubmission = () => {
               </GoabFormItem>
               <GoabButtonGroup alignment="end">
                 <GoabButton
+                  size="compact"
                   disabled={!draft.status || !draft.reason || busy.executing}
                   onClick={() =>
                     dispatch(
@@ -127,7 +128,7 @@ export const FormSubmission = () => {
                         submissionUrn: `/forms/${submission.formId}${AdspId.parse(submission.urn).resource}`,
                         status: draft.status,
                         reason: draft.reason,
-                      })
+                      }),
                     )
                   }
                 >

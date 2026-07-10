@@ -70,10 +70,12 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 };
 
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
+  const headerServiceName = serviceName.trim() || 'Alberta Digital Service Platform - Subscription management';
+
   return (
     <HeaderContainer>
       <GoabMicrositeHeader type="live" headerUrlTarget="self" />
-      <GoabAppHeader url="/" heading={serviceName}>
+      <GoabAppHeader url="/" heading={headerServiceName}>
         <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
       </GoabAppHeader>
     </HeaderContainer>

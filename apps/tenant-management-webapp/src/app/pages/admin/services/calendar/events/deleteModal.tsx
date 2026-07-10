@@ -23,7 +23,7 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="delete-cancel"
             onClick={() => {
@@ -32,7 +32,7 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             variant="destructive"
             testId="delete-confirm"

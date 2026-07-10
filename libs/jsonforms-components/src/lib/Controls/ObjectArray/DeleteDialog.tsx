@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components-ds1';
 import { DeleteDialogContent } from './styled-components';
 
 export interface DeleteDialogProps {

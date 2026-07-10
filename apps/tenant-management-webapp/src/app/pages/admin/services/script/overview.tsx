@@ -34,7 +34,7 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
       <OverviewLayout
         description={description}
         addButton={
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-script-btn"
             onClick={() => {
               setActiveEdit(true);

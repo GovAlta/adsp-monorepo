@@ -30,12 +30,13 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
       open={open}
       heading="Add agent"
       actions={
-        <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="tool-agent-modal-cancel" onClick={onCancel}>
+        <GoabButtonGroup alignment="end" mt="m">
+          <GoabButton size="compact" type="secondary" testId="tool-agent-modal-cancel" onClick={onCancel}>
             Cancel
           </GoabButton>
 
           <GoabButton
+            size="compact"
             type="primary"
             testId="tool-agent-modal-save"
             onClick={() => {
@@ -48,7 +49,7 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
       }
     >
       <form>
-        <GoabFormItem label="Select agents" mb="m">
+        <GoabFormItem label="Select agents">
           <GoabTable width="100%">
             <thead>
               <tr>
@@ -64,7 +65,7 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
                     <p>{description}</p>
                   </td>
                   <td>
-                    <GoabButtonGroup alignment="end">
+                    <GoabButtonGroup alignment="end" mt="m">
                       <GoabCheckbox
                         name="selected"
                         checked={selected.includes(id)}

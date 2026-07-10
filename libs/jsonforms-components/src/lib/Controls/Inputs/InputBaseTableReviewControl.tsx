@@ -19,7 +19,7 @@ import {
   isNilOrEmptyValue,
 } from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
-import { GoabButton, GoabFormItem } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { useReviewContext } from '../../Context/ReviewRenderContext';
@@ -243,7 +243,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-            <GoabButton type="tertiary" size="compact" onClick={handleChangeClick}>
+            <GoabButton type="tertiary" onClick={handleChangeClick}>
               Change
             </GoabButton>
           )}

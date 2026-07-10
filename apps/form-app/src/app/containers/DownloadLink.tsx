@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { GoabIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components-ds1';
 
 interface ExternalLinkProps {
   text: string;

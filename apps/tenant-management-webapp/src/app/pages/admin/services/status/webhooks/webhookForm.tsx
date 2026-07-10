@@ -106,7 +106,7 @@ export const WebhookFormModal = (): JSX.Element => {
       'url',
       wordMaxLengthCheck(150, 'URL'),
       characterCheck(validationPattern.validURL),
-      isNotEmptyCheck('url')
+      isNotEmptyCheck('url'),
     )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
@@ -148,6 +148,7 @@ export const WebhookFormModal = (): JSX.Element => {
         loaded && (
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               type="secondary"
               testId="webhook-from-cancel-button"
               onClick={() => {
@@ -157,6 +158,7 @@ export const WebhookFormModal = (): JSX.Element => {
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               testId="webhook-from-save-button"
               disabled={!isFormValid() || validators.haveErrors()}
               type="primary"
@@ -170,7 +172,7 @@ export const WebhookFormModal = (): JSX.Element => {
     >
       {loaded ? (
         <>
-          <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabFormItem error={errors?.['name']} label="Name" mb="s">
             <GoabInput
               type="text"
               name="name"
@@ -188,7 +190,7 @@ export const WebhookFormModal = (): JSX.Element => {
               aria-label="name"
             />
           </GoabFormItem>
-          <GoabFormItem error={errors?.['url']} label="Url">
+          <GoabFormItem error={errors?.['url']} label="Url" mb="s">
             <GoabInput
               name="url"
               type="url"
@@ -206,7 +208,7 @@ export const WebhookFormModal = (): JSX.Element => {
               aria-label="description"
             />
           </GoabFormItem>
-          <GoabFormItem error={errors?.['waitInterval']} label="Wait Interval">
+          <GoabFormItem error={errors?.['waitInterval']} label="Wait Interval" mb="s">
             <GoabInput
               name="interval"
               type="number"
@@ -225,7 +227,7 @@ export const WebhookFormModal = (): JSX.Element => {
             />
           </GoabFormItem>
 
-          <GoabFormItem label="Application">
+          <GoabFormItem label="Application" mb="s">
             <GoabDropdown
               name="targetId"
               value={webhook?.targetId}
@@ -249,7 +251,7 @@ export const WebhookFormModal = (): JSX.Element => {
               ))}
             </GoabDropdown>
           </GoabFormItem>
-          <GoabFormItem label="Description">
+          <GoabFormItem label="Description" mb="s">
             <GoabTextArea
               name="description"
               value={webhook?.description}
@@ -298,6 +300,7 @@ export const WebhookFormModal = (): JSX.Element => {
                       eventTypes: eventTypes.map((e) => ({ id: e })),
                     });
                   }}
+                  mb="m"
                 >
                   {name}
                 </GoabCheckbox>

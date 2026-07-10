@@ -15,6 +15,8 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
   coverageDirectory: '../../coverage/apps/status-app',
   moduleNameMapper: {
+    '^@abgov/react-components$': '@abgov/react-components',
+    '^@abgov/react-components-ds1$': '@abgov/react-components-ds1',
     '^@components(.*)$': path.resolve(__dirname, './src/app/components/$1'),
     '^@pages(.*)$': path.resolve(__dirname, './src/app/pages/$1'),
     '^@store(.*)$': path.resolve(__dirname, './src/app/store/$1'),

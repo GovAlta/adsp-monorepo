@@ -8,8 +8,6 @@ import { toKebabName } from '@lib/kebabName';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from '../styled-components';
 import { RootState } from '@store/index';
-import { FetchRealmRoles } from '@store/tenant/actions';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { selectCalendarsByName } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
@@ -47,7 +45,7 @@ export const CalendarModal = ({
         description: '',
         readRoles: [],
         updateRoles: [],
-      }
+      },
   );
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
@@ -66,7 +64,7 @@ export const CalendarModal = ({
 
   const calendarNames = useMemo(
     () => (calendars ? Object.values(calendars).map((c) => c.displayName) : []),
-    [calendars]
+    [calendars],
   );
 
   const title = isNew ? 'Add calendar' : tenantMode ? 'Edit calendar' : 'View calendar details';
@@ -76,7 +74,7 @@ export const CalendarModal = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', duplicateNameCheck(calendarNames, 'Calendar'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
@@ -133,7 +131,7 @@ export const CalendarModal = ({
         { title: 'modify', selectedRoles: calendar?.updateRoles, disabled: !tenantMode },
       ],
     }),
-    [handleRoleSelect, calendar?.readRoles, calendar?.updateRoles, tenantMode]
+    [handleRoleSelect, calendar?.readRoles, calendar?.updateRoles, tenantMode],
   );
 
   const handleCancelClick = () => {
@@ -152,6 +150,7 @@ export const CalendarModal = ({
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type={tenantMode ? 'secondary' : 'primary'}
             testId="calendar-modal-cancel"
             onClick={handleCancelClick}
@@ -160,6 +159,7 @@ export const CalendarModal = ({
           </GoabButton>
           {tenantMode && (
             <GoabButton
+              size="compact"
               type="primary"
               testId="calendar-modal-save"
               disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
@@ -176,7 +176,7 @@ export const CalendarModal = ({
         className="roles-scroll-pane"
         style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name']} label="Name" mb="s">
           <GoabInput
             type="text"
             name="name"
@@ -194,7 +194,7 @@ export const CalendarModal = ({
           />
         </GoabFormItem>
         {tenantMode && (
-          <GoabFormItem label="Calendar ID">
+          <GoabFormItem label="Calendar ID" mb="s">
             <IdField>{calendar?.name}</IdField>
           </GoabFormItem>
         )}

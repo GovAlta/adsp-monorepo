@@ -98,7 +98,7 @@ export const AddEditTargetCache = ({
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-edit-target-cancel"
             type="secondary"
             onClick={() => {
@@ -108,7 +108,7 @@ export const AddEditTargetCache = ({
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="target-save"
             disabled={!target.urn || validators.haveErrors()}
