@@ -36,7 +36,7 @@ jest.mock('./tenants', () => ({
 import { getAccessToken, getStatus, loginInteractive, logout } from './login';
 import { findTenantByName, findTenantByRealm, listTenants } from './tenants';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
-import { getCacheFilePath, setCachedToken } from './tokenCache';
+import { getCachedToken, getCacheFilePath, setCachedToken } from './tokenCache';
 import { AuthorizationCode } from 'simple-oauth2';
 
 const mockFindTenantByName = findTenantByName as jest.Mock;
@@ -332,6 +332,29 @@ describe('login', () => {
 
       const [authorizeArgs] = mockAuthClient.authorizeURL.mock.calls.at(-1);
       expect(authorizeArgs.scope).toEqual(['email', 'adsp-cli-admin']);
+    });
+
+    it('throws when the identity provider does not grant a requested scope, without caching the token', async () => {
+      // e.g. the scope isn't registered as an optional client scope on this realm's adsp-cli client.
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload({ scope: 'email' }));
+
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
+
+      await expect(loginPromise).rejects.toThrow(/did not grant the requested scope.*adsp-cli-admin/);
+      expect(getCachedToken(ACCESS_SERVICE_URL, REALM)).toBeNull();
+    });
+
+    it('caches the scope actually granted by the identity provider rather than just what was requested', async () => {
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload({ scope: 'email adsp-cli-admin offline_access' }));
+
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
+      await loginPromise;
+
+      expect(getCachedToken(ACCESS_SERVICE_URL, REALM)?.scopes).toEqual(['email', 'adsp-cli-admin', 'offline_access']);
     });
 
     it('reuses a cached token that already covers the newly requested scope, without a fresh browser login', async () => {
