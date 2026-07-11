@@ -170,6 +170,21 @@ async function browserLogin(accessServiceUrl: string, realm: string, scopes: str
     server.close();
   });
 
+  // The token endpoint echoes back the scope it actually granted (RFC 6749 §5.1) — trust that over
+  // what was merely requested, since Keycloak silently drops any scope not registered/grantable on
+  // the client rather than erroring. Falls back to the requested list only if the field is absent
+  // entirely (some environments/mocks don't echo it), rather than treating that as a hard failure.
+  const grantedScopeField = token['scope'];
+  const grantedScopes = typeof grantedScopeField === 'string' ? grantedScopeField.split(' ').filter(Boolean) : scopes;
+  const missingScopes = scopes.filter((scope) => !grantedScopes.includes(scope));
+  if (missingScopes.length > 0) {
+    throw new Error(
+      `Login succeeded, but the '${realm}' realm did not grant the requested scope(s): ${missingScopes.join(
+        ', '
+      )}. Check that they're registered as optional client scopes on that realm's adsp-cli client.`
+    );
+  }
+
   const expiresIn = (token['expires_in'] as number) ?? 300;
   setCachedToken(
     accessServiceUrl,
@@ -177,7 +192,7 @@ async function browserLogin(accessServiceUrl: string, realm: string, scopes: str
     token['access_token'] as string,
     token['refresh_token'] as string | undefined,
     expiresIn,
-    scopes
+    grantedScopes
   );
 
   return token['access_token'] as string;
