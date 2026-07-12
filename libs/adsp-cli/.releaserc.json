@@ -1,0 +1,25 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "adsp-cli-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "adsp-cli"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "pkgRoot": "dist/libs/adsp-cli"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false
+      }
+    ]
+  ]
+}

@@ -19,6 +19,7 @@ describe('EndpointStatusEntryEntity', () => {
     responseTime: 179,
     status: '200',
     applicationId: '1234',
+    tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
   };
   const userMock = {} as User;
 
@@ -30,7 +31,7 @@ describe('EndpointStatusEntryEntity', () => {
     expect(repositoryMock.save).toHaveBeenLastCalledWith(
       expect.objectContaining({
         url: endpointStatusEntityMock.url,
-      })
+      }),
     );
   });
 
@@ -40,7 +41,7 @@ describe('EndpointStatusEntryEntity', () => {
     expect(repositoryMock.delete).toHaveBeenLastCalledWith(
       expect.objectContaining({
         url: endpointStatusEntityMock.url,
-      })
+      }),
     );
   });
 });

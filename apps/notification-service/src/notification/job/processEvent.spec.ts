@@ -25,6 +25,7 @@ describe('createProcessEventJob', () => {
     getServiceConfiguration: jest.fn(),
     getServiceConfigurationRevision: jest.fn(),
     getNamedServiceConfiguration: jest.fn(),
+    clearCached: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -62,8 +63,10 @@ describe('createProcessEventJob', () => {
   beforeEach(() => {
     queueServiceMock.enqueue.mockReset();
     configurationServiceMock.getConfiguration.mockReset();
+    configurationServiceMock.clearCached.mockReset();
     tokenProviderMock.getAccessToken.mockReset();
     repositoryMock.getSubscriptions.mockReset();
+    eventServiceMock.send.mockReset();
   });
 
   it('can create job', () => {
@@ -368,7 +371,8 @@ describe('createProcessEventJob', () => {
       );
     });
 
-    it('signals retry when email fromEmail is not configured after retries exhausted', async () => {
+    // clean-code-ignore: 2.16
+    it('logs an error and continues when email fromEmail is not configured after retries exhausted', async () => {
       jest.useFakeTimers();
       try {
         const job = createProcessEventJob({
@@ -404,6 +408,7 @@ describe('createProcessEventJob', () => {
 
         tokenProviderMock.getAccessToken.mockResolvedValue('token');
         configurationServiceMock.getConfiguration.mockResolvedValue(configuration);
+        repositoryMock.getSubscriptions.mockResolvedValue({ results: [], page: {} });
 
         let capturedErr: unknown;
         const jobDone = new Promise<void>((resolve) => {
@@ -420,10 +425,19 @@ describe('createProcessEventJob', () => {
         await jest.runAllTimersAsync();
         await jobDone;
 
-        expect(capturedErr).toBeTruthy();
-        expect((capturedErr as Error).message).toContain(`${tenantId}`);
-        expect((capturedErr as Error).message).toContain('test:test-run');
+        expect(capturedErr).toBeFalsy();
+        // clean-code-ignore: 2.11
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining(`Configuration not ready: email fromEmail is not set for tenant ${tenantId}`),
+          expect.anything(),
+        );
         expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'notification-config-retried',
+            payload: expect.objectContaining({ retries: 5, resolved: false }),
+          }),
+        );
       } finally {
         jest.useRealTimers();
       }
@@ -510,6 +524,17 @@ describe('createProcessEventJob', () => {
         expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
           expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' }),
         );
+        expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(
+          tenantId,
+          'platform',
+          'notification-service',
+        );
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'notification-config-retried',
+            payload: expect.objectContaining({ retries: 1, resolved: true }),
+          }),
+        );
       } finally {
         jest.useRealTimers();
       }
@@ -557,6 +582,9 @@ describe('createProcessEventJob', () => {
         (err) => {
           expect(err).toBeFalsy();
           expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+          expect(eventServiceMock.send).not.toHaveBeenCalledWith(
+            expect.objectContaining({ name: 'notification-config-retried' }),
+          );
           done();
         },
       );

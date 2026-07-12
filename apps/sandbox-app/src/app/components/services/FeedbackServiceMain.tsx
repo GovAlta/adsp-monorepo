@@ -1,0 +1,28 @@
+import React from 'react';
+import { ServiceContainer } from '../styled-components';
+import { GoabContainer, GoabText } from '@abgov/react-components';
+import { ServiceMainProps } from './types';
+
+import { ServiceListTemplate, ServicePage } from './ServiceListTemplate';
+import { addFeedbackServicePages } from '../../utils/servicePageUtils';
+
+export const FeedbackServiceMain = ({ tenantName }: ServiceMainProps) => {
+  const pages = addFeedbackServicePages(tenantName);
+
+  return (
+    <ServiceContainer>
+      <GoabContainer
+        accent="thick"
+        type="non-interactive"
+        width={'full'}
+        testId={'feedbackServiceContainer'}
+        heading={'Feedback Service'}
+      >
+        <GoabText size="body-m" mb="none">
+          The following contains POC or samples for the Feedback service.
+        </GoabText>
+        <ServiceListTemplate servicePages={pages} />
+      </GoabContainer>
+    </ServiceContainer>
+  );
+};

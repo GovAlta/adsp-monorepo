@@ -10,22 +10,27 @@ export class EndpointStatusEntryEntity implements EndpointStatusEntry {
   responseTime: number;
   status: number | string;
   applicationId: string;
+  tenantId: string;
 
   static create(
     repository: EndpointStatusEntryRepository,
-    entry: NewOrExisting<EndpointStatusEntry>
+    entry: NewOrExisting<EndpointStatusEntry>,
   ): Promise<EndpointStatusEntryEntity> {
     const entity = new EndpointStatusEntryEntity(repository, entry);
     return repository.save(entity);
   }
 
-  constructor(private repository: EndpointStatusEntryRepository, entry: NewOrExisting<EndpointStatusEntry>) {
+  constructor(
+    private repository: EndpointStatusEntryRepository,
+    entry: NewOrExisting<EndpointStatusEntry>,
+  ) {
     this.ok = entry.ok;
     this.url = entry?.url;
     this.timestamp = entry.timestamp;
     this.responseTime = entry.responseTime;
     this.status = entry.status;
     this.applicationId = entry.applicationId;
+    this.tenantId = entry.tenantId;
   }
 
   async delete(user: User): Promise<boolean> {

@@ -3,8 +3,13 @@ import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { EndpointStatusEntry } from '../types';
 
 export interface EndpointStatusEntryRepository extends Repository<EndpointStatusEntryEntity, EndpointStatusEntry> {
-  findRecentByUrlAndApplicationId(url: string, applicationId: string, top): Promise<EndpointStatusEntryEntity[]>;
+  findRecentByUrlAndApplicationId(
+    url: string,
+    applicationId: string,
+    tenantId: string,
+    top,
+  ): Promise<EndpointStatusEntryEntity[]>;
   findRecent(ageInMinutes?: number): Promise<EndpointStatusEntryEntity[]>;
   deleteOldUrlStatus(): Promise<boolean>;
-  deleteAll(appKey: string): Promise<number>;
+  deleteAll(appKey: string, tenantId: string): Promise<number>;
 }

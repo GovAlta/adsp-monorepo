@@ -40,7 +40,7 @@ export class ApplicationRepo {
     serviceId: AdspId,
     directoryService: ServiceDirectory,
     tokenProvider: TokenProvider,
-    configurationService: ConfigurationService
+    configurationService: ConfigurationService,
   ) {
     this.#repository = repository;
     this.#serviceId = serviceId;
@@ -133,7 +133,7 @@ export class ApplicationRepo {
     monitorOnly: boolean,
     status: PublicServiceStatusType,
     tenant: Tenant,
-    user?: User
+    user?: User,
   ) => {
     const newApp = {
       appKey: appKey,
@@ -170,7 +170,7 @@ export class ApplicationRepo {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     return newApp.appKey;
   };
@@ -188,7 +188,7 @@ export class ApplicationRepo {
     }
 
     // Delete its health status
-    await this.#endpointStatusEntryRepository.deleteAll(app.appKey);
+    await this.#endpointStatusEntryRepository.deleteAll(app.appKey, user.tenantId.toString());
 
     // Delete the app itself.
     this.#deleteConfigurationApp(appKey, user.tenantId);
@@ -206,7 +206,7 @@ export class ApplicationRepo {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
   };
 
