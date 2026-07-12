@@ -1,7 +1,8 @@
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useEffect } from 'react';
+
 import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AppDispatch, authenticatedUserSelector, environmentSelector, loginUser, tenantSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -16,6 +17,7 @@ interface SignInProps {
 }
 
 export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const tenant = useSelector(tenantSelector);
@@ -23,9 +25,16 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
   const environment = useSelector(environmentSelector);
   const isServicesUrl = (path: string): boolean => /\/services(\/.*)?$/.test(path);
 
+  useEffect(() => {
+    if (environment.tenantName && !location.pathname.includes(environment.tenantName)) {
+      navigate('/');
+    }
+  }, [environment.tenantName, location.pathname, navigate]);
+
   const shouldShowSignInButton = () => {
     return authenticatedUser === null && (url.endsWith(`/${environment.tenantName}`) || isServicesUrl(url));
   };
+
   const onSignInStart = () => {
     if (!isServicesUrl(url)) {
       dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
