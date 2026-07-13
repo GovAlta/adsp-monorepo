@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { GoabTable } from '@abgov/react-components';
+import { GoabTable } from '@abgov/react-components-ds1';
 import { DataObject, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
 import { GoabIcon } from '@abgov/react-components-ds1';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';

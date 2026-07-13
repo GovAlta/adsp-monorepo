@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonFormsProps, UISchemaElement } from '@jsonforms/core';
 import GoACalloutControl from './GoACalloutControl';
-import { GoabCalloutSize, GoabCalloutType } from '@abgov/react-components';
+import { GoabCalloutSize, GoabCalloutType } from '@abgov/react-components-ds1';
 
 describe('callout control', () => {
   const uiSchema = (
