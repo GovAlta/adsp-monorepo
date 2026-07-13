@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { environmentSelector } from '../state';
 import { getFeedbackContext } from './useFeedbackWidget';
 
-export const useFeedbackScript = (tenantName?: string) => {
+export const useInitializeFeedbackScript = (tenantName?: string) => {
   const environment = useSelector(environmentSelector);
 
   useEffect(() => {

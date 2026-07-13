@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useFeedbackScript } from './useFeedbackScript';
+import { useInitializeFeedbackScript } from './useInitializeFeedbackScript';
 import { useSelector } from 'react-redux';
 import { getFeedbackContext } from './useFeedbackWidget';
 
@@ -16,7 +16,7 @@ jest.mock('./useFeedbackWidget', () => ({
   getFeedbackContext: jest.fn(),
 }));
 
-describe('useFeedbackScript', () => {
+describe('useInitializeFeedbackScript', () => {
   afterEach(() => {
     jest.clearAllMocks();
     document.head.innerHTML = ''; // Clean up DOM
@@ -27,7 +27,7 @@ describe('useFeedbackScript', () => {
     (useSelector as jest.Mock).mockReturnValue({ feedback: {} });
 
     // Act
-    renderHook(() => useFeedbackScript());
+    renderHook(() => useInitializeFeedbackScript());
 
     // Assert
     expect(document.querySelector('script')).toBeNull();
@@ -43,7 +43,7 @@ describe('useFeedbackScript', () => {
     document.head.appendChild(existingScript);
 
     // Act
-    renderHook(() => useFeedbackScript());
+    renderHook(() => useInitializeFeedbackScript());
 
     // Assert
     const scripts = document.querySelectorAll(`script[src="${mockUrl}"]`);
@@ -56,7 +56,7 @@ describe('useFeedbackScript', () => {
     (useSelector as jest.Mock).mockReturnValue({ feedback: { url: mockUrl } });
 
     // Act
-    renderHook(() => useFeedbackScript());
+    renderHook(() => useInitializeFeedbackScript());
 
     // Assert
     const script = document.querySelector(`script[src="${mockUrl}"]`);
@@ -74,7 +74,7 @@ describe('useFeedbackScript', () => {
     (getFeedbackContext as jest.Mock).mockReturnValue({ user: 'test-user' });
 
     // Act
-    renderHook(() => useFeedbackScript('custom-tenant'));
+    renderHook(() => useInitializeFeedbackScript('custom-tenant'));
 
     const script = document.querySelector(`script[src="${mockUrl}"]`);
     script?.onload?.(new Event('load'));
