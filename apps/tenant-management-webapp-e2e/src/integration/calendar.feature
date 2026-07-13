@@ -110,7 +110,7 @@ Feature: Calendar
         Then the user views View calendar details modal is closed
 
     # Core calendar of "form-intake" no longer can be used to create events, so skipping this test
-    @TEST_CS-4120 @REQ_CS-3587 @regression @ignore
+    @TEST_CS-4120 @REQ_CS-3587 @regression @ignore @obsolete
     Scenario: As a tenant admin, I can select a core calendar from the calendar list and add/edit/delete events for the core calendar
         Given a tenant admin user is on calendar service overview page
         When the user selects "Events" tab for "Calendar"
