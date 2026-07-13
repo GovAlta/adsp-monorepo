@@ -78,9 +78,7 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
                   </GoabCallout>
                 </Placeholder>
               )}
-              {from && authenticatedUser === null && (
-                <GoabCircularProgress variant="inline" size="large" message="Signing in..." visible={true} />
-              )}
+
               {shouldShowSignInButton() && (
                 <GoabButtonGroup alignment="end">
                   <GoabButton type="primary" data-testid="sandbox-sign-in" onClick={onSignInStart}>
