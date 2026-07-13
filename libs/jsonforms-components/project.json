@@ -33,7 +33,7 @@
         "entryFile": "libs/jsonforms-components/src/index.ts",
         "external": [
           "@apidevtools/json-schema-ref-parser",
-          "@abgov/react-components-ds1",
+          "@abgov/react-components-new",
           "@jsonforms/core",
           "@jsonforms/react",
           "react",

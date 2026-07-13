@@ -20,7 +20,7 @@ jest.mock('@jsonforms/react', () => {
 
 const useJsonFormsMock = jsonforms.useJsonForms as jest.Mock;
 
-jest.mock('@abgov/react-components-ds1', () => ({
+jest.mock('@abgov/react-components', () => ({
   //eslint-disable-next-line
   GoabFormItem: ({ children }: any) => <div>{children}</div>,
   //eslint-disable-next-line

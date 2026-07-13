@@ -9,7 +9,7 @@ jest.mock('../../util', () => ({
   getLabelText: (_scope: string, label: string) => label,
 }));
 
-jest.mock('@abgov/react-components-ds1', () => ({
+jest.mock('@abgov/react-components', () => ({
   GoabButton: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
   GoabIconButton: ({ children }: { children?: React.ReactNode }) => <button>{children}</button>,
   GoabCheckbox: ({

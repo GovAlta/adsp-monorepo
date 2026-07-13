@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoabContainer } from '@abgov/react-components-ds1';
+import { GoabContainer } from '@abgov/react-components';
 import { GoabContainerAccent } from '@abgov/ui-components-common';
 import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
