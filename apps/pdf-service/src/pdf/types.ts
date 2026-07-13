@@ -38,12 +38,13 @@ export interface PdfTemplate {
   footer?: string;
   header?: string;
   additionalStyles?: string;
+  variables?: string;
   startWithDefault?: boolean;
   logger: Logger;
 }
 
-
-export interface PdfTemplateConfiguration { // clean-code-ignore: RULE-19
+export interface PdfTemplateConfiguration {
+  // clean-code-ignore: RULE-19
   id: string;
   name: string;
   description: string;
@@ -53,7 +54,6 @@ export interface PdfTemplateConfiguration { // clean-code-ignore: RULE-19
   additionalStyles?: string; // clean-code-ignore: RULE-19
   variables?: string;
 }
-
 
 export interface ConfigurationUpdateOperation<T> {
   operation: 'UPDATE';

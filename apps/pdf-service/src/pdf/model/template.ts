@@ -15,6 +15,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   header?: string;
   footer?: string;
   additionalStyles?: string;
+  variables?: string;
   startWithDefault?: boolean;
   additionalStylesWrapped?: string;
   logger: Logger;
@@ -35,9 +36,10 @@ export class PdfTemplateEntity implements PdfTemplate {
       header,
       footer,
       additionalStyles,
+      variables,
       startWithDefault,
       logger,
-    }: PdfTemplate
+    }: PdfTemplate,
   ) {
     this.tenantId = tenantId;
     this.id = id;
@@ -46,6 +48,7 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.template = template;
     this.header = header;
     this.footer = footer;
+    this.variables = variables;
     this.templateService = templateService;
     this.startWithDefault = startWithDefault;
 
@@ -58,15 +61,15 @@ export class PdfTemplateEntity implements PdfTemplate {
     if (!this.evaluateTemplate) {
       this.evaluateTemplate = this.templateService.getTemplateFunction(
         this.additionalStylesWrapped.concat(this.template),
-        null
+        null,
       );
       this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
         this.footer ? this.additionalStylesWrapped.concat(this.footer) : this.footer,
-        'pdf-footer'
+        'pdf-footer',
       );
       this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
         this.header ? this.additionalStylesWrapped.concat(this.header) : this.header,
-        'pdf-header'
+        'pdf-header',
       );
     }
   }
