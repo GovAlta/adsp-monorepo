@@ -58,12 +58,13 @@ Then('the user views Queue page for {string}, {string}', function (namespace, na
 When(
   'the user enters {string} as Assigner roles and {string} as Worker roles',
   function (assignerRole: string, workerRole: string) {
+    cy.viewport(1920, 1080);
+    cy.wait(2000);
+
     //Unselect all checkboxes
     taskObj
       .queuePageCheckboxesTables()
-      .find('goa-checkbox')
-      .shadow()
-      .find('[class^="container"]')
+      .find('input[type="checkbox"]')
       .then((elements) => {
         for (let i = 0; i < elements.length; i++) {
           if (elements[i].getAttribute('class')?.includes('selected')) {
@@ -76,12 +77,35 @@ When(
     if (assignerRole.toLowerCase() != 'empty') {
       const assignerRoles = assignerRole.split(',');
       for (let i = 0; i < assignerRoles.length; i++) {
-        taskObj
-          .queuePageCheckboxesTables()
-          .find('goa-checkbox[testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
-          .shadow()
-          .find('[class^="container"]')
-          .click({ force: true });
+        if (assignerRoles[i].includes(':')) {
+          const clientRoleStringArray = assignerRoles[i].split(':');
+          let clientName = '';
+          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+            if (j !== clientRoleStringArray.length - 2) {
+              clientName = clientName + clientRoleStringArray[j].trim() + ':';
+            } else {
+              clientName = clientName + clientRoleStringArray[j];
+            }
+          }
+          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+          taskObj
+            .queuePageClientRolesTable(clientName)
+            .find('.role-name')
+            .contains(roleName)
+            .next()
+            .find('input[type="checkbox"]')
+            .scrollIntoView()
+            .click({ force: true });
+        } else {
+          taskObj
+            .queuePageRolesTable()
+            .find('.role-name')
+            .contains(assignerRoles[i].trim())
+            .next()
+            .find('input[type="checkbox"]')
+            .scrollIntoView()
+            .click({ force: true });
+        }
         cy.wait(1000); // Wait the checkbox status to change before proceeding
       }
     }
@@ -107,9 +131,7 @@ When(
             .contains(roleName)
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -120,9 +142,7 @@ When(
             .contains(workerRoles[i].trim())
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
