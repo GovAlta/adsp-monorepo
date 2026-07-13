@@ -73,7 +73,7 @@ Feature: Form
     When the user sends a request to delete "mytag<$ph>" tag in directory service
     Then the user should not get "mytag<$ph>" tag in the response when the user sends a request to get the tag
 
-  # Bug #: CS-4368 tasks tab shows a blank page with console errors
+  # Task list doesn't have a search and the newly created tasks are at the end of the list, which makes the test hard to find the task. Ignore for now.
   # TEST DATA: a form definition named "autotest-submission-task" is precreated
   # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
   @TEST_CS-2780 @REQ_CS-2570 @regression @ignore
