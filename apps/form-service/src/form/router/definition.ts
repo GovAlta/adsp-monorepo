@@ -60,7 +60,7 @@ async function patchConfigurationDefinition(
 ): Promise<{ latest: { revision: number; configuration: FormDefinition } }> {
   try {
     const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-      new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
+      new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
       { operation: 'REPLACE', configuration: definition },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -275,7 +275,7 @@ export function updateFormDefinition(directory: ServiceDirectory, tokenProvider:
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
       const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
+        new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
         { operation: 'REPLACE', configuration: definition },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -350,7 +350,7 @@ export function deleteFormDefinition(directory: ServiceDirectory, tokenProvider:
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      await axios.delete(new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href, {
+      await axios.delete(new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
         params: { tenantId: tenantId?.toString() },
       });
