@@ -35,6 +35,7 @@ export const UPDATE_TEMP_TEMPLATE = 'pdf/UPDATE_TEMP_TEMPLATE';
 export const MARK_PDF_PREVIEW_STALE_ACTION = 'pdf/MARK_PDF_PREVIEW_STALE_ACTION';
 export const CLEAR_PDF_PREVIEW_STALE_ACTION = 'pdf/CLEAR_PDF_PREVIEW_STALE_ACTION';
 export const SAVE_UPDATED_PDF_TEMPLATE_ACTION = 'pdf/SAVE_UPDATED_PDF_TEMPLATE_ACTION';
+export const UPDATE_PDF_TEMPLATE_FROM_AGENT_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_FROM_AGENT_ACTION';
 
 export const SOCKET_CHANNEL = 'pdf/SOCKET_CHANNEL';
 
@@ -53,6 +54,11 @@ export interface ClearPdfPreviewStaleAction {
 export interface SaveUpdatedPdfTemplateAction {
   type: typeof SAVE_UPDATED_PDF_TEMPLATE_ACTION;
   payload: Record<string, object>;
+}
+
+export interface UpdatePdfTemplateFromAgentAction {
+  type: typeof UPDATE_PDF_TEMPLATE_FROM_AGENT_ACTION;
+  payload: PdfTemplate;
 }
 
 export interface FetchCorePdfTemplatesAction {
@@ -211,6 +217,7 @@ export type PdfActionTypes =
   | MarkPdfPreviewStaleAction
   | ClearPdfPreviewStaleAction
   | SaveUpdatedPdfTemplateAction
+  | UpdatePdfTemplateFromAgentAction
   | UpdatePdfResponseAction;
 
 export const createPdfTemplate = (template: PdfTemplate): CreatePdfTemplateAction => ({
@@ -365,5 +372,10 @@ export const clearPdfPreviewStale = (): ClearPdfPreviewStaleAction => ({
 
 export const saveUpdatedPdfTemplate = (template: Record<string, object>): SaveUpdatedPdfTemplateAction => ({
   type: SAVE_UPDATED_PDF_TEMPLATE_ACTION,
+  payload: template,
+});
+
+export const updatePdfTemplateFromAgent = (template: PdfTemplate): UpdatePdfTemplateFromAgentAction => ({
+  type: UPDATE_PDF_TEMPLATE_FROM_AGENT_ACTION,
   payload: template,
 });

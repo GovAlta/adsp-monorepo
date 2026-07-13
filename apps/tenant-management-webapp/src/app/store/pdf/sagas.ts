@@ -41,8 +41,8 @@ import {
   updateJobs,
   clearPdfPreviewStale,
   markPdfPreviewStale,
-  getPdfTemplates,
   saveUpdatedPdfTemplate,
+  updatePdfTemplateFromAgent,
   generatePdf as generatePdfAction,
 } from './action';
 import { readFileAsync } from './readFile';
@@ -455,7 +455,9 @@ export function* fetchPdfMetrics(): SagaIterator {
   });
 }
 
-const MUTATION_TOOLS = new Set(['pdfConfigurationUpdateTool', 'pdfDataUpdateTool']);
+// Tools whose results carry the full saved PDF template; the result is merged into the store,
+// so only add tools here whose result shape matches PdfTemplate.
+const MUTATION_TOOLS = new Set(['pdfConfigurationUpdateTool']);
 
 function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
   return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
@@ -466,13 +468,20 @@ export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponse
     yield put(markPdfPreviewStale());
     const chunkPayload = chunk?.payload as unknown as { result: Record<string, object> };
     yield put(saveUpdatedPdfTemplate(chunkPayload.result));
+
+    // The tool result is the authoritative saved template; merge it into pdfTemplates directly
+    // so the editor tabs reflect the agent's changes. A refetch of the configuration "latest"
+    // immediately after the update can return a stale cached revision, so it is not used here.
+    const updatedTemplate = chunkPayload.result as unknown as PdfTemplate;
+    if (updatedTemplate?.id) {
+      yield put(updatePdfTemplateFromAgent(updatedTemplate));
+    }
   }
 
   if (done) {
     const currentlyGeneratedPDFData = yield select((state: RootState) => state.pdf?.currentlyGeneratedPDFData);
     const isPreviewMarkedStale: boolean = yield select((state: RootState) => state.pdf.previewStale);
     if (isPreviewMarkedStale) {
-      yield put(getPdfTemplates());
       yield put(clearPdfPreviewStale());
 
       const payload = {
