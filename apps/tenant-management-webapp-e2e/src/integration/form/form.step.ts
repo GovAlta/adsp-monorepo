@@ -978,7 +978,7 @@ Then(
 When('the user saves the changes if any and go back out of form definition editor', function () {
   formObj.editorSaveButton().then((element) => {
     cy.log(element.prop('disabled'));
-    if (element.prop('disabled') == 'false') {
+    if (element.prop('disabled') == null) {
       formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
       cy.wait(6000);
     }
