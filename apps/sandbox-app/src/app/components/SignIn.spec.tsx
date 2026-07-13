@@ -109,17 +109,6 @@ describe('SignIn Component', () => {
     expect(screen.queryByTestId('sandbox-sign-in')).not.toBeInTheDocument();
   });
 
-  test('shows loading spinner when sign-in button should not display', () => {
-    // Arrange — authenticated user means shouldShowSignInButton returns false
-    setupSelectors({ roles: ['admin'] });
-
-    // Act
-    render(<SignIn url="https://example.com/test-tenant" />);
-
-    // Assert
-    expect(screen.getByText('Loading services...')).toBeInTheDocument();
-  });
-
   test('shows not authorized message when user has no roles', () => {
     // Arrange
     setupSelectors({ roles: [] });

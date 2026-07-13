@@ -66,11 +66,6 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
           <GridItem md={1} />
           <GridItem md={10}>
             <div>
-              {!shouldShowSignInButton() && (
-                <CenteredProgress>
-                  <GoabCircularProgress variant="inline" size="large" message="Loading services..." visible={true} />
-                </CenteredProgress>
-              )}
               {authenticatedUser && authenticatedUser.roles.length === 0 && (
                 <Placeholder>
                   <GoabCallout heading="Not authorized" type="information">
