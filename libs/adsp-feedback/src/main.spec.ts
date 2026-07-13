@@ -5,11 +5,11 @@ describe('AdspFeedback selectRating', () => {
     adspFeedback = new AdspFeedback();
     document.body.innerHTML = `
       <div>
-        <div class="rating" data-index="0"><img class="rating" src="defaultImage1" /></div>
-        <div class="rating" data-index="1"><img class="rating" src="defaultImage2" /></div>
-        <div class="rating" data-index="2"><img class="rating" src="defaultImage3" /></div>
-        <div class="rating" data-index="3"><img class="rating" src="defaultImage4" /></div>
-        <div class="rating" data-index="4"><img class="rating" src="defaultImage5" /></div>
+        <div class="rating" data-index="0"><img class="adsp-fb-rating-icon" src="defaultImage1" /></div>
+        <div class="rating" data-index="1"><img class="adsp-fb-rating-icon" src="defaultImage2" /></div>
+        <div class="rating" data-index="2"><img class="adsp-fb-rating-icon" src="defaultImage3" /></div>
+        <div class="rating" data-index="3"><img class="adsp-fb-rating-icon" src="defaultImage4" /></div>
+        <div class="rating" data-index="4"><img class="adsp-fb-rating-icon" src="defaultImage5" /></div>
         <div class="ratingText" data-index="0"></div>
         <div class="ratingText" data-index="1"></div>
         <div class="ratingText" data-index="2"></div>
@@ -95,7 +95,7 @@ describe('AdspFeedback selectRating', () => {
     const previousRating = adspFeedback['selectedRating'];
     adspFeedback['selectRating'](ratingIndex);
     // Verify the new image source is updated
-    const images = document.querySelectorAll('.rating') as NodeListOf<HTMLImageElement>;
+    const images = document.querySelectorAll('.adsp-fb-rating-icon') as NodeListOf<HTMLImageElement>;
     expect(images[ratingIndex].src).toContain('clickedImage3');
     if (previousRating !== -1) {
       const previousImage = images[previousRating] as HTMLImageElement;
@@ -210,11 +210,11 @@ describe('AdspFeedback style isolation', () => {
         <span id="host-tooltip" class="tooltip-text">Host tooltip</span>
       </main>
       <div id="widget-root">
-        <img class="rating" src="defaultImage1" />
-        <img class="rating" src="defaultImage2" />
-        <img class="rating" src="defaultImage3" />
-        <img class="rating" src="defaultImage4" />
-        <img class="rating" src="defaultImage5" />
+        <img class="adsp-fb-rating-icon" src="defaultImage1" />
+        <img class="adsp-fb-rating-icon" src="defaultImage2" />
+        <img class="adsp-fb-rating-icon" src="defaultImage3" />
+        <img class="adsp-fb-rating-icon" src="defaultImage4" />
+        <img class="adsp-fb-rating-icon" src="defaultImage5" />
         <p class="ratingText">Very Difficult</p>
         <p class="ratingText">Difficult</p>
         <p class="ratingText">Neutral</p>
@@ -234,7 +234,7 @@ describe('AdspFeedback style isolation', () => {
     const hostRating = document.getElementById('host-rating') as HTMLImageElement;
     const hostText = document.getElementById('host-rating-text') as HTMLElement;
     const hostTooltip = document.getElementById('host-tooltip') as HTMLElement;
-    const widgetRating = document.querySelector('#widget-root .rating') as HTMLImageElement;
+    const widgetRating = document.querySelector('#widget-root .adsp-fb-rating-icon') as HTMLImageElement;
 
     expect(hostRating.getAttribute('src')).toBe('host-default');
     expect(hostText.style.color).toBe('');
@@ -278,6 +278,9 @@ describe('AdspFeedback style isolation', () => {
     expect(styleText).toContain('.adsp-fb .adsp-fb-sent button.adsp-fb-form-primary');
     expect(styleText).toContain('.adsp-fb .tooltip-text');
     expect(styleText).toContain('.adsp-fb .radio');
+    expect(styleText).toContain('.adsp-fb .adsp-fb-rating-icon');
+    expect(styleText).toContain('width: 46px !important;');
+    expect(styleText).toContain('filter: none !important;');
     expect(styleText).toContain('.adsp-fb-root .overlay');
     expect(styleText).not.toMatch(/(^|\n)\s*body\.modal-open\b/);
     expect(styleText).not.toMatch(/(^|\n)\s*\.tooltip-text\b/);

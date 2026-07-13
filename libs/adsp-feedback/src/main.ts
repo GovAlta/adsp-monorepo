@@ -423,7 +423,7 @@ export class AdspFeedback implements AdspFeedbackApi {
           @mouseout="${() => this.updateHover(index, false)}"
           @click="${() => this.selectRating(index)}"
           @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)}
-          class="rating"
+          class="adsp-fb-rating-icon"
           alt="${rating.label}"
           tabindex="0"
           aria-label="${rating.label}"
@@ -444,7 +444,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private updateHover = (index: number, isHovering: boolean) => {
     const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
-    const images = this.getWidgetElements<HTMLImageElement>('.rating');
+    const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
     const image = images[index] as HTMLImageElement;
     image.src =
       isHovering && this.selectedRating !== index
@@ -471,7 +471,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private clearRating = (index: number) => {
     if (index > -1) {
       const rating = this.ratings[index];
-      const images = this.getWidgetElements<HTMLImageElement>('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
       const image = images[index] as HTMLImageElement;
       image.src = rating.svgDefault;
 
@@ -483,7 +483,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private defaultRating = () => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
-      const images = this.getWidgetElements<HTMLImageElement>('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
       const image = images[i] as HTMLImageElement;
 
       image.src = rating.svgDefault;
@@ -492,7 +492,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private errorsOnRating = (isError: boolean) => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
-      const images = this.getWidgetElements<HTMLImageElement>('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
       const image = images[i] as HTMLImageElement;
       if (isError) {
         image.src = rating.svgError;
@@ -549,7 +549,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
 
     this.updateHover(index, false);
-    const images = this.getWidgetElements<HTMLImageElement>('.rating');
+    const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
     const ratingNew = this.ratings[index];
     const imageNew = images[index] as HTMLImageElement;
     imageNew.src = ratingNew.svgClick;
@@ -991,7 +991,21 @@ export class AdspFeedback implements AdspFeedbackApi {
             border: 1px solid #feba35;
             outline: #feba35 solid 1px;
           }
-          .adsp-fb .rating {
+          .adsp-fb .adsp-fb-rating-icon {
+            display: block !important;
+            width: 46px !important;
+            min-width: 46px !important;
+            max-width: 46px !important;
+            height: 46px !important;
+            min-height: 46px !important;
+            max-height: 46px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            filter: none !important;
+            object-fit: contain !important;
             cursor: pointer;
             transform: translateZ(0);
             will-change: transform, color;
@@ -1244,8 +1258,13 @@ export class AdspFeedback implements AdspFeedbackApi {
                 align-items: center;
               }
               > div > img {
-                height: 32px;
-                padding-right: 8px;
+                height: 32px !important;
+                width: 32px !important;
+                min-width: 32px !important;
+                max-width: 32px !important;
+                min-height: 32px !important;
+                max-height: 32px !important;
+                margin-right: 8px;
               }
             }
             .adsp-fb .tooltip-text {
