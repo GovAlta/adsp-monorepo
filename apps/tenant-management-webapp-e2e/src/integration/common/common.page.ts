@@ -114,8 +114,7 @@ class Common {
   }
 
   formAppFormSubmitButton() {
-    return cy.get('goa-button').shadow().find('button').contains('Submit').should('not.be.disabled');
-    // return cy.xpath('//goa-button[text()="Submit" and @disabled="false"]');
+    return cy.xpath('//goa-button[text()="Submit" and not(@disabled)]');
   }
 
   //Status app page objects
