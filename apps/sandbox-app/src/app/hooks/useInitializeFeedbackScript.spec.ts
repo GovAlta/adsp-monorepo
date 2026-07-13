@@ -1,8 +1,7 @@
 import { renderHook } from '@testing-library/react';
-import { useFeedbackScript } from './useFeedbackScript';
+import { useInitializeFeedbackScript } from './useInitializeFeedbackScript';
 import { useSelector } from 'react-redux';
-import { environmentSelector } from '../state';
-import { DEFAULT_TENANT, getFeedbackContext } from './useFeedbackWidget';
+import { getFeedbackContext } from './useFeedbackWidget';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -17,7 +16,7 @@ jest.mock('./useFeedbackWidget', () => ({
   getFeedbackContext: jest.fn(),
 }));
 
-describe('useFeedbackScript', () => {
+describe('useInitializeFeedbackScript', () => {
   afterEach(() => {
     jest.clearAllMocks();
     document.head.innerHTML = ''; // Clean up DOM
@@ -28,7 +27,7 @@ describe('useFeedbackScript', () => {
     (useSelector as jest.Mock).mockReturnValue({ feedback: {} });
 
     // Act
-    renderHook(() => useFeedbackScript());
+    renderHook(() => useInitializeFeedbackScript());
 
     // Assert
     expect(document.querySelector('script')).toBeNull();
@@ -44,7 +43,7 @@ describe('useFeedbackScript', () => {
     document.head.appendChild(existingScript);
 
     // Act
-    renderHook(() => useFeedbackScript());
+    renderHook(() => useInitializeFeedbackScript());
 
     // Assert
     const scripts = document.querySelectorAll(`script[src="${mockUrl}"]`);
@@ -57,7 +56,7 @@ describe('useFeedbackScript', () => {
     (useSelector as jest.Mock).mockReturnValue({ feedback: { url: mockUrl } });
 
     // Act
-    renderHook(() => useFeedbackScript());
+    renderHook(() => useInitializeFeedbackScript());
 
     // Assert
     const script = document.querySelector(`script[src="${mockUrl}"]`);
@@ -75,7 +74,7 @@ describe('useFeedbackScript', () => {
     (getFeedbackContext as jest.Mock).mockReturnValue({ user: 'test-user' });
 
     // Act
-    renderHook(() => useFeedbackScript('custom-tenant'));
+    renderHook(() => useInitializeFeedbackScript('custom-tenant'));
 
     const script = document.querySelector(`script[src="${mockUrl}"]`);
     script?.onload?.(new Event('load'));
@@ -89,27 +88,5 @@ describe('useFeedbackScript', () => {
     // Verify getContext function
     const getContext = mockInitialize.mock.calls[0][0].getContext;
     expect(getContext()).toEqual({ user: 'test-user' });
-  });
-
-  test('uses DEFAULT_TENANT if tenantName is not provided', () => {
-    // Arrange
-    const mockUrl = 'https://feedback.example.com/script.js';
-    const mockInitialize = jest.fn();
-    globalThis.adspFeedback = { initialize: mockInitialize };
-
-    (useSelector as jest.Mock).mockReturnValue({ feedback: { url: mockUrl } });
-    (getFeedbackContext as jest.Mock).mockReturnValue({ user: 'test-user' });
-
-    // Act
-    renderHook(() => useFeedbackScript());
-
-    const script = document.querySelector(`script[src="${mockUrl}"]`);
-    script?.onload?.(new Event('load'));
-
-    // Assert
-    expect(mockInitialize).toHaveBeenCalledWith({
-      tenant: 'default-tenant',
-      getContext: expect.any(Function),
-    });
   });
 });

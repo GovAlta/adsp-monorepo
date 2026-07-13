@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-export const DEFAULT_TENANT = 'autotest';
 
 /**
  * Handles the feedback link click event.

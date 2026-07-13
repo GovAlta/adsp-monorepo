@@ -12,6 +12,7 @@ jest.mock('react-redux', () => ({
 
 jest.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: '/test-tenant' }),
+  useNavigate: jest.fn(),
 }));
 
 jest.mock('../state', () => ({
@@ -79,15 +80,7 @@ describe('SignIn Component', () => {
     expect(screen.getByText('Sign in to the sandbox')).toBeInTheDocument();
   });
 
-  test('shows the sign-in button when user is not authenticated and URL matches tenant', () => {
-    // Arrange & Act
-    render(<SignIn url="https://example.com/test-tenant" />);
-
-    // Assert
-    expect(screen.getByTestId('sandbox-sign-in')).toBeInTheDocument();
-  });
-
-  test('does not show the sign-in button when user is authenticated', () => {
+  test('does not show sign-in button when user is authenticated', () => {
     // Arrange
     setupSelectors({ roles: ['admin'] });
 
@@ -98,20 +91,20 @@ describe('SignIn Component', () => {
     expect(screen.queryByTestId('sandbox-sign-in')).not.toBeInTheDocument();
   });
 
-  test('shows the not authorized message when user has no roles', () => {
+  test('shows sign-in button when user is not authenticated and URL matches tenant', () => {
     // Arrange
-    setupSelectors({ roles: [] });
+    setupSelectors(null);
 
     // Act
     render(<SignIn url="https://example.com/test-tenant" />);
 
     // Assert
-    expect(screen.getByText('Not authorized')).toBeInTheDocument();
-    expect(screen.getByText('You do not have a permitted role to access this sandbox.')).toBeInTheDocument();
+    expect(screen.getByTestId('sandbox-sign-in')).toBeInTheDocument();
   });
 
-  test('dispatches loginUser with /services suffix when URL does not end with /services', () => {
+  test('dispatches loginUser action with correct parameters when sign-in button is clicked and URL does not end with /services', () => {
     // Arrange
+    setupSelectors(null);
     render(<SignIn url="https://example.com/test-tenant" />);
 
     // Act
@@ -121,14 +114,27 @@ describe('SignIn Component', () => {
     expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant/services' }));
   });
 
-  test('dispatches loginUser with pathname when URL ends with /services', () => {
+  test('dispatches loginUser action with correct parameters when sign-in button is clicked and URL ends with /services', () => {
     // Arrange
-    render(<SignIn url="https://example.com/test-tenant/services" />);
+    setupSelectors(null);
+    render(<SignIn url="https://example.com/services" />);
 
     // Act
     fireEvent.click(screen.getByTestId('sandbox-sign-in'));
 
     // Assert
     expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant' }));
+  });
+
+  test('shows not authorized message when user has no roles', () => {
+    // Arrange
+    setupSelectors({ roles: [] });
+
+    // Act
+    render(<SignIn url="https://example.com/test-tenant" />);
+
+    // Assert
+    expect(screen.getByText('Not authorized')).toBeInTheDocument();
+    expect(screen.getByText('You do not have a permitted role to access this sandbox.')).toBeInTheDocument();
   });
 });
