@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useFeedbackWidget, getFeedbackContext, DEFAULT_TENANT } from './useFeedbackWidget';
+import { useFeedbackWidget, getFeedbackContext } from './useFeedbackWidget';
 
 describe('useFeedbackWidget', () => {
   const mockInitialize = jest.fn();
@@ -25,17 +25,6 @@ describe('useFeedbackWidget', () => {
     // Assert
     expect(mockInitialize).toHaveBeenCalledWith({
       tenant: tenantName,
-      getContext: expect.any(Function),
-    });
-  });
-
-  test('initializes feedback widget with DEFAULT_TENANT when no tenant name is provided', () => {
-    // Act
-    renderHook(() => useFeedbackWidget());
-
-    // Assert
-    expect(mockInitialize).toHaveBeenCalledWith({
-      tenant: DEFAULT_TENANT,
       getContext: expect.any(Function),
     });
   });

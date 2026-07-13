@@ -1,8 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { useFeedbackScript } from './useFeedbackScript';
 import { useSelector } from 'react-redux';
-import { environmentSelector } from '../state';
-import { DEFAULT_TENANT, getFeedbackContext } from './useFeedbackWidget';
+import { getFeedbackContext } from './useFeedbackWidget';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -89,27 +88,5 @@ describe('useFeedbackScript', () => {
     // Verify getContext function
     const getContext = mockInitialize.mock.calls[0][0].getContext;
     expect(getContext()).toEqual({ user: 'test-user' });
-  });
-
-  test('uses DEFAULT_TENANT if tenantName is not provided', () => {
-    // Arrange
-    const mockUrl = 'https://feedback.example.com/script.js';
-    const mockInitialize = jest.fn();
-    globalThis.adspFeedback = { initialize: mockInitialize };
-
-    (useSelector as jest.Mock).mockReturnValue({ feedback: { url: mockUrl } });
-    (getFeedbackContext as jest.Mock).mockReturnValue({ user: 'test-user' });
-
-    // Act
-    renderHook(() => useFeedbackScript());
-
-    const script = document.querySelector(`script[src="${mockUrl}"]`);
-    script?.onload?.(new Event('load'));
-
-    // Assert
-    expect(mockInitialize).toHaveBeenCalledWith({
-      tenant: 'default-tenant',
-      getContext: expect.any(Function),
-    });
   });
 });
