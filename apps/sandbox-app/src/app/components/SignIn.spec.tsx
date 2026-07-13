@@ -11,8 +11,14 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: '/test-tenant' }),
+  useLocation: () => ({ pathname: '/test-tenant', state: null }),
   useNavigate: jest.fn(),
+}));
+
+jest.mock('./styled-components', () => ({
+  CenteredProgress: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="centered-progress">{children}</div>
+  ),
 }));
 
 jest.mock('../state', () => ({
@@ -49,6 +55,7 @@ jest.mock('@abgov/react-components', () => ({
       <span>{children}</span>
     </div>
   ),
+  GoabCircularProgress: ({ message }: { message: string }) => <div data-testid="circular-progress">{message}</div>,
 }));
 
 describe('SignIn Component', () => {
@@ -80,6 +87,17 @@ describe('SignIn Component', () => {
     expect(screen.getByText('Sign in to the sandbox')).toBeInTheDocument();
   });
 
+  test('shows sign-in button when user is not authenticated, URL matches tenant, and no from state', () => {
+    // Arrange — pathname ends with tenantName and no location.state.from
+    setupSelectors(null);
+
+    // Act
+    render(<SignIn url="https://example.com/test-tenant" />);
+
+    // Assert
+    expect(screen.getByTestId('sandbox-sign-in')).toBeInTheDocument();
+  });
+
   test('does not show sign-in button when user is authenticated', () => {
     // Arrange
     setupSelectors({ roles: ['admin'] });
@@ -91,39 +109,15 @@ describe('SignIn Component', () => {
     expect(screen.queryByTestId('sandbox-sign-in')).not.toBeInTheDocument();
   });
 
-  test('shows sign-in button when user is not authenticated and URL matches tenant', () => {
-    // Arrange
-    setupSelectors(null);
+  test('shows loading spinner when sign-in button should not display', () => {
+    // Arrange — authenticated user means shouldShowSignInButton returns false
+    setupSelectors({ roles: ['admin'] });
 
     // Act
     render(<SignIn url="https://example.com/test-tenant" />);
 
     // Assert
-    expect(screen.getByTestId('sandbox-sign-in')).toBeInTheDocument();
-  });
-
-  test('dispatches loginUser action with correct parameters when sign-in button is clicked and URL does not end with /services', () => {
-    // Arrange
-    setupSelectors(null);
-    render(<SignIn url="https://example.com/test-tenant" />);
-
-    // Act
-    fireEvent.click(screen.getByTestId('sandbox-sign-in'));
-
-    // Assert
-    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant/services' }));
-  });
-
-  test('dispatches loginUser action with correct parameters when sign-in button is clicked and URL ends with /services', () => {
-    // Arrange
-    setupSelectors(null);
-    render(<SignIn url="https://example.com/services" />);
-
-    // Act
-    fireEvent.click(screen.getByTestId('sandbox-sign-in'));
-
-    // Assert
-    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant' }));
+    expect(screen.getByText('Loading services...')).toBeInTheDocument();
   });
 
   test('shows not authorized message when user has no roles', () => {
@@ -136,5 +130,29 @@ describe('SignIn Component', () => {
     // Assert
     expect(screen.getByText('Not authorized')).toBeInTheDocument();
     expect(screen.getByText('You do not have a permitted role to access this sandbox.')).toBeInTheDocument();
+  });
+
+  test('dispatches loginUser with /services suffix when URL does not end with /services', () => {
+    // Arrange
+    setupSelectors(null);
+    render(<SignIn url="https://example.com/test-tenant" />);
+
+    // Act
+    fireEvent.click(screen.getByTestId('sandbox-sign-in'));
+
+    // Assert
+    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant/services' }));
+  });
+
+  test('dispatches loginUser with pathname when URL ends with /services', () => {
+    // Arrange
+    setupSelectors(null);
+    render(<SignIn url="https://example.com/services" />);
+
+    // Act
+    fireEvent.click(screen.getByTestId('sandbox-sign-in'));
+
+    // Assert
+    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant' }));
   });
 });
