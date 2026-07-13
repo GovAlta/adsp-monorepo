@@ -350,10 +350,13 @@ export function deleteFormDefinition(directory: ServiceDirectory, tokenProvider:
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      await axios.delete(new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { tenantId: tenantId?.toString() },
-      });
+      await axios.delete(
+        new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        },
+      );
 
       res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
