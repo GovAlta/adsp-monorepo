@@ -135,7 +135,8 @@ export const FormDefinitions = ({
     }
 
     return () => {
-      if (!window.location.href.includes('/edit/')) { // clean-code-ignore: 2.18
+      if (!window.location.href.includes('/edit/')) {
+        // clean-code-ignore: 2.18
         dispatch(setSelectedTag(null));
       }
     };
@@ -211,7 +212,7 @@ export const FormDefinitions = ({
               name="form-definition-search"
               value={searchInput}
               placeholder="Search form definitions..."
-              width="100%"
+              width="60ch"
               trailingIcon={searchInput ? 'close-circle' : undefined}
               onTrailingIconClick={() => {
                 dispatch(setDefinitionSearchInput(''));
@@ -235,8 +236,7 @@ export const FormDefinitions = ({
           </GoabFormItem>
         </SearchInputWrapper>
         <GoabButton
-          size="compact"
-          type="secondary"
+          type="tertiary"
           mb={'m'}
           testId="form-definition-search-btn"
           onClick={() => {
@@ -273,7 +273,7 @@ export const FormDefinitions = ({
               dispatch(setSelectedTag(null));
             }
           }}
-          width="60ch"
+          width="57ch"
         >
           <GoabDropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
