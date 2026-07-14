@@ -12,6 +12,7 @@ import {
   deleteFormDefinition,
   getFormDefinitions,
   patchFormDefinition,
+  patchFormDefinitionLifecycle,
   updateFormDefinition,
   updateFormDefinitionSchemas,
 } from './definition';
@@ -305,6 +306,7 @@ describe('definition router', () => {
         assessorRoles: [],
         clerkRoles: [],
         dataSchema: {},
+        securityClassification: 'protected b',
       };
       mockPatchSuccess(createdDefinition);
 
@@ -521,6 +523,7 @@ describe('definition router', () => {
             assessorRoles: [],
             clerkRoles: [],
             dataSchema: {},
+            securityClassification: 'protected b',
           },
         },
         expect.any(Object),
@@ -1220,6 +1223,238 @@ describe('definition router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(networkError);
+      expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('patchFormDefinitionLifecycle', () => {
+    const existingDefinition = {
+      id: 'test',
+      name: 'Test Form',
+      description: '',
+      anonymousApply: false,
+      oneFormPerApplicant: true,
+      applicantRoles: [],
+      assessorRoles: [],
+      clerkRoles: [],
+      dataSchema: {},
+      supportTopic: false,
+      securityClassification: 'public',
+    };
+
+    let res: { status: jest.Mock; send: jest.Mock };
+    let next: jest.Mock;
+
+    beforeEach(() => {
+      res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      next = jest.fn();
+    });
+
+    it('can create handler', () => {
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', roles: ['test-applicant'] },
+        params: { definitionId: 'test' },
+        body: { allowAnonymousApplication: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(axiosMock.get).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found when definition does not exist', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.NOT_FOUND, data: {} });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'missing-def' },
+        body: { allowAnonymousApplication: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('missing-def') }));
+    });
+
+    it('can update allowAnonymousApplication', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess({ ...existingDefinition, anonymousApply: true });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { allowAnonymousApplication: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        { operation: 'REPLACE', configuration: expect.objectContaining({ anonymousApply: true }) },
+        expect.any(Object),
+      );
+      expect(res.send).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('sets oneFormPerApplicant=false when allowMultipleFormsPerApplicant=true', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess({ ...existingDefinition, oneFormPerApplicant: false });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { allowMultipleFormsPerApplicant: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        { operation: 'REPLACE', configuration: expect.objectContaining({ oneFormPerApplicant: false }) },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('sets oneFormPerApplicant=true when allowMultipleFormsPerApplicant=false', async () => {
+      axiosMock.get.mockResolvedValue({
+        status: HttpStatusCodes.OK,
+        data: { ...existingDefinition, oneFormPerApplicant: false },
+      });
+      mockPatchSuccess({ ...existingDefinition, oneFormPerApplicant: true });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { allowMultipleFormsPerApplicant: false },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        { operation: 'REPLACE', configuration: expect.objectContaining({ oneFormPerApplicant: true }) },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can update createSupportTopic', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess({ ...existingDefinition, supportTopic: true });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { createSupportTopic: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        { operation: 'REPLACE', configuration: expect.objectContaining({ supportTopic: true }) },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can update securityClassification', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess({ ...existingDefinition, securityClassification: 'protected a' });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { securityClassification: 'protected a' },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        { operation: 'REPLACE', configuration: expect.objectContaining({ securityClassification: 'protected a' }) },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('preserves existing fields when only one lifecycle field is provided', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(existingDefinition);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { createSupportTopic: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({
+            anonymousApply: false,
+            oneFormPerApplicant: true,
+            supportTopic: true,
+            securityClassification: 'public',
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with 400 when configuration service rejects the patch', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { data: { errorMessage: 'Validation failed.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.patch.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { allowAnonymousApplication: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
       expect(res.send).not.toHaveBeenCalled();
     });
   });
