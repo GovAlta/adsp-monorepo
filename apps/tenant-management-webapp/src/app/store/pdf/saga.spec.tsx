@@ -1,6 +1,13 @@
 import { expectSaga } from 'redux-saga-test-plan';
 import { fetchPdfTemplates, createPdfTemplateSaga, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
-import { fetchPdfTemplatesApi, createPdfTemplateApi, deletePdfTemplateApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
+import {
+  fetchPdfTemplatesApi,
+  createPdfTemplateApi,
+  deletePdfTemplateApi,
+  updatePDFTemplateApi,
+  generatePdfApi,
+  createPdfJobApi,
+} from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
@@ -20,12 +27,17 @@ const mockTemplates = {
   },
 };
 it('Fetch Pdf templates', () => {
+  const templateArray = Object.entries(mockTemplates).map(([id, template]) => ({ id, ...template }));
+  const expectedTemplates = {
+    'mock-template': { id: 'mock-template', ...mockTemplates['mock-template'] },
+  };
   return expectSaga(fetchPdfTemplates)
     .withState(storeState)
     .provide({
       call(effect, next) {
         if (effect.fn === fetchPdfTemplatesApi) {
-          return mockTemplates;
+          expect(effect.args[1]).toBe('http://mock-pdf-servie.com/pdf/v1/templates');
+          return templateArray;
         }
         return next();
       },
@@ -33,7 +45,7 @@ it('Fetch Pdf templates', () => {
     .put.like({
       action: {
         type: FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
-        payload: mockTemplates,
+        payload: expectedTemplates,
       },
     })
     .run();
@@ -135,21 +147,24 @@ it('Delete Pdf template', () => {
 });
 
 it('Update Pdf template', () => {
-  const templateToDelete = {
+  const templateToUpdate = {
     id: 'pdf-to-delete',
     ...mockTemplates['mock-template'],
   };
 
-  return expectSaga(updatePdfTemplate, { type: 'update-action', template: templateToDelete })
+  const updatedTemplate = {
+    id: 'pdf-to-delete',
+    ...mockTemplates['mock-template'],
+    template: '<div>Updated body</div>',
+  };
+
+  return expectSaga(updatePdfTemplate, { type: 'update-action', template: templateToUpdate })
     .withState(storeState)
     .provide({
       call(effect, next) {
         if (effect.fn === updatePDFTemplateApi) {
-          return {
-            latest: {
-              configuration: mockTemplates['mock-template'],
-            },
-          };
+          expect(effect.args[1]).toBe('http://mock-pdf-servie.com/pdf/v1/templates/pdf-to-delete');
+          return updatedTemplate;
         }
         return next();
       },
@@ -157,7 +172,10 @@ it('Update Pdf template', () => {
     .put.like({
       action: {
         type: UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
-        payload: mockTemplates['mock-template'],
+        payload: {
+          'pdf-to-delete': updatedTemplate,
+          'mock-template': mockTemplates['mock-template'],
+        },
       },
     })
     .run();
