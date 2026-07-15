@@ -6,7 +6,7 @@ interface DefaultServiceListTemplateProps {
   tenantName?: string;
 }
 
-const ITEM_COUNT = 5;
+const ITEM_COUNT = 2;
 
 /**
  * Use this component to render a dummy list of examples for the service if no specific

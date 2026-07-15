@@ -40,27 +40,9 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
     }
   }, [from, authenticatedUser, dispatch, tenant]);
 
-  const shouldShowSignInButton = () => {
-    if (
-      (environment && from && !from.includes(`${environment.tenantName}`)) ||
-      !location.pathname.endsWith(`${environment.tenantName}`)
-    )
-      return false;
-
-    return authenticatedUser === null && !from;
-  };
-
-  const onSignInStart = () => {
-    if (!isServicesUrl(url)) {
-      dispatch(loginUser({ tenant, from: `${location.pathname}/services` }));
-    } else {
-      dispatch(loginUser({ tenant, from: `${location.pathname}` }));
-    }
-  };
-
   return (
     <div>
-      <Band title="Sandbox application">Sign in to the sandbox</Band>
+      <Band title="Sandbox application"></Band>
       <Container vs={3} hs={1}>
         <Grid>
           <GridItem md={1} />
@@ -72,14 +54,6 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
                     You do not have a permitted role to access this sandbox.
                   </GoabCallout>
                 </Placeholder>
-              )}
-
-              {shouldShowSignInButton() && (
-                <GoabButtonGroup alignment="end">
-                  <GoabButton type="primary" data-testid="sandbox-sign-in" onClick={onSignInStart}>
-                    Sign in
-                  </GoabButton>
-                </GoabButtonGroup>
               )}
             </div>
           </GridItem>
