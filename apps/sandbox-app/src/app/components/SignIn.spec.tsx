@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { SignIn } from './SignIn';
 import { authenticatedUserSelector, environmentSelector, loginUser, tenantSelector } from '../state';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
@@ -11,7 +12,7 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: '/test-tenant', state: null }),
+  useLocation: jest.fn(() => ({ pathname: '/test-tenant', state: null })),
   useNavigate: jest.fn(),
 }));
 
@@ -60,88 +61,93 @@ jest.mock('@abgov/react-components', () => ({
 
 describe('SignIn Component', () => {
   const mockDispatch = jest.fn();
+  const mockNavigate = jest.fn();
   const mockTenant = { id: 'test-tenant' };
   const mockEnvironment = { tenantName: 'test-tenant' };
+
+  beforeEach(() => {
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
+    (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   const setupSelectors = (authenticatedUser: unknown = null) => {
     (useSelector as jest.Mock).mockImplementation((selector) => {
       if (selector === authenticatedUserSelector) return authenticatedUser;
       if (selector === environmentSelector) return mockEnvironment;
       if (selector === tenantSelector) return mockTenant;
-      return undefined;
+      return null;
     });
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
+  test('renders the Band component with correct title', () => {
+    // Arrange
     setupSelectors();
-  });
 
-  test('renders the Band component with the correct title', () => {
-    // Arrange & Act
-    render(<SignIn url="https://example.com/test-tenant" />);
+    // Act
+    render(<SignIn url="/test-url" />);
 
     // Assert
     expect(screen.getByText('Sandbox application')).toBeInTheDocument();
-    expect(screen.getByText('Sign in to the sandbox')).toBeInTheDocument();
   });
 
-  test('shows sign-in button when user is not authenticated, URL matches tenant, and no from state', () => {
-    // Arrange — pathname ends with tenantName and no location.state.from
-    setupSelectors(null);
-
-    // Act
-    render(<SignIn url="https://example.com/test-tenant" />);
-
-    // Assert
-    expect(screen.getByTestId('sandbox-sign-in')).toBeInTheDocument();
-  });
-
-  test('does not show sign-in button when user is authenticated', () => {
+  test('redirects to root if tenant name is not in the path', () => {
     // Arrange
-    setupSelectors({ roles: ['admin'] });
+    setupSelectors();
+    (useNavigate as jest.Mock).mockClear();
+    (useSelector as jest.Mock).mockImplementation((selector) => {
+      if (selector === environmentSelector) return { tenantName: 'another-tenant' };
+      if (selector === tenantSelector) return mockTenant;
+      return null;
+    });
 
     // Act
-    render(<SignIn url="https://example.com/test-tenant" />);
+    render(<SignIn url="/test-url" />);
 
     // Assert
-    expect(screen.queryByTestId('sandbox-sign-in')).not.toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith('/', { state: { from: undefined } });
   });
 
-  test('shows not authorized message when user has no roles', () => {
+  test('dispatches loginUser action if user is not authenticated and `from` is defined', () => {
+    // Arrange
+    (useLocation as jest.Mock).mockReturnValueOnce({ pathname: '/test-tenant', state: { from: '/dashboard' } });
+    (useSelector as jest.Mock).mockImplementation((selector) => {
+      if (selector === authenticatedUserSelector) return null;
+      if (selector === environmentSelector) return mockEnvironment;
+      if (selector === tenantSelector) return mockTenant;
+      return null;
+    });
+
+    // Act
+    render(<SignIn url="/test-url" />);
+
+    // Assert
+    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/dashboard' }));
+  });
+
+  test('shows not authorized message if authenticated user has no roles', () => {
     // Arrange
     setupSelectors({ roles: [] });
 
     // Act
-    render(<SignIn url="https://example.com/test-tenant" />);
+    render(<SignIn url="/test-url" />);
 
     // Assert
     expect(screen.getByText('Not authorized')).toBeInTheDocument();
     expect(screen.getByText('You do not have a permitted role to access this sandbox.')).toBeInTheDocument();
   });
 
-  test('dispatches loginUser with /services suffix when URL does not end with /services', () => {
+  test('does not show not authorized message if authenticated user has roles', () => {
     // Arrange
-    setupSelectors(null);
-    render(<SignIn url="https://example.com/test-tenant" />);
+    setupSelectors({ roles: ['admin'] });
 
     // Act
-    fireEvent.click(screen.getByTestId('sandbox-sign-in'));
+    render(<SignIn url="/test-url" />);
 
     // Assert
-    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant/services' }));
-  });
-
-  test('dispatches loginUser with pathname when URL ends with /services', () => {
-    // Arrange
-    setupSelectors(null);
-    render(<SignIn url="https://example.com/services" />);
-
-    // Act
-    fireEvent.click(screen.getByTestId('sandbox-sign-in'));
-
-    // Assert
-    expect(mockDispatch).toHaveBeenCalledWith(loginUser({ tenant: mockTenant, from: '/test-tenant' }));
+    expect(screen.queryByText('Not authorized')).not.toBeInTheDocument();
   });
 });

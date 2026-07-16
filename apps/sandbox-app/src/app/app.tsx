@@ -31,7 +31,6 @@ export function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/:tenant/services" element={<Services />} />
         <Route path="/:tenant/login" element={<Login />} />
-        <Route path="/:tenant/signin" element={<Login />} />
         <Route path="/:tenant/*" element={<SandBoxTenant />} />
         <Route path="*" element={<Landing />} />
       </Routes>
