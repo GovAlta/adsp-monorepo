@@ -1,6 +1,20 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchPdfTemplates, createPdfTemplateSaga, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
-import { fetchPdfTemplatesApi, createPdfTemplateApi, deletePdfTemplateApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
+import {
+  fetchPdfTemplates,
+  createPdfTemplateSaga,
+  deletePdfTemplate,
+  updatePdfTemplate,
+  generatePdf,
+  generatePdfSuccessProcessingSaga,
+} from './sagas';
+import {
+  fetchPdfTemplatesApi,
+  createPdfTemplateApi,
+  deletePdfTemplateApi,
+  updatePDFTemplateApi,
+  generatePdfApi,
+  createPdfJobApi,
+} from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   CREATE_PDF_TEMPLATE_SUCCESS_ACTION,
@@ -8,6 +22,7 @@ import {
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
 } from './action';
+import { UPDATE_INDICATOR } from '@store/session/actions';
 
 const mockTemplates = {
   'mock-template': {
@@ -199,6 +214,46 @@ it('Generate Pdf template', () => {
           templateId: mockPayload.templateId,
           data: mockPayload.data,
           filename: 'mock-filename',
+        },
+      },
+    })
+    .run();
+});
+
+it('Clears indicator when generation fails in stream processing', () => {
+  const failedAction = {
+    payload: {
+      name: 'pdf-generation-failed',
+      context: {
+        jobId: 'job-1',
+      },
+      payload: {
+        error: 'mock error',
+      },
+    },
+  };
+
+  const stateWithJob = {
+    ...storeState,
+    pdf: {
+      ...storeState.pdf,
+      jobs: [
+        {
+          id: 'job-1',
+          stream: [],
+          status: 'pdf-generation-queued',
+        },
+      ],
+    },
+  };
+
+  return expectSaga(generatePdfSuccessProcessingSaga, failedAction as never)
+    .withState(stateWithJob)
+    .put.like({
+      action: {
+        type: UPDATE_INDICATOR,
+        payload: {
+          show: false,
         },
       },
     })

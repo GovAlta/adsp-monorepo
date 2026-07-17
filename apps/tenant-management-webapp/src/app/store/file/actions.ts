@@ -201,7 +201,7 @@ interface DeleteFilesFailedAction {
 
 export interface DownloadFileAction {
   type: typeof DOWNLOAD_FILE;
-  payload: { data: string };
+  payload: { data: string | FileItem };
 }
 interface CacheFileAction {
   type: typeof CACHE_FILE;
@@ -452,7 +452,7 @@ export const DeleteFilesFailedService = (data: string[]): DeleteFilesFailedActio
   },
 });
 
-export const DownloadFileService = (data: string): DownloadFileAction => ({
+export const DownloadFileService = (data: string | FileItem): DownloadFileAction => ({
   type: DOWNLOAD_FILE,
   payload: {
     data,

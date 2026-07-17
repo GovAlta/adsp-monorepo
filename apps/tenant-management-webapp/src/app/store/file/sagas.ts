@@ -39,6 +39,7 @@ import {
   FetchFileAction,
   CHECK_FILE_TYPE_HAS_FILE,
   CheckFileTypeHasFileAction,
+  DownloadFileAction,
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
 } from './actions';
 import { FileApi } from './api';
@@ -146,11 +147,19 @@ export function* deleteFiles(file: DeleteFilesAction): SagaIterator {
 }
 
 // eslint-disable-next-line
-export function* downloadFile(file) {
+export function* downloadFile(file: DownloadFileAction): SagaIterator {
   const state = yield select();
   try {
-    const fileId = file.payload.data.id;
-    const filename = file.payload.data.filename;
+    const downloadData = file.payload.data;
+    const fileId = typeof downloadData === 'string' ? downloadData : downloadData?.id;
+    const filenameFromPayload = typeof downloadData === 'string' ? undefined : downloadData?.filename;
+
+    if (!fileId) {
+      throw new Error('Missing file ID for download');
+    }
+
+    const matchedFile = state.fileService.fileList?.find((item) => item.id === fileId);
+    const filename = filenameFromPayload || matchedFile?.filename || `file-${fileId}`;
 
     // Check if file is already cached
     const cachedDataUrl = state.fileService.downloadedFiles?.[fileId];
@@ -186,10 +195,13 @@ export function* downloadFile(file) {
 
     // Trigger browser download
     const element = document.createElement('a');
-    element.href = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
+    element.href = blobUrl;
     element.download = filename;
     document.body.appendChild(element);
     element.click();
+    URL.revokeObjectURL(blobUrl);
+    element.remove();
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   }

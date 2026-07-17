@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GoabButton, GoabIconButton, GoabCallout } from '@abgov/react-components';
-import _ from 'underscore';
 import { generatePdf, updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 import {
@@ -14,17 +13,42 @@ import {
 } from '../../styled-components';
 
 import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import { streamPdfSocket } from '@store/pdf/action';
 import { useParams } from 'react-router-dom';
-import { PageIndicator } from '@components/Indicator';
+import { PageIndicator, IndicatorWithDelay, Center } from '@components/Indicator';
+import { FileItem } from '@store/file/models';
+import { PdfGenerationResponse } from '@store/pdf/model';
 
 interface PreviewTemplateProps {
   channelTitle: string;
 }
 
-const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+interface PreviewTopProps {
+  title: string;
+  iconDisable: boolean;
+  indicatorVisible: boolean;
+  isGenerating: boolean;
+  pdfTemplateMissing: boolean;
+  onGenerate: () => void;
+  onDownload: () => void;
+}
+
+interface PdfPreviewProps {
+  blobUrl: string | null;
+  channelTitle: string;
+  hasError: boolean;
+  indicatorVisible: boolean;
+  isGenerating: boolean;
+  pdfGenerationError: string;
+  windowSize: number;
+  pdfTemplateMissing: boolean;
+  onGenerate: () => void;
+  onDownload: () => void;
+}
+
+const base64toBlob = (b64Data: string, contentType = '', sliceSize = 512) => {
   const byteCharacters = atob(b64Data);
   const byteArrays = [];
 
@@ -44,42 +68,181 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   return blob;
 };
 
+const getPdfBlob = (pdfFile: Blob | string | null | undefined): Blob | null => {
+  if (!pdfFile) {
+    return null;
+  }
+
+  if (pdfFile instanceof Blob) {
+    return pdfFile;
+  }
+
+  if (typeof pdfFile === 'string') {
+    const base64Data = pdfFile.startsWith('data:') ? pdfFile.split(',')[1] : pdfFile;
+    if (!base64Data) {
+      return null;
+    }
+
+    try {
+      return base64toBlob(base64Data, 'application/pdf');
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+};
+
+const getDownloadableFile = (fileList: FileItem[], pdfList: PdfGenerationResponse[]): FileItem | null => {
+  const file = fileList?.[0];
+  const pdf = pdfList?.[0];
+
+  if (!file || !pdf) {
+    return null;
+  }
+
+  return file.recordId === pdf.id && file.filename && file.filename.indexOf(pdf.templateId) > -1 ? file : null;
+};
+
+const PreviewTop = ({
+  title,
+  iconDisable,
+  indicatorVisible,
+  isGenerating,
+  pdfTemplateMissing,
+  onGenerate,
+  onDownload,
+}: PreviewTopProps) => {
+  return (
+    <PreviewTopStyleWrapper>
+      <PreviewTopStyle>
+        <PDFTitle>{title}</PDFTitle>
+
+        <GoabButton
+          disabled={indicatorVisible || isGenerating || pdfTemplateMissing}
+          type="secondary"
+          testId="generate-template"
+          size="compact"
+          onClick={onGenerate}
+        >
+          Generate PDF
+        </GoabButton>
+
+        <GoabIconButton
+          icon="download"
+          title="Download"
+          testId="download-template-icon"
+          size="medium"
+          disabled={iconDisable}
+          onClick={onDownload}
+        />
+      </PreviewTopStyle>
+      <hr />
+    </PreviewTopStyleWrapper>
+  );
+};
+
+const PdfPreview = ({
+  blobUrl,
+  channelTitle,
+  hasError,
+  indicatorVisible,
+  isGenerating,
+  pdfGenerationError,
+  windowSize,
+  pdfTemplateMissing,
+  onGenerate,
+  onDownload,
+}: PdfPreviewProps) => {
+  return (
+    <>
+      <PreviewWrapper>
+        <section>
+          <PreviewTop
+            title={channelTitle}
+            iconDisable={!blobUrl}
+            indicatorVisible={indicatorVisible}
+            isGenerating={isGenerating}
+            pdfTemplateMissing={pdfTemplateMissing}
+            onGenerate={onGenerate}
+            onDownload={onDownload}
+          />
+          {indicatorVisible && (
+            <SpinnerPadding>
+              <PageIndicator />
+            </SpinnerPadding>
+          )}
+          {!indicatorVisible && isGenerating && (
+            <SpinnerPadding>
+              <Center>
+                <IndicatorWithDelay message="Processing may take a while. Please wait..." />
+              </Center>
+            </SpinnerPadding>
+          )}
+          {!indicatorVisible && !isGenerating && !hasError && blobUrl && (
+            <PdfViewer>
+              <object type="application/pdf" data={blobUrl} height={windowSize - 202} style={{ width: '100%' }}>
+                <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
+              </object>
+            </PdfViewer>
+          )}
+        </section>
+      </PreviewWrapper>
+      {!indicatorVisible && !isGenerating && hasError && (
+        <GoabCallout type="emergency" heading="Error in PDF generation">
+          {pdfGenerationError}
+        </GoabCallout>
+      )}
+    </>
+  );
+};
+
 export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
+  const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
-  const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
-  const pdfTemplate = useSelector((state: RootState) => state?.pdf?.pdfTemplates[id]);
+  const fileList = useSelector((state: RootState) => state?.fileService?.fileList || []);
+  const pdfTemplate = useSelector((state: RootState) => (id ? state?.pdf?.pdfTemplates[id] : undefined));
   const jobList = useSelector((state: RootState) =>
-    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id)
+    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate?.id),
   );
   const pdfGenerationError = jobList?.[0]?.payload?.error;
-  const hasError = pdfGenerationError && pdfGenerationError.length > 0;
+  const hasError = Boolean(pdfGenerationError && pdfGenerationError.length > 0);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const generatingCurrentIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
-    const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
-    if (currentFile) {
-      dispatch(showCurrentFilePdf(currentFile?.id));
+    const jobIds = new Set(jobList.map((job) => job.id));
+    const currentFile = fileList.find((file) => file.recordId && jobIds.has(file.recordId));
+    if (currentFile?.id) {
+      dispatch(showCurrentFilePdf(currentFile.id));
     } else {
-      dispatch(setPdfDisplayFileId(null));
+      dispatch(setPdfDisplayFileId(''));
     }
   }, [fileList]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generateTemplate = () => {
+    if (!pdfTemplate?.id) {
+      return;
+    }
+
     const payload = {
       templateId: pdfTemplate.id,
       data: pdfTemplate.variables ? JSON.parse(pdfTemplate.variables) : {},
       fileName: `${pdfTemplate.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
     };
 
+    generatingCurrentIdRef.current = currentId;
+    setIsGenerating(true);
     dispatch(generatePdf(payload));
   };
+
   const [windowSize, setWindowSize] = useState(window.innerHeight);
 
-  const dispatch = useDispatch();
+  const indicator = useSelector((state: RootState) => state?.session?.indicator, shallowEqual);
 
-  const indicator = useSelector((state: RootState) => state?.session?.indicator, _.isEqual);
-
-  const files = useSelector((state: RootState) => state?.pdf.files);
+  const files = useSelector((state: RootState) => state?.pdf.files as Record<string, Blob | string>);
 
   const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
 
@@ -94,7 +257,9 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
 
   useEffect(() => {
     const handleWindowResize = () => {
-      if (window.innerHeight !== windowSize) setWindowSize(window.innerHeight);
+      setWindowSize((currentWindowSize) =>
+        window.innerHeight === currentWindowSize ? currentWindowSize : window.innerHeight,
+      );
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -102,86 +267,64 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     return () => {
       window.removeEventListener('resize', handleWindowResize);
     };
-  });
+  }, []);
 
-  const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
-  const onDownloadFile = async (file) => {
-    file && dispatch(DownloadFileService(file));
+  const currentPdfFile = currentId ? files[currentId] : null;
+
+  useEffect(() => {
+    const currentPdfBlob = getPdfBlob(currentPdfFile);
+
+    if (!currentPdfBlob) {
+      setBlobUrl(null);
+      return;
+    }
+
+    const nextBlobUrl = URL.createObjectURL(currentPdfBlob);
+    setBlobUrl(nextBlobUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextBlobUrl);
+    };
+  }, [currentId, currentPdfFile]);
+
+  useEffect(() => {
+    if (isGenerating && currentId && currentId !== generatingCurrentIdRef.current && files[currentId]) {
+      setIsGenerating(false);
+    }
+  }, [isGenerating, currentId, files]);
+
+  useEffect(() => {
+    if (isGenerating && hasError) {
+      setIsGenerating(false);
+    }
+  }, [isGenerating, hasError]);
+
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
+  const onDownloadFile = async (file: FileItem) => {
+    dispatch(DownloadFileService(file));
   };
 
-  const PdfPreview = () => {
-    const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
-
-    const blobUrl = blob && URL.createObjectURL(blob);
-
-    return (
-      <>
-        <PreviewWrapper>
-          <section>
-            <PreviewTop title={channelTitle} iconDisable={!blobUrl} />
-            {indicator?.show && (
-              <SpinnerPadding>
-                <PageIndicator />
-              </SpinnerPadding>
-            )}
-            {!indicator?.show && !hasError && blobUrl && (
-              <PdfViewer>
-                <object type="application/pdf" data={blobUrl} height={windowSize - 202} style={{ width: '100%' }}>
-                  <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
-                </object>
-              </PdfViewer>
-            )}
-          </section>
-        </PreviewWrapper>
-        {!indicator?.show && hasError && (
-          <GoabCallout type="emergency" heading="Error in PDF generation">
-            {pdfGenerationError}
-          </GoabCallout>
-        )}
-      </>
-    );
-  };
-
-  const PreviewTop = ({ title, iconDisable }) => {
-    return (
-      <PreviewTopStyleWrapper>
-        <PreviewTopStyle>
-          <PDFTitle>{title}</PDFTitle>
-
-          <GoabButton
-            disabled={indicator.show || pdfTemplate === null}
-            type="secondary"
-            testId="generate-template"
-            size="compact"
-            onClick={() => {
-              generateTemplate();
-            }}
-          >
-            Generate PDF
-          </GoabButton>
-
-          <GoabIconButton
-            icon="download"
-            title="Download"
-            testId="download-template-icon"
-            size="medium"
-            disabled={iconDisable}
-            onClick={() => {
-              const file = fileList[0];
-              if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
-                onDownloadFile(file);
-              }
-            }}
-          />
-        </PreviewTopStyle>
-        <hr />
-      </PreviewTopStyleWrapper>
-    );
+  const onDownload = () => {
+    const file = getDownloadableFile(fileList, pdfList);
+    if (file) {
+      onDownloadFile(file);
+    }
   };
 
   return (
     <PreviewContainer>
-      <PdfPreview />
+      <PdfPreview
+        blobUrl={blobUrl}
+        channelTitle={channelTitle}
+        hasError={hasError}
+        indicatorVisible={Boolean(indicator?.show)}
+        isGenerating={isGenerating}
+        pdfGenerationError={pdfGenerationError || ''}
+        windowSize={windowSize}
+        pdfTemplateMissing={!pdfTemplate}
+        onGenerate={generateTemplate}
+        onDownload={onDownload}
+      />
     </PreviewContainer>
   );
 };

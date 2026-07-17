@@ -1,7 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { PDFConfigForm } from './PDFConfigForm';
 import '@testing-library/jest-dom';
@@ -18,10 +18,13 @@ jest.mock('@store/agent/actions', () => ({
 describe('Test pdf template preview', () => {
   const mockStore = configureStore([]);
 
-  window.URL.createObjectURL = jest.fn();
+  window.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+  window.URL.revokeObjectURL = jest.fn();
 
   afterEach(() => {
     window.URL.createObjectURL.mockReset();
+    window.URL.createObjectURL.mockReturnValue('blob:mock-url');
+    window.URL.revokeObjectURL.mockReset();
   });
 
   const templateMock = {
@@ -351,5 +354,133 @@ describe('Test pdf template preview', () => {
 
     expect(await queryByTestId('form-save')).toBeDefined();
     expect(await queryByTestId('download-icon')).toBeDefined();
+  });
+
+  it('enables download action when preview file is available', async () => {
+    const downloadableFile = {
+      urn: 'urn:ads:platform:file-service:v1:/files/mock-file-id',
+      id: 'mock-file-id',
+      filename: 'mock-template.pdf',
+      recordId: 'mock-job-id',
+      created: '2023-03-27T16:57:50.289Z',
+      lastAccessed: '2023-03-27T16:57:51.747Z',
+      scanned: false,
+      infected: false,
+    };
+
+    const store = mockStore({
+      session: {
+        indicator: {
+          show: false,
+        },
+      },
+      fileService: {
+        fileList: [downloadableFile],
+      },
+      pdf: {
+        currentId: 'mock-file-id',
+        pdfTemplates: {
+          'mock-id': {
+            id: 'mock-id',
+            name: 'mock-name',
+            description: '',
+            template: '<div>template</div>',
+            header: '<div>header</div>',
+            footer: '<div>footer</div>',
+          },
+        },
+        files: {
+          'mock-file-id': new Blob(['mock-pdf-content'], { type: 'application/pdf' }),
+        },
+        jobs: [
+          {
+            id: 'mock-job-id',
+            templateId: 'mock-id',
+            filename: 'mock-template.pdf',
+            status: 'pdf-generated',
+            payload: {},
+            data: {},
+            stream: [],
+            fileWasGenerated: true,
+          },
+        ],
+      },
+    });
+
+    store.dispatch = jest.fn(store.dispatch);
+
+    const { container } = render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/admin/services/pdf/edit/mock-id']}>
+          <Routes>
+            <Route path="/admin/services/pdf/edit/:id" element={<PreviewTemplate channelTitle={'test'} />}></Route>
+          </Routes>
+        </MemoryRouter>
+      </Provider>,
+    );
+
+    const downloadButton = container.querySelector('goa-icon-button[title="Download"]');
+    expect(downloadButton).toBeTruthy();
+    await waitFor(() => {
+      expect(downloadButton.hasAttribute('disabled')).toBe(false);
+    });
+  });
+
+  it('clears processing state and shows error callout when generation fails', async () => {
+    const buildStore = (errorMessage?: string) =>
+      mockStore({
+        session: {
+          indicator: {
+            show: false,
+          },
+        },
+        fileService: {
+          fileList: [],
+        },
+        pdf: {
+          currentId: '',
+          pdfTemplates: {
+            'mock-id': {
+              id: 'mock-id',
+              name: 'mock-name',
+              description: '',
+              template: '<div>template</div>',
+              header: '<div>header</div>',
+              footer: '<div>footer</div>',
+              variables: '{}',
+            },
+          },
+          files: {},
+          jobs: [
+            {
+              id: 'mock-job-id',
+              templateId: 'mock-id',
+              filename: 'mock-template.pdf',
+              status: errorMessage ? 'pdf-generation-failed' : 'pdf-generation-queued',
+              payload: errorMessage ? { error: errorMessage } : {},
+              data: {},
+              stream: [],
+              fileWasGenerated: false,
+            },
+          ],
+        },
+      });
+
+    const failedStore = buildStore('Mock PDF generation failure');
+
+    render(
+      <Provider store={failedStore}>
+        <MemoryRouter initialEntries={['/admin/services/pdf/edit/mock-id']}>
+          <Routes>
+            <Route path="/admin/services/pdf/edit/:id" element={<PreviewTemplate channelTitle={'test'} />}></Route>
+          </Routes>
+        </MemoryRouter>
+      </Provider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Processing may take a while. Please wait...')).not.toBeInTheDocument();
+      expect(screen.getByText('Mock PDF generation failure')).toBeInTheDocument();
+    });
   });
 });
