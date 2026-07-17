@@ -77,7 +77,7 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
       ErrorNotification({
         message: 'failed to fetch tenant',
         error: e,
-      })
+      }),
     );
   }
 }
@@ -126,7 +126,7 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
       yield put(
         ErrorNotification({
           message: 'Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %).',
-        })
+        }),
       );
     } else {
       yield put(ErrorNotification({ error: err }));
@@ -170,6 +170,10 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
 export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction): SagaIterator {
   try {
     const realm = action.payload;
+    if (!realm) {
+      window.location.replace('/');
+    }
+
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
     const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
@@ -264,7 +268,7 @@ export function* fetchRealmRoles(): SagaIterator {
       UpdateIndicator({
         show: true,
         message: 'Loading...',
-      })
+      }),
     );
 
     const baseUrl = config.keycloakApi.url;
@@ -278,13 +282,13 @@ export function* fetchRealmRoles(): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   } catch (e) {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
     yield put(ErrorNotification({ message: 'Failed to fetch realm roles', error: e }));
   }
@@ -309,7 +313,7 @@ export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaItera
       UpdateLoadingState({
         name: FETCH_USER_ID_BY_EMAIL,
         state: 'start',
-      })
+      }),
     );
 
     const coreRealmUserId = yield call(callFetchUserIdInCoreByEmail, coreUserIdUrl, token, email);
@@ -324,7 +328,7 @@ export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaItera
           data: {
             hasDefaultIdpInCore,
           },
-        })
+        }),
       );
     } else {
       yield put(
@@ -332,7 +336,7 @@ export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaItera
           name: FETCH_USER_ID_BY_EMAIL,
           state: 'completed',
           data: {},
-        })
+        }),
       );
     }
   } catch (err) {
@@ -341,7 +345,7 @@ export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaItera
         name: FETCH_USER_ID_BY_EMAIL,
         state: 'error',
         data: {},
-      })
+      }),
     );
   }
 }
@@ -357,7 +361,7 @@ export function* deleteUserIdpFromCore(action: DeleteUserIdpAction): SagaIterato
       UpdateLoadingState({
         name: DELETE_USER_IDP,
         state: 'start',
-      })
+      }),
     );
 
     yield call(callDeleteUserIdPFromCore, url, token, userId, realm);
@@ -365,26 +369,26 @@ export function* deleteUserIdpFromCore(action: DeleteUserIdpAction): SagaIterato
       UpdateLoadingState({
         name: DELETE_USER_IDP,
         state: 'completed',
-      })
+      }),
     );
     yield put(
       SuccessNotification({
         message: 'ADSP default user IdP in the core has been deleted successfully.',
-      })
+      }),
     );
   } catch (err) {
     yield put(
       ErrorNotification({
         message: 'Failed to delete user IdP in core',
         error: err,
-      })
+      }),
     );
     yield put(
       UpdateLoadingState({
         name: DELETE_USER_IDP,
         state: 'error',
         data: err.message,
-      })
+      }),
     );
   }
 }
