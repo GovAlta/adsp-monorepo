@@ -8,7 +8,15 @@ import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { DeleteModal } from '@components/DeleteModal';
 import MonacoEditor from '@monaco-editor/react';
-import { GoabBadge, GoabButton, GoabButtonGroup, GoabCircularProgress, GoabFormItem, GoabIconButton, GoabTable } from '@abgov/react-components';
+import {
+  GoabBadge,
+  GoabButton,
+  GoabButtonGroup,
+  GoabCircularProgress,
+  GoabFormItem,
+  GoabIconButton,
+  GoabTable,
+} from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import {
   DataRegisterEditorWrapper,
@@ -29,16 +37,16 @@ import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
 import { AddRegisterDataModal } from './addRegisterDataModal';
 
-
 interface RegisterItemProps {
   entry: RegisterConfigData;
   isSelected: boolean;
   onToggle: (entry: RegisterConfigData | null) => void;
   onDelete: (urn: string) => void;
   onUpdate: (urn: string, data: RegisterConfigData['data']) => void;
+  detail?: React.ReactNode;
 }
 
-const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate }: RegisterItemProps): JSX.Element => {
+const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -117,6 +125,11 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate }: Regis
           </DataRegisterIconDiv>
         </td>
       </tr>
+      {detail && (
+        <tr>
+          <td colSpan={3}>{detail}</td>
+        </tr>
+      )}
       {isEditing && (
         <tr>
           <td colSpan={3}>
@@ -244,6 +257,38 @@ export const DataRegisters = (): JSX.Element => {
   };
 
   const selectedName = selectedEntry ? parseUrn(selectedEntry.urn ?? '').name : null;
+  const renderSelectedDetail = () => {
+    if (!selectedEntry || !selectedName) {
+      return null;
+    }
+
+    const selectedUrn = `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`;
+
+    return (
+      <>
+        <DataRegisterUrn>
+          <GoabBadge type="information" content={selectedUrn} icon={false} />
+          {!urnCopied ? (
+            <GoabIconButton
+              icon="copy"
+              size="small"
+              variant="color"
+              title="Copy URN"
+              onClick={() => {
+                navigator.clipboard.writeText(selectedUrn);
+                setUrnCopied(true);
+              }}
+            />
+          ) : (
+            <CheckmarkCircle size="medium" />
+          )}
+        </DataRegisterUrn>
+        <DataRegisterEntryDetail data-testid={`data-register-detail-${selectedName}`}>
+          {JSON.stringify(selectedEntry.data, null, 2)}
+        </DataRegisterEntryDetail>
+      </>
+    );
+  };
 
   return (
     <>
@@ -283,41 +328,12 @@ export const DataRegisters = (): JSX.Element => {
                   onToggle={handleToggle}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
+                  detail={selectedEntry?.urn === entry.urn ? renderSelectedDetail() : null}
                 />
               ))}
             </tbody>
           </GoabTable>
         </DataRegisterTableWrapper>
-      )}
-      {selectedEntry && selectedName && (
-        <>
-          <DataRegisterUrn>
-            <GoabBadge
-              type="information"
-              content={`urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`}
-              icon={false}
-            />
-            {!urnCopied ? (
-              <GoabIconButton
-                icon="copy"
-                size="small"
-                variant="color"
-                title="Copy URN"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`
-                  );
-                  setUrnCopied(true);
-                }}
-              />
-            ) : (
-              <CheckmarkCircle size="medium" />
-            )}
-          </DataRegisterUrn>
-          <DataRegisterEntryDetail data-testid={`data-register-detail-${selectedName}`}>
-            {JSON.stringify(selectedEntry.data, null, 2)}
-          </DataRegisterEntryDetail>
-        </>
       )}
       <AddRegisterDataModal open={isAddModalOpen} onCancel={() => setIsAddModalOpen(false)} onSave={handleAddSave} />
     </>
