@@ -334,6 +334,9 @@ components:
                       type: string
                     size:
                       type: number
+                    total:
+                      type: number
+                      description: Total number of available form definitions before filters are applied.
   post:
     tags:
       - Form
@@ -627,6 +630,9 @@ components:
                       type: string
                     size:
                       type: number
+                    total:
+                      type: number
+                      description: Total number of available forms before filters are applied.
   post:
     tags:
       - Form
@@ -928,6 +934,9 @@ components:
                       type: string
                     size:
                       type: number
+                    total:
+                      type: number
+                      description: Total number of available submissions before filters are applied.
 
 /form/v1/submissions:
   get:
@@ -1000,6 +1009,9 @@ components:
                       type: string
                     size:
                       type: number
+                    total:
+                      type: number
+                      description: Total number of available submissions before filters are applied.
 /form/v1/submissions/{submissionId}:
   parameters:
     - name: submissionId
