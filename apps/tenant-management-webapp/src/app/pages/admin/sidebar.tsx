@@ -84,7 +84,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                     end
                     className={({ isActive }) => `menu-section-link${isActive ? ' current' : ''}`}
                     title="Services"
-                    data-testid="menu-dashboard"
+                    data-testid="sidebar-service"
                   >
                     <span>Services</span>
                   </NavLink>
