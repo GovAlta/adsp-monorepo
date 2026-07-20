@@ -13,6 +13,7 @@ export interface PagedResults<T> {
   page: {
     after: string;
     next: string;
+    total?: number;
   };
 }
 

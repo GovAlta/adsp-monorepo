@@ -15,7 +15,7 @@ import {
   Resource,
   definitionCriteriaSelector,
   formActions,
-  getDefaultDefinitionCriteria,
+  formResultTotalsSelector,
 } from '../state';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
@@ -25,6 +25,7 @@ import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer
 import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
+import { ResultsSummary } from '../components/ResultsSummary';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
   return hasFeature && <GoabBadge type="information" content={feature} mr="xs" mb="xs" icon={false} />;
@@ -78,6 +79,7 @@ export const FormsDefinitions = () => {
   const criteria = useSelector(definitionCriteriaSelector);
   const { definitions: next } = useSelector(nextSelector);
   const definitions = useSelector(definitionsSelector);
+  const { definitions: totalDefinitions } = useSelector(formResultTotalsSelector);
 
   useEffect(() => {
     if (user?.roles.includes('urn:ads:platform:form-service:form-admin') && definitions.length < 1) {
@@ -89,6 +91,11 @@ export const FormsDefinitions = () => {
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setDefinitionCriteria(update)); // clean-code-ignore: 2.10
   const handleLoadDefinitions = (after?: string) => dispatch(loadDefinitions({ after, tag: criteria.tag, criteria })); // clean-code-ignore: 2.10
+  const clearFilters = () => {
+    const criteria = {};
+    dispatch(formActions.setDefinitionCriteria(criteria));
+    dispatch(loadDefinitions({ criteria }));
+  };
 
   return (
     <SearchLayout
@@ -103,19 +110,9 @@ export const FormsDefinitions = () => {
                 onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
                 onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
               />
-              <TagSearchFilter
-                value={criteria.tag}
-                onChange={(value) => updateCriteria({ ...criteria, tag: value })}
-              />
+              <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             </SearchFormItemsContainer>
             <GoabButtonGroup alignment="end" mt="l">
-              <GoabButton
-                type="secondary"
-                disabled={busy.loading}
-                onClick={() => updateCriteria(getDefaultDefinitionCriteria())}
-              >
-                Reset filter
-              </GoabButton>
               <GoabButton type="primary" disabled={searchDisabled} onClick={() => handleLoadDefinitions()}>
                 Load definitions
               </GoabButton>
@@ -132,6 +129,13 @@ export const FormsDefinitions = () => {
       }
     >
       <ContentContainer>
+        <ResultsSummary
+          visible={definitions.length}
+          total={totalDefinitions}
+          itemLabel="definitions"
+          loading={busy.loading}
+          onClearFilters={clearFilters}
+        />
         <GoabTable width="100%">
           <thead>
             <tr>
@@ -151,12 +155,7 @@ export const FormsDefinitions = () => {
               />
             ))}
             <RowSkeleton columns={4} show={busy.loading} />
-            <RowLoadMore
-              columns={4}
-              next={next}
-              loading={busy.loading}
-              onLoadMore={handleLoadDefinitions}
-            />
+            <RowLoadMore columns={4} next={next} loading={busy.loading} onLoadMore={handleLoadDefinitions} />
           </tbody>
         </GoabTable>
       </ContentContainer>
