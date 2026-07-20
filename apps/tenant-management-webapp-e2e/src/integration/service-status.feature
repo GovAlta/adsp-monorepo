@@ -236,7 +236,8 @@ Feature: Service status
     When the user types "adsp5.t@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
     Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
-    Given a tenant admin user is on status applications page
+    When the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
     Then the user "views" "autotest-DO-NOT-DELETE" in the application list
     And the user views current status for "autotest-DO-NOT-DELETE"
     When the user clicks Change status button for "autotest-DO-NOT-DELETE"

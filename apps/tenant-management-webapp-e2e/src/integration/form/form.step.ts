@@ -1365,7 +1365,7 @@ When('the user clicks Remove button for the tag {string} in Add tags modal', fun
   formObj.definitionsAddTagsModalTagChips().then((chips) => {
     for (let i = 0; i < chips.length; i++) {
       if (chips[i].getAttribute('content') == tagName) {
-        cy.wrap(chips[i]).shadow().find('goa-icon').click({ force: true });
+        cy.wrap(chips[i]).shadow().find('goa-icon-button').click({ force: true });
       }
     }
   });
@@ -1446,7 +1446,7 @@ When('the user deletes all tags for the form definition of {string}, {string}', 
       } else {
         formObj.definitionsAddTagsModalTagChips().then((chips) => {
           for (let i = 0; i < chips.length; i++) {
-            cy.wrap(chips[i]).shadow().find('goa-icon').click({ force: true });
+            cy.wrap(chips[i]).shadow().find('goa-icon-button').click({ force: true });
             cy.log(chips[i].getAttribute('content') + ' tag removed');
             cy.wait(1000); // Wait for tag chips to update
           }

@@ -76,8 +76,9 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views the subscribe checkbox is "checked"
     # Test subscription deletion
-    Given a tenant admin user is on notification subscriptions page
-    When the user types "Auto Test" in Search subuscriber address as field and "adsp1.t@gov.ab.ca" in Search subscriber email field
+    When the user selects the "Notification" menu item
+    And the user selects "Subscriptions" tab for "Notification"
+    And the user types "Auto Test" in Search subuscriber address as field and "adsp1.t@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
     Then the user "views" the subscription of "Auto Test", "adsp1.t@gov.ab.ca" under "Application health check change"
     When the user clicks delete button of "Auto Test", "adsp1.t@gov.ab.ca" under "Application health check change"
@@ -86,7 +87,8 @@ Feature: Notifications
     When the user clicks Confirm button on Delete subscription modal
     Then the user "should not view" the subscription of "Auto Test", "adsp1.t@gov.ab.ca" under "Application health check change"
     # Restore the subscription
-    Given a tenant admin user is on status applications page
+    When the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
@@ -123,7 +125,8 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views the subscribe checkbox is "checked"
     # Test subscriber deletion
-    Given a tenant admin user is on notification subscribers page
+    When the user selects the "Notification" menu item
+    And the user selects "Subscribers" tab for "Notification"
     When the user searches subscribers with address as containing "Auto Test", email containing "adsp1.t@gov.ab.ca" and phone number containing "EMPTY"
     Then the user "views" the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
     When the user clicks "delete" button of "Auto Test", "adsp1.t@gov.ab.ca" on subscribers page
@@ -135,7 +138,8 @@ Feature: Notifications
     When the user selects "Subscriptions" tab for "Notification"
     Then the user "should not view" the subscription of "Auto Test", "adsp1.t@gov.ab.ca" under "Status-Application-Health-Change"
     # Restore the subscription
-    Given a tenant admin user is on status applications page
+    When the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
