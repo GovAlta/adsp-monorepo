@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { isAxiosError } from 'axios';
 import {
   TemplateEditorContainerPdf,
   EditTemplateActions,
@@ -48,6 +49,13 @@ import { v4 as uuid } from 'uuid';
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 const resolveAttachmentType = (file: File): Attachment['type'] => (file.type.startsWith('image/') ? 'image' : 'file');
+
+// Images may be embedded in the template and fetched anonymously by the PDF renderer (via the
+// fileId helper), so they go to the pdf-template-assets type (anonymous read, no retention),
+// falling back to agent-attachments where that type is not registered. Documents are design
+// references for the agent only and stay in the protected agent-attachments type.
+const getFileTypesForAttachment = (type: Attachment['type']): string[] =>
+  type === 'image' ? ['pdf-template-assets', 'agent-attachments'] : ['agent-attachments'];
 
 interface TemplateEditorProps {
   //eslint-disable-next-line
@@ -118,25 +126,34 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   const handleAttachmentUpload = useCallback(
     async (file: File): Promise<Attachment> => {
-      try {
-        const type = resolveAttachmentType(file);
-        const { uploadedFile, dataUrl } = await dispatch(
-          UploadFileService({
-            type: 'agent-attachments',
-            file,
-            recordId: tmpTemplate.id,
-          })
-        );
-        return {
-          urn: uploadedFile.urn,
-          filename: uploadedFile.filename || file.name,
-          type,
-          thumbnailUrl: type === 'image' ? dataUrl : undefined,
-        };
-      } catch (err) {
-        notifyAttachmentUploadError(err);
-        throw err;
+      const type = resolveAttachmentType(file);
+      const fileTypes = getFileTypesForAttachment(type);
+      for (let i = 0; i < fileTypes.length; i++) {
+        try {
+          const { uploadedFile, dataUrl } = await dispatch(
+            UploadFileService({
+              type: fileTypes[i],
+              file,
+              recordId: tmpTemplate.id,
+            })
+          );
+          return {
+            urn: uploadedFile.urn,
+            filename: uploadedFile.filename || file.name,
+            type,
+            thumbnailUrl: type === 'image' ? dataUrl : undefined,
+          };
+        } catch (err) {
+          // 404 means the file type is not registered in this environment (e.g. the pdf-service
+          // that registers pdf-template-assets has not been deployed); fall back to the next type.
+          const isMissingType = isAxiosError(err) && err.response?.status === 404;
+          if (!isMissingType || i === fileTypes.length - 1) {
+            notifyAttachmentUploadError(err);
+            throw err;
+          }
+        }
       }
+      throw new Error('Attachment upload failed.');
     },
     [dispatch, tmpTemplate.id, notifyAttachmentUploadError],
   );

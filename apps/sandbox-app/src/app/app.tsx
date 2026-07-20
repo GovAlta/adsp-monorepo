@@ -7,7 +7,7 @@ import { SandBoxTenant } from './components/SandboxTenant';
 import { Login } from './components/Login';
 
 import { useFeedbackWidget } from './hooks/useFeedbackWidget';
-import { useFeedbackScript } from './hooks/useFeedbackScript';
+import { useInitializeFeedbackScript } from './hooks/useInitializeFeedbackScript';
 import Services from './components/Services';
 import { useSelector } from 'react-redux';
 import { environmentSelector } from './state';
@@ -23,7 +23,7 @@ declare global {
 }
 export function App() {
   const environment = useSelector(environmentSelector);
-  useFeedbackScript(environment.tenantName);
+  useInitializeFeedbackScript(environment.tenantName);
   useFeedbackWidget(environment.tenantName);
   return (
     <div className={styles.app}>
@@ -31,7 +31,6 @@ export function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/:tenant/services" element={<Services />} />
         <Route path="/:tenant/login" element={<Login />} />
-        <Route path="/:tenant/signin" element={<Login />} />
         <Route path="/:tenant/*" element={<SandBoxTenant />} />
         <Route path="*" element={<Landing />} />
       </Routes>

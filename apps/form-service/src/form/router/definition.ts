@@ -28,6 +28,55 @@ import { CalendarService } from '../calendar';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
+async function fetchExistingDefinition(
+  configurationApiUrl: URL,
+  token: string,
+  encodedDefinitionId: string,
+  tenantId: string,
+  definitionId: string,
+): Promise<FormDefinition> {
+  const response = await axios.get(
+    new URL(`v2/configuration/form-service/${encodedDefinitionId}/latest`, configurationApiUrl).href,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId },
+      validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
+    },
+  );
+
+  if (response.status === HttpStatusCodes.NOT_FOUND || !response.data) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+
+  return response.data as FormDefinition;
+}
+
+async function patchConfigurationDefinition(
+  configurationApiUrl: URL,
+  token: string,
+  definitionId: string,
+  tenantId: string,
+  definition: FormDefinition,
+): Promise<{ latest: { revision: number; configuration: FormDefinition } }> {
+  try {
+    const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
+      new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+      { operation: 'REPLACE', configuration: definition },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { tenantId },
+      },
+    );
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
+      throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
+    }
+    throw err;
+  }
+}
+
 export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -84,12 +133,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         results: data.results.map(({ latest, active }) =>
           active
             ? mapFormDefinition(active.configuration, active.revision, undefined, latest.created as unknown as Date)
-            : mapFormDefinition(
-                latest.configuration,
-                latest.revision,
-                undefined,
-                latest.created as unknown as Date,
-              ),
+            : mapFormDefinition(latest.configuration, latest.revision, undefined, latest.created as unknown as Date),
         ),
       });
     } catch (err) {
@@ -178,6 +222,7 @@ export function createFormDefinition(
         assessorRoles: [],
         clerkRoles: [],
         dataSchema: {},
+        securityClassification: 'protected b',
       };
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
@@ -200,24 +245,13 @@ export function createFormDefinition(
         });
       }
 
-      let data: { latest: { revision: number; configuration: FormDefinition } };
-      try {
-        const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-          new URL(`v2/configuration/form-service/${definition.id}`, configurationApiUrl).href,
-          { operation: 'REPLACE', configuration: definition },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { tenantId: tenantId?.toString() },
-          },
-        );
-        data = response.data;
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
-          throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
-        }
-        throw err;
-      }
+      const data = await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definition.id,
+        tenantId?.toString(),
+        definition,
+      );
 
       res.status(HttpStatusCodes.CREATED).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
@@ -241,13 +275,12 @@ export function updateFormDefinition(directory: ServiceDirectory, tokenProvider:
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      const { data } = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
-        { operation: 'REPLACE', configuration: definition },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
+      const data = await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definitionId,
+        tenantId?.toString(),
+        definition,
       );
 
       res.send(mapFormDefinition(data.latest.configuration, data.latest.revision));
@@ -269,24 +302,16 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
       }
 
       const encodedDefinitionId = encodeURIComponent(definitionId);
-
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
 
-      const existingDefinitionResponse = await axios.get(
-        new URL(`v2/configuration/form-service/${encodedDefinitionId}/latest`, configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-        },
+      const existingDefinition = await fetchExistingDefinition(
+        configurationApiUrl,
+        token,
+        encodedDefinitionId,
+        tenantId?.toString(),
+        definitionId,
       );
-
-      if (existingDefinitionResponse.status === HttpStatusCodes.NOT_FOUND || !existingDefinitionResponse.data) {
-        throw new NotFoundError('form definition', definitionId);
-      }
-
-      const existingDefinition = existingDefinitionResponse.data;
 
       const patchedDefinition: FormDefinition = {
         ...existingDefinition,
@@ -297,24 +322,13 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         id: definitionId,
       };
 
-      let data: { latest: { revision: number; configuration: FormDefinition } };
-      try {
-        const response = await axios.patch<{ latest: { revision: number; configuration: FormDefinition } }>(
-          new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href,
-          { operation: 'REPLACE', configuration: patchedDefinition },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { tenantId: tenantId?.toString() },
-          },
-        );
-        data = response.data;
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
-          throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
-        }
-        throw err;
-      }
+      const data = await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definitionId,
+        tenantId?.toString(),
+        patchedDefinition,
+      );
 
       res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
@@ -336,12 +350,116 @@ export function deleteFormDefinition(directory: ServiceDirectory, tokenProvider:
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      await axios.delete(new URL(`v2/configuration/form-service/${definitionId}`, configurationApiUrl).href, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { tenantId: tenantId?.toString() },
-      });
+      await axios.delete(
+        new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        },
+      );
 
       res.status(HttpStatusCodes.NO_CONTENT).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function updateFormDefinitionSchemas(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('update form definition schemas', user);
+      }
+
+      const encodedDefinitionId = encodeURIComponent(definitionId);
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+
+      const existingDefinition = await fetchExistingDefinition(
+        configurationApiUrl,
+        token,
+        encodedDefinitionId,
+        tenantId?.toString(),
+        definitionId,
+      );
+
+      const updatedDefinition: FormDefinition = {
+        ...existingDefinition,
+        dataSchema: req.body['data-schema'] !== undefined ? req.body['data-schema'] : existingDefinition.dataSchema,
+        uiSchema: req.body['ui-schema'] !== undefined ? req.body['ui-schema'] : existingDefinition.uiSchema,
+        id: definitionId,
+      };
+
+      await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definitionId,
+        tenantId?.toString(),
+        updatedDefinition,
+      );
+
+      res.status(HttpStatusCodes.NO_CONTENT).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function patchFormDefinitionLifecycle(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('patch form definition lifecycle', user);
+      }
+
+      const encodedDefinitionId = encodeURIComponent(definitionId);
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+
+      const existingDefinition = await fetchExistingDefinition(
+        configurationApiUrl,
+        token,
+        encodedDefinitionId,
+        tenantId?.toString(),
+        definitionId,
+      );
+
+      const updatedDefinition: FormDefinition = {
+        ...existingDefinition,
+        ...(req.body.allowAnonymousApplication !== undefined
+          ? { anonymousApply: req.body.allowAnonymousApplication }
+          : {}),
+        ...(req.body.allowMultipleFormsPerApplicant !== undefined
+          ? { oneFormPerApplicant: !req.body.allowMultipleFormsPerApplicant }
+          : {}),
+        ...(req.body.createSupportTopic !== undefined ? { supportTopic: req.body.createSupportTopic } : {}),
+        ...(req.body.securityClassification !== undefined
+          ? { securityClassification: req.body.securityClassification }
+          : {}),
+        id: definitionId,
+      };
+
+      const data = await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definitionId,
+        tenantId?.toString(),
+        updatedDefinition,
+      );
+
+      res.send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -376,10 +494,7 @@ export function createFormDefinitionRouter({
   router.post(
     '/definitions',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      body('name').isString().isLength({ min: 1 }),
-      body('description').optional().isString(),
-    ),
+    createValidationHandler(body('name').isString().isLength({ min: 1 }), body('description').optional().isString()),
     createFormDefinition(directory, tokenProvider, logger),
   );
   router.get(
@@ -440,6 +555,39 @@ export function createFormDefinitionRouter({
         .matches(/^[a-zA-Z0-9-]+$/),
     ),
     deleteFormDefinition(directory, tokenProvider),
+  );
+
+  router.put(
+    '/definitions/:definitionId/schemas',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      body('data-schema').optional().isObject(),
+      body('ui-schema').optional().isObject(),
+    ),
+    updateFormDefinitionSchemas(directory, tokenProvider),
+  );
+
+  router.patch(
+    '/definitions/:definitionId/lifecycle',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      body('allowAnonymousApplication').optional().isBoolean(),
+      body('allowMultipleFormsPerApplicant').optional().isBoolean(),
+      body('createSupportTopic').optional().isBoolean(),
+      body('securityClassification')
+        .optional()
+        .isString()
+        .isIn(['protected a', 'protected b', 'protected c', 'public']),
+    ),
+    patchFormDefinitionLifecycle(directory, tokenProvider),
   );
 
   return router;

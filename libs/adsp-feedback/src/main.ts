@@ -416,35 +416,35 @@ export class AdspFeedback implements AdspFeedbackApi {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderRating = (rating: any, index: number) => {
     return html`
-      <div class="rating-div">
+      <div class="adsp-fb-rating-item">
         <img
           src="${rating.svgDefault}"
           @mouseover="${() => this.updateHover(index, true)}"
           @mouseout="${() => this.updateHover(index, false)}"
           @click="${() => this.selectRating(index)}"
           @keydown=${(event: KeyboardEvent) => this.handleKeyHowEasy(event, index)}
-          class="rating"
+          class="adsp-fb-rating-icon"
           alt="${rating.label}"
           tabindex="0"
           aria-label="${rating.label}"
         />
 
         <p
-          class="ratingText"
+          class="adsp-fb-rating-text"
           @mouseover="${() => this.updateHover(index, true)}"
           @mouseout="${() => this.updateHover(index, false)}"
           @click="${() => this.selectRating(index)}"
         >
           ${rating.label}
         </p>
-        <span class="tooltip-text">${rating.label}</span>
+        <span class="adsp-fb-tooltip-text">${rating.label}</span>
       </div>
     `;
   };
   private updateHover = (index: number, isHovering: boolean) => {
     const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
     const rating = this.ratings[index];
-    const images = this.getWidgetElements<HTMLImageElement>('.rating');
+    const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
     const image = images[index] as HTMLImageElement;
     image.src =
       isHovering && this.selectedRating !== index
@@ -453,17 +453,17 @@ export class AdspFeedback implements AdspFeedbackApi {
           ? rating.svgClick
           : rating.svgDefault;
 
-    const texts = this.getWidgetElements<HTMLElement>('.ratingText');
+    const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
     const text = texts[index] as HTMLImageElement;
     text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
     if (!isSmallScreen) {
-      const tooltips = this.getWidgetElements<HTMLElement>('.tooltip-text');
+      const tooltips = this.getWidgetElements<HTMLElement>('.adsp-fb-tooltip-text');
       const tooltip = tooltips[index] as HTMLImageElement;
       tooltip.style.visibility = isHovering ? 'visible' : 'hidden';
       tooltip.style.opacity = isHovering ? '1' : '0';
       if (index === 0) {
         tooltip.style.marginLeft = '35px';
-        tooltip.classList.add('modified');
+        tooltip.classList.add('adsp-fb-tooltip-modified');
       }
     }
   };
@@ -471,11 +471,11 @@ export class AdspFeedback implements AdspFeedbackApi {
   private clearRating = (index: number) => {
     if (index > -1) {
       const rating = this.ratings[index];
-      const images = this.getWidgetElements<HTMLImageElement>('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
       const image = images[index] as HTMLImageElement;
       image.src = rating.svgDefault;
 
-      const texts = this.getWidgetElements<HTMLElement>('.ratingText');
+      const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
       const text = texts[index] as HTMLImageElement;
       text.style.color = '#333333';
     }
@@ -483,7 +483,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private defaultRating = () => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
-      const images = this.getWidgetElements<HTMLImageElement>('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
       const image = images[i] as HTMLImageElement;
 
       image.src = rating.svgDefault;
@@ -492,7 +492,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private errorsOnRating = (isError: boolean) => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
-      const images = this.getWidgetElements<HTMLImageElement>('.rating');
+      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
       const image = images[i] as HTMLImageElement;
       if (isError) {
         image.src = rating.svgError;
@@ -549,7 +549,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
 
     this.updateHover(index, false);
-    const images = this.getWidgetElements<HTMLImageElement>('.rating');
+    const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
     const ratingNew = this.ratings[index];
     const imageNew = images[index] as HTMLImageElement;
     imageNew.src = ratingNew.svgClick;
@@ -557,13 +557,13 @@ export class AdspFeedback implements AdspFeedbackApi {
       const rating = this.ratings[this.selectedRating];
       const image = images[this.selectedRating] as HTMLImageElement;
       image.src = rating.svgDefault;
-      const texts = this.getWidgetElements<HTMLElement>('.ratingText');
+      const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
       const text = texts[this.selectedRating] as HTMLImageElement;
       text.style.color = '#333333';
     }
     this.selectedRating = index;
     this.lastFocusableElement = this.sendButtonRef;
-    const texts = this.getWidgetElements<HTMLElement>('.ratingText');
+    const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
   };
@@ -603,7 +603,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       const styleContainer = document.createElement('div');
       render(
         html`<style id="adsp-feedback-widget-styles">
-          .adsp-fb-root .overlay {
+          .adsp-fb-root .adsp-fb-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -716,9 +716,9 @@ export class AdspFeedback implements AdspFeedbackApi {
             padding-left: 1.25rem;
             align-items: center;
             height: 74px;
-            > img {
-              cursor: pointer;
-            }
+          }
+          .adsp-fb .adsp-fb-container-heading > img {
+            cursor: pointer;
           }
           .adsp-fb .adsp-fb-form {
             display: flex;
@@ -752,16 +752,15 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-top: 12px;
             justify-content: space-between;
             width: 98%;
-
-            > div > img {
-              width: 46px;
-              height: 46px;
-            }
-            > div > img:first-child {
-              padding-left: 0px;
-            }
           }
-          .adsp-fb .tooltip-text {
+          .adsp-fb .adsp-fb-form-rating > div > img {
+            width: 46px;
+            height: 46px;
+          }
+          .adsp-fb .adsp-fb-form-rating > div > img:first-child {
+            padding-left: 0px;
+          }
+          .adsp-fb .adsp-fb-tooltip-text {
             visibility: hidden;
             margin-left: 25px;
             background-color: #666666;
@@ -779,7 +778,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             transition: opacity 0.3s;
             -webkit-transition: opacity 0.3s;
           }
-          .adsp-fb .tooltip-text:before {
+          .adsp-fb .adsp-fb-tooltip-text:before {
             content: '';
             position: absolute;
             top: -10px;
@@ -791,19 +790,19 @@ export class AdspFeedback implements AdspFeedbackApi {
             -webkit-transform: translateX(-50%);
             border-color: transparent transparent #666666 transparent;
           }
-          .adsp-fb .tooltip-text.modified:before {
+          .adsp-fb .adsp-fb-tooltip-text.adsp-fb-tooltip-modified:before {
             left: 40%;
           }
-          .adsp-fb .ratingText {
+          .adsp-fb .adsp-fb-rating-text {
             display: none;
           }
           .adsp-fb .adsp-fb-form-comment {
             display: flex;
             flex-direction: column;
             margin-bottom: 12px;
-            > label {
-              margin-top: 32px;
-            }
+          }
+          .adsp-fb .adsp-fb-form-comment > label {
+            margin-top: 32px;
           }
           .adsp-fb .adsp-fb-form-comment span {
             color: var(--color-gray-600, #666666);
@@ -905,7 +904,7 @@ export class AdspFeedback implements AdspFeedbackApi {
           }
 
           .adsp-fb button.adsp-fb-form-secondary {
-            border: 2x solid #0070c4;
+            border: 2px solid #0070c4;
             background-color: #ffffff;
             color: #0070c4;
           }
@@ -942,7 +941,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             box-sizing: border-box;
             padding: 24px 24px;
           }
-          .adsp-fb .rating-div {
+          .adsp-fb .adsp-fb-rating-item {
             display: flex;
             flex-direction: column;
             padding-left: 2px;
@@ -976,22 +975,36 @@ export class AdspFeedback implements AdspFeedbackApi {
             visibility: visible;
             transition: visibility 0s 0.1s;
           }
-          .adsp-fb .radios {
+          .adsp-fb .adsp-fb-radios {
             margin-top: 16px;
             margin-bottom: 16px;
             display: flex;
             flex-direction: row;
           }
-          .adsp-fb .radio-span {
+          .adsp-fb .adsp-fb-radio-span {
             display: flex;
             align-items: center;
           }
-          .adsp-fb .radio-span:focus-visible {
+          .adsp-fb .adsp-fb-radio-span:focus-visible {
             border-radius: 0.25rem;
             border: 1px solid #feba35;
             outline: #feba35 solid 1px;
           }
-          .adsp-fb .rating {
+          .adsp-fb .adsp-fb-rating-icon {
+            display: block !important;
+            width: 46px !important;
+            min-width: 46px !important;
+            max-width: 46px !important;
+            height: 46px !important;
+            min-height: 46px !important;
+            max-height: 46px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            filter: none !important;
+            object-fit: contain !important;
             cursor: pointer;
             transform: translateZ(0);
             will-change: transform, color;
@@ -1005,7 +1018,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             color: #333333;
             font-size: var(--fs-xl, 1.5rem);
             font-weight: 700;
-            line-height: 1.5rem
+            line-height: 1.5rem;
             text-align: left;
             margin-bottom: 0px;
           }
@@ -1018,16 +1031,16 @@ export class AdspFeedback implements AdspFeedbackApi {
             margin-bottom: 12px;
             line-height: 28px;
           }
-          .adsp-fb .radio-container {
+          .adsp-fb .adsp-fb-radio-container {
             display: flex;
             flex-direction: column;
             cursor: pointer;
           }
-          .adsp-fb .radio-container span {
+          .adsp-fb .adsp-fb-radio-container span {
             color: var(--color-gray-600, #666666);
             font-size: 14px;
           }
-          .adsp-fb .radio {
+          .adsp-fb .adsp-fb-radio {
             appearance: none;
             width: 24px;
             height: 24px;
@@ -1038,42 +1051,42 @@ export class AdspFeedback implements AdspFeedbackApi {
             transition: box-shadow 100ms ease-in-out;
             cursor: pointer;
           }
-          .adsp-fb .radio *,
-          .adsp-fb .radio *:before,
-          .adsp-fb .radio *:after {
+          .adsp-fb .adsp-fb-radio *,
+          .adsp-fb .adsp-fb-radio *:before,
+          .adsp-fb .adsp-fb-radio *:after {
             box-sizing: border-box;
           }
 
-          .adsp-fb .radio::not(:checked) {
+          .adsp-fb .adsp-fb-radio::not(:checked) {
             border: 1px solid #666666;
           }
 
-          .adsp-fb .radio:checked:hover {
+          .adsp-fb .adsp-fb-radio:checked:hover {
             border: 7px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
 
-          .adsp-fb .radio:hover,
-          .adsp-fb .radio:focus-visible,
-          .adsp-fb .radio:focus:active {
+          .adsp-fb .adsp-fb-radio:hover,
+          .adsp-fb .adsp-fb-radio:focus-visible,
+          .adsp-fb .adsp-fb-radio:focus:active {
             outline: initial;
             border: 1px solid #004f84;
             box-shadow: 0 0 0 1px #004f84;
           }
 
-          .adsp-fb .radio:hover:active,
-          .adsp-fb .radio:hover:focus {
+          .adsp-fb .adsp-fb-radio:hover:active,
+          .adsp-fb .adsp-fb-radio:hover:focus {
             box-shadow: 0 0 0 3px #feba35;
           }
 
-          .adsp-fb .radio:checked {
+          .adsp-fb .adsp-fb-radio:checked {
             border: 7px solid #0070c4;
           }
-          .adsp-fb .radio.error {
+          .adsp-fb .adsp-fb-radio.error {
             border: 1px solid red;
             box-shadow: 0 0 0 1px red;
           }
-          .adsp-fb .radio-label {
+          .adsp-fb .adsp-fb-radio-label {
             color: #333333;
             font-size: 1.125rem;
             padding: 0 8px;
@@ -1154,11 +1167,11 @@ export class AdspFeedback implements AdspFeedbackApi {
             font-weight: 400;
             line-height: 28px;
             margin: 0;
-            > a,
-            > a:link,
-            > a:visited {
-              color: #0070c4;
-            }
+          }
+          .adsp-fb .p-content > a,
+          .adsp-fb .p-content > a:link,
+          .adsp-fb .p-content > a:visited {
+            color: #0070c4;
           }
 
           .adsp-fb .adsp-fb-sent .p-content a {
@@ -1219,10 +1232,10 @@ export class AdspFeedback implements AdspFeedbackApi {
               bottom: 0;
               margin-top: 0px;
               flex-direction: column-reverse;
-              > button {
-                width: 100%;
-                margin-top: 12px;
-              }
+            }
+            .adsp-fb .adsp-fb-actions > button {
+              width: 100%;
+              margin-top: 12px;
             }
             .adsp-fb button.adsp-fb-form-primary {
               margin-left: 0;
@@ -1230,36 +1243,40 @@ export class AdspFeedback implements AdspFeedbackApi {
             .adsp-fb .adsp-fb-container-heading {
               height: 55px !important;
             }
-            .adsp-fb .rating-div {
+            .adsp-fb .adsp-fb-rating-item {
               flex-direction: row;
               gap: 6px;
             }
             .adsp-fb .adsp-fb-form-rating {
               flex-direction: column-reverse;
               gap: 16px;
-
-              > div {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-              }
-              > div > img {
-                height: 32px;
-                padding-right: 8px;
-              }
             }
-            .adsp-fb .tooltip-text {
+            .adsp-fb .adsp-fb-form-rating > div {
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+            }
+            .adsp-fb .adsp-fb-form-rating > div > img {
+              height: 32px !important;
+              width: 32px !important;
+              min-width: 32px !important;
+              max-width: 32px !important;
+              min-height: 32px !important;
+              max-height: 32px !important;
+              margin-right: 8px;
+            }
+            .adsp-fb .adsp-fb-tooltip-text {
               visibility: hidden;
               opacity: 0;
             }
-            .adsp-fb .ratingText {
+            .adsp-fb .adsp-fb-rating-text {
               padding-top: 12px;
               cursor: pointer;
               margin-bottom: 0px !important;
               display: block;
               padding: 0;
             }
-            .adsp-fb .ratingText:hover {
+            .adsp-fb .adsp-fb-rating-text:hover {
               color: #004f84;
             }
           }
@@ -1312,7 +1329,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                 <span>Feedback</span>
               </div>
             </div>
-            <div ${ref(this.dimRef)} class="overlay">
+            <div ${ref(this.dimRef)} class="adsp-fb-overlay">
               <div class="adsp-fb">
                 <div ${ref(this.startRef)} class="adsp-fb-form-container adsp-fb-start" data-show="false">
                   <div class="adsp-fb-container-heading">
@@ -1400,33 +1417,33 @@ export class AdspFeedback implements AdspFeedbackApi {
                       </div>
                       <hr class="hr-width" />
                       <br />
-                      <div class="radio-container">
+                      <div class="adsp-fb-radio-container">
                         <label><b>Did you experience any technical issues?</b></label>
-                        <div class="radios" @change=${this.onIssueChange}>
-                          <div id="technicalIssueYes" class="radio-span">
+                        <div class="adsp-fb-radios" @change=${this.onIssueChange}>
+                          <div id="technicalIssueYes" class="adsp-fb-radio-span">
                             <input
                               tabindex="0"
                               name="YesOrNo"
                               type="radio"
                               id="yes"
                               value="Yes"
-                              class="radio"
+                              class="adsp-fb-radio"
                               ${ref(this.ratingSelector)}
                               aria-label="Yes"
                               @keydown=${(e: KeyboardEvent) => {
                                 this.handleRadioKeyDown(e);
                               }}
                             />
-                            <label for="yes" class="radio-label"> Yes </label>
+                            <label for="yes" class="adsp-fb-radio-label"> Yes </label>
                           </div>
-                          <div class="radio-span">
+                          <div class="adsp-fb-radio-span">
                             <input
                               tabindex="0"
                               name="YesOrNo"
                               type="radio"
                               id="no"
                               value="No"
-                              class="radio"
+                              class="adsp-fb-radio"
                               ${ref(this.commentSelector)}
                               aria-label="No"
                               @keydown=${(e: KeyboardEvent) => {
@@ -1434,7 +1451,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                               }}
                             />
 
-                            <label for="no" class="radio-label"> No </label>
+                            <label for="no" class="adsp-fb-radio-label"> No </label>
                           </div>
                         </div>
                         <span class="inline-error" ${ref(this.issueSelectionErrorText)}>

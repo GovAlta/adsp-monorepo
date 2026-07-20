@@ -4,8 +4,39 @@ import type { CoreUserMessage } from '@mastra/core/llm';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { BrokerInputProcessor } from '../types';
-import { createFileServiceClient } from '../clients';
-import { extractDocumentText, isExtractableDocument } from '../utils/documentParser';
+import { createFileServiceClient, FileTypeInfo } from '../clients';
+import { extractDocumentText, ExtractedImage, isExtractableDocument } from '../utils/documentParser';
+
+// Rendered on its own line so no punctuation is adjacent to the URN token that precedes it.
+function formatStorageNote(typeInfo: FileTypeInfo | null): string {
+  if (!typeInfo) {
+    return '';
+  }
+  const access = typeInfo.anonymousRead ? 'anonymous read allowed' : 'no anonymous read';
+  const retention = !typeInfo.retentionActive
+    ? 'no auto-delete'
+    : typeInfo.retentionDays
+      ? `auto-deletes after ${typeInfo.retentionDays} days`
+      : 'auto-deletes per a retention policy';
+  return `\nThe file is stored in file type '${typeInfo.name}' (${access}; ${retention}).`;
+}
+
+function pushLabeledImageParts(
+  parts: Array<TextPart | FilePart | ImagePart>,
+  images: ExtractedImage[],
+  label: string,
+): void {
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+    parts.push({ type: 'text', text: `${label} ${i + 1}:` });
+    // SDK declares ImagePart.image as URL but accepts data URI strings at runtime; cast is intentional.
+    parts.push({
+      type: 'image',
+      image: `data:${image.mimeType};base64,${image.data}` as unknown as URL,
+      mediaType: image.mimeType,
+    });
+  }
+}
 
 export class FileServiceDownloadProcessor implements BrokerInputProcessor {
   readonly name = 'file-service-download-processor';
@@ -52,7 +83,14 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);
       if (resourceId.type === 'resource' && resourceId.service === 'file-service') {
-        const { rawData, mediaType, url, urn, filename } = await this.getFile(tenantId, resourceId);
+        const { rawData, mediaType, url, urn, filename, typeName } = await this.getFile(tenantId, resourceId);
+
+        // Storage details let the agent warn the user when a file's type cannot render in
+        // generated PDFs (no anonymous read) or will be auto-deleted by a retention rule.
+        // Started here so the lookup runs concurrently with document extraction below.
+        const typeInfoPromise = typeName
+          ? this.fileServiceClient.getFileTypeInfo(tenantId, typeName)
+          : Promise.resolve(null);
 
         // For PDF/DOCX documents, extract text and send only text parts.
         // Most LLMs don't support binary document file parts (e.g. application/pdf),
@@ -62,11 +100,12 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         if (isExtractable) {
           try {
             const extracted = await extractDocumentText(rawData, mediaType, filename, this.logger);
+            const storageNote = formatStorageNote(await typeInfoPromise);
 
             if (extracted?.text) {
               const prefix = extracted.xfaForm
-                ? `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form structure was extracted from the embedded XML:`
-                : `Provided document has filename '${filename}' and file service URN of: ${urn}`;
+                ? `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form structure was extracted from the embedded XML:${storageNote}`
+                : `Provided document has filename '${filename}' and file service URN of: ${urn}${storageNote}`;
 
               const contentLabel = extracted.format === 'html' ? 'Extracted HTML content' : 'Extracted text content';
 
@@ -80,12 +119,20 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
                   type: 'text',
                   text: `The document contains ${extracted.images.length} embedded diagram(s). Each [DIAGRAM_N] marker in the HTML above shows where diagram N appears in the document. Reproduce each diagram in HTML/CSS at its marker position. The diagrams are provided as vision images below:`,
                 });
-                for (let i = 0; i < extracted.images.length; i++) {
-                  const img = extracted.images[i];
-                  parts.push({ type: 'text', text: `Diagram ${i + 1}:` });
-                  // SDK declares ImagePart.image as URL but accepts data URI strings at runtime; cast is intentional.
-                  parts.push({ type: 'image', image: `data:${img.mimeType};base64,${img.data}` as unknown as URL, mediaType: img.mimeType });
-                }
+                pushLabeledImageParts(parts, extracted.images, 'Diagram');
+              }
+
+              if (extracted.pageImages?.length) {
+                const totalPages = extracted.pageCount ?? extracted.pageImages.length;
+                const coverageNote =
+                  totalPages > extracted.pageImages.length
+                    ? ` (first ${extracted.pageImages.length} of ${totalPages} pages; describe to the user that remaining pages were not rendered)`
+                    : '';
+                parts.push({
+                  type: 'text',
+                  text: `Full-page visual renders of the document${coverageNote} are provided below. Use them as the visual design reference for page orientation, margins, columns, layout regions, colors, fonts, field placement, and logos. Use the extracted text above for accurate text content:`,
+                });
+                pushLabeledImageParts(parts, extracted.pageImages, 'Page');
               }
 
               return parts;
@@ -110,11 +157,15 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         }
 
         // For images and non-extractable files, send the base64 data as before.
+        const storageNote = formatStorageNote(await typeInfoPromise);
         return [
           content.type === 'file'
             ? { type: 'file', data: url, mediaType, filename }
             : { type: 'image', image: url, mediaType },
-          { type: 'text', text: `Provided file or image has filename '${filename}' and file service URN of: ${urn}` },
+          {
+            type: 'text',
+            text: `Provided file or image has filename '${filename}' and file service URN of: ${urn}${storageNote}`,
+          },
         ];
       }
     }
@@ -136,6 +187,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
       mediaType: metadata.mimeType,
       filename: metadata.filename,
       urn: metadata.urn,
+      typeName: metadata.typeName,
     };
   }
 }

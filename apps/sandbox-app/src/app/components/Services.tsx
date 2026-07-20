@@ -9,8 +9,6 @@ import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { useSelector } from 'react-redux';
 import { authenticatedUserSelector, environmentSelector, userSelector } from '../state';
 
-import { DEFAULT_TENANT } from '../utils/feedbackUtils';
-
 interface ServiceInfo {
   /**
    * Id of the service
@@ -185,7 +183,7 @@ export default function Services() {
 
   useEffect(() => {
     if (!user && userInitialized) {
-      navigate(`/${DEFAULT_TENANT}`);
+      navigate(`/`);
     }
   }, [navigate, user, userInitialized]);
 

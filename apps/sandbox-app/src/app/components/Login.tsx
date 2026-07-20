@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -17,6 +17,7 @@ const isUUID = (id: string) => uuidRegex.test(id);
 
 export const Login = () => {
   const realm = useParams<{ tenant: string }>().tenant;
+  const location = useLocation();
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -63,10 +64,20 @@ export const Login = () => {
       dispatch(initializeConfig());
     }
 
-    if (realm && Object.keys(environment).length > 0) {
+    if (
+      realm &&
+      Object.keys(environment).length > 0 &&
+      environment &&
+      environment.tenantName &&
+      location.pathname.includes(environment.tenantName)
+    ) {
       tenantLogin(realm);
+    } else {
+      if (environment.tenantName !== undefined) {
+        navigate('/');
+      }
     }
-  }, [dispatch, configInitialized, realm, environment, tenantLogin]);
+  }, [dispatch, configInitialized, realm, environment, tenantLogin, location.pathname, navigate]);
 
   return null;
 };

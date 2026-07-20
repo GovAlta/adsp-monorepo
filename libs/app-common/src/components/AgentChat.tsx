@@ -461,22 +461,56 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   const isWaitingForResponse = useMemo(() => messages[messages.length - 1]?.from === 'user', [messages]);
 
   // Event handlers
+  const uploadAttachment = async (file: File) => {
+    if (!onAttachmentUpload) {
+      return;
+    }
+    try {
+      setUploading(true);
+      const attachment = await onAttachmentUpload(file);
+      setAttachments((prev) => [...prev, attachment]);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && onAttachmentUpload) {
-      try {
-        setUploading(true);
-        const attachment = await onAttachmentUpload(file);
-        setAttachments((prev) => [...prev, attachment]);
-      } catch (error) {
-        console.error('Upload failed:', error);
-      } finally {
-        setUploading(false);
-      }
+    if (file) {
+      await uploadAttachment(file);
     }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handlePaste = async (event: React.ClipboardEvent) => {
+    if (!onAttachmentUpload || disabled || uploading) {
+      return;
+    }
+
+    const files = Array.from(event.clipboardData?.items || [])
+      .filter((item) => item.kind === 'file')
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+
+    if (files.length === 0) {
+      return;
+    }
+    // Prevent the browser from inserting file names or binary content into the textarea.
+    event.preventDefault();
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // Clipboard files arrive with a generic name (e.g. "image.png"), so always rename with a
+      // timestamp and index to keep multiple pastes distinguishable in the file service. The
+      // MIME subtype is trimmed at '+' since values like "svg+xml" are not valid file extensions.
+      const extension = (file.type.split('/')[1] || 'png').split('+')[0];
+      const named = new File([file], `pasted-${Date.now()}-${i + 1}.${extension}`, { type: file.type });
+      await uploadAttachment(named);
     }
   };
 
@@ -539,7 +573,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
       </div>
 
       {/* Input form */}
-      <FormDiv>
+      <FormDiv onPaste={handlePaste}>
         {onAttachmentUpload && (
           <AttachmentListDiv>
             <input

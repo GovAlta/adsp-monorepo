@@ -1,7 +1,4 @@
 import { useEffect } from 'react';
-import { DEFAULT_TENANT } from '../utils/feedbackUtils';
-
-export { DEFAULT_TENANT };
 
 export const getFeedbackContext = () => {
   const sandboxSite = `${document.location.protocol}//${document.location.host}`;
@@ -28,7 +25,7 @@ export const useFeedbackWidget = (tenantName?: string) => {
   useEffect(() => {
     if (globalThis.adspFeedback !== undefined) {
       globalThis.adspFeedback.initialize({
-        tenant: tenantName ?? DEFAULT_TENANT,
+        tenant: tenantName ?? '',
         getContext: () => getFeedbackContext(),
       });
     }

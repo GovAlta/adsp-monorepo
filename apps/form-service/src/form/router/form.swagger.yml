@@ -467,6 +467,95 @@ components:
       404:
         description: Form definition not found.
 
+/form/v1/definitions/{definitionId}/schemas:
+  put:
+    tags:
+      - Form
+    description: Updates the data and UI schemas for an existing form definition. Requires the form-service admin role.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition whose schemas are to be updated.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data-schema:
+                type: object
+                description: JSON Schema describing the shape of the form data. If omitted, the existing data schema is preserved.
+              ui-schema:
+                type: object
+                description: UI schema describing the layout and controls of the form. If omitted, the existing UI schema is preserved.
+    responses:
+      204:
+        description: Schemas updated successfully. No content is returned.
+      400:
+        description: Request body does not conform to the required schema.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User does not have the form-admin role.
+      404:
+        description: Form definition not found.
+
+/form/v1/definitions/{definitionId}/lifecycle:
+  patch:
+    tags:
+      - Form
+    description: Partially updates the lifecycle settings of an existing form definition. Requires the form-service admin role. Only provided fields are changed; omitted fields are left unchanged.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition whose lifecycle settings are to be updated.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              allowAnonymousApplication:
+                type: boolean
+                description: Whether anonymous (unauthenticated) applicants can submit the form.
+              allowMultipleFormsPerApplicant:
+                type: boolean
+                description: Whether an applicant can submit more than one form. When false, only one form per applicant is allowed.
+              createSupportTopic:
+                type: boolean
+                description: Whether a support topic is created when the form is submitted.
+              securityClassification:
+                type: string
+                enum:
+                  - protected a
+                  - protected b
+                  - protected c
+                  - public
+                description: Security classification of the form definition.
+    responses:
+      200:
+        description: Successfully updated lifecycle settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      400:
+        description: Request body does not conform to the required schema.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User does not have the form-admin role.
+      404:
+        description: Form definition not found.
+
 /form/v1/forms:
   get:
     tags:
