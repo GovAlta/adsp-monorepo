@@ -31,7 +31,7 @@ import {
   Resource,
   directoryBusySelector,
   tagResource,
-  getDefaultFormCriteria,
+  formResultTotalsSelector,
 } from '../state';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -44,6 +44,7 @@ import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { ResultsSummary } from '../components/ResultsSummary';
 interface FormRowProps {
   dispatch: AppDispatch;
   navigate: NavigateFunction;
@@ -108,6 +109,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
   const { forms: next } = useSelector(nextSelector);
+  const { forms: totalForms } = useSelector(formResultTotalsSelector);
   const formsExport = useSelector(formsExportSelector);
 
   useEffect(() => {
@@ -126,6 +128,11 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
   const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, after })); // clean-code-ignore: 2.10
+  const clearFilters = () => {
+    const criteria = {};
+    dispatch(formActions.setFormCriteria(criteria));
+    dispatch(findForms({ definitionId, criteria }));
+  };
 
   return (
     <SearchLayout
@@ -181,9 +188,6 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 Export to file
               </GoabButton>
             )}
-            <GoabButton type="secondary" onClick={() => updateCriteria(getDefaultFormCriteria())}>
-              Reset filter
-            </GoabButton>
             <GoabButton type="primary" leadingIcon="search" disabled={searchDisabled} onClick={() => handleFindForms()}>
               Find forms
             </GoabButton>
@@ -192,6 +196,13 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
       }
     >
       <ContentContainer>
+        <ResultsSummary
+          visible={forms.length}
+          total={totalForms}
+          itemLabel="forms"
+          loading={busy.loading}
+          onClearFilters={clearFilters}
+        />
         <GoabTable width="100%">
           <thead>
             <tr>
