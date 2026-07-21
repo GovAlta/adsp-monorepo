@@ -93,6 +93,10 @@ export function getTenant(logger: Logger, repository: TenantRepository): Request
       }
 
       const tenant = await repository.get(id);
+      if (!tenant) {
+        throw new NotFoundError('tenant', id);
+      }
+
       res.send(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed to get tenant with error: ${err.message}`, LOG_CONTEXT);
