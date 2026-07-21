@@ -96,13 +96,6 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
 }
 
 export function* fetchFile(action: FetchFileAction): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Loading File...',
-    }),
-  );
-
   const state = yield select();
   try {
     const token = yield call(getAccessToken);
