@@ -81,7 +81,7 @@ Feature: File service
       | /file/v1/files   | Now-2mins           | Now+2mins            | 200         |
 
   # TODO: Test is no longer relevant with removal of file service enable/disable
-  @TEST_CS-305 @REQ_CS-195 @regression @ignore
+  @TEST_CS-305 @REQ_CS-195 @regression @ignore @obsolete
   Scenario: As a tenant admin, I can enable and disable the file service to my tenant
     Given a service owner user is on Files overview page
     When the user "disables" file service

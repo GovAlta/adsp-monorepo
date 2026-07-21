@@ -1,8 +1,7 @@
 @task
 Feature: Task
 
-  # Bug #: CS-4368 tasks tab shows a blank page with console errors
-  @TEST_CS-2391 @TEST_CS-2397 @TEST_CS-2433 @TEST_CS-2408 @TEST_CS-2350 @REQ_CS-1748 @REQ_CS-1749 @REQ_CS-1750 @regression @ignore
+  @TEST_CS-2391 @TEST_CS-2397 @TEST_CS-2433 @TEST_CS-2408 @TEST_CS-2350 @REQ_CS-1748 @REQ_CS-1749 @REQ_CS-1750 @regression
   Scenario: As a tenant admin, I can add and delete a task queue
     Given a tenant admin user is on task service overview page
     When the user clicks Add queue button on task service overview page
