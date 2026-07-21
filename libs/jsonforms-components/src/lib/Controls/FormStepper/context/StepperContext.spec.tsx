@@ -1,6 +1,7 @@
 import { Dispatch } from 'react';
 import React, { useContext } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './index';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import Ajv from 'ajv';
@@ -61,8 +62,15 @@ describe('JsonFormsStepperContext', () => {
 
   const TestComponent = (): JSX.Element => {
     const ctx = useContext(JsonFormsStepperContext);
-    const { selectStepperState, selectPath, selectIsDisabled, selectIsActive, selectCategory, goToPage } =
-      ctx as JsonFormsStepperContextProps;
+    const {
+      selectStepperState,
+      selectPath,
+      selectIsDisabled,
+      selectIsActive,
+      selectCategory,
+      goToPage,
+      selectNumberOfCompletedCategories,
+    } = ctx as JsonFormsStepperContextProps;
 
     return (
       <div>
@@ -70,6 +78,7 @@ describe('JsonFormsStepperContext', () => {
         <div data-testid="is-disabled">{selectIsDisabled().toString()}</div>
         <div data-testid="is-active">{selectIsActive(0).toString()}</div>
         <div data-testid="category-label">{selectCategory(0).label}</div>
+        <div data-testid="completed-categories">{selectNumberOfCompletedCategories()}</div>
         <button data-testid="go-to-page" onClick={() => goToPage(1)}>
           Go to Page
         </button>
@@ -77,40 +86,60 @@ describe('JsonFormsStepperContext', () => {
     );
   };
 
-  test('provides the correct context values', () => {
+  test('provides the correct context values for path and category', () => {
+    // Arrange
     render(
       <JsonFormsStepperContextProvider StepperProps={stepperBaseProps}>
         <TestComponent />
       </JsonFormsStepperContextProvider>,
     );
 
-    // Assert default path
+    // Assert
     expect(screen.getByTestId('path').textContent).toBe('test-path');
-
-    // Assert default isDisabled
     expect(screen.getByTestId('is-disabled').textContent).toBe('false');
-
-    // Assert default isActive for step 0
     expect(screen.getByTestId('is-active').textContent).toBe('true');
-
-    // Assert category label (falls back to Step 1 when no translation is resolved)
     expect(screen.getByTestId('category-label').textContent).toBe('Step 1');
   });
 
-  test('goToPage updates active page', () => {
+  test('goToPage function updates the active page', () => {
+    // Arrange
     render(
       <JsonFormsStepperContextProvider StepperProps={stepperBaseProps}>
         <TestComponent />
       </JsonFormsStepperContextProvider>,
     );
 
-    // Ignore dispatches from provider lifecycle effects and assert click behavior only.
+    // Act
     mockDispatch.mockClear();
-
-    // Trigger goToPage
     fireEvent.click(screen.getByTestId('go-to-page'));
 
-    // Assert that the mock dispatch was called with the correct action
+    // Assert
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'page/to/index', payload: { id: 1, targetScope: undefined } });
+  });
+
+  test('selectNumberOfCompletedCategories returns correct count', () => {
+    // Arrange
+    render(
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps}>
+        <TestComponent />
+      </JsonFormsStepperContextProvider>,
+    );
+
+    // Assert
+    expect(screen.getByTestId('completed-categories').textContent).toBe('0');
+  });
+
+  test('handles missing context gracefully', () => {
+    // Arrange
+    const MissingContextComponent = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext);
+      return <div>{ctx ? 'Context Found' : 'Context Missing'}</div>;
+    };
+
+    // Act
+    render(<MissingContextComponent />);
+
+    // Assert
+    expect(screen.getByText('Context Missing')).toBeInTheDocument();
   });
 });
