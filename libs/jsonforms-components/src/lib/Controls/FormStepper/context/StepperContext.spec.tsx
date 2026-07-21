@@ -103,8 +103,10 @@ describe('JsonFormsStepperContext', () => {
 
   test('goToPage function updates the active page', () => {
     // Arrange
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const propsWithDispatch = { ...stepperBaseProps, customDispatch: mockDispatch as any };
     render(
-      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps}>
+      <JsonFormsStepperContextProvider StepperProps={propsWithDispatch}>
         <TestComponent />
       </JsonFormsStepperContextProvider>,
     );
