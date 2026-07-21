@@ -328,7 +328,7 @@ ${violation.message}
 }
 
 function formatPositiveComment(positiveFeedback) {
-  return `💚 **Clean Code — Positive Feedback** \`PRAISE\`
+  return `⭐ **Clean Code — Positive Feedback** \`PRAISE\`
 
 ${positiveFeedback.message}`;
 }

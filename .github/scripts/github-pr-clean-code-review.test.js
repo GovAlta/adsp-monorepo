@@ -677,7 +677,7 @@ describe('postReviewSummary', () => {
     const createReview = jest.fn().mockResolvedValue({});
     const octokit = { rest: { pulls: { createReview } } };
     const correctiveComments = [{ path: 'src/test.ts', line: 1, side: 'RIGHT', body: '🔴 ERROR issue' }];
-    const positiveComments = [{ path: 'src/test.ts', line: 1, side: 'RIGHT', body: '💚 strength' }];
+    const positiveComments = [{ path: 'src/test.ts', line: 1, side: 'RIGHT', body: '⭐ strength' }];
 
     await postReviewSummary(octokit, correctiveComments, true, positiveComments, []);
 
