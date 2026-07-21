@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as express from 'express';
+import jwtDecode from 'jwt-decode';
 import * as open from 'open';
 import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
@@ -213,13 +214,30 @@ async function getOrLogin(accessServiceUrl: string, realm: string, scopes: strin
   return { token: await browserLogin(accessServiceUrl, realm, scopes), reused: false };
 }
 
+/** Best-effort decode of the caller's own email from their access token — never throws. */
+function decodeEmail(token: string): string | undefined {
+  try {
+    return jwtDecode<{ email?: string }>(token).email;
+  } catch {
+    return undefined;
+  }
+}
+
 async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string): Promise<Tenant> {
   const tenants = await listTenants(directoryServiceUrl, coreToken);
   if (tenants.length === 0) {
     throw new Error('No tenants found.');
   }
 
-  const choices = tenants.map((t) => t.name).sort((a, b) => a.localeCompare(b));
+  const email = decodeEmail(coreToken);
+  const byName = (a: Tenant, b: Tenant) => a.name.localeCompare(b.name);
+  const owned = tenants.filter((t) => email && t.adminEmail === email).sort(byName);
+  const rest = tenants.filter((t) => !(email && t.adminEmail === email)).sort(byName);
+
+  const choices = [
+    ...owned.map((t) => ({ name: t.name, message: `${t.name} (yours)` })),
+    ...rest.map((t) => t.name),
+  ];
   const { prompt } = await import('enquirer');
   const { tenant: pickedName } = await prompt<{ tenant: string }>({
     type: 'autocomplete',
