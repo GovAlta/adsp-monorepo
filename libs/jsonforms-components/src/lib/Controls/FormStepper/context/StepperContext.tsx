@@ -46,7 +46,7 @@ const createStepperContextInitData = (
 
   const isPage = uischema?.options?.variant === 'pages';
 
-  //TODO: Determine if cachedStatus still being used by anything in the library`
+  //TODO: Determine if cachedStatus is still being used by anything in the library
   //      If not, do a proper clean up.
   const isCacheStatus = uischema.options?.cacheStatus;
   const cachedStatus = (isCacheStatus && getIsVisitFromLocalStorage()) || [];
@@ -55,10 +55,10 @@ const createStepperContextInitData = (
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
 
     // Treat a step as visited when its scoped fields already contain data so
-    // that getStepStatus returns the real data-driven status on initial mount.
-    const visited = scopes.some((scope) => hasValueAtScope(data, scope));
+    // that getStepStatus returns the real data-driven status on initial mount initially.
+    let visited = scopes.some((scope) => hasValueAtScope(data, scope));
 
-    const status = getStepStatus({
+    const statusData = getStepStatus({
       scopes,
       data,
       errors: filteredErrors ?? [],
@@ -66,14 +66,20 @@ const createStepperContextInitData = (
       visited,
     });
 
+    //If the step has all conditional fields, set to visited to true so that the step status will be
+    //completed to enable form to be saved.
+    if (!statusData.hasRequiredFields) {
+      visited = true;
+    }
+
     return {
       id,
       label: deriveLabelForUISchemaElement(c, t) ?? `Step ${id + 1}`,
       scopes,
-      isCompleted: status === StepStatus.COMPLETED,
-      isValid: status === StepStatus.COMPLETED,
-      isVisited: [StepStatus.COMPLETED, StepStatus.IN_PROGRESS].includes(status),
-      status,
+      isCompleted: statusData.status === StepStatus.COMPLETED || (visited && !statusData.hasRequiredFields),
+      isValid: statusData.status === StepStatus.COMPLETED || (visited && !statusData.hasRequiredFields),
+      isVisited: [StepStatus.COMPLETED, StepStatus.IN_PROGRESS].includes(statusData.status),
+      status: statusData.status,
       uischema: c,
       isEnabled: isEnabled(c, data, '', ajv, undefined),
       visible: isVisible(c, data, '', ajv, undefined),

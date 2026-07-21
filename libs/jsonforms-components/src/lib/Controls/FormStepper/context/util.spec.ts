@@ -11,6 +11,7 @@ import {
   hasMeaningfulValue,
   isErrorPathIncluded,
   isJson,
+  isScopeRequired,
   normalizeInstancePath,
   normalizeSchemaPath,
   saveIsVisitFromLocalStorage,
@@ -235,6 +236,16 @@ describe('getIncompletePaths', () => {
     ];
 
     expect(getIncompletePaths(errors, scopes)).toEqual([]);
+  });
+});
+
+describe('isScopeRequired', () => {
+  it('returns true when a required field matches a normalized scope value', () => {
+    expect(isScopeRequired(['fullName', 'email'], ['fullName'], {} as any)).toBe(true);
+  });
+
+  it('returns false when no required field matches a normalized scope value', () => {
+    expect(isScopeRequired(['fullName', 'email'], ['phone'], {} as any)).toBe(false);
   });
 });
 
