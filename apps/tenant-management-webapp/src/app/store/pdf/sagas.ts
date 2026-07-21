@@ -1,7 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
 import { RootState, store } from '../index';
-import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
+import { select, call, put, takeEvery, takeLatest, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -149,6 +149,10 @@ export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProc
 
   if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
     yield put(generatePdfSuccess(action.payload));
+  }
+
+  if (action.payload.name === 'pdf-generation-failed') {
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaIterator {
@@ -434,11 +438,6 @@ export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): Sag
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
       yield put(generatePdfSuccess(pdfResponse, templateMap));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        }),
-      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
@@ -518,7 +517,7 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
   yield takeEvery(DELETE_PDF_FILE_SERVICE, deletePdfFileService);
   yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);
-  yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
+  yield takeLatest(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
   yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
   yield takeEvery(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
 }
