@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { JsonSchema, toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
 import type { ErrorObject } from 'ajv';
@@ -16,13 +14,6 @@ export function hasMeaningfulValue(val: any): boolean {
   if (Array.isArray(val)) return val.length > 0;
   if (typeof val === 'object') return Object.keys(val).length > 0;
   return true;
-}
-
-function isStepStarted(normalizedScopes: string[], data: any): boolean {
-  return normalizedScopes.some((path) => {
-    const value = getValueAtPath(data, path);
-    return hasMeaningfulValue(value);
-  });
 }
 
 function getSubSchema(schema: JsonSchema, path: string): any {
@@ -45,6 +36,32 @@ function getSubSchema(schema: JsonSchema, path: string): any {
     }
   }
   return current;
+}
+
+// Checks whether any of the given normalized scopes (dot-path form, e.g. "a.b.c")
+// resolve to a property name present in the required array. Returns true if at
+// least one scope's property name is required, false otherwise.
+export function isScopeRequired(normalizedScopes: string[], required: string[]): boolean {
+  if (!normalizedScopes?.length || !required?.length) return false;
+
+  return normalizedScopes.some((scope) => {
+    const propertyName = scope.split('.').pop();
+    return !!propertyName && required.includes(propertyName);
+  });
+}
+
+// Aggregates the required property names applicable to a step's scopes: the
+// schema's top-level required array plus the required array of each scope's
+// immediate parent (sub)schema (for nested objects).
+function getRequiredForScopes(scopes: string[], schema: JsonSchema): string[] {
+  const topLevelRequired: string[] = (schema as { required?: string[] })?.required || [];
+
+  const scopeSets = scopes.reduce((acc: string[], scope) => {
+    const subSchema = getSubSchema(schema, scope);
+    return acc.concat(subSchema?.required || []);
+  }, topLevelRequired);
+
+  return Array.from(new Set(scopeSets));
 }
 
 function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: JsonSchema): boolean {
@@ -93,16 +110,30 @@ export function hasValueAtScope(data: any, scope: string): boolean {
   return hasMeaningfulValue(getValueAtPath(data, path));
 }
 
+interface StepStatusData {
+  status: StepStatusType;
+  hasRequiredFields: boolean;
+}
 export function getStepStatus(opts: {
   scopes: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   errors: AjvError[];
-  schema: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: JsonSchema;
   visited?: boolean;
-}): StepStatusType {
-  const { scopes, errors, schema, data } = opts;
+}): StepStatusData {
+  const { scopes, errors, schema, data, visited } = opts;
 
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
+
+  // A step with no required fields has nothing that must be filled in, so once
+  // the user has visited it (e.g. navigated back to the application overview
+  // page) it is trivially Completed, regardless of whether its optional
+  // fields hold any data.
+  const requiredForScopes = getRequiredForScopes(scopes, schema);
+
+  const stepHasRequiredFields = isScopeRequired(normalizedScopes, requiredForScopes);
 
   // NotStarted is data-driven: if any scoped field has a defined value the step has been started.
   // For non-standard scopes that cannot be normalised, fall back to the visited flag so those
@@ -110,28 +141,32 @@ export function getStepStatus(opts: {
   const stepHasData =
     normalizedScopes.length > 0
       ? normalizedScopes.some((path) => hasMeaningfulValue(get(data || {}, path)))
-      : (opts.visited ?? false);
+      : (visited ?? false);
+
+  if (!stepHasRequiredFields && (visited || stepHasData)) {
+    return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
+  }
 
   if (!stepHasData) {
-    return StepStatus.NOT_STARTED;
+    return { status: StepStatus.NOT_STARTED, hasRequiredFields: stepHasRequiredFields };
   }
   const incompleteInStep = getIncompletePaths(errors, scopes);
 
   if (incompleteInStep.length > 0) {
-    return StepStatus.IN_PROGRESS;
+    return { status: StepStatus.IN_PROGRESS, hasRequiredFields: stepHasRequiredFields };
   }
 
   const required = schema.required || [];
 
   if (anyRequiredFieldEmpty(scopes, data, required, schema)) {
-    return StepStatus.IN_PROGRESS;
+    return { status: StepStatus.IN_PROGRESS, hasRequiredFields: stepHasRequiredFields };
   }
 
   const deps = buildConditionalDeps(schema);
   const controllersInStep = normalizedScopes.filter((s) => deps.has(s));
 
   if (controllersInStep.length === 0) {
-    return StepStatus.COMPLETED;
+    return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
   const affected = new Set<string>();
@@ -143,7 +178,7 @@ export function getStepStatus(opts: {
   }
 
   if (affected.size === 0) {
-    return StepStatus.COMPLETED;
+    return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
   const affectedPaths = [...affected];
@@ -151,12 +186,12 @@ export function getStepStatus(opts: {
   for (const err of errors || []) {
     for (const candidate of collectErrorCandidates(err)) {
       if (affectedPaths.some((path) => isUnder(candidate, path))) {
-        return StepStatus.IN_PROGRESS;
+        return { status: StepStatus.IN_PROGRESS, hasRequiredFields: stepHasRequiredFields };
       }
     }
   }
 
-  return StepStatus.COMPLETED;
+  return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
 }
 
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {

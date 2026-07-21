@@ -3,6 +3,8 @@ import { ErrorObject } from 'ajv';
 import { Dispatch } from 'react';
 import Ajv from 'ajv';
 import { getStepStatus } from './util';
+import { StepStatus } from '../../../common/Constants';
+import { JsonSchema } from '@jsonforms/core';
 
 export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 
@@ -12,7 +14,10 @@ export type StepperAction =
   | { type: 'page/to/index'; payload: { id: number; targetScope?: string } }
   | { type: 'set/visited'; payload: { id: number } }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: any; data: any } }
+  | {
+      type: 'update/category';
+      payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: JsonSchema; data: any };
+    }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
   | { type: 'toggle/category/review-link'; payload: { id: number } }
   | { type: 'update/uischema'; payload: { state: StepperContextDataType } };
@@ -23,7 +28,23 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
   switch (action.type) {
     case 'update/uischema': {
-      return { ...action.payload.state };
+      const newState = action.payload.state;
+
+      // createStepperContextInitData recomputes categories purely from the
+      // current data/schema snapshot, so a category with no data in its scopes
+      // is reported as not visited even if the user already navigated through it
+      // (page/next, page/prev, or setVisited previously marked it visited).
+      // Preserve any previously-tracked isVisited=true so navigation history
+      // isn't lost whenever unrelated form data changes trigger this recompute.
+      const mergedCategories = newState.categories.map((newCategory) => {
+        const previousCategory = categories.find((c) => c.id === newCategory.id);
+        return {
+          ...newCategory,
+          isVisited: previousCategory?.isVisited || newCategory.isVisited,
+        };
+      });
+
+      return { ...newState, categories: mergedCategories };
     }
 
     case 'page/next': {
@@ -90,7 +111,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         }
         const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
         const visited = true;
-        const status = getStepStatus({
+        const statusData = getStepStatus({
           scopes: cat.scopes,
           data,
           errors: filteredErrors ?? [],
@@ -100,9 +121,9 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
         return {
           ...cat,
-          isCompleted: status === 'Completed',
-          isValid: status === 'Completed',
-          status,
+          isCompleted: statusData.status === StepStatus.COMPLETED,
+          isValid: statusData.status === StepStatus.COMPLETED,
+          status: statusData.status,
         };
       });
 
