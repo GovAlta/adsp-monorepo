@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { toDataPath } from '@jsonforms/core';
+import { JsonSchema, toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
 import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
+import { StepStatus, StepStatusType, VALIDATION_KEYWORDS } from '../../../common/Constants';
 
 function getValueAtPath(obj: any, path: string) {
   return path.split('.').reduce((acc, key) => acc?.[key], obj);
@@ -19,11 +20,12 @@ export function hasMeaningfulValue(val: any): boolean {
 
 function isStepStarted(normalizedScopes: string[], data: any): boolean {
   return normalizedScopes.some((path) => {
-    return hasMeaningfulValue(getValueAtPath(data, path));
+    const value = getValueAtPath(data, path);
+    return hasMeaningfulValue(value);
   });
 }
 
-function getSubSchema(schema: any, path: string): any {
+function getSubSchema(schema: JsonSchema, path: string): any {
   const parts = path
     .replace(/^#\//, '')
     .split('/')
@@ -45,7 +47,7 @@ function getSubSchema(schema: any, path: string): any {
   return current;
 }
 
-function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: any): boolean {
+function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: JsonSchema): boolean {
   for (const scope of scopes) {
     const path = scope
       .replace(/^#\//, '')
@@ -81,37 +83,55 @@ function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], 
 
   return false;
 }
+
+// Resolve a single schema scope against the provided data and determine whether
+// it already holds a meaningful value. Used to derive the initial "visited"
+// state of a step from populated form data.
+export function hasValueAtScope(data: any, scope: string): boolean {
+  const path = normalizeSchemaPath(scope);
+  if (!path) return false;
+  return hasMeaningfulValue(getValueAtPath(data, path));
+}
+
 export function getStepStatus(opts: {
   scopes: string[];
   data: any;
   errors: AjvError[];
   schema: any;
-  visited: boolean;
-}): 'Completed' | 'InProgress' | 'NotStarted' {
-  const { scopes, errors, schema, data, visited } = opts;
-
-  if (!visited) {
-    return 'NotStarted';
-  }
+  visited?: boolean;
+}): StepStatusType {
+  const { scopes, errors, schema, data } = opts;
 
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
+
+  // NotStarted is data-driven: if any scoped field has a defined value the step has been started.
+  // For non-standard scopes that cannot be normalised, fall back to the visited flag so those
+  // steps are never stuck in NotStarted when the form is pre-populated or already visited.
+  const stepHasData =
+    normalizedScopes.length > 0
+      ? normalizedScopes.some((path) => hasMeaningfulValue(get(data || {}, path)))
+      : (opts.visited ?? false);
+
+  if (!stepHasData) {
+    return StepStatus.NOT_STARTED;
+  }
   const incompleteInStep = getIncompletePaths(errors, scopes);
 
   if (incompleteInStep.length > 0) {
-    return 'InProgress';
+    return StepStatus.IN_PROGRESS;
   }
 
   const required = schema.required || [];
 
   if (anyRequiredFieldEmpty(scopes, data, required, schema)) {
-    return 'InProgress';
+    return StepStatus.IN_PROGRESS;
   }
 
   const deps = buildConditionalDeps(schema);
   const controllersInStep = normalizedScopes.filter((s) => deps.has(s));
 
   if (controllersInStep.length === 0) {
-    return 'Completed';
+    return StepStatus.COMPLETED;
   }
 
   const affected = new Set<string>();
@@ -123,7 +143,7 @@ export function getStepStatus(opts: {
   }
 
   if (affected.size === 0) {
-    return 'Completed';
+    return StepStatus.COMPLETED;
   }
 
   const affectedPaths = [...affected];
@@ -131,13 +151,14 @@ export function getStepStatus(opts: {
   for (const err of errors || []) {
     for (const candidate of collectErrorCandidates(err)) {
       if (affectedPaths.some((path) => isUnder(candidate, path))) {
-        return 'InProgress';
+        return StepStatus.IN_PROGRESS;
       }
     }
   }
 
-  return 'Completed';
+  return StepStatus.COMPLETED;
 }
+
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
   return errorPaths.some((ePath) => {
     /**
@@ -153,7 +174,7 @@ function collectErrorCandidates(e: AjvError): string[] {
   const out: string[] = [];
 
   const missing = (e.params as any)?.missingProperty as string | undefined;
-  if (e.keyword === 'required' && missing) {
+  if (e.keyword === VALIDATION_KEYWORDS.REQUIRED && missing) {
     const base = normalizeInstancePath(e.instancePath || '');
     out.push(base ? `${base}.${missing}` : missing);
   }
@@ -210,7 +231,7 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
     const missingProperty = (error.params as any)?.missingProperty as string | undefined;
     const candidates: string[] = [];
 
-    if (error.keyword === 'required' && missingProperty) {
+    if (error.keyword === VALIDATION_KEYWORDS.REQUIRED && missingProperty) {
       candidates.push(missingProperty);
 
       if (error.instancePath) {
@@ -235,7 +256,7 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
 
     for (const candidate of candidates) {
       const match = normalizedScopes.find(
-        (scope) => candidate === scope || candidate.startsWith(scope + '.') || scope.startsWith(candidate + '.')
+        (scope) => candidate === scope || candidate.startsWith(scope + '.') || scope.startsWith(candidate + '.'),
       );
       if (!match) continue;
       incomplete.add(match);
@@ -245,14 +266,6 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
   const result = [...incomplete];
 
   return result;
-}
-
-export type StepStatus = 'not-started' | 'in-progress' | 'completed';
-
-export interface StepConfig {
-  id: string;
-  label: string;
-  scopePaths: string[];
 }
 
 export const subErrorInParent = (error: ErrorObject, paths: string[]): boolean => {
@@ -286,7 +299,7 @@ export const getErrorsInScopes = (errors: ErrorObject[] | null | undefined, scop
   return errors.filter((err) => {
     let fullPath = '';
 
-    if (err.keyword === 'required') {
+    if (err.keyword === VALIDATION_KEYWORDS.REQUIRED) {
       const missingProp = (err.params as any)?.missingProperty;
       const instancePath = err.instancePath || '';
       const instanceDot = instancePath.replace(/^\//, '').replace(/\//g, '.');

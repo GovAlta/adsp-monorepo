@@ -20,6 +20,11 @@ export interface CategoryConfig {
 export type CategoryState = CategoryInternalState & CategoryConfig;
 
 export type CategoriesState = Array<CategoryState>;
+export interface StepConfig {
+  id: string;
+  label: string;
+  scopePaths: string[];
+}
 
 export interface StepperContextDataType {
   categories: CategoriesState;

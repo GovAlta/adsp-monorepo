@@ -8,8 +8,9 @@ import { JsonFormStepperDispatch } from './reducer';
 import { JsonSchema7, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { useJsonForms } from '@jsonforms/react';
-import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
+import { getIsVisitFromLocalStorage, hasValueAtScope, saveIsVisitFromLocalStorage } from './util';
 import { getStepStatus } from './util';
+import { StepStatus } from '../../../common/Constants';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
   StepperProps: CategorizationStepperLayoutRendererProps & {
@@ -44,13 +45,18 @@ const createStepperContextInitData = (
   const valid = ajv.validate(schema, data || {});
 
   const isPage = uischema?.options?.variant === 'pages';
+
+  //TODO: Determine if cachedStatus still being used by anything in the library`
+  //      If not, do a proper clean up.
   const isCacheStatus = uischema.options?.cacheStatus;
   const cachedStatus = (isCacheStatus && getIsVisitFromLocalStorage()) || [];
 
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
 
-    const visited = false;
+    // Treat a step as visited when its scoped fields already contain data so
+    // that getStepStatus returns the real data-driven status on initial mount.
+    const visited = scopes.some((scope) => hasValueAtScope(data, scope));
 
     const status = getStepStatus({
       scopes,
@@ -64,9 +70,9 @@ const createStepperContextInitData = (
       id,
       label: deriveLabelForUISchemaElement(c, t) ?? `Step ${id + 1}`,
       scopes,
-      isCompleted: status === 'Completed',
-      isValid: status === 'Completed',
-      isVisited: status === 'Completed',
+      isCompleted: status === StepStatus.COMPLETED,
+      isValid: status === StepStatus.COMPLETED,
+      isVisited: [StepStatus.COMPLETED, StepStatus.IN_PROGRESS].includes(status),
       status,
       uischema: c,
       isEnabled: isEnabled(c, data, '', ajv, undefined),
@@ -228,7 +234,7 @@ export const JsonFormsStepperContextProvider = ({
       }
     }
     //eslint-disable-next-line
-  }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
+  }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema), JSON.stringify(StepperProps.data)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
