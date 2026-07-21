@@ -19,7 +19,7 @@ export const selectKeycloakServiceRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
     return serviceRoles?.keycloak || {};
-  }
+  },
 );
 
 const isConfigRoleExisted = (
@@ -27,7 +27,7 @@ const isConfigRoleExisted = (
   tenantAdminRoles: Record<string, { roles: string[] }>,
   isInTenantAdmin,
   clientId: string,
-  roleName: string
+  roleName: string,
 ) => {
   if (clientId in kcRoleConfig) {
     const isRoleInClient = kcRoleConfig[clientId].roles.find((role) => {
@@ -83,7 +83,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
                 tenantAdminRoles,
                 role?.inTenantAdmin,
                 clientId,
-                role.role
+                role.role,
               );
               return (
                 <tr key={`${role.role}`}>

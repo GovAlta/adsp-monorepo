@@ -25,17 +25,10 @@ import {
   GoabFormItem,
   GoabButton,
   GoabCheckbox,
-  GoabDropdown,
-  GoabDropdownItem,
   GoabFilterChip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
-import { Tag } from '@store/directory/models';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { fetchFormTagByTagName } from '@store/form/action';
 
 interface AddEditFormDefinitionProps {
@@ -135,9 +128,6 @@ export const AddEditFormDefinition = ({
       }
     }
   }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator, defaultFormUrl]);
 
   useEffect(() => {
     setDefinition(initialValue);

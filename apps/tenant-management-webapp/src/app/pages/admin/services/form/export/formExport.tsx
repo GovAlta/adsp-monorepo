@@ -38,7 +38,7 @@ export const FormExport = (): JSX.Element => {
   const [downloadDisable, setDownloadDisable] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
   const formDefinitions = useSelector((state: RootState) => state.form.definitions);
-  const exportResult = useSelector((state: RootState) => state.form.exportResult);
+
   const formList: FormDefinition[] = Object.entries(formDefinitions)
     .map(([, value]) => value)
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -58,12 +58,6 @@ export const FormExport = (): JSX.Element => {
   const onDownloadFile = async (file) => {
     file && dispatch(DownloadFileService(file));
   };
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   const exportToFile = () => {
     let selectedColumns = [];
@@ -116,9 +110,6 @@ export const FormExport = (): JSX.Element => {
       dispatch(getFormDefinitions(next));
     } //eslint-disable-next-line
   }, [dispatch, next === 'NTA=']);
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [exportResult]);
 
   useEffect(() => {
     socket?.on('connect', () => {

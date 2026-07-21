@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
 import { GoabBadge } from '@abgov/react-components';
@@ -72,8 +72,6 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
     applications: state.serviceStatus.applications,
   }));
   const { isMenuOpen, clickMenuFn } = props;
-  // eslint-disable-next-line
-  useEffect(() => {}, [applications]);
 
   const { notice } = props;
   const CardHeader = (props: CardHeaderProps): JSX.Element => {

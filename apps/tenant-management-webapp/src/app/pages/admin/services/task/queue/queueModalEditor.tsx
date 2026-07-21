@@ -46,7 +46,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const tenantClients: ServiceRoleConfig = tenant.tenantClients ? tenant.tenantClients : {};
   const { id } = useParams<{ id: string }>();
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1],
   );
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height + 42;
@@ -97,8 +97,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const assignerRoles = types[0];
   const workerRoles = types[1];
 
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
   const ClientRole = ({ roleNames, clientId }) => {
     return (
       <ClientRoleTable
@@ -162,7 +160,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
@@ -178,9 +176,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
       setSpinner(false);
     }
   }, [queues]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   return (
     <TaskEditor>

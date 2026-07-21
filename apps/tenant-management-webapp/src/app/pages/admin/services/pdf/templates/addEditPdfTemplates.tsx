@@ -64,9 +64,6 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     }
   }, [templates]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     setTemplate(initialValue);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -76,7 +73,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(templateIds, 'template'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
@@ -148,7 +145,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               setTemplate(
                 isEdit
                   ? { ...template, name: detail.value }
-                  : { ...template, name: detail.value, id: toKebabName(detail.value) }
+                  : { ...template, name: detail.value, id: toKebabName(detail.value) },
               );
             }}
             onBlur={() => {

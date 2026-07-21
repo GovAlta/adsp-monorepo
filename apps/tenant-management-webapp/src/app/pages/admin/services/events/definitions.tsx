@@ -32,9 +32,6 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
     setCoreNamespaces(namespaces);
   }, [definitions]);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   const dispatch = useDispatch();
 
   function reset() {

@@ -83,7 +83,7 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                     type: StatusWebhookHistoryType,
                     isOpen: true,
                     id,
-                  })
+                  }),
                 );
               }}
             />
@@ -97,7 +97,7 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                     type: TestStatusWebhookType,
                     isOpen: true,
                     id,
-                  })
+                  }),
                 );
               }}
             />
@@ -111,7 +111,7 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                     type: AddEditStatusWebhookType,
                     isOpen: true,
                     id,
-                  })
+                  }),
                 );
               }}
             />
@@ -125,7 +125,7 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
                     type: DeleteStatusWebhookType,
                     isOpen: true,
                     id,
-                  })
+                  }),
                 );
               }}
             />
@@ -154,8 +154,6 @@ export const WebhookListTable = () => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  // eslint-disable-next-line
-  useEffect(() => {}, [webhooks]);
 
   return (
     <>
