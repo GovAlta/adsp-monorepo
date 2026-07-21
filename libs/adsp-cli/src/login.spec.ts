@@ -32,7 +32,10 @@ jest.mock('./tenants', () => ({
   listTenants: jest.fn(),
 }));
 
+jest.mock('jwt-decode');
+
 // Imported after the mocks above so login.ts picks up the mocked modules.
+import jwtDecode from 'jwt-decode';
 import { getAccessToken, getStatus, loginInteractive, logout } from './login';
 import { findTenantByName, findTenantByRealm, listTenants } from './tenants';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
@@ -43,6 +46,7 @@ const mockFindTenantByName = findTenantByName as jest.Mock;
 const mockFindTenantByRealm = findTenantByRealm as jest.Mock;
 const mockListTenants = listTenants as jest.Mock;
 const mockAuthorizationCode = AuthorizationCode as unknown as jest.Mock;
+const mockJwtDecode = jwtDecode as jest.Mock;
 
 const ACCESS_SERVICE_URL = 'https://access.example.com';
 const REALM = 'my-realm';
@@ -91,6 +95,12 @@ describe('login', () => {
     mockFindTenantByName.mockReset();
     mockFindTenantByRealm.mockReset();
     mockListTenants.mockReset();
+    // Default: simulate a token jwt-decode can't parse, matching the plain placeholder tokens
+    // used throughout this suite (e.g. 'fresh-access-token') — tests that care about the
+    // owned-tenant annotation override this explicitly.
+    mockJwtDecode.mockReset().mockImplementation(() => {
+      throw new Error('invalid token');
+    });
   });
 
   afterEach(() => {
@@ -446,6 +456,77 @@ describe('login', () => {
       );
       expect(readConfig()).toEqual({ tenantRealm: 'realm-a', tenantName: 'tenant-a' });
       expect(mockFindTenantByRealm).not.toHaveBeenCalled();
+    });
+
+    it('sorts and annotates a tenant the caller administers first in the picker', async () => {
+      mockListTenants.mockResolvedValue([
+        { name: 'tenant-b', realm: 'realm-b', adminEmail: 'someone.else@example.com' },
+        { name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' },
+        { name: 'tenant-c', realm: 'realm-c', adminEmail: 'someone.else@example.com' },
+      ]);
+      mockJwtDecode.mockReturnValue({ email: 'me@example.com' });
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive();
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      const result = await loginPromise;
+
+      expect(result).toEqual({ realm: 'realm-a', token: 'fresh-access-token', reused: false });
+      expect(mockPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'autocomplete',
+          choices: [{ name: 'tenant-a', message: 'tenant-a (yours)' }, 'tenant-b', 'tenant-c'],
+        })
+      );
+    });
+
+    it('falls back to the plain alphabetical list when no tenant is administered by the caller', async () => {
+      mockListTenants.mockResolvedValue([
+        { name: 'tenant-b', realm: 'realm-b', adminEmail: 'someone.else@example.com' },
+        { name: 'tenant-a', realm: 'realm-a', adminEmail: 'another.person@example.com' },
+      ]);
+      mockJwtDecode.mockReturnValue({ email: 'me@example.com' });
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive();
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      await loginPromise;
+
+      expect(mockPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'autocomplete', choices: ['tenant-a', 'tenant-b'] })
+      );
+    });
+
+    it('falls back to the plain alphabetical list when the core token cannot be decoded', async () => {
+      mockListTenants.mockResolvedValue([
+        { name: 'tenant-b', realm: 'realm-b' },
+        { name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' },
+      ]);
+      // mockJwtDecode keeps its default (throwing) implementation from beforeEach.
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive();
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      await loginPromise;
+
+      expect(mockPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'autocomplete', choices: ['tenant-a', 'tenant-b'] })
+      );
     });
 
     it('never sends the caller-requested extra scope to the core listing login, only to the final tenant-realm login', async () => {

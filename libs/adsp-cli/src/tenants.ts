@@ -6,6 +6,7 @@ const TENANT_SERVICE_URN = 'urn:ads:platform:tenant-service:v2';
 export interface Tenant {
   name: string;
   realm: string;
+  adminEmail?: string;
 }
 
 interface TenantsResponse {
