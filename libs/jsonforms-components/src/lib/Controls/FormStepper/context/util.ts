@@ -18,6 +18,7 @@ export function hasMeaningfulValue(val: any): boolean {
   return true;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSubSchema(schema: JsonSchema, path: string): any {
   const parts = path
     .replace(/^#\//, '')
@@ -25,6 +26,7 @@ function getSubSchema(schema: JsonSchema, path: string): any {
     .filter((p) => p !== 'properties') // remove 'properties' segments
     .slice(0, -1);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let current: any = schema;
   for (const part of parts) {
     if (!current) return undefined;
