@@ -1,6 +1,7 @@
 # Clean Code Rules
 
 This is the **single source of truth** for clean code rules used across:
+
 - The `@clean-code` Copilot agent (interactive review)
 - The GitHub PR automated review (`github-pr-clean-code-review.js`)
 - The `@adsp-code` orchestrator (delegates here)
@@ -14,6 +15,16 @@ Do not flag a name merely because another name is also reasonable.
 Do not reverse a previous naming suggestion unless it was clearly wrong.
 If both names are acceptable, prefer the existing name to avoid churn.
 Prefer stable, readable code over theoretically perfect names.
+
+---
+
+## Positive Review Guidance
+
+Before corrective findings, reviewers may identify up to three meaningful things the author did well. Positive feedback must be specific and tied to actual evidence in the code, tests, design, or implementation.
+
+Reinforce values such as readability, simplicity, maintainability, testability, clear API design, good error handling, appropriate naming, separation of concerns, removal of unnecessary complexity, and consistency with project patterns.
+
+Do not provide generic praise, invent positive feedback, or praise work that conflicts with the Jira ticket, project standards, security requirements, or maintainability goals. If there is nothing meaningful to praise, omit positive feedback. Positive feedback must never suppress required corrections.
 
 ---
 
@@ -91,10 +102,10 @@ Functions must not modify external state unexpectedly or produce outputs not ind
 
 ## Severity Levels
 
-| Severity | Rules |
-|----------|-------|
-| ERROR | 2.13, 2.14, 2.18 |
-| WARNING | 2.3, 2.4, 2.7, 2.8, 2.10 |
+| Severity   | Rules                                           |
+| ---------- | ----------------------------------------------- |
+| ERROR      | 2.13, 2.14, 2.18                                |
+| WARNING    | 2.3, 2.4, 2.7, 2.8, 2.10                        |
 | SUGGESTION | 2.1, 2.2, 2.5, 2.6, 2.9, 2.11, 2.15, 2.16, 2.17 |
 
 ---
@@ -116,6 +127,7 @@ For `useEffect`, `useMemo`, `useCallback` bodies — review the code INSIDE the 
 Apply before suggesting any extraction: If the extracted function would require many parameters, many setters, refs, dispatch functions, or locally scoped callbacks — do not recommend moving it to another file.
 
 Instead suggest one of:
+
 - Split the effect into multiple effects by responsibility
 - Create small named helper functions inside the component
 - Reduce the number of responsibilities in the effect
@@ -135,6 +147,7 @@ Do not suggest extraction unless the extracted code has a clean boundary.
 ## Suppression
 
 To suppress a rule on a specific line, add a comment:
+
 ```
 // clean-code-ignore: RULE_ID
 ```

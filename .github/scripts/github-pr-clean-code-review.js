@@ -166,7 +166,20 @@ Removed lines have been omitted entirely.
 IMPORTANT: Only report violations on [LN+] lines. Use the number N from the [LN+] prefix exactly as the "line" value in your response. Do not report violations on [LN ] context lines.
 
 RESPONSE FORMAT:
-Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. Each item:
+Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. Each item is either a corrective finding or positive feedback.
+
+Before providing corrective feedback, identify up to three meaningful things the author did well. Positive feedback must be specific and tied to actual evidence in the PR: readable code structure, simple clean implementation, good tests, clear naming, good error handling, reduced complexity, consistency with existing project patterns, good separation of concerns, or clear API design. Do not provide generic praise like "good job" or "well done". Do not invent positive feedback. Do not praise work that conflicts with the Jira ticket, introduces bugs, weakens security, or creates complexity. If there is nothing meaningful to praise, omit positive feedback entirely. Continue to report every required violation; do not suppress corrections to make the review feel positive.
+
+Positive feedback item:
+{
+  "rule": "POSITIVE",
+  "severity": "PRAISE",
+  "line": <new-file line number as integer, or 0 for PR-wide feedback>,
+  "message": "<specific observation tied to actual evidence in the PR>",
+  "suggestion": ""
+}
+
+Each violation item:
 {
   "rule": "2.X",
   "severity": "ERROR" | "WARNING" | "SUGGESTION",
@@ -174,8 +187,6 @@ Respond ONLY with a valid JSON array. No preamble, no explanation, no markdown. 
   "message": "<clear description of the violation>",
   "suggestion": "<specific actionable fix>"
 }
-
-If there are no violations, respond with an empty array: []
 ${jiraSection}`;
 }
 
@@ -316,6 +327,50 @@ ${violation.message}
 <sub>To suppress: add \`// clean-code-ignore: ${violation.rule}\` on this line</sub>`;
 }
 
+function formatPositiveComment(positiveFeedback) {
+  return `💚 **Clean Code — Positive Feedback** \`PRAISE\`
+
+${positiveFeedback.message}`;
+}
+
+function normalizeReviewResult(result) {
+  const splitReviewItems = (items) => ({
+    violations: items.filter((item) => item?.rule !== 'POSITIVE' || item?.severity !== 'PRAISE'),
+    positives: items.filter((item) => item?.rule === 'POSITIVE' && item?.severity === 'PRAISE'),
+  });
+
+  if (Array.isArray(result)) {
+    return splitReviewItems(result);
+  }
+
+  if (!result || typeof result !== 'object') {
+    return { violations: [], positives: [] };
+  }
+
+  const items = Array.isArray(result.items) ? result.items : Array.isArray(result.violations) ? result.violations : [];
+
+  return splitReviewItems(items);
+}
+
+function routePositiveFeedback(positiveFeedback, changedLines, filename, remainingSlots) {
+  const inline = [];
+  const summary = [];
+
+  const validFeedback = positiveFeedback.filter(
+    (item) => item && item.rule === 'POSITIVE' && item.severity === 'PRAISE' && item.message && item.suggestion === '',
+  );
+
+  for (const item of validFeedback.slice(0, remainingSlots)) {
+    if (item.line === 0) {
+      summary.push(item);
+    } else if (Number.isInteger(item.line) && changedLines.has(item.line)) {
+      inline.push({ path: filename, line: item.line, side: 'RIGHT', body: formatPositiveComment(item) });
+    }
+  }
+
+  return { inline, summary };
+}
+
 // ─────────────────────────────────────────────────────────────
 // RULE-19: Check each changed source file has a colocated test file
 // ─────────────────────────────────────────────────────────────
@@ -385,7 +440,20 @@ async function checkMissingTestFiles(octokit, changedFiles, config, { checkRepoF
 // ─────────────────────────────────────────────────────────────
 // Post review comments to the PR
 // ─────────────────────────────────────────────────────────────
-async function postReviewSummary(octokit, comments, hasBlockingViolations) {
+async function postReviewSummary(
+  octokit,
+  comments,
+  hasBlockingViolations,
+  positiveComments = [],
+  positiveSummaries = [],
+) {
+  const positiveFeedbackSection =
+    positiveSummaries.length > 0
+      ? `\n\n**What worked well**\n${positiveSummaries
+          .map((positiveFeedback) => `- ${positiveFeedback.message}`)
+          .join('\n')}`
+      : '';
+
   if (comments.length === 0) {
     await octokit.rest.pulls.createReview({
       owner: REPO_OWNER,
@@ -393,7 +461,8 @@ async function postReviewSummary(octokit, comments, hasBlockingViolations) {
       pull_number: PR_NUMBER,
       commit_id: HEAD_SHA,
       event: 'COMMENT',
-      body: '✅ **Clean Code Review — No issues found!** The code looks good and meets all 18 Clean Code rules.',
+      body: `✅ **Clean Code Review — No issues found!** The code meets the clean code rules.${positiveFeedbackSection}`,
+      comments: positiveComments.slice(0, 3),
     });
     return;
   }
@@ -422,8 +491,8 @@ async function postReviewSummary(octokit, comments, hasBlockingViolations) {
   const event = 'COMMENT';
 
   const summary = hasBlockingViolations
-    ? `🔴 **Clean Code Review — Issues found!**\n\nThere are issues in the code that are recommended to be addressed before merging:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details on each issue.`
-    : `🟡 **Clean Code Review — Issues found!**\n\nThere are some items in the code that need to be reviewed:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details.`;
+    ? `🔴 **Clean Code Review — Issues found!**\n\nThere are issues in the code that are recommended to be addressed before merging:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details on each issue.${positiveFeedbackSection}`
+    : `🟡 **Clean Code Review — Issues found!**\n\nThere are some items in the code that need to be reviewed:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details.${positiveFeedbackSection}`;
 
   await octokit.rest.pulls.createReview({
     owner: REPO_OWNER,
@@ -432,7 +501,7 @@ async function postReviewSummary(octokit, comments, hasBlockingViolations) {
     commit_id: HEAD_SHA,
     event,
     body: summary,
-    comments: topComments,
+    comments: [...topComments, ...positiveComments.slice(0, 3)],
   });
 }
 
@@ -462,6 +531,8 @@ function routeViolations(violations, changedLines, filename) {
 
 async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
+  const positiveComments = [];
+  const positiveSummaries = [];
   let hasBlockingViolations = false;
 
   for (const file of changedFiles) {
@@ -472,12 +543,30 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
       continue;
     }
 
-    let violations = [];
+    let reviewResult = { violations: [], positives: [] };
     try {
-      violations = await reviewFile(buildAnnotatedDiff(file.patch), file.filename, systemPrompt);
+      reviewResult = normalizeReviewResult(
+        await reviewFile(buildAnnotatedDiff(file.patch), file.filename, systemPrompt),
+      );
     } catch (e) {
       console.warn(`  Error reviewing ${file.filename}:`, e.message);
       continue;
+    }
+
+    const violations = reviewResult.violations;
+    const changedLines = buildChangedLineSet(file.patch);
+    const remainingPositiveFeedbackSlots = Math.max(0, 3 - positiveComments.length - positiveSummaries.length);
+    if (remainingPositiveFeedbackSlots > 0) {
+      const { inline: inlinePositiveFeedback, summary: summaryPositiveFeedback } = routePositiveFeedback(
+        reviewResult.positives,
+        changedLines,
+        file.filename,
+        remainingPositiveFeedbackSlots,
+      );
+      positiveComments.push(...inlinePositiveFeedback);
+      positiveSummaries.push(
+        ...summaryPositiveFeedback.slice(0, Math.max(0, 3 - positiveComments.length - positiveSummaries.length)),
+      );
     }
 
     if (!Array.isArray(violations) || violations.length === 0) {
@@ -487,17 +576,13 @@ async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = 
 
     console.log(`  ⚠️  ${violations.length} violation(s) in ${file.filename}`);
 
-    const { inline, hasBlockingViolations: blocking } = routeViolations(
-      violations,
-      buildChangedLineSet(file.patch),
-      file.filename,
-    );
+    const { inline, hasBlockingViolations: blocking } = routeViolations(violations, changedLines, file.filename);
 
     reviewComments.push(...inline);
     if (blocking) hasBlockingViolations = true;
   }
 
-  return { reviewComments, hasBlockingViolations };
+  return { reviewComments, positiveComments, positiveSummaries, hasBlockingViolations };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -530,9 +615,7 @@ async function main() {
     });
 
     const alreadyReviewedFiles = new Set(
-      existingComments.data
-        .filter((c) => c.user && c.user.type === 'Bot')
-        .map((c) => c.path)
+      existingComments.data.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path),
     );
 
     const newFiles = changedFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
@@ -559,13 +642,16 @@ async function main() {
   }
 
   const systemPrompt = buildSystemPrompt(config, jiraContext);
-  const { reviewComments, hasBlockingViolations } = await processFilesForReview(changedFiles, systemPrompt);
+  const { reviewComments, positiveComments, positiveSummaries, hasBlockingViolations } = await processFilesForReview(
+    changedFiles,
+    systemPrompt,
+  );
 
   const missingTestComments = await checkMissingTestFiles(octokit, changedFiles, config);
   const allComments = [...reviewComments, ...missingTestComments];
 
-  console.log(`\n📝 Posting review with ${allComments.length} comment(s)...`);
-  await postReviewSummary(octokit, allComments, hasBlockingViolations);
+  console.log(`\n📝 Posting review with ${allComments.length + positiveComments.length} comment(s)...`);
+  await postReviewSummary(octokit, allComments, hasBlockingViolations, positiveComments, positiveSummaries);
   console.log('✅ Clean Code Review complete.');
 
   if (hasBlockingViolations) {
@@ -586,10 +672,14 @@ module.exports = {
   buildAnnotatedDiff,
   buildChangedLineSet,
   routeViolations,
+  routePositiveFeedback,
   formatComment,
+  formatPositiveComment,
+  normalizeReviewResult,
   loadConfig,
   buildSystemPrompt,
   processFilesForReview,
+  postReviewSummary,
   isTestFile,
   deriveTestFilePaths,
   checkMissingTestFiles,
