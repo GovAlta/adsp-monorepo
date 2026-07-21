@@ -53,7 +53,7 @@ describe('JsonFormsStepperContext', () => {
     ajv: ajvInstance,
     t: jest.fn(),
     locale: 'en',
-    customDispatch: mockDispatch,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as unknown as CategorizationStepperLayoutRendererProps & { customDispatch: Dispatch<any> };
 
   afterEach(() => {

@@ -16,6 +16,7 @@ export type StepperAction =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | {
       type: 'update/category';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: JsonSchema; data: any };
     }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
