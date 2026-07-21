@@ -112,27 +112,27 @@ class feedbackPage {
   }
 
   feedbackMainModalRatingVeryDifficult() {
-    return cy.xpath('//div[@class="rating-div"]/img[@alt="Very Difficult"]');
+    return cy.xpath('//div[@class="adsp-fb-rating-item"]/img[@alt="Very Difficult"]');
   }
 
   feedbackMainModalRatingDifficult() {
-    return cy.xpath('//div[@class="rating-div"]/img[@alt="Difficult"]');
+    return cy.xpath('//div[@class="adsp-fb-rating-item"]/img[@alt="Difficult"]');
   }
 
   feedbackMainModalRatingVeryNeutral() {
-    return cy.xpath('//div[@class="rating-div"]/img[@alt="Neutral"]');
+    return cy.xpath('//div[@class="adsp-fb-rating-item"]/img[@alt="Neutral"]');
   }
 
   feedbackMainModalRatingEasy() {
-    return cy.xpath('//div[@class="rating-div"]/img[@alt="Easy"]');
+    return cy.xpath('//div[@class="adsp-fb-rating-item"]/img[@alt="Easy"]');
   }
 
   feedbackMainModalRatingVeryEasy() {
-    return cy.xpath('//div[@class="rating-div"]/img[@alt="Very Easy"]');
+    return cy.xpath('//div[@class="adsp-fb-rating-item"]/img[@alt="Very Easy"]');
   }
 
   feedbackMainModalRating(ratingName) {
-    return cy.xpath(`//div[@class="rating-div"]/img[@alt="${ratingName}"]`);
+    return cy.xpath(`//div[@class="adsp-fb-rating-item"]/img[@alt="${ratingName}"]`);
   }
 
   feedbackMainModalAdditionalCommentsLabel() {
@@ -148,26 +148,26 @@ class feedbackPage {
   }
 
   feedbackMainModalTechnicalIssuesLabel() {
-    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="radio-container"]/label/b');
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/label/b');
   }
 
   feedbackMainModalTechnicalIssuesLabelRequiredOrOptional() {
-    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="radio-container"]/label/span');
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/label/span');
   }
 
   feedbackMainModalTechnicalIssuesRadios() {
-    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="radio-container"]/div[@class="radios"]');
+    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="radios"]');
   }
 
   feedbackMainModalTechnicalIssuesYesRadio() {
     return cy.xpath(
-      '//div[@class="adsp-fb-content"]/div[@class="radio-container"]/div[@class="radios"]//input[@id="yes"]'
+      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="radios"]//input[@id="yes"]'
     );
   }
 
   feedbackMainModalTechnicalIssuesNoRadio() {
     return cy.xpath(
-      '//div[@class="adsp-fb-content"]/div[@class="radio-container"]/div[@class="radios"]//input[@id="no"]'
+      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="radios"]//input[@id="no"]'
     );
   }
 
