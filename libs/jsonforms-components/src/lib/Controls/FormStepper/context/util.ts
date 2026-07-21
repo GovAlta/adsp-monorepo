@@ -4,10 +4,12 @@ import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
 import { StepStatus, StepStatusType, VALIDATION_KEYWORDS } from '../../../common/Constants';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getValueAtPath(obj: any, path: string) {
   return path.split('.').reduce((acc, key) => acc?.[key], obj);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function hasMeaningfulValue(val: any): boolean {
   if (val === undefined || val === null) return false;
   if (typeof val === 'string') return val.trim() !== '';
@@ -64,6 +66,7 @@ function getRequiredForScopes(scopes: string[], schema: JsonSchema): string[] {
   return Array.from(new Set(scopeSets));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: JsonSchema): boolean {
   for (const scope of scopes) {
     const path = scope
@@ -104,6 +107,7 @@ function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], 
 // Resolve a single schema scope against the provided data and determine whether
 // it already holds a meaningful value. Used to derive the initial "visited"
 // state of a step from populated form data.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function hasValueAtScope(data: any, scope: string): boolean {
   const path = normalizeSchemaPath(scope);
   if (!path) return false;
@@ -208,6 +212,7 @@ export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean
 function collectErrorCandidates(e: AjvError): string[] {
   const out: string[] = [];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const missing = (e.params as any)?.missingProperty as string | undefined;
   if (e.keyword === VALIDATION_KEYWORDS.REQUIRED && missing) {
     const base = normalizeInstancePath(e.instancePath || '');
@@ -216,6 +221,7 @@ function collectErrorCandidates(e: AjvError): string[] {
 
   if (e.instancePath) out.push(normalizeInstancePath(e.instancePath));
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (e.dataPath) out.push(normalizeInstancePath((e as any).dataPath));
 
   return out.filter(Boolean);
@@ -263,6 +269,7 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
   const incomplete = new Set<string>();
 
   for (const error of errors) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const missingProperty = (error.params as any)?.missingProperty as string | undefined;
     const candidates: string[] = [];
 
@@ -335,6 +342,7 @@ export const getErrorsInScopes = (errors: ErrorObject[] | null | undefined, scop
     let fullPath = '';
 
     if (err.keyword === VALIDATION_KEYWORDS.REQUIRED) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const missingProp = (err.params as any)?.missingProperty;
       const instancePath = err.instancePath || '';
       const instanceDot = instancePath.replace(/^\//, '').replace(/\//g, '.');
