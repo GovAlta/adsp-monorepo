@@ -112,7 +112,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         }
         const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
         const visited = true;
-        const statusData = getStepStatus({
+        const { status } = getStepStatus({
           scopes: cat.scopes,
           data,
           errors: filteredErrors ?? [],
@@ -122,9 +122,9 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
         return {
           ...cat,
-          isCompleted: statusData.status === StepStatus.COMPLETED,
-          isValid: statusData.status === StepStatus.COMPLETED,
-          status: statusData.status,
+          isCompleted: status === StepStatus.COMPLETED,
+          isValid: status === StepStatus.COMPLETED,
+          status: status,
         };
       });
 

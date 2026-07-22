@@ -58,7 +58,7 @@ const createStepperContextInitData = (
     // that getStepStatus returns the real data-driven status on initial mount initially.
     let visited = scopes.some((scope) => hasValueAtScope(data, scope));
 
-    const statusData = getStepStatus({
+    const { status, hasRequiredFields } = getStepStatus({
       scopes,
       data,
       errors: filteredErrors ?? [],
@@ -66,9 +66,9 @@ const createStepperContextInitData = (
       visited,
     });
 
-    //If the step has all conditional fields, set to visited to true so that the step status will be
+    //If the step has all conditional fields, set visited to true so that the step status will be
     //completed to enable form to be saved.
-    if (!statusData.hasRequiredFields) {
+    if (!hasRequiredFields) {
       visited = true;
     }
 
@@ -76,10 +76,10 @@ const createStepperContextInitData = (
       id,
       label: deriveLabelForUISchemaElement(c, t) ?? `Step ${id + 1}`,
       scopes,
-      isCompleted: statusData.status === StepStatus.COMPLETED || (visited && !statusData.hasRequiredFields),
-      isValid: statusData.status === StepStatus.COMPLETED || (visited && !statusData.hasRequiredFields),
-      isVisited: [StepStatus.COMPLETED, StepStatus.IN_PROGRESS].includes(statusData.status),
-      status: statusData.status,
+      isCompleted: status === StepStatus.COMPLETED || (visited && !hasRequiredFields),
+      isValid: status === StepStatus.COMPLETED || (visited && !hasRequiredFields),
+      isVisited: [StepStatus.COMPLETED, StepStatus.IN_PROGRESS].includes(status),
+      status,
       uischema: c,
       isEnabled: isEnabled(c, data, '', ajv, undefined),
       visible: isVisible(c, data, '', ajv, undefined),

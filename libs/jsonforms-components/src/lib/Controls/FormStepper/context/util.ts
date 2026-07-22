@@ -3,6 +3,7 @@ import get from 'lodash/get';
 import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
 import { StepStatus, StepStatusType, VALIDATION_KEYWORDS } from '../../../common/Constants';
+import { StepStatusData } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getValueAtPath(obj: any, path: string) {
@@ -58,7 +59,7 @@ export function isScopeRequired(normalizedScopes: string[], required: string[]):
 // schema's top-level required array plus the required array of each scope's
 // immediate parent (sub)schema (for nested objects).
 function getRequiredForScopes(scopes: string[], schema: JsonSchema): string[] {
-  const topLevelRequired: string[] = (schema as { required?: string[] })?.required || [];
+  const topLevelRequired: string[] = schema.required || [];
 
   const scopeSets = scopes.reduce((acc: string[], scope) => {
     const subSchema = getSubSchema(schema, scope);
@@ -116,10 +117,6 @@ export function hasValueAtScope(data: any, scope: string): boolean {
   return hasMeaningfulValue(getValueAtPath(data, path));
 }
 
-interface StepStatusData {
-  status: StepStatusType;
-  hasRequiredFields: boolean;
-}
 export function getStepStatus(opts: {
   scopes: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
