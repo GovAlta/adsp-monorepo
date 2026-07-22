@@ -17,19 +17,19 @@ class feedbackPage {
 
   feedbackOverviewFeedbackWidgetParagraphOne() {
     return cy.xpath(
-      '//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::div[1]/p'
+      '//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::div[1]/p',
     );
   }
 
   feedbackOverviewFeedbackWidgetParagraphTwo() {
     return cy.xpath(
-      '//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::div[2]/p'
+      '//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::div[2]/p',
     );
   }
 
   feedbackOverviewSummaryBlock() {
     return cy.xpath(
-      '//div[@data-testid="feedbacks-overview-tab"]//h2[text()="Summary"]/parent::div/following-sibling::goa-block'
+      '//div[@data-testid="feedbacks-overview-tab"]//h2[text()="Summary"]/parent::div/following-sibling::goa-block',
     );
   }
 
@@ -83,7 +83,7 @@ class feedbackPage {
 
   feedbackSitesDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@testid, "site-delete")])[${rowNumber}]`
+      `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@testid, "site-delete")])[${rowNumber}]`,
     );
   }
 
@@ -101,13 +101,13 @@ class feedbackPage {
 
   feedbackStartModalCloseBtn() {
     return cy.xpath(
-      '//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]//img[@class="feedback-close-button"]'
+      '//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]//img[@class="feedback-close-button"]',
     );
   }
 
   feedbackStartModalStartBtn() {
     return cy.xpath(
-      '//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]//button[contains(text(),"Start")]'
+      '//div[@class="adsp-fb-form-container adsp-fb-start" and @data-show="true"]//button[contains(text(),"Start")]',
     );
   }
 
@@ -156,18 +156,20 @@ class feedbackPage {
   }
 
   feedbackMainModalTechnicalIssuesRadios() {
-    return cy.xpath('//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="radios"]');
+    return cy.xpath(
+      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="adsp-fb-radios"]',
+    );
   }
 
   feedbackMainModalTechnicalIssuesYesRadio() {
     return cy.xpath(
-      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="radios"]//input[@id="yes"]'
+      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="adsp-fb-radios"]//input[@id="yes"]',
     );
   }
 
   feedbackMainModalTechnicalIssuesNoRadio() {
     return cy.xpath(
-      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="radios"]//input[@id="no"]'
+      '//div[@class="adsp-fb-content"]/div[@class="adsp-fb-radio-container"]/div[@class="adsp-fb-radios"]//input[@id="no"]',
     );
   }
 
@@ -213,7 +215,7 @@ class feedbackPage {
 
   feedbackFeedbackTableHeadersExpandedView() {
     return cy.xpath(
-      '//goa-button[text()="Back to default view"]/following-sibling::div//table[@data-testid="feedback-table"]/thead/tr/th'
+      '//goa-button[text()="Back to default view"]/following-sibling::div//table[@data-testid="feedback-table"]/thead/tr/th',
     );
   }
 
@@ -235,19 +237,19 @@ class feedbackPage {
 
   feedbackFeedbackStartDateFilterExpandedView() {
     return cy.xpath(
-      '//goa-button[text()="Back to default view"]/following-sibling::div//goa-input[@name="feedback-filter-start-date"]'
+      '//goa-button[text()="Back to default view"]/following-sibling::div//goa-input[@name="feedback-filter-start-date"]',
     );
   }
 
   feedbackFeedbackEndDateFilterExpandedView() {
     return cy.xpath(
-      '//goa-button[text()="Back to default view"]/following-sibling::div//goa-input[@name="feedback-filter-end-date"]'
+      '//goa-button[text()="Back to default view"]/following-sibling::div//goa-input[@name="feedback-filter-end-date"]',
     );
   }
 
   feedbackFeedbackExportCSVExpandedView() {
     return cy.xpath(
-      '//goa-button[text()="Back to default view"]/following-sibling::goa-button-group/goa-button[text()="Export CSV"]'
+      '//goa-button[text()="Back to default view"]/following-sibling::goa-button-group/goa-button[text()="Export CSV"]',
     );
   }
 

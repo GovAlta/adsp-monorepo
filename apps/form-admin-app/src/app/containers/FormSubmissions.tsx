@@ -25,7 +25,7 @@ import {
   Resource,
   directoryBusySelector,
   tagResource,
-  getDefaultSubmissionCriteria,
+  formResultTotalsSelector,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
@@ -39,6 +39,7 @@ import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { ResultsSummary } from '../components/ResultsSummary';
 interface FormSubmissionsProps {
   definitionId: string;
 }
@@ -57,6 +58,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);
   const { submissions: next } = useSelector(nextSelector);
+  const { submissions: totalSubmissions } = useSelector(formResultTotalsSelector);
   const submissionsExport = useSelector(submissionsExportSelector);
 
   useEffect(() => {
@@ -69,6 +71,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setSubmissionCriteria(update)); // clean-code-ignore: 2.10
   const handleFindSubmissions = (after?: string) => dispatch(findSubmissions({ definitionId, criteria, after })); // clean-code-ignore: 2.10
+  const clearFilters = () => {
+    const criteria = {};
+    dispatch(formActions.setSubmissionCriteria(criteria));
+    dispatch(findSubmissions({ definitionId, criteria }));
+  };
 
   return (
     <SearchLayout
@@ -132,9 +139,6 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 Export to file
               </GoabButton>
             )}
-            <GoabButton type="secondary" onClick={() => updateCriteria(getDefaultSubmissionCriteria())}>
-              Reset filter
-            </GoabButton>
             <GoabButton
               type="primary"
               leadingIcon="search"
@@ -148,6 +152,13 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
       }
     >
       <ContentContainer>
+        <ResultsSummary
+          visible={submissions.length}
+          total={totalSubmissions}
+          itemLabel="submissions"
+          loading={busy.loading}
+          onClearFilters={clearFilters}
+        />
         <GoabTable width="100%">
           <thead>
             <tr>

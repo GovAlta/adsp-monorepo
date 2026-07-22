@@ -8,7 +8,7 @@ export const serviceStatusEndpointSchema = new Schema(
       required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 export const endpointStatusEntrySchema = new Schema({
@@ -24,6 +24,10 @@ export const endpointStatusEntrySchema = new Schema({
   },
   applicationId: {
     type: String,
+  },
+  tenantId: {
+    type: String,
+    index: true,
   },
   responseTime: {
     type: Number,
@@ -57,7 +61,7 @@ export const serviceStatusApplicationSchema = new Schema(
     },
     endpoint: serviceStatusEndpointSchema,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const noticeEndpointSchema = new Schema(
@@ -67,7 +71,7 @@ export const noticeEndpointSchema = new Schema(
       required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 export const noticeApplicationSchema = new Schema(
@@ -105,7 +109,7 @@ export const noticeApplicationSchema = new Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // An application property is pretty wide open.

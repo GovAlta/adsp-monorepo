@@ -151,9 +151,6 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFilesService(null, criteria));
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator, isUploadingFile, hasUploadingFileCompleted]);
-
   const renderFileTable = () => {
     return (
       <FileTableStyles>

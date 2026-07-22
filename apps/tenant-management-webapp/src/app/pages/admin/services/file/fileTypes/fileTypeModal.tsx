@@ -7,10 +7,7 @@ import { FileTypeItem, RetentionPolicy } from '@store/file/models';
 import { useDispatch } from 'react-redux';
 import { toKebabName } from '@lib/kebabName';
 
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { useNavigate } from 'react-router-dom';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
@@ -46,13 +43,6 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
     .build();
 
   const dispatch = useDispatch();
-
-  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
-    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
-  }));
-
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
 
   useEffect(() => {
     setFileType(initialValue);

@@ -22,7 +22,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
   const sites = useSelector((state: RootState) => {
     return (
       state.feedback.sites?.sort((a, b) =>
-        a.url.replace(/^https?:\/\//, '').localeCompare(b.url.replace(/^https?:\/\//, ''))
+        a.url.replace(/^https?:\/\//, '').localeCompare(b.url.replace(/^https?:\/\//, '')),
       ) || []
     );
   });
@@ -40,8 +40,6 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
     setEditSite(false);
     setDeleteSiteConfirmation(false);
   };
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   const dispatch = useDispatch();
   useEffect(() => {

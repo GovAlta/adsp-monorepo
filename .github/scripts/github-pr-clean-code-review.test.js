@@ -25,9 +25,13 @@ const {
   buildAnnotatedDiff,
   buildChangedLineSet,
   formatComment,
+  formatPositiveComment,
   loadConfig,
   buildSystemPrompt,
   processFilesForReview,
+  postReviewSummary,
+  normalizeReviewResult,
+  routePositiveFeedback,
   isTestFile,
   deriveTestFilePaths,
   checkMissingTestFiles,
@@ -134,7 +138,7 @@ describe('buildChangedLineSet', () => {
     const set = buildChangedLineSet(patch);
     expect(set.has(1)).toBe(false); // context
     expect(set.has(3)).toBe(false); // context
-    expect(set.has(2)).toBe(true);  // only the + line
+    expect(set.has(2)).toBe(true); // only the + line
   });
 
   test('handles a new-file patch starting at line 1 with no context', () => {
@@ -194,6 +198,121 @@ describe('formatComment', () => {
   });
 });
 
+// ─── formatPositiveComment ───────────────────────────────────────────────────
+
+describe('formatPositiveComment', () => {
+  test('includes the positive severity and evidence-backed message', () => {
+    const comment = formatPositiveComment({
+      rule: 'POSITIVE',
+      severity: 'PRAISE',
+      line: 4,
+      message: 'The tests cover the new error path in auth.service.spec.ts.',
+      suggestion: '',
+    });
+
+    expect(comment).toContain('PRAISE');
+    expect(comment).toContain('The tests cover the new error path in auth.service.spec.ts.');
+  });
+});
+
+// ─── normalizeReviewResult ───────────────────────────────────────────────────
+
+describe('normalizeReviewResult', () => {
+  test('keeps legacy array responses as violations', () => {
+    const violations = [{ rule: '2.13', severity: 'ERROR', line: 1, message: 'msg', suggestion: 'fix' }];
+
+    expect(normalizeReviewResult(violations)).toEqual({ violations, positives: [] });
+  });
+
+  test('splits POSITIVE PRAISE items from corrective review items', () => {
+    const positive = {
+      rule: 'POSITIVE',
+      severity: 'PRAISE',
+      line: 0,
+      message: 'Clear names in the new helper.',
+      suggestion: '',
+    };
+    const violation = { rule: '2.9', severity: 'SUGGESTION', line: 1, message: 'msg', suggestion: 'fix' };
+
+    expect(normalizeReviewResult([positive, violation])).toEqual({ violations: [violation], positives: [positive] });
+  });
+
+  test('accepts object responses with an items array', () => {
+    const positive = {
+      rule: 'POSITIVE',
+      severity: 'PRAISE',
+      line: 0,
+      message: 'Clear names in the new helper.',
+      suggestion: '',
+    };
+
+    expect(normalizeReviewResult({ items: [positive] })).toEqual({ violations: [], positives: [positive] });
+  });
+
+  test('returns empty arrays for invalid responses', () => {
+    expect(normalizeReviewResult(null)).toEqual({ violations: [], positives: [] });
+  });
+});
+
+// ─── routePositiveFeedback ───────────────────────────────────────────────────
+
+describe('routePositiveFeedback', () => {
+  test('routes line-specific positive feedback to inline comments on changed lines', () => {
+    const changedLines = new Set([4]);
+    const { inline, summary } = routePositiveFeedback(
+      [
+        {
+          rule: 'POSITIVE',
+          severity: 'PRAISE',
+          line: 4,
+          message: 'The helper name states intent: isValidTenantRequest.',
+          suggestion: '',
+        },
+      ],
+      changedLines,
+      'src/auth.ts',
+      3,
+    );
+
+    expect(inline).toHaveLength(1);
+    expect(inline[0].line).toBe(4);
+    expect(inline[0].body).toContain('isValidTenantRequest');
+    expect(summary).toHaveLength(0);
+  });
+
+  test('routes line 0 positive feedback to the summary', () => {
+    const { inline, summary } = routePositiveFeedback(
+      [
+        {
+          rule: 'POSITIVE',
+          severity: 'PRAISE',
+          line: 0,
+          message: 'The implementation stays small: one focused helper handles the branch.',
+          suggestion: '',
+        },
+      ],
+      new Set([4]),
+      'src/auth.ts',
+      3,
+    );
+
+    expect(inline).toHaveLength(0);
+    expect(summary).toHaveLength(1);
+  });
+
+  test('caps valid positive feedback to the remaining slot count', () => {
+    const positiveFeedback = [
+      { rule: 'POSITIVE', severity: 'PRAISE', line: 0, message: 'a', suggestion: '' },
+      { rule: 'POSITIVE', severity: 'PRAISE', line: 0, message: 'b', suggestion: '' },
+      { rule: 'POSITIVE', severity: 'PRAISE', line: 0, message: 'c', suggestion: '' },
+    ];
+
+    const { summary } = routePositiveFeedback(positiveFeedback, new Set(), 'src/auth.ts', 2);
+
+    expect(summary).toHaveLength(2);
+  });
+});
+
 // ─── loadConfig ───────────────────────────────────────────────────────────────
 
 describe('loadConfig', () => {
@@ -242,6 +361,23 @@ describe('buildSystemPrompt', () => {
 
   test('includes the JIRA CONTEXT section header when jiraContext is provided', () => {
     expect(buildSystemPrompt(defaultConfig, 'CS-1234')).toContain('JIRA CONTEXT');
+  });
+
+  test('asks for evidence-backed positive observations', () => {
+    const prompt = buildSystemPrompt(defaultConfig, null);
+
+    expect(prompt).toContain('identify up to three meaningful things the author did well');
+    expect(prompt).toContain('Do not provide generic praise');
+    expect(prompt).toContain('Continue to report every required violation');
+  });
+
+  test('uses the POSITIVE PRAISE response item shape', () => {
+    const prompt = buildSystemPrompt(defaultConfig, null);
+
+    expect(prompt).toContain('"rule": "POSITIVE"');
+    expect(prompt).toContain('"severity": "PRAISE"');
+    expect(prompt).toContain('"suggestion": ""');
+    expect(prompt).toContain('or 0 for PR-wide feedback');
   });
 
   // Each rule is verified individually for clear failure messages.
@@ -351,11 +487,49 @@ describe('processFilesForReview', () => {
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('excludes a violation with no diff position from reviewComments', async () => {
+  test('collects inline positive comments from POSITIVE PRAISE review items', async () => {
     const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
     const mockReviewFile = jest.fn().mockResolvedValue([
-      { rule: '2.3', severity: 'WARNING', line: 99, message: 'too long', suggestion: 'split' },
+      {
+        rule: 'POSITIVE',
+        severity: 'PRAISE',
+        line: 1,
+        message: 'The new helper has a clear boundary: const x = 1 is isolated on the added line.',
+        suggestion: '',
+      },
     ]);
+
+    const { positiveComments, positiveSummaries } = await processFilesForReview(files, SYSTEM_PROMPT, {
+      reviewFile: mockReviewFile,
+    });
+
+    expect(positiveComments).toHaveLength(1);
+    expect(positiveComments[0].body).toContain('The new helper has a clear boundary');
+    expect(positiveSummaries).toHaveLength(0);
+  });
+
+  test('caps positive observations to three across reviewed files', async () => {
+    const files = [
+      { filename: 'src/one.ts', patch: PATCH_WITH_LINE_1_ADDED },
+      { filename: 'src/two.ts', patch: PATCH_WITH_LINE_1_ADDED },
+    ];
+    const mockReviewFile = jest.fn().mockResolvedValue([
+      { rule: 'POSITIVE', severity: 'PRAISE', line: 0, message: 'one', suggestion: '' },
+      { rule: 'POSITIVE', severity: 'PRAISE', line: 0, message: 'two', suggestion: '' },
+    ]);
+
+    const { positiveComments, positiveSummaries } = await processFilesForReview(files, SYSTEM_PROMPT, {
+      reviewFile: mockReviewFile,
+    });
+
+    expect(positiveComments.length + positiveSummaries.length).toBe(3);
+  });
+
+  test('excludes a violation with no diff position from reviewComments', async () => {
+    const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const mockReviewFile = jest
+      .fn()
+      .mockResolvedValue([{ rule: '2.3', severity: 'WARNING', line: 99, message: 'too long', suggestion: 'split' }]);
 
     const { reviewComments } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
@@ -364,9 +538,11 @@ describe('processFilesForReview', () => {
 
   test('sets hasBlockingViolations for an ERROR violation with no diff position', async () => {
     const files = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const mockReviewFile = jest.fn().mockResolvedValue([
-      { rule: '2.13', severity: 'ERROR', line: 99, message: 'no error handling', suggestion: 'throw' },
-    ]);
+    const mockReviewFile = jest
+      .fn()
+      .mockResolvedValue([
+        { rule: '2.13', severity: 'ERROR', line: 99, message: 'no error handling', suggestion: 'throw' },
+      ]);
 
     const { hasBlockingViolations } = await processFilesForReview(files, SYSTEM_PROMPT, { reviewFile: mockReviewFile });
 
@@ -382,7 +558,7 @@ describe('processFilesForReview', () => {
     expect(mockReviewFile).toHaveBeenCalledWith(
       expect.stringContaining('const answer = 42;'),
       'src/utils.ts',
-      SYSTEM_PROMPT
+      SYSTEM_PROMPT,
     );
   });
 
@@ -431,13 +607,9 @@ describe('processFilesForReview', () => {
       { filename: 'src/existing.ts', patch: '@@ -0,0 +1 @@\n+const a = 1;' },
       { filename: 'src/new.ts', patch: '@@ -0,0 +1 @@\n+const b = 2;' },
     ];
-    const botComments = [
-      { user: { type: 'Bot' }, path: 'src/existing.ts' },
-    ];
+    const botComments = [{ user: { type: 'Bot' }, path: 'src/existing.ts' }];
 
-    const alreadyReviewedFiles = new Set(
-      botComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path)
-    );
+    const alreadyReviewedFiles = new Set(botComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path));
     const newFiles = allFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
 
     expect(newFiles).toHaveLength(1);
@@ -448,9 +620,7 @@ describe('processFilesForReview', () => {
     const allFiles = [{ filename: 'src/existing.ts', patch: '@@ -0,0 +1 @@\n+const a = 1;' }];
     const botComments = [{ user: { type: 'Bot' }, path: 'src/existing.ts' }];
 
-    const alreadyReviewedFiles = new Set(
-      botComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path)
-    );
+    const alreadyReviewedFiles = new Set(botComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path));
     const newFiles = allFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
 
     expect(newFiles).toHaveLength(0);
@@ -458,17 +628,62 @@ describe('processFilesForReview', () => {
 
   test('ignores human comments when filtering reviewed files', () => {
     const allFiles = [{ filename: 'src/feature.ts', patch: '@@ -0,0 +1 @@\n+const c = 3;' }];
-    const mixedComments = [
-      { user: { type: 'User' }, path: 'src/feature.ts' },
-    ];
+    const mixedComments = [{ user: { type: 'User' }, path: 'src/feature.ts' }];
 
     const alreadyReviewedFiles = new Set(
-      mixedComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path)
+      mixedComments.filter((c) => c.user && c.user.type === 'Bot').map((c) => c.path),
     );
     const newFiles = allFiles.filter((f) => !alreadyReviewedFiles.has(f.filename));
 
     expect(newFiles).toHaveLength(1);
     expect(newFiles[0].filename).toBe('src/feature.ts');
+  });
+});
+
+// ─── postReviewSummary ───────────────────────────────────────────────────────
+
+describe('postReviewSummary', () => {
+  test('posts positive summary feedback without calling it an issue', async () => {
+    const createReview = jest.fn().mockResolvedValue({});
+    const octokit = { rest: { pulls: { createReview } } };
+
+    await postReviewSummary(
+      octokit,
+      [],
+      false,
+      [],
+      [
+        {
+          rule: 'POSITIVE',
+          severity: 'PRAISE',
+          line: 0,
+          message:
+            'The new function keeps validation separate from persistence: validateTenantInput is called before repository.save.',
+          suggestion: '',
+        },
+      ],
+    );
+
+    expect(createReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.stringContaining('No issues found'),
+      }),
+    );
+    expect(createReview.mock.calls[0][0].body).toContain('What worked well');
+    expect(createReview.mock.calls[0][0].body).not.toContain('Issues found');
+  });
+
+  test('keeps corrective comments and positive comments separate in the summary', async () => {
+    const createReview = jest.fn().mockResolvedValue({});
+    const octokit = { rest: { pulls: { createReview } } };
+    const correctiveComments = [{ path: 'src/test.ts', line: 1, side: 'RIGHT', body: '🔴 ERROR issue' }];
+    const positiveComments = [{ path: 'src/test.ts', line: 1, side: 'RIGHT', body: '⭐ strength' }];
+
+    await postReviewSummary(octokit, correctiveComments, true, positiveComments, []);
+
+    const review = createReview.mock.calls[0][0];
+    expect(review.body).toContain('1 error(s)');
+    expect(review.comments).toEqual([...correctiveComments, ...positiveComments]);
   });
 });
 

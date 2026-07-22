@@ -5,21 +5,21 @@ describe('AdspFeedback selectRating', () => {
     adspFeedback = new AdspFeedback();
     document.body.innerHTML = `
       <div>
-        <div class="rating" data-index="0"><img class="rating" src="defaultImage1" /></div>
-        <div class="rating" data-index="1"><img class="rating" src="defaultImage2" /></div>
-        <div class="rating" data-index="2"><img class="rating" src="defaultImage3" /></div>
-        <div class="rating" data-index="3"><img class="rating" src="defaultImage4" /></div>
-        <div class="rating" data-index="4"><img class="rating" src="defaultImage5" /></div>
-        <div class="ratingText" data-index="0"></div>
-        <div class="ratingText" data-index="1"></div>
-        <div class="ratingText" data-index="2"></div>
-        <div class="ratingText" data-index="3"></div>
-        <div class="ratingText" data-index="4"></div>
-        <div class="tooltip-text" data-index="0"></div>
-        <div class="tooltip-text" data-index="1"></div>
-        <div class="tooltip-text" data-index="2"></div>
-        <div class="tooltip-text" data-index="3"></div>
-        <div class="tooltip-text" data-index="4"></div>
+        <div class="rating" data-index="0"><img class="adsp-fb-rating-icon" src="defaultImage1" /></div>
+        <div class="rating" data-index="1"><img class="adsp-fb-rating-icon" src="defaultImage2" /></div>
+        <div class="rating" data-index="2"><img class="adsp-fb-rating-icon" src="defaultImage3" /></div>
+        <div class="rating" data-index="3"><img class="adsp-fb-rating-icon" src="defaultImage4" /></div>
+        <div class="rating" data-index="4"><img class="adsp-fb-rating-icon" src="defaultImage5" /></div>
+        <div class="adsp-fb-rating-text" data-index="0"></div>
+        <div class="adsp-fb-rating-text" data-index="1"></div>
+        <div class="adsp-fb-rating-text" data-index="2"></div>
+        <div class="adsp-fb-rating-text" data-index="3"></div>
+        <div class="adsp-fb-rating-text" data-index="4"></div>
+        <div class="adsp-fb-tooltip-text" data-index="0"></div>
+        <div class="adsp-fb-tooltip-text" data-index="1"></div>
+        <div class="adsp-fb-tooltip-text" data-index="2"></div>
+        <div class="adsp-fb-tooltip-text" data-index="3"></div>
+        <div class="adsp-fb-tooltip-text" data-index="4"></div>
         <button class="adsp-fb-form-primary" disabled></button>
       </div>
     `;
@@ -95,7 +95,7 @@ describe('AdspFeedback selectRating', () => {
     const previousRating = adspFeedback['selectedRating'];
     adspFeedback['selectRating'](ratingIndex);
     // Verify the new image source is updated
-    const images = document.querySelectorAll('.rating') as NodeListOf<HTMLImageElement>;
+    const images = document.querySelectorAll('.adsp-fb-rating-icon') as NodeListOf<HTMLImageElement>;
     expect(images[ratingIndex].src).toContain('clickedImage3');
     if (previousRating !== -1) {
       const previousImage = images[previousRating] as HTMLImageElement;
@@ -104,7 +104,7 @@ describe('AdspFeedback selectRating', () => {
     // Verify selected rating is updated
     expect(adspFeedback['selectedRating']).toBe(ratingIndex);
     // Verify the text color is updated (Convert RGB to HEX)
-    const texts = document.querySelectorAll('.ratingText') as NodeListOf<HTMLImageElement>;
+    const texts = document.querySelectorAll('.adsp-fb-rating-text') as NodeListOf<HTMLImageElement>;
     const text = texts[ratingIndex] as HTMLImageElement;
     const rgbToHex = (rgb: string) => {
       const rgbValues = rgb.match(/\d+/g)?.map(Number);
@@ -208,23 +208,25 @@ describe('AdspFeedback style isolation', () => {
         <img id="host-rating" class="rating" src="host-default" />
         <p id="host-rating-text" class="ratingText">Host rating text</p>
         <span id="host-tooltip" class="tooltip-text">Host tooltip</span>
+        <input id="host-radio" class="radio" />
+        <div id="host-overlay" class="overlay"></div>
       </main>
       <div id="widget-root">
-        <img class="rating" src="defaultImage1" />
-        <img class="rating" src="defaultImage2" />
-        <img class="rating" src="defaultImage3" />
-        <img class="rating" src="defaultImage4" />
-        <img class="rating" src="defaultImage5" />
-        <p class="ratingText">Very Difficult</p>
-        <p class="ratingText">Difficult</p>
-        <p class="ratingText">Neutral</p>
-        <p class="ratingText">Easy</p>
-        <p class="ratingText">Very Easy</p>
-        <span class="tooltip-text">Very Difficult</span>
-        <span class="tooltip-text">Difficult</span>
-        <span class="tooltip-text">Neutral</span>
-        <span class="tooltip-text">Easy</span>
-        <span class="tooltip-text">Very Easy</span>
+        <img class="adsp-fb-rating-icon" src="defaultImage1" />
+        <img class="adsp-fb-rating-icon" src="defaultImage2" />
+        <img class="adsp-fb-rating-icon" src="defaultImage3" />
+        <img class="adsp-fb-rating-icon" src="defaultImage4" />
+        <img class="adsp-fb-rating-icon" src="defaultImage5" />
+        <p class="adsp-fb-rating-text">Very Difficult</p>
+        <p class="adsp-fb-rating-text">Difficult</p>
+        <p class="adsp-fb-rating-text">Neutral</p>
+        <p class="adsp-fb-rating-text">Easy</p>
+        <p class="adsp-fb-rating-text">Very Easy</p>
+        <span class="adsp-fb-tooltip-text">Very Difficult</span>
+        <span class="adsp-fb-tooltip-text">Difficult</span>
+        <span class="adsp-fb-tooltip-text">Neutral</span>
+        <span class="adsp-fb-tooltip-text">Easy</span>
+        <span class="adsp-fb-tooltip-text">Very Easy</span>
       </div>
     `;
     adspFeedback['rootRef'] = { value: document.getElementById('widget-root') as HTMLDivElement };
@@ -234,11 +236,15 @@ describe('AdspFeedback style isolation', () => {
     const hostRating = document.getElementById('host-rating') as HTMLImageElement;
     const hostText = document.getElementById('host-rating-text') as HTMLElement;
     const hostTooltip = document.getElementById('host-tooltip') as HTMLElement;
-    const widgetRating = document.querySelector('#widget-root .rating') as HTMLImageElement;
+    const hostRadio = document.getElementById('host-radio') as HTMLElement;
+    const hostOverlay = document.getElementById('host-overlay') as HTMLElement;
+    const widgetRating = document.querySelector('#widget-root .adsp-fb-rating-icon') as HTMLImageElement;
 
     expect(hostRating.getAttribute('src')).toBe('host-default');
     expect(hostText.style.color).toBe('');
     expect(hostTooltip.style.visibility).toBe('');
+    expect(hostRadio.classList.contains('error')).toBe(false);
+    expect(hostOverlay.style.visibility).toBe('');
     expect(widgetRating.getAttribute('src')).toBe('hoverImage1');
   });
 
@@ -276,12 +282,18 @@ describe('AdspFeedback style isolation', () => {
     expect(styleText).toContain('.adsp-fb .h3-success');
     expect(styleText).toContain('.adsp-fb .adsp-fb-sent .p-content');
     expect(styleText).toContain('.adsp-fb .adsp-fb-sent button.adsp-fb-form-primary');
-    expect(styleText).toContain('.adsp-fb .tooltip-text');
-    expect(styleText).toContain('.adsp-fb .radio');
-    expect(styleText).toContain('.adsp-fb-root .overlay');
+    expect(styleText).toContain('.adsp-fb .adsp-fb-tooltip-text');
+    expect(styleText).toContain('.adsp-fb .adsp-fb-radio');
+    expect(styleText).toContain('.adsp-fb .adsp-fb-rating-icon');
+    expect(styleText).toContain('.adsp-fb .adsp-fb-rating-text');
+    expect(styleText).toContain('width: 46px !important;');
+    expect(styleText).toContain('filter: none !important;');
+    expect(styleText).toContain('.adsp-fb-root .adsp-fb-overlay');
     expect(styleText).not.toMatch(/(^|\n)\s*body\.modal-open\b/);
     expect(styleText).not.toMatch(/(^|\n)\s*\.tooltip-text\b/);
     expect(styleText).not.toMatch(/(^|\n)\s*\.radio\b/);
+    expect(styleText).not.toMatch(/(^|\n)\s*\.ratingText\b/);
+    expect(styleText).not.toMatch(/(^|\n)\s*\.overlay\b/);
   });
 
   it('locks body scrolling without adding a global modal class', () => {

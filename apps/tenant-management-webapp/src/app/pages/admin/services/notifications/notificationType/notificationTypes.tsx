@@ -190,8 +190,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       }
     }
   }, [selectedEvent]); // eslint-disable-line react-hooks/exhaustive-deps
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());

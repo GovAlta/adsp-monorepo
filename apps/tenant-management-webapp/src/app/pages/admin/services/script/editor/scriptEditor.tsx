@@ -43,7 +43,6 @@ import { getEventDefinitions } from '@store/event/actions';
 import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
 import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import useWindowDimensions from '@lib/useWindowDimensions';
 import { NotificationBanner } from 'app/notificationBanner';
 export interface ScriptEditorProps {
   name: string;
@@ -280,8 +279,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
 
   const ClientRole = ({ roleNames, clientId }) => {
     const runnerRoles = types[0];

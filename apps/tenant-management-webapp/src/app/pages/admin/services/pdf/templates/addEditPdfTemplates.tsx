@@ -64,9 +64,6 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     }
   }, [templates]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     setTemplate(initialValue);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps

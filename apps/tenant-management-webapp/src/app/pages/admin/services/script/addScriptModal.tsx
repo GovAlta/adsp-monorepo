@@ -61,9 +61,6 @@ export const AddScriptModal = ({
     .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
     .build();
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [roles]);
-
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());

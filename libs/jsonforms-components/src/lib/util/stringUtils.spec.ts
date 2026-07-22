@@ -211,6 +211,18 @@ describe('stringUtils string tests', () => {
     expect(checkFieldValidity(props, {})).toBe('');
   });
 
+  it('shows required error instead of another validation rule error for an empty required field', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: '',
+      required: true,
+      schema: { type: 'string', minLength: 2 },
+      errors: 'must NOT have fewer than 2 characters',
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('My First name is required');
+  });
+
   it('When allOf should have at least one If condition', () => {
     const schema = schemaAllOfIfThenProps.rootSchema as JsonSchema7;
     const ifConditions = schema.allOf?.filter((y) => y.if !== undefined);

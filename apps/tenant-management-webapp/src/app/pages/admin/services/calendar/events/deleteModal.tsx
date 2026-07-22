@@ -13,8 +13,6 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
   const event = useSelector((state) => selectDeleteEventById(state, calendarName));
   const dispatch = useDispatch();
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [event]);
   return (
     <GoabModal
       testId="delete-confirmation"

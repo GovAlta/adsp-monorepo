@@ -5,7 +5,16 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { PDF_GENERATION_QUEUED } from '../events';
 import { ServiceRoles } from '../roles';
-import { createPdfRouter, createPdfTemplate, deletePdfTemplate, generatePdf, getGeneratedFile, getTemplate, getTemplates, updatePdfTemplate } from './pdf';
+import {
+  createPdfRouter,
+  createPdfTemplate,
+  deletePdfTemplate,
+  generatePdf,
+  getGeneratedFile,
+  getTemplate,
+  getTemplates,
+  updatePdfTemplate,
+} from './pdf';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -57,15 +66,15 @@ describe('pdf', () => {
   };
 
   const createMockResponse = (): Partial<Response> => {
-  const res: Partial<Response> = {
-    status: jest.fn(),
-    send: jest.fn(),
-    json: jest.fn(),
-  };
+    const res: Partial<Response> = {
+      status: jest.fn(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
 
-  (res.status as jest.Mock).mockReturnValue(res);
-  return res;
-};
+    (res.status as jest.Mock).mockReturnValue(res);
+    return res;
+  };
 
   beforeEach(() => {
     eventServiceMock.send.mockReset();
@@ -100,8 +109,6 @@ describe('pdf', () => {
 
   // clean-code-ignore: 2.3
   describe('createPdfTemplate', () => {
-
-
     it('creates an empty PDF template', async () => {
       const req = {
         tenant: { id: tenantId },
@@ -119,9 +126,8 @@ describe('pdf', () => {
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
-
 
       expect(serviceDirectoryMock.getServiceUrl).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -147,7 +153,7 @@ describe('pdf', () => {
         {
           headers: { Authorization: 'Bearer test-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
       expect(res.json).toHaveBeenCalledWith({
@@ -176,7 +182,7 @@ describe('pdf', () => {
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -195,7 +201,7 @@ describe('pdf', () => {
         {
           headers: { Authorization: 'Bearer test-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
       expect(res.json).toHaveBeenCalledWith({
@@ -224,7 +230,7 @@ describe('pdf', () => {
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(res.json).toHaveBeenCalledWith({
@@ -257,7 +263,7 @@ describe('pdf', () => {
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
@@ -288,7 +294,7 @@ describe('pdf', () => {
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(error);
@@ -309,7 +315,7 @@ describe('pdf', () => {
       await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -334,6 +340,39 @@ describe('pdf', () => {
 
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([configuration.test]));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    it('includes additionalStyles and variables in the mapped templates', async () => {
+      const req = {
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      req.getConfiguration.mockResolvedValueOnce([
+        {
+          styled: {
+            id: 'styled',
+            name: 'Styled template',
+            description: 'Has styles.',
+            template: '<p>body</p>',
+            header: '<h1>header</h1>',
+            footer: '<p>footer</p>',
+            additionalStyles: '.a { color: red; }',
+            variables: '{"foo":"bar"}',
+          },
+        },
+      ]);
+      await getTemplates(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'styled',
+          additionalStyles: '.a { color: red; }',
+          variables: '{"foo":"bar"}',
+        }),
+      ]);
     });
 
     it('can call next for error', async () => {
@@ -445,7 +484,7 @@ describe('pdf', () => {
       await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -466,7 +505,7 @@ describe('pdf', () => {
         {
           headers: { Authorization: 'Bearer test-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
       expect(res.json).toHaveBeenCalledWith({
@@ -477,6 +516,82 @@ describe('pdf', () => {
         header: '<h1>New header</h1>',
         footer: '<p>New footer</p>',
       });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('updates name, description, additionalStyles, and variables when provided', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: {
+          name: 'Renamed template',
+          description: 'Updated description.',
+          additionalStyles: '.a { color: red; }',
+          variables: '{"foo":"bar"}',
+        },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'test',
+          name: 'Renamed template',
+          description: 'Updated description.',
+          template: '<p>Old body</p>',
+          header: '<h1>Old header</h1>',
+          footer: '<p>Old footer</p>',
+          additionalStyles: '.a { color: red; }',
+          variables: '{"foo":"bar"}',
+        }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('preserves existing additionalStyles and variables when not in the request body', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body only</p>' },
+        template: {
+          ...existingTemplate,
+          additionalStyles: '.keep { color: blue; }',
+          variables: '{"kept":true}',
+        },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
+      axiosMock.patch.mockResolvedValueOnce({ data: {} });
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          template: '<p>New body only</p>',
+          additionalStyles: '.keep { color: blue; }',
+          variables: '{"kept":true}',
+        }),
+      );
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -498,7 +613,7 @@ describe('pdf', () => {
       await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(res.json).toHaveBeenCalledWith(
@@ -506,7 +621,7 @@ describe('pdf', () => {
           template: '<p>New body only</p>',
           header: '<h1>Old header</h1>',
           footer: '<p>Old footer</p>',
-        })
+        }),
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -525,7 +640,7 @@ describe('pdf', () => {
       await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -552,7 +667,7 @@ describe('pdf', () => {
       await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(error);
@@ -573,7 +688,7 @@ describe('pdf', () => {
       await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(TypeError));
@@ -603,7 +718,7 @@ describe('pdf', () => {
       await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(serviceDirectoryMock.getServiceUrl).toHaveBeenCalledWith(
@@ -620,7 +735,7 @@ describe('pdf', () => {
         {
           headers: { Authorization: 'Bearer test-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
       expect(res.send).toHaveBeenCalledWith();
@@ -639,7 +754,7 @@ describe('pdf', () => {
       await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -666,7 +781,7 @@ describe('pdf', () => {
       await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(error);
@@ -688,7 +803,7 @@ describe('pdf', () => {
       await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(error);
@@ -711,7 +826,7 @@ describe('pdf', () => {
       await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(error);
@@ -732,7 +847,7 @@ describe('pdf', () => {
       await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
         req as unknown as Request,
         res as unknown as Response,
-        next
+        next,
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(TypeError));
@@ -748,7 +863,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -785,7 +900,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -797,10 +912,10 @@ describe('pdf', () => {
           data: req.body.data,
           filename: req.body.filename,
           requestedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED })
+        expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
@@ -838,7 +953,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -850,7 +965,7 @@ describe('pdf', () => {
           data: req.body.data,
           filename: req.body.filename,
           requestedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
-        })
+        }),
       );
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
@@ -884,7 +999,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -934,7 +1049,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -946,10 +1061,10 @@ describe('pdf', () => {
           data: req.body.data,
           filename: req.body.filename,
           requestedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED })
+        expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
@@ -988,7 +1103,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -1024,7 +1139,7 @@ describe('pdf', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        loggerMock
+        loggerMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

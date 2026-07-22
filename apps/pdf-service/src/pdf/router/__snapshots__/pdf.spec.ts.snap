@@ -30,12 +30,14 @@ exports[`pdf getGeneratedFile can get file 1`] = `
 exports[`pdf getTemplates can get templates 1`] = `
 [
   {
+    "additionalStyles": undefined,
     "description": "This is a test.",
     "footer": undefined,
     "header": undefined,
     "id": "test",
     "name": "Test template",
     "template": "",
+    "variables": undefined,
   },
 ]
 `;

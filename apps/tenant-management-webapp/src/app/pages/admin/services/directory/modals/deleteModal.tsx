@@ -15,9 +15,6 @@ export const DirectoryDeleteModal = (): JSX.Element => {
   const modal = useSelector(selectModalStateByType(DeleteModalType));
   const content = directory && `${directory?.api ? `${directory?.service}:${directory?.api}` : directory.service}`;
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [modal?.isOpen]);
-
   return (
     <DeleteModal
       title={title}

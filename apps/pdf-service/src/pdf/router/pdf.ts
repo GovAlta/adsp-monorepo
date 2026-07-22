@@ -5,7 +5,7 @@ import {
   isAllowedUser,
   ServiceDirectory,
   UnauthorizedUserError,
-  TokenProvider
+  TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import * as HttpStatusCodes from 'http-status-codes';
 import axios from 'axios';
@@ -24,7 +24,7 @@ import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { ServiceRoles } from '../roles';
-import { ConfigurationDeleteOperation, ConfigurationUpdateOperation, PdfTemplateConfiguration  } from '../types';
+import { ConfigurationDeleteOperation, ConfigurationUpdateOperation, PdfTemplateConfiguration } from '../types';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -37,7 +37,16 @@ export interface RouterProps {
   tokenProvider: TokenProvider;
 }
 
-function mapPdfTemplate({ id, name, description, template, header, footer }: PdfTemplateEntity) {
+function mapPdfTemplate({
+  id,
+  name,
+  description,
+  template,
+  header,
+  footer,
+  additionalStyles,
+  variables,
+}: PdfTemplateEntity) {
   return {
     id,
     name,
@@ -45,6 +54,8 @@ function mapPdfTemplate({ id, name, description, template, header, footer }: Pdf
     template,
     header,
     footer,
+    additionalStyles,
+    variables,
   };
 }
 
@@ -79,9 +90,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
   };
 }
 
-
-const toTemplateId = (name: string): string =>
-  name.trim().toLowerCase().replace(/\s+/g, '-');
+const toTemplateId = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, '-');
 
 // clean-code-ignore: 2.3 2.10
 const createPdfTemplatePatch = (
@@ -109,10 +118,8 @@ const createPdfTemplatePatch = (
   },
 });
 
-const isTemplateIdAlreadyInUse = (
-  configuration: Record<string, PdfTemplateEntity>,
-  name: string,
-): boolean => Boolean(configuration[name]);
+const isTemplateIdAlreadyInUse = (configuration: Record<string, PdfTemplateEntity>, name: string): boolean =>
+  Boolean(configuration[name]);
 
 async function savePdfTemplate(
   directory: ServiceDirectory,
@@ -120,42 +127,29 @@ async function savePdfTemplate(
   tenantId: string,
   patch: ReturnType<typeof createPdfTemplatePatch>,
 ): Promise<void> {
-  const configurationServiceId =
-    adspId`urn:ads:platform:configuration-service:v2`;
-  const configurationApiUrl =
-    await directory.getServiceUrl(configurationServiceId);
+  const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
+  const configurationApiUrl = await directory.getServiceUrl(configurationServiceId);
   const token = await tokenProvider.getAccessToken();
 
-  await axios.patch(
-    new URL(
-      'v2/configuration/platform/pdf-service',
-      configurationApiUrl,
-    ).href,
-    patch,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId },
-    },
-  );
+  await axios.patch(new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href, patch, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { tenantId },
+  });
 }
 
-export function createPdfTemplate(
-  directory: ServiceDirectory,
-  tokenProvider: TokenProvider,
-): RequestHandler {
+export function createPdfTemplate(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
-
       const user = req.user;
       const tenantId = req.tenant?.id;
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) {
+        // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('create pdf template', user);
       }
       const { name, description = '', template = '', header, footer, additionalStyles, variables } = req.body;
       const id = toTemplateId(name);
-      const [configuration] =
-        await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       if (isTemplateIdAlreadyInUse(configuration, id)) {
         return res.status(HttpStatusCodes.CONFLICT).send({
@@ -163,14 +157,18 @@ export function createPdfTemplate(
         });
       }
 
-      const patch = createPdfTemplatePatch(id, name, description, template, header, footer, additionalStyles, variables);
-
-      await savePdfTemplate(
-        directory,
-        tokenProvider,
-        req.tenant.id.toString(),
-        patch,
+      const patch = createPdfTemplatePatch(
+        id,
+        name,
+        description,
+        template,
+        header,
+        footer,
+        additionalStyles,
+        variables,
       );
+
+      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
 
       res.status(HttpStatusCodes.CREATED).json(patch.update[id]);
     } catch (err) {
@@ -190,40 +188,36 @@ async function deletePdfTemplateFromConfig(
   const token = await tokenProvider.getAccessToken();
 
   const patch: ConfigurationDeleteOperation = { operation: 'DELETE', property: templateId };
-  await axios.patch(
-    new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href,
-    patch,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId },
-    },
-  );
+  await axios.patch(new URL('v2/configuration/platform/pdf-service', configurationApiUrl).href, patch, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { tenantId },
+  });
 }
 
 // clean-code-ignore: 2.3 2.10
-export function updatePdfTemplate(
-  directory: ServiceDirectory,
-  tokenProvider: TokenProvider,
-): RequestHandler {
+export function updatePdfTemplate(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) {
+        // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('update pdf template', user);
       }
 
       const template: PdfTemplateEntity = req[TEMPLATE];
-      const { template: templateBody, header, footer } = req.body;
+      const { name, description, template: templateBody, header, footer, additionalStyles, variables } = req.body;
 
       const updated: PdfTemplateConfiguration = {
         id: template.id,
-        name: template.name,
-        description: template.description,
+        name: name !== undefined ? name : template.name,
+        description: description !== undefined ? description : template.description,
         template: templateBody !== undefined ? templateBody : template.template,
         header: header !== undefined ? header : template.header,
         footer: footer !== undefined ? footer : template.footer,
+        additionalStyles: additionalStyles !== undefined ? additionalStyles : template.additionalStyles,
+        variables: variables !== undefined ? variables : template.variables,
       };
 
       const patch: ConfigurationUpdateOperation<PdfTemplateConfiguration> = {
@@ -241,16 +235,14 @@ export function updatePdfTemplate(
 }
 
 // clean-code-ignore: 2.18
-export function deletePdfTemplate(
-  directory: ServiceDirectory,
-  tokenProvider: TokenProvider,
-): RequestHandler {
+export function deletePdfTemplate(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) { // clean-code-ignore: 2.4
+      if (!isAllowedUser(user, tenantId, ServiceRoles.Admin, true)) {
+        // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('delete pdf template', user);
       }
 
@@ -269,7 +261,7 @@ export function generatePdf(
   eventService: EventService,
   fileService: FileService,
   queueService: WorkQueueService<PdfServiceWorkItem>,
-  logger: Logger
+  logger: Logger,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -353,7 +345,7 @@ export function createPdfRouter({
   queueService,
   logger,
   directory,
-  tokenProvider
+  tokenProvider,
 }: RouterProps): Router {
   const router = Router();
 
@@ -372,9 +364,7 @@ export function createPdfRouter({
         .isLength({ min: 1, max: 50 })
         .withMessage('name must be between 1 and 50 characters')
         .matches(/^[a-zA-Z0-9 -]+$/)
-        .withMessage(
-          'name can contain only letters, numbers, spaces, and hyphens',
-        ),
+        .withMessage('name can contain only letters, numbers, spaces, and hyphens'),
       body('description').optional().isString(),
       body('template').optional().isString(),
       body('header').optional().isString(),
@@ -388,15 +378,19 @@ export function createPdfRouter({
     '/templates/:templateId',
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
     getTemplate('params'),
-    (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
+    (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE])),
   );
   router.patch(
     '/templates/:templateId',
     createValidationHandler(
       param('templateId').isString().isLength({ min: 1, max: 50 }),
+      body('name').optional().isString().isLength({ min: 1, max: 50 }),
+      body('description').optional().isString(),
       body('template').optional().isString(),
       body('header').optional().isString(),
       body('footer').optional().isString(),
+      body('additionalStyles').optional().isString(),
+      body('variables').optional().isString(),
     ),
     getTemplate('params'),
     updatePdfTemplate(directory, tokenProvider),
@@ -416,10 +410,10 @@ export function createPdfRouter({
       body('filename').isString().isLength({ min: 1, max: 60 }),
       body('fileType').optional().isString().isLength({ min: 1, max: 50 }),
       body('recordId').optional().isString(),
-      body('context').optional().isObject()
+      body('context').optional().isObject(),
     ),
     getTemplate('body'),
-    generatePdf(serviceId, repository, eventService, fileService, queueService, logger)
+    generatePdf(serviceId, repository, eventService, fileService, queueService, logger),
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 

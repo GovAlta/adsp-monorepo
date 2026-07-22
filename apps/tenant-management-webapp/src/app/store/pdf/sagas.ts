@@ -1,7 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
 import { RootState, store } from '../index';
-import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
+import { select, call, put, takeEvery, takeLatest, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -41,21 +41,21 @@ import {
   updateJobs,
   clearPdfPreviewStale,
   markPdfPreviewStale,
-  getPdfTemplates,
   saveUpdatedPdfTemplate,
+  updatePdfTemplateFromAgent,
   generatePdf as generatePdfAction,
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
 import { getAccessToken as getAccessTokenThunk } from '@store/tenant/actions';
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
+import { PdfGenerationResponse, PdfTemplate, CreatePdfConfig } from './model'; // clean-code-ignore: RULE-19 — covered by ./saga.spec.tsx, the established one-spec-per-slice convention in this folder
 import {
   fetchPdfTemplatesApi,
   createPdfTemplateApi,
   updatePDFTemplateApi,
   fetchPdfFileApi,
-  deletePdfFileApi,
+  deletePdfTemplateApi,
   generatePdfApi,
   createPdfJobApi,
 } from './api';
@@ -67,29 +67,31 @@ export function* fetchPdfTemplates(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading template...',
-    })
+    }),
   );
 
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-  );
+  const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  if (configBaseUrl && token) {
+  if (pdfServiceUrl && token) {
     try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/platform/pdf-service/latest`;
-      const templates = yield call(fetchPdfTemplatesApi, token, url);
+      const url = `${pdfServiceUrl}/pdf/v1/templates`;
+      const templateList: PdfTemplate[] = yield call(fetchPdfTemplatesApi, token, url);
+      const templates = templateList.reduce(
+        (acc, template) => ({ ...acc, [template.id]: template }),
+        {} as Record<string, PdfTemplate>,
+      );
       yield put(getPdfTemplatesSuccess(templates));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -99,11 +101,11 @@ export function* fetchCorePdfTemplates(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading template...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
@@ -115,14 +117,14 @@ export function* fetchCorePdfTemplates(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -147,6 +149,10 @@ export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProc
 
   if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
     yield put(generatePdfSuccess(action.payload));
+  }
+
+  if (action.payload.name === 'pdf-generation-failed') {
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaIterator {
@@ -230,37 +236,41 @@ export function* createPdfTemplateSaga({ template }: CreatePdfTemplateAction): S
 }
 
 export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
 
   yield put(UpdateElementIndicator({ show: true }));
 
   const token: string = yield call(getAccessToken);
-  if (baseUrl && token) {
+  if (pdfServiceUrl && token) {
     try {
-      const pdfTemplate = {
-        [template.id]: {
-          ...template,
-        },
+      const body: Partial<PdfTemplate> = {
+        name: template.name,
+        description: template.description,
+        template: template.template,
+        header: template.header,
+        footer: template.footer,
+        additionalStyles: template.additionalStyles,
+        variables: template.variables,
       };
-
-      const body: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
-      const { latest } = yield call(updatePDFTemplateApi, token, url, body);
+      const url = `${pdfServiceUrl}/pdf/v1/templates/${template.id}`;
+      const updated: PdfTemplate = yield call(updatePDFTemplateApi, token, url, body);
 
       if (options === 'no-refresh') {
         yield put(
           updatePdfTemplateSuccessNoRefresh({
-            ...latest.configuration,
-          })
+            [updated.id]: updated,
+          }),
         );
       } else {
+        const existing: Record<string, PdfTemplate> = yield select((state: RootState) => state.pdf.pdfTemplates);
         yield put(
           updatePdfTemplateSuccess(
             {
-              ...latest.configuration,
+              ...existing,
+              [updated.id]: updated,
             },
-            { templateId: template.id }
-          )
+            { templateId: template.id },
+          ),
         );
       }
       yield put(UpdateElementIndicator({ show: false }));
@@ -286,7 +296,7 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -295,20 +305,22 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
 }
 
 export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
-  if (baseUrl && token) {
+  if (pdfServiceUrl && token) {
+    // clean-code-ignore: 2.4 — matches the if (x && token) guard used by every other saga in this file
     try {
-      const payload: DeletePdfConfig = { operation: 'DELETE', property: template.id };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
-      const { latest } = yield call(deletePdfFileApi, token, url, payload);
+      const url = `${pdfServiceUrl}/pdf/v1/templates/${template.id}`;
+      yield call(deletePdfTemplateApi, token, url);
 
-      yield put(
-        deletePdfTemplateSuccess({
-          ...latest.configuration,
-        })
-      );
+      const pdfTemplates: Record<string, PdfTemplate> = yield select((state: RootState) => state.pdf.pdfTemplates);
+      const remainingTemplates = { ...pdfTemplates };
+      // clean-code-ignore: 2.14 — not duplicated with deletePdfFilesService's jobs.filter above: that
+      // filters an array of jobs by templateId, this removes one key from a templates dict by id.
+      delete remainingTemplates[template.id];
+
+      yield put(deletePdfTemplateSuccess(remainingTemplates));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
@@ -372,7 +384,6 @@ function* emitResponse(socket) {
 
 export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   let tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
 
   const token: string = yield call(getAccessToken);
@@ -381,26 +392,33 @@ export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): Sag
     UpdateIndicator({
       show: true,
       message: 'Processing may take a while. Please wait...',
-    })
+    }),
   );
 
-  if (pdfServiceUrl && token && baseUrl) {
+  if (pdfServiceUrl && token) {
     try {
       if (agentTemplate) {
         tempTemplate = agentTemplate;
       }
 
-      const pdfTemplate = {
+      const templateMap = {
         [tempTemplate.id]: {
           ...tempTemplate,
         },
       };
 
-      const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
-
       if (!agentTemplate) {
-        const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
-        yield call(generatePdfApi, token, url, saveBody);
+        const saveBody: Partial<PdfTemplate> = {
+          name: tempTemplate.name,
+          description: tempTemplate.description,
+          template: tempTemplate.template,
+          header: tempTemplate.header,
+          footer: tempTemplate.footer,
+          additionalStyles: tempTemplate.additionalStyles,
+          variables: tempTemplate.variables,
+        };
+        const saveUrl = `${pdfServiceUrl}/pdf/v1/templates/${tempTemplate.id}`;
+        yield call(generatePdfApi, token, saveUrl, saveBody);
       }
 
       const combinedData = payload.data;
@@ -419,18 +437,13 @@ export function* generatePdf({ payload, agentTemplate }: GeneratePdfAction): Sag
       const body: CreatePdfConfig = { operation: 'generate', ...pdfData };
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
-      yield put(generatePdfSuccess(pdfResponse, saveBody.update));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
+      yield put(generatePdfSuccess(pdfResponse, templateMap));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -448,33 +461,38 @@ export function* fetchPdfMetrics(): SagaIterator {
         generationDuration: metrics[durationMetric]?.values[0]
           ? parseInt(metrics[durationMetric]?.values[0].avg)
           : null,
-      })
+      }),
     );
   });
 }
 
-const MUTATION_TOOLS = new Set([
-  'pdfConfigurationUpdateTool',
-  'pdfDataUpdateTool'
-]);
+// Tools whose results carry the full saved PDF template; the result is merged into the store,
+// so only add tools here whose result shape matches PdfTemplate.
+const MUTATION_TOOLS = new Set(['pdfConfigurationUpdateTool']);
 
 function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
   return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
 }
 
-
 export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponseAction): SagaIterator {
   if (isMutationToolResult(chunk)) {
     yield put(markPdfPreviewStale());
-      const chunkPayload  = chunk?.payload as unknown as { result: Record<string, object> };
+    const chunkPayload = chunk?.payload as unknown as { result: Record<string, object> };
     yield put(saveUpdatedPdfTemplate(chunkPayload.result));
+
+    // The tool result is the authoritative saved template; merge it into pdfTemplates directly
+    // so the editor tabs reflect the agent's changes. A refetch of the configuration "latest"
+    // immediately after the update can return a stale cached revision, so it is not used here.
+    const updatedTemplate = chunkPayload.result as unknown as PdfTemplate;
+    if (updatedTemplate?.id) {
+      yield put(updatePdfTemplateFromAgent(updatedTemplate));
+    }
   }
 
   if (done) {
     const currentlyGeneratedPDFData = yield select((state: RootState) => state.pdf?.currentlyGeneratedPDFData);
     const isPreviewMarkedStale: boolean = yield select((state: RootState) => state.pdf.previewStale);
     if (isPreviewMarkedStale) {
-      yield put(getPdfTemplates());
       yield put(clearPdfPreviewStale());
 
       const payload = {
@@ -499,7 +517,7 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
   yield takeEvery(DELETE_PDF_FILE_SERVICE, deletePdfFileService);
   yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);
-  yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
+  yield takeLatest(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
   yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
   yield takeEvery(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
 }

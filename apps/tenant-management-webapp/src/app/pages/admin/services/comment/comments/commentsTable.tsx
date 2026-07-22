@@ -92,8 +92,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
   const elementIndicator = useSelector((state: RootState) => {
     return state?.session?.elementIndicator;
   });
-  // eslint-disable-next-line
-  useEffect(() => {}, [elementIndicator]);
+
   return (
     <section>
       <HeaderFont>

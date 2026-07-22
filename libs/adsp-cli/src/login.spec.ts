@@ -30,19 +30,28 @@ jest.mock('./tenants', () => ({
   findTenantByName: jest.fn(),
   findTenantByRealm: jest.fn(),
   listTenants: jest.fn(),
+  createTenant: jest.fn(),
+  waitForTenantActive: jest.fn(),
 }));
 
+jest.mock('jwt-decode');
+
 // Imported after the mocks above so login.ts picks up the mocked modules.
+import jwtDecode from 'jwt-decode';
 import { getAccessToken, getStatus, loginInteractive, logout } from './login';
-import { findTenantByName, findTenantByRealm, listTenants } from './tenants';
+import { createTenant, findTenantByName, findTenantByRealm, listTenants, waitForTenantActive } from './tenants';
+import { HttpRequestError } from './httpError';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
-import { getCacheFilePath, setCachedToken } from './tokenCache';
+import { getCachedToken, getCacheFilePath, setCachedToken } from './tokenCache';
 import { AuthorizationCode } from 'simple-oauth2';
 
 const mockFindTenantByName = findTenantByName as jest.Mock;
 const mockFindTenantByRealm = findTenantByRealm as jest.Mock;
 const mockListTenants = listTenants as jest.Mock;
+const mockCreateTenant = createTenant as jest.Mock;
+const mockWaitForTenantActive = waitForTenantActive as jest.Mock;
 const mockAuthorizationCode = AuthorizationCode as unknown as jest.Mock;
+const mockJwtDecode = jwtDecode as jest.Mock;
 
 const ACCESS_SERVICE_URL = 'https://access.example.com';
 const REALM = 'my-realm';
@@ -91,6 +100,14 @@ describe('login', () => {
     mockFindTenantByName.mockReset();
     mockFindTenantByRealm.mockReset();
     mockListTenants.mockReset();
+    mockCreateTenant.mockReset();
+    mockWaitForTenantActive.mockReset();
+    // Default: simulate a token jwt-decode can't parse, matching the plain placeholder tokens
+    // used throughout this suite (e.g. 'fresh-access-token') — tests that care about the
+    // owned-tenant annotation override this explicitly.
+    mockJwtDecode.mockReset().mockImplementation(() => {
+      throw new Error('invalid token');
+    });
   });
 
   afterEach(() => {
@@ -334,6 +351,29 @@ describe('login', () => {
       expect(authorizeArgs.scope).toEqual(['email', 'adsp-cli-admin']);
     });
 
+    it('throws when the identity provider does not grant a requested scope, without caching the token', async () => {
+      // e.g. the scope isn't registered as an optional client scope on this realm's adsp-cli client.
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload({ scope: 'email' }));
+
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
+
+      await expect(loginPromise).rejects.toThrow(/did not grant the requested scope.*adsp-cli-admin/);
+      expect(getCachedToken(ACCESS_SERVICE_URL, REALM)).toBeNull();
+    });
+
+    it('caches the scope actually granted by the identity provider rather than just what was requested', async () => {
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload({ scope: 'email adsp-cli-admin offline_access' }));
+
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
+      await loginPromise;
+
+      expect(getCachedToken(ACCESS_SERVICE_URL, REALM)?.scopes).toEqual(['email', 'adsp-cli-admin', 'offline_access']);
+    });
+
     it('reuses a cached token that already covers the newly requested scope, without a fresh browser login', async () => {
       setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email', 'adsp-cli-admin']);
 
@@ -423,6 +463,237 @@ describe('login', () => {
       );
       expect(readConfig()).toEqual({ tenantRealm: 'realm-a', tenantName: 'tenant-a' });
       expect(mockFindTenantByRealm).not.toHaveBeenCalled();
+    });
+
+    it('sorts and annotates a tenant the caller administers first in the picker', async () => {
+      mockListTenants.mockResolvedValue([
+        { name: 'tenant-b', realm: 'realm-b', adminEmail: 'someone.else@example.com' },
+        { name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' },
+        { name: 'tenant-c', realm: 'realm-c', adminEmail: 'someone.else@example.com' },
+      ]);
+      mockJwtDecode.mockReturnValue({ email: 'me@example.com' });
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive();
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      const result = await loginPromise;
+
+      expect(result).toEqual({ realm: 'realm-a', token: 'fresh-access-token', reused: false });
+      expect(mockPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'autocomplete',
+          choices: [{ name: 'tenant-a', message: 'tenant-a (yours)' }, 'tenant-b', 'tenant-c'],
+        })
+      );
+    });
+
+    it('falls back to the plain alphabetical list when no tenant is administered by the caller', async () => {
+      mockListTenants.mockResolvedValue([
+        { name: 'tenant-b', realm: 'realm-b', adminEmail: 'someone.else@example.com' },
+        { name: 'tenant-a', realm: 'realm-a', adminEmail: 'another.person@example.com' },
+      ]);
+      mockJwtDecode.mockReturnValue({ email: 'me@example.com' });
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive();
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      await loginPromise;
+
+      expect(mockPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'autocomplete', choices: ['tenant-a', 'tenant-b'] })
+      );
+    });
+
+    it('falls back to the plain alphabetical list when the core token cannot be decoded', async () => {
+      mockListTenants.mockResolvedValue([
+        { name: 'tenant-b', realm: 'realm-b' },
+        { name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' },
+      ]);
+      // mockJwtDecode keeps its default (throwing) implementation from beforeEach.
+      mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+      const loginPromise = loginInteractive();
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+      await flushAsync();
+      lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+      await loginPromise;
+
+      expect(mockPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'autocomplete', choices: ['tenant-a', 'tenant-b'] })
+      );
+    });
+
+    describe('offering to create a new tenant', () => {
+      function autocompleteChoices(): unknown[] {
+        const call = mockPrompt.mock.calls.find(([args]) => args.type === 'autocomplete');
+        return call?.[0].choices ?? [];
+      }
+
+      it('adds a create-tenant entry when logging into a pre-prod env with no owned tenant', async () => {
+        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+        await loginPromise;
+
+        expect(autocompleteChoices()).toContainEqual({ name: '__create_tenant__', message: '+ Create a new tenant' });
+      });
+
+      it('never adds a create-tenant entry when logging into prod, even with no owned tenant', async () => {
+        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'prod' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+        await loginPromise;
+
+        expect(autocompleteChoices()).toEqual(['tenant-a']);
+      });
+
+      it('never adds a create-tenant entry in pre-prod for a non-admin who already owns a tenant', async () => {
+        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' }]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+        await loginPromise;
+
+        expect(autocompleteChoices()).not.toContainEqual(
+          expect.objectContaining({ message: '+ Create a new tenant' })
+        );
+      });
+
+      it('still adds a create-tenant entry in pre-prod for a tenant-service-admin who already owns a tenant', async () => {
+        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' }]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['tenant-service-admin'] } });
+        mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+        await loginPromise;
+
+        expect(autocompleteChoices()).toContainEqual({ name: '__create_tenant__', message: '+ Create a new tenant' });
+      });
+
+      it('picking the create-tenant entry prompts for a name, creates it, waits for provisioning, then logs into the new realm', async () => {
+        mockListTenants.mockResolvedValue([]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockPrompt.mockImplementation(async (args: { type: string; choices?: { name: string; message?: string }[] }) => {
+          if (args.type === 'autocomplete') {
+            const createChoice = args.choices.find((c) => typeof c === 'object' && c.message === '+ Create a new tenant');
+            return { tenant: createChoice.name };
+          }
+          return { name: 'new-tenant' };
+        });
+        const createdTenant = {
+          id: 'urn:ads:platform:tenant-service:v2:/tenants/new-tenant-id',
+          name: 'new-tenant',
+          realm: 'new-tenant-realm',
+          status: 'provisioning',
+        };
+        mockCreateTenant.mockResolvedValue(createdTenant);
+        mockWaitForTenantActive.mockResolvedValue({ name: 'new-tenant', realm: 'new-tenant-realm', status: 'active' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+        const result = await loginPromise;
+
+        expect(mockCreateTenant).toHaveBeenCalledWith(expect.any(String), 'fresh-access-token', 'new-tenant');
+        expect(mockWaitForTenantActive).toHaveBeenCalledWith(expect.any(String), 'fresh-access-token', createdTenant);
+        expect(result).toEqual({ realm: 'new-tenant-realm', token: 'fresh-access-token', reused: false });
+        expect(readConfig()).toEqual({ tenantRealm: 'new-tenant-realm', tenantName: 'new-tenant', env: 'dev' });
+      });
+
+      it('re-prompts for a name when createTenant rejects with a 400 (validation failure)', async () => {
+        mockListTenants.mockResolvedValue([]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        let inputCalls = 0;
+        mockPrompt.mockImplementation(async (args: { type: string; choices?: { name: string; message?: string }[] }) => {
+          if (args.type === 'autocomplete') {
+            const createChoice = args.choices.find((c) => typeof c === 'object' && c.message === '+ Create a new tenant');
+            return { tenant: createChoice.name };
+          }
+          inputCalls += 1;
+          return { name: inputCalls === 1 ? 'taken-name' : 'new-tenant' };
+        });
+        mockCreateTenant
+          .mockRejectedValueOnce(new HttpRequestError(400, 'This tenant name has already been used.'))
+          .mockResolvedValueOnce({ name: 'new-tenant', realm: 'new-tenant-realm', status: 'provisioning' });
+        mockWaitForTenantActive.mockResolvedValue({ name: 'new-tenant', realm: 'new-tenant-realm', status: 'active' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+
+        await loginPromise;
+
+        expect(mockCreateTenant).toHaveBeenCalledTimes(2);
+        expect(mockCreateTenant).toHaveBeenNthCalledWith(1, expect.any(String), 'fresh-access-token', 'taken-name');
+        expect(mockCreateTenant).toHaveBeenNthCalledWith(2, expect.any(String), 'fresh-access-token', 'new-tenant');
+      });
+
+      it('propagates a non-400 error from createTenant (e.g. missing beta-tester role) without retrying', async () => {
+        mockListTenants.mockResolvedValue([]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockPrompt.mockImplementation(async (args: { type: string; choices?: { name: string; message?: string }[] }) => {
+          if (args.type === 'autocomplete') {
+            const createChoice = args.choices.find((c) => typeof c === 'object' && c.message === '+ Create a new tenant');
+            return { tenant: createChoice.name };
+          }
+          return { name: 'new-tenant' };
+        });
+        mockCreateTenant.mockImplementation(() => Promise.reject(new HttpRequestError(401, "missing the 'beta-tester' role")));
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+
+        await expect(loginPromise).rejects.toThrow("missing the 'beta-tester' role");
+        expect(mockCreateTenant).toHaveBeenCalledTimes(1);
+        expect(mockWaitForTenantActive).not.toHaveBeenCalled();
+      });
     });
 
     it('never sends the caller-requested extra scope to the core listing login, only to the final tenant-realm login', async () => {

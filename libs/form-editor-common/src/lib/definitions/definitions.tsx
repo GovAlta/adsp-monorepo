@@ -64,7 +64,6 @@ export const FormDefinitions = ({
   };
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
@@ -106,9 +105,6 @@ export const FormDefinitions = ({
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
   const dispatch = useDispatch();
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     if (openAddDefinition) {

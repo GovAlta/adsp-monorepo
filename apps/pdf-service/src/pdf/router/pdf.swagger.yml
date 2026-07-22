@@ -27,6 +27,13 @@ components:
           type: string
           description: Page footers, designed with HTML/CSS
           example: <p>Thank you, thank you very much</p>
+        additionalStyles:
+          type: string
+          description: CSS styles shared across the template, header, and footer.
+          example: ".label { font-weight: bold; }"
+        variables:
+          type: string
+          description: Variable assignments available to the template.
     Job:
       type: object
       properties:
@@ -78,11 +85,11 @@ components:
           example: user-jane-doe
         context:
           description: The context in which the PDF is being generated. This is an arbitrary JSON object that can include any relevant information about the generation request.
-          example: { "requestId": "12345", "source": "user-action" }
+          example: {"requestId": "12345", "source": "user-action"}
           type: object
         data:
           description: The variable (Handlebars) assignments to be applied to the template when generating a PDF.  This is an arbitrary JSON object, but its properties must match those expected by the template.
-          example: { "user": { "name": "Jane Doe" } }
+          example: {"user": {"name": "Jane Doe"}}
           type: object
         filename:
           description: The name of the file that will be given to the generated PDF document.  It must be unique within your tenant.
@@ -172,7 +179,7 @@ components:
   patch:
     tags:
       - Templates
-    description: Update the template body, header, and/or footer of an existing PDF template. Only the fields included in the request body are updated; all other fields are left unchanged.
+    description: Update an existing PDF template. Only the fields included in the request body are updated; all other fields are left unchanged.
     parameters:
       - name: templateId
         description: ID of template to update.
@@ -187,6 +194,16 @@ components:
           schema:
             type: object
             properties:
+              name:
+                type: string
+                description: Name of the template. Can contain letters, numbers, spaces, and hyphens.
+                minLength: 1
+                maxLength: 50
+                example: My Template
+              description:
+                type: string
+                description: Description of the template's purpose.
+                example: A template for rendering a user name
               template:
                 type: string
                 description: The template body, designed with HTML/CSS.
@@ -199,6 +216,13 @@ components:
                 type: string
                 description: Page footer, designed with HTML/CSS.
                 example: <p>Thank you, thank you very much</p>
+              additionalStyles:
+                type: string
+                description: CSS styles shared across the template, header, and footer.
+                example: ".label { font-weight: bold; }"
+              variables:
+                type: string
+                description: Variable assignments available to the template.
     responses:
       201:
         description: The PDF template was successfully updated.

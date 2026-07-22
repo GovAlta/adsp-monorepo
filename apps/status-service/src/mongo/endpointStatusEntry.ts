@@ -14,7 +14,10 @@ export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
 
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
   model: Model<EndpointStatusEntry & Document>;
-  constructor(private logger: Logger, private opts: EndpointStatusEntryRepositoryOptions = defaultStatusEntryOptions) {
+  constructor(
+    private logger: Logger,
+    private opts: EndpointStatusEntryRepositoryOptions = defaultStatusEntryOptions,
+  ) {
     this.model = model<EndpointStatusEntry & Document>('EndpointStatusEntry', endpointStatusEntrySchema);
     this.model.on('index', (err: unknown) => {
       if (err) {
@@ -29,9 +32,13 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
   async findRecentByUrlAndApplicationId(
     url: string,
     applicationId: string,
-    top = this.opts.limit
+    tenantId: string,
+    top = this.opts.limit,
   ): Promise<EndpointStatusEntryEntity[]> {
-    const docs = await this.model.find({ url: url, applicationId: applicationId }).sort({ timestamp: -1 }).limit(top);
+    const docs = await this.model
+      .find({ url: url, applicationId: applicationId, tenantId: tenantId })
+      .sort({ timestamp: -1 })
+      .limit(top);
 
     const entries = docs.map((doc) => this.fromDoc(doc));
 
@@ -51,8 +58,8 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     throw new Error('not implemented');
   }
 
-  async deleteAll(appKey: string): Promise<number> {
-    const count = await this.model.deleteMany({ applicationId: appKey });
+  async deleteAll(appKey: string, tenantId: string): Promise<number> {
+    const count = await this.model.deleteMany({ applicationId: appKey, tenantId: tenantId });
     return count.deletedCount;
   }
 
@@ -75,6 +82,7 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
       ok: endpoint.ok,
       responseTime: endpoint.responseTime,
       applicationId: endpoint.applicationId,
+      tenantId: endpoint.tenantId,
       status: endpoint.status,
       timestamp: endpoint.timestamp,
       url: endpoint.url,
@@ -89,6 +97,7 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
       ok: doc.ok,
       responseTime: doc.responseTime,
       applicationId: doc.applicationId,
+      tenantId: doc.tenantId,
       status: doc.status,
       timestamp: doc.timestamp,
       url: doc.url,

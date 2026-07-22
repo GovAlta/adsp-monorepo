@@ -54,9 +54,6 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     }
   }, [topicTypes, topicType.id, spinner, navigate, isEdit, onClose]);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     setTopicType(initialValue);
   }, [open, initialValue]);

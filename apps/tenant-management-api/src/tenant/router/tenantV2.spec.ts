@@ -306,6 +306,23 @@ describe('createTenantV2Router', () => {
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
+
+    it('can throw not found for a deleted/unknown tenant', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = getTenant(loggerMock, repositoryMock);
+
+      repositoryMock.get.mockResolvedValueOnce(null);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
   });
 
   describe('deleteTenant', () => {

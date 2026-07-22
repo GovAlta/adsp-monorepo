@@ -33,9 +33,6 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
     return state?.session?.indicator;
   });
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     setTemplate(initialValue);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -45,7 +42,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(templateIds, 'template'))
 
@@ -113,7 +110,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
                 setTemplate(
                   isEdit
                     ? { ...template, name: detail.value }
-                    : { ...template, name: detail.value, id: toKebabName(detail.value) }
+                    : { ...template, name: detail.value, id: toKebabName(detail.value) },
                 );
               }}
             />

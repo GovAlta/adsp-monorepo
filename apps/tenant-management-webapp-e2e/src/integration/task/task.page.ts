@@ -48,9 +48,7 @@ class TaskPage {
   }
 
   queuePageBackButton() {
-    return cy.get('goa-button[testid="queue-cancel"]').shadow().find('button').should('not.be.disabled');
-
-    //return cy.xpath('//*[@testid="queue-cancel" and @disabled="false"]');
+    return cy.xpath('//*[@testid="queue-cancel" and not(@disabled)]');
   }
 
   queuePageCheckboxesTables() {

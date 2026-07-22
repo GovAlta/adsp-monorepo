@@ -17,6 +17,7 @@ import {
   GoabIconButton,
   GoabTable,
 } from '@abgov/react-components';
+
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import {
   DataRegisterEditorWrapper,
@@ -43,9 +44,10 @@ interface RegisterItemProps {
   onToggle: (entry: RegisterConfigData | null) => void;
   onDelete: (urn: string) => void;
   onUpdate: (urn: string, data: RegisterConfigData['data']) => void;
+  detail?: React.ReactNode;
 }
 
-const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate }: RegisterItemProps): JSX.Element => {
+const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -124,6 +126,11 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate }: Regis
           </DataRegisterIconDiv>
         </td>
       </tr>
+      {detail && (
+        <tr>
+          <td colSpan={3}>{detail}</td>
+        </tr>
+      )}
       {isEditing && (
         <tr>
           <td colSpan={3}>
@@ -253,6 +260,38 @@ export const DataRegisters = (): JSX.Element => {
   };
 
   const selectedName = selectedEntry ? parseUrn(selectedEntry.urn ?? '').name : null;
+  const renderSelectedDetail = () => {
+    if (!selectedEntry || !selectedName) {
+      return null;
+    }
+
+    const selectedUrn = `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`;
+
+    return (
+      <>
+        <DataRegisterUrn>
+          <GoabBadge type="information" content={selectedUrn} icon={false} />
+          {!urnCopied ? (
+            <GoabIconButton
+              icon="copy"
+              size="small"
+              variant="color"
+              title="Copy URN"
+              onClick={() => {
+                navigator.clipboard.writeText(selectedUrn);
+                setUrnCopied(true);
+              }}
+            />
+          ) : (
+            <CheckmarkCircle size="medium" />
+          )}
+        </DataRegisterUrn>
+        <DataRegisterEntryDetail data-testid={`data-register-detail-${selectedName}`}>
+          {JSON.stringify(selectedEntry.data, null, 2)}
+        </DataRegisterEntryDetail>
+      </>
+    );
+  };
 
   return (
     <>
@@ -292,6 +331,7 @@ export const DataRegisters = (): JSX.Element => {
                   onToggle={handleToggle}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
+                  detail={selectedEntry?.urn === entry.urn ? renderSelectedDetail() : null}
                 />
               ))}
             </tbody>

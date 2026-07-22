@@ -45,7 +45,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
         <GoabFormItem label="Start date">
           <GoabInput
             type="date"
-            name=""
+            name="startDate"
             value={(event.start ? new Date(event.start) : new Date()).toISOString().slice(0, 10)}
             width="100%"
             testId="calendar-event-modal-start-date-input"
@@ -58,7 +58,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
         <GoabFormItem label="Start time">
           <GoabInput
             type="time"
-            name="StartTime"
+            name="startTime"
             value={new Date(event.start)?.toTimeString().split(' ')[0]}
             step={1}
             width="100%"
@@ -71,6 +71,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
         </GoabFormItem>
         <GoabFormItem label="End date" error={endDateError}>
           <GoabInput
+            type="date"
             name="endDate"
             value={(event.end ? new Date(event.end) : new Date()).toISOString().slice(0, 10)}
             width="100%"
