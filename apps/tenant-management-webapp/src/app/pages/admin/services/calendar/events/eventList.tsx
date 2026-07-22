@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
@@ -79,9 +79,6 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   const { indicator } = useSelector((state: RootState) => ({
     indicator: state.session?.elementIndicator,
   }));
-
-  //eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   if (indicator?.show) {
     return <GoabSkeleton type="text" key={1} />;
@@ -165,7 +162,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
                       type: EventAddEditModalType,
                       id: `${event.id}`,
                       isOpen: true,
-                    })
+                    }),
                   );
                 }}
               />
@@ -179,7 +176,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
                       type: EventDeleteModalType,
                       id: `${event.id}`,
                       isOpen: true,
-                    })
+                    }),
                   );
                 }}
               />
@@ -202,8 +199,6 @@ interface EventListProps {
 export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, calendarName));
   const next = useSelector((state: RootState) => selectSelectedCalendarNextEvents(state, calendarName));
-  // eslint-disable-next-line
-  useEffect(() => {}, [selectedEvents]);
 
   if (!selectedEvents) {
     return (

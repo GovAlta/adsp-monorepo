@@ -64,7 +64,6 @@ export const FormDefinitions = ({
   };
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
@@ -107,9 +106,6 @@ export const FormDefinitions = ({
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
   const dispatch = useDispatch();
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     if (openAddDefinition) {
       setOpenAddFormDefinition(true);
@@ -135,7 +131,8 @@ export const FormDefinitions = ({
     }
 
     return () => {
-      if (!window.location.href.includes('/edit/')) { // clean-code-ignore: 2.18
+      if (!window.location.href.includes('/edit/')) {
+        // clean-code-ignore: 2.18
         dispatch(setSelectedTag(null));
       }
     };

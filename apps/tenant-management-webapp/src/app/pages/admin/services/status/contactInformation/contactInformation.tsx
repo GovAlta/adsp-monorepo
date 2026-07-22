@@ -14,7 +14,7 @@ import { ContactInformationModalForm } from './editContactInfo';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { useActionStateCheck } from '@components/Indicator';
 import { NoPaddingH2 } from '@components/AppHeader';
-import {GoabGrid} from '@abgov/react-components';
+import { GoabGrid } from '@abgov/react-components';
 interface SubscribersProps {
   subscribers?: Subscriber[];
   readonly?: boolean;
@@ -28,12 +28,9 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
     dispatch(FetchStatusConfigurationService());
   }, [dispatch]);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [isFetchConfigCompleted]);
-
   const contact = useSelector((state: RootState) => state.serviceStatus.contact);
   const hasConfigurationAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin')
+    state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin'),
   );
 
   const [editContactInformation, setEditContactInformation] = useState<boolean>(false);
@@ -78,8 +75,8 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
           report service issues.
         </p>
 
-        <GoabGrid minChildWidth='320' >
-          <div data-testid="email" className="word-break contact-border" >
+        <GoabGrid minChildWidth="320">
+          <div data-testid="email" className="word-break contact-border">
             <h4>Contact email</h4>
             {!isFetchConfigCompleted && <TextGoASkeleton />}
             {isFetchConfigCompleted && contact?.contactEmail}

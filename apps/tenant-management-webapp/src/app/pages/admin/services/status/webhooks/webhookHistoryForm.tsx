@@ -14,11 +14,7 @@ import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { ResetModalState } from '@store/session/actions';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
@@ -123,9 +119,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [entries, next]);
 
   const onSearch = (criteria: EventSearchCriteria) => {
     dispatch(clearEventLogEntries());

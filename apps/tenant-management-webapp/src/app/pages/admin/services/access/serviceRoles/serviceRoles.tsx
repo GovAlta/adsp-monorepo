@@ -9,27 +9,26 @@ import { ServiceRoleListContainer } from '../styled-component';
 import { PageIndicator } from '@components/Indicator';
 import { ConfirmationModal } from './addRoleModal';
 import { ServiceRoleSyncStatus } from '@store/access/models';
-import { sortedIndex } from 'lodash';
 
 export const selectServiceTenantRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
     return serviceRoles?.tenant || {};
-  }
+  },
 );
 
 export const selectServiceCoreRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
     return serviceRoles?.core || {};
-  }
+  },
 );
 
 export const selectKeycloakServiceRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
     return serviceRoles?.keycloak || {};
-  }
+  },
 );
 
 export const ServiceRoles = (): JSX.Element => {
@@ -54,11 +53,6 @@ export const ServiceRoles = (): JSX.Element => {
       return {};
     }
   });
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [updateState]);
 
   useEffect(() => {
     dispatch(fetchServiceRoles());

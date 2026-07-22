@@ -58,7 +58,7 @@ const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boo
 export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const [topicType, setTopicType] = useState<CommentTopicTypes>(
-    id ? defaultEditCommentTopicType : defaultCommentTopicType
+    id ? defaultEditCommentTopicType : defaultCommentTopicType,
   );
   const [initialTopicType, setInitialTopicType] = useState<CommentTopicTypes>(defaultCommentTopicType);
   const [spinner, setSpinner] = useState<boolean>(false);
@@ -66,7 +66,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1],
   );
   const scrollPaneRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
@@ -94,7 +94,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     (state: RootState) => state.serviceRoles,
     (serviceRoles) => {
       return serviceRoles?.keycloak || {};
-    }
+    },
   );
 
   useEffect(() => {
@@ -124,8 +124,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
 
   const ClientRole = ({ roleNames, clientId }) => {
     const applicantRoles = types[0];
@@ -201,22 +199,19 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     }
   }, [topicTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   const { validators, errors } = useValidators(
     'name',
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name'),
-    isNotEmptyCheck('securityClassification')
+    isNotEmptyCheck('securityClassification'),
   )
     .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
     .add(
       'securityClassification',
       'securityClassification',
-      isNotUndefinedCheck(topicType.securityClassification, 'Security classification')
+      isNotUndefinedCheck(topicType.securityClassification, 'Security classification'),
     )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();

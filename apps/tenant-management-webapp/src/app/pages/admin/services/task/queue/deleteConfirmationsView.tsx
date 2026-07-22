@@ -33,8 +33,6 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
       setShowDeleteConfirmation(true);
     }
   }, [tasks]);
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  useEffect(() => {}, [tasks]);
 
   return (
     <TableDiv key="task">

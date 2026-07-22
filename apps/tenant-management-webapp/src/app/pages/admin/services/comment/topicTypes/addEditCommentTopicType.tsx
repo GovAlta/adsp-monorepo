@@ -54,9 +54,6 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     }
   }, [topicTypes, topicType.id, spinner, navigate, isEdit, onClose]);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     setTopicType(initialValue);
   }, [open, initialValue]);
@@ -66,7 +63,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
@@ -141,7 +138,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
                   setTopicType(
                     isEdit
                       ? { ...topicType, name: detail.value }
-                      : { ...topicType, name: detail.value, id: toKebabName(detail.value) }
+                      : { ...topicType, name: detail.value, id: toKebabName(detail.value) },
                   );
                 }}
                 onBlur={() => {
