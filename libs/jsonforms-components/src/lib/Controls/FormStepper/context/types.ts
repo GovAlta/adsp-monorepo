@@ -1,4 +1,5 @@
 import { Categorization, Category } from '@jsonforms/core';
+import { StepStatusType } from '../../../common/Constants';
 
 export interface CategoryInternalState {
   isCompleted?: boolean;
@@ -20,7 +21,16 @@ export interface CategoryConfig {
 export type CategoryState = CategoryInternalState & CategoryConfig;
 
 export type CategoriesState = Array<CategoryState>;
+export interface StepConfig {
+  id: string;
+  label: string;
+  scopePaths: string[];
+}
 
+export interface StepStatusData {
+  status: StepStatusType;
+  hasRequiredFields: boolean;
+}
 export interface StepperContextDataType {
   categories: CategoriesState;
   activeId: number;

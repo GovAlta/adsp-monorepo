@@ -22,6 +22,13 @@ export const VALIDATION_KEYWORDS = {
   ERROR_MESSAGE: 'errorMessage',
 };
 
+export enum StepStatus {
+  NOT_STARTED = 'NotStarted',
+  IN_PROGRESS = 'InProgress',
+  COMPLETED = 'Completed',
+}
+export type StepStatusType = StepStatus.COMPLETED | StepStatus.NOT_STARTED | StepStatus.IN_PROGRESS;
+
 export const getAddressLookupFieldLabel = (fieldName: string): string => {
   return ADDRESS_LOOKUP_LABELS[fieldName as keyof typeof ADDRESS_LOOKUP_LABELS] || fieldName;
 };
