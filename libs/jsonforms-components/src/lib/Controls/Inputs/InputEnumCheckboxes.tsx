@@ -47,9 +47,12 @@ const getOptionDescription = (option: string | EnumOption): string | undefined =
 };
 
 export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
-  const { data, id, schema, uischema, path, handleChange, options, config, label, enabled } = props;
+  const { data, id, schema, uischema, path, handleChange, config, label, enabled } = props;
   const enumOptions = getEnumOptions(schema);
-  const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
+  // Merge only UI-schema level options. The enum data `options` array must NOT be merged
+  // here: lodash.merge folds its indices in as numeric keys (0, 1, 2, ...) that then get
+  // spread onto <goa-checkbox> below and trigger React's "Invalid attribute name" warning.
+  const appliedUiSchemaOptions = merge({}, config, props.uischema.options);
 
   return (
     <Checkboxes
