@@ -82,7 +82,7 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
         heading={title}
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               type="secondary"
               onClick={() => {
                 onClose();
@@ -90,7 +90,7 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
             >
               Close
             </GoabButton>
-            <GoabButton type="primary" onClick={() => onValidate(selectedChannel)}>
+            <GoabButton size="compact" type="primary" onClick={() => onValidate(selectedChannel)}>
               Verify
             </GoabButton>
           </GoabButtonGroup>

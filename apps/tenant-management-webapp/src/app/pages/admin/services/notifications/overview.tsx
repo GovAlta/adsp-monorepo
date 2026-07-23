@@ -28,7 +28,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
     <OverviewLayout
       description={description}
       addButton={
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-notification-overview"
           disabled={disabled}
           onClick={() => {

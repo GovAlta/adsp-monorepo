@@ -55,7 +55,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId={`disposition-state-cancel-${isEdit ? 'edit' : 'add'}`}
             type="secondary"
             onClick={() => {
@@ -65,7 +65,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="disposition-state-save"
             disabled={!template?.name || validators.haveErrors()}

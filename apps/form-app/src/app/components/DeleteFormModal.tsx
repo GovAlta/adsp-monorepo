@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components-ds1';
 import { FunctionComponent } from 'react';
 import { Form } from '../state';
 

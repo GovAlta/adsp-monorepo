@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components-ds1';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

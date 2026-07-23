@@ -1,4 +1,5 @@
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { BuilderTenant } from './containers/BuilderTenant';
 import { Landing } from './components/Landing';

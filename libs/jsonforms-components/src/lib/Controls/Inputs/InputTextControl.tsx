@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
+import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/register';

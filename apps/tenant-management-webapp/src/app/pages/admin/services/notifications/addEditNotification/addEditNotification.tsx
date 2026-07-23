@@ -174,7 +174,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', duplicateNameCheck(typeNames, 'Notification type'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
@@ -187,8 +187,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         testId="notification-types-form"
         open={open}
         actions={
-          <GoabButtonGroup alignment="end">
+          <GoabButtonGroup alignment="end" mt="m">
             <GoabButton
+              size="compact"
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -202,6 +203,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               disabled={!addressPathChanged && (validators.haveErrors() || areObjectsEqual(type, initialValue))}
               type="primary"
               testId="form-save"
@@ -212,7 +214,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoabButtonGroup>
         }
       >
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name']} label="Name" mb="s">
           <GoabInput
             type="text"
             name="name"
@@ -239,14 +241,14 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             }}
           />
         </GoabFormItem>
-        <GoabFormItem label="Type ID">
+        <GoabFormItem label="Type ID" mb="s">
           <div style={{ display: 'flex', flexDirection: 'row' }}>
             <div style={{ margin: '3px 10px' }}>
               <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
             </div>
           </div>
         </GoabFormItem>
-        <GoabFormItem error={errors?.['description']} label="Description">
+        <GoabFormItem error={errors?.['description']} label="Description" mb="s">
           <GoabTextArea
             name="description"
             testId="form-description"
@@ -270,7 +272,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           />
         </GoabFormItem>
         {isNotifyAddressSetting === NotificationType.SUBSCRIBERS && (
-          <GoabFormItem error={errors?.['channels']} label="Select Notification Channels">
+          <GoabFormItem error={errors?.['channels']} label="Select Notification Channels" mb="s">
             <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
               {channels.map((channel, key) => {
                 return (
@@ -297,6 +299,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                         value="manageSubscribe"
                         ariaLabel={`manage-subscriptions-checkbox`}
                         text={channel.title}
+                        mb="m"
                       />
                     </div>
                   </div>
@@ -317,6 +320,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               testId="manage-subscriptions-checkbox"
               value="manageSubscribe"
               ariaLabel={`manage-subscriptions-checkbox`}
+              mb="m"
             >
               My subscribers are allowed to manage their own subscription for this notification type
             </GoabCheckbox>
@@ -342,6 +346,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           }}
           ariaLabel={`anonymousRead-checkbox`}
           text="Make notification public"
+          mb="m"
         />
 
         <GoabFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>

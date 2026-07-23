@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { ControlProps, JsonSchema } from '@jsonforms/core';
-import { GoabFormItem, GoabInput } from '@abgov/react-components';
+import { GoabFormItem, GoabInput } from '@abgov/react-components-ds1';
 import { Visible } from '../../util';
 import { RankedTester, rankWith, and, schemaTypeIs, formatIs } from '@jsonforms/core';
 import { evaluateExpression, EvalResult, collectScopes } from './CalculationEngine';

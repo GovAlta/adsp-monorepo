@@ -23,7 +23,7 @@ export const Paging: FunctionComponent<PagingProps> = ({ room }) => {
   return (
     <div className={styles.paging}>
       {room?.set?.next && (
-        <GoabButton
+        <GoabButton size="compact"
           disabled={isLoading}
           type="secondary"
           onClick={() => {

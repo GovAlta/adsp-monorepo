@@ -259,7 +259,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoabButtonGroup alignment="start">
-                <GoabButton
+                <GoabButton size="compact"
                   type="primary"
                   testId="comment-save"
                   disabled={
@@ -292,7 +292,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                 >
                   Save
                 </GoabButton>
-                <GoabButton
+                <GoabButton size="compact"
                   testId="comment-cancel"
                   type="secondary"
                   onClick={() => {

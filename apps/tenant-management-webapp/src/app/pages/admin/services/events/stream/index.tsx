@@ -43,7 +43,7 @@ export const EventStreams = (): JSX.Element => {
       <PageIndicator />
       {!indicator.show && (
         <>
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-stream"
             onClick={() => {
               dispatch(

@@ -156,7 +156,7 @@ export const AddEditFormDefinition = ({
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-edit-form-cancel"
             type="secondary"
             onClick={() => {
@@ -166,7 +166,7 @@ export const AddEditFormDefinition = ({
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="form-save"
             disabled={!definition.name || validators.haveErrors()}
@@ -332,7 +332,7 @@ export const AddEditFormDefinition = ({
                   }}
                 />
               </DescriptionItem>
-              <GoabButton
+              <GoabButton size="compact"
                 type="secondary"
                 testId="add-tag-btn"
                 disabled={!tagInput.trim() || validators.haveErrors() || tagAlreadyAdded()}
@@ -383,6 +383,7 @@ export const AddEditFormDefinition = ({
                 onChange={() => {
                   setMultiForm(multiForm ? false : true);
                 }}
+                mt="m"
               >
                 Populate form with a default multi-page form
               </GoabCheckbox>

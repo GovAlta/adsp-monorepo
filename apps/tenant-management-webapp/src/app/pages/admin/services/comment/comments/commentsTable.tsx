@@ -150,7 +150,13 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
       {!elementIndicator?.show && comments && !comments.length && renderNoItem('comments')}
       {next && (
         <LoadMoreCommentsWrapper>
-          <GoabButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
+          <GoabButton
+            size="compact"
+            testId="comment-load-more-btn"
+            key="comment-load-more-btn"
+            type="text"
+            onClick={onNext}
+          >
             View older comments
           </GoabButton>
         </LoadMoreCommentsWrapper>

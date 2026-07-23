@@ -2,7 +2,7 @@ import React from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { PhoneNumberControl } from '../PhoneNumber';
 import { GoAEmailInput } from '../Inputs/InputEmailControl';
-import { GoabDropdown, GoabDropdownItem, GoabFormItem } from '@abgov/react-components';
+import { GoabDropdown, GoabDropdownItem, GoabFormItem } from '@abgov/react-components-ds1';
 import { FormFieldWrapper } from './style-component';
 
 export const ContractInfoControl = (props: ControlProps): JSX.Element => {

@@ -65,7 +65,7 @@ export const EventLog: FunctionComponent = () => {
               <EventLogEntries onSearch={onSearch} />
               {next && (
                 <LoadMoreWrapper>
-                  <GoabButton disabled={isLoading} type="tertiary" onClick={onNext}>
+                  <GoabButton size="compact" disabled={isLoading} type="text" onClick={onNext} mt="m">
                     Load more
                   </GoabButton>
                 </LoadMoreWrapper>

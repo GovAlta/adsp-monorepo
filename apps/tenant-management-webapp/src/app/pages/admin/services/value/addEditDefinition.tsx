@@ -129,6 +129,7 @@ export const AddEditValueDefinition = ({
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               testId="value-cancel"
               type="secondary"
               onClick={() => {
@@ -140,6 +141,7 @@ export const AddEditValueDefinition = ({
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               type="primary"
               testId="value-save"
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
@@ -156,7 +158,7 @@ export const AddEditValueDefinition = ({
           </GoabButtonGroup>
         }
       >
-        <GoabFormItem error={errors?.['namespace']} label="Namespace">
+        <GoabFormItem error={errors?.['namespace']} label="Namespace" mb="s">
           <NamespaceDropdown
             value={definition.namespace}
             disabled={isEdit}
@@ -175,7 +177,7 @@ export const AddEditValueDefinition = ({
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name']} label="Name" mb="s">
           <GoabInput
             type="text"
             name="name"
@@ -196,7 +198,7 @@ export const AddEditValueDefinition = ({
             onBlur={() => validators.checkAll({ name: definition.name })}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['description']} label="Description">
+        <GoabFormItem error={errors?.['description']} label="Description" mb="s">
           <GoabTextArea
             name="description"
             value={definition.description}

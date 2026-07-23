@@ -1,4 +1,4 @@
-import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components-ds1';
 import { Band, Footer } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';

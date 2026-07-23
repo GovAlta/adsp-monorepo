@@ -45,7 +45,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
       {!indicator.show && definitions && (
         <div>
           <Buttons>
-            <GoabButton
+            <GoabButton size="compact"
               testId="add-definition"
               onClick={() => {
                 setSelectedDefinition(defaultEventDefinition);

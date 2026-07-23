@@ -87,9 +87,10 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   return next ? (
     <LoadMoreWrapper>
       <GoabButton
+        size="compact"
         testId="calendar-event-load-more-btn"
         key="calendar-event-load-more-btn"
-        type="tertiary"
+        type="text"
         onClick={() => {
           dispatch(FetchEventsByCalendar(calendarName, next));
         }}
@@ -115,7 +116,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isAllDay === true && (
         <div>
-          <GoabBadge type="midtone" content="All day" icon={false} />
+          <GoabBadge type="default" content="All day" icon={false} />
         </div>
       )}
 
@@ -123,7 +124,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isPublic === true && (
         <div>
-          <GoabBadge type="midtone" content=" Public " icon={false} />
+          <GoabBadge type="default" content=" Public " icon={false} />
         </div>
       )}
     </EventDetailTd>

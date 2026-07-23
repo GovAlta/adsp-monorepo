@@ -72,7 +72,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   return (
     <section>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-topic-type"
         onClick={() => {
           setOpenAddCommentTopicType(true);

@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabInput } from '@abgov/react-components';
+import { GoabFormItem, GoabInput } from '@abgov/react-components-ds1';
 import { FunctionComponent } from 'react';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { toDateRangeStart, toDateRangeEnd } from '../state/form.slice';

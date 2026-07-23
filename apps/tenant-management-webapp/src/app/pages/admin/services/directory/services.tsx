@@ -37,7 +37,7 @@ export const DirectoryService = (): JSX.Element => {
         <div>
           <p>Add your own entry so they can be found using the directory.</p>
 
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-directory-btn"
             onClick={() => {
               dispatch(

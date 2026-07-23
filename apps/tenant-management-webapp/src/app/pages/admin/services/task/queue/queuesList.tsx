@@ -65,7 +65,7 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   return (
     <section>
       <div>
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-queue-btn"
           onClick={() => {
             setSelectedQueue(defaultTaskQueue);

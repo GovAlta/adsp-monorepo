@@ -26,13 +26,19 @@ export const SaveFormModal: FunctionComponent<SaveFormProps> = ({
         maxWidth="640px"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton testId="form-cancel-modal" type="tertiary" onClick={onCancel}>
+            <GoabButton size="compact" testId="form-cancel-modal" type="text" onClick={onCancel}>
               Cancel
             </GoabButton>
-            <GoabButton type="secondary" testId="form-dont-save" onClick={() => onDontSave()}>
+            <GoabButton size="compact" type="secondary" testId="form-dont-save" onClick={() => onDontSave()}>
               Don't save
             </GoabButton>
-            <GoabButton type="primary" testId="form-agree-save" disabled={saveDisable} onClick={() => onSave()}>
+            <GoabButton
+              size="compact"
+              type="primary"
+              testId="form-agree-save"
+              disabled={saveDisable}
+              onClick={() => onSave()}
+            >
               Save
             </GoabButton>
           </GoabButtonGroup>

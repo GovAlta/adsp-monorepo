@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoabFormItem, GoabGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid } from '@abgov/react-components-ds1';
 import { AddressIndent, LabelDiv, TextWrap } from './styled-components';
 
 interface AddressInputsProps {

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { GoabTable, GoabText } from '@abgov/react-components';
+import { GoabTable, GoabText } from '@abgov/react-components-ds1';
 import { GoabCalloutType } from '@abgov/ui-components-common';
 import { PageBorder } from '../styled-components';
 import { CategoriesState, CategoryState } from '../context';
@@ -112,16 +112,16 @@ export const TaskList: React.FC<TocProps> = ({
 
   const totalPages = useMemo(
     () => mergedSections.reduce((count, section) => count + section.categories.filter(shouldShow).length, 0),
-    [mergedSections]
+    [mergedSections],
   );
 
   const completedPages = useMemo(
     () =>
       mergedSections.reduce(
         (count, section) => count + section.categories.filter((cat) => shouldShow(cat) && cat.isCompleted).length,
-        0
+        0,
       ),
-    [mergedSections]
+    [mergedSections],
   );
 
   let globalIndex = 0;

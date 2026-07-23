@@ -190,7 +190,7 @@ const CreateFormDefinition = (): JSX.Element => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>{isEdit ? 'Edit' : 'Create'} Form Definition</h1>
-        <GoabButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)}>
+        <GoabButton size="compact" type="secondary" onClick={() => navigate(`/${tenant}/forms`)}>
           Back to Definitions
         </GoabButton>
       </div>
@@ -364,10 +364,10 @@ const CreateFormDefinition = (): JSX.Element => {
         </div>
 
         <div className={styles.actions}>
-          <GoabButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)} disabled={isLoading}>
+          <GoabButton size="compact" type="secondary" onClick={() => navigate(`/${tenant}/forms`)} disabled={isLoading}>
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             onClick={handleSave}
             disabled={!definition.name || validators.haveErrors() || isLoading}

@@ -50,7 +50,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
     'name',
     badCharsCheck,
     isNotEmptyCheck('name'),
-    wordMaxLengthCheck(32, 'Name')
+    wordMaxLengthCheck(32, 'Name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(Object.keys(streams), 'Stream'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
@@ -95,8 +95,9 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
         open={isOpen}
         heading={isEdit ? 'Edit stream' : 'Add stream'}
         actions={
-          <GoabButtonGroup alignment="end">
+          <GoabButtonGroup alignment="end" mt="m">
             <GoabButton
+              size="compact"
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -108,6 +109,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               type="primary"
               testId="form-save"
               disabled={!stream?.name || validators.haveErrors()}
@@ -125,7 +127,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           </GoabButtonGroup>
         }
       >
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name']} label="Name" mb="s">
           <GoabInput
             type="text"
             name="stream-name"
@@ -142,10 +144,10 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             }}
           />
         </GoabFormItem>
-        <GoabFormItem label="Stream ID">
+        <GoabFormItem label="Stream ID" mb="s">
           <IdField>{stream.id}</IdField>
         </GoabFormItem>
-        <GoabFormItem label="Description">
+        <GoabFormItem label="Description" mb="s">
           <GoabTextArea
             name="stream-description"
             value={stream.description}
@@ -209,6 +211,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           }}
           ariaLabel={`stream-anonymousRead-checkbox`}
           text="Make stream public"
+          mb="m"
         />
 
         {rolesObj ? '' : <GoabSkeleton type="text" />}

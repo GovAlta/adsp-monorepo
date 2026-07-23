@@ -233,7 +233,7 @@ export const FormExport = (): JSX.Element => {
         </GoabFormItem>
 
         <h3>Records</h3>
-        {selectedForm && <GoabBadge type="information" content={resourceType} icon={false} />}
+        {selectedForm && <GoabBadge type="information" content={resourceType} icon={false} emphasis="subtle" />}
         <br />
         <br />
         <GoabFormItem label="Format">
@@ -280,6 +280,7 @@ export const FormExport = (): JSX.Element => {
                           text={col.id}
                           checked={col.selected}
                           onChange={() => handleColumnToggle(col.id)}
+                          mb="m"
                         />
                       </label>
                     ))}

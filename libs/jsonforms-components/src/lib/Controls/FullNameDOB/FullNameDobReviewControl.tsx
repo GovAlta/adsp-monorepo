@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { GoabButton, GoabFormItem } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
@@ -27,8 +27,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
 
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
-              type="tertiary"
-              size="compact"
+              type="text"
               onClick={() => context?.goToPage(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >

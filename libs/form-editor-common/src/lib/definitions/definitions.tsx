@@ -208,7 +208,7 @@ export const FormDefinitions = ({
               name="form-definition-search"
               value={searchInput}
               placeholder="Search form definitions..."
-              width="100%"
+              width="60ch"
               trailingIcon={searchInput ? 'close-circle' : undefined}
               onTrailingIconClick={() => {
                 dispatch(setDefinitionSearchInput(''));
@@ -232,7 +232,7 @@ export const FormDefinitions = ({
           </GoabFormItem>
         </SearchInputWrapper>
         <GoabButton
-          type="secondary"
+          type="tertiary"
           mb={'m'}
           testId="form-definition-search-btn"
           onClick={() => {
@@ -269,7 +269,7 @@ export const FormDefinitions = ({
               dispatch(setSelectedTag(null));
             }
           }}
-          width="60ch"
+          width="57ch"
         >
           <GoabDropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
@@ -282,6 +282,7 @@ export const FormDefinitions = ({
 
       {showFormDefinitions && (
         <GoabButton
+          size="compact"
           testId="add-definition"
           onClick={() => {
             setOpenAddFormDefinition(true);
@@ -339,9 +340,10 @@ export const FormDefinitions = ({
                 {getNextEntries() && (
                   <LoadMoreWrapper>
                     <GoabButton
+                      size="compact"
                       testId="form-event-load-more-btn"
                       key="form-event-load-more-btn"
-                      type="tertiary"
+                      type="text"
                       onClick={onNext}
                     >
                       Load more

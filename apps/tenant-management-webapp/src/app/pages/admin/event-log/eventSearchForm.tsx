@@ -332,7 +332,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         </GoabFormItem>
       </GoabGrid>
       <GoabButtonGroup alignment="end">
-        <GoabButton
+        <GoabButton size="compact"
           type="secondary"
           onClick={() => {
             dd.reset();
@@ -343,7 +343,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         >
           Reset
         </GoabButton>
-        <GoabButton
+        <GoabButton size="compact"
           disabled={dd.query.indexOf(':') === -1}
           onClick={() => {
             dd.setOpen(false);

@@ -1,4 +1,4 @@
-import { GoabButton, GoabFormItem } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { FunctionComponent, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, AppState, downloadFile, pdfSelector } from '../state';

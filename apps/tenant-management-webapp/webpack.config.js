@@ -1,5 +1,6 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
+const { aliasReactComponents } = require('../../tools/webpack/react-components-version');
 
 function withSvgr(svgrOptions = {}) {
   const defaultOptions = {
@@ -51,5 +52,5 @@ module.exports = composePlugins(withNx(), withReact(), withSvgr(), (config, { op
   // For more information on webpack config and Nx see:
   // https://nx.dev/packages/webpack/documents/webpack-config-setup
 
-  return require('./webpack.config.old.js')(config, context);
+  return aliasReactComponents(require('./webpack.config.old.js')(config, context), '@abgov/react-components');
 });

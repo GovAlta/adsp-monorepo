@@ -186,7 +186,7 @@ export const TestStream = (): JSX.Element => {
             </GoabDropdown>
           </StreamsDropdown>
           {socketStatus()}
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             disabled={disableConnectButton()}
             onClick={() => {
@@ -198,7 +198,7 @@ export const TestStream = (): JSX.Element => {
             Connect
           </GoabButton>
           <Divider />
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             disabled={!socketConnection}
             onClick={() => {

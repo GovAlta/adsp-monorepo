@@ -51,7 +51,7 @@ export const ConnectionsView = ({ activeEdit }: AddEditConnectionProps): JSX.Ele
   return (
     <section>
       <ButtonPadding>
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-connection-btn"
           onClick={() => {
             setSelectedConnectionId(undefined);

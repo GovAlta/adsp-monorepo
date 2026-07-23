@@ -723,6 +723,7 @@ export function AddEditFormDefinitionEditor({
                               setDefinition({ anonymousApply: detail.checked });
                             }}
                             text={'Allow anonymous application'}
+                            mt="s"
                           />
                         </GoACheckboxPad>
                         <GoabTooltip
@@ -753,6 +754,7 @@ export function AddEditFormDefinitionEditor({
                               setDefinition({ oneFormPerApplicant: !detail.value });
                             }}
                             text={'Allow multiple forms per applicant'}
+                            mt="s"
                           />
                         </GoACheckboxPad>
                         <GoabTooltip
@@ -779,6 +781,7 @@ export function AddEditFormDefinitionEditor({
                               setDefinition({ supportTopic });
                             }}
                             text="Create support topic"
+                            mt="m"
                           />
                         </GoACheckboxPad>
                         <GoabTooltip
@@ -802,6 +805,7 @@ export function AddEditFormDefinitionEditor({
                               setDefinition({ scheduledIntakes: detail.checked });
                             }}
                             text={'Use scheduled intakes'}
+                            mt="m"
                           />
                         </GoACheckboxPad>
                         <GoabTooltip
@@ -818,6 +822,7 @@ export function AddEditFormDefinitionEditor({
                       {definition.scheduledIntakes && (
                         <div style={{ marginBottom: '0.5rem', marginLeft: '0.125rem' }}>
                           <GoabButton
+                            size="compact"
                             type="secondary"
                             testId="set-intake-period"
                             onClick={() => {
@@ -862,6 +867,7 @@ export function AddEditFormDefinitionEditor({
                             setDefinition({ submissionPdfTemplate: records });
                           }}
                           text="Create PDF on submit"
+                          mt="s"
                         />
                       </SubmissionRecordsBox>
                       <GoabTooltip
@@ -887,6 +893,7 @@ export function AddEditFormDefinitionEditor({
                             setDefinition({ submissionRecords: records });
                           }}
                           text="Create submission records on submit"
+                          mt="s"
                         />
                       </SubmissionRecordsBox>
                       <GoabTooltip
@@ -911,6 +918,7 @@ export function AddEditFormDefinitionEditor({
                             setDefinition({ includeDataInSubmission: !definition.includeDataInSubmission });
                           }}
                           text="Include data in submission event"
+                          mt="s"
                         />
                       </SubmissionRecordsBox>
                       <GoabTooltip
@@ -1047,6 +1055,7 @@ export function AddEditFormDefinitionEditor({
                           <RightAlign>
                             {definition.submissionRecords ? (
                               <GoabButton
+                                size="compact"
                                 type="secondary"
                                 testId="Add state"
                                 disabled={!definition.submissionRecords}
@@ -1105,7 +1114,8 @@ export function AddEditFormDefinitionEditor({
             <FinalButtonPadding>
               <GoabButtonGroup alignment="start">
                 <GoabButton
-                  type="tertiary"
+                  size="compact"
+                  type="text"
                   testId="collapse-all"
                   onClick={() => {
                     const editor = getCurrentEditorRef();
@@ -1116,8 +1126,9 @@ export function AddEditFormDefinitionEditor({
                   Collapse all
                 </GoabButton>
                 <GoabButton
+                  size="compact"
                   testId="expand-all"
-                  type="tertiary"
+                  type="text"
                   disabled={activeIndex > 1}
                   onClick={() => {
                     const editor = getCurrentEditorRef();
@@ -1130,6 +1141,7 @@ export function AddEditFormDefinitionEditor({
 
               <GoabButtonGroup alignment="end">
                 <GoabButton
+                  size="compact"
                   type="primary"
                   testId="definition-form-save"
                   disabled={
@@ -1149,6 +1161,7 @@ export function AddEditFormDefinitionEditor({
                   Save
                 </GoabButton>
                 <GoabButton
+                  size="compact"
                   testId="form-editor-cancel"
                   type="secondary"
                   onClick={() => {
@@ -1301,13 +1314,14 @@ export function AddEditFormDefinitionEditor({
             )}
             {!showNew && (
               <Margin>
-                <GoabButton type="primary" onClick={() => setShowNew(true)}>
+                <GoabButton size="compact" type="primary" onClick={() => setShowNew(true)}>
                   New intake period
                 </GoabButton>
               </Margin>
             )}
             <GoabButtonGroup alignment="end" mt="xl">
               <GoabButton
+                size="compact"
                 type="secondary"
                 disabled={showNew}
                 onClick={() => {

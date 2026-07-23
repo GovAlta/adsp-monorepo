@@ -14,11 +14,11 @@ const SubscriberRoles = ({ roles, publicSubscribe }: SubscriberRolesProps): JSX.
   return (
     <td>
       {publicSubscribe ? (
-        <GoabBadge key={`roles-public`} type="information" content={'Public'} icon={false} />
+        <GoabBadge key={`roles-public`} type="information" content={'Public'} icon={false} emphasis="subtle" />
       ) : (
         roles &&
         roles.map((role): JSX.Element => {
-          return <GoabBadge key={`roles-${role}`} type="information" content={role} icon={false} />;
+          return <GoabBadge key={`roles-${role}`} type="information" content={role} icon={false} emphasis="subtle" />;
         })
       )}
     </td>

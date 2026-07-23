@@ -58,6 +58,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
     <section>
       <Buttons>
         <GoabButton
+          size="compact"
           testId="value-add-definition"
           onClick={() => {
             setOpenAddDefinition(true);

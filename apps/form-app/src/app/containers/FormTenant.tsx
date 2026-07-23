@@ -1,4 +1,4 @@
-import { GoabAppHeader, GoabButton, GoabMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabButton, GoabMicrositeHeader } from '@abgov/react-components-ds1';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
@@ -50,11 +50,13 @@ export const FormTenant = () => {
   useFeedbackLinkHandler();
 
   const { definition } = useSelector(definitionSelector);
+  const headerTitle =
+    definition?.uiSchema?.options?.mainTitle || definition?.name || 'Alberta Digital Service Platform - Form';
 
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading={definition?.uiSchema?.options?.mainTitle || definition?.name}>
+      <GoabAppHeader url="/" heading={headerTitle}>
         <>
           <span style={{ display: 'none' }}></span>
           {userInitialized && (
@@ -63,8 +65,9 @@ export const FormTenant = () => {
                 <>
                   <span className="username">{user?.name}</span>
                   <GoabButton
+                    size="compact"
                     ml="s"
-                    type="tertiary"
+                    type="text"
                     data-testid="form-sign-out"
                     onClick={() => {
                       if (userForm?.definition) {

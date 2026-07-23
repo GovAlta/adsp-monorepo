@@ -165,11 +165,11 @@ export const AgentEditor: FunctionComponent = () => {
               />
             </Tab>
             <Tab testId="agent-edit-tools" label="Tools" className="editorMain">
-              <GoabButtonGroup alignment="start" mt="s" gap="compact">
-                <GoabButton type="tertiary" size="compact" onClick={() => setToolToEdit({ ...defaultApiToolValue })}>
+              <GoabButtonGroup alignment="start" mt="s" gap="compact" mb="s">
+                <GoabButton type="text" size="compact" onClick={() => setToolToEdit({ ...defaultApiToolValue })}>
                   Add API tool
                 </GoabButton>
-                <GoabButton type="tertiary" size="compact" onClick={() => setShowBuiltInToolModal(true)}>
+                <GoabButton type="text" size="compact" onClick={() => setShowBuiltInToolModal(true)}>
                   Add built-in tool
                 </GoabButton>
               </GoabButtonGroup>
@@ -225,9 +225,9 @@ export const AgentEditor: FunctionComponent = () => {
               </div>
             </Tab>
             <Tab testId="agent-edit-mcp" label="MCP" className="editorMain">
-              <GoabButtonGroup alignment="start" mt="s" gap="compact">
+              <GoabButtonGroup alignment="start" mt="s" gap="compact" mb="s">
                 <GoabButton
-                  type="tertiary"
+                  type="text"
                   size="compact"
                   onClick={() => {
                     setMcpServerEditIndex(null);
@@ -280,8 +280,8 @@ export const AgentEditor: FunctionComponent = () => {
               </div>
             </Tab>
             <Tab testId="agent-edit-agents" label="Agents" className="editorMain">
-              <GoabButtonGroup alignment="start" mt="s" gap="compact">
-                <GoabButton type="tertiary" size="compact" onClick={() => setShowAgentModal(true)}>
+              <GoabButtonGroup alignment="start" mt="s" gap="compact" mb="s">
+                <GoabButton type="text" size="compact" onClick={() => setShowAgentModal(true)}>
                   Add agent
                 </GoabButton>
               </GoabButtonGroup>
@@ -326,6 +326,7 @@ export const AgentEditor: FunctionComponent = () => {
                   text="Show selected roles"
                   checked={showSelectedRoles}
                   onChange={() => setShowSelectedRoles((prev) => !prev)}
+                  mt="m"
                 />
               </GoabButtonGroup>
               <div style={{ overflow: 'auto' }}>
@@ -414,6 +415,7 @@ export const AgentEditor: FunctionComponent = () => {
           <hr />
           <GoabButtonGroup alignment="start" mt="m" mb="xl">
             <GoabButton
+              size="compact"
               disabled={saving || !hasChanges}
               onClick={() => dispatch(updateAgent(agent))}
               type="primary"
@@ -421,7 +423,7 @@ export const AgentEditor: FunctionComponent = () => {
             >
               Save
             </GoabButton>
-            <GoabButton onClick={() => navigate('../agents')} testId="agent-form-close" type="secondary">
+            <GoabButton size="compact" onClick={() => navigate('../agents')} testId="agent-form-close" type="secondary">
               Back
             </GoabButton>
           </GoabButtonGroup>

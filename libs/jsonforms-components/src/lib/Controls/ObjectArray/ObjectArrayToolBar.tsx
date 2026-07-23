@@ -1,6 +1,6 @@
 import React from 'react';
 import { ControlElement, createDefaultValue, JsonSchema } from '@jsonforms/core';
-import { GoabButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components-ds1';
 import { getLabelText } from '../../util';
 import { MarginTop } from './styled-components';
 import pluralize from 'pluralize';

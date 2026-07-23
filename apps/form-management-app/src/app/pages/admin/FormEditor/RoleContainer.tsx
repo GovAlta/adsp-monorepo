@@ -64,7 +64,7 @@ const ClientRole = React.memo(
         { title: clerkRoles.name, selectedRoles: configuration[clerkRoles.type] || [] },
         { title: assessorRoles.name, selectedRoles: configuration[assessorRoles.type] || [] },
       ],
-      [configuration, anonymousRead]
+      [configuration, anonymousRead],
     );
 
     return (
@@ -78,7 +78,7 @@ const ClientRole = React.memo(
         checkedRoles={checkedRoles}
       />
     );
-  }
+  },
 );
 
 export const RoleContainer: React.FC<RoleContainerProps> = ({
@@ -93,7 +93,7 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
     (update: Partial<FormDefinition>) => {
       updateEditorFormDefinition(update);
     },
-    [updateEditorFormDefinition]
+    [updateEditorFormDefinition],
   );
 
   // Memoize filtered roles per client
@@ -113,7 +113,7 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
         return allCheckedRoles.includes(selectedRole);
       });
     },
-    [definition, showSelectedRoles]
+    [definition, showSelectedRoles],
   );
 
   // Stable handler for updating roles
@@ -129,7 +129,7 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
         setDefinition({ assessorRoles: Array.from(new Set(roles)) });
       }
     },
-    [definition, setDefinition]
+    [definition, setDefinition],
   );
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
       clerkRoles: definition?.clerkRoles || [],
       assessorRoles: definition?.assessorRoles || [],
     }),
-    [definition]
+    [definition],
   );
 
   return (
@@ -157,6 +157,7 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
             text="Show selected roles"
             checked={showSelectedRoles}
             onChange={() => setShowSelectedRoles((prev) => !prev)}
+            mt="m"
           />
         </GoabButtonGroup>
       </div>

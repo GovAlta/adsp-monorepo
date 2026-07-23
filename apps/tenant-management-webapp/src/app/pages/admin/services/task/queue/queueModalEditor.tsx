@@ -197,7 +197,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoabButtonGroup alignment="start">
-                <GoabButton
+                <GoabButton size="compact"
                   type="primary"
                   testId="queue-save"
                   disabled={isTaskUpdated(initialDefinition, queue) || validators.haveErrors()}
@@ -220,7 +220,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                 >
                   Save
                 </GoabButton>
-                <GoabButton
+                <GoabButton size="compact"
                   testId="queue-cancel"
                   type="secondary"
                   onClick={() => {

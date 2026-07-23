@@ -42,7 +42,7 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
         </section>
       }
       addButton={
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-definition"
           onClick={() => {
             setActiveIndex(1);

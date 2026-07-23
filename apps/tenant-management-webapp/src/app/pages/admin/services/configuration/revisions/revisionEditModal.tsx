@@ -58,7 +58,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
         heading={`Edit Revision for ${service}`}
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -68,7 +68,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
             >
               Cancel
             </GoabButton>
-            <GoabButton
+            <GoabButton size="compact"
               type="primary"
               testId="form-save"
               disabled={error?.length > 0 || !configuration}

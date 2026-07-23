@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { GoabFileUploadInput, GoabFormItem, GoabCircularProgress, GoabModal } from '@abgov/react-components';
+import { GoabFileUploadInput, GoabFormItem, GoabCircularProgress, GoabModal } from '@abgov/react-components-ds1';
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';

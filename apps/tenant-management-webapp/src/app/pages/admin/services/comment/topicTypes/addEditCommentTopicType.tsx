@@ -77,6 +77,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             testId="comment-cancel"
             type="secondary"
             onClick={() => {
@@ -87,6 +88,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="comment-save"
             disabled={!topicType.name || validators.haveErrors()}
@@ -147,7 +149,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
               />
             </GoabFormItem>
           </CommentCommentItem>
-          <GoabFormItem label="Topic type ID">
+          <GoabFormItem label="Topic type ID" mt="m">
             <CommentCommentItem>
               <GoabInput
                 name="comment-topicType-id"

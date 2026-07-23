@@ -73,7 +73,7 @@ const CreateRealm = (): JSX.Element => {
           <Message />
         </GoabNotification>
         <br />
-        <GoabButton
+        <GoabButton size="compact"
           onClick={() => {
             dispatch(TenantLogout());
           }}
@@ -88,7 +88,7 @@ const CreateRealm = (): JSX.Element => {
     return (
       <>
         <p>The '{name}' has been successfully created</p>
-        <GoabButton
+        <GoabButton size="compact"
           onClick={() => {
             dispatch(TenantLogin(tenantRealm));
           }}
@@ -111,7 +111,7 @@ const CreateRealm = (): JSX.Element => {
         >
           Back
         </GoALinkButton>
-        <GoabButton onClick={onCreateRealm} disabled={name.length === 0}>
+        <GoabButton size="compact" onClick={onCreateRealm} disabled={name.length === 0}>
           Create tenant
         </GoabButton>
       </>

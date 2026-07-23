@@ -1,4 +1,4 @@
-import { GoabNotification } from '@abgov/react-components';
+import { GoabNotification } from '@abgov/react-components-ds1';
 import { useDispatch, useSelector } from 'react-redux';
 import { feedbackSelector, feedbackActions, FeedbackMessageLevel } from '../state';
 import { GoabNotificationType } from '@abgov/ui-components-common';
