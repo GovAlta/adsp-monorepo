@@ -412,6 +412,9 @@ export function updateFormDefinitionSchemas(directory: ServiceDirectory, tokenPr
   };
 }
 
+// clean-code-ignore: 2.10 — follows the same fetch-modify-save handler shape as the sibling
+// definition endpoints in this file (updateFormDefinitionSchemas, patchFormDefinitionLifecycle);
+// extracting helpers for only this one would make it inconsistent with the established pattern.
 export function updateFormDefinitionRoles(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -628,12 +631,10 @@ export function createFormDefinitionRouter({
         .isString()
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-]+$/),
-      body('applicantRoles').optional().isArray(),
-      body('applicantRoles.*').isString(),
-      body('assessorRoles').optional().isArray(),
-      body('assessorRoles.*').isString(),
-      body('clerkRoles').optional().isArray(),
-      body('clerkRoles.*').isString(),
+      ...allowedRoleProperties.flatMap((field) => [
+        body(field).optional().isArray(),
+        body(`${field}.*`).isString(),
+      ]),
       body().custom((value) => {
         const extra = Object.keys(value ?? {}).filter((key) => !allowedRoleProperties.includes(key));
         if (extra.length > 0) {
