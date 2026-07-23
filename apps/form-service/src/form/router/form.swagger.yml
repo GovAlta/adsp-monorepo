@@ -507,6 +507,57 @@ components:
       404:
         description: Form definition not found.
 
+/form/v1/definitions/{definitionId}/roles:
+  put:
+    tags:
+      - Form
+    description: Replaces the applicant, assessor, and clerk roles of an existing form definition. Requires the form-service admin role. The provided roles replace the existing roles entirely; any role array omitted from the request is reset to empty.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition whose roles are to be replaced.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              applicantRoles:
+                type: array
+                items:
+                  type: string
+                description: Roles permitted to apply. Replaces the existing applicant roles entirely.
+              assessorRoles:
+                type: array
+                items:
+                  type: string
+                description: Roles permitted to assess submissions. Replaces the existing assessor roles entirely.
+              clerkRoles:
+                type: array
+                items:
+                  type: string
+                description: Roles permitted to act as clerks. Replaces the existing clerk roles entirely.
+    responses:
+      200:
+        description: Successfully replaced form definition roles.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      400:
+        description: Request body does not conform to the required schema.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User does not have the form-admin role.
+      404:
+        description: Form definition not found.
+
 /form/v1/definitions/{definitionId}/lifecycle:
   patch:
     tags:
