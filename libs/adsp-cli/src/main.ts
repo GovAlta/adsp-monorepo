@@ -16,7 +16,8 @@ Commands:
   login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>]
                           Log in interactively (opens a browser). Resolves a tenant realm via
                           --realm (direct), --tenant (anonymous name lookup), or neither (logs
-                          into core, then prompts you to pick a tenant). Persists the resolved
+                          into core, then prompts you to pick a tenant — in dev/test, this
+                          prompt also offers to create a new tenant). Persists the resolved
                           realm/environment so later commands don't need them set again.
   status                  Print the current environment, realm, and cached token state. Read-only.
   logout                  Clear the persisted realm/environment and every cached token.
