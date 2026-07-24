@@ -113,7 +113,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
     >
       <form>
         <GoabFormItem error={errors?.['id']} label="Tool ID" mb="m">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="id"
             value={tool.id}
@@ -148,7 +148,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
           />
         </GoabFormItem>
         <GoabFormItem label="Method" mb="m">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             testId="api-tool-modal-method-input"
             ariaLabel="method"
             value={tool.method}
@@ -163,7 +163,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
           </GoabDropdown>
         </GoabFormItem>
         <GoabFormItem error={errors?.['api']} label="Api" mb="m">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="api"
             value={tool.api}
             aria-label="api"
@@ -188,7 +188,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
           </GoabDropdown>
         </GoabFormItem>
         <GoabFormItem error={errors?.['path']} label="Path" mb="m">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="path"
             value={tool.path}

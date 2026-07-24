@@ -25,7 +25,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
     <div>
       <GoabGrid gap="s" minChildWidth="30ch">
         <GoabFormItem label="Service">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="Service"
             value={service ? service : ''}
             width="100%"
@@ -40,7 +40,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           </GoabDropdown>
         </GoabFormItem>
         <GoabFormItem label="Time period">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="Time period"
             value={chartInterval}
             onChange={(detail: GoabDropdownOnChangeDetail) =>

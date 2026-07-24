@@ -152,7 +152,7 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
     <div className={styles.BorderBottom}>
       <div className={styles.addToggleButtonPadding}>
         <GoabButtonGroup alignment="start">
-          <GoabCheckbox
+          <GoabCheckbox size="compact"
             name="showSelectedRoles"
             text="Show selected roles"
             checked={showSelectedRoles}

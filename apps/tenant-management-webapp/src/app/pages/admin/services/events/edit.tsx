@@ -147,7 +147,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           />
         </GoabFormItem>
         <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             width="100%"

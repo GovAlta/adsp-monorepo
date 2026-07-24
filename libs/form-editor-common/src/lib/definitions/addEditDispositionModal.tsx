@@ -3,8 +3,6 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { DispositionFormItem, DescriptionItem } from '../styled-components';
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 import { GoabTextArea, GoabInput, GoabModal, GoabButtonGroup, GoabFormItem, GoabButton } from '@abgov/react-components';
 import { Disposition } from '@store/form/model';
 import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
@@ -29,9 +27,6 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
   const [template, setTemplate] = useState<Disposition>(initialValue);
 
   const templateIds = (existingDispositions || []).map((disposition) => disposition.name);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
 
   useEffect(() => {
     setTemplate(initialValue);
@@ -55,7 +50,8 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             testId={`disposition-state-cancel-${isEdit ? 'edit' : 'add'}`}
             type="secondary"
             onClick={() => {
@@ -65,7 +61,8 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
           >
             Cancel
           </GoabButton>
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             type="primary"
             testId="disposition-state-save"
             disabled={!template?.name || validators.haveErrors()}
@@ -99,6 +96,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
               testId="disposition-name"
               aria-label="disposition-name"
               width="100%"
+              size="compact"
               onChange={(detail: GoabInputOnChangeDetail) => {
                 const validations = {
                   name: detail.value,

@@ -96,7 +96,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
           </td>
           {checkedRoles.map((checkedRole, index) => (
             <td className="role" key={`${props.service}-${role}-checkbox-${index}`}>
-              <GoabCheckbox
+              <GoabCheckbox size="compact"
                 name={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                 checked={checkedRole.selectedRoles.includes(compositeRole)}
                 testId={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}

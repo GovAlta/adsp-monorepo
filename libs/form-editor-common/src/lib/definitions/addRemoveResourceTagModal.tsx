@@ -88,9 +88,9 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           setTag(input);
         },
         800,
-        { leading: false, trailing: true }
+        { leading: false, trailing: true },
       ),
-    [dispatch]
+    [dispatch],
   );
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     'name',
     wordMaxLengthCheck(MAX_TAG_LENGTH, 'Tag'),
     isNotEmptyCheck('Tag'),
-    badCharsCheck
+    badCharsCheck,
   ).build();
 
   const isNotValid = () => {
@@ -135,7 +135,8 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             testId={`add-resource-tag-name-cancel`}
             type="secondary"
             onClick={() => {
@@ -145,7 +146,8 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           >
             Close
           </GoabButton>
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             type="primary"
             testId="resource-tag-save"
             disabled={isNotValid()}
@@ -155,7 +157,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
                   label: tag.trim(),
                   urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
                 } as ResourceTag,
-                tagAlreadyAdded()
+                tagAlreadyAdded(),
               );
 
               onClose();
@@ -178,6 +180,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           testId="add-resource-tag-name"
           aria-label="add-resource-tag-name"
           width="100%"
+          size="compact"
           maxLength={MAX_TAG_LENGTH}
           onChange={(detail: GoabInputOnChangeDetail) => {
             validators.remove('name');

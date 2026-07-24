@@ -128,7 +128,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     >
       <PdfFormItem>
         <GoabFormItem error={errors?.['name']} label="Name">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="pdf-template-name"
             value={template.name}
@@ -157,7 +157,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       </PdfFormItem>
       <GoabFormItem label="Template ID">
         <PdfFormItem>
-          <GoabInput
+          <GoabInput size="compact"
             name="pdf-template-id"
             value={template.id}
             testId="pdf-template-id"
@@ -195,7 +195,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       </GoabFormItem>
       {!isEdit && (
         <PopulateTemplateWrapper>
-          <GoabCheckbox
+          <GoabCheckbox size="compact"
             name={'populate-template'}
             key={'populate-template'}
             ariaLabel={'populate-template-checkbox'}

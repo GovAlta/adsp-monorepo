@@ -204,7 +204,7 @@ export const FormExport = (): JSX.Element => {
     <section>
       <div>
         <GoabFormItem label="Form definition">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="formTypes"
             value={selectedForm?.name}
             onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -238,7 +238,7 @@ export const FormExport = (): JSX.Element => {
         <br />
         <GoabFormItem label="Format">
           <div>
-            <GoabRadioGroup
+            <GoabRadioGroup size="compact"
               name="formatOptions"
               value={exportFormat}
               onChange={(detail: GoabRadioGroupOnChangeDetail) => setExportFormat(detail.value as ExportFormat)}
@@ -258,7 +258,7 @@ export const FormExport = (): JSX.Element => {
                     .filter((col) => col.group === 'Standard properties')
                     .map((col) => (
                       <label key={col.id}>
-                        <GoabCheckbox
+                        <GoabCheckbox size="compact"
                           name={col.id}
                           text={col.id}
                           checked={col.selected}
@@ -275,7 +275,7 @@ export const FormExport = (): JSX.Element => {
                     .filter((col) => col.group === 'Form data')
                     .map((col) => (
                       <label key={col.id}>
-                        <GoabCheckbox
+                        <GoabCheckbox size="compact"
                           name={col.id}
                           text={col.id}
                           checked={col.selected}

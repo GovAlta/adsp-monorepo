@@ -169,7 +169,7 @@ const FileList = (): JSX.Element => {
           <thead>
             <tr>
               <th className="selection-column">
-                <GoabCheckbox
+                <GoabCheckbox size="compact"
                   name="select-all-files"
                   checked={isAllVisibleFilesSelected}
                   disabled={visibleFileIds.length === 0 ? true : undefined}
@@ -194,7 +194,7 @@ const FileList = (): JSX.Element => {
               return (
                 <tr key={key} className={isSelected ? 'selected' : undefined}>
                   <td className="selection-column">
-                    <GoabCheckbox
+                    <GoabCheckbox size="compact"
                       name={`select-file-${file.id}`}
                       checked={isSelected}
                       disabled={!file.id ? true : undefined}
@@ -300,7 +300,7 @@ const FileList = (): JSX.Element => {
       </>
       <FileTypeDropdown>
         <GoabFormItem label="Select a file type">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="fileType"
             value={uploadFileType}
             width="100%"
@@ -328,7 +328,7 @@ const FileList = (): JSX.Element => {
       <div className="mt-48">
         <NoPaddingH2>File filtering</NoPaddingH2>
         <GoabFormItem label="Search file name" mb="m">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             id="name"
@@ -340,7 +340,7 @@ const FileList = (): JSX.Element => {
         </GoabFormItem>
         <GoabFormItem label="Filter file type">
           {resetFilter === 'visible' && (
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="fileType"
               value={filterFileType}
               width="100%"

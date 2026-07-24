@@ -64,7 +64,7 @@ export const ContactInformationModalForm: FunctionComponent<EditContactInformati
       >
         <ErrorWrapper>
           <GoabFormItem error={formErrors?.['email']} label="Email">
-            <GoabInput
+            <GoabInput size="compact"
               type="email"
               width="100%"
               name="email"

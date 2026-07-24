@@ -130,7 +130,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     >
       <div>
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={task?.name}
@@ -170,7 +170,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           </DescriptionItem>
         </GoabFormItem>
         <GoabFormItem label="Priority" error={errors?.['priority']}>
-          <GoabRadioGroup
+          <GoabRadioGroup size="compact"
             name="priority"
             value={task?.priority}
             onChange={(detail: GoabRadioGroupOnChangeDetail) => {

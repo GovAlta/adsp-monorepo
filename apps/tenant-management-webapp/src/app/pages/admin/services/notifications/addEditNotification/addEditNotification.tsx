@@ -215,7 +215,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         }
       >
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={type.name}
@@ -278,7 +278,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 return (
                   <div key={key}>
                     <div style={{ paddingRight: '20px' }}>
-                      <GoabCheckbox
+                      <GoabCheckbox size="compact"
                         name={channel.value}
                         checked={
                           type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
@@ -311,7 +311,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
         <div data-testid="manage-subscriptions-checkbox-wrapper">
           <GoabFormItem label="">
-            <GoabCheckbox
+            <GoabCheckbox size="compact"
               name="subscribe"
               checked={!!type.manageSubscribe}
               onChange={() => {
@@ -334,7 +334,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             )}
           </GoabFormItem>
         </div>
-        <GoabCheckbox
+        <GoabCheckbox size="compact"
           checked={type.publicSubscribe}
           name="anonymousRead-checkbox"
           testId="anonymousRead-checkbox"
@@ -351,7 +351,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
         <GoabFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>
           <div style={{ marginBottom: '1rem' }}>
-            <GoabRadioGroup
+            <GoabRadioGroup size="compact"
               name="notify"
               testId="select-type-notification-radio-group"
               ariaLabel="select-type-notification-radio-group"
@@ -368,7 +368,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         </GoabFormItem>
         {isNotifyAddressSetting === NotificationType.CONTACT && (
           <GoabFormItem label="Notify this contact" error={errors?.['address']}>
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="address"
               value={type.address}
@@ -389,7 +389,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         {isNotifyAddressSetting === NotificationType.CONTACT_EVENT_PAYLOAD && (
           <div>
             <GoabFormItem label="Notify contact in event payload at Json schema path">
-              <GoabInput
+              <GoabInput size="compact"
                 type="text"
                 name="addressPath"
                 value={type.addressPath}
@@ -405,7 +405,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               />
             </GoabFormItem>
             <GoabFormItem label="bcc in event payload at Json schema path">
-              <GoabInput
+              <GoabInput size="compact"
                 type="text"
                 name="bcc"
                 value={type.bccPath}
@@ -418,7 +418,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               />
             </GoabFormItem>
             <GoabFormItem label="cc in event payload at Json schema path">
-              <GoabInput
+              <GoabInput size="compact"
                 type="text"
                 name="cc"
                 value={type.ccPath}
@@ -431,7 +431,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               />
             </GoabFormItem>
             <GoabFormItem label="attachment in event payload at Json schema path">
-              <GoabInput
+              <GoabInput size="compact"
                 type="text"
                 name="attachment"
                 value={type.attachmentPath}

@@ -123,7 +123,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
         <>
           <CommentCommentItem>
             <GoabFormItem error={errors?.['name']} label="Name">
-              <GoabInput
+              <GoabInput size="compact"
                 type="text"
                 name="comment-topicType-name"
                 value={topicType.name}
@@ -151,7 +151,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
           </CommentCommentItem>
           <GoabFormItem label="Topic type ID" mt="m">
             <CommentCommentItem>
-              <GoabInput
+              <GoabInput size="compact"
                 name="comment-topicType-id"
                 value={topicType.id}
                 testId="comment-topicType-id"

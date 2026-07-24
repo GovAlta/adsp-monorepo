@@ -66,7 +66,7 @@ export const AddBuiltInToolModal: FunctionComponent<AddBuiltInToolModalProps> = 
                   </td>
                   <td>
                     <GoabButtonGroup alignment="end" mt="m">
-                      <GoabCheckbox
+                      <GoabCheckbox size="compact"
                         name="selected"
                         checked={selected.includes(id)}
                         onChange={(detail: GoabCheckboxOnChangeDetail) => {

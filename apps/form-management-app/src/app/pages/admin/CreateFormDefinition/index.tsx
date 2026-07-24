@@ -198,7 +198,7 @@ const CreateFormDefinition = (): JSX.Element => {
       <div className={styles.form}>
         <div className={styles.formRow}>
           <GoabFormItem error={errors?.['name']} label="Name" requirement="required">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="form-definition-name"
               value={definition.name || ''}
@@ -231,7 +231,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoabFormItem label="Definition ID">
-            <GoabInput name="form-definition-id" value={definition.id || ''} disabled={true} width="100%" />
+            <GoabInput size="compact" name="form-definition-id" value={definition.id || ''} disabled={true} width="100%" />
           </GoabFormItem>
         </div>
 
@@ -252,7 +252,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
-            <GoabInput
+            <GoabInput size="compact"
               name="form-url-id"
               value={definition.formDraftUrlTemplate || ''}
               width="100%"
@@ -275,7 +275,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoabFormItem label="Ministry (optional)">
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="ministry"
               value={definition?.ministry || ''}
               onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -295,7 +295,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoabFormItem label="Program (optional)">
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="program"
               value={definition?.programName || ''}
               onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -314,7 +314,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoabFormItem label="Acts of Legislation (optional)">
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="actsOfLegislation"
               value={definition?.actsOfLegislation || ''}
               onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -333,7 +333,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoabFormItem error={errors?.['duplicateRegisteredId']} label="Registered ID (optional)">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="form-definition-registeredId"
               value={definition.registeredId || ''}

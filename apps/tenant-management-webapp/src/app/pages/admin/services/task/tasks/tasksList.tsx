@@ -92,7 +92,7 @@ export const TasksList = (): JSX.Element => {
       <GoabFormItem label="Select a queue">
         {indicator.show && Object.keys(taskQueues).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
         {Object.keys(taskQueues).length > 0 && (
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="Queues"
             value={selectedTask}
             onChange={(detail: GoabDropdownOnChangeDetail) => {

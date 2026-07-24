@@ -152,7 +152,7 @@ export const ConfigurationExport: FunctionComponent = () => {
         <div className="flex-row ">
           <div className="flex-one">
             <div style={{ width: `calc(100% - ${Object.keys(exportServices).length > 0 ? '10px' : '260px'})` }}>
-              <GoabCheckbox
+              <GoabCheckbox size="compact"
                 name="Select all"
                 key="Select all"
                 checked={selectAll}
@@ -171,7 +171,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                     <h3>{namespace}</h3>
                     <div className="flex-row">
                       {Array.isArray(names) && !names[0] && (
-                        <GoabCheckbox
+                        <GoabCheckbox size="compact"
                           name={allNames}
                           key={8}
                           checked={exportServices[namespace] || false}
@@ -195,7 +195,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         <div key={`${name}-${namespace}`}>
                           <div key={toServiceKey(namespace, name)} className="flex-row">
                             <div className="flex-row">
-                              <GoabCheckbox
+                              <GoabCheckbox size="compact"
                                 name={name}
                                 key={name}
                                 checked={exportServices[toServiceKey(namespace, name)] || false}

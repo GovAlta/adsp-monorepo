@@ -83,7 +83,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     return (
       <div id="form-disposition-block">
         <GoabFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             testId="formDispositionStatus"
             value={dispositionStatus}
             disabled={disableFormDispositionControls()}

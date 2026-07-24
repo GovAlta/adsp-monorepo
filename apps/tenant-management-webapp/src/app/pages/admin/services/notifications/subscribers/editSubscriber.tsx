@@ -163,7 +163,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       >
         <ErrorWrapper>
           <GoabFormItem error={formErrors?.['name']} label="Address as" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               width="100%"
@@ -174,7 +174,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
             />
           </GoabFormItem>
           <GoabFormItem error={formErrors?.['email'] || updateError} label="Email" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="email"
               name="email"
               width="100%"
@@ -188,7 +188,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
           </GoabFormItem>
           <GoabFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
             <div className="phoneInputStyle">
-              <GoabInput
+              <GoabInput size="compact"
                 type="tel"
                 aria-label="sms"
                 name="sms"

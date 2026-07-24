@@ -50,7 +50,7 @@ export const TaskAssignmentModal: FunctionComponent<TaskAssignmentModalProps> = 
         </div>
         {user.isAssigner ? (
           <GoabFormItem label="Assign task to" mt="m" mb="4xl">
-            <GoabDropdown
+            <GoabDropdown size="compact"
               value={task?.assignment?.assignedTo?.id}
               onChange={(detail: GoabInputOnChangeDetail) => setSelected(detail.value as string)}
               width={'50ch'}

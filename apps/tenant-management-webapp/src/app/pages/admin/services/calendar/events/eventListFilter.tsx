@@ -40,7 +40,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
     <EventFilterWrapper>
       <GoabGrid minChildWidth="20ch">
         <GoabFormItem label="Start date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="calendar-event-filter-start-date"
             value={calenderName && parsedStartDate?.toISOString().slice(0, 10)}
@@ -67,7 +67,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         </GoabFormItem>
 
         <GoabFormItem label="End date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="calendar-event-filter-end-date"
             value={calenderName && parsedEndDate?.toISOString().slice(0, 10)}

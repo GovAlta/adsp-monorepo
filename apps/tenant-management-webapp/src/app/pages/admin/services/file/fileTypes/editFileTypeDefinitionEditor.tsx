@@ -219,7 +219,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
               <MakePublicPadding>
                 <DropDownZIndex>
                   <GoabFormItem label="Select a security classification">
-                    <GoabDropdown
+                    <GoabDropdown size="compact"
                       name="securityClassifications"
                       width="25rem"
                       value={fileType?.securityClassification}
@@ -247,7 +247,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                     </GoabDropdown>
                   </GoabFormItem>
                   <div style={{ paddingTop: '0.625rem' }}>
-                    <GoabCheckbox
+                    <GoabCheckbox size="compact"
                       checked={fileType?.anonymousRead}
                       name="file-type-anonymousRead-checkbox"
                       testId="file-type-anonymousRead-checkbox"
@@ -291,7 +291,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   <GoabIcon type="information-circle" ariaLabel="Retention policy"></GoabIcon>
                 </GoabTooltip>
                 <RetentionPolicyWrapper>
-                  <GoabCheckbox
+                  <GoabCheckbox size="compact"
                     name="retentionActive"
                     key="retention-period-active-checkbox"
                     checked={fileType?.rules?.retention?.active === true}
@@ -313,7 +313,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   <RetentionPeriodText>Enter retention period</RetentionPeriodText>
                 </RetentionPolicyWrapper>
               </GoabFormItem>
-              <GoabInput
+              <GoabInput size="compact"
                 onChange={(detail: GoabInputOnChangeDetail) => {
                   if (parseInt(detail.value) > 0) {
                     setFileType({

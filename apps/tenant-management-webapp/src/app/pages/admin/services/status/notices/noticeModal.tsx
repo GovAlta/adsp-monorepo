@@ -183,7 +183,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       </GoabFormItem>
       <br />
       <GoabFormItem label="Application">
-        <GoabCheckbox
+        <GoabCheckbox size="compact"
           name="isAllApplications"
           checked={isAllApplications}
           testId="notice-form-all-applications-checkbox"
@@ -198,7 +198,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
       {isAllApplications === false && (
         <GoabFormItem label="Select an application" error={errors?.['applications']}>
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="application"
             value={selectedApplications[0]?.name}
             onChange={(detail: GoabDropdownOnChangeDetail) => onSelect(detail.value)}
@@ -216,7 +216,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
       <GoabGrid gap="s" minChildWidth="25ch">
         <GoabFormItem label="Start date" error={errors?.['date']}>
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="StartDate"
             value={startDate.toISOString().slice(0, 10)}
@@ -233,7 +233,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           />
         </GoabFormItem>
         <GoabFormItem label="Start time">
-          <GoabInput
+          <GoabInput size="compact"
             type="time"
             name="startTime"
             value={startTime}
@@ -247,7 +247,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         </GoabFormItem>
 
         <GoabFormItem label="End date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="EndDate"
             value={endDate.toISOString().slice(0, 10)}
@@ -265,7 +265,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         </GoabFormItem>
 
         <GoabFormItem label="End time">
-          <GoabInput
+          <GoabInput size="compact"
             type="time"
             name="endTime"
             value={endTime}
