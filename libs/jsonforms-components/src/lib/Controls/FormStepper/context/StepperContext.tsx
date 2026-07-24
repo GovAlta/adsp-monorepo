@@ -8,8 +8,9 @@ import { JsonFormStepperDispatch } from './reducer';
 import { JsonSchema7, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { useJsonForms } from '@jsonforms/react';
-import { getIsVisitFromLocalStorage, hasValueAtScope, saveIsVisitFromLocalStorage } from './util';
+import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
 import { getStepStatus } from './util';
+import { getAutoPopulateControls } from '../../../util/autoPopulate';
 import { StepStatus } from '../../../common/Constants';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -54,9 +55,12 @@ const createStepperContextInitData = (
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
 
-    // Treat a step as visited when its scoped fields already contain data so
-    // that getStepStatus returns the real data-driven status on initial mount initially.
-    let visited = scopes.some((scope) => hasValueAtScope(data, scope));
+    // A step is not visited on initial mount, so its status is driven by whether it already holds
+    // user-entered data. Auto-populated fields (system-filled from the user profile) are excluded
+    // so an unopened page with only auto-populated values stays NotStarted, while a resumed form
+    // the user actually filled still shows its saved status.
+    let visited = false;
+    const autoPopulatedScopes = getAutoPopulateControls(c).map((control) => control.scope);
 
     const { status, hasRequiredFields } = getStepStatus({
       scopes,
@@ -64,6 +68,7 @@ const createStepperContextInitData = (
       errors: filteredErrors ?? [],
       schema,
       visited,
+      autoPopulatedScopes,
     });
 
     //If the step has all conditional fields, set visited to true so that the step status will be

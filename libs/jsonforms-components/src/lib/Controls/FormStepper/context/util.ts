@@ -125,34 +125,39 @@ export function getStepStatus(opts: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: JsonSchema;
   visited?: boolean;
+  // Data paths that are auto-populated (system-filled from the user profile). Values in these
+  // paths do not count as user activity, so a page holding only auto-populated data stays
+  // NotStarted until the user actually opens it.
+  autoPopulatedScopes?: string[];
 }): StepStatusData {
-  const { scopes, errors, schema, data, visited } = opts;
+  const { scopes, errors, schema, data, visited, autoPopulatedScopes = [] } = opts;
 
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
 
-  // A step with no required fields has nothing that must be filled in, so once
-  // the user has visited it (e.g. navigated back to the application overview
-  // page) it is trivially Completed, regardless of whether its optional
-  // fields hold any data.
   const requiredForScopes = getRequiredForScopes(scopes, schema);
 
   const stepHasRequiredFields = isScopeRequired(normalizedScopes, requiredForScopes);
 
-  // NotStarted is data-driven: if any scoped field has a defined value the step has been started.
-  // For non-standard scopes that cannot be normalised, fall back to the visited flag so those
-  // steps are never stuck in NotStarted when the form is pre-populated or already visited.
-  const stepHasData =
-    normalizedScopes.length > 0
-      ? normalizedScopes.some((path) => hasMeaningfulValue(get(data || {}, path)))
-      : (visited ?? false);
+  // A step is "started" when the user has visited it OR it already holds user-entered data.
+  // Auto-populated values (system-filled from the user profile) are excluded, so:
+  //  - a page the user has never opened is NotStarted even when auto-populated, and
+  //  - a saved form the user actually filled still shows its status when resumed.
+  const autoPopulatedSet = new Set(autoPopulatedScopes.map(normalizeSchemaPath).filter(Boolean));
+  const userDataScopes = normalizedScopes.filter((path) => !autoPopulatedSet.has(path));
+  const stepHasUserData =
+    userDataScopes.length > 0 ? userDataScopes.some((path) => hasMeaningfulValue(get(data || {}, path))) : false;
 
-  if (!stepHasRequiredFields && (visited || stepHasData)) {
+  const started = (visited ?? false) || stepHasUserData;
+
+  if (!started) {
+    return { status: StepStatus.NOT_STARTED, hasRequiredFields: stepHasRequiredFields };
+  }
+
+  // A started step with no required fields has nothing left to fill in, so it is trivially Completed.
+  if (!stepHasRequiredFields) {
     return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
-  if (!stepHasData) {
-    return { status: StepStatus.NOT_STARTED, hasRequiredFields: stepHasRequiredFields };
-  }
   const incompleteInStep = getIncompletePaths(errors, scopes);
 
   if (incompleteInStep.length > 0) {

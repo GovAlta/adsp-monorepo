@@ -317,7 +317,9 @@ describe('Form Stepper Control', () => {
     expect(step1!.getAttribute('status')).toBe(null);
   });
 
-  it('will recognize status as incomplete for populated name step state', () => {
+  it('shows status for a populated name step (resumed form with user-entered data)', () => {
+    // The name fields are user-entered (not auto-populated), so a resumed form that already holds
+    // this data shows the step's saved status even before the user re-opens the page.
     const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } } }}
