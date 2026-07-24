@@ -45,11 +45,13 @@ token, it returns immediately — no core-realm login, no tenant listing, no pro
 ## Creating a new tenant
 
 When the no-args `login` mode prompts you to pick a tenant, it also offers a `+ Create a new tenant` choice —
-but only in `dev`/`test` (never `prod`), and only when you don't already own a tenant or you hold the
-`tenant-service-admin` role. Picking it prompts for a name (letters, numbers, spaces, and underscores; 1-50
-characters), creates the tenant, and waits for its realm to finish provisioning before continuing the login as
-that tenant. A name that's already taken, or an ineligible account (e.g. one tenant per email), re-prompts for a
-different name rather than failing outright.
+but only in `dev`/`test` (never `prod`), and only for an account that can actually create one: your core-realm
+roles must include `beta-tester` or `tenant-service-admin` (the same roles tenant-management-api's `POST
+/tenants` requires), and — unless you're a `tenant-service-admin` — you must not already own a tenant (the
+tenant service allows only one per admin email). Picking it prompts for a name (letters, numbers, spaces, and
+underscores; 1-50 characters), creates the tenant, and waits for its realm to finish provisioning before
+continuing the login as that tenant. A name that's already taken re-prompts for a different name rather than
+failing outright.
 
 ## Requesting additional scopes
 
