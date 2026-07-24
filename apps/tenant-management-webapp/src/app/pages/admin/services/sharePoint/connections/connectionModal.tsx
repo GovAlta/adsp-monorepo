@@ -129,7 +129,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
       >
         <ConnectionPadding>
           <GoabFormItem error={errors?.['name']} label="Sharepoint connection name" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="form-definition-name"
               value={connection.name}
@@ -174,7 +174,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
             />
           </GoabFormItem>
           <GoabFormItem label="Definition ID" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               name="form-definition-id"
               value={connection?.id}
               testId="form-definition-id"
@@ -184,7 +184,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
             />
           </GoabFormItem>
           <GoabFormItem error={errors?.['tenantId']} label="Tenant ID">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               value={connection?.tenantId}
@@ -200,7 +200,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
         </ConnectionPadding>
         <ConnectionPadding>
           <GoabFormItem error={errors?.['siteId']} label="SharePoint site ID">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               value={connection?.siteId}
@@ -216,7 +216,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
         </ConnectionPadding>
         <ConnectionPadding>
           <GoabFormItem error={errors?.['listId']} label="SharePoint list ID">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               value={connection?.listId}
@@ -232,7 +232,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
         </ConnectionPadding>
         <ConnectionPadding>
           <GoabFormItem error={errors?.['clientId']} label="Client ID">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               value={connection?.clientId}

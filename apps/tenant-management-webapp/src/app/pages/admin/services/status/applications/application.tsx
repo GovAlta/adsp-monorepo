@@ -135,7 +135,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         </GoabButton>
       </AppHealth>
 
-      <GoabCheckbox
+      <GoabCheckbox size="compact"
         checked={app.monitorOnly}
         name="monitor-only-checkbox"
         testId="monitor-only-checkbox"
@@ -150,7 +150,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         Monitor only (the application will not be publicly displayed)
       </GoabCheckbox>
 
-      <GoabCheckbox
+      <GoabCheckbox size="compact"
         checked={app.autoChangeStatus}
         name="autoChangeStatus-checkbox"
         testId="autoChangeStatus-checkbox"
@@ -198,7 +198,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       {/* Manual status change dialog */}
       <GoabModal open={showStatusForm} heading="Manual status change">
         <GoabFormItem label="">
-          <GoabRadioGroup
+          <GoabRadioGroup size="compact"
             name="status"
             value={status}
             onChange={(detail: GoabRadioGroupOnChangeDetail) => setStatus(detail.value as ServiceStatusType)}

@@ -21,9 +21,9 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
     return () => {
       clearTimeout(timer);
     };
-  }, []);// eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return showIndicator ? <PageLoader message={message} />:<>&nbsp;</>;
+  return showIndicator ? <PageLoader message={message} /> : <>&nbsp;</>;
 };
 
 const Center = styled.div`
@@ -43,7 +43,5 @@ export const PageIndicator = (): JSX.Element => {
     pageLock: false,
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
   return <Center>{indicator.show && <IndicatorWithDelay {...props} />}</Center>;
 };

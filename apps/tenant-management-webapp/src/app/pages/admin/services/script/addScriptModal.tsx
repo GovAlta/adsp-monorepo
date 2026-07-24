@@ -145,7 +145,7 @@ export const AddScriptModal = ({
     >
       <div ref={scrollPaneRef} className="roles-scroll-pane" style={{ padding: '0 3px 0 3px' }}>
         <GoabFormItem error={errors?.['name']} label="Name" mb="m">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={script.name}
@@ -199,7 +199,7 @@ export const AddScriptModal = ({
         </GoabFormItem>
         <br />
         {isNew && (
-          <GoabCheckbox
+          <GoabCheckbox size="compact"
             checked={script.useServiceAccount}
             name="script-use-service-account-checkbox"
             testId="script-use-service-account-checkbox"

@@ -174,7 +174,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
         </GoabFormItem>
 
         <GoabFormItem label="URL" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             name="url"
             type="url"
             width="100%"

@@ -165,7 +165,7 @@ const FormDefinitions = (): JSX.Element => {
       <br />
       <div className={styles.container}>
         <div className={styles.filters}>
-          <GoabInput
+          <GoabInput size="compact"
             name="name"
             type="search"
             placeholder="Search by name"
@@ -174,7 +174,7 @@ const FormDefinitions = (): JSX.Element => {
             width="100%"
           />
           <GoabSpacer vSpacing="m" />
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="actsOfLegislation"
             value={actsOfLegislation}
             onChange={(detail: GoabInputOnChangeDetail) => onActsChange(detail.name, detail.value)}
@@ -187,7 +187,7 @@ const FormDefinitions = (): JSX.Element => {
             ))}
           </GoabDropdown>
           <GoabSpacer vSpacing="m" />
-          <GoabInput
+          <GoabInput size="compact"
             name="registeredId"
             type="search"
             placeholder="Search by registered ID"
@@ -196,7 +196,7 @@ const FormDefinitions = (): JSX.Element => {
             width="100%"
           />
           <GoabSpacer vSpacing="m" />
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="program"
             value={program}
             onChange={(detail: GoabDropdownOnChangeDetail) => onProgramChange(detail.name ?? '', detail.values ?? '')}
@@ -209,7 +209,7 @@ const FormDefinitions = (): JSX.Element => {
             ))}
           </GoabDropdown>
           <GoabSpacer vSpacing="m" />
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="ministry"
             value={ministry}
             onChange={(detail: GoabDropdownOnChangeDetail) => onMinistryChange(detail.name ?? '', detail.values ?? '')}

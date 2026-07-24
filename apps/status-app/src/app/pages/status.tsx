@@ -286,7 +286,7 @@ const ServiceStatusPage = (): JSX.Element => {
                           error={formErrors?.['email'] || error?.length > 0 ? formErrors?.['email'] : ''}
                           label="Enter your email to receive updates"
                         >
-                          <GoabInput
+                          <GoabInput size="compact"
                             type="email"
                             id="email"
                             name="email"

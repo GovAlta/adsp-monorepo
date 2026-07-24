@@ -99,7 +99,7 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
         {loaded && (
           <GoabFormItem label="Choose a channel to verify">
             {buttons && (
-              <GoabRadioGroup
+              <GoabRadioGroup size="compact"
                 value={selectedChannel}
                 name="option"
                 onChange={(detail: GoabRadioGroupOnChangeDetail) => setSelectedChannel(detail.value)}

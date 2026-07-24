@@ -128,7 +128,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
         }
       >
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="stream-name"
             width="100%"
@@ -199,7 +199,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           })}
         </ChipsWrapper>
 
-        <GoabCheckbox
+        <GoabCheckbox size="compact"
           checked={stream.publicSubscribe}
           name="stream-anonymousRead-checkbox"
           testId="stream-anonymousRead-checkbox"

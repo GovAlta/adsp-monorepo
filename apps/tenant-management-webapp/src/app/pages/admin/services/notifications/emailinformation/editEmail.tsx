@@ -70,7 +70,7 @@ export const EditEmailInformationTypeModalForm: FunctionComponent<EmailNotificat
       >
         <ErrorWrapper>
           <GoabFormItem error={formErrors?.['email']} label="Email" helpText="Email must be a real email with a inbox">
-            <GoabInput
+            <GoabInput size="compact"
               type="email"
               name="email"
               width="100%"

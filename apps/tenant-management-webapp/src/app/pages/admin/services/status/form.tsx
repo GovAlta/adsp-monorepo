@@ -189,7 +189,7 @@ export const ApplicationFormModal: FC<Props> = ({
       }
     >
       <GoabFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name" mb="s">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="name"
           width="100%"
@@ -256,7 +256,7 @@ export const ApplicationFormModal: FC<Props> = ({
         />
       </GoabFormItem>
       <GoabFormItem error={errors?.['url']} label="URL" mb="s" mt="s">
-        <GoabInput
+        <GoabInput size="compact"
           type="url"
           name="url"
           width="100%"

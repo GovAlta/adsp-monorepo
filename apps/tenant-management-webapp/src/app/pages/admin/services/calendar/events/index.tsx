@@ -25,7 +25,7 @@ interface CalendarDropdownProps {
 const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.Element => {
   return (
     <CalendarDropdownWrapper>
-      <GoabDropdown
+      <GoabDropdown size="compact"
         name="calendars"
         width="100%"
         placeholder="Select"

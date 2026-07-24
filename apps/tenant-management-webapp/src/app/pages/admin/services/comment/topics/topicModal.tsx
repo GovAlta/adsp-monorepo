@@ -147,7 +147,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
     >
       <div>
         <GoabFormItem error={errors?.['name']} label="Name">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={topic?.name}
@@ -166,7 +166,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
         <GoabFormItem label="Select a topic type" mt="s" mb="s">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
           {Object.keys(topicTypes).length > 0 && (
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="TopicTypes"
               value={selectedTopicType}
               onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -226,7 +226,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
           </DescriptionItem>
         </GoabFormItem>
         <GoabFormItem label="Resource ID">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="resourceid"
             value={topic?.resourceId}

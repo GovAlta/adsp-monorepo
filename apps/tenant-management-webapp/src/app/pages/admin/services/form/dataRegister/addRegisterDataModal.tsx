@@ -126,7 +126,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
       }
     >
       <GoabFormItem label="Name">
-        <GoabInput
+        <GoabInput size="compact"
           width="100%"
           name="register-name"
           value={newName}
@@ -146,7 +146,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
         />
       </GoabFormItem>
       <GoabFormItem label="Register data" mt="m" mb="m">
-        <GoabDropdown
+        <GoabDropdown size="compact"
           name="register-data-separator"
           value={separator}
           testId="data-register-add-data-separator"

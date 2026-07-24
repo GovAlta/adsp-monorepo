@@ -69,7 +69,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
       >
         <ErrorWrapper>
           <GoabFormItem error={formErrors?.['email']} label="Email" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="email"
               name="email"
               width="100%"
@@ -82,7 +82,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
             />
           </GoabFormItem>
           <GoabFormItem error={formErrors?.['sms']} label="Phone number" requirement="optional" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="tel"
               aria-label="sms"
               name="sms"

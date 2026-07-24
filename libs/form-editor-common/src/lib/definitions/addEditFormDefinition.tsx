@@ -156,7 +156,8 @@ export const AddEditFormDefinition = ({
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             testId="add-edit-form-cancel"
             type="secondary"
             onClick={() => {
@@ -166,7 +167,8 @@ export const AddEditFormDefinition = ({
           >
             Cancel
           </GoabButton>
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             type="primary"
             testId="form-save"
             disabled={!definition.name || validators.haveErrors()}
@@ -212,6 +214,7 @@ export const AddEditFormDefinition = ({
                 testId="form-definition-name"
                 aria-label="form-definition-name"
                 width="100%"
+                size="compact"
                 onChange={(detail: GoabInputOnChangeDetail) => {
                   const validations = {
                     name: detail.value,
@@ -258,6 +261,7 @@ export const AddEditFormDefinition = ({
                 testId="form-definition-id"
                 disabled={true}
                 width="100%"
+                size="compact"
                 onChange={() => {}}
               />
             </FormFormItem>
@@ -294,6 +298,7 @@ export const AddEditFormDefinition = ({
                 testId="form-url-id"
                 disabled={!definition?.id?.length}
                 width="100%"
+                size="compact"
                 onChange={(detail: GoabInputOnChangeDetail) => {
                   validators.remove('formDraftUrlTemplate');
                   const validations = {
@@ -317,6 +322,7 @@ export const AddEditFormDefinition = ({
                   testId="form-definition-tag"
                   aria-label="form-definition-tag"
                   width="100%"
+                  size="compact"
                   maxLength={MAX_TAG_LENGTH}
                   placeholder="Enter tag name"
                   onChange={(detail: GoabInputOnChangeDetail) => {
@@ -332,7 +338,8 @@ export const AddEditFormDefinition = ({
                   }}
                 />
               </DescriptionItem>
-              <GoabButton size="compact"
+              <GoabButton
+                size="compact"
                 type="secondary"
                 testId="add-tag-btn"
                 disabled={!tagInput.trim() || validators.haveErrors() || tagAlreadyAdded()}
@@ -375,6 +382,7 @@ export const AddEditFormDefinition = ({
           {!isEdit && (
             <GoabFormItem mt={'m'}>
               <GoabCheckbox
+                size="compact"
                 name={'populate-form'}
                 key={'populate-form'}
                 ariaLabel={'populate-form-checkbox'}

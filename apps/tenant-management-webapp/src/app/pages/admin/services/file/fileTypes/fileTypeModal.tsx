@@ -117,7 +117,7 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
       >
         <>
           <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               value={fileType.name}
@@ -147,7 +147,7 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
           </GoabFormItem>
           <GoabFormItem label="Type ID">
             <FileIdItem>
-              <GoabInput
+              <GoabInput size="compact"
                 testId={`file-type-modal-id`}
                 value={fileType?.id}
                 disabled={true}

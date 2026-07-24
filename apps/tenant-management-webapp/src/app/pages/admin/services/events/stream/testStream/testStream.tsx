@@ -167,7 +167,7 @@ export const TestStream = (): JSX.Element => {
           <StreamHeading>Please select a stream to test</StreamHeading>
 
           <StreamsDropdown>
-            <GoabDropdown
+            <GoabDropdown size="compact"
               disabled={socketConnection}
               name="streams"
               value={selectedSteamId}

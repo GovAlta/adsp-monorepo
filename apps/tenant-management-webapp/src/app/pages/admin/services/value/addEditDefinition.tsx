@@ -178,7 +178,7 @@ export const AddEditValueDefinition = ({
           />
         </GoabFormItem>
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={definition.name}

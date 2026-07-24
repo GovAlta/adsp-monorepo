@@ -321,7 +321,7 @@ export const AgentEditor: FunctionComponent = () => {
             </Tab>
             <Tab testId="agent-edit-roles" label="Roles" className="editorMain">
               <GoabButtonGroup alignment="start" mt="s">
-                <GoabCheckbox
+                <GoabCheckbox size="compact"
                   name="showSelectedRoles"
                   text="Show selected roles"
                   checked={showSelectedRoles}
@@ -352,7 +352,7 @@ export const AgentEditor: FunctionComponent = () => {
                   during a conversation. Clients can pre-populate the workspace with files via the socket connection.
                 </p>
               </div>
-              <GoabCheckbox
+              <GoabCheckbox size="compact"
                 name="workspace-enabled"
                 text="Enable workspace"
                 checked={!!agent?.workspace?.enabled}

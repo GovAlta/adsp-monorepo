@@ -162,7 +162,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       }
     >
       <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="eventName"
           value={calendarEvent?.name}
@@ -204,7 +204,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         />
       </GoabFormItem>
 
-      <GoabCheckbox
+      <GoabCheckbox size="compact"
         name="isPublicCheckbox"
         checked={calendarEvent?.isPublic}
         text={'Is public '}
@@ -214,7 +214,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         }}
       />
 
-      <GoabCheckbox
+      <GoabCheckbox size="compact"
         name="isAllDayCheckbox"
         checked={calendarEvent?.isAllDay}
         text={'Is all day'}
@@ -228,7 +228,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
 
       {Object.keys(core).includes(calendarName) && calendarName === 'form-intake' && isEdit && (
         <GoabFormItem error={errors?.['formId']} label="Form Id" mb="3" mt="3">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="eventName"
             value={calendarEvent?.recordId.substring(calendarEvent?.recordId.lastIndexOf('/') + 1)}
@@ -247,7 +247,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
 
       <GoabGrid minChildWidth="25ch" gap="s">
         <GoabFormItem label="Start date" error={errors?.['start']}>
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="StartDate"
             value={(calendarEvent?.start ? new Date(calendarEvent.start) : new Date()).toLocaleDateString('en-CA')}
@@ -262,7 +262,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           />
         </GoabFormItem>
         <GoabFormItem label="Start time">
-          <GoabInput
+          <GoabInput size="compact"
             name="StartTime"
             type="time"
             value={startTime}
@@ -278,7 +278,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           />
         </GoabFormItem>
         <GoabFormItem label="End date" error={endDateError}>
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="endDate"
             value={(calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()).toLocaleDateString('en-CA')}
@@ -294,7 +294,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         </GoabFormItem>
 
         <GoabFormItem label="End time">
-          <GoabInput
+          <GoabInput size="compact"
             type="time"
             name="endTime"
             value={endTime}

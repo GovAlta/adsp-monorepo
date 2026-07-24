@@ -113,7 +113,7 @@ export const FeedbacksList = (): JSX.Element => {
     <div>
       <GoabFormItem label="Registered sites">
         {indicator.show && (!sites || Object.keys(sites).length === 0) && <GoabSkeleton type="text" />}
-        <GoabDropdown
+        <GoabDropdown size="compact"
           name="Sites"
           value={selectedSite}
           onChange={(detail: GoabDropdownOnChangeDetail) =>
@@ -129,7 +129,7 @@ export const FeedbacksList = (): JSX.Element => {
       </GoabFormItem>
       <ExportDates>
         <GoabFormItem label="Start date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             width="30ch"
             name="feedback-filter-start-date"
@@ -144,7 +144,7 @@ export const FeedbacksList = (): JSX.Element => {
         </GoabFormItem>
 
         <GoabFormItem label="End date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             width="30ch"
             name="feedback-filter-end-date"

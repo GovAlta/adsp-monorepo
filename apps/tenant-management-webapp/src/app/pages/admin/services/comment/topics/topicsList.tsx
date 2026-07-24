@@ -108,7 +108,7 @@ export const TopicsList = (): JSX.Element => {
       {(Object.keys(topicTypes).length > 0 || Object.keys(coreTopicTypes).length > 0) && (
         <GoabFormItem label="Select a topic type">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="TopicTypes"
             value={selectedType}
             onChange={(detail: GoabDropdownOnChangeDetail) => {

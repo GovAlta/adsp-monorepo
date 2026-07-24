@@ -351,7 +351,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
                     return (
                       <GoabFormItem label="">
-                        <GoabCheckbox
+                        <GoabCheckbox size="compact"
                           name={`use-default-template`}
                           checked={useDefaultTemplate}
                           data-testid="default-template-checkbox"

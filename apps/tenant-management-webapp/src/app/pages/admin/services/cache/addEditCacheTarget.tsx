@@ -132,7 +132,7 @@ export const AddEditTargetCache = ({
       <div style={{ height: '660px' }}>
         <div>
           <GoabFormItem error={errors?.['urn']} label="Target" mb="3" mt="3">
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="target"
               testId="target"
               width="100%"
@@ -150,7 +150,7 @@ export const AddEditTargetCache = ({
 
           {tenantDirectory && (
             <GoabFormItem label="Url" mb="5" mt="5">
-              <GoabInput
+              <GoabInput size="compact"
                 name="target-url"
                 testId="target-url"
                 width="100%"
@@ -161,7 +161,7 @@ export const AddEditTargetCache = ({
           )}
 
           <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="TTL" mb="3" mt="3">
-            <GoabInput
+            <GoabInput size="compact"
               name="target-ttl-seconds"
               type="number"
               min="0"
@@ -219,7 +219,7 @@ export const AddEditTargetCache = ({
               <MbXs>
                 {event.namespace}:{event.name}
               </MbXs>
-              <GoabInput
+              <GoabInput size="compact"
                 data-testid={`${invalidationEvents}-${i}`}
                 name={`${invalidationEvents}-${i}`}
                 value={event.resourceIdPath.toString()}

@@ -177,7 +177,7 @@ export const CalendarModal = ({
         style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={calendar?.displayName}

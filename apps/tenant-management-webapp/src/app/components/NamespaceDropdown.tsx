@@ -171,7 +171,7 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
         onMouseDown={openDropdown}
         onTouchStart={openDropdown}
       >
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="namespace"
           value={value}

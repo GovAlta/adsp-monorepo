@@ -132,7 +132,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
       }
     >
       <GoabFormItem label="">
-        <GoabDropdown
+        <GoabDropdown size="compact"
           name="event"
           onChange={(detail: GoabDropdownOnChangeDetail) => onChange(detail.name, detail.value)}
           value={selectedValues ? selectedValues : ''}

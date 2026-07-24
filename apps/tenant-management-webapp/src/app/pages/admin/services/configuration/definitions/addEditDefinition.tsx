@@ -186,7 +186,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           />
         </GoabFormItem>
         <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={definition.name}
@@ -235,7 +235,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           />
         </GoabFormItem>
         <GoabSpacer vSpacing="xs"></GoabSpacer>
-        <GoabCheckbox
+        <GoabCheckbox size="compact"
           name="anonymousRead"
           key="anonymousRead"
           checked={!!definition?.anonymousRead}
