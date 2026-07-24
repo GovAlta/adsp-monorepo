@@ -204,7 +204,8 @@ export const FormExport = (): JSX.Element => {
     <section>
       <div>
         <GoabFormItem label="Form definition">
-          <GoabDropdown size="compact"
+          <GoabDropdown
+            size="compact"
             name="formTypes"
             value={selectedForm?.name}
             onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -238,7 +239,8 @@ export const FormExport = (): JSX.Element => {
         <br />
         <GoabFormItem label="Format">
           <div>
-            <GoabRadioGroup size="compact"
+            <GoabRadioGroup
+              size="compact"
               name="formatOptions"
               value={exportFormat}
               onChange={(detail: GoabRadioGroupOnChangeDetail) => setExportFormat(detail.value as ExportFormat)}
@@ -258,11 +260,13 @@ export const FormExport = (): JSX.Element => {
                     .filter((col) => col.group === 'Standard properties')
                     .map((col) => (
                       <label key={col.id}>
-                        <GoabCheckbox size="compact"
+                        <GoabCheckbox
+                          size="compact"
                           name={col.id}
                           text={col.id}
                           checked={col.selected}
                           onChange={() => handleColumnToggle(col.id)}
+                          mb="m"
                         />
                       </label>
                     ))}
@@ -275,7 +279,8 @@ export const FormExport = (): JSX.Element => {
                     .filter((col) => col.group === 'Form data')
                     .map((col) => (
                       <label key={col.id}>
-                        <GoabCheckbox size="compact"
+                        <GoabCheckbox
+                          size="compact"
                           name={col.id}
                           text={col.id}
                           checked={col.selected}
@@ -293,8 +298,8 @@ export const FormExport = (): JSX.Element => {
         {!spinner && (
           <GoabButtonGroup alignment="start">
             <GoabButton
+              size="compact"
               type="primary"
-              size="normal"
               variant="normal"
               onClick={exportToFile}
               testId="export-button"
@@ -306,7 +311,7 @@ export const FormExport = (): JSX.Element => {
             <GoabButton
               type="secondary"
               testId="export-download-button"
-              size="normal"
+              size="compact"
               disabled={downloadDisable || spinner}
               onClick={() => {
                 onDownloadFile(currentFile);

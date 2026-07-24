@@ -645,6 +645,7 @@ export function AddEditFormDefinitionEditor({
                       <GoabCheckbox
                         name="showSelectedRoles"
                         text="Show selected roles"
+                        size="compact"
                         checked={showSelectedRoles}
                         onChange={() => setShowSelectedRoles((prev) => !prev)}
                       />
