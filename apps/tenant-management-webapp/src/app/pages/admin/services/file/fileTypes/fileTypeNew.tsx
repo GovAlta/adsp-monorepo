@@ -29,7 +29,7 @@ export const selectFileTyeNames = createSelector(
     } else {
       return null;
     }
-  }
+  },
 );
 
 export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Element => {
@@ -47,11 +47,13 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
   return (
     <div>
       <GoabButton
+        size="compact"
         testId="add-file-type-btn"
         onClick={() => {
           setWillAddNew(true);
           navigate('/admin/services/file?fileTypes=true');
         }}
+        mt="m"
       >
         Add file type
       </GoabButton>

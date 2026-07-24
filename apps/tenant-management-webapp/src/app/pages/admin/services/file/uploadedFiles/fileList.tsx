@@ -151,14 +151,12 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFilesService(null, criteria));
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator, isUploadingFile, hasUploadingFileCompleted]);
-
   const renderFileTable = () => {
     return (
       <FileTableStyles>
         <div className="table-actions">
           <GoabButton
+            size="compact"
             type="secondary"
             disabled={selectedFileIds.length === 0 ? true : undefined}
             onClick={onDeleteSelectedFiles}
@@ -180,6 +178,7 @@ const FileList = (): JSX.Element => {
                   onChange={(detail: GoabCheckboxOnChangeDetail) => {
                     onToggleAllVisibleFiles(detail.checked);
                   }}
+                  mb="m"
                 />
               </th>
               <th>File name</th>
@@ -206,6 +205,7 @@ const FileList = (): JSX.Element => {
                           onToggleFileSelection(file.id, detail.checked);
                         }
                       }}
+                      mb="m"
                     />
                   </td>
                   <td>{file.filename}</td>
@@ -317,6 +317,7 @@ const FileList = (): JSX.Element => {
       </FileTypeDropdown>
 
       <GoabButton
+        size="compact"
         type="secondary"
         onClick={onUploadSubmit}
         disabled={isUploadingFile || !(selectedFile && uploadFileType.length > 0) ? true : undefined}
@@ -326,7 +327,7 @@ const FileList = (): JSX.Element => {
 
       <div className="mt-48">
         <NoPaddingH2>File filtering</NoPaddingH2>
-        <GoabFormItem label="Search file name">
+        <GoabFormItem label="Search file name" mb="m">
           <GoabInput
             type="text"
             name="name"
@@ -357,6 +358,7 @@ const FileList = (): JSX.Element => {
         <br />
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             onClick={() => {
               setSearchName('');
@@ -368,7 +370,9 @@ const FileList = (): JSX.Element => {
             Reset
           </GoabButton>
 
-          <GoabButton onClick={getFilteredFiles}>Search</GoabButton>
+          <GoabButton size="compact" onClick={getFilteredFiles}>
+            Search
+          </GoabButton>
         </GoabButtonGroup>
       </div>
       <br />
@@ -377,7 +381,7 @@ const FileList = (): JSX.Element => {
       {indicator.show && <PageIndicator />}
       {next && (
         <LoadMoreWrapper>
-          <GoabButton type="tertiary" disabled={isLoading} onClick={onNext}>
+          <GoabButton size="compact" type="text" disabled={isLoading} onClick={onNext}>
             Load more
           </GoabButton>
         </LoadMoreWrapper>

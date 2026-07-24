@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components-ds1';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -32,7 +32,7 @@ export const SessionExpiryModal = () => {
             }
             return next;
           }),
-        1000
+        1000,
       );
       return () => clearInterval(interval);
     }

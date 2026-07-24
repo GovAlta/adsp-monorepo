@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isDateTimeControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoabInput } from '@abgov/react-components';
+import { GoabInput } from '@abgov/react-components-ds1';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';

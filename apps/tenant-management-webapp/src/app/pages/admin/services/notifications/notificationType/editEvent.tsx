@@ -96,7 +96,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
       heading={'Select an event'}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId="event-form-cancel"
             type="secondary"
             onClick={() => {
@@ -106,7 +106,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             disabled={selectedValues[0] === ''}
             type="primary"
             testId="event-form-save"

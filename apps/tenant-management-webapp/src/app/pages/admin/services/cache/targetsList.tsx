@@ -31,7 +31,7 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({
           <th id="cache-targets-Description" data-testid="cache-targets-table-header-description">
             TTL
           </th>
-          <th id="cache-targets-action" data-testid="cache-targets-table-header-action">
+          <th id="cache-targets-action" data-testid="cache-targets-table-header-action" style={{ textAlign: 'right' }}>
             Actions
           </th>
         </tr>

@@ -23,6 +23,7 @@ import PublicApp from './publicApp';
 import styled from 'styled-components';
 import { GoabAppHeader } from '@abgov/react-components';
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 import { useScripts } from '@core-services/app-common';
 import { SelectTenant } from '@pages/public/SelectTenant';
 
@@ -104,6 +105,11 @@ const HideMobile = styled.div`
 `;
 
 const MobileMessage = styled.div`
+  --goa-app-header-typography-service-name: var(--goa-font-weight-medium) var(--goa-font-size-5) /
+    var(--goa-line-height-3) var(--goa-font-family-sans);
+  --goa-app-header-typography-service-name-mobile: var(--goa-font-weight-medium) var(--goa-font-size-3) /
+    var(--goa-line-height-1) var(--goa-font-family-sans);
+
   h1,
   h3 {
     text-align: center;

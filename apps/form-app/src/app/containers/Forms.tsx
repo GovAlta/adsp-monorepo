@@ -6,7 +6,7 @@ import {
   GoabContainer,
   GoabDivider,
   GoabSkeleton,
-} from '@abgov/react-components';
+} from '@abgov/react-components-ds1';
 import { Container } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -83,7 +83,7 @@ const FormStatusBadge: FunctionComponent<{ status: FormStatus }> = ({ status }) 
     case FormStatus.submitted:
       return <GoabBadge mt="xs" type="success" content={status} icon={false} />;
     default:
-      return <GoabBadge mt="xs" type="light" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="default" content={status} icon={false} />;
   }
 };
 
@@ -201,7 +201,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
           <FormLoadMoreDiv>
             {next && (
               <GoabButton
-                type="tertiary"
+                type="text"
                 disabled={busy.loading}
                 onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
               >

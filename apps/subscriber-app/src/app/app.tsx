@@ -13,6 +13,7 @@ import styled from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 
 const AppRouters = () => {
   return (

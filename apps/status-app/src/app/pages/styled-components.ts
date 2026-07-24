@@ -103,6 +103,11 @@ export const AllApplications = styled.div`
   }
 `;
 export const HeaderContainer = styled.div`
+  --goa-app-header-typography-service-name: var(--goa-font-weight-medium) var(--goa-font-size-5) /
+    var(--goa-line-height-3) var(--goa-font-family-sans);
+  --goa-app-header-typography-service-name-mobile: var(--goa-font-weight-medium) var(--goa-font-size-3) /
+    var(--goa-line-height-1) var(--goa-font-family-sans);
+
   position: fixed;
   top: 0;
   left: 0;

@@ -7,7 +7,7 @@ import {
   GoabRadioItem,
   GoabSpacer,
   GoabSpinner,
-} from '@abgov/react-components';
+} from '@abgov/react-components-ds1';
 import { FunctionComponent, useState } from 'react';
 import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 interface ExportModalProps {

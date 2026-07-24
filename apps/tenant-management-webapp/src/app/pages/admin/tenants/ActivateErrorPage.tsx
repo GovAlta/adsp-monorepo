@@ -9,7 +9,7 @@ const CreateErrorPage = (): JSX.Element => {
     <Page>
       <Main>
         <p>We apologize for the inconvenience, but we could not successfully activate your tenant. Please try again.</p>
-        <GoabButton>Activate Tenant</GoabButton>
+        <GoabButton size="compact">Activate Tenant</GoabButton>
       </Main>
       <Aside>
         <AsidePadding>

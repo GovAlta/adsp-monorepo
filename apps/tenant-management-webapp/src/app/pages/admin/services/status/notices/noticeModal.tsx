@@ -113,7 +113,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           startDate: getDateTime(startDate, startTime),
           endDate: getDateTime(endDate, endTime),
           isAllApplications: isAllApplications,
-        })
+        }),
       );
 
       if (props.onSave) props.onSave();
@@ -153,10 +153,10 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       heading={props.title}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="notice-form-cancel" onClick={cancel}>
+          <GoabButton size="compact" type="secondary" testId="notice-form-cancel" onClick={cancel}>
             Cancel
           </GoabButton>
-          <GoabButton type="primary" data-testId="notice-form-submit" onClick={submit}>
+          <GoabButton size="compact" type="primary" data-testId="notice-form-submit" onClick={submit}>
             Save as draft
           </GoabButton>
         </GoabButtonGroup>
@@ -192,6 +192,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             setIsAllApplications(!isAllApplications);
           }}
           text="All applications"
+          mb="m"
         />
       </GoabFormItem>
 

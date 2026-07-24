@@ -56,7 +56,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', badCharsCheck, duplicateNameCheck(calendarEvents, 'Calendar Events'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
@@ -107,6 +107,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="calendar-event-modal-cancel"
             onClick={() => {
@@ -118,6 +119,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="calendar-event-modal-save"
             disabled={
@@ -159,7 +161,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         </GoabButtonGroup>
       }
     >
-      <GoabFormItem error={errors?.['name']} label="Name">
+      <GoabFormItem error={errors?.['name']} label="Name" mb="s">
         <GoabInput
           type="text"
           name="eventName"
@@ -220,6 +222,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         onChange={(detail: GoabCheckboxOnChangeDetail) => {
           setCalendarEvent({ ...calendarEvent, isAllDay: detail.checked });
         }}
+        mt="m"
+        mb="m"
       />
 
       {Object.keys(core).includes(calendarName) && calendarName === 'form-intake' && isEdit && (

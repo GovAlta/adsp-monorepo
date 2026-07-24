@@ -4,19 +4,13 @@ import styled from 'styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { RootState } from '@store/index';
-import { useActionStateCheck } from '@components/Indicator';
-import {
-  FETCH_NOTIFICATION_CONFIGURATION,
-  FetchNotificationConfigurationService,
-  UpdateEmailInformationService,
-} from '@store/notification/actions';
+import { FetchNotificationConfigurationService, UpdateEmailInformationService } from '@store/notification/actions';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { EditEmailInformationTypeModalForm } from './editEmail';
 import { GoabGrid } from '@abgov/react-components';
 export const EmailInformation: FunctionComponent = () => {
   const [editEmailInformation, setEditEmailInformation] = useState<boolean>(false);
   const dispatch = useDispatch();
-  const isFetchLoading = useActionStateCheck(FETCH_NOTIFICATION_CONFIGURATION, 'start');
   const fromEmail = useSelector((state: RootState) => state.notification.email);
 
   const openModalFunction = () => {
@@ -31,11 +25,8 @@ export const EmailInformation: FunctionComponent = () => {
     dispatch(FetchNotificationConfigurationService());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [isFetchLoading]);
-
   const hasConfigurationAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin')
+    state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin'),
   );
 
   return (

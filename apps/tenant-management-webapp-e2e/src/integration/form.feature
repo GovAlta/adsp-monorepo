@@ -9,6 +9,7 @@ Feature: Form
     And the user views the link of See the code for "form-service"
     And the user views the link of "Get support" under Support
 
+  # TEST DATA: a form definition named "autotest-form-existing-tag" is precreated with a tag of "autotest"
   @TEST_CS-3977 @REQ_CS-3590 @regression
   Scenario: As a tenant admin, I can find form definitions by tag, so I can find forms related to some context
     Given a tenant admin user is on form definitions page

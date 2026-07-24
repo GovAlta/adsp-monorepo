@@ -26,7 +26,7 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTem
       testId="pdf-service-overview"
       description={description}
       addButton={
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-templates"
           onClick={() => {
             navigate('/admin/services/pdf?templates=true');

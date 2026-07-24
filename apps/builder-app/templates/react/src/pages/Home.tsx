@@ -37,7 +37,7 @@ export default function Home() {
             This starter combines an information-focused service website with an integrated ADSP
             application form so teams can prototype and iterate quickly.
           </p>
-          <GoabButton type="primary" testId="starter-cta" onClick={() => navigate('/apply')}>
+          <GoabButton size="compact" type="primary" testId="starter-cta" onClick={() => navigate('/apply')}>
             Start application
           </GoabButton>
         </GoabHeroBanner>

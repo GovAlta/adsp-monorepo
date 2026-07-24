@@ -77,14 +77,14 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
     badCharsCheck,
     namespaceCheck(),
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add(
       'duplicated',
       'name',
       isNotEmptyCheck('name'),
       wordMaxLengthCheck(32, 'Name'),
-      duplicateNameCheck(topicNames, 'Topic')
+      duplicateNameCheck(topicNames, 'Topic'),
     )
     .add('typeId', 'typeId', isNotEmptyCheck('typeId'))
     .add('resourceId', 'resourceId', isNotEmptyCheck('typeId'))
@@ -119,6 +119,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="topic-modal-cancel"
             onClick={() => {
@@ -130,6 +131,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="topic-modal-save"
             disabled={!topic?.name || !topic?.resourceId || validators.haveErrors()}
@@ -161,7 +163,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
           />
         </GoabFormItem>
 
-        <GoabFormItem label="Select a topic type">
+        <GoabFormItem label="Select a topic type" mt="s" mb="s">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
           {Object.keys(topicTypes).length > 0 && (
             <GoabDropdown
@@ -199,7 +201,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
           )}
         </GoabFormItem>
 
-        <GoabFormItem label="Description">
+        <GoabFormItem label="Description" mb="s">
           <DescriptionItem>
             <GoabTextArea
               name="description"

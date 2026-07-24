@@ -17,10 +17,10 @@ export const TaskCancelModal = ({ isOpen, title, content, onYes, onNo }: taskCan
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="task-cancelNo" onClick={onNo}>
+          <GoabButton size="compact" type="secondary" testId="task-cancelNo" onClick={onNo}>
             No
           </GoabButton>
-          <GoabButton type="primary" variant="destructive" testId="task-confirmYes" onClick={onYes}>
+          <GoabButton size="compact" type="primary" variant="destructive" testId="task-confirmYes" onClick={onYes}>
             Yes
           </GoabButton>
         </GoabButtonGroup>

@@ -17,6 +17,7 @@ import {
   GoabIconButton,
   GoabTable,
 } from '@abgov/react-components';
+
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import {
   DataRegisterEditorWrapper,
@@ -156,6 +157,7 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail 
               </GoabFormItem>
               <GoabButtonGroup alignment="start" mt="m">
                 <GoabButton
+                  size="compact"
                   type="primary"
                   testId={`data-register-save-${name}`}
                   disabled={!!jsonError}
@@ -164,6 +166,7 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail 
                   Save
                 </GoabButton>
                 <GoabButton
+                  size="compact"
                   type="secondary"
                   testId={`data-register-cancel-${name}`}
                   onClick={() => setIsEditing(false)}
@@ -293,7 +296,7 @@ export const DataRegisters = (): JSX.Element => {
   return (
     <>
       <GoabButtonGroup alignment="start" mt="m">
-        <GoabButton type="secondary" onClick={() => setIsAddModalOpen(true)} testId="data-register-add-btn">
+        <GoabButton size="compact" onClick={() => setIsAddModalOpen(true)} testId="data-register-add-btn" mb="m">
           Add register data
         </GoabButton>
       </GoabButtonGroup>
@@ -334,6 +337,37 @@ export const DataRegisters = (): JSX.Element => {
             </tbody>
           </GoabTable>
         </DataRegisterTableWrapper>
+      )}
+      {selectedEntry && selectedName && (
+        <>
+          <DataRegisterUrn>
+            <GoabBadge
+              type="information"
+              content={`urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`}
+              icon={false}
+              emphasis="subtle"
+            />
+            {!urnCopied ? (
+              <GoabIconButton
+                icon="copy"
+                size="small"
+                variant="color"
+                title="Copy URN"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`,
+                  );
+                  setUrnCopied(true);
+                }}
+              />
+            ) : (
+              <CheckmarkCircle size="medium" />
+            )}
+          </DataRegisterUrn>
+          <DataRegisterEntryDetail data-testid={`data-register-detail-${selectedName}`}>
+            {JSON.stringify(selectedEntry.data, null, 2)}
+          </DataRegisterEntryDetail>
+        </>
       )}
       <AddRegisterDataModal open={isAddModalOpen} onCancel={() => setIsAddModalOpen(false)} onSave={handleAddSave} />
     </>

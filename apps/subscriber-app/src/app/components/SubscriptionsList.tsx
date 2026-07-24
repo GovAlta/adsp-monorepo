@@ -127,7 +127,7 @@ const SubscriptionsList = ({ subscriber, onUnsubscribe }: SubscriptionsListProps
                 {subscription.type?.manageSubscribe ? (
                   <GoabButton
                     size="compact"
-                    type="tertiary"
+                    type="text"
                     key={`${subscription.typeId}`}
                     onClick={() => onUnsubscribe(subscription.typeId)}
                     testId="unsubscribe-button"

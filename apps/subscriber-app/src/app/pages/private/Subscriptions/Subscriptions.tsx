@@ -119,7 +119,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
           service in the future.{' '}
         </GoAModelTextWrapper>
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="unsubscribe-modal-cancel-button"
             onClick={() => {
@@ -128,7 +128,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="unsubscribe-modal-okay-button"
             onClick={() => {

@@ -920,7 +920,7 @@ export const BuilderTenant = () => {
                   </GoabCallout>
                   <PanelSubtle>Tenant: {tenant.name}</PanelSubtle>
                   <GoabButtonGroup alignment="end">
-                    <GoabButton
+                    <GoabButton size="compact"
                       type="primary"
                       onClick={() => dispatch(loginUser({ tenant, from: `${location.pathname}${location.search}` }))}
                     >

@@ -255,10 +255,10 @@ const FormFilters = (): JSX.Element => {
         onClose={() => setShowDeleteModal(false)}
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton type="secondary" onClick={() => setShowDeleteModal(false)} disabled={busy.saving}>
+            <GoabButton size="compact" type="secondary" onClick={() => setShowDeleteModal(false)} disabled={busy.saving}>
               Cancel
             </GoabButton>
-            <GoabButton type="primary" variant="destructive" onClick={confirmDelete} disabled={busy.saving}>
+            <GoabButton size="compact" type="primary" variant="destructive" onClick={confirmDelete} disabled={busy.saving}>
               {busy.saving ? 'Deleting...' : 'Delete'}
             </GoabButton>
           </GoabButtonGroup>

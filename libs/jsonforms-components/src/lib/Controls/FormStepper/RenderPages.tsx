@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { GoabButton, GoabButtonGroup, GoabModal, GoabGrid } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal, GoabGrid } from '@abgov/react-components-ds1';
 import { Visible } from '../../util';
 import { PageBorder, PageRenderPadding } from './styled-components';
 import FormStepperPageReviewer from './PageStepperReviewControl';

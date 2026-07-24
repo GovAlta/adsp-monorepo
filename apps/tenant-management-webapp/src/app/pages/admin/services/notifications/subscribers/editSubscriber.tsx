@@ -152,17 +152,17 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
         heading="Edit subscriber"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+            <GoabButton size="compact" testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
             </GoabButton>
-            <GoabButton type="primary" testId="form-save" onClick={() => trySave(subscriber)}>
+            <GoabButton size="compact" type="primary" testId="form-save" onClick={() => trySave(subscriber)}>
               Save
             </GoabButton>
           </GoabButtonGroup>
         }
       >
         <ErrorWrapper>
-          <GoabFormItem error={formErrors?.['name']} label="Address as">
+          <GoabFormItem error={formErrors?.['name']} label="Address as" mb="s">
             <GoabInput
               type="text"
               name="name"
@@ -173,7 +173,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
               onChange={(detail: GoabInputOnChangeDetail) => setAddress(detail.value)}
             />
           </GoabFormItem>
-          <GoabFormItem error={formErrors?.['email'] || updateError} label="Email">
+          <GoabFormItem error={formErrors?.['email'] || updateError} label="Email" mb="s">
             <GoabInput
               type="email"
               name="email"

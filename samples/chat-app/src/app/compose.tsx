@@ -77,10 +77,10 @@ export const Compose: FunctionComponent<ComposeProps> = ({ roomId }) => {
             setDraft(update);
           }}
         />
-        <GoabButton type="secondary" onClick={() => setDraft([''])}>
+        <GoabButton size="compact" type="secondary" onClick={() => setDraft([''])}>
           Clear
         </GoabButton>
-        <GoabButton
+        <GoabButton size="compact"
           disabled={!draft.filter((item) => !!item).length}
           onClick={() => {
             setDraft(['']);

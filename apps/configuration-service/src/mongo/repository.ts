@@ -14,12 +14,27 @@ import { renamePrefixProperties } from './prefix';
 import { activeRevisionSchema, revisionSchema } from './schema';
 import { ActiveRevisionDoc, ConfigurationRevisionDoc, RevisionAggregateDoc } from './types';
 
+interface FindAggregateResult<C> {
+  results: RevisionAggregateDoc<C>[];
+  page: { total: number }[];
+}
+
 const NON_FILTERABLE_CRITERIA_KEYS = new Set([
-  'tenantIdEquals', 'namespaceEquals', 'registeredIdEquals', 'nameContains', 'useOr', 'createDateAfter', 'createDateBefore',
+  'tenantIdEquals',
+  'namespaceEquals',
+  'registeredIdEquals',
+  'nameContains',
+  'useOr',
+  'createDateAfter',
+  'createDateBefore',
 ]);
 
 const isFilterableKey = (key: string, value: unknown): boolean =>
-  !NON_FILTERABLE_CRITERIA_KEYS.has(key) && !key.startsWith('$') && value !== undefined && value !== null && value !== '';
+  !NON_FILTERABLE_CRITERIA_KEYS.has(key) &&
+  !key.startsWith('$') &&
+  value !== undefined &&
+  value !== null &&
+  value !== '';
 
 const buildCreatedDateFilter = (after?: Date, before?: Date): Record<string, Date> => ({
   ...(after ? { $gte: new Date(after) } : {}),
@@ -32,7 +47,10 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
 
   private readonly META_PREFIX = 'META_';
 
-  constructor(private logger: Logger, private validationService: ValidationService) {
+  constructor(
+    private logger: Logger,
+    private validationService: ValidationService,
+  ) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
     this.activeRevisionModel = model<ActiveRevisionDoc>('activeRevision', activeRevisionSchema);
 
@@ -48,7 +66,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   async find<C>(
     criteria: ConfigurationEntityCriteria,
     top: number = 10,
-    after?: string
+    after?: string,
   ): Promise<Results<ConfigurationEntity<C>>> {
     const skip = decodeAfter(after);
 
@@ -95,7 +113,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     const orConditions: Record<string, unknown>[] = [];
 
     Object.entries(criteria).forEach(([key, value]) => {
-      if (isFilterableKey(key, value)) { // clean-code-ignore: 2.14
+      if (isFilterableKey(key, value)) {
+        // clean-code-ignore: 2.14
         const condition: Record<string, unknown> = {};
         // Strict type checking to prevent object injection (e.g. { $ne: ... })
         if (typeof value === 'string') {
@@ -122,7 +141,17 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       pipeline.push({ $match: match });
     }
 
-    const docs: RevisionAggregateDoc<C>[] = await this.revisionModel.aggregate(pipeline).skip(skip).limit(top).exec();
+    const [{ results: docs = [], page = [] } = { results: [], page: [] }] = await this.revisionModel
+      .aggregate<FindAggregateResult<C>>([
+        ...pipeline,
+        {
+          $facet: {
+            results: [{ $skip: skip }, { $limit: top }],
+            page: [{ $count: 'total' }],
+          },
+        },
+      ])
+      .exec();
 
     return {
       results: docs.map(({ _id, ...result }) => {
@@ -133,13 +162,14 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
           this,
           this.validationService,
           this.fromDoc(result),
-          criteria.tenantIdEquals
+          criteria.tenantIdEquals,
         );
       }),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
         size: docs.length,
+        total: page[0]?.total || 0,
       },
     };
   }
@@ -148,7 +178,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     namespace: string,
     name: string,
     tenantId?: AdspId,
-    definition?: ConfigurationDefinition
+    definition?: ConfigurationDefinition,
   ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
@@ -171,7 +201,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       this.validationService,
       latest,
       tenantId,
-      definition
+      definition,
     );
   }
 
@@ -192,7 +222,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     entity: ConfigurationEntity<C>,
     top: number,
     after: string,
-    criteria: RevisionCriteria
+    criteria: RevisionCriteria,
   ): Promise<Results<ConfigurationRevision<C>>> {
     const query: Record<string, unknown> = {
       namespace: entity.namespace,
@@ -237,7 +267,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
 
   async saveRevision<C>(
     entity: ConfigurationEntity<C>,
-    revision: ConfigurationRevision<C>
+    revision: ConfigurationRevision<C>,
   ): Promise<ConfigurationRevision<C>> {
     const query: Record<string, unknown> = {
       namespace: entity.namespace,
@@ -267,7 +297,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
               configuration: renamePrefixProperties(revision.configuration, '$', this.META_PREFIX),
             },
           },
-          { upsert: true, new: true, lean: true }
+          { upsert: true, new: true, lean: true },
         )
         .exec((err, res) => (err ? reject(err) : resolve(res as ConfigurationRevisionDoc<C>)));
     });
@@ -288,7 +318,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
             revision: result.active,
           },
           null,
-          { lean: true }
+          { lean: true },
         )
         .exec();
     }

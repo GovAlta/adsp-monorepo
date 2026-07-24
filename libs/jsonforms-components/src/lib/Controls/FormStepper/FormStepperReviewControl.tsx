@@ -5,7 +5,7 @@ import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { withAjvProps } from '../../util/layout';
-import { GoabTable } from '@abgov/react-components';
+import { GoabTable } from '@abgov/react-components-ds1';
 import { FormStepperComponentProps } from './types';
 
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
@@ -31,7 +31,11 @@ import {
   GoABooleanRadioControlTester,
   MultiLineTextControlTester,
 } from '../Inputs';
-import { GoAArrayControlTester, GoAArrayControlReviewRenderer, GoAPrimitiveArrayTester } from '../ObjectArray/ObjectArray';
+import {
+  GoAArrayControlTester,
+  GoAArrayControlReviewRenderer,
+  GoAPrimitiveArrayTester,
+} from '../ObjectArray/ObjectArray';
 import { GoAListWithDetailsTester } from '../ObjectArray/listWithDetails';
 
 import { GoAInputBaseTableReviewControl } from '../Inputs/InputBaseTableReviewControl';

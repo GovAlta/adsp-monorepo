@@ -52,7 +52,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
         heading="Calendar current in use"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               type="secondary"
               testId="file-type-delete-modal-cancel-btn"
               onClick={() => {

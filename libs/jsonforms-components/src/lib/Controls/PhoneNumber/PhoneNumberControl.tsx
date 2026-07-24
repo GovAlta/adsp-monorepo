@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabInput } from '@abgov/react-components';
+import { GoabFormItem, GoabInput } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { useState } from 'react';

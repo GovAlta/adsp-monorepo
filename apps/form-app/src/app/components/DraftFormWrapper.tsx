@@ -1,5 +1,5 @@
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
-import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components-ds1';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { DateTime } from 'luxon';

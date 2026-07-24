@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components-ds1';
 import { FunctionComponent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';

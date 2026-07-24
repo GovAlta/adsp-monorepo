@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { GoabFormItem, GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { useEffect, useState } from 'react';

@@ -135,7 +135,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId={`add-resource-tag-name-cancel`}
             type="secondary"
             onClick={() => {
@@ -145,7 +145,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           >
             Close
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="resource-tag-save"
             disabled={isNotValid()}

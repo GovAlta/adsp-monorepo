@@ -70,10 +70,12 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 };
 
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
+  const headerServiceName = serviceName.trim() || 'Alberta Digital Service Platform - Subscription management';
+
   return (
     <HeaderContainer>
       <GoabMicrositeHeader type="live" headerUrlTarget="self" />
-      <GoabAppHeader url="/" heading={serviceName}>
+      <GoabAppHeader url="/" heading={headerServiceName}>
         <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
       </GoabAppHeader>
     </HeaderContainer>
@@ -140,6 +142,11 @@ const UserIconBox = styled.div`
 `;
 
 const HeaderContainer = styled.div`
+  --goa-app-header-typography-service-name: var(--goa-font-weight-medium) var(--goa-font-size-5) /
+    var(--goa-line-height-3) var(--goa-font-family-sans);
+  --goa-app-header-typography-service-name-mobile: var(--goa-font-weight-medium) var(--goa-font-size-3) /
+    var(--goa-line-height-1) var(--goa-font-family-sans);
+
   position: relative;
   border-bottom: 1px solid var(--color-gray-200);
 `;

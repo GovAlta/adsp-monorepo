@@ -37,20 +37,20 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
         </GoabDetails>
       </div>
       <GoabButtonGroup alignment="end" mt="l">
-        <GoabButton type="secondary" onClick={onClose}>
+        <GoabButton size="compact" type="secondary" onClick={onClose}>
           Close
         </GoabButton>
         {task?.status === TASK_STATUS.PENDING && (
-          <GoabButton disabled={disableTaskButtons()} onClick={onStart}>
+          <GoabButton size="compact" disabled={disableTaskButtons()} onClick={onStart}>
             Start task
           </GoabButton>
         )}
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
-            <GoabButton type="secondary" disabled={disableTaskButtons()} onClick={() => onCancel(null)}>
+            <GoabButton size="compact" type="secondary" disabled={disableTaskButtons()} onClick={() => onCancel(null)}>
               Cancel task
             </GoabButton>
-            <GoabButton disabled={disableTaskButtons()} onClick={() => onComplete()}>
+            <GoabButton size="compact" disabled={disableTaskButtons()} onClick={() => onComplete()}>
               Complete task
             </GoabButton>
           </>

@@ -1,11 +1,13 @@
 import * as fs from 'fs';
 import * as express from 'express';
+import jwtDecode from 'jwt-decode';
 import * as open from 'open';
 import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
 import { EnvironmentName, resolveEnvironmentName, resolveEnvironmentUrls, resolveTenantRealm } from './environments';
 import { generatePkcePair } from './pkce';
-import { findTenantByName, findTenantByRealm, listTenants, Tenant } from './tenants';
+import { HttpRequestError } from './httpError';
+import { createTenant, findTenantByName, findTenantByRealm, listTenants, Tenant, waitForTenantActive } from './tenants';
 import { CacheEntry, getCacheFilePath, getCachedToken, hasScopes, isExpired, setCachedToken } from './tokenCache';
 
 export type AccessTokenResult = { status: 'ok'; token: string } | { status: 'not-authenticated' };
@@ -213,13 +215,96 @@ async function getOrLogin(accessServiceUrl: string, realm: string, scopes: strin
   return { token: await browserLogin(accessServiceUrl, realm, scopes), reused: false };
 }
 
-async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string): Promise<Tenant> {
+/** Best-effort decode of the caller's own email from their access token — never throws. */
+function decodeEmail(token: string): string | undefined {
+  try {
+    return jwtDecode<{ email?: string }>(token).email;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Best-effort decode of the caller's core-realm roles from their access token — never throws.
+ * tenant-service-admin/beta-tester are plain core-realm roles (not client-qualified), so the raw
+ * realm_access.roles claim is enough — no need for the SDK's full role-resolution logic.
+ */
+function getCoreRealmRoles(token: string): string[] {
+  try {
+    return jwtDecode<{ realm_access?: { roles?: string[] } }>(token).realm_access?.roles ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function isTenantServiceAdmin(token: string): boolean {
+  return getCoreRealmRoles(token).includes('tenant-service-admin');
+}
+
+/** Mirrors tenant-management-api's requireBetaTesterOrAdmin guard on POST /tenants — see tenants.ts's createTenant. */
+function canCreateTenant(token: string): boolean {
+  const roles = getCoreRealmRoles(token);
+  return roles.includes('tenant-service-admin') || roles.includes('beta-tester');
+}
+
+const CREATE_TENANT_CHOICE = '__create_tenant__';
+const TENANT_NAME_PATTERN = /^[0-9a-zA-Z _]{1,50}$/;
+
+/**
+ * Prompts for a new tenant name, creates it, and waits for provisioning to finish. Validation
+ * failures (bad characters, name already taken, one-tenant-per-email) re-prompt for a new name
+ * since the caller can fix those and retry; any other failure (e.g. missing beta-tester role)
+ * rethrows immediately since retrying the name won't help.
+ */
+async function createTenantInteractive(directoryServiceUrl: string, coreToken: string): Promise<Tenant> {
+  const { prompt } = await import('enquirer');
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { name } = await prompt<{ name: string }>({
+      type: 'input',
+      name: 'name',
+      message: 'What would you like to name your tenant?',
+      validate: (value) =>
+        TENANT_NAME_PATTERN.test(value) || 'Names can only contain letters, numbers, spaces, and underscores (1-50 characters).',
+    });
+
+    let created: Tenant;
+    try {
+      created = await createTenant(directoryServiceUrl, coreToken, name);
+    } catch (err) {
+      if (err instanceof HttpRequestError && err.status === 400) {
+        // eslint-disable-next-line no-console
+        console.log(err.message);
+        continue;
+      }
+      throw err;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(`Creating tenant '${name}'... this can take a minute.`);
+    return waitForTenantActive(directoryServiceUrl, coreToken, created);
+  }
+}
+
+async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string, preProd: boolean): Promise<Tenant> {
   const tenants = await listTenants(directoryServiceUrl, coreToken);
-  if (tenants.length === 0) {
+
+  const email = decodeEmail(coreToken);
+  const byName = (a: Tenant, b: Tenant) => a.name.localeCompare(b.name);
+  const owned = tenants.filter((t) => email && t.adminEmail === email).sort(byName);
+  const rest = tenants.filter((t) => !(email && t.adminEmail === email)).sort(byName);
+  const showCreateOption = preProd && canCreateTenant(coreToken) && (owned.length === 0 || isTenantServiceAdmin(coreToken));
+
+  if (tenants.length === 0 && !showCreateOption) {
     throw new Error('No tenants found.');
   }
 
-  const choices = tenants.map((t) => t.name).sort((a, b) => a.localeCompare(b));
+  const choices = [
+    ...owned.map((t) => ({ name: t.name, message: `${t.name} (yours)` })),
+    ...(showCreateOption ? [{ name: CREATE_TENANT_CHOICE, message: '+ Create a new tenant' }] : []),
+    ...rest.map((t) => t.name),
+  ];
   const { prompt } = await import('enquirer');
   const { tenant: pickedName } = await prompt<{ tenant: string }>({
     type: 'autocomplete',
@@ -227,6 +312,10 @@ async function promptForTenantRealm(directoryServiceUrl: string, coreToken: stri
     message: 'Which tenant?',
     choices,
   });
+
+  if (pickedName === CREATE_TENANT_CHOICE) {
+    return createTenantInteractive(directoryServiceUrl, coreToken);
+  }
 
   const picked = tenants.find((t) => t.name === pickedName);
   if (!picked) {
@@ -316,7 +405,8 @@ export async function loginInteractive(
     // doesn't have (and doesn't need) scopes like adsp-cli-admin registered; that scope is only
     // meaningful on the tenant-realm login below, once a realm is actually known.
     const core = await getOrLogin(accessServiceUrl, CORE_REALM, ['email']);
-    const picked = await promptForTenantRealm(directoryServiceUrl, core.token);
+    const preProd = resolveEnvironmentName(options.env) !== 'prod';
+    const picked = await promptForTenantRealm(directoryServiceUrl, core.token, preProd);
     realm = picked.realm;
     tenantName = picked.name;
   }

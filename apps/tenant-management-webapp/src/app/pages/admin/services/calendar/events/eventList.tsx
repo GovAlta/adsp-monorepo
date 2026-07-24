@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
@@ -80,9 +80,6 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
     indicator: state.session?.elementIndicator,
   }));
 
-  //eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   if (indicator?.show) {
     return <GoabSkeleton type="text" key={1} />;
   }
@@ -90,9 +87,10 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   return next ? (
     <LoadMoreWrapper>
       <GoabButton
+        size="compact"
         testId="calendar-event-load-more-btn"
         key="calendar-event-load-more-btn"
-        type="tertiary"
+        type="text"
         onClick={() => {
           dispatch(FetchEventsByCalendar(calendarName, next));
         }}
@@ -118,7 +116,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isAllDay === true && (
         <div>
-          <GoabBadge type="midtone" content="All day" icon={false} />
+          <GoabBadge type="default" content="All day" icon={false} />
         </div>
       )}
 
@@ -126,7 +124,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isPublic === true && (
         <div>
-          <GoabBadge type="midtone" content=" Public " icon={false} />
+          <GoabBadge type="default" content=" Public " icon={false} />
         </div>
       )}
     </EventDetailTd>
@@ -165,7 +163,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
                       type: EventAddEditModalType,
                       id: `${event.id}`,
                       isOpen: true,
-                    })
+                    }),
                   );
                 }}
               />
@@ -179,7 +177,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
                       type: EventDeleteModalType,
                       id: `${event.id}`,
                       isOpen: true,
-                    })
+                    }),
                   );
                 }}
               />
@@ -202,8 +200,6 @@ interface EventListProps {
 export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, calendarName));
   const next = useSelector((state: RootState) => selectSelectedCalendarNextEvents(state, calendarName));
-  // eslint-disable-next-line
-  useEffect(() => {}, [selectedEvents]);
 
   if (!selectedEvents) {
     return (

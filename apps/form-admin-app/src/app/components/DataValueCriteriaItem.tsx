@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabInput } from '@abgov/react-components';
+import { GoabFormItem, GoabInput } from '@abgov/react-components-ds1';
 import { FunctionComponent } from 'react';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
@@ -29,7 +29,7 @@ export const DataValueCriteriaItem: FunctionComponent<DataValueCriteriaItemProps
             type="number"
             onChange={(detail: GoabInputOnChangeDetail) =>
               onChange(
-                detail.value ? (type === 'integer' ? parseInt(detail.value) : parseFloat(detail.value)) : undefined
+                detail.value ? (type === 'integer' ? parseInt(detail.value) : parseFloat(detail.value)) : undefined,
               )
             }
             value={value}

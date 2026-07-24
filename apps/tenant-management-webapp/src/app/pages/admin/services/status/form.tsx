@@ -45,7 +45,7 @@ const tenantServiceURNSelector = createSelector(
       .map((_directory) => {
         return _directory[1].urn;
       });
-  }
+  },
 );
 
 const healthEndpointsSelector = createSelector(
@@ -58,7 +58,7 @@ const healthEndpointsSelector = createSelector(
       .map((_directory) => {
         return _directory?.metadata._links?.health?.href;
       });
-  }
+  },
 );
 
 export const ApplicationFormModal: FC<Props> = ({
@@ -103,7 +103,7 @@ export const ApplicationFormModal: FC<Props> = ({
     checkForBadChars,
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('nameAppKey'),
-    isDuplicateAppKey()
+    isDuplicateAppKey(),
   )
     .add('nameOnly', 'name', checkForBadChars, isDuplicateAppName())
     .add(
@@ -111,8 +111,8 @@ export const ApplicationFormModal: FC<Props> = ({
       'name',
       duplicateNameCheck(
         applications.map((app) => app.name),
-        'Application'
-      )
+        'Application',
+      ),
     )
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add(
@@ -120,7 +120,7 @@ export const ApplicationFormModal: FC<Props> = ({
       'url',
       wordMaxLengthCheck(150, 'URL'),
       characterCheck(validationPattern.validURL),
-      isNotEmptyCheck('url')
+      isNotEmptyCheck('url'),
     )
     .build();
 
@@ -163,6 +163,7 @@ export const ApplicationFormModal: FC<Props> = ({
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="form-cancel-button"
             onClick={() => {
@@ -176,6 +177,7 @@ export const ApplicationFormModal: FC<Props> = ({
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             testId="form-save-button"
             disabled={!isFormValid() || validators.haveErrors()}
             type="primary"
@@ -186,7 +188,7 @@ export const ApplicationFormModal: FC<Props> = ({
         </GoabButtonGroup>
       }
     >
-      <GoabFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name">
+      <GoabFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name" mb="s">
         <GoabInput
           type="text"
           name="name"
@@ -226,10 +228,10 @@ export const ApplicationFormModal: FC<Props> = ({
           aria-label="name"
         />
       </GoabFormItem>
-      <GoabFormItem label="Application ID">
+      <GoabFormItem label="Application ID" mb="s">
         <IdField>{application.appKey}</IdField>
       </GoabFormItem>
-      <GoabFormItem error={errors?.['description']} label="Description">
+      <GoabFormItem error={errors?.['description']} label="Description" mb="s">
         <GoabTextArea
           name="description"
           width="100%"
@@ -253,7 +255,7 @@ export const ApplicationFormModal: FC<Props> = ({
           errorMsg={errors?.['description']}
         />
       </GoabFormItem>
-      <GoabFormItem error={errors?.['url']} label="URL">
+      <GoabFormItem error={errors?.['url']} label="URL" mb="s" mt="s">
         <GoabInput
           type="url"
           name="url"

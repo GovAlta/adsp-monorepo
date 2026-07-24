@@ -49,7 +49,7 @@ export const TaskOverview = ({
         </section>
       }
       addButton={
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-queue"
           onClick={() => {
             setActiveEdit(true);

@@ -48,7 +48,7 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
           </>
         }
         addButton={
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-file-type-btn"
             onClick={() => {
               setOpenAddFileType(true);

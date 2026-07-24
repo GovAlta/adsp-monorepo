@@ -101,6 +101,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                                   data-testid="viewing-badge"
                                   type="information"
                                   icon={false}
+                                  emphasis="subtle"
                                 />
                               </BadgeWrapper>
                             )}

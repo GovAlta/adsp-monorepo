@@ -5,15 +5,13 @@ import { ChatState } from './chat.slice';
 import styles from './connectLabel.module.scss';
 
 export const ConnectLabel: FunctionComponent = () => {
-  const connected = useSelector(
-    (state: { chat: ChatState }) => state.chat.connected
-  );
+  const connected = useSelector((state: { chat: ChatState }) => state.chat.connected);
   return (
     <div className={styles.connect}>
       {connected ? (
         <GoabBadge type="success" content="Connected" />
       ) : (
-        <GoabBadge type="information" content="Not connected" />
+        <GoabBadge type="information" content="Not connected" emphasis="subtle" />
       )}
     </div>
   );

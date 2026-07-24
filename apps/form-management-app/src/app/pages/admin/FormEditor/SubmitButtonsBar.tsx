@@ -50,7 +50,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
       <div className={styles['final-button-padding']}>
         <GoabButtonGroup alignment="start">
           <GoabButton
-            type="tertiary"
+            size="compact"
+            type="text"
             testId="collapse-all"
             onClick={() => {
               const editor = getCurrentEditorRef();
@@ -63,8 +64,9 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             Collapse all
           </GoabButton>
           <GoabButton
+            size="compact"
             testId="expand-all"
-            type="tertiary"
+            type="text"
             disabled={activeIndex > 1}
             onClick={() => {
               const editor = getCurrentEditorRef();
@@ -76,6 +78,7 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
         </GoabButtonGroup>
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="primary"
             testId="definition-form-save"
             disabled={
@@ -93,6 +96,7 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             Save
           </GoabButton>
           <GoabButton
+            size="compact"
             testId="form-editor-cancel"
             type="secondary"
             onClick={() => {

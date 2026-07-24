@@ -98,7 +98,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
         heading={isEdit ? 'Edit registered site' : 'Register site'}
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               testId="site-cancel"
               type="secondary"
               onClick={() => {
@@ -109,7 +109,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             </GoabButton>
 
             {isEdit ? (
-              <GoabButton
+              <GoabButton size="compact"
                 type="primary"
                 testId="site-edit"
                 disabled={!site.url || validators.haveErrors()}
@@ -121,7 +121,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
                 Save
               </GoabButton>
             ) : (
-              <GoabButton
+              <GoabButton size="compact"
                 type="primary"
                 testId="site-register"
                 disabled={!site.url || validators.haveErrors()}

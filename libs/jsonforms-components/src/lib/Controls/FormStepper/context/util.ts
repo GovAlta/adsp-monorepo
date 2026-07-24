@@ -1,14 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { toDataPath } from '@jsonforms/core';
+import { JsonSchema, toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
 import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
+import { StepStatus, StepStatusType, VALIDATION_KEYWORDS } from '../../../common/Constants';
+import { StepStatusData } from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getValueAtPath(obj: any, path: string) {
   return path.split('.').reduce((acc, key) => acc?.[key], obj);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function hasMeaningfulValue(val: any): boolean {
   if (val === undefined || val === null) return false;
   if (typeof val === 'string') return val.trim() !== '';
@@ -17,19 +19,15 @@ export function hasMeaningfulValue(val: any): boolean {
   return true;
 }
 
-function isStepStarted(normalizedScopes: string[], data: any): boolean {
-  return normalizedScopes.some((path) => {
-    return hasMeaningfulValue(getValueAtPath(data, path));
-  });
-}
-
-function getSubSchema(schema: any, path: string): any {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSubSchema(schema: JsonSchema, path: string): any {
   const parts = path
     .replace(/^#\//, '')
     .split('/')
     .filter((p) => p !== 'properties') // remove 'properties' segments
     .slice(0, -1);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let current: any = schema;
   for (const part of parts) {
     if (!current) return undefined;
@@ -45,7 +43,34 @@ function getSubSchema(schema: any, path: string): any {
   return current;
 }
 
-function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: any): boolean {
+// Checks whether any of the given normalized scopes (dot-path form, e.g. "a.b.c")
+// resolve to a property name present in the required array. Returns true if at
+// least one scope's property name is required, false otherwise.
+export function isScopeRequired(normalizedScopes: string[], required: string[]): boolean {
+  if (!normalizedScopes?.length || !required?.length) return false;
+
+  return normalizedScopes.some((scope) => {
+    const propertyName = scope.split('.').pop();
+    return !!propertyName && required.includes(propertyName);
+  });
+}
+
+// Aggregates the required property names applicable to a step's scopes: the
+// schema's top-level required array plus the required array of each scope's
+// immediate parent (sub)schema (for nested objects).
+function getRequiredForScopes(scopes: string[], schema: JsonSchema): string[] {
+  const topLevelRequired: string[] = schema.required || [];
+
+  const scopeSets = scopes.reduce((acc: string[], scope) => {
+    const subSchema = getSubSchema(schema, scope);
+    return acc.concat(subSchema?.required || []);
+  }, topLevelRequired);
+
+  return Array.from(new Set(scopeSets));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: JsonSchema): boolean {
   for (const scope of scopes) {
     const path = scope
       .replace(/^#\//, '')
@@ -81,37 +106,70 @@ function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], 
 
   return false;
 }
+
+// Resolve a single schema scope against the provided data and determine whether
+// it already holds a meaningful value. Used to derive the initial "visited"
+// state of a step from populated form data.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function hasValueAtScope(data: any, scope: string): boolean {
+  const path = normalizeSchemaPath(scope);
+  if (!path) return false;
+  return hasMeaningfulValue(getValueAtPath(data, path));
+}
+
 export function getStepStatus(opts: {
   scopes: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   errors: AjvError[];
-  schema: any;
-  visited: boolean;
-}): 'Completed' | 'InProgress' | 'NotStarted' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: JsonSchema;
+  visited?: boolean;
+}): StepStatusData {
   const { scopes, errors, schema, data, visited } = opts;
 
-  if (!visited) {
-    return 'NotStarted';
+  const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
+
+  // A step with no required fields has nothing that must be filled in, so once
+  // the user has visited it (e.g. navigated back to the application overview
+  // page) it is trivially Completed, regardless of whether its optional
+  // fields hold any data.
+  const requiredForScopes = getRequiredForScopes(scopes, schema);
+
+  const stepHasRequiredFields = isScopeRequired(normalizedScopes, requiredForScopes);
+
+  // NotStarted is data-driven: if any scoped field has a defined value the step has been started.
+  // For non-standard scopes that cannot be normalised, fall back to the visited flag so those
+  // steps are never stuck in NotStarted when the form is pre-populated or already visited.
+  const stepHasData =
+    normalizedScopes.length > 0
+      ? normalizedScopes.some((path) => hasMeaningfulValue(get(data || {}, path)))
+      : (visited ?? false);
+
+  if (!stepHasRequiredFields && (visited || stepHasData)) {
+    return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
-  const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
+  if (!stepHasData) {
+    return { status: StepStatus.NOT_STARTED, hasRequiredFields: stepHasRequiredFields };
+  }
   const incompleteInStep = getIncompletePaths(errors, scopes);
 
   if (incompleteInStep.length > 0) {
-    return 'InProgress';
+    return { status: StepStatus.IN_PROGRESS, hasRequiredFields: stepHasRequiredFields };
   }
 
   const required = schema.required || [];
 
   if (anyRequiredFieldEmpty(scopes, data, required, schema)) {
-    return 'InProgress';
+    return { status: StepStatus.IN_PROGRESS, hasRequiredFields: stepHasRequiredFields };
   }
 
   const deps = buildConditionalDeps(schema);
   const controllersInStep = normalizedScopes.filter((s) => deps.has(s));
 
   if (controllersInStep.length === 0) {
-    return 'Completed';
+    return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
   const affected = new Set<string>();
@@ -123,7 +181,7 @@ export function getStepStatus(opts: {
   }
 
   if (affected.size === 0) {
-    return 'Completed';
+    return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
   const affectedPaths = [...affected];
@@ -131,13 +189,14 @@ export function getStepStatus(opts: {
   for (const err of errors || []) {
     for (const candidate of collectErrorCandidates(err)) {
       if (affectedPaths.some((path) => isUnder(candidate, path))) {
-        return 'InProgress';
+        return { status: StepStatus.IN_PROGRESS, hasRequiredFields: stepHasRequiredFields };
       }
     }
   }
 
-  return 'Completed';
+  return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
 }
+
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
   return errorPaths.some((ePath) => {
     /**
@@ -152,14 +211,16 @@ export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean
 function collectErrorCandidates(e: AjvError): string[] {
   const out: string[] = [];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const missing = (e.params as any)?.missingProperty as string | undefined;
-  if (e.keyword === 'required' && missing) {
+  if (e.keyword === VALIDATION_KEYWORDS.REQUIRED && missing) {
     const base = normalizeInstancePath(e.instancePath || '');
     out.push(base ? `${base}.${missing}` : missing);
   }
 
   if (e.instancePath) out.push(normalizeInstancePath(e.instancePath));
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (e.dataPath) out.push(normalizeInstancePath((e as any).dataPath));
 
   return out.filter(Boolean);
@@ -207,10 +268,11 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
   const incomplete = new Set<string>();
 
   for (const error of errors) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const missingProperty = (error.params as any)?.missingProperty as string | undefined;
     const candidates: string[] = [];
 
-    if (error.keyword === 'required' && missingProperty) {
+    if (error.keyword === VALIDATION_KEYWORDS.REQUIRED && missingProperty) {
       candidates.push(missingProperty);
 
       if (error.instancePath) {
@@ -235,7 +297,7 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
 
     for (const candidate of candidates) {
       const match = normalizedScopes.find(
-        (scope) => candidate === scope || candidate.startsWith(scope + '.') || scope.startsWith(candidate + '.')
+        (scope) => candidate === scope || candidate.startsWith(scope + '.') || scope.startsWith(candidate + '.'),
       );
       if (!match) continue;
       incomplete.add(match);
@@ -245,14 +307,6 @@ export function getIncompletePaths(errors: AjvError[] | null | undefined, scopeP
   const result = [...incomplete];
 
   return result;
-}
-
-export type StepStatus = 'not-started' | 'in-progress' | 'completed';
-
-export interface StepConfig {
-  id: string;
-  label: string;
-  scopePaths: string[];
 }
 
 export const subErrorInParent = (error: ErrorObject, paths: string[]): boolean => {
@@ -286,7 +340,8 @@ export const getErrorsInScopes = (errors: ErrorObject[] | null | undefined, scop
   return errors.filter((err) => {
     let fullPath = '';
 
-    if (err.keyword === 'required') {
+    if (err.keyword === VALIDATION_KEYWORDS.REQUIRED) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const missingProp = (err.params as any)?.missingProperty;
       const instancePath = err.instancePath || '';
       const instanceDot = instancePath.replace(/^\//, '').replace(/\//g, '.');

@@ -35,7 +35,7 @@ const AddClientRole = (): JSX.Element => {
           <GoALinkButton to="/admin/tenants" buttonType="secondary">
             Back
           </GoALinkButton>
-          <GoabButton>Activate Tenant</GoabButton>
+          <GoabButton size="compact">Activate Tenant</GoabButton>
         </GoabButtonGroup>
         Need to <a href={'/get-started'}>create a tenant?</a>
       </Main>

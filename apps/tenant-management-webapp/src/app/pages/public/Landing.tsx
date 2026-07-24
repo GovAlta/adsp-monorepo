@@ -61,7 +61,7 @@ const LandingPage = (): JSX.Element => {
 
   return (
     <>
-      <Header serviceName="" />
+      <Header />
       <Main>
         <HeroBannerLayout>
           <GoabHeroBanner heading="" backgroundUrl={bannerBackground} minHeight="300px">

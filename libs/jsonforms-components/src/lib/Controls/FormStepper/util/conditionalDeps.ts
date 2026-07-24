@@ -1,3 +1,5 @@
+import { JsonSchema } from '@jsonforms/core';
+
 // eslint-disable-next-line
 type AnyRecord = Record<string, any>;
 
@@ -23,8 +25,8 @@ function collectRequiredPaths(schema: any, basePath = ''): string[] {
 
   return out;
 }
-// eslint-disable-next-line
-function collectControllerKeys(ifSchema: any): string[] {
+
+function collectControllerKeys(ifSchema: JsonSchema): string[] {
   if (!isObj(ifSchema)) return [];
   const keys = new Set<string>();
 
@@ -39,8 +41,8 @@ function collectControllerKeys(ifSchema: any): string[] {
 
   return [...keys];
 }
-// eslint-disable-next-line
-export function buildConditionalDeps(rootSchema: any): Map<string, string[]> {
+
+export function buildConditionalDeps(rootSchema: JsonSchema): Map<string, string[]> {
   const deps = new Map<string, Set<string>>();
   // eslint-disable-next-line
   function walk(node: any) {

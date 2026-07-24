@@ -9,6 +9,7 @@ import { Route, Routes, BrowserRouter as Router } from 'react-router-dom';
 import ServiceStatusPage from './pages/status';
 import { RootState } from '@store/index';
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 
 export function App(): JSX.Element {
   const dispatch = useDispatch();

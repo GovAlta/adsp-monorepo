@@ -1,4 +1,4 @@
-import { GoabButton, GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
+import { GoabButton, GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components-ds1';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';

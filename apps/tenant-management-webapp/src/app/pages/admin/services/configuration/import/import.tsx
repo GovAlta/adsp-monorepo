@@ -115,8 +115,8 @@ export const ConfigurationImport: FunctionComponent = () => {
                 name: name,
                 configuration: importConfigJson[config][name].configuration,
               },
-              true
-            )
+              true,
+            ),
           );
         }
       }
@@ -174,10 +174,13 @@ export const ConfigurationImport: FunctionComponent = () => {
           </div>
 
           <GoabButton
+            size="compact"
             type="primary"
             onClick={onUploadSubmit}
             disabled={selectedImportFile.length === 0}
             testId="import-input-button"
+            mt="m"
+            mb="m"
           >
             Import
           </GoabButton>

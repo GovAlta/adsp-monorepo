@@ -71,7 +71,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         onChangeErrors={(errors) => setHasErrors(errors.length > 0)}
       />
       <GoabButtonGroup alignment="end" mt="l">
-        <GoabButton
+        <GoabButton size="compact"
           mr="l"
           type={
             task.status === TASK_STATUS.PENDING || task.status === TASK_STATUS.IN_PROGRESS ? 'tertiary' : 'secondary'
@@ -80,7 +80,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         >
           Close
         </GoabButton>
-        <GoabButton
+        <GoabButton size="compact"
           type="secondary"
           disabled={
             !user.isWorker ||
@@ -92,7 +92,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         >
           Save
         </GoabButton>
-        <GoabButton
+        <GoabButton size="compact"
           disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS || hasErrors}
           onClick={async () => {
             await dispatch(updateTaskData({ taskId: task.id, data }));

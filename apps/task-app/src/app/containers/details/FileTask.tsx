@@ -14,10 +14,10 @@ const FileTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
     <TaskDetailsLayout>
       <FileViewer urn={task.recordId} />
       <GoabButtonGroup alignment="end" mt="l">
-        <GoabButton type="secondary" onClick={onClose}>
+        <GoabButton size="compact" type="secondary" onClick={onClose}>
           Close
         </GoabButton>
-        <GoabButton
+        <GoabButton size="compact"
           disabled={!user.isWorker || isExecuting}
           onClick={() => dispatch(completeTask({ taskId: task.id }))}
         >

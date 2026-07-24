@@ -63,8 +63,9 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
         </GoabFormItem>
       </GoabGrid>
 
-      <GoabButtonGroup alignment="end">
+      <GoabButtonGroup alignment="end" mt="m">
         <GoabButton
+          size="compact"
           type="secondary"
           testId="subscriber-search-reset-button"
           onClick={() => {
@@ -74,6 +75,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           Reset
         </GoabButton>
         <GoabButton
+          size="compact"
           testId="subscriber-search-search-button"
           onClick={() => {
             onSearch(criteria);

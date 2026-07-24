@@ -18,7 +18,7 @@ const GetStarted = (): JSX.Element => {
           authentication, with plans to expand to other federated login providers in the future.
         </p>
         <GoabButtonGroup alignment="start">
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             onClick={() => {
               const idpHint = getIdpHint();

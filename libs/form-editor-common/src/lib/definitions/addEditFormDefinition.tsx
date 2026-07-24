@@ -25,17 +25,10 @@ import {
   GoabFormItem,
   GoabButton,
   GoabCheckbox,
-  GoabDropdown,
-  GoabDropdownItem,
   GoabFilterChip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
-import { Tag } from '@store/directory/models';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { fetchFormTagByTagName } from '@store/form/action';
 
 interface AddEditFormDefinitionProps {
@@ -136,9 +129,6 @@ export const AddEditFormDefinition = ({
     }
   }, [definitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator, defaultFormUrl]);
-
   useEffect(() => {
     setDefinition(initialValue);
     setTagInput('');
@@ -166,7 +156,7 @@ export const AddEditFormDefinition = ({
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-edit-form-cancel"
             type="secondary"
             onClick={() => {
@@ -176,7 +166,7 @@ export const AddEditFormDefinition = ({
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="form-save"
             disabled={!definition.name || validators.haveErrors()}
@@ -342,7 +332,7 @@ export const AddEditFormDefinition = ({
                   }}
                 />
               </DescriptionItem>
-              <GoabButton
+              <GoabButton size="compact"
                 type="secondary"
                 testId="add-tag-btn"
                 disabled={!tagInput.trim() || validators.haveErrors() || tagAlreadyAdded()}
@@ -393,6 +383,7 @@ export const AddEditFormDefinition = ({
                 onChange={() => {
                   setMultiForm(multiForm ? false : true);
                 }}
+                mt="m"
               >
                 Populate form with a default multi-page form
               </GoabCheckbox>

@@ -1,6 +1,7 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
 const { ProvidePlugin } = require('webpack');
+const { aliasReactComponents } = require('../../tools/webpack/react-components-version');
 
 // Nx plugins for webpack.
 module.exports = composePlugins(withNx(), withReact(), (config) => {
@@ -19,5 +20,8 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     })
   );
 
-  return config;
+  return aliasReactComponents(config, '@abgov/react-components-ds1', {
+    webComponentsPackage: '@abgov/web-components-ds1',
+    designTokensPackage: '@abgov/design-tokens-ds1',
+  });
 });

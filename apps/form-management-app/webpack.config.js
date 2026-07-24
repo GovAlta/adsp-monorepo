@@ -1,5 +1,6 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
+const { aliasReactComponents } = require('../../tools/webpack/react-components-version');
 
 // Nx plugins for webpack.
 module.exports = composePlugins(withNx(), withReact(), (config, { options, context }) => {
@@ -10,5 +11,5 @@ module.exports = composePlugins(withNx(), withReact(), (config, { options, conte
 
   config.ignoreWarnings = [/Failed to parse source map/];
 
-  return require('./webpack.config.old.js')(config, context);
+  return aliasReactComponents(require('./webpack.config.old.js')(config, context), '@abgov/react-components');
 });

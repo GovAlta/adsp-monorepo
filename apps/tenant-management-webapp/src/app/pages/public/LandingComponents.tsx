@@ -107,7 +107,8 @@ export const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.E
 
   return (
     <GoabButton
-      type="tertiary"
+      size="compact"
+      type="text"
       testId={`redirect-button-${name}`}
       onClick={() => {
         window.open(url, '_blank');

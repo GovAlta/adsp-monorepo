@@ -31,11 +31,12 @@ export const AddBuiltInToolModal: FunctionComponent<AddBuiltInToolModalProps> = 
       heading="Add built-in tool"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="built-in-tool-modal-cancel" onClick={onCancel}>
+          <GoabButton size="compact" type="secondary" testId="built-in-tool-modal-cancel" onClick={onCancel}>
             Cancel
           </GoabButton>
 
           <GoabButton
+            size="compact"
             type="primary"
             testId="built-in-tool-modal-save"
             onClick={() => {
@@ -64,7 +65,7 @@ export const AddBuiltInToolModal: FunctionComponent<AddBuiltInToolModalProps> = 
                     <p>{description}</p>
                   </td>
                   <td>
-                    <GoabButtonGroup alignment="end">
+                    <GoabButtonGroup alignment="end" mt="m">
                       <GoabCheckbox
                         name="selected"
                         checked={selected.includes(id)}
@@ -81,6 +82,7 @@ export const AddBuiltInToolModal: FunctionComponent<AddBuiltInToolModalProps> = 
                           }
                           setSelected(update);
                         }}
+                        mt="m"
                       />
                     </GoabButtonGroup>
                   </td>

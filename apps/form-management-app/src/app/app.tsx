@@ -1,4 +1,5 @@
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 import { AuthCallback } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

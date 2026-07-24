@@ -37,7 +37,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   constructor(
     private logger: Logger,
     private definitionRepository: FormDefinitionRepository,
-    private formRepository: FormRepository
+    private formRepository: FormRepository,
   ) {
     this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
     this.submissionModel.on('index', (err: unknown) => {
@@ -54,17 +54,19 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }
 
     const skip = decodeAfter(after);
-    const query: Record<string, unknown> = {
+    const baseQuery: Record<string, unknown> = {
       tenantId: criteria.tenantIdEquals.toString(),
     };
 
     if (criteria?.formIdEquals) {
-      query.formId = criteria?.formIdEquals;
+      baseQuery.formId = criteria?.formIdEquals;
     }
 
     if (criteria?.definitionIdEquals) {
-      query.formDefinitionId = criteria?.definitionIdEquals;
+      baseQuery.formDefinitionId = criteria?.definitionIdEquals;
     }
+
+    const query: Record<string, unknown> = { ...baseQuery };
 
     if (criteria?.submissionStatusEquals) {
       query.submissionStatus = criteria.submissionStatusEquals;
@@ -100,21 +102,25 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       });
     }
 
-    return new Promise<FormSubmissionEntity[]>((resolve, reject) => {
+    const results = new Promise<FormSubmissionEntity[]>((resolve, reject) => {
       this.submissionModel
         .find(query, null, { lean: true })
         .sort({ created: -1 })
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>
-          err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc))))
+          err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc)))),
         );
-    }).then((docs) => ({
+    });
+    const total = this.submissionModel.countDocuments(baseQuery).exec();
+
+    return Promise.all([results, total]).then(([docs, total]) => ({
       results: docs,
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
         size: docs.length,
+        total,
       },
     }));
   }
@@ -142,7 +148,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       const doc = await this.submissionModel.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
         this.toDoc(entity),
-        { upsert: true, new: true, lean: true }
+        { upsert: true, new: true, lean: true },
       );
 
       return this.fromDoc(entity.tenantId, doc);
@@ -180,7 +186,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       formData: entity.formData,
       formFiles: Object.entries(entity.formFiles).reduce(
         (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
-        {} as Record<string, string>
+        {} as Record<string, string>,
       ),
       disposition: entity.disposition,
       hash: entity.hash,
@@ -210,14 +216,14 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         formData: doc.formData,
         formFiles: Object.entries(doc.formFiles).reduce(
           (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
-          {} as Record<string, AdspId>
+          {} as Record<string, AdspId>,
         ),
         disposition: doc.disposition,
         hash: doc.hash,
         dryRun: doc.dryRun,
       },
       definition,
-      form
+      form,
     );
   };
 }

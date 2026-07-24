@@ -156,7 +156,7 @@ export const ConfigurationData = (): JSX.Element => {
           <hr className="styled-hr styled-hr-bottom" />
           <EditActionLayout>
             <GoabButtonGroup alignment="end">
-              <GoabButton
+              <GoabButton size="compact"
                 disabled={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || dataError.length > 0}
                 onClick={() => {
                   setCustomIndicator(true);

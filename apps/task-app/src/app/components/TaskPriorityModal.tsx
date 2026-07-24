@@ -49,10 +49,10 @@ export const TaskPriorityModal: FunctionComponent<TaskPriorityModal> = ({
           </GoabRadioGroup>
         </GoabFormItem>
         <GoabButtonGroup alignment="end" mt="4xl">
-          <GoabButton type="secondary" onClick={onClose}>
+          <GoabButton size="compact" type="secondary" onClick={onClose}>
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             disabled={executing || (priority && priority === task?.priority)}
             onClick={() => onSetPriority(priority)}

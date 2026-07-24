@@ -1,4 +1,4 @@
-import { GoabText } from '@abgov/react-components';
+import { GoabText } from '@abgov/react-components-ds1';
 import { SectionHeaderRowTr } from '../styled-components';
 
 interface SectionHeaderRowProps {

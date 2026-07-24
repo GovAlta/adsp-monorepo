@@ -28,7 +28,7 @@ export const ScriptsView = ({ setActiveEdit, activeEdit }: ScriptsViewProps): JS
   return (
     <section>
       <div>
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-script-btn"
           onClick={() => {
             setOpenAddScript(true);

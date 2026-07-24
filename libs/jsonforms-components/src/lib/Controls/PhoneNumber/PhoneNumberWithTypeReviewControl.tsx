@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { TextWrapDiv } from '../AddressLookup/styled-components';

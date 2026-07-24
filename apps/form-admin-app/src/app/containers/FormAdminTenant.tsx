@@ -1,4 +1,4 @@
-import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components-ds1';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -51,10 +51,15 @@ export const FormAdminTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  const serviceDisplayName = tenant?.name || tenantName;
+  const headerTitle = serviceDisplayName
+    ? `${serviceDisplayName} - Form administration`
+    : 'Alberta Digital Service Platform - Form administration';
+
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Form administration`}>
+      <GoabAppHeader url="/" heading={headerTitle}>
         <NavigationMenu type="menu" />
       </GoabAppHeader>
       <FeedbackNotification />

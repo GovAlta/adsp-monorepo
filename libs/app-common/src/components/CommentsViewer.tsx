@@ -82,7 +82,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
         ))}
         <GoabCircularProgress variant="inline" size="small" visible={loading} />
         {!loading && canLoadMore && (
-          <GoabButton type="tertiary" onClick={onLoadMore}>
+          <GoabButton size="compact" type="text" onClick={onLoadMore}>
             Load more
           </GoabButton>
         )}
@@ -102,13 +102,19 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
         </GoabFormItem>
         <GoabButtonGroup alignment="end" mt="l">
           <GoabButton
+            size="compact"
             type="secondary"
             disabled={!draft.content}
             onClick={() => onUpdateDraft({ title: draft.title, content: null })}
           >
             Clear
           </GoabButton>
-          <GoabButton type="primary" disabled={!draft.content || commenting} onClick={() => onAddComment(draft)}>
+          <GoabButton
+            size="compact"
+            type="primary"
+            disabled={!draft.content || commenting}
+            onClick={() => onAddComment(draft)}
+          >
             {addCommentLabel}
           </GoabButton>
         </GoabButtonGroup>

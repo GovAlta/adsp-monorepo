@@ -3,21 +3,15 @@ import common from './common.page';
 const commonObj = new common();
 
 export function tenantAdminDirectURLLogin(url, id, user, password) {
-  const urlToTenantLogin = url + '/' + id + '/login?kc_idp_hint=';
+  const urlToTenantLogin = `${url}/${id}/login?kc_idp_hint=`;
+  const appOrigin = new URL(url).origin;
+  const accessOrigin = new URL(Cypress.env('accessManagementApi')).origin;
+  const isSameDomain = appOrigin === accessOrigin;
+
   cy.visit(urlToTenantLogin);
-  cy.wait(4000); // Wait all the redirects to settle down
-  // cy.url().then(function (urlString) {
-  //   if (urlString.includes('openid-connect')) {
-  //     commonObj.usernameEmailField().type(user);
-  //     commonObj.passwordField().type(password);
-  //     commonObj.loginButton().click();
-  //     cy.wait(8000); // Wait all the redirects to settle down
-  //   }
-  // });
-  // Change to checking if the login controls are present instead of checking URL
-  commonObj
-    .applicationBody()
-    .then((pageBody) => {
+
+  if (isSameDomain) {
+    commonObj.applicationBody().then((pageBody) => {
       if (
         pageBody.find('input[name="username"]').length > 0 &&
         pageBody.find('input[name="password"]').length > 0 &&
@@ -27,14 +21,23 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
         commonObj.passwordField().type(password);
         commonObj.loginButton().click();
       } else {
-        // If the login controls aren't found, we assume we are already logged in
-        cy.log('Already logged in, skipping login step.');
+        cy.log('Already logged in, skipping same-origin login step.');
       }
-    })
-    .then(() => {
-      cy.wait(6000);
-      cy.url().should('include', '/admin');
     });
+    cy.url({ timeout: 30000 }).should('include', '/admin');
+  } else {
+    cy.origin(accessOrigin, { args: { user, password } }, ({ user, password }) => {
+      cy.get('body').then(($body) => {
+        if ($body.find('input[name="username"]').length && $body.find('input[name="password"]').length) {
+          cy.get('input[name="username"]').clear();
+          cy.get('input[name="username"]').type(user);
+          cy.get('input[name="password"]').clear();
+          cy.get('input[name="password"]').type(password, { log: false });
+          cy.get('input[name="login"]').click();
+        }
+      });
+    });
+  }
 }
 
 export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
@@ -117,7 +120,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Form',
         'Comment',
         'feedback',
-        'value',
+        'value'
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();

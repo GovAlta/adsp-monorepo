@@ -126,6 +126,7 @@ export default function Apply() {
 
               <div className="button-group">
                 <GoabButton
+                  size="compact"
                   type="submit"
                   disabled={hasValidationError || submitting}
                   onClick={async () => {
@@ -159,7 +160,8 @@ export default function Apply() {
                 <p>Your submission has been received.</p>
                 <p className="submission-reference">Reference: {submission.id}</p>
                 <GoabButton
-                  type="tertiary"
+                  size="compact"
+                  type="text"
                   onClick={() => {
                     setSubmission(null);
                     setData({});

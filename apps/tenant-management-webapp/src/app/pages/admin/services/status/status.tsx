@@ -110,7 +110,7 @@ function Status(): JSX.Element {
           <Tab label="Applications" data-testid="status-applications-tab">
             <section>
               <p>
-                <GoabButton testId="add-application" onClick={() => addApplication(true)} type="primary">
+                <GoabButton size="compact" testId="add-application" onClick={() => addApplication(true)} type="primary">
                   Add application
                 </GoabButton>
               </p>
@@ -141,7 +141,7 @@ function Status(): JSX.Element {
             <section>
               <p>The webhooks are listed here</p>
               <p>
-                <GoabButton
+                <GoabButton size="compact"
                   testId="add-application"
                   onClick={() => {
                     dispatch(
@@ -178,7 +178,7 @@ function Status(): JSX.Element {
                 This service allows for posting of application notices. This allows you to communicate with your
                 customers about upcoming maintenance windows or other events
               </p>
-              <GoabButton
+              <GoabButton size="compact"
                 testId="add-notice"
                 onClick={() => {
                   setShowAddNoticeModal(true);

@@ -21,7 +21,7 @@ export const SelectTenant = (): JSX.Element => {
             <div>
               <b>Tenant Name:</b> {tenant.name} <br /> <b>Realm:</b> {tenant.realm}
             </div>
-            <GoabButton
+            <GoabButton size="compact"
               type="primary"
               testId={`${tenant.realm}-login-button`}
               onClick={() => {

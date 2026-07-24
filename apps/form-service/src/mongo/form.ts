@@ -26,16 +26,22 @@ export class MongoFormRepository implements FormRepository {
 
   find(top: number, after: string, criteria: FormCriteria): Promise<Results<FormEntity>> {
     const skip = decodeAfter(after);
-    const query: Record<string, unknown> = {};
+    const baseQuery: Record<string, unknown> = {};
 
     if (criteria?.tenantIdEquals) {
-      query.tenantId = criteria.tenantIdEquals.toString();
+      baseQuery.tenantId = criteria.tenantIdEquals.toString();
     }
 
     if (criteria?.definitionIdEquals) {
       //check for case insensitivity.
-      query.definitionId = { $regex: `${criteria?.definitionIdEquals}`, $options: 'i' };
+      baseQuery.definitionId = { $regex: `${criteria?.definitionIdEquals}`, $options: 'i' };
     }
+
+    if (criteria?.createdByIdEquals) {
+      baseQuery['createdBy.id'] = criteria.createdByIdEquals;
+    }
+
+    const query: Record<string, unknown> = { ...baseQuery };
 
     if (criteria?.statusEquals) {
       query.status = criteria.statusEquals;
@@ -51,10 +57,6 @@ export class MongoFormRepository implements FormRepository {
 
     if (criteria?.hashEquals) {
       query.hash = criteria.hashEquals;
-    }
-
-    if (criteria?.createdByIdEquals) {
-      query['createdBy.id'] = criteria.createdByIdEquals;
     }
 
     if (criteria?.anonymousApplicantEquals !== undefined) {
@@ -74,19 +76,23 @@ export class MongoFormRepository implements FormRepository {
       });
     }
 
-    return new Promise<FormEntity[]>((resolve, reject) => {
+    const results = new Promise<FormEntity[]>((resolve, reject) => {
       this.model
         .find(query, null, { lean: true })
         .sort({ created: -1 })
         .skip(skip)
         .limit(top)
         .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
-    }).then((docs) => ({
+    });
+    const total = this.model.countDocuments(baseQuery).exec();
+
+    return Promise.all([results, total]).then(([docs, total]) => ({
       results: docs,
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
         size: docs.length,
+        total,
       },
     }));
   }

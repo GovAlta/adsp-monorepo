@@ -33,8 +33,6 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
       setShowDeleteConfirmation(true);
     }
   }, [tasks]);
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  useEffect(() => {}, [tasks]);
 
   return (
     <TableDiv key="task">
@@ -58,7 +56,7 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
         heading="Queue current in use"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               type="secondary"
               testId="queue-delete-modal-cancel-btn"
               onClick={() => {

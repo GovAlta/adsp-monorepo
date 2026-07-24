@@ -42,6 +42,17 @@ switching between multiple tenant contexts without re-running `login`), it's jus
 Running `login` with no args again later is safe and cheap: if the persisted realm already has a valid cached
 token, it returns immediately — no core-realm login, no tenant listing, no prompt.
 
+## Creating a new tenant
+
+When the no-args `login` mode prompts you to pick a tenant, it also offers a `+ Create a new tenant` choice —
+but only in `dev`/`test` (never `prod`), and only for an account that can actually create one: your core-realm
+roles must include `beta-tester` or `tenant-service-admin` (the same roles tenant-management-api's `POST
+/tenants` requires), and — unless you're a `tenant-service-admin` — you must not already own a tenant (the
+tenant service allows only one per admin email). Picking it prompts for a name (letters, numbers, spaces, and
+underscores; 1-50 characters), creates the tenant, and waits for its realm to finish provisioning before
+continuing the login as that tenant. A name that's already taken re-prompts for a different name rather than
+failing outright.
+
 ## Requesting additional scopes
 
 `login` always requests the `email` scope; pass `--scope <name>` (repeatable) to additionally request one or more

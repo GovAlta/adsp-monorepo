@@ -9,7 +9,7 @@ import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import _ from 'lodash';
-import { GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
+import { GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 

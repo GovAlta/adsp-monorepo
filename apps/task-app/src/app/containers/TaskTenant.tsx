@@ -3,6 +3,7 @@ import { useScripts } from '@core-services/app-common';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useParams, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 
 import {
   AppDispatch,
@@ -88,35 +89,44 @@ export const TaskTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  const serviceDisplayName = tenant?.name || tenantName;
+  const headerTitle = serviceDisplayName
+    ? `${serviceDisplayName} - Task management`
+    : 'Alberta Digital Service Platform - Task management';
+
   return (
     <React.Fragment>
-      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
-        {userInitialized && (
-          <span>
-            <span>{user?.name}</span>
-            {user ? (
-              <GoabButton
-                mt="s"
-                mr="s"
-                type="tertiary"
-                onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
-              >
-                Sign out
-              </GoabButton>
-            ) : (
-              <GoabButton
-                mt="s"
-                mr="s"
-                type="tertiary"
-                onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
-              >
-                Sign in
-              </GoabButton>
-            )}
-          </span>
-        )}
-      </GoabAppHeader>
+      <HeaderContainer>
+        <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+        <GoabAppHeader url="/" heading={headerTitle}>
+          {userInitialized && (
+            <span>
+              <span>{user?.name}</span>
+              {user ? (
+                <GoabButton
+                  size="compact"
+                  mt="s"
+                  mr="s"
+                  type="text"
+                  onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
+                >
+                  Sign out
+                </GoabButton>
+              ) : (
+                <GoabButton
+                  size="compact"
+                  mt="s"
+                  mr="s"
+                  type="text"
+                  onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+                >
+                  Sign in
+                </GoabButton>
+              )}
+            </span>
+          )}
+        </GoabAppHeader>
+      </HeaderContainer>
       <FeedbackNotification />
       <main>
         <AuthorizeUser>
@@ -126,3 +136,10 @@ export const TaskTenant = () => {
     </React.Fragment>
   );
 };
+
+const HeaderContainer = styled.div`
+  --goa-app-header-typography-service-name: var(--goa-font-weight-medium) var(--goa-font-size-5) /
+    var(--goa-line-height-3) var(--goa-font-family-sans);
+  --goa-app-header-typography-service-name-mobile: var(--goa-font-weight-medium) var(--goa-font-size-3) /
+    var(--goa-line-height-1) var(--goa-font-family-sans);
+`;

@@ -21,6 +21,12 @@
         "*.ts",
         "*.tsx"
       ],
+      "parserOptions": {
+        "project": [
+          "libs/jsonforms-components/tsconfig.lib.json",
+          "libs/jsonforms-components/tsconfig.spec.json"
+        ]
+      },
       "rules": {}
     },
     {
@@ -41,6 +47,7 @@
           {
             "ignoredDependencies": [
               "@abgov/react-components",
+              "@abgov/react-components-ds1",
               "@abgov/react-components-new"
             ],
             "ignoredFiles": [

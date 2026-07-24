@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
 import { GoabBadge } from '@abgov/react-components';
@@ -72,8 +72,6 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
     applications: state.serviceStatus.applications,
   }));
   const { isMenuOpen, clickMenuFn } = props;
-  // eslint-disable-next-line
-  useEffect(() => {}, [applications]);
 
   const { notice } = props;
   const CardHeader = (props: CardHeaderProps): JSX.Element => {
@@ -88,6 +86,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               type="information"
               testId="notice-card-mode"
               icon={false}
+              emphasis="subtle"
             />
           )}
           {props.mode === 'published' && (
@@ -98,6 +97,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               type="success"
               testId="notice-card-mode"
               icon={false}
+              emphasis="subtle"
             />
           )}
           {props.mode === 'archived' && (
@@ -106,7 +106,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               content={'Archived'}
               data-testid="notice-card-mode"
               testId="notice-card-mode"
-              type="midtone"
+              type="default"
               icon={false}
             />
           )}

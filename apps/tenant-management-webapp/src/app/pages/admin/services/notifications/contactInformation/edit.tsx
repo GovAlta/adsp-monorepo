@@ -33,7 +33,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
     const formErrorList = Object.assign(
       {},
       emailError(contactInformation.contactEmail),
-      smsError(contactInformation.phoneNumber)
+      smsError(contactInformation.phoneNumber),
     );
     if (Object.keys(formErrorList).length === 0) {
       onSave(contactInformation);
@@ -58,17 +58,17 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
         heading="Edit contact information"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+            <GoabButton size="compact" testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
             </GoabButton>
-            <GoabButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
+            <GoabButton size="compact" type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
               Save
             </GoabButton>
           </GoabButtonGroup>
         }
       >
         <ErrorWrapper>
-          <GoabFormItem error={formErrors?.['email']} label="Email">
+          <GoabFormItem error={formErrors?.['email']} label="Email" mb="s">
             <GoabInput
               type="email"
               name="email"
@@ -81,7 +81,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
               }}
             />
           </GoabFormItem>
-          <GoabFormItem error={formErrors?.['sms']} label="Phone number" requirement="optional">
+          <GoabFormItem error={formErrors?.['sms']} label="Phone number" requirement="optional" mb="s">
             <GoabInput
               type="tel"
               aria-label="sms"

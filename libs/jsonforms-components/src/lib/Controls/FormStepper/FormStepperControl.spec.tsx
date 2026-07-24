@@ -240,7 +240,7 @@ const { customDispatch, ...stepperBasePropsNoDispatch } = stepperBaseProps;
 const getForm = (
   data: object,
   uiSchema: UISchemaElement = categorization,
-  componentProps: object | undefined = undefined
+  componentProps: object | undefined = undefined,
 ): JSX.Element => {
   combineOptions(uiSchema, componentProps);
 
@@ -261,13 +261,13 @@ afterEach(() => {
 describe('Form Stepper Control', () => {
   it('can render an initial Categorization', () => {
     const renderer = render(
-      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />,
     );
   });
 
   it('can render a nested Categorization', () => {
     const renderer = render(
-      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />,
     );
     const step0 = renderer.getByTestId('step_0-content');
     expect(step0).toBeVisible();
@@ -278,7 +278,7 @@ describe('Form Stepper Control', () => {
 
   it('can input a text value', () => {
     const { baseElement } = render(
-      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />,
     );
     const lastName = baseElement.querySelector("goa-input[testId='last-name-input']");
     expect(lastName).toBeInTheDocument();
@@ -296,7 +296,7 @@ describe('Form Stepper Control', () => {
       <JsonFormsStepperContextProvider
         StepperProps={stepperBaseProps}
         children={getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } })}
-      />
+      />,
     );
     const lastName = baseElement.querySelector("goa-input[testId='last-name-input']");
     expect(lastName?.getAttribute('value')).toBe('Bing');
@@ -304,12 +304,12 @@ describe('Form Stepper Control', () => {
     expect(firstName?.getAttribute('value')).toBe('Bob');
   });
 
-  it('will recognize status as not-started because its unvisited', () => {
+  it('will recognize status as not-started because stepper context data is unvisited', () => {
     const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={stepperBaseProps}
         children={getForm({ ...formData, name: { lastName: 'Bing' } })}
-      />
+      />,
     );
 
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
@@ -317,22 +317,22 @@ describe('Form Stepper Control', () => {
     expect(step1!.getAttribute('status')).toBe(null);
   });
 
-  it('will recognize status as not-started because unvisited', () => {
+  it('will recognize status as incomplete for populated name step state', () => {
     const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } } }}
         children={getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } })}
-      />
+      />,
     );
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe(null);
+    expect(step1!.getAttribute('status')).toBe('incomplete');
   });
 
   describe('step navigation', () => {
     it('can navigate between steps with the nav buttons', async () => {
       const { container, baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
+        <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />,
       );
       window.HTMLElement.prototype.scrollIntoView = function () {};
       const stepperHeader = container.querySelector("goa-form-stepper[testId='form-stepper-headers-stepper-test']");
@@ -351,7 +351,7 @@ describe('Form Stepper Control', () => {
 
     it('will hide Prev Nav button on 1st step', () => {
       const { baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
+        <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />,
       );
       const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
 
@@ -366,7 +366,7 @@ describe('Form Stepper Control', () => {
       // eslint-disable-next-line
       newStepperProps.activeId = 1;
       const { baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getForm(formData)} />
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getForm(formData)} />,
       );
 
       const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
@@ -390,7 +390,7 @@ describe('Form Stepper Control', () => {
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(newStepperProps.data, categorizationWithDisabledAddressCategory)}
-        />
+        />,
       );
 
       const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
@@ -414,7 +414,7 @@ describe('Form Stepper Control', () => {
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
-        />
+        />,
       );
     });
 
@@ -428,7 +428,7 @@ describe('Form Stepper Control', () => {
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
-        />
+        />,
       );
 
       const nextButton = renderer.baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
@@ -450,7 +450,7 @@ describe('Form Stepper Control', () => {
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
-        />
+        />,
       );
 
       const toc = renderer.getByTestId('table-of-contents');
@@ -473,7 +473,7 @@ describe('Form Stepper Control', () => {
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
-        />
+        />,
       );
 
       const toc = renderer.getByTestId('table-of-contents');
@@ -494,7 +494,7 @@ describe('Form Stepper Control', () => {
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
-        />
+        />,
       );
     });
   });
@@ -514,7 +514,7 @@ describe('Form Stepper Control', () => {
             name: { firstName: 'Bob', lastName: 'Bing' },
             address: { street: 'Sesame', city: 'Seattle' },
           })}
-        />
+        />,
       );
       const submitBtn = baseElement.querySelector("goa-button[testId='stepper-submit-btn']");
 
@@ -550,9 +550,9 @@ describe('Form Stepper Control', () => {
               address: { street: 'Sesame', city: 'Seattle' },
             },
             categorization,
-            componentProps
+            componentProps,
           )}
-        />
+        />,
       );
       window.HTMLElement.prototype.scrollIntoView = function () {};
       const testNext = screen.getByText('testNext');
@@ -625,7 +625,10 @@ describe('Form Stepper Control', () => {
             data: { name: { firstName: 'Bob', lastName: 'Bing' }, address: { street: 'Sesame', city: 'Seattle' } },
             activeId: 2,
           }}
-          children={getForm({ name: { firstName: 'Bob', lastName: 'Bing' }, address: { street: 'Sesame', city: 'Seattle' } })}
+          children={getForm({
+            name: { firstName: 'Bob', lastName: 'Bing' },
+            address: { street: 'Sesame', city: 'Seattle' },
+          })}
         />,
       );
       expect(container).toBeInTheDocument();

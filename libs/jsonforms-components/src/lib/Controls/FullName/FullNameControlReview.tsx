@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { GoabButton, GoabFormItem } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
@@ -26,8 +26,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
           </ReviewLabel>
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
-              type="tertiary"
-              size="compact"
+              type="text"
               onClick={() => context?.goToPage(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >

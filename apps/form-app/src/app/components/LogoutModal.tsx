@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, JSX } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components-ds1';
 import { clearInterval, setInterval } from 'worker-timers';
 import { getKeycloakExpiry } from '../state';
 import { logoutUser, tenantSelector, AppDispatch, getAccessToken } from '../state';

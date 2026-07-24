@@ -6,7 +6,7 @@ function fallbackRender({ error, resetErrorBoundary }) {
     <div role="alert">
       <GoabBadge type="emergency" content="Unexpected error in JSON Form" icon={false} />
       <pre>{error.message}</pre>
-      <GoabButton
+      <GoabButton size="compact"
         onClick={() => {
           resetErrorBoundary();
         }}

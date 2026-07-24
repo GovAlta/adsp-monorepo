@@ -24,7 +24,7 @@ export const SharePointOverview: FunctionComponent = () => {
           </div>
         }
         addButton={
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-connection-btn"
             onClick={() => {
               setOpenAddConnection(true);

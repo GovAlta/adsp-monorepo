@@ -32,7 +32,8 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
             <div className="desktop">
               {displayName && <div className={styles.signoutBadgeWrapper}>{displayName}</div>}
               <GoabButton
-                type="tertiary"
+                size="compact"
+                type="text"
                 testId="sign-out-btn"
                 onClick={() =>
                   (async () => {
@@ -53,7 +54,7 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
                           const realm = state?.session?.realm || kc.realm || 'core';
                           const auth = await getOrCreateKeycloakAuth(
                             { url: kc.url, clientId: kc.clientId, realm },
-                            realm
+                            realm,
                           );
                           await auth.logout();
                         }
@@ -71,7 +72,8 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
 
           {!authenticated && !admin && (
             <GoabButton
-              type="tertiary"
+              size="compact"
+              type="text"
               testId="sign-ing-btn"
               onClick={() => {
                 const idpHint = getIdpHint();
@@ -114,10 +116,12 @@ function AppHeader({
   tenant,
   tenantName,
 }: HeaderProps): JSX.Element {
+  const headerServiceName = serviceName.trim() || 'Form Management';
+
   return (
     <div className={styles.headerContainer}>
-      <GoabMicrositeHeader type="alpha"></GoabMicrositeHeader>
-      <GoabAppHeader url={tenantName ? `/${tenantName}` : '/'} heading={serviceName}>
+      <GoabMicrositeHeader type="alpha" feedbackUrl="#" feedbackUrlTarget="self" headerUrlTarget="self" />
+      <GoabAppHeader url={tenantName ? `/${tenantName}` : '/'} heading={headerServiceName}>
         <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} userInfo={userInfo} tenant={tenant} />
       </GoabAppHeader>
     </div>

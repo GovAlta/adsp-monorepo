@@ -12,7 +12,7 @@ import {
   RequiredTextLabel,
   NoneGivenText,
 } from '../Inputs/style-component';
-import { GoabButton, GoabFormItem } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
 import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 
@@ -141,7 +141,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
             </ReviewLabel>
             {showButton && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
               <GoabButton
-                type="tertiary"
+                type="text"
                 size="compact"
                 onClick={() => formStepperCtx?.goToPage(stepId, targetScope)}
                 testId="address-change-btn"
@@ -167,7 +167,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
             <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
             {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
               <GoabButton
-                type="tertiary"
+                type="text"
                 size="compact"
                 onClick={() => formStepperCtx?.goToPage(stepId, targetScope)}
                 testId="address-change-btn"

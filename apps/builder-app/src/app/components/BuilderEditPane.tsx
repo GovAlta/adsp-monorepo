@@ -324,7 +324,7 @@ export const BuilderEditPane = ({
                 <PanelLabel>Project ID</PanelLabel>
                 <ProjectIdRow>
                   <PanelValue>{threadId || 'Pending'}</PanelValue>
-                  <GoabButton type="tertiary" size="compact" disabled={!threadId} onClick={handleCopyLink}>
+                  <GoabButton type="text" size="compact" disabled={!threadId} onClick={handleCopyLink}>
                     {copyLinkLabel}
                   </GoabButton>
                 </ProjectIdRow>
@@ -476,7 +476,7 @@ export const BuilderEditPane = ({
                             </div>
                           </GoabFormItem>
                           <GoabButtonGroup alignment="end">
-                            <GoabButton type="tertiary" size="compact" onClick={() => setShowTarballForm(false)}>
+                            <GoabButton type="text" size="compact" onClick={() => setShowTarballForm(false)}>
                               Cancel
                             </GoabButton>
                             <GoabButton

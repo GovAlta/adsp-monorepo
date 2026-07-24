@@ -50,7 +50,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
           utilized by services consuming events. For example, notification template configuration can validate template
           variables as matching the payload from a triggering event.
         </p>
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-definition"
           onClick={() => {
             setActiveEdit(true);

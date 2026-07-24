@@ -1,7 +1,7 @@
 import React from 'react';
 import { ControlProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabCallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components-ds1';
 import { Visible } from '../util';
 import { GoabCalloutSize, GoabCalloutType } from '@abgov/ui-components-common';
 import { sanitizeHtml } from '../common/sanitize';

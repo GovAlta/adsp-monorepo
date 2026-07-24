@@ -35,9 +35,6 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
     return state?.session?.elementIndicator;
   });
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [elementIndicator]);
-
   return (
     <>
       <tr key={service.urn}>
@@ -63,7 +60,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
                         type: AddModalType,
                         id: service.urn,
                         isOpen: true,
-                      })
+                      }),
                     );
                   }}
                   testId={`directory-add-${service.service}`}
@@ -88,7 +85,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
                         type: EditModalType,
                         id: service.urn,
                         isOpen: true,
-                      })
+                      }),
                     );
                   }}
                 />
@@ -105,7 +102,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
                         id: service.urn,
                         type: DeleteModalType,
                         isOpen: true,
-                      })
+                      }),
                     );
                   }}
                 />

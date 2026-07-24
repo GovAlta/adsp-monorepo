@@ -9,7 +9,7 @@ import {
   GoabIconButton,
   GoabInput,
   GoabTable,
-} from '@abgov/react-components';
+} from '@abgov/react-components-ds1';
 import {
   ControlElement,
   JsonFormsCellRendererRegistryEntry,

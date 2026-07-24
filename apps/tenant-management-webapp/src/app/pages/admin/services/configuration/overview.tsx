@@ -22,7 +22,7 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
       testId="configuration-service-overview"
       description={description}
       addButton={
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-definition"
           disabled={disabled}
           onClick={() => {

@@ -28,7 +28,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     private logger: Logger,
     private keycloakRootUrl: string,
     private managementRealm: string,
-    private createAdminClient: () => Promise<KeycloakAdminClient>
+    private createAdminClient: () => Promise<KeycloakAdminClient>,
   ) {}
 
   private brokerClientName(realm: string): string {
@@ -39,7 +39,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     client: KeycloakAdminClient,
     registeredClients: ServiceClient[],
     realm: string,
-    tenantAdminRole: RoleRepresentation
+    tenantAdminRole: RoleRepresentation,
   ) {
     this.logger.debug(`Creating tenant admin aggregate role for realm '${realm}'...`, LOG_CONTEXT);
 
@@ -67,7 +67,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
         });
         this.logger.debug(
           `Found ${registeredClient.serviceId} service client role ${adminRole?.role}: ${serviceClientRole.id}`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
         tenantAdminRoles.push(serviceClientRole);
       }
@@ -82,7 +82,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     realm: string,
     email: string,
     tenantServiceClientId: string,
-    tenantAdminRole: RoleRepresentation
+    tenantAdminRole: RoleRepresentation,
   ) {
     this.logger.info(`Creating admin user ${email} for realm '${realm}'...`, LOG_CONTEXT);
     const username = email;
@@ -184,7 +184,25 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
     this.logger.debug(
       `Granted manage-clients/manage-users scope mapping to '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope.`,
-      LOG_CONTEXT
+      LOG_CONTEXT,
+    );
+  }
+
+  private async createAdspCliAdminScope(client: KeycloakAdminClient, realm: string): Promise<void> {
+    await client.clientScopes.create({ realm, ...createAdspCliAdminClientScopeConfig() });
+
+    const adminScope = await client.clientScopes.findOneByName({ realm, name: ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME });
+    const adspCliClient = (await client.clients.find({ realm, clientId: 'adsp-cli' }))[0];
+
+    await client.clients.addOptionalClientScope({
+      realm,
+      id: adspCliClient.id,
+      clientScopeId: adminScope.id,
+    });
+
+    this.logger.debug(
+      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and assigned to adsp-cli as optional.`,
+      LOG_CONTEXT,
     );
   }
 
@@ -193,7 +211,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     clientSecret: string,
     clientId: string,
     flowAlias: string,
-    realm: string
+    realm: string,
   ): Promise<{ id: string }> {
     this.logger.debug(`Creating core identity provider for realm '${realm}...`, LOG_CONTEXT);
 
@@ -244,7 +262,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     client: KeycloakAdminClient,
     realm: string,
     secret: string,
-    clientId: string
+    clientId: string,
   ): Promise<{ id: string }> {
     this.logger.debug(`Creating IdP broker client in core realm for ${realm} realm...`, LOG_CONTEXT);
 
@@ -345,7 +363,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     }
     this.logger.info(
       `Validated new tenant realm '${realm}' and associated broker client '${clientName}'.`,
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
   }
 
@@ -368,7 +386,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     const adspCliPublicClientConfig = createAdspCliPublicClientConfig(adspCliPublicClientId);
 
     const clients = serviceClients.map((registeredClient) =>
-      createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
+      createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles),
     );
 
     const realmConfig: RealmRepresentation = {
@@ -391,7 +409,6 @@ export class KeycloakRealmServiceImpl implements RealmService {
       clientScopeMappings: {
         'adsp-cli': ADSP_CLI_CLIENT_SCOPE_MAPPINGS,
       },
-      clientScopes: [createAdspCliAdminClientScopeConfig()],
       enabled: true,
     };
 
@@ -420,6 +437,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     });
     this.logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`, LOG_CONTEXT);
 
+    await this.createAdspCliAdminScope(client, realm);
     await this.createTenantAdminComposite(client, serviceClients, realm, tenantAdminRole);
     await this.grantAdspCliAdminScopeMapping(client, realm);
 

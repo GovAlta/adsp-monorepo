@@ -59,7 +59,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
     'id',
     badCharsCheckNoSpace,
     wordMaxLengthCheck(50, 'ID'),
-    isNotEmptyCheck('id')
+    isNotEmptyCheck('id'),
   )
     // .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Event'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'), isNotEmptyCheck('description'))
@@ -75,8 +75,9 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
       open={open}
       heading={`${initialValue?.id ? 'Edit' : 'Add'} API tool`}
       actions={
-        <GoabButtonGroup alignment="end">
+        <GoabButtonGroup alignment="end" mt="m">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="api-tool-modal-cancel"
             onClick={() => {
@@ -88,6 +89,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
           </GoabButton>
 
           <GoabButton
+            size="compact"
             type="primary"
             testId="api-tool-modal-save"
             disabled={!tool.id || validators.haveErrors()}
@@ -150,7 +152,9 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
             testId="api-tool-modal-method-input"
             ariaLabel="method"
             value={tool.method}
-            onChange={(detail: GoabDropdownOnChangeDetail) => setTool({ ...tool, method: detail.value as ApiToolMethods })}
+            onChange={(detail: GoabDropdownOnChangeDetail) =>
+              setTool({ ...tool, method: detail.value as ApiToolMethods })
+            }
           >
             <GoabDropdownItem value="GET" />
             <GoabDropdownItem value="POST" />

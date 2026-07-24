@@ -38,7 +38,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   return (
     <section>
       <FeedbackMetrics />
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-feedback"
         onClick={() => {
           setActiveEdit(true);

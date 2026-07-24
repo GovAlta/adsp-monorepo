@@ -36,14 +36,14 @@ export const EventStreams = (): JSX.Element => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line
-  useEffect(() => {}, [tenantStreams]);
+  //useEffect(() => {}, [tenantStreams]);
 
   return (
     <section>
       <PageIndicator />
       {!indicator.show && (
         <>
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-stream"
             onClick={() => {
               dispatch(
@@ -51,7 +51,7 @@ export const EventStreams = (): JSX.Element => {
                   type: AddModalType,
                   id: null,
                   isOpen: true,
-                })
+                }),
               );
             }}
           >
@@ -82,7 +82,7 @@ export const EventStreams = (): JSX.Element => {
                     type: EditModalType,
                     id: streamId,
                     isOpen: true,
-                  })
+                  }),
                 );
               }}
               streams={{ ...tenantStreams }}

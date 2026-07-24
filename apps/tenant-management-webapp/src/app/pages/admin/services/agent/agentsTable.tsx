@@ -5,6 +5,7 @@ import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { AgentConfiguration } from '@store/agent/model';
 import { AgentTableItem } from './agentsTableItem';
+import styled from 'styled-components';
 
 export interface AgentsTableProps {
   agents: AgentConfiguration[];
@@ -20,7 +21,7 @@ export const AgentsTable: FunctionComponent<AgentsTableProps> = ({ agents, onEdi
       <thead data-testid="agents-table-header">
         <tr>
           <th data-testid="agents-table-header-name">Agent</th>
-          <th id="agents-action" data-testid="agents-table-header-action">
+          <th id="agents-action" data-testid="agents-table-header-action" style={{ textAlign: 'right' }}>
             Actions
           </th>
         </tr>

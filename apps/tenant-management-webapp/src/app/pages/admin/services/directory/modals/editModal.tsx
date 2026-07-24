@@ -16,11 +16,7 @@ import { EditModalType, AddModalType } from '@store/directory/models';
 import { selectModalStateByType } from '@store/session/selectors';
 import { ResetModalState } from '@store/session/actions';
 import { selectEditAddDirectory } from '@store/directory/selectors';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 const duplicateServiceCheck = (directory: Service[], tenantName: string, isNew: boolean): Validator => {
   return (input: Service) => {
@@ -43,7 +39,7 @@ const duplicateApiCheck = (directory: Service[], tenantName: string, isNew: bool
         ? directory
         : directory.slice(0).filter((e) => e.api !== input.api && e.service === input.service);
       const duplicate = dir.find(
-        (s) => s.namespace === tenantName && s.service === input.service && s.api === input.api
+        (s) => s.namespace === tenantName && s.service === input.service && s.api === input.api,
       );
       return duplicate ? 'Api duplicate, please use another' : '';
     }
@@ -74,7 +70,7 @@ export const DirectoryModal = (): JSX.Element => {
     'service',
     lowerCaseCheck,
     checkServiceExists,
-    wordLengthCheck
+    wordLengthCheck,
   )
     .add('api', 'api', lowerCaseCheck)
     .add('url', 'url', checkForBadUrl, checkUrlExists)
@@ -95,6 +91,7 @@ export const DirectoryModal = (): JSX.Element => {
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="directory-modal-cancel"
             onClick={() => {
@@ -105,6 +102,7 @@ export const DirectoryModal = (): JSX.Element => {
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             disabled={!entry.service || !entry.url || validators.haveErrors()}
             testId="directory-modal-save"
@@ -142,7 +140,7 @@ export const DirectoryModal = (): JSX.Element => {
         </GoabButtonGroup>
       }
     >
-      <GoabFormItem error={errors?.['service']} label="Service">
+      <GoabFormItem error={errors?.['service']} label="Service" mb="s">
         <GoabInput
           type="text"
           name="service"
@@ -157,7 +155,7 @@ export const DirectoryModal = (): JSX.Element => {
           }}
         />
       </GoabFormItem>
-      <GoabFormItem error={errors?.['api']} label="API">
+      <GoabFormItem error={errors?.['api']} label="API" mb="s">
         <GoabInput
           type="text"
           name="api"

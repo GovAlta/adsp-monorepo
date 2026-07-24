@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoabBadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components-ds1';
 import { CompletionStatus, BadgeWrapper, CompletionTextHeader, Bar, BarTop } from './styled-components';
 
 export const ApplicationStatus = ({

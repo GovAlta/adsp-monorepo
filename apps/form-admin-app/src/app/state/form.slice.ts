@@ -105,6 +105,11 @@ export interface FormState {
     forms: string[];
     submissions: string[];
   };
+  resultTotals: {
+    definitions: number;
+    forms: number;
+    submissions: number;
+  };
   definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
   submissionCriteria: FormSubmissionCriteria;
@@ -140,6 +145,11 @@ export const initialFormState: FormState = {
     definitions: [],
     forms: [],
     submissions: [],
+  },
+  resultTotals: {
+    definitions: 0,
+    forms: 0,
+    submissions: 0,
   },
   definitionCriteria: getDefaultDefinitionCriteria(),
   formCriteria: getDefaultFormCriteria(),
@@ -886,6 +896,8 @@ const formSlice = createSlice({
         if (state.selectedDefinition !== meta.arg) {
           state.results.forms = [];
           state.results.submissions = [];
+          state.resultTotals.forms = 0;
+          state.resultTotals.submissions = 0;
           state.next.forms = null;
           state.next.submissions = null;
           state.export = { forms: {}, submissions: {} };
@@ -910,10 +922,14 @@ const formSlice = createSlice({
           (definitions, definition) => ({ ...definitions, [definition.id]: definition }),
           state.definitions as Record<string, FormDefinition>,
         );
-        state.results.definitions = [
+        const results = [
           ...(payload.page.after ? state.results.definitions : []),
           ...payload.results.map((result) => result.id),
         ];
+        state.results.definitions = results;
+        if (payload.page.total !== undefined) {
+          state.resultTotals.definitions = payload.page.total;
+        }
         state.next.definitions = payload.page.next;
       })
       .addCase(loadDefinitions.rejected, (state) => {
@@ -967,10 +983,14 @@ const formSlice = createSlice({
           (results, form) => ({ ...results, [form.id]: form }),
           state.forms as Record<string, Form>,
         );
-        state.results.forms = [
+        const results = [
           ...(payload.page.after ? state.results.forms : []),
           ...payload.results.map((result) => result.id),
         ];
+        state.results.forms = results;
+        if (payload.page.total !== undefined) {
+          state.resultTotals.forms = payload.page.total;
+        }
         state.next.forms = payload.page.next;
       })
       .addCase(findForms.rejected, (state) => {
@@ -985,10 +1005,14 @@ const formSlice = createSlice({
           (results, form) => ({ ...results, [form.id]: form }),
           state.submissions as Record<string, FormSubmission>,
         );
-        state.results.submissions = [
+        const results = [
           ...(payload.page.after ? state.results.submissions : []),
           ...payload.results.map((result) => result.id),
         ];
+        state.results.submissions = results;
+        if (payload.page.total !== undefined) {
+          state.resultTotals.submissions = payload.page.total;
+        }
         state.next.submissions = payload.page.next;
       })
       .addCase(findSubmissions.rejected, (state) => {
@@ -1107,6 +1131,11 @@ export const dataValuesSelector = createSelector(
 
 export const selectedDataValuesSelector = createSelector(dataValuesSelector, (values) =>
   values.filter(({ selected }) => !!selected),
+);
+
+export const formResultTotalsSelector = createSelector(
+  (state: AppState) => state.form.resultTotals,
+  (resultTotals) => resultTotals,
 );
 
 export const formsSelector = createSelector(

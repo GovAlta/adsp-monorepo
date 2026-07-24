@@ -43,7 +43,6 @@ import { getEventDefinitions } from '@store/event/actions';
 import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
 import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import useWindowDimensions from '@lib/useWindowDimensions';
 import { NotificationBanner } from 'app/notificationBanner';
 export interface ScriptEditorProps {
   name: string;
@@ -108,7 +107,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
   const roles = useSelector(selectRoleList);
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1],
   );
   useEffect(() => {
     if (monaco) {
@@ -280,8 +279,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
 
   const ClientRole = ({ roleNames, clientId }) => {
     const runnerRoles = types[0];
@@ -356,6 +353,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   });
                 }}
                 ariaLabel={`script-use-service-account-checkbox`}
+                mb="m"
               />
             </div>
             <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
@@ -402,7 +400,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           </div>
           <EditScriptActions>
             <div>
-              <GoabButton
+              <GoabButton size="compact"
                 onClick={() => {
                   setCustomIndicator(true);
                   updateScript();
@@ -416,7 +414,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 Save
               </GoabButton>
             </div>
-            <GoabButton
+            <GoabButton size="compact"
               onClick={() => {
                 if (hasChanged()) {
                   setSaveModal(true);
@@ -472,7 +470,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </GoabFormItem>
               </div>
               <div className="execute-button">
-                <GoabButton
+                <GoabButton size="compact"
                   onClick={() => {
                     const testItem: ScriptItem = {
                       testInputs: {

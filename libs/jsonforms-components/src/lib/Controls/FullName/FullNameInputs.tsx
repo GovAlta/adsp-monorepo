@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GoabFormItem, GoabInput, GoabGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabGrid } from '@abgov/react-components-ds1';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 interface Data {

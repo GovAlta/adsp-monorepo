@@ -349,14 +349,16 @@ describe('form router', () => {
       const next = jest.fn();
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
-      axiosMock.get.mockResolvedValueOnce({ data: { page: {}, results: [{ latest: { configuration: definition } }] } });
+      axiosMock.get.mockResolvedValueOnce({
+        data: { page: { total: 1 }, results: [{ latest: { configuration: definition } }] },
+      });
 
       const handler = getFormDefinitions(directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
-          page: expect.any(Object),
+          page: expect.objectContaining({ total: 1 }),
           results: expect.arrayContaining([expect.objectContaining({ id: definition.id })]),
         }),
       );

@@ -99,7 +99,49 @@ describe('MongoConfigurationRepository', () => {
               'configuration.ministry': { $regex: 'test-ministry', $options: 'i' },
             }),
           }),
-        ])
+        ]),
+      );
+    });
+
+    it('returns total count in page metadata', async () => {
+      const criteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+      };
+
+      const aggregateMock = {
+        exec: jest.fn().mockResolvedValue([
+          {
+            results: [
+              {
+                _id: { namespace: 'test-namespace', name: 'test-name', tenant: criteria.tenantIdEquals.toString() },
+                revision: 1,
+                configuration: {},
+              },
+            ],
+            page: [{ total: 25 }],
+          },
+        ]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      const result = await repository.find(criteria);
+
+      expect(result.page).toEqual(
+        expect.objectContaining({
+          size: 1,
+          total: 25,
+        }),
+      );
+      expect(revisionModelMock.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $facet: {
+              results: [{ $skip: 0 }, { $limit: 10 }],
+              page: [{ $count: 'total' }],
+            },
+          }),
+        ]),
       );
     });
 
@@ -131,7 +173,7 @@ describe('MongoConfigurationRepository', () => {
               ]),
             },
           }),
-        ])
+        ]),
       );
     });
 
@@ -163,7 +205,7 @@ describe('MongoConfigurationRepository', () => {
               },
             },
           }),
-        ])
+        ]),
       );
 
       // Date criteria should not leak into the generic configuration.* matching.
@@ -172,7 +214,7 @@ describe('MongoConfigurationRepository', () => {
           expect.objectContaining({
             $match: expect.objectContaining({ 'configuration.createDateAfter': expect.anything() }),
           }),
-        ])
+        ]),
       );
     });
 
@@ -195,7 +237,7 @@ describe('MongoConfigurationRepository', () => {
       // Should not contain the injected key
       const calls = revisionModelMock.aggregate.mock.calls[0][0];
       const matchStage = calls.find(
-        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.$where']
+        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.$where'],
       );
       expect(matchStage).toBeUndefined();
     });
@@ -219,7 +261,7 @@ describe('MongoConfigurationRepository', () => {
       // Should not contain the injected object value
       const calls = revisionModelMock.aggregate.mock.calls[0][0];
       const matchStage = calls.find(
-        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.password']
+        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.password'],
       );
       expect(matchStage).toBeUndefined();
     });
@@ -247,7 +289,7 @@ describe('MongoConfigurationRepository', () => {
               'configuration.name': { $regex: '\\.\\*', $options: 'i' },
             }),
           }),
-        ])
+        ]),
       );
     });
 
@@ -270,7 +312,7 @@ describe('MongoConfigurationRepository', () => {
       // Should not contain the array value key
       const calls = revisionModelMock.aggregate.mock.calls[0][0];
       const matchStage = calls.find(
-        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.ministry']
+        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.ministry'],
       );
       expect(matchStage).toBeUndefined();
     });
@@ -298,7 +340,7 @@ describe('MongoConfigurationRepository', () => {
               'configuration.metadata.author': { $regex: 'me', $options: 'i' },
             }),
           }),
-        ])
+        ]),
       );
     });
 
@@ -357,7 +399,7 @@ describe('MongoConfigurationRepository', () => {
               'configuration.isActive': true,
             }),
           }),
-        ])
+        ]),
       );
     });
 
@@ -387,7 +429,7 @@ describe('MongoConfigurationRepository', () => {
               'configuration.description': { $regex: escaped, $options: 'i' },
             }),
           }),
-        ])
+        ]),
       );
     });
   });
@@ -411,7 +453,7 @@ describe('MongoConfigurationRepository', () => {
       expect(revisionModelMock.find).toHaveBeenCalledWith(
         expect.objectContaining({ namespace, name, tenant: tenantId.toString() }),
         null,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -434,7 +476,7 @@ describe('MongoConfigurationRepository', () => {
 
       expect(result).toBe(true);
       expect(revisionModelMock.deleteMany).toHaveBeenCalledWith(
-        expect.objectContaining({ namespace, name, tenant: tenantId.toString() })
+        expect.objectContaining({ namespace, name, tenant: tenantId.toString() }),
       );
     });
   });
@@ -457,7 +499,7 @@ describe('MongoConfigurationRepository', () => {
         exec: jest
           .fn()
           .mockImplementation((cb) =>
-            cb(null, [{ revision: 1, configuration: {}, created: new Date(), lastUpdated: new Date() }])
+            cb(null, [{ revision: 1, configuration: {}, created: new Date(), lastUpdated: new Date() }]),
           ),
       };
       revisionModelMock.find.mockReturnValue(findMock);
@@ -468,7 +510,7 @@ describe('MongoConfigurationRepository', () => {
       expect(revisionModelMock.find).toHaveBeenCalledWith(
         expect.objectContaining({ namespace, name, tenant: tenantId.toString() }),
         null,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -492,7 +534,7 @@ describe('MongoConfigurationRepository', () => {
         exec: jest
           .fn()
           .mockImplementation((cb) =>
-            cb(null, { revision: 1, configuration: {}, created: new Date(), lastUpdated: new Date() })
+            cb(null, { revision: 1, configuration: {}, created: new Date(), lastUpdated: new Date() }),
           ),
       };
       revisionModelMock.findOneAndUpdate.mockReturnValue(findOneAndUpdateMock);
@@ -503,7 +545,7 @@ describe('MongoConfigurationRepository', () => {
       expect(revisionModelMock.findOneAndUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ namespace, name, revision: 1, tenant: tenantId.toString() }),
         expect.any(Object),
-        expect.objectContaining({ upsert: true, new: true, lean: true })
+        expect.objectContaining({ upsert: true, new: true, lean: true }),
       );
     });
   });
@@ -646,7 +688,7 @@ describe('MongoConfigurationRepository', () => {
               tenant: { $exists: false },
             }),
           }),
-        ])
+        ]),
       );
     });
 
@@ -671,7 +713,7 @@ describe('MongoConfigurationRepository', () => {
               'configuration.registeredId': 'test-registered-id',
             }),
           }),
-        ])
+        ]),
       );
     });
   });
@@ -693,7 +735,7 @@ describe('MongoConfigurationRepository', () => {
       expect(revisionModelMock.find).toHaveBeenCalledWith(
         expect.objectContaining({ namespace, name, tenant: { $exists: false } }),
         null,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -720,7 +762,7 @@ describe('MongoConfigurationRepository', () => {
       expect(revisionModelMock.find).toHaveBeenCalledWith(
         expect.objectContaining({ namespace, name }),
         null,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -752,7 +794,7 @@ describe('MongoConfigurationRepository', () => {
           'configuration.numberVal': 123,
         }),
         null,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

@@ -19,7 +19,7 @@ export const SignInError = (): JSX.Element => {
           </li>
         </ul>
 
-        <GoabButton
+        <GoabButton size="compact"
           type="secondary"
           onClick={() => {
             setShowModel(true);
@@ -53,7 +53,7 @@ export const SignInError = (): JSX.Element => {
         maxWidth="640px"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               testId="add-edit-cache-cancel"
               type="primary"
               onClick={() => {

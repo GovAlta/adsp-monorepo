@@ -148,6 +148,7 @@ export const TopicsList = (): JSX.Element => {
         <div>
           <ButtonPadding>
             <GoabButton
+              size="compact"
               testId="add-topic-btn"
               onClick={() => {
                 setModalType('new');
@@ -188,7 +189,13 @@ export const TopicsList = (): JSX.Element => {
           )}
           {next && (
             <LoadMoreWrapper>
-              <GoabButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
+              <GoabButton
+                size="compact"
+                testId="comment-load-more-btn"
+                key="comment-load-more-btn"
+                type="text"
+                onClick={onNext}
+              >
                 Load more
               </GoabButton>
             </LoadMoreWrapper>

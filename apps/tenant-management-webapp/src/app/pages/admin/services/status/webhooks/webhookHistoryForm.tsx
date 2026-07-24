@@ -14,11 +14,7 @@ import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { ResetModalState } from '@store/session/actions';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
@@ -124,9 +120,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [entries, next]);
-
   const onSearch = (criteria: EventSearchCriteria) => {
     dispatch(clearEventLogEntries());
     dispatch(getEventLogEntries('', criteria));
@@ -156,6 +149,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               type="secondary"
               onClick={() => {
                 dispatch(ResetModalState());
@@ -164,6 +158,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
               Close
             </GoabButton>
             <GoabButton
+              size="compact"
               type="primary"
               onClick={() => {
                 onSearch(searchCriteria);
@@ -174,11 +169,11 @@ export const WebhookHistoryModal = (): JSX.Element => {
           </GoabButtonGroup>
         }
       >
-        <GoabFormItem label="Application">
+        <GoabFormItem label="Application" mb="s">
           <div className="grey-fill">{webhook?.targetId}</div>
         </GoabFormItem>
 
-        <GoabFormItem label="URL">
+        <GoabFormItem label="URL" mb="s">
           <GoabInput
             name="url"
             type="url"
@@ -193,7 +188,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
         </GoabFormItem>
         <DateFilter>
           <StartDate>
-            <GoabFormItem label="Start date">
+            <GoabFormItem label="Start date" mb="s">
               <DateTimeInput
                 type="datetime-local"
                 name="timestampMin"
@@ -205,7 +200,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
             </GoabFormItem>
           </StartDate>
           <EndDate>
-            <GoabFormItem label="End date">
+            <GoabFormItem label="End date" mb="s">
               <DateTimeInput
                 type="datetime-local"
                 name="timestampMax"
@@ -257,7 +252,8 @@ export const WebhookHistoryModal = (): JSX.Element => {
               <div className="mt-1">
                 <LoadMoreWrapper>
                   <GoabButton
-                    type="tertiary"
+                    size="compact"
+                    type="text"
                     testId="webhook-history-form-load-more"
                     disabled={isLoading}
                     onClick={onNext}

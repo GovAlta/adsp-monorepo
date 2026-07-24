@@ -37,10 +37,10 @@ export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: dele
       maxWidth="640px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="delete-cancel" onClick={onCancel}>
+          <GoabButton size="compact" type="secondary" testId="delete-cancel" onClick={onCancel}>
             Cancel
           </GoabButton>
-          <GoabButton type="primary" variant="destructive" testId="delete-confirm" onClick={onDelete}>
+          <GoabButton size="compact" type="primary" variant="destructive" testId="delete-confirm" onClick={onDelete}>
             Delete
           </GoabButton>
         </GoabButtonGroup>

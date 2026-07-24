@@ -108,7 +108,7 @@ const Subscriptions = (): JSX.Element => {
           service in the future.{' '}
         </GoAModelTextWrapper>
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             type="secondary"
             testId="unsubscribe-modal-cancel-button"
             onClick={() => {
@@ -117,7 +117,7 @@ const Subscriptions = (): JSX.Element => {
           >
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="unsubscribe-modal-okay-button"
             onClick={() => {
@@ -170,7 +170,7 @@ const Subscriptions = (): JSX.Element => {
                       <div>
                         {validCodeExists ? (
                           <div>
-                            <GoabBadge type="midtone" content="Pending" icon={false} />
+                            <GoabBadge type="default" content="Pending" icon={false} />
                           </div>
                         ) : (
                           <GoabBadge type="important" content="Not verified" icon={false} />

@@ -54,9 +54,6 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     }
   }, [topicTypes, topicType.id, spinner, navigate, isEdit, onClose]);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     setTopicType(initialValue);
   }, [open, initialValue]);
@@ -66,7 +63,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
@@ -80,6 +77,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             testId="comment-cancel"
             type="secondary"
             onClick={() => {
@@ -90,6 +88,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="comment-save"
             disabled={!topicType.name || validators.haveErrors()}
@@ -141,7 +140,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
                   setTopicType(
                     isEdit
                       ? { ...topicType, name: detail.value }
-                      : { ...topicType, name: detail.value, id: toKebabName(detail.value) }
+                      : { ...topicType, name: detail.value, id: toKebabName(detail.value) },
                   );
                 }}
                 onBlur={() => {
@@ -150,7 +149,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
               />
             </GoabFormItem>
           </CommentCommentItem>
-          <GoabFormItem label="Topic type ID">
+          <GoabFormItem label="Topic type ID" mt="m">
             <CommentCommentItem>
               <GoabInput
                 name="comment-topicType-id"

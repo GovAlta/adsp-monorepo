@@ -190,8 +190,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       }
     }
   }, [selectedEvent]); // eslint-disable-line react-hooks/exhaustive-deps
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
@@ -377,7 +375,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         </p>
       </div>
       <Buttons>
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-notification"
           onClick={() => {
             setSelectedType(emptyNotificationType);
@@ -530,7 +528,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
                   <NotificationBorder className="padding">
                     <EventButtonWrapper>
-                      <GoabButton
+                      <GoabButton size="compact"
                         type="secondary"
                         testId="add-event"
                         onClick={() => {

@@ -53,10 +53,10 @@ export const ContactInformationModalForm: FunctionComponent<EditContactInformati
         heading="Edit contact information"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+            <GoabButton size="compact" testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
             </GoabButton>
-            <GoabButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
+            <GoabButton size="compact" type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
               Save
             </GoabButton>
           </GoabButtonGroup>

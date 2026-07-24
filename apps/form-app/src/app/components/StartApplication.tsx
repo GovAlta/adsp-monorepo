@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components-ds1';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 import { FormDefinition } from '../state';

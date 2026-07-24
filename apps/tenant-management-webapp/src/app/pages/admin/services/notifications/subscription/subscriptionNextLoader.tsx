@@ -27,8 +27,9 @@ export const SubscriptionNextLoader: FunctionComponent<SubscriptionSearchNextPro
     return (
       <LoadMoreWrapper>
         <GoabButton
+          size="compact"
           testId="subscription-next-loader"
-          type="tertiary"
+          type="text"
           onClick={() => {
             searchCriteria.next = next;
             const searchInfo: SearchInfo = {

@@ -102,12 +102,12 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
           {!deleteConfirm && (
             <>
               <Margin>
-                <GoabButton type="secondary" onClick={() => setEdit(true)}>
+                <GoabButton size="compact" type="secondary" onClick={() => setEdit(true)}>
                   Edit
                 </GoabButton>
               </Margin>
               <Margin>
-                <GoabButton
+                <GoabButton size="compact"
                   type="primary"
                   variant="destructive"
                   testId="delete-confirm"
@@ -121,12 +121,12 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
           {deleteConfirm && (
             <>
               <Margin>
-                <GoabButton type="secondary" testId="delete-cancel" onClick={() => setDeleteConfirm(false)}>
+                <GoabButton size="compact" type="secondary" testId="delete-cancel" onClick={() => setDeleteConfirm(false)}>
                   Cancel
                 </GoabButton>
               </Margin>
               <Margin>
-                <GoabButton
+                <GoabButton size="compact"
                   type="primary"
                   variant="destructive"
                   testId="delete-confirm"
@@ -146,7 +146,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
       {edit && (
         <Margin>
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               type="secondary"
               onClick={() => {
                 setEdit(false);
@@ -156,7 +156,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
               Cancel
             </GoabButton>
 
-            <GoabButton
+            <GoabButton size="compact"
               type="primary"
               onClick={() => {
                 if (getDateTime(endDate, endTime) < getDateTime(startDate, startTime)) {

@@ -55,7 +55,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'), isNotEmptyCheck('description'))
     .add(
@@ -63,8 +63,8 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
       'name',
       duplicateNameCheck(
         agentNames.filter((name) => !initialValue || name !== initialValue?.name),
-        'Agent'
-      )
+        'Agent',
+      ),
     )
     .build();
 
@@ -83,8 +83,9 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
       open={open}
       heading="Add agent"
       actions={
-        <GoabButtonGroup alignment="end">
+        <GoabButtonGroup alignment="end" mt="m">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="agent-modal-cancel"
             onClick={() => {
@@ -96,6 +97,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
           </GoabButton>
 
           <GoabButton
+            size="compact"
             type="primary"
             testId="agent-modal-save"
             disabled={validators.haveErrors()}

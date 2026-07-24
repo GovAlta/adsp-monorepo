@@ -1,6 +1,6 @@
 import React from 'react';
 import { SummaryRowLink, SummaryTd } from '../styled-components';
-import { GoabText } from '@abgov/react-components';
+import { GoabText } from '@abgov/react-components-ds1';
 
 interface SummaryRowProps {
   index: number;

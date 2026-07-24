@@ -52,7 +52,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const currentForm = form.forms[id];
 
   const dispositionStates = [...(definition?.dispositionStates ?? [])].sort((a, b) =>
-    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
   );
 
   const [dispositionReason, setDispositionReason] = useState<string>('');
@@ -134,12 +134,13 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderButtonGroup = () => {
     return (
       <GoabButtonGroup alignment="end" mt="m">
-        <GoabButton type="tertiary" mr="l" onClick={onClose}>
+        <GoabButton size="compact" type="text" mr="l" onClick={onClose}>
           Close
         </GoabButton>
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoabButton
+              size="compact"
               type="secondary"
               disabled={!user.isWorker || isExecuting}
               onClick={() => {
@@ -149,6 +150,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               Cancel review
             </GoabButton>
             <GoabButton
+              size="compact"
               disabled={buttonDisabledForCompleteTask()}
               onClick={async () => {
                 await dispatch(
@@ -157,7 +159,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                     submissionId: submissionId,
                     dispositionReason: dispositionReason,
                     dispositionStatus: dispositionStatus,
-                  })
+                  }),
                 );
                 validators.clear();
                 onComplete();
@@ -168,7 +170,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
           </>
         )}
         {task?.status === TASK_STATUS.PENDING && (
-          <GoabButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
+          <GoabButton size="compact" disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start review
           </GoabButton>
         )}
@@ -227,5 +229,5 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
 registerDetailsComponent(
   (task) => task?.recordId.startsWith('urn:ads:platform:form-service:v1:/forms/'),
-  FormSubmissionReviewTask
+  FormSubmissionReviewTask,
 );

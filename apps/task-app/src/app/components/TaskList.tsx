@@ -42,13 +42,15 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
         <QueueMetrics metrics={metrics} isLoading={metricsLoading} />
         <GoabFormItem label="Filter" ml="xl">
           <GoabDropdown
+            name="Filter-dropdown"
+            aria-label="filter-type-dropdown"
             onChange={(detail: GoabDropdownOnChangeDetail) => onSetFilter(detail.value as TaskFilter)}
             value={filter}
-            width={'100%'}
+            aria-testId="filter-type-dropdown"
           >
-            <GoabDropdownItem label="Active" value="active" />
-            <GoabDropdownItem label="My tasks" value="assigned" />
-            <GoabDropdownItem label="Pending" value="pending" />
+            <GoabDropdownItem label="Active" value="active" key="active" />
+            <GoabDropdownItem label="My tasks" value="assigned" key="assigned" />
+            <GoabDropdownItem label="Pending" value="pending" key="pending" />
           </GoabDropdown>
         </GoabFormItem>
       </div>

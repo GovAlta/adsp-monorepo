@@ -63,10 +63,10 @@ export const TaskListItem: FunctionComponent<TaskListItemProps> = ({
           )}
           {user.isAssigner && (
             <>
-              <GoabButton size="compact" type="tertiary" onClick={() => onAssign(task)}>
+              <GoabButton size="compact" type="text" onClick={() => onAssign(task)}>
                 Assign
               </GoabButton>
-              <GoabButton size="compact" type="tertiary" onClick={() => onSetPriority(task)}>
+              <GoabButton size="compact" type="text" onClick={() => onSetPriority(task)}>
                 Set priority
               </GoabButton>
             </>
@@ -74,7 +74,7 @@ export const TaskListItem: FunctionComponent<TaskListItemProps> = ({
           {!user.isAssigner && user.isWorker && (
             <GoabButton
               size="compact"
-              type="tertiary"
+              type="text"
               onClick={() => onAssign(task)}
               disabled={task.assignment?.assignedTo?.id === user.id}
             >

@@ -144,10 +144,14 @@ export default function About() {
 
           <div className="section-spacing button-group">
             <Link to="/" style={{ textDecoration: 'none' }}>
-              <GoabButton type="secondary">Back to home</GoabButton>
+              <GoabButton size="compact" type="secondary">
+                Back to home
+              </GoabButton>
             </Link>
             <Link to="/components" style={{ textDecoration: 'none' }}>
-              <GoabButton type="tertiary">View components</GoabButton>
+              <GoabButton size="compact" type="text">
+                View components
+              </GoabButton>
             </Link>
           </div>
         </div>

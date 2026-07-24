@@ -162,6 +162,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                 testId={'select-all-id'}
                 ariaLabel="select-all-checkbox"
                 text="Select all"
+                mb="m"
               />
               {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
                 const names = sortedConfiguration.namespaces[namespace];
@@ -180,6 +181,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                           testId={`${toServiceKey(namespace, allNames)}_id`}
                           ariaLabel={`${toServiceKey(namespace, allNames)}_id_checkbox`}
                           text={'all names'}
+                          mb="m"
                         />
                       )}
                     </div>
@@ -203,6 +205,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 testId={`${toServiceKey(namespace, name)}_id`}
                                 ariaLabel={`${toServiceKey(namespace, name)}_id_checkbox`}
                                 text={name}
+                                mb="m"
                               />
                             </div>
                             <div>
@@ -235,7 +238,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                       style={{
                         maxHeight: `calc(100vh - 608px + ${Math.max(
                           Math.min(scrollPosition, Math.max(pageHeight - 600, 300)),
-                          0
+                          0,
                         )}px`,
                         minHeight: '100px',
                       }}
@@ -279,7 +282,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                     </div>
                     <div className="flex-reverse-row">
                       <div className="button-style">
-                        <GoabButton
+                        <GoabButton size="compact"
                           testId="export-configuration"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
                           onClick={() => {
@@ -290,7 +293,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         </GoabButton>
                       </div>
                       <div className="button-style">
-                        <GoabButton
+                        <GoabButton size="compact"
                           type="secondary"
                           testId="export-configuration-remove-all"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}

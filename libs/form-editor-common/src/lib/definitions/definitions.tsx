@@ -64,7 +64,6 @@ export const FormDefinitions = ({
   };
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
@@ -107,9 +106,6 @@ export const FormDefinitions = ({
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
   const dispatch = useDispatch();
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-
   useEffect(() => {
     if (openAddDefinition) {
       setOpenAddFormDefinition(true);
@@ -135,7 +131,8 @@ export const FormDefinitions = ({
     }
 
     return () => {
-      if (!window.location.href.includes('/edit/')) { // clean-code-ignore: 2.18
+      if (!window.location.href.includes('/edit/')) {
+        // clean-code-ignore: 2.18
         dispatch(setSelectedTag(null));
       }
     };
@@ -211,7 +208,7 @@ export const FormDefinitions = ({
               name="form-definition-search"
               value={searchInput}
               placeholder="Search form definitions..."
-              width="100%"
+              width="60ch"
               trailingIcon={searchInput ? 'close-circle' : undefined}
               onTrailingIconClick={() => {
                 dispatch(setDefinitionSearchInput(''));
@@ -235,7 +232,7 @@ export const FormDefinitions = ({
           </GoabFormItem>
         </SearchInputWrapper>
         <GoabButton
-          type="secondary"
+          type="tertiary"
           mb={'m'}
           testId="form-definition-search-btn"
           onClick={() => {
@@ -272,7 +269,7 @@ export const FormDefinitions = ({
               dispatch(setSelectedTag(null));
             }
           }}
-          width="60ch"
+          width="57ch"
         >
           <GoabDropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
@@ -285,6 +282,7 @@ export const FormDefinitions = ({
 
       {showFormDefinitions && (
         <GoabButton
+          size="compact"
           testId="add-definition"
           onClick={() => {
             setOpenAddFormDefinition(true);
@@ -342,9 +340,10 @@ export const FormDefinitions = ({
                 {getNextEntries() && (
                   <LoadMoreWrapper>
                     <GoabButton
+                      size="compact"
                       testId="form-event-load-more-btn"
                       key="form-event-load-more-btn"
-                      type="tertiary"
+                      type="text"
                       onClick={onNext}
                     >
                       Load more

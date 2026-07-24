@@ -77,7 +77,7 @@ export const LogoutModal = (): JSX.Element => {
       heading="Session expired"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton
+          <GoabButton size="compact"
             testId="session-continue-button"
             onClick={() => {
               dispatch(UpdateAccessToken());
@@ -87,7 +87,7 @@ export const LogoutModal = (): JSX.Element => {
           >
             Continue
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             testId="session-again-button"
             type="secondary"
             onClick={() => {

@@ -59,10 +59,10 @@ export const EditEmailInformationTypeModalForm: FunctionComponent<EmailNotificat
         heading="Edit email information"
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton testId="edit-email-form-cancel" type="secondary" onClick={tryCancel}>
+            <GoabButton size="compact" testId="edit-email-form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
             </GoabButton>
-            <GoabButton type="primary" testId="edit-email-form-save" onClick={() => trySave(emailInformation)}>
+            <GoabButton size="compact" type="primary" testId="edit-email-form-save" onClick={() => trySave(emailInformation)}>
               Save
             </GoabButton>
           </GoabButtonGroup>

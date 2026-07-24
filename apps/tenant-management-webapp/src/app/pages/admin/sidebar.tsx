@@ -55,7 +55,7 @@ const Sidebar = ({ type }: SidebarProps) => {
               <NavLink
                 to="/admin"
                 end
-                className={({ isActive }) => (isActive ? 'current' : '')}
+                className={({ isActive }) => `menu-section-link${isActive ? ' current' : ''}`}
                 title="Dashboard"
                 data-testid="menu-dashboard"
               >
@@ -79,9 +79,18 @@ const Sidebar = ({ type }: SidebarProps) => {
                   >
                     <span>Service metrics</span>
                   </NavLink>
-                  <div className="goab-side-menu-heading">
-                    <GoabSideMenuHeading>Services</GoabSideMenuHeading>
-                  </div>
+                  <NavLink
+                    to="/admin"
+                    end
+                    className={({ isActive }) => `menu-section-link${isActive ? ' current' : ''}`}
+                    title="Services"
+                    data-testid="sidebar-service"
+                  >
+                    <span>Services</span>
+                  </NavLink>
+                  {/* <div className="goab-side-menu-heading"> */}
+                  {/* <GoabSideMenuHeading>Services</GoabSideMenuHeading> */}
+                  {/* </div> */}
                 </>
               )}
               {hasAdminRole &&
@@ -121,7 +130,11 @@ const AlphaBadgeStyle = styled.span`
 `;
 const Links = styled.div`
   .goab-side-menu-heading {
-    margin-right: 1rem;
+    margin: 1rem 1rem 0.25rem 0;
+  }
+
+  .goab-side-menu-heading goa-side-menu-heading {
+    --goa-side-menu-heading-font-weight: var(--fw-bold);
   }
 
   a {
@@ -163,6 +176,18 @@ const Links = styled.div`
       display: block;
     }
   }
+
+  a.menu-section-link,
+  .goab-side-menu-heading goa-side-menu-heading {
+    color: var(--goa-color-greyscale-700, #333333);
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.25rem;
+  }
+
+  a.menu-section-link span,
+  .goab-side-menu-heading goa-side-menu-heading {
+    font-weight: var(--fw-bold);
+  }
 `;
 
 const Title = styled.div`
@@ -177,3 +202,5 @@ const Title = styled.div`
     display: block;
   }
 `;
+
+<script src="https://feedback-service.adsp-uat.alberta.ca/feedback/v1/script/adspFeedback.js"></script>;

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GoabFormItem, GoabGrid, GoabInput } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid, GoabInput } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { useState, useRef, useEffect, useContext } from 'react';
 import { useSyncAutofillFields } from '../../util/useSyncAutofillFields';

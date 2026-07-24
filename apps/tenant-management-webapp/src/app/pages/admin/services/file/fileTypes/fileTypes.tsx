@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
 
 import { RootState } from '@store/index';
@@ -44,9 +43,6 @@ const FileTypesTableContainer = ({ roles, activeEdit }: FileTypesTableContainerP
       dispatch(FetchFileTypeService());
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     document.body.style.overflow = 'unset';

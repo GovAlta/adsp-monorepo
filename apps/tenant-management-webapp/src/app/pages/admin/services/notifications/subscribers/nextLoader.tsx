@@ -23,8 +23,9 @@ export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, 
     return (
       <LoadMoreWrapper>
         <GoabButton
+          size="compact"
           testId="next-loader"
-          type="tertiary"
+          type="text"
           onClick={() => {
             searchCriteria.next = next;
             const searchInfo: SearchInfo = {

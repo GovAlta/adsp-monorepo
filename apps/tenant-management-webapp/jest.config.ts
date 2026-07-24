@@ -18,6 +18,8 @@ export default {
   coverageDirectory: '../../coverage/apps/tenant-management-webapp',
 
   moduleNameMapper: {
+    '^@abgov/react-components$': '@abgov/react-components',
+    '^@abgov/react-components-ds1$': '@abgov/react-components-ds1',
     '^@components(.*)$': path.resolve(__dirname, './src/app/components/$1'),
     '^@assets(.*)$': path.resolve(__dirname, './src/assets/$1'),
     '^@icons(.*)$': path.resolve(__dirname, './src/assets/icons/$1'),

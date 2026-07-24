@@ -44,7 +44,7 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
           {isLive ? (
             <GoabBadge mt="m" mb="s" type="success" content="Live" icon={false} />
           ) : (
-            <GoabBadge mt="m" mb="s" type="information" content="Not live" icon={false} />
+            <GoabBadge mt="m" mb="s" type="information" content="Not live" icon={false} emphasis="subtle" />
           )}
         </span>
       </div>

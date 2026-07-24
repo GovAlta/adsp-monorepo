@@ -101,7 +101,6 @@ export const createAdspCliPublicClientConfig = (id: string): ClientRepresentatio
     serviceAccountsEnabled: false,
     consentRequired: true,
     fullScopeAllowed: false,
-    optionalClientScopes: [ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME],
     attributes: {
       'pkce.code.challenge.method': 'S256',
     },
@@ -133,7 +132,7 @@ export const createAdspCliAdminClientScopeConfig = (): ClientScopeRepresentation
   attributes: {
     'display.on.consent.screen': 'true',
     'consent.screen.text':
-      "Manage OAuth clients and role assignments in this realm. Used by @abgov/nx-adsp to register new " +
+      'Manage OAuth clients and role assignments in this realm. Used by @abgov/nx-adsp to register new ' +
       "services' Keycloak clients. Only takes effect if you already have Keycloak realm-management rights.",
     'include.in.token.scope': 'true',
   },

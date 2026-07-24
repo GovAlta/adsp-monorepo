@@ -1,14 +1,17 @@
 import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
+import styled from 'styled-components';
 import GoALogo from '../../assets/goa-logo.svg';
 import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 export const Landing: FunctionComponent = () => {
   useFeedbackLinkHandler();
   return (
     <React.Fragment>
-      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading="Alberta Digital Service Platform - Task management" />
+      <HeaderContainer>
+        <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+        <GoabAppHeader url="/" heading="Alberta Digital Service Platform - Task management" />
+      </HeaderContainer>
       <Band title="Task management">Work on tasks in queues.</Band>
       <main>
         <section>
@@ -32,3 +35,10 @@ export const Landing: FunctionComponent = () => {
     </React.Fragment>
   );
 };
+
+const HeaderContainer = styled.div`
+  --goa-app-header-typography-service-name: var(--goa-font-weight-medium) var(--goa-font-size-5) /
+    var(--goa-line-height-3) var(--goa-font-family-sans);
+  --goa-app-header-typography-service-name-mobile: var(--goa-font-weight-medium) var(--goa-font-size-3) /
+    var(--goa-line-height-1) var(--goa-font-family-sans);
+`;

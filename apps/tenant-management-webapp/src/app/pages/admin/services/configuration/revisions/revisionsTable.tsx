@@ -54,7 +54,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
           <div className="number-badge">
             {revision.revision}
             <div>
-              {isLatest && <GoabBadge type="information" content="latest" icon={false} />}
+              {isLatest && <GoabBadge type="information" content="latest" icon={false} emphasis="subtle" />}
               {isActive && <GoabBadge type="success" content="active" icon={false} />}
             </div>
           </div>
@@ -209,7 +209,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
       {!indicator.show && revisions && revisions.length === 0 && isCore && renderNoItem(`revisions`)}
       {next && (
         <LoadMoreWrapper>
-          <GoabButton onClick={onNext} type="tertiary">
+          <GoabButton size="compact" onClick={onNext} type="text">
             Load more
           </GoabButton>
         </LoadMoreWrapper>
@@ -220,6 +220,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               type="secondary"
               testId="revision-create-cancel-button"
               onClick={() => setShowCreateNewRevision(false)}
@@ -227,6 +228,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               testId="revision-create-button"
               onClick={() => {
                 setShowCreateNewRevision(false);
@@ -244,6 +246,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton
+              size="compact"
               type="secondary"
               testId="revision-active-cancel-button"
               onClick={() => setShowActiveRevision(false)}
@@ -251,6 +254,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
               Cancel
             </GoabButton>
             <GoabButton
+              size="compact"
               testId="revision-active-button"
               onClick={() => {
                 setShowActiveRevision(false);

@@ -22,6 +22,7 @@ export const ValueOverview: FunctionComponent<ValueOverviewProps> = (props) => {
       description={description}
       addButton={
         <GoabButton
+          size="compact"
           testId="add-definition"
           disabled={disabled}
           onClick={() => {

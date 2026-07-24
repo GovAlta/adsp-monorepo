@@ -77,7 +77,7 @@ export const TestWebhookModal = (): JSX.Element => {
         heading={`Test webhook - ${webhook?.name}`}
         actions={
           <GoabButtonGroup alignment="end">
-            <GoabButton
+            <GoabButton size="compact"
               type="secondary"
               onClick={() => {
                 dispatch(clearEventLogEntries());
@@ -87,7 +87,7 @@ export const TestWebhookModal = (): JSX.Element => {
             >
               Close
             </GoabButton>
-            <GoabButton
+            <GoabButton size="compact"
               type="primary"
               disabled={selectedStatusName === null}
               onClick={() => {

@@ -65,10 +65,10 @@ export const TaskAssignmentModal: FunctionComponent<TaskAssignmentModalProps> = 
           <div>Assign this task to yourself?</div>
         )}
         <GoabButtonGroup alignment="end" mt="4xl">
-          <GoabButton type="secondary" onClick={onClose}>
+          <GoabButton size="compact" type="secondary" onClick={onClose}>
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             disabled={executing || (user.isAssigner && selected === (task?.assignment?.assignedTo?.id || ''))}
             type="primary"
             onClick={() => {

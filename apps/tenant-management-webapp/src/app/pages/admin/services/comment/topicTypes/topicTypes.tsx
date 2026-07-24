@@ -66,15 +66,13 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
     setOpenAddCommentTopicType(false);
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [commentTopicTypes]);
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
 
   return (
     <section>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-topic-type"
         onClick={() => {
           setOpenAddCommentTopicType(true);

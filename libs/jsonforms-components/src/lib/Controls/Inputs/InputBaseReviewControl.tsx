@@ -2,7 +2,7 @@ import { CellProps, WithClassname, ControlProps, StatePropsOfControl } from '@js
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabIcon } from '@abgov/react-components';
+import { GoabIcon } from '@abgov/react-components-ds1';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
 import { getControlLabelText, to12HourFormat, UTCToFullLocalTime } from '../../util';
 
@@ -67,7 +67,13 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
     } else {
-      reviewText = data ? (checkboxLabel ? `Yes (${checkboxLabel})` : `Yes`) : (checkboxLabel ? `No (${checkboxLabel})` : `No`);
+      reviewText = data
+        ? checkboxLabel
+          ? `Yes (${checkboxLabel})`
+          : `Yes`
+        : checkboxLabel
+          ? `No (${checkboxLabel})`
+          : `No`;
     }
   }
 

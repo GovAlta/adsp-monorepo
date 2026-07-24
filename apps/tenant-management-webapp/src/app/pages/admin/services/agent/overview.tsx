@@ -21,7 +21,7 @@ export const AgentOverview: FunctionComponent<AgentOverviewProps> = ({ setOpenAd
         <NoPaddingH2>Agents</NoPaddingH2>
 
         <p></p>
-        <GoabButton
+        <GoabButton size="compact"
           testId="add-agent"
           onClick={() => {
             setActiveIndex(1);

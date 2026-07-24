@@ -133,6 +133,7 @@ export const TriggerEventModal = ({
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
+            size="compact"
             type="secondary"
             testId="script-trigger-event-modal-cancel"
             onClick={() => {
@@ -146,6 +147,7 @@ export const TriggerEventModal = ({
             Cancel
           </GoabButton>
           <GoabButton
+            size="compact"
             type="primary"
             testId="script-trigger-event-modal-save"
             disabled={isSaveButtonDisabled()}
@@ -171,6 +173,7 @@ export const TriggerEventModal = ({
             const [namespace, name] = detail.value?.split(':') || [];
             setTriggerEvent({ ...triggerEvent, namespace, name });
           }}
+          mb="s"
         >
           {filteredEventNames &&
             filteredEventNames

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { ControlProps, isEnabled } from '@jsonforms/core';
-import { GoabFormItem, GoabGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid } from '@abgov/react-components-ds1';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
 import { Visible } from '../../util';

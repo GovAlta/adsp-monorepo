@@ -1,4 +1,5 @@
 import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
 import { AuthCallback } from '@core-services/app-common';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { TaskTenant } from './containers/TaskTenant';

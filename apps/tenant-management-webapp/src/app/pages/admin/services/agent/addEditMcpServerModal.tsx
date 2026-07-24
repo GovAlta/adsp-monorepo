@@ -124,11 +124,11 @@ export const AddEditMcpServerModal: FunctionComponent<AddEditMcpServerModalProps
       open={open}
       heading={`${initialValue?.url ? 'Edit' : 'Add'} MCP server`}
       actions={
-        <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="mcp-server-modal-cancel" onClick={onCancel}>
+        <GoabButtonGroup alignment="end" mt="m">
+          <GoabButton size="compact" type="secondary" testId="mcp-server-modal-cancel" onClick={onCancel}>
             Cancel
           </GoabButton>
-          <GoabButton type="primary" testId="mcp-server-modal-save" onClick={validate}>
+          <GoabButton size="compact" type="primary" testId="mcp-server-modal-save" onClick={validate}>
             OK
           </GoabButton>
         </GoabButtonGroup>

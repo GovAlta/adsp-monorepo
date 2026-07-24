@@ -28,6 +28,8 @@ import { CalendarService } from '../calendar';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
+const allowedRoleProperties = ['applicantRoles', 'assessorRoles', 'clerkRoles'];
+
 async function fetchExistingDefinition(
   configurationApiUrl: URL,
   token: string,
@@ -410,6 +412,56 @@ export function updateFormDefinitionSchemas(directory: ServiceDirectory, tokenPr
   };
 }
 
+// clean-code-ignore: 2.10 — follows the same fetch-modify-save handler shape as the sibling
+// definition endpoints in this file (updateFormDefinitionSchemas, patchFormDefinitionLifecycle);
+// extracting helpers for only this one would make it inconsistent with the established pattern.
+export function updateFormDefinitionRoles(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('update form definition roles', user);
+      }
+
+      const encodedDefinitionId = encodeURIComponent(definitionId);
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+
+      const existingDefinition = await fetchExistingDefinition(
+        configurationApiUrl,
+        token,
+        encodedDefinitionId,
+        tenantId?.toString(),
+        definitionId,
+      );
+
+      // Roles are replaced entirely; any role array omitted from the request is reset to empty.
+      const updatedDefinition: FormDefinition = {
+        ...existingDefinition,
+        applicantRoles: req.body.applicantRoles ?? [],
+        assessorRoles: req.body.assessorRoles ?? [],
+        clerkRoles: req.body.clerkRoles ?? [],
+        id: definitionId,
+      };
+
+      const data = await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definitionId,
+        tenantId?.toString(),
+        updatedDefinition,
+      );
+
+      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function patchFormDefinitionLifecycle(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
@@ -569,6 +621,29 @@ export function createFormDefinitionRouter({
       body('ui-schema').optional().isObject(),
     ),
     updateFormDefinitionSchemas(directory, tokenProvider),
+  );
+
+  router.put(
+    '/definitions/:definitionId/roles',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      ...allowedRoleProperties.flatMap((field) => [
+        body(field).optional().isArray(),
+        body(`${field}.*`).isString(),
+      ]),
+      body().custom((value) => {
+        const extra = Object.keys(value ?? {}).filter((key) => !allowedRoleProperties.includes(key));
+        if (extra.length > 0) {
+          throw new Error(`Unsupported properties: ${extra.join(', ')}`);
+        }
+        return true;
+      }),
+    ),
+    updateFormDefinitionRoles(directory, tokenProvider),
   );
 
   router.patch(

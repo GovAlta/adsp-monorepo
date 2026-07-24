@@ -101,10 +101,10 @@ export const AddEditResourceTypeModal = ({
       heading={`${isEdit ? 'Edit' : 'New'} resource type`}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" testId="resource-type-modal-cancel" onClick={onCancelModal}>
+          <GoabButton size="compact" type="secondary" testId="resource-type-modal-cancel" onClick={onCancelModal}>
             Cancel
           </GoabButton>
-          <GoabButton
+          <GoabButton size="compact"
             type="primary"
             testId="resource-type-modal-save"
             disabled={

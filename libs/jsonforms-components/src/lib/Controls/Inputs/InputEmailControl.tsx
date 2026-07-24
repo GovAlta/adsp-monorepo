@@ -11,7 +11,7 @@ import {
   schemaTypeIs,
   formatIs,
 } from '@jsonforms/core';
-import { GoabInput, GoabFormItem } from '@abgov/react-components';
+import { GoabInput, GoabFormItem } from '@abgov/react-components-ds1';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputControlUtils';

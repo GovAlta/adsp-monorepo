@@ -33,7 +33,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
   return (
     <div>
       <Padding>Agents are configurations of LLMs for specific purposes.</Padding>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-agent"
         onClick={() => {
           setOpenAddAgent(true);

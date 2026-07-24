@@ -78,7 +78,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
 
   return (
     <section>
-      <GoabButton
+      <GoabButton size="compact"
         testId="add-template"
         onClick={() => {
           setOpenAddPdfTemplate(true);

@@ -1,4 +1,4 @@
-import { GoabModal, GoabFormItem, GoabInputDateTime, GoabButtonGroup, GoabButton } from '@abgov/react-components';
+import { GoabModal, GoabFormItem, GoabInputDateTime, GoabButtonGroup, GoabButton } from '@abgov/react-components-ds1';
 import { GoabDate } from '@abgov/ui-components-common';
 import { FunctionComponent, useState } from 'react';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
@@ -41,7 +41,7 @@ export const ScheduleIntakeModal: FunctionComponent<ScheduleIntakeModalProps> = 
           onClick={async () =>
             await onSchedule(
               typeof start === 'string' ? new Date(start) : start,
-              typeof end === 'string' ? new Date(end) : end
+              typeof end === 'string' ? new Date(end) : end,
             )
           }
         >

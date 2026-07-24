@@ -104,7 +104,7 @@ export const TenantIdp = (): JSX.Element => {
       </GoabFormItem>
       <GoabSpacer vSpacing="s"></GoabSpacer>
 
-      <GoabButton
+      <GoabButton size="compact"
         disabled={(fetchUserIdState?.state as unknown) === 'start'}
         testId={'user-search-email-btn'}
         onClick={searchUserByEmailHandler}
@@ -133,6 +133,7 @@ export const TenantIdp = (): JSX.Element => {
               testId="user-idp-in-core-badge"
               content={`${fetchUserIdState?.id}`}
               icon={false}
+              emphasis="subtle"
             />
             {copied !== fetchUserIdState?.id && (
               <GoabIconButton
@@ -152,7 +153,7 @@ export const TenantIdp = (): JSX.Element => {
             (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore === true && (
               <>
                 <p>The related ADSP default IdP link in the core realm is found.</p>
-                <GoabButton
+                <GoabButton size="compact"
                   testId="delete-core-idp-btn"
                   disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
                   variant="destructive"
@@ -174,7 +175,7 @@ export const TenantIdp = (): JSX.Element => {
           }
 
           <GoabSpacer vSpacing="m"></GoabSpacer>
-          <GoabButton testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
+          <GoabButton size="compact" testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
             Reset
           </GoabButton>
         </GoabFormItem>

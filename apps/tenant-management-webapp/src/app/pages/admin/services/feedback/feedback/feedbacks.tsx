@@ -91,7 +91,7 @@ export const FeedbacksList = (): JSX.Element => {
     return (
       next && (
         <LoadMoreWrapper>
-          <GoabButton type="tertiary" onClick={onNext}>
+          <GoabButton size="compact" type="text" onClick={onNext}>
             Load more
           </GoabButton>
         </LoadMoreWrapper>
@@ -167,7 +167,7 @@ export const FeedbacksList = (): JSX.Element => {
         <FullScreenModalWrapper>
           <h2 style={{ margin: 0 }}>Feedback service</h2>
           <GoabButton
-            type="tertiary"
+            type="text"
             leadingIcon="arrow-back"
             size="compact"
             mt="s"
@@ -180,13 +180,14 @@ export const FeedbacksList = (): JSX.Element => {
 
           <GoabButtonGroup alignment="start" gap="compact">
             <GoabButton
+              size="compact"
               type="primary"
               onClick={exportToCsv}
               disabled={!selectedSite || showDateError || feedbacks.length === 0}
             >
               Export CSV
             </GoabButton>
-            <GoabButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
+            <GoabButton size="compact" type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
               Collapse view
             </GoabButton>
           </GoabButtonGroup>
@@ -212,6 +213,7 @@ export const FeedbacksList = (): JSX.Element => {
           )}
           <GoabButtonGroup alignment="start" gap="compact">
             <GoabButton
+              size="compact"
               type="primary"
               onClick={exportToCsv}
               disabled={!selectedSite || showDateError || feedbacks.length === 0}
@@ -219,6 +221,7 @@ export const FeedbacksList = (): JSX.Element => {
               Export CSV
             </GoabButton>
             <GoabButton
+              size="compact"
               type="secondary"
               trailingIcon="expand"
               onClick={() => setExpandView(true)}

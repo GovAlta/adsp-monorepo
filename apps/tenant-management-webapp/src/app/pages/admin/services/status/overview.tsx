@@ -48,7 +48,7 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
           </section>
         }
         addButton={
-          <GoabButton
+          <GoabButton size="compact"
             testId="add-application"
             disabled={disabled}
             type="primary"

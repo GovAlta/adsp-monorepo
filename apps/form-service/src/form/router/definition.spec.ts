@@ -14,6 +14,7 @@ import {
   patchFormDefinition,
   patchFormDefinitionLifecycle,
   updateFormDefinition,
+  updateFormDefinitionRoles,
   updateFormDefinitionSchemas,
 } from './definition';
 
@@ -1223,6 +1224,170 @@ describe('definition router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(networkError);
+      expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateFormDefinitionRoles', () => {
+    const existingDefinition = {
+      id: 'test',
+      name: 'Test Form',
+      description: '',
+      anonymousApply: false,
+      applicantRoles: ['old-applicant'],
+      assessorRoles: ['old-assessor'],
+      clerkRoles: ['old-clerk'],
+      dataSchema: {},
+      uiSchema: {},
+      dispositionStates: [],
+    };
+
+    let res: { status: jest.Mock; send: jest.Mock };
+    let next: jest.Mock;
+
+    beforeEach(() => {
+      res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      next = jest.fn();
+    });
+
+    it('can create handler', () => {
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', roles: ['test-applicant'] },
+        params: { definitionId: 'test' },
+        body: { applicantRoles: ['a'], assessorRoles: [], clerkRoles: [] },
+        tenant: { id: tenantId },
+      };
+
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(axiosMock.get).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found when definition does not exist', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.NOT_FOUND, data: {} });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'missing-def' },
+        body: { applicantRoles: ['a'], assessorRoles: [], clerkRoles: [] },
+        tenant: { id: tenantId },
+      };
+
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.stringContaining('missing-def/latest'),
+        expect.objectContaining({ validateStatus: expect.any(Function) }),
+      );
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('missing-def') }));
+    });
+
+    it('replaces roles entirely and returns 200 with the mapped definition', async () => {
+      const newRoles = {
+        applicantRoles: ['new-applicant'],
+        assessorRoles: ['new-assessor'],
+        clerkRoles: ['new-clerk'],
+      };
+
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      axiosMock.patch.mockResolvedValue({
+        data: { latest: { revision: 2, configuration: { ...existingDefinition, ...newRoles } } },
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: newRoles,
+        tenant: { id: tenantId },
+      };
+
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('test'),
+        {
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({
+            id: 'test',
+            name: 'Test Form',
+            applicantRoles: ['new-applicant'],
+            assessorRoles: ['new-assessor'],
+            clerkRoles: ['new-clerk'],
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ applicantRoles: ['new-applicant'], assessorRoles: ['new-assessor'] }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('resets omitted role arrays to empty', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 2, configuration: existingDefinition } } });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { applicantRoles: ['only-applicant'] },
+        tenant: { id: tenantId },
+      };
+
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({
+            applicantRoles: ['only-applicant'],
+            assessorRoles: [],
+            clerkRoles: [],
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with 400 when configuration service rejects the patch', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { data: { errorMessage: 'Role validation failed.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.patch.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { applicantRoles: [], assessorRoles: [], clerkRoles: [] },
+        tenant: { id: tenantId },
+      };
+
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
       expect(res.send).not.toHaveBeenCalled();
     });
   });
