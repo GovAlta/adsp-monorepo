@@ -56,6 +56,34 @@ describe('Input Boolean Radio Control', () => {
     expect(radio).toBeInTheDocument();
   });
 
+  it('does not spread enum option indices as attributes (no invalid attribute warning)', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const fourOptionSchema = {
+      type: 'object',
+      properties: {
+        options: {
+          type: 'string',
+          enum: ['one', 'two', 'three', 'four'],
+        },
+      },
+    };
+
+    const { baseElement } = render(getForm(fourOptionSchema, uiSchema));
+    const radio = baseElement.querySelector("goa-radio-group[testId='options-radio-group']");
+
+    expect(radio).toBeInTheDocument();
+    // Regression: the enum options array must not leak in as numeric attributes,
+    // which React reports via a console warning. Scan every call/arg so the check
+    // does not depend on React's exact warning argument shape.
+    const warnedInvalidAttribute = consoleError.mock.calls.some((args) =>
+      args.some((arg) => typeof arg === 'string' && arg.includes('Invalid attribute name'))
+    );
+    expect(warnedInvalidAttribute).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
   it('will accept a yes click', () => {
     const data = { radio: false };
     const { baseElement } = render(getForm(dataSchema, uiSchema, data));
@@ -99,10 +127,10 @@ describe('Input Boolean Radio Control', () => {
         id=""
         enabled={true}
         schema={{ enum: ['one'] }}
-        uischema={{ type: 'Control' }}
+        uischema={{ type: 'Control', options: { label } }}
         path=""
         handleChange={jest.fn()}
-        options={{ label }}
+        options={{}}
         config={{}}
         label={label}
         isVisited={false}
