@@ -225,17 +225,26 @@ function decodeEmail(token: string): string | undefined {
 }
 
 /**
- * Best-effort decode of the tenant-service-admin realm role from the caller's access token —
- * never throws. tenant-service-admin/beta-tester are plain core-realm roles (not client-qualified),
- * so the raw realm_access.roles claim is enough — no need for the SDK's full role-resolution logic.
+ * Best-effort decode of the caller's core-realm roles from their access token — never throws.
+ * tenant-service-admin/beta-tester are plain core-realm roles (not client-qualified), so the raw
+ * realm_access.roles claim is enough — no need for the SDK's full role-resolution logic.
  */
-function isTenantServiceAdmin(token: string): boolean {
+function getCoreRealmRoles(token: string): string[] {
   try {
-    const roles = jwtDecode<{ realm_access?: { roles?: string[] } }>(token).realm_access?.roles ?? [];
-    return roles.includes('tenant-service-admin');
+    return jwtDecode<{ realm_access?: { roles?: string[] } }>(token).realm_access?.roles ?? [];
   } catch {
-    return false;
+    return [];
   }
+}
+
+function isTenantServiceAdmin(token: string): boolean {
+  return getCoreRealmRoles(token).includes('tenant-service-admin');
+}
+
+/** Mirrors tenant-management-api's requireBetaTesterOrAdmin guard on POST /tenants — see tenants.ts's createTenant. */
+function canCreateTenant(token: string): boolean {
+  const roles = getCoreRealmRoles(token);
+  return roles.includes('tenant-service-admin') || roles.includes('beta-tester');
 }
 
 const CREATE_TENANT_CHOICE = '__create_tenant__';
@@ -285,7 +294,7 @@ async function promptForTenantRealm(directoryServiceUrl: string, coreToken: stri
   const byName = (a: Tenant, b: Tenant) => a.name.localeCompare(b.name);
   const owned = tenants.filter((t) => email && t.adminEmail === email).sort(byName);
   const rest = tenants.filter((t) => !(email && t.adminEmail === email)).sort(byName);
-  const showCreateOption = preProd && (owned.length === 0 || isTenantServiceAdmin(coreToken));
+  const showCreateOption = preProd && canCreateTenant(coreToken) && (owned.length === 0 || isTenantServiceAdmin(coreToken));
 
   if (tenants.length === 0 && !showCreateOption) {
     throw new Error('No tenants found.');

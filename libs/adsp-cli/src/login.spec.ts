@@ -542,9 +542,9 @@ describe('login', () => {
         return call?.[0].choices ?? [];
       }
 
-      it('adds a create-tenant entry when logging into a pre-prod env with no owned tenant', async () => {
+      it('adds a create-tenant entry when logging into a pre-prod env with no owned tenant and the beta-tester role', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
-        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
@@ -558,9 +558,9 @@ describe('login', () => {
         expect(autocompleteChoices()).toContainEqual({ name: '__create_tenant__', message: '+ Create a new tenant' });
       });
 
-      it('never adds a create-tenant entry when logging into prod, even with no owned tenant', async () => {
+      it('never adds a create-tenant entry when logging into prod, even with no owned tenant and the beta-tester role', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
-        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
@@ -574,9 +574,27 @@ describe('login', () => {
         expect(autocompleteChoices()).toEqual(['tenant-a']);
       });
 
-      it('never adds a create-tenant entry in pre-prod for a non-admin who already owns a tenant', async () => {
-        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' }]);
+      it('never adds a create-tenant entry in pre-prod for a caller with no owned tenant but neither the beta-tester nor tenant-service-admin role', async () => {
+        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
         mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
+        mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+
+        const loginPromise = loginInteractive({ env: 'dev' });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
+        await flushAsync();
+        lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
+        await loginPromise;
+
+        expect(autocompleteChoices()).not.toContainEqual(
+          expect.objectContaining({ message: '+ Create a new tenant' })
+        );
+      });
+
+      it('never adds a create-tenant entry in pre-prod for a non-admin beta-tester who already owns a tenant', async () => {
+        mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' }]);
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
@@ -610,7 +628,7 @@ describe('login', () => {
 
       it('picking the create-tenant entry prompts for a name, creates it, waits for provisioning, then logs into the new realm', async () => {
         mockListTenants.mockResolvedValue([]);
-        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockImplementation(async (args: { type: string; choices?: { name: string; message?: string }[] }) => {
           if (args.type === 'autocomplete') {
             const createChoice = args.choices.find((c) => typeof c === 'object' && c.message === '+ Create a new tenant');
@@ -644,7 +662,7 @@ describe('login', () => {
 
       it('re-prompts for a name when createTenant rejects with a 400 (validation failure)', async () => {
         mockListTenants.mockResolvedValue([]);
-        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         let inputCalls = 0;
         mockPrompt.mockImplementation(async (args: { type: string; choices?: { name: string; message?: string }[] }) => {
           if (args.type === 'autocomplete') {
@@ -673,9 +691,9 @@ describe('login', () => {
         expect(mockCreateTenant).toHaveBeenNthCalledWith(2, expect.any(String), 'fresh-access-token', 'new-tenant');
       });
 
-      it('propagates a non-400 error from createTenant (e.g. missing beta-tester role) without retrying', async () => {
+      it('propagates a non-400 error from createTenant (e.g. the role was revoked between the picker prompt and the create call) without retrying', async () => {
         mockListTenants.mockResolvedValue([]);
-        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
+        mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockImplementation(async (args: { type: string; choices?: { name: string; message?: string }[] }) => {
           if (args.type === 'autocomplete') {
             const createChoice = args.choices.find((c) => typeof c === 'object' && c.message === '+ Create a new tenant');
