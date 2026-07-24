@@ -16,13 +16,17 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components-ds1';
+// Use @abgov/react-components so the React wrapper matches the goa-radio web component the app
+// registers (@abgov/web-components); @abgov/web-components-ds1 is never registered, so the ds1
+// wrapper rendered against the old element and left the checked dot on its grey fallback.
+// Revisit when the design system migration registers the ds1 web components app-wide.
+import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
-  const { data, id, enabled, schema, uischema, path, handleChange, options, config, label, isVisited, errors } = props;
+  const { data, id, enabled, schema, uischema, path, handleChange, config, label, isVisited, errors } = props;
   const oneOF = schema?.oneOf || [];
   const items =
     oneOF?.length > 0
@@ -35,7 +39,11 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
           label: String(value),
         }));
 
-  const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
+  // Merge only UI-schema level options (config + uischema.options). The enum data
+  // `options` array must NOT be merged here: lodash.merge folds its indices in as
+  // numeric keys (0, 1, 2, ...), which then get spread onto <goa-radio-group> below
+  // and trigger React's "Invalid attribute name: `3`" warning (CS ticket).
+  const appliedUiSchemaOptions = merge({}, config, props.uischema.options);
   return (
     <GoabRadioGroup
       error={isVisited && errors.length > 0}
