@@ -3,6 +3,43 @@ import common from './common.page';
 const commonObj = new common();
 
 export function tenantAdminDirectURLLogin(url, id, user, password) {
+  const urlToTenantLogin = url + '/' + id + '/login?kc_idp_hint=';
+  cy.visit(urlToTenantLogin);
+  cy.wait(4000); // Wait all the redirects to settle down
+  // cy.url().then(function (urlString) {
+  //   if (urlString.includes('openid-connect')) {
+  //     commonObj.usernameEmailField().type(user);
+  //     commonObj.passwordField().type(password);
+  //     commonObj.loginButton().click();
+  //     cy.wait(8000); // Wait all the redirects to settle down
+  //   }
+  // });
+  // Change to checking if the login controls are present instead of checking URL
+  commonObj
+    .applicationBody()
+    .then((pageBody) => {
+      if (
+        pageBody.find('input[name="username"]').length > 0 &&
+        pageBody.find('input[name="password"]').length > 0 &&
+        pageBody.find('input[name="login"]').length > 0
+      ) {
+        commonObj.usernameEmailField().type(user);
+        commonObj.passwordField().type(password);
+        commonObj.loginButton().click();
+      } else {
+        // If the login controls aren't found, we assume we are already logged in
+        cy.log('Already logged in, skipping login step.');
+      }
+    })
+    .then(() => {
+      cy.wait(6000);
+      cy.url().should('include', '/admin');
+    });
+}
+
+// Log in function for cross-origin does not work with user going to a different app and comes back to the tenant management app
+// when the user is auto-logged in from the previous session. The function needs to be improved to handle the case.
+export function tenantAdminDirectURLLoginCrossOrigin(url, id, user, password) {
   const urlToTenantLogin = `${url}/${id}/login?kc_idp_hint=`;
   const appOrigin = new URL(url).origin;
   const accessOrigin = new URL(Cypress.env('accessManagementApi')).origin;
@@ -120,7 +157,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Form',
         'Comment',
         'feedback',
-        'value'
+        'value',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
@@ -156,4 +193,10 @@ export function stringReplacement(nameString, replacementString) {
   return nameAfterPlacement;
 }
 
-export default { tenantAdminDirectURLLogin, tenantAdminMenuItem, nowPlusMinusMinutes, stringReplacement };
+export default {
+  tenantAdminDirectURLLogin,
+  tenantAdminDirectURLLoginCrossOrigin,
+  tenantAdminMenuItem,
+  nowPlusMinusMinutes,
+  stringReplacement,
+};
