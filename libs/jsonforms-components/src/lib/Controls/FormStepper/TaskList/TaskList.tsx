@@ -50,14 +50,6 @@ function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
 
 const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
-// The rows the progress bar is counting: the ones actually rendered in the task list.
-const isCounted = (cat: CategoryState) => shouldShow(cat) && cat?.visible !== false;
-
-// A page counts as completed only when its own badge says so. A page with no required fields is
-// flagged isCompleted on mount (so an untouched optional page does not block submission), while its
-// badge still reads "Not started" - counting isCompleted alone credits pages the user never opened.
-const isCountedComplete = (cat: CategoryState) => getCategoryStatus(cat) === PageStatus.Complete;
-
 const isInTaskList = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
 function updateCompletion(group: CategoryState[], index: number): CategoryState {
@@ -91,6 +83,25 @@ function updateCompletion(group: CategoryState[], index: number): CategoryState 
   };
 }
 
+// The rows the progress bar is counting: the ones actually rendered in the task list.
+const isCounted = (cat: CategoryState) => shouldShow(cat) && cat?.visible !== false;
+
+// A page counts as completed only when its own badge says so. A page with no required fields is
+// flagged isCompleted on mount (so an untouched optional page does not block submission), while its
+// badge still reads "Not started" - counting isCompleted alone credits pages the user never opened.
+// updateCompletion rolls up the detail pages hidden from the task list, exactly as the rendered row
+// does, so the count never runs ahead of the badges.
+const isCountedComplete = (group: CategoryState[], index: number): boolean =>
+  getCategoryStatus(updateCompletion(group, index)) === PageStatus.Complete;
+
+const countCountedPages = (group: CategoryState[]): number => group.filter(isCounted).length;
+
+const countCompletedPages = (group: CategoryState[]): number =>
+  group.filter((cat, index) => isCounted(cat) && isCountedComplete(group, index)).length;
+
+const sumOverSections = (sections: SectionMap[], count: (group: CategoryState[]) => number): number =>
+  sections.reduce((total, section) => total + count(section.categories), 0);
+
 export const TaskList: React.FC<TocProps> = ({
   categories,
   onClick,
@@ -119,25 +130,9 @@ export const TaskList: React.FC<TocProps> = ({
     return sections;
   }, [categories]);
 
-  const totalPages = useMemo(
-    () => mergedSections.reduce((count, section) => count + section.categories.filter(isCounted).length, 0),
-    [mergedSections],
-  );
+  const totalPages = useMemo(() => sumOverSections(mergedSections, countCountedPages), [mergedSections]);
 
-  const completedPages = useMemo(
-    () =>
-      mergedSections.reduce(
-        (count, section) =>
-          count +
-          section.categories.filter(
-            // updateCompletion rolls up the detail pages hidden from the task list, exactly as the
-            // rendered row does, so the count never runs ahead of the badges.
-            (cat, index) => isCounted(cat) && isCountedComplete(updateCompletion(section.categories, index)),
-          ).length,
-        0,
-      ),
-    [mergedSections],
-  );
+  const completedPages = useMemo(() => sumOverSections(mergedSections, countCompletedPages), [mergedSections]);
 
   let globalIndex = 0;
   let sectionIndex = 1;
