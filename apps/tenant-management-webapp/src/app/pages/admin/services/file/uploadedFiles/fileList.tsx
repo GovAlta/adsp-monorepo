@@ -169,7 +169,8 @@ const FileList = (): JSX.Element => {
           <thead>
             <tr>
               <th className="selection-column">
-                <GoabCheckbox size="compact"
+                <GoabCheckbox
+                  size="compact"
                   name="select-all-files"
                   checked={isAllVisibleFilesSelected}
                   disabled={visibleFileIds.length === 0 ? true : undefined}
@@ -178,7 +179,6 @@ const FileList = (): JSX.Element => {
                   onChange={(detail: GoabCheckboxOnChangeDetail) => {
                     onToggleAllVisibleFiles(detail.checked);
                   }}
-                  mb="m"
                 />
               </th>
               <th>File name</th>
@@ -194,7 +194,8 @@ const FileList = (): JSX.Element => {
               return (
                 <tr key={key} className={isSelected ? 'selected' : undefined}>
                   <td className="selection-column">
-                    <GoabCheckbox size="compact"
+                    <GoabCheckbox
+                      size="compact"
                       name={`select-file-${file.id}`}
                       checked={isSelected}
                       disabled={!file.id ? true : undefined}
@@ -205,7 +206,6 @@ const FileList = (): JSX.Element => {
                           onToggleFileSelection(file.id, detail.checked);
                         }
                       }}
-                      mb="m"
                     />
                   </td>
                   <td>{file.filename}</td>
@@ -300,10 +300,11 @@ const FileList = (): JSX.Element => {
       </>
       <FileTypeDropdown>
         <GoabFormItem label="Select a file type">
-          <GoabDropdown size="compact"
+          <GoabDropdown
+            size="compact"
             name="fileType"
             value={uploadFileType}
-            width="100%"
+            width="57ch"
             testId="file-type-name-dropdown-1"
             onChange={(detail: GoabDropdownOnChangeDetail) => {
               setUploadFileType(detail.value as string);
@@ -328,22 +329,24 @@ const FileList = (): JSX.Element => {
       <div className="mt-48">
         <NoPaddingH2>File filtering</NoPaddingH2>
         <GoabFormItem label="Search file name" mb="m">
-          <GoabInput size="compact"
+          <GoabInput
+            size="compact"
             type="text"
             name="name"
             id="name"
             value={searchName}
             testId="file-type-name-input"
-            width="548px"
+            width="60ch"
             onChange={(detail: GoabInputOnChangeDetail) => setSearchName(detail.value)}
           />
         </GoabFormItem>
         <GoabFormItem label="Filter file type">
           {resetFilter === 'visible' && (
-            <GoabDropdown size="compact"
+            <GoabDropdown
+              size="compact"
               name="fileType"
               value={filterFileType}
-              width="100%"
+              width="57ch"
               testId="file-type-name-dropdown-2"
               onChange={(detail: GoabDropdownOnChangeDetail) => {
                 setFilterFileType(detail?.value.toString());
@@ -354,26 +357,26 @@ const FileList = (): JSX.Element => {
               ))}
             </GoabDropdown>
           )}
-        </GoabFormItem>
-        <br />
-        <GoabButtonGroup alignment="end">
-          <GoabButton
-            size="compact"
-            type="secondary"
-            onClick={() => {
-              setSearchName('');
-              setFilterFileType('');
-              setResetFilter('switch');
-              dispatch(FetchFilesService(null));
-            }}
-          >
-            Reset
-          </GoabButton>
+          <br />
+          <GoabButtonGroup alignment="start">
+            <GoabButton
+              size="compact"
+              type="secondary"
+              onClick={() => {
+                setSearchName('');
+                setFilterFileType('');
+                setResetFilter('switch');
+                dispatch(FetchFilesService(null));
+              }}
+            >
+              Reset
+            </GoabButton>
 
-          <GoabButton size="compact" onClick={getFilteredFiles}>
-            Search
-          </GoabButton>
-        </GoabButtonGroup>
+            <GoabButton size="compact" onClick={getFilteredFiles}>
+              Search
+            </GoabButton>
+          </GoabButtonGroup>
+        </GoabFormItem>
       </div>
       <br />
       {!indicator.show && !fileList && renderNoItem('file')}
@@ -403,11 +406,12 @@ const FileTableStyles = styled.div`
     align-items: center;
     display: flex;
     gap: 1rem;
-    justify-content: flex-end;
+    justify-content: flex-start;
     margin-bottom: 1rem;
   }
 
   .selection-column {
+    vertical-align: middle;
     width: 3rem;
   }
 
