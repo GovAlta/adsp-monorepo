@@ -176,6 +176,45 @@ describe('TaskList Component', () => {
     expect(container).toBeTruthy();
   });
 
+  it('should not count untouched pages with no required fields towards the progress bar', () => {
+    // A page with no required fields is flagged isCompleted on mount so it does not block
+    // submission, but until the user opens it the badge reads "Not started".
+    const untouched = (label: string) => ({ ...createCategory(label, true, true), isVisited: false });
+
+    const categories = [
+      untouched('Category 1'),
+      untouched('Category 2'),
+      untouched('Category 3'),
+    ] as unknown as CategoryState[];
+
+    const { container } = render(<TaskList {...baseProps} categories={categories} />);
+
+    expect(screen.getByText('0 out of 3 items completed')).toBeInTheDocument();
+    expect(container.querySelectorAll('[content="Not started"]')).toHaveLength(3);
+  });
+
+  it('should count a visited, completed page towards the progress bar', () => {
+    const categories = [
+      createCategory('Category 1', true, true),
+      { ...createCategory('Category 2', true, true), isVisited: false },
+    ] as unknown as CategoryState[];
+
+    render(<TaskList {...baseProps} categories={categories} />);
+
+    expect(screen.getByText('1 out of 2 items completed')).toBeInTheDocument();
+  });
+
+  it('should exclude invisible pages from the progress totals', () => {
+    const categories = [
+      createCategory('Category 1', true, true),
+      createCategory('Category 2', true, true, true, false),
+    ] as unknown as CategoryState[];
+
+    render(<TaskList {...baseProps} categories={categories} />);
+
+    expect(screen.getByText('1 out of 1 items completed')).toBeInTheDocument();
+  });
+
   it('should handle Enter key on category', () => {
     const categories = [createCategory('Category 1')] as unknown as CategoryState[];
     const props = {

@@ -5,6 +5,7 @@ import { GoabCalloutType } from '@abgov/ui-components-common';
 import { PageBorder } from '../styled-components';
 import { CategoriesState, CategoryState } from '../context';
 import { ApplicationStatus } from '../ApplicationStatus';
+import { getCategoryStatus, PageStatus } from '../CategoryStatus';
 import { getCategorySections, SectionMap } from './categorySections';
 import { SectionHeaderRow } from './sectionHeaderRow';
 import { CategoryRow } from './categoryRow';
@@ -48,6 +49,14 @@ function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
 }
 
 const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
+
+// The rows the progress bar is counting: the ones actually rendered in the task list.
+const isCounted = (cat: CategoryState) => shouldShow(cat) && cat?.visible !== false;
+
+// A page counts as completed only when its own badge says so. A page with no required fields is
+// flagged isCompleted on mount (so an untouched optional page does not block submission), while its
+// badge still reads "Not started" - counting isCompleted alone credits pages the user never opened.
+const isCountedComplete = (cat: CategoryState) => getCategoryStatus(cat) === PageStatus.Complete;
 
 const isInTaskList = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
@@ -111,14 +120,20 @@ export const TaskList: React.FC<TocProps> = ({
   }, [categories]);
 
   const totalPages = useMemo(
-    () => mergedSections.reduce((count, section) => count + section.categories.filter(shouldShow).length, 0),
+    () => mergedSections.reduce((count, section) => count + section.categories.filter(isCounted).length, 0),
     [mergedSections],
   );
 
   const completedPages = useMemo(
     () =>
       mergedSections.reduce(
-        (count, section) => count + section.categories.filter((cat) => shouldShow(cat) && cat.isCompleted).length,
+        (count, section) =>
+          count +
+          section.categories.filter(
+            // updateCompletion rolls up the detail pages hidden from the task list, exactly as the
+            // rendered row does, so the count never runs ahead of the badges.
+            (cat, index) => isCounted(cat) && isCountedComplete(updateCompletion(section.categories, index)),
+          ).length,
         0,
       ),
     [mergedSections],
