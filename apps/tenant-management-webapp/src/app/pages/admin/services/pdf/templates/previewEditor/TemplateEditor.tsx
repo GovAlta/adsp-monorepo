@@ -99,6 +99,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id) || selectCorePdfTemplateById(state, id));
 
+  // clean-code-ignore: 2.18 — pdfTemplate is a plain object deserialized from the pdf-service
+  // response (seven string fields, no methods or non-serializable values), so a JSON round trip is
+  // an adequate deep clone and avoids pulling in lodash for it.
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || {})));
 
   const suggestion =
@@ -179,6 +182,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   //eslint-disable-next-line
   useEffect(() => {
+    // clean-code-ignore: 2.18 — see the note on the useState initializer above.
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || {})));
   }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
