@@ -62,13 +62,18 @@ interface TemplateEditorProps {
   errors?: any;
 }
 
+// A segment that has never been set comes back undefined, while Monaco reports an empty editor as
+// ''. Treat those as the same so an untouched tab is not flagged as an edit — otherwise Save is
+// enabled on load and writes '' over segments the user never opened.
+const isSegmentUpdated = (prev?: string, next?: string): boolean => (prev ?? '') !== (next ?? '');
+
 const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   return (
-    prev?.template !== next?.template ||
-    prev?.header !== next?.header ||
-    prev?.footer !== next?.footer ||
-    prev?.additionalStyles !== next?.additionalStyles ||
-    prev?.variables !== next?.variables
+    isSegmentUpdated(prev?.template, next?.template) ||
+    isSegmentUpdated(prev?.header, next?.header) ||
+    isSegmentUpdated(prev?.footer, next?.footer) ||
+    isSegmentUpdated(prev?.additionalStyles, next?.additionalStyles) ||
+    isSegmentUpdated(prev?.variables, next?.variables)
   );
 };
 
@@ -94,7 +99,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id) || selectCorePdfTemplateById(state, id));
 
-  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
+  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || {})));
 
   const suggestion =
     pdfTemplate && pdfTemplate.variables && convertToEditorSuggestion(JSON.parse(pdfTemplate.variables));
@@ -174,7 +179,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   //eslint-disable-next-line
   useEffect(() => {
-    setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
+    setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || {})));
   }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

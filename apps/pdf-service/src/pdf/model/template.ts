@@ -3,6 +3,23 @@ import { Readable } from 'stream';
 import { PdfService, PdfTemplate, TemplateService } from '../types';
 import { Logger } from 'winston';
 
+const STYLE_ELEMENT = /^\s*<style[^>]*>([\s\S]*)<\/style>\s*$/i;
+
+// additionalStyles is stored as raw CSS, but templates seeded from the ADSP defaults were saved
+// with their own <style> wrapper. Wrapping those again yields <style><style>…</style></style>: the
+// parser closes the style element at the first </style>, so the CSS text starts with a literal
+// <style> token, and CSS error recovery consumes it — along with the first rule in the file.
+// Normalize to exactly one wrapper, and to no style element at all when there are no styles.
+export function wrapAdditionalStyles(additionalStyles?: string): string {
+  const styles = additionalStyles?.trim();
+  if (!styles) {
+    return '';
+  }
+
+  const alreadyWrapped = STYLE_ELEMENT.exec(styles);
+  return `<style>${alreadyWrapped ? alreadyWrapped[1] : styles}</style>`;
+}
+
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
   id: string;
@@ -52,7 +69,8 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.templateService = templateService;
     this.startWithDefault = startWithDefault;
 
-    this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
+    this.additionalStyles = additionalStyles;
+    this.additionalStylesWrapped = wrapAdditionalStyles(additionalStyles);
     this.logger = logger;
   }
 
