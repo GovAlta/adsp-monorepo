@@ -348,15 +348,26 @@ export function onIoConnection(logger: Logger) {
               try {
                 output = await result.object;
               } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : String(err);
                 logger.warn(
                   `Invalid structured output produced for agent ${agent}; falling back to text output only.`,
                   {
                     context: 'AgentRouter',
                     tenant: tenant?.id?.toString(),
                     user: `${user.name} (ID: ${user.id})`,
-                    error: err instanceof Error ? err.message : String(err),
+                    error: errorMessage,
                   },
                 );
+                // Surface provider/tool failures (e.g. Groq tool_use_failed) so the UI is not blank.
+                if (socket.connected) {
+                  socket.emit('stream', {
+                    agent,
+                    threadId,
+                    messageId: replyId,
+                    replyTo: messageId,
+                    chunk: { type: 'error', payload: { message: errorMessage } },
+                  });
+                }
               }
 
               const totalDurationMs = Date.now() - streamStartTime;
@@ -678,6 +689,124 @@ export function messageAgent(logger: Logger): RequestHandler {
     }
   };
 }
+
+export function listThreads(logger: Logger): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const tenant = req.tenant;
+      const user = req.user;
+      const agent = req[AGENT_KEY] as AgentBroker;
+
+      logger.debug(`User ${user.name} (ID: ${user.id}) listing threads.`, {
+        context: 'AgentRouter',
+        tenant: tenant?.id?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
+      const result = await agent.listThreads(user);
+
+      res.send({
+        agent: agent.Agent.id,
+        ...result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function listThreadMessages(logger: Logger): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const tenant = req.tenant;
+      const user = req.user;
+      const { threadId } = req.params;
+      const agent = req[AGENT_KEY] as AgentBroker;
+
+      logger.debug(`User ${user.name} (ID: ${user.id}) listing messages for thread ${threadId}.`, {
+        context: 'AgentRouter',
+        tenant: tenant?.id?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
+      const result = await agent.listMessages(user, threadId);
+
+      res.send({
+        agent: agent.Agent.id,
+        ...result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function clearThreadMessages(logger: Logger): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const tenant = req.tenant;
+      const user = req.user;
+      const { threadId } = req.params;
+      const agent = req[AGENT_KEY] as AgentBroker;
+
+      logger.info(`User ${user.name} (ID: ${user.id}) clearing all messages for thread ${threadId}.`, {
+        context: 'AgentRouter',
+        tenant: tenant?.id?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
+      const result = await agent.clearMessages(user, threadId);
+
+      res.send({
+        agent: agent.Agent.id,
+        ...result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function rollbackThreadMessages(logger: Logger): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const tenant = req.tenant;
+      const user = req.user;
+      const { threadId } = req.params;
+      const keepThroughMessageId =
+        typeof req.body?.keepThroughMessageId === 'string' ? req.body.keepThroughMessageId : '';
+      const scrubToolResults = req.body?.scrubToolResults === true;
+      const toolNames = Array.isArray(req.body?.toolNames)
+        ? req.body.toolNames.filter((name: unknown): name is string => typeof name === 'string')
+        : undefined;
+      const agent = req[AGENT_KEY] as AgentBroker;
+
+      logger.info(
+        `User ${user.name} (ID: ${user.id}) rolling back thread ${threadId} to message ${keepThroughMessageId}` +
+          (scrubToolResults ? ' (scrubToolResults)' : '') +
+          '.',
+        {
+          context: 'AgentRouter',
+          tenant: tenant?.id?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        },
+      );
+
+      const result = await agent.rollbackToMessage(user, threadId, keepThroughMessageId, {
+        scrubToolResults,
+        toolNames,
+      });
+
+      res.send({
+        agent: agent.Agent.id,
+        ...result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface AgentRouterProps {
   logger: Logger;
   tenantService: TenantService;
@@ -695,6 +824,11 @@ export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }:
       name: agent.Agent.name,
     });
   });
+
+  router.get('/agents/:agentId/threads', getAgent, listThreads(logger));
+  router.get('/agents/:agentId/threads/:threadId/messages', getAgent, listThreadMessages(logger));
+  router.delete('/agents/:agentId/threads/:threadId/messages', getAgent, clearThreadMessages(logger));
+  router.post('/agents/:agentId/threads/:threadId/rollback', getAgent, rollbackThreadMessages(logger));
 
   router.post('/agents/:agentId', getAgent, messageAgent(logger));
 
