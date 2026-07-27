@@ -321,6 +321,7 @@ describe('getStepStatus', () => {
       data: { name: 'Bob' },
       errors: [{ instancePath: '/name', message: 'invalid' }] as unknown as ErrorObject[],
       schema,
+      visited: true,
     };
 
     // Act
@@ -342,6 +343,7 @@ describe('getStepStatus', () => {
       data: { name: '', other: 'x' },
       errors: [] as ErrorObject[],
       schema,
+      visited: true,
     };
 
     // Act
@@ -360,6 +362,7 @@ describe('getStepStatus', () => {
       data: { name: 'Bob' },
       errors: [] as ErrorObject[],
       schema,
+      visited: true,
     };
 
     // Act
@@ -383,6 +386,7 @@ describe('getStepStatus', () => {
       data: { hasPet: true },
       errors: [] as ErrorObject[],
       schema,
+      visited: true,
     };
 
     // Act
@@ -412,6 +416,7 @@ describe('getStepStatus', () => {
         },
       ] as unknown as ErrorObject[],
       schema,
+      visited: true,
     };
 
     // Act
@@ -419,6 +424,47 @@ describe('getStepStatus', () => {
 
     // Assert
     expect(result.status).toBe(StepStatus.IN_PROGRESS);
+  });
+
+  test('returns NotStarted for an unvisited step whose only data is auto-populated', () => {
+    // Arrange: the step's single field is auto-populated (system-filled), and the user has not
+    // visited the step. Auto-populated values must not make it look started.
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+    const opts = {
+      scopes: ['#/name'],
+      data: { name: 'Bob' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+      autoPopulatedScopes: ['#/name'],
+    };
+
+    // Act
+    const result = getStepStatus(opts);
+
+    // Assert: no status is shown until the user actually visits the step.
+    expect(result.status).toBe(StepStatus.NOT_STARTED);
+    expect(result.hasRequiredFields).toBe(true);
+  });
+
+  test('shows status for an unvisited step that holds user-entered data (resumed form)', () => {
+    // Arrange: the field holds user-entered data (not auto-populated) and the user has not visited
+    // it this session — i.e. a saved form being resumed.
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+    const opts = {
+      scopes: ['#/name'],
+      data: { name: 'Bob' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+    };
+
+    // Act
+    const result = getStepStatus(opts);
+
+    // Assert: user-entered data counts as started, so the saved status shows on resume.
+    expect(result.status).toBe(StepStatus.COMPLETED);
+    expect(result.hasRequiredFields).toBe(true);
   });
 
   test('falls back to the visited flag when scopes cannot be normalized', () => {
