@@ -26,6 +26,7 @@ import { SubmittedForm } from '../components/SubmittedForm';
 import { FormSupportPane } from './FormSupportPane';
 import { UserNotAuthorized } from '../components/UserNotAuthorized';
 import { getEmptyRequiredStringErrors } from 'libs/jsonforms-components/src/lib/Controls/FormStepper/context';
+import { resolveFormChangeErrors } from './formChangeErrors';
 
 interface FormProps {
   className?: string;
@@ -81,14 +82,13 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   saving={busy.saving}
                   submitting={busy.submitting}
                   onChange={({ data, errors }) => {
-                    if (
-                      errors[0]?.message === 'should be equal to one of the allowed values' &&
-                      errors[0]?.schemaPath.includes('enum')
-                    ) {
-                      errors = null;
-                    }
-
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                    dispatch(
+                      updateForm({
+                        data: data as Record<string, unknown>,
+                        files,
+                        errors: resolveFormChangeErrors(errors),
+                      }),
+                    );
                   }}
                   onSave={({ data, errors }) => {
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
