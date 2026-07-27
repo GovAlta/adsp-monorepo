@@ -14,15 +14,15 @@ import {
   GoabInputOnChangeDetail,
   GoabTextAreaOnKeyPressDetail,
 } from '@abgov/ui-components-common';
-import { validateRegisterJson } from './utils';
+import {
+  getSeparatorHelpText,
+  RegisterDataSeparator,
+  SEPARATOR_MAPPER,
+  validateRegisterJson,
+  validateSeparatorMatch,
+} from './utils';
 import { RegisterDataType } from '@abgov/jsonforms-components';
 
-export type RegisterDataSeparator = 'comma' | 'newline' | 'semicolon' | 'json';
-const SEPARATOR_MAPPER = {
-  comma: ',',
-  newline: '\n',
-  semicolon: ';',
-};
 interface AddRegisterDataModalProps {
   open: boolean;
   onCancel: () => void;
@@ -46,7 +46,10 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
     onDescriptionChange('');
   };
 
-  const parseDataBySeparator = (value: string, selectedSeparator: RegisterDataSeparator): string[] | null => {
+  const parseDataBySeparator = (
+    value: string,
+    selectedSeparator: Exclude<RegisterDataSeparator, 'json'>,
+  ): string[] | null => {
     let trimmedValue = value.trim();
     if (!trimmedValue) {
       return null;
@@ -81,8 +84,14 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
         setParsedData(JSON.parse(value) as RegisterDataType);
       }
     } else {
-      setDataError('');
-      setParsedData(parseDataBySeparator(value, selectedSeparator));
+      const mismatchError = validateSeparatorMatch(value, selectedSeparator);
+      if (mismatchError) {
+        setDataError(mismatchError);
+        setParsedData(null);
+      } else {
+        setDataError('');
+        setParsedData(parseDataBySeparator(value, selectedSeparator));
+      }
     }
   };
 
@@ -163,7 +172,12 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           <GoabDropdownItem value="json" label="Use JSON format" />
         </GoabDropdown>
       </GoabFormItem>
-      <GoabFormItem label="" error={dataError}>
+      <GoabFormItem
+        label=""
+        helpText={getSeparatorHelpText(separator)}
+        error={dataError}
+        testId="data-register-add-data-formitem"
+      >
         <GoabTextArea
           name="register-data"
           value={configValue}
