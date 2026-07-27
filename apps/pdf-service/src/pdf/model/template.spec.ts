@@ -1,5 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { PdfTemplateEntity } from './template';
+import { PdfTemplateEntity, wrapAdditionalStyles } from './template';
 import { Logger } from 'winston';
 
 describe('PdfTemplateEntity', () => {
@@ -93,6 +93,34 @@ describe('PdfTemplateEntity', () => {
     expect(result).toBe(stream);
   });
 
+  it('retains additionalStyles so it can be read back from configuration', () => {
+    const entity = new PdfTemplateEntity(templateServiceMock, pdfServiceMock, {
+      tenantId,
+      id: 'test-template',
+      name: 'Test Template',
+      description: null,
+      template: 'template',
+      additionalStyles: '.pb20 { padding-bottom: 20px; }',
+      logger: loggerMock,
+    });
+
+    expect(entity.additionalStyles).toBe('.pb20 { padding-bottom: 20px; }');
+  });
+
+  it('wraps additionalStyles in a single style element when generating', () => {
+    const entity = new PdfTemplateEntity(templateServiceMock, pdfServiceMock, {
+      tenantId,
+      id: 'test-template',
+      name: 'Test Template',
+      description: null,
+      template: 'template',
+      additionalStyles: '.pb20 { padding-bottom: 20px; }',
+      logger: loggerMock,
+    });
+
+    expect(entity.additionalStylesWrapped).toBe('<style>.pb20 { padding-bottom: 20px; }</style>');
+  });
+
   it('can create entity with header and footer', async () => {
     const entity = new PdfTemplateEntity(templateServiceMock, pdfServiceMock, {
       tenantId,
@@ -105,5 +133,29 @@ describe('PdfTemplateEntity', () => {
       logger: loggerMock,
     });
     expect(entity).toBeTruthy();
+  });
+
+  describe('wrapAdditionalStyles', () => {
+    it('wraps raw css', () => {
+      expect(wrapAdditionalStyles('.a { color: red; }')).toBe('<style>.a { color: red; }</style>');
+    });
+
+    it('does not double wrap css that already carries a style element', () => {
+      expect(wrapAdditionalStyles('<style>\n.a { color: red; }\n</style>')).toBe(
+        '<style>\n.a { color: red; }\n</style>',
+      );
+    });
+
+    it('wraps css that only partially resembles a style element', () => {
+      // Only a wrapper spanning the whole value is unwrapped; anything else is passed through
+      // as-is rather than guessing where the author meant the css to end.
+      expect(wrapAdditionalStyles('<style>.a { color: red; }</style>.b { color: blue; }')).toBe(
+        '<style><style>.a { color: red; }</style>.b { color: blue; }</style>',
+      );
+    });
+
+    it.each([undefined, null, '', '   '])('returns no style element for %p', (styles) => {
+      expect(wrapAdditionalStyles(styles)).toBe('');
+    });
   });
 });

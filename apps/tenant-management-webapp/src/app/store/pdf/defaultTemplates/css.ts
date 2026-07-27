@@ -1,5 +1,5 @@
-export const defaultTemplateCss = `<style>
-/*
+// Raw CSS only — pdf-service wraps additionalStyles in a <style> element when it renders.
+export const defaultTemplateCss = `/*
  * The CSS tab is useful for CSS that applies throughout your template i.e. to the header, footer,
  * and body segments. Define your default, common styles for fonts, margins, padding, colours, etc.
  * here.
@@ -32,5 +32,4 @@ html {
 .clear {
   clear: both;
 }
-</style>
 `;
