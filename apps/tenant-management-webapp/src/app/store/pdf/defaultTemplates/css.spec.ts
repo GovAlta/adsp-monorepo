@@ -1,15 +1,17 @@
 import { defaultTemplateCss } from './css';
 
 describe('defaultTemplateCss', () => {
-  it('is raw css with no style element wrapper', () => {
-    // Regression guard: pdf-service wraps additionalStyles in <style> when it renders. Seeding the
-    // CSS tab with an already wrapped value produced <style><style>…</style></style>, and the
-    // parser closes the style element at the first </style> — CSS error recovery then consumed the
-    // leading token along with the first rule in the file.
-    expect(defaultTemplateCss).not.toMatch(/<\/?style/i);
+  it('keeps its own style element wrapper', () => {
+    // Deliberate. pdf-service wraps additionalStyles again at render time, and every existing
+    // template renders with the resulting double wrapper. Seeding new templates without it would
+    // give them a different layout from the ones already published. See wrapAdditionalStyles in
+    // apps/pdf-service/src/pdf/model/template.ts.
+    expect(defaultTemplateCss.trimStart()).toMatch(/^<style>/i);
+    expect(defaultTemplateCss.trimEnd()).toMatch(/<\/style>$/i);
   });
 
-  it('keeps the rule that was previously swallowed by the double wrapper', () => {
+  it('still defines the shared resets the CSS tab is seeded with', () => {
     expect(defaultTemplateCss).toMatch(/div,\s*p\s*\{[^}]*margin:/s);
+    expect(defaultTemplateCss).toMatch(/\.clear\s*\{[^}]*clear:\s*both/s);
   });
 });

@@ -40,8 +40,11 @@ const template = `
 
 `;
 
-// Raw CSS only — pdf-service wraps additionalStyles in a <style> element when it renders.
+// Carries its own <style> wrapper, which pdf-service wraps again. See wrapAdditionalStyles in
+// pdf-service: the submitted-form PDF has always rendered with that double wrapper, so removing it
+// here would shift the layout of every submitted form.
 const additionalStyles = `
+<style>
 /*
  * The CSS tab is useful for CSS that applies throughout your template i.e. to the header, footer,
  * and body segments. Define your default, common styles for fonts, margins, padding, colours, etc.
@@ -202,6 +205,8 @@ html {
 .content img {
   width: 100%;
 }
+</style>
+
 `;
 
 const header = `

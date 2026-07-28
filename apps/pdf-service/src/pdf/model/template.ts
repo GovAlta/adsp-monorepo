@@ -3,24 +3,25 @@ import { Readable } from 'stream';
 import { PdfService, PdfTemplate, TemplateService } from '../types';
 import { Logger } from 'winston';
 
-const STYLE_ELEMENT = /^\s*<style[^>]*>([\s\S]*)<\/style>\s*$/i;
-
-// Templates seeded from the ADSP defaults were saved with their own <style> wrapper. Strip it so
-// the caller can apply exactly one. A wrapper that does not span the whole value is left alone
-// rather than guessing where the author meant the css to end.
-function unwrapStyleElement(styles: string): string {
-  const wrapped = STYLE_ELEMENT.exec(styles);
-  return wrapped ? wrapped[1] : styles;
-}
-
-// additionalStyles is stored as raw CSS. Wrapping an already wrapped value yields
-// <style><style>…</style></style>: the parser closes the style element at the first </style>, so
-// the CSS text starts with a literal <style> token, and CSS error recovery consumes it — along
-// with the first rule in the file. Normalize to exactly one wrapper, and to no style element at
-// all when there are no styles.
+// additionalStyles is wrapped verbatim, without unwrapping a <style> element the stored value may
+// already carry.
+//
+// That double wrapping is not accidental. Tenants authored their templates against it: the parser
+// closes the style element at the first </style>, so CSS error recovery consumes the leading
+// <style> token together with the first rule in the file, and the trailing </style> lands in the
+// body as text. Normalizing to a single wrapper made that first rule start applying, which changed
+// the layout of every already-published PDF whose CSS tab holds the ADSP default. Correct in
+// isolation, but not a change to make underneath live documents.
+//
+// The only departure from the original is that an unset value yields no style element rather than
+// <style>undefined</style>. Both render identically — `undefined` is not valid CSS and is
+// discarded — so this costs nothing and keeps the literal out of the output.
+//
+// If the double wrapping is ever to be undone, it needs a migration that rewrites stored
+// additionalStyles, not a change to how they are rendered.
 export function wrapAdditionalStyles(additionalStyles?: string): string {
   const styles = additionalStyles?.trim();
-  return styles ? `<style>${unwrapStyleElement(styles)}</style>` : '';
+  return styles ? `<style>${styles}</style>` : '';
 }
 
 export class PdfTemplateEntity implements PdfTemplate {

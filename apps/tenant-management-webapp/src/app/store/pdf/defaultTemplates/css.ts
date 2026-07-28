@@ -1,5 +1,8 @@
-// Raw CSS only — pdf-service wraps additionalStyles in a <style> element when it renders.
-export const defaultTemplateCss = `/*
+// Ships with its own <style> wrapper, which pdf-service then wraps again. See wrapAdditionalStyles
+// in pdf-service — the resulting double wrapper is what every existing template renders with, so
+// the seed has to keep producing it for new templates to match.
+export const defaultTemplateCss = `<style>
+/*
  * The CSS tab is useful for CSS that applies throughout your template i.e. to the header, footer,
  * and body segments. Define your default, common styles for fonts, margins, padding, colours, etc.
  * here.
@@ -32,4 +35,5 @@ html {
 .clear {
   clear: both;
 }
+</style>
 `;
