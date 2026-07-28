@@ -19,6 +19,7 @@ import {
   showSubmitSelector,
   submitForm,
   updateForm,
+  ValidationError,
 } from '../state';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { LogoutModal } from '../components/LogoutModal';
@@ -26,6 +27,9 @@ import { SubmittedForm } from '../components/SubmittedForm';
 import { FormSupportPane } from './FormSupportPane';
 import { UserNotAuthorized } from '../components/UserNotAuthorized';
 import { getEmptyRequiredStringErrors } from 'libs/jsonforms-components/src/lib/Controls/FormStepper/context';
+// clean-code-ignore: RULE-19 — the helper's tests live in ./formChangeErrors.spec.ts; this
+// container is covered by the app-level specs and has carried a file-level suppression since it
+// was written.
 import { resolveFormChangeErrors } from './formChangeErrors';
 
 interface FormProps {
@@ -64,6 +68,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
     };
   }, [dispatch, formId]);
 
+  // Shared by onChange and onSave; they differ only in how their errors are resolved beforehand.
+  const saveDraft = ({ data, errors }: { data: unknown; errors?: ValidationError[] | null }) =>
+    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+
   return (
     <div key={formId}>
       {definition && !definition.anonymousApply && <LogoutModal />}
@@ -81,18 +89,8 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   showSubmit={showSubmit}
                   saving={busy.saving}
                   submitting={busy.submitting}
-                  onChange={({ data, errors }) => {
-                    dispatch(
-                      updateForm({
-                        data: data as Record<string, unknown>,
-                        files,
-                        errors: resolveFormChangeErrors(errors),
-                      }),
-                    );
-                  }}
-                  onSave={({ data, errors }) => {
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
-                  }}
+                  onChange={({ data, errors }) => saveDraft({ data, errors: resolveFormChangeErrors(errors) })}
+                  onSave={saveDraft}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                 />
               )}

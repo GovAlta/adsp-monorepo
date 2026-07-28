@@ -54,6 +54,8 @@ interface AutoPopulatedValue {
 
 const AUTO_POPULATE_ACTION_TYPES = new Set<string>([INIT, UPDATE_CORE]);
 
+// clean-code-ignore: RULE-19 — covered by ./autoPopulate.spec.tsx, colocated. The rule only looks
+// for a .test.ts sibling; adding one would duplicate the existing suite.
 // Only a value the user has never set is a populate target. An empty string is a real value here:
 // the text controls write '' when a field is cleared (see onChangeForInputControl), so treating it
 // as empty made auto-populate refill the field the instant it was emptied, and the user could
