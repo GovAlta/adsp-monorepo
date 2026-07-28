@@ -30,6 +30,15 @@ const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
 const allowedRoleProperties = ['applicantRoles', 'assessorRoles', 'clerkRoles'];
 
+// The configuration service answers /latest with 200 and an empty object when the definition has
+// never been written (see getConfiguration's `configuration.latest?.configuration || {}`), so an
+// empty body is the real not-found signal. Without this the handlers went on to PATCH a spread of
+// {}, and the caller got the configuration service's schema error as a 400 instead of a 404.
+const isDefinitionNotFound = (response: { status: number; data?: unknown }): boolean =>
+  response.status === HttpStatusCodes.NOT_FOUND ||
+  !response.data ||
+  Object.keys(response.data).length === 0;
+
 async function fetchExistingDefinition(
   configurationApiUrl: URL,
   token: string,
@@ -46,7 +55,7 @@ async function fetchExistingDefinition(
     },
   );
 
-  if (response.status === HttpStatusCodes.NOT_FOUND || !response.data) {
+  if (isDefinitionNotFound(response)) {
     throw new NotFoundError('form definition', definitionId);
   }
 
