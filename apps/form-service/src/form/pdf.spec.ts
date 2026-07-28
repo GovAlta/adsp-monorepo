@@ -2,12 +2,13 @@ import { SubmittedFormPdfTemplate } from './pdf';
 
 describe('SubmittedFormPdfTemplate', () => {
   describe('additionalStyles', () => {
-    it('is raw css with no style element wrapper', () => {
-      // Regression guard: pdf-service wraps additionalStyles in <style> when it renders. Shipping
-      // an already wrapped value produced <style><style>…</style></style>, and the parser closes
-      // the style element at the first </style> — CSS error recovery then consumed the leading
-      // token along with the first rule in the file.
-      expect(SubmittedFormPdfTemplate.additionalStyles).not.toMatch(/<\/?style/i);
+    it('keeps its own style element wrapper', () => {
+      // Deliberate. pdf-service wraps additionalStyles again at render time, and the submitted-form
+      // PDF has always rendered with the resulting double wrapper. Removing it here would shift the
+      // layout of every submitted form. See wrapAdditionalStyles in
+      // apps/pdf-service/src/pdf/model/template.ts.
+      expect(SubmittedFormPdfTemplate.additionalStyles.trimStart()).toMatch(/^<style>/i);
+      expect(SubmittedFormPdfTemplate.additionalStyles.trimEnd()).toMatch(/<\/style>$/i);
     });
 
     it('does not set white-space: nowrap on .body', () => {

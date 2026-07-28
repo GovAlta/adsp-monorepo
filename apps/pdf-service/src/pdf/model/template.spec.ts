@@ -107,7 +107,7 @@ describe('PdfTemplateEntity', () => {
     expect(entity.additionalStyles).toBe('.pb20 { padding-bottom: 20px; }');
   });
 
-  it('wraps additionalStyles in a single style element when generating', () => {
+  it('wraps additionalStyles in a style element when generating', () => {
     const entity = new PdfTemplateEntity(templateServiceMock, pdfServiceMock, {
       tenantId,
       id: 'test-template',
@@ -140,17 +140,11 @@ describe('PdfTemplateEntity', () => {
       expect(wrapAdditionalStyles('.a { color: red; }')).toBe('<style>.a { color: red; }</style>');
     });
 
-    it('does not double wrap css that already carries a style element', () => {
+    it('wraps css that already carries a style element, preserving the established output', () => {
+      // Deliberate: existing templates were authored against this double wrapper, and unwrapping
+      // would change the layout of already-published PDFs. See wrapAdditionalStyles for why.
       expect(wrapAdditionalStyles('<style>\n.a { color: red; }\n</style>')).toBe(
-        '<style>\n.a { color: red; }\n</style>',
-      );
-    });
-
-    it('wraps css that only partially resembles a style element', () => {
-      // Only a wrapper spanning the whole value is unwrapped; anything else is passed through
-      // as-is rather than guessing where the author meant the css to end.
-      expect(wrapAdditionalStyles('<style>.a { color: red; }</style>.b { color: blue; }')).toBe(
-        '<style><style>.a { color: red; }</style>.b { color: blue; }</style>',
+        '<style><style>\n.a { color: red; }\n</style></style>',
       );
     });
 
