@@ -308,15 +308,9 @@ async function promptForTenantRealm(directoryServiceUrl: string, coreToken: stri
     ...rest.map((t) => t.name),
   ];
   const { prompt } = await import('enquirer');
+  const promptOptions = { type: 'autocomplete', name: 'tenant', message: 'Which tenant?', hint: '(type to filter)', limit: 10, choices };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { tenant: pickedName } = await prompt<{ tenant: string }>({
-    type: 'autocomplete',
-    name: 'tenant',
-    message: 'Which tenant?',
-    hint: '(type to filter)',
-    limit: 10,
-    choices,
-  } as any);
+  const { tenant: pickedName } = await prompt<{ tenant: string }>(promptOptions as any);
 
   if (pickedName === CREATE_TENANT_CHOICE) {
     return createTenantInteractive(directoryServiceUrl, coreToken);
