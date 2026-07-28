@@ -1,5 +1,5 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { ValidationService } from '@core-services/core-common';
+import { NotFoundError, ValidationService } from '@core-services/core-common';
 import * as HttpStatusCodes from 'http-status-codes';
 import axios from 'axios';
 import { Request, Response } from 'express';
@@ -1269,6 +1269,40 @@ describe('definition router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(axiosMock.get).not.toHaveBeenCalled();
       expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('reports an authenticated caller without the admin role as forbidden, not unauthorized', () => {
+      // Acceptance criterion: 403 when authenticated but lacking form-admin. 401 is reserved for
+      // callers the auth middleware never authenticated at all.
+      const err = new UnauthorizedUserError('update form definition roles', {
+        id: 'tester',
+        name: 'Tester',
+      } as never);
+
+      expect(err.extra.statusCode).toBe(HttpStatusCodes.FORBIDDEN);
+    });
+
+    it('can call next with not found when the definition has never been written', async () => {
+      // The configuration service answers /latest with 200 and {} for a definition that does not
+      // exist. Previously this fell through to the PATCH and surfaced the configuration service's
+      // schema error as a 400.
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: {} });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'never-written' },
+        body: { applicantRoles: ['a'], assessorRoles: [], clerkRoles: [] },
+        tenant: { id: tenantId },
+      };
+
+      const handler = updateFormDefinitionRoles(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining('never-written') }),
+      );
     });
 
     it('can call next with not found when definition does not exist', async () => {
