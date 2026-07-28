@@ -487,7 +487,12 @@ describe('login', () => {
       expect(mockPrompt).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'autocomplete',
-          choices: [{ name: 'tenant-a', message: 'tenant-a (yours)' }, 'tenant-b', 'tenant-c'],
+          choices: [
+            { name: 'tenant-a', message: 'tenant-a (yours)' },
+            { role: 'separator', value: '─────────────────────' },
+            'tenant-b',
+            'tenant-c',
+          ],
         })
       );
     });
