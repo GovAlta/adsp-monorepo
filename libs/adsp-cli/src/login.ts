@@ -300,9 +300,11 @@ async function promptForTenantRealm(directoryServiceUrl: string, coreToken: stri
     throw new Error('No tenants found.');
   }
 
+  const hasPinnedItems = owned.length > 0 || showCreateOption;
   const choices = [
-    ...owned.map((t) => ({ name: t.name, message: `${t.name} (yours)` })),
     ...(showCreateOption ? [{ name: CREATE_TENANT_CHOICE, message: '+ Create a new tenant' }] : []),
+    ...owned.map((t) => ({ name: t.name, message: `${t.name} (yours)` })),
+    ...(hasPinnedItems && rest.length > 0 ? [{ role: 'separator', value: '─────────────────────' }] : []),
     ...rest.map((t) => t.name),
   ];
   const { prompt } = await import('enquirer');
@@ -310,6 +312,8 @@ async function promptForTenantRealm(directoryServiceUrl: string, coreToken: stri
     type: 'autocomplete',
     name: 'tenant',
     message: 'Which tenant?',
+    hint: '(type to filter)',
+    limit: 10,
     choices,
   });
 
