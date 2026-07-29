@@ -2,6 +2,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { join } from 'path';
 import { DocsRepository } from './docs/docsRepository';
+import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
@@ -22,6 +23,7 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
     ...createSdkTools(),
     ...createQuickstartTool(),
     ...createServiceRolesTools(),
+    ...createConfigurationSchemaTools(),
   ];
   const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
 
