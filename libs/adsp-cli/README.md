@@ -15,9 +15,12 @@ invoke each other directly:
   against Keycloak for it, cache the resulting token in `~/.adsp-cli/token-cache.json`, and persist the realm itself
   as the current context in `~/.adsp-cli/config.json`. This is the only place an interactive, potentially slow (up
   to 120s) wait happens; its other commands (see below) never block on user interaction.
+  - For CI pipelines there is a non-interactive variant: `adsp login --ci` uses the client credentials grant instead
+    of a browser flow (see [CI / non-interactive login](#ci--non-interactive-login)).
 - **Library consumers** (e.g. an MCP server tool handler, which must never block on user interaction) call
-  `getAccessToken()` — a fast, non-interactive function that only reads/refreshes the cache, never opens a browser —
-  to get a token, then call `getServiceUrls()`/`getConfiguration()` themselves to actually talk to ADSP.
+  `getAccessToken()` — a fast, non-interactive function that reads/refreshes the cache, and also auto-acquires via
+  client credentials when `ADSP_CLIENT_ID`/`ADSP_CLIENT_SECRET` env vars are set — to get a token, then call
+  `getServiceUrls()`/`getConfiguration()` themselves to actually talk to ADSP.
 
 `loginInteractive` (the browser-opening function) is intentionally **not** part of the public API — only the CLI
 entry (`src/main.ts`) calls it. A library consumer that needs a token should always call `getAccessToken()` and
@@ -41,6 +44,50 @@ switching between multiple tenant contexts without re-running `login`), it's jus
 
 Running `login` with no args again later is safe and cheap: if the persisted realm already has a valid cached
 token, it returns immediately — no core-realm login, no tenant listing, no prompt.
+
+## CI / non-interactive login
+
+For pipelines and scripts that can't drive a browser, use the `--ci` flag with the `client_credentials` grant:
+
+```bash
+npx @abgov/adsp-cli login --ci --tenant "My Tenant" \
+  --client-id adsp-cli-ci \
+  --client-secret "$ADSP_CI_SECRET"
+```
+
+`--tenant` is required (realm-by-name lookup — no prior login needed). `--client-id` and `--client-secret` can
+also be supplied via environment variables so secrets don't appear on the command line:
+
+```bash
+export ADSP_CLIENT_ID=adsp-cli-ci
+export ADSP_CLIENT_SECRET="$ADSP_CI_SECRET"
+npx @abgov/adsp-cli login --ci --tenant "My Tenant"
+```
+
+**Skipping `adsp login` entirely** — if `ADSP_CLIENT_ID`, `ADSP_CLIENT_SECRET`, and `ADSP_TENANT_REALM` (or a
+previously-persisted realm from an earlier `login`) are all set, `getAccessToken()` acquires a token
+automatically via client credentials. This means CI jobs can call ADSP APIs without any `adsp login` step at all:
+
+```bash
+export ADSP_TENANT_REALM=my-tenant-realm
+export ADSP_CLIENT_ID=adsp-cli-ci
+export ADSP_CLIENT_SECRET="$ADSP_CI_SECRET"
+# Any command that calls getAccessToken() (e.g. `adsp token`, `adsp service-roles`)
+# will acquire a token transparently — no login required.
+adsp token
+```
+
+### The `adsp-cli-ci` confidential client
+
+Every tenant realm is bootstrapped with an `adsp-cli-ci` confidential Keycloak client. It is **disabled by default**
+— a tenant admin must explicitly enable it and generate a client secret via the Keycloak admin console before it can
+be used. Its service account is pre-granted the same roles available to interactive `adsp-cli` users
+(`configuration-admin` on configuration-service and `agent-user` on agent-service). The client does not support
+the browser/interactive flow — it is restricted to the client credentials grant only.
+
+To enable it: log in to the Keycloak admin console for your realm → Clients → `adsp-cli-ci` → Settings → toggle
+*Enabled* on → Credentials tab → regenerate the client secret. Distribute the secret to your CI environment
+(e.g. as a GitHub Actions secret or an OpenShift secret). The client ID is always `adsp-cli-ci`.
 
 ## Creating a new tenant
 
@@ -105,6 +152,7 @@ for the one-time manual setup steps. `--realm`/`--tenant` logins are unaffected 
 | Command | Auth required | Description |
 |---|---|---|
 | `login [--realm <realm> \| --tenant <name>] [--scope <name>]... [--env <dev\|test\|prod>]` | Interactive (opens a browser) | See above. |
+| `login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev\|test\|prod>]` | Client credentials (no browser) | Non-interactive CI login. `--client-id`/`--client-secret` can also be set via `ADSP_CLIENT_ID`/`ADSP_CLIENT_SECRET` env vars. See [CI / non-interactive login](#ci--non-interactive-login). |
 | `status` | No | Prints the current environment and realm (and where each came from — `ADSP_ENV`/`ADSP_TENANT_REALM`, persisted login, or default), the tenant's display name when known, and the cached token's state (`valid` / `expired` / `missing`). Read-only — no network calls. |
 | `logout` | No | Clears `~/.adsp-cli/config.json` and `~/.adsp-cli/token-cache.json`. Safe to run when already logged out. |
 | `token` | Yes (`getAccessToken()`) | Prints the raw access token to stdout — refreshed first if expired, same as any other command. Handy for scripting, e.g. `curl -H "Authorization: Bearer $(adsp token)" ...`. |
@@ -120,7 +168,9 @@ for the one-time manual setup steps. `--realm`/`--tenant` logins are unaffected 
 | `ADSP_ENV` | No (default `prod`) | Override for the environment resolved by the last `login --env` (persisted config) — `dev` \| `test` \| `prod`, selects preset `accessServiceUrl`/`directoryServiceUrl`. Required only if you've never run `login --env` and don't want to. |
 | `ADSP_ACCESS_SERVICE_URL` | No | Overrides the preset access-service (Keycloak) URL for the selected environment. |
 | `ADSP_DIRECTORY_SERVICE_URL` | No | Overrides the preset directory-service URL for the selected environment. |
-| `ADSP_ACCESS_TOKEN` | No | Escape hatch — if set, `getAccessToken()` returns it directly, skipping cache/login/realm-resolution entirely. Useful for CI-like or pre-authenticated use. |
+| `ADSP_ACCESS_TOKEN` | No | Escape hatch — if set, `getAccessToken()` returns it directly, skipping cache/login/realm-resolution entirely. |
+| `ADSP_CLIENT_ID` | No | Client ID for the CI client credentials grant. When set alongside `ADSP_CLIENT_SECRET` and a resolvable realm, `getAccessToken()` acquires a fresh token automatically without any `adsp login` step. Also used as the fallback for `adsp login --ci` when `--client-id` is not provided on the command line. |
+| `ADSP_CLIENT_SECRET` | No | Client secret for the CI client credentials grant. See `ADSP_CLIENT_ID` above. Never log or commit this value. |
 
 ## Library usage
 
@@ -130,6 +180,7 @@ import { getAccessToken, getDirectoryServiceUrl, getServiceUrls, getConfiguratio
 const result = await getAccessToken();
 if (result.status !== 'ok') {
   // 'not-authenticated' — tell the user to run `npx @abgov/adsp-cli login`
+  // (or set ADSP_CLIENT_ID + ADSP_CLIENT_SECRET for a CI environment)
   throw new Error('Not authenticated');
 }
 
@@ -138,6 +189,24 @@ const serviceUrls = await getServiceUrls(directoryServiceUrl);
 
 // Or, for the common "which roles can I assign" case directly:
 const roles = await getServiceRoles(result.token, directoryServiceUrl);
+```
+
+`getAccessToken()` checks in priority order: `ADSP_ACCESS_TOKEN` env var → valid cached token → token refresh →
+client credentials (when `ADSP_CLIENT_ID` + `ADSP_CLIENT_SECRET` are set). It never opens a browser.
+
+For CI scripts that want to explicitly pre-warm the token cache (e.g. at the start of a job, before a series
+of commands), `loginWithClientCredentials` is exported:
+
+```typescript
+import { loginWithClientCredentials } from '@abgov/adsp-cli';
+
+await loginWithClientCredentials({
+  tenant: 'My Tenant',
+  clientId: process.env.ADSP_CLIENT_ID,
+  clientSecret: process.env.ADSP_CLIENT_SECRET,
+  // env: 'prod', // optional; defaults to persisted config or 'prod'
+});
+// Subsequent getAccessToken() calls will be cache hits for the rest of this process.
 ```
 
 `getStatus()` (same function backing the `status` command) is also exported, for consumers that want the

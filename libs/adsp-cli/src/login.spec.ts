@@ -9,8 +9,13 @@ const mockAuthClient = {
   createToken: jest.fn(),
 };
 
+const mockCiClient = {
+  getToken: jest.fn(),
+};
+
 jest.mock('simple-oauth2', () => ({
   AuthorizationCode: jest.fn().mockImplementation(() => mockAuthClient),
+  ClientCredentials: jest.fn().mockImplementation(() => mockCiClient),
 }));
 
 const mockApp = {
@@ -38,12 +43,12 @@ jest.mock('jwt-decode');
 
 // Imported after the mocks above so login.ts picks up the mocked modules.
 import jwtDecode from 'jwt-decode';
-import { getAccessToken, getStatus, loginInteractive, logout } from './login';
+import { getAccessToken, getStatus, loginInteractive, loginWithClientCredentials, logout } from './login';
 import { createTenant, findTenantByName, findTenantByRealm, listTenants, waitForTenantActive } from './tenants';
 import { HttpRequestError } from './httpError';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
 import { getCachedToken, getCacheFilePath, setCachedToken } from './tokenCache';
-import { AuthorizationCode } from 'simple-oauth2';
+import { AuthorizationCode, ClientCredentials } from 'simple-oauth2';
 
 const mockFindTenantByName = findTenantByName as jest.Mock;
 const mockFindTenantByRealm = findTenantByRealm as jest.Mock;
@@ -51,6 +56,7 @@ const mockListTenants = listTenants as jest.Mock;
 const mockCreateTenant = createTenant as jest.Mock;
 const mockWaitForTenantActive = waitForTenantActive as jest.Mock;
 const mockAuthorizationCode = AuthorizationCode as unknown as jest.Mock;
+const mockClientCredentials = ClientCredentials as unknown as jest.Mock;
 const mockJwtDecode = jwtDecode as jest.Mock;
 
 const ACCESS_SERVICE_URL = 'https://access.example.com';
@@ -89,10 +95,13 @@ describe('login', () => {
     delete process.env.ADSP_ENV;
     delete process.env.ADSP_TENANT_REALM;
     delete process.env.ADSP_DIRECTORY_SERVICE_URL;
+    delete process.env.ADSP_CLIENT_ID;
+    delete process.env.ADSP_CLIENT_SECRET;
     process.env.ADSP_ACCESS_SERVICE_URL = ACCESS_SERVICE_URL;
 
     mockAuthClient.getToken.mockReset();
     mockAuthClient.createToken.mockReset();
+    mockCiClient.getToken.mockReset();
     mockApp.get.mockReset();
     mockApp.listen.mockReset().mockReturnValue({ close: jest.fn() });
     mockOpen.mockReset().mockResolvedValue(undefined);
@@ -119,6 +128,8 @@ describe('login', () => {
     delete process.env.ADSP_ACCESS_TOKEN;
     delete process.env.ADSP_ENV;
     delete process.env.ADSP_DIRECTORY_SERVICE_URL;
+    delete process.env.ADSP_CLIENT_ID;
+    delete process.env.ADSP_CLIENT_SECRET;
   });
 
   describe('getAccessToken', () => {
@@ -974,6 +985,107 @@ describe('login', () => {
       expect(status.realm).toBe(REALM);
       expect(status.realmSource).toBe('env');
       expect(status.tenantName).toBeUndefined();
+    });
+  });
+
+  describe('loginWithClientCredentials', () => {
+    it('looks up the tenant realm by name and acquires a token via client credentials', async () => {
+      mockFindTenantByName.mockResolvedValue({ name: 'my-tenant', realm: REALM });
+      mockCiClient.getToken.mockResolvedValue({ token: { access_token: 'ci-token', expires_in: 3600 } });
+
+      const result = await loginWithClientCredentials({ tenant: 'my-tenant', clientId: 'adsp-cli-ci', clientSecret: 'secret' });
+
+      expect(result).toEqual({ realm: REALM, token: 'ci-token', reused: false });
+      expect(mockFindTenantByName).toHaveBeenCalledWith(expect.any(String), 'my-tenant');
+      expect(mockClientCredentials).toHaveBeenCalledWith(
+        expect.objectContaining({ client: { id: 'adsp-cli-ci', secret: 'secret' } }),
+      );
+    });
+
+    it('persists the realm and tenant name to config, just like loginInteractive does', async () => {
+      mockFindTenantByName.mockResolvedValue({ name: 'my-tenant', realm: REALM });
+      mockCiClient.getToken.mockResolvedValue({ token: { access_token: 'ci-token', expires_in: 3600 } });
+
+      await loginWithClientCredentials({ tenant: 'my-tenant', clientId: 'adsp-cli-ci', clientSecret: 'secret' });
+
+      expect(readConfig()).toMatchObject({ tenantRealm: REALM, tenantName: 'my-tenant' });
+    });
+
+    it('caches the token so subsequent getAccessToken() calls are cache hits', async () => {
+      mockFindTenantByName.mockResolvedValue({ name: 'my-tenant', realm: REALM });
+      mockCiClient.getToken.mockResolvedValue({ token: { access_token: 'ci-token', expires_in: 3600 } });
+
+      await loginWithClientCredentials({ tenant: 'my-tenant', clientId: 'adsp-cli-ci', clientSecret: 'secret' });
+
+      const cached = getCachedToken(ACCESS_SERVICE_URL, REALM);
+      expect(cached?.accessToken).toBe('ci-token');
+      expect(cached?.refreshToken).toBeUndefined();
+    });
+
+    it('throws a clear error when the tenant is not found', async () => {
+      mockFindTenantByName.mockResolvedValue(null);
+
+      await expect(
+        loginWithClientCredentials({ tenant: 'unknown', clientId: 'adsp-cli-ci', clientSecret: 'secret' }),
+      ).rejects.toThrow("Tenant 'unknown' not found.");
+    });
+
+    it('preserves the previously-persisted env when none is given', async () => {
+      writeConfig({ tenantRealm: 'old-realm', env: 'dev' });
+      mockFindTenantByName.mockResolvedValue({ name: 'my-tenant', realm: REALM });
+      mockCiClient.getToken.mockResolvedValue({ token: { access_token: 'ci-token', expires_in: 3600 } });
+
+      await loginWithClientCredentials({ tenant: 'my-tenant', clientId: 'adsp-cli-ci', clientSecret: 'secret' });
+
+      expect(readConfig()).toMatchObject({ env: 'dev' });
+    });
+  });
+
+  describe('getAccessToken CI fallback (ADSP_CLIENT_ID + ADSP_CLIENT_SECRET)', () => {
+    it('acquires a fresh token via client credentials when the env vars are set and no cache exists', async () => {
+      process.env.ADSP_TENANT_REALM = REALM;
+      process.env.ADSP_CLIENT_ID = 'adsp-cli-ci';
+      process.env.ADSP_CLIENT_SECRET = 'secret';
+      mockCiClient.getToken.mockResolvedValue({ token: { access_token: 'ci-token', expires_in: 3600 } });
+
+      const result = await getAccessToken();
+
+      expect(result).toEqual({ status: 'ok', token: 'ci-token' });
+      expect(mockClientCredentials).toHaveBeenCalled();
+    });
+
+    it('prefers a valid cached token over re-acquiring via client credentials', async () => {
+      process.env.ADSP_TENANT_REALM = REALM;
+      process.env.ADSP_CLIENT_ID = 'adsp-cli-ci';
+      process.env.ADSP_CLIENT_SECRET = 'secret';
+      setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
+
+      const result = await getAccessToken();
+
+      expect(result).toEqual({ status: 'ok', token: 'cached-token' });
+      expect(mockCiClient.getToken).not.toHaveBeenCalled();
+    });
+
+    it('returns not-authenticated when the client credentials grant fails', async () => {
+      process.env.ADSP_TENANT_REALM = REALM;
+      process.env.ADSP_CLIENT_ID = 'adsp-cli-ci';
+      process.env.ADSP_CLIENT_SECRET = 'wrong-secret';
+      mockCiClient.getToken.mockRejectedValue(new Error('unauthorized_client'));
+
+      const result = await getAccessToken();
+
+      expect(result).toEqual({ status: 'not-authenticated' });
+    });
+
+    it('does not attempt client credentials when only one of the two env vars is set', async () => {
+      process.env.ADSP_TENANT_REALM = REALM;
+      process.env.ADSP_CLIENT_ID = 'adsp-cli-ci';
+      // ADSP_CLIENT_SECRET is not set
+
+      const result = await getAccessToken();
+
+      expect(result).toEqual({ status: 'not-authenticated' });
+      expect(mockCiClient.getToken).not.toHaveBeenCalled();
     });
   });
 

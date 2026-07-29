@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — pure factory functions, object construction only, no logic to unit-test
 import { AdspId, ServiceRole } from '@abgov/adsp-service-sdk';
 import type ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
 import type ClientScopeRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientScopeRepresentation';
@@ -152,9 +153,44 @@ export const createAdspCliAdminClientScopeConfig = (): ClientScopeRepresentation
  *   (apps/agent-service/src/agent/router.ts's onIoConnection socket-connection gate); adsp-cli itself doesn't use
  *   agent-service, this is here for that shared-client consumer.
  * Used as the adsp-cli client's clientScopeMappings in keycloak.ts so its tokens can only ever carry these two
- * roles, never the rest of a user's role set.
+ * roles, never the rest of a user's role set. Also used for the CI client's service account role grants
+ * (see createAdspCliCiClientConfig / grantCiClientServiceAccountRoles in keycloak.ts).
  */
 export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
   { client: 'urn:ads:platform:agent-service', roles: ['agent-user'] },
 ];
+
+export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
+
+/**
+ * Roles granted to the adsp-cli-ci service account — configuration-admin only. agent-user is
+ * intentionally omitted: agent-service is for interactive (human-in-the-loop) use and has no
+ * value in a non-interactive CI pipeline. The adsp-cli-admin optional scope (manage-clients +
+ * manage-users) is attached separately in keycloak.ts's createAdspCliAdminScope so it is
+ * available if a tenant admin enables it for automated provisioning workflows.
+ */
+export const ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS = [
+  { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
+];
+
+/**
+ * Confidential client for CI environments — client credentials grant only. Bootstrapped disabled
+ * so tenants must consciously enable it and set a secret before it can be used. Service account
+ * roles (configuration-admin, see ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS) are granted separately in
+ * keycloak.ts's grantCiClientServiceAccountRoles after realm creation.
+ */
+export const createAdspCliCiClientConfig = (id: string): ClientRepresentation => ({
+  id,
+  clientId: ADSP_CLI_CI_CLIENT_ID,
+  enabled: false,
+  publicClient: false,
+  standardFlowEnabled: false,
+  implicitFlowEnabled: false,
+  directAccessGrantsEnabled: false,
+  serviceAccountsEnabled: true,
+  fullScopeAllowed: false,
+  description:
+    'Confidential client for @abgov/adsp-cli CI use (client credentials grant). ' +
+    'Bootstrapped disabled — enable and configure a secret via the tenant admin console to use.',
+});
