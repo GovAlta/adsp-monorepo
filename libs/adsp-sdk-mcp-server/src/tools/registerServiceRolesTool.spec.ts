@@ -61,7 +61,9 @@ describe('list_service_roles', () => {
     const result = await listServiceRolesTool.handler({});
 
     expect(result.isError).toBeUndefined();
-    expect(JSON.parse(getText(result))).toEqual([
+    const text = getText(result);
+    // Response is preamble + JSON; parse starting from the first '['.
+    expect(JSON.parse(text.slice(text.indexOf('[')))).toEqual([
       { serviceId: 'urn:ads:platform:event-service', serviceName: 'event-service', role: 'event-sender', description: 'Sender role.' },
     ]);
     expect(mockGetServiceRoles).toHaveBeenCalledWith('token-abc', 'https://directory-service.example.com');

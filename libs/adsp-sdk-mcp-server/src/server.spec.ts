@@ -35,12 +35,19 @@ describe('adsp-sdk-mcp-server', () => {
     rmSync(docsRoot, { recursive: true, force: true });
   });
 
-  it('lists all four tools', async () => {
+  it('lists all tools including live-data tools', async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
 
     expect(names).toEqual(
-      expect.arrayContaining(['search_adsp_docs', 'read_adsp_doc', 'search_sdk_reference', 'get_platform_quickstart'])
+      expect.arrayContaining([
+        'search_adsp_docs',
+        'read_adsp_doc',
+        'search_sdk_reference',
+        'get_platform_quickstart',
+        'list_service_roles',
+        'get_service_configuration_schema',
+      ])
     );
   });
 
