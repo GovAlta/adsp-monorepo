@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { getDirectoryServiceUrl } from './directory';
 import { EnvironmentName, resolveEnvironmentUrls } from './environments';
-import { CORE_REALM, getAccessToken, getCachedOrRefreshedToken, getStatus, loginInteractive, logout } from './login';
+import { CORE_REALM, getAccessToken, getCachedOrRefreshedToken, getStatus, loginInteractive, loginWithClientCredentials, logout } from './login';
 import { getServiceRoles } from './serviceRoles';
 import { findTenantByName, listTenants } from './tenants';
 
 const USAGE =
-  'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] | status | logout | token | tenants [name] | service-roles>';
+  'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] | ' +
+  'login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>] | ' +
+  'status | logout | token | tenants [name] | service-roles>';
 
 const HELP_TEXT = `adsp-cli — CLI and client library for authenticating against ADSP and calling its live APIs.
 
@@ -19,6 +21,13 @@ Commands:
                           into core, then prompts you to pick a tenant — in dev/test, this
                           prompt also offers to create a new tenant). Persists the resolved
                           realm/environment so later commands don't need them set again.
+  login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>]
+                          Log in non-interactively via the client credentials grant. Intended for
+                          CI environments. --tenant is required. --client-id and --client-secret
+                          can be supplied as flags or via the ADSP_CLIENT_ID / ADSP_CLIENT_SECRET
+                          environment variables. The tenant's 'adsp-cli-ci' confidential client is
+                          bootstrapped disabled at tenant creation — a tenant admin must enable it
+                          and generate credentials via the Keycloak admin console before use.
   status                  Print the current environment, realm, and cached token state. Read-only.
   logout                  Clear the persisted realm/environment and every cached token.
   token                   Print the current access token to stdout (refreshed if expired).
@@ -29,23 +38,38 @@ Commands:
   help, --help, -h        Show this help.
 
 Flags (login only):
-  --realm <realm>         Log in to a specific realm directly.
+  --realm <realm>         Log in to a specific realm directly (interactive).
   --tenant <name>         Resolve a realm from a tenant's display name (anonymous lookup).
   --scope <name>          Request an additional OAuth scope beyond the default 'email'.
-                          Repeatable, e.g. --scope adsp-cli-admin.
+                          Repeatable, e.g. --scope adsp-cli-admin. Interactive only.
   --env <dev|test|prod>   Select which ADSP environment to log in to. Defaults to whatever
                           was last persisted, or 'prod' if nothing has ever been set.
+  --ci                    Use client credentials grant instead of the browser flow.
+  --client-id <id>        Client ID for --ci login (or set ADSP_CLIENT_ID).
+  --client-secret <secret>  Client secret for --ci login (or set ADSP_CLIENT_SECRET).
 
 Environment variables (all optional overrides — see README for details):
-  ADSP_TENANT_REALM, ADSP_ENV, ADSP_ACCESS_SERVICE_URL, ADSP_DIRECTORY_SERVICE_URL, ADSP_ACCESS_TOKEN`;
+  ADSP_TENANT_REALM, ADSP_ENV, ADSP_ACCESS_SERVICE_URL, ADSP_DIRECTORY_SERVICE_URL,
+  ADSP_ACCESS_TOKEN, ADSP_CLIENT_ID, ADSP_CLIENT_SECRET`;
 
 export function parseLoginArgs(argv: string[]): {
   realm?: string;
   tenant?: string;
   scopes?: string[];
   env?: EnvironmentName;
+  ci?: boolean;
+  clientId?: string;
+  clientSecret?: string;
 } {
-  const options: { realm?: string; tenant?: string; scopes?: string[]; env?: EnvironmentName } = {};
+  const options: {
+    realm?: string;
+    tenant?: string;
+    scopes?: string[];
+    env?: EnvironmentName;
+    ci?: boolean;
+    clientId?: string;
+    clientSecret?: string;
+  } = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--realm' && argv[i + 1]) {
       options.realm = argv[++i];
@@ -59,13 +83,38 @@ export function parseLoginArgs(argv: string[]): {
         throw new Error(`Invalid --env value '${value}'. Must be one of: dev, test, prod.`);
       }
       options.env = value;
+    } else if (argv[i] === '--ci') {
+      options.ci = true;
+    } else if (argv[i] === '--client-id' && argv[i + 1]) {
+      options.clientId = argv[++i];
+    } else if (argv[i] === '--client-secret' && argv[i + 1]) {
+      options.clientSecret = argv[++i];
     }
   }
   return options;
 }
 
 async function runLogin(argv: string[]): Promise<void> {
-  const result = await loginInteractive(parseLoginArgs(argv));
+  const options = parseLoginArgs(argv);
+
+  if (options.ci) {
+    if (!options.tenant) {
+      throw new Error('--ci requires --tenant <name>.');
+    }
+    const clientId = options.clientId ?? process.env.ADSP_CLIENT_ID;
+    const clientSecret = options.clientSecret ?? process.env.ADSP_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      throw new Error(
+        '--ci requires a client ID and secret. Pass --client-id and --client-secret, or set ADSP_CLIENT_ID and ADSP_CLIENT_SECRET.',
+      );
+    }
+    const result = await loginWithClientCredentials({ tenant: options.tenant, clientId, clientSecret, env: options.env });
+    // eslint-disable-next-line no-console
+    console.log(`Logged in as realm '${result.realm}' using client credentials.`);
+    return;
+  }
+
+  const result = await loginInteractive(options);
   // eslint-disable-next-line no-console
   console.log(result.reused ? `Already logged in as realm '${result.realm}'.` : `Logged in as realm '${result.realm}'.`);
 }

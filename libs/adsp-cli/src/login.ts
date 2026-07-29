@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as express from 'express';
 import jwtDecode from 'jwt-decode';
 import * as open from 'open';
-import { AccessToken, AuthorizationCode } from 'simple-oauth2';
+import { AccessToken, AuthorizationCode, ClientCredentials } from 'simple-oauth2';
 import { getConfigFilePath, readConfig, writeConfig } from './config';
 import { EnvironmentName, resolveEnvironmentName, resolveEnvironmentUrls, resolveTenantRealm } from './environments';
 import { generatePkcePair } from './pkce';
@@ -25,6 +25,35 @@ function createClient(accessServiceUrl: string, realm: string): AuthorizationCod
       authorizePath: `/auth/realms/${realm}/protocol/openid-connect/auth`,
     },
   });
+}
+
+function createCiClient(accessServiceUrl: string, realm: string, clientId: string, clientSecret: string): ClientCredentials {
+  return new ClientCredentials({
+    client: { id: clientId, secret: clientSecret },
+    auth: {
+      tokenHost: accessServiceUrl,
+      tokenPath: `/auth/realms/${realm}/protocol/openid-connect/token`,
+    },
+  });
+}
+
+/**
+ * Acquires a token via the client_credentials grant and caches it for the realm. No refresh token
+ * is available for this grant type; an expired cached CI token re-acquires rather than refreshing.
+ * Scopes are cached as ['email'] as a convention so standard getAccessToken() cache checks pass;
+ * the actual JWT will carry the roles granted to the CI client's service account.
+ */
+async function acquireClientCredentialsToken(
+  accessServiceUrl: string,
+  realm: string,
+  clientId: string,
+  clientSecret: string,
+): Promise<string> {
+  const client = createCiClient(accessServiceUrl, realm, clientId, clientSecret);
+  const { token } = await client.getToken({});
+  const expiresIn = (token['expires_in'] as number) ?? 300;
+  setCachedToken(accessServiceUrl, realm, token['access_token'] as string, undefined, expiresIn, ['email']);
+  return token['access_token'] as string;
 }
 
 async function refreshCachedToken(
@@ -89,13 +118,15 @@ export async function getCachedOrRefreshedToken(
 }
 
 /**
- * Fast, non-interactive check for a usable access token: a valid cached token, or a
- * successful refresh. Never opens a browser — safe to call from any consumer, including
- * an MCP tool handler that must not block on user interaction.
+ * Fast, non-interactive check for a usable access token: a valid cached token, a successful
+ * refresh, or (if ADSP_CLIENT_ID and ADSP_CLIENT_SECRET are set) a fresh client_credentials
+ * grant. Never opens a browser — safe to call from any consumer, including an MCP tool handler.
  *
  * options.scopes requests additional scopes beyond the always-required 'email' — if the cached
  * token doesn't cover them, this returns 'not-authenticated' rather than attempting any browser
  * flow; the caller should tell the user to run `adsp-cli login --scope <name>` interactively.
+ * (The CI path does not support arbitrary extra scopes — it uses the roles the service account
+ * was granted at realm bootstrap time.)
  */
 export async function getAccessToken(options: { scopes?: string[] } = {}): Promise<AccessTokenResult> {
   const envToken = process.env.ADSP_ACCESS_TOKEN;
@@ -110,8 +141,24 @@ export async function getAccessToken(options: { scopes?: string[] } = {}): Promi
 
   const { accessServiceUrl } = resolveEnvironmentUrls();
   const requiredScopes = ['email', ...(options.scopes ?? [])];
-  const token = await getCachedOrRefreshedToken(accessServiceUrl, realmResolution.tenantRealm, requiredScopes);
-  return token ? { status: 'ok', token } : { status: 'not-authenticated' };
+  const cached = await getCachedOrRefreshedToken(accessServiceUrl, realmResolution.tenantRealm, requiredScopes);
+  if (cached) {
+    return { status: 'ok', token: cached };
+  }
+
+  // CI fallback: if client credentials env vars are set, acquire a fresh token without a browser.
+  const clientId = process.env.ADSP_CLIENT_ID;
+  const clientSecret = process.env.ADSP_CLIENT_SECRET;
+  if (clientId && clientSecret) {
+    try {
+      const token = await acquireClientCredentialsToken(accessServiceUrl, realmResolution.tenantRealm, clientId, clientSecret);
+      return { status: 'ok', token };
+    } catch {
+      return { status: 'not-authenticated' };
+    }
+  }
+
+  return { status: 'not-authenticated' };
 }
 
 /**
@@ -420,6 +467,40 @@ export async function loginInteractive(
   writeConfig({ tenantRealm: realm, tenantName, env: options.env ?? readConfig()?.env });
 
   return { realm, token: final.token, reused: final.reused };
+}
+
+/**
+ * Non-interactive login for CI environments using the client_credentials grant. Resolves the
+ * tenant realm by name (anonymous lookup — no prior login needed), acquires a token for the
+ * given confidential client, and persists the realm to config exactly as loginInteractive does,
+ * so subsequent getAccessToken() calls work without re-specifying credentials.
+ *
+ * Only supported in tenant-specified mode (a tenant name is always required). The client must be
+ * the tenant's 'adsp-cli-ci' confidential client (bootstrapped disabled by realm creation —
+ * the tenant admin must enable it and generate credentials via the Keycloak admin console).
+ *
+ * Called from the CLI's `adsp login --ci` command; also usable as a library entry point by CI
+ * scripts that want to pre-warm the token cache for a job.
+ */
+// clean-code-ignore: 2.3 2.10 — tenant resolution, token acquisition, and config persistence are
+// the three inseparable steps of a CI login; splitting them further would not add clarity.
+export async function loginWithClientCredentials(options: {
+  tenant: string;
+  clientId: string;
+  clientSecret: string;
+  env?: EnvironmentName;
+}): Promise<LoginResult> {
+  const { accessServiceUrl, directoryServiceUrl } = resolveEnvironmentUrls(options.env);
+
+  const found = await findTenantByName(directoryServiceUrl, options.tenant);
+  if (!found) {
+    throw new Error(`Tenant '${options.tenant}' not found.`);
+  }
+
+  const token = await acquireClientCredentialsToken(accessServiceUrl, found.realm, options.clientId, options.clientSecret);
+  writeConfig({ tenantRealm: found.realm, tenantName: found.name, env: options.env ?? readConfig()?.env });
+
+  return { realm: found.realm, token, reused: false };
 }
 
 export interface LoginStatus {

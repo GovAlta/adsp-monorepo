@@ -1,5 +1,5 @@
-export { getAccessToken, getStatus } from './login';
-export type { AccessTokenResult, LoginStatus } from './login';
+export { getAccessToken, getStatus, loginWithClientCredentials } from './login';
+export type { AccessTokenResult, LoginResult, LoginStatus } from './login';
 export { getDirectoryServiceUrl, getServiceUrls } from './directory';
 export { getConfiguration } from './configuration';
 export { getServiceRoles, ServiceNotInDirectoryError } from './serviceRoles';
