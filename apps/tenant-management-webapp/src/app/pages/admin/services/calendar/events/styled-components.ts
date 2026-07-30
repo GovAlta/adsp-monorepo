@@ -97,13 +97,15 @@ export const EventFilterButtonWrapper = styled.div`
   margin-bottom: var(--goa-space-xl);
 `;
 
+export const CalendarEventFilterErrorWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-2xs);
+  margin-top: var(--goa-space-xs);
+`;
+
 export const CalendarEventFilterError = styled.span`
   color: var(--goa-color-emergency-default);
-  padding-left: 5px;
-  display: inline-flex;
-  line-height: 2.5rem;
-  position: relative;
-  top: -3px;
 `;
 
 export const CalendarDropdownWrapper = styled.div`
