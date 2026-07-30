@@ -262,6 +262,42 @@ describe('CalendarEntity', () => {
 
       expect(result).toBeFalsy();
     });
+
+    it('can return true for core user with admin role', () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+
+      const result = entity.canUpdateEvent({
+        isCore: true,
+        id: 'test',
+        roles: [CalendarServiceRoles.Admin],
+      } as User);
+
+      expect(result).toBeTruthy();
+    });
+
+    it('can return false for core user without roles', () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+
+      const result = entity.canUpdateEvent({
+        isCore: true,
+        id: 'test',
+        roles: [],
+      } as User);
+
+      expect(result).toBeFalsy();
+    });
   });
 
   describe('getEvents', () => {

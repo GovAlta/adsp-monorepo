@@ -50,7 +50,7 @@ export class CalendarEntity implements Calendar {
   }
 
   canUpdateEvent(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.updateRoles]);
+    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.updateRoles], true);
   }
 
   createEvent(user: User, event: New<CalendarEvent>): Promise<CalendarEventEntity> {
