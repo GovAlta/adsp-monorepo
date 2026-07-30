@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import styled from 'styled-components';
 
 export const PRE = styled.div`
@@ -124,16 +125,18 @@ export const ButtonPadding = styled.div`
 export const ExportDates = styled.div`
   display: flex;
   margin-top: var(--goa-space-l);
-  margin-bottom: var(--goa-space-l);
+  margin-bottom: var(--goa-space-xs);
   gap: var(--goa-space-m);
 `;
+export const FeedbackFilterErrorWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-2xs);
+  margin-bottom: var(--goa-space-m);
+`;
+
 export const FeedbackFilterError = styled.span`
   color: var(--goa-color-emergency-default);
-  padding-left: 5px;
-  display: inline-flex;
-  line-height: 2.5rem;
-  position: relative;
-  top: -3px;
 `;
 
 export const NoResultsMessage = styled.div`

@@ -213,4 +213,40 @@ describe('Feedbacks Components', () => {
       expect(screen.getByText('Feedback service')).toBeInTheDocument();
     });
   });
+
+  it('should show the date range error when the start date is after the end date', () => {
+    const { baseElement } = render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>
+    );
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
+    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
+
+    const startDate = baseElement.querySelector("goa-input[name='feedback-filter-start-date']");
+    fireEvent(startDate, new CustomEvent('_change', { detail: { value: '2099-12-31' } }));
+
+    expect(screen.getByText('Start date must be before End date.')).toBeInTheDocument();
+  });
+
+  it('should keep the error icon and message on the same horizontal level', () => {
+    // Regression guard: the badge and the message used to be bare siblings in a plain div, so they
+    // were baseline-aligned in an inline formatting context and the message compensated with
+    // line-height: 2.5rem and top: -3px. That left the icon and text on different levels.
+    const { baseElement } = render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>
+    );
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
+    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
+
+    const startDate = baseElement.querySelector("goa-input[name='feedback-filter-start-date']");
+    fireEvent(startDate, new CustomEvent('_change', { detail: { value: '2099-12-31' } }));
+
+    const wrapper = screen.getByText('Start date must be before End date.').parentElement;
+    const styles = getComputedStyle(wrapper);
+    expect(styles.display).toBe('flex');
+    expect(styles.alignItems).toBe('center');
+  });
 });
