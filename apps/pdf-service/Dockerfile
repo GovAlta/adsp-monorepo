@@ -7,8 +7,13 @@ COPY . .
 
 # Install Chrome system library dependencies and unzip for reliable extraction.
 # Fonts and libs required by Chrome for Testing (bundled via puppeteer browsers install).
+# fonts-liberation is metric-compatible with Arial/Helvetica/Times and must be installed
+# explicitly: it used to arrive as a hard dependency of the google-chrome-stable package, which
+# this image no longer installs. Without it Arial falls back to DejaVu Sans, which is ~15% wider
+# and renders every template larger than it does in environments that still have Liberation.
 RUN apt-get update \
   && apt-get install -y \
+    fonts-liberation \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
     libasound2 libatk1.0-0 libatk-bridge2.0-0 libcairo2 libcups2 libdbus-1-3 \
     libdrm2 libgbm1 libglib2.0-0 libnss3 libnspr4 libpango-1.0-0 \
