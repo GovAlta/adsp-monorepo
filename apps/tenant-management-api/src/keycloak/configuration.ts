@@ -175,22 +175,21 @@ export const ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS = [
 ];
 
 /**
- * Confidential client for CI environments — client credentials grant only. Bootstrapped disabled
- * so tenants must consciously enable it and set a secret before it can be used. Service account
- * roles (configuration-admin, see ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS) are granted separately in
- * keycloak.ts's grantCiClientServiceAccountRoles after realm creation.
+ * Confidential client for CI environments — client credentials grant only. Bootstrapped disabled;
+ * service account roles (configuration-admin) granted separately in grantCiClientServiceAccountRoles.
  */
 export const createAdspCliCiClientConfig = (id: string): ClientRepresentation => ({
   id,
   clientId: ADSP_CLI_CI_CLIENT_ID,
   enabled: false,
   publicClient: false,
+  bearerOnly: false,
   standardFlowEnabled: false,
   implicitFlowEnabled: false,
   directAccessGrantsEnabled: false,
   serviceAccountsEnabled: true,
+  authorizationServicesEnabled: false,
   fullScopeAllowed: false,
-  description:
-    'Confidential client for @abgov/adsp-cli CI use (client credentials grant). ' +
-    'Bootstrapped disabled — enable and configure a secret via the tenant admin console to use.',
+  redirectUris: [],
+  description: 'Confidential client for @abgov/adsp-cli CI use (client credentials grant).',
 });
