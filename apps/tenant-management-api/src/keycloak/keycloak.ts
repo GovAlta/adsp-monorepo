@@ -231,16 +231,14 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await client.clientScopes.create({ realm, ...createAdspCliAdminClientScopeConfig() });
 
     const adminScope = await client.clientScopes.findOneByName({ realm, name: ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME });
-    const adspCliClient = (await client.clients.find({ realm, clientId: 'adsp-cli' }))[0];
 
-    await client.clients.addOptionalClientScope({
-      realm,
-      id: adspCliClient.id,
-      clientScopeId: adminScope.id,
-    });
+    // KC 24 deprecated per-client optional scope assignment for scopes that may be treated as realm-level.
+    // Use the realm-level optional scope endpoint instead — equivalent effect for adsp-cli since it is a
+    // client within this realm and will pick up realm-level optional scopes.
+    await client.clientScopes.addDefaultOptionalClientScope({ realm, id: adminScope.id });
 
     this.logger.debug(
-      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and assigned to adsp-cli as optional.`,
+      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and added as realm optional scope.`,
       LOG_CONTEXT,
     );
   }

@@ -40,6 +40,7 @@ describe('KeycloakRealmService', () => {
       create: jest.fn(),
       findOneByName: jest.fn(),
       addClientScopeMappings: jest.fn(),
+      addDefaultOptionalClientScope: jest.fn(),
     },
     roles: {
       createComposite: jest.fn(),
@@ -79,6 +80,7 @@ describe('KeycloakRealmService', () => {
     keycloakClientMock.clientScopes.create.mockReset();
     keycloakClientMock.clientScopes.findOneByName.mockReset();
     keycloakClientMock.clientScopes.addClientScopeMappings.mockReset();
+    keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockReset();
 
     keycloakClientMock.users.create.mockReset();
     keycloakClientMock.users.addClientRoleMappings.mockReset();
@@ -179,7 +181,6 @@ describe('KeycloakRealmService', () => {
 
       keycloakClientMock.clients.find
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
-        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
@@ -200,7 +201,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clientScopes.findOneByName
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' })
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' });
-      keycloakClientMock.clients.addOptionalClientScope.mockResolvedValueOnce(undefined);
+      keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockResolvedValueOnce(undefined);
       keycloakClientMock.clients.getServiceAccountUser.mockResolvedValueOnce({ id: 'ci-service-account-user-123' });
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });
@@ -300,7 +301,6 @@ describe('KeycloakRealmService', () => {
 
       keycloakClientMock.clients.find
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
-        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
@@ -321,7 +321,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clientScopes.findOneByName
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' })
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' });
-      keycloakClientMock.clients.addOptionalClientScope.mockResolvedValueOnce(undefined);
+      keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockResolvedValueOnce(undefined);
       keycloakClientMock.clients.getServiceAccountUser.mockResolvedValueOnce({ id: 'ci-service-account-user-123' });
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });
@@ -349,7 +349,6 @@ describe('KeycloakRealmService', () => {
 
       keycloakClientMock.clients.find
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
-        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
@@ -370,7 +369,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clientScopes.findOneByName
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' })
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' });
-      keycloakClientMock.clients.addOptionalClientScope.mockResolvedValueOnce(undefined);
+      keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockResolvedValueOnce(undefined);
       keycloakClientMock.clients.getServiceAccountUser.mockResolvedValueOnce({ id: 'ci-service-account-user-123' });
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });
