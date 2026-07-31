@@ -29,15 +29,22 @@ import { CalendarService } from '../calendar';
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
 const allowedRoleProperties = ['applicantRoles', 'assessorRoles', 'clerkRoles'];
+const allowedSubmissionActionProperties = [
+  'createPDF',
+  'createSubmissionRecords',
+  'event',
+  'includeDataInEvent',
+  'taskQueue',
+  'dispositionStates',
+];
+const defaultSubmissionPdfTemplate = 'submitted-form';
 
 // The configuration service answers /latest with 200 and an empty object when the definition has
 // never been written (see getConfiguration's `configuration.latest?.configuration || {}`), so an
 // empty body is the real not-found signal. Without this the handlers went on to PATCH a spread of
 // {}, and the caller got the configuration service's schema error as a 400 instead of a 404.
 const isDefinitionNotFound = (response: { status: number; data?: unknown }): boolean =>
-  response.status === HttpStatusCodes.NOT_FOUND ||
-  !response.data ||
-  Object.keys(response.data).length === 0;
+  response.status === HttpStatusCodes.NOT_FOUND || !response.data || Object.keys(response.data).length === 0;
 
 async function fetchExistingDefinition(
   configurationApiUrl: URL,
@@ -527,6 +534,76 @@ export function patchFormDefinitionLifecycle(
   };
 }
 
+function parseNamespacedValue(value: string): { namespace: string; name: string } {
+  const [namespace, name] = value.split(':');
+  return { namespace, name };
+}
+
+function parseTaskQueue(value: string): { queueNameSpace: string; queueName: string } {
+  const [queueNameSpace, queueName] = value.split(':');
+  return { queueNameSpace, queueName };
+}
+
+export function patchFormDefinitionSubmissionActions(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('patch form definition submission actions', user);
+      }
+
+      const encodedDefinitionId = encodeURIComponent(definitionId);
+      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+      const token = await tokenProvider.getAccessToken();
+
+      const existingDefinition = await fetchExistingDefinition(
+        configurationApiUrl,
+        token,
+        encodedDefinitionId,
+        tenantId?.toString(),
+        definitionId,
+      );
+
+      const updatedDefinition: FormDefinition = {
+        ...existingDefinition,
+        ...(req.body.createPDF !== undefined
+          ? { submissionPdfTemplate: req.body.createPDF ? defaultSubmissionPdfTemplate : null }
+          : {}),
+        ...(req.body.createSubmissionRecords !== undefined
+          ? { submissionRecords: req.body.createSubmissionRecords }
+          : {}),
+        ...(req.body.event !== undefined
+          ? { customSubmissionEvent: req.body.event ? parseNamespacedValue(req.body.event) : null }
+          : {}),
+        ...(req.body.includeDataInEvent !== undefined ? { includeDataInSubmission: req.body.includeDataInEvent } : {}),
+        ...(req.body.taskQueue !== undefined
+          ? { queueTaskToProcess: req.body.taskQueue ? parseTaskQueue(req.body.taskQueue) : null }
+          : {}),
+        ...(req.body.dispositionStates !== undefined ? { dispositionStates: req.body.dispositionStates } : {}),
+        id: definitionId,
+      };
+
+      const data = await patchConfigurationDefinition(
+        configurationApiUrl,
+        token,
+        definitionId,
+        tenantId?.toString(),
+        updatedDefinition,
+      );
+
+      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface FormDefinitionRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
@@ -640,10 +717,7 @@ export function createFormDefinitionRouter({
         .isString()
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-]+$/),
-      ...allowedRoleProperties.flatMap((field) => [
-        body(field).optional().isArray(),
-        body(`${field}.*`).isString(),
-      ]),
+      ...allowedRoleProperties.flatMap((field) => [body(field).optional().isArray(), body(`${field}.*`).isString()]),
       body().custom((value) => {
         const extra = Object.keys(value ?? {}).filter((key) => !allowedRoleProperties.includes(key));
         if (extra.length > 0) {
@@ -672,6 +746,40 @@ export function createFormDefinitionRouter({
         .isIn(['protected a', 'protected b', 'protected c', 'public']),
     ),
     patchFormDefinitionLifecycle(directory, tokenProvider),
+  );
+
+  router.patch(
+    '/definitions/:definitionId/submission-actions',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-]+$/),
+      body('createPDF').optional().isBoolean(),
+      body('createSubmissionRecords').optional().isBoolean(),
+      body('event')
+        .optional({ nullable: true })
+        .isString()
+        .matches(/^[^:]+:[^:]+$/),
+      body('includeDataInEvent').optional().isBoolean(),
+      body('taskQueue')
+        .optional({ nullable: true })
+        .isString()
+        .matches(/^[^:]+:[^:]+$/),
+      body('dispositionStates').optional().isArray(),
+      body('dispositionStates.*.id').optional().isString(),
+      body('dispositionStates.*.name').exists().isString(),
+      body('dispositionStates.*.description').optional().isString(),
+      body().custom((value) => {
+        const extra = Object.keys(value ?? {}).filter((key) => !allowedSubmissionActionProperties.includes(key));
+        if (extra.length > 0) {
+          throw new Error(`Unsupported properties: ${extra.join(', ')}`);
+        }
+        return true;
+      }),
+    ),
+    patchFormDefinitionSubmissionActions(directory, tokenProvider),
   );
 
   return router;

@@ -40,6 +40,7 @@ export const configurationSchema = {
       properties: { queueNameSpace: { type: 'string' }, queueName: { type: 'string' } },
     },
     submissionRecords: { type: 'boolean' },
+    includeDataInSubmission: { type: 'boolean' },
     supportTopic: { type: 'boolean' },
     submissionPdfTemplate: { type: 'string' },
     scheduledIntakes: { type: 'boolean' },

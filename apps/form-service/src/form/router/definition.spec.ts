@@ -13,6 +13,7 @@ import {
   getFormDefinitions,
   patchFormDefinition,
   patchFormDefinitionLifecycle,
+  patchFormDefinitionSubmissionActions,
   updateFormDefinition,
   updateFormDefinitionRoles,
   updateFormDefinitionSchemas,
@@ -1300,9 +1301,7 @@ describe('definition router', () => {
 
       expect(axiosMock.patch).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(next).toHaveBeenCalledWith(
-        expect.objectContaining({ message: expect.stringContaining('never-written') }),
-      );
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('never-written') }));
     });
 
     it('can call next with not found when definition does not exist', async () => {
@@ -1649,6 +1648,231 @@ describe('definition router', () => {
       };
 
       const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
+      expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('patchFormDefinitionSubmissionActions', () => {
+    const existingDefinition = {
+      id: 'test',
+      name: 'Test Form',
+      description: '',
+      anonymousApply: false,
+      applicantRoles: [],
+      assessorRoles: [],
+      clerkRoles: [],
+      dataSchema: {},
+      submissionRecords: false,
+      submissionPdfTemplate: null,
+      includeDataInSubmission: false,
+      dispositionStates: [],
+    };
+
+    let res: { status: jest.Mock; send: jest.Mock };
+    let next: jest.Mock;
+
+    beforeEach(() => {
+      res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      next = jest.fn();
+    });
+
+    it('can create handler', () => {
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', roles: ['test-applicant'] },
+        params: { definitionId: 'test' },
+        body: { createSubmissionRecords: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(axiosMock.get).not.toHaveBeenCalled();
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found when definition does not exist', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.NOT_FOUND, data: {} });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'missing-def' },
+        body: { createSubmissionRecords: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('missing-def') }));
+    });
+
+    it('can update submission actions and return mapped definition', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess({
+        ...existingDefinition,
+        submissionRecords: true,
+        submissionPdfTemplate: 'submitted-form',
+        includeDataInSubmission: true,
+        customSubmissionEvent: { namespace: 'form-service', name: 'custom-submitted' },
+        queueTaskToProcess: { queueNameSpace: 'queue-service', queueName: 'review' },
+        dispositionStates: [{ id: 'approved', name: 'Approved', description: 'Approved submission' }],
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: {
+          createPDF: true,
+          createSubmissionRecords: true,
+          event: 'form-service:custom-submitted',
+          includeDataInEvent: true,
+          taskQueue: 'queue-service:review',
+          dispositionStates: [{ id: 'approved', name: 'Approved', description: 'Approved submission' }],
+        },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({
+            id: 'test',
+            submissionRecords: true,
+            submissionPdfTemplate: 'submitted-form',
+            includeDataInSubmission: true,
+            customSubmissionEvent: { namespace: 'form-service', name: 'custom-submitted' },
+            queueTaskToProcess: { queueNameSpace: 'queue-service', queueName: 'review' },
+            dispositionStates: [{ id: 'approved', name: 'Approved', description: 'Approved submission' }],
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ submissionRecords: true, generatesPdf: true }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can disable optional submission actions', async () => {
+      const definitionWithActions = {
+        ...existingDefinition,
+        submissionRecords: true,
+        submissionPdfTemplate: 'submitted-form',
+        includeDataInSubmission: true,
+        customSubmissionEvent: { namespace: 'form-service', name: 'custom-submitted' },
+        queueTaskToProcess: { queueNameSpace: 'queue-service', queueName: 'review' },
+      };
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: definitionWithActions });
+      mockPatchSuccess({
+        ...definitionWithActions,
+        submissionRecords: false,
+        submissionPdfTemplate: null,
+        includeDataInSubmission: false,
+        customSubmissionEvent: null,
+        queueTaskToProcess: null,
+      });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: {
+          createPDF: false,
+          createSubmissionRecords: false,
+          event: null,
+          includeDataInEvent: false,
+          taskQueue: null,
+        },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({
+            submissionRecords: false,
+            submissionPdfTemplate: null,
+            includeDataInSubmission: false,
+            customSubmissionEvent: null,
+            queueTaskToProcess: null,
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('preserves existing actions when only one action field is provided', async () => {
+      const definitionWithActions = {
+        ...existingDefinition,
+        submissionPdfTemplate: 'existing-template',
+        includeDataInSubmission: true,
+      };
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: definitionWithActions });
+      mockPatchSuccess({ ...definitionWithActions, submissionRecords: true });
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { createSubmissionRecords: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          operation: 'REPLACE',
+          configuration: expect.objectContaining({
+            submissionRecords: true,
+            submissionPdfTemplate: 'existing-template',
+            includeDataInSubmission: true,
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with 400 when configuration service rejects the patch', async () => {
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { data: { errorMessage: 'Validation failed.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.patch.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { createSubmissionRecords: true },
+        tenant: { id: tenantId },
+      };
+
+      const handler = patchFormDefinitionSubmissionActions(directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(
