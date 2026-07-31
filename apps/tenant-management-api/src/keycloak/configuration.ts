@@ -164,14 +164,15 @@ export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
 export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
 
 /**
- * Roles granted to the adsp-cli-ci service account — configuration-admin only. agent-user is
- * intentionally omitted: agent-service is for interactive (human-in-the-loop) use and has no
- * value in a non-interactive CI pipeline. The adsp-cli-admin optional scope (manage-clients +
- * manage-users) is attached separately in keycloak.ts's createAdspCliAdminScope so it is
- * available if a tenant admin enables it for automated provisioning workflows.
+ * Roles granted to the adsp-cli-ci service account. agent-user is intentionally omitted:
+ * agent-service is for interactive (human-in-the-loop) use and has no value in a non-interactive
+ * CI pipeline. manage-clients and manage-users (from realm-management) are included so the service
+ * account can perform automated provisioning workflows (registering Keycloak clients, assigning
+ * roles) when the tenant enables this client.
  */
 export const ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
+  { client: 'realm-management', roles: ['manage-clients', 'manage-users'] },
 ];
 
 /**
