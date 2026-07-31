@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GoabFormItem, GoabGrid, GoabInput } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import { useSyncAutofillFields } from '../../util/useSyncAutofillFields';
+import { useDebouncedCommit } from '../../util/useDebouncedCommit';
 import { Visible, ensureGoaDatePointerCursor } from '../../util';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
@@ -47,31 +48,22 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     };
   };
 
-  const [formData, setFormData] = useState(normalizeNameDobData(data));
+  const normalizedData = useMemo(() => normalizeNameDobData(data), [data]);
+  const {
+    value: formData,
+    setValue: setFormData,
+    flush: flushFormData,
+  } = useDebouncedCommit<NameDobData>(normalizedData, (updatedData) =>
+    handleChange(path, Object.fromEntries(Object.entries(updatedData).filter(([, value]) => value !== ''))),
+  );
 
   const updateFormData = (updatedData: NameDobData) => {
-    const nextData = Object.fromEntries(
-      Object.entries(updatedData).filter(([_, value]) => value !== ''),
-    ) as NameDobData;
-    setFormData(nextData);
-    handleChange(path, nextData);
+    setFormData(updatedData);
+    flushFormData();
   };
 
-  useEffect(() => {
-    const nextData = normalizeNameDobData(data);
-    setFormData((currentData) =>
-      currentData.firstName === nextData.firstName &&
-      currentData.middleName === nextData.middleName &&
-      currentData.lastName === nextData.lastName &&
-      currentData.dateOfBirth === nextData.dateOfBirth
-        ? currentData
-        : nextData,
-    );
-  }, [data]);
-
   const handleInputChange = (field: string, value: string) => {
-    const updatedData = { ...formData, [field]: value };
-    updateFormData(updatedData);
+    setFormData({ ...formData, [field]: value });
   };
 
   // eslint-disable-next-line
@@ -141,6 +133,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           requiredFields={requiredFields}
           errors={errors}
           onFieldBlur={handleRequiredFieldBlur}
+          onFieldCommit={flushFormData}
         />
         <GoabGrid minChildWidth="0ch" gap="s" mb="m">
           <GoabFormItem
@@ -160,7 +153,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
               value={formData?.dateOfBirth}
               onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
               onBlur={(detail: GoabInputOnBlurDetail) => {
-                /* istanbul ignore next */
+                flushFormData();
                 handleRequiredFieldBlur(detail.name);
               }}
               width="100%"

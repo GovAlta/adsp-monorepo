@@ -18,6 +18,8 @@ interface NameInputsProps {
   requiredFields?: string[];
   errors?: Record<string, string>;
   onFieldBlur?: (name: string) => void;
+  /** Called whenever a field loses focus, so the owner can push pending edits without waiting out the debounce. */
+  onFieldCommit?: () => void;
   // eslint-disable-next-line
   handleInputChange: (field: string, value: string) => void;
 }
@@ -32,6 +34,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   disabled,
   errors,
   onFieldBlur,
+  onFieldCommit,
 }: NameInputsProps): JSX.Element => {
   const [internalErrors, setInternalErrors] = useState<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,6 +97,8 @@ export const NameInputs: React.FC<NameInputsProps> = ({
 
   const displayedErrors = errors ?? internalErrors;
   const handleBlur = (name: string) => {
+    onFieldCommit?.();
+
     if (onFieldBlur) {
       onFieldBlur(name);
     } else {
@@ -137,6 +142,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
             ariaLabel={'name-form-middle-name'}
             value={middleName || ''}
             onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
+            onBlur={() => onFieldCommit?.()}
             width="100%"
           />
         </GoabFormItem>

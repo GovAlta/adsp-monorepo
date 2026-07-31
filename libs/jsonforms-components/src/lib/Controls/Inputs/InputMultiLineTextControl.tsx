@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   CellProps,
   WithClassname,
@@ -19,31 +19,19 @@ import {
   GoabTextAreaOnChangeDetail,
   GoabTextAreaOnKeyPressDetail,
 } from '@abgov/ui-components-common';
-import { useDebounce } from '../../util/useDebounce';
+import { useDebouncedCommit } from '../../util/useDebouncedCommit';
 export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
-const DEBOUNCE_DELAY = 550;
 export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
 
-  const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
-
-  const debouncedValue = useDebounce(textAreaValue, DEBOUNCE_DELAY);
-
-  useEffect(() => {
-    setTextAreaValue(data || '');
-  }, [data]);
-
-  /* istanbul ignore next */
-  useEffect(() => {
-    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
-      onChangeForInputControl({
-        name: '',
-        value: debouncedValue,
-        controlProps: props as ControlProps,
-      });
-    }
-  }, [debouncedValue]);
+  const {
+    value: textAreaValue,
+    setValue: setTextAreaValue,
+    flush: flushTextArea,
+  } = useDebouncedCommit<string>(data || '', (value) =>
+    onChangeForInputControl({ name: '', value, controlProps: props as ControlProps }),
+  );
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
@@ -54,10 +42,18 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const textAreaName = `${label || path}-text-area` || '';
 
+  const applyCapitalization = (value: string) => (autoCapitalize ? value.toUpperCase() : value);
+
+  const markVisited = () => {
+    if (isVisited === false && setIsVisited) {
+      setIsVisited();
+    }
+  };
+
   const txtAreaComponent = (
     <GoabTextArea
       error={isVisited && errors.length > 0}
-      value={debouncedValue}
+      value={textAreaValue}
       disabled={!enabled}
       readOnly={readOnly}
       placeholder={placeholder}
@@ -66,25 +62,21 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
       width={width}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
+      // The component raises _change from its input event, so unlike _keyPress (keyup) this also
+      // covers pasting, IME composition and held-key repeats.
+      onChange={(detail: GoabTextAreaOnChangeDetail) => {
+        setTextAreaValue(applyCapitalization(detail.value));
+        markVisited();
+      }}
       onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
-        const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
-
-        setTextAreaValue(newValue);
-
-        if (isVisited === false && setIsVisited) {
-          setIsVisited();
-        }
+        setTextAreaValue(applyCapitalization(detail.value));
+        markVisited();
       }}
       onBlur={(detail: GoabTextAreaOnBlurDetail) => {
-        const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
-
-        setTextAreaValue(newValue);
-
-        if (isVisited === false && setIsVisited) {
-          setIsVisited();
-        }
+        setTextAreaValue(applyCapitalization(detail.value));
+        flushTextArea();
+        markVisited();
       }}
-      onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
       {...uischema?.options?.componentProps}
     />
   );
