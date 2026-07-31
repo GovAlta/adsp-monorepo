@@ -8,6 +8,7 @@ import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
 import { createDataRegisterTools } from './dataRegister';
 import { createPdfConfigurationTools } from './pdfConfiguration';
+import { createMockDocumentTools } from './mockDocument';
 import { createNotificationTemplateTools } from './notificationTemplate';
 import { createNxAdspTemplateTools } from './nxAdspTemplates';
 import { createAdspSdkReferenceTools } from './adspSdkReference';
@@ -34,6 +35,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     directory,
     tokenProvider,
   });
+  const { mockHashTool } = await createMockDocumentTools({ logger });
   const { formDataRetrievalTool, formDataUpdateTool } = await createFormTools({ logger, directory });
 
   const { schemaDefinitionTool } = await createSchemaTools();
@@ -67,6 +69,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     formConfigurationUpdateTool,
     pdfConfigurationRetrievalTool,
     pdfConfigurationUpdateTool,
+    mockHashTool,
     formDataRetrievalTool,
     formDataUpdateTool,
     schemaDefinitionTool,

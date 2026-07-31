@@ -378,4 +378,274 @@ describe('AgentBroker', () => {
       expect(event).toBeUndefined();
     });
   });
+
+  describe('listThreads', () => {
+    it('returns threads filtered by the user resource id', async () => {
+      const listThreads = jest.fn().mockResolvedValue({
+        threads: [
+          { id: 't1', resourceId: 'user-123', title: 'First', updatedAt: '2026-01-02T00:00:00Z', metadata: { agentId: 'support-agent' } },
+          { id: 't2', resourceId: 'user-123', title: 'Second', updatedAt: '2026-01-01T00:00:00Z', metadata: { agentId: 'other-agent' } },
+          { id: 't1', resourceId: 'user-123', title: 'First dup', updatedAt: '2026-01-02T00:00:00Z', metadata: { agentId: 'support-agent' } },
+        ],
+        total: 3,
+      });
+      const getMemory = jest.fn().mockResolvedValue({ listThreads });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(
+        logger as never,
+        tenantId as never,
+        [],
+        agent as never,
+        {},
+        undefined,
+        undefined,
+        'support-agent',
+      );
+
+      const result = await broker.listThreads(user as never);
+
+      expect(listThreads).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filter: { resourceId: 'user-123' },
+          perPage: false,
+        }),
+      );
+      expect(result.total).toBe(1);
+      expect(result.threads).toHaveLength(1);
+      expect(result.threads[0].id).toBe('t1');
+    });
+  });
+
+  describe('listMessages', () => {
+    const storedMessages = [
+      { id: 'm1', role: 'user', content: 'Hello', createdAt: new Date('2026-01-01T00:00:00Z') },
+      { id: 'm2', role: 'assistant', content: 'Hi there', createdAt: new Date('2026-01-01T00:00:01Z') },
+    ];
+
+    it('returns recalled messages for a thread owned by the user', async () => {
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'user-123' });
+      const recall = jest.fn().mockResolvedValue({ messages: storedMessages, total: 2 });
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const result = await broker.listMessages(user as never, 'thread-456');
+
+      expect(recall).toHaveBeenCalledWith({ threadId: 'thread-456', perPage: false });
+      expect(result).toEqual(
+        expect.objectContaining({
+          threadId: 'thread-456',
+          messages: storedMessages,
+          total: 2,
+          contextWindow: expect.objectContaining({ lastMessages: expect.any(Number) }),
+        }),
+      );
+    });
+
+    it('throws NotFoundError when the thread does not exist', async () => {
+      const getThreadById = jest.fn().mockResolvedValue(null);
+      const recall = jest.fn();
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      await expect(broker.listMessages(user as never, 'missing-thread')).rejects.toThrow(/thread/);
+      expect(recall).not.toHaveBeenCalled();
+    });
+
+    it('throws UnauthorizedUserError when the thread belongs to another user', async () => {
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'other-user' });
+      const recall = jest.fn();
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      await expect(broker.listMessages(user as never, 'thread-456')).rejects.toThrow(/access thread/);
+      expect(recall).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rollbackToMessage', () => {
+    const storedMessages = [
+      { id: 'm1', role: 'user', content: 'Hello', createdAt: new Date('2026-01-01T00:00:00Z') },
+      { id: 'm2', role: 'assistant', content: 'Hi', createdAt: new Date('2026-01-01T00:00:01Z') },
+      { id: 'm3', role: 'user', content: 'Again', createdAt: new Date('2026-01-01T00:00:02Z') },
+      { id: 'm4', role: 'assistant', content: 'Ok', createdAt: new Date('2026-01-01T00:00:03Z') },
+    ];
+
+    it('deletes messages after the checkpoint and returns remaining history', async () => {
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'user-123' });
+      const recall = jest.fn().mockResolvedValue({ messages: storedMessages, total: 4 });
+      const deleteMessages = jest.fn().mockResolvedValue(undefined);
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall, deleteMessages });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const result = await broker.rollbackToMessage(user as never, 'thread-456', 'm2');
+
+      expect(deleteMessages).toHaveBeenCalledWith(['m3', 'm4']);
+      expect(result.deletedIds).toEqual(['m3', 'm4']);
+      expect(result.scrubbedMessageIds).toEqual([]);
+      expect(result.scrubToolResults).toBe(false);
+      expect(result.messages.map((message) => message.id)).toEqual(['m1', 'm2']);
+      expect(result.keepThroughMessageId).toBe('m2');
+    });
+
+    it('scrubs tool parts from kept messages when scrubToolResults is true', async () => {
+      const messagesWithTools = [
+        {
+          id: 'm1',
+          role: 'user',
+          content: { format: 2, parts: [{ type: 'text', text: 'Hello' }], content: 'Hello' },
+          createdAt: new Date('2026-01-01T00:00:00Z'),
+        },
+        {
+          id: 'm2',
+          role: 'assistant',
+          content: {
+            format: 2,
+            parts: [
+              { type: 'text', text: 'Saved.' },
+              {
+                type: 'tool-invocation',
+                toolInvocation: {
+                  toolName: 'pdfConfigurationUpdateTool',
+                  result: { template: '<html>big</html>' },
+                },
+              },
+            ],
+            content: 'Saved.',
+          },
+          createdAt: new Date('2026-01-01T00:00:01Z'),
+        },
+        {
+          id: 'm3',
+          role: 'user',
+          content: { format: 2, parts: [{ type: 'text', text: 'Again' }], content: 'Again' },
+          createdAt: new Date('2026-01-01T00:00:02Z'),
+        },
+      ];
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'user-123' });
+      const recall = jest.fn().mockResolvedValue({ messages: messagesWithTools, total: 3 });
+      const deleteMessages = jest.fn().mockResolvedValue(undefined);
+      const updateMessages = jest.fn().mockResolvedValue([]);
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall, deleteMessages, updateMessages });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const result = await broker.rollbackToMessage(user as never, 'thread-456', 'm2', {
+        scrubToolResults: true,
+      });
+
+      expect(deleteMessages).toHaveBeenCalledWith(['m3']);
+      expect(updateMessages).toHaveBeenCalledWith({
+        messages: [
+          expect.objectContaining({
+            id: 'm2',
+            content: expect.objectContaining({
+              parts: [{ type: 'text', text: 'Saved.' }],
+            }),
+          }),
+        ],
+      });
+      expect(result.scrubToolResults).toBe(true);
+      expect(result.scrubbedMessageIds).toEqual(['m2']);
+      expect(result.messages).toHaveLength(2);
+    });
+
+    it('is a no-op delete when checkpoint is the last message', async () => {
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'user-123' });
+      const recall = jest.fn().mockResolvedValue({ messages: storedMessages, total: 4 });
+      const deleteMessages = jest.fn().mockResolvedValue(undefined);
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall, deleteMessages });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const result = await broker.rollbackToMessage(user as never, 'thread-456', 'm4');
+
+      expect(deleteMessages).not.toHaveBeenCalled();
+      expect(result.deletedIds).toEqual([]);
+      expect(result.messages).toHaveLength(4);
+    });
+
+    it('throws when checkpoint message is missing', async () => {
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'user-123' });
+      const recall = jest.fn().mockResolvedValue({ messages: storedMessages, total: 4 });
+      const deleteMessages = jest.fn();
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall, deleteMessages });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      await expect(broker.rollbackToMessage(user as never, 'thread-456', 'missing')).rejects.toThrow(/message/);
+      expect(deleteMessages).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('clearMessages', () => {
+    it('deletes all messages in the thread', async () => {
+      const storedMessages = [
+        { id: 'm1', role: 'user', content: 'Hello', createdAt: new Date('2026-01-01T00:00:00Z') },
+        { id: 'm2', role: 'assistant', content: 'Hi', createdAt: new Date('2026-01-01T00:00:01Z') },
+        { id: 'm3', role: 'user', content: 'Again', createdAt: new Date('2026-01-01T00:00:02Z') },
+        { id: 'm4', role: 'assistant', content: 'Ok', createdAt: new Date('2026-01-01T00:00:03Z') },
+      ];
+      const getThreadById = jest.fn().mockResolvedValue({ id: 'thread-456', resourceId: 'user-123' });
+      const recall = jest.fn().mockResolvedValue({ messages: storedMessages, total: 4 });
+      const deleteMessages = jest.fn().mockResolvedValue(undefined);
+      const getMemory = jest.fn().mockResolvedValue({ getThreadById, recall, deleteMessages });
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory,
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const result = await broker.clearMessages(user as never, 'thread-456');
+
+      expect(deleteMessages).toHaveBeenCalledWith(['m1', 'm2', 'm3', 'm4']);
+      expect(result.messages).toEqual([]);
+      expect(result.total).toBe(0);
+    });
+  });
 });

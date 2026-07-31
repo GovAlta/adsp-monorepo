@@ -10,6 +10,8 @@ docs/vendor
 
 # dependencies
 /node_modules
+ai-undo-app/node_modules
+ai-undo-app/dist
 
 # IDEs and editors
 /.idea
@@ -51,8 +53,10 @@ globalConfig.json
 
 # env file
 **/.env
+**/.env.local
 **/.local.env
 .env.github-scripts
+apps/agent-service/.local/
 
 # oc env configuration
 /.openshift/configuration/*.encoded.yml

@@ -3,6 +3,7 @@ layout: page
 title: Agent service
 nav_order: 21
 parent: Services
+has_children: true
 ---
 
 # Agent service
@@ -53,6 +54,8 @@ Custom API tools can be configured to call external APIs on behalf of the agent.
 ### Threads
 
 Conversations with agents are organized into threads. Each thread maintains context across multiple messages, allowing for coherent multi-turn conversations. Thread IDs can be provided by the client or generated automatically.
+
+To rewind conversation history after an unwanted agent turn, see [Rolling back agent AI](agent-rollback.md).
 
 ### Structured Output
 
