@@ -261,20 +261,18 @@ describe('AdspFeedback style isolation', () => {
     expect(document.head.querySelector('title')?.textContent).toBe('Host page');
     expect(styleText).toContain('.adsp-fb *');
     expect(styleText).toContain('.adsp-fb p');
-    expect(styleText).toContain('line-height: 1.5;');
-    expect(styleText).toContain('font-size: 1.125rem;');
+    expect(styleText).toContain('--adsp-fb-line-height-body: 1.5;');
+    expect(styleText).toContain('--adsp-fb-font-size-body: 1.125rem;');
     expect(styleText).toContain('.adsp-fb .adsp-fb-badge span');
-    expect(styleText).toContain('color: var(--color-gray-600, #666666);');
+    expect(styleText).toContain('color: var(--adsp-fb-color-muted);');
     expect(styleText).toContain('margin: 0;');
-    expect(styleText).toContain(
-      'box-shadow: 0 0 0 var(--goa-border-width-m, 2px) var(--goa-color-interactive-hover, #004f84);',
-    );
-    expect(styleText).toContain('box-shadow: 0 0 0 3px var(--goa-color-interactive-focus, #feba35);');
-    expect(styleText).toContain('box-shadow: 0 0 0 var(--goa-border-width-m, 2px) red;');
+    expect(styleText).toContain('box-shadow: 0 0 0 var(--adsp-fb-border-width) var(--adsp-fb-color-primary-hover);');
+    expect(styleText).toContain('box-shadow: 0 0 0 3px var(--adsp-fb-color-focus);');
+    expect(styleText).toContain('box-shadow: 0 0 0 var(--adsp-fb-border-width) var(--adsp-fb-color-error);');
     expect(styleText).toContain('.adsp-fb .h3-sub-title');
-    expect(styleText).toContain('font-size: var(--fs-xl, 1.5rem)');
-    expect(styleText).toContain('font-weight: var(--fw-regular, 400)');
-    expect(styleText).toContain('line-height: var(--lh-lg, 2rem)');
+    expect(styleText).toContain('font-size: var(--adsp-fb-font-size-title)');
+    expect(styleText).toContain('font-weight: var(--adsp-fb-font-weight-regular)');
+    expect(styleText).toContain('line-height: var(--adsp-fb-line-height-title)');
     expect(styleText).toContain('.adsp-fb h3.h3-error');
     expect(styleText.match(/margin-bottom: 0;/g)).toHaveLength(2);
     expect(styleText).toContain('margin: 0 !important;');
@@ -294,6 +292,71 @@ describe('AdspFeedback style isolation', () => {
     expect(styleText).not.toMatch(/(^|\n)\s*\.radio\b/);
     expect(styleText).not.toMatch(/(^|\n)\s*\.ratingText\b/);
     expect(styleText).not.toMatch(/(^|\n)\s*\.overlay\b/);
+  });
+
+  it('defaults to Design System 1 when no design system version is specified', () => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+
+    adspFeedback.initialize({ tenant: 'autotest', apiUrl: 'http://localhost/feedback/v1/feedback' });
+
+    expect(adspFeedback['rootRef'].value?.getAttribute('data-design-system')).toBe('1.0');
+  });
+
+  it('uses Design System 2 mode when requested', () => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+
+    adspFeedback.initialize({
+      tenant: 'autotest',
+      apiUrl: 'http://localhost/feedback/v1/feedback',
+      designSystemsVersion: '2.0',
+    });
+
+    const styleText = document.getElementById('adsp-feedback-widget-styles')?.textContent ?? '';
+
+    expect(adspFeedback['rootRef'].value?.getAttribute('data-design-system')).toBe('2.0');
+    expect(styleText).toContain(".adsp-fb-root[data-design-system='2.0']");
+    expect(styleText).toContain('--adsp-fb-color-primary: var(--goa-color-interactive-default, #0070c4);');
+    expect(styleText).toContain("--adsp-fb-font-family: var(--goa-typography-body-font-family");
+    expect(styleText).toContain('--adsp-fb-shadow: var(--goa-shadow-m');
+    expect(styleText).toContain('--adsp-fb-badge-color: #0081a2;');
+    expect(styleText).toContain('--adsp-fb-badge-radius: var(--goa-border-radius-l, 0.5rem);');
+  });
+
+  it('uses Design System 2 mode from script auto-initialization', () => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = `
+      <script
+        id="feedback-script"
+        src="http://localhost/feedback/v1/script/adspFeedback.js?tenant=autotest&designSystemsVersion=2.0"
+      ></script>
+    `;
+    Object.defineProperty(document, 'currentScript', {
+      configurable: true,
+      value: document.getElementById('feedback-script'),
+    });
+
+    const autoInitializedFeedback = new AdspFeedback();
+
+    expect(autoInitializedFeedback['rootRef'].value?.getAttribute('data-design-system')).toBe('2.0');
+  });
+
+  it('falls back to Design System 1 for unknown design system versions', () => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    adspFeedback.initialize({
+      tenant: 'autotest',
+      apiUrl: 'http://localhost/feedback/v1/feedback',
+      designSystemsVersion: '3.0',
+    });
+
+    expect(adspFeedback['rootRef'].value?.getAttribute('data-design-system')).toBe('1.0');
+    expect(consoleWarn).not.toHaveBeenCalled();
+
+    consoleWarn.mockRestore();
   });
 
   it('locks body scrolling without adding a global modal class', () => {

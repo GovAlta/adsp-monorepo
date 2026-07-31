@@ -68,6 +68,7 @@ export interface FeatureFlags {
 
 export interface FeedbackConfiguration {
   tenant: string;
+  designSystemsVersion?: string;
   script: {
     src: URL;
     integrity: string;

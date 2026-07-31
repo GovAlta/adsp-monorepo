@@ -27,6 +27,7 @@ export const useFeedbackWidget = (tenantName?: string) => {
       globalThis.adspFeedback.initialize({
         tenant: tenantName ?? '',
         getContext: () => getFeedbackContext(),
+        designSystemsVersion: '2.0',
       });
     }
     updateWidgetVisibility(true);

@@ -26,6 +26,7 @@ describe('useFeedbackWidget', () => {
     expect(mockInitialize).toHaveBeenCalledWith({
       tenant: tenantName,
       getContext: expect.any(Function),
+      designSystemsVersion: '2.0',
     });
   });
 
