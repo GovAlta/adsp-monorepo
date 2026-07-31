@@ -233,6 +233,94 @@ describe('mapSuggestionToAddress', () => {
 
     expect(mapSuggestionToAddress(suggestion)).toEqual(expectedAddress);
   });
+
+  // CS-5218: reading the description parts positionally threw for anything but the three part
+  // form, crashing the app when a suggestion was picked by click or by pressing Enter.
+  it('should map a description that carries the province and postal code in one part', () => {
+    const suggestion: Suggestion = {
+      Id: 'CA|CP|A|10010614',
+      Text: '1234 Example St',
+      Highlight: '1-2',
+      Cursor: 0,
+      Description: 'Edmonton, AB T5J 2N9',
+      Next: 'Retrieve',
+    };
+
+    expect(mapSuggestionToAddress(suggestion)).toEqual({
+      addressLine1: '1234 Example St',
+      addressLine2: '',
+      municipality: 'Edmonton',
+      subdivisionCode: 'AB',
+      postalCode: 'T5J 2N9',
+      country: 'CA',
+    });
+  });
+
+  it('should map a description with no postal code rather than throwing', () => {
+    const suggestion: Suggestion = {
+      Id: 'CA|CP|A|10010614',
+      Text: '1234 Example St',
+      Highlight: '1-2',
+      Cursor: 0,
+      Description: 'Edmonton, AB',
+      Next: 'Retrieve',
+    };
+
+    expect(mapSuggestionToAddress(suggestion)).toEqual({
+      addressLine1: '1234 Example St',
+      addressLine2: '',
+      municipality: 'Edmonton',
+      subdivisionCode: 'AB',
+      postalCode: '',
+      country: 'CA',
+    });
+  });
+
+  it('should map a description with only a municipality rather than throwing', () => {
+    const suggestion: Suggestion = {
+      Id: 'CA|CP|A|10010614',
+      Text: '1234 Example St',
+      Highlight: '1-2',
+      Cursor: 0,
+      Description: 'Edmonton',
+      Next: 'Find',
+    };
+
+    expect(mapSuggestionToAddress(suggestion)).toEqual({
+      addressLine1: '1234 Example St',
+      addressLine2: '',
+      municipality: 'Edmonton',
+      subdivisionCode: '',
+      postalCode: '',
+      country: 'CA',
+    });
+  });
+
+  it('should map an empty description rather than throwing', () => {
+    const suggestion = {
+      Id: 'CA|CP|A|10010614',
+      Text: '1234 Example St',
+      Highlight: '1-2',
+      Cursor: 0,
+      Description: '',
+      Next: 'Find',
+    } as Suggestion;
+
+    expect(() => mapSuggestionToAddress(suggestion)).not.toThrow();
+    expect(mapSuggestionToAddress(suggestion).addressLine1).toBe('1234 Example St');
+  });
+
+  it('should tolerate a suggestion with no text or description at all', () => {
+    expect(() => mapSuggestionToAddress({} as Suggestion)).not.toThrow();
+    expect(mapSuggestionToAddress({} as Suggestion)).toEqual({
+      addressLine1: '',
+      addressLine2: '',
+      municipality: '',
+      subdivisionCode: '',
+      postalCode: '',
+      country: 'CA',
+    });
+  });
 });
 
 describe('filterSuggestionsWithoutAddressCount', () => {
