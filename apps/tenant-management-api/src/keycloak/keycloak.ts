@@ -231,18 +231,16 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await client.clientScopes.create({ realm, ...createAdspCliAdminClientScopeConfig() });
 
     const adminScope = await client.clientScopes.findOneByName({ realm, name: ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME });
+    const adspCliClient = (await client.clients.find({ realm, clientId: 'adsp-cli' }))[0];
 
-    for (const clientId of ['adsp-cli', ADSP_CLI_CI_CLIENT_ID]) {
-      const adspClient = (await client.clients.find({ realm, clientId }))[0];
-      await client.clients.addOptionalClientScope({
-        realm,
-        id: adspClient.id,
-        clientScopeId: adminScope.id,
-      });
-    }
+    await client.clients.addOptionalClientScope({
+      realm,
+      id: adspCliClient.id,
+      clientScopeId: adminScope.id,
+    });
 
     this.logger.debug(
-      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and assigned to adsp-cli and ${ADSP_CLI_CI_CLIENT_ID} as optional.`,
+      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and assigned to adsp-cli as optional.`,
       LOG_CONTEXT,
     );
   }
