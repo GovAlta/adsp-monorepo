@@ -42,7 +42,9 @@ export class MongoTenantRepository implements TenantRepository {
 
   async get(id: string): Promise<TenantEntity> {
     const doc = await this.tenantModel.findOne({ _id: id });
-
+    if (!doc) {
+      throw new NotFoundError('Tenant', id);
+    }
     return this.fromDoc(doc);
   }
 
@@ -76,9 +78,6 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   private fromDoc(doc: Doc<Tenant>) {
-    if (doc === null) {
-      throw new NotFoundError('Tenant', null);
-    }
     return new TenantEntity(this, {
       id: `${doc._id}`,
       name: doc.name,
