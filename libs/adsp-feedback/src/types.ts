@@ -11,6 +11,7 @@ export interface FeedbackOptions {
   email?: string;
   site?: string;
   apiUrl?: string;
+  designSystemsVersion?: string;
   getAccessToken?: () => Promise<string>;
   getContext?: () => Promise<FeedbackContext>;
 }
