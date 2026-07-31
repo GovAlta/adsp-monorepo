@@ -87,6 +87,8 @@ components:
               type: string
             name:
               type: string
+        includeDataInSubmission:
+          type: boolean
         dryRun:
           type: boolean
     FormDefinitionCreate:
@@ -597,6 +599,74 @@ components:
     responses:
       200:
         description: Successfully updated lifecycle settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      400:
+        description: Request body does not conform to the required schema.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User does not have the form-admin role.
+      404:
+        description: Form definition not found.
+
+/form/v1/definitions/{definitionId}/submission-actions:
+  patch:
+    tags:
+      - Form
+    description: Partially updates the actions invoked when a form is submitted. Requires the form-service admin role. Only provided fields are changed; omitted fields are left unchanged.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition whose submission actions are to be updated.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              createPDF:
+                type: boolean
+                description: Whether to generate a submission PDF using the default submitted-form template.
+              createSubmissionRecords:
+                type: boolean
+                description: Whether to create submission records when the form is submitted.
+              event:
+                type: string
+                nullable: true
+                pattern: '^[^:]+:[^:]+$'
+                description: Custom submission event in namespace:name format. Set to null to clear.
+              includeDataInEvent:
+                type: boolean
+                description: Whether submitted form data is included in the submission event payload.
+              taskQueue:
+                type: string
+                nullable: true
+                pattern: '^[^:]+:[^:]+$'
+                description: Queue task target in queueNameSpace:queueName format. Set to null to clear.
+              dispositionStates:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    description:
+                      type: string
+    responses:
+      200:
+        description: Successfully updated submission actions.
         content:
           application/json:
             schema:
