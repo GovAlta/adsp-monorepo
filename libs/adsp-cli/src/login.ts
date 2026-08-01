@@ -284,7 +284,7 @@ function getCoreRealmRoles(token: string): string[] {
   }
 }
 
-function isTenantServiceAdmin(token: string): boolean {
+export function isTenantServiceAdmin(token: string): boolean {
   return getCoreRealmRoles(token).includes('tenant-service-admin');
 }
 

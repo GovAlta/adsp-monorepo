@@ -210,6 +210,38 @@ export class KeycloakRealmServiceImpl implements RealmService {
   }
 
   /**
+   * Explicitly adds the ADSP_CLI_CLIENT_SCOPE_MAPPINGS role restrictions to the adsp-cli client via
+   * the scope-mappings API. The clientScopeMappings key in the realm creation JSON sets the same
+   * restriction declaratively but KC 24 does not apply it — same pattern as the addOptionalClientScope
+   * regression fixed in createAdspCliAdminScope. Source clients absent from the realm are skipped so
+   * a not-yet-registered optional service does not break realm creation.
+   */
+  private async grantAdspCliClientScopeMappings(client: KeycloakAdminClient, realm: string): Promise<void> {
+    this.logger.debug(`Granting client scope mappings to 'adsp-cli' in realm '${realm}'...`, LOG_CONTEXT);
+
+    const adspCliClient = (await client.clients.find({ realm, clientId: 'adsp-cli' }))[0];
+
+    for (const mapping of ADSP_CLI_CLIENT_SCOPE_MAPPINGS) {
+      const sourceClient = (await client.clients.find({ realm, clientId: mapping.client }))[0];
+      if (!sourceClient) {
+        this.logger.debug(`Client '${mapping.client}' not found in realm '${realm}' — skipping scope mapping.`, LOG_CONTEXT);
+        continue;
+      }
+
+      const roles = await Promise.all(
+        mapping.roles.map((roleName) => client.clients.findRole({ realm, id: sourceClient.id, roleName }))
+      );
+
+      await client.clients.addClientScopeMappings(
+        { realm, id: adspCliClient.id, client: sourceClient.id },
+        roles.map((r) => ({ id: r.id, name: r.name }))
+      );
+    }
+
+    this.logger.info(`Granted client scope mappings to 'adsp-cli' in realm '${realm}'.`, LOG_CONTEXT);
+  }
+
+  /**
    * Grants the CI client's service account (created automatically by Keycloak when
    * serviceAccountsEnabled: true) the roles in ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS. Combined with
    * fullScopeAllowed: false, its tokens will carry exactly those roles and nothing else.
@@ -481,6 +513,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await this.createAdspCliAdminScope(client, realm);
     await this.createTenantAdminComposite(client, serviceClients, realm, tenantAdminRole);
     await this.grantAdspCliAdminScopeMapping(client, realm);
+    await this.grantAdspCliClientScopeMappings(client, realm);
 
     const flowAlias = await this.createAuthenticationFlow(client, realm);
     await this.createCoreIdentityProvider(client, brokerClientSecret, brokerClient, flowAlias, realm);

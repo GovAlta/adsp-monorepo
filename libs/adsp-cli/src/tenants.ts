@@ -79,6 +79,49 @@ export async function listTenants(directoryServiceUrl: string, accessToken: stri
   return data.results ?? [];
 }
 
+export interface DeleteTenantResult {
+  deletedRealm: boolean;
+  deletedTenant: boolean;
+  success: boolean;
+}
+
+/**
+ * Deletes a tenant and its Keycloak realm — requires a core-realm token with the
+ * tenant-service-admin role. The id argument is the raw tenant id (not the full URN).
+ */
+export async function deleteTenantById(
+  directoryServiceUrl: string,
+  accessToken: string,
+  id: string
+): Promise<DeleteTenantResult> {
+  const tenantServiceUrl = await resolveTenantServiceUrl(directoryServiceUrl);
+  const url = new URL(`v2/tenants/${encodeURIComponent(id)}`, tenantServiceUrl);
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new HttpRequestError(
+        response.status,
+        "Your account doesn't have the 'tenant-service-admin' role required to delete tenants."
+      );
+    }
+    let message = `Tenant service request failed with status ${response.status}.`;
+    try {
+      const body = (await response.json()) as { errorMessage?: string };
+      if (body.errorMessage) message = body.errorMessage;
+    } catch {
+      // non-JSON body — use the fallback message
+    }
+    throw new HttpRequestError(response.status, message);
+  }
+
+  return (await response.json()) as DeleteTenantResult;
+}
+
 /**
  * tenant-service's role guard (`requireBetaTesterOrAdmin`) rejects a caller lacking the
  * beta-tester/tenant-service-admin role with a bare 401 and no body, so that case needs its own

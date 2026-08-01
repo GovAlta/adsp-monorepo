@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 import { getDirectoryServiceUrl } from './directory';
 import { EnvironmentName, resolveEnvironmentUrls } from './environments';
-import { CORE_REALM, getAccessToken, getCachedOrRefreshedToken, getStatus, loginInteractive, loginWithClientCredentials, logout } from './login';
+import { CORE_REALM, getAccessToken, getCachedOrRefreshedToken, getStatus, isTenantServiceAdmin, loginInteractive, loginWithClientCredentials, logout } from './login';
 import { getServiceRoles } from './serviceRoles';
-import { findTenantByName, listTenants } from './tenants';
+import { deleteTenantById, findTenantByName, listTenants, Tenant } from './tenants';
 
 const USAGE =
   'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] | ' +
   'login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>] | ' +
-  'status | logout | token | tenants [name] | service-roles>';
+  'status | logout | token | tenants [name] | service-roles | delete-tenant <name>>';
 
 const HELP_TEXT = `adsp-cli — CLI and client library for authenticating against ADSP and calling its live APIs.
 
@@ -35,6 +35,9 @@ Commands:
                           a cached core-realm session from a prior no-args login).
   service-roles           Print every platform service's registered RBAC role, read live from
                           tenant-service configuration.
+  delete-tenant <name>    Permanently delete a tenant and its Keycloak realm. Requires a cached
+                          core-realm session with the tenant-service-admin role. Prompts for
+                          confirmation before deleting.
   help, --help, -h        Show this help.
 
 Flags (login only):
@@ -186,6 +189,85 @@ async function runToken(): Promise<void> {
   console.log(tokenResult.token);
 }
 
+async function pickTenantInteractive(directoryServiceUrl: string, coreToken: string): Promise<Tenant> {
+  const tenants = await listTenants(directoryServiceUrl, coreToken);
+  if (tenants.length === 0) {
+    throw new Error('No tenants found.');
+  }
+
+  const { prompt } = await import('enquirer');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { name } = await (prompt as any)({
+    type: 'autocomplete',
+    name: 'name',
+    message: 'Which tenant?',
+    hint: '(type to filter)',
+    limit: 10,
+    choices: tenants.map((t) => t.name),
+  });
+
+  const picked = tenants.find((t) => t.name === name);
+  if (!picked) {
+    throw new Error(`Tenant '${name}' not found.`);
+  }
+  return picked;
+}
+
+async function runDeleteTenant(argv: string[]): Promise<void> {
+  const { accessServiceUrl, directoryServiceUrl } = resolveEnvironmentUrls();
+
+  const coreToken = await getCachedOrRefreshedToken(accessServiceUrl, CORE_REALM);
+  if (!coreToken) {
+    throw new Error("No core-realm session. Run 'adsp login' (no args) to establish a core-realm session first.");
+  }
+
+  if (!isTenantServiceAdmin(coreToken)) {
+    throw new Error("Your account doesn't have the 'tenant-service-admin' role required to delete tenants.");
+  }
+
+  const tenant = argv[0]
+    ? await (async () => {
+        const found = await findTenantByName(directoryServiceUrl, argv[0]);
+        if (!found) throw new Error(`Tenant '${argv[0]}' not found.`);
+        return found;
+      })()
+    : await pickTenantInteractive(directoryServiceUrl, coreToken);
+
+  // eslint-disable-next-line no-console
+  console.log(`\nTenant:  ${tenant.name}`);
+  // eslint-disable-next-line no-console
+  console.log(`Realm:   ${tenant.realm}`);
+  // eslint-disable-next-line no-console
+  console.log(`Admin:   ${tenant.adminEmail ?? '(unknown)'}`);
+  // eslint-disable-next-line no-console
+  console.log('\nThis will permanently delete the tenant and its Keycloak realm. This cannot be undone.\n');
+
+  const { prompt } = await import('enquirer');
+  const { confirmation } = await prompt<{ confirmation: string }>({
+    type: 'input',
+    name: 'confirmation',
+    message: 'Type the tenant name to confirm deletion:',
+  });
+
+  if (confirmation !== tenant.name) {
+    throw new Error('Deletion cancelled — confirmation did not match the tenant name.');
+  }
+
+  const id = tenant.id ?? '';
+  const rawId = id.substring(id.lastIndexOf('/') + 1);
+  if (!rawId) {
+    throw new Error(`Could not determine the ID for tenant '${tenant.name}'.`);
+  }
+
+  const result = await deleteTenantById(directoryServiceUrl, coreToken, rawId);
+  // eslint-disable-next-line no-console
+  console.log(
+    result.success
+      ? `Tenant '${tenant.name}' deleted successfully.`
+      : `Tenant '${tenant.name}' was partially deleted (realm removed: ${result.deletedRealm}, record removed: ${result.deletedTenant}).`
+  );
+}
+
 async function runServiceRoles(): Promise<void> {
   const tokenResult = await getAccessToken();
   if (tokenResult.status === 'not-authenticated') {
@@ -225,6 +307,9 @@ async function main(): Promise<void> {
         break;
       case 'service-roles':
         await runServiceRoles();
+        break;
+      case 'delete-tenant':
+        await runDeleteTenant(rest);
         break;
       default:
         // eslint-disable-next-line no-console

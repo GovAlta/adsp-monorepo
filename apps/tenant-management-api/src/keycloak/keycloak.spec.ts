@@ -34,6 +34,7 @@ describe('KeycloakRealmService', () => {
       listRoles: jest.fn(),
       del: jest.fn(),
       addOptionalClientScope: jest.fn(),
+      addClientScopeMappings: jest.fn(),
       getServiceAccountUser: jest.fn(),
     },
     clientScopes: {
@@ -75,6 +76,7 @@ describe('KeycloakRealmService', () => {
     keycloakClientMock.clients.findRole.mockReset();
     keycloakClientMock.clients.listRoles.mockReset();
     keycloakClientMock.clients.addOptionalClientScope.mockReset();
+    keycloakClientMock.clients.addClientScopeMappings.mockReset();
     keycloakClientMock.clients.getServiceAccountUser.mockReset();
 
     keycloakClientMock.clientScopes.create.mockReset();
@@ -183,6 +185,10 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
+        // grantAdspCliClientScopeMappings: adsp-cli, config-service, agent-service (not in realm → [])
+        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
+        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -193,6 +199,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce(testerRole)
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
+        // grantAdspCliClientScopeMappings: configuration-admin from config-service
+        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -253,6 +261,10 @@ describe('KeycloakRealmService', () => {
           expect.objectContaining({ name: 'manage-users' }),
         ]),
       );
+      expect(keycloakClientMock.clients.addClientScopeMappings).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'adsp-cli-client-123', client: 'config-service-client-123' }),
+        expect.arrayContaining([expect.objectContaining({ name: 'configuration-admin' })]),
+      );
 
       axiosMock.get.mockResolvedValueOnce({ data: [{ id: 'execution-123' }] });
 
@@ -303,6 +315,9 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
+        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
+        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -313,6 +328,7 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce(testerRole)
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
+        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -351,6 +367,9 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
+        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
+        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -361,6 +380,7 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce(testerRole)
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
+        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
