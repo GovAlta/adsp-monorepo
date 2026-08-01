@@ -4,7 +4,7 @@ jest.mock('./directory', () => ({
 
 import { getServiceUrls } from './directory';
 import { HttpRequestError } from './httpError';
-import { createTenant, findTenantByName, findTenantByRealm, getTenantById, listTenants, waitForTenantActive } from './tenants';
+import { createTenant, deleteTenantById, findTenantByName, findTenantByRealm, getTenantById, listTenants, waitForTenantActive } from './tenants';
 
 const mockGetServiceUrls = getServiceUrls as jest.Mock;
 
@@ -228,6 +228,56 @@ describe('getTenantById', () => {
     await expect(
       getTenantById('https://directory-service.example.com', 'core-token', 'tenant-a')
     ).rejects.toBeInstanceOf(HttpRequestError);
+  });
+});
+
+describe('deleteTenantById', () => {
+  it('DELETEs by id with a bearer token and returns the result', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ deletedRealm: true, deletedTenant: true, success: true }),
+    });
+    global.fetch = fetchMock as never;
+
+    const result = await deleteTenantById('https://directory-service.example.com', 'core-token', 'tenant-abc');
+
+    expect(result).toEqual({ deletedRealm: true, deletedTenant: true, success: true });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe(`${TENANT_SERVICE_URL}/v2/tenants/tenant-abc`);
+    expect(init.method).toBe('DELETE');
+    expect(init.headers.Authorization).toBe('Bearer core-token');
+  });
+
+  it('throws a tenant-service-admin message on a 401', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({}) }) as never;
+
+    await expect(
+      deleteTenantById('https://directory-service.example.com', 'core-token', 'tenant-abc')
+    ).rejects.toMatchObject({ status: 401, message: expect.stringContaining('tenant-service-admin') });
+  });
+
+  it('surfaces the server-provided errorMessage on other non-ok responses', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ errorMessage: 'Cannot delete active tenant.' }),
+    }) as never;
+
+    await expect(
+      deleteTenantById('https://directory-service.example.com', 'core-token', 'tenant-abc')
+    ).rejects.toMatchObject({ status: 400, message: 'Cannot delete active tenant.' });
+  });
+
+  it('falls back to a generic message when the error body is not JSON', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => { throw new Error('no body'); },
+    }) as never;
+
+    await expect(
+      deleteTenantById('https://directory-service.example.com', 'core-token', 'tenant-abc')
+    ).rejects.toMatchObject({ status: 500, message: 'Tenant service request failed with status 500.' });
   });
 });
 
