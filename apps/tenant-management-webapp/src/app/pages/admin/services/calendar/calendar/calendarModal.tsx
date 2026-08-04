@@ -12,6 +12,9 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { selectCalendarsByName } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
+import { TextLoadingIndicator } from '@components/Indicator';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { ActionState } from '@store/session/models';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
   GoabTextAreaOnChangeDetail,
@@ -50,6 +53,10 @@ export const CalendarModal = ({
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
   const scrollPaneRef = useRef<HTMLDivElement>(null);
+  const fetchKeycloakRolesState = useSelector(
+    (state: RootState) => state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
+  );
+  const rolesLoading = fetchKeycloakRolesState === ActionState.inProcess || fetchKeycloakRolesState === '';
   const descErrMessage = 'Calendar description can not be over 180 characters';
 
   useEffect(() => {
@@ -174,7 +181,7 @@ export const CalendarModal = ({
       <div
         ref={scrollPaneRef}
         className="roles-scroll-pane"
-        style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
+        style={{ padding: '0 3px 0 3px' }}
       >
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
           <GoabInput size="compact"
@@ -223,13 +230,18 @@ export const CalendarModal = ({
           </GoabFormItem>
         )}
 
-        {Array.isArray(roles) &&
-          roles.length !== 0 &&
-          roles.map((r) => (
-            <ClientRoleTable key={r.clientId} roles={r.roleNames} clientId={r.clientId} {...roleTableProps} />
-          ))}
-
-        {Array.isArray(roles) && roles.length === 0 && <TextGoASkeleton />}
+        {rolesLoading ? (
+          <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+        ) : (
+          <>
+            {Array.isArray(roles) &&
+              roles.length !== 0 &&
+              roles.map((r) => (
+                <ClientRoleTable key={r.clientId} roles={r.roleNames} clientId={r.clientId} {...roleTableProps} />
+              ))}
+            {Array.isArray(roles) && roles.length === 0 && <TextGoASkeleton />}
+          </>
+        )}
       </div>
     </GoabModal>
   );
