@@ -15,6 +15,8 @@ import {
   isJson,
   saveIsVisitFromLocalStorage,
   getIsVisitFromLocalStorage,
+  saveVisitedSteps,
+  getVisitedSteps,
 } from './util';
 
 describe('hasMeaningfulValue', () => {
@@ -862,5 +864,85 @@ describe('saveIsVisitFromLocalStorage / getIsVisitFromLocalStorage', () => {
 
     // Assert
     expect(result).toBeUndefined();
+  });
+});
+
+describe('saveVisitedSteps / getVisitedSteps', () => {
+  afterEach(() => {
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  test('round-trips the visited step ids for a form', () => {
+    // Arrange & Act
+    saveVisitedSteps('form-1', [0, 2]);
+
+    // Assert
+    expect(getVisitedSteps('form-1')).toEqual([0, 2]);
+  });
+
+  test('keeps each form separate', () => {
+    // Arrange
+    saveVisitedSteps('form-1', [0, 2]);
+
+    // Act
+    saveVisitedSteps('form-2', [1]);
+
+    // Assert
+    expect(getVisitedSteps('form-1')).toEqual([0, 2]);
+    expect(getVisitedSteps('form-2')).toEqual([1]);
+  });
+
+  test('survives a change of day, unlike the cacheStatus cache', () => {
+    // Regression guard: the cacheStatus cache keys on the date, so a draft resumed the next day
+    // loses its visited steps. This one keys on the form id only.
+    // Arrange
+    saveVisitedSteps('form-1', [1]);
+
+    // Act
+    jest.spyOn(Date.prototype, 'toISOString').mockReturnValue('2099-01-01T00:00:00.000Z');
+
+    // Assert
+    expect(getVisitedSteps('form-1')).toEqual([1]);
+  });
+
+  test('returns undefined when nothing has been saved for the form', () => {
+    // Arrange & Act & Assert
+    expect(getVisitedSteps('form-1')).toBeUndefined();
+  });
+
+  test('returns undefined without a form id, and does not write', () => {
+    // Arrange & Act
+    saveVisitedSteps(undefined, [0]);
+
+    // Assert
+    expect(getVisitedSteps(undefined)).toBeUndefined();
+    expect(localStorage.length).toBe(0);
+  });
+
+  test('ignores a corrupt entry rather than throwing', () => {
+    // Arrange
+    localStorage.setItem('adsp.form.form-1.visitedSteps', 'not json');
+
+    // Act & Assert
+    expect(getVisitedSteps('form-1')).toBeUndefined();
+  });
+
+  test('discards non-numeric ids', () => {
+    // Arrange
+    localStorage.setItem('adsp.form.form-1.visitedSteps', JSON.stringify([0, 'x', 2]));
+
+    // Act & Assert
+    expect(getVisitedSteps('form-1')).toEqual([0, 2]);
+  });
+
+  test('does not throw when localStorage rejects the write', () => {
+    // Arrange: private browsing and full quotas both throw on setItem.
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+
+    // Act & Assert
+    expect(() => saveVisitedSteps('form-1', [0])).not.toThrow();
   });
 });

@@ -1,4 +1,14 @@
-import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect, useCallback, useContext } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useMemo,
+  useReducer,
+  Dispatch,
+  useEffect,
+  useCallback,
+  useContext,
+  useRef,
+} from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
@@ -8,7 +18,7 @@ import { JsonFormStepperDispatch } from './reducer';
 import { JsonSchema7, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { useJsonForms } from '@jsonforms/react';
-import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
+import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage, getVisitedSteps, saveVisitedSteps } from './util';
 import { getStepStatus, AutoPopulatedPathValue } from './util';
 import { getAutoPopulateControls } from '../../../util/autoPopulate';
 import { JsonFormContext } from '../../../Context';
@@ -134,9 +144,15 @@ export const JsonFormsStepperContextProvider = ({
   const { schema, ajv, data, uischema } = StepperProps;
   const formCtx = useContext(JsonFormContext);
   const autoPopulatedValues = formCtx?.autoPopulatedData as AutoPopulatedPathValue[] | undefined;
+  const formId = formCtx?.formId as string | undefined;
+  // Steps opened in an earlier session. Seeding these on first mount is what keeps a step the user
+  // has been through from dropping back to NotStarted on resume — including the case where they
+  // edited an auto-populated field and then restored the original value, which leaves nothing in
+  // the data to distinguish it from a step that was never opened.
+  const persistedVisitedIds = useMemo(() => new Set(getVisitedSteps(formId) ?? []), [formId]);
   const [stepperState, dispatch] = useReducer(
     stepperReducer,
-    createStepperContextInitData(StepperProps, { autoPopulatedValues }),
+    createStepperContextInitData(StepperProps, { visitedIds: persistedVisitedIds, autoPopulatedValues }),
   );
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
   const isCacheStatus = uischema.options?.cacheStatus;
@@ -229,6 +245,29 @@ export const JsonFormsStepperContextProvider = ({
     //eslint-disable-next-line
   }, [ctx?.core?.errors]);
 
+  // Persist as the user goes rather than on unload: a draft resumed on another tab, or after a
+  // crash or a killed mobile tab, never fires beforeunload and would otherwise lose the visits.
+  // The categories array is rebuilt on every data change, so this effect runs on each keystroke —
+  // only touch storage when the set has actually grown.
+  const lastPersistedVisited = useRef<string | null>(null);
+
+  useEffect(() => {
+    const visitedIds = stepperState?.categories?.filter((c) => c.isVisited).map((c) => c.id) ?? [];
+    const merged = [...new Set([...persistedVisitedIds, ...visitedIds])].sort((a, b) => a - b);
+
+    if (merged.length === 0) {
+      return;
+    }
+
+    const serialized = JSON.stringify(merged);
+    if (serialized === lastPersistedVisited.current) {
+      return;
+    }
+
+    lastPersistedVisited.current = serialized;
+    saveVisitedSteps(formId, merged);
+  }, [formId, persistedVisitedIds, stepperState?.categories]);
+
   /* istanbul ignore next */
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -256,7 +295,10 @@ export const JsonFormsStepperContextProvider = ({
               activeId: Math.min(stepperState?.activeId, stepperState.maxReachedStep),
             },
             {
-              visitedIds: new Set(stepperState?.categories?.filter((c) => c.isVisited).map((c) => c.id) ?? []),
+              visitedIds: new Set([
+                ...persistedVisitedIds,
+                ...(stepperState?.categories?.filter((c) => c.isVisited).map((c) => c.id) ?? []),
+              ]),
               autoPopulatedValues,
             },
           ),

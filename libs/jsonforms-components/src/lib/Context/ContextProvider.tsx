@@ -53,6 +53,10 @@ type Props = {
   // What auto-populate writes into the form data. The form stepper needs the values, not just the
   // paths, to tell an untouched pre-filled field from one the user has since edited.
   autoPopulatedData?: AutoPopulatedValue[];
+  // Identifies the draft so the stepper can persist which steps the user has opened. Without it the
+  // visited state is session-only and a resumed form loses the status of any step whose data is
+  // entirely auto-populated.
+  formId?: string;
 };
 
 export class ContextProviderClass {
@@ -91,6 +95,7 @@ export class ContextProviderClass {
     isFormSubmitted?: boolean;
     formUrl: string | null | undefined;
     autoPopulatedData?: AutoPopulatedValue[];
+    formId?: string;
   };
 
   addFormContextData = (key: string, data: Record<string, unknown> | unknown[]) => {
@@ -173,6 +178,7 @@ export class ContextProviderClass {
     }
     this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
     this.baseEnumerator.autoPopulatedData = props.autoPopulatedData ?? [];
+    this.baseEnumerator.formId = props.formId;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 

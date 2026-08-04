@@ -433,6 +433,43 @@ const getLocalStorageKeyPrefix = () => {
   return window.location.href + '_' + new Date().toISOString().slice(0, 10);
 };
 
+// Steps the user has opened, persisted per form so the status survives a resume.
+//
+// Whether a step was opened cannot be recovered from the form data: a user who edits an
+// auto-populated field and then puts the original value back leaves data identical to the
+// untouched case. The visit has to be recorded when it happens, or it is lost.
+//
+// Deliberately keyed on the form id rather than the URL+date used by the cacheStatus cache above,
+// so resuming a draft tomorrow — or from a different route to the same form — still restores it.
+const getVisitedStepsKey = (formId: string) => `adsp.form.${formId}.visitedSteps`;
+
+export const saveVisitedSteps = (formId: string | undefined, ids: number[]): void => {
+  if (!formId) return;
+
+  try {
+    localStorage.setItem(getVisitedStepsKey(formId), JSON.stringify(ids));
+  } catch (err) {
+    // Private browsing and full quotas both throw here. Losing the cache only costs the user the
+    // restored status on resume, so it must never take the form down with it.
+    console.warn(`Could not persist visited steps: ${err}`);
+  }
+};
+
+export const getVisitedSteps = (formId: string | undefined): number[] | undefined => {
+  if (!formId) return undefined;
+
+  try {
+    const value = localStorage.getItem(getVisitedStepsKey(formId));
+    if (!value || !isJson(value)) return undefined;
+
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'number') : undefined;
+  } catch (err) {
+    console.warn(`Could not read visited steps: ${err}`);
+    return undefined;
+  }
+};
+
 export function isJson(str: string) {
   try {
     JSON.parse(str);
