@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — covered by ./context.spec.tsx, colocated. The rule only looks for a
+// .test.tsx sibling; adding one would duplicate the existing suite.
 import React, { createContext, useContext } from 'react';
 import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
 
@@ -34,6 +36,11 @@ interface SubmitManagement {
   saveForm?: (any: any) => void;
 }
 
+export interface AutoPopulatedValue {
+  path: string;
+  value: unknown;
+}
+
 type Props = {
   children?: React.ReactNode;
   fileManagement?: FileManagement;
@@ -43,6 +50,9 @@ type Props = {
   data?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formUrl?: string | null | undefined;
+  // What auto-populate writes into the form data. The form stepper needs the values, not just the
+  // paths, to tell an untouched pre-filled field from one the user has since edited.
+  autoPopulatedData?: AutoPopulatedValue[];
 };
 
 export class ContextProviderClass {
@@ -80,6 +90,7 @@ export class ContextProviderClass {
     getAllFormContextData: () => AllData;
     isFormSubmitted?: boolean;
     formUrl: string | null | undefined;
+    autoPopulatedData?: AutoPopulatedValue[];
   };
 
   addFormContextData = (key: string, data: Record<string, unknown> | unknown[]) => {
@@ -161,6 +172,7 @@ export class ContextProviderClass {
       this.baseEnumerator.formUrl = props.formUrl;
     }
     this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
+    this.baseEnumerator.autoPopulatedData = props.autoPopulatedData ?? [];
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 

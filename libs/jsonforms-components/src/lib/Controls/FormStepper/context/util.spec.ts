@@ -447,6 +447,101 @@ describe('getStepStatus', () => {
     expect(result.hasRequiredFields).toBe(true);
   });
 
+  // CS-5233: an auto-populated scope only stops counting as user activity while it still holds the
+  // value auto-populate wrote. Once the user changes it, the step is theirs and stays started.
+  test('stays NotStarted when an auto-populated value is untouched and its value is known', () => {
+    // Arrange
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+
+    // Act
+    const result = getStepStatus({
+      scopes: ['#/name'],
+      data: { name: 'Bob' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+      autoPopulatedScopes: ['#/name'],
+      autoPopulatedValues: [{ path: 'name', value: 'Bob' }],
+    });
+
+    // Assert
+    expect(result.status).toBe(StepStatus.NOT_STARTED);
+  });
+
+  test('counts an edited auto-populated value as user data on an unvisited step', () => {
+    // Arrange: the user changed the pre-filled name, then the form was resumed.
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+
+    // Act
+    const result = getStepStatus({
+      scopes: ['#/name'],
+      data: { name: 'Robert' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+      autoPopulatedScopes: ['#/name'],
+      autoPopulatedValues: [{ path: 'name', value: 'Bob' }],
+    });
+
+    // Assert: the edit survives the reload, so the step keeps its status.
+    expect(result.status).toBe(StepStatus.COMPLETED);
+  });
+
+  test('counts a cleared auto-populated value as user data even though nothing is left', () => {
+    // Arrange: clearing a pre-filled required field is still user activity.
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+
+    // Act
+    const result = getStepStatus({
+      scopes: ['#/name'],
+      data: { name: '' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+      autoPopulatedScopes: ['#/name'],
+      autoPopulatedValues: [{ path: 'name', value: 'Bob' }],
+    });
+
+    // Assert: started, but the required field is empty, so there is still work to do.
+    expect(result.status).toBe(StepStatus.IN_PROGRESS);
+  });
+
+  test('treats auto-populated scopes as system-filled when no values are supplied', () => {
+    // Arrange: the user profile isn't known, so an edit can't be told from the original.
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+
+    // Act
+    const result = getStepStatus({
+      scopes: ['#/name'],
+      data: { name: 'Robert' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+      autoPopulatedScopes: ['#/name'],
+    });
+
+    // Assert: unchanged from the previous behaviour.
+    expect(result.status).toBe(StepStatus.NOT_STARTED);
+  });
+
+  test('accepts auto-populated values on their own, without a matching scope list', () => {
+    // Arrange: getAutoPopulatedData yields data paths rather than schema scopes.
+    const schema = { required: ['name'], properties: { name: { type: 'string' } } };
+
+    // Act
+    const result = getStepStatus({
+      scopes: ['#/name'],
+      data: { name: 'Bob' },
+      errors: [] as ErrorObject[],
+      schema,
+      visited: false,
+      autoPopulatedValues: [{ path: 'name', value: 'Bob' }],
+    });
+
+    // Assert
+    expect(result.status).toBe(StepStatus.NOT_STARTED);
+  });
+
   test('shows status for an unvisited step that holds user-entered data (resumed form)', () => {
     // Arrange: the field holds user-entered data (not auto-populated) and the user has not visited
     // it this session — i.e. a saved form being resumed.

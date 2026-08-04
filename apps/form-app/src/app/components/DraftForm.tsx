@@ -220,6 +220,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           deleteFile: deleteFormFile,
         }}
         formUrl="https://form.adsp-uat.alberta.ca"
+        autoPopulatedData={autoPopulatedData}
       >
         <JsonFormsWrapper
           definition={definition}

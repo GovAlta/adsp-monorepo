@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect, useCallback } from 'react';
+import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect, useCallback, useContext } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
@@ -9,8 +9,9 @@ import { JsonSchema7, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { useJsonForms } from '@jsonforms/react';
 import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
-import { getStepStatus } from './util';
+import { getStepStatus, AutoPopulatedPathValue } from './util';
 import { getAutoPopulateControls } from '../../../util/autoPopulate';
+import { JsonFormContext } from '../../../Context';
 import { StepStatus } from '../../../common/Constants';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -36,8 +37,18 @@ export interface JsonFormsStepperContextProps {
   isProvided?: boolean;
 }
 
+interface StepperInitOptions {
+  // Categories the user has already opened. The init data is recomputed from the current data
+  // snapshot on every change, so without this a visited page is re-derived from its data alone —
+  // and a page holding nothing but auto-populated values drops back to NotStarted.
+  visitedIds?: ReadonlySet<number>;
+  // What auto-populate would write, so an edited pre-filled field counts as user activity.
+  autoPopulatedValues?: AutoPopulatedPathValue[];
+}
+
 const createStepperContextInitData = (
   props: CategorizationStepperLayoutRendererProps & { activeId?: number } & { withBackReviewBtn?: boolean },
+  options?: StepperInitOptions,
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
@@ -55,11 +66,12 @@ const createStepperContextInitData = (
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
 
-    // A step is not visited on initial mount, so its status is driven by whether it already holds
+    // On first mount nothing is visited, so status is driven by whether the step already holds
     // user-entered data. Auto-populated fields (system-filled from the user profile) are excluded
     // so an unopened page with only auto-populated values stays NotStarted, while a resumed form
-    // the user actually filled still shows its saved status.
-    let visited = false;
+    // the user actually filled still shows its saved status. On the recomputes that follow every
+    // data change, pages the user has already opened keep their visited state.
+    let visited = options?.visitedIds?.has(id) ?? false;
     const autoPopulatedScopes = getAutoPopulateControls(c).map((control) => control.scope);
 
     const { status, hasRequiredFields } = getStepStatus({
@@ -69,6 +81,7 @@ const createStepperContextInitData = (
       schema,
       visited,
       autoPopulatedScopes,
+      autoPopulatedValues: options?.autoPopulatedValues,
     });
 
     //If the step has all conditional fields, set visited to true so that the step status will be
@@ -119,7 +132,12 @@ export const JsonFormsStepperContextProvider = ({
   const ctx = useJsonForms();
   /* istanbul ignore next */
   const { schema, ajv, data, uischema } = StepperProps;
-  const [stepperState, dispatch] = useReducer(stepperReducer, createStepperContextInitData(StepperProps));
+  const formCtx = useContext(JsonFormContext);
+  const autoPopulatedValues = formCtx?.autoPopulatedData as AutoPopulatedPathValue[] | undefined;
+  const [stepperState, dispatch] = useReducer(
+    stepperReducer,
+    createStepperContextInitData(StepperProps, { autoPopulatedValues }),
+  );
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
   const isCacheStatus = uischema.options?.cacheStatus;
 
@@ -232,10 +250,16 @@ export const JsonFormsStepperContextProvider = ({
       stepperDispatch({
         type: 'update/uischema',
         payload: {
-          state: createStepperContextInitData({
-            ...StepperProps,
-            activeId: Math.min(stepperState?.activeId, stepperState.maxReachedStep),
-          }),
+          state: createStepperContextInitData(
+            {
+              ...StepperProps,
+              activeId: Math.min(stepperState?.activeId, stepperState.maxReachedStep),
+            },
+            {
+              visitedIds: new Set(stepperState?.categories?.filter((c) => c.isVisited).map((c) => c.id) ?? []),
+              autoPopulatedValues,
+            },
+          ),
         },
       });
 

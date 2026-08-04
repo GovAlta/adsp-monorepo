@@ -1,5 +1,6 @@
 import { JsonSchema, toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
 import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
 import { StepStatus, StepStatusType, VALIDATION_KEYWORDS } from '../../../common/Constants';
@@ -117,6 +118,16 @@ export function hasValueAtScope(data: any, scope: string): boolean {
   return hasMeaningfulValue(getValueAtPath(data, path));
 }
 
+export interface AutoPopulatedPathValue {
+  path: string;
+  value: unknown;
+}
+
+// Auto-populate targets reach us either as schema scopes (#/properties/firstName) or as the data
+// paths toDataPath produces (firstName). Normalize both to the dot form used for value lookups.
+const toNormalizedPath = (pathOrScope: string): string =>
+  pathOrScope?.startsWith('#/') ? normalizeSchemaPath(pathOrScope) : pathOrScope || '';
+
 export function getStepStatus(opts: {
   scopes: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,8 +140,13 @@ export function getStepStatus(opts: {
   // paths do not count as user activity, so a page holding only auto-populated data stays
   // NotStarted until the user actually opens it.
   autoPopulatedScopes?: string[];
+  // The values auto-populate would write, by path. A scope only stops counting as user activity
+  // while it still holds exactly this value; once the user edits or clears it the change is
+  // theirs, so the step is started and stays that way when the form is resumed. Omit when the
+  // user profile isn't known — every auto-populated scope is then treated as system-filled.
+  autoPopulatedValues?: AutoPopulatedPathValue[];
 }): StepStatusData {
-  const { scopes, errors, schema, data, visited, autoPopulatedScopes = [] } = opts;
+  const { scopes, errors, schema, data, visited, autoPopulatedScopes = [], autoPopulatedValues = [] } = opts;
 
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
 
@@ -142,10 +158,37 @@ export function getStepStatus(opts: {
   // Auto-populated values (system-filled from the user profile) are excluded, so:
   //  - a page the user has never opened is NotStarted even when auto-populated, and
   //  - a saved form the user actually filled still shows its status when resumed.
-  const autoPopulatedSet = new Set(autoPopulatedScopes.map(normalizeSchemaPath).filter(Boolean));
+  const autoPopulatedSet = new Set(autoPopulatedScopes.map(toNormalizedPath).filter(Boolean));
+  const autoPopulatedValueByPath = new Map<string, unknown>();
+
+  autoPopulatedValues.forEach(({ path, value }) => {
+    const normalized = toNormalizedPath(path);
+    if (normalized) {
+      autoPopulatedSet.add(normalized);
+      autoPopulatedValueByPath.set(normalized, value);
+    }
+  });
+
+  // Still system-filled only while the value matches what auto-populate would write. Without a
+  // known value we can't tell an edit from the original, so assume it is untouched.
+  const isStillAutoPopulated = (path: string): boolean => {
+    if (!autoPopulatedValueByPath.has(path)) {
+      return true;
+    }
+
+    return isEqual(get(data || {}, path), autoPopulatedValueByPath.get(path));
+  };
+
+  // Editing or clearing an auto-populated field is user activity in its own right, even when what
+  // is left behind is empty — otherwise clearing a pre-filled field would send the step back to
+  // NotStarted.
+  const userEditedAutoPopulated = normalizedScopes.some(
+    (path) => autoPopulatedSet.has(path) && !isStillAutoPopulated(path),
+  );
+
   const userDataScopes = normalizedScopes.filter((path) => !autoPopulatedSet.has(path));
   const stepHasUserData =
-    userDataScopes.length > 0 ? userDataScopes.some((path) => hasMeaningfulValue(get(data || {}, path))) : false;
+    userDataScopes.some((path) => hasMeaningfulValue(get(data || {}, path))) || userEditedAutoPopulated;
 
   const started = (visited ?? false) || stepHasUserData;
 
