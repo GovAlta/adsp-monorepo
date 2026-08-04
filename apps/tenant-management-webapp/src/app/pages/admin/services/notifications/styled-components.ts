@@ -189,10 +189,10 @@ export const NotificationStyles = styled.div`
 `;
 
 export const PreviewTemplateContainer = styled.div`
-  width: 60%;
-  margin-left: 2rem;
-  padding-top: 4rem;
-  padding-left: 2rem;
+  width: 52%;
+  margin-left: 1rem;
+  padding-top: 2rem;
+  padding-left: 1rem;
   background-color: #c3c3c3;
   overflow: hidden;
   &:hover {
@@ -202,7 +202,7 @@ export const PreviewTemplateContainer = styled.div`
 
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
-  padding-left: 3rem;
+  padding-left: 1.5rem;
   width: 100%;
   height: 100vh;
   overflow: hidden;
