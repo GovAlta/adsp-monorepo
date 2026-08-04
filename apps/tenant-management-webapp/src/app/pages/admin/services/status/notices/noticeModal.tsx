@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ import {
 import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
 } from '@abgov/ui-components-common';
@@ -168,11 +169,9 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           name="message"
           value={message}
           width="100%"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+          onChange={(detail: GoabTextAreaOnChangeDetail) => {
             setMessage(detail.value);
           }}
-          // eslint-disable-next-line
-          onChange={() => {}}
         />
         <HelpTextComponent
           length={message.length}

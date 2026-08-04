@@ -33,7 +33,7 @@ describe('AddRegisterDataModal', () => {
 
     const dataInput = baseElement.querySelector("goa-textarea[testId='data-register-add-data-input']");
     // separator is left as the default 'comma', but the data uses semicolons
-    fireEvent(dataInput, new CustomEvent('_keyPress', { detail: { value: 'Monday; Tuesday; Wednesday' } }));
+    fireEvent(dataInput, new CustomEvent('_change', { detail: { value: 'Monday; Tuesday; Wednesday' } }));
     fireEvent(dataInput, new CustomEvent('_blur', { detail: { value: 'Monday; Tuesday; Wednesday' } }));
 
     const formItem = baseElement.querySelector("goa-form-item[testId='data-register-add-data-formitem']");
@@ -50,7 +50,7 @@ describe('AddRegisterDataModal', () => {
     fireEvent(nameInput, new CustomEvent('_change', { detail: { value: 'weekdays' } }));
 
     const dataInput = baseElement.querySelector("goa-textarea[testId='data-register-add-data-input']");
-    fireEvent(dataInput, new CustomEvent('_keyPress', { detail: { value: 'Monday, Tuesday, Wednesday' } }));
+    fireEvent(dataInput, new CustomEvent('_change', { detail: { value: 'Monday, Tuesday, Wednesday' } }));
     fireEvent(dataInput, new CustomEvent('_blur', { detail: { value: 'Monday, Tuesday, Wednesday' } }));
 
     const formItem = baseElement.querySelector("goa-form-item[testId='data-register-add-data-formitem']");
@@ -68,7 +68,7 @@ describe('AddRegisterDataModal', () => {
     fireEvent(nameInput, new CustomEvent('_change', { detail: { value: 'weekdays' } }));
 
     const dataInput = baseElement.querySelector("goa-textarea[testId='data-register-add-data-input']");
-    fireEvent(dataInput, new CustomEvent('_keyPress', { detail: { value: 'Monday, Tuesday' } }));
+    fireEvent(dataInput, new CustomEvent('_change', { detail: { value: 'Monday, Tuesday' } }));
     fireEvent(dataInput, new CustomEvent('_blur', { detail: { value: 'Monday, Tuesday' } }));
 
     const saveBtn = baseElement.querySelector("goa-button[testId='data-register-add-save']");

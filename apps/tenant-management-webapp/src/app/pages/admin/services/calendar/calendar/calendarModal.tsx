@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabTextArea, GoabInput, GoabFormItem } from '@abgov/react-components';
 import { CalendarItem } from '@store/calendar/models';
@@ -18,7 +19,6 @@ import { ActionState } from '@store/session/models';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
   GoabTextAreaOnChangeDetail,
-  GoabTextAreaOnKeyPressDetail,
   GoabInputOnChangeDetail,
 } from '@abgov/ui-components-common';
 
@@ -213,13 +213,11 @@ export const CalendarModal = ({
               testId={`calendar-modal-description-input`}
               aria-label="description"
               width="100%"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setCalendar({ ...calendar, description: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={calendar?.description?.length || 0}

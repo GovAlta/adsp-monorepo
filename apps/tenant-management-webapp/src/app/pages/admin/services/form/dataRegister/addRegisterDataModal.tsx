@@ -12,7 +12,7 @@ import {
 import {
   GoabDropdownOnChangeDetail,
   GoabInputOnChangeDetail,
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
 } from '@abgov/ui-components-common';
 import {
   getSeparatorHelpText,
@@ -151,7 +151,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           rows={2}
           width="100%"
           testId="data-register-add-description-input"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => onDescriptionChange(detail.value)}
+          onChange={(detail: GoabTextAreaOnChangeDetail) => onDescriptionChange(detail.value)}
         />
       </GoabFormItem>
       <GoabFormItem label="Register data" mt="m" mb="m">
@@ -183,7 +183,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           value={configValue}
           width="100%"
           testId="data-register-add-data-input"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => handleDataChange(detail.value)}
+          onChange={(detail: GoabTextAreaOnChangeDetail) => handleDataChange(detail.value)}
           onBlur={() => parseAndSet(configValue, separator)}
         />
       </GoabFormItem>

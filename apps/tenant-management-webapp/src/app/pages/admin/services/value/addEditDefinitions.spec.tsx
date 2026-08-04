@@ -142,3 +142,33 @@ test('shows validation errors', async () => {
     expect(formItem.getAttribute('error')).toBe('Cannot use the word platform as namespace');
   });
 });
+
+test('keeps description text that arrives without a keystroke, as a mouse paste does', async () => {
+  const store = mockStore(initialState);
+  const onSave = jest.fn();
+
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={onSave}
+        initialValue={{ ...initialValue, namespace: 'ns', name: 'thing' }}
+        open={true}
+        isEdit={true}
+        onClose={() => {}}
+        values={[]}
+      />
+    </Provider>
+  );
+
+  const description = baseElement.querySelector("goa-textarea[testId='value-description']");
+  expect(description).toBeInTheDocument();
+
+  fireEvent(description, new CustomEvent('_change', { detail: { value: 'pasted description' } }));
+
+  await waitFor(() => {
+    expect(baseElement.querySelector("goa-textarea[testId='value-description']")).toHaveAttribute(
+      'value',
+      'pasted description'
+    );
+  });
+});

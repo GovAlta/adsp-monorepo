@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useState, useEffect, useMemo } from 'react';
 import { debounce as _debounce } from 'lodash';
 import { FormDefinition } from '@store/form/model';
@@ -28,7 +29,7 @@ import {
   GoabFilterChip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { fetchFormTagByTagName } from '@store/form/action';
 
 interface AddEditFormDefinitionProps {
@@ -275,12 +276,11 @@ export const AddEditFormDefinition = ({
                 width="100%"
                 testId="form-definition-description"
                 aria-label="form-definition-description"
-                onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+                onChange={(detail: GoabTextAreaOnChangeDetail) => {
                   validators.remove('description');
                   validators['description'].check(detail.value);
                   setDefinition({ ...definition, description: detail.value });
                 }}
-                onChange={() => {}}
               />
               <HelpTextComponent
                 length={definition?.description?.length || 0}

@@ -18,7 +18,6 @@ import { HelpTextComponent } from '@components/HelpTextComponent';
 import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import styled from 'styled-components';
 import {
-  GoabTextAreaOnKeyPressDetail,
   GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
 } from '@abgov/ui-components-common';
@@ -169,13 +168,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             value={definition.description}
             aria-label="description"
             width="100%"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
               validators['description'].check(detail.value);
               setDefinition({ ...definition, description: detail.value });
             }}
-            // eslint-disable-next-line
-            onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
           />
           <HelpTextComponent
             length={definition?.description?.length || 0}

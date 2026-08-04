@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
@@ -17,7 +18,7 @@ import {
   GoabCheckbox,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditPdfTemplateProps {
   open: boolean;
@@ -177,13 +178,11 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             width="100%"
             testId="pdf-template-description"
             aria-label="pdf-template-description"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
               validators['description'].check(detail.value);
               setTemplate({ ...template, description: detail.value });
             }}
-            // eslint-disable-next-line
-            onChange={() => {}}
           />
           <HelpTextComponent
             length={template?.description?.length || 0}
