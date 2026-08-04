@@ -1,10 +1,12 @@
 import { Dispatch } from 'react';
 import React, { useContext } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './index';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import Ajv from 'ajv';
+import { JsonFormContext } from '../../../Context';
+import { getCategoryStatus, PageStatus } from '../CategoryStatus';
 
 describe('JsonFormsStepperContext', () => {
   const ajvInstance = new Ajv({ allErrors: true, verbose: true, strict: false });
@@ -129,6 +131,111 @@ describe('JsonFormsStepperContext', () => {
 
     // Assert
     expect(screen.getByTestId('completed-categories').textContent).toBe('0');
+  });
+
+  // CS-5233: a page whose fields are all auto-populated has no user data to derive "started" from,
+  // so the recompute that runs on every data change must not discard what the user already visited.
+  describe('auto-populated pages', () => {
+    const autoPopulateSchema = {
+      type: 'object',
+      required: ['firstName'],
+      properties: {
+        firstName: { type: 'string' },
+        notes: { type: 'string' },
+      },
+    };
+
+    const autoPopulateUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'Your details',
+          elements: [{ type: 'Control', scope: '#/properties/firstName', options: { autoPopulate: 'firstName' } }],
+        },
+        {
+          type: 'Category',
+          label: 'Other',
+          elements: [{ type: 'Control', scope: '#/properties/notes' }],
+        },
+      ],
+      options: { variant: 'stepper', showNavButtons: true },
+    };
+
+    const autoPopulatedData = [{ path: 'firstName', value: 'Bob' }];
+
+    const StatusProbe = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
+      const { categories } = ctx.selectStepperState();
+
+      return (
+        <div>
+          <div data-testid="status-0">{getCategoryStatus(categories[0])}</div>
+          {/* What opening a page does: PageStepperControl validates it and it gets marked visited. */}
+          <button
+            data-testid="visit-0"
+            onClick={() => {
+              ctx.setVisited(0);
+              ctx.validatePage(0);
+            }}
+          >
+            visit
+          </button>
+        </div>
+      );
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const renderStepper = (data: any) => (
+      <JsonFormContext.Provider value={{ autoPopulatedData }}>
+        <JsonFormsStepperContextProvider
+          StepperProps={
+            {
+              ...stepperBaseProps,
+              uischema: autoPopulateUischema,
+              schema: autoPopulateSchema,
+              data,
+            } as unknown as CategorizationStepperLayoutRendererProps
+          }
+        >
+          <StatusProbe />
+        </JsonFormsStepperContextProvider>
+      </JsonFormContext.Provider>
+    );
+
+    test('shows Not started before the page is opened, even though it is pre-filled', () => {
+      // Arrange / Act
+      render(renderStepper({ firstName: 'Bob' }));
+
+      // Assert
+      expect(screen.getByTestId('status-0').textContent).toBe(PageStatus.NotStarted);
+    });
+
+    test('keeps Completed when unrelated data changes after the page was opened', () => {
+      // Arrange
+      const { rerender } = render(renderStepper({ firstName: 'Bob' }));
+
+      // Act: open the page, then type somewhere else in the form.
+      act(() => {
+        fireEvent.click(screen.getByTestId('visit-0'));
+      });
+      expect(screen.getByTestId('status-0').textContent).toBe(PageStatus.Complete);
+
+      act(() => {
+        rerender(renderStepper({ firstName: 'Bob', notes: 'something' }));
+      });
+
+      // Assert: the recompute must not drop it back to In progress.
+      expect(screen.getByTestId('status-0').textContent).toBe(PageStatus.Complete);
+    });
+
+    test('shows a status on resume once the pre-filled value has been edited', () => {
+      // Arrange / Act: a fresh mount, as after logging back in, with the name the user changed.
+      render(renderStepper({ firstName: 'Robert' }));
+
+      // Assert
+      expect(screen.getByTestId('status-0').textContent).toBe(PageStatus.Complete);
+    });
   });
 
   test('handles missing context gracefully', () => {
