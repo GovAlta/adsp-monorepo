@@ -62,7 +62,6 @@ export const CalendarEvents = (): JSX.Element => {
   const onCalendarSelect = (name: string, value: string) => {
     setSelectedCalendar(value);
     dispatch(FetchEventsByCalendar(value, null));
-    dispatch(UpdateSearchCalendarEventCriteria());
   };
 
   useEffect(() => {
