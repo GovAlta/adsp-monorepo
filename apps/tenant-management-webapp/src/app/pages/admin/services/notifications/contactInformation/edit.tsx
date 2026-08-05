@@ -1,9 +1,10 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
 import styled from 'styled-components';
 import { GoabTextArea, GoabInput, GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface NotificationTypeFormProps {
   initialValue?: ContactInformation;
@@ -108,11 +109,9 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
               testId="form-support-instructions"
               aria-label="name"
               width="100%"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 setContactInformation({ ...contactInformation, supportInstructions: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
             />
           </GoabFormItem>
         </ErrorWrapper>

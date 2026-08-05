@@ -20,7 +20,7 @@ import { registerDetailsComponent } from './register';
 
 import { ReviewContent, ActionContainer, FormReviewContainer } from './styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
-import { GoabTextAreaOnKeyPressDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -118,13 +118,11 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             width="600px"
             testId="reason"
             aria-label="reason"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               setDispositionReason(detail.value);
               validators.remove('dispositionReason');
               validators['dispositionReason'].check(detail.value);
             }}
-            // eslint-disable-next-line
-            onChange={() => {}}
           />
         </GoabFormItem>
       </div>

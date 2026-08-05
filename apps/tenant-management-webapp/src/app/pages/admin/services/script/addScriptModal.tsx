@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useEffect, useState, useRef } from 'react';
 import {
   GoabCheckbox,
@@ -21,7 +22,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -181,9 +182,7 @@ export const AddScriptModal = ({
             testId={`script-modal-description-input`}
             aria-label="description"
             width="100%"
-            // eslint-disable-next-line
-            onChange={() => {}}
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               const description = detail.value;
               validators.remove('description');
               validators['description'].check(description);

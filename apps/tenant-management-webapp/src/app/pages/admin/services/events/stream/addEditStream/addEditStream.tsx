@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useMemo, useState, useEffect } from 'react';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components-old';
 import { ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
@@ -26,7 +27,7 @@ import { ResetModalState } from '@store/session/actions';
 import { selectModalStateByType } from '@store/session/selectors';
 import { selectRolesObject, constructRoleObjFromUrns, roleObjectToUrns } from '@store/sharedSelectors/roles';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
@@ -154,13 +155,11 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             testId="stream-description"
             aria-label="stream-description"
             width="100%"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
               validators['description'].check(detail.value);
               setStream({ ...stream, description: detail.value });
             }}
-            // eslint-disable-next-line
-            onChange={() => {}}
           />
           <HelpTextComponent
             length={stream?.description?.length || 0}

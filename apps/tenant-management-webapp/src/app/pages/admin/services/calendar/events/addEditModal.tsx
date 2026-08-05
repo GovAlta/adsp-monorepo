@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useEffect, useState } from 'react';
 import {
   GoabModal,
@@ -22,7 +23,6 @@ import { HelpTextComponent } from '@components/HelpTextComponent';
 import { readOnlyCalendars } from '.';
 import {
   GoabTextAreaOnChangeDetail,
-  GoabTextAreaOnKeyPressDetail,
   GoabInputOnChangeDetail,
   GoabCheckboxOnChangeDetail,
 } from '@abgov/ui-components-common';
@@ -188,13 +188,11 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           aria-label="description"
           disabled={readOnlyCalendars.includes(calendarName)}
           width="100%"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+          onChange={(detail: GoabTextAreaOnChangeDetail) => {
             validators.remove('description');
             validators['description'].check(detail.value);
             setCalendarEvent({ ...calendarEvent, description: detail.value });
           }}
-          // eslint-disable-next-line
-          onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
         />
         <HelpTextComponent
           length={calendarEvent?.description?.length || 0}

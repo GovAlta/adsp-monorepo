@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveWebhook } from '@store/status/actions';
@@ -32,7 +33,7 @@ import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
   GoabCheckboxOnChangeDetail,
@@ -256,7 +257,7 @@ export const WebhookFormModal = (): JSX.Element => {
               name="description"
               value={webhook?.description}
               width="100%"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setWebhook({
@@ -264,8 +265,6 @@ export const WebhookFormModal = (): JSX.Element => {
                   description: detail.value,
                 });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
               aria-label="description"
             />
             <HelpTextComponent

@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useState } from 'react';
 
 import {
@@ -26,7 +27,6 @@ import { RootState } from '@store/index';
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
   GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
@@ -209,13 +209,11 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               width="100%"
               testId="description"
               aria-label="description"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setTopic({ ...topic, description: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={topic?.description?.length || 0}

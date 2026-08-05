@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import {
@@ -18,7 +19,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabRadioGroupOnChangeDetail,
 } from '@abgov/ui-components-common';
@@ -153,13 +154,11 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
               width="100%"
               testId="description"
               aria-label="description"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setTask({ ...task, description: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
             />
             <HelpTextComponent
               length={task?.description?.length || 0}

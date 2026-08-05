@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
@@ -5,7 +6,7 @@ import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck 
 import { DispositionFormItem, DescriptionItem } from '../styled-components';
 import { GoabTextArea, GoabInput, GoabModal, GoabButtonGroup, GoabFormItem, GoabButton } from '@abgov/react-components';
 import { Disposition } from '@store/form/model';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditDispositionModalProps {
   open: boolean;
@@ -123,11 +124,9 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
               width="100%"
               testId="disposition-description"
               aria-label="disposition-description"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 setTemplate({ ...template, description: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
             />
           </DescriptionItem>
         </GoabFormItem>

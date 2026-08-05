@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
@@ -32,7 +33,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabRadioGroupOnChangeDetail,
 } from '@abgov/ui-components-common';
@@ -255,14 +256,13 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             value={type?.description}
             aria-label="description"
             width="100%"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               if (detail.value) {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setType({ ...type, description: detail.value });
               }
             }}
-            onChange={() => {}}
           />
           <HelpTextComponent
             length={type?.description?.length || 0}

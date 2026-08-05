@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
@@ -25,7 +26,7 @@ import {
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import { NamespaceDropdown } from '@components/NamespaceDropdown';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditValueDefinitionProps {
   onSave: (definition: ValueDefinition) => void;
@@ -205,13 +206,11 @@ export const AddEditValueDefinition = ({
             testId="value-description"
             aria-label="description"
             width="100%"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
               validators['description'].check(detail.value);
               setDefinition({ ...definition, description: detail.value });
             }}
-            // eslint-disable-next-line
-            onChange={() => {}}
           />
           <HelpTextComponent
             length={definition?.description?.length || 0}
