@@ -109,6 +109,7 @@ export function updateTask(apiId: AdspId, logger: Logger, eventService: EventSer
         name: req.body.name,
         description: req.body.description,
         context: req.body.context,
+        priority: Number(req.body.priority) as TaskPriority,
         data: req.body.data,
       };
       const task: TaskEntity = req[TASK_KEY];
@@ -180,7 +181,7 @@ export function taskOperation(apiId: AdspId, logger: Logger, eventService: Event
           context: 'TaskRouter',
           tenantId: task.tenantId.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
 
       switch (request.operation) {
@@ -222,7 +223,7 @@ export function taskOperation(apiId: AdspId, logger: Logger, eventService: Event
           context: 'TaskRouter',
           tenantId: task.tenantId.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -255,7 +256,7 @@ export function deleteTask(apiId: AdspId, logger: Logger, eventService: EventSer
           context: 'TaskRouter',
           tenantId: task.tenantId.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -277,15 +278,15 @@ export function createTaskRouter({ logger, apiId, taskRepository: repository, ev
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
-    getTasks(apiId, repository)
+    getTasks(apiId, repository),
   );
   router.get(
     '/tasks/:id',
     validateIdHandler,
     getTask(repository, DirectoryServiceRoles.ResourceResolver),
-    (req: Request, res: Response) => res.send(mapTask(apiId, req[TASK_KEY]))
+    (req: Request, res: Response) => res.send(mapTask(apiId, req[TASK_KEY])),
   );
   router.patch(
     '/tasks/:id',
@@ -298,20 +299,18 @@ export function createTaskRouter({ logger, apiId, taskRepository: repository, ev
           context: { optional: true, isObject: true },
           data: { optional: true, isObject: true },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
     getTask(repository),
-    updateTask(apiId, logger, eventService)
+    updateTask(apiId, logger, eventService),
   );
   router.patch(
     '/tasks/:id/data',
     validateIdHandler,
-    createValidationHandler(
-      body().isObject()
-    ),
+    createValidationHandler(body().isObject()),
     getTask(repository),
-    updateTaskData(apiId, logger, eventService)
+    updateTaskData(apiId, logger, eventService),
   );
 
   router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, logger, eventService));
