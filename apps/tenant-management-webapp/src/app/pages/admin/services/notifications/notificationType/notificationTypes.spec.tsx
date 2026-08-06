@@ -9,10 +9,14 @@ import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notif
 
 jest.mock('../previewEditor/TemplateEditor', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TemplateEditor: ({ saveAndReset, resetToSavedAction }: any) => (
+  TemplateEditor: ({ saveAndReset, resetToSavedAction, previewVisible, onTogglePreview }: any) => (
     <div data-testid="template-editor-mock">
       <div data-testid="templated-editor-title" />
       <div data-testid="templated-editor-subtitle" />
+      <span data-testid="preview-visible-state">{String(previewVisible)}</span>
+      <button data-testid="preview-toggle-mock" onClick={onTogglePreview}>
+        Toggle preview
+      </button>
       <goa-button testId="template-form-close" onClick={() => resetToSavedAction?.()}>
         Cancel
       </goa-button>
@@ -154,7 +158,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const addDefButton = baseElement.querySelector("goa-button[testId='add-notification']");
     expect(addDefButton).not.toBeNull();
@@ -164,7 +168,7 @@ describe('NotificationTypes Page', () => {
     const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const addDefButton = baseElement.querySelector("goa-button[testId='add-notification']");
     fireEvent.click(addDefButton);
@@ -178,7 +182,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
 
     const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
@@ -199,7 +203,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
 
     const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
@@ -215,7 +219,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
     await waitFor(() => {
@@ -237,13 +241,13 @@ describe('NotificationTypes Page', () => {
       description,
       new CustomEvent('_change', {
         detail: { value: 'the updated description' },
-      })
+      }),
     );
     fireEvent(
       name,
       new CustomEvent('_change', {
         detail: { value: 'the updated name' },
-      })
+      }),
     );
 
     fireEvent(saveBtn, new CustomEvent('_click'));
@@ -258,7 +262,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
 
     await waitFor(() => {
@@ -279,7 +283,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const addBtn = baseElement.querySelector("goa-button[testId='add-notification']");
     fireEvent.click(addBtn);
@@ -301,7 +305,7 @@ describe('NotificationTypes Page', () => {
       description,
       new CustomEvent('_change', {
         detail: { value: 'description' },
-      })
+      }),
     );
     fireEvent.click(saveBtn);
 
@@ -316,7 +320,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const addBtn = baseElement.querySelectorAll("goa-button[testId='add-event']")[1];
     await waitFor(() => {
@@ -339,7 +343,7 @@ describe('NotificationTypes Page', () => {
       el,
       new CustomEvent('_change', {
         detail: { name: 'foo:bar', value: 'foo:bar' },
-      })
+      }),
     );
 
     fireEvent.click(saveBtn);
@@ -354,7 +358,7 @@ describe('NotificationTypes Page', () => {
     const { getAllByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const editBtn = getAllByTestId('edit-event')[0];
     await waitFor(() => {
@@ -376,11 +380,26 @@ describe('NotificationTypes Page', () => {
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
     expect(saveAction).toBeTruthy();
   });
+
+  it('shows preview on open and lets the editor toggle it', async () => {
+    const { getAllByTestId, getByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>,
+    );
+
+    fireEvent.click(getAllByTestId('edit-event')[0]);
+    await waitFor(() => expect(getByTestId('preview-visible-state')).toHaveTextContent('true'));
+
+    fireEvent.click(getByTestId('preview-toggle-mock'));
+    expect(getByTestId('preview-visible-state')).toHaveTextContent('false');
+  });
+
   it('edit notification type should have title and subtitle field', async () => {
     const { getAllByTestId, queryByTestId, queryAllByText, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
 
     const editBtn = getAllByTestId('edit-event')[0];
@@ -398,7 +417,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
-      </Provider>
+      </Provider>,
     );
     const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-event']")[0];
 

@@ -9,7 +9,9 @@ import {
   MonacoDivBody,
   TemplateEditorTitle,
   TemplatePropertiesActions,
+  TemplatePropertiesGrid,
   TemplatePropertiesSummary,
+  BodyEditorFooter,
 } from './styled-components';
 import { AppDispatch, RootState } from '@store/index';
 import { connectAgent, disconnectAgent, startThread } from '@store/agent/actions';
@@ -72,6 +74,8 @@ interface TemplateEditorProps {
   serviceName?: string;
   notificationTypeId?: string;
   onAISaved?: (proposal: EmailTemplateProposal) => void;
+  previewVisible?: boolean;
+  onTogglePreview?: () => void;
   // eslint-disable-next-line
   eventSuggestion?: any;
 }
@@ -98,6 +102,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   notificationTypeId,
   onAISaved,
   eventSuggestion,
+  previewVisible = true,
+  onTogglePreview,
 }) => {
   const [aiThreadId, setAiThreadId] = useState<string>(uuid());
   const agentName = 'notificationEmailTemplateAgent';
@@ -144,14 +150,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [saveModal, setSaveModal] = useState(false);
   const [useDefaultTemplate, setUseDefaultTemplate] = useState(false);
-  const [propertiesOpen, setPropertiesOpen] = useState(false);
+  const [propertiesOpen, setPropertiesOpen] = useState(true);
 
   const hasPropertyErrors = !!(errors?.['subject'] || errors?.['title'] || errors?.['subtitle']);
 
-  // Start collapsed every time the modal opens so the body editor gets the most room by default.
+  // Make the metadata fields immediately available each time the modal opens.
   // Keyed on modelOpen only - keying on templates would re-collapse the section on every keystroke.
   useEffect(() => {
-    setPropertiesOpen(false);
+    setPropertiesOpen(true);
   }, [modelOpen]);
 
   useEffect(() => {
@@ -268,6 +274,19 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       <GoabFormItem label="">
         <Tabs
           activeIndex={activeIndex}
+          actions={
+            onTogglePreview && (
+              <GoabButton
+                type="tertiary"
+                size="compact"
+                leadingIcon={previewVisible ? 'eye-off' : 'eye'}
+                testId="toggle-email-preview"
+                onClick={onTogglePreview}
+              >
+                {previewVisible ? 'Hide preview' : 'Preview email'}
+              </GoabButton>
+            )
+          }
           changeTabCallback={(index: number) => {
             if (index < validChannels.length) {
               switchTabPreview(validChannels[index]);
@@ -360,78 +379,49 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     )
                   }
                 >
-                  <GoabFormItem error={errors['subject'] ?? ''} label="Subject" mb="s">
-                    <MonacoDiv data-testid="templated-editor-subject">
-                      <MonacoEditor
-                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                        data-testid="templated-editor-subject"
-                        onChange={(value) => {
-                          onSubjectChange(value, item.name);
-                        }}
-                        value={templates[item.name]?.subject}
-                        {...subjectEditorConfig}
-                      />
-                    </MonacoDiv>
-                  </GoabFormItem>
+                  <TemplatePropertiesGrid data-testid="template-properties-grid">
+                    <GoabFormItem error={errors['subject'] ?? ''} label="Subject" mb="s">
+                      <MonacoDiv data-testid="templated-editor-subject">
+                        <MonacoEditor
+                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                          data-testid="templated-editor-subject"
+                          onChange={(value) => {
+                            onSubjectChange(value, item.name);
+                          }}
+                          value={templates[item.name]?.subject}
+                          {...subjectEditorConfig}
+                        />
+                      </MonacoDiv>
+                    </GoabFormItem>
 
-                  <GoabFormItem error={errors['title'] ?? ''} label="Title" mb="s">
-                    <MonacoDiv data-testid="templated-editor-title">
-                      <MonacoEditor
-                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                        data-testid="templated-editor-title"
-                        onChange={(value) => {
-                          onTitleChange(value, item.name);
-                        }}
-                        value={templates[item.name]?.title}
-                        {...subjectEditorConfig}
-                      />
-                    </MonacoDiv>
-                  </GoabFormItem>
+                    <GoabFormItem error={errors['title'] ?? ''} label="Title" mb="s">
+                      <MonacoDiv data-testid="templated-editor-title">
+                        <MonacoEditor
+                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                          data-testid="templated-editor-title"
+                          onChange={(value) => {
+                            onTitleChange(value, item.name);
+                          }}
+                          value={templates[item.name]?.title}
+                          {...subjectEditorConfig}
+                        />
+                      </MonacoDiv>
+                    </GoabFormItem>
 
-                  <GoabFormItem error={errors['subtitle'] ?? ''} label="Subtitle" mb="s">
-                    <MonacoDiv data-testid="templated-editor-subtitle">
-                      <MonacoEditor
-                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                        data-testid="templated-editor-subtitle"
-                        onChange={(value) => {
-                          onSubtitleChange(value, item.name);
-                        }}
-                        value={templates[item.name]?.subtitle}
-                        {...subjectEditorConfig}
-                      />
-                    </MonacoDiv>
-                  </GoabFormItem>
-
-                  {item.name === 'email' &&
-                    (() => {
-                      const emailBody = templates[item.name]?.body ?? '';
-                      const isDefaultTemplate = emailBody.trim() === emailWrapper.trim();
-                      const isBodyNotEmpty = emailBody.trim().length > 0 && !isDefaultTemplate;
-
-                      return (
-                        <GoabFormItem label="" mb="none" helpText={bodyEditorHintText}>
-                          <GoabCheckbox
-                            size="compact"
-                            name={`use-default-template`}
-                            checked={useDefaultTemplate}
-                            data-testid="default-template-checkbox"
-                            description={
-                              isBodyNotEmpty ? 'Clear the current body in order to use the default template.' : ''
-                            }
-                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
-                              setUseDefaultTemplate(detail.checked);
-                              if (detail.value) {
-                                onBodyChange(emailWrapper, item.name);
-                              } else {
-                                onBodyChange('', item.name);
-                              }
-                            }}
-                            text={'Use default template to edit header and footer'}
-                            disabled={isBodyNotEmpty}
-                          ></GoabCheckbox>
-                        </GoabFormItem>
-                      );
-                    })()}
+                    <GoabFormItem error={errors['subtitle'] ?? ''} label="Subtitle" mb="s">
+                      <MonacoDiv data-testid="templated-editor-subtitle">
+                        <MonacoEditor
+                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                          data-testid="templated-editor-subtitle"
+                          onChange={(value) => {
+                            onSubtitleChange(value, item.name);
+                          }}
+                          value={templates[item.name]?.subtitle}
+                          {...subjectEditorConfig}
+                        />
+                      </MonacoDiv>
+                    </GoabFormItem>
+                  </TemplatePropertiesGrid>
                 </GoabAccordion>
 
                 <GoabFormItem error={errors['body'] ?? ''} mb={'s'} label="Body">
@@ -446,6 +436,34 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     />
                   </MonacoDivBody>
                 </GoabFormItem>
+
+                {item.name === 'email' &&
+                  (() => {
+                    const emailBody = templates[item.name]?.body ?? '';
+                    const isDefaultTemplate = emailBody.trim() === emailWrapper.trim();
+                    const isBodyNotEmpty = emailBody.trim().length > 0 && !isDefaultTemplate;
+
+                    return (
+                      <BodyEditorFooter>
+                        <span>{bodyEditorHintText}</span>
+                        <GoabCheckbox
+                          size="compact"
+                          name="use-default-template"
+                          checked={useDefaultTemplate}
+                          data-testid="default-template-checkbox"
+                          description={
+                            isBodyNotEmpty ? 'Clear the current body in order to use the default template.' : ''
+                          }
+                          onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                            setUseDefaultTemplate(detail.checked);
+                            onBodyChange(detail.checked ? emailWrapper : '', item.name);
+                          }}
+                          text="Use default template to edit header and footer"
+                          disabled={isBodyNotEmpty}
+                        />
+                      </BodyEditorFooter>
+                    );
+                  })()}
               </>
             </Tab>
           ))}

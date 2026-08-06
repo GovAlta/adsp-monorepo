@@ -189,7 +189,10 @@ export const NotificationStyles = styled.div`
 `;
 
 export const PreviewTemplateContainer = styled.div`
-  width: 52%;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
   margin-left: 1rem;
   padding-top: 2rem;
   padding-left: 1rem;
