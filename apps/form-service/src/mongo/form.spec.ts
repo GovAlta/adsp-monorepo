@@ -231,6 +231,41 @@ describe('MongoFormRepository', () => {
       expect(results.results).toHaveLength(1);
       expect(results.results[0].id).toBe('form-1');
     });
+
+    it.each(['Value1', 'VALUE1', 'value1'])(
+      'should find forms by data criteria regardless of case (%s)',
+      async (value) => {
+        await saveForms({ id: 'form-1', data: { field1: 'Value1' } }, { id: 'form-2', data: { field1: 'value2' } });
+
+        const results = await repo.find(10, null, {
+          tenantIdEquals: tenantId,
+          dataCriteria: { field1: value },
+        });
+        expect(results.results).toHaveLength(1);
+        expect(results.results[0].id).toBe('form-1');
+      },
+    );
+
+    it.each(['alue1', 'UE1', '1'])('should find forms on a partial data criteria value (%s)', async (value) => {
+      await saveForms({ id: 'form-1', data: { field1: 'Value1' } }, { id: 'form-2', data: { field1: 'value2' } });
+
+      const results = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        dataCriteria: { field1: value },
+      });
+      expect(results.results).toHaveLength(1);
+      expect(results.results[0].id).toBe('form-1');
+    });
+
+    it('should not find forms on a data criteria value that is not a substring', async () => {
+      await saveForms({ id: 'form-1', data: { field1: 'value1' } }, { id: 'form-2', data: { field1: 'value2' } });
+
+      const results = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        dataCriteria: { field1: 'value12' },
+      });
+      expect(results.results).toHaveLength(0);
+    });
   });
 
   describe('get', () => {
@@ -259,7 +294,7 @@ describe('MongoFormRepository', () => {
             'supporting.document': adspId`urn:ads:platform:file-service:v1:/files/file-1`,
             missing: null,
           },
-        })
+        }),
       );
 
       const result = await repo.get(tenantId, 'form-1');
