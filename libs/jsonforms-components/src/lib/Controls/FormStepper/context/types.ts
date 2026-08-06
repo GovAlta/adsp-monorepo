@@ -3,7 +3,15 @@ import { StepStatusType } from '../../../common/Constants';
 
 export interface CategoryInternalState {
   isCompleted?: boolean;
+  // "Started": set when the step holds user entered data as well as when it is navigated through,
+  // because the task list status has to show progress on a form resumed from saved data. Do not use
+  // it to gate validation messages — entering data in one field would then raise errors on every
+  // other field of the step. Use isNavigatedAway for that.
   isVisited?: boolean;
+  // "The user has been through this step and moved on": set only by navigation (Next, Previous, or
+  // back to the application overview), never derived from data. Gates validation messages, so a
+  // step the user has not worked through yet stays quiet.
+  isNavigatedAway?: boolean;
   isValid?: boolean;
   showReviewPageLink?: boolean;
   id: number;

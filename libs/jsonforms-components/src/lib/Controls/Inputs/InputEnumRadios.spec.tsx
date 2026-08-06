@@ -95,6 +95,60 @@ describe('Input Boolean Radio Control', () => {
     expect(radioGroup.getAttribute('value')).toBe('two');
   });
 
+  it('marks itself visited on selection so the group can report its own error state', () => {
+    const setIsVisited = jest.fn();
+    const handleChange = jest.fn();
+    const { baseElement } = render(
+      <RadioGroup
+        data={undefined}
+        id="enum-id"
+        enabled={true}
+        schema={{ enum: ['one', 'two'] }}
+        uischema={{ type: 'Control' }}
+        path=""
+        handleChange={handleChange}
+        options={{}}
+        config={{}}
+        label="Options"
+        isVisited={false}
+        setIsVisited={setIsVisited}
+        errors={'error'}
+      />
+    );
+
+    const radioGroup = baseElement.querySelector("goa-radio-group[testId='enum-id-radio-group']");
+    fireEvent(radioGroup as Element, new CustomEvent('_change', { detail: { value: 'two' } }));
+
+    expect(setIsVisited).toHaveBeenCalled();
+    expect(handleChange).toHaveBeenCalledWith('', 'two');
+  });
+
+  it('does not mark itself visited again once it already is', () => {
+    const setIsVisited = jest.fn();
+    const { baseElement } = render(
+      <RadioGroup
+        data={'one'}
+        id="enum-id"
+        enabled={true}
+        schema={{ enum: ['one', 'two'] }}
+        uischema={{ type: 'Control' }}
+        path=""
+        handleChange={jest.fn()}
+        options={{}}
+        config={{}}
+        label="Options"
+        isVisited={true}
+        setIsVisited={setIsVisited}
+        errors={''}
+      />
+    );
+
+    const radioGroup = baseElement.querySelector("goa-radio-group[testId='enum-id-radio-group']");
+    fireEvent(radioGroup as Element, new CustomEvent('_change', { detail: { value: 'two' } }));
+
+    expect(setIsVisited).not.toHaveBeenCalled();
+  });
+
   it('uses id fallback in testId when path is empty and can be disabled', () => {
     const handleChange = jest.fn();
     const { baseElement } = render(

@@ -50,6 +50,8 @@ describe('stepperReducer', () => {
       // Assert
       expect(result.activeId).toBe(1);
       expect(result.categories[0].isVisited).toBe(true);
+      expect(result.categories[0].isNavigatedAway).toBe(true);
+      expect(result.categories[1].isNavigatedAway).toBeFalsy();
       expect(result.isOnReview).toBe(false);
       expect(result.hasNextButton).toBe(true);
       expect(result.hasPrevButton).toBe(true);
@@ -80,6 +82,7 @@ describe('stepperReducer', () => {
       // Assert
       expect(result.activeId).toBe(0);
       expect(result.categories[1].isVisited).toBe(true);
+      expect(result.categories[1].isNavigatedAway).toBe(true);
       expect(result.isOnReview).toBe(false);
       expect(result.hasPrevButton).toBe(false);
     });
@@ -179,6 +182,20 @@ describe('stepperReducer', () => {
       expect(result.categories[1].isVisited).toBe(true);
       expect(result.categories[0].isVisited).toBe(false);
     });
+
+    test('marks the specified category as navigated away from', () => {
+      // This is the action RenderPages fires on Next, Previous and back to the application
+      // overview, so it is what actually opens up validation messages for a step.
+      // Arrange
+      const state = buildState();
+
+      // Act
+      const result = stepperReducer(state, { type: 'set/visited', payload: { id: 1 } });
+
+      // Assert
+      expect(result.categories[1].isNavigatedAway).toBe(true);
+      expect(result.categories[0].isNavigatedAway).toBeFalsy();
+    });
   });
 
   describe('validate/form', () => {
@@ -259,6 +276,38 @@ describe('stepperReducer', () => {
 
       // Assert
       expect(result.categories[0].isVisited).toBe(true);
+    });
+
+    test('carries a navigated category across a recompute', () => {
+      // Arrange
+      const state = buildState({
+        categories: [{ ...buildCategory(0), isNavigatedAway: true }, buildCategory(1)],
+      });
+      const newState = buildState({ categories: [buildCategory(0), buildCategory(1)] });
+
+      // Act
+      const result = stepperReducer(state, { type: 'update/uischema', payload: { state: newState } });
+
+      // Assert
+      expect(result.categories[0].isNavigatedAway).toBe(true);
+      expect(result.categories[1].isNavigatedAway).toBe(false);
+    });
+
+    test('does not let a recomputed visited category mark itself navigated (CS-5245)', () => {
+      // Entering data anywhere in a step makes the recompute report it visited. That must not
+      // promote the step to navigated, or every untouched control on it starts showing errors.
+      // Arrange
+      const state = buildState({ categories: [buildCategory(0), buildCategory(1)] });
+      const newState = buildState({
+        categories: [{ ...buildCategory(0), isVisited: true, isNavigatedAway: true }, buildCategory(1)],
+      });
+
+      // Act
+      const result = stepperReducer(state, { type: 'update/uischema', payload: { state: newState } });
+
+      // Assert
+      expect(result.categories[0].isVisited).toBe(true);
+      expect(result.categories[0].isNavigatedAway).toBe(false);
     });
   });
 });
