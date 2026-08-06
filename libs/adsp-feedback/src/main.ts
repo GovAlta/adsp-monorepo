@@ -658,11 +658,13 @@ export class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
-                    <h3 class="h3-sub-title">Tell us what you think</h3>
+                    <h3 class="h3-sub-title"><b>Tell us what you think</b></h3>
+                    <br />
                     <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.
                     </p>
+                    <p>All responses are anonymous.</p>
                     <div class="adsp-fb-actions">
                       <button
                         ${ref(this.feedbackStartCloseButton)}

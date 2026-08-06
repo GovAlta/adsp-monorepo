@@ -113,13 +113,14 @@ export const FeedbacksList = (): JSX.Element => {
     <div>
       <GoabFormItem label="Registered sites">
         {indicator.show && (!sites || Object.keys(sites).length === 0) && <GoabSkeleton type="text" />}
-        <GoabDropdown size="compact"
+        <GoabDropdown
+          size="compact"
           name="Sites"
           value={selectedSite}
           onChange={(detail: GoabDropdownOnChangeDetail) =>
             setSelectedSite(Array.isArray(detail.value) ? detail.value[0] : detail?.value)
           }
-          width={expandView ? '60%' : '100%'}
+          width={'62ch'}
           testId="sites-dropdown"
         >
           {Array.isArray(sites) &&
@@ -129,7 +130,8 @@ export const FeedbacksList = (): JSX.Element => {
       </GoabFormItem>
       <ExportDates>
         <GoabFormItem label="Start date">
-          <GoabInput size="compact"
+          <GoabInput
+            size="compact"
             type="date"
             width="30ch"
             name="feedback-filter-start-date"
@@ -144,7 +146,8 @@ export const FeedbacksList = (): JSX.Element => {
         </GoabFormItem>
 
         <GoabFormItem label="End date">
-          <GoabInput size="compact"
+          <GoabInput
+            size="compact"
             type="date"
             width="30ch"
             name="feedback-filter-end-date"
