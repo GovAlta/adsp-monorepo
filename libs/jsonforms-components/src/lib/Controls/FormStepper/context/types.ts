@@ -3,6 +3,7 @@ import { StepStatusType } from '../../../common/Constants';
 
 export interface CategoryInternalState {
   isCompleted?: boolean;
+  // clean-code-ignore: RULE-19 — declarations only; nothing is emitted at runtime to unit test.
   // "Started": set when the step holds user entered data as well as when it is navigated through,
   // because the task list status has to show progress on a form resumed from saved data. Do not use
   // it to gate validation messages — entering data in one field would then raise errors on every
