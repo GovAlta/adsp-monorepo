@@ -213,6 +213,5 @@
     ]
   },
   "defaultBase": "main",
-  "analytics": false,
-  "nxIgnorePatterns": ["apps/builder-app/templates/**"]
+  "analytics": false
 }
