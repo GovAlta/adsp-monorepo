@@ -27,7 +27,7 @@ Given('a tenant admin user is on notification overview page', function () {
     Cypress.config().baseUrl,
     Cypress.env('realm'),
     Cypress.env('email'),
-    Cypress.env('password'),
+    Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Notification', 4000);
 });
@@ -221,7 +221,7 @@ When(
           }
         }
       });
-  },
+  }
 );
 
 Then('the user clicks Save button in notification type modal', function () {
@@ -249,7 +249,7 @@ Then(
     } else {
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
-  },
+  }
 );
 
 Then('the user views Add notification type button on Notification types page', function () {
@@ -280,7 +280,7 @@ Given('a tenant admin user is on notification types page', function () {
     Cypress.config().baseUrl,
     Cypress.env('realm'),
     Cypress.env('email'),
-    Cypress.env('password'),
+    Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Notification', 4000);
   commonObj.serviceTab('Notification', 'Notification types').click();
@@ -407,7 +407,7 @@ Then(
       .notificationTypeCoreSelfService(notificationTypeName)
       .invoke('text')
       .should('contain', selfService);
-  },
+  }
 );
 
 Then('the user {string} {string} for {string} in {string}', function (viewOrNot, elementType, eventName, typeName) {
@@ -466,7 +466,7 @@ When(
       .clear()
       .type(addressAs, { delay: 100, force: true });
     notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
-  },
+  }
 );
 
 When(
@@ -477,7 +477,7 @@ When(
       .shadow()
       .find('button')
       .click({ force: true });
-  },
+  }
 );
 
 Then('the user views Delete subscription modal', function () {
@@ -498,7 +498,7 @@ Given('a tenant admin user is on notification subscribers page', function () {
     Cypress.config().baseUrl,
     Cypress.env('realm'),
     Cypress.env('email'),
-    Cypress.env('password'),
+    Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Notification', 4000);
   commonObj.serviceTab('Notification', 'Subscribers').click();
@@ -558,7 +558,7 @@ When(
     }
     notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(2000);
-  },
+  }
 );
 
 Then(
@@ -587,7 +587,7 @@ Then(
         });
       });
     });
-  },
+  }
 );
 
 Then(
@@ -621,7 +621,7 @@ Then(
         });
       });
     });
-  },
+  }
 );
 
 When('the user expands the subscription list for the subscriber of {string} and {string}', function (addressAs, email) {
@@ -632,7 +632,7 @@ Then(
   'the user views the subscription of {string} for the subscriber of {string} and {string}',
   function (subscription, addressAs, email) {
     notificationsObj.subscriberSubscriptions(addressAs, email).invoke('text').should('contain', subscription);
-  },
+  }
 );
 
 Then(
@@ -678,7 +678,7 @@ Then(
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
-  },
+  }
 );
 
 When('the user clicks {string} button of {string}, {string} on subscribers page', function (button, addressAs, email) {
@@ -755,7 +755,7 @@ When(
       .find('textarea')
       .clear()
       .type(instructionsInput, { force: true });
-  },
+  }
 );
 
 Then('the user clicks Save button in Edit contact information modal', function () {
@@ -807,7 +807,7 @@ Then(
     } else {
       notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructionsInput);
     }
-  },
+  }
 );
 
 When(
@@ -825,7 +825,7 @@ When(
       .find('input')
       .clear()
       .type(editEmail, { delay: 100, force: true });
-  },
+  }
 );
 
 When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
@@ -927,7 +927,7 @@ Then(
     } else {
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
-  },
+  }
 );
 
 Then('the user views that email channel is greyed out', function () {
@@ -978,7 +978,7 @@ When(
       .clear({ force: true })
       .type('{selectAll}', { force: true, parseSpecialCharSequences: true }) //In case clear doesn't work, do select all and then type in text
       .type(bodyText, { force: true, parseSpecialCharSequences: false });
-  },
+  }
 );
 
 Then('the user views an email template modal title for {string}', function (notificationEvent) {
@@ -1096,7 +1096,7 @@ Then(
     notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('contain', subjectWithoutVariables);
     notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
     notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('contain', bodyWithoutVariables);
-  },
+  }
 );
 
 Then(
@@ -1109,7 +1109,7 @@ Then(
     notificationsObj.templateModalPreviewPaneBotSubject().invoke('text').should('contain', subjectWithoutVariables);
     notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
     notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('contain', bodyWithoutVariables);
-  },
+  }
 );
 
 Then('Event template modal is closed', function () {
@@ -1118,11 +1118,11 @@ Then('Event template modal is closed', function () {
 
 Then('the user views the hint text for GoA wrapper in event template modal', function () {
   notificationsObj
-    .templateModalBodyWithHelpText()
-    .invoke('attr', 'helptext')
+    .templateModalEmailHelpText()
+    .invoke('text')
     .should(
       'contain',
-      "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags",
+      "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags"
     );
 });
 
@@ -1192,7 +1192,7 @@ Then(
     } else {
       notificationsObj.subscriptionAppContactSupportsInstructions().invoke('text').should('contain', instructionsInput);
     }
-  },
+  }
 );
 
 When('the user clicks Edit button for email information', function () {
