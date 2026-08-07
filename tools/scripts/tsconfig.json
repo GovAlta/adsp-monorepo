@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "strict": false
+    "strict": false,
+    "ignoreDeprecations": "5.0"
   },
   "files": [],
   "include": [],

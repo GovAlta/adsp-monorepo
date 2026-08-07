@@ -6,14 +6,9 @@
     "module": "commonjs",
     "resolveJsonModule": true,
     "target": "es6",
-    "types": [
-      "node"
-    ]
+    "types": ["node"],
+    "ignoreDeprecations": "5.0"
   },
-  "include": [
-    "**/*.ts"
-  ],
-  "exclude": [
-    "**/*.spec.ts"
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.spec.ts"]
 }

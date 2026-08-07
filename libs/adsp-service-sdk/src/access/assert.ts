@@ -18,9 +18,9 @@ type AssertRole = (
   roles: string | string[],
   roleProperties?: string | string[],
   allowCore?: boolean
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 ) => <T extends Function>(
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   target: object,
   propertyKey: string,
   descriptor: TypedPropertyDescriptor<T>

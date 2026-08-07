@@ -9,6 +9,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/tenant-management-api",
         "main": "apps/tenant-management-api/src/main.ts",
@@ -26,8 +27,7 @@
           "inspect": false,
           "fileReplacements": []
         }
-      },
-      "outputs": ["{options.outputPath}"]
+      }
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -37,15 +37,21 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-api"],
       "options": {
         "jestConfig": "apps/tenant-management-api/jest.config.ts",
         "runInBand": true
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-api"]
+      }
     }
   }
 }

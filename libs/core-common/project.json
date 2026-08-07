@@ -7,14 +7,20 @@
   "generators": {},
   "targets": {
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/core-common"],
       "options": {
         "jestConfig": "libs/core-common/jest.config.ts"
-      },
-      "outputs": ["{workspaceRoot}/coverage/libs/core-common"]
+      }
     }
   }
 }

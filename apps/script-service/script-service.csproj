@@ -44,9 +44,4 @@
 
   </ItemGroup>
 
-  <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">
-
-    <Exec Command="node ../../node_modules/@nx-dotnet/core/src/tasks/check-module-boundaries.js -p script-service" />
-
-  </Target>
 </Project>
