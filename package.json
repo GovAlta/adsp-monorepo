@@ -344,28 +344,18 @@
     "yaml": "^2.4.2"
   },
   "overrides": {
-    "@nx/angular": "23.1.1",
-    "@nx/devkit": "23.1.1",
     "@opentelemetry/api": "1.9.0",
-    "ai": "^5.0.0",
     "nx": {
-      "axios": "1.18.0",
-      "form-data": "4.0.6"
+      "axios": "1.18.0"
     },
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "rxjs": "7.8.2",
     "fast-uri": "4.1.1",
     "picomatch": "4.0.5",
-    "idna": "3.15",
     "hono": "4.12.34",
-    "urllib3": "2.7.0",
     "serialize-javascript": "7.0.5",
     "systeminformation": "5.33.1",
-    "tmp": "0.2.7",
     "ws": "8.21.1",
-    "webpack-dev-server": "5.2.6",
-    "koa": "3.1.2",
     "@babel/plugin-transform-modules-systemjs": "7.29.4",
     "@hapi/wreck": "18.1.2",
     "ip-address": "10.3.1",
@@ -380,7 +370,6 @@
     "undici": "7.29.0",
     "svgo": "4.0.2",
     "engine.io": "6.6.9",
-    "adm-zip": "0.6.0",
     "websocket-driver": "0.7.5",
     "http-proxy-middleware": "3.0.7",
     "piscina": "5.3.0",
