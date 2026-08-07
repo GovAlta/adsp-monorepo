@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/form-app-e2e/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["form-app"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
@@ -17,10 +19,13 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["form-app"]
+  }
 }

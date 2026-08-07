@@ -55,9 +55,4 @@
     <PackageReference Include="System.Reactive.Linq" Version="6.1.0" />
   </ItemGroup>
 
-  <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">
-
-    <Exec Command="node ../../node_modules/@nx-dotnet/core/src/tasks/check-module-boundaries.js -p adsp-service-net-sdk" />
-
-  </Target>
 </Project>

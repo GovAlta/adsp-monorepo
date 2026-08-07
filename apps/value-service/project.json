@@ -9,6 +9,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/value-service/webpack.config.js",
         "outputPath": "dist/apps/value-service",
@@ -33,8 +34,7 @@
           "inspect": false,
           "fileReplacements": []
         }
-      },
-      "outputs": ["{options.outputPath}"]
+      }
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -44,14 +44,20 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/value-service"],
       "options": {
         "jestConfig": "apps/value-service/jest.config.ts"
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/value-service"]
+      }
     }
   }
 }

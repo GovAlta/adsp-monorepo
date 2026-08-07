@@ -1,0 +1,13 @@
+{
+  "name": "builder-prototype",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/builder-app/templates/react",
+        "command": "eslint .",
+        "usePty": false
+      }
+    }
+  }
+}
