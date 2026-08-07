@@ -179,7 +179,7 @@ export interface ShowCurrentFilePdfSuccessAction {
 }
 export interface SetPdfDisplayFileIdAction {
   type: typeof SET_PDF_DISPLAY_FILE_ID;
-  id: string;
+  id: string | null;
 }
 
 export interface FetchPdfMetricsAction {
@@ -242,14 +242,14 @@ export const updateTempTemplate = (payload: PdfTemplate): UpdateTempTemplateActi
 
 export const updatePdfTemplateSuccess = (
   template: Record<string, PdfTemplate>,
-  option: { templateId: string }
+  option: { templateId: string },
 ): UpdatePdfTemplatesSuccessAction => ({
   type: UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   payload: template,
   option: option,
 });
 export const updatePdfTemplateSuccessNoRefresh = (
-  template: Record<string, PdfTemplate>
+  template: Record<string, PdfTemplate>,
 ): UpdatePdfTemplatesSuccessNoRefreshAction => ({
   type: UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION,
   payload: template,
@@ -277,7 +277,7 @@ export const getPdfTemplatesSuccess = (results: Record<string, PdfTemplate>): Fe
   payload: results,
 });
 export const getCorePdfTemplatesSuccess = (
-  results: Record<string, PdfTemplate>
+  results: Record<string, PdfTemplate>,
 ): FetchCorePdfTemplatesSuccessAction => ({
   type: FETCH_CORE_PDF_TEMPLATES_SUCCESS_ACTION,
   payload: results,
@@ -296,7 +296,7 @@ export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => (
 
 export const generatePdfSuccess = (
   results: PdfGenerationResponse,
-  pdfTemplate?: Record<string, PdfTemplate>
+  pdfTemplate?: Record<string, PdfTemplate>,
 ): GeneratePdfSuccessAction => ({
   type: GENERATE_PDF_SUCCESS_ACTION,
   payload: results,
@@ -332,7 +332,7 @@ export const showCurrentFilePdf = (fileId: string): ShowCurrentFilePdfAction => 
   fileId,
 });
 
-export const setPdfDisplayFileId = (id: string): SetPdfDisplayFileIdAction => ({
+export const setPdfDisplayFileId = (id: string | null): SetPdfDisplayFileIdAction => ({
   type: SET_PDF_DISPLAY_FILE_ID,
   id,
 });

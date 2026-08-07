@@ -17,7 +17,7 @@
         "main": "samples/chat-app/src/main.tsx",
         "tsConfig": "samples/chat-app/tsconfig.app.json",
         "assets": [
-          "samples/chat-app/src/favicon.ico", 
+          "samples/chat-app/src/favicon.ico",
           "samples/chat-app/src/assets",
           {
             "glob": "api.conf",
@@ -50,6 +50,7 @@
     "serve": {
       "executor": "@nx/webpack:dev-server",
       "defaultConfiguration": "development",
+      "dependsOn": ["chat-service:serve"],
       "options": {
         "buildTarget": "chat-app:build",
         "hmr": true,
@@ -63,11 +64,16 @@
           "buildTarget": "chat-app:build:production",
           "hmr": false
         }
-      },
-      "dependsOn": ["chat-service:serve"]
+      }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "serve-static": {
       "executor": "@nx/web:file-server",

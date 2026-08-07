@@ -8,6 +8,8 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/tenant-management-webapp",
         "index": "apps/tenant-management-webapp/src/index.html",
@@ -71,12 +73,11 @@
           "sourceMap": true,
           "vendorChunk": true
         }
-      },
-      "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production"
+      }
     },
     "serve": {
       "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "tenant-management-webapp:build",
         "proxyConfig": "apps/tenant-management-webapp/proxy.conf.json"
@@ -88,18 +89,23 @@
         "development": {
           "buildTarget": "tenant-management-webapp:build:development"
         }
-      },
-      "defaultConfiguration": "development"
+      }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-webapp"],
       "options": {
         "jestConfig": "apps/tenant-management-webapp/jest.config.ts"
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-webapp"]
+      }
     }
   }
 }

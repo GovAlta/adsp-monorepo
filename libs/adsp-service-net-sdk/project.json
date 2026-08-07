@@ -4,21 +4,12 @@
   "projectType": "library",
   "sourceRoot": "libs/adsp-service-net-sdk",
   "targets": {
-    "build": {
-      "executor": "@nx-dotnet/core:build",
-      "outputs": ["{workspaceRoot}/dist/libs/adsp-service-net-sdk"],
-      "options": {
-        "configuration": "Debug",
-        "noDependencies": true
-      },
-      "configurations": {
-        "production": {
-          "configuration": "Release"
-        }
-      }
-    },
     "lint": {
-      "executor": "@nx-dotnet/core:format"
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotnet format",
+        "cwd": "libs/adsp-service-net-sdk"
+      }
     },
     "test": {
       "executor": "nx:noop",

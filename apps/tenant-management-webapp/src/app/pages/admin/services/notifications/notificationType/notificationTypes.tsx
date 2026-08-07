@@ -10,6 +10,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { checkForProhibitedTags } from '@lib/EmailTemplateValidator';
+import { ResizableSplitPane } from '@core-services/app-common';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
@@ -83,6 +84,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
   const [coreEvent, setCoreEvent] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(true);
+  const [splitResetKey, setSplitResetKey] = useState(0);
   const templateDefaultError = {
     subject: '',
     title: '',
@@ -147,6 +150,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     document.body.style.overflow = 'auto';
   }, []);
+
+  useEffect(() => {
+    if (showTemplateForm) {
+      setPreviewVisible(true);
+      setSplitResetKey((current) => current + 1);
+    }
+  }, [showTemplateForm]);
+
   useEffect(() => {
     // if an event is selected for editing
     if (selectedEvent) {
@@ -375,7 +386,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         </p>
       </div>
       <Buttons>
-        <GoabButton size="compact"
+        <GoabButton
+          size="compact"
           testId="add-notification"
           onClick={() => {
             setSelectedType(emptyNotificationType);
@@ -528,7 +540,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
                   <NotificationBorder className="padding">
                     <EventButtonWrapper>
-                      <GoabButton size="compact"
+                      <GoabButton
+                        size="compact"
                         type="secondary"
                         testId="add-event"
                         onClick={() => {
@@ -769,122 +782,138 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <BodyGlobalStyles hideOverflow={showTemplateForm} />
         <ModalContent>
           <NotificationTemplateEditorContainer>
-            <TemplateEditor
-              modelOpen={showTemplateForm}
-              mainTitle={eventTemplateFormState.mainTitle}
-              templates={templates}
-              initialChannel={currentChannel}
-              validChannels={selectedType.sortedChannels}
-              serviceName={serviceName}
-              notificationTypeId={selectedType.id}
-              onSubjectChange={(value, channel) => {
-                setTemplates((prev) => {
-                  const newTemplates = structuredClone(prev);
-                  if (newTemplates[channel]) {
-                    newTemplates[channel].subject = value;
-                  } else {
-                    newTemplates[channel] = { subject: value };
-                  }
-                  return newTemplates;
-                });
-                setSubject(value);
-              }}
-              onTitleChange={(value, channel) => {
-                setTemplates((prev) => {
-                  const newTemplates = structuredClone(prev);
-                  if (newTemplates[channel]) {
-                    newTemplates[channel].title = value;
-                  } else {
-                    newTemplates[channel] = { title: value };
-                  }
-                  return newTemplates;
-                });
-                setTitle(value);
-              }}
-              onSubtitleChange={(value, channel) => {
-                setTemplates((prev) => {
-                  const newTemplates = structuredClone(prev);
-                  if (newTemplates[channel]) {
-                    newTemplates[channel].subtitle = value;
-                  } else {
-                    newTemplates[channel] = { subtitle: value };
-                  }
-                  return newTemplates;
-                });
-                setSubtitle(value);
-              }}
-              onBodyChange={(value, channel) => {
-                setTemplates((prev) => {
-                  const newTemplates = structuredClone(prev);
-                  if (newTemplates[channel]) {
-                    newTemplates[channel].body = value;
-                  } else {
-                    newTemplates[channel] = { body: value };
-                  }
-                  return newTemplates;
-                });
-                setBody(value);
-              }}
-              setPreview={(channel) => {
-                if (templates && templates[channel] && templates[channel]?.additionalStyles) {
-                  const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
-                    templates[channel]?.body,
-                  );
-                  setBodyPreview(
-                    generateMessage(
-                      getTemplateBody(combinedPreview, channel, { ...htmlPayload, ...{ title, subtitle } }),
-                      { ...htmlPayload, ...{ title, subtitle } },
-                    ),
-                  );
-                  setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
-                  setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
-                  setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
-                } else {
-                  setBodyPreview(
-                    generateMessage(
-                      getTemplateBody(templates[channel]?.body, channel, { ...htmlPayload, ...{ title, subtitle } }),
-                      { ...htmlPayload, ...{ title, subtitle } },
-                    ),
-                  );
-                  setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
-                  setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
-                  setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
-                }
-                setCurrentChannel(channel);
-              }}
-              errors={templateEditErrors}
-              saveCurrentTemplate={() => saveOrAddEventTemplate()}
-              resetToSavedAction={() => {
-                setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
-                reset(true);
-              }}
-              saveAndReset={saveAndReset}
-              validateEventTemplateFields={() => validateEventTemplateFields()}
-              eventSuggestion={getEventSuggestion()}
-              savedTemplates={savedTemplates}
-              eventTemplateFormState={eventTemplateFormState}
-              onAISaved={(proposal) => {
-                setSavedTemplates((prev) => {
-                  const updated = structuredClone(prev);
-                  if (!updated.email) updated.email = { subject: '', body: '' };
-                  if (proposal.subject !== undefined) updated.email.subject = proposal.subject;
-                  if (proposal.title !== undefined) updated.email.title = proposal.title;
-                  if (proposal.subtitle !== undefined) updated.email.subtitle = proposal.subtitle;
-                  if (proposal.body !== undefined) updated.email.body = proposal.body;
-                  return updated;
-                });
-                // Refresh Redux store so reopening the modal loads the saved data.
-                dispatch(FetchNotificationConfigurationService());
-              }}
+            <ResizableSplitPane
+              initialLeftPercent={48}
+              minPaneWidth={300}
+              resetKey={splitResetKey}
+              rightHidden={!previewVisible}
+              testId="notification-template-split"
+              left={
+                <TemplateEditor
+                  modelOpen={showTemplateForm}
+                  mainTitle={eventTemplateFormState.mainTitle}
+                  templates={templates}
+                  initialChannel={currentChannel}
+                  validChannels={selectedType.sortedChannels}
+                  serviceName={serviceName}
+                  notificationTypeId={selectedType.id}
+                  onSubjectChange={(value, channel) => {
+                    setTemplates((prev) => {
+                      const newTemplates = structuredClone(prev);
+                      if (newTemplates[channel]) {
+                        newTemplates[channel].subject = value;
+                      } else {
+                        newTemplates[channel] = { subject: value };
+                      }
+                      return newTemplates;
+                    });
+                    setSubject(value);
+                  }}
+                  onTitleChange={(value, channel) => {
+                    setTemplates((prev) => {
+                      const newTemplates = structuredClone(prev);
+                      if (newTemplates[channel]) {
+                        newTemplates[channel].title = value;
+                      } else {
+                        newTemplates[channel] = { title: value };
+                      }
+                      return newTemplates;
+                    });
+                    setTitle(value);
+                  }}
+                  onSubtitleChange={(value, channel) => {
+                    setTemplates((prev) => {
+                      const newTemplates = structuredClone(prev);
+                      if (newTemplates[channel]) {
+                        newTemplates[channel].subtitle = value;
+                      } else {
+                        newTemplates[channel] = { subtitle: value };
+                      }
+                      return newTemplates;
+                    });
+                    setSubtitle(value);
+                  }}
+                  onBodyChange={(value, channel) => {
+                    setTemplates((prev) => {
+                      const newTemplates = structuredClone(prev);
+                      if (newTemplates[channel]) {
+                        newTemplates[channel].body = value;
+                      } else {
+                        newTemplates[channel] = { body: value };
+                      }
+                      return newTemplates;
+                    });
+                    setBody(value);
+                  }}
+                  setPreview={(channel) => {
+                    if (templates && templates[channel] && templates[channel]?.additionalStyles) {
+                      const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
+                        templates[channel]?.body,
+                      );
+                      setBodyPreview(
+                        generateMessage(
+                          getTemplateBody(combinedPreview, channel, { ...htmlPayload, ...{ title, subtitle } }),
+                          { ...htmlPayload, ...{ title, subtitle } },
+                        ),
+                      );
+                      setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                      setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
+                      setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
+                    } else {
+                      setBodyPreview(
+                        generateMessage(
+                          getTemplateBody(templates[channel]?.body, channel, {
+                            ...htmlPayload,
+                            ...{ title, subtitle },
+                          }),
+                          { ...htmlPayload, ...{ title, subtitle } },
+                        ),
+                      );
+                      setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                      setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
+                      setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
+                    }
+                    setCurrentChannel(channel);
+                  }}
+                  errors={templateEditErrors}
+                  saveCurrentTemplate={() => saveOrAddEventTemplate()}
+                  resetToSavedAction={() => {
+                    setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
+                    reset(true);
+                  }}
+                  saveAndReset={saveAndReset}
+                  validateEventTemplateFields={() => validateEventTemplateFields()}
+                  eventSuggestion={getEventSuggestion()}
+                  savedTemplates={savedTemplates}
+                  eventTemplateFormState={eventTemplateFormState}
+                  previewVisible={previewVisible}
+                  onTogglePreview={() => setPreviewVisible((visible) => !visible)}
+                  onAISaved={(proposal) => {
+                    setSavedTemplates((prev) => {
+                      const updated = structuredClone(prev);
+                      if (!updated.email) updated.email = { subject: '', body: '' };
+                      if (proposal.subject !== undefined) updated.email.subject = proposal.subject;
+                      if (proposal.title !== undefined) updated.email.title = proposal.title;
+                      if (proposal.subtitle !== undefined) updated.email.subtitle = proposal.subtitle;
+                      if (proposal.body !== undefined) updated.email.body = proposal.body;
+                      return updated;
+                    });
+                    // Refresh Redux store so reopening the modal loads the saved data.
+                    dispatch(FetchNotificationConfigurationService());
+                  }}
+                />
+              }
+              right={
+                <PreviewTemplateContainer>
+                  <PreviewTemplate
+                    channel={channelNames[currentChannel]}
+                    subjectPreviewContent={subjectPreview}
+                    bodyPreviewContent={bodyPreview}
+                    contactPhoneNumber={contact?.phoneNumber}
+                  />
+                </PreviewTemplateContainer>
+              }
             />
-            <PreviewTemplateContainer>
-              <PreviewTemplate
-                channel={channelNames[currentChannel]}
-                subjectPreviewContent={subjectPreview}
-                bodyPreviewContent={bodyPreview}
-                contactPhoneNumber={contact?.phoneNumber}
-              />
-            </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>
         </ModalContent>
       </Modal>

@@ -35,7 +35,12 @@
       "@pages/*": ["apps/tenant-management-webapp/src/app/pages/*"],
       "@store/*": ["apps/tenant-management-webapp/src/app/store/*"],
       "workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
-    }
+    },
+    "strict": false,
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "5.0"
   },
   "exclude": ["node_modules", "tmp"]
 }

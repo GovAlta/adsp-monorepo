@@ -1,4 +1,0 @@
-dist
-node_modules
-**/*.config.js
-**/*.config.old.js

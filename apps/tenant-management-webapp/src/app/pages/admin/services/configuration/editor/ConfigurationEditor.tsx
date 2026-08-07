@@ -23,37 +23,39 @@ import { RootState } from '@store/index';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ConfigForm } from './ConfigForm';
-import { ConfigDefinition } from '@store/configuration/model';
+import { ConfigDefinition, defaultConfigDefinition } from '@store/configuration/model';
 import { getConfigurationRevisions, closeTemplate } from '@store/configuration/action';
-import { PageIndicator } from '@components/Indicator';
+
+const cloneTemplate = (template?: ConfigDefinition): ConfigDefinition =>
+  JSON.parse(JSON.stringify(template || defaultConfigDefinition));
 
 export const ConfigurationEditor = (): JSX.Element => {
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
-  const [namespace, name] = id.split(':') || [];
+  const routeId = id ?? '';
+  const [namespace, name] = routeId.split(':');
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
-  const [payloadSchema, setPayloadSchema] = useState<string>(null);
+  const [payloadSchema, setPayloadSchema] = useState<string>('');
   const { tenantConfigDefinitions, configurationRevisions } = useSelector((state: RootState) => state.configuration);
 
   // eslint-disable-next-line
   const isConfigurationUpdated = (prev: any, next: any): boolean => {
     return JSON.stringify(prev?.configurationSchema) !== JSON.stringify(next?.configurationSchema);
   };
-  const indicator = useSelector((state: RootState) => state?.session?.indicator);
 
   const configurationTemplate = useMemo(() => {
-    const base = tenantConfigDefinitions?.configuration?.[id] as ConfigDefinition | undefined;
+    const base = tenantConfigDefinitions?.configuration?.[routeId] as ConfigDefinition | undefined;
     return base && { ...base, namespace, name };
-  }, [tenantConfigDefinitions?.configuration, id, namespace, name]);
+  }, [tenantConfigDefinitions?.configuration, routeId, namespace, name]);
 
-  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(configurationTemplate || '')));
+  const [tmpTemplate, setTmpTemplate] = useState<ConfigDefinition>(cloneTemplate(configurationTemplate));
 
   const elementIndicator = useSelector((state: RootState) => {
     return state?.session?.elementIndicator;
   });
 
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
-  const [EditorError, setEditorError] = useState<Record<string, string>>({
+  const [EditorError, setEditorError] = useState<Record<string, string | null>>({
     testData: null,
   });
 
@@ -64,10 +66,18 @@ export const ConfigurationEditor = (): JSX.Element => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    setTmpTemplate(JSON.parse(JSON.stringify(configurationTemplate || '')));
-    setPayloadSchema(JSON.stringify(configurationTemplate?.configurationSchema, null, 2));
-    dispatch(getConfigurationActive(id));
-    dispatch(getConfigurationRevisions(id));
+    setTmpTemplate(cloneTemplate(configurationTemplate));
+    setPayloadSchema(
+      JSON.stringify(
+        configurationTemplate?.configurationSchema || defaultConfigDefinition.configurationSchema,
+        null,
+        2,
+      ),
+    );
+    if (routeId) {
+      dispatch(getConfigurationActive(routeId));
+      dispatch(getConfigurationRevisions(routeId));
+    }
     //eslint-disable-next-line
   }, [configurationTemplate]);
 
@@ -77,7 +87,7 @@ export const ConfigurationEditor = (): JSX.Element => {
     }
   }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const saveConfigurationTemplate = (value, options = null) => {
+  const saveConfigurationTemplate = (value: ConfigDefinition) => {
     const saveObject = JSON.parse(JSON.stringify(value));
     dispatch(updateConfigurationDefinition(saveObject, false));
   };
@@ -103,7 +113,7 @@ export const ConfigurationEditor = (): JSX.Element => {
     return false;
   };
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1]
+    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1],
   );
   const Height = latestNotification && !latestNotification.disabled ? 401 : 310;
 
@@ -112,11 +122,10 @@ export const ConfigurationEditor = (): JSX.Element => {
       <div>
         <EditorLHSWrapper>
           <section>
-            {indicator.show && <PageIndicator />}
             <Title>Configuration Editor</Title>
             <hr />
 
-            {configurationTemplate && <ConfigForm template={configurationTemplate} id={id} />}
+            {configurationTemplate && <ConfigForm template={configurationTemplate} id={routeId} />}
             <div style={{ height: `calc(100vh - ${Height}px)`, overflowY: 'auto' }}>
               <GoabFormItem label="">
                 <Tabs activeIndex={0}>
@@ -129,17 +138,18 @@ export const ConfigurationEditor = (): JSX.Element => {
                           value={payloadSchema}
                           onChange={(value) => {
                             validators.remove('payloadSchema');
+                            const updatedValue = value ?? '';
 
                             const validations = {
-                              payloadSchema: value,
+                              payloadSchema: updatedValue,
                             };
 
                             if (!validators.checkAll(validations)) {
                               return;
                             }
 
-                            setPayloadSchema(value);
-                            setTmpTemplate({ ...tmpTemplate, configurationSchema: JSON.parse(value) });
+                            setPayloadSchema(updatedValue);
+                            setTmpTemplate({ ...tmpTemplate, configurationSchema: JSON.parse(updatedValue) });
                           }}
                           language="json"
                           options={{
@@ -157,7 +167,7 @@ export const ConfigurationEditor = (): JSX.Element => {
                   </Tab>
                   <Tab testId={`pdf-edit-footer`} label={<EditorLabelWrapper>Managing revisions</EditorLabelWrapper>}>
                     <GoabFormItem error={errors?.footer ?? ''} label="">
-                      <RevisionTable service={id} />
+                      <RevisionTable service={routeId} />
                     </GoabFormItem>
                   </Tab>
                 </Tabs>
@@ -168,7 +178,8 @@ export const ConfigurationEditor = (): JSX.Element => {
             <hr className="styled-hr styled-hr-bottom" />
             <EditActionLayout>
               <GoabButtonGroup alignment="start">
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   disabled={
                     !isConfigurationUpdated(tmpTemplate, configurationTemplate) ||
                     EditorError?.testData !== null ||
@@ -182,7 +193,8 @@ export const ConfigurationEditor = (): JSX.Element => {
                 >
                   Save
                 </GoabButton>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   onClick={() => {
                     if (isConfigurationUpdated(tmpTemplate, configurationTemplate)) {
                       setSaveModal({ visible: true, closeEditor: false });
@@ -209,7 +221,7 @@ export const ConfigurationEditor = (): JSX.Element => {
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
-          saveConfigurationTemplate(tmpTemplate, 'no-refresh');
+          saveConfigurationTemplate(tmpTemplate);
           setSaveModal({ visible: false, closeEditor: true });
         }}
         saveDisable={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || EditorError?.testData !== null}

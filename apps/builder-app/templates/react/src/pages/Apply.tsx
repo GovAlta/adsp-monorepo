@@ -161,7 +161,7 @@ export default function Apply() {
                 <p className="submission-reference">Reference: {submission.id}</p>
                 <GoabButton
                   size="compact"
-                  type="text"
+                  type="tertiary"
                   onClick={() => {
                     setSubmission(null);
                     setData({});
