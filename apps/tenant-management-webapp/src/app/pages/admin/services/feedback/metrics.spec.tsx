@@ -23,7 +23,7 @@ describe('FeedbackMetrics', () => {
     const { baseElement } = renderMetrics({
       feedbackCount: 10,
       averageRating: 2,
-      lowestSiteAverageRating: 2,
+      lowestRating: 2,
       momCountPercent: null,
       momAvgRatingPercent: null,
       momLowestRatingPercent: null,
@@ -37,7 +37,7 @@ describe('FeedbackMetrics', () => {
     const { baseElement } = renderMetrics({
       feedbackCount: 25,
       averageRating: 2.4,
-      lowestSiteAverageRating: 1,
+      lowestRating: 1,
       momCountPercent: null,
       momAvgRatingPercent: null,
       momLowestRatingPercent: null,
@@ -52,7 +52,7 @@ describe('FeedbackMetrics', () => {
     const { baseElement } = renderMetrics({
       feedbackCount: 3,
       averageRating: 0,
-      lowestSiteAverageRating: 0,
+      lowestRating: 0,
       momCountPercent: null,
       momAvgRatingPercent: null,
       momLowestRatingPercent: null,
@@ -62,11 +62,26 @@ describe('FeedbackMetrics', () => {
     expect(textOf(baseElement, 'feedback-lowest-rating')).toBe('1 - Very Difficult');
   });
 
+  it('shows the worst rating submitted alongside the average', () => {
+    // Five submissions displayed as 5, 5, 1, 2, 1 — recorded 4, 4, 0, 1, 0. Mean 1.8, lowest 0.
+    const { baseElement } = renderMetrics({
+      feedbackCount: 5,
+      averageRating: 1.8,
+      lowestRating: 0,
+      momCountPercent: null,
+      momAvgRatingPercent: null,
+      momLowestRatingPercent: null,
+    });
+
+    expect(textOf(baseElement, 'feedback-avg-rating')).toBe('3 - Neutral');
+    expect(textOf(baseElement, 'feedback-lowest-rating')).toBe('1 - Very Difficult');
+  });
+
   it('shows a placeholder when there is no rating data', () => {
     const { baseElement } = renderMetrics({
       feedbackCount: 0,
       averageRating: null,
-      lowestSiteAverageRating: null,
+      lowestRating: null,
       momCountPercent: null,
       momAvgRatingPercent: null,
       momLowestRatingPercent: null,

@@ -42,7 +42,8 @@ export interface SelectedSite {
 
 export interface FeedbackMetrics {
   averageRating?: number;
-  lowestSiteAverageRating?: number;
+  /** Lowest single rating submitted, not the lowest site average. */
+  lowestRating?: number;
   feedbackCount?: number;
   momCountPercent?: number | null;
   momAvgRatingPercent?: number | null;

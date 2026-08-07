@@ -42,7 +42,7 @@ export const FeedbackMetrics: FunctionComponent = () => {
           {
             id: 'feedback-lowest-rating',
             name: 'Lowest feedback rating ',
-            value: toDisplayRating(metrics.lowestSiteAverageRating),
+            value: toDisplayRating(metrics.lowestRating),
             mom: metrics.momLowestRatingPercent ? parseFloat(Number(metrics.momLowestRatingPercent).toFixed(1)) : null,
           },
         ]}
