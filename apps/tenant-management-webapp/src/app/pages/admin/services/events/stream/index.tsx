@@ -33,17 +33,15 @@ export const EventStreams = (): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // eslint-disable-next-line
-  //useEffect(() => {}, [tenantStreams]);
+  }, []);
 
   return (
     <section>
       <PageIndicator />
       {!indicator.show && (
         <>
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             testId="add-stream"
             onClick={() => {
               dispatch(

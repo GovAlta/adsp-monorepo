@@ -50,8 +50,6 @@ export const PdfPageIndicator = (variant?: PdfPageIndicatorProps): JSX.Element |
     variant: variant?.variant,
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
   return indicator ? (
     <Center>
       <IndicatorWithDelay {...props} />
