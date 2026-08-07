@@ -18,7 +18,7 @@ class CalendarServiceImpl implements CalendarService {
     private calendarEventCache: NodeCache,
   ) {}
 
-  async updateSchdeduleIntake(
+  async updateScheduleIntake(
     tenantId: string,
     intakeParameters: { name: string; calendarEventId: string; start: Date; end: Date },
   ): Promise<Intake> {

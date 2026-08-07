@@ -5,7 +5,7 @@ export const INTAKE_CALENDAR_NAME = 'form-intake';
 
 export interface CalendarService {
   getScheduledIntake(definition: FormDefinitionEntity, token?: string): Promise<Intake>;
-  updateSchdeduleIntake(
+  updateScheduleIntake(
     tenantId: string,
     intakeParameters: {
       name: string;
