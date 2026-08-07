@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   GoabInput,
   GoabFormItem,
@@ -34,10 +34,13 @@ export const TenantIdp = (): JSX.Element => {
     findActionState(state, FETCH_USER_ID_BY_EMAIL),
   );
 
+  const deleteUserIdpState: LoadingState = useSelector((state: RootState) => findActionState(state, DELETE_USER_IDP));
   const emailValidator = characterCheck(validationPattern.validEmail);
   const { errors, validators } = useValidators('email', 'email', emailValidator).build();
   const [copied, setCopied] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
+  // eslint-disable-next-line
+  useEffect(() => {}, [fetchUserIdState, deleteUserIdpState]);
 
   const searchUserByEmailHandler = () => {
     const validations = {
@@ -91,8 +94,7 @@ export const TenantIdp = (): JSX.Element => {
         linked to the previous AD account.
       </p>
       <GoabFormItem label="Email" error={`${errors['email'] || ''}`}>
-        <GoabInput
-          size="compact"
+        <GoabInput size="compact"
           value={email}
           name="user-email"
           type="email"
@@ -102,8 +104,7 @@ export const TenantIdp = (): JSX.Element => {
       </GoabFormItem>
       <GoabSpacer vSpacing="s"></GoabSpacer>
 
-      <GoabButton
-        size="compact"
+      <GoabButton size="compact"
         disabled={(fetchUserIdState?.state as unknown) === 'start'}
         testId={'user-search-email-btn'}
         onClick={searchUserByEmailHandler}
@@ -146,27 +147,33 @@ export const TenantIdp = (): JSX.Element => {
             )}
             {copied === fetchUserIdState?.id && <CheckmarkCircle size={'medium'} />}
           </p>
-          // eslint-disable-next-line
-          {(fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore === true && (
-            <>
-              <p>The related ADSP default IdP link in the core realm is found.</p>
-              <GoabButton
-                size="compact"
-                testId="delete-core-idp-btn"
-                disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
-                variant="destructive"
-                onClick={() => {
-                  setOpenModal(true);
-                }}
-              >
-                Delete
-              </GoabButton>
-            </>
-          )}
-          // eslint-disable-next-line
-          {(fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore !== true && (
-            <p>The related ADSP default IdP link in the core realm is not found.</p>
-          )}
+
+          {
+            // eslint-disable-next-line
+            (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore === true && (
+              <>
+                <p>The related ADSP default IdP link in the core realm is found.</p>
+                <GoabButton size="compact"
+                  testId="delete-core-idp-btn"
+                  disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
+                  variant="destructive"
+                  onClick={() => {
+                    setOpenModal(true);
+                  }}
+                >
+                  Delete
+                </GoabButton>
+              </>
+            )
+          }
+
+          {
+            // eslint-disable-next-line
+            (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore !== true && (
+              <p>The related ADSP default IdP link in the core realm is not found.</p>
+            )
+          }
+
           <GoabSpacer vSpacing="m"></GoabSpacer>
           <GoabButton size="compact" testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
             Reset
