@@ -522,10 +522,10 @@ Then('the user views feedback details with timestamp, rating, comments, technica
     .feedbackFeedbackTableItemDetails()
     .find('p')
     .invoke('text')
-    .should('match', /Feedback was submitted for [/a-zA-Z']+ on [a-zA-Z]+ [0-9a-zA-Z]+, [0-9]+ [0-9]+:[0-9]+ [A|P]M/g);
+    .should('match', /Feedback was submitted for '[^']+' on [a-zA-Z]+ [0-9a-zA-Z]+, [0-9]+ [0-9]+:[0-9]+ [A|P]M/g);
   feedbackObj
     .feedbackFeedbackTableItemDetails()
-    .find('h2')
+    .find('h4')
     .then((elements) => {
       expect(elements.length).to.gte(2);
       if (elements.length == 3) {
