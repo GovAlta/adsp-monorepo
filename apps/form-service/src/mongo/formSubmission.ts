@@ -9,6 +9,7 @@ import {
   FormSubmissionEntity,
   FormSubmissionRepository,
 } from '../form';
+import { toDataCriteriaQuery } from './criteria';
 import { formSubmissionSchema } from './schema';
 import { FormSubmissionDoc } from './types';
 
@@ -97,9 +98,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     }
 
     if (criteria?.dataCriteria) {
-      Object.entries(criteria.dataCriteria).forEach(([property, value]) => {
-        query[`formData.${property}`] = value;
-      });
+      Object.assign(query, toDataCriteriaQuery(criteria.dataCriteria, 'formData'));
     }
 
     const results = new Promise<FormSubmissionEntity[]>((resolve, reject) => {
