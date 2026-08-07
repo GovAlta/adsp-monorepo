@@ -51,6 +51,7 @@ interface TaskModalProps {
   onSave: (task: QueueTaskDefinition) => void;
   open: boolean;
 }
+
 export const TaskModal: FunctionComponent<TaskModalProps> = ({
   initialValue,
   type,
