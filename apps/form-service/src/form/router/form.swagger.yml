@@ -1166,3 +1166,24 @@ components:
               properties:
                 deleted:
                   type: boolean
+/form/v1/definitions/{definitionId}/schedule:
+  put:
+    tags:
+      - Form schedules
+    description: Form schedule intakes.
+    responses:
+      200:
+        description: Successful form schedule intake update.
+        content:
+          schema:
+            $ref: '#/components/schemas/FormDefinition'
+          example:
+            name: My Application Form
+      400:
+        description: Validation failed  for JSON object
+      401:
+        description: User is not authorized to create form definitions.
+      403:
+        description: User is not authorized to create form definitions.
+      404:
+        description: Schedule intake not found.
