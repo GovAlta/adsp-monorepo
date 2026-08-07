@@ -122,7 +122,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
     >
       <form>
         <GoabFormItem error={errors?.['name']} label="Name" mb="l">
-          <GoabInput
+          <GoabInput size="compact"
             disabled={initialValue}
             type="text"
             name="name"

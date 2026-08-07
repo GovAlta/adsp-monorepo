@@ -164,7 +164,7 @@ export const TriggerEventModal = ({
       }
     >
       <GoabFormItem label="Select trigger event">
-        <GoabDropdown
+        <GoabDropdown size="compact"
           data-test-id="script-trigger-event-name-dropDown"
           name="script-trigger-event-name-dropDown"
           value={`${triggerEvent.namespace}:${triggerEvent.name}`}

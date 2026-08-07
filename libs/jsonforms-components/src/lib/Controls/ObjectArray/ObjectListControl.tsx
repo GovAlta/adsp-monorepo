@@ -830,7 +830,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         {listTitle && (
           <ObjectArrayTitle>
             {listTitle}
-            <span>{additionalProps.required && '(required)'}</span>
+            <span>{additionalProps.required && ' (required)'}</span>
             {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
           </ObjectArrayTitle>
         )}

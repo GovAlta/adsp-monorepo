@@ -20,4 +20,27 @@ describe('parseLoginArgs', () => {
       scopes: ['adsp-cli-admin'],
     });
   });
+
+  it('parses --ci flag', () => {
+    expect(parseLoginArgs(['--ci'])).toEqual({ ci: true });
+  });
+
+  it('parses --client-id and --client-secret', () => {
+    expect(parseLoginArgs(['--client-id', 'my-client', '--client-secret', 'my-secret'])).toEqual({
+      clientId: 'my-client',
+      clientSecret: 'my-secret',
+    });
+  });
+
+  it('combines --ci with --tenant, --client-id, --client-secret, and --env', () => {
+    expect(
+      parseLoginArgs(['--ci', '--tenant', 'my-tenant', '--client-id', 'my-client', '--client-secret', 'my-secret', '--env', 'test']),
+    ).toEqual({
+      ci: true,
+      tenant: 'my-tenant',
+      clientId: 'my-client',
+      clientSecret: 'my-secret',
+      env: 'test',
+    });
+  });
 });

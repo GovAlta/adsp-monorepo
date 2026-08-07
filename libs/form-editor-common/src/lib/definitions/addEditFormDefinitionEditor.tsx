@@ -484,9 +484,7 @@ export function AddEditFormDefinitionEditor({
         (m): m is AgentMessage =>
           m.from === 'agent' &&
           !(m as AgentMessage).streaming &&
-          (m as AgentMessage).toolCalls?.some(
-            (tc: ToolCall) => tc.toolName === PATCH_TOOL_NAME && tc.result != null,
-          ),
+          (m as AgentMessage).toolCalls?.some((tc: ToolCall) => tc.toolName === PATCH_TOOL_NAME && tc.result != null),
       ) ?? null;
 
   useEffect(() => {
@@ -647,6 +645,7 @@ export function AddEditFormDefinitionEditor({
                       <GoabCheckbox
                         name="showSelectedRoles"
                         text="Show selected roles"
+                        size="compact"
                         checked={showSelectedRoles}
                         onChange={() => setShowSelectedRoles((prev) => !prev)}
                       />
@@ -704,6 +703,7 @@ export function AddEditFormDefinitionEditor({
                       <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                         <FormFormItem>
                           <GoabInput
+                            size="compact"
                             name="form-url-id"
                             value={definition?.formDraftUrlTemplate}
                             testId="form-url-id"
@@ -716,6 +716,7 @@ export function AddEditFormDefinitionEditor({
                       <FlexRow>
                         <GoACheckboxPad>
                           <GoabCheckbox
+                            size="compact"
                             name="form-definition-anonymous-apply"
                             key="form-definition-anonymous-apply-checkbox"
                             checked={definition.anonymousApply === true}
@@ -743,6 +744,7 @@ export function AddEditFormDefinitionEditor({
                             name="form-definition-allow-multiple-forms-checkbox"
                             key="form-definition-allow-multiple-forms-checkbox"
                             disabled={definition.anonymousApply}
+                            size="compact"
                             checked={
                               !(
                                 definition.oneFormPerApplicant === true ||
@@ -776,6 +778,7 @@ export function AddEditFormDefinitionEditor({
                             disabled={definition.anonymousApply}
                             checked={definition.supportTopic}
                             testId="support-topic"
+                            size="compact"
                             onChange={() => {
                               const supportTopic = definition.supportTopic ? false : true;
                               setDefinition({ supportTopic });
@@ -804,8 +807,10 @@ export function AddEditFormDefinitionEditor({
                             onChange={(detail: GoabCheckboxOnChangeDetail) => {
                               setDefinition({ scheduledIntakes: detail.checked });
                             }}
+                            size="compact"
                             text={'Use scheduled intakes'}
                             mt="m"
+                            mb="m"
                           />
                         </GoACheckboxPad>
                         <GoabTooltip
@@ -841,6 +846,7 @@ export function AddEditFormDefinitionEditor({
                           <GoabDropdown
                             name="securityClassifications"
                             width="25rem"
+                            size="compact"
                             value={definition?.securityClassification || ''}
                             onChange={(detail: GoabDropdownOnChangeDetail) => {
                               setDefinition({ securityClassification: detail.value as SecurityClassification });
@@ -860,6 +866,7 @@ export function AddEditFormDefinitionEditor({
                         <GoabCheckbox
                           name="generate-pdf-on-submit"
                           key="generate-pdf-on-submit"
+                          size="compact"
                           checked={definition.submissionPdfTemplate ? true : false}
                           testId="generate-pdf-on-submit"
                           onChange={() => {
@@ -886,6 +893,7 @@ export function AddEditFormDefinitionEditor({
                         <GoabCheckbox
                           name="submission-records"
                           key="submission-records"
+                          size="compact"
                           checked={definition.submissionRecords}
                           testId="submission-records"
                           onChange={() => {
@@ -914,6 +922,7 @@ export function AddEditFormDefinitionEditor({
                           key="include-data-in-submission"
                           checked={definition.includeDataInSubmission}
                           testId="include-data-in-submission"
+                          size="compact"
                           onChange={() => {
                             setDefinition({ includeDataInSubmission: !definition.includeDataInSubmission });
                           }}
@@ -946,6 +955,7 @@ export function AddEditFormDefinitionEditor({
                         <GoabDropdown
                           name="customSubmissionEvent"
                           width="25rem"
+                          size="compact"
                           value={
                             definition.customSubmissionEvent
                               ? `${definition.customSubmissionEvent.namespace}:${definition.customSubmissionEvent.name}`
@@ -1002,6 +1012,7 @@ export function AddEditFormDefinitionEditor({
                             <GoabDropdown
                               data-test-id="form-submission-select-queue-task-dropdown"
                               name="queueTasks"
+                              size="compact"
                               disabled={!definition.submissionRecords}
                               value={[getQueueTaskToProcessValue()]}
                               onChange={(detail: GoabDropdownOnChangeDetail) => {

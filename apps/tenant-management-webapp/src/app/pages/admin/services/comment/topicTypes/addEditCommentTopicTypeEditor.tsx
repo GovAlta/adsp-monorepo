@@ -235,7 +235,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <EditorPadding>
               <div style={heightCover}>
                 <GoabFormItem error={errors?.['securityClassification']} label="Select a security classification">
-                  <GoabDropdown
+                  <GoabDropdown size="compact"
                     name="securityClassifications"
                     value={topicType?.securityClassification}
                     onChange={(detail: GoabDropdownOnChangeDetail) => {

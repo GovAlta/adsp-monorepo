@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useState } from 'react';
 
 import {
@@ -26,7 +27,6 @@ import { RootState } from '@store/index';
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
   GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
@@ -147,7 +147,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
     >
       <div>
         <GoabFormItem error={errors?.['name']} label="Name">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={topic?.name}
@@ -166,7 +166,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
         <GoabFormItem label="Select a topic type" mt="s" mb="s">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
           {Object.keys(topicTypes).length > 0 && (
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="TopicTypes"
               value={selectedTopicType}
               onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -209,13 +209,11 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               width="100%"
               testId="description"
               aria-label="description"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setTopic({ ...topic, description: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={topic?.description?.length || 0}
@@ -226,7 +224,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
           </DescriptionItem>
         </GoabFormItem>
         <GoabFormItem label="Resource ID">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="resourceid"
             value={topic?.resourceId}

@@ -17,7 +17,7 @@ export const ApplicationStatus = ({
       <GoabBadge type="information" content="Incomplete" icon={false} />
     );
   const mainHeading = 'Application Progress';
-  const progressPercentageAccurate = (100 * completed) / totalGroups;
+  const progressPercentageAccurate = totalGroups > 0 ? (100 * completed) / totalGroups : 0;
 
   return (
     <CompletionStatus>

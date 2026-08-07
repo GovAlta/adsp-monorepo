@@ -12,17 +12,17 @@ import {
 import {
   GoabDropdownOnChangeDetail,
   GoabInputOnChangeDetail,
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
 } from '@abgov/ui-components-common';
-import { validateRegisterJson } from './utils';
+import {
+  getSeparatorHelpText,
+  RegisterDataSeparator,
+  SEPARATOR_MAPPER,
+  validateRegisterJson,
+  validateSeparatorMatch,
+} from './utils';
 import { RegisterDataType } from '@abgov/jsonforms-components';
 
-export type RegisterDataSeparator = 'comma' | 'newline' | 'semicolon' | 'json';
-const SEPARATOR_MAPPER = {
-  comma: ',',
-  newline: '\n',
-  semicolon: ';',
-};
 interface AddRegisterDataModalProps {
   open: boolean;
   onCancel: () => void;
@@ -46,7 +46,10 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
     onDescriptionChange('');
   };
 
-  const parseDataBySeparator = (value: string, selectedSeparator: RegisterDataSeparator): string[] | null => {
+  const parseDataBySeparator = (
+    value: string,
+    selectedSeparator: Exclude<RegisterDataSeparator, 'json'>,
+  ): string[] | null => {
     let trimmedValue = value.trim();
     if (!trimmedValue) {
       return null;
@@ -81,8 +84,14 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
         setParsedData(JSON.parse(value) as RegisterDataType);
       }
     } else {
-      setDataError('');
-      setParsedData(parseDataBySeparator(value, selectedSeparator));
+      const mismatchError = validateSeparatorMatch(value, selectedSeparator);
+      if (mismatchError) {
+        setDataError(mismatchError);
+        setParsedData(null);
+      } else {
+        setDataError('');
+        setParsedData(parseDataBySeparator(value, selectedSeparator));
+      }
     }
   };
 
@@ -126,7 +135,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
       }
     >
       <GoabFormItem label="Name">
-        <GoabInput
+        <GoabInput size="compact"
           width="100%"
           name="register-name"
           value={newName}
@@ -142,11 +151,11 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           rows={2}
           width="100%"
           testId="data-register-add-description-input"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => onDescriptionChange(detail.value)}
+          onChange={(detail: GoabTextAreaOnChangeDetail) => onDescriptionChange(detail.value)}
         />
       </GoabFormItem>
       <GoabFormItem label="Register data" mt="m" mb="m">
-        <GoabDropdown
+        <GoabDropdown size="compact"
           name="register-data-separator"
           value={separator}
           testId="data-register-add-data-separator"
@@ -163,13 +172,18 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           <GoabDropdownItem value="json" label="Use JSON format" />
         </GoabDropdown>
       </GoabFormItem>
-      <GoabFormItem label="" error={dataError}>
+      <GoabFormItem
+        label=""
+        helpText={getSeparatorHelpText(separator)}
+        error={dataError}
+        testId="data-register-add-data-formitem"
+      >
         <GoabTextArea
           name="register-data"
           value={configValue}
           width="100%"
           testId="data-register-add-data-input"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => handleDataChange(detail.value)}
+          onChange={(detail: GoabTextAreaOnChangeDetail) => handleDataChange(detail.value)}
           onBlur={() => parseAndSet(configValue, separator)}
         />
       </GoabFormItem>

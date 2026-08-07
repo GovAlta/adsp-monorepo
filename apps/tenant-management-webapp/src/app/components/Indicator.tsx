@@ -58,8 +58,6 @@ export const PageIndicator = (variant): JSX.Element => {
     variant: variant.variant,
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
   return (
     indicator.show && (
       <Center>

@@ -21,7 +21,7 @@
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
-    "dompurify": "^3.4.9",
+    "dompurify": "^3.4.12",
     "expr-eval-fork": "^3.0.1",
     "ionicons": "^8.0.13",
     "pluralize": "^8.0.0",
@@ -51,16 +51,21 @@
     "typescript-eslint": "^8.0.0",
     "webpack": "^5.92.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.2.4"
+    "webpack-dev-server": "^6.0.0"
   },
   "overrides": {
     "qs": "6.15.2",
     "uuid": "11.1.1",
-    "fast-uri": "3.1.2",
+    "fast-uri": "3.1.5",
     "@babel/plugin-transform-modules-systemjs": "7.29.4",
-    "shell-quote": "1.8.4",
+    "shell-quote": "1.9.0",
     "launch-editor": "2.14.1",
     "form-data": "4.0.6",
-    "react-router": "6.30.4"
+    "react-router": "6.30.4",
+    "ws": "8.21.1",
+    "postcss": "8.5.23",
+    "axios": "1.18.1",
+    "js-yaml": "4.3.1",
+    "websocket-driver": "0.7.5"
   }
 }

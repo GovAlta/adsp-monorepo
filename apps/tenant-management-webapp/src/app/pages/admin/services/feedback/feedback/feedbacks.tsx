@@ -19,7 +19,7 @@ import {
 import { LoadMoreWrapper } from '@components/styled-components';
 import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
 import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
-import { ExportDates, FeedbackFilterError, ProgressWrapper } from '../styled-components';
+import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper, ProgressWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
 import { FullScreenModalWrapper } from '../styled-components';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
@@ -114,12 +114,13 @@ export const FeedbacksList = (): JSX.Element => {
       <GoabFormItem label="Registered sites">
         {indicator.show && (!sites || Object.keys(sites).length === 0) && <GoabSkeleton type="text" />}
         <GoabDropdown
+          size="compact"
           name="Sites"
           value={selectedSite}
           onChange={(detail: GoabDropdownOnChangeDetail) =>
             setSelectedSite(Array.isArray(detail.value) ? detail.value[0] : detail?.value)
           }
-          width={expandView ? '60%' : '100%'}
+          width={'62ch'}
           testId="sites-dropdown"
         >
           {Array.isArray(sites) &&
@@ -130,6 +131,7 @@ export const FeedbacksList = (): JSX.Element => {
       <ExportDates>
         <GoabFormItem label="Start date">
           <GoabInput
+            size="compact"
             type="date"
             width="30ch"
             name="feedback-filter-start-date"
@@ -145,6 +147,7 @@ export const FeedbacksList = (): JSX.Element => {
 
         <GoabFormItem label="End date">
           <GoabInput
+            size="compact"
             type="date"
             width="30ch"
             name="feedback-filter-end-date"
@@ -206,10 +209,10 @@ export const FeedbacksList = (): JSX.Element => {
           {sharedFilterForm}
 
           {showDateError && (
-            <div>
+            <FeedbackFilterErrorWrapper>
               <GoabBadge type="emergency" icon />
               <FeedbackFilterError>Start date must be before End date.</FeedbackFilterError>
-            </div>
+            </FeedbackFilterErrorWrapper>
           )}
           <GoabButtonGroup alignment="start" gap="compact">
             <GoabButton

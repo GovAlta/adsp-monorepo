@@ -1,0 +1,39 @@
+diff --git a/node_modules/@nxrocks/common-jvm/src/lib/utils/gradle-utils.js b/node_modules/@nxrocks/common-jvm/src/lib/utils/gradle-utils.js
+index 2b89537..f0c1bec 100644
+--- a/node_modules/@nxrocks/common-jvm/src/lib/utils/gradle-utils.js
++++ b/node_modules/@nxrocks/common-jvm/src/lib/utils/gradle-utils.js
+@@ -22,7 +22,7 @@ exports.hasGradleWrapperInTree = hasGradleWrapperInTree;
+ exports.hasGradleWrapper = hasGradleWrapper;
+ exports.getCoordinatesForGradleProjet = getCoordinatesForGradleProjet;
+ const utils_1 = require("./utils");
+-const fileutils_1 = require("@nx/workspace/src/utilities/fileutils");
++const fileutils_1 = { fileExists: require("fs").existsSync };
+ const path_1 = require("path");
+ const common_1 = require("@nxrocks/common");
+ exports.GRADLE_PLUGINS_REGEX = /(?:plugins\s*\{\s*)([^}]+)(?:\s*\})/g;
+diff --git a/node_modules/@nxrocks/common-jvm/src/lib/utils/maven-utils.js b/node_modules/@nxrocks/common-jvm/src/lib/utils/maven-utils.js
+index 8c38f8d..00ed271 100644
+--- a/node_modules/@nxrocks/common-jvm/src/lib/utils/maven-utils.js
++++ b/node_modules/@nxrocks/common-jvm/src/lib/utils/maven-utils.js
+@@ -21,7 +21,7 @@ exports.hasMavenWrapperInTree = hasMavenWrapperInTree;
+ exports.hasMavenWrapper = hasMavenWrapper;
+ exports.getCoordinatesForMavenProjet = getCoordinatesForMavenProjet;
+ const index_1 = require("./index");
+-const fileutils_1 = require("@nx/workspace/src/utilities/fileutils");
++const fileutils_1 = { fileExists: require("fs").existsSync };
+ const path_1 = require("path");
+ const common_1 = require("@nxrocks/common");
+ exports.SPOTLESS_MAVEN_PLUGIN_GROUP_ID = 'com.diffplug.spotless';
+diff --git a/node_modules/@nxrocks/common-jvm/src/lib/utils/utils.js b/node_modules/@nxrocks/common-jvm/src/lib/utils/utils.js
+index feea5b5..861ddeb 100644
+--- a/node_modules/@nxrocks/common-jvm/src/lib/utils/utils.js
++++ b/node_modules/@nxrocks/common-jvm/src/lib/utils/utils.js
+@@ -21,7 +21,7 @@ exports.getPathToParentModule = getPathToParentModule;
+ exports.getAdjustedProjectAndModuleRoot = getAdjustedProjectAndModuleRoot;
+ const devkit_1 = require("@nx/devkit");
+ const child_process_1 = require("child_process");
+-const fileutils_1 = require("@nx/workspace/src/utilities/fileutils");
++const fileutils_1 = { fileExists: require("fs").existsSync };
+ const common_1 = require("@nxrocks/common");
+ const utils_1 = require("../utils");
+ const maven_utils_1 = require("./maven-utils");

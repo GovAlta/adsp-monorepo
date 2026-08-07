@@ -186,7 +186,10 @@ async function provisionRealm(
     eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
     logger.info(`Provisioned tenant '${entity.name}' with realm '${entity.realm}'.`, LOG_CONTEXT);
   } catch (err) {
-    logger.error(`Failed to provision tenant '${entity.name}': ${err.message}`, LOG_CONTEXT);
+    logger.error(
+      `Failed to provision tenant '${entity.name}': ${err.message}${err.responseData ? ` — KC: ${JSON.stringify(err.responseData)}` : ''}`,
+      LOG_CONTEXT,
+    );
     try {
       await realmService.deleteRealm(entity);
     } catch (deleteErr) {

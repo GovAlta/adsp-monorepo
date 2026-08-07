@@ -7,6 +7,8 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { RootState } from '@store/index';
 import { FetchTenant } from '@store/tenant/actions';
 
+import { scrollAppToTop } from '@lib/scrollAppToTop';
+
 import { serviceVariables } from '../../../featureFlag';
 import { GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
 
@@ -55,6 +57,7 @@ const Sidebar = ({ type }: SidebarProps) => {
               <NavLink
                 to="/admin"
                 end
+                onClick={scrollAppToTop}
                 className={({ isActive }) => `menu-section-link${isActive ? ' current' : ''}`}
                 title="Dashboard"
                 data-testid="menu-dashboard"
@@ -65,6 +68,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                 <>
                   <NavLink
                     to="event-log"
+                    onClick={scrollAppToTop}
                     className={({ isActive }) => (isActive ? 'current' : '')}
                     title="Event log"
                     data-testid="menu-eventLog"
@@ -73,6 +77,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="service-metrics"
+                    onClick={scrollAppToTop}
                     className={({ isActive }) => (isActive ? 'current' : '')}
                     title="Service metrics"
                     data-testid="menu-service-metrics"
@@ -82,6 +87,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                   <NavLink
                     to="/admin"
                     end
+                    onClick={scrollAppToTop}
                     className={({ isActive }) => `menu-section-link${isActive ? ' current' : ''}`}
                     title="Services"
                     data-testid="sidebar-service"
@@ -98,6 +104,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                   <NavLink
                     key={index}
                     to={service.link}
+                    onClick={scrollAppToTop}
                     className={({ isActive }) => (isActive ? 'current' : '')}
                     title={service.name}
                     data-testid={`menu-${service.name.toLowerCase()}`}

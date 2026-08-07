@@ -141,7 +141,7 @@ export const DirectoryModal = (): JSX.Element => {
       }
     >
       <GoabFormItem error={errors?.['service']} label="Service" mb="s">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="service"
           width="100%"
@@ -156,7 +156,7 @@ export const DirectoryModal = (): JSX.Element => {
         />
       </GoabFormItem>
       <GoabFormItem error={errors?.['api']} label="API" mb="s">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="api"
           width="100%"
@@ -171,7 +171,7 @@ export const DirectoryModal = (): JSX.Element => {
         />
       </GoabFormItem>
       <GoabFormItem error={errors?.['url']} label="URL">
-        <GoabInput
+        <GoabInput size="compact"
           type="url"
           name="url"
           width="100%"

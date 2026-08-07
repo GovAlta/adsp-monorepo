@@ -43,7 +43,5 @@ export const PageIndicator = (): JSX.Element => {
     pageLock: false,
   };
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
   return <Center>{indicator.show && <IndicatorWithDelay {...props} />}</Center>;
 };

@@ -99,7 +99,7 @@ export default function Examples() {
               </GoabButton>
             </Link>
             <Link to="/about" style={{ textDecoration: 'none' }}>
-              <GoabButton size="compact" type="text">
+              <GoabButton size="compact" type="tertiary">
                 About this starter
               </GoabButton>
             </Link>

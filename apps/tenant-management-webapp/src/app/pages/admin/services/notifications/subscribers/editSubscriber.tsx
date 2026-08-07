@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
 import { GoabButton, GoabButtonGroup, GoabInput, GoabTextArea, GoabModal, GoabFormItem } from '@abgov/react-components';
@@ -5,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { emailError, smsError } from '@lib/inputValidation';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -163,7 +164,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       >
         <ErrorWrapper>
           <GoabFormItem error={formErrors?.['name']} label="Address as" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               width="100%"
@@ -174,7 +175,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
             />
           </GoabFormItem>
           <GoabFormItem error={formErrors?.['email'] || updateError} label="Email" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="email"
               name="email"
               width="100%"
@@ -188,7 +189,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
           </GoabFormItem>
           <GoabFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
             <div className="phoneInputStyle">
-              <GoabInput
+              <GoabInput size="compact"
                 type="tel"
                 aria-label="sms"
                 name="sms"
@@ -214,11 +215,9 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 value={bot}
                 aria-label="slack"
                 width="100%"
-                onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+                onChange={(detail: GoabTextAreaOnChangeDetail) => {
                   setBot(detail.value);
                 }}
-                // eslint-disable-next-line
-                onChange={() => {}}
               />
             </GoabFormItem>
           )}

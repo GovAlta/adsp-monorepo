@@ -5,7 +5,7 @@ import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventSearchCriteria } from '@store/calendar/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { CalendarEventFilterError } from './styled-components';
+import { CalendarEventFilterError, CalendarEventFilterErrorWrapper } from './styled-components';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface EventListFilterProps {
@@ -40,7 +40,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
     <EventFilterWrapper>
       <GoabGrid minChildWidth="20ch">
         <GoabFormItem label="Start date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="calendar-event-filter-start-date"
             value={calenderName && parsedStartDate?.toISOString().slice(0, 10)}
@@ -67,7 +67,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         </GoabFormItem>
 
         <GoabFormItem label="End date">
-          <GoabInput
+          <GoabInput size="compact"
             type="date"
             name="calendar-event-filter-end-date"
             value={calenderName && parsedEndDate?.toISOString().slice(0, 10)}
@@ -92,10 +92,10 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         </GoabFormItem>
       </GoabGrid>
       {showDateError && (
-        <>
+        <CalendarEventFilterErrorWrapper>
           <GoabBadge type="emergency" icon />
           <CalendarEventFilterError>Start date must be before end date.</CalendarEventFilterError>
-        </>
+        </CalendarEventFilterErrorWrapper>
       )}
     </EventFilterWrapper>
   );

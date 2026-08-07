@@ -7,25 +7,14 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
     "paths": {
-      "@components/*": [
-        "app/components/*"
-      ],
-      "@pages/*": [
-        "app/pages/*"
-      ],
-      "@lib/*": [
-        "app/lib/*"
-      ],
-      "@store/*": [
-        "app/store/*"
-      ],
-      "@style/*": [
-        "../../../libs/stylesheets/scss/src/lib/*"
-      ],
-      "@core-services/app-common": [
-        "../../../libs/app-common/src/index.ts"
-      ]
-    }
+      "@components/*": ["app/components/*"],
+      "@pages/*": ["app/pages/*"],
+      "@lib/*": ["app/lib/*"],
+      "@store/*": ["app/store/*"],
+      "@style/*": ["../../../libs/stylesheets/scss/src/lib/*"],
+      "@core-services/app-common": ["../../../libs/app-common/src/index.ts"]
+    },
+    "ignoreDeprecations": "5.0"
   },
   "files": [],
   "include": [],

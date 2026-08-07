@@ -1,3 +1,4 @@
+import { NotFoundError } from '@core-services/core-common';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { Logger } from 'winston';
 import { TenantEntity } from '../tenant';
@@ -29,5 +30,11 @@ describe('Mongo: Tenant', () => {
     ]);
     const results = await repo.find();
     expect(results.length).toEqual(data.length);
+  });
+
+  it('should throw NotFoundError with the lookup id when tenant does not exist', async () => {
+    const missingId = '507f1f77bcf86cd799439011';
+    await expect(repo.get(missingId)).rejects.toThrow(NotFoundError);
+    await expect(repo.get(missingId)).rejects.toThrow(missingId);
   });
 });

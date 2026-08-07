@@ -41,7 +41,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
       <div>
         <QueueMetrics metrics={metrics} isLoading={metricsLoading} />
         <GoabFormItem label="Filter" ml="xl">
-          <GoabDropdown
+          <GoabDropdown size="compact"
             name="Filter-dropdown"
             aria-label="filter-type-dropdown"
             onChange={(detail: GoabDropdownOnChangeDetail) => onSetFilter(detail.value as TaskFilter)}

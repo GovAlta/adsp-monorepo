@@ -92,6 +92,38 @@ describe('EnumSelect component', () => {
       expect(handleChangeMock).toHaveBeenLastCalledWith('', 'option1-value');
     });
 
+    it('marks itself visited on selection so a cleared required control can report its error', () => {
+      const setIsVisited = jest.fn();
+      const props = { ...staticProps, isVisited: false, setIsVisited, handleChange: handleChangeMock };
+      const { container } = render(<EnumSelect {...props} />);
+
+      fireEvent(
+        container.querySelector('#jsonforms--dropdown') as Element,
+        new CustomEvent('_change', {
+          detail: { name: 'jsonforms--dropdown', value: '' },
+          bubbles: true,
+        })
+      );
+
+      expect(setIsVisited).toHaveBeenCalled();
+    });
+
+    it('does not mark itself visited again once it already is', () => {
+      const setIsVisited = jest.fn();
+      const props = { ...staticProps, isVisited: true, setIsVisited, handleChange: handleChangeMock };
+      const { container } = render(<EnumSelect {...props} />);
+
+      fireEvent(
+        container.querySelector('#jsonforms--dropdown') as Element,
+        new CustomEvent('_change', {
+          detail: { name: 'jsonforms--dropdown', value: 'option1-value' },
+          bubbles: true,
+        })
+      );
+
+      expect(setIsVisited).not.toHaveBeenCalled();
+    });
+
     it('stores primitive dropdown value even when schema type is object without properties', () => {
       const props = {
         ...staticProps,

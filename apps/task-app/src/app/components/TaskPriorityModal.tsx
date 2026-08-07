@@ -38,7 +38,7 @@ export const TaskPriorityModal: FunctionComponent<TaskPriorityModal> = ({
           <span>{task?.priority}</span>
         </div>
         <GoabFormItem label="Set priority to" mt="m">
-          <GoabRadioGroup
+          <GoabRadioGroup size="compact"
             name="priority"
             value={task?.priority}
             onChange={(detail: GoabRadioGroupOnChangeDetail) => setPriority(detail.value)}

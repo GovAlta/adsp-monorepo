@@ -76,8 +76,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       }
     }
   };
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
 
   const isValidEmail = (email: string): boolean => {
     return /^\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})+$/.test(email);
@@ -220,6 +218,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <FormGap>
                   <GoabFormItem label="" error={formErrors?.['email']}>
                     <GoabInput
+                      size="compact"
                       type="email"
                       aria-label="email"
                       name="email"
@@ -237,6 +236,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <FormGap>
                   <GoabFormItem label="" error={formErrors?.['sms']}>
                     <GoabInput
+                      size="compact"
                       type="tel"
                       aria-label="sms"
                       name="sms"
@@ -258,6 +258,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <br />
                 <FormGap>
                   <GoabRadioGroup
+                    size="compact"
                     name="channel"
                     value={preferredChannel}
                     onChange={(detail: GoabRadioGroupOnChangeDetail) => updateChannelPreference(detail.value)}
@@ -331,6 +332,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   <Label>My preferred notification channel</Label>
                   <FormGap>
                     <GoabRadioGroup
+                      size="compact"
                       name="preferredChannel"
                       //eslint-disable-next-line
                       onChange={() => {}}

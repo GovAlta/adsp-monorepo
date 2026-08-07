@@ -157,7 +157,7 @@ const FormFilters = (): JSX.Element => {
     <div>
       <h1>Form Filters</h1>
       <GoabSpacer vSpacing="m" />
-      <GoabDropdown
+      <GoabDropdown size="compact"
         name="filter-type"
         value={selectedFilter}
         onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -188,7 +188,7 @@ const FormFilters = (): JSX.Element => {
           {isAdding && (
             <tr>
               <td>
-                <GoabInput
+                <GoabInput size="compact"
                   name="filter-new"
                   value={newValue}
                   onChange={(detail: GoabInputOnChangeDetail) => setNewValue(detail.value)}
@@ -217,7 +217,7 @@ const FormFilters = (): JSX.Element => {
               <tr key={index}>
                 <td>
                   {editIndex === index ? (
-                    <GoabInput
+                    <GoabInput size="compact"
                       name="filter-edit"
                       value={editValue}
                       onChange={(detail: GoabInputOnChangeDetail) => setEditValue(detail.value)}

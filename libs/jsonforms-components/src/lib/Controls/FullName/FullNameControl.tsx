@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { ControlProps, isEnabled } from '@jsonforms/core';
 import { GoabFormItem, GoabGrid } from '@abgov/react-components-ds1';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
 import { Visible } from '../../util';
+import { useDebouncedCommit } from '../../util/useDebouncedCommit';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
 type FullNameProps = ControlProps;
@@ -60,32 +61,22 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
   const { data, path, schema, handleChange, enabled, visible, uischema } = props;
   const requiredFields = (schema as { required: string[] }).required;
-  const [nameData, setNameData] = useState(normalizeNameData(data));
   const controlRef = useRef<HTMLDivElement>(null);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
 
-  const updateFormData = (updatedData: object) => {
-    updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
-    handleChange(path, updatedData);
-  };
-
-  useEffect(() => {
-    const nextData = normalizeNameData(data);
-    setNameData((currentData) =>
-      currentData.firstName === nextData.firstName &&
-      currentData.middleName === nextData.middleName &&
-      currentData.lastName === nextData.lastName
-        ? currentData
-        : nextData,
-    );
-  }, [data]);
+  const normalizedData = useMemo(() => normalizeNameData(data), [data]);
+  const {
+    value: nameData,
+    setValue: setNameData,
+    flush: flushName,
+  } = useDebouncedCommit(normalizedData, (updatedData) =>
+    handleChange(path, Object.fromEntries(Object.entries(updatedData).filter(([, value]) => value !== ''))),
+  );
 
   const handleInputChange = (field: string, value: string) => {
-    const updatedName = { ...nameData, [field]: value };
-    setNameData(updatedName);
-    updateFormData(updatedName);
+    setNameData({ ...nameData, [field]: value });
   };
 
   /* istanbul ignore next */
@@ -128,6 +119,7 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
           data={data}
           disabled={!enabled}
           requiredFields={requiredFields}
+          onFieldCommit={flushName}
         />
       </div>
     </Visible>

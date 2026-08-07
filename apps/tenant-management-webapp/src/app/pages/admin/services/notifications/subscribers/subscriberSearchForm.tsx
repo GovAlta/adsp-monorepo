@@ -30,7 +30,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
     <div>
       <GoabGrid minChildWidth="26ch" gap="m">
         <GoabFormItem label="Search subscriber address as">
-          <GoabInput
+          <GoabInput size="compact"
             name="name"
             testId="subscriber-name-input"
             id="name"
@@ -40,7 +40,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           />
         </GoabFormItem>
         <GoabFormItem label="Search subscriber email">
-          <GoabInput
+          <GoabInput size="compact"
             type="email"
             testId="subscriber-email-input"
             name="email"
@@ -51,7 +51,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           />
         </GoabFormItem>
         <GoabFormItem label="Search subscriber phone">
-          <GoabInput
+          <GoabInput size="compact"
             type="tel"
             name="sms"
             testId="subscriber-phone-input"

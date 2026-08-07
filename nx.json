@@ -67,7 +67,76 @@
       }
     }
   },
-  "plugins": ["@nx-dotnet/core", "@nxlv/python", "@nxrocks/nx-spring-boot"],
+  "plugins": [
+    "@nx/dotnet",
+    "@nxlv/python",
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      },
+      "include": [
+        "apps/agent-service/**/*",
+        "apps/api-docs-app/**/*",
+        "apps/builder-app/**/*",
+        "apps/cache-service/**/*",
+        "apps/calendar-service/**/*",
+        "apps/comment-service/**/*",
+        "apps/configuration-service/**/*",
+        "apps/dashboard-metrics/**/*",
+        "apps/directory-service/**/*",
+        "apps/event-service/**/*",
+        "apps/export-service/**/*",
+        "apps/feedback-service/**/*",
+        "apps/file-service/**/*",
+        "apps/form-admin-app/**/*",
+        "apps/form-admin-app-e2e/**/*",
+        "apps/form-app/**/*",
+        "apps/form-app-e2e/**/*",
+        "apps/form-gateway/**/*",
+        "apps/form-management-app/**/*",
+        "apps/form-service/**/*",
+        "apps/notification-service/**/*",
+        "apps/pdf-service/**/*",
+        "apps/push-service/**/*",
+        "apps/sandbox-app/**/*",
+        "apps/sandbox-app-e2e/**/*",
+        "apps/secret-service/**/*",
+        "apps/sharepoint-service/**/*",
+        "apps/status-app/**/*",
+        "apps/status-app-e2e/**/*",
+        "apps/status-service/**/*",
+        "apps/subscriber-app/**/*",
+        "apps/subscriber-app-e2e/**/*",
+        "apps/subscriber-gateway/**/*",
+        "apps/task-app/**/*",
+        "apps/task-app-e2e/**/*",
+        "apps/task-service/**/*",
+        "apps/tenant-management-api/**/*",
+        "apps/tenant-management-gateway/**/*",
+        "apps/tenant-management-webapp/**/*",
+        "apps/tenant-management-webapp-e2e/**/*",
+        "apps/token-handler/**/*",
+        "apps/value-service/**/*",
+        "apps/verify-service/**/*",
+        "libs/adsp-cli/**/*",
+        "libs/adsp-feedback/**/*",
+        "libs/adsp-sdk-mcp-server/**/*",
+        "libs/adsp-service-sdk/**/*",
+        "libs/app-common/**/*",
+        "libs/core-common/**/*",
+        "libs/data-exchange-standard/**/*",
+        "libs/form-editor-common/**/*",
+        "libs/job-common/**/*",
+        "libs/jsonforms-components/**/*",
+        "libs/notification-shared/**/*",
+        "libs/stylesheets/scss/**/*",
+        "samples/chat-app/**/*",
+        "samples/chat-service/**/*",
+        "tools/workspace-plugin/**/*"
+      ]
+    }
+  ],
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
@@ -80,7 +149,7 @@
       "cache": true
     },
     "lint": {
-      "inputs": ["default", "!{projectRoot}/Dockerfile", "{workspaceRoot}/.eslintrc.json"],
+      "inputs": ["default", "!{projectRoot}/Dockerfile", "{workspaceRoot}/eslint.config.mjs"],
       "cache": true
     },
     "e2e": {
@@ -96,7 +165,7 @@
         "default",
         "^default",
         "!{projectRoot}/Dockerfile",
-        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/eslint.config.mjs",
         "{workspaceRoot}/tools/eslint-rules/**/*"
       ],
       "cache": true
@@ -139,7 +208,7 @@
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",
-      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs",
       "!{projectRoot}/src/test-setup.[jt]s"
     ]
   },

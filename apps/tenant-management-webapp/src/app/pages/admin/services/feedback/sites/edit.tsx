@@ -144,7 +144,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             testId="feedback-url-formItem"
             error={errors?.['url'] || urlError}
           >
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="url"
               value={site.url}
@@ -198,7 +198,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
           )}
 
           <CheckboxSpaceWrapper>
-            <GoabCheckbox
+            <GoabCheckbox size="compact"
               text={'Allow anonymous feedback'}
               testId="anonymous-feedback"
               ariaLabel="Anonymous feedback"

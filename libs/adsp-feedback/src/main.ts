@@ -8,13 +8,18 @@ import errorIconSvg from './assets/Error_Icon.svg';
 import greenCircleCheckmarkSvg from './assets/green-circle-checkmark.svg';
 import openLinkSvg from './assets/Open-Link.svg';
 import goaErrorIconSvg from './assets/goa-error-icon.svg';
+import { feedbackStyles } from './feedback.styles';
 
 import { ratings } from './ratings';
+
+type DesignSystemsVersion = '1.0' | '2.0';
+
 export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
   private getAccessToken?: () => Promise<string>;
   private getContext: () => Promise<FeedbackContext>;
+  private designSystemsVersion: DesignSystemsVersion = '1.0';
 
   private readonly MAX_CHAR_LIMIT = 1000;
   private readonly CHAR_LIMIT_WARNING = 'Please limit your text to 1000 characters.';
@@ -71,7 +76,10 @@ export class AdspFeedback implements AdspFeedbackApi {
       if (scriptElement.parentElement instanceof HTMLBodyElement) {
         const tenant = scriptUrl.searchParams.get('tenant');
         if (tenant) {
-          this.initialize({ tenant });
+          this.initialize({
+            tenant,
+            designSystemsVersion: scriptUrl.searchParams.get('designSystemsVersion') ?? undefined,
+          });
         }
       }
     }
@@ -79,6 +87,18 @@ export class AdspFeedback implements AdspFeedbackApi {
 
   private getWidgetElements<T extends Element>(selector: string): NodeListOf<T> {
     return (this.rootRef.value ?? document).querySelectorAll<T>(selector);
+  }
+
+  private normalizeDesignSystemsVersion(version?: string): DesignSystemsVersion {
+    return version === '2.0' ? '2.0' : '1.0';
+  }
+
+  private getThemeColor(tokenName: string, fallback: string): string {
+    if (this.designSystemsVersion !== '2.0') {
+      return fallback;
+    }
+
+    return `var(${tokenName}, ${fallback})`;
   }
 
   private lockBodyScroll() {
@@ -455,7 +475,11 @@ export class AdspFeedback implements AdspFeedbackApi {
 
     const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
     const text = texts[index] as HTMLImageElement;
-    text.style.color = isHovering ? '#004F84' : this.selectedRating === index ? '#0081A2' : '#333333';
+    text.style.color = isHovering
+      ? this.getThemeColor('--adsp-fb-color-primary-hover', '#004F84')
+      : this.selectedRating === index
+        ? this.getThemeColor('--adsp-fb-color-primary-selected', '#0081A2')
+        : this.getThemeColor('--adsp-fb-color-text', '#333333');
     if (!isSmallScreen) {
       const tooltips = this.getWidgetElements<HTMLElement>('.adsp-fb-tooltip-text');
       const tooltip = tooltips[index] as HTMLImageElement;
@@ -468,18 +492,6 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
   };
 
-  private clearRating = (index: number) => {
-    if (index > -1) {
-      const rating = this.ratings[index];
-      const images = this.getWidgetElements<HTMLImageElement>('.adsp-fb-rating-icon');
-      const image = images[index] as HTMLImageElement;
-      image.src = rating.svgDefault;
-
-      const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
-      const text = texts[index] as HTMLImageElement;
-      text.style.color = '#333333';
-    }
-  };
   private defaultRating = () => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
@@ -559,20 +571,20 @@ export class AdspFeedback implements AdspFeedbackApi {
       image.src = rating.svgDefault;
       const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
       const text = texts[this.selectedRating] as HTMLImageElement;
-      text.style.color = '#333333';
+      text.style.color = this.getThemeColor('--adsp-fb-color-text', '#333333');
     }
     this.selectedRating = index;
     this.lastFocusableElement = this.sendButtonRef;
     const texts = this.getWidgetElements<HTMLElement>('.adsp-fb-rating-text');
     const text = texts[index] as HTMLImageElement;
-    text.style.color = '#0081A2';
+    text.style.color = this.getThemeColor('--adsp-fb-color-primary-selected', '#0081A2');
   };
 
   public openFeedbackForm() {
     this.openStartForm();
   }
 
-  public initialize({ apiUrl, tenant, getAccessToken, getContext }: FeedbackOptions) {
+  public initialize({ apiUrl, tenant, designSystemsVersion, getAccessToken, getContext }: FeedbackOptions) {
     if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
     }
@@ -597,725 +609,22 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.getContext = getContext;
     }
 
+    this.designSystemsVersion = this.normalizeDesignSystemsVersion(designSystemsVersion);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const head = document.querySelector('head');
     if (head && !document.getElementById('adsp-feedback-widget-styles')) {
-      const styleContainer = document.createElement('div');
-      render(
-        html`<style id="adsp-feedback-widget-styles">
-          .adsp-fb-root .adsp-fb-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-            z-index: 1000; /* Ensure it overlays other content */
-            visibility: hidden;
-          }
-          .adsp-fb img:focus-visible {
-            border-radius: 0.25rem;
-            outline: #feba35 solid 3px;
-          }
-          .adsp-fb .feedback-close-button:hover,
-          .adsp-fb .feedback-close-button:active,
-          .adsp-fb .feedback-close-button:focus {
-            background-color: #f1f1f1;
-            border-radius: 0.25rem;
-          }
-
-          .adsp-fb .feedback-close-button:active {
-            transform: translateY(2px);
-          }
-
-          .adsp-fb {
-            z-index: 999;
-            font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
-            line-height: 1.5;
-            font-size: 1.125rem;
-            color: #333333;
-          }
-          .adsp-fb *,
-          .adsp-fb *::before,
-          .adsp-fb *::after {
-            box-sizing: border-box;
-            font-family: inherit;
-          }
-          .adsp-fb h3 {
-            color: #333333;
-            font-family: inherit;
-            margin-top: 0px !important;
-          }
-          .adsp-fb p,
-          .adsp-fb label,
-          .adsp-fb span {
-            color: #333333;
-            font-family: inherit;
-            font-size: 1.125rem;
-          }
-          .adsp-fb > *[data-show]:not([data-show='true']) {
-            display: none;
-          }
-          .adsp-fb .adsp-fb-badge {
-            z-index: 10;
-            background: #0081a2;
-            color: #ffffff;
-            font-size: 1.125rem;
-            position: fixed;
-            right: 0;
-            top: 60vh;
-            padding: 16px 8px;
-            writing-mode: vertical-rl;
-            cursor: pointer;
-            border-radius: 0 0.25rem 0.25rem 0;
-            transform: rotate(-180deg);
-            display: block;
-          }
-          .adsp-fb .adsp-fb-badge span {
-            color: #ffffff;
-            font-size: inherit;
-          }
-          .adsp-fb .adsp-fb-badge:hover {
-            border-color: #004f84;
-            background-color: #004f84;
-          }
-          .adsp-fb .adsp-fb-badge:focus {
-            border-color: #004f84;
-            background-color: #004f84;
-          }
-
-          .adsp-fb .adsp-fb-badge:active {
-            outline: initial;
-            box-shadow: 0 0 0 3px #feba35;
-          }
-
-          .adsp-fb .adsp-fb-badge:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px #feba35;
-          }
-
-          .adsp-fb .adsp-fb-form-container {
-            z-index: 2;
-            position: fixed;
-            background: #ffffff;
-            width: 640px;
-            left: 50%;
-            top: 10vh;
-            border: 1px solid;
-            border-radius: 3px;
-            transform: translateX(-50%);
-            max-height: 100%;
-            height: min-content;
-            overflow: hidden;
-          }
-          .adsp-fb .adsp-fb-container-heading {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            padding-right: 20px;
-            padding-left: 1.25rem;
-            align-items: center;
-            height: 74px;
-          }
-          .adsp-fb .adsp-fb-container-heading > img {
-            cursor: pointer;
-          }
-          .adsp-fb .adsp-fb-form {
-            display: flex;
-            box-sizing: border-box;
-            flex-direction: column;
-            padding: 0 0 24px 24px;
-            transition: transform 0.001ms;
-          }
-          .adsp-fb .adsp-fb-form label {
-            font-weight: 400;
-            line-height: 24px;
-          }
-          .adsp-fb .adsp-fb-form b {
-            font-weight: 700;
-          }
-          .adsp-fb .adsp-fb-content {
-            max-height: 465px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            flex: 1;
-            padding-right: 16px;
-            padding-top: 36px;
-            margin-bottom: 4px;
-            padding-bottom: 0px !important;
-          }
-          .adsp-fb .adsp-fb-form-rating {
-            display: flex;
-            flex-direction: row;
-            gap: 32px;
-            border: 0;
-            margin-top: 12px;
-            justify-content: space-between;
-            width: 98%;
-          }
-          .adsp-fb .adsp-fb-form-rating > div > img {
-            width: 46px;
-            height: 46px;
-          }
-          .adsp-fb .adsp-fb-form-rating > div > img:first-child {
-            padding-left: 0px;
-          }
-          .adsp-fb .adsp-fb-tooltip-text {
-            visibility: hidden;
-            margin-left: 25px;
-            background-color: #666666;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 8px 12px;
-            margin-top: 53px;
-            position: absolute;
-            transform: translateX(-50%);
-            -webkit-transform: translateX(-50%);
-            white-space: nowrap;
-            opacity: 0;
-            z-index: 2;
-            transition: opacity 0.3s;
-            -webkit-transition: opacity 0.3s;
-          }
-          .adsp-fb .adsp-fb-tooltip-text:before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            transform: translateX(-50%);
-            -webkit-transform: translateX(-50%);
-            border-color: transparent transparent #666666 transparent;
-          }
-          .adsp-fb .adsp-fb-tooltip-text.adsp-fb-tooltip-modified:before {
-            left: 40%;
-          }
-          .adsp-fb .adsp-fb-rating-text {
-            display: none;
-          }
-          .adsp-fb .adsp-fb-form-comment {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 12px;
-          }
-          .adsp-fb .adsp-fb-form-comment > label {
-            margin-top: 32px;
-          }
-          .adsp-fb .adsp-fb-form-comment span {
-            color: var(--color-gray-600, #666666);
-            font-size: 14px;
-          }
-
-          .adsp-fb .adsp-fb-form-comment textarea {
-            font-family: inherit;
-            font-size: 1rem;
-            color: #333333;
-            margin-top: 12px;
-            margin-left: 3px;
-            resize: none;
-            min-height: 100px;
-            width: 98%;
-            border-radius: 3px;
-            cursor: text;
-            padding: 10px 8px;
-            box-sizing: border-box;
-            outline: none;
-          }
-          .adsp-fb .adsp-fb-form-comment textarea:hover {
-            box-shadow: 0 0 0 var(--goa-border-width-m, 2px) var(--goa-color-interactive-hover, #004f84);
-          }
-          .adsp-fb .adsp-fb-form-comment textarea:focus {
-            box-shadow: 0 0 0 3px var(--goa-color-interactive-focus, #feba35);
-          }
-          .adsp-fb .adsp-fb-form-comment textarea.error {
-            box-shadow: 0 0 0 var(--goa-border-width-m, 2px) red;
-            border: 1px solid red;
-          }
-          .adsp-fb .adsp-fb-form-comment textarea::placeholder {
-            text-align: right;
-            position: absolute;
-            bottom: 10px;
-            right: 16px;
-          }
-
-          .adsp-fb .adsp-fb-actions,
-          .adsp-fb .adsp-fb-success-actions {
-            display: flex;
-            padding-right: 24px;
-            margin-top: 24px;
-          }
-          .adsp-fb .adsp-fb-success-actions {
-            padding-right: 0px;
-          }
-
-          .adsp-fb button {
-            display: inline-flex;
-            cursor: pointer;
-            border-radius: 0.25rem;
-            box-sizing: border-box;
-            font-size: 1.25rem;
-            font-weight: 400;
-            height: 2.625rem;
-            line-height: 100%;
-            padding: 0 0.75rem;
-            gap: 0.5rem;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #0070c4;
-            color: #0070c4;
-          }
-          .adsp-fb button:active {
-            transform: translateY(2px);
-          }
-
-          .adsp-fb button:first-child {
-            margin-left: auto !important;
-          }
-          .adsp-fb button.adsp-fb-form-primary {
-            border: 2px solid #0070c4;
-            margin-left: 24px;
-            background: #0070c4;
-            color: #ffffff;
-          }
-
-          .adsp-fb button.adsp-fb-form-primary:focus-visible {
-            border-radius: 0.25rem;
-            box-shadow: 0 0 0 3px #feba35;
-            outline: #feba35 solid 1px;
-          }
-
-          .adsp-fb button:hover {
-            border-color: #004f84;
-            background-color: #004f84;
-          }
-
-          .adsp-fb button:focus:active {
-            border-color: #004f84;
-            background-color: #004f84;
-            box-shadow: 0 0 0 3px #feba35;
-          }
-
-          .adsp-fb button[disabled] {
-            pointer-events: none;
-            opacity: 0.5;
-          }
-
-          .adsp-fb button.adsp-fb-form-secondary {
-            border: 2px solid #0070c4;
-            background-color: #ffffff;
-            color: #0070c4;
-          }
-          .adsp-fb button.adsp-fb-form-secondary:focus-visible {
-            border-radius: 0.25rem;
-            box-shadow: 0 0 0 3px #feba35;
-            outline: #feba35 solid 1px;
-          }
-
-          .adsp-fb button.adsp-fb-form-secondary:hover {
-            border-color: #004f84;
-            color: #004f84;
-            background-color: #f1f1f1;
-          }
-          .adsp-fb button.adsp-fb-form-secondary:focus,
-          .adsp-fb button.adsp-fb-form-secondary:active {
-            border-color: #004f84;
-            background-color: #f1f1f1;
-            border-radius: 0.25rem;
-            border: 1px solid #004f84;
-          }
-
-          .adsp-fb .adsp-fb-message {
-            position: absolute;
-            visibility: hidden;
-            top: 0;
-            right: 0;
-            height: 100%;
-            width: 100%;
-            transition: transform 200ms;
-            transform: translateX(100%);
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            padding: 24px 24px;
-          }
-          .adsp-fb .adsp-fb-rating-item {
-            display: flex;
-            flex-direction: column;
-            padding-left: 2px;
-          }
-          .adsp-fb .adsp-fb-sent {
-            text-align: left;
-          }
-          .adsp-fb .adsp-fb-error {
-            text-align: center;
-          }
-          .adsp-fb .adsp-fb-sent .adsp-fb-error .adsp-fb-actions {
-            margin-top: auto;
-          }
-
-          .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
-            transform: translateX(-100%);
-            visibility: hidden;
-            height: 264px;
-          }
-          .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
-            transform: translateX(-100%);
-            visibility: hidden;
-            height: 334px;
-          }
-          .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-sent {
-            visibility: visible;
-            transition: visibility 0s 0.1s;
-          }
-
-          .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-error {
-            visibility: visible;
-            transition: visibility 0s 0.1s;
-          }
-          .adsp-fb .adsp-fb-radios {
-            margin-top: 16px;
-            margin-bottom: 16px;
-            display: flex;
-            flex-direction: row;
-          }
-          .adsp-fb .adsp-fb-radio-span {
-            display: flex;
-            align-items: center;
-          }
-          .adsp-fb .adsp-fb-radio-span:focus-visible {
-            border-radius: 0.25rem;
-            border: 1px solid #feba35;
-            outline: #feba35 solid 1px;
-          }
-          .adsp-fb .adsp-fb-rating-icon {
-            display: block !important;
-            width: 46px !important;
-            min-width: 46px !important;
-            max-width: 46px !important;
-            height: 46px !important;
-            min-height: 46px !important;
-            max-height: 46px !important;
-            padding: 0 !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            filter: none !important;
-            object-fit: contain !important;
-            cursor: pointer;
-            transform: translateZ(0);
-            will-change: transform, color;
-            transition: transform 0.3s ease-in-out color 0.3s ease;
-            transition:
-              -webkit-transform 0.3s ease-in-out,
-              color 0.3s ease;
-          }
-
-          .adsp-fb .title {
-            color: #333333;
-            font-size: var(--fs-xl, 1.5rem);
-            font-weight: 700;
-            line-height: 1.5rem;
-            text-align: left;
-            margin-bottom: 0px;
-          }
-
-          .adsp-fb .help-text {
-            color: #333333;
-            font-size: 1.125rem;
-            font-weight: 400;
-            margin-top: 4px;
-            margin-bottom: 12px;
-            line-height: 28px;
-          }
-          .adsp-fb .adsp-fb-radio-container {
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-          }
-          .adsp-fb .adsp-fb-radio-container span {
-            color: var(--color-gray-600, #666666);
-            font-size: 14px;
-          }
-          .adsp-fb .adsp-fb-radio {
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border: 2px solid #ccc;
-            border-radius: 50%;
-            position: relative;
-            background-color: #fff;
-            transition: box-shadow 100ms ease-in-out;
-            cursor: pointer;
-          }
-          .adsp-fb .adsp-fb-radio *,
-          .adsp-fb .adsp-fb-radio *:before,
-          .adsp-fb .adsp-fb-radio *:after {
-            box-sizing: border-box;
-          }
-
-          .adsp-fb .adsp-fb-radio::not(:checked) {
-            border: 1px solid #666666;
-          }
-
-          .adsp-fb .adsp-fb-radio:checked:hover {
-            border: 7px solid #004f84;
-            box-shadow: 0 0 0 1px #004f84;
-          }
-
-          .adsp-fb .adsp-fb-radio:hover,
-          .adsp-fb .adsp-fb-radio:focus-visible,
-          .adsp-fb .adsp-fb-radio:focus:active {
-            outline: initial;
-            border: 1px solid #004f84;
-            box-shadow: 0 0 0 1px #004f84;
-          }
-
-          .adsp-fb .adsp-fb-radio:hover:active,
-          .adsp-fb .adsp-fb-radio:hover:focus {
-            box-shadow: 0 0 0 3px #feba35;
-          }
-
-          .adsp-fb .adsp-fb-radio:checked {
-            border: 7px solid #0070c4;
-          }
-          .adsp-fb .adsp-fb-radio.error {
-            border: 1px solid red;
-            box-shadow: 0 0 0 1px red;
-          }
-          .adsp-fb .adsp-fb-radio-label {
-            color: #333333;
-            font-size: 1.125rem;
-            padding: 0 8px;
-            font-weight: normal;
-            cursor: pointer;
-          }
-          .adsp-fb .errorText {
-            color: #333333;
-            font-size: 18px;
-          }
-          .adsp-fb .errorButton {
-            padding-top: 4px;
-          }
-          .adsp-fb .successButton {
-            margin-top: 24px;
-          }
-
-          .adsp-fb .styled-hr {
-            border: none;
-            height: 1px;
-            background-color: #ccc;
-            margin: 0;
-          }
-
-          /* Top-facing shadow */
-          .adsp-fb .styled-hr-top {
-            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
-          }
-
-          /* Bottom-facing shadow */
-          .adsp-fb .styled-hr-bottom {
-            box-shadow: -2px -3px 3px rgba(0, 0, 0, 0.1);
-          }
-
-          .adsp-fb .hr-width {
-            width: 98%;
-            margin: 0;
-          }
-          .adsp-fb .full-width-hr-container {
-            margin-left: -24px;
-          }
-
-          .adsp-fb .p-error {
-            color: #333333;
-            font-size: 1.125rem;
-            font-weight: 400;
-
-            line-height: 28px;
-            margin: 0 1.5rem 1rem 1.5rem;
-          }
-          .adsp-fb h3.h3-error {
-            margin: 0 !important;
-            margin-block-start: 0 !important;
-            margin-block-end: 0 !important;
-          }
-          .adsp-fb .h3-sub-title {
-            color: #333333;
-            font-size: var(--fs-xl, 1.5rem);
-            font-weight: var(--fw-regular, 400);
-            line-height: var(--lh-lg, 2rem);
-            margin-top: 0;
-            margin-bottom: 0;
-            padding-top: 36px !important;
-          }
-          .adsp-fb .h3-success {
-            color: #333333;
-            font-size: 1.5rem;
-            font-weight: 400;
-            line-height: 2rem;
-            margin-bottom: 0;
-          }
-          .adsp-fb .h3-success img {
-            vertical-align: baseline;
-          }
-          .adsp-fb .p-content {
-            color: #333333;
-            font-size: 1.125rem;
-            font-weight: 400;
-            line-height: 28px;
-            margin: 0;
-          }
-          .adsp-fb .p-content > a,
-          .adsp-fb .p-content > a:link,
-          .adsp-fb .p-content > a:visited {
-            color: #0070c4;
-          }
-
-          .adsp-fb .adsp-fb-sent .p-content a {
-            color: #0070c4;
-            text-decoration: underline;
-          }
-          .adsp-fb .adsp-fb-sent button.adsp-fb-form-primary {
-          }
-          .adsp-fb .inline-error {
-            display: none;
-            align-items: center;
-            color: red;
-            gap: 0.5rem;
-          }
-          .adsp-fb .inline-error.visible {
-            display: flex;
-            visibility: visible;
-          }
-          .adsp-fb .inline-error p {
-            margin: 0;
-            color: red;
-          }
-          @media screen and (max-width: 767px) {
-            .adsp-fb div.adsp-fb-form-container {
-            }
-            .adsp-fb .adsp-fb-badge {
-              top: auto;
-              bottom: 12vh;
-              font-size: 12px;
-              padding: 12px 0;
-              line-height: 1.5rem;
-            }
-          }
-          @media screen and (max-width: 640px) {
-            .adsp-fb .adsp-fb-form-container[data-completed='true'] .adsp-fb-form {
-              height: 320px;
-            }
-            .adsp-fb .adsp-fb-form-container[data-error='true'] .adsp-fb-form {
-              height: 350px;
-            }
-            .adsp-fb div.adsp-fb-form-container {
-              bottom: 0;
-              border: 0;
-              width: 100%;
-              top: auto;
-              max-height: 100%;
-              overflow-x: hidden;
-            }
-            .adsp-fb .adsp-fb-main {
-              overflow-y: auto;
-            }
-            .adsp-fb .adsp-fb-content {
-              margin-bottom: 0px;
-              padding-top: 24px;
-            }
-
-            .adsp-fb .adsp-fb-actions {
-              bottom: 0;
-              margin-top: 0px;
-              flex-direction: column-reverse;
-            }
-            .adsp-fb .adsp-fb-actions > button {
-              width: 100%;
-              margin-top: 12px;
-            }
-            .adsp-fb button.adsp-fb-form-primary {
-              margin-left: 0;
-            }
-            .adsp-fb .adsp-fb-container-heading {
-              height: 55px !important;
-            }
-            .adsp-fb .adsp-fb-rating-item {
-              flex-direction: row;
-              gap: 6px;
-            }
-            .adsp-fb .adsp-fb-form-rating {
-              flex-direction: column-reverse;
-              gap: 16px;
-            }
-            .adsp-fb .adsp-fb-form-rating > div {
-              display: flex;
-              flex-direction: row;
-              align-items: center;
-            }
-            .adsp-fb .adsp-fb-form-rating > div > img {
-              height: 32px !important;
-              width: 32px !important;
-              min-width: 32px !important;
-              max-width: 32px !important;
-              min-height: 32px !important;
-              max-height: 32px !important;
-              margin-right: 8px;
-            }
-            .adsp-fb .adsp-fb-tooltip-text {
-              visibility: hidden;
-              opacity: 0;
-            }
-            .adsp-fb .adsp-fb-rating-text {
-              padding-top: 12px;
-              cursor: pointer;
-              margin-bottom: 0px !important;
-              display: block;
-              padding: 0;
-            }
-            .adsp-fb .adsp-fb-rating-text:hover {
-              color: #004f84;
-            }
-          }
-          @media screen and (max-height: 800px) {
-            .adsp-fb .adsp-fb-form-container {
-              top: 16px;
-            }
-          }
-
-          .adsp-fb .char-count {
-            display: block;
-            font-size: 14px;
-            color: #666;
-            text-align: right;
-            margin-top: 4px;
-          }
-
-          .adsp-fb .char-warning {
-            display: none;
-            font-size: 14px;
-            color: red;
-            text-align: right;
-            margin-top: 4px;
-          }
-
-          .adsp-fb .char-warning.visible {
-            display: block;
-          }
-        </style>`,
-        styleContainer,
-      );
-      head.append(...Array.from(styleContainer.childNodes));
+      const style = document.createElement('style');
+      style.id = 'adsp-feedback-widget-styles';
+      style.textContent = feedbackStyles;
+      head.append(style);
     }
 
     const body = document.querySelector('body');
     if (body) {
       render(
         html`
-          <div ${ref(this.rootRef)} class="adsp-fb-root">
+          <div ${ref(this.rootRef)} class="adsp-fb-root" data-design-system="${this.designSystemsVersion}">
             <div class="adsp-fb">
               <div
                 tabindex="0"
@@ -1349,11 +658,13 @@ export class AdspFeedback implements AdspFeedbackApi {
                   </div>
                   <hr class="styled-hr styled-hr-top" />
                   <form class="adsp-fb-form">
-                    <h3 class="h3-sub-title">Tell us what you think</h3>
+                    <h3 class="h3-sub-title"><b>Tell us what you think</b></h3>
+                    <br />
                     <p class="p-content">
                       Please help us improve our service by sharing feedback about your experience. This will only take
                       a minute.
                     </p>
+                    <p>All responses are anonymous.</p>
                     <div class="adsp-fb-actions">
                       <button
                         ${ref(this.feedbackStartCloseButton)}

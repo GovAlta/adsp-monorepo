@@ -9,6 +9,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/notification-service/webpack.config.js",
         "outputPath": "dist/apps/notification-service",
@@ -28,8 +29,7 @@
           "sourceMap": false,
           "fileReplacements": []
         }
-      },
-      "outputs": ["{options.outputPath}"]
+      }
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -39,14 +39,20 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/notification-service"],
       "options": {
         "jestConfig": "apps/notification-service/jest.config.ts"
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/notification-service"]
+      }
     }
   }
 }

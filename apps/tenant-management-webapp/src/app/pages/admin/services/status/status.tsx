@@ -117,7 +117,7 @@ function Status(): JSX.Element {
               <p>
                 <b>Do you want to subscribe and receive notifications for application health changes?</b>
               </p>
-              <GoabCheckbox
+              <GoabCheckbox size="compact"
                 name="subscribe"
                 checked={!!subscription}
                 onChange={() => {

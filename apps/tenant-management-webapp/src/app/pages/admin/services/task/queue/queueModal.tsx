@@ -158,7 +158,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
         />
       </GoabFormItem>
       <GoabFormItem error={errors?.['name']} label="Name">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="name"
           width="100%"

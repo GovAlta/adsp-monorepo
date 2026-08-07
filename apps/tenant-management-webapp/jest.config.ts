@@ -1,11 +1,5 @@
 /* eslint-disable */
-import { createRequire } from 'node:module';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
 
 export default {
   displayName: 'tenant-management-webapp',
@@ -26,6 +20,10 @@ export default {
     '^@lib(.*)$': path.resolve(__dirname, './src/app/lib/$1'),
     '^@pages(.*)$': path.resolve(__dirname, './src/app/pages/$1'),
     '^@store(.*)$': path.resolve(__dirname, './src/app/store/$1'),
+    // clean-code-ignore: RULE-19
+    '^@form-editor-common$': path.resolve(__dirname, '../../libs/form-editor-common/src/index.ts'),
+    // clean-code-ignore: RULE-19
+    '^@form-editor-common/(.*)$': path.resolve(__dirname, '../../libs/form-editor-common/src/lib/$1'),
     '^uuid$': require.resolve('uuid'),
     // clean-code-ignore: RULE-19
     // @mdx-js/mdx, react-markdown and rehype-sanitize are ESM-only; stub them so Jest (babel-jest) can parse tests.

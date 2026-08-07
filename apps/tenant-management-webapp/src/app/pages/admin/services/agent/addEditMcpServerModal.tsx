@@ -136,7 +136,7 @@ export const AddEditMcpServerModal: FunctionComponent<AddEditMcpServerModalProps
     >
       <form>
         <GoabFormItem label="Server URL" mb="m" error={errors.url}>
-          <GoabInput
+          <GoabInput size="compact"
             name="mcp-server-url"
             value={server.url}
             width="100%"

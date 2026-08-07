@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useState } from 'react';
 
 import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal, GoabTextArea } from '@abgov/react-components';
@@ -8,7 +9,7 @@ import { useValidators } from '@lib/validation/useValidators';
 
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import { GoabTextAreaOnKeyPressDetail, GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 interface TopicModalProps {
   topic: TopicItem;
   selComment: Comment;
@@ -85,13 +86,11 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
               width="100%"
               testId="content"
               aria-label="content"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('content');
                 validators['content'].check(detail.value);
                 setComment({ ...comment, content: detail.value });
               }}
-              // eslint-disable-next-line
-              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={comment?.content?.length || 0}

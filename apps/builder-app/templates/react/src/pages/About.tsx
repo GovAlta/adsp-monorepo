@@ -149,7 +149,7 @@ export default function About() {
               </GoabButton>
             </Link>
             <Link to="/components" style={{ textDecoration: 'none' }}>
-              <GoabButton size="compact" type="text">
+              <GoabButton size="compact" type="tertiary">
                 View components
               </GoabButton>
             </Link>

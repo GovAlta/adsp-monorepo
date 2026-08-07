@@ -11,8 +11,6 @@ export const LandingSample = (): JSX.Element => {
     return state.config.serviceUrls.chatServiceApiUrl;
   });
 
-  //eslint-disable-next-line
-  useEffect(() => {}, [chatApiUrl]);
   return (
     <Container>
       <Grid>

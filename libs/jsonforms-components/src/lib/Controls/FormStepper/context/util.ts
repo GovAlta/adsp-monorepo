@@ -1,5 +1,6 @@
 import { JsonSchema, toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
 import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
 import { StepStatus, StepStatusType, VALIDATION_KEYWORDS } from '../../../common/Constants';
@@ -117,6 +118,16 @@ export function hasValueAtScope(data: any, scope: string): boolean {
   return hasMeaningfulValue(getValueAtPath(data, path));
 }
 
+export interface AutoPopulatedPathValue {
+  path: string;
+  value: unknown;
+}
+
+// Auto-populate targets reach us either as schema scopes (#/properties/firstName) or as the data
+// paths toDataPath produces (firstName). Normalize both to the dot form used for value lookups.
+const toNormalizedPath = (pathOrScope: string): string =>
+  pathOrScope?.startsWith('#/') ? normalizeSchemaPath(pathOrScope) : pathOrScope || '';
+
 export function getStepStatus(opts: {
   scopes: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,34 +136,71 @@ export function getStepStatus(opts: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: JsonSchema;
   visited?: boolean;
+  // Data paths that are auto-populated (system-filled from the user profile). Values in these
+  // paths do not count as user activity, so a page holding only auto-populated data stays
+  // NotStarted until the user actually opens it.
+  autoPopulatedScopes?: string[];
+  // The values auto-populate would write, by path. A scope only stops counting as user activity
+  // while it still holds exactly this value; once the user edits or clears it the change is
+  // theirs, so the step is started and stays that way when the form is resumed. Omit when the
+  // user profile isn't known — every auto-populated scope is then treated as system-filled.
+  autoPopulatedValues?: AutoPopulatedPathValue[];
 }): StepStatusData {
-  const { scopes, errors, schema, data, visited } = opts;
+  const { scopes, errors, schema, data, visited, autoPopulatedScopes = [], autoPopulatedValues = [] } = opts;
 
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
 
-  // A step with no required fields has nothing that must be filled in, so once
-  // the user has visited it (e.g. navigated back to the application overview
-  // page) it is trivially Completed, regardless of whether its optional
-  // fields hold any data.
   const requiredForScopes = getRequiredForScopes(scopes, schema);
 
   const stepHasRequiredFields = isScopeRequired(normalizedScopes, requiredForScopes);
 
-  // NotStarted is data-driven: if any scoped field has a defined value the step has been started.
-  // For non-standard scopes that cannot be normalised, fall back to the visited flag so those
-  // steps are never stuck in NotStarted when the form is pre-populated or already visited.
-  const stepHasData =
-    normalizedScopes.length > 0
-      ? normalizedScopes.some((path) => hasMeaningfulValue(get(data || {}, path)))
-      : (visited ?? false);
+  // A step is "started" when the user has visited it OR it already holds user-entered data.
+  // Auto-populated values (system-filled from the user profile) are excluded, so:
+  //  - a page the user has never opened is NotStarted even when auto-populated, and
+  //  - a saved form the user actually filled still shows its status when resumed.
+  const autoPopulatedSet = new Set(autoPopulatedScopes.map(toNormalizedPath).filter(Boolean));
+  const autoPopulatedValueByPath = new Map<string, unknown>();
 
-  if (!stepHasRequiredFields && (visited || stepHasData)) {
+  autoPopulatedValues.forEach(({ path, value }) => {
+    const normalized = toNormalizedPath(path);
+    if (normalized) {
+      autoPopulatedSet.add(normalized);
+      autoPopulatedValueByPath.set(normalized, value);
+    }
+  });
+
+  // Still system-filled only while the value matches what auto-populate would write. Without a
+  // known value we can't tell an edit from the original, so assume it is untouched.
+  const isStillAutoPopulated = (path: string): boolean => {
+    if (!autoPopulatedValueByPath.has(path)) {
+      return true;
+    }
+
+    return isEqual(get(data || {}, path), autoPopulatedValueByPath.get(path));
+  };
+
+  // Editing or clearing an auto-populated field is user activity in its own right, even when what
+  // is left behind is empty — otherwise clearing a pre-filled field would send the step back to
+  // NotStarted.
+  const userEditedAutoPopulated = normalizedScopes.some(
+    (path) => autoPopulatedSet.has(path) && !isStillAutoPopulated(path),
+  );
+
+  const userDataScopes = normalizedScopes.filter((path) => !autoPopulatedSet.has(path));
+  const stepHasUserData =
+    userDataScopes.some((path) => hasMeaningfulValue(get(data || {}, path))) || userEditedAutoPopulated;
+
+  const started = (visited ?? false) || stepHasUserData;
+
+  if (!started) {
+    return { status: StepStatus.NOT_STARTED, hasRequiredFields: stepHasRequiredFields };
+  }
+
+  // A started step with no required fields has nothing left to fill in, so it is trivially Completed.
+  if (!stepHasRequiredFields) {
     return { status: StepStatus.COMPLETED, hasRequiredFields: stepHasRequiredFields };
   }
 
-  if (!stepHasData) {
-    return { status: StepStatus.NOT_STARTED, hasRequiredFields: stepHasRequiredFields };
-  }
   const incompleteInStep = getIncompletePaths(errors, scopes);
 
   if (incompleteInStep.length > 0) {
@@ -383,6 +431,43 @@ export const hasDataInScopes = (data: object, scopes: string[]) => {
 
 const getLocalStorageKeyPrefix = () => {
   return window.location.href + '_' + new Date().toISOString().slice(0, 10);
+};
+
+// Steps the user has opened, persisted per form so the status survives a resume.
+//
+// Whether a step was opened cannot be recovered from the form data: a user who edits an
+// auto-populated field and then puts the original value back leaves data identical to the
+// untouched case. The visit has to be recorded when it happens, or it is lost.
+//
+// Deliberately keyed on the form id rather than the URL+date used by the cacheStatus cache above,
+// so resuming a draft tomorrow — or from a different route to the same form — still restores it.
+const getVisitedStepsKey = (formId: string) => `adsp.form.${formId}.visitedSteps`;
+
+export const saveVisitedSteps = (formId: string | undefined, ids: number[]): void => {
+  if (!formId) return;
+
+  try {
+    localStorage.setItem(getVisitedStepsKey(formId), JSON.stringify(ids));
+  } catch (err) {
+    // Private browsing and full quotas both throw here. Losing the cache only costs the user the
+    // restored status on resume, so it must never take the form down with it.
+    console.warn(`Could not persist visited steps: ${err}`);
+  }
+};
+
+export const getVisitedSteps = (formId: string | undefined): number[] | undefined => {
+  if (!formId) return undefined;
+
+  try {
+    const value = localStorage.getItem(getVisitedStepsKey(formId));
+    if (!value || !isJson(value)) return undefined;
+
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'number') : undefined;
+  } catch (err) {
+    console.warn(`Could not read visited steps: ${err}`);
+    return undefined;
+  }
 };
 
 export function isJson(str: string) {

@@ -152,9 +152,6 @@ export const ApplicationFormModal: FC<Props> = ({
     dispatch(fetchDirectoryDetailByURNs(tenantServiceUrns));
   }, [tenantServiceUrns.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
-  // useEffect(() => {}, [healthEndpoints]);
-
   return (
     <GoabModal
       open={isOpen}
@@ -190,6 +187,7 @@ export const ApplicationFormModal: FC<Props> = ({
     >
       <GoabFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name" mb="s">
         <GoabInput
+          size="compact"
           type="text"
           name="name"
           width="100%"
@@ -257,6 +255,7 @@ export const ApplicationFormModal: FC<Props> = ({
       </GoabFormItem>
       <GoabFormItem error={errors?.['url']} label="URL" mb="s" mt="s">
         <GoabInput
+          size="compact"
           type="url"
           name="url"
           width="100%"

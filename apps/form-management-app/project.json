@@ -8,6 +8,8 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/form-management-app",
         "index": "apps/form-management-app/src/index.html",
@@ -71,12 +73,11 @@
           "sourceMap": true,
           "vendorChunk": true
         }
-      },
-      "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production"
+      }
     },
     "serve": {
       "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "form-management-app:build",
         "proxyConfig": "apps/form-management-app/proxy.conf.json"
@@ -88,18 +89,23 @@
         "development": {
           "buildTarget": "form-management-app:build:development"
         }
-      },
-      "defaultConfiguration": "development"
+      }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/form-management-app"],
       "options": {
         "jestConfig": "apps/form-management-app/jest.config.ts"
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/form-management-app"]
+      }
     }
   }
 }

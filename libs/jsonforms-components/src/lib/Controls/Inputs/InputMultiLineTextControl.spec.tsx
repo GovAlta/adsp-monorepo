@@ -97,7 +97,7 @@ describe('Input Text Control tests', () => {
       const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
 
       fireEvent(input, new CustomEvent('_change', { detail: { name: 'test', value: 'testValue' } }));
-      expect(input.getAttribute('value')).toBe('testValue');
+      expect(input.getAttribute('value')).toBe('TESTVALUE');
     });
 
     it('can trigger handleChange keyPress events autoCapitalize with empty text', async () => {
@@ -126,6 +126,32 @@ describe('Input Text Control tests', () => {
 
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'test' } }));
       expect(input.getAttribute('value')).toBe('test');
+    });
+
+    // CS-5218: value was bound to the debounced copy, so the textarea rendered text the user had
+    // already typed past and the web component wrote that stale text back over the field.
+    it('renders every typed character rather than the debounced copy', async () => {
+      const props = { ...staticProps, data: '' };
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
+
+      ['D', 'DO', 'DO NOT', 'DO NOT DELETE'].forEach((value) => {
+        fireEvent(input, new CustomEvent('_change', { detail: { name: 'test', value } }));
+      });
+
+      expect(input.getAttribute('value')).toBe('DO NOT DELETE');
+    });
+
+    it('records pasted text, which arrives without a key press', async () => {
+      const handleChange = jest.fn();
+      const props = { ...staticProps, data: '', handleChange };
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
+
+      fireEvent(input, new CustomEvent('_change', { detail: { name: 'test', value: 'pasted text' } }));
+
+      expect(input.getAttribute('value')).toBe('pasted text');
+      expect(handleChange).toHaveBeenCalledWith('test', 'pasted text');
     });
 
     it('shows required validation after an empty multiline text input loses focus', async () => {

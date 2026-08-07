@@ -121,7 +121,7 @@ export const AddEditResourceTypeModal = ({
       }
     >
       <GoabFormItem label="Api" requirement="required" error={errors?.['api']}>
-        <GoabDropdown
+        <GoabDropdown size="compact"
           name="api"
           value={isEdit ? urn : api}
           aria-label="resource-type-api"
@@ -149,7 +149,7 @@ export const AddEditResourceTypeModal = ({
       </GoabFormItem>
       <br />
       <GoabFormItem label="Type" error={errors?.['type']} requirement="required">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="type"
           value={resourceType?.type}
@@ -165,7 +165,7 @@ export const AddEditResourceTypeModal = ({
       </GoabFormItem>
       <br />
       <GoabFormItem label="Matcher" error={errors?.['matcher']} requirement="required">
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="matcher"
           value={resourceType?.matcher}
@@ -184,7 +184,7 @@ export const AddEditResourceTypeModal = ({
         label="Name path"
         helpText="Path to a property on the API GET response for the resource which represents its name"
       >
-        <GoabInput
+        <GoabInput size="compact"
           type="text"
           name="name_path"
           value={resourceType?.namePath}
@@ -198,7 +198,7 @@ export const AddEditResourceTypeModal = ({
       </GoabFormItem>
       <br />
       <GoabFormItem label="Delete event">
-        <GoabDropdown
+        <GoabDropdown size="compact"
           name="resource-type-event-definitions"
           value={isEdit ? initialDeleteEvent : selectedDeleteEvent}
           aria-label="resource-type-form-dropdown"

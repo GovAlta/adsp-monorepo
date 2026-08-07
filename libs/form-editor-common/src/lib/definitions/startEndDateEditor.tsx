@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { GoabButton, GoabFormItem, GoabInput, GoabInputTime, GoabButtonGroup, GoabGrid } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabInput, GoabButtonGroup, GoabGrid } from '@abgov/react-components';
 import { UpdateEventsByCalendar, CreateEventsByCalendar } from '@store/calendar/actions';
 
-import { CalendarEvent, EventDeleteModalType } from '@store/calendar/models';
+import { CalendarEvent } from '@store/calendar/models';
 
 import { getDateTime } from '@lib/timeUtil';
 import { Margin } from '../styled-components';
@@ -45,6 +45,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
         <GoabFormItem label="Start date">
           <GoabInput
             type="date"
+            size="compact"
             name="startDate"
             value={(event.start ? new Date(event.start) : new Date()).toISOString().slice(0, 10)}
             width="100%"
@@ -59,6 +60,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
           <GoabInput
             type="time"
             name="startTime"
+            size="compact"
             value={new Date(event.start)?.toTimeString().split(' ')[0]}
             step={1}
             width="100%"
@@ -73,6 +75,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
           <GoabInput
             type="date"
             name="endDate"
+            size="compact"
             value={(event.end ? new Date(event.end) : new Date()).toISOString().slice(0, 10)}
             width="100%"
             testId="calendar-event-modal-end-date-input"
@@ -86,6 +89,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
           <GoabInput
             type="time"
             name="endTime"
+            size="compact"
             value={new Date(event.end)?.toTimeString().split(' ')[0]}
             step={1}
             width="100%"
@@ -107,7 +111,8 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
                 </GoabButton>
               </Margin>
               <Margin>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   type="primary"
                   variant="destructive"
                   testId="delete-confirm"
@@ -121,12 +126,18 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
           {deleteConfirm && (
             <>
               <Margin>
-                <GoabButton size="compact" type="secondary" testId="delete-cancel" onClick={() => setDeleteConfirm(false)}>
+                <GoabButton
+                  size="compact"
+                  type="secondary"
+                  testId="delete-cancel"
+                  onClick={() => setDeleteConfirm(false)}
+                >
                   Cancel
                 </GoabButton>
               </Margin>
               <Margin>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   type="primary"
                   variant="destructive"
                   testId="delete-confirm"
@@ -146,7 +157,8 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
       {edit && (
         <Margin>
           <GoabButtonGroup alignment="end">
-            <GoabButton size="compact"
+            <GoabButton
+              size="compact"
               type="secondary"
               onClick={() => {
                 setEdit(false);
@@ -156,7 +168,8 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
               Cancel
             </GoabButton>
 
-            <GoabButton size="compact"
+            <GoabButton
+              size="compact"
               type="primary"
               onClick={() => {
                 if (getDateTime(endDate, endTime) < getDateTime(startDate, startTime)) {

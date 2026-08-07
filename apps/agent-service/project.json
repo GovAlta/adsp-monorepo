@@ -3,8 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/agent-service/src",
   "projectType": "application",
-  "implicitDependencies": ["jsonforms-components"],
   "tags": [],
+  "implicitDependencies": ["jsonforms-components"],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -78,7 +78,13 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",

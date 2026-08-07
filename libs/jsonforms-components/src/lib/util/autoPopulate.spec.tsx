@@ -8,7 +8,7 @@ import {
   mergeAutoPopulatedData,
 } from './autoPopulate';
 import { User } from '../Context/register';
-import { INIT } from '@jsonforms/core';
+import { INIT, UPDATE_CORE } from '@jsonforms/core';
 
 describe('autoPopulateValue', () => {
   const mockUser: User = {
@@ -86,6 +86,40 @@ describe('mergeAutoPopulatedData', () => {
     const data = { foo: 'bar' };
     expect(mergeAutoPopulatedData(data, [])).toBe(data);
   });
+
+  it('populates a value the user has never set', () => {
+    expect(mergeAutoPopulatedData({}, [{ path: 'applicantFirstName', value: 'John' }])).toEqual({
+      applicantFirstName: 'John',
+    });
+  });
+
+  it('populates a null value', () => {
+    expect(
+      mergeAutoPopulatedData({ applicantFirstName: null }, [{ path: 'applicantFirstName', value: 'John' }]),
+    ).toEqual({ applicantFirstName: 'John' });
+  });
+
+  it('leaves a cleared value cleared', () => {
+    // Regression guard: the text controls write '' when a field is cleared. Treating '' as an
+    // empty populate target refilled the field on the next merge, so the user could never erase an
+    // auto-populated value — it grew back as fast as they deleted it.
+    expect(mergeAutoPopulatedData({ applicantFirstName: '' }, [{ path: 'applicantFirstName', value: 'John' }])).toEqual(
+      { applicantFirstName: '' },
+    );
+  });
+
+  it('is idempotent once the user has cleared a value', () => {
+    const populated = [{ path: 'applicantFirstName', value: 'John' }];
+    const cleared = mergeAutoPopulatedData({ applicantFirstName: '' }, populated);
+
+    expect(mergeAutoPopulatedData(cleared, populated)).toEqual({ applicantFirstName: '' });
+  });
+
+  it('leaves a nested cleared value cleared', () => {
+    expect(
+      mergeAutoPopulatedData({ contact: { email: '' } }, [{ path: 'contact.email', value: 'john@example.com' }]),
+    ).toEqual({ contact: { email: '' } });
+  });
 });
 
 describe('auto-populate middleware', () => {
@@ -147,5 +181,16 @@ describe('auto-populate middleware', () => {
         [{ path: 'applicantFirstName', value: 'John' }],
       ),
     ).toEqual({ applicantFirstName: 'Existing' });
+  });
+
+  it('does not refill a value the user cleared on a later UPDATE_CORE', () => {
+    // UPDATE_CORE fires on every data change, so the middleware re-runs while the user types. It
+    // must be a no-op once the field holds a real value, including the empty string.
+    const middleware = createAutoPopulateMiddleware(uiSchema, mockUser);
+    const cleared = { data: { applicantFirstName: '', contact: { email: '' } } };
+
+    const state = middleware(cleared, { type: UPDATE_CORE }, () => cleared);
+
+    expect(state.data).toEqual({ applicantFirstName: '', contact: { email: '' } });
   });
 });

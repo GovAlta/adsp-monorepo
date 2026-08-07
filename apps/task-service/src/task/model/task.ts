@@ -44,7 +44,11 @@ export class TaskEntity implements Task {
     return repository.save(entity);
   }
 
-  constructor(private repository: TaskRepository, queue: QueueEntity, task: NewTask | Task) {
+  constructor(
+    private repository: TaskRepository,
+    queue: QueueEntity,
+    task: NewTask | Task,
+  ) {
     this.tenantId = task.tenantId;
     this.context = task.context || {};
     this.queue = queue;
@@ -82,6 +86,18 @@ export class TaskEntity implements Task {
 
     if (update.context) {
       this.context = update.context;
+    }
+
+    if (update.priority) {
+      switch (update.priority) {
+        case TaskPriority.Urgent:
+        case TaskPriority.High:
+        case TaskPriority.Normal:
+          this.priority = update.priority;
+          break;
+        default:
+          throw new InvalidOperationError(`Specified priority '${update.priority}' not recognized.`);
+      }
     }
 
     if (update.data) {

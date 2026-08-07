@@ -4,7 +4,8 @@
     "esModuleInterop": false,
     "strict": true,
     "moduleResolution": "node",
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "ignoreDeprecations": "5.0"
   },
   "files": [],
   "include": [],

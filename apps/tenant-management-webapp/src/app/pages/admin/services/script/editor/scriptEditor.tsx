@@ -340,7 +340,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <hr className="hr-only-line" />
             <TombStone selectedScript={selectedScript} onSave={onSave} />
             <div style={{ paddingLeft: '4px' }}>
-              <GoabCheckbox
+              <GoabCheckbox size="compact"
                 checked={isServiceAccountChecked()}
                 name="script-use-service-account-checkbox"
                 testId="script-use-service-account-checkbox"

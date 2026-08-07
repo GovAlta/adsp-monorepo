@@ -25,7 +25,7 @@ interface CalendarDropdownProps {
 const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.Element => {
   return (
     <CalendarDropdownWrapper>
-      <GoabDropdown
+      <GoabDropdown size="compact"
         name="calendars"
         width="100%"
         placeholder="Select"
@@ -62,7 +62,6 @@ export const CalendarEvents = (): JSX.Element => {
   const onCalendarSelect = (name: string, value: string) => {
     setSelectedCalendar(value);
     dispatch(FetchEventsByCalendar(value, null));
-    dispatch(UpdateSearchCalendarEventCriteria());
   };
 
   useEffect(() => {

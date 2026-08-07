@@ -45,13 +45,15 @@ jest.mock('@jsonforms/react', () => ({
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
+// Only the helpers a test needs to steer are stubbed; the rest keep their real behaviour so the
+// control's suggestion and keyboard handling is exercised rather than short circuited.
 jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
   fetchAddressSuggestions: jest.fn(),
   filterAlbertaAddresses: jest.fn(),
   mapSuggestionToAddress: jest.fn(),
   filterSuggestionsWithoutAddressCount: jest.fn(),
   validatePostalCode: jest.fn(),
-  formatPostalCodeIfNeeded: jest.fn(),
 }));
 const mockHandleChange = jest.fn();
 const formUrl = 'http://mock-form-url.com';
@@ -223,6 +225,8 @@ describe('AddressLookUpControl', () => {
       inputField,
       new CustomEvent('_keyPress', {
         detail: {
+          name: 'addressLine1',
+          value: '123',
           key: 'ArrowDown',
           code: 40,
           charCode: 0,
@@ -233,6 +237,8 @@ describe('AddressLookUpControl', () => {
       inputField,
       new CustomEvent('_keyPress', {
         detail: {
+          name: 'addressLine1',
+          value: '123',
           key: 'ArrowUp',
           code: 38,
           charCode: 0,
@@ -244,6 +250,8 @@ describe('AddressLookUpControl', () => {
       inputField,
       new CustomEvent('_keyPress', {
         detail: {
+          name: 'addressLine1',
+          value: '123',
           key: 'Enter',
           code: 13,
           charCode: 0,
@@ -579,7 +587,7 @@ describe('AddressLookUpControl - More tests', () => {
     },
   ];
 
-  const renderComponent = (overrides = {}) => {
+  const buildProps = (overrides = {}) => {
     const defaultProps = {
       data: {},
       enabled: true,
@@ -611,14 +619,17 @@ describe('AddressLookUpControl - More tests', () => {
       handleChange: mockHandleChange,
     };
 
-    const props = { ...defaultProps, ...overrides };
-
-    return render(
-      <JsonFormContext.Provider value={mockFormContext}>
-        <AddressLookUpControl {...props} />
-      </JsonFormContext.Provider>,
-    );
+    return { ...defaultProps, ...overrides };
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderControl = (props: any) => (
+    <JsonFormContext.Provider value={mockFormContext}>
+      <AddressLookUpControl {...props} />
+    </JsonFormContext.Provider>
+  );
+
+  const renderComponent = (overrides = {}) => render(renderControl(buildProps(overrides)));
 
   describe('Default Address Initialization', () => {
     it('should use existing data if provided instead of default address', () => {
@@ -1226,6 +1237,141 @@ describe('AddressLookUpControl - More tests', () => {
       // Component should be visible - check if h3 exists
       const h3 = container.querySelector('h3');
       expect(h3).not.toBeNull();
+    });
+  });
+
+  // CS-5218: the inputs are controlled, so any render that carries a value older than what has been
+  // typed makes the web component overwrite the characters in between.
+  describe('Typed characters are retained', () => {
+    const typeInto = (input: Element, name: string, value: string) => {
+      act(() => {
+        fireEvent(input, new CustomEvent('_change', { detail: { name, value } }));
+      });
+    };
+
+    it('keeps addressLine1 in step with what was typed', () => {
+      const { baseElement } = renderComponent({ data: {} });
+      const input = baseElement.querySelector("goa-input[testId='address-form-address1']")!;
+
+      typeInto(input, 'addressLine1', 'D');
+      typeInto(input, 'addressLine1', 'DO');
+      typeInto(input, 'addressLine1', 'DO NOT DELETE');
+
+      expect(input.getAttribute('value')).toBe('DO NOT DELETE');
+    });
+
+    // Writing addressLine1 to the form data mid-lookup re-renders the form while the search is
+    // still debouncing, which closes the suggestions dropdown before it can be clicked.
+    it('does not touch the form data while the address lookup is being typed', () => {
+      const { baseElement } = renderComponent({ data: {} });
+      const input = baseElement.querySelector("goa-input[testId='address-form-address1']")!;
+
+      typeInto(input, 'addressLine1', '123 Main');
+
+      expect(mockHandleChange).not.toHaveBeenCalled();
+    });
+
+    it('commits the typed address once the field is left', () => {
+      const { baseElement } = renderComponent({ data: {} });
+      const input = baseElement.querySelector("goa-input[testId='address-form-address1']")!;
+
+      typeInto(input, 'addressLine1', '123 Main');
+
+      act(() => {
+        fireEvent(
+          input,
+          new CustomEvent('_blur', { detail: { name: 'addressLine1', value: '123 Main' } }),
+        );
+      });
+
+      expect(mockHandleChange).toHaveBeenCalledWith('address', expect.objectContaining({ addressLine1: '123 Main' }));
+    });
+
+    // useDebounce resolves synchronously under jest, so a commit is never actually outstanding.
+    // Restoring the real timing is what puts the control in the state this guards against.
+    describe('with production debounce timing', () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      const originalWorkerId = process.env.JEST_WORKER_ID;
+
+      beforeEach(() => {
+        process.env.NODE_ENV = 'production';
+        delete process.env.JEST_WORKER_ID;
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+        process.env.NODE_ENV = originalNodeEnv;
+        if (originalWorkerId !== undefined) {
+          process.env.JEST_WORKER_ID = originalWorkerId;
+        }
+      });
+
+      it('does not roll addressLine1 back when stale form data arrives mid-edit', () => {
+        const { baseElement, rerender } = renderComponent({ data: {} });
+        const input = baseElement.querySelector("goa-input[testId='address-form-address1']")!;
+
+        typeInto(input, 'addressLine1', 'DO NOT DELET');
+        typeInto(input, 'addressLine1', 'DO NOT DELETE');
+
+        // The form data round trip lands a keystroke behind what is in the box.
+        act(() => {
+          rerender(renderControl(buildProps({ data: { addressLine1: 'DO NOT DELET' } })));
+        });
+
+        expect(input.getAttribute('value')).toBe('DO NOT DELETE');
+      });
+
+      it('opens the suggestions dropdown and keeps it clickable after typing settles', async () => {
+        (fetchAddressSuggestions as jest.Mock).mockResolvedValue(mockSuggestions);
+        (filterSuggestionsWithoutAddressCount as jest.Mock).mockReturnValue(mockSuggestions);
+        (filterAlbertaAddresses as jest.Mock).mockReturnValue(mockSuggestions);
+        (mapSuggestionToAddress as jest.Mock).mockReturnValue({
+          addressLine1: '123 Main St',
+          municipality: 'Calgary',
+          subdivisionCode: 'AB',
+          postalCode: 'T1X 1A1',
+          country: 'CA',
+        });
+
+        const { baseElement } = renderComponent({ data: {} });
+        const input = baseElement.querySelector("goa-input[testId='address-form-address1']")!;
+
+        typeInto(input, 'addressLine1', '123 Main');
+
+        // Past both the commit debounce and the longer search debounce, then let the fetch settle.
+        await act(async () => {
+          jest.advanceTimersByTime(600);
+          await Promise.resolve();
+          await Promise.resolve();
+          await Promise.resolve();
+        });
+
+        const listItem = baseElement.querySelector("[data-testId='listItem-0']");
+        expect(listItem).not.toBeNull();
+
+        act(() => {
+          fireEvent.click(listItem!);
+        });
+
+        expect(input.getAttribute('value')).toBe('123 Main St');
+        expect(mockHandleChange).toHaveBeenLastCalledWith(
+          'address',
+          expect.objectContaining({ addressLine1: '123 Main St' }),
+        );
+      });
+    });
+
+    it('keeps the other address fields in step with what was typed', () => {
+      const { baseElement } = renderComponent({ data: {} });
+      const city = baseElement.querySelector("goa-input[testId='address-form-city']")!;
+
+      typeInto(city, 'municipality', 'C');
+      typeInto(city, 'municipality', 'Ca');
+      typeInto(city, 'municipality', 'Calgary');
+
+      expect(city.getAttribute('value')).toBe('Calgary');
+      expect(mockHandleChange).toHaveBeenLastCalledWith('address', expect.objectContaining({ municipality: 'Calgary' }));
     });
   });
 });

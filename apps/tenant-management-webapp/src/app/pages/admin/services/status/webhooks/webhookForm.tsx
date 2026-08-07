@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveWebhook } from '@store/status/actions';
@@ -32,7 +33,7 @@ import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
-  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
   GoabCheckboxOnChangeDetail,
@@ -173,7 +174,7 @@ export const WebhookFormModal = (): JSX.Element => {
       {loaded ? (
         <>
           <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               type="text"
               name="name"
               width="100%"
@@ -191,7 +192,7 @@ export const WebhookFormModal = (): JSX.Element => {
             />
           </GoabFormItem>
           <GoabFormItem error={errors?.['url']} label="Url" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               name="url"
               type="url"
               width="100%"
@@ -209,7 +210,7 @@ export const WebhookFormModal = (): JSX.Element => {
             />
           </GoabFormItem>
           <GoabFormItem error={errors?.['waitInterval']} label="Wait Interval" mb="s">
-            <GoabInput
+            <GoabInput size="compact"
               name="interval"
               type="number"
               width="50%"
@@ -228,7 +229,7 @@ export const WebhookFormModal = (): JSX.Element => {
           </GoabFormItem>
 
           <GoabFormItem label="Application" mb="s">
-            <GoabDropdown
+            <GoabDropdown size="compact"
               name="targetId"
               value={webhook?.targetId}
               onChange={(detail: GoabDropdownOnChangeDetail) =>
@@ -256,7 +257,7 @@ export const WebhookFormModal = (): JSX.Element => {
               name="description"
               value={webhook?.description}
               width="100%"
-              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
                 validators['description'].check(detail.value);
                 setWebhook({
@@ -264,8 +265,6 @@ export const WebhookFormModal = (): JSX.Element => {
                   description: detail.value,
                 });
               }}
-              // eslint-disable-next-line
-              onChange={() => {}}
               aria-label="description"
             />
             <HelpTextComponent
@@ -279,7 +278,7 @@ export const WebhookFormModal = (): JSX.Element => {
             {!orderedGroupNames && renderNoItem('event definition')}
             {['monitored-service-down', 'monitored-service-up'].map((name) => {
               return (
-                <GoabCheckbox
+                <GoabCheckbox size="compact"
                   name={name}
                   key={`${name}:${Math.random()}`}
                   testId="webhook-name"

@@ -16,6 +16,9 @@ export const subjectEditorConfig = {
     overviewRulerLanes: 0,
     hideCursorInOverviewRuler: true,
     overviewRulerBorder: false,
+    // Required: these editors mount inside a collapsed accordion where they have no layout box.
+    // Monaco re-measures via ResizeObserver once the section expands.
+    automaticLayout: true,
   },
 };
 
@@ -29,5 +32,8 @@ export const bodyEditorConfig = {
     renderLineHighlight: 'line' as const,
     overviewRulerLanes: 0,
     hideCursorInOverviewRuler: true,
+    // Required: the body editor's container height changes when the properties section is
+    // collapsed or expanded. Monaco re-measures via ResizeObserver.
+    automaticLayout: true,
   },
 };

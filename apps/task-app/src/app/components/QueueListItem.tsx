@@ -35,7 +35,7 @@ const QueueListItemComponent: FunctionComponent<QueueListItemProps> = ({
             )}
           </h3>
           <div>
-            <GoabIconButton title="create" icon="open" size="large" onClick={() => onOpen(queue)} />
+            <GoabIconButton title="Open" icon="open" size="large" onClick={() => onOpen(queue)} />
           </div>
         </div>
         <QueueMetrics metrics={metrics} isLoading={metricsLoading[`${queue.namespace}:${queue.name}`]} />

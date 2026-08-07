@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
@@ -19,6 +19,7 @@ import {
 import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
 import { useDebounce } from '../../util/useDebounce';
+import { SetValueOptions, useDebouncedCommit } from '../../util/useDebouncedCommit';
 import { Visible } from '../../util';
 import { GoabInputOnBlurDetail, GoabInputOnChangeDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
@@ -53,17 +54,18 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const addressContainerRef = useRef<HTMLDivElement>(null);
 
   const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
-  const [address, setAddress] = useState<Address>(normalizeAddressData(data, isAlbertaAddress));
+  const normalizedData = useMemo(() => normalizeAddressData(data, isAlbertaAddress), [data, isAlbertaAddress]);
+  const {
+    value: address,
+    setValue: setAddress,
+    flush: flushAddress,
+  } = useDebouncedCommit<Address>(normalizedData, (updatedAddress) => handleChange(path, updatedAddress));
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const requiredFields = (schema as { required: string[] }).required;
   const [dropdownSelected, setDropdownSelected] = useState(false);
-  const updateFormData = (updatedAddress: Address) => {
-    handleChange(path, updatedAddress);
-  };
-  const debouncedRenderAddress = useDebounce(searchTerm, 500);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
@@ -76,131 +78,89 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const spinnerTimerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const nextAddress = normalizeAddressData(data, isAlbertaAddress);
-    setAddress((currentAddress) => {
-      const keys: Array<keyof Address> = [
-        'addressLine1',
-        'addressLine2',
-        'municipality',
-        'postalCode',
-        'country',
-        'subdivisionCode',
-      ];
-
-      const unchanged = keys.every((key) => currentAddress[key] === nextAddress[key]);
-      return unchanged ? currentAddress : nextAddress;
-    });
-  }, [data, isAlbertaAddress]);
-
-  const handleInputChange = (field: string, value: string) => {
-    if (field === 'addressLine1') {
-      setDropdownSelected(false);
-    }
-    let newAddress;
+  const handleInputChange = (field: string, value: string, options?: SetValueOptions) => {
+    let newValue = value;
     const postalCodeErrorMessage = (schema as { errorMessage?: { properties?: { postalCode?: string } } }).errorMessage
       ?.properties?.postalCode;
 
     if (field === 'postalCode') {
       const validatePc = validatePostalCode(value);
-      setErrors(
-        handlePostalCodeValidation(validatePc, postalCodeErrorMessage ? postalCodeErrorMessage : '', value, errors),
+      setErrors((currentErrors) =>
+        handlePostalCodeValidation(validatePc, postalCodeErrorMessage ?? '', value, currentErrors),
       );
-      value = formatPostalCode(value);
-      newAddress = { ...address, [field]: value.toUpperCase() };
+      newValue = formatPostalCode(value).toUpperCase();
     } else {
-      newAddress = { ...address, [field]: value };
-      delete errors[field];
+      setErrors((currentErrors) => {
+        if (!(field in currentErrors)) {
+          return currentErrors;
+        }
+
+        const nextErrors = { ...currentErrors };
+        delete nextErrors[field];
+        return nextErrors;
+      });
     }
 
-    if (value === '' && field in newAddress) {
-      delete newAddress[field];
+    const newAddress: Address = { ...address, [field]: newValue };
+    if (newValue === '') {
+      delete newAddress[field as keyof Address];
     }
 
-    setAddress(newAddress);
-    updateFormData(newAddress);
+    setAddress(newAddress, options);
+
+    // Picking a province isn't typing, so there is nothing to wait for.
+    if (field === 'subdivisionCode') {
+      flushAddress();
+    }
   };
 
   const renderHelp = () => {
     return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      /* istanbul ignore next */
-      if (debouncedRenderAddress.length > 2 && dropdownSelected === false) {
-        setLoading(true);
-        setOpen(true);
-        try {
-          await fetchAddressSuggestions(formUrl, formatPostalCodeIfNeeded(searchTerm), isAlbertaAddress).then(
-            (response) => {
-              const suggestions = filterSuggestionsWithoutAddressCount(response);
-              if (isAlbertaAddress) {
-                setSuggestions(filterAlbertaAddresses(suggestions));
-              } else {
-                setSuggestions(suggestions);
-              }
-              setLoading(false);
-            },
-          );
-          // eslint-disable-next-line
-        } catch (error: any) {
-          if (error.name !== 'AbortError') {
-            console.error('Address fetch failed:', error);
-          }
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setSuggestions([]);
-        setOpen(false);
-      }
-    };
-
-    fetchSuggestions();
-  }, [debouncedTerm]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleDropdownChange = (value: string) => {
+  const handleAddressLine1Change = (value: string) => {
     setDropdownSelected(false);
     setSearchTerm(value);
+    // Mirror the keystroke so the field never renders a stale value, but leave the form data alone
+    // until blur or a suggestion is picked. Committing mid-lookup re-renders the whole form while
+    // the search is still debouncing, which is what closed the suggestions dropdown.
+    handleInputChange('addressLine1', value, { autoCommit: false });
   };
 
   /* istanbul ignore next */
   const handleSuggestionClick = (suggestion: Suggestion) => {
     const suggestAddress = mapSuggestionToAddress(suggestion);
     setAddress(suggestAddress);
-    handleChange(path, suggestAddress);
+    flushAddress();
     setSuggestions([]);
     setErrors({});
     setDropdownSelected(true);
   };
 
   const handleRequiredFieldBlur = (name: string, value?: string) => {
-    const err = { ...errors };
-    const addressValue = name in address ? address[name as keyof Address] : undefined;
+    const liveInputValue = value ?? address[name as keyof Address] ?? data?.[name] ?? '';
 
-    const liveInputValue =
-      value ??
-      addressContainerRef.current?.querySelector<HTMLInputElement>(`goa-input[name="${name}"]`)?.value ??
-      addressValue ??
-      data?.[name] ??
-      '';
+    setErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
 
-    if (liveInputValue.trim() === '') {
-      err[name] = `${getAddressLookupFieldLabel(name)} is required`;
-    } else {
-      delete err[name];
-    }
+      if (liveInputValue.trim() === '') {
+        nextErrors[name] = `${getAddressLookupFieldLabel(name)} is required`;
+      } else {
+        delete nextErrors[name];
+      }
 
-    setErrors(err);
+      return nextErrors;
+    });
+
     setSuggestions([]);
     setOpen(false);
 
     if (name === 'addressLine1' && value !== undefined) {
-      const newAddress = { ...address, addressLine1: value };
-      setAddress(newAddress);
-      updateFormData(newAddress);
+      setAddress({ ...address, addressLine1: value });
     }
+
+    // Leaving the field ends the burst of typing, so push what is there now.
+    flushAddress();
   };
 
   useEffect(() => {
@@ -344,7 +304,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                 ariaLabel={'address-form-address1'}
                 placeholder="Start typing the first line of your address, required."
                 value={address?.addressLine1 || ''}
-                onChange={(detail: GoabInputOnChangeDetail) => handleDropdownChange(detail.value)}
+                onChange={(detail: GoabInputOnChangeDetail) => handleAddressLine1Change(detail.value)}
                 onBlur={(detail: GoabInputOnBlurDetail) => handleRequiredFieldBlur(detail.name, detail.value)}
                 width="100%"
                 onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
@@ -354,7 +314,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                       detail.value,
                       activeIndex,
                       suggestions,
-                      (val) => handleInputChange('addressLine1', val),
+                      // Navigating the suggestions must never blank out what has been typed.
+                      (val) => typeof val === 'string' && handleInputChange('addressLine1', val),
                       (suggestion) => handleSuggestionClick(suggestion),
                     );
                     setActiveIndex(newIndex);

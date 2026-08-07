@@ -94,7 +94,7 @@ export const TenantIdp = (): JSX.Element => {
         linked to the previous AD account.
       </p>
       <GoabFormItem label="Email" error={`${errors['email'] || ''}`}>
-        <GoabInput
+        <GoabInput size="compact"
           value={email}
           name="user-email"
           type="email"

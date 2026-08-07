@@ -35,8 +35,8 @@ export const FeedbackMetrics: FunctionComponent = () => {
           {
             id: 'feedback-avg-rating',
             name: 'Average feedback rating',
-            value: metrics.averageRating ? metrics.averageRating + 1 : metrics.averageRating,
-            mom: metrics.momAvgRatingPercent,
+            value: metrics.averageRating ? Number(metrics.averageRating.toFixed(1)) : metrics.averageRating,
+            mom: metrics.momAvgRatingPercent ? parseFloat(Number(metrics.momAvgRatingPercent).toFixed(1)) : null,
           },
           {
             id: 'feedback-lowest-rating',
@@ -44,7 +44,7 @@ export const FeedbackMetrics: FunctionComponent = () => {
             value: metrics.lowestSiteAverageRating
               ? metrics.lowestSiteAverageRating + 1
               : metrics.lowestSiteAverageRating,
-            mom: metrics.momLowestRatingPercent,
+            mom: metrics.momLowestRatingPercent ? parseFloat(Number(metrics.momLowestRatingPercent).toFixed(1)) : null,
           },
         ]}
       />

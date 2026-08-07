@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
@@ -17,7 +18,7 @@ import {
   GoabCheckbox,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditPdfTemplateProps {
   open: boolean;
@@ -34,7 +35,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   open,
   onSave,
 }) => {
-  const [template, setTemplate] = useState<PdfTemplate>(initialValue);
+  // Copy: initialValue is the shared defaultPdfTemplate, and editing must not write through to it.
+  const [template, setTemplate] = useState<PdfTemplate>({ ...initialValue });
   const [spinner, setSpinner] = useState<boolean>(false);
 
   const templates = useSelector((state: RootState) => {
@@ -65,7 +67,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   }, [templates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    setTemplate(initialValue);
+    setTemplate({ ...initialValue });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
@@ -128,7 +130,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     >
       <PdfFormItem>
         <GoabFormItem error={errors?.['name']} label="Name">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="pdf-template-name"
             value={template.name}
@@ -157,7 +159,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       </PdfFormItem>
       <GoabFormItem label="Template ID">
         <PdfFormItem>
-          <GoabInput
+          <GoabInput size="compact"
             name="pdf-template-id"
             value={template.id}
             testId="pdf-template-id"
@@ -177,13 +179,11 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             width="100%"
             testId="pdf-template-description"
             aria-label="pdf-template-description"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
               validators['description'].check(detail.value);
               setTemplate({ ...template, description: detail.value });
             }}
-            // eslint-disable-next-line
-            onChange={() => {}}
           />
           <HelpTextComponent
             length={template?.description?.length || 0}
@@ -195,7 +195,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       </GoabFormItem>
       {!isEdit && (
         <PopulateTemplateWrapper>
-          <GoabCheckbox
+          <GoabCheckbox size="compact"
             name={'populate-template'}
             key={'populate-template'}
             ariaLabel={'populate-template-checkbox'}
@@ -203,20 +203,16 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             testId={'populate-template'}
             mt="m"
             onChange={() => {
-              template.startWithDefault = !template.startWithDefault;
-              if (template.startWithDefault) {
-                template.footer = initialValue.footer;
-                template.header = initialValue.header;
-                template.additionalStyles = initialValue.additionalStyles;
-                template.template = initialValue.template;
-                template.variables = initialValue.variables;
-              } else {
-                template.footer = '';
-                template.header = '';
-                template.additionalStyles = '';
-                template.template = '';
-                template.variables = '';
-              }
+              const startWithDefault = !template.startWithDefault;
+              setTemplate({
+                ...template,
+                startWithDefault,
+                footer: startWithDefault ? initialValue.footer : '',
+                header: startWithDefault ? initialValue.header : '',
+                additionalStyles: startWithDefault ? initialValue.additionalStyles : '',
+                template: startWithDefault ? initialValue.template : '',
+                variables: startWithDefault ? initialValue.variables : '',
+              });
             }}
           >
             Populate template with ADSP default html

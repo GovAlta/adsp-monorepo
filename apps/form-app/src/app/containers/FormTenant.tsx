@@ -65,9 +65,9 @@ export const FormTenant = () => {
                 <>
                   <span className="username">{user?.name}</span>
                   <GoabButton
-                    size="compact"
+                    size="normal"
                     ml="s"
-                    type="text"
+                    type="tertiary"
                     data-testid="form-sign-out"
                     onClick={() => {
                       if (userForm?.definition) {

@@ -121,6 +121,45 @@ describe('contextProvider', () => {
 
     expect(component.getByText('xxx')).toBeInTheDocument();
   });
+  // CS-5233: the form stepper reads these off the context to tell an untouched pre-filled field
+  // from one the user has edited.
+  it('exposes the auto-populated values it is given', async () => {
+    // Arrange
+    const autoPopulatedData = [{ path: 'firstName', value: 'Bob' }];
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext) as enumerators & { autoPopulatedData?: unknown };
+      return <div data-testid="auto-populated">{JSON.stringify(ctx.autoPopulatedData)}</div>;
+    };
+
+    // Act
+    const component = render(
+      <ContextProvider autoPopulatedData={autoPopulatedData}>
+        <Probe />
+      </ContextProvider>
+    );
+
+    // Assert
+    expect(component.getByTestId('auto-populated').textContent).toBe(JSON.stringify(autoPopulatedData));
+  });
+
+  it('defaults the auto-populated values to an empty list', async () => {
+    // Arrange
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext) as enumerators & { autoPopulatedData?: unknown };
+      return <div data-testid="auto-populated">{JSON.stringify(ctx.autoPopulatedData)}</div>;
+    };
+
+    // Act
+    const component = render(
+      <ContextProvider>
+        <Probe />
+      </ContextProvider>
+    );
+
+    // Assert
+    expect(component.getByTestId('auto-populated').textContent).toBe('[]');
+  });
+
   it('works with submit props', async () => {
     const onSubmitFunction = (text: string) => {
       ContextProviderC.addFormContextData('submittedData', { text: text });

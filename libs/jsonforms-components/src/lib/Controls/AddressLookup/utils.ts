@@ -47,22 +47,21 @@ export const filterSuggestionsWithoutAddressCount = (suggestions: Suggestion[]):
 };
 
 export const mapSuggestionToAddress = (suggestion: Suggestion): Address => {
-  let addressLine1, addressLine2;
-  const suiteMatch = suggestion.Text.match(/(Suite|Apt|Unit|#)+/i);
-  const textParts = suggestion.Text.split(' ');
-  if (suiteMatch) {
-    addressLine1 = suggestion.Text.replace(textParts[0], '').trim();
-    addressLine2 = textParts[0].trim();
-  } else {
-    addressLine2 = '';
-    addressLine1 = suggestion.Text.trim();
-  }
+  const text = suggestion?.Text?.trim() ?? '';
+  const textParts = text.split(' ');
+  const hasSuite = /(Suite|Apt|Unit|#)+/i.test(text) && textParts.length > 1;
 
-  const descriptionParts = suggestion.Description.split(',');
-  const municipality = descriptionParts[0].trim();
-  const provinceAndPostalCode = descriptionParts[1].trim().split(' ');
-  const subdivisionCode = provinceAndPostalCode[0];
-  const postalCode = descriptionParts[2].trim();
+  const addressLine1 = hasSuite ? text.replace(textParts[0], '').trim() : text;
+  const addressLine2 = hasSuite ? textParts[0].trim() : '';
+
+  // Descriptions usually read "municipality, province, postalCode", but the lookup also returns
+  // "municipality, province postalCode" and, for partial matches, drops the postal code entirely.
+  // Reading the parts positionally used to throw on anything but the three part form.
+  const descriptionParts = (suggestion?.Description ?? '').split(',').map((part) => part.trim());
+  const [municipality = '', provinceAndPostalCode = '', trailingPostalCode = ''] = descriptionParts;
+
+  const [subdivisionCode = '', ...postalCodeParts] = provinceAndPostalCode.split(' ').filter(Boolean);
+  const postalCode = postalCodeParts.length > 0 ? postalCodeParts.join(' ') : trailingPostalCode;
 
   return {
     addressLine1,

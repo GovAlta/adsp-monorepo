@@ -27,7 +27,6 @@ import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import {
-  GoabTextAreaOnKeyPressDetail,
   GoabTextAreaOnChangeDetail,
   GoabInputOnChangeDetail,
 } from '@abgov/ui-components-common';
@@ -186,7 +185,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           />
         </GoabFormItem>
         <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name" mb="s">
-          <GoabInput
+          <GoabInput size="compact"
             type="text"
             name="name"
             value={definition.name}
@@ -219,13 +218,11 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             testId="form-description"
             aria-label="description"
             width="100%"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
               validators['description'].check(detail.value);
               setDefinition({ ...definition, description: detail.value });
             }}
-            // eslint-disable-next-line
-            onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
           />
           <HelpTextComponent
             length={definition?.description?.length || 0}
@@ -235,7 +232,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           />
         </GoabFormItem>
         <GoabSpacer vSpacing="xs"></GoabSpacer>
-        <GoabCheckbox
+        <GoabCheckbox size="compact"
           name="anonymousRead"
           key="anonymousRead"
           checked={!!definition?.anonymousRead}

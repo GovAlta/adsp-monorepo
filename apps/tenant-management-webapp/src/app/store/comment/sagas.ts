@@ -53,11 +53,11 @@ export function* fetchCommentTopicTypes(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading Topic types...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
@@ -74,14 +74,14 @@ export function* fetchCommentTopicTypes(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -106,7 +106,7 @@ export function* updateCommentTopicTypes({ topicType }: UpdateCommentTopicTypesA
       yield put(
         updateCommentTopicTypesSuccess({
           ...latest.configuration,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -127,7 +127,7 @@ export function* deleteCommentTopicTypes({ topicTypeId }: DeleteCommentTopicType
       yield put(
         deleteCommentTopicTypeSuccess({
           ...latest.configuration,
-        })
+        }),
       );
       yield put(getCommentTopicTypes());
     } catch (err) {
@@ -141,7 +141,7 @@ function* addTopicSaga({ payload }: AddTopicRequestAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Creating Topic...',
-    })
+    }),
   );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
@@ -167,12 +167,12 @@ function* fetchTopicsSaga(payload): SagaIterator {
     UpdateIndicator({
       show: next === '',
       message: 'Loading Topics...',
-    })
+    }),
   );
 
   try {
     const url = encodeURI(
-      `${baseUrl}/comment/v1/topics?top=10&after=${next}&criteria=${'{"typeIdEquals":"' + payload.payload.id + '"}'}`
+      `${baseUrl}/comment/v1/topics?top=10&after=${next}&criteria=${'{"typeIdEquals":"' + payload.payload.id + '"}'}`,
     );
     const { results, page } = yield call(fetchTopicsApi, url, token);
     yield put(setTopics(results, page.after, page.next));
@@ -190,7 +190,7 @@ function* fetchCommentSaga(action): SagaIterator {
   yield put(
     UpdateElementIndicator({
       show: true,
-    })
+    }),
   );
   const baseUrl = yield select((state) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
@@ -203,7 +203,7 @@ function* fetchCommentSaga(action): SagaIterator {
     yield put(
       UpdateElementIndicator({
         show: false,
-      })
+      }),
     );
   } catch (error) {
     yield put(ErrorNotification(error.toString()));
@@ -211,7 +211,7 @@ function* fetchCommentSaga(action): SagaIterator {
     yield put(
       UpdateElementIndicator({
         show: false,
-      })
+      }),
     );
   }
 }
@@ -276,7 +276,7 @@ export function* fetchCommentMetrics(): SagaIterator {
       fetchCommentMetricsSucceeded({
         topicsCreated: parseInt(metrics[topicsMetric]?.values[0]?.sum || '0', 10),
         commentsCreated: parseInt(metrics[commentsMetric]?.values[0]?.sum || '0', 10),
-      })
+      }),
     );
   });
 }
@@ -291,7 +291,6 @@ export function* watchCommentSagas(): Generator {
   yield takeEvery(CLEAR_COMMENT_COMMENTS_ACTION, clearCommentSaga);
   yield takeEvery(UPDATE_COMMENT_COMMENTS_ACTION, updateCommentSaga);
   yield takeEvery(FETCH_COMMENT_TOPIC_COMMENTS, fetchCommentSaga);
-  // yield takeEvery(FETCH_COMMENTS, addCommentSaga);
   yield takeEvery(DELETE_COMMENT_TOPIC_ACTION, deleteTopicSaga);
   yield takeEvery(DELETE_COMMENT, deleteCommentSaga);
   yield takeLatest(FETCH_COMMENT_METRICS, fetchCommentMetrics);

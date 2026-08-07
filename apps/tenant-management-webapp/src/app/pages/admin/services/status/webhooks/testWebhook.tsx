@@ -103,7 +103,7 @@ export const TestWebhookModal = (): JSX.Element => {
           {!orderedGroupNames && renderNoItem('event definition')}
 
           {events && (
-            <GoabRadioGroup
+            <GoabRadioGroup size="compact"
               name="option"
               value={selectedStatusName}
               onChange={(detail: GoabRadioGroupOnChangeDetail) => setSelectedStatusName(detail.value)}

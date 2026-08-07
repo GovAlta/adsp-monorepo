@@ -52,7 +52,7 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
         <img src={FilterIcon} width="20" alt="notice-filter" />
         <span>Filter by status</span>
       </div>
-      <GoabRadioGroup
+      <GoabRadioGroup size="compact"
         name="option"
         value={option}
         onChange={(detail: GoabRadioGroupOnChangeDetail) => onSelect(detail.value)}

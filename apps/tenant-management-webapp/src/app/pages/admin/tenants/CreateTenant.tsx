@@ -142,7 +142,7 @@ const CreateRealm = (): JSX.Element => {
                     </p>
 
                     <GoabFormItem error={notifications[notifications.length - 1]?.message} label="Tenant name">
-                      <GoabInput
+                      <GoabInput size="compact"
                         name="name"
                         testId="name-input"
                         id="name"
