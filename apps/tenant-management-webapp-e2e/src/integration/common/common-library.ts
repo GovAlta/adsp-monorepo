@@ -193,10 +193,36 @@ export function stringReplacement(nameString, replacementString) {
   return nameAfterPlacement;
 }
 
+export function enterMonacoEditorJson(monacoEditorElement, jsonContent) {
+  const content = typeof jsonContent === 'string' ? jsonContent : JSON.stringify(jsonContent, null, 2);
+
+  // Use monaco editor API to enter data into the editor. This is a workaround for the issue where Cypress cannot type into the Monaco editor directly.
+  monacoEditorElement.should('exist').scrollIntoView().click({ force: true });
+
+  cy.window().then((windowObj) => {
+    const monacoApi = (windowObj as any).monaco;
+    if (monacoApi?.editor) {
+      // Prefer the focused editor or the latest model so we write into the modal's editor.
+      const focusedEditor = monacoApi.editor.getFocusedEditor?.();
+      const focusedModel = focusedEditor?.getModel?.();
+      const models = monacoApi.editor.getModels?.() ?? [];
+      const targetModel = focusedModel ?? models[models.length - 1];
+
+      if (targetModel?.setValue) {
+        // Clear first and then enter the new schema content
+        targetModel.setValue('');
+        targetModel.setValue(content);
+        return;
+      }
+    }
+  });
+}
+
 export default {
   tenantAdminDirectURLLogin,
   tenantAdminDirectURLLoginCrossOrigin,
   tenantAdminMenuItem,
   nowPlusMinusMinutes,
   stringReplacement,
+  enterMonacoEditorJson,
 };

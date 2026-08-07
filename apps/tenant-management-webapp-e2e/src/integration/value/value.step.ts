@@ -77,22 +77,7 @@ Then(
         .type(desc, { force: true });
     }
     if (schema !== 'N/A') {
-      // Clearing schema field doesn't always work. Try 3 times of clearing before entering user data
-      for (let j = 0; j < 3; j++) {
-        valueObj
-          .valueDefinitionsDefinitionModalSchema()
-          .click({ force: true })
-          .focus()
-          .type('{ctrl}a', { force: true })
-          .wait(1000)
-          .type('{backspace}', { force: true });
-      }
-      cy.wait(1000);
-      valueObj
-        .valueDefinitionsDefinitionModalSchema()
-        .click({ force: true })
-        .focus()
-        .type(schema, { force: true, parseSpecialCharSequences: false });
+      commonlib.enterMonacoEditorJson(valueObj.valueDefinitionsDefinitionModalSchema(), schema);
     }
   }
 );
