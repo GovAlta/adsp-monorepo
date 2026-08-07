@@ -37,11 +37,15 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       // (page/next, page/prev, or setVisited previously marked it visited).
       // Preserve any previously-tracked isVisited=true so navigation history
       // isn't lost whenever unrelated form data changes trigger this recompute.
+      // isNavigatedAway is tracked here and never recomputed, so the merge is the only thing
+      // carrying it across a recompute. Seeding it from the recomputed state instead would let
+      // data presence mark a step navigated, which is the whole thing it exists to avoid.
       const mergedCategories = newState.categories.map((newCategory) => {
         const previousCategory = categories.find((c) => c.id === newCategory.id);
         return {
           ...newCategory,
           isVisited: previousCategory?.isVisited || newCategory.isVisited,
+          isNavigatedAway: previousCategory?.isNavigatedAway === true,
         };
       });
 
@@ -51,7 +55,9 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     case 'page/next': {
       const newActive = activeId + 1;
 
-      const newCategories = categories.map((c, idx) => (idx === activeId ? { ...c, isVisited: true } : c));
+      const newCategories = categories.map((c, idx) =>
+        idx === activeId ? { ...c, isVisited: true, isNavigatedAway: true } : c,
+      );
 
       const isOnReview = newActive === lastId + 1;
 
@@ -69,7 +75,9 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     case 'page/prev': {
       const newActive = Math.max(0, activeId - 1);
 
-      const newCategories = categories.map((c, idx) => (idx === activeId ? { ...c, isVisited: true } : c));
+      const newCategories = categories.map((c, idx) =>
+        idx === activeId ? { ...c, isVisited: true, isNavigatedAway: true } : c,
+      );
 
       return {
         ...state,
@@ -138,6 +146,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
           ? {
               ...cat,
               isVisited: true,
+              isNavigatedAway: true,
             }
           : cat,
       );
