@@ -26,6 +26,7 @@ import '@abgov/web-components/index.css';
 import '@abgov/design-tokens/dist/tokens.css';
 import { useScripts } from '@core-services/app-common';
 import { SelectTenant } from '@pages/public/SelectTenant';
+import { APP_SCROLL_CONTAINER_ID } from '@lib/scrollAppToTop';
 
 const AppRouters = () => {
   return (
@@ -71,7 +72,7 @@ const AppDiv = styled.div`
 
 export const App = (): JSX.Element => {
   return (
-    <AppDiv>
+    <AppDiv id={APP_SCROLL_CONTAINER_ID}>
       <ThemeProvider theme={theme}>
         <Provider store={store}>
           <AppWithAuthContext />
