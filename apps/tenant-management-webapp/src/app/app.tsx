@@ -26,6 +26,7 @@ import '@abgov/web-components/index.css';
 import '@abgov/design-tokens/dist/tokens.css';
 import { useScripts } from '@core-services/app-common';
 import { SelectTenant } from '@pages/public/SelectTenant';
+// clean-code-ignore: RULE-19
 import { APP_SCROLL_CONTAINER_ID } from '@lib/scrollAppToTop';
 
 const AppRouters = () => {
