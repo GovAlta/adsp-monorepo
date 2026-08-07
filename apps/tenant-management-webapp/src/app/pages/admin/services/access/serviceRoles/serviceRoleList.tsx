@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import DataTable from '@components/DataTable';
 import { ServiceRoles } from '@store/access/models';
 import { TableDiv } from '../styled-component';
@@ -61,8 +61,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
   const { tenantAdminRoles } = useSelector((state: RootState) => ({
     tenantAdminRoles: state.session?.resourceAccess,
   }));
-  // eslint-disable-next-line
-  useEffect(() => {}, [keycloakRoles, tenantAdminRoles]);
+
   return (
     <div>
       <TableDiv key={`${clientId}-list-table`}>
