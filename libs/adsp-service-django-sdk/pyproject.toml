@@ -24,7 +24,7 @@ include = "adsp_service_django_sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-django = "^4.2.30"
+django = ">=4.2.30,<6.0.0"
 idna = ">=3.15"
 cryptography = ">=50.0.0"
 
