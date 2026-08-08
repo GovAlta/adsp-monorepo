@@ -12,6 +12,7 @@ describe('FormDefinitionEntity', () => {
 
   const calendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   beforeEach(() => {
@@ -282,7 +283,7 @@ describe('FormDefinitionEntity', () => {
       expect(validationService.validate).toHaveBeenCalledWith(
         expect.any(String),
         `${tenantId.resource}:${entity.id}`,
-        data
+        data,
       );
     });
   });
@@ -407,7 +408,7 @@ describe('FormDefinitionEntity', () => {
         repositoryMock,
         notificationMock,
         true,
-        subscriber
+        subscriber,
       );
       expect(form).toBeTruthy();
       expect(notificationMock.subscribe).toHaveBeenCalledWith(entity.tenantId, entity, expect.any(String), subscriber);
@@ -421,7 +422,7 @@ describe('FormDefinitionEntity', () => {
         entity.tenantId,
         entity,
         expect.any(String),
-        expect.objectContaining({ userId: user.id })
+        expect.objectContaining({ userId: user.id }),
       );
     });
 
@@ -474,7 +475,7 @@ describe('FormDefinitionEntity', () => {
         entity.tenantId,
         entity,
         expect.any(String),
-        expect.objectContaining({ userId: user.id })
+        expect.objectContaining({ userId: user.id }),
       );
     });
   });

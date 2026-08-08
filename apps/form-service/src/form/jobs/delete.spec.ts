@@ -47,6 +47,7 @@ describe('delete', () => {
 
   const calendarService: CalendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -97,7 +98,7 @@ describe('delete', () => {
       lastAccessed: new Date(),
       status: FormStatus.Draft,
       dryRun: false,
-    }
+    },
   );
 
   beforeEach(() => {
