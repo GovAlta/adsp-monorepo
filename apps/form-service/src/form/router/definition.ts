@@ -544,6 +544,41 @@ function parseTaskQueue(value: string): { queueNameSpace: string; queueName: str
   return { queueNameSpace, queueName };
 }
 
+export function updateIntakeSchedule(calendarService: CalendarService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { start, end, name, calendarEventId } = req.body;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('update schedule intake', user);
+      }
+
+      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      if (!definition) {
+        throw new InvalidOperationError(`Form definition not found`);
+      }
+
+      // Calendar service doesn't have a PUT method, so we need to use PATCH instead.
+      const intake = await calendarService.updateScheduleIntake(tenantId.toString(), {
+        start,
+        end,
+        calendarEventId,
+        name,
+      });
+
+      const mapped = mapFormDefinition(definition, definition.revision, intake);
+
+      res.status(HttpStatusCodes.OK).send(mapped);
+    } catch (err) {
+      //Anything that is caught here is considered a Bad request
+      next(err);
+    }
+  };
+}
+
 export function patchFormDefinitionSubmissionActions(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
@@ -782,5 +817,16 @@ export function createFormDefinitionRouter({
     patchFormDefinitionSubmissionActions(directory, tokenProvider),
   );
 
+  router.put(
+    '/definitions/:definitionId/schedule',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      body('name').isString().withMessage('name is required'),
+      body('calendarEventId').isInt().withMessage('calendarEventId'),
+      body('start').isISO8601().withMessage('start date is required'),
+      body('end').isISO8601().withMessage('end date is required'),
+    ),
+    updateIntakeSchedule(calendarService),
+  );
   return router;
 }

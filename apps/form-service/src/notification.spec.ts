@@ -35,6 +35,7 @@ describe('notification', () => {
 
   const calendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const cacheMock = {
@@ -58,7 +59,7 @@ describe('notification', () => {
       loggerMock,
       directoryMock,
       tokenProviderMock,
-      cacheMock as unknown as NodeCache
+      cacheMock as unknown as NodeCache,
     );
     expect(service).toBeTruthy();
   });
@@ -69,7 +70,7 @@ describe('notification', () => {
       loggerMock,
       directoryMock,
       tokenProviderMock,
-      cacheMock as unknown as NodeCache
+      cacheMock as unknown as NodeCache,
     );
     const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
     const subscriberUrl = new URL('https://notification-service/notification/v1/subscribers/test');
@@ -99,7 +100,7 @@ describe('notification', () => {
           subscriberUrl.href,
           expect.objectContaining({
             params: expect.objectContaining({ tenantId: tenantId.toString() }),
-          })
+          }),
         );
       });
 
@@ -123,7 +124,7 @@ describe('notification', () => {
           subscriberUrl.href,
           expect.objectContaining({
             params: expect.objectContaining({ tenantId: tenantId.toString() }),
-          })
+          }),
         );
       });
 
@@ -166,7 +167,7 @@ describe('notification', () => {
           expect.objectContaining({
             criteria: expect.objectContaining({ correlationId: `${apiId}:/forms/form-1` }),
           }),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
 
@@ -197,7 +198,7 @@ describe('notification', () => {
             params: expect.objectContaining({
               criteria: JSON.stringify({ correlationId: `${apiId}:/forms/test` }),
             }),
-          })
+          }),
         );
       });
 
@@ -228,14 +229,14 @@ describe('notification', () => {
             address: subscriber.channels[0].address,
             reason: 'Enter this code to access your form.',
           }),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
 
       it('can throw for no subscriber channel', async () => {
         directoryMock.getResourceUrl.mockResolvedValueOnce(subscriberUrl);
         await expect(service.sendCode(tenantId, { ...subscriber, channels: [], urn: subscriberId })).rejects.toThrow(
-          InvalidOperationError
+          InvalidOperationError,
         );
       });
 
@@ -264,7 +265,7 @@ describe('notification', () => {
             address: subscriber.channels[0].address,
             code: 'test',
           }),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
 

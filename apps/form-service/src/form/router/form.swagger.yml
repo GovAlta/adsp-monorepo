@@ -68,11 +68,13 @@ components:
           type: string
         scheduledIntakes:
           type: boolean
+          description: Allow this form definition to accept schedule intakes
         supportTopic:
           type: boolean
         securityClassification:
           type: string
           enum: [public, 'protected a', 'protected b', 'protected c']
+          description: The security classification for the form definition
         queueTaskToProcess:
           type: object
           properties:
@@ -91,6 +93,32 @@ components:
           type: boolean
         dryRun:
           type: boolean
+        intake:
+          type: object
+          properties:
+            urn:
+              type: string
+              description: The urn of the form schedule intake
+            name:
+              type: string
+              description: The description of the form schedule intake
+            description:
+              type: string
+              description: The description of the form schedule intake
+            start:
+              type: string
+              format: date-time
+              description: The start date time of the form schedule intake
+            end:
+              type: string
+              format: date-time
+              description: The end date time of the form schedule intake
+            isAllDay:
+              type: boolean
+              description: Is form schedule intake all day
+            isUpcoming:
+              type: boolean
+              description: Is the form schedule intake upcoming
     FormDefinitionCreate:
       type: object
       description: Payload for creating a new form definition. Only name and description are accepted; all other fields are set to defaults.
@@ -276,6 +304,25 @@ components:
         operation:
           type: string
           enum: [to-draft]
+    PutIntakeParameters:
+      type: object
+      description: Payload for updating schedule intake
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        calendarEventId:
+          type: string
 
 /form/v1/definitions:
   get:
@@ -1166,3 +1213,37 @@ components:
               properties:
                 deleted:
                   type: boolean
+/form/v1/definitions/{definitionId}/schedule:
+  put:
+    tags:
+      - Form schedules
+    description: Form schedule intakes.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition.
+        required: true
+        in: path
+        schema:
+          type: string
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PutIntakeParameters'
+    required: true
+    responses:
+      200:
+        description: Successful form schedule intake update.
+        content:
+          schema:
+            $ref: '#/components/schemas/FormDefinition'
+          example:
+            name: My Application Form
+      400:
+        description: Validation failed  for JSON object
+      401:
+        description: User is not authorized to create form definitions.
+      403:
+        description: User is not authorized to create form definitions.
+      404:
+        description: Schedule intake not found.

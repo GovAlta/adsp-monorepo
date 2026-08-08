@@ -43,6 +43,7 @@ describe('lock', () => {
 
   const calendarService: CalendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -94,7 +95,7 @@ describe('lock', () => {
       lastAccessed: new Date(),
       status: FormStatus.Draft,
       dryRun: false,
-    }
+    },
   );
 
   beforeEach(() => {
@@ -134,7 +135,7 @@ describe('lock', () => {
       expect.objectContaining({
         statusEquals: FormStatus.Draft,
         anonymousApplicantEquals: true,
-      })
+      }),
     );
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
   });
