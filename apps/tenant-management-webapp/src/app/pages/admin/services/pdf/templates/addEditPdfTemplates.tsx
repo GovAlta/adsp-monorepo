@@ -35,7 +35,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   open,
   onSave,
 }) => {
-  const [template, setTemplate] = useState<PdfTemplate>(initialValue);
+  // Copy: initialValue is the shared defaultPdfTemplate, and editing must not write through to it.
+  const [template, setTemplate] = useState<PdfTemplate>({ ...initialValue });
   const [spinner, setSpinner] = useState<boolean>(false);
 
   const templates = useSelector((state: RootState) => {
@@ -66,7 +67,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   }, [templates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    setTemplate(initialValue);
+    setTemplate({ ...initialValue });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
@@ -202,20 +203,16 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             testId={'populate-template'}
             mt="m"
             onChange={() => {
-              template.startWithDefault = !template.startWithDefault;
-              if (template.startWithDefault) {
-                template.footer = initialValue.footer;
-                template.header = initialValue.header;
-                template.additionalStyles = initialValue.additionalStyles;
-                template.template = initialValue.template;
-                template.variables = initialValue.variables;
-              } else {
-                template.footer = '';
-                template.header = '';
-                template.additionalStyles = '';
-                template.template = '';
-                template.variables = '';
-              }
+              const startWithDefault = !template.startWithDefault;
+              setTemplate({
+                ...template,
+                startWithDefault,
+                footer: startWithDefault ? initialValue.footer : '',
+                header: startWithDefault ? initialValue.header : '',
+                additionalStyles: startWithDefault ? initialValue.additionalStyles : '',
+                template: startWithDefault ? initialValue.template : '',
+                variables: startWithDefault ? initialValue.variables : '',
+              });
             }}
           >
             Populate template with ADSP default html
