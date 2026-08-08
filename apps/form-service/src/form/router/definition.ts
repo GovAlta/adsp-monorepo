@@ -562,18 +562,16 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
       }
 
       // Calendar service doesn't have a PUT method, so we need to use PATCH instead.
-      const response = await calendarService.updateScheduleIntake(tenantId.toString(), {
+      const intake = await calendarService.updateScheduleIntake(tenantId.toString(), {
         start,
         end,
-        calendarEventId: calendarEventId,
+        calendarEventId,
         name,
       });
 
-      const mapped = mapFormDefinition(definition, definition.revision, response);
+      const mapped = mapFormDefinition(definition, definition.revision, intake);
 
       res.status(HttpStatusCodes.OK).send(mapped);
-
-      next();
     } catch (err) {
       //Anything that is caught here is considered a Bad request
       next(err);
