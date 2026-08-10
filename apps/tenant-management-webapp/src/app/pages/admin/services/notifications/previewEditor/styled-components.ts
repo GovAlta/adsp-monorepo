@@ -74,20 +74,12 @@ export const TemplatePropertiesGrid = styled.div`
 
 export const BodyEditorFooter = styled.div`
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: flex-start;
-  gap: var(--goa-space-m);
+  gap: var(--goa-space-xs);
   margin-bottom: var(--goa-space-s);
   font: var(--goa-typography-body-s);
   color: var(--goa-color-text-secondary);
-
-  > span {
-    flex: 1;
-  }
-
-  @container template-editor (max-width: 720px) {
-    flex-direction: column;
-  }
 `;
 
 // Keeps the long "Edit an <channel> template--<service>" heading from eating two lines of
