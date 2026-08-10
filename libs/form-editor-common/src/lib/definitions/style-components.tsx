@@ -35,6 +35,14 @@ export const QueueTaskDropdown = styled.div`
   margin-top: 0.25rem;
   margin-bottom: 3rem;
 `;
+
+export const LifecycleLabelRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+`;
+
 export const Anchor = styled.div`
   color: #0070c4;
   text-decoration: underline;
@@ -60,14 +68,15 @@ export const FormPreviewSpacer = styled.div`
 
 export const H3Inline = styled.h3`
   display: inline-block;
-  position: relative;
-  top: var(--goa-space-s);
+  font-size: inherit;
+  font-weight: bold;
+  line-height: inherit;
+  margin: 0;
 `;
 
 export const ToolTipAdjust = styled.div`
-  position: relative;
-  top: var(--goa-space-s);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
 `;
 
 export const AddRemoveResourceTagSpacing = styled.div`
