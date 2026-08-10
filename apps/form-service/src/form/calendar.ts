@@ -8,6 +8,7 @@ export interface CalendarService {
   updateScheduleIntake(
     tenantId: string,
     intakeParameters: {
+      definitionId: string;
       name: string;
       calendarEventId: string;
       start: Date;

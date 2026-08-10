@@ -564,6 +564,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
 
       // Calendar service doesn't have a PUT method, so we need to use PATCH instead.
       const intake = await calendarService.updateScheduleIntake(tenantId.toString(), {
+        definitionId,
         start,
         end,
         calendarEventId,

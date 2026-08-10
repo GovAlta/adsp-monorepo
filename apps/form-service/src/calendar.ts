@@ -20,11 +20,11 @@ class CalendarServiceImpl implements CalendarService {
 
   async updateScheduleIntake(
     tenantId: string,
-    intakeParameters: { name: string; calendarEventId: string; start: Date; end: Date },
+    intakeParameters: { definitionId: string; name: string; calendarEventId: string; start: Date; end: Date },
   ): Promise<Intake> {
-    const { start, end, name, calendarEventId } = intakeParameters;
+    const { start, end, name, calendarEventId, definitionId } = intakeParameters;
     try {
-      this.logger.debug(`Updating scheduled intake for definition ${tenantId}...`, {
+      this.logger.debug(`Updating scheduled intake for definition ${definitionId}...`, {
         context: 'CalendarService',
         tenantId: tenantId.toString(),
       });
