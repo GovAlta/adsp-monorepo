@@ -11,6 +11,7 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('calendar', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const definitionId = 'test-definition-id';
   const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -375,6 +376,7 @@ describe('calendar', () => {
           calendarEventId: '123',
           start,
           end,
+          definitionId,
         });
 
         // Assert
@@ -404,6 +406,7 @@ describe('calendar', () => {
           calendarEventId: '123',
           start,
           end,
+          definitionId,
         });
 
         // Assert
@@ -431,6 +434,7 @@ describe('calendar', () => {
           calendarEventId: 'missing-event',
           start: new Date(),
           end: new Date(),
+          definitionId,
         });
 
         // Assert
@@ -454,6 +458,7 @@ describe('calendar', () => {
           calendarEventId: '123',
           start: new Date(),
           end: new Date(),
+          definitionId,
         });
 
         // Assert
@@ -480,6 +485,7 @@ describe('calendar', () => {
           calendarEventId: '123',
           start: new Date(),
           end: new Date(),
+          definitionId,
         });
 
         // Assert
@@ -503,6 +509,7 @@ describe('calendar', () => {
           calendarEventId: '123',
           start: new Date(),
           end: new Date(),
+          definitionId,
         });
 
         // Assert
