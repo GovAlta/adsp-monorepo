@@ -31,6 +31,11 @@ class CalendarServiceImpl implements CalendarService {
       const token = await this.tokenProvider.getAccessToken();
 
       const url = new URL(`calendar/v1/calendars/form-intake/events/${calendarEventId}`, this.calendarApiUrl).href;
+      this.logger.debug(`Calendar URL: ${url}`, {
+        context: 'CalendarService',
+        tenantId: tenantId.toString(),
+      });
+
       const response = await axios.patch(
         new URL(url).href,
         {
@@ -44,16 +49,15 @@ class CalendarServiceImpl implements CalendarService {
         },
       );
 
-      if (response.status === HttpStatusCodes.NOT_FOUND || !response.data) {
+      if (response.status === HttpStatusCodes.NOT_FOUND || !response.data || response.data === undefined) {
         throw new NotFoundError('Update intake schedule ', calendarEventId);
       }
 
-      const mapped = this.mapIntake(response.data, response.data.isUpcoming);
-
+      const mapped = this.mapIntake(response.data, false);
       return mapped;
     } catch (err) {
       this.logger.error(
-        `Error encountered updating scheduled intake for definition ${tenantId}: ${
+        `Error encountered updating scheduled intake for definition ${definitionId}: ${
           isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
         }`,
         {
