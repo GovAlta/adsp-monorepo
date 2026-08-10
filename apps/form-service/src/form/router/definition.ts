@@ -38,6 +38,7 @@ const allowedSubmissionActionProperties = [
   'dispositionStates',
 ];
 const defaultSubmissionPdfTemplate = 'submitted-form';
+const DEFINITION_ID_REGEX = /^[a-zA-Z0-9-]+$/;
 
 // The configuration service answers /latest with 200 and an empty object when the definition has
 // never been written (see getConfiguration's `configuration.latest?.configuration || {}`), so an
@@ -544,6 +545,41 @@ function parseTaskQueue(value: string): { queueNameSpace: string; queueName: str
   return { queueNameSpace, queueName };
 }
 
+export function updateIntakeSchedule(calendarService: CalendarService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { start, end, name, calendarEventId } = req.body;
+      const { definitionId } = req.params;
+
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
+        throw new UnauthorizedUserError('update schedule intake', user);
+      }
+
+      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      if (!definition) {
+        throw new InvalidOperationError(`Form definition not found`);
+      }
+
+      // Calendar service doesn't have a PUT method, so we need to use PATCH instead.
+      const intake = await calendarService.updateScheduleIntake(tenantId.toString(), {
+        definitionId,
+        start,
+        end,
+        calendarEventId,
+        name,
+      });
+
+      const mapped = mapFormDefinition(definition, definition.revision, intake);
+
+      res.status(HttpStatusCodes.OK).send(mapped);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function patchFormDefinitionSubmissionActions(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
@@ -638,10 +674,7 @@ export function createFormDefinitionRouter({
   router.get(
     '/definitions/:definitionId',
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
     ),
     getFormDefinition(tenantService, calendarService),
   );
@@ -649,10 +682,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
       body('formDraftUrlTemplate')
         .optional()
         .isString()
@@ -666,10 +696,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
       body('name').optional().isString().isLength({ min: 1 }),
       body('description').optional().isString(),
       body('dataSchema').optional().isObject(),
@@ -687,10 +714,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
     ),
     deleteFormDefinition(directory, tokenProvider),
   );
@@ -699,10 +723,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId/schemas',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
       body('data-schema').optional().isObject(),
       body('ui-schema').optional().isObject(),
     ),
@@ -713,10 +734,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId/roles',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
       ...allowedRoleProperties.flatMap((field) => [body(field).optional().isArray(), body(`${field}.*`).isString()]),
       body().custom((value) => {
         const extra = Object.keys(value ?? {}).filter((key) => !allowedRoleProperties.includes(key));
@@ -733,10 +751,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId/lifecycle',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
       body('allowAnonymousApplication').optional().isBoolean(),
       body('allowMultipleFormsPerApplicant').optional().isBoolean(),
       body('createSupportTopic').optional().isBoolean(),
@@ -752,10 +767,7 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId/submission-actions',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('definitionId')
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
       body('createPDF').optional().isBoolean(),
       body('createSubmissionRecords').optional().isBoolean(),
       body('event')
@@ -782,5 +794,17 @@ export function createFormDefinitionRouter({
     patchFormDefinitionSubmissionActions(directory, tokenProvider),
   );
 
+  router.put(
+    '/definitions/:definitionId/schedule',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      body('name').isString().withMessage('name is required'),
+      body('calendarEventId').isInt().withMessage('calendarEventId'),
+      body('start').isISO8601().withMessage('start date is required'),
+      body('end').isISO8601().withMessage('end date is required'),
+    ),
+    updateIntakeSchedule(calendarService),
+  );
   return router;
 }

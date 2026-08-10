@@ -42,6 +42,7 @@ describe('form router', () => {
 
   const calendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const definition = new FormDefinitionEntity(validationService, calendarService, tenantId, {
@@ -187,6 +188,7 @@ describe('form router', () => {
 
   const calendarServiceMock = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const formInfo = {

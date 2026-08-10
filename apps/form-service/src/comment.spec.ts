@@ -33,6 +33,7 @@ describe('comment', () => {
 
   const calendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const repositoryMock = {
@@ -89,7 +90,7 @@ describe('comment', () => {
       loggerMock,
       directoryMock,
       tokenProviderMock,
-      SUPPORT_COMMENT_TOPIC_TYPE_ID
+      SUPPORT_COMMENT_TOPIC_TYPE_ID,
     );
     expect(service).toBeTruthy();
   });
@@ -101,7 +102,7 @@ describe('comment', () => {
           loggerMock,
           directoryMock,
           tokenProviderMock,
-          SUPPORT_COMMENT_TOPIC_TYPE_ID
+          SUPPORT_COMMENT_TOPIC_TYPE_ID,
         );
 
         axiosMock.post.mockResolvedValueOnce({ data: { urn: 'urn:ads:platform:comment-service:v1:/topics/2' } });
@@ -111,7 +112,7 @@ describe('comment', () => {
         expect(axiosMock.post).toHaveBeenCalledWith(
           'https://comment-service/comment/v1/topics',
           expect.objectContaining({ resourceId: formUrn }),
-          expect.objectContaining({ params: expect.objectContaining({ tenantId: tenantId.toString() }) })
+          expect.objectContaining({ params: expect.objectContaining({ tenantId: tenantId.toString() }) }),
         );
       });
 
@@ -120,7 +121,7 @@ describe('comment', () => {
           loggerMock,
           directoryMock,
           tokenProviderMock,
-          SUPPORT_COMMENT_TOPIC_TYPE_ID
+          SUPPORT_COMMENT_TOPIC_TYPE_ID,
         );
 
         axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
@@ -134,7 +135,7 @@ describe('comment', () => {
           loggerMock,
           directoryMock,
           tokenProviderMock,
-          SUPPORT_COMMENT_TOPIC_TYPE_ID
+          SUPPORT_COMMENT_TOPIC_TYPE_ID,
         );
 
         const error = new Error('oh noes!');
@@ -151,7 +152,7 @@ describe('comment', () => {
           loggerMock,
           directoryMock,
           tokenProviderMock,
-          SUPPORT_COMMENT_TOPIC_TYPE_ID
+          SUPPORT_COMMENT_TOPIC_TYPE_ID,
         );
 
         const error = new Error('oh noes!');

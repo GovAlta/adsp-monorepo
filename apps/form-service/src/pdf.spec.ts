@@ -32,6 +32,7 @@ describe('pdf', () => {
 
   const calendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const repositoryMock = {
@@ -137,7 +138,7 @@ describe('pdf', () => {
         }),
         expect.objectContaining({
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
     });
 
@@ -158,7 +159,7 @@ describe('pdf', () => {
         }),
         expect.objectContaining({
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
     });
 
