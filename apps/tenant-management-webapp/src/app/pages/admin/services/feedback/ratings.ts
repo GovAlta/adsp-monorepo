@@ -53,3 +53,12 @@ export function getRatingLabelByValue(value: number): string | undefined {
   const rating = ratings.find((r) => r.value === value);
   return rating ? rating.label : undefined;
 }
+
+/**
+ * Feedback ratings are recorded 0-based — the feedback-service `Rating` enum runs terrible=0 to
+ * delightful=4 — while the labels above are 1-based, so a raw metric value shifts by one to be
+ * displayed. `terrible` is 0, so this must not test truthiness.
+ */
+export function toDisplayRating(raw?: number): number | undefined {
+  return typeof raw === 'number' ? Math.round((raw + 1) * 10) / 10 : undefined;
+}

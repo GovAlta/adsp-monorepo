@@ -231,7 +231,7 @@ function* deleteFeedbackSite(action: DeleteFeedbackSiteAction) {
 }
 
 interface MetricResponse {
-  values: { sum: string; avg: string }[];
+  values: { sum: string; avg: string; min: string }[];
 }
 
 export function* fetchFeedbackMetrics(): SagaIterator {
@@ -269,6 +269,19 @@ export function* fetchFeedbackMetrics(): SagaIterator {
           }
           return ratings;
         }, [] as [string, number][]);
+      // The lowest rating is the lowest rating anyone submitted, so it comes from the metric's own
+      // `min`. Taking Math.min over the site averages instead returns the overall average whenever
+      // a tenant has a single site, which is why this card used to mirror the average card.
+      const siteRatingMins = Object.entries(data)
+        .filter(([name]) => name.split(':').length === 3 && name.endsWith(':rating'))
+        .reduce((mins, [, value]) => {
+          const min = value?.values[0]?.min;
+          if (min !== undefined && min !== null) {
+            mins.push(parseFloat(min));
+          }
+          return mins;
+        }, [] as number[])
+        .filter((min) => !isNaN(min));
       yield put(
         fetchFeedbackMetricsSuccess({
           feedbackCount: Object.values(siteCounts).reduce((count, value) => count + value, 0),
@@ -282,8 +295,7 @@ export function* fetchFeedbackMetrics(): SagaIterator {
                     Object.values(siteCounts).reduce((total, count) => total + count, 0)
                 ) / 10
               : null,
-          lowestSiteAverageRating:
-            siteRatings.length > 0 ? Math.min(...siteRatings.map(([_, rating]) => rating)) : null,
+          lowestRating: siteRatingMins.length > 0 ? Math.min(...siteRatingMins) : null,
         })
       );
     } catch (err) {
@@ -350,8 +362,15 @@ export function* fetchFeedbackMetricsMoM(): SagaIterator {
         return count > 0 ? Math.round((total * 10) / count) / 10 : null;
       };
 
-      const getLowestRating = (ratings: [string, number][]) =>
-        ratings.length ? Math.min(...ratings.map(([, rating]) => rating)) : null;
+      // Matches the summary card: the lowest rating submitted, from the metric's own `min`.
+      const getLowestRating = (data: Record<string, MetricResponse>) => {
+        const mins = Object.entries(data)
+          .filter(([name]) => name.split(':').length === 3 && name.endsWith(':rating'))
+          .map(([, metric]) => parseFloat(metric?.values[0]?.min))
+          .filter((min) => !isNaN(min));
+
+        return mins.length ? Math.min(...mins) : null;
+      };
 
       // Extract and compute
       const currentCounts = extractCounts(currentResp.data);
@@ -366,8 +385,8 @@ export function* fetchFeedbackMetricsMoM(): SagaIterator {
       const currentAvg = getWeightedAverage(currentRatings, currentCounts);
       const previousAvg = getWeightedAverage(previousRatings, previousCounts);
 
-      const currentLowest = getLowestRating(currentRatings);
-      const previousLowest = getLowestRating(previousRatings);
+      const currentLowest = getLowestRating(currentResp.data);
+      const previousLowest = getLowestRating(previousResp.data);
 
       const momCount =
         previousCountTotal > 0 ? ((currentCountTotal - previousCountTotal) / previousCountTotal) * 100 : null;

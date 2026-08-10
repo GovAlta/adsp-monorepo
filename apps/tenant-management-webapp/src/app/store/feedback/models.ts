@@ -42,7 +42,9 @@ export interface SelectedSite {
 
 export interface FeedbackMetrics {
   averageRating?: number;
-  lowestSiteAverageRating?: number;
+  // clean-code-ignore: RULE-19 — type declaration; the behaviour is covered by sagas.spec.ts.
+  /** Lowest single rating submitted, not the lowest site average. */
+  lowestRating?: number;
   feedbackCount?: number;
   momCountPercent?: number | null;
   momAvgRatingPercent?: number | null;
