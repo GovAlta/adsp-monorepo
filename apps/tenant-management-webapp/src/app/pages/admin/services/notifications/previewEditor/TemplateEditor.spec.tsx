@@ -143,12 +143,12 @@ describe('TemplateEditor properties section', () => {
     expect(baseElement.querySelector(ERROR_BADGE_SELECTOR)).not.toBeInTheDocument();
   });
 
-  it('groups the property fields and keeps the default template option outside the accordion', () => {
+  it('groups the property fields and the default template option inside the accordion', () => {
     const { baseElement, getByTestId } = renderEditor();
 
     expect(getByTestId('template-properties-grid')).toBeInTheDocument();
     const checkbox = getByTestId('default-template-checkbox');
-    expect(checkbox.closest('goa-accordion')).toBeNull();
+    expect(checkbox.closest('goa-accordion')).not.toBeNull();
 
     collapseProperties(baseElement);
     expect(getByTestId('default-template-checkbox')).toBeInTheDocument();

@@ -150,14 +150,20 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [saveModal, setSaveModal] = useState(false);
   const [useDefaultTemplate, setUseDefaultTemplate] = useState(false);
-  const [propertiesOpen, setPropertiesOpen] = useState(true);
+  // Keyed by channel name (email/sms/bot) so each tab's accordion opens/closes independently.
+  const [propertiesOpenMap, setPropertiesOpenMap] = useState<Record<string, boolean>>({});
+
+  const setPropertiesOpenFor = (channel: string, open: boolean) => {
+    setPropertiesOpenMap((prev) => ({ ...prev, [channel]: open }));
+  };
 
   const hasPropertyErrors = !!(errors?.['subject'] || errors?.['title'] || errors?.['subtitle']);
 
   // Make the metadata fields immediately available each time the modal opens.
   // Keyed on modelOpen only - keying on templates would re-collapse the section on every keystroke.
   useEffect(() => {
-    setPropertiesOpen(true);
+    setPropertiesOpenMap(Object.fromEntries(validChannels.map((channel) => [channel, true])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelOpen]);
 
   useEffect(() => {
@@ -297,176 +303,170 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             }
           }}
         >
-          {radioOptions.map((item, key) => (
-            <Tab
-              data-testid={`${item.display}-tab`}
-              key={item.name}
-              label={
-                <div style={{ display: 'flex', flexDirection: 'row' }}>
-                  <div>{item.display}</div>
-                  <div style={{ margin: '3px 0 0 5px' }}>
-                    {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
-                      savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
-                    item.body?.length !== 0 &&
-                    item.subject?.length !== 0 ? (
-                      <div>
-                        <div className="mobile">
-                          <GoabBadge content="" type="information" icon={false} emphasis="subtle" />
-                        </div>
-                        <div className="desktop">
-                          <GoabBadge content="Unsaved" type="information" icon={false} emphasis="subtle" />
-                        </div>
-                      </div>
-                    ) : (
-                      (item.body?.length === 0 || item.subject?.length === 0) && (
+          {radioOptions.map((item, key) => {
+            const isPropertiesOpen = propertiesOpenMap[item.name] ?? true;
+
+            return (
+              <Tab
+                data-testid={`${item.display}-tab`}
+                key={item.name}
+                label={
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    <div>{item.display}</div>
+                    <div style={{ margin: '3px 0 0 5px' }}>
+                      {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
+                        savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
+                      item.body?.length !== 0 &&
+                      item.subject?.length !== 0 ? (
                         <div>
                           <div className="mobile">
-                            <GoabBadge type="important" icon />
+                            <GoabBadge content="" type="information" icon={false} emphasis="subtle" />
                           </div>
                           <div className="desktop">
-                            <GoabBadge type="important" content="Unfilled" icon />
+                            <GoabBadge content="Unsaved" type="information" icon={false} emphasis="subtle" />
                           </div>
                         </div>
-                      )
-                    )}
+                      ) : (
+                        (item.body?.length === 0 || item.subject?.length === 0) && (
+                          <div>
+                            <div className="mobile">
+                              <GoabBadge type="important" icon />
+                            </div>
+                            <div className="desktop">
+                              <GoabBadge type="important" content="Unfilled" icon />
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-              }
-            >
-              <TemplateEditorTitle data-testid="modal-title">{`${mainTitle}${
-                titleNames[item.name] || ''
-              } template--${serviceName}`}</TemplateEditorTitle>
+                }
+              >
+                <TemplateEditorTitle data-testid="modal-title">{`${mainTitle}${
+                  titleNames[item.name] || ''
+                } template--${serviceName}`}</TemplateEditorTitle>
 
-              <>
-                <GoabAccordion
-                  heading={`${item.display} properties`}
-                  headingSize="small"
-                  headingType="filled"
-                  iconPosition="left"
-                  maxWidth="none"
-                  mb="s"
-                  open={propertiesOpen}
-                  onChange={setPropertiesOpen}
-                  testId={`${item.name}-template-properties`}
-                  headingContent={
-                    !propertiesOpen && (
-                      <TemplatePropertiesSummary data-testid={`${item.name}-template-properties-values`}>
-                        {buildPropertiesSummary(templates[item.name])}
-                      </TemplatePropertiesSummary>
-                    )
-                  }
-                  actions={
-                    !propertiesOpen && (
-                      <TemplatePropertiesActions>
-                        {hasPropertyErrors && (
+                <>
+                  <GoabAccordion
+                    heading={`${item.display} properties`}
+                    headingSize="small"
+                    headingType="filled"
+                    iconPosition="left"
+                    maxWidth="none"
+                    mb="s"
+                    open={isPropertiesOpen}
+                    onChange={(open) => setPropertiesOpenFor(item.name, open)}
+                    testId={`${item.name}-template-properties`}
+                    headingContent={
+                      !isPropertiesOpen && (
+                        <TemplatePropertiesSummary data-testid={`${item.name}-template-properties-values`}>
+                          {buildPropertiesSummary(templates[item.name])}
+                        </TemplatePropertiesSummary>
+                      )
+                    }
+                    actions={
+                      !isPropertiesOpen &&
+                      hasPropertyErrors && (
+                        <TemplatePropertiesActions>
                           <GoabBadge
                             type="emergency"
                             content="Error"
                             icon
                             testId={`${item.name}-template-properties-error`}
                           />
-                        )}
-                        <GoabButton
-                          type="tertiary"
-                          size="compact"
-                          leadingIcon="pencil"
-                          testId={`${item.name}-template-properties-edit`}
-                          onClick={() => setPropertiesOpen(true)}
-                        >
-                          Edit
-                        </GoabButton>
-                      </TemplatePropertiesActions>
-                    )
-                  }
-                >
-                  <TemplatePropertiesGrid data-testid="template-properties-grid">
-                    <GoabFormItem error={errors['subject'] ?? ''} label="Subject" mb="s">
-                      <MonacoDiv data-testid="templated-editor-subject">
-                        <MonacoEditor
-                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                          data-testid="templated-editor-subject"
-                          onChange={(value) => {
-                            onSubjectChange(value, item.name);
-                          }}
-                          value={templates[item.name]?.subject}
-                          {...subjectEditorConfig}
-                        />
-                      </MonacoDiv>
-                    </GoabFormItem>
+                        </TemplatePropertiesActions>
+                      )
+                    }
+                  >
+                    <TemplatePropertiesGrid data-testid="template-properties-grid">
+                      <GoabFormItem error={errors['subject'] ?? ''} label="Subject" mb="s">
+                        <MonacoDiv data-testid="templated-editor-subject">
+                          <MonacoEditor
+                            language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                            data-testid="templated-editor-subject"
+                            onChange={(value) => {
+                              onSubjectChange(value, item.name);
+                            }}
+                            value={templates[item.name]?.subject}
+                            {...subjectEditorConfig}
+                          />
+                        </MonacoDiv>
+                      </GoabFormItem>
 
-                    <GoabFormItem error={errors['title'] ?? ''} label="Title" mb="s">
-                      <MonacoDiv data-testid="templated-editor-title">
-                        <MonacoEditor
-                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                          data-testid="templated-editor-title"
-                          onChange={(value) => {
-                            onTitleChange(value, item.name);
-                          }}
-                          value={templates[item.name]?.title}
-                          {...subjectEditorConfig}
-                        />
-                      </MonacoDiv>
-                    </GoabFormItem>
+                      <GoabFormItem error={errors['title'] ?? ''} label="Title" mb="s">
+                        <MonacoDiv data-testid="templated-editor-title">
+                          <MonacoEditor
+                            language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                            data-testid="templated-editor-title"
+                            onChange={(value) => {
+                              onTitleChange(value, item.name);
+                            }}
+                            value={templates[item.name]?.title}
+                            {...subjectEditorConfig}
+                          />
+                        </MonacoDiv>
+                      </GoabFormItem>
 
-                    <GoabFormItem error={errors['subtitle'] ?? ''} label="Subtitle" mb="s">
-                      <MonacoDiv data-testid="templated-editor-subtitle">
-                        <MonacoEditor
-                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                          data-testid="templated-editor-subtitle"
-                          onChange={(value) => {
-                            onSubtitleChange(value, item.name);
-                          }}
-                          value={templates[item.name]?.subtitle}
-                          {...subjectEditorConfig}
-                        />
-                      </MonacoDiv>
-                    </GoabFormItem>
-                  </TemplatePropertiesGrid>
-                </GoabAccordion>
+                      <GoabFormItem error={errors['subtitle'] ?? ''} label="Subtitle" mb="s">
+                        <MonacoDiv data-testid="templated-editor-subtitle">
+                          <MonacoEditor
+                            language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                            data-testid="templated-editor-subtitle"
+                            onChange={(value) => {
+                              onSubtitleChange(value, item.name);
+                            }}
+                            value={templates[item.name]?.subtitle}
+                            {...subjectEditorConfig}
+                          />
+                        </MonacoDiv>
+                      </GoabFormItem>
+                    </TemplatePropertiesGrid>
 
-                <GoabFormItem error={errors['body'] ?? ''} mb={'s'} label="Body">
-                  <MonacoDivBody data-testid="templated-editor-body" $compact={!propertiesOpen}>
-                    <MonacoEditor
-                      language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                      value={templates[item.name]?.body}
-                      onChange={(value, event) => {
-                        onBodyChange(value, item.name);
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivBody>
-                </GoabFormItem>
+                    {item.name === 'email' &&
+                      (() => {
+                        const emailBody = templates[item.name]?.body ?? '';
+                        const isDefaultTemplate = emailBody.trim() === emailWrapper.trim();
+                        const isBodyNotEmpty = emailBody.trim().length > 0 && !isDefaultTemplate;
 
-                {item.name === 'email' &&
-                  (() => {
-                    const emailBody = templates[item.name]?.body ?? '';
-                    const isDefaultTemplate = emailBody.trim() === emailWrapper.trim();
-                    const isBodyNotEmpty = emailBody.trim().length > 0 && !isDefaultTemplate;
+                        return (
+                          <BodyEditorFooter>
+                            <span>{bodyEditorHintText}</span>
+                            <GoabCheckbox
+                              size="compact"
+                              name="use-default-template"
+                              checked={useDefaultTemplate}
+                              data-testid="default-template-checkbox"
+                              description={
+                                isBodyNotEmpty ? 'Clear the current body in order to use the default template.' : ''
+                              }
+                              onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                                setUseDefaultTemplate(detail.checked);
+                                onBodyChange(detail.checked ? emailWrapper : '', item.name);
+                              }}
+                              text="Use default template to edit header and footer"
+                              disabled={isBodyNotEmpty}
+                            />
+                          </BodyEditorFooter>
+                        );
+                      })()}
+                  </GoabAccordion>
 
-                    return (
-                      <BodyEditorFooter>
-                        <span>{bodyEditorHintText}</span>
-                        <GoabCheckbox
-                          size="compact"
-                          name="use-default-template"
-                          checked={useDefaultTemplate}
-                          data-testid="default-template-checkbox"
-                          description={
-                            isBodyNotEmpty ? 'Clear the current body in order to use the default template.' : ''
-                          }
-                          onChange={(detail: GoabCheckboxOnChangeDetail) => {
-                            setUseDefaultTemplate(detail.checked);
-                            onBodyChange(detail.checked ? emailWrapper : '', item.name);
-                          }}
-                          text="Use default template to edit header and footer"
-                          disabled={isBodyNotEmpty}
-                        />
-                      </BodyEditorFooter>
-                    );
-                  })()}
-              </>
-            </Tab>
-          ))}
+                  <GoabFormItem error={errors['body'] ?? ''} mb={'s'} label="Body">
+                    <MonacoDivBody data-testid="templated-editor-body" $compact={!isPropertiesOpen}>
+                      <MonacoEditor
+                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                        value={templates[item.name]?.body}
+                        onChange={(value, event) => {
+                          onBodyChange(value, item.name);
+                        }}
+                        {...bodyEditorConfig}
+                      />
+                    </MonacoDivBody>
+                  </GoabFormItem>
+                </>
+              </Tab>
+            );
+          })}
           {hasEmailChannel && notificationEmailAIEnabled && (
             <Tab label="AI (Email)">
               <TemplateAITab
