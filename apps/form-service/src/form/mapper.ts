@@ -25,7 +25,7 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     supportTopic: entity.supportTopic,
     registeredId: entity.registeredId,
     created,
-    intake,
+    intake: intake ? intake : null,
   };
 }
 

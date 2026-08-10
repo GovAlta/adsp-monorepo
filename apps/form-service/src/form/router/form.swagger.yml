@@ -1233,12 +1233,11 @@ components:
     required: true
     responses:
       200:
-        description: Successful form schedule intake update.
+        description: Successfully retrieved a form definition.
         content:
-          schema:
-            $ref: '#/components/schemas/FormDefinition'
-          example:
-            name: My Application Form
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
       400:
         description: Validation failed  for JSON object
       401:
