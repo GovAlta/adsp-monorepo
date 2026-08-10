@@ -64,23 +64,23 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
           >
             <MoreDetails data-testid="moredetails">
               <p>
-                Feedback was submitted for '{feedback.context.view}' on {submissionDate.formattedDate}{' '}
-                {submissionDate.formattedDateTime}
+                Feedback was submitted for '{feedback.context.view === 'string' ? '/' : 'feedback.context.view'}' on{' '}
+                {submissionDate.formattedDate} {submissionDate.formattedDateTime}
               </p>
-              <h2>Rating</h2>
+              <h4>Rating</h4>
               <span data-testid={`feedbackRating_${id}`}>{`${ratingValue} - ${getRatingLabelByValue(
-                Number(ratingValue)
+                Number(ratingValue),
               )}`}</span>
               {feedback.value.comment && (
                 <>
-                  <h2>Comments</h2>
+                  <h4>Comments</h4>
                   <span data-testid={`feedbackComments_${id}`}>{feedback.value.comment}</span>
                 </>
               )}
 
               {feedback.value.technicalIssue && (
                 <>
-                  <h2>Technical issues</h2>
+                  <h4>Technical issues</h4>
                   <span data-testid={`feedbackTechnicalIssue_${id}`}>{feedback.value.technicalIssue}</span>
                 </>
               )}

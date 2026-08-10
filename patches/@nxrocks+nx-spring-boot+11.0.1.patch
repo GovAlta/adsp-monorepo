@@ -1,0 +1,13 @@
+diff --git a/node_modules/@nxrocks/nx-spring-boot/src/generators/project/lib/normalize-options.js b/node_modules/@nxrocks/nx-spring-boot/src/generators/project/lib/normalize-options.js
+index ee89119..03b3e41 100644
+--- a/node_modules/@nxrocks/nx-spring-boot/src/generators/project/lib/normalize-options.js
++++ b/node_modules/@nxrocks/nx-spring-boot/src/generators/project/lib/normalize-options.js
+@@ -1,7 +1,7 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.normalizeOptions = normalizeOptions;
+-const project_name_and_root_utils_1 = require("@nx/devkit/src/generators/project-name-and-root-utils");
++const project_name_and_root_utils_1 = require("@nx/devkit/internal");
+ async function normalizeOptions(tree, options) {
+     await (0, project_name_and_root_utils_1.ensureRootProjectName)(options, options.projectType);
+     const { projectName, projectRoot } = await (0, project_name_and_root_utils_1.determineProjectNameAndRootOptions)(tree, {

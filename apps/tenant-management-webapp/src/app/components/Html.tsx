@@ -11,7 +11,7 @@ const Page = styled.div<PagePros>`
     flex-direction: row;
   }
   background: #fbfcfe;
-  padding: 0 1rem;
+  padding: 0 3rem;
   margin-top: 9px;
 `;
 

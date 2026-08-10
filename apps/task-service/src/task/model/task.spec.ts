@@ -124,7 +124,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      const result = await entity.update(user, { name: 'test-2', description: 'testing 123' });
+      const result = await entity.update(user, { name: 'test-2', description: 'testing 123', priority:TaskPriority.Normal  });
       expect(result.name).toBe('test-2');
     });
 

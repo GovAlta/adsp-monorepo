@@ -34,8 +34,8 @@ jest.mock('@store/file/actions', () => ({
 }));
 
 const ACCORDION_SELECTOR = "goa-accordion[testid='email-template-properties']";
-const EDIT_BUTTON_SELECTOR = "goa-button[testid='email-template-properties-edit']";
 const ERROR_BADGE_SELECTOR = "goa-badge[testid='email-template-properties-error']";
+const PREVIEW_BUTTON_SELECTOR = "goa-button[testid='toggle-email-preview']";
 
 const mockStore = configureStore([]);
 
@@ -86,18 +86,24 @@ function renderEditor(props: Record<string, any> = {}) {
   );
 }
 
+function collapseProperties(baseElement: HTMLElement) {
+  const accordion = baseElement.querySelector(ACCORDION_SELECTOR);
+  fireEvent(accordion, new CustomEvent('_change', { detail: { open: false } }));
+}
+
 describe('TemplateEditor properties section', () => {
-  it('renders the properties accordion collapsed by default', () => {
+  it('renders the properties accordion expanded by default', () => {
     const { baseElement } = renderEditor();
 
     const accordion = baseElement.querySelector(ACCORDION_SELECTOR);
 
     expect(accordion).toBeInTheDocument();
-    expect(accordion).not.toHaveAttribute('open');
+    expect(accordion).toHaveAttribute('open', 'true');
   });
 
   it('summarizes the current property values, marking blank fields as empty', () => {
-    const { getByTestId } = renderEditor();
+    const { baseElement, getByTestId } = renderEditor();
+    collapseProperties(baseElement);
 
     const summary = getByTestId('email-template-properties-values');
 
@@ -107,32 +113,54 @@ describe('TemplateEditor properties section', () => {
   });
 
   it('keeps the subject, title and subtitle editors mounted while collapsed', () => {
-    const { getByTestId } = renderEditor();
+    const { baseElement, getByTestId } = renderEditor();
+    collapseProperties(baseElement);
 
     expect(getByTestId('templated-editor-subject')).toBeInTheDocument();
     expect(getByTestId('templated-editor-title')).toBeInTheDocument();
     expect(getByTestId('templated-editor-subtitle')).toBeInTheDocument();
   });
 
-  it('opens the accordion and hides the summary when Edit is clicked', () => {
-    const { baseElement, queryByTestId } = renderEditor();
+  it('shows the summary when the properties are collapsed', () => {
+    const { baseElement, getByTestId } = renderEditor();
+    collapseProperties(baseElement);
 
-    const editButton = baseElement.querySelector(EDIT_BUTTON_SELECTOR);
-    fireEvent(editButton, new CustomEvent('_click'));
-
-    expect(baseElement.querySelector(ACCORDION_SELECTOR)).toHaveAttribute('open', 'true');
-    expect(queryByTestId('email-template-properties-values')).not.toBeInTheDocument();
+    expect(baseElement.querySelector(ACCORDION_SELECTOR)).not.toHaveAttribute('open');
+    expect(getByTestId('email-template-properties-values')).toBeInTheDocument();
   });
 
   it('flags a collapsed section that hides a property error', () => {
     const { baseElement } = renderEditor({ errors: { subject: 'Invalid handlebar syntax' } });
+    collapseProperties(baseElement);
 
     expect(baseElement.querySelector(ERROR_BADGE_SELECTOR)).toBeInTheDocument();
   });
 
   it('does not flag an error when only the body is invalid', () => {
     const { baseElement } = renderEditor({ errors: { body: 'Invalid handlebar syntax' } });
+    collapseProperties(baseElement);
 
     expect(baseElement.querySelector(ERROR_BADGE_SELECTOR)).not.toBeInTheDocument();
+  });
+
+  it('groups the property fields and the default template option inside the accordion', () => {
+    const { baseElement, getByTestId } = renderEditor();
+
+    expect(getByTestId('template-properties-grid')).toBeInTheDocument();
+    const checkbox = getByTestId('default-template-checkbox');
+    expect(checkbox.closest('goa-accordion')).not.toBeNull();
+
+    collapseProperties(baseElement);
+    expect(getByTestId('default-template-checkbox')).toBeInTheDocument();
+  });
+
+  it('toggles the preview from the tab bar action', () => {
+    const onTogglePreview = jest.fn();
+    const { baseElement, getByText } = renderEditor({ onTogglePreview, previewVisible: true });
+
+    expect(getByText('Hide preview')).toBeInTheDocument();
+    fireEvent(baseElement.querySelector(PREVIEW_BUTTON_SELECTOR), new CustomEvent('_click'));
+
+    expect(onTogglePreview).toHaveBeenCalledTimes(1);
   });
 });

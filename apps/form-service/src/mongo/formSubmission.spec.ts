@@ -257,7 +257,7 @@ describe('MongoFormSubmissionRepository', () => {
           tenantIdEquals: tenantId,
           formIdEquals: testFormId,
           createDateAfter: 'not-a-date' as never,
-        })
+        }),
       ).toThrow(/valid date/);
     });
 
@@ -319,6 +319,86 @@ describe('MongoFormSubmissionRepository', () => {
       });
       expect(results.results).toHaveLength(1);
       expect(results.results[0].id).toBe('sub-1');
+    });
+
+    it.each(['Support', 'SUPPORT', 'support'])(
+      'should find submissions by formData criteria regardless of case (%s)',
+      async (value) => {
+        const results = await repo.find(10, null, {
+          tenantIdEquals: tenantId,
+          formIdEquals: testFormId,
+          dataCriteria: { category: value },
+        });
+        expect(results.results).toHaveLength(1);
+        expect(results.results[0].id).toBe('sub-1');
+      },
+    );
+
+    it.each(['supp', 'ORT', 'ppo'])(
+      'should find submissions on a partial formData criteria value (%s)',
+      async (value) => {
+        const results = await repo.find(10, null, {
+          tenantIdEquals: tenantId,
+          formIdEquals: testFormId,
+          dataCriteria: { category: value },
+        });
+        expect(results.results).toHaveLength(1);
+        expect(results.results[0].id).toBe('sub-1');
+      },
+    );
+
+    it('should not find submissions on a formData criteria value that is not a substring', async () => {
+      const results = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        formIdEquals: testFormId,
+        dataCriteria: { category: 'supports' },
+      });
+      expect(results.results).toHaveLength(0);
+    });
+
+    it('should treat regex characters in a formData criteria value as literals', async () => {
+      await repo.save(
+        createSubmission({
+          id: 'sub-5',
+          formId: testFormId,
+          formDefinitionId: 'def-1',
+          formData: { category: 'sup.ort' },
+        }),
+      );
+
+      const literal = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        formIdEquals: testFormId,
+        dataCriteria: { category: 'SUP.ORT' },
+      });
+      expect(literal.results).toHaveLength(1);
+      expect(literal.results[0].id).toBe('sub-5');
+
+      const wildcard = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        formIdEquals: testFormId,
+        dataCriteria: { category: 'supp.rt' },
+      });
+      expect(wildcard.results).toHaveLength(0);
+    });
+
+    it('should find submissions on a non-string formData criteria value', async () => {
+      await repo.save(
+        createSubmission({
+          id: 'sub-6',
+          formId: testFormId,
+          formDefinitionId: 'def-1',
+          formData: { category: 'support', count: 3 },
+        }),
+      );
+
+      const results = await repo.find(10, null, {
+        tenantIdEquals: tenantId,
+        formIdEquals: testFormId,
+        dataCriteria: { count: 3 },
+      });
+      expect(results.results).toHaveLength(1);
+      expect(results.results[0].id).toBe('sub-6');
     });
 
     it('should find submissions with multiple formData criteria', async () => {

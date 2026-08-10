@@ -31,7 +31,7 @@ function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undef
 }
 
 export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
-  const { data, enabled, path, handleChange, options, uischema, schema, errors } = props;
+  const { data, enabled, path, handleChange, options, uischema, schema, errors, isVisited, setIsVisited } = props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
@@ -97,6 +97,12 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           id={`jsonforms-${path}-dropdown`}
           filterable={autoCompletion}
           onChange={(detail: GoabDropdownOnChangeDetail) => {
+            // goa-dropdown exposes no blur event, so a selection is the only interaction available
+            // to mark visited on. This is what surfaces the error when the user picks the empty
+            // placeholder on a required control, which leaves no value to fall back on.
+            if (isVisited === false && setIsVisited) {
+              setIsVisited();
+            }
             if (expectsObjectValue(schema)) {
               handleChange(
                 path,

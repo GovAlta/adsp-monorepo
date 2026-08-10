@@ -9,6 +9,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/push-service/webpack.config.js",
         "outputPath": "dist/apps/push-service",
@@ -26,8 +27,7 @@
           "inspect": false,
           "fileReplacements": []
         }
-      },
-      "outputs": ["{options.outputPath}"]
+      }
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -37,14 +37,20 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/push-service"],
       "options": {
         "jestConfig": "apps/push-service/jest.config.ts"
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/push-service"]
+      }
     }
   }
 }

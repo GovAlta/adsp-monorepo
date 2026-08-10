@@ -24,6 +24,25 @@ import {
   GoabRadioGroupOnChangeDetail,
 } from '@abgov/ui-components-common';
 
+enum TaskPriority {
+  Normal = '1',
+  High = '2',
+  Urgent = '3',
+}
+
+const getTaskPriority = (priority: string): string | null => {
+  switch (priority) {
+    case 'Normal':
+      return TaskPriority.Normal;
+    case 'High':
+      return TaskPriority.High;
+    case 'Urgent':
+      return TaskPriority.Urgent;
+    default:
+      return null;
+  }
+};
+
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
   type: string;
@@ -91,7 +110,10 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     task.recordId = queue;
     onSave(task);
 
-    onCancel();
+    if (onCancel) {
+      onCancel();
+    }
+
     validators.clear();
   };
 
@@ -109,7 +131,9 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             onClick={() => {
               validators.clear();
               setTask(defaultQueuedTask);
-              onCancel();
+              if (onCancel) {
+                onCancel();
+              }
             }}
           >
             Cancel
@@ -131,7 +155,8 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     >
       <div>
         <GoabFormItem error={errors?.['name']} label="Name" mb="s">
-          <GoabInput size="compact"
+          <GoabInput
+            size="compact"
             type="text"
             name="name"
             value={task?.name}
@@ -169,22 +194,21 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           </DescriptionItem>
         </GoabFormItem>
         <GoabFormItem label="Priority" error={errors?.['priority']}>
-          <GoabRadioGroup size="compact"
+          <GoabRadioGroup
+            size="compact"
             name="priority"
-            value={task?.priority}
+            value={getTaskPriority(task?.priority)}
             onChange={(detail: GoabRadioGroupOnChangeDetail) => {
-              if (type === 'new') {
-                validators.remove('priority');
-                validators['priority'].check(detail.value);
-                setTask({ ...task, priority: detail.value });
-              }
+              validators.remove('priority');
+              validators['priority'].check(detail.value);
+              setTask({ ...task, priority: detail.value });
             }}
             testId="task-modal-priority-radio-group"
             aria-label="task-modal-priority-radio"
           >
-            <GoabRadioItem name="priority" value="Normal" disabled={isNew} />
-            <GoabRadioItem name="priority" value="High" disabled={isNew} />
-            <GoabRadioItem name="priority" value="Urgent" disabled={isNew} />
+            <GoabRadioItem name="priority" label="Normal" value={TaskPriority.Normal} disabled={isNew} />
+            <GoabRadioItem name="priority" label="High" value={TaskPriority.High} disabled={isNew} />
+            <GoabRadioItem name="priority" label="Urgent" value={TaskPriority.Urgent} disabled={isNew} />
           </GoabRadioGroup>
         </GoabFormItem>
       </div>

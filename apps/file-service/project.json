@@ -9,6 +9,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "webpackConfig": "apps/file-service/webpack.config.js",
         "outputPath": "dist/apps/file-service",
@@ -26,8 +27,7 @@
           "inspect": false,
           "fileReplacements": []
         }
-      },
-      "outputs": ["{options.outputPath}"]
+      }
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -37,15 +37,21 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/file-service"],
       "options": {
         "jestConfig": "apps/file-service/jest.config.ts",
         "runInBand": true
-      },
-      "outputs": ["{workspaceRoot}/coverage/apps/file-service"]
+      }
     }
   }
 }

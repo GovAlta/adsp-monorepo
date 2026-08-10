@@ -4,41 +4,34 @@
   "projectType": "application",
   "sourceRoot": "apps/script-service",
   "targets": {
-    "build": {
-      "executor": "@nx-dotnet/core:build",
-      "outputs": ["{workspaceRoot}/dist/apps/script-service"],
-      "options": {
-        "configuration": "Debug",
-        "noDependencies": true
-      },
-      "configurations": {
-        "production": {
-          "configuration": "Release"
-        }
-      }
-    },
     "serve": {
-      "executor": "@nx-dotnet/core:serve",
+      "executor": "nx:run-commands",
       "options": {
-        "configuration": "Debug"
+        "command": "dotnet run",
+        "cwd": "apps/script-service"
       },
       "configurations": {
         "production": {
-          "configuration": "Release"
+          "command": "dotnet run --configuration Release"
         }
       }
     },
     "lint": {
-      "executor": "@nx-dotnet/core:format"
-    },
-    "test": {
-      "executor": "@nx-dotnet/core:test"
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotnet format",
+        "cwd": "apps/script-service"
+      }
     },
     "swagger": {
-      "executor": "@nx-dotnet/core:update-swagger",
-      "outputs": ["{workspaceRoot}/options.output"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/libs/generated/script-service-swagger/swagger.json"],
       "options": {
-        "output": "libs/generated/script-service-swagger/swagger.json"
+        "commands": [
+          "dotnet tool restore",
+          "dotnet swagger tofile --output libs/generated/script-service-swagger/swagger.json dist/apps/script-service/Adsp.Platform.ScriptService.dll v1"
+        ],
+        "parallel": false
       }
     }
   },

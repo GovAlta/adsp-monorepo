@@ -7,11 +7,13 @@ import { SmsPreviewPortal } from './smsPreviewPortal';
 export const TemplateEditorContainer = styled.div`
   display: flex;
   flex-direction: column;
-  width: 48%;
-  min-height: calc(100vh - 4rem);
+  flex: 1;
+  height: calc(100% - 2rem);
+  min-width: 0;
   padding-right: 0.5rem;
   margin-top: 2rem;
   overflow: hidden;
+  container: template-editor / inline-size;
 
   &:hover {
     overflow: auto;
@@ -46,28 +48,38 @@ export const TemplateEditorContainer = styled.div`
 
 export const MonacoDiv = styled.div`
   display: flex;
+  min-width: 0;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
 `;
-// The height budget subtracted below accounts for the fixed chrome above the body editor.
-// When the properties section is collapsed its accordion header (~52px) replaces the three
-// subject-style form items (~91px each) plus the default-template checkbox and body hint,
-// freeing ~290px for the body editor.
 export const MonacoDivBody = styled.div<{ $compact?: boolean }>`
   display: flex;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: ${({ $compact }) => ($compact ? 'calc(100vh - 285px)' : 'calc(100vh - 645px)')};
-  min-height: 65px;
+  height: ${({ $compact }) => ($compact ? 'max(200px, calc(100vh - 340px))' : 'max(200px, calc(100vh - 450px))')};
+  min-height: 200px;
+`;
 
-  @media (max-width: 1420px) {
-    height: ${({ $compact }) => ($compact ? 'calc(100vh - 195px)' : 'calc(100vh - 555px)')};
+export const TemplatePropertiesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--goa-space-s);
+
+  @container template-editor (max-width: 720px) {
+    grid-template-columns: minmax(0, 1fr);
   }
-  @media (max-height: 920px) {
-    height: ${({ $compact }) => ($compact ? 'calc(100vh - 310px)' : 'calc(100vh - 670px)')};
-  }
+`;
+
+export const BodyEditorFooter = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--goa-space-xs);
+  margin-bottom: var(--goa-space-s);
+  font: var(--goa-typography-body-s);
+  color: var(--goa-color-text-secondary);
 `;
 
 // Keeps the long "Edit an <channel> template--<service>" heading from eating two lines of

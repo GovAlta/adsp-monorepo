@@ -7,7 +7,13 @@
   "implicitDependencies": ["adsp-service-sdk"],
   "targets": {
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -27,7 +33,11 @@
         "main": "libs/adsp-sdk-mcp-server/src/main.ts",
         "assets": [
           "libs/adsp-sdk-mcp-server/*.md",
-          { "input": "docs", "glob": "**/*.md", "output": "assets/docs" }
+          {
+            "input": "docs",
+            "glob": "**/*.md",
+            "output": "assets/docs"
+          }
         ]
       }
     },

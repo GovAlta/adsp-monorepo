@@ -36,6 +36,7 @@ import {
   RowFlexMenuMain,
   RowFlexMenuLeft,
   MarginTop,
+  RequiredSpan,
   UpdateListContainer,
   TabName,
   NoDataMessage,
@@ -1153,7 +1154,8 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
           {listTitle && (
             <MarginTop>
               <ObjectArrayTitle>
-                {listTitle} <span>{additionalProps.required && ' (required)'}</span>
+                {listTitle}
+                {additionalProps.required && <RequiredSpan>(required)</RequiredSpan>}
                 {this.state.maxItemsError && (
                   <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
                 )}

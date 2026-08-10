@@ -152,5 +152,5 @@ export const ServiceColumnLayoutDashboard = styled.div`
 `;
 
 export const ServiceColumnLayoutWithMargin = styled.div`
-  margin: 1rem 2rem var(--goa-space-3xl) 2rem;
+  margin: 1rem 4rem var(--goa-space-3xl) 2rem;
 `;

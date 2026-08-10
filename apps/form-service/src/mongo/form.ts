@@ -5,6 +5,7 @@ import { Logger } from 'winston';
 import { FormCriteria, FormEntity, FormRepository } from '../form';
 import { FormDefinitionRepository } from '../form';
 import { NotificationService, Subscriber } from '../notification';
+import { toDataCriteriaQuery } from './criteria';
 import { formSchema } from './schema';
 import { FormDoc } from './types';
 
@@ -71,9 +72,7 @@ export class MongoFormRepository implements FormRepository {
     }
 
     if (criteria?.dataCriteria) {
-      Object.entries(criteria.dataCriteria).forEach(([property, value]) => {
-        query[`data.${property}`] = value;
-      });
+      Object.assign(query, toDataCriteriaQuery(criteria.dataCriteria, 'data'));
     }
 
     const results = new Promise<FormEntity[]>((resolve, reject) => {

@@ -23,7 +23,8 @@
             "glob": "silent-check-sso.html",
             "input": "apps/sandbox-app/src/",
             "output": "./"
-          }],
+          }
+        ],
         "styles": ["apps/sandbox-app/src/styles.scss"],
         "scripts": [],
         "webpackConfig": "apps/sandbox-app/webpack.config.js"
@@ -69,7 +70,13 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "serve-static": {
       "executor": "@nx/web:file-server",

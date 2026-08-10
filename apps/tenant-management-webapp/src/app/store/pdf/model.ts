@@ -101,7 +101,7 @@ export interface PdfState {
   status: string[];
   files: Record<string, Blob>;
   currentFile: Blob;
-  currentId: string;
+  currentId: string | null;
   socketChannel: boolean;
   tempTemplate: PdfTemplate;
   openEditor: string;

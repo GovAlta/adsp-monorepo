@@ -107,6 +107,10 @@ const createStepperContextInitData = (
       isCompleted: status === StepStatus.COMPLETED || (visited && !hasRequiredFields),
       isValid: status === StepStatus.COMPLETED || (visited && !hasRequiredFields),
       isVisited: [StepStatus.COMPLETED, StepStatus.IN_PROGRESS].includes(status),
+      // Navigation is tracked by the reducer, which merges this value forward on every recompute.
+      // It starts false so a freshly opened form shows no validation messages until the user has
+      // actually worked through a step; deriving it here from data would defeat the point.
+      isNavigatedAway: false,
       status,
       uischema: c,
       isEnabled: isEnabled(c, data, '', ajv, undefined),

@@ -15,6 +15,7 @@ describe('FormSubmission', () => {
 
   const calendarService = {
     getScheduledIntake: jest.fn(),
+    updateScheduleIntake: jest.fn(),
   };
 
   const aDefinition = new FormDefinitionEntity(validationService, calendarService, tenantId, {

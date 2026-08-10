@@ -14,6 +14,7 @@ import styled from 'styled-components';
 interface TabsProps {
   activeIndex?: number;
   children: ReactNode;
+  actions?: ReactNode;
   style?: React.CSSProperties;
   changeTabCallback?: (index: number) => void;
 }
@@ -54,6 +55,7 @@ function Tabs(props: TabsProps): JSX.Element {
             );
           })
         }
+        {props.actions && <SCTabActions>{props.actions}</SCTabActions>}
       </SCTabs>
       {
         // eslint-disable-next-line
@@ -123,6 +125,14 @@ const SCTabs = styled.div`
   display: flex;
   border-bottom: 1px solid #ccc;
   overflow-x: auto;
+`;
+
+const SCTabActions = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0 var(--goa-space-xs);
 `;
 
 const SCTab = styled.div`

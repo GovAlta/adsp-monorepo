@@ -3,6 +3,8 @@ import axios, { isAxiosError } from 'axios';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { CalendarService, FormDefinitionEntity, Intake } from './form';
+import { NotFoundError } from '@core-services/core-common';
+import * as HttpStatusCodes from 'http-status-codes';
 
 type IntakeResponse = Omit<Intake, 'isUpcoming' | 'start' | 'end'> & { start: string; end?: string };
 
@@ -13,14 +15,65 @@ class CalendarServiceImpl implements CalendarService {
     private tokenProvider: TokenProvider,
     private calendarApiUrl: URL,
     private calendar: string,
-    private calendarEventCache: NodeCache
+    private calendarEventCache: NodeCache,
   ) {}
+
+  async updateScheduleIntake(
+    tenantId: string,
+    intakeParameters: { definitionId: string; name: string; calendarEventId: string; start: Date; end: Date },
+  ): Promise<Intake> {
+    const { start, end, name, calendarEventId, definitionId } = intakeParameters;
+    try {
+      this.logger.debug(`Updating scheduled intake for definition ${definitionId}...`, {
+        context: 'CalendarService',
+        tenantId: tenantId.toString(),
+      });
+      const token = await this.tokenProvider.getAccessToken();
+
+      const url = new URL(`v1/calendars/form-intake/events/${calendarEventId}`, this.calendarApiUrl).href;
+      this.logger.debug(`Calendar URL: ${url}`, {
+        context: 'CalendarService',
+        tenantId: tenantId.toString(),
+      });
+
+      const response = await axios.patch(
+        new URL(url).href,
+        {
+          start: start,
+          end: end,
+          name: name,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId.toString() },
+        },
+      );
+
+      if (response.status === HttpStatusCodes.NOT_FOUND || !response.data || response.data === undefined) {
+        throw new NotFoundError('Update intake schedule ', calendarEventId);
+      }
+
+      const mapped = this.mapIntake(response.data, false);
+      return mapped;
+    } catch (err) {
+      this.logger.error(
+        `Error encountered updating scheduled intake for definition ${definitionId}: ${
+          isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
+        }`,
+        {
+          context: 'CalendarService',
+          tenantId: tenantId.toString(),
+        },
+      );
+      return;
+    }
+  }
 
   @LimitToOne(
     (propertyKey: string, definition: FormDefinitionEntity) =>
-      `${propertyKey}-${definition.tenantId.resource}-${definition.id}`
+      `${propertyKey}-${definition.tenantId.resource}-${definition.id}`,
   )
-  async getScheduledIntake(definition: FormDefinitionEntity): Promise<Intake> {
+  async getScheduledIntake(definition: FormDefinitionEntity, token?: string): Promise<Intake> {
     try {
       this.logger.debug(`Retrieving scheduled intake for definition ${definition.id}...`, {
         context: 'CalendarService',
@@ -87,7 +140,7 @@ class CalendarServiceImpl implements CalendarService {
           {
             context: 'CalendarService',
             tenantId: definition.tenantId.toString(),
-          }
+          },
         );
       }
       return intake;
@@ -99,7 +152,7 @@ class CalendarServiceImpl implements CalendarService {
         {
           context: 'CalendarService',
           tenantId: definition.tenantId.toString(),
-        }
+        },
       );
       return;
     }
@@ -127,7 +180,7 @@ export async function createCalendarService(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   calendar: string,
-  calendarEventCache = new NodeCache({ stdTTL: 30, useClones: false })
+  calendarEventCache = new NodeCache({ stdTTL: 30, useClones: false }),
 ) {
   const calendarApiUrl = await directory.getServiceUrl(adspId`urn:ads:platform:calendar-service:v1`);
   return new CalendarServiceImpl(logger, tokenProvider, calendarApiUrl, calendar, calendarEventCache);

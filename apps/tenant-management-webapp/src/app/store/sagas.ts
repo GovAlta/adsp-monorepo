@@ -131,6 +131,4 @@ export function* watchSagas() {
     //sharepoint
     watchSharepointSagas(),
   ]);
-
-  // yield all([watchNotixSagas()]);
 }

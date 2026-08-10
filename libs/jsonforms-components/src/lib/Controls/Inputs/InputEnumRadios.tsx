@@ -26,7 +26,8 @@ import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
-  const { data, id, enabled, schema, uischema, path, handleChange, config, label, isVisited, errors } = props;
+  const { data, id, enabled, schema, uischema, path, handleChange, config, label, isVisited, setIsVisited, errors } =
+    props;
   const oneOF = schema?.oneOf || [];
   const items =
     oneOF?.length > 0
@@ -52,7 +53,15 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}
-      onChange={(detail: GoabRadioGroupOnChangeDetail) => handleChange(path, detail.value)}
+      onChange={(detail: GoabRadioGroupOnChangeDetail) => {
+        // goa-radio-group exposes no blur event, so selecting an option is the only interaction we
+        // can mark visited on. Without this the group never reports its own error state, and on a
+        // non stepper form a required control the user cleared would stay silent.
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
+        handleChange(path, detail.value);
+      }}
       {...uischema?.options?.componentProps}
     >
       {items.map((item, index) => (

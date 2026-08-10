@@ -1,10 +1,8 @@
 // This script in-place replaces secret data with base64 encoded value.
 import { lstatSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
-import { scalarOptions, parse, stringify } from 'yaml';
+import { parse, stringify } from 'yaml';
 import { processManifest } from './processManifest';
-
-scalarOptions.null.nullStr = '';
 
 const arg = process.argv[2];
 if (arg) {
@@ -32,7 +30,7 @@ if (arg) {
       const basename = path.basename(file, extension);
       const processedFile = path.join(path.dirname(file), `${basename}.encoded${extension}`);
 
-      writeFileSync(processedFile, stringify(processed, {}));
+      writeFileSync(processedFile, stringify(processed, { nullStr: '' }));
       console.log(`Encoded file written to: ${processedFile}`);
     }
   });

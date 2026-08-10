@@ -58,6 +58,7 @@
     },
     "serve": {
       "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "subscriber-app:build",
         "proxyConfig": "apps/subscriber-app/proxy.conf.json",
@@ -71,12 +72,16 @@
         "development": {
           "buildTarget": "subscriber-app:build:development"
         }
-      },
-      "defaultConfiguration": "development"
+      }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
