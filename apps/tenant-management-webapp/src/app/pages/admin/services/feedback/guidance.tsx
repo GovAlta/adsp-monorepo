@@ -57,9 +57,10 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
           will attach a widget element which includes a badge and form that users can use to send feedback.
         </p>
         <div>
-        <p>
-          Reference the feedback widget script in <CodeSpan>&lt;head&gt;</CodeSpan> to set the{' '}
-          <CodeSpan>adspFeedback</CodeSpan> global variable.</p>
+          <p>
+            Reference the feedback widget script in <CodeSpan>&lt;head&gt;</CodeSpan> to set the{' '}
+            <CodeSpan>adspFeedback</CodeSpan> global variable.
+          </p>
           <PRE>
             &lt;head&gt;
             <br />
@@ -69,13 +70,14 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
             <br />
             &lt;/head&gt;
           </PRE>
-
         </div>
         <div>
-        <p>
-          Initialize the widget via the <CodeSpan>adspFeedback</CodeSpan> variable in <CodeSpan>&lt;body&gt;</CodeSpan>{' '}
-          to identify your tenant and mount the widget element to DOM. A <CodeSpan>getAccessToken</CodeSpan> function
-          for feedback under the user's context is required for sites that don't allow anonymous feedback.</p>
+          <p>
+            Initialize the widget via the <CodeSpan>adspFeedback</CodeSpan> variable in{' '}
+            <CodeSpan>&lt;body&gt;</CodeSpan> to identify your tenant and mount the widget element to DOM. A{' '}
+            <CodeSpan>getAccessToken</CodeSpan> function for feedback under the user's context is required for sites
+            that don't allow anonymous feedback.
+          </p>
           <PRE>
             &lt;body&gt;
             <br />
@@ -95,19 +97,19 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
             <br />
             &lt;/body&gt;
           </PRE>
-
         </div>
         <div>
           <p>For more information on integrating the feedback service with your application please see the </p>
           <ExternalLink
             testId="feedback-tutorial-link"
-            link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html"
+            link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/feedback-service.html"
             text="feedback service tutorial"
           />
         </div>
       </FeedbackOverviewSection>
       <br />
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-feedback"
         onClick={() => {
           setActiveEdit(true);
