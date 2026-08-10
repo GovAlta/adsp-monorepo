@@ -17,6 +17,7 @@ interface MetricsProps {
   metrics: Metric[];
 }
 
+// clean-code-ignore: RULE-19 — presentational component; the behaviour is covered by metrics.spec.tsx.
 // Month over month change is a raw ratio; show one decimal on every card so the
 // summary reads consistently (e.g. 33.3%, not 33.33333333333333%).
 const toDisplayMom = (mom: number) => Math.abs(mom).toFixed(1);
