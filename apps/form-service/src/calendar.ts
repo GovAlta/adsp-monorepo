@@ -30,7 +30,7 @@ class CalendarServiceImpl implements CalendarService {
       });
       const token = await this.tokenProvider.getAccessToken();
 
-      const url = new URL(`calendar/v1/calendars/form-intake/events/${calendarEventId}`, this.calendarApiUrl).href;
+      const url = new URL(`v1/calendars/form-intake/events/${calendarEventId}`, this.calendarApiUrl).href;
       this.logger.debug(`Calendar URL: ${url}`, {
         context: 'CalendarService',
         tenantId: tenantId.toString(),
