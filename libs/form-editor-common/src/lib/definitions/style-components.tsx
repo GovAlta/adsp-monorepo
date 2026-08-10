@@ -39,8 +39,8 @@ export const QueueTaskDropdown = styled.div`
 export const LifecycleLabelRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
+  gap: var(--goa-space-xs);
+  margin-bottom: var(--goa-space-2xs);
 `;
 
 export const Anchor = styled.div`
