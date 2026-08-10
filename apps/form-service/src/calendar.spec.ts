@@ -366,7 +366,7 @@ describe('calendar', () => {
             start: start.toISOString(),
             end: end.toISOString(),
             isAllDay: false,
-            isUpcoming: true,
+            isUpcoming: false,
           },
         });
 
@@ -381,7 +381,7 @@ describe('calendar', () => {
 
         // Assert
         expect(intake.name).toBe('Updated intake');
-        expect(intake.isUpcoming).toBe(true);
+        expect(intake.isUpcoming).toBe(false);
       });
 
       it('sends the updated start, end, and name to the calendar service', async () => {
