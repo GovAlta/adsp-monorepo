@@ -77,6 +77,38 @@ describe('FeedbackMetrics', () => {
     expect(textOf(baseElement, 'feedback-lowest-rating')).toBe('1 - Very Difficult');
   });
 
+  it('rounds the month over month change to one decimal on every card', () => {
+    // The reported defect: a raw ratio rendered as "33.33333333333333 MoM%".
+    const { baseElement } = renderMetrics({
+      feedbackCount: 2,
+      averageRating: 3,
+      lowestRating: 2,
+      momCountPercent: -33.33333333333333,
+      momAvgRatingPercent: 8.666666666666666,
+      momLowestRatingPercent: 12,
+    });
+
+    expect(textOf(baseElement, 'feedback-count-mom')).toBe('33.3 MoM%');
+    expect(textOf(baseElement, 'feedback-avg-rating-mom')).toBe('8.7 MoM%');
+    expect(textOf(baseElement, 'feedback-lowest-rating-mom')).toBe('12.0 MoM%');
+  });
+
+  it('shows an unchanged rating as no change rather than hiding it', () => {
+    // A truthiness check dropped the rating cards' 0% change while the count card kept it.
+    const { baseElement } = renderMetrics({
+      feedbackCount: 4,
+      averageRating: 3,
+      lowestRating: 2,
+      momCountPercent: 0,
+      momAvgRatingPercent: 0,
+      momLowestRatingPercent: 0,
+    });
+
+    expect(textOf(baseElement, 'feedback-count-mom')).toBe('0.0 MoM%');
+    expect(textOf(baseElement, 'feedback-avg-rating-mom')).toBe('0.0 MoM%');
+    expect(textOf(baseElement, 'feedback-lowest-rating-mom')).toBe('0.0 MoM%');
+  });
+
   it('shows a placeholder when there is no rating data', () => {
     const { baseElement } = renderMetrics({
       feedbackCount: 0,
