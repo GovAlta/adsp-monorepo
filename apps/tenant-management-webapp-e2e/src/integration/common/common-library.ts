@@ -196,26 +196,41 @@ export function stringReplacement(nameString, replacementString) {
 export function enterMonacoEditorJson(monacoEditorElement, jsonContent) {
   const content = typeof jsonContent === 'string' ? jsonContent : JSON.stringify(jsonContent, null, 2);
 
-  // Use monaco editor API to enter data into the editor. This is a workaround for the issue where Cypress cannot type into the Monaco editor directly.
-  monacoEditorElement.should('exist').scrollIntoView().click({ force: true });
+  // Resolve Monaco editor instance from the passed element first (more reliable than global focus).
+  monacoEditorElement
+    .should('exist')
+    .scrollIntoView()
+    .click({ force: true })
+    .then(($editorElement) => {
+      const editorElement = $editorElement.get(0) as HTMLElement;
 
-  cy.window().then((windowObj) => {
-    const monacoApi = (windowObj as any).monaco;
-    if (monacoApi?.editor) {
-      // Prefer the focused editor or the latest model so we write into the modal's editor.
-      const focusedEditor = monacoApi.editor.getFocusedEditor?.();
-      const focusedModel = focusedEditor?.getModel?.();
-      const models = monacoApi.editor.getModels?.() ?? [];
-      const targetModel = focusedModel ?? models[models.length - 1];
+      cy.window().then((windowObj) => {
+        const monacoApi = (windowObj as any).monaco;
+        if (!monacoApi?.editor) return;
 
-      if (targetModel?.setValue) {
-        // Clear first and then enter the new schema content
-        targetModel.setValue('');
-        targetModel.setValue(content);
-        return;
-      }
-    }
-  });
+        const editors = monacoApi.editor.getEditors?.() ?? [];
+        const container = editorElement.closest('.monaco-editor');
+
+        const matchedEditor = editors.find((editorInstance) => {
+          const domNode = editorInstance.getDomNode?.();
+          return !!domNode && (domNode === container || domNode.contains(editorElement));
+        });
+
+        const focusedEditor = monacoApi.editor.getFocusedEditor?.();
+        const targetEditor = matchedEditor ?? focusedEditor ?? editors[editors.length - 1];
+        const targetModel = targetEditor?.getModel?.();
+
+        if (targetEditor?.focus) {
+          targetEditor.focus();
+        }
+
+        if (targetModel?.setValue) {
+          targetModel.setValue('');
+          targetModel.setValue(content);
+          targetEditor?.pushUndoStop?.();
+        }
+      });
+    });
 }
 
 export default {
