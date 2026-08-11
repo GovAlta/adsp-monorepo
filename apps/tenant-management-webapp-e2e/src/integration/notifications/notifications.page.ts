@@ -551,7 +551,7 @@ class NotificationsPage {
 
   templateModalEmailHelpText() {
     return cy.xpath(
-      '//*[@data-testid="template-form"]//div[@data-testid="Email-tab"]//goa-form-item[@label="Body"]/following-sibling::div/span'
+      '//*[@data-testid="template-form"]//div[@data-testid="Email-tab"]//goa-checkbox[@data-testid="default-template-checkbox"]/preceding-sibling::span'
     );
   }
 
