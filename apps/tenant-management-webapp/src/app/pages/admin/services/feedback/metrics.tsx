@@ -1,6 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import moment from 'moment';
 import { Metrics } from './feedbackMetrics';
+import { toDisplayRating } from './ratings';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -35,16 +36,14 @@ export const FeedbackMetrics: FunctionComponent = () => {
           {
             id: 'feedback-avg-rating',
             name: 'Average feedback rating',
-            value: metrics.averageRating ? Number(metrics.averageRating.toFixed(1)) : metrics.averageRating,
-            mom: metrics.momAvgRatingPercent ? parseFloat(Number(metrics.momAvgRatingPercent).toFixed(1)) : null,
+            value: toDisplayRating(metrics.averageRating),
+            mom: metrics.momAvgRatingPercent ?? null,
           },
           {
             id: 'feedback-lowest-rating',
             name: 'Lowest feedback rating ',
-            value: metrics.lowestSiteAverageRating
-              ? metrics.lowestSiteAverageRating + 1
-              : metrics.lowestSiteAverageRating,
-            mom: metrics.momLowestRatingPercent ? parseFloat(Number(metrics.momLowestRatingPercent).toFixed(1)) : null,
+            value: toDisplayRating(metrics.lowestRating),
+            mom: metrics.momLowestRatingPercent ?? null,
           },
         ]}
       />

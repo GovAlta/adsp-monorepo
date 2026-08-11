@@ -39,6 +39,7 @@ export const RequiredSpan = styled.span`
   color: #666666;
   font-weight: var(--goa-font-weight-regular);
   font-size: var(--goa-font-size-2);
+  margin-left: var(--goa-space-xs);
 `;
 
 export const TextCenter = styled.div`

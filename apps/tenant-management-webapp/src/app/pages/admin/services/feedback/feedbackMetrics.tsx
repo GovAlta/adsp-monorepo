@@ -17,6 +17,11 @@ interface MetricsProps {
   metrics: Metric[];
 }
 
+// clean-code-ignore: RULE-19 — presentational component; the behaviour is covered by metrics.spec.tsx.
+// Month over month change is a raw ratio; show one decimal on every card so the
+// summary reads consistently (e.g. 33.3%, not 33.33333333333333%).
+const toDisplayMom = (mom: number) => Math.abs(mom).toFixed(1);
+
 const MetricGridItem = styled(GridItem)`
   border: 1px solid #ccc;
   border-radius: 12px;
@@ -81,7 +86,7 @@ export const Metrics: FunctionComponent<MetricsProps> = ({ metrics }: MetricsPro
                     alt={mom > 0 ? 'Up' : mom < 0 ? 'Down' : 'No change'}
                     style={{ width: '14px', height: '14px', marginRight: '4px' }}
                   />
-                  <span> {`${Math.abs(mom)} MoM`}%</span>
+                  <span id={`${id}-mom`}> {`${toDisplayMom(mom)} MoM`}%</span>
                 </>
               )}
             </MomDiv>

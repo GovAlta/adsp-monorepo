@@ -80,7 +80,15 @@ import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
-import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
+import {
+  RowFlex,
+  QueueTaskDropdown,
+  H3,
+  BorderBottom,
+  H3Inline,
+  ToolTipAdjust,
+  LifecycleLabelRow,
+} from './style-components';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
@@ -993,20 +1001,22 @@ export function AddEditFormDefinitionEditor({
                     </div>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
-                        <H3Inline>Task queue to process</H3Inline>
-                        <ToolTipAdjust>
-                          {definition.submissionRecords && (
-                            <GoabTooltip
-                              content={
-                                getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                                  ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                                  : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                              }
-                            >
-                              <GoabIcon type="information-circle" ariaLabel="queue"></GoabIcon>
-                            </GoabTooltip>
-                          )}
-                        </ToolTipAdjust>
+                        <LifecycleLabelRow>
+                          <H3Inline>Task queue to process</H3Inline>
+                          <ToolTipAdjust>
+                            {definition.submissionRecords && (
+                              <GoabTooltip
+                                content={
+                                  getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                                    ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                                    : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                                }
+                              >
+                                <GoabIcon type="information-circle" ariaLabel="queue"></GoabIcon>
+                              </GoabTooltip>
+                            )}
+                          </ToolTipAdjust>
+                        </LifecycleLabelRow>
                         <QueueTaskDropdown>
                           {queueTasks && Object.keys(queueTasks).length > 0 && (
                             <GoabDropdown
@@ -1050,19 +1060,21 @@ export function AddEditFormDefinitionEditor({
                           )}
                         </QueueTaskDropdown>
                         <RowFlex>
-                          <h3>Disposition states</h3>
-                          <div>
-                            {definition.submissionRecords ? (
-                              <GoabTooltip
-                                content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                                position="top"
-                              >
-                                <GoabIcon type="information-circle" ariaLabel="disposition-icon"></GoabIcon>
-                              </GoabTooltip>
-                            ) : (
-                              <FakeButton />
-                            )}
-                          </div>
+                          <LifecycleLabelRow>
+                            <H3Inline>Disposition states</H3Inline>
+                            <ToolTipAdjust>
+                              {definition.submissionRecords ? (
+                                <GoabTooltip
+                                  content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                                  position="top"
+                                >
+                                  <GoabIcon type="information-circle" ariaLabel="disposition-icon"></GoabIcon>
+                                </GoabTooltip>
+                              ) : (
+                                <FakeButton />
+                              )}
+                            </ToolTipAdjust>
+                          </LifecycleLabelRow>
                           <RightAlign>
                             {definition.submissionRecords ? (
                               <GoabButton
