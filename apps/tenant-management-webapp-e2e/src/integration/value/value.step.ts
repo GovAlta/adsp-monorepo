@@ -78,6 +78,7 @@ Then(
     }
     if (schema !== 'N/A') {
       commonlib.enterMonacoEditorJson(valueObj.valueDefinitionsDefinitionModalSchema(), schema);
+      cy.wait(1000);
     }
   }
 );
