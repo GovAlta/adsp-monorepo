@@ -95,7 +95,7 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
       const adminInTenants = tenants.map((tenant) => ({ name: tenant.name, realm: tenant.realm }));
       yield put(UpdateTenantAdminInfo(true, adminInTenants[0].name, adminInTenants[0].realm, adminInTenants));
     }
-  } catch (e) {
+  } catch {
     yield put(UpdateTenantAdminInfo(false, TENANT_INIT.name, TENANT_INIT.realm, []));
   }
 }
@@ -236,7 +236,7 @@ export function* getAccessToken(isForce = false): SagaIterator {
     } else {
       return credentials.token;
     }
-  } catch (e) {
+  } catch {
     // Failure to get the access token results in a logout.
     if (realmInSession) {
       yield put(SetSessionExpired(true));
@@ -339,7 +339,7 @@ export function* fetchUserIdByEmail(action: FetchUserIdByEmailAction): SagaItera
         }),
       );
     }
-  } catch (err) {
+  } catch {
     yield put(
       UpdateLoadingState({
         name: FETCH_USER_ID_BY_EMAIL,

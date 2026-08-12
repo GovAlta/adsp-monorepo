@@ -119,7 +119,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
     if (data) {
       yield put(createEntrySuccess(action.data));
     }
-  } catch (err) {
+  } catch {
     yield put(
       ErrorNotification({
         message: `Failed to create a directory service entry,  ${action.data.service} already exists.`,
@@ -217,7 +217,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
 
       yield put(fetchEntryDetailSuccess(service));
     }
-  } catch (err) {
+  } catch {
     const service = action.data;
     service.loaded = true;
     service.metadata = null;
@@ -263,7 +263,6 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
             _service.metadata = result?.metadata ? { ...result?.metadata } : null;
             yield put(fetchEntryDetailSuccess(_service));
           }
-          // eslint-disable-next-line
         } catch (err) {
           console.warn(`Failed to fetch metadata ${err.message}`);
         }

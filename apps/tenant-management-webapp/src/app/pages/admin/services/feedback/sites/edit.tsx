@@ -62,10 +62,6 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
     setSelectedTags(updatedSelectedTags);
   };
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
   const NO_TAG_FILTER = {
     label: '<No tag filter>',
     value: '',

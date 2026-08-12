@@ -19,7 +19,6 @@ interface ValueDefinitionsComponentProps {
 export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps> = ({ activeEdit }) => {
   const [selectedDefinition, setSelectedDefinition] = useState(defaultValueDefinition);
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
-  const [editDefinition, setEditDefinition] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const indicator = useSelector((state: RootState) => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@core-services/app-common';
 import { RootState } from '@store/index';

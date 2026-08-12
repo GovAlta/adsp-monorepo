@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SelectCalendarHeader, CalendarDropdownWrapper } from './styled-components';
 import { GoabDropdown, GoabDropdownItem, GoabButton, GoabSkeleton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,7 +6,6 @@ import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/model
 import {
   fetchCalendars,
   FetchEventsByCalendar,
-  UpdateSearchCalendarEventCriteria,
   ExportCalendarEventsAction,
 } from '@store/calendar/actions';
 import { UpdateModalState } from '@store/session/actions';

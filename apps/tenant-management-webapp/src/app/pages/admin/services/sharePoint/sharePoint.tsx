@@ -7,7 +7,7 @@ import AsideLinks from '@components/AsideLinks';
 import { AsidePadding } from '../../../../components/Html';
 
 export const SharePoint: FunctionComponent = () => {
-  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+  const [activateEditState] = useState<boolean>(false);
 
   return (
     <Page>

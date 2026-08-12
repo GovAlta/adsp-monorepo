@@ -18,7 +18,7 @@ import {
 } from './styled-components';
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
-import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd, EventTableHeader } from './styled-components';
+import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd } from './styled-components';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
 

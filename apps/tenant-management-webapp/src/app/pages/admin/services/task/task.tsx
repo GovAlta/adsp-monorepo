@@ -8,12 +8,10 @@ import AsideLinks from '@components/AsideLinks';
 import { useSelector } from 'react-redux';
 import { taskAppLoginUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
-import { RootState } from '@store/index';
 import { useLocation } from 'react-router-dom';
 import { AsidePadding } from '../../../../components/Html';
 
 export const Task: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const loginUrl = useSelector(taskAppLoginUrlSelector);
   const [openAddTask, setOpenAddTask] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -21,11 +19,7 @@ export const Task: FunctionComponent = () => {
   const location = useLocation();
 
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
-  const [isNavigatedFromEditor, setIsNavigatedFromEditor] = useState(isNavigatedFromEdit);
-  const searchParams = new URLSearchParams(document.location.search);
-
-  const queues = tenantName && searchParams.get('queues');
-
+  const [isNavigatedFromEditor] = useState(isNavigatedFromEdit);
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);

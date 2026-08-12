@@ -61,7 +61,6 @@ export function serviceRolesReduce(
       );
       return { ...state };
     }
-    // eslint-disable-next-line
     default:
       return state;
   }

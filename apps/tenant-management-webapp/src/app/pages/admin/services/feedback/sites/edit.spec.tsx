@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, screen, cleanup } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SiteAddEditForm } from './edit';
 import { FeedbackSite } from '@store/feedback/models';

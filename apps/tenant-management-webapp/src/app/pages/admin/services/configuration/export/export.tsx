@@ -38,7 +38,6 @@ export const ConfigurationExport: FunctionComponent = () => {
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
   const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
   const [selectAll, setSelectAll] = useState(false);
-  const [infoView, setInfoView] = useState<Record<string, boolean>>({});
 
   const sortedConfiguration = useMemo(() => {
     const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
@@ -77,19 +76,6 @@ export const ConfigurationExport: FunctionComponent = () => {
     } else {
       setExportServices({
         ...exportServices,
-        [key]: true,
-      });
-    }
-  };
-
-  const toggleInfo = (key: string) => {
-    if (infoView[key]) {
-      const temp = { ...infoView };
-      delete temp[key];
-      setInfoView(temp);
-    } else {
-      setInfoView({
-        ...infoView,
         [key]: true,
       });
     }

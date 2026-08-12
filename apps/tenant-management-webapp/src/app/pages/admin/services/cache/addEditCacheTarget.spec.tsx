@@ -90,7 +90,7 @@ describe('addEditCacheTarget', () => {
     expect(dropdown?.getAttribute('disabled')).not.toBe('true');
   });
   it('renders the edit window', async () => {
-    const { getByText, getByRole, baseElement } = render(
+    const { getByText, baseElement } = render(
       <Provider store={store}>
         <AddEditTargetCache
           onSave={() => {}}

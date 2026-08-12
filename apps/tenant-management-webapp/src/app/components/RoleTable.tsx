@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoabTable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { Checkbox } from './Checkbox';

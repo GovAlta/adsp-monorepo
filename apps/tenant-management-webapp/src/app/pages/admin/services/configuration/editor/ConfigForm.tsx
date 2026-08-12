@@ -8,7 +8,6 @@ import { RootState } from '@store/index';
 
 import { Anchor, Edit, ConfigFormWrapper, Tooltip } from '../styled-components';
 
-import { updatePdfTemplate } from '@store/pdf/action';
 import { AddEditConfigDefinition } from '../definitions/addEditDefinition';
 
 import { updateConfigurationDefinition } from '@store/configuration/action';

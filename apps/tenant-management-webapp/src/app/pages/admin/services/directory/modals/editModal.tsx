@@ -78,7 +78,6 @@ export const DirectoryModal = (): JSX.Element => {
     .add('serviceDuplicate', 'service', duplicateServiceCheck(directory, tenantName, isNew))
     .build();
 
-  // eslint-disable-next-line
   useEffect(() => {
     setEntry(initEntry);
   }, [isNew, isQuickAdd, isEdit, initEntry]);

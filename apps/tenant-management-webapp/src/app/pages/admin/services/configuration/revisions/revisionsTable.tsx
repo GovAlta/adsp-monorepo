@@ -4,7 +4,7 @@ import { Revision } from '@store/configuration/model';
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
 import { GoabButton, GoabBadge, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
@@ -98,24 +98,6 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
     </>
   );
 };
-interface NoItemRevisionComponentProps {
-  service: string;
-  onClick?: () => void;
-}
-const NoItemRevisionComponent: FunctionComponent<NoItemRevisionComponentProps> = ({ service, onClick }) => {
-  return (
-    <tr>
-      <td></td>
-      <td></td>
-      <td>
-        <GoAContextMenu>
-          {<GoAContextMenuIcon type="create" title="Edit" testId={`revision-edit-${service}`} onClick={onClick} />}
-        </GoAContextMenu>
-      </td>
-    </tr>
-  );
-};
-
 interface RevisionTableComponentProps {
   className?: string;
   service: string;
@@ -150,7 +132,6 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
     dispatch(getConfigurationRevisions(service, next));
   };
 
-  // eslint-disable-next-line
   useEffect(() => {
     if (revisions?.length > 0) {
       dispatch(getConfigurationActive(service));

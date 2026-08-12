@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
 import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPdfTemplates, createPdfTemplate, updatePdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
+import { getPdfTemplates, createPdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
@@ -20,10 +20,6 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   const openEditor = useSelector((state: RootState) => state.pdf.openEditor);
 
   const navigate = useNavigate();
-
-  const isObjectEmpty = (obj) => {
-    return JSON.stringify(obj) === '{}';
-  };
 
   useEffect(() => {
     if (openEditor) {
@@ -71,7 +67,6 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     dispatch(getCorePdfTemplates());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // eslint-disable-next-line
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, [pdfTemplates]);

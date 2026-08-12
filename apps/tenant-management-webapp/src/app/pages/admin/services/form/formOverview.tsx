@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoabButton } from '@abgov/react-components';
-import { fetchFormMetrics, fetchAllTags, getFormDefinitions } from '@store/form/action';
+import { fetchFormMetrics } from '@store/form/action';
 import { useDispatch } from 'react-redux';
 import { FormMetrics } from './metrics';
 import { fetchDirectory } from '@store/directory/actions';

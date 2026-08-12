@@ -4,7 +4,6 @@ import { defaultTemplateFooter } from '../../store/pdf/defaultTemplates/footer';
 import { defaultTemplateCss } from '../../store/pdf/defaultTemplates/css';
 import { defaultAssignments } from '../../store/pdf/defaultTemplates/assignments';
 import { FileItem } from '@store/file/models';
-import { FormDefinition } from '@store/form/model';
 export interface PdfTemplate {
   id: string;
   name: string;

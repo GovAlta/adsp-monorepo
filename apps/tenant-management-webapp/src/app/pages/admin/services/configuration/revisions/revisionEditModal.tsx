@@ -45,7 +45,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
     try {
       JSON.parse(input);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   };

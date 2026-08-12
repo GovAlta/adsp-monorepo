@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DeleteModal } from '@components/DeleteModal';
 import { DeleteModalType } from '@store/directory/models';
 import { selectDirectoryDeleteDirectory } from '@store/directory/selectors';
