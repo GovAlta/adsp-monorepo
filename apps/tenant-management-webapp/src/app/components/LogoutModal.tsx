@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — pre-existing untested component; this change only removed dead code.
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';

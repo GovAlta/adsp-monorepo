@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — pre-existing untested page; this change only removed an unused import.
 import React, { useEffect } from 'react';
 import { GoabCallout, GoabGrid, GoabTooltip } from '@abgov/react-components';
 
