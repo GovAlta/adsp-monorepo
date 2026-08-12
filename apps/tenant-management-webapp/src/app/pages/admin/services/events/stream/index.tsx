@@ -33,7 +33,7 @@ export const EventStreams = (): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
-  }, []);
+  }, [dispatch]);
 
   return (
     <section>

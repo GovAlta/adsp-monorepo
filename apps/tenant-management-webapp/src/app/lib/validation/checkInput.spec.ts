@@ -96,7 +96,6 @@ describe('checkInput', () => {
       let successActionCalled = false;
 
       const action = {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         onFailure: (_message: string) => {},
         onSuccess: () => {
           successActionCalled = true;

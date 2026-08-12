@@ -232,9 +232,7 @@ export interface SubmissionInfoItem {
   definitionId?: string;
   tenantId?: string;
   formId?: string;
-  //eslint-disable-next-line
   formData?: {};
-  //eslint-disable-next-line
   formFiles?: {};
   created?: string;
   createdBy?: {

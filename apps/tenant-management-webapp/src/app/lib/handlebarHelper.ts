@@ -13,13 +13,12 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
         .setZone(TIME_ZONE)
         .toFormat(hash.format || 'ff ZZZZ');
     }
-  } catch (err) {
+  } catch {
     // If this fails, then just fallback to default.
   }
   return value;
 });
 
-// eslint-disable-next-line
 export const generateMessage = (template, data) => {
   return handlebars.compile(template || '')(data);
 };

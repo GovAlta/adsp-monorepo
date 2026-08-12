@@ -44,8 +44,6 @@ export const FormExport = (): JSX.Element => {
     .sort((a, b) => a.name.localeCompare(b.name));
   const [exportFormat, setExportFormat] = useState<ExportFormat>('json');
   const [socketConnection, setSocketConnection] = useState(undefined); // to track socket connection status
-  const [socketConnecting, setSocketConnecting] = useState(undefined); // to track socket connection initializing progress
-  const [socketDisconnect, setSocketDisconnect] = useState(undefined); // to track socket disconnection status
   const [socketConnectionError, setSocketConnectionError] = useState(undefined); // to track socket unexpected errors status
   const [spinner, setSpinner] = useState(false);
 
@@ -73,25 +71,21 @@ export const FormExport = (): JSX.Element => {
     setLoadingMessage('Exporting File ...');
   };
 
-  // eslint-disable-next-line
   useEffect(() => {
     if (selectedForm) {
       setFileNamePrefix(`Exports-${truncateString(selectedForm?.id)}-${generateRandomNumber()}`);
     }
   }, [selectedForm]);
 
-  // eslint-disable-next-line
   useEffect(() => {
     dispatch(FetchFilesService());
   }, [dispatch, exportStream]);
 
-  // eslint-disable-next-line
   useEffect(() => {
     dispatch(getFormDefinitions());
     //eslint-disable-next-line
   }, [dispatch, Object.keys(formDefinitions).length === 0]);
 
-  // eslint-disable-next-line
   useEffect(() => {
     setColumns(transformToColumns(selectedForm, dataSchema));
   }, [exportFormat, selectedForm, dataSchema]);
@@ -104,7 +98,6 @@ export const FormExport = (): JSX.Element => {
       setSpinner(false);
     }
   }, [fileList, exportStream?.payload?.jobId]);
-  // eslint-disable-next-line
   useEffect(() => {
     if (next) {
       dispatch(getFormDefinitions(next));
@@ -113,31 +106,22 @@ export const FormExport = (): JSX.Element => {
 
   useEffect(() => {
     socket?.on('connect', () => {
-      setSocketDisconnect(false);
       setSocketConnectionError(false);
       setSocketConnection(true);
-      setSocketConnecting(false);
     });
 
     socket?.on('disconnect', (reason) => {
-      // if connection disconnects from client or server side, consider it as a successful disconnect
-      if (reason === 'io client disconnect' || reason === 'io server disconnect') {
-        setSocketDisconnect(true);
-      }
       // if connection is closed due to an error from client or server, consider this as unexpected error
       // once these errors are caught here, it then goes to connect_error event
       if (reason === 'transport close' || reason === 'transport error') {
         setSocketConnectionError(true);
       }
       setSocketConnection(false);
-      setSocketConnecting(false);
     });
 
-    socket?.on('connect_error', (error) => {
+    socket?.on('connect_error', () => {
       setSocketConnectionError(true);
       setSocketConnection(false);
-      setSocketConnecting(false);
-      setSocketDisconnect(false);
       setSpinner(false);
     });
 

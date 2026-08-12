@@ -16,11 +16,7 @@ import {
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface QueueModalProps {
   initialValue?: TaskDefinition;

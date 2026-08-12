@@ -150,7 +150,6 @@ export const WebhookListTable = () => {
   useEffect(() => {
     dispatch(fetchWebhooks());
   }, [dispatch]);
-  // eslint-disable-next-line
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });

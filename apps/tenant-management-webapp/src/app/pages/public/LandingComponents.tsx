@@ -2,8 +2,6 @@ import React from 'react';
 import styled from 'styled-components';
 import { GoabButton, GoabIcon } from '@abgov/react-components';
 
-import { GoAContextMenuIcon } from '@components/ContextMenu';
-
 // *****************
 // Styled Components
 // *****************

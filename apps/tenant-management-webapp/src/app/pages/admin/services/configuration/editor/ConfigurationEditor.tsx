@@ -36,7 +36,7 @@ export const ConfigurationEditor = (): JSX.Element => {
   const [namespace, name] = routeId.split(':');
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [payloadSchema, setPayloadSchema] = useState<string>('');
-  const { tenantConfigDefinitions, configurationRevisions } = useSelector((state: RootState) => state.configuration);
+  const { tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
 
   // eslint-disable-next-line
   const isConfigurationUpdated = (prev: any, next: any): boolean => {
@@ -55,7 +55,7 @@ export const ConfigurationEditor = (): JSX.Element => {
   });
 
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
-  const [EditorError, setEditorError] = useState<Record<string, string | null>>({
+  const [EditorError] = useState<Record<string, string | null>>({
     testData: null,
   });
 

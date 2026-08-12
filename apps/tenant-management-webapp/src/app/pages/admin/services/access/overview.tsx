@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import DataTable from '@components/DataTable';
 import { Metrics } from '@components/Metrics';
 import { PageIndicator } from '@components/Indicator';
-import { TitleLinkHeader, TableStyle, Title } from './styled-component';
+import { TitleLinkHeader, TableStyle } from './styled-component';
 import { fetchAccess, accessReset } from '@store/access/actions';
 import { OverviewLayout } from '@components/Overview';
 import { ExternalLink } from '@components/icons/ExternalLink';

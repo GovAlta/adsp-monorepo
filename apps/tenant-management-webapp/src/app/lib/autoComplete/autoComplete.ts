@@ -48,7 +48,6 @@ const createSuggestion = (suggestion: EditorSuggestion, hasBracket: boolean, has
     range: null,
   } as languages.CompletionItem;
 };
-// eslint-disable-next-line
 export const buildSuggestions = (
   instance: Monaco,
   suggestions: EditorSuggestion[],
@@ -133,7 +132,6 @@ export const buildSuggestions = (
 
   return results.map((s) => createSuggestion(s, hasBracket, hasParent)) as languages.CompletionItem[];
 };
-// eslint-disable-next-line
 export const convertToSuggestion = (event: EventDefinition, hasAddress: boolean) => {
   const eventPayload = getElementSuggestion(event.payloadSchema);
   const eventSuggestion = [

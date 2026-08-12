@@ -44,7 +44,6 @@ describe('Test Pdf overview page', () => {
       <Provider store={store}>
         <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
           <PdfOverview
-            // eslint-disable-next-line
             setOpenAddTemplate={jest.fn((val: boolean) => {})}
           />
         </MemoryRouter>

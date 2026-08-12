@@ -214,7 +214,7 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
           show: false,
         }),
       );
-    } catch (err) {
+    } catch {
       yield put(getConfigurationRevisionsSuccess([], action.service));
       yield put(
         UpdateIndicator({
@@ -243,7 +243,6 @@ export function* fetchRegisterData(): SagaIterator {
 
     const registerConfigs =
       tenantConfigs
-        // eslint-disable-next-line
         .filter(([name, config]) => {
           // eslint-disable-next-line
           const _c = config as any;
@@ -253,7 +252,6 @@ export function* fetchRegisterData(): SagaIterator {
         .map(([name, config]) => ({ name, description: (config as any)?.description ?? '' })) || [];
 
     const dataListObject = tenantConfigs
-      // eslint-disable-next-line
       .filter(([name, config]) => {
         // eslint-disable-next-line
         const _c = config as any;
@@ -293,7 +291,7 @@ export function* fetchRegisterData(): SagaIterator {
             data: data?.configuration,
           });
         }
-      } catch (error) {
+      } catch {
         console.warn(`Error in fetching the register data from service: ${registerConfig.name}`);
       }
     }
@@ -317,7 +315,7 @@ export function* fetchConfigurationActiveRevision(action: FetchConfigurationActi
       const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
 
       yield put(getConfigurationActiveSuccess(data, action.service));
-    } catch (err) {
+    } catch {
       yield put(getConfigurationActiveSuccess(null, action.service));
     }
   }

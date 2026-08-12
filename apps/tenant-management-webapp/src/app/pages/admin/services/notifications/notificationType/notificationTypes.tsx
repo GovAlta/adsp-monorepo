@@ -113,8 +113,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
-  const [titlePreview, setTitlePreview] = useState('');
-  const [subtitlePreview, setSubTitlePreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
   const [currentChannel, setCurrentChannel] = useState('email');
 
@@ -181,7 +179,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           ...templateEditErrors,
           body: '',
         });
-      } catch (e) {
+      } catch {
         setTemplateEditErrors({
           ...templateEditErrors,
           body: syntaxErrorMessage,
@@ -193,7 +191,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           ...templateEditErrors,
           subject: '',
         });
-      } catch (e) {
+      } catch {
         setTemplateEditErrors({
           ...templateEditErrors,
           subject: syntaxErrorMessage,
@@ -857,8 +855,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         ),
                       );
                       setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
-                      setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
-                      setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
                     } else {
                       setBodyPreview(
                         generateMessage(
@@ -870,8 +866,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         ),
                       );
                       setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
-                      setTitlePreview(generateMessage(templates[channel]?.title, htmlPayload));
-                      setSubTitlePreview(generateMessage(templates[channel]?.subtitle, htmlPayload));
                     }
                     setCurrentChannel(channel);
                   }}

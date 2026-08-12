@@ -10,7 +10,7 @@ import { FetchTenant } from '@store/tenant/actions';
 import { scrollAppToTop } from '@lib/scrollAppToTop';
 
 import { serviceVariables } from '../../../featureFlag';
-import { GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
+import { GoabSideMenu } from '@abgov/react-components';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';

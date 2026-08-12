@@ -141,7 +141,7 @@ function* fetchDashboardMetrics(action: FetchDashboardMetricsAction): SagaIterat
   try {
     const { data } = yield call(axios.get, `/api/metrics/v1/metrics/${interval.toISO()}`);
     yield put(fetchDashboardMetricsSuccess(data));
-  } catch (err) {
+  } catch {
     // This is best effort; fine if it fails.
   }
 }

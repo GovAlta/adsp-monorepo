@@ -14,7 +14,7 @@ import {
   GoabSkeleton,
 } from '@abgov/react-components';
 import { TopicModal } from './topicModal';
-import { ButtonPadding, ProgressWrapper, Topics } from '../styled-components';
+import { ButtonPadding, ProgressWrapper } from '../styled-components';
 import { TopicListTable } from './topicsTable';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { LoadMoreWrapper } from '@components/styled-components';

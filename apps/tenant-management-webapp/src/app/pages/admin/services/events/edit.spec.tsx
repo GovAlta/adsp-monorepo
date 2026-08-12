@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EventDefinitionModalForm } from './edit';
 import { Provider } from 'react-redux';
@@ -40,8 +40,6 @@ const mockDefinitions = {
 };
 
 describe('EventDefinitionModalForm', () => {
-  const mockDispatch = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
   });

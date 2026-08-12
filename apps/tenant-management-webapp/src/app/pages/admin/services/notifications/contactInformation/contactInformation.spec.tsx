@@ -93,7 +93,7 @@ describe('NotificationTypes Page', () => {
   const invalidStore = mockStore(invalidScore);
 
   it('renders contact info', () => {
-    const { queryByTestId, baseElement } = render(
+    const { queryByTestId } = render(
       <Provider store={store}>
         <ContactInformation />
       </Provider>
