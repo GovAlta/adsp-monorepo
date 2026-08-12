@@ -1,4 +1,3 @@
-// clean-code-ignore: RULE-19 — pre-existing untested component; this change only removed an unused import.
 import React, { useState } from 'react';
 import { GoabTable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
