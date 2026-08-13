@@ -42,6 +42,7 @@
         "extractCss": true,
         "styles": [],
         "webpackConfig": "apps/tenant-management-webapp/webpack.config.js",
+        "memoryLimit": 4096,
         "babelUpwardRootMode": true
       },
       "configurations": {
