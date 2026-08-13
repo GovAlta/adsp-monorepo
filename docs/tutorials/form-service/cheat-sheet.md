@@ -27,12 +27,65 @@ Note: in some UI schemas you will see "ComponentProps" in the options element. C
 
 Here are some out-of-the-box formats that not only render with the correct input widget, but ensure that the data provided by users is valid. NOTE: There is a known issue in jsonforms that allows an empty string to satisfy the required validation rule. To work around this, you should also add a minimum length of 1 to required string fields (see Limited text with required validation) below.
 
+The Name, Address, and Email examples below reuse definitions from the [ADSP common schema](https://adsp.alberta.ca/common.v1.schema.json). Add the data schema property first, then add a UI schema control whose <code>scope</code> uses the same property name.
+
 <table>
   <tr>
     <th>Format</th>
     <th>Description</th>
     <th>JSON schema</th>
     <th>UI schema</th>
+  </tr>
+  <tr>
+    <td>Name</td>
+    <td>A structured name control with first name, optional middle name, and last name fields. The common definition includes validation and requires the first and last names.</td>
+    <td><pre><code>
+{
+  "applicantName": {
+    "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName"
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/applicantName"
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Address</td>
+    <td>A structured Alberta postal address control with address lookup. Use <code>postalAddressCanada</code> instead of <code>postalAddressAlberta</code> when addresses from any Canadian province or territory are allowed.</td>
+    <td><pre><code>
+{
+  "mailingAddress": {
+    "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta"
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/mailingAddress"
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td>Email</td>
+    <td>An email input with the common schema's email format validation and 100-character limit.</td>
+    <td><pre><code>
+{
+  "contactEmail": {
+    "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/email"
+  }
+}
+    </code></pre></td>
+    <td><pre><code>
+{
+  "type": "Control",
+  "scope": "#/properties/contactEmail"
+}
+    </code></pre></td>
   </tr>
   <tr>
     <td>Date</td>
