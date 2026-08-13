@@ -39,7 +39,6 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
     reset();
   }, [search]);
 
-  // eslint-disable-next-line
   const openModalFunction = (subscription) => {
     setSelectedSubscriber(subscription);
     setEditSubscription(true);

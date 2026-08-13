@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -43,11 +43,6 @@ export const ResourceTypePage = (): JSX.Element => {
       }
     });
   };
-
-  const groupedResourceTypes = useMemo(
-    () => resourceTypes && groupResources(resourceTypes),
-    [resourceTypes, groupResources]
-  );
 
   const onEdit = (urn: string, resource: ResourceType) => {
     setOpenAddResourceType(true);

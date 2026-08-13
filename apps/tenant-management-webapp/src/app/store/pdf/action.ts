@@ -89,17 +89,14 @@ export interface UpdatePdfResponseAction {
   payload: UpdatePDFResponse;
 }
 
-// eslint-disable-next-line
 export interface AddToStreamAction {
   type: typeof ADD_TO_STREAM;
   // eslint-disable-next-line
   payload: any;
 }
 
-// eslint-disable-next-line
 export interface SocketChannelAction {
   type: typeof SOCKET_CHANNEL;
-  // eslint-disable-next-line
   socketChannel: boolean;
 }
 

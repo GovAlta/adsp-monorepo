@@ -1,10 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoabButton } from '@abgov/react-components';
-import { useNavigate } from 'react-router-dom';
-
-import { useDispatch } from 'react-redux';
-import { defaultTaskQueue, TaskDefinition } from '@store/task/model';
 
 interface TaskOverviewProps {
   setOpenAddTask: (val: boolean) => void;
@@ -22,21 +18,10 @@ export const TaskOverview = ({
   openAddTask,
   setOpenAddTask,
 }: TaskOverviewProps): JSX.Element => {
-  const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
-
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-
-  const reset = () => {
-    setSelectedQueue(defaultTaskQueue);
-    setOpenAddTask(false);
-    document.body.style.overflow = 'unset';
-  };
 
   return (
     <OverviewLayout

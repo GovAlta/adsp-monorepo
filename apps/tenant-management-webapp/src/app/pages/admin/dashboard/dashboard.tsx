@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoabContainer, GoabCallout, GoabGrid, GoabTooltip } from '@abgov/react-components';
+import { GoabCallout, GoabGrid, GoabTooltip } from '@abgov/react-components';
 
 import { Link } from 'react-router-dom';
 import { Main, Page } from '@components/Html';

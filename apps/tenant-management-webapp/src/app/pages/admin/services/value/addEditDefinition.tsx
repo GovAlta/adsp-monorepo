@@ -47,7 +47,6 @@ export const AddEditValueDefinition = ({
 }: AddEditValueDefinitionProps): JSX.Element => {
   const [definition, setDefinition] = useState<ValueDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.jsonSchema, null, 2));
-  const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = values && Object.values(values).map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
 
   const coreNamespaces = values
@@ -147,9 +146,7 @@ export const AddEditValueDefinition = ({
               testId="value-save"
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
               onClick={() => {
-                if (loadingIndicator.show) {
-                  setSpinner(true);
-                } else {
+                if (!loadingIndicator.show) {
                   validationCheck();
                 }
               }}

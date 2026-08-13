@@ -19,11 +19,7 @@ import { ButtonPadding, ProgressWrapper } from '../styled-components';
 import { TaskListTable } from './tasksTable';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { getSortedQueues } from '../taskUtil';
-import {
-  GoabTextAreaOnKeyPressDetail,
-  GoabInputOnChangeDetail,
-  GoabDropdownOnChangeDetail,
-} from '@abgov/ui-components-common';
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface VisibleProps {
   visible: boolean;
 }

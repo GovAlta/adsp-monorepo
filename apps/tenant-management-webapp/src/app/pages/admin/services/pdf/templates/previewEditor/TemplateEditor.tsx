@@ -16,7 +16,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoabButton, GoabFormItem, GoabButtonGroup, GoabCircularProgress, GoabBadge } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabButtonGroup, GoabBadge } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
@@ -90,7 +90,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (!thread) {
       dispatch(startThread('pdfGenerationAgent', threadId));
     }
-  }, [dispatch, thread]);
+  }, [dispatch, thread, threadId]);
 
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
@@ -180,11 +180,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  //eslint-disable-next-line
   useEffect(() => {
     // clean-code-ignore: 2.18 — see the note on the useState initializer above.
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || {})));
-  }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pdfTemplate]);
 
   useEffect(() => {
     if (saveModal.closeEditor) {

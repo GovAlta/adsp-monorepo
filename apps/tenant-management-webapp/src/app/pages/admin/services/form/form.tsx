@@ -35,7 +35,7 @@ export const Form: FunctionComponent = () => {
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
-  const [isNavigatedFromEditor, setIsNavigatedFromEditor] = useState(isNavigatedFromEdit);
+  const [isNavigatedFromEditor] = useState(isNavigatedFromEdit);
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export const Form: FunctionComponent = () => {
       setActivateEditState(true);
     }
     dispatch(getConfigurationDefinitions());
-  }, [isNavigatedFromEditor]);
+  }, [isNavigatedFromEditor, dispatch]);
 
   return (
     <Page>

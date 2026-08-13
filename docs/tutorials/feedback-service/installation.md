@@ -73,6 +73,21 @@ The tenant name will be extracted from the access token, and the feedback inform
 
 Note: The service itself does not make a record of the user ID in the access token. If this is desired you can use the [correlation ID](#target-correlationid) for this purpose.
 
+For applications that need to use Design Systems 2.0 components add a parameter `designSystemsVersion: '2.0'` in the initialize method as shown below:
+
+```html
+<body>
+  ...
+  <script>
+    adspFeedback.initialize({
+      designSystemsVersion: '2.0',
+      getAccessToken: () => {<your getter method>}});
+  </script>
+</body>
+```
+
+By default the Feedback widget will show Design Systems 1.0 if the parameter `designSystemsVersion: '2.0'` is not provided.
+
 #### Anonymous access
 
 For anonymous access you must submit your tenant name directly, as follows:

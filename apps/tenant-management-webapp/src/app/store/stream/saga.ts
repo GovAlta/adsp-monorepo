@@ -143,7 +143,7 @@ export function* startSocket({ url, stream }: StartStreamAction): SagaIterator {
       try {
         const token = await store.dispatch(getAccessTokenThunk());
         cb({ token });
-      } catch (err) {
+      } catch {
         cb({});
       }
     },

@@ -130,7 +130,7 @@ export const isValidJSONCheck = (label?: string): Validator => {
     try {
       JSON.parse(str);
       return '';
-    } catch (err) {
+    } catch {
       return `${capitalize(label)} is invalid for JSON string`;
     }
   };
@@ -151,7 +151,7 @@ export const isValidJSONSchemaCheck = (label?: string): Validator => {
     try {
       ajv.compile(JSON.parse(str));
       return '';
-    } catch (err) {
+    } catch {
       return `${capitalize(label)} is invalid for JSON Schema.`;
     }
   };
@@ -198,7 +198,6 @@ export const errorLogger: ValidationAction = {
 /*
  * Default action
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const nonAction: ValidationAction = { onFailure: () => {} };
 
 // eslint-disable-next-line

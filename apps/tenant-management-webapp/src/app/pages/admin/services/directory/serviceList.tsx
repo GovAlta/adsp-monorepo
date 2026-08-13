@@ -196,12 +196,6 @@ const IconDiv = styled.div`
   justify-content: flex-end;
 `;
 
-const NoItem = styled.div`
-  text-align: center;
-  padding-top: 1.5rem;
-  padding-bottom: 0.5rem;
-`;
-
 const ElementLoader = styled.div`
   text-align: center;
   margin-top: 1.3rem;

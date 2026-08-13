@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   GoabInput,
   GoabFormItem,
@@ -39,8 +39,6 @@ export const TenantIdp = (): JSX.Element => {
   const { errors, validators } = useValidators('email', 'email', emailValidator).build();
   const [copied, setCopied] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
-  // eslint-disable-next-line
-  useEffect(() => {}, [fetchUserIdState, deleteUserIdpState]);
 
   const searchUserByEmailHandler = () => {
     const validations = {
@@ -94,7 +92,8 @@ export const TenantIdp = (): JSX.Element => {
         linked to the previous AD account.
       </p>
       <GoabFormItem label="Email" error={`${errors['email'] || ''}`}>
-        <GoabInput size="compact"
+        <GoabInput
+          size="compact"
           value={email}
           name="user-email"
           type="email"
@@ -104,7 +103,8 @@ export const TenantIdp = (): JSX.Element => {
       </GoabFormItem>
       <GoabSpacer vSpacing="s"></GoabSpacer>
 
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         disabled={(fetchUserIdState?.state as unknown) === 'start'}
         testId={'user-search-email-btn'}
         onClick={searchUserByEmailHandler}
@@ -153,7 +153,8 @@ export const TenantIdp = (): JSX.Element => {
             (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore === true && (
               <>
                 <p>The related ADSP default IdP link in the core realm is found.</p>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   testId="delete-core-idp-btn"
                   disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
                   variant="destructive"

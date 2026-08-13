@@ -165,7 +165,6 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             testId="pdf-template-id"
             disabled={true}
             width="100%"
-            // eslint-disable-next-line
             onChange={() => {}}
           />
         </PdfFormItem>

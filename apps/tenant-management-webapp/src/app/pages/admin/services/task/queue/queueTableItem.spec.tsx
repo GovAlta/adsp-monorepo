@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueueTableItem } from './queueTableItem';
 import { TaskDefinition } from '@store/task/model';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 jest.mock('react-redux', () => ({
