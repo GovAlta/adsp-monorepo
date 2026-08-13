@@ -64,7 +64,7 @@ describe('target Component', () => {
   });
 
   it('shows cache object', async () => {
-    const { getByText, getByTestId } = render(
+    const { getByText } = render(
       <Provider store={store}>
         <Cache />
       </Provider>

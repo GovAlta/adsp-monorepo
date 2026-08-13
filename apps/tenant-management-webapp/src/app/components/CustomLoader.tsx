@@ -2,7 +2,6 @@ import React from 'react';
 import { GoabCircularProgress } from '@abgov/react-components';
 import styled from 'styled-components';
 
-// eslint-disable-next-line
 export const CustomLoader = (): JSX.Element => {
   return (
     <CustomLoaderWrapper>

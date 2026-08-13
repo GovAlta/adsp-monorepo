@@ -55,7 +55,6 @@ describe('Comment Component', () => {
     const saveButton = baseElement.querySelector("goa-button[testId='comment-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
     });
   });

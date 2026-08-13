@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabTextArea, GoabInput, GoabFormItem } from '@abgov/react-components';
 import { CalendarItem } from '@store/calendar/models';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
@@ -50,7 +50,6 @@ export const CalendarModal = ({
         updateRoles: [],
       },
   );
-  const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
   const scrollPaneRef = useRef<HTMLDivElement>(null);
   const fetchKeycloakRolesState = useSelector(

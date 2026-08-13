@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
-import { RootState } from '@store/index';
 import { TenantLogout } from '@store/tenant/actions';
 import { clearInterval, setInterval } from 'worker-timers';
 import { UpdateAccessToken } from '@store/tenant/actions';
@@ -48,8 +47,6 @@ export const LogoutModal = (): JSX.Element => {
 
   useEffect(() => {
     if (open) {
-      const expiry = authInstance.getExpiryTime();
-      const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
       countDownRef.current = setInterval(() => {
         setCountdownTime((time) => {
           if (time === 0) {

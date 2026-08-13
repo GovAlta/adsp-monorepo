@@ -21,7 +21,6 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
     adminInTenants: state.tenant.adminInTenants,
   }));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const urlParams = new URLSearchParams(window.location.search);
   const realm = encodeURIComponent(urlParams.get('realm'));
 

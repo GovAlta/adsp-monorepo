@@ -53,7 +53,7 @@ describe('User IdP tab in the access service', () => {
       },
     });
 
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <TenantIdp />
       </Provider>

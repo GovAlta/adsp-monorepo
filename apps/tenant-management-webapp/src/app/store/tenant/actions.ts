@@ -304,7 +304,7 @@ export function getAccessToken(isForce = false) {
       } else {
         return credentials.token;
       }
-    } catch (e) {
+    } catch {
       // Failure to get the access token results in a logout.
       if (realmInSession) {
         dispatch(SetSessionExpired(true));

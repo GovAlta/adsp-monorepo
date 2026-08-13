@@ -155,7 +155,6 @@ export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }:
                 name="file-type-id"
                 type="text"
                 aria-label="goa-input-file-type-id"
-                //eslint-disable-next-line
                 onChange={() => {}}
               />
             </FileIdItem>

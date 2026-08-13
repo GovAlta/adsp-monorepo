@@ -3,13 +3,7 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
-import { FeedbackSite } from '@store/feedback/models';
 import '@testing-library/jest-dom';
-interface siteDeleteProps {
-  site: FeedbackSite;
-  onCancel?: () => void;
-  deleteSite?: () => void;
-}
 const mockStore = configureStore([]);
 
 const store = mockStore({
@@ -24,7 +18,6 @@ describe('DeleteConfirmationsView', () => {
     deleteSite: mockOnConfirm,
     site: { url: 'https://test.com', allowAnonymous: true },
   };
-  const open = true;
 
   it('should render the dialog with the correct site name', () => {
     const { baseElement } = render(

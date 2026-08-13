@@ -18,9 +18,6 @@ const isSearchCriteriaValid = (criteria?: CalendarEventSearchCriteria) => {
 
 export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Element => {
   const criteria = useSelector((state: RootState) => state.calendarService?.eventSearchCriteria);
-  const todayDate = new Date();
-  const futureDate = new Date(todayDate);
-
   const dispatch = useDispatch();
   const [showDateError, setShowDateError] = useState<boolean>(false);
   const [startDateValue, setStartDateValue] = useState(JSON.parse(JSON.stringify(criteria?.startDate)));

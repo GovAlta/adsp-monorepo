@@ -292,7 +292,7 @@ export function connectAgent() {
         try {
           const token = await dispatch(getAccessToken());
           cb({ token });
-        } catch (err) {
+        } catch {
           // Token retrieval failed and connection (using auth result) will also fail after.
           cb(null as unknown as object);
         }

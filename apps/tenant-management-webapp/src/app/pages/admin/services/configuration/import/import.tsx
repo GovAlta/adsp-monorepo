@@ -12,7 +12,7 @@ import {
 import { ConfigDefinition } from '@store/configuration/model';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/validation/checkInput';
-import { ErrorStatusText, Import } from '../styled-components';
+import { ErrorStatusText } from '../styled-components';
 import JobList from './jobList';
 import { NoPaddingH2 } from '@components/AppHeader';
 

@@ -101,7 +101,6 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  // eslint-disable-next-line
   useEffect(() => {
     entries?.filter((item) => {
       if (!Object.prototype.hasOwnProperty.call(colors, item.correlationId)) {

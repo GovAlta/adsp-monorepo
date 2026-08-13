@@ -157,7 +157,6 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
                 testId="comment-topicType-id"
                 disabled={true}
                 width="100%"
-                // eslint-disable-next-line
                 onChange={() => {}}
               />
             </CommentCommentItem>

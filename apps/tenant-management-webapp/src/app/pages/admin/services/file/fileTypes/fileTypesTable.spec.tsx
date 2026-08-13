@@ -1,8 +1,7 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { render, fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { CoreFileTypeTableRow } from './fileTypesTable'; // Update with actual path
-import { debug } from 'node:console';
 
 describe('CoreFileTypeTableRow', () => {
   const mockProps = {

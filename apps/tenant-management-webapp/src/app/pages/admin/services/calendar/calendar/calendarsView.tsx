@@ -42,7 +42,6 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       setOpenEditCalendar(true);
     }
   }, [activeEdit]);
-  // eslint-disable-next-line
 
   const reset = () => {
     setOpenEditCalendar(false);

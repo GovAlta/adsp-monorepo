@@ -202,7 +202,7 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
         state: 'completed',
       })
     );
-  } catch (err) {
+  } catch {
     yield put(
       UpdateIndicator({
         show: false,
@@ -360,7 +360,7 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
         )
       );
     }
-  } catch (e) {
+  } catch {
     // This is best effort, so ok if not resolved.
   }
 }

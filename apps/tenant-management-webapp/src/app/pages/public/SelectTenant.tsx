@@ -1,12 +1,11 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { useNavigate } from 'react-router-dom';
 import { GoabButton } from '@abgov/react-components';
 import { TenantBasicInfo } from '@store/tenant/models';
 
 export const SelectTenant = (): JSX.Element => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { adminInTenants } = useSelector((state: RootState) => ({

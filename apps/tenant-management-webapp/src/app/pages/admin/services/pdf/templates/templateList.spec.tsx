@@ -19,7 +19,6 @@ describe('Test Pdf list page', () => {
   };
   it('Can create list item', async () => {
     const store = mockStore({});
-    // eslint-disable-next-line
     const onDeleteMock = jest.fn(() => {});
     const { baseElement } = render(
       <Provider store={store}>
@@ -38,7 +37,6 @@ describe('Test Pdf list page', () => {
   });
 
   it('Can create template table', async () => {
-    // eslint-disable-next-line
     const onDeleteMock = jest.fn(() => {});
     const templates = {
       'mock-template': templateMock,

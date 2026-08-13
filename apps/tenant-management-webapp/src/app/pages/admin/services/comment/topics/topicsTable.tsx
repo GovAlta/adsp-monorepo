@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { TopicTableItem } from './topicTableItem';
 import { TopicItem } from '@store/comment/model';
 
-import { HeaderFont, TableDiv } from '../styled-components';
+import { TableDiv } from '../styled-components';
 
 import { useDispatch } from 'react-redux';
 import { clearComments } from '@store/comment/action';

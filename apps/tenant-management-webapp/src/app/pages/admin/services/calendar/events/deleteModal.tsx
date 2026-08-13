@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResetModalState } from '@store/session/actions';

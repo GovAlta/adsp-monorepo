@@ -1,5 +1,4 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import Editor from '@monaco-editor/react';
 import {
   GoabButton,
   GoabButtonGroup,
@@ -49,7 +48,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
 }) => {
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
-  const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = Object.keys(configurations);
 
   const coreNamespaces = Object.keys(configurations)
@@ -148,9 +146,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               testId="form-save"
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
               onClick={() => {
-                if (loadingIndicator.show) {
-                  setSpinner(true);
-                } else {
+                if (!loadingIndicator.show) {
                   validationCheck();
                 }
               }}

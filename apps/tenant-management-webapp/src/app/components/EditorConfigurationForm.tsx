@@ -1,5 +1,4 @@
 import { GoabIconButton } from '@abgov/react-components';
-import { Dirent } from 'fs';
 import { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
 

@@ -243,7 +243,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
           show: false,
         }),
       );
-    } catch (err) {
+    } catch {
       yield put(
         ErrorNotification({
           error: {

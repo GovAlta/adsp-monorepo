@@ -5,7 +5,6 @@ import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { AgentConfiguration } from '@store/agent/model';
 import { AgentTableItem } from './agentsTableItem';
-import styled from 'styled-components';
 
 export interface AgentsTableProps {
   agents: AgentConfiguration[];
