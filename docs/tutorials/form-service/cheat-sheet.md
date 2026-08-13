@@ -353,6 +353,7 @@ The Name, Address, and Email examples below reuse definitions from the [ADSP com
 }
     </code></pre></td>
   </tr>
+
   <tr>
     <td>Checkbox with required validation</td>
     <td>A required checkbox that must be checked (confirmed) to satisfy the form requirement.</td>
@@ -688,6 +689,56 @@ For when the user must select from a limited set of answers.
 }
     </code></pre></td>
   </tr>
+  <tr>
+    <td>Radio Button 2</td>
+    <td>Another way to provide a set/list radio buttons along with hint text</td>
+    <td>
+<pre><code>
+{
+"carType": {
+"type": "array",
+"default": [],
+"items": {
+"type": "string",
+"oneOf": [
+{
+"const": "Acura",
+"title": "Acura SUV",
+"description": "Acura SUv -- This is for hint text"
+},
+{
+"const": "Toyota",
+"title": "Toyota SUV",
+"description": "Toyota SUV -- This is for hint text"
+},
+{
+"const": "Mazda SUV",
+"title": "Mazda SUV ",
+"description": "Toyota SUV -- This is for hint text"
+}
+],
+"uniqueItems": true
+},
+"minItems": 1,
+"errorMessage": {
+"minItems": "Choose all that apply is required"
+}
+}
+}
+</code></pre>
+    </td>
+    <td><pre><code>
+     {
+        "type": "Control",
+        "scope": "#/properties/carType",
+        "label": "Choose the car Type that best applies.",
+        "options": {
+          "format": "radio"
+        }
+    },
+    </code></pre></td>
+  </tr>
+
   <tr>
     <td>Checkbox</td>
     <td>A set of checkboxes for selecting multiple options from a list simultaneously.</td>
