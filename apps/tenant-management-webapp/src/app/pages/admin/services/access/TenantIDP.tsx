@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   GoabInput,
   GoabFormItem,
@@ -39,8 +39,6 @@ export const TenantIdp = (): JSX.Element => {
   const { errors, validators } = useValidators('email', 'email', emailValidator).build();
   const [copied, setCopied] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
-  // eslint-disable-next-line
-  useEffect(() => {}, [fetchUserIdState, deleteUserIdpState]);
 
   const searchUserByEmailHandler = () => {
     const validations = {

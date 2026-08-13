@@ -46,11 +46,30 @@ function withSvgr(svgrOptions = {}) {
 }
 
 // Nx plugins for webpack.
+function excludeNodeModulesFromSourceMapLoader(config) {
+  const rules = config.module?.rules ?? [];
+
+  for (const rule of rules) {
+    if (
+      typeof rule === 'object' &&
+      rule !== null &&
+      rule.enforce === 'pre' &&
+      rule.loader?.includes('source-map-loader')
+    ) {
+      rule.exclude = /node_modules/;
+    }
+  }
+
+  return config;
+}
+
 module.exports = composePlugins(withNx(), withReact(), withSvgr(), (config, { options, context }) => {
   // Note: This was added by an Nx migration.
   // You should consider inlining the logic into this file.
   // For more information on webpack config and Nx see:
   // https://nx.dev/packages/webpack/documents/webpack-config-setup
 
-  return aliasReactComponents(require('./webpack.config.old.js')(config, context), '@abgov/react-components');
+  return excludeNodeModulesFromSourceMapLoader(
+    aliasReactComponents(require('./webpack.config.old.js')(config, context), '@abgov/react-components')
+  );
 });
