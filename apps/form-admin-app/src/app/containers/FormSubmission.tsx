@@ -155,7 +155,7 @@ export const FormSubmission = () => {
       initialized={!!(definition && submission)}
       navButtons={
         submission?.formId && (
-          <GoabButton type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
+          <GoabButton type="secondary" size="compact" onClick={() => navigate(`../forms/${submission.formId}`)}>
             Go to related form
           </GoabButton>
         )
@@ -173,8 +173,8 @@ export const FormSubmission = () => {
               </GoabFormItem>
               <PdfDownload urn={formSubmissionUrn} />
             </PropertiesContainer>
-            <GoabButtonGroup alignment="end" mr={'l'}>
-              <GoabButton type="tertiary" onClick={() => setHideWorkspace(!hideWorkspace)}>
+            <GoabButtonGroup alignment="end" mr={'l'} mb={'m'}>
+              <GoabButton type="secondary" size="compact" onClick={() => setHideWorkspace(!hideWorkspace)}>
                 {hideWorkspace ? 'Show workspace' : 'Hide workspace'}
               </GoabButton>
             </GoabButtonGroup>
