@@ -44,6 +44,7 @@ export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [hideWorkspace, setHideWorkspace] = useState(false);
   const { submissionId } = useParams();
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
@@ -161,15 +162,22 @@ export const FormSubmission = () => {
       nextTo={next && `../submissions/${next}`}
       header={
         submission && (
-          <PropertiesContainer>
-            <GoabFormItem mr="s" mb="s" label="Submitted by">
-              {submission.createdBy.name}
-            </GoabFormItem>
-            <GoabFormItem mr="xl" mb="s" label="Submitted on">
-              {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
-            </GoabFormItem>
-            <PdfDownload urn={formSubmissionUrn} />
-          </PropertiesContainer>
+          <>
+            <PropertiesContainer>
+              <GoabFormItem mr="s" mb="s" label="Submitted by">
+                {submission.createdBy.name}
+              </GoabFormItem>
+              <GoabFormItem mr="xl" mb="s" label="Submitted on">
+                {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
+              </GoabFormItem>
+              <PdfDownload urn={formSubmissionUrn} />
+            </PropertiesContainer>
+            <GoabButtonGroup alignment="end" mr={'l'}>
+              <GoabButton type="tertiary" onClick={() => setHideWorkspace(!hideWorkspace)}>
+                {hideWorkspace ? 'Show workspace' : 'Hide workspace'}
+              </GoabButton>
+            </GoabButtonGroup>
+          </>
         )
       }
       actionsForm={null}
@@ -187,6 +195,7 @@ export const FormSubmission = () => {
             />
           </ContentContainer>
         }
+        rightHidden={hideWorkspace}
         right={<RightPaneWorkSpaceAccordians />}
         minPaneWidth={200}
       ></ResizableSplitPane>
