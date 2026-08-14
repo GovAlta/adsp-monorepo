@@ -2,6 +2,7 @@ import { GoabFilterChip, GoabIconButton, GoabSkeleton } from '@abgov/react-compo
 import { FunctionComponent } from 'react';
 import { AppDispatch, AppState, directoryBusySelector, resourceTagsSelector, Tag, untagResource } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
+import { GoabButton } from '@abgov/react-components-ds1';
 
 const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, onDelete }) => {
   return <GoabFilterChip content={tag.label} onClick={onDelete} mr="xs" mb="xs" />;
@@ -10,9 +11,10 @@ const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, 
 interface TagsProps {
   urn: string;
   onTag: () => void;
+  showButtonText?: boolean;
 }
 
-export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
+export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag, showButtonText }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { loadingResourceTags } = useSelector(directoryBusySelector);
@@ -27,7 +29,13 @@ export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
           <TagBadge key={tag.value} tag={tag} onDelete={() => dispatch(untagResource({ urn, tag }))} />
         ))
       )}
-      <GoabIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
+      {showButtonText ? (
+        <GoabButton leadingIcon="add-circle" size="compact" type="secondary" variant="normal" onClick={onTag}>
+          Add tag
+        </GoabButton>
+      ) : (
+        <GoabIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
+      )}
     </>
   );
 };

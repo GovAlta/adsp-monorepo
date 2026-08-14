@@ -7,7 +7,7 @@ import {
   GoabTextArea,
 } from '@abgov/react-components';
 import { DateTime } from 'luxon';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -20,7 +20,11 @@ import {
   submissionFilesSelector,
   submissionSelector,
   updateFormDisposition,
+  Resource,
+  directoryBusySelector,
+  tagResource,
 } from '../state';
+import { AddTagModal } from '../components/AddTagModal';
 import { AdspId } from '../../lib/adspId';
 import { ContentContainer } from '../components/ContentContainer';
 import { DetailsLayout } from '../components/DetailsLayout';
@@ -31,6 +35,7 @@ import { GoabDropdownOnChangeDetail, GoabTextAreaOnChangeDetail } from '@abgov/u
 import { ResizableSplitPane } from '@core-services/app-common';
 import { GoabAccordion } from '@abgov/react-components';
 import styled from 'styled-components';
+import { Tags } from './Tags';
 
 const AccordianDisplayDiv = styled.main`
   display: block;
@@ -38,19 +43,21 @@ const AccordianDisplayDiv = styled.main`
   overflow: auto;
 `;
 
-const ACCORDIAN_MAX_WIDTH = '1000px';
+const ACCORDIAN_MAX_WIDTH = '1200px';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [showTagSubmission, setShowTagSubmission] = useState<Pick<Resource, 'name' | 'urn'>>(null);
   const [hideWorkspace, setHideWorkspace] = useState(false);
+
   const { submissionId } = useParams();
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
   const { submission, next } = useSelector(submissionSelector);
   const files = useSelector(submissionFilesSelector);
-
+  const directoryBusy = useSelector(directoryBusySelector);
   const draft = useSelector(dispositionDraftSelector);
   const [formSubmissionUrn, setFormSubmissionUrn] = useState<string>(null);
 
@@ -67,6 +74,11 @@ export const FormSubmission = () => {
     }
   }, [submission]);
 
+  const onOpenTag = useCallback(() => {
+    if (!submission) return;
+    setShowTagSubmission({ name: '', urn: submission.urn });
+  }, [submission]);
+
   const RightPaneWorkSpaceAccordians = () => {
     return (
       <AccordianDisplayDiv>
@@ -79,13 +91,13 @@ export const FormSubmission = () => {
           {/* TODO: Add Notes content */}
         </GoabAccordion>
         <GoabAccordion heading="Tags" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
-          Tags section
-          {/* TODO: Add  Tags content */}
+          <Tags urn={submission.urn} showButtonText={true} onTag={onOpenTag} />
         </GoabAccordion>
         <GoabAccordion heading="History" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
           History section
           {/* TODO: Add History content */}
         </GoabAccordion>
+
         <GoabAccordion heading="Disposition" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
           {submission?.disposition ? (
             <PropertiesContainer>
@@ -174,7 +186,12 @@ export const FormSubmission = () => {
               <PdfDownload urn={formSubmissionUrn} />
             </PropertiesContainer>
             <GoabButtonGroup alignment="end" mr={'l'} mb={'m'}>
-              <GoabButton type="secondary" size="compact" onClick={() => setHideWorkspace(!hideWorkspace)}>
+              <GoabButton
+                leadingIcon={hideWorkspace ? 'eye' : 'eye-off'}
+                type="secondary"
+                size="compact"
+                onClick={() => setHideWorkspace(!hideWorkspace)}
+              >
                 {hideWorkspace ? 'Show workspace' : 'Hide workspace'}
               </GoabButton>
             </GoabButtonGroup>
@@ -200,6 +217,16 @@ export const FormSubmission = () => {
         right={<RightPaneWorkSpaceAccordians />}
         minPaneWidth={200}
       ></ResizableSplitPane>
+      <AddTagModal
+        open={!!showTagSubmission}
+        resource={showTagSubmission}
+        tagging={directoryBusy.executing}
+        onClose={() => setShowTagSubmission(null)}
+        onTag={async (urn, label) => {
+          await dispatch(tagResource({ urn, label }));
+          setShowTagSubmission(null);
+        }}
+      />
     </DetailsLayout>
   );
 };
