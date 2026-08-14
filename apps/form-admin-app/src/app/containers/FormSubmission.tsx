@@ -25,10 +25,20 @@ import { AdspId } from '../../lib/adspId';
 import { ContentContainer } from '../components/ContentContainer';
 import { DetailsLayout } from '../components/DetailsLayout';
 import { PropertiesContainer } from '../components/PropertiesContainer';
-import { ActionsForm } from '../components/ActionsForm';
 import { FormViewer } from './FormViewer';
 import { PdfDownload } from './PdfDownload';
 import { GoabDropdownOnChangeDetail, GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
+import { ResizableSplitPane } from '@core-services/app-common';
+import { GoabAccordion } from '@abgov/react-components';
+import styled from 'styled-components';
+
+const AccordianDisplayDiv = styled.main`
+  display: block;
+  padding: var(--goa-space-xl);
+  overflow: auto;
+`;
+
+const ACCORDIAN_MAX_WIDTH = '1000px';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -56,6 +66,88 @@ export const FormSubmission = () => {
     }
   }, [submission]);
 
+  const RightPaneWorkSpaceAccordians = () => {
+    return (
+      <AccordianDisplayDiv>
+        <GoabAccordion heading="Communication/Messages" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          Communication section
+          {/* TODO: Add Communication/Messages content */}
+        </GoabAccordion>
+        <GoabAccordion heading="Notes" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          Notes section
+          {/* TODO: Add Notes content */}
+        </GoabAccordion>
+        <GoabAccordion heading="Tags" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          Tags section
+          {/* TODO: Add  Tags content */}
+        </GoabAccordion>
+        <GoabAccordion heading="History" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          History section
+          {/* TODO: Add History content */}
+        </GoabAccordion>
+        <GoabAccordion heading="Disposition" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          {submission?.disposition ? (
+            <PropertiesContainer>
+              <GoabFormItem ml="xl" label="Disposition">
+                <span>{submission.disposition.status}</span>
+              </GoabFormItem>
+              <GoabFormItem ml="xl" label="Reason">
+                <span>{submission.disposition.reason}</span>
+              </GoabFormItem>
+              <GoabFormItem ml="xl" label="Dispositioned on">
+                <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL d, yyyy')}</span>
+              </GoabFormItem>
+            </PropertiesContainer>
+          ) : (
+            <>
+              <GoabFormItem label="Disposition">
+                <GoabDropdown
+                  width="200px"
+                  value={draft.status || ''}
+                  onChange={(detail: GoabDropdownOnChangeDetail) =>
+                    dispatch(formActions.setDispositionDraft({ ...draft, status: detail.value }))
+                  }
+                  mb={'m'}
+                >
+                  <GoabDropdownItem value={''} label={'None selected'} />
+                  {definition?.dispositionStates?.map((state) => (
+                    <GoabDropdownItem key={state.id} value={state.name} label={state.name} />
+                  ))}
+                </GoabDropdown>
+              </GoabFormItem>
+              <GoabFormItem label="Reason">
+                <GoabTextArea
+                  name="reason"
+                  value={draft.reason}
+                  onChange={(detail: GoabTextAreaOnChangeDetail) =>
+                    dispatch(formActions.setDispositionDraft({ ...draft, reason: detail.value }))
+                  }
+                  mb={'m'}
+                />
+              </GoabFormItem>
+              <GoabButtonGroup alignment="start">
+                <GoabButton
+                  size="compact"
+                  disabled={!draft.status || !draft.reason || busy.executing}
+                  onClick={() =>
+                    dispatch(
+                      updateFormDisposition({
+                        submissionUrn: `/forms/${submission.formId}${AdspId.parse(submission.urn).resource}`,
+                        status: draft.status,
+                        reason: draft.reason,
+                      }),
+                    )
+                  }
+                >
+                  Disposition
+                </GoabButton>
+              </GoabButtonGroup>
+            </>
+          )}
+        </GoabAccordion>
+      </AccordianDisplayDiv>
+    );
+  };
   return (
     <DetailsLayout
       initialized={!!(definition && submission)}
@@ -80,74 +172,24 @@ export const FormSubmission = () => {
           </PropertiesContainer>
         )
       }
-      actionsForm={
-        <ActionsForm>
-          {submission?.disposition ? (
-            <PropertiesContainer>
-              <GoabFormItem ml="xl" label="Disposition">
-                <span>{submission.disposition.status}</span>
-              </GoabFormItem>
-              <GoabFormItem ml="xl" label="Reason">
-                <span>{submission.disposition.reason}</span>
-              </GoabFormItem>
-              <GoabFormItem ml="xl" label="Dispositioned on">
-                <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL d, yyyy')}</span>
-              </GoabFormItem>
-            </PropertiesContainer>
-          ) : (
-            <>
-              <GoabFormItem label="Disposition">
-                <GoabDropdown
-                  value={draft.status || ''}
-                  onChange={(detail: GoabDropdownOnChangeDetail) =>
-                    dispatch(formActions.setDispositionDraft({ ...draft, status: detail.value }))
-                  }
-                >
-                  <GoabDropdownItem value={''} label={'None selected'} />
-                  {definition?.dispositionStates?.map((state) => (
-                    <GoabDropdownItem key={state.id} value={state.name} label={state.name} />
-                  ))}
-                </GoabDropdown>
-              </GoabFormItem>
-              <GoabFormItem label="Reason">
-                <GoabTextArea
-                  name="reason"
-                  value={draft.reason}
-                  onChange={(detail: GoabTextAreaOnChangeDetail) =>
-                    dispatch(formActions.setDispositionDraft({ ...draft, reason: detail.value }))
-                  }
-                />
-              </GoabFormItem>
-              <GoabButtonGroup alignment="end">
-                <GoabButton
-                  size="compact"
-                  disabled={!draft.status || !draft.reason || busy.executing}
-                  onClick={() =>
-                    dispatch(
-                      updateFormDisposition({
-                        submissionUrn: `/forms/${submission.formId}${AdspId.parse(submission.urn).resource}`,
-                        status: draft.status,
-                        reason: draft.reason,
-                      }),
-                    )
-                  }
-                >
-                  Disposition
-                </GoabButton>
-              </GoabButtonGroup>
-            </>
-          )}
-        </ActionsForm>
-      }
+      actionsForm={null}
     >
-      <ContentContainer>
-        <FormViewer
-          dataSchema={definition?.dataSchema}
-          uiSchema={definition?.uiSchema}
-          data={submission?.formData}
-          files={files}
-        />
-      </ContentContainer>
+      <ResizableSplitPane
+        initialLeftPercent={40}
+        testId="workSpacekeyResizePane"
+        left={
+          <ContentContainer>
+            <FormViewer
+              dataSchema={definition?.dataSchema}
+              uiSchema={definition?.uiSchema}
+              data={submission?.formData}
+              files={files}
+            />
+          </ContentContainer>
+        }
+        right={<RightPaneWorkSpaceAccordians />}
+        minPaneWidth={200}
+      ></ResizableSplitPane>
     </DetailsLayout>
   );
 };

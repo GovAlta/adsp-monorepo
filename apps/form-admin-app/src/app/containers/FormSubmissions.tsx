@@ -30,7 +30,6 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
 import { DataValueCell } from '../components/DataValueCell';
-// import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
