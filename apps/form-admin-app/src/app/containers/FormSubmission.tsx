@@ -25,15 +25,26 @@ import { AdspId } from '../../lib/adspId';
 import { ContentContainer } from '../components/ContentContainer';
 import { DetailsLayout } from '../components/DetailsLayout';
 import { PropertiesContainer } from '../components/PropertiesContainer';
-import { ActionsForm } from '../components/ActionsForm';
 import { FormViewer } from './FormViewer';
 import { PdfDownload } from './PdfDownload';
 import { GoabDropdownOnChangeDetail, GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
+import { ResizableSplitPane } from '@core-services/app-common';
+import { GoabAccordion } from '@abgov/react-components';
+import styled from 'styled-components';
+
+const AccordianDisplayDiv = styled.main`
+  display: block;
+  padding: var(--goa-space-xl);
+  overflow: auto;
+`;
+
+const ACCORDIAN_MAX_WIDTH = '1000px';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [hideWorkspace, setHideWorkspace] = useState(false);
   const { submissionId } = useParams();
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
@@ -56,32 +67,26 @@ export const FormSubmission = () => {
     }
   }, [submission]);
 
-  return (
-    <DetailsLayout
-      initialized={!!(definition && submission)}
-      navButtons={
-        submission?.formId && (
-          <GoabButton size="compact" type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
-            Go to related form
-          </GoabButton>
-        )
-      }
-      nextTo={next && `../submissions/${next}`}
-      header={
-        submission && (
-          <PropertiesContainer>
-            <GoabFormItem mr="s" mb="s" label="Submitted by">
-              {submission.createdBy.name}
-            </GoabFormItem>
-            <GoabFormItem mr="xl" mb="s" label="Submitted on">
-              {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
-            </GoabFormItem>
-            <PdfDownload urn={formSubmissionUrn} />
-          </PropertiesContainer>
-        )
-      }
-      actionsForm={
-        <ActionsForm>
+  const RightPaneWorkSpaceAccordians = () => {
+    return (
+      <AccordianDisplayDiv>
+        <GoabAccordion heading="Communication/Messages" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          Communication section
+          {/* TODO: Add Communication/Messages content */}
+        </GoabAccordion>
+        <GoabAccordion heading="Notes" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          Notes section
+          {/* TODO: Add Notes content */}
+        </GoabAccordion>
+        <GoabAccordion heading="Tags" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          Tags section
+          {/* TODO: Add  Tags content */}
+        </GoabAccordion>
+        <GoabAccordion heading="History" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+          History section
+          {/* TODO: Add History content */}
+        </GoabAccordion>
+        <GoabAccordion heading="Disposition" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
           {submission?.disposition ? (
             <PropertiesContainer>
               <GoabFormItem ml="xl" label="Disposition">
@@ -98,11 +103,13 @@ export const FormSubmission = () => {
             <>
               <GoabFormItem label="Disposition">
                 <GoabDropdown
+                  width="200px"
                   size="compact"
                   value={draft.status || ''}
                   onChange={(detail: GoabDropdownOnChangeDetail) =>
                     dispatch(formActions.setDispositionDraft({ ...draft, status: detail.value }))
                   }
+                  mb={'m'}
                 >
                   <GoabDropdownItem value={''} label={'None selected'} />
                   {definition?.dispositionStates?.map((state) => (
@@ -117,9 +124,10 @@ export const FormSubmission = () => {
                   onChange={(detail: GoabTextAreaOnChangeDetail) =>
                     dispatch(formActions.setDispositionDraft({ ...draft, reason: detail.value }))
                   }
+                  mb={'m'}
                 />
               </GoabFormItem>
-              <GoabButtonGroup alignment="end">
+              <GoabButtonGroup alignment="start">
                 <GoabButton
                   size="compact"
                   disabled={!draft.status || !draft.reason || busy.executing}
@@ -138,17 +146,60 @@ export const FormSubmission = () => {
               </GoabButtonGroup>
             </>
           )}
-        </ActionsForm>
+        </GoabAccordion>
+      </AccordianDisplayDiv>
+    );
+  };
+  return (
+    <DetailsLayout
+      initialized={!!(definition && submission)}
+      navButtons={
+        submission?.formId && (
+          <GoabButton type="secondary" size="compact" onClick={() => navigate(`../forms/${submission.formId}`)}>
+            Go to related form
+          </GoabButton>
+        )
       }
+      nextTo={next && `../submissions/${next}`}
+      header={
+        submission && (
+          <>
+            <PropertiesContainer>
+              <GoabFormItem mr="s" mb="s" label="Submitted by">
+                {submission.createdBy.name}
+              </GoabFormItem>
+              <GoabFormItem mr="xl" mb="s" label="Submitted on">
+                {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
+              </GoabFormItem>
+              <PdfDownload urn={formSubmissionUrn} />
+            </PropertiesContainer>
+            <GoabButtonGroup alignment="end" mr={'l'} mb={'m'}>
+              <GoabButton type="secondary" size="compact" onClick={() => setHideWorkspace(!hideWorkspace)}>
+                {hideWorkspace ? 'Show workspace' : 'Hide workspace'}
+              </GoabButton>
+            </GoabButtonGroup>
+          </>
+        )
+      }
+      actionsForm={null}
     >
-      <ContentContainer>
-        <FormViewer
-          dataSchema={definition?.dataSchema}
-          uiSchema={definition?.uiSchema}
-          data={submission?.formData}
-          files={files}
-        />
-      </ContentContainer>
+      <ResizableSplitPane
+        initialLeftPercent={40}
+        testId="workSpacekeyResizePane"
+        left={
+          <ContentContainer>
+            <FormViewer
+              dataSchema={definition?.dataSchema}
+              uiSchema={definition?.uiSchema}
+              data={submission?.formData}
+              files={files}
+            />
+          </ContentContainer>
+        }
+        rightHidden={hideWorkspace}
+        right={<RightPaneWorkSpaceAccordians />}
+        minPaneWidth={200}
+      ></ResizableSplitPane>
     </DetailsLayout>
   );
 };
