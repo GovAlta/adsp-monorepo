@@ -5,7 +5,7 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabTable,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -94,6 +94,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               <GoabDropdown
                 name="submission-disposition"
                 disabled={!!criteria.tag}
+                size="compact"
                 value={
                   typeof criteria['dispositioned'] !== 'boolean'
                     ? ''
@@ -135,12 +136,19 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           </SearchFormItemsContainer>
           <GoabButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoabButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
+              <GoabButton
+                size="compact"
+                type="tertiary"
+                mr="xl"
+                disabled={!!criteria.tag}
+                onClick={() => setShowExport(true)}
+              >
                 Export to file
               </GoabButton>
             )}
             <GoabButton
               type="primary"
+              size="compact"
               leadingIcon="search"
               disabled={searchDisabled}
               onClick={() => handleFindSubmissions()}

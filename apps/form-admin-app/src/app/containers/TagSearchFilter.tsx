@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
+import { GoabFormItem, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, getTags, tagsSelector } from '../state';
@@ -24,6 +24,7 @@ export const TagSearchFilter: FunctionComponent<TagSearchFilterProps> = ({ value
   return (
     <GoabFormItem label="Tag" mr="m">
       <GoabDropdown
+        size="compact"
         name="tag"
         value={value || ''}
         onChange={(detail: GoabDropdownOnChangeDetail) => onChange(detail.value)}
