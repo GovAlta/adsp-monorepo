@@ -5,7 +5,7 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabTextArea,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -104,6 +104,7 @@ export const FormSubmission = () => {
               <GoabFormItem label="Disposition">
                 <GoabDropdown
                   width="200px"
+                  size="compact"
                   value={draft.status || ''}
                   onChange={(detail: GoabDropdownOnChangeDetail) =>
                     dispatch(formActions.setDispositionDraft({ ...draft, status: detail.value }))

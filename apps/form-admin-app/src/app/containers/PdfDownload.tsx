@@ -1,4 +1,4 @@
-import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { FunctionComponent, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, AppState, downloadFile, pdfSelector } from '../state';
@@ -22,7 +22,7 @@ export const PdfDownload: FunctionComponent<PdfDownloadProps> = ({ urn }) => {
   return (
     pdf && (
       <GoabFormItem label="Download PDF copy">
-        <GoabButton type="tertiary" size="compact" trailingIcon="download" onClick={onDownload}>
+        <GoabButton size="compact" type="tertiary" trailingIcon="download" onClick={onDownload}>
           {pdf.filename}
         </GoabButton>
       </GoabFormItem>

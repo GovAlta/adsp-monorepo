@@ -1,4 +1,4 @@
-import { GoabBadge, GoabButton, GoabButtonGroup, GoabCallout, GoabTable } from '@abgov/react-components-ds1';
+import { GoabBadge, GoabButton, GoabButtonGroup, GoabCallout, GoabTable } from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,7 +28,7 @@ import { TagSearchFilter } from './TagSearchFilter';
 import { ResultsSummary } from '../components/ResultsSummary';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
-  return hasFeature && <GoabBadge type="information" content={feature} mr="xs" mb="xs" icon={false} />;
+  return hasFeature && <GoabBadge type="information" content={feature} mr="xs" mb="xs" emphasis="subtle" />;
 };
 
 interface FormDefinitionRowProps {
@@ -57,7 +57,7 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({ d
       </td>
       <td>
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" size="compact" onClick={() => navigate(definition.id)}>
+          <GoabButton size="compact" type="secondary" onClick={() => navigate(definition.id)}>
             Select
           </GoabButton>
         </GoabButtonGroup>
@@ -113,7 +113,12 @@ export const FormsDefinitions = () => {
               <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             </SearchFormItemsContainer>
             <GoabButtonGroup alignment="end" mt="l">
-              <GoabButton type="primary" disabled={searchDisabled} onClick={() => handleLoadDefinitions()}>
+              <GoabButton
+                size="compact"
+                type="primary"
+                disabled={searchDisabled}
+                onClick={() => handleLoadDefinitions()}
+              >
                 Load definitions
               </GoabButton>
             </GoabButtonGroup>
