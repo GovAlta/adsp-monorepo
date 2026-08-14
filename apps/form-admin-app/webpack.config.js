@@ -20,8 +20,7 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     })
   );
 
-  return aliasReactComponents(config, '@abgov/react-components-ds1', {
-    webComponentsPackage: '@abgov/web-components-ds1',
-    designTokensPackage: '@abgov/design-tokens-ds1',
+  return aliasReactComponents(config, '@abgov/react-components', {
+    ds1Package: '@abgov/react-components',
   });
 });

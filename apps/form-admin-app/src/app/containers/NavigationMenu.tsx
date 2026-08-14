@@ -1,4 +1,4 @@
-import { GoabButton, GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components-ds1';
+import { GoabButton, GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -45,6 +45,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           <UserSpan>{user?.name}</UserSpan>
           {user ? (
             <GoabButton
+              size="compact"
               mt="s"
               mr="s"
               type="tertiary"
@@ -54,6 +55,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
             </GoabButton>
           ) : (
             <GoabButton
+              size="compact"
               mt="s"
               mr="s"
               type="tertiary"

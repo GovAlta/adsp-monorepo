@@ -5,7 +5,7 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabTextArea,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -61,7 +61,7 @@ export const FormSubmission = () => {
       initialized={!!(definition && submission)}
       navButtons={
         submission?.formId && (
-          <GoabButton type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
+          <GoabButton size="compact" type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
             Go to related form
           </GoabButton>
         )
@@ -98,6 +98,7 @@ export const FormSubmission = () => {
             <>
               <GoabFormItem label="Disposition">
                 <GoabDropdown
+                  size="compact"
                   value={draft.status || ''}
                   onChange={(detail: GoabDropdownOnChangeDetail) =>
                     dispatch(formActions.setDispositionDraft({ ...draft, status: detail.value }))

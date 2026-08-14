@@ -9,7 +9,7 @@ import {
   GoabIconButton,
   GoabSpacer,
   GoabTable,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -183,7 +183,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                         <GoabBadge
                           type="success"
                           content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'}
-                          icon={false}
+                          emphasis="subtle"
                         />
                       )}
                     </td>
@@ -203,7 +203,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             </GoabTable>
             <form>
               <GoabButtonGroup alignment="end" mt="l">
-                <GoabButton type="secondary" onClick={() => setShowScheduleIntake(true)}>
+                <GoabButton size="compact" type="secondary" onClick={() => setShowScheduleIntake(true)}>
                   Schedule intake
                 </GoabButton>
               </GoabButtonGroup>
@@ -249,6 +249,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                 <td>{path}</td>
                 <td>
                   <GoabCheckbox
+                    size="compact"
                     name="Show column"
                     mt="s"
                     checked={!!selected}

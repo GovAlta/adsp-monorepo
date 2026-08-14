@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -120,6 +120,7 @@ export const Form = () => {
               <GoabButtonGroup alignment="end">
                 {form?.status === FormStatus.submitted && canSetToDraft && (
                   <GoabButton
+                    size="compact"
                     type="secondary"
                     disabled={busy.executing}
                     onClick={() => dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'to-draft' }))}
@@ -129,6 +130,7 @@ export const Form = () => {
                 )}
                 {form?.status !== FormStatus.archived && canArchive && (
                   <GoabButton
+                    size="compact"
                     type={form?.status === FormStatus.submitted ? 'primary' : 'secondary'}
                     disabled={busy.executing}
                     onClick={() => setShowArchiveConfirm(true)}
@@ -144,10 +146,11 @@ export const Form = () => {
                 being actively worked on. The applicant will no longer be able to update the form.
               </div>
               <GoabButtonGroup alignment="end" mt="xl">
-                <GoabButton type="secondary" onClick={() => setShowArchiveConfirm(false)}>
+                <GoabButton size="compact" type="secondary" onClick={() => setShowArchiveConfirm(false)}>
                   Cancel
                 </GoabButton>
                 <GoabButton
+                  size="compact"
                   type="primary"
                   onClick={() => {
                     dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'archive' }));
