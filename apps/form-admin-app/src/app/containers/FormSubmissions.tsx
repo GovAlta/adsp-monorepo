@@ -184,7 +184,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 <td>{submission.created.toFormat('LLL d, yyyy')}</td>
                 <td>{submission.disposition?.status}</td>
                 <td>
-                  <Tags urn={submission.urn} onTag={() => setShowTagSubmission({ name: '', urn: submission.urn })} />
+                  <Tags
+                    hideAddButton={true}
+                    urn={submission.urn}
+                    onTag={() => setShowTagSubmission({ name: '', urn: submission.urn })}
+                  />
                 </td>
                 {dataValues.map(({ path }) => {
                   const value = submission.values[path];

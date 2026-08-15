@@ -24,15 +24,15 @@ import { PropertiesContainer } from '../components/PropertiesContainer';
 import styled from 'styled-components';
 import { FunctionComponent } from 'react';
 
-const AccordianDisplayDiv = styled.main`
+const AccordionDisplayDiv = styled.main`
   display: block;
   padding: var(--goa-space-xl);
   overflow: auto;
 `;
 
-const ACCORDIAN_MAX_WIDTH = '1200px';
+const ACCORDION_MAX_WIDTH = '1200px';
 
-interface WorkspaceAccordionsProps {
+interface FormSubmissionWorkspaceProps {
   dispatch: AppDispatch;
   definition: ReturnType<typeof definitionSelector>;
   submission: ReturnType<typeof submissionSelector>['submission'];
@@ -41,8 +41,7 @@ interface WorkspaceAccordionsProps {
   onOpenTag: () => void;
 }
 
-// Hoisted to module scope so its identity is stable across FormSubmission renders and React can diff instead of remounting.
-export const WorkspaceAccordions: FunctionComponent<WorkspaceAccordionsProps> = ({
+export const FormSubmissionWorkspace: FunctionComponent<FormSubmissionWorkspaceProps> = ({
   dispatch,
   definition,
   submission,
@@ -51,24 +50,24 @@ export const WorkspaceAccordions: FunctionComponent<WorkspaceAccordionsProps> = 
   onOpenTag,
 }) => {
   return (
-    <AccordianDisplayDiv>
-      <GoabAccordion heading="Communication/Messages" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+    <AccordionDisplayDiv>
+      <GoabAccordion heading="Communication/Messages" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
         Communication section
         {/* TODO: Add Communication/Messages content */}
       </GoabAccordion>
-      <GoabAccordion heading="Notes" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+      <GoabAccordion heading="Notes" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
         Notes section
         {/* TODO: Add Notes content */}
       </GoabAccordion>
-      <GoabAccordion heading="Tags" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
-        <Tags urn={submission.urn} showButtonText={true} onTag={onOpenTag} />
+      <GoabAccordion heading="Tags" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
+        <Tags urn={submission.urn} hideAddButton={false} onTag={onOpenTag} />
       </GoabAccordion>
-      <GoabAccordion heading="History" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+      <GoabAccordion heading="History" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
         History section
         {/* TODO: Add History content */}
       </GoabAccordion>
 
-      <GoabAccordion heading="Disposition" maxWidth={ACCORDIAN_MAX_WIDTH} mb="m">
+      <GoabAccordion heading="Disposition" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
         {submission?.disposition ? (
           <PropertiesContainer>
             <GoabFormItem ml="xl" label="Disposition">
@@ -129,6 +128,6 @@ export const WorkspaceAccordions: FunctionComponent<WorkspaceAccordionsProps> = 
           </>
         )}
       </GoabAccordion>
-    </AccordianDisplayDiv>
+    </AccordionDisplayDiv>
   );
 };

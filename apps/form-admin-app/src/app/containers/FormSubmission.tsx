@@ -23,7 +23,7 @@ import { FormViewer } from './FormViewer';
 import { PdfDownload } from './PdfDownload';
 import { ResizableSplitPane } from '@core-services/app-common';
 
-import { WorkspaceAccordions } from './WorkspaceAccordions';
+import { FormSubmissionWorkspace } from './FormSubmissionWorkspace';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -112,7 +112,7 @@ export const FormSubmission = () => {
         }
         rightHidden={hideWorkspace}
         right={
-          <WorkspaceAccordions
+          <FormSubmissionWorkspace
             dispatch={dispatch}
             definition={definition}
             submission={submission}
