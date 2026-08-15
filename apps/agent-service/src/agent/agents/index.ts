@@ -7,6 +7,7 @@ import {
   builderWorkspaceAnalystAgent,
 } from './builder';
 import { pdfGenerationAgent } from './pdf';
+import { mockAgent } from './mock';
 import { nxAdspAgent } from './nxAdsp';
 import { notificationEmailTemplateAgent } from './notification';
 
@@ -14,6 +15,7 @@ import { notificationEmailTemplateAgent } from './notification';
 export const CoreAgents: AgentConfigurations = {
   formGenerationAgent,
   pdfGenerationAgent,
+  'mock-agent': mockAgent,
   formUpdateAgent,
   pdfFormAnalysisAgent,
   builderWorkspaceAnalystAgent,

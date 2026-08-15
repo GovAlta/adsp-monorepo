@@ -1,5 +1,5 @@
 import { AgentConfigurations } from './configuration';
-import { onIoConnection } from './router';
+import { clearThreadMessages, listThreadMessages, listThreads, onIoConnection, rollbackThreadMessages } from './router';
 import { WorkspaceChangeProjector } from './workspace';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
@@ -850,5 +850,196 @@ describe('Agent Router - Structured Output', () => {
       const agentDef = agentConfig['text-agent'];
       expect(agentDef.outputSchema).toBeUndefined();
     });
+  });
+});
+
+describe('listThreads', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
+  it('returns threads for the authenticated user', async () => {
+    const listThreadsFn = jest.fn().mockResolvedValue({
+      threads: [{ id: 't1', resourceId: 'user-1', title: 'Chat' }],
+      total: 1,
+    });
+    const agent = {
+      Agent: { id: 'support-agent' },
+      listThreads: listThreadsFn,
+    };
+    const req = {
+      user: { id: 'user-1', name: 'Alice' },
+      tenant: { id: { toString: () => 'tenant-1' } },
+      agent,
+    };
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await listThreads(logger as never)(req as never, res as never, next);
+
+    expect(listThreadsFn).toHaveBeenCalledWith(req.user);
+    expect(res.send).toHaveBeenCalledWith({
+      agent: 'support-agent',
+      threads: [{ id: 't1', resourceId: 'user-1', title: 'Chat' }],
+      total: 1,
+    });
+  });
+});
+
+describe('clearThreadMessages', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
+  it('clears all messages for the thread', async () => {
+    const clearMessages = jest.fn().mockResolvedValue({
+      threadId: 'thread-1',
+      messages: [],
+      total: 0,
+      contextWindow: { lastMessages: 20 },
+    });
+    const agent = {
+      Agent: { id: 'mock-agent' },
+      clearMessages,
+    };
+    const req = {
+      user: { id: 'user-1', name: 'Alice' },
+      tenant: { id: { toString: () => 'tenant-1' } },
+      params: { threadId: 'thread-1' },
+      agent,
+    };
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await clearThreadMessages(logger as never)(req as never, res as never, next);
+
+    expect(clearMessages).toHaveBeenCalledWith(req.user, 'thread-1');
+    expect(res.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent: 'mock-agent',
+        threadId: 'thread-1',
+        messages: [],
+        total: 0,
+      }),
+    );
+  });
+});
+
+describe('rollbackThreadMessages', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
+  it('returns remaining messages after rollback', async () => {
+    const rollbackToMessage = jest.fn().mockResolvedValue({
+      threadId: 'thread-1',
+      keepThroughMessageId: 'm1',
+      deletedIds: ['m2'],
+      scrubbedMessageIds: [],
+      scrubToolResults: false,
+      messages: [{ id: 'm1', role: 'user', content: 'hi' }],
+      total: 1,
+      contextWindow: { lastMessages: 20 },
+    });
+    const agent = {
+      Agent: { id: 'support-agent' },
+      rollbackToMessage,
+    };
+    const req = {
+      user: { id: 'user-1', name: 'Alice' },
+      tenant: { id: { toString: () => 'tenant-1' } },
+      params: { threadId: 'thread-1' },
+      body: { keepThroughMessageId: 'm1', scrubToolResults: true, toolNames: ['myTool'] },
+      agent,
+    };
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await rollbackThreadMessages(logger as never)(req as never, res as never, next);
+
+    expect(rollbackToMessage).toHaveBeenCalledWith(req.user, 'thread-1', 'm1', {
+      scrubToolResults: true,
+      toolNames: ['myTool'],
+    });
+    expect(res.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent: 'support-agent',
+        deletedIds: ['m2'],
+        keepThroughMessageId: 'm1',
+      }),
+    );
+  });
+});
+
+describe('listThreadMessages', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
+  it('returns agent messages for the requested thread', async () => {
+    const listMessages = jest.fn().mockResolvedValue({
+      threadId: 'thread-1',
+      messages: [{ id: 'm1', role: 'user', content: 'hi' }],
+      total: 1,
+      contextWindow: { lastMessages: 20 },
+    });
+    const agent = {
+      Agent: { id: 'support-agent' },
+      listMessages,
+    };
+
+    const req = {
+      user: { id: 'user-1', name: 'Alice' },
+      tenant: { id: { toString: () => 'tenant-1' } },
+      params: { threadId: 'thread-1' },
+      agent,
+    };
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await listThreadMessages(logger as never)(req as never, res as never, next);
+
+    expect(listMessages).toHaveBeenCalledWith(req.user, 'thread-1');
+    expect(res.send).toHaveBeenCalledWith({
+      agent: 'support-agent',
+      threadId: 'thread-1',
+      messages: [{ id: 'm1', role: 'user', content: 'hi' }],
+      total: 1,
+      contextWindow: { lastMessages: 20 },
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('forwards errors to next', async () => {
+    const error = new Error('boom');
+    const agent = {
+      Agent: { id: 'support-agent' },
+      listMessages: jest.fn().mockRejectedValue(error),
+    };
+    const req = {
+      user: { id: 'user-1', name: 'Alice' },
+      tenant: { id: { toString: () => 'tenant-1' } },
+      params: { threadId: 'thread-1' },
+      agent,
+    };
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await listThreadMessages(logger as never)(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.send).not.toHaveBeenCalled();
   });
 });
