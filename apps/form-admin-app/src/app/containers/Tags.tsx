@@ -10,9 +10,10 @@ const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, 
 interface TagsProps {
   urn: string;
   onTag: () => void;
+  hideAddButton?: boolean;
 }
 
-export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
+export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag, hideAddButton }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { loadingResourceTags } = useSelector(directoryBusySelector);
@@ -27,7 +28,11 @@ export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
           <TagBadge key={tag.value} tag={tag} onDelete={() => dispatch(untagResource({ urn, tag }))} />
         ))
       )}
-      <GoabIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
+      {!hideAddButton && (
+        <div>
+          <GoabIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
+        </div>
+      )}
     </>
   );
 };
