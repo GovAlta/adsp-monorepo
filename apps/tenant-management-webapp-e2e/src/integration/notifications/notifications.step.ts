@@ -340,6 +340,7 @@ Then('the user views Add an email template page', function () {
 });
 
 When('the user clicks Add button in Add an email template page', function () {
+  notificationsObj.addAnEmailTemplateModalAddBtn().shadow().find('button').should('be.enabled');
   notificationsObj.addAnEmailTemplateModalAddBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -962,22 +963,10 @@ When(
 
     // Subject lives inside the collapsed-by-default properties accordion.
     expandTemplateProperties(channel.toLowerCase());
-
-    notificationsObj
-      .eventTemplateModalSubject(channelNameInTitle)
-      .click({ force: true })
-      .focus()
-      .clear({ force: true })
-      .type('{selectAll}', { force: true, parseSpecialCharSequences: true }) //In case clear doesn't work, do select all and then type in text
-      .type(subjectText, { force: true, parseSpecialCharSequences: false });
-
-    notificationsObj
-      .eventTemplateModalBody(channelNameInTitle)
-      .click({ force: true })
-      .focus()
-      .clear({ force: true })
-      .type('{selectAll}', { force: true, parseSpecialCharSequences: true }) //In case clear doesn't work, do select all and then type in text
-      .type(bodyText, { force: true, parseSpecialCharSequences: false });
+    commonlib.enterMonacoEditorJson(notificationsObj.eventTemplateModalSubject(channelNameInTitle), subjectText);
+    cy.wait(1000);
+    commonlib.enterMonacoEditorJson(notificationsObj.eventTemplateModalBody(channelNameInTitle), bodyText);
+    cy.wait(1000);
   }
 );
 

@@ -193,10 +193,51 @@ export function stringReplacement(nameString, replacementString) {
   return nameAfterPlacement;
 }
 
+export function enterMonacoEditorJson(monacoEditorElement, jsonContent) {
+  const content = typeof jsonContent === 'string' ? jsonContent : JSON.stringify(jsonContent, null, 2);
+
+  // Resolve Monaco editor instance from the passed element first (more reliable than global focus).
+  monacoEditorElement
+    .should('exist')
+    .scrollIntoView()
+    .click({ force: true })
+    .then(($editorElement) => {
+      const editorElement = $editorElement.get(0) as HTMLElement;
+
+      cy.window().then((windowObj) => {
+        const monacoApi = (windowObj as any).monaco;
+        if (!monacoApi?.editor) return;
+
+        const editors = monacoApi.editor.getEditors?.() ?? [];
+        const container = editorElement.closest('.monaco-editor');
+
+        const matchedEditor = editors.find((editorInstance) => {
+          const domNode = editorInstance.getDomNode?.();
+          return !!domNode && (domNode === container || domNode.contains(editorElement));
+        });
+
+        const focusedEditor = monacoApi.editor.getFocusedEditor?.();
+        const targetEditor = matchedEditor ?? focusedEditor ?? editors[editors.length - 1];
+        const targetModel = targetEditor?.getModel?.();
+
+        if (targetEditor?.focus) {
+          targetEditor.focus();
+        }
+
+        if (targetModel?.setValue) {
+          targetModel.setValue('');
+          targetModel.setValue(content);
+          targetEditor?.pushUndoStop?.();
+        }
+      });
+    });
+}
+
 export default {
   tenantAdminDirectURLLogin,
   tenantAdminDirectURLLoginCrossOrigin,
   tenantAdminMenuItem,
   nowPlusMinusMinutes,
   stringReplacement,
+  enterMonacoEditorJson,
 };

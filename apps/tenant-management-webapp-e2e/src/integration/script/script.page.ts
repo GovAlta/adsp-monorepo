@@ -106,7 +106,7 @@ class ScriptPage {
 
   editScriptModalLuaScriptEditor() {
     return cy.xpath(
-      '//*[@data-testid="script-edit-form" and @open]//*[@data-testid="templated-editor-body"]//*[contains(@class, "monaco-editor") and @role="code"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea'
+      '//*[@data-testid="script-edit-form" and @open]//*[@data-testid="templated-editor-body"]//*[contains(@class, "monaco-editor") and @role="code"]//div[@class="native-edit-context"]'
     );
   }
 

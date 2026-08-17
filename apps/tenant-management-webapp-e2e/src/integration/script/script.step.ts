@@ -70,9 +70,7 @@ When(
           .find('.role-name')
           .contains(roleName)
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -81,9 +79,7 @@ When(
           .find('.role-name')
           .contains(roles[i].trim())
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -189,12 +185,8 @@ When(
 );
 
 When('the user enters {string} as lua script', function (script: string) {
-  scriptObj
-    .editScriptModalLuaScriptEditor()
-    .click({ force: true })
-    .focus()
-    .clear({ force: true })
-    .type(script, { force: true });
+  commonlib.enterMonacoEditorJson(scriptObj.editScriptModalLuaScriptEditor(), script);
+  cy.wait(1000);
 });
 
 When('the user clicks Save button in Edit script modal', function () {
@@ -223,9 +215,7 @@ When('the user enters {string} for roles in script editor', function (role: stri
   for (let j = 0; j < 3; j++) {
     scriptObj
       .editorRolesTabRoleTables()
-      .find('goa-checkbox')
-      .shadow()
-      .find('[class^="container"]')
+      .find('input[type="checkbox"]')
       .then((elements) => {
         for (let i = 0; i < elements.length; i++) {
           if (elements[i].getAttribute('class')?.includes('selected')) {
@@ -255,9 +245,7 @@ When('the user enters {string} for roles in script editor', function (role: stri
         .find('.role-name')
         .contains(roleName)
         .next()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .scrollIntoView()
         .click({ force: true });
     } else {
@@ -266,9 +254,7 @@ When('the user enters {string} for roles in script editor', function (role: stri
         .find('.role-name')
         .contains(roles[i].trim())
         .next()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .scrollIntoView()
         .click({ force: true });
     }
