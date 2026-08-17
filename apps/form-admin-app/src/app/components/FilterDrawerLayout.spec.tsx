@@ -14,6 +14,9 @@ describe('FilterDrawerLayout', () => {
       </FilterDrawerLayout>
     );
 
+  const getDrawer = (baseElement: HTMLElement) =>
+    baseElement.querySelector("goa-push-drawer[testid='filter-drawer']");
+
   it('should render results, toolbar actions and the filters trigger', () => {
     const { baseElement, getByTestId } = renderLayout();
 
@@ -22,33 +25,29 @@ describe('FilterDrawerLayout', () => {
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeTruthy();
   });
 
-  it('should keep the drawer hidden initially', () => {
-    const { getByTestId } = renderLayout();
-    const drawer = getByTestId('filter-drawer');
+  it('should keep the drawer closed initially', () => {
+    const { baseElement } = renderLayout();
 
-    expect(window.getComputedStyle(drawer).display).toBe('none');
+    expect(getDrawer(baseElement).getAttribute('open')).toBeNull();
   });
 
   it('should open the drawer and hide the trigger when filters are requested', () => {
-    const { baseElement, getByTestId } = renderLayout();
+    const { baseElement } = renderLayout();
 
     fireEvent(baseElement.querySelector("goa-button[testId='show-filters']"), new CustomEvent('_click'));
 
-    const drawer = getByTestId('filter-drawer');
-    expect(window.getComputedStyle(drawer).display).toBe('flex');
+    expect(getDrawer(baseElement).getAttribute('open')).toBe('true');
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeFalsy();
   });
 
   it('should close the drawer and restore the trigger on drawer close', () => {
-    const { baseElement, getByTestId } = renderLayout();
+    const { baseElement } = renderLayout();
+    const drawer = getDrawer(baseElement);
 
     fireEvent(baseElement.querySelector("goa-button[testId='show-filters']"), new CustomEvent('_click'));
+    fireEvent(drawer, new CustomEvent('_close'));
 
-    const closeBtn = baseElement.querySelector("goa-icon-button[testId='close-filters']");
-    fireEvent(closeBtn, new CustomEvent('_click'));
-
-    const drawer = getByTestId('filter-drawer');
-    expect(window.getComputedStyle(drawer).display).toBe('none');
+    expect(drawer.getAttribute('open')).toBeNull();
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeTruthy();
   });
 

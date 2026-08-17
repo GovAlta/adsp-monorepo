@@ -194,11 +194,11 @@ describe('Forms', () => {
   });
 
   it('should hide the filters trigger while the drawer is open', () => {
-    const { baseElement, getByTestId } = renderForms();
+    const { baseElement } = renderForms();
 
     fireEvent(baseElement.querySelector("goa-button[testId='show-filters']"), new CustomEvent('_click'));
 
-    expect(window.getComputedStyle(getByTestId('filter-drawer')).display).toBe('flex');
+    expect(baseElement.querySelector("goa-push-drawer[testid='filter-drawer']").getAttribute('open')).toBe('true');
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeFalsy();
   });
 });
