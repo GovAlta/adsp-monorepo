@@ -95,7 +95,6 @@ export const FormSubmission = () => {
           </>
         )
       }
-      actionsForm={null}
     >
       <ResizableSplitPane
         initialLeftPercent={40}
