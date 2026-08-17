@@ -1,4 +1,4 @@
-import { GoabIconButton } from '@abgov/react-components-ds1';
+import { GoabIconButton } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
