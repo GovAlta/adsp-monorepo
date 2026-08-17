@@ -15,6 +15,7 @@ import {
   findSubmissions,
   submissionsSelector,
   submissionCriteriaSelector,
+  submissionFilterCountSelector,
   formActions,
   formBusySelector,
   nextSelector,
@@ -28,10 +29,10 @@ import {
   formResultTotalsSelector,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
-import { SearchLayout } from '../components/SearchLayout';
+import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
 import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
-import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { FilterFormItemsContainer } from '../components/FilterFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
@@ -39,6 +40,7 @@ import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
+
 interface FormSubmissionsProps {
   definitionId: string;
 }
@@ -56,6 +58,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const submissions = useSelector(submissionsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);
+  const activeFilterCount = useSelector(submissionFilterCountSelector);
   const { submissions: next } = useSelector(nextSelector);
   const { submissions: totalSubmissions } = useSelector(formResultTotalsSelector);
   const submissionsExport = useSelector(submissionsExportSelector);
@@ -77,10 +80,24 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   };
 
   return (
-    <SearchLayout
-      searchForm={
+    <FilterDrawerLayout
+      activeFilterCount={activeFilterCount}
+      toolbarActions={
+        canExport && (
+          <GoabButton
+            type="tertiary"
+            size="compact"
+            testId="export-submissions"
+            disabled={!!criteria.tag}
+            onClick={() => setShowExport(true)}
+          >
+            Export to file
+          </GoabButton>
+        )
+      }
+      filters={
         <form>
-          <SearchFormItemsContainer>
+          <FilterFormItemsContainer>
             <DateRangeCriteriaItem
               fromValue={criteria.createDateAfter}
               toValue={criteria.createDateBefore}
@@ -132,30 +149,22 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 }
               />
             ))}
-          </SearchFormItemsContainer>
-          <GoabButtonGroup alignment="end" mt="l">
-            {canExport && (
-              <GoabButton
-                size="compact"
-                type="tertiary"
-                mr="xl"
-                disabled={!!criteria.tag}
-                onClick={() => setShowExport(true)}
-              >
-                Export to file
-              </GoabButton>
-            )}
-            <GoabButton
-              type="primary"
-              size="compact"
-              leadingIcon="search"
-              disabled={searchDisabled}
-              onClick={() => handleFindSubmissions()}
-            >
-              Find submissions
-            </GoabButton>
-          </GoabButtonGroup>
+          </FilterFormItemsContainer>
         </form>
+      }
+      filterActions={
+        <GoabButtonGroup alignment="end">
+          <GoabButton
+            type="primary"
+            size="compact"
+            leadingIcon="search"
+            testId="find-submissions"
+            disabled={searchDisabled}
+            onClick={() => handleFindSubmissions()}
+          >
+            Find submissions
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <ContentContainer>
@@ -234,6 +243,6 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
         onClose={() => setShowExport(false)}
         onStartExport={(format) => dispatch(exportSubmissions({ definitionId, criteria, format }))}
       />
-    </SearchLayout>
+    </FilterDrawerLayout>
   );
 };

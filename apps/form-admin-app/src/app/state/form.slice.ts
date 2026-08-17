@@ -32,7 +32,7 @@ interface DefinitionCriteria {
   tag?: string;
 }
 
-interface FormSubmissionCriteria {
+export interface FormSubmissionCriteria {
   dispositioned?: boolean;
   createDateAfter?: string;
   createDateBefore?: string;
@@ -64,6 +64,14 @@ export const getDefaultSubmissionCriteria = (): FormSubmissionCriteria => ({
   dispositioned: false,
   createDateAfter: toDateRangeStart(DateTime.utc().minus({ weeks: 2 }).toISODate()),
 });
+
+const hasFilterValue = (value: unknown): boolean => value !== undefined && value !== null && value !== '';
+
+// Counts every criteria field that carries a value; data value criteria are counted individually.
+export const countActiveFilters = (criteria: { dataCriteria?: Record<string, unknown> } = {}): number => {
+  const { dataCriteria, ...fields } = criteria;
+  return [...Object.values(fields), ...Object.values(dataCriteria || {})].filter(hasFilterValue).length;
+};
 
 interface DataValue {
   name: string;
@@ -1239,7 +1247,11 @@ export const formBusySelector = (state: AppState) => state.form.busy;
 
 export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
 
+export const submissionFilterCountSelector = createSelector(submissionCriteriaSelector, countActiveFilters);
+
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
+
+export const formFilterCountSelector = createSelector(formCriteriaSelector, countActiveFilters);
 
 export const definitionCriteriaSelector = (state: AppState) => state.form.definitionCriteria;
 
