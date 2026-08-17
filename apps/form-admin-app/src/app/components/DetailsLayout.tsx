@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { FunctionComponent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -45,12 +45,12 @@ export const DetailsLayout: FunctionComponent<DetailsLayoutProps> = ({
     <DetailsLayoutContainer>
       <div>
         <GoabButtonGroup alignment="start" mt="s" ml="s" mr="s">
-          <GoabButton type="secondary" leadingIcon="arrow-back" onClick={() => navigate(-1)}>
+          <GoabButton size="compact" type="secondary" leadingIcon="arrow-back" onClick={() => navigate(-1)}>
             Back
           </GoabButton>
           {navButtons}
           {nextTo && (
-            <GoabButton type="secondary" trailingIcon="arrow-forward" onClick={() => navigate(nextTo)}>
+            <GoabButton size="compact" type="secondary" trailingIcon="arrow-forward" onClick={() => navigate(nextTo)}>
               Next
             </GoabButton>
           )}

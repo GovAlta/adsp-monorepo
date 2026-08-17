@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 import { FormDefinition } from '../state';
@@ -36,6 +36,7 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({
                   data-testid="form-start-application"
                   disabled={!canCreate}
                   onClick={onCreate}
+                  size="compact"
                 >
                   Start application
                 </GoabButton>

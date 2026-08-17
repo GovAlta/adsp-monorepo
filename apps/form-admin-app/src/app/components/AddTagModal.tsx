@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Resource } from '../state';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
@@ -33,6 +33,7 @@ export const AddTagModal: FunctionComponent<AddTagModal> = ({ open, resource, ta
         </div>
         <GoabFormItem label="Tag" mt="l" error={tagLabelError}>
           <GoabInput
+            size="compact"
             type="text"
             onChange={(detail: GoabInputOnChangeDetail) => setTagLabel(detail.value)}
             value={tagLabel}
@@ -41,11 +42,12 @@ export const AddTagModal: FunctionComponent<AddTagModal> = ({ open, resource, ta
           />
         </GoabFormItem>
         <GoabButtonGroup alignment="end" mt="xl">
-          <GoabButton type="secondary" onClick={onClose}>
+          <GoabButton size="compact" type="secondary" onClick={onClose}>
             Close
           </GoabButton>
           <GoabButton
             disabled={!tagLabel?.trim() || !!tagLabelError || tagging}
+            size="compact"
             type="primary"
             onClick={() => onTag(resource?.urn, tagLabel.trim())}
           >

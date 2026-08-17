@@ -1,4 +1,4 @@
-import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components-ds1';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -33,6 +33,7 @@ export const ResourceTypePage = (): JSX.Element => {
     setOpenAddResourceType(false);
     setSelectedType(defaultResourceType);
   }, []);
+
   //eslint-disable-next-line
   const groupResources = (data: Record<string, ResourceType[]>) => {
     Object.entries(data).forEach(([key, value]) => {
@@ -43,6 +44,12 @@ export const ResourceTypePage = (): JSX.Element => {
       }
     });
   };
+
+  //eslint-disable-next-line
+  const groupedResourceTypes = useMemo(
+    () => resourceTypes && groupResources(resourceTypes),
+    [resourceTypes, groupResources],
+  );
 
   const onEdit = (urn: string, resource: ResourceType) => {
     setOpenAddResourceType(true);
@@ -87,7 +94,8 @@ export const ResourceTypePage = (): JSX.Element => {
 
   return (
     <section>
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-resource-type"
         onClick={() => {
           setOpenAddResourceType(true);

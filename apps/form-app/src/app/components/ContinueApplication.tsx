@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition } from '../state';
@@ -21,7 +21,7 @@ export const ContinueApplication: FunctionComponent<ContinueApplicationProps> = 
           <GridItem md={10}>
             <div>
               <GoabButtonGroup alignment="end">
-                <GoabButton type="primary" data-testid="form-continue-application" onClick={onContinue}>
+                <GoabButton size="compact" type="primary" data-testid="form-continue-application" onClick={onContinue}>
                   Continue application
                 </GoabButton>
               </GoabButtonGroup>

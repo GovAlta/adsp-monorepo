@@ -7,7 +7,7 @@ import {
   GoabRadioItem,
   GoabSpacer,
   GoabSpinner,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { FunctionComponent, useState } from 'react';
 import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 interface ExportModalProps {
@@ -42,6 +42,7 @@ export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading
             </div>
             <GoabFormItem label="Export format" mt="l">
               <GoabRadioGroup
+                size="compact"
                 name="format"
                 onChange={(detail: GoabRadioGroupOnChangeDetail) => setFormat(detail.value as 'json' | 'csv')}
                 value={format}
@@ -60,10 +61,10 @@ export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading
           </GoabFormItem>
         )}
         <GoabButtonGroup alignment="end" mt="2xl">
-          <GoabButton type="secondary" onClick={onClose}>
+          <GoabButton size="compact" type="secondary" onClick={onClose}>
             Close
           </GoabButton>
-          <GoabButton type="primary" onClick={() => onStartExport(format)} disabled={state.working}>
+          <GoabButton size="compact" type="primary" onClick={() => onStartExport(format)} disabled={state.working}>
             Start export
           </GoabButton>
         </GoabButtonGroup>

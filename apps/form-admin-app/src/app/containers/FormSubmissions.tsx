@@ -5,7 +5,7 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabTable,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -30,7 +30,6 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { SearchLayout } from '../components/SearchLayout';
 import { DataValueCell } from '../components/DataValueCell';
-// import { Digest } from '../components/Digest';
 import { ExportModal } from '../components/ExportModal';
 import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
@@ -94,6 +93,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               <GoabDropdown
                 name="submission-disposition"
                 disabled={!!criteria.tag}
+                size="compact"
                 value={
                   typeof criteria['dispositioned'] !== 'boolean'
                     ? ''
@@ -135,12 +135,19 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           </SearchFormItemsContainer>
           <GoabButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoabButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
+              <GoabButton
+                size="compact"
+                type="tertiary"
+                mr="xl"
+                disabled={!!criteria.tag}
+                onClick={() => setShowExport(true)}
+              >
                 Export to file
               </GoabButton>
             )}
             <GoabButton
               type="primary"
+              size="compact"
               leadingIcon="search"
               disabled={searchDisabled}
               onClick={() => handleFindSubmissions()}
@@ -177,7 +184,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 <td>{submission.created.toFormat('LLL d, yyyy')}</td>
                 <td>{submission.disposition?.status}</td>
                 <td>
-                  <Tags urn={submission.urn} onTag={() => setShowTagSubmission({ name: '', urn: submission.urn })} />
+                  <Tags
+                    hideAddButton={true}
+                    urn={submission.urn}
+                    onTag={() => setShowTagSubmission({ name: '', urn: submission.urn })}
+                  />
                 </td>
                 {dataValues.map(({ path }) => {
                   const value = submission.values[path];
