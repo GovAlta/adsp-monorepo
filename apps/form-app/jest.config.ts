@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'form-app',
   preset: '../../jest.preset.js',
@@ -7,8 +6,8 @@ export default {
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
   moduleNameMapper: {
-    '^@abgov/react-components$': '@abgov/react-components-ds1',
-    '^@abgov/react-components-ds1$': '@abgov/react-components-ds1',
+    '^@abgov/react-components$': '@abgov/react-components',
+    '^@abgov/react-components-ds1$': '@abgov/react-components',
     // @mdx-js/mdx, react-markdown and rehype-sanitize are ESM-only; stub them so Jest (babel-jest) can parse tests.
     // clean-code-ignore: RULE-19
     '@mdx-js/mdx': '<rootDir>/../../libs/jsonforms-components/src/lib/.jest/mdx-js-stub.js',

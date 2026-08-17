@@ -1,6 +1,6 @@
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
-import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
 import { useLocation } from 'react-router-dom';
 import { AppDispatch, loginUser, tenantSelector, userSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,6 +41,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
               ) : null}
               <GoabButtonGroup alignment="end">
                 <GoabButton
+                  size="compact"
                   type="primary"
                   data-testid="form-start-application-sign-in"
                   onClick={onSignInStartApplication}

@@ -10,7 +10,7 @@ import {
   getAutoPopulatedData,
   mergeAutoPopulatedData,
 } from '@abgov/jsonforms-components';
-import { GoabBadge } from '@abgov/react-components-ds1';
+import { GoabBadge } from '@abgov/react-components';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import * as _ from 'lodash';
@@ -204,7 +204,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     <div>
       {!anonymousApply && (
         <SavingIndicator data-saving={saving}>
-          <GoabBadge type="information" content="Saving..." icon={false} />
+          <GoabBadge emphasis="subtle" type="information" content="Saving..." />
         </SavingIndicator>
       )}
 

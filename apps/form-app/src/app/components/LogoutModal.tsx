@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, JSX } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components-ds1';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { clearInterval, setInterval } from 'worker-timers';
 import { getKeycloakExpiry } from '../state';
 import { logoutUser, tenantSelector, AppDispatch, getAccessToken } from '../state';
@@ -79,6 +79,7 @@ export const LogoutModal = (): JSX.Element => {
         <GoabButtonGroup alignment="end">
           <GoabButton
             testId="session-continue-button"
+            size="compact"
             onClick={() => {
               getAccessToken();
               setCountdownTime(120);
@@ -90,6 +91,7 @@ export const LogoutModal = (): JSX.Element => {
           <GoabButton
             testId="session-again-button"
             type="secondary"
+            size="compact"
             onClick={() => {
               dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
             }}
