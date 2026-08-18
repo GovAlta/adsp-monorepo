@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import { Forms } from './Forms';
-import { findForms, getDefaultFormCriteria } from '../state';
+import { findForms, getDefaultFormCriteria, getDefaultResultsSort } from '../state';
 import { FormStatus } from '../state/types';
 
 jest.mock('../state', () => {
@@ -27,10 +27,12 @@ const createState = ({
   forms = {},
   formResults = [],
   formCriteria = getDefaultFormCriteria(),
+  formSort = getDefaultResultsSort(),
 }: {
   forms?: Record<string, unknown>;
   formResults?: string[];
   formCriteria?: ReturnType<typeof getDefaultFormCriteria>;
+  formSort?: ReturnType<typeof getDefaultResultsSort>;
 } = {}) => ({
   user: {
     user: {
@@ -76,6 +78,8 @@ const createState = ({
     definitionCriteria: {},
     formCriteria,
     submissionCriteria: {},
+    formSort,
+    submissionSort: getDefaultResultsSort(),
     next: {
       definitions: null,
       forms: null,
@@ -168,6 +172,7 @@ describe('Forms', () => {
     expect(findForms).toHaveBeenCalledWith({
       definitionId,
       criteria: getDefaultFormCriteria(),
+      sort: getDefaultResultsSort(),
     });
   });
 
@@ -189,8 +194,48 @@ describe('Forms', () => {
     expect(findForms).toHaveBeenCalledWith({
       definitionId,
       criteria: getDefaultFormCriteria(),
+      sort: getDefaultResultsSort(),
       after: undefined,
     });
+  });
+
+  it('should indicate the created on column is sorted descending by default', () => {
+    const { baseElement } = renderForms();
+
+    expect(baseElement.querySelector("goa-table-sort-header[name='created']").getAttribute('direction')).toBe('desc');
+    expect(baseElement.querySelector("goa-table-sort-header[name='status']").getAttribute('direction')).toBe('none');
+    expect(baseElement.querySelector("goa-table-sort-header[name='data.firstName']")).toBeTruthy();
+  });
+
+  it('should find forms with the selected sort', () => {
+    const { baseElement, store } = renderForms();
+
+    fireEvent(
+      baseElement.querySelector('goa-table'),
+      new CustomEvent('_sort', { detail: { sortBy: 'status', sortDir: 1 } }),
+    );
+
+    expect(store.getActions()).toContainEqual({
+      type: 'form/setFormSort',
+      payload: { field: 'status', direction: 'asc' },
+    });
+    expect(findForms).toHaveBeenCalledWith({
+      definitionId,
+      criteria: getDefaultFormCriteria(),
+      sort: { field: 'status', direction: 'asc' },
+    });
+  });
+
+  it('should not find forms again for the sort the results already have', () => {
+    const { baseElement } = renderForms();
+    (findForms as unknown as jest.Mock).mockClear();
+
+    fireEvent(
+      baseElement.querySelector('goa-table'),
+      new CustomEvent('_sort', { detail: { sortBy: 'created', sortDir: -1 } }),
+    );
+
+    expect(findForms).not.toHaveBeenCalled();
   });
 
   it('should hide the filters trigger while the drawer is open', () => {

@@ -638,8 +638,66 @@ describe('form router', () => {
         10,
         undefined,
         expect.objectContaining({ createDateAfter: '2024-01-01', createDateBefore: '2024-01-31' }),
+        null,
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find forms with sort', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: {
+          sortBy: 'status',
+          sortDirection: 'asc',
+        },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.find).toHaveBeenCalledWith(10, undefined, expect.any(Object), {
+        field: 'status',
+        direction: 'asc',
+      });
+    });
+
+    it('can find forms with descending sort by default', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: {
+          sortBy: 'created',
+        },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.find).toHaveBeenCalledWith(10, undefined, expect.any(Object), {
+        field: 'created',
+        direction: 'desc',
+      });
     });
 
     it('can call next with invalid operation for bad criteria', async () => {
@@ -714,6 +772,7 @@ describe('form router', () => {
         expect.any(Number),
         undefined,
         expect.objectContaining({ createdByIdEquals: user.id }),
+        null,
       );
     });
 
@@ -2033,8 +2092,38 @@ describe('form router', () => {
         100,
         undefined,
         expect.objectContaining({ tenantIdEquals: tenantId }),
+        null,
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can find form submissions with sort', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: {
+          sortBy: 'data.firstName',
+          sortDirection: 'asc',
+        },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
+
+      const handler = findSubmissions(apiId, formSubmissionMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(formSubmissionMock.find).toBeCalledWith(100, undefined, expect.any(Object), {
+        field: 'data.firstName',
+        direction: 'asc',
+      });
     });
 
     it('can find form submissions of definition', async () => {
@@ -2075,6 +2164,7 @@ describe('form router', () => {
         10,
         'abc-123',
         expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id }),
+        null,
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -2120,6 +2210,7 @@ describe('form router', () => {
         100,
         undefined,
         expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id }),
+        null,
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -2226,6 +2317,7 @@ describe('form router', () => {
         100,
         undefined,
         expect.objectContaining({ tenantIdEquals: tenantId, formIdEquals: 'test-form' }),
+        null,
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });

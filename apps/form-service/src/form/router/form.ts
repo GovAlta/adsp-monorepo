@@ -39,7 +39,7 @@ import { mapForm, mapFormSubmission, mapFormWithFormSubmission } from '../mapper
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
 import { FormRepository, FormSubmissionRepository } from '../repository';
 import { ExportServiceRoles, FormServiceRoles } from '../roles';
-import { Form, FormCriteria, FormStatus, FormSubmissionCriteria } from '../types';
+import { Form, FormCriteria, FormStatus, FormSubmissionCriteria, ResultsSort } from '../types';
 import {
   ARCHIVE_FORM_OPERATION,
   FormOperations,
@@ -52,6 +52,13 @@ import { PdfService } from '../pdf';
 import * as HttpStatusCodes from 'http-status-codes';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
+
+// Results are sorted by create date descending unless the request specifies a sort column; the
+// repository validates the column since only it knows how the results are stored.
+function getResultsSort(query: Record<string, unknown>): ResultsSort {
+  const { sortBy, sortDirection } = query;
+  return sortBy ? { field: sortBy as string, direction: sortDirection === 'asc' ? 'asc' : 'desc' } : null;
+}
 
 export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'files'> {
   return {
@@ -147,7 +154,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         criteria.tenantIdEquals = user.tenantId;
       }
 
-      const { results, page } = await repository.find(top, after as string, criteria);
+      const { results, page } = await repository.find(top, after as string, criteria, getResultsSort(req.query));
 
       end();
       res.send({
@@ -184,10 +191,15 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
         throw new UnauthorizedUserError('find submissions', user);
       }
 
-      const { results, page } = await repository.find(top, after as string, {
-        ...criteria,
-        tenantIdEquals: tenantId,
-      });
+      const { results, page } = await repository.find(
+        top,
+        after as string,
+        {
+          ...criteria,
+          tenantIdEquals: tenantId,
+        },
+        getResultsSort(req.query),
+      );
 
       res.send({
         results: results.map((r) => mapFormSubmission(apiId, r)),
@@ -228,11 +240,16 @@ export function findFormSubmissions(
         throw new UnauthorizedUserError('find form submissions', user);
       }
 
-      const { results, page } = await repository.find(top, after as string, {
-        ...criteria,
-        tenantIdEquals: tenantId,
-        formIdEquals: formId,
-      });
+      const { results, page } = await repository.find(
+        top,
+        after as string,
+        {
+          ...criteria,
+          tenantIdEquals: tenantId,
+          formIdEquals: formId,
+        },
+        getResultsSort(req.query),
+      );
 
       res.send({
         results: results.map((r) => mapFormSubmission(apiId, r)),
@@ -797,6 +814,8 @@ export function createFormRouter({
           after: { optional: true, isString: true },
           criteria: { optional: true, isJSON: true },
           includeData: { optional: true, isBoolean: true },
+          sortBy: { optional: true, isString: true, isLength: { options: { min: 1, max: 100 } } },
+          sortDirection: { optional: true, isIn: { options: [['asc', 'desc']] } },
         },
         ['query'],
       ),
@@ -898,6 +917,8 @@ export function createFormRouter({
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after').optional().isString(),
       query('criteria').optional().custom(validateCriteriaValue),
+      query('sortBy').optional().isString().isLength({ min: 1, max: 100 }),
+      query('sortDirection').optional().isIn(['asc', 'desc']),
     ),
     findSubmissions(apiId, submissionRepository),
   );
@@ -924,6 +945,8 @@ export function createFormRouter({
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after').optional().isString(),
       query('criteria').optional().custom(validateCriteriaValue),
+      query('sortBy').optional().isString().isLength({ min: 1, max: 100 }),
+      query('sortDirection').optional().isIn(['asc', 'desc']),
     ),
     findFormSubmissions(apiId, submissionRepository, repository),
   );
