@@ -28,6 +28,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="text"
+              size="compact"
               onClick={() => context?.goToPage(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >
