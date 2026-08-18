@@ -27,7 +27,6 @@ import {
 } from './models';
 import { getAccessToken } from '@store/tenant/sagas';
 
-// eslint-disable-next-line
 export function* fetchAccess() {
   const currentState: RootState = yield select();
 
@@ -183,7 +182,6 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
           keycloakRoleIds.push(c.id);
           keycloakIdMap[c.clientId] = c.id;
         });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const rolePromises = keycloakRoleIds.map((id, index) => {
         const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
         return call(axios.get, url, {

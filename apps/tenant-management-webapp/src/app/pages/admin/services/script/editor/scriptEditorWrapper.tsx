@@ -48,7 +48,7 @@ export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = 
   const [selectedScript, setSelectedScript] = useState<ScriptItem>(defaultScript);
   const [openAddScript, setOpenAddScript] = useState(openAddScriptModal);
   const [showScriptEditForm, setShowScriptEditForm] = useState(false);
-  const [showScriptListTable, setShowScriptListTable] = useState(showScriptTable);
+  const [showScriptListTable] = useState(showScriptTable);
 
   const dispatch = useDispatch();
   const location = useLocation();

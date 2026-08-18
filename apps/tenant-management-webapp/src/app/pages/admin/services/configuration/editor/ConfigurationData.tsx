@@ -6,10 +6,9 @@ import { GoabButton, GoabFormItem, GoabButtonGroup } from '@abgov/react-componen
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { getConfigurationActive } from '@store/configuration/action';
-import { setPdfDisplayFileId } from '@store/pdf/action';
 import { RootState } from '@store/index';
 
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { CustomLoader } from '@components/CustomLoader';
 import { ConfigDefinition } from '@store/configuration/model';
@@ -73,7 +72,7 @@ export const ConfigurationData = (): JSX.Element => {
     try {
       JSON.parse(input);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   };
@@ -100,13 +99,6 @@ export const ConfigurationData = (): JSX.Element => {
     setOldConfigurationData(JSON.stringify(configurationRevisions[id]?.revisions?.result[0]?.configuration, null, 2));
     //eslint-disable-next-line
   }, [JSON.stringify(configurationRevisions)]);
-
-  const navigate = useNavigate();
-
-  const cancel = () => {
-    dispatch(setPdfDisplayFileId(null));
-    navigate('/admin/services/configuration?templates=true');
-  };
 
   const monacoHeight = `calc(100vh - 292px${notifications.length > 0 ? ' - 80px' : ''})`;
 

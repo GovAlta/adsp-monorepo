@@ -1,5 +1,4 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { OverviewLayout } from '@components/Overview';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { GoabButton } from '@abgov/react-components';
 

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { Provider } from 'react-redux';

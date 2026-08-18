@@ -165,7 +165,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('allows for the NotificationTypes to be added', async () => {
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>,
@@ -396,7 +396,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('edit notification type should have title and subtitle field', async () => {
-    const { getAllByTestId, queryByTestId, queryAllByText, baseElement } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>,

@@ -6,7 +6,7 @@ import {
   GoabFormItem,
   GoabIcon,
   GoabTable,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,6 +18,7 @@ import {
   findForms,
   formActions,
   formCriteriaSelector,
+  formFilterCountSelector,
   formsSelector,
   nextSelector,
   canExportSelector,
@@ -33,11 +34,11 @@ import {
   tagResource,
   formResultTotalsSelector,
 } from '../state';
-import { SearchLayout } from '../components/SearchLayout';
+import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { DataValueCell } from '../components/DataValueCell';
 import { ExportModal } from '../components/ExportModal';
-import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { FilterFormItemsContainer } from '../components/FilterFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
@@ -45,6 +46,7 @@ import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
+
 interface FormRowProps {
   dispatch: AppDispatch;
   navigate: NavigateFunction;
@@ -81,7 +83,7 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
       })}
       <td>
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
+          <GoabButton size="compact" type="secondary" onClick={() => navigate(form.id)}>
             Open
           </GoabButton>
         </GoabButtonGroup>
@@ -108,6 +110,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
+  const activeFilterCount = useSelector(formFilterCountSelector);
   const { forms: next } = useSelector(nextSelector);
   const { forms: totalForms } = useSelector(formResultTotalsSelector);
   const formsExport = useSelector(formsExportSelector);
@@ -135,10 +138,24 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   };
 
   return (
-    <SearchLayout
-      searchForm={
+    <FilterDrawerLayout
+      activeFilterCount={activeFilterCount}
+      toolbarActions={
+        canExport && (
+          <GoabButton
+            type="tertiary"
+            size="compact"
+            testId="export-forms"
+            disabled={!!criteria.tag}
+            onClick={() => setShowExport(true)}
+          >
+            Export to file
+          </GoabButton>
+        )
+      }
+      filters={
         <form>
-          <SearchFormItemsContainer>
+          <FilterFormItemsContainer>
             <DateRangeCriteriaItem
               fromValue={criteria.createDateAfter}
               toValue={criteria.createDateBefore}
@@ -149,6 +166,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
             <GoabFormItem label="Status" mr="m">
               <GoabDropdown
+                size="compact"
                 name="form-status"
                 disabled={!!criteria.tag}
                 value={criteria.statusEquals}
@@ -181,18 +199,22 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 }
               />
             ))}
-          </SearchFormItemsContainer>
-          <GoabButtonGroup alignment="end" mt="l">
-            {canExport && (
-              <GoabButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
-                Export to file
-              </GoabButton>
-            )}
-            <GoabButton type="primary" leadingIcon="search" disabled={searchDisabled} onClick={() => handleFindForms()}>
-              Find forms
-            </GoabButton>
-          </GoabButtonGroup>
+          </FilterFormItemsContainer>
         </form>
+      }
+      filterActions={
+        <GoabButtonGroup alignment="end">
+          <GoabButton
+            type="primary"
+            size="compact"
+            leadingIcon="search"
+            testId="find-forms"
+            disabled={searchDisabled}
+            onClick={() => handleFindForms()}
+          >
+            Find forms
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <ContentContainer>
@@ -255,6 +277,6 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         onClose={() => setShowExport(false)}
         onStartExport={(format) => dispatch(exportForms({ definitionId, criteria, format }))}
       />
-    </SearchLayout>
+    </FilterDrawerLayout>
   );
 };

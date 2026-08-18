@@ -1,4 +1,4 @@
-import { GoabFormItem, GoabInput } from '@abgov/react-components-ds1';
+import { GoabFormItem, GoabInput } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { toDateRangeStart, toDateRangeEnd } from '../state/form.slice';
@@ -40,6 +40,7 @@ const DateCriteriaInput: FunctionComponent<DateCriteriaInputProps> = ({
 }) => (
   <GoabFormItem label={label} mr="m" error={error}>
     <GoabInput
+      size="compact"
       type="date"
       name={name}
       testId={name}

@@ -1,4 +1,4 @@
-import { GoabCallout } from '@abgov/react-components-ds1';
+import { GoabCallout } from '@abgov/react-components';
 
 export const UserNotAuthorized = () => {
   return (

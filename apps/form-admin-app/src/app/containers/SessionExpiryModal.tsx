@@ -1,4 +1,4 @@
-import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components-ds1';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -50,13 +50,14 @@ export const SessionExpiryModal = () => {
         )}
         <GoabButtonGroup alignment="end" mt="l">
           <GoabButton
+            size="compact"
             type={seconds > 0 ? 'secondary' : 'primary'}
             onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
           >
             Logout
           </GoabButton>
           {seconds > 0 && (
-            <GoabButton type="primary" onClick={() => dispatch(renewSession())}>
+            <GoabButton size="compact" type="primary" onClick={() => dispatch(renewSession())}>
               Continue working
             </GoabButton>
           )}

@@ -170,7 +170,7 @@ class NotificationsPage {
 
   notificationTypeCardFooterItems(notificationTypeTitle) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div/div`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid/div`
     );
   }
 
@@ -461,13 +461,15 @@ class NotificationsPage {
 
   eventTemplateModalSubject(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="native-edit-context"]`
     );
   }
 
+  //goa-form-item[@label="Subject"]//div[@class="native-edit-context"]
+
   eventTemplateModalBody(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]//div[@class="native-edit-context"]`
     );
   }
 

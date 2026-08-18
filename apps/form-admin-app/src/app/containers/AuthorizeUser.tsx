@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { GoabCallout } from '@abgov/react-components-ds1';
+import { GoabCallout } from '@abgov/react-components';
 import { FunctionComponent, ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';

@@ -46,7 +46,7 @@ export const ResultsSummary: FunctionComponent<ResultsSummaryProps> = ({
       </SummaryCount>{' '}
       {itemLabel} matching your current filters.
     </SummaryText>
-    <GoabButton type="secondary" disabled={loading} onClick={onClearFilters}>
+    <GoabButton size="compact" type="secondary" disabled={loading} onClick={onClearFilters}>
       Clear filters
     </GoabButton>
   </ResultsSummaryContainer>

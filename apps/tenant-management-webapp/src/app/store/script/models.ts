@@ -12,7 +12,6 @@ export interface ScriptItem {
 }
 export interface ScriptItemTriggerEventCriteria {
   correlationId?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context?: string;
 }
 export interface ScriptItemTriggerEvent {

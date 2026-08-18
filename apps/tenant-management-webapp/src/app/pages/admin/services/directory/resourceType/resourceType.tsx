@@ -33,6 +33,7 @@ export const ResourceTypePage = (): JSX.Element => {
     setOpenAddResourceType(false);
     setSelectedType(defaultResourceType);
   }, []);
+
   //eslint-disable-next-line
   const groupResources = (data: Record<string, ResourceType[]>) => {
     Object.entries(data).forEach(([key, value]) => {
@@ -44,9 +45,10 @@ export const ResourceTypePage = (): JSX.Element => {
     });
   };
 
+  //eslint-disable-next-line
   const groupedResourceTypes = useMemo(
     () => resourceTypes && groupResources(resourceTypes),
-    [resourceTypes, groupResources]
+    [resourceTypes, groupResources],
   );
 
   const onEdit = (urn: string, resource: ResourceType) => {
@@ -92,7 +94,8 @@ export const ResourceTypePage = (): JSX.Element => {
 
   return (
     <section>
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-resource-type"
         onClick={() => {
           setOpenAddResourceType(true);

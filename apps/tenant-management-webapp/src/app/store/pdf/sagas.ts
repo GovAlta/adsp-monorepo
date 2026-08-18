@@ -189,7 +189,7 @@ const connect = (pushServiceUrl, stream) => {
         try {
           const token = await store.dispatch(getAccessTokenThunk());
           cb({ token });
-        } catch (err) {
+        } catch {
           cb({});
         }
       },

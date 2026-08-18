@@ -63,7 +63,6 @@ import { watchValueSagas } from './value/sagas';
 import { watchDirectorySagas } from './directory/sagas';
 import { watchSharepointSagas } from './sharePoint/sagas';
 
-// eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
   yield takeLatest(FETCH_ACCESS_ACTION, fetchAccess);

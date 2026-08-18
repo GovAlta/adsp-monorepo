@@ -2,7 +2,6 @@ import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { CommentCoreTopicTypesTable } from './commentCoreTopicTypes'; // Update with actual path
-import { debug } from 'node:console';
 import { CommentTopicTypes, SecurityClassification } from '@store/comment/model';
 
 describe('CoreFileTypeTableRow', () => {

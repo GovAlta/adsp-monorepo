@@ -32,7 +32,7 @@ import {
   retrieveScriptSuggestions,
 } from '@lib/luaCodeCompletion';
 import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
-import { GoabButton, GoabFormItem, GoabCheckbox, GoabSkeleton, GoabCircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabCheckbox, GoabSkeleton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -199,7 +199,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           }
 
           return {
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
             dispose: () => {},
             value: {
               activeParameter: activeParam,
@@ -313,7 +312,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const isNotificationActive = latestNotification && !latestNotification.disabled;
 
   const monacoHeight = `calc(100vh - 404px${notifications.length > 0 ? ' - 80px' : ''})`;
-  const Height = latestNotification && !latestNotification.disabled ? 91 : 0;
   const isServiceAccountDisabled = () => {
     if (script.triggerEvents?.length > 0) return true;
 

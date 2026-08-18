@@ -6,7 +6,7 @@ import {
   GoabContainer,
   GoabDivider,
   GoabSkeleton,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -79,11 +79,11 @@ const FormsLayout = styled.div`
 const FormStatusBadge: FunctionComponent<{ status: FormStatus }> = ({ status }) => {
   switch (status) {
     case FormStatus.draft:
-      return <GoabBadge mt="xs" type="information" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="information" content={status} emphasis="subtle" icon={false} />;
     case FormStatus.submitted:
-      return <GoabBadge mt="xs" type="success" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="success" content={status} emphasis="subtle" icon={false} />;
     default:
-      return <GoabBadge mt="xs" type="default" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="default" content={status} emphasis="subtle" icon={false} />;
   }
 };
 
@@ -123,6 +123,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               {definition && definition.oneFormPerApplicant === false && canCreateDraft && (
                 <GoabButton
                   mr="m"
+                  size="compact"
                   disabled={busy.creating}
                   type="tertiary"
                   leadingIcon="add"
@@ -203,6 +204,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               <GoabButton
                 type="text"
                 disabled={busy.loading}
+                size="compact"
                 onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
               >
                 Load more
