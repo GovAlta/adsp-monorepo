@@ -745,12 +745,21 @@ components:
         required: false
         schema:
           type: string
-      - name: includeData
-        description: Flag indicating if data should be included in results.
+      - name: sortBy
+        description: |
+          Column to sort results on. Use 'created' or 'status' for form fields, and 'data.' followed by
+          the path into the form data for a data value (e.g. 'data.applicant.lastName').
         in: query
         required: false
         schema:
-          type: boolean
+          type: string
+      - name: sortDirection
+        description: Direction of the sort. Defaults to descending.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [asc, desc]
       - name: criteria
         description: Criteria for the forms to retrieve.
         in: query
@@ -1050,6 +1059,22 @@ components:
         required: false
         schema:
           type: string
+      - name: sortBy
+        description: |
+          Column to sort results on. Use 'created', 'submissionStatus', or 'disposition' for submission
+          fields, and 'data.' followed by the path into the form data for a data value
+          (e.g. 'data.applicant.lastName').
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sortDirection
+        description: Direction of the sort. Defaults to descending.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [asc, desc]
       - name: criteria
         description: Criteria for form submissions to retrieve.
         in: query
@@ -1125,6 +1150,22 @@ components:
         required: false
         schema:
           type: string
+      - name: sortBy
+        description: |
+          Column to sort results on. Use 'created', 'submissionStatus', or 'disposition' for submission
+          fields, and 'data.' followed by the path into the form data for a data value
+          (e.g. 'data.applicant.lastName').
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sortDirection
+        description: Direction of the sort. Defaults to descending.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [asc, desc]
       - name: criteria
         description: Criteria for form submissions to retrieve.
         in: query

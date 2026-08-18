@@ -8,8 +8,10 @@ import {
   FormSubmissionCriteria,
   FormSubmissionEntity,
   FormSubmissionRepository,
+  ResultsSort,
 } from '../form';
 import { toDataCriteriaQuery } from './criteria';
+import { toSortQuery } from './sort';
 import { formSubmissionSchema } from './schema';
 import { FormSubmissionDoc } from './types';
 
@@ -32,6 +34,12 @@ function toCreateDateQuery(criteria: FormSubmissionCriteria): Record<string, str
   };
 }
 
+const SORT_FIELDS = {
+  created: 'created',
+  submissionStatus: 'submissionStatus',
+  disposition: 'disposition.status',
+};
+
 export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   private submissionModel: Model<Document & FormSubmissionDoc>;
 
@@ -48,7 +56,12 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     });
   }
 
-  find(top: number, after: string, criteria: FormSubmissionCriteria): Promise<Results<FormSubmissionEntity>> {
+  find(
+    top: number,
+    after: string,
+    criteria: FormSubmissionCriteria,
+    sort?: ResultsSort,
+  ): Promise<Results<FormSubmissionEntity>> {
     // tenantId is a required criteria.
     if (!criteria?.tenantIdEquals) {
       throw new InvalidOperationError('Cannot retrieve submissions without tenant context.');
@@ -104,7 +117,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     const results = new Promise<FormSubmissionEntity[]>((resolve, reject) => {
       this.submissionModel
         .find(query, null, { lean: true })
-        .sort({ created: -1 })
+        .sort(toSortQuery(sort, SORT_FIELDS, 'formData'))
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>

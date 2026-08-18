@@ -2,12 +2,18 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
 import { Logger } from 'winston';
-import { FormCriteria, FormEntity, FormRepository } from '../form';
+import { FormCriteria, FormEntity, FormRepository, ResultsSort } from '../form';
 import { FormDefinitionRepository } from '../form';
 import { NotificationService, Subscriber } from '../notification';
 import { toDataCriteriaQuery } from './criteria';
+import { toSortQuery } from './sort';
 import { formSchema } from './schema';
 import { FormDoc } from './types';
+
+const SORT_FIELDS = {
+  created: 'created',
+  status: 'status',
+};
 
 export class MongoFormRepository implements FormRepository {
   private model: Model<Document & FormDoc>;
@@ -25,7 +31,7 @@ export class MongoFormRepository implements FormRepository {
     });
   }
 
-  find(top: number, after: string, criteria: FormCriteria): Promise<Results<FormEntity>> {
+  find(top: number, after: string, criteria: FormCriteria, sort?: ResultsSort): Promise<Results<FormEntity>> {
     const skip = decodeAfter(after);
     const baseQuery: Record<string, unknown> = {};
 
@@ -78,7 +84,7 @@ export class MongoFormRepository implements FormRepository {
     const results = new Promise<FormEntity[]>((resolve, reject) => {
       this.model
         .find(query, null, { lean: true })
-        .sort({ created: -1 })
+        .sort(toSortQuery(sort, SORT_FIELDS, 'data'))
         .skip(skip)
         .limit(top)
         .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));

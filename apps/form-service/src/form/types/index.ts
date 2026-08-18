@@ -3,3 +3,4 @@ export * from './fileTypes';
 export * from './form';
 export * from './formSubmission';
 export * from './intake';
+export * from './sort';
