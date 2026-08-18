@@ -41,6 +41,14 @@ export interface Intake {
   isUpcoming: boolean;
 }
 
+export interface ReviewColumn {
+  path: string;
+}
+
+export interface ReviewConfiguration {
+  columns: ReviewColumn[];
+}
+
 export interface FormDefinition {
   urn: string;
   id: string;
@@ -61,6 +69,7 @@ export interface FormDefinition {
   scheduledIntakes: boolean;
   supportTopic: boolean;
   intake?: Intake;
+  reviewConfiguration?: ReviewConfiguration;
 }
 
 export enum FormStatus {

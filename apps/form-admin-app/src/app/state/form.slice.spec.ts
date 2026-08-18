@@ -1,4 +1,10 @@
-import { countActiveFilters, formFilterCountSelector, getDefaultFormCriteria } from './form.slice';
+import { AppState } from './store';
+import {
+  countActiveFilters,
+  formFilterCountSelector,
+  getDefaultFormCriteria,
+  selectedDataValuesSelector,
+} from './form.slice';
 
 describe('countActiveFilters', () => {
   it('should return zero for empty criteria', () => {
@@ -37,5 +43,71 @@ describe('formFilterCountSelector', () => {
     >[0];
 
     expect(formFilterCountSelector(state)).toBe(2);
+  });
+});
+
+const reviewDefinitionState = {
+  form: {
+    selectedDefinition: 'intake',
+    definitions: {
+      intake: {
+        id: 'intake',
+        dataSchema: {
+          type: 'object',
+          properties: {
+            firstName: { type: 'string', title: 'First name' },
+            lastName: { type: 'string', title: 'Last name' },
+            fileNumber: { type: 'number' },
+          },
+        },
+        reviewConfiguration: { columns: [{ path: 'lastName' }, { path: 'firstName' }] },
+      },
+    },
+  },
+} as unknown as AppState;
+
+describe('selectedDataValuesSelector', () => {
+  it('returns configured review columns in the specified order', () => {
+    expect(selectedDataValuesSelector(reviewDefinitionState).map((column) => column.path)).toEqual([
+      'lastName',
+      'firstName',
+    ]);
+  });
+
+  it('does not include schema fields that are not in the review configuration', () => {
+    expect(selectedDataValuesSelector(reviewDefinitionState).map((column) => column.path)).not.toContain('fileNumber');
+  });
+
+  it('returns no columns when the definition has no review configuration', () => {
+    const state = {
+      form: {
+        selectedDefinition: 'intake',
+        definitions: {
+          intake: {
+            id: 'intake',
+            dataSchema: reviewDefinitionState.form.definitions.intake.dataSchema,
+          },
+        },
+      },
+    } as unknown as AppState;
+
+    expect(selectedDataValuesSelector(state)).toEqual([]);
+  });
+
+  it('returns no columns when review configuration is empty', () => {
+    const state = {
+      form: {
+        selectedDefinition: 'intake',
+        definitions: {
+          intake: {
+            id: 'intake',
+            dataSchema: reviewDefinitionState.form.definitions.intake.dataSchema,
+            reviewConfiguration: { columns: [] },
+          },
+        },
+      },
+    } as unknown as AppState;
+
+    expect(selectedDataValuesSelector(state)).toEqual([]);
   });
 });

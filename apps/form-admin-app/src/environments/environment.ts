@@ -10,4 +10,8 @@ export const environment = {
     url: 'https://access.adsp-dev.gov.ab.ca',
     client_id: 'urn:ads:platform:form-admin-app',
   },
+  // Send form-service calls to the locally served mapper (reviewConfiguration).
+  serviceOverrides: {
+    'urn:ads:platform:form-service': 'http://localhost:3343',
+  },
 };

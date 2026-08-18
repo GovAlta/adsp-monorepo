@@ -36,6 +36,39 @@ export const QueueTaskDropdown = styled.div`
   margin-bottom: 3rem;
 `;
 
+export const ReviewTabBody = styled.div`
+  padding-bottom: var(--goa-space-l);
+`;
+
+export const ReviewDescription = styled.div`
+  p {
+    margin: 0 0 var(--goa-space-s);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+export const ReviewAddFieldRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--goa-space-s);
+`;
+
+export const ReviewFieldDropdown = styled.div`
+  width: 50%;
+`;
+
+export const ReviewOrderField = styled.div`
+  width: var(--goa-space-3xl);
+`;
+
+export const ReviewEmptyState = styled.p`
+  margin: var(--goa-space-s) 0 0;
+`;
+
 export const LifecycleLabelRow = styled.div`
   display: flex;
   align-items: center;

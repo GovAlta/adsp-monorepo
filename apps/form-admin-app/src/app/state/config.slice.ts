@@ -50,6 +50,11 @@ export const initializeConfig = createAsyncThunk('config/initialize', async () =
     }
   }
 
+  const serviceOverrides = envStatic.serviceOverrides;
+  if (serviceOverrides) {
+    directory = { ...directory, ...serviceOverrides };
+  }
+
   return { directory, environment };
 });
 

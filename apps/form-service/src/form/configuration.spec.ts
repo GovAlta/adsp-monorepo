@@ -15,4 +15,35 @@ describe('configuration', () => {
     service.setSchema('configuration', { $ref: 'http://json-schema.org/draft-07/schema#' });
     service.validate('test', 'configuration', configurationSchema);
   });
+
+  it('accepts a form definition with review configuration', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('formDefinition', configurationSchema);
+    service.validate('test', 'formDefinition', {
+      id: 'intake',
+      name: 'Intake',
+      anonymousApply: false,
+      applicantRoles: [],
+      assessorRoles: [],
+      reviewConfiguration: {
+        columns: [{ path: 'applicant.firstName' }, { path: 'fileNumber' }],
+      },
+    });
+  });
+
+  it('rejects review columns without a path', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('formDefinition', configurationSchema);
+
+    expect(() =>
+      service.validate('test', 'formDefinition', {
+        id: 'intake',
+        name: 'Intake',
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+        reviewConfiguration: { columns: [{}] },
+      }),
+    ).toThrow();
+  });
 });

@@ -1,7 +1,10 @@
 import * as dotenv from 'dotenv';
 import * as envalid from 'envalid';
+import * as path from 'path';
 import * as util from 'util';
 
+// Nx serve runs from the workspace root, so load the service file explicitly.
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/form-service/.env') });
 dotenv.config();
 
 export const environment = envalid.cleanEnv(
