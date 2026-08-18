@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — repository interface declaration; the mongo implementation is
+// covered by ../../mongo/formSubmission.spec.ts.
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
 import { FormSubmissionEntity } from '../model';
