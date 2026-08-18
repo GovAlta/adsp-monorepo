@@ -25,7 +25,7 @@ const AsideLinks = ({ serviceName, noDocsLink = false, feedbackTutorialLink }: A
   };
   const getSupportCodeLink = () => {
     if (serviceName.toLowerCase() === 'access') {
-      return 'https://github.com/GovAlta/access-service';
+      return 'https://github.com/keycloak/keycloak';
     }
     return `https://github.com/GovAlta/adsp-monorepo/tree/main/apps/${serviceName}-service`;
   };

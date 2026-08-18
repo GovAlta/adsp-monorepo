@@ -185,7 +185,7 @@ Feature: Tenant admin
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
     Then the user views the "Access service" overview content "Access allows you to"
-    And the user views the link of See the code for "access-service"
+    And the user views the link of See the code for "keycloak/keycloak"
     And the user views the link of "Get support" under Support
 
   @TEST_CS-2501 @REQ_CS-1401 @regression
