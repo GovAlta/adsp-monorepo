@@ -122,7 +122,9 @@ function AppHeader({
     <div className={styles.headerContainer}>
       <GoabMicrositeHeader type="alpha" feedbackUrl="#" feedbackUrlTarget="self" headerUrlTarget="self" />
       <GoabAppHeader url={tenantName ? `/${tenantName}` : '/'} heading={headerServiceName}>
-        <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} userInfo={userInfo} tenant={tenant} />
+        <div slot="utilities">
+          <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} userInfo={userInfo} tenant={tenant} />
+        </div>
       </GoabAppHeader>
     </div>
   );

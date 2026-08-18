@@ -76,7 +76,9 @@ function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: Hea
     <HeaderContainer>
       <GoabMicrositeHeader type="live" headerUrlTarget="self" />
       <GoabAppHeader url="/" heading={headerServiceName}>
-        <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
+        <div slot="utilities">
+          <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
+        </div>
       </GoabAppHeader>
     </HeaderContainer>
   );
