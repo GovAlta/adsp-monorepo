@@ -159,6 +159,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
           <GoabButton
             size="compact"
             type="primary"
+            variant="destructive"
             disabled={busy}
             onClick={async () => {
               await onDeleteComment(topicId, deleting.id);
