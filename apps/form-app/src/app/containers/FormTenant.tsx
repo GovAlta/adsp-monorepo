@@ -57,7 +57,7 @@ export const FormTenant = () => {
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoabAppHeader url="/" heading={headerTitle}>
-        <>
+        <div slot="utilities">
           <span style={{ display: 'none' }}></span>
           {userInitialized && (
             <AccountActionsDiv>
@@ -65,7 +65,7 @@ export const FormTenant = () => {
                 <>
                   <span className="username">{user?.name}</span>
                   <GoabButton
-                    size="normal"
+                    size="compact"
                     ml="s"
                     type="tertiary"
                     data-testid="form-sign-out"
@@ -83,7 +83,7 @@ export const FormTenant = () => {
               )}
             </AccountActionsDiv>
           )}
-        </>
+        </div>
       </GoabAppHeader>
       <FeedbackNotification />
       <main>

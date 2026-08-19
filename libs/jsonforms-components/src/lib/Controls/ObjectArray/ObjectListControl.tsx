@@ -794,7 +794,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                 </ReviewLabel>
                 {uischema.options?.stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
                   <GoabButton
-                    type="tertiary"
+                    type="text"
                     size="compact"
                     onClick={() => context?.goToPage(uischema.options?.stepId as number)}
                   >

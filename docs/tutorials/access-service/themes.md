@@ -37,7 +37,7 @@ Keycloak uses FreeMarker files to build server-side webpages that then get serve
 Probably the easiest way to build and test a new theme is:
 
 - read the [keycloak guide](https://www.keycloak.org/docs/18.0/server_development/) for developing themes
-- clone the [access-service git repository](https://github.com/GovAlta/access-service/tree/main)
+- clone the Access service repository, and
 - follow the instructions in the repository to build, test, and deploy your new templates.
 
-If you have any questions please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca).
+The Access service repository is maintained by the ADSP team in a private Government of Alberta organization, so you will need to request access before you can clone it. Please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca) to request access, or if you have any questions.

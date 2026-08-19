@@ -99,32 +99,34 @@ export const TaskTenant = () => {
       <HeaderContainer>
         <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
         <GoabAppHeader url="/" heading={headerTitle}>
-          {userInitialized && (
-            <span>
-              <span>{user?.name}</span>
-              {user ? (
-                <GoabButton
-                  size="compact"
-                  mt="s"
-                  mr="s"
-                  type="text"
-                  onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
-                >
-                  Sign out
-                </GoabButton>
-              ) : (
-                <GoabButton
-                  size="compact"
-                  mt="s"
-                  mr="s"
-                  type="text"
-                  onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
-                >
-                  Sign in
-                </GoabButton>
-              )}
-            </span>
-          )}
+          <div slot="utilities">
+            {userInitialized && (
+              <span>
+                <span>{user?.name}</span>
+                {user ? (
+                  <GoabButton
+                    size="compact"
+                    mt="s"
+                    mr="s"
+                    type="text"
+                    onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
+                  >
+                    Sign out
+                  </GoabButton>
+                ) : (
+                  <GoabButton
+                    size="compact"
+                    mt="s"
+                    mr="s"
+                    type="text"
+                    onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
+                  >
+                    Sign in
+                  </GoabButton>
+                )}
+              </span>
+            )}
+          </div>
         </GoabAppHeader>
       </HeaderContainer>
       <FeedbackNotification />

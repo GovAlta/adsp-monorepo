@@ -17,8 +17,9 @@ import {
   submissionSelector,
   updateFormDisposition,
 } from '../state';
-import { AdspId } from '@core-services/app-common';
+import { AdspId } from '../../lib/adspId';
 import { DateTime } from 'luxon';
+import { SubmissionNotes } from './SubmissionNotes';
 import { Tags } from './Tags';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import styled from 'styled-components';
@@ -56,8 +57,7 @@ export const FormSubmissionWorkspace: FunctionComponent<FormSubmissionWorkspaceP
         {/* TODO: Add Communication/Messages content */}
       </GoabAccordion>
       <GoabAccordion heading="Notes" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
-        Notes section
-        {/* TODO: Add Notes content */}
+        <SubmissionNotes dispatch={dispatch} submission={submission} busy={busy} />
       </GoabAccordion>
       <GoabAccordion heading="Tags" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
         <Tags urn={submission.urn} hideAddButton={false} onTag={onOpenTag} />

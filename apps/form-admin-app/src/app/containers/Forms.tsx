@@ -33,6 +33,8 @@ import {
   directoryBusySelector,
   tagResource,
   formResultTotalsSelector,
+  formSortSelector,
+  DATA_VALUE_SORT_PREFIX,
 } from '../state';
 import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
 import { ContentContainer } from '../components/ContentContainer';
@@ -44,8 +46,9 @@ import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRange
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
-import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabDropdownOnChangeDetail, GoabTableOnSortDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
+import { SortableColumnHeader, toSortChange } from '../components/SortableColumnHeader';
 
 interface FormRowProps {
   dispatch: AppDispatch;
@@ -110,6 +113,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
+  const sort = useSelector(formSortSelector);
   const activeFilterCount = useSelector(formFilterCountSelector);
   const { forms: next } = useSelector(nextSelector);
   const { forms: totalForms } = useSelector(formResultTotalsSelector);
@@ -117,7 +121,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
 
   useEffect(() => {
     if (forms.length < 1) {
-      dispatch(findForms({ definitionId, criteria }));
+      dispatch(findForms({ definitionId, criteria, sort }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
@@ -128,13 +132,23 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     }
   }, [dispatch, definition]);
 
+  // The table wires up its sort headers when it mounts, so it is remounted when the data value
+  // columns of the definition are loaded and the set of sortable columns changes.
+  const sortableColumnsKey = dataValues.map(({ path }) => path).join('|');
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
-  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, after })); // clean-code-ignore: 2.10
+  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, sort, after })); // clean-code-ignore: 2.10
   const clearFilters = () => {
     const criteria = {};
     dispatch(formActions.setFormCriteria(criteria));
-    dispatch(findForms({ definitionId, criteria }));
+    dispatch(findForms({ definitionId, criteria, sort }));
+  };
+  const handleSort = (detail: GoabTableOnSortDetail) => {
+    const update = toSortChange(detail, sort);
+    if (update) {
+      dispatch(formActions.setFormSort(update));
+      dispatch(findForms({ definitionId, criteria, sort: update }));
+    }
   };
 
   return (
@@ -225,15 +239,21 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           loading={busy.loading}
           onClearFilters={clearFilters}
         />
-        <GoabTable width="100%">
+        <GoabTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
           <thead>
             <tr>
               <th></th>
-              <th>Created on</th>
-              <th>Status</th>
+              <SortableColumnHeader name="created" sort={sort}>
+                Created on
+              </SortableColumnHeader>
+              <SortableColumnHeader name="status" sort={sort}>
+                Status
+              </SortableColumnHeader>
               <th>Tags</th>
               {dataValues.map(({ name, path }) => (
-                <th key={path}>{name}</th>
+                <SortableColumnHeader key={path} name={`${DATA_VALUE_SORT_PREFIX}${path}`} sort={sort}>
+                  {name}
+                </SortableColumnHeader>
               ))}
               <th>Actions</th>
             </tr>

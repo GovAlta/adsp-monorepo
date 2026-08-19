@@ -12,6 +12,8 @@ import {
   TemplatePropertiesGrid,
   TemplatePropertiesSummary,
   BodyEditorFooter,
+  CheckboxRow,
+  CheckboxHint,
 } from './styled-components';
 import { AppDispatch, RootState } from '@store/index';
 import { connectAgent, disconnectAgent, startThread } from '@store/agent/actions';
@@ -35,6 +37,8 @@ import {
   GoabBadge,
   GoabFormItem,
   GoabCheckbox,
+  GoabIcon,
+  GoabTooltip,
 } from '@abgov/react-components';
 import { areObjectsEqual } from '@lib/objectUtil';
 import emailWrapper from './templates/email-wrapper.hbs';
@@ -112,7 +116,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const editorHeight = height - 200;
   const monaco = useMonaco();
   const bodyEditorHintText =
-    "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
+    "GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
 
   const agentConnected = useSelector(agentConnectedSelector);
   const notificationEmailAIEnabled = useSelector(
@@ -157,6 +161,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     setPropertiesOpenMap((prev) => ({ ...prev, [channel]: open }));
   };
 
+  const anyPropertiesOpen = Object.values(propertiesOpenMap).some(Boolean);
   const hasPropertyErrors = !!(errors?.['subject'] || errors?.['title'] || errors?.['subtitle']);
 
   // Make the metadata fields immediately available each time the modal opens.
@@ -276,7 +281,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   } else return null;
 
   return (
-    <TemplateEditorContainer>
+    <TemplateEditorContainer $propertiesOpen={anyPropertiesOpen}>
       <GoabFormItem label="">
         <Tabs
           activeIndex={activeIndex}
@@ -430,22 +435,26 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
                         return (
                           <BodyEditorFooter>
-                            <span>{bodyEditorHintText}</span>
-                            <GoabCheckbox
-                              size="compact"
-                              name="use-default-template"
-                              checked={useDefaultTemplate}
-                              data-testid="default-template-checkbox"
-                              description={
-                                isBodyNotEmpty ? 'Clear the current body in order to use the default template.' : ''
-                              }
-                              onChange={(detail: GoabCheckboxOnChangeDetail) => {
-                                setUseDefaultTemplate(detail.checked);
-                                onBodyChange(detail.checked ? emailWrapper : '', item.name);
-                              }}
-                              text="Use default template to edit header and footer"
-                              disabled={isBodyNotEmpty}
-                            />
+                            <CheckboxRow>
+                              <GoabCheckbox
+                                size="compact"
+                                name="use-default-template"
+                                checked={useDefaultTemplate}
+                                data-testid="default-template-checkbox"
+                                onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                                  setUseDefaultTemplate(detail.checked);
+                                  onBodyChange(detail.checked ? emailWrapper : '', item.name);
+                                }}
+                                text="Use default template to edit header and footer"
+                                disabled={isBodyNotEmpty}
+                              />
+                              <GoabTooltip content={bodyEditorHintText} position="top">
+                                <GoabIcon type="information-circle" ariaLabel="About default template" />
+                              </GoabTooltip>
+                              {isBodyNotEmpty && (
+                                <CheckboxHint>(Clear the current body to enable)</CheckboxHint>
+                              )}
+                            </CheckboxRow>
                           </BodyEditorFooter>
                         );
                       })()}

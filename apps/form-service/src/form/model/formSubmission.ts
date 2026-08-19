@@ -1,9 +1,9 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidValueError } from '@core-services/core-common';
+import { InvalidValueError, NotFoundError } from '@core-services/core-common';
 import { v4 as uuidv4 } from 'uuid';
 import { FormSubmissionRepository } from '../repository';
 import { DirectoryServiceRoles, FormServiceRoles } from '../roles';
-import { FormDisposition, FormSubmission, SecurityClassificationType } from '../types';
+import { FormDisposition, FormSubmission, FormSubmissionNote, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
 import { FormDefinitionEntity } from './definition';
 
@@ -21,6 +21,7 @@ export class FormSubmissionEntity implements FormSubmission {
   updated: Date;
   submissionStatus: string;
   disposition: FormDisposition;
+  notes: FormSubmissionNote[];
   hash: string;
   securityClassification: SecurityClassificationType;
   dryRun: boolean;
@@ -83,6 +84,7 @@ export class FormSubmissionEntity implements FormSubmission {
     this.tenantId = tenantId;
     this.submissionStatus = formSubmission.submissionStatus;
     this.disposition = formSubmission.disposition || null;
+    this.notes = formSubmission.notes || [];
     this.hash = formSubmission.hash;
     // This is for backwards compatibility, but security classification should be saved against the submission.
     this.securityClassification = formSubmission.securityClassification || form?.securityClassification;
@@ -96,6 +98,17 @@ export class FormSubmissionEntity implements FormSubmission {
     );
   }
 
+  // Assessors of the form definition and form admins review submissions; they can disposition
+  // a submission and maintain the notes recorded against it.
+  canAssess(user: User): boolean {
+    return isAllowedUser(
+      user,
+      this.tenantId,
+      [FormServiceRoles.Admin, ...(this.definition?.assessorRoles || [])],
+      true,
+    );
+  }
+
   async delete(user: User): Promise<boolean> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('delete form', user);
@@ -106,9 +119,7 @@ export class FormSubmissionEntity implements FormSubmission {
   }
 
   async dispositionSubmission(user: User, status: string, reason?: string): Promise<FormSubmissionEntity> {
-    if (
-      !isAllowedUser(user, this.tenantId, [FormServiceRoles.Admin, ...(this.definition?.assessorRoles || [])], true)
-    ) {
+    if (!this.canAssess(user)) {
       throw new UnauthorizedUserError('updated form disposition', user);
     }
 
@@ -125,6 +136,44 @@ export class FormSubmissionEntity implements FormSubmission {
       date: dispositionedOn,
     };
     this.updated = dispositionedOn;
+    this.updatedBy = { id: user.id, name: user.name };
+
+    return await this.repository.save(this);
+  }
+
+  async addNote(user: User, content: string): Promise<FormSubmissionEntity> {
+    if (!this.canAssess(user)) {
+      throw new UnauthorizedUserError('add form submission note', user);
+    }
+
+    const addedOn = new Date();
+    this.notes = [
+      ...this.notes,
+      {
+        id: uuidv4(),
+        content,
+        created: addedOn,
+        createdBy: { id: user.id, name: user.name },
+      },
+    ];
+    this.updated = addedOn;
+    this.updatedBy = { id: user.id, name: user.name };
+
+    return await this.repository.save(this);
+  }
+
+  async deleteNote(user: User, noteId: string): Promise<FormSubmissionEntity> {
+    if (!this.canAssess(user)) {
+      throw new UnauthorizedUserError('delete form submission note', user);
+    }
+
+    const note = this.notes.find(({ id }) => id === noteId);
+    if (!note) {
+      throw new NotFoundError('form submission note', noteId);
+    }
+
+    this.notes = this.notes.filter(({ id }) => id !== noteId);
+    this.updated = new Date();
     this.updatedBy = { id: user.id, name: user.name };
 
     return await this.repository.save(this);

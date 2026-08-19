@@ -27,6 +27,8 @@ import {
   directoryBusySelector,
   tagResource,
   formResultTotalsSelector,
+  submissionSortSelector,
+  DATA_VALUE_SORT_PREFIX,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
 import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
@@ -38,8 +40,9 @@ import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRange
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
-import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabDropdownOnChangeDetail, GoabTableOnSortDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
+import { SortableColumnHeader, toSortChange } from '../components/SortableColumnHeader';
 
 interface FormSubmissionsProps {
   definitionId: string;
@@ -58,6 +61,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   const submissions = useSelector(submissionsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(submissionCriteriaSelector);
+  const sort = useSelector(submissionSortSelector);
   const activeFilterCount = useSelector(submissionFilterCountSelector);
   const { submissions: next } = useSelector(nextSelector);
   const { submissions: totalSubmissions } = useSelector(formResultTotalsSelector);
@@ -65,18 +69,28 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
 
   useEffect(() => {
     if (submissions.length < 1) {
-      dispatch(findSubmissions({ definitionId, criteria }));
+      dispatch(findSubmissions({ definitionId, criteria, sort }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
 
+  // The table wires up its sort headers when it mounts, so it is remounted when the data value
+  // columns of the definition are loaded and the set of sortable columns changes.
+  const sortableColumnsKey = dataValues.map(({ path }) => path).join('|');
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setSubmissionCriteria(update)); // clean-code-ignore: 2.10
-  const handleFindSubmissions = (after?: string) => dispatch(findSubmissions({ definitionId, criteria, after })); // clean-code-ignore: 2.10
+  const handleFindSubmissions = (after?: string) => dispatch(findSubmissions({ definitionId, criteria, sort, after })); // clean-code-ignore: 2.10
   const clearFilters = () => {
     const criteria = {};
     dispatch(formActions.setSubmissionCriteria(criteria));
-    dispatch(findSubmissions({ definitionId, criteria }));
+    dispatch(findSubmissions({ definitionId, criteria, sort }));
+  };
+  const handleSort = (detail: GoabTableOnSortDetail) => {
+    const update = toSortChange(detail, sort);
+    if (update) {
+      dispatch(formActions.setSubmissionSort(update));
+      dispatch(findSubmissions({ definitionId, criteria, sort: update }));
+    }
   };
 
   return (
@@ -175,14 +189,20 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           loading={busy.loading}
           onClearFilters={clearFilters}
         />
-        <GoabTable width="100%">
+        <GoabTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
           <thead>
             <tr>
-              <th>Submitted on</th>
-              <th>Disposition</th>
+              <SortableColumnHeader name="created" sort={sort}>
+                Submitted on
+              </SortableColumnHeader>
+              <SortableColumnHeader name="disposition" sort={sort}>
+                Disposition
+              </SortableColumnHeader>
               <th>Tags</th>
               {dataValues.map(({ name, path }) => (
-                <th key={path}>{name}</th>
+                <SortableColumnHeader key={path} name={`${DATA_VALUE_SORT_PREFIX}${path}`} sort={sort}>
+                  {name}
+                </SortableColumnHeader>
               ))}
               <th>Actions</th>
             </tr>

@@ -249,7 +249,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-            <GoabButton type="tertiary" onClick={handleChangeClick}>
+            <GoabButton type="text" size="compact" onClick={handleChangeClick}>
               Change
             </GoabButton>
           )}

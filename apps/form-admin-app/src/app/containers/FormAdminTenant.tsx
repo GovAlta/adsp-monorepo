@@ -60,7 +60,9 @@ export const FormAdminTenant = () => {
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoabAppHeader url="/" heading={headerTitle}>
-        <NavigationMenu type="menu" />
+        <div slot="utilities">
+          <NavigationMenu type="menu" />
+        </div>
       </GoabAppHeader>
       <FeedbackNotification />
       <AuthorizeUser>

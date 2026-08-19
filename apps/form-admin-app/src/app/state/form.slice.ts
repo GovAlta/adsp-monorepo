@@ -48,6 +48,23 @@ interface FormCriteria {
   tag?: string;
 }
 
+export type SortDirection = 'asc' | 'desc';
+
+// Sort field is the column name understood by the form service; data value columns are sorted using
+// the 'data.' prefix followed by the path of the value in the form data.
+export interface ResultsSort {
+  field: string;
+  direction: SortDirection;
+}
+
+export const DATA_VALUE_SORT_PREFIX = 'data.';
+
+export const getDefaultResultsSort = (): ResultsSort => ({ field: 'created', direction: 'desc' });
+
+// Tagged resource search is served by the directory service, which doesn't sort on form values, so
+// sort parameters are only sent on the form service search.
+const toSortParams = (sort?: ResultsSort) => (sort?.field ? { sortBy: sort.field, sortDirection: sort.direction } : {});
+
 export const toDateRangeStart = (value: string): string => new Date(`${value}T00:00:00.000Z`).toISOString();
 export const toDateRangeEnd = (value: string): string => new Date(`${value}T23:59:59.999Z`).toISOString();
 
@@ -121,6 +138,8 @@ export interface FormState {
   definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
   submissionCriteria: FormSubmissionCriteria;
+  formSort: ResultsSort;
+  submissionSort: ResultsSort;
   next: {
     definitions: string;
     forms: string;
@@ -162,6 +181,8 @@ export const initialFormState: FormState = {
   definitionCriteria: getDefaultDefinitionCriteria(),
   formCriteria: getDefaultFormCriteria(),
   submissionCriteria: getDefaultSubmissionCriteria(),
+  formSort: getDefaultResultsSort(),
+  submissionSort: getDefaultResultsSort(),
   next: {
     definitions: null,
     forms: null,
@@ -253,7 +274,12 @@ export const loadDefinitions = createAsyncThunk(
 export const findForms = createAsyncThunk(
   'form/find-forms',
   async (
-    { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormCriteria },
+    {
+      definitionId,
+      after,
+      criteria,
+      sort,
+    }: { definitionId: string; after?: string; criteria?: FormCriteria; sort?: ResultsSort },
     { dispatch, getState, rejectWithValue },
   ) => {
     const state = getState() as AppState;
@@ -289,6 +315,7 @@ export const findForms = createAsyncThunk(
               ...criteria,
               definitionIdEquals: definitionId,
             }),
+            ...toSortParams(sort),
           },
         });
 
@@ -319,7 +346,12 @@ export const findForms = createAsyncThunk(
 export const findSubmissions = createAsyncThunk(
   'form/find-submissions',
   async (
-    { definitionId, after, criteria }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria },
+    {
+      definitionId,
+      after,
+      criteria,
+      sort,
+    }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria; sort?: ResultsSort },
     { dispatch, getState, rejectWithValue },
   ) => {
     const state = getState() as AppState;
@@ -348,6 +380,7 @@ export const findSubmissions = createAsyncThunk(
               ...criteria,
               definitionIdEquals: definitionId,
             }),
+            ...toSortParams(sort),
           },
         });
 
@@ -852,6 +885,67 @@ export const updateFormDisposition = createAsyncThunk(
   },
 );
 
+export const addSubmissionNote = createAsyncThunk(
+  'form/add-submission-note',
+  async (
+    { formId, submissionId, content }: { formId: string; submissionId: string; content: string },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.post<FormSubmission>(
+        new URL(`/form/v1/forms/${formId}/submissions/${submissionId}/notes`, formServiceUrl).href,
+        { content },
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
+);
+
+export const deleteSubmissionNote = createAsyncThunk(
+  'form/delete-submission-note',
+  async (
+    { formId, submissionId, noteId }: { formId: string; submissionId: string; noteId: string },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.delete<FormSubmission>(
+        new URL(`/form/v1/forms/${formId}/submissions/${submissionId}/notes/${noteId}`, formServiceUrl).href,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
+);
+
 export const runFormOperation = createAsyncThunk(
   'form/run-form-operation',
   async ({ urn, operation }: { urn: AdspId; operation: 'to-draft' | 'archive' }, { getState, rejectWithValue }) => {
@@ -892,6 +986,12 @@ const formSlice = createSlice({
     },
     setSubmissionCriteria: (state, { payload }: { payload: FormSubmissionCriteria }) => {
       state.submissionCriteria = payload;
+    },
+    setFormSort: (state, { payload }: { payload: ResultsSort }) => {
+      state.formSort = payload;
+    },
+    setSubmissionSort: (state, { payload }: { payload: ResultsSort }) => {
+      state.submissionSort = payload;
     },
     setDispositionDraft: (state, { payload }: { payload: Omit<FormDisposition, 'id' | 'date'> }) => {
       state.dispositionDraft = payload;
@@ -1083,6 +1183,26 @@ const formSlice = createSlice({
         state.busy.executing = false;
         state.submissions[payload.id] = payload;
       })
+      .addCase(addSubmissionNote.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(addSubmissionNote.rejected, (state) => {
+        state.busy.executing = false;
+      })
+      .addCase(addSubmissionNote.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.submissions[payload.id] = payload;
+      })
+      .addCase(deleteSubmissionNote.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(deleteSubmissionNote.rejected, (state) => {
+        state.busy.executing = false;
+      })
+      .addCase(deleteSubmissionNote.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.submissions[payload.id] = payload;
+      })
       .addCase(runFormOperation.pending, (state) => {
         state.busy.executing = true;
       })
@@ -1248,6 +1368,10 @@ export const formBusySelector = (state: AppState) => state.form.busy;
 export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
 
 export const submissionFilterCountSelector = createSelector(submissionCriteriaSelector, countActiveFilters);
+
+export const formSortSelector = (state: AppState) => state.form.formSort;
+
+export const submissionSortSelector = (state: AppState) => state.form.submissionSort;
 
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
 

@@ -4,13 +4,14 @@ import { SlackPreviewPortal } from './slackPreviewPortal';
 import { SmsPreviewPortal } from './smsPreviewPortal';
 
 // Edit Template components
-export const TemplateEditorContainer = styled.div`
+export const TemplateEditorContainer = styled.div<{ $propertiesOpen?: boolean }>`
   display: flex;
   flex-direction: column;
   flex: 1;
   height: calc(100% - 2rem);
   min-width: 0;
   padding-right: 0.5rem;
+  padding-bottom: ${({ $propertiesOpen }) => ($propertiesOpen ? 0 : 'var(--goa-space-2xl)')};
   margin-top: 2rem;
   overflow: hidden;
   container: template-editor / inline-size;
@@ -82,6 +83,18 @@ export const BodyEditorFooter = styled.div`
   color: var(--goa-color-text-secondary);
 `;
 
+export const CheckboxRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0;
+`;
+
+export const CheckboxHint = styled.span`
+  margin-left: var(--goa-space-xs);
+  font: var(--goa-typography-body-s);
+  color: var(--goa-color-text-secondary);
+`;
+
 // Keeps the long "Edit an <channel> template--<service>" heading from eating two lines of
 // vertical space that the body editor could use instead.
 export const TemplateEditorTitle = styled.h3`
@@ -120,8 +133,7 @@ export const EditTemplateActions = styled.div`
   z-index: 1;
   background: white;
   border-top: 1px solid var(--goa-color-greyscale-200);
-  padding: 1rem 0 0.5rem 0
-  padding-top: 1rem;
+  padding: var(--goa-space-xl) 0 var(--goa-space-xs) 0;
 `;
 
 // preview template components

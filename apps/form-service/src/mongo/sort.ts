@@ -1,0 +1,62 @@
+import { InvalidOperationError } from '@core-services/core-common';
+import { ResultsSort } from '../form';
+
+// Data value columns are sorted by the path into the form data, prefixed to distinguish them from
+// the fields of the form or submission itself.
+const DATA_VALUE_PREFIX = 'data.';
+const DATA_VALUE_PATH_PATTERN = /^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$/;
+
+const DEFAULT_SORT: Record<string, 1 | -1> = { created: -1 };
+
+function toSortField(sort: ResultsSort, fields: Record<string, string>, dataField: string): string {
+  // Own properties only; a lookup of an inherited name (constructor, toString) would otherwise pass
+  // for a mapped field and put a value that is not a field name into the sort.
+  if (Object.prototype.hasOwnProperty.call(fields, sort.field)) {
+    return fields[sort.field];
+  }
+
+  if (sort.field.startsWith(DATA_VALUE_PREFIX)) {
+    const path = sort.field.substring(DATA_VALUE_PREFIX.length);
+    if (DATA_VALUE_PATH_PATTERN.test(path)) {
+      return `${dataField}.${path}`;
+    }
+  }
+
+  throw new InvalidOperationError(`Cannot sort results on field: ${sort.field}`);
+}
+
+// Results are sorted on a single column, with the create date as tie breaker so that paging over
+// values shared by many records (e.g. a status) returns each record exactly once. The tie breaker
+// follows the sort direction rather than being pinned to descending, so that one composite index
+// serves the column in both directions.
+//
+// The tie breaker makes it a sort on two keys, which has to be served from a composite index, and
+// the database does not support those on a nested path. Nested columns are therefore sorted on
+// their own key, served by a single field index, and ties there fall back to the natural order.
+export function toSortQuery(
+  sort: ResultsSort,
+  fields: Record<string, string>,
+  dataField: string,
+): Record<string, 1 | -1> {
+  if (!sort?.field) {
+    return DEFAULT_SORT;
+  }
+
+  const field = toSortField(sort, fields, dataField);
+  const direction = sort.direction === 'asc' ? 1 : -1;
+
+  return field === 'created' || field.includes('.')
+    ? { [field]: direction }
+    : { [field]: direction, created: direction };
+}
+
+// The database rejects a sort it has no index to serve rather than sorting the results itself, and
+// reports it as a server error that says nothing about which column was at fault. Recognize it so
+// the caller is told what it asked for that cannot be done, instead of an unexplained failure.
+const UNSERVABLE_SORT_PATTERN = /order.by|composite index/i;
+
+export function toSortError(err: Error, sort: ResultsSort): Error {
+  return sort?.field && UNSERVABLE_SORT_PATTERN.test(err?.message || '')
+    ? new InvalidOperationError(`Cannot sort results on field: ${sort.field} — no index to serve it`)
+    : err;
+}

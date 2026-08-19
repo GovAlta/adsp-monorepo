@@ -92,6 +92,17 @@ export interface FormDisposition {
   date: string;
 }
 
+// clean-code-ignore: RULE-19 — type declarations only.
+export interface FormSubmissionNote {
+  id: string;
+  content: string;
+  created: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+}
+
 export interface FormSubmission {
   urn: string;
   id: string;
@@ -105,6 +116,7 @@ export interface FormSubmission {
     name: string;
   };
   disposition: FormDisposition;
+  notes?: FormSubmissionNote[];
   updated: string;
   updatedBy: {
     id: string;
