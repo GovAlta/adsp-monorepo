@@ -33,19 +33,19 @@ interface CommentsViewerProps {
   heading?: string;
   addCommentLabel?: string;
   anonymousName?: string;
-  userId: string;
+  userId?: string;
   canComment: boolean;
   canLoadMore: boolean;
-  topicId: number | null;
+  topicId?: number | null;
   comments: Comment[];
   draft: DraftComment;
   loading: boolean;
-  busy: boolean;
+  busy?: boolean;
   commenting: boolean;
   onLoadMore: () => void;
   onUpdateDraft: (draft: DraftComment) => void;
   onAddComment: (draft: DraftComment) => void;
-  onDeleteComment: (topicId: number, commentId: number) => void;
+  onDeleteComment?: (topicId: number, commentId: number) => void;
 }
 
 function formatTimestamp(timestamp: Date): string {
@@ -92,7 +92,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
               <span>{result.createdBy.name || anonymousName} </span>
               <span>{formatTimestamp(result.createdOn)}</span>
               {/* Only allow the user that created the message to be able to delete it */}
-              {userId === result.createdBy.id && (
+              {userId && userId === result.createdBy.id && (
                 <span>
                   <GoabIconButton
                     title="remove message"
