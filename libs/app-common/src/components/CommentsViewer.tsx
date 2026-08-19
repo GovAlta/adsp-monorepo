@@ -66,6 +66,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   canLoadMore,
   topicId,
   draft,
+  userId,
   comments,
   loading,
   commenting,
@@ -87,17 +88,20 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             <div>
               <span>{result.createdBy.name || anonymousName} </span>
               <span>{formatTimestamp(result.createdOn)}</span>
-              <span>
-                <GoabIconButton
-                  title="remove message"
-                  icon="trash-bin:outline"
-                  variant="color"
-                  size="small"
-                  onClick={() => {
-                    onDeleteComment(topicId, result.id);
-                  }}
-                />
-              </span>
+              {/* Only allow the user that created the message to be able to delete it */}
+              {userId === result.createdBy.id && (
+                <span>
+                  <GoabIconButton
+                    title="remove message"
+                    icon="trash-bin:outline"
+                    variant="color"
+                    size="small"
+                    onClick={() => {
+                      onDeleteComment(topicId, result.id);
+                    }}
+                  />
+                </span>
+              )}
             </div>
             <div>
               <p>{result.content}</p>
