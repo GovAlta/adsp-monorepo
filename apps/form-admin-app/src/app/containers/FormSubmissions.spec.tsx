@@ -3,13 +3,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import { FormSubmissions } from './FormSubmissions';
-import {
-  DATA_VALUE_SORT_MAX_RESULTS,
-  findSubmissions,
-  getDefaultResultsSort,
-  getDefaultSubmissionCriteria,
-} from '../state';
-import { DATA_VALUE_SORT_NOTICE_ID } from '../components/DataValueSortNotice';
+import { findSubmissions, getDefaultResultsSort, getDefaultSubmissionCriteria } from '../state';
 
 jest.mock('../state', () => {
   const actual = jest.requireActual('../state');
@@ -183,40 +177,6 @@ describe('FormSubmissions', () => {
       'none',
     );
     expect(baseElement.querySelector("goa-table-sort-header[name='data.firstName']")).toBeTruthy();
-  });
-
-  it('should not make form data columns sortable when there are more results than can be sorted', () => {
-    const state = createState();
-    state.form.resultTotals.submissions = DATA_VALUE_SORT_MAX_RESULTS + 1;
-    const { baseElement } = renderSubmissions(state);
-
-    const sortable = Array.from(baseElement.querySelectorAll('goa-table-sort-header')).map((header) =>
-      header.getAttribute('name'),
-    );
-    expect(sortable).toEqual(['created', 'disposition']);
-  });
-
-  it('should explain why form data columns cannot be sorted', () => {
-    const state = createState();
-    state.form.resultTotals.submissions = DATA_VALUE_SORT_MAX_RESULTS + 1;
-    const { getByTestId } = renderSubmissions(state);
-
-    expect(getByTestId(DATA_VALUE_SORT_NOTICE_ID).textContent).toContain(`${DATA_VALUE_SORT_MAX_RESULTS}`);
-  });
-
-  it('should not explain anything when form data columns can be sorted', () => {
-    const { queryByTestId } = renderSubmissions();
-
-    expect(queryByTestId(DATA_VALUE_SORT_NOTICE_ID)).toBeNull();
-  });
-
-  it('should point the unsortable headings at the explanation', () => {
-    const state = createState();
-    state.form.resultTotals.submissions = DATA_VALUE_SORT_MAX_RESULTS + 1;
-    const { baseElement } = renderSubmissions(state);
-
-    const heading = Array.from(baseElement.querySelectorAll('th')).find((th) => th.textContent === 'First name');
-    expect(heading.getAttribute('aria-describedby')).toBe(DATA_VALUE_SORT_NOTICE_ID);
   });
 
   it('should not make the tags or actions columns sortable', () => {

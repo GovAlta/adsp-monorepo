@@ -11,7 +11,7 @@ import {
   ResultsSort,
 } from '../form';
 import { toDataCriteriaQuery } from './criteria';
-import { toSortQuery } from './sort';
+import { toSortError, toSortQuery } from './sort';
 import { formSubmissionSchema } from './schema';
 import { FormSubmissionDoc } from './types';
 
@@ -117,11 +117,13 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     const results = new Promise<FormSubmissionEntity[]>((resolve, reject) => {
       this.submissionModel
         .find(query, null, { lean: true })
-        .sort(toSortQuery(sort, SORT_FIELDS))
+        .sort(toSortQuery(sort, SORT_FIELDS, 'formData'))
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>
-          err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc)))),
+          err
+            ? reject(toSortError(err, sort))
+            : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc)))),
         );
     });
     const total = this.submissionModel.countDocuments(baseQuery).exec();
