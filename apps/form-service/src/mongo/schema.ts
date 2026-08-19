@@ -1,5 +1,3 @@
-// clean-code-ignore: RULE-19 — schema and index declarations only; the sorts the indexes serve are
-// covered by sort.spec.ts and the repositories that use them by form.spec.ts and formSubmission.spec.ts.
 import { Schema } from 'mongoose';
 import { FormStatus } from '../form';
 
