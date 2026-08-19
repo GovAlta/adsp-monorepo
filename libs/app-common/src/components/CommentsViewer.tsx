@@ -4,10 +4,11 @@ import {
   GoabCircularProgress,
   GoabFormItem,
   GoabIconButton,
+  GoabModal,
   GoabTextArea,
 } from '@abgov/react-components';
 import moment from 'moment';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useState } from 'react';
 import styled from 'styled-components';
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 interface Comment {
@@ -39,7 +40,7 @@ interface CommentsViewerProps {
   comments: Comment[];
   draft: DraftComment;
   loading: boolean;
-
+  busy: boolean;
   commenting: boolean;
   onLoadMore: () => void;
   onUpdateDraft: (draft: DraftComment) => void;
@@ -69,6 +70,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   userId,
   comments,
   loading,
+  busy,
   commenting,
   onLoadMore,
   onUpdateDraft,
@@ -78,6 +80,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   heading = heading || 'Comments';
   addCommentLabel = addCommentLabel || 'Add comment';
   anonymousName = anonymousName || 'Commenter';
+  const [deleting, setDeleting] = useState<Comment>(null);
 
   return (
     <div className={className}>
@@ -97,7 +100,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
                     variant="color"
                     size="small"
                     onClick={() => {
-                      onDeleteComment(topicId, result.id);
+                      setDeleting(result);
                     }}
                   />
                 </span>
@@ -147,6 +150,25 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
           </GoabButton>
         </GoabButtonGroup>
       </form>
+      <GoabModal heading="Are you sure you want to delete this message?" open={!!deleting}>
+        <div>This action cannot be undone.</div>
+        <GoabButtonGroup alignment="end" mt="xl">
+          <GoabButton size="compact" type="secondary" onClick={() => setDeleting(null)}>
+            Cancel
+          </GoabButton>
+          <GoabButton
+            size="compact"
+            type="primary"
+            disabled={busy}
+            onClick={async () => {
+              await onDeleteComment(topicId, deleting.id);
+              setDeleting(null);
+            }}
+          >
+            Delete
+          </GoabButton>
+        </GoabButtonGroup>
+      </GoabModal>
     </div>
   );
 };
