@@ -63,7 +63,48 @@ export const getDefaultResultsSort = (): ResultsSort => ({ field: 'created', dir
 
 // Tagged resource search is served by the directory service, which doesn't sort on form values, so
 // sort parameters are only sent on the form service search.
-const toSortParams = (sort?: ResultsSort) => (sort?.field ? { sortBy: sort.field, sortDirection: sort.direction } : {});
+// Form data values are at paths that vary by definition, so the form service has no index to sort
+// them from and rejects them. Those columns are sorted here instead, over a result set small enough
+// to load in full; past that the results can only be sorted on the columns the service can serve.
+export const DATA_VALUE_SORT_MAX_RESULTS = 200;
+
+export const isDataValueSort = (sort?: ResultsSort): boolean => !!sort?.field?.startsWith(DATA_VALUE_SORT_PREFIX);
+
+const toSortParams = (sort?: ResultsSort) =>
+  sort?.field && !isDataValueSort(sort) ? { sortBy: sort.field, sortDirection: sort.direction } : {};
+
+// A data value sort is applied to the whole result set, so it is all requested at once.
+const toResultsTop = (sort?: ResultsSort) => (isDataValueSort(sort) ? DATA_VALUE_SORT_MAX_RESULTS : 20);
+
+const isEmptyDataValue = (value: unknown): boolean => value === null || value === undefined || value === '';
+
+// Values of mixed types compare as numbers when both are numeric and as text otherwise.
+const compareDataValues = (a: unknown, b: unknown): number =>
+  typeof a === 'number' && typeof b === 'number'
+    ? a - b
+    : `${a}`.localeCompare(`${b}`, undefined, { numeric: true, sensitivity: 'base' });
+
+// Sorts results on a data value column; results sorted by the service are returned as they are.
+// Rows with no value in the column sort last in both directions, so that reversing the sort does not
+// put a block of empty cells at the top of the table.
+function sortByDataValue<T extends { values: Record<string, unknown> }>(results: T[], sort?: ResultsSort): T[] {
+  if (!isDataValueSort(sort)) {
+    return results;
+  }
+
+  const path = sort.field.substring(DATA_VALUE_SORT_PREFIX.length);
+  const direction = sort.direction === 'asc' ? 1 : -1;
+
+  return [...results].sort((a, b) => {
+    const aValue = a.values[path];
+    const bValue = b.values[path];
+    if (isEmptyDataValue(aValue) || isEmptyDataValue(bValue)) {
+      return isEmptyDataValue(aValue) && isEmptyDataValue(bValue) ? 0 : isEmptyDataValue(aValue) ? 1 : -1;
+    }
+
+    return direction * compareDataValues(aValue, bValue);
+  });
+}
 
 export const toDateRangeStart = (value: string): string => new Date(`${value}T00:00:00.000Z`).toISOString();
 export const toDateRangeEnd = (value: string): string => new Date(`${value}T23:59:59.999Z`).toISOString();
@@ -308,7 +349,7 @@ export const findForms = createAsyncThunk(
         const { data } = await axios.get<PagedResults<Form>>(requestUrl.href, {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
-            top: 20,
+            top: toResultsTop(sort),
             after,
             includeData: true,
             criteria: JSON.stringify({
@@ -374,7 +415,7 @@ export const findSubmissions = createAsyncThunk(
         const { data } = await axios.get<PagedResults<FormSubmission>>(requestUrl.href, {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
-            top: 20,
+            top: toResultsTop(sort),
             after,
             criteria: JSON.stringify({
               ...criteria,
@@ -1189,16 +1230,20 @@ export const formsSelector = createSelector(
   (state: AppState) => state.form.forms,
   (state: AppState) => state.form.results.forms,
   selectedDataValuesSelector,
-  (forms, results, values) => {
-    return results
-      .map((result) => forms[result])
-      .filter((result) => !!result)
-      .map(({ created, submitted, ...result }) => ({
-        ...result,
-        created: DateTime.fromISO(created),
-        submitted: submitted ? DateTime.fromISO(submitted) : null,
-        values: values.reduce((values, value) => ({ ...values, [value.path]: _.get(result.data, value.path) }), {}),
-      }));
+  (state: AppState) => state.form.formSort,
+  (forms, results, values, sort) => {
+    return sortByDataValue(
+      results
+        .map((result) => forms[result])
+        .filter((result) => !!result)
+        .map(({ created, submitted, ...result }) => ({
+          ...result,
+          created: DateTime.fromISO(created),
+          submitted: submitted ? DateTime.fromISO(submitted) : null,
+          values: values.reduce((values, value) => ({ ...values, [value.path]: _.get(result.data, value.path) }), {}),
+        })),
+      sort,
+    );
   },
 );
 
@@ -1206,16 +1251,23 @@ export const submissionsSelector = createSelector(
   (state: AppState) => state.form.submissions,
   (state: AppState) => state.form.results.submissions,
   selectedDataValuesSelector,
-  (submissions, results, values) => {
-    return results
-      .map((result) => submissions[result])
-      .filter((result) => !!result)
-      .map(({ created, updated, ...result }) => ({
-        ...result,
-        created: DateTime.fromISO(created),
-        updated: updated ? DateTime.fromISO(updated) : null,
-        values: values.reduce((values, value) => ({ ...values, [value.path]: _.get(result.formData, value.path) }), {}),
-      }));
+  (state: AppState) => state.form.submissionSort,
+  (submissions, results, values, sort) => {
+    return sortByDataValue(
+      results
+        .map((result) => submissions[result])
+        .filter((result) => !!result)
+        .map(({ created, updated, ...result }) => ({
+          ...result,
+          created: DateTime.fromISO(created),
+          updated: updated ? DateTime.fromISO(updated) : null,
+          values: values.reduce(
+            (values, value) => ({ ...values, [value.path]: _.get(result.formData, value.path) }),
+            {},
+          ),
+        })),
+      sort,
+    );
   },
 );
 

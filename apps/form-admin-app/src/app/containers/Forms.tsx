@@ -49,6 +49,11 @@ import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail, GoabTableOnSortDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
 import { SortableColumnHeader, toSortChange } from '../components/SortableColumnHeader';
+import {
+  DataValueSortNotice,
+  DATA_VALUE_SORT_NOTICE_ID,
+  isDataValueSortAvailable,
+} from '../components/DataValueSortNotice';
 
 interface FormRowProps {
   dispatch: AppDispatch;
@@ -134,7 +139,8 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
 
   // The table wires up its sort headers when it mounts, so it is remounted when the data value
   // columns of the definition are loaded and the set of sortable columns changes.
-  const sortableColumnsKey = dataValues.map(({ path }) => path).join('|');
+  const canSortDataValues = isDataValueSortAvailable(totalForms);
+  const sortableColumnsKey = `${dataValues.map(({ path }) => path).join('|')}|${canSortDataValues}`;
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
   const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, sort, after })); // clean-code-ignore: 2.10
@@ -239,6 +245,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           loading={busy.loading}
           onClearFilters={clearFilters}
         />
+        <DataValueSortNotice total={totalForms} columnCount={dataValues.length} />
         <GoabTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
           <thead>
             <tr>
@@ -251,7 +258,13 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               </SortableColumnHeader>
               <th>Tags</th>
               {dataValues.map(({ name, path }) => (
-                <SortableColumnHeader key={path} name={`${DATA_VALUE_SORT_PREFIX}${path}`} sort={sort}>
+                <SortableColumnHeader
+                  key={path}
+                  name={`${DATA_VALUE_SORT_PREFIX}${path}`}
+                  sort={sort}
+                  sortable={canSortDataValues}
+                  describedBy={DATA_VALUE_SORT_NOTICE_ID}
+                >
                   {name}
                 </SortableColumnHeader>
               ))}

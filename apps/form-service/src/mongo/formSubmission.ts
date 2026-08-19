@@ -117,7 +117,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
     const results = new Promise<FormSubmissionEntity[]>((resolve, reject) => {
       this.submissionModel
         .find(query, null, { lean: true })
-        .sort(toSortQuery(sort, SORT_FIELDS, 'formData'))
+        .sort(toSortQuery(sort, SORT_FIELDS))
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>

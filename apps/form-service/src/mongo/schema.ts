@@ -74,6 +74,10 @@ export const formSchema = new Schema(
 formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
 formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });
 
+// Sortable columns need an index the sort can be served from. The tie breaker on a column sort
+// follows the sort direction, so one composite index covers both ascending and descending.
+formSchema.index({ status: 1, created: 1 });
+
 export const createdBy = {
   id: {
     type: String,
@@ -173,3 +177,5 @@ export const formSubmissionSchema = new Schema(
 );
 
 formSubmissionSchema.index({ tenantId: 1, formDefinitionId: 1 });
+formSubmissionSchema.index({ submissionStatus: 1, created: 1 });
+formSubmissionSchema.index({ 'disposition.status': 1, created: 1 });

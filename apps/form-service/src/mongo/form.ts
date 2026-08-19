@@ -84,7 +84,7 @@ export class MongoFormRepository implements FormRepository {
     const results = new Promise<FormEntity[]>((resolve, reject) => {
       this.model
         .find(query, null, { lean: true })
-        .sort(toSortQuery(sort, SORT_FIELDS, 'data'))
+        .sort(toSortQuery(sort, SORT_FIELDS))
         .skip(skip)
         .limit(top)
         .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
