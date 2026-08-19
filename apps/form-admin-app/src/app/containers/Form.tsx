@@ -80,7 +80,7 @@ export const Form = () => {
   //Messages tab will be hidden if there is a form has been submitted, otherwise we will use the supportTopic to
   //determine if it should be shown.
   const hideMessageTab = useMemo(() => {
-    return submission ? true : !definition.supportTopic ? false : true;
+    return submission ? true : !definition.supportTopic;
   }, [definition.supportTopic, submission]);
 
   return (

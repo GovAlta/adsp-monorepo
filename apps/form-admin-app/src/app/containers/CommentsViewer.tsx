@@ -19,6 +19,7 @@ import {
 export const CommentsViewer: FunctionComponent = () => {
   const topic = useSelector(selectedTopicSelector);
   const { user } = useSelector(userSelector);
+  const busy = useSelector(commentExecutingSelector);
 
   const { results, next } = useSelector(commentsSelector);
   const loading = useSelector(commentLoadingSelector);
@@ -37,6 +38,7 @@ export const CommentsViewer: FunctionComponent = () => {
       canLoadMore={!!next}
       topicId={topic?.id}
       loading={loading}
+      busy={busy}
       commenting={executing}
       userId={user.id}
       draft={draft}
