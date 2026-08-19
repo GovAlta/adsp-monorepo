@@ -92,6 +92,7 @@ export interface FormDisposition {
   date: string;
 }
 
+// clean-code-ignore: RULE-19 — type declarations only.
 export interface FormSubmissionNote {
   id: string;
   content: string;

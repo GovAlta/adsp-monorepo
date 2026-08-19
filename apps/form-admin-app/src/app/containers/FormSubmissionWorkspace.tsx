@@ -17,7 +17,7 @@ import {
   submissionSelector,
   updateFormDisposition,
 } from '../state';
-import { AdspId } from '@core-services/app-common';
+import { AdspId } from '../../lib/adspId';
 import { DateTime } from 'luxon';
 import { SubmissionNotes } from './SubmissionNotes';
 import { Tags } from './Tags';

@@ -104,6 +104,7 @@ export const formDeposition = {
   },
 };
 
+// clean-code-ignore: RULE-19 — schema declarations only.
 export const formSubmissionNoteSchema = new Schema(
   {
     id: {
