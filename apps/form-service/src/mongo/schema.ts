@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — schema and index declarations only; the sorts the indexes serve are
+// covered by sort.spec.ts and the repositories that use them by form.spec.ts and formSubmission.spec.ts.
 import { Schema } from 'mongoose';
 import { FormStatus } from '../form';
 
@@ -73,6 +75,10 @@ export const formSchema = new Schema(
 
 formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
 formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });
+
+// Sortable columns need an index the sort can be served from. The tie breaker on a column sort
+// follows the sort direction, so one composite index covers both ascending and descending.
+formSchema.index({ status: 1, created: 1 });
 
 export const createdBy = {
   id: {
@@ -173,3 +179,5 @@ export const formSubmissionSchema = new Schema(
 );
 
 formSubmissionSchema.index({ tenantId: 1, formDefinitionId: 1 });
+formSubmissionSchema.index({ submissionStatus: 1, created: 1 });
+formSubmissionSchema.index({ 'disposition.status': 1, created: 1 });
