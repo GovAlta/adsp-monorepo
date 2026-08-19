@@ -40,6 +40,33 @@ interface NewComment {
 
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
+// The comment service has no server side read tracking, so 'read' is recorded per browser as the id
+// of the newest comment that was in the drawer the last time the user opened it.
+const LAST_READ_STORAGE_PREFIX = 'form-app.messages.last-read.';
+// Unread messages are counted from a single page of comments, so the count saturates at this value.
+const UNREAD_MESSAGES_MAX = 100;
+
+function readLastReadCommentId(topicId: number): number {
+  try {
+    return parseInt(localStorage.getItem(`${LAST_READ_STORAGE_PREFIX}${topicId}`)) || 0;
+  } catch {
+    // Storage isn't available, so treat everything as unread.
+    return 0;
+  }
+}
+
+function writeLastReadCommentId(topicId: number, commentId: number): void {
+  try {
+    localStorage.setItem(`${LAST_READ_STORAGE_PREFIX}${topicId}`, `${commentId}`);
+  } catch {
+    // Storage isn't available, so the count is only cleared for this session.
+  }
+}
+
+function latestOf(commentId: number, comments: Comment[]): number {
+  return comments.reduce((latest, { id }) => (id > latest ? id : latest), commentId);
+}
+
 let socket: Socket;
 
 export const disconnectStream = createAsyncThunk('comment/disconnectStream', async (_, { dispatch }) => {
@@ -196,6 +223,48 @@ export const selectTopic = createAsyncThunk(
   },
 );
 
+export const loadUnreadMessages = createAsyncThunk(
+  'comment/load-unread-messages',
+  async ({ topicId }: { topicId: number }, { getState }) => {
+    const { config, user } = getState() as AppState;
+    const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
+    const lastReadCommentId = readLastReadCommentId(topicId);
+
+    const token = await getAccessToken();
+    const { data } = await axios.get<{ results: Comment[] }>(
+      new URL(`/comment/v1/topics/${topicId}/comments`, commentServiceUrl).href,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          top: UNREAD_MESSAGES_MAX,
+          criteria: JSON.stringify({ idGreaterThan: lastReadCommentId }),
+        },
+      },
+    );
+
+    const userId = user.user?.id;
+    return {
+      lastReadCommentId,
+      latestCommentId: latestOf(lastReadCommentId, data.results),
+      // Comments the applicant wrote themselves were never unread.
+      unread: data.results.filter(({ createdBy }) => createdBy?.id !== userId).length,
+    };
+  },
+);
+
+// Opening the drawer is what marks messages as read; the id is recorded so the count survives a reload.
+export const setShowMessages = createAsyncThunk('comment/set-show-messages', (show: boolean, { getState }) => {
+  const { comment } = getState() as AppState;
+  const topic = comment.topics[comment.selected.resourceId];
+  const { latestCommentId, lastReadCommentId } = comment.messages;
+
+  if (show && topic && latestCommentId > lastReadCommentId) {
+    writeLastReadCommentId(topic.id, latestCommentId);
+  }
+
+  return show;
+});
+
 export const addComment = createAsyncThunk(
   'comment/add-comment',
   async (
@@ -243,6 +312,12 @@ interface CommentState {
     next: string;
   };
   draft: NewComment;
+  messages: {
+    show: boolean;
+    unread: number;
+    latestCommentId: number;
+    lastReadCommentId: number;
+  };
   busy: {
     loading: boolean;
     executing: boolean;
@@ -265,6 +340,12 @@ const initialCommentState: CommentState = {
   draft: {
     title: null,
     content: null,
+  },
+  messages: {
+    show: false,
+    unread: 0,
+    latestCommentId: 0,
+    lastReadCommentId: 0,
   },
   busy: {
     loading: false,
@@ -319,6 +400,7 @@ const commentSlice = createSlice({
 
         state.comments.results = [...state.comments.results, ...payload.results];
         state.comments.next = payload.page.next;
+        state.messages.latestCommentId = latestOf(state.messages.latestCommentId, payload.results);
       })
       .addCase(loadComments.rejected, (state) => {
         state.busy.loading = false;
@@ -330,9 +412,29 @@ const commentSlice = createSlice({
         state.busy.executing = false;
         state.comments.results.unshift(payload);
         state.draft = { title: null, content: null };
+        state.messages.latestCommentId = latestOf(state.messages.latestCommentId, [payload]);
       })
       .addCase(addComment.rejected, (state) => {
         state.busy.executing = false;
+      })
+      .addCase(loadUnreadMessages.pending, (state) => {
+        // The counts are for a single topic, so drop what was tracked for the previously loaded form.
+        state.messages.unread = 0;
+        state.messages.latestCommentId = 0;
+        state.messages.lastReadCommentId = 0;
+      })
+      .addCase(loadUnreadMessages.fulfilled, (state, { payload }) => {
+        state.messages.lastReadCommentId = Math.max(state.messages.lastReadCommentId, payload.lastReadCommentId);
+        state.messages.latestCommentId = Math.max(state.messages.latestCommentId, payload.latestCommentId);
+        // The drawer may have been opened while the count was loading, which already read them.
+        state.messages.unread = state.messages.show ? 0 : payload.unread;
+      })
+      .addCase(setShowMessages.fulfilled, (state, { payload }) => {
+        state.messages.show = payload;
+        if (payload) {
+          state.messages.unread = 0;
+          state.messages.lastReadCommentId = Math.max(state.messages.lastReadCommentId, state.messages.latestCommentId);
+        }
       });
   },
 });
@@ -367,3 +469,7 @@ export const commentLoadingSelector = (state: AppState) => state.comment.busy.lo
 export const draftSelector = (state: AppState) => state.comment.draft;
 
 export const canCommentSelector = (state: AppState) => state.comment.selected.canComment;
+
+export const showMessagesSelector = (state: AppState) => state.comment.messages.show;
+
+export const unreadMessagesSelector = (state: AppState) => state.comment.messages.unread;
