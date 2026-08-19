@@ -10,9 +10,12 @@ li > ol {
   margin-top: initial;
 }
 
-em {
-  font-size: var(--goa-typography-body-s) !important;
-  color: var(--goa-color-text-default) !important;
+/* The GoA design system styles every <em> as small grey hint text
+   (see @abgov/web-components/index.css). Markdown emphasis in help content
+   is not hint text, so keep it matching the copy around it. */
+.help-content-markdown em {
+  font-size: inherit;
+  color: inherit;
 }
 
 .help-content-markdown{
