@@ -76,7 +76,8 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
             Initialize the widget via the <CodeSpan>adspFeedback</CodeSpan> variable in{' '}
             <CodeSpan>&lt;body&gt;</CodeSpan> to identify your tenant and mount the widget element to DOM. A{' '}
             <CodeSpan>getAccessToken</CodeSpan> function for feedback under the user's context is required for sites
-            that don't allow anonymous feedback.
+            that don't allow anonymous feedback.<CodeSpan>designSystemsVersion</CodeSpan> identify design system
+            version, default is 1.0 .
           </p>
           <PRE>
             &lt;body&gt;
@@ -90,6 +91,8 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
             {`  tenant: '${tenant.name}',`}
             <br />
             {`  getAccessToken: () => Promise.resolve(<token value>),`}
+            <br />
+            {`  designSystemsVersion: '2.0',`}
             <br />
             &#125;);
             <br />
