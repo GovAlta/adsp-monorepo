@@ -104,6 +104,28 @@ export const formDeposition = {
   },
 };
 
+export const formSubmissionNoteSchema = new Schema(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    created: {
+      type: Date,
+      required: true,
+    },
+    createdBy: {
+      type: createdBy,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 export const formSubmissionSchema = new Schema(
   {
     id: {
@@ -167,6 +189,7 @@ export const formSubmissionSchema = new Schema(
       type: Boolean,
     },
     disposition: { type: formDeposition, required: false },
+    notes: { type: [formSubmissionNoteSchema], required: false },
     hash: String,
   },
   { _id: false }

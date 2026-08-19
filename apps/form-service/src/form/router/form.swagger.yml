@@ -274,6 +274,27 @@ components:
           format: date-time
         disposition:
           $ref: '#/components/schemas/FormDisposition'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormSubmissionNote'
+    FormSubmissionNote:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        created:
+          type: string
+          format: date-time
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
     SendCodeOperation:
       type: object
       properties:
@@ -1026,6 +1047,73 @@ components:
                 type: string
               dispositionReason:
                 type: string
+
+/form/v1/forms/{formId}/submissions/{submissionId}/notes:
+  parameters:
+    - name: formId
+      description: ID of the form.
+      required: true
+      in: path
+      schema:
+        type: string
+    - name: submissionId
+      description: ID of the submission.
+      required: true
+      in: path
+      schema:
+        type: string
+  post:
+    tags:
+      - Form Submission
+    description: Adds a reviewer note to the form submission.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content:
+                type: string
+    responses:
+      200:
+        description: Successfully added the note to the form submission.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormSubmission'
+
+/form/v1/forms/{formId}/submissions/{submissionId}/notes/{noteId}:
+  parameters:
+    - name: formId
+      description: ID of the form.
+      required: true
+      in: path
+      schema:
+        type: string
+    - name: submissionId
+      description: ID of the submission.
+      required: true
+      in: path
+      schema:
+        type: string
+    - name: noteId
+      description: ID of the note.
+      required: true
+      in: path
+      schema:
+        type: string
+  delete:
+    tags:
+      - Form Submission
+    description: Removes a reviewer note from the form submission.
+    responses:
+      200:
+        description: Successfully removed the note from the form submission.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormSubmission'
 
 /form/v1/forms/{formId}/submissions:
   parameters:

@@ -102,6 +102,12 @@ export function mapFormSubmission(apiId: AdspId, entity: FormSubmissionEntity) {
           reason: entity.disposition.reason,
         }
       : null,
+    notes: (entity.notes || []).map((note) => ({
+      id: note.id,
+      content: note.content,
+      created: note.created,
+      createdBy: { id: note.createdBy.id, name: note.createdBy.name },
+    })),
     updated: entity.updated,
     updatedBy: { id: entity.updatedBy.id, name: entity.updatedBy.name },
     hash: entity.hash,

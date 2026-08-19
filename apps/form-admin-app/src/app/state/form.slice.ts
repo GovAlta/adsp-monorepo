@@ -885,6 +885,67 @@ export const updateFormDisposition = createAsyncThunk(
   },
 );
 
+export const addSubmissionNote = createAsyncThunk(
+  'form/add-submission-note',
+  async (
+    { formId, submissionId, content }: { formId: string; submissionId: string; content: string },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.post<FormSubmission>(
+        new URL(`/form/v1/forms/${formId}/submissions/${submissionId}/notes`, formServiceUrl).href,
+        { content },
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
+);
+
+export const deleteSubmissionNote = createAsyncThunk(
+  'form/delete-submission-note',
+  async (
+    { formId, submissionId, noteId }: { formId: string; submissionId: string; noteId: string },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.delete<FormSubmission>(
+        new URL(`/form/v1/forms/${formId}/submissions/${submissionId}/notes/${noteId}`, formServiceUrl).href,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
+);
+
 export const runFormOperation = createAsyncThunk(
   'form/run-form-operation',
   async ({ urn, operation }: { urn: AdspId; operation: 'to-draft' | 'archive' }, { getState, rejectWithValue }) => {
@@ -1119,6 +1180,26 @@ const formSlice = createSlice({
         state.busy.executing = false;
       })
       .addCase(updateFormDisposition.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.submissions[payload.id] = payload;
+      })
+      .addCase(addSubmissionNote.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(addSubmissionNote.rejected, (state) => {
+        state.busy.executing = false;
+      })
+      .addCase(addSubmissionNote.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.submissions[payload.id] = payload;
+      })
+      .addCase(deleteSubmissionNote.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(deleteSubmissionNote.rejected, (state) => {
+        state.busy.executing = false;
+      })
+      .addCase(deleteSubmissionNote.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
         state.submissions[payload.id] = payload;
       })

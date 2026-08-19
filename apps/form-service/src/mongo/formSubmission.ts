@@ -201,6 +201,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         {} as Record<string, string>,
       ),
       disposition: entity.disposition,
+      notes: entity.notes,
       hash: entity.hash,
       dryRun: entity.form?.dryRun,
     };
@@ -231,6 +232,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
           {} as Record<string, AdspId>,
         ),
         disposition: doc.disposition,
+        notes: doc.notes?.map(({ id, content, created, createdBy }) => ({ id, content, created, createdBy })),
         hash: doc.hash,
         dryRun: doc.dryRun,
       },
