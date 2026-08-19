@@ -1,10 +1,10 @@
 import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { FormSubmission, QueueTaskToProcess } from '../types';
+import { FormSubmission, FormSubmissionNote, QueueTaskToProcess } from '../types';
 import { FormSubmissionEntity } from './formSubmission';
 import { FormServiceRoles } from '../roles';
 import { FormEntity } from './form';
 import { FormDefinitionEntity } from './definition';
-import { InvalidValueError } from '@core-services/core-common';
+import { InvalidValueError, NotFoundError } from '@core-services/core-common';
 
 describe('FormSubmission', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -200,5 +200,91 @@ describe('FormSubmission', () => {
     const user = { tenantId, id: 'tester', roles: ['abvc'] } as User;
 
     entity.canRead(user);
+  });
+
+  describe('notes', () => {
+    const assessor = { tenantId, id: 'assessor', name: 'Assessor', roles: ['test-assessor'] } as User;
+
+    beforeEach(() => {
+      // Reset since preceding tests queue up one time results that they don't consume.
+      repositoryMock.save.mockReset();
+      repositoryMock.save.mockImplementation((saved) => Promise.resolve(saved));
+    });
+
+    function anEntity(notes?: FormSubmissionNote[]) {
+      return new FormSubmissionEntity(repositoryMock, tenantId, { ...formSubmissionInfo, notes }, aDefinition, {
+        id: '242',
+        definition: aDefinition,
+      } as FormEntity);
+    }
+
+    it('can add note', async () => {
+      const before = new Date();
+      const entity = anEntity();
+
+      const result = await entity.addNote(assessor, 'Called the applicant.');
+
+      expect(repositoryMock.save).toHaveBeenCalled();
+      expect(result.notes).toHaveLength(1);
+      expect(result.notes[0]).toMatchObject({
+        content: 'Called the applicant.',
+        createdBy: { id: assessor.id, name: assessor.name },
+      });
+      expect(result.notes[0].id).toBeTruthy();
+      expect(result.updated.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(result.updatedBy).toMatchObject({ id: assessor.id, name: assessor.name });
+    });
+
+    it('can add note to submission with existing notes', async () => {
+      const entity = anEntity([
+        { id: 'existing', content: 'first', created: new Date(), createdBy: { id: 'tester', name: 'tester' } },
+      ]);
+
+      const result = await entity.addNote({ ...assessor, roles: [FormServiceRoles.Admin] } as User, 'second');
+
+      expect(result.notes.map(({ content }) => content)).toEqual(['first', 'second']);
+    });
+
+    it('cannot add note - unauthorized', async () => {
+      const entity = anEntity();
+
+      await expect(entity.addNote({ tenantId, id: 'tester', roles: ['abc'] } as User, 'nope')).rejects.toThrow(
+        UnauthorizedUserError,
+      );
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('can delete note', async () => {
+      const entity = anEntity([
+        { id: 'note-1', content: 'first', created: new Date(), createdBy: { id: 'tester', name: 'tester' } },
+        { id: 'note-2', content: 'second', created: new Date(), createdBy: { id: 'assessor', name: 'Assessor' } },
+      ]);
+
+      const result = await entity.deleteNote(assessor, 'note-1');
+
+      expect(repositoryMock.save).toHaveBeenCalled();
+      expect(result.notes.map(({ id }) => id)).toEqual(['note-2']);
+      expect(result.updatedBy).toMatchObject({ id: assessor.id, name: assessor.name });
+    });
+
+    it('cannot delete note - not found', async () => {
+      const entity = anEntity([
+        { id: 'note-1', content: 'first', created: new Date(), createdBy: { id: 'tester', name: 'tester' } },
+      ]);
+
+      await expect(entity.deleteNote(assessor, 'note-2')).rejects.toThrow(NotFoundError);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('cannot delete note - unauthorized', async () => {
+      const entity = anEntity([
+        { id: 'note-1', content: 'first', created: new Date(), createdBy: { id: 'tester', name: 'tester' } },
+      ]);
+
+      await expect(entity.deleteNote({ tenantId, id: 'tester', roles: [] } as User, 'note-1')).rejects.toThrow(
+        UnauthorizedUserError,
+      );
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
   });
 });

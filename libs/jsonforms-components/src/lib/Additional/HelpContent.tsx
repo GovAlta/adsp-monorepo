@@ -10,7 +10,7 @@ import { RenderLink } from './LinkControl';
 import { compileSync } from '@mdx-js/mdx';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import './HelpContent';
+import './HelpContent.css';
 
 interface OptionProps {
   ariaLabel?: string;

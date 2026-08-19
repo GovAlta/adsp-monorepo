@@ -528,6 +528,85 @@ export function updateFormSubmissionDisposition(
   };
 }
 
+export function addFormSubmissionNote(
+  apiId: AdspId,
+  logger: Logger,
+  submissionRepository: FormSubmissionRepository,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { formId, submissionId } = req.params;
+      const { content } = req.body;
+
+      logger.debug(`Adding note to form submission with ID: ${submissionId} (form ID: ${formId})...`, {
+        context: 'FormRouter',
+        tenantId: tenantId?.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
+
+      const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
+      if (!formSubmission) {
+        throw new NotFoundError('Form submission', submissionId);
+      }
+
+      const updated = await formSubmission.addNote(user, content);
+      end();
+
+      res.send(mapFormSubmission(apiId, updated));
+
+      logger.info(`Added note to form submission with ID: ${submissionId} (form ID: ${formId}).`, {
+        context: 'FormRouter',
+        tenantId: tenantId?.toString,
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteFormSubmissionNote(
+  apiId: AdspId,
+  logger: Logger,
+  submissionRepository: FormSubmissionRepository,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const { formId, submissionId, noteId } = req.params;
+
+      logger.debug(`Deleting note ${noteId} from form submission with ID: ${submissionId} (form ID: ${formId})...`, {
+        context: 'FormRouter',
+        tenantId: tenantId?.toString,
+        user: user ? `${user.name} (ID: ${user.id})` : null,
+      });
+
+      const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
+      if (!formSubmission) {
+        throw new NotFoundError('Form submission', submissionId);
+      }
+
+      const updated = await formSubmission.deleteNote(user, noteId);
+      end();
+
+      res.send(mapFormSubmission(apiId, updated));
+
+      logger.info(`Deleted note ${noteId} from form submission with ID: ${submissionId} (form ID: ${formId}).`, {
+        context: 'FormRouter',
+        tenantId: tenantId?.toString,
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function accessForm(logger: Logger, notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -968,6 +1047,23 @@ export function createFormRouter({
       body('dispositionReason').isString().isLength({ min: 1 }),
     ),
     updateFormSubmissionDisposition(apiId, logger, eventService, submissionRepository),
+  );
+
+  router.post(
+    '/forms/:formId/submissions/:submissionId/notes',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('formId').isUUID(),
+      param('submissionId').isUUID(),
+      body('content').isString().isLength({ min: 1, max: 5000 }),
+    ),
+    addFormSubmissionNote(apiId, logger, submissionRepository),
+  );
+  router.delete(
+    '/forms/:formId/submissions/:submissionId/notes/:noteId',
+    assertAuthenticatedHandler,
+    createValidationHandler(param('formId').isUUID(), param('submissionId').isUUID(), param('noteId').isUUID()),
+    deleteFormSubmissionNote(apiId, logger, submissionRepository),
   );
 
   return router;

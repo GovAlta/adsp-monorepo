@@ -6,7 +6,7 @@ import { FormCriteria, FormEntity, FormRepository, ResultsSort } from '../form';
 import { FormDefinitionRepository } from '../form';
 import { NotificationService, Subscriber } from '../notification';
 import { toDataCriteriaQuery } from './criteria';
-import { toSortQuery } from './sort';
+import { toSortError, toSortQuery } from './sort';
 import { formSchema } from './schema';
 import { FormDoc } from './types';
 
@@ -87,7 +87,9 @@ export class MongoFormRepository implements FormRepository {
         .sort(toSortQuery(sort, SORT_FIELDS, 'data'))
         .skip(skip)
         .limit(top)
-        .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
+        .exec((err, docs) =>
+          err ? reject(toSortError(err, sort)) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc)))),
+        );
     });
     const total = this.model.countDocuments(baseQuery).exec();
 
