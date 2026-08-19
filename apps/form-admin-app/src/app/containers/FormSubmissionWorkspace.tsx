@@ -21,7 +21,6 @@ import {
   topicSelector,
   updateFormDisposition,
   AppState,
-  commentActions,
   formSelector,
   selectForm,
 } from '../state';

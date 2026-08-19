@@ -30,7 +30,7 @@ export const CommentsViewer: FunctionComponent = () => {
 
   return (
     <CommentsViewerComponent
-      heading="Questions"
+      heading=" "
       addCommentLabel="Add response"
       comments={results}
       canComment={canComment}
