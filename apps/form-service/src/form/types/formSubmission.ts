@@ -8,6 +8,17 @@ export interface FormDisposition {
   date: Date;
 }
 
+// clean-code-ignore: RULE-19 — type declarations only.
+export interface FormSubmissionNote {
+  id: string;
+  content: string;
+  created: Date;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+}
+
 export interface FormSubmission {
   id: string;
   formDefinitionId: string;
@@ -27,6 +38,7 @@ export interface FormSubmission {
   updated: Date;
   submissionStatus?: string;
   disposition: FormDisposition;
+  notes?: FormSubmissionNote[];
   hash: string;
   securityClassification?: SecurityClassificationType;
   dryRun: boolean;
