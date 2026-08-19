@@ -8,24 +8,17 @@ const DATA_VALUE_PATH_PATTERN = /^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$/;
 
 const DEFAULT_SORT: Record<string, 1 | -1> = { created: -1 };
 
-interface SortField {
-  field: string;
-  // Data values are at paths that vary by definition, so there is no index declared for them and
-  // the sort has to be one the database can serve without one.
-  isDataValue: boolean;
-}
-
-function toSortField(sort: ResultsSort, fields: Record<string, string>, dataField: string): SortField {
+function toSortField(sort: ResultsSort, fields: Record<string, string>, dataField: string): string {
   // Own properties only; a lookup of an inherited name (constructor, toString) would otherwise pass
   // for a mapped field and put a value that is not a field name into the sort.
   if (Object.prototype.hasOwnProperty.call(fields, sort.field)) {
-    return { field: fields[sort.field], isDataValue: false };
+    return fields[sort.field];
   }
 
   if (sort.field.startsWith(DATA_VALUE_PREFIX)) {
     const path = sort.field.substring(DATA_VALUE_PREFIX.length);
     if (DATA_VALUE_PATH_PATTERN.test(path)) {
-      return { field: `${dataField}.${path}`, isDataValue: true };
+      return `${dataField}.${path}`;
     }
   }
 
@@ -37,9 +30,9 @@ function toSortField(sort: ResultsSort, fields: Record<string, string>, dataFiel
 // follows the sort direction rather than being pinned to descending, so that one composite index
 // serves the column in both directions.
 //
-// A sort on more than one key has to be served from a composite index, which can only be declared
-// for the columns known ahead of time. Data value columns are at paths that vary by definition, so
-// they are sorted on their key alone and ties there fall back to the natural order.
+// The tie breaker makes it a sort on two keys, which has to be served from a composite index, and
+// the database does not support those on a nested path. Nested columns are therefore sorted on
+// their own key, served by a single field index, and ties there fall back to the natural order.
 export function toSortQuery(
   sort: ResultsSort,
   fields: Record<string, string>,
@@ -49,14 +42,12 @@ export function toSortQuery(
     return DEFAULT_SORT;
   }
 
-  const { field, isDataValue } = toSortField(sort, fields, dataField);
+  const field = toSortField(sort, fields, dataField);
   const direction = sort.direction === 'asc' ? 1 : -1;
 
-  if (field === 'created' || isDataValue) {
-    return { [field]: direction };
-  }
-
-  return { [field]: direction, created: direction };
+  return field === 'created' || field.includes('.')
+    ? { [field]: direction }
+    : { [field]: direction, created: direction };
 }
 
 // The database rejects a sort it has no index to serve rather than sorting the results itself, and
@@ -66,6 +57,6 @@ const UNSERVABLE_SORT_PATTERN = /order.by|composite index/i;
 
 export function toSortError(err: Error, sort: ResultsSort): Error {
   return sort?.field && UNSERVABLE_SORT_PATTERN.test(err?.message || '')
-    ? new InvalidOperationError(`Cannot sort results on field: ${sort.field}`)
+    ? new InvalidOperationError(`Cannot sort results on field: ${sort.field} — no index to serve it`)
     : err;
 }

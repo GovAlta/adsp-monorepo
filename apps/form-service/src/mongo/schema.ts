@@ -76,9 +76,12 @@ export const formSchema = new Schema(
 formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
 formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });
 
-// Sortable columns need an index the sort can be served from. The tie breaker on a column sort
-// follows the sort direction, so one composite index covers both ascending and descending.
+// Sortable columns need an index the sort can be served from. A top level column is sorted with the
+// create date as tie breaker, which one composite index covers in both directions. Data value
+// columns are at paths that vary by definition, so a wildcard index covers them; it indexes single
+// fields only, which is why those columns are sorted on one key.
 formSchema.index({ status: 1, created: 1 });
+formSchema.index({ 'data.$**': 1 });
 
 export const createdBy = {
   id: {
@@ -180,4 +183,6 @@ export const formSubmissionSchema = new Schema(
 
 formSubmissionSchema.index({ tenantId: 1, formDefinitionId: 1 });
 formSubmissionSchema.index({ submissionStatus: 1, created: 1 });
-formSubmissionSchema.index({ 'disposition.status': 1, created: 1 });
+// Nested columns are indexed on their own; a composite index is not supported on a nested path.
+formSubmissionSchema.index({ 'disposition.status': 1 });
+formSubmissionSchema.index({ 'formData.$**': 1 });
