@@ -12,6 +12,7 @@ import {
   QueueTaskToProcess,
   SecurityClassificationType,
   CustomSubmissionEvent,
+  ReviewConfiguration,
 } from '../types';
 import {
   collectFileUrnPathTemplates,
@@ -44,6 +45,7 @@ export class FormDefinitionEntity implements FormDefinition {
   includeDataInSubmission: boolean;
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
+  reviewConfiguration: ReviewConfiguration;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
   private fileUrnPathTemplates: FileUrnPathTemplate[];
@@ -81,6 +83,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.includeDataInSubmission = definition?.includeDataInSubmission || false;
     this.registeredId = definition?.registeredId || null;
     this.customSubmissionEvent = definition?.customSubmissionEvent || null;
+    this.reviewConfiguration = definition?.reviewConfiguration || { columns: [] };
   }
 
   public canAccessDefinition(user: User): boolean {

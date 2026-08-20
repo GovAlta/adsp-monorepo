@@ -91,6 +91,23 @@ components:
               type: string
         includeDataInSubmission:
           type: boolean
+        reviewConfiguration:
+          type: object
+          description: Ordered form data fields shown as columns in the Form Admin submission and form lists.
+          additionalProperties: false
+          properties:
+            columns:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                  - path
+                properties:
+                  path:
+                    type: string
+                    description: Dot-separated path of a leaf field in the form data schema.
+                    minLength: 1
         dryRun:
           type: boolean
         intake:

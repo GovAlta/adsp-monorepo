@@ -74,10 +74,12 @@ import {
   ReviewPageTabWrapper,
   AddToggleButtonPadding,
   Margin,
+  EditorTabScroll,
 } from '../styled-components';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
+import { ReviewConfigurationTab } from './reviewConfigurationTab';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import {
@@ -705,7 +707,7 @@ export function AddEditFormDefinitionEditor({
               </Tab>
               <Tab label="Lifecycle" data-testid="lifecycle" isTightContent={true}>
                 <BorderBottom>
-                  <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
+                  <EditorTabScroll $height={EditorHeight + 7}>
                     <H3>Application</H3>
                     <div>
                       <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
@@ -1129,7 +1131,18 @@ export function AddEditFormDefinitionEditor({
                         </div>
                       </SubmissionConfigurationPadding>
                     </div>
-                  </div>
+                  </EditorTabScroll>
+                </BorderBottom>
+              </Tab>
+              <Tab label="Review" data-testid="form-editor-review-tab" isTightContent={true}>
+                <BorderBottom>
+                  <EditorTabScroll $height={EditorHeight + 7}>
+                    <ReviewConfigurationTab
+                      schema={dataSchema}
+                      reviewConfiguration={definition.reviewConfiguration}
+                      onChange={(reviewConfiguration) => setDefinition({ reviewConfiguration })}
+                    />
+                  </EditorTabScroll>
                 </BorderBottom>
               </Tab>
             </Tabs>

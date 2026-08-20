@@ -22,11 +22,20 @@ export interface FormDefinition {
   includeDataInSubmission?: boolean;
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
+  reviewConfiguration?: ReviewConfiguration;
 }
 
 export interface CustomSubmissionEvent {
   namespace: string;
   name: string;
+}
+
+export interface ReviewColumn {
+  path: string;
+}
+
+export interface ReviewConfiguration {
+  columns: ReviewColumn[];
 }
 
 export interface QueueTaskToProcess {
