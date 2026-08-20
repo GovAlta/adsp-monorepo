@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { GoabButton, GoabIconButton } from '@abgov/react-components-ds1';
+import { GoabButton, GoabIconButton } from '@abgov/react-components';
 import { GoabIconType } from '@abgov/ui-components-common';
 import styled from 'styled-components';
 

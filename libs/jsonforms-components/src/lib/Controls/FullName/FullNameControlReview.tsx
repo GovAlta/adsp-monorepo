@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';

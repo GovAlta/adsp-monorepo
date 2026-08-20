@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { GoabTable, GoabText } from '@abgov/react-components-ds1';
+import { GoabTable, GoabText } from '@abgov/react-components';
 import { GoabCalloutType } from '@abgov/ui-components-common';
 import { PageBorder } from '../styled-components';
 import { CategoriesState, CategoryState } from '../context';

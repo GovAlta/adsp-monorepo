@@ -5,7 +5,7 @@ import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { withAjvProps } from '../../util/layout';
-import { GoabTable } from '@abgov/react-components-ds1';
+import { GoabTable } from '@abgov/react-components';
 import { FormStepperComponentProps } from './types';
 
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';

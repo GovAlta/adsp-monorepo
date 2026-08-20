@@ -21,11 +21,30 @@ function updateWidgetVisibility(show: boolean) {
   }
 }
 
+export const resolveFeedbackTenant = (tenantName?: string) => {
+  const configuredTenant = tenantName?.trim();
+  if (configuredTenant) {
+    return configuredTenant;
+  }
+
+  const [tenantFromPath] = document.location.pathname.split('/').filter(Boolean);
+  return tenantFromPath || '';
+};
+
 export const useFeedbackWidget = (tenantName?: string) => {
   useEffect(() => {
+    const tenant = resolveFeedbackTenant(tenantName);
+
     if (globalThis.adspFeedback !== undefined) {
+      if (!tenant) {
+        updateWidgetVisibility(false);
+        return () => {
+          updateWidgetVisibility(false);
+        };
+      }
+
       globalThis.adspFeedback.initialize({
-        tenant: tenantName ?? '',
+        tenant,
         getContext: () => getFeedbackContext(),
         designSystemsVersion: '2.0',
       });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Address } from './types';
-import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem, GoabDropdown } from '@abgov/react-components-ds1';
+import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem, GoabDropdown } from '@abgov/react-components';
 import { LabelDiv } from './styled-components';
 import {
   GoabInputOnChangeDetail,

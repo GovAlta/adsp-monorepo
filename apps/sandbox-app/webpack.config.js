@@ -1,6 +1,12 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
 const { ProvidePlugin } = require('webpack');
+const { aliasReactComponents } = require('../../tools/webpack/react-components-version');
+
+const getReactComponentsPackage = () => {
+  const version = process.env.SANDBOX_DESIGN_SYSTEMS_VERSION;
+  return version === '1' || version === '1.0' ? '@abgov/react-components-ds1' : '@abgov/react-components';
+};
 
 // Nx plugins for webpack.
 module.exports = composePlugins(withNx(), withReact(), (config) => {
@@ -19,5 +25,5 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     }),
   );
 
-  return config;
+  return aliasReactComponents(config, getReactComponentsPackage());
 });

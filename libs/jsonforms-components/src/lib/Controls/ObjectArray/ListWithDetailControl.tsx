@@ -21,7 +21,7 @@ import type { ErrorObject } from 'ajv';
 import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 
-import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem, GoabTable } from '@abgov/react-components-ds1';
+import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem, GoabTable } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components-ds1';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;
