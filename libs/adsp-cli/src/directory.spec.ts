@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'fs';
 import * as os from 'os';
 import { join } from 'path';
-import { getDirectoryServiceUrl, getServiceUrls } from './directory';
+import { getDirectoryServiceUrl, getServiceUrls, registerDirectoryService } from './directory';
 import { HttpRequestError } from './httpError';
 
 const ENV_KEYS = ['ADSP_ENV', 'ADSP_TENANT_REALM', 'ADSP_ACCESS_SERVICE_URL', 'ADSP_DIRECTORY_SERVICE_URL'] as const;
@@ -72,5 +72,71 @@ describe('getServiceUrls', () => {
       status: 503,
     });
     await expect(getServiceUrls('https://directory-service.example.com')).rejects.toBeInstanceOf(HttpRequestError);
+  });
+});
+
+describe('registerDirectoryService', () => {
+  it('returns "registered" on a 201 response', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 201 }) as never;
+
+    const result = await registerDirectoryService(
+      'https://directory-service.example.com',
+      'my-tenant',
+      'my-service',
+      'https://my-service.example.com',
+      'test-token',
+    );
+
+    expect(result).toBe('registered');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.objectContaining({ href: expect.stringContaining('/directory/v2/namespaces/my-tenant/services') }),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        body: JSON.stringify({ service: 'my-service', url: 'https://my-service.example.com' }),
+      }),
+    );
+  });
+
+  it('returns "exists" on a 409 without throwing', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409 }) as never;
+
+    const result = await registerDirectoryService(
+      'https://directory-service.example.com',
+      'my-tenant',
+      'my-service',
+      'https://my-service.example.com',
+      'test-token',
+    );
+
+    expect(result).toBe('exists');
+  });
+
+  it('throws an HttpRequestError with a helpful message on 403', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 403 }) as never;
+
+    await expect(
+      registerDirectoryService(
+        'https://directory-service.example.com',
+        'my-tenant',
+        'my-service',
+        'https://my-service.example.com',
+        'test-token',
+      ),
+    ).rejects.toMatchObject({ status: 403, message: expect.stringContaining('directory-admin') });
+  });
+
+  it('throws an HttpRequestError on other non-ok responses', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as never;
+
+    await expect(
+      registerDirectoryService(
+        'https://directory-service.example.com',
+        'my-tenant',
+        'my-service',
+        'https://my-service.example.com',
+        'test-token',
+      ),
+    ).rejects.toBeInstanceOf(HttpRequestError);
   });
 });

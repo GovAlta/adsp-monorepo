@@ -1,4 +1,4 @@
-import { parseLoginArgs } from './main';
+import { parseDirectoryRegisterArgs, parseLoginArgs } from './main';
 
 describe('parseLoginArgs', () => {
   it('accepts dev/test/prod for --env', () => {
@@ -42,5 +42,28 @@ describe('parseLoginArgs', () => {
       clientSecret: 'my-secret',
       env: 'test',
     });
+  });
+});
+
+describe('parseDirectoryRegisterArgs', () => {
+  it('parses --service and --url', () => {
+    expect(parseDirectoryRegisterArgs(['--service', 'my-service', '--url', 'https://my-service.example.com'])).toEqual({
+      service: 'my-service',
+      url: 'https://my-service.example.com',
+    });
+  });
+
+  it('parses an explicit --namespace', () => {
+    expect(
+      parseDirectoryRegisterArgs(['--service', 'my-service', '--url', 'https://my-service.example.com', '--namespace', 'my-tenant']),
+    ).toEqual({
+      service: 'my-service',
+      url: 'https://my-service.example.com',
+      namespace: 'my-tenant',
+    });
+  });
+
+  it('returns empty object when no flags are provided', () => {
+    expect(parseDirectoryRegisterArgs([])).toEqual({});
   });
 });

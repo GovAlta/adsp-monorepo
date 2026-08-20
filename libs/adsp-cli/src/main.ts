@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { getDirectoryServiceUrl } from './directory';
+import { getDirectoryServiceUrl, registerDirectoryService } from './directory';
 import { EnvironmentName, resolveEnvironmentUrls } from './environments';
 import { CORE_REALM, getAccessToken, getCachedOrRefreshedToken, getStatus, isTenantServiceAdmin, loginInteractive, loginWithClientCredentials, logout } from './login';
 import { getServiceRoles } from './serviceRoles';
@@ -8,7 +8,8 @@ import { deleteTenantById, findTenantByName, listTenants, Tenant } from './tenan
 const USAGE =
   'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] | ' +
   'login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>] | ' +
-  'status | logout | token | tenants [name] | service-roles | delete-tenant <name>>';
+  'status | logout | token | tenants [name] | service-roles | delete-tenant <name> | ' +
+  'directory register --service <name> --url <url> [--namespace <ns>]>';
 
 const HELP_TEXT = `adsp-cli — CLI and client library for authenticating against ADSP and calling its live APIs.
 
@@ -38,6 +39,12 @@ Commands:
   delete-tenant <name>    Permanently delete a tenant and its Keycloak realm. Requires a cached
                           core-realm session with the tenant-service-admin role. Prompts for
                           confirmation before deleting.
+  directory register --service <name> --url <url> [--namespace <ns>]
+                          Register a service entry in the ADSP directory under the tenant's
+                          namespace. Skips silently if the entry already exists (register-once
+                          semantics — no overwrite). --namespace defaults to the kebab-case of
+                          the tenant name from the current login session. Requires the
+                          'directory-admin' role (tenant admins have it automatically).
   help, --help, -h        Show this help.
 
 Flags (login only):
@@ -268,6 +275,59 @@ async function runDeleteTenant(argv: string[]): Promise<void> {
   );
 }
 
+export function parseDirectoryRegisterArgs(argv: string[]): { service?: string; url?: string; namespace?: string } {
+  const options: { service?: string; url?: string; namespace?: string } = {};
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--service' && argv[i + 1]) {
+      options.service = argv[++i];
+    } else if (argv[i] === '--url' && argv[i + 1]) {
+      options.url = argv[++i];
+    } else if (argv[i] === '--namespace' && argv[i + 1]) {
+      options.namespace = argv[++i];
+    }
+  }
+  return options;
+}
+
+async function runDirectoryRegister(argv: string[]): Promise<void> {
+  const options = parseDirectoryRegisterArgs(argv);
+
+  if (!options.service) {
+    throw new Error('--service <name> is required.');
+  }
+  if (!options.url) {
+    throw new Error('--url <url> is required.');
+  }
+
+  let namespace = options.namespace;
+  if (!namespace) {
+    const status = getStatus();
+    if (!status.tenantName) {
+      throw new Error(
+        'Could not determine the directory namespace — no tenant found in the current login session. ' +
+          'Pass --namespace explicitly or run `adsp login --tenant <name>` first.',
+      );
+    }
+    namespace = status.tenantName.toLowerCase().replace(/ /g, '-');
+  }
+
+  const tokenResult = await getAccessToken();
+  if (tokenResult.status === 'not-authenticated') {
+    throw new Error('Not authenticated. Run `adsp login` in a terminal, then retry.');
+  }
+
+  const directoryServiceUrl = getDirectoryServiceUrl();
+  const result = await registerDirectoryService(directoryServiceUrl, namespace, options.service, options.url, tokenResult.token);
+
+  if (result === 'exists') {
+    // eslint-disable-next-line no-console
+    console.log(`Directory entry urn:ads:${namespace}:${options.service} already exists, skipping.`);
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(`Registered urn:ads:${namespace}:${options.service} → ${options.url}`);
+  }
+}
+
 async function runServiceRoles(): Promise<void> {
   const tokenResult = await getAccessToken();
   if (tokenResult.status === 'not-authenticated') {
@@ -311,6 +371,17 @@ async function main(): Promise<void> {
       case 'delete-tenant':
         await runDeleteTenant(rest);
         break;
+      case 'directory': {
+        const [subcommand, ...subrest] = rest;
+        if (subcommand === 'register') {
+          await runDirectoryRegister(subrest);
+        } else {
+          // eslint-disable-next-line no-console
+          console.error(`Unknown directory subcommand: ${subcommand ?? '(none)'}. Try: adsp directory register --service <name> --url <url>`);
+          process.exitCode = 1;
+        }
+        break;
+      }
       default:
         // eslint-disable-next-line no-console
         console.error(`Unknown command: ${command ?? '(none)'}. ${USAGE}`);
