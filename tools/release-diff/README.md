@@ -24,9 +24,25 @@ instructions, not a program. They live in `.github/agents/release-review.agent.m
 alongside the repo's other agent definitions and in the same format, so any agent runner
 can follow them: assign it in GitHub's Agents tab, or run it from an editor.
 
+Invoke it as `@release-review` where the repo's other agents are invoked (`@adsp-plan`,
+`@clean-code`). If your client does not index `.github/agents/`, point at the file by
+path instead — this works in any agent client, including ones that never resolve `@`
+names:
+
+```
+Read tools/release-diff/README.md and .github/agents/release-review.agent.md,
+then follow those instructions to produce a release review for this repo.
+```
+
+You do not need to run the collector first. Running it is the agent's first step.
+
 In Claude Code, type `/release-diff` and it loads the same file.
 `.claude/skills/release-diff/SKILL.md` is a two-line pointer, not a second copy — edit
 the `.github/agents/` file and every runner picks the change up.
+
+Locally the requirements are already met by a normal dev setup: an authenticated `gh`, a
+full clone, and `npm ci`. A cloud agent needs those arranged in its own environment, and
+needs an output path that is not gitignored — see **Running in CI**.
 
 The agent runs the collector, reads its output, opens the diffs behind anything it
 intends to call significant, and writes a release-planning report with themes,
