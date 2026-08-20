@@ -68,7 +68,7 @@ When('the user enters {string}, {string} in Add form definition modal', function
     .shadow()
     .find('input')
     .clear()
-    .type(nameAfterReplacement, { force: true, delay: 500 });
+    .type(nameAfterReplacement, { force: true, delay: 200 });
   formObj.addDefinitionDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
 });
 
@@ -99,12 +99,10 @@ When(
       cy.wait(500);
       formObj
         .editorCheckboxesTables()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
-            if (elements[i].getAttribute('class')?.includes('selected')) {
+            if ((elements[i] as HTMLInputElement).checked) {
               elements[i].click();
             }
           }
@@ -131,9 +129,7 @@ When(
             .find('.role-name')
             .contains(applicantRoleName)
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -143,9 +139,7 @@ When(
             .find('.role-name')
             .contains(applicantRoles[i].trim())
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -174,9 +168,7 @@ When(
             .contains(clerkRoleName)
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -187,9 +179,7 @@ When(
             .contains(clerkRoles[i].trim())
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -219,9 +209,7 @@ When(
             .next()
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -233,9 +221,7 @@ When(
             .next()
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -429,122 +415,27 @@ When('the user clicks Save button in Edit definition modal', function () {
 Then(
   'the user views {string} as applicant roles, {string} as clerk roles, {string} as assessor roles in roles tab',
   function (applicantRole: string, clerkRole: string, assessorRole: string) {
-    //check applicant roles
-    let applicantRoleMatchCount = 0;
-    if (applicantRole.toLowerCase() != 'empty') {
-      const applicantRoles = applicantRole.split(',');
-      formObj
-        .definitionEditorRolesTables()
-        .find('goa-checkbox[testid*="Applicant roles"]')
-        .then((appRoles) => {
-          for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              for (let j = 0; j < applicantRoles.length; j++) {
-                if (appRoles[i].getAttribute('name')?.includes(applicantRoles[j])) {
-                  const appRoleName = appRoles[i].getAttribute('name');
-                  if (appRoleName != null) {
-                    cy.log(appRoleName);
-                  } else {
-                    cy.log('Application role name attribute is null');
-                  }
-                  applicantRoleMatchCount = applicantRoleMatchCount + 1;
-                }
-              }
-            }
-          }
-          expect(applicantRoles.length).to.eq(applicantRoleMatchCount);
-        });
-    } else {
-      formObj
-        .definitionEditorRolesTables()
-        .find('goa-checkbox[testid*="Applicant roles"]')
-        .then((appRoles) => {
-          for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              expect(appRoles[i].getAttribute('checked')).to.be('false');
-            }
-          }
-        });
-      cy.log('No applicant role is selected');
-    }
+    const assertSelectedRoles = (roleType: string, expectedRolesInput: string) => {
+      const expectedRoles =
+        expectedRolesInput.toLowerCase() === 'empty' ? [] : expectedRolesInput.split(',').map((role) => role.trim());
 
-    //check clerk roles
-    let clerkRoleMatchCount = 0;
-    if (clerkRole.toLowerCase() != 'empty') {
-      const clerkRoles = clerkRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[testid*="Clerk roles"]')
-        .then((cRoles) => {
-          for (let i = 0; i < cRoles.length; i++) {
-            if (cRoles[i].getAttribute('checked') == 'true') {
-              for (let j = 0; j < clerkRoles.length; j++) {
-                if (cRoles[i].getAttribute('name')?.includes(clerkRoles[j])) {
-                  const clerkRoleName = cRoles[i].getAttribute('name');
-                  if (clerkRoleName != null) {
-                    cy.log(clerkRoleName);
-                  } else {
-                    cy.log('Clerk role name attribute is null');
-                  }
-                  clerkRoleMatchCount = clerkRoleMatchCount + 1;
-                }
-              }
-            }
-          }
-          expect(clerkRoles.length).to.eq(clerkRoleMatchCount);
-        });
-    } else {
-      formObj
-        .definitionEditorRolesTables()
-        .find('goa-checkbox[testid*="Clerk roles"]')
-        .then((cRoles) => {
-          for (let i = 0; i < cRoles.length; i++) {
-            if (cRoles[i].getAttribute('checked') == 'true') {
-              expect(cRoles[i].getAttribute('checked')).to.be('false');
-            }
-          }
-        });
-      cy.log('No clerk role is selected');
-    }
+        .find(`input[type="checkbox"][aria-label$=" ${roleType}"]:checked`)
+        .then((selectedCheckboxes) => {
+          const selectedRoles = selectedCheckboxes
+            .toArray()
+            .map((checkbox) => checkbox.getAttribute('aria-label')?.replace(` ${roleType}`, ''))
+            .filter((role): role is string => role !== undefined);
 
-    //check assessor roles
-    let assessorRoleMatchCount = 0;
-    if (assessorRole.toLowerCase() != 'empty') {
-      const assessorRoles = assessorRole.split(',');
-      formObj
-        .definitionEditorRolesTables()
-        .find('goa-checkbox[testid*="Assessor roles"]')
-        .then((assRoles) => {
-          for (let i = 0; i < assRoles.length; i++) {
-            if (assRoles[i].getAttribute('checked') == 'true') {
-              for (let j = 0; j < assessorRoles.length; j++) {
-                if (assRoles[i].getAttribute('name')?.includes(assessorRoles[j])) {
-                  const assRoleName = assRoles[i].getAttribute('name');
-                  if (assRoleName != null) {
-                    cy.log(assRoleName);
-                  } else {
-                    cy.log('Assessor role name attribute is null');
-                  }
-                  assessorRoleMatchCount = assessorRoleMatchCount + 1;
-                }
-              }
-            }
-          }
-          expect(assessorRoles.length).to.eq(assessorRoleMatchCount);
+          expect(selectedRoles, `selected ${roleType}`).to.have.length(expectedRoles.length);
+          expect(selectedRoles, `selected ${roleType}`).to.have.members(expectedRoles);
         });
-    } else {
-      formObj
-        .definitionEditorRolesTables()
-        .find('goa-checkbox[testid*="Assessor roles"]')
-        .then((assRoles) => {
-          for (let i = 0; i < assRoles.length; i++) {
-            if (assRoles[i].getAttribute('checked') == 'true') {
-              expect(assRoles[i].getAttribute('checked')).to.be('false');
-            }
-          }
-        });
-      cy.log('No assessor role is selected');
-    }
+    };
+
+    assertSelectedRoles('Applicant roles', applicantRole);
+    assertSelectedRoles('Clerk roles', clerkRole);
+    assertSelectedRoles('Assessor roles', assessorRole);
   }
 );
 

@@ -20,9 +20,17 @@ describe('toSortQuery', () => {
     expect(toSortQuery({ field: 'created', direction: 'desc' }, fields, 'data')).toEqual({ created: -1 });
   });
 
-  it('can sort on mapped field with create date tie breaker', () => {
+  it('can sort on a nested mapped field without a tie breaker', () => {
+    // A tie breaker makes it a sort on two keys, which needs a composite index; the database does
+    // not support those on a nested path.
     expect(toSortQuery({ field: 'disposition', direction: 'asc' }, fields, 'data')).toEqual({
       'disposition.status': 1,
+    });
+  });
+
+  it('can sort on a top level mapped field with create date tie breaker', () => {
+    expect(toSortQuery({ field: 'status', direction: 'asc' }, fields, 'data')).toEqual({
+      status: 1,
       created: 1,
     });
   });
@@ -76,6 +84,8 @@ describe('toSortError', () => {
     const result = toSortError(err, sort);
     expect(result).toBeInstanceOf(InvalidOperationError);
     expect(result.message).toContain('data.firstName');
+    // Distinct from the message for a column that is not sortable at all, so the two are told apart.
+    expect(result.message).toContain('no index to serve it');
   });
 
   it('can report an excluded order by path as a request error', () => {

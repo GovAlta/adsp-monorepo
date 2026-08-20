@@ -158,6 +158,8 @@ for the one-time manual setup steps. `--realm`/`--tenant` logins are unaffected 
 | `token` | Yes (`getAccessToken()`) | Prints the raw access token to stdout — refreshed first if expired, same as any other command. Handy for scripting, e.g. `curl -H "Authorization: Bearer $(adsp token)" ...`. |
 | `tenants [name]` | No (with `name`) / core-realm session (without) | With a name: anonymous exact-name lookup, no login needed. Without: lists every tenant — requires a cached core-realm token (established by a prior no-args `login`); this command never triggers an interactive login itself. |
 | `service-roles` | Yes (`getAccessToken()`) | Prints the same data as `@abgov/adsp-sdk-mcp-server`'s `list_service_roles` tool — every platform service's registered RBAC role, read live from tenant-service configuration. |
+| `directory register --service <name> --url <url>` | Yes (`getAccessToken()`) | Registers a service entry in the ADSP directory under the current tenant's namespace (derived from the login session). Skips silently if the entry already exists — register-once semantics, no overwrite. Requires the `directory-admin` role (tenant admins have it automatically). |
+| `delete-tenant <name>` | Core-realm session with `tenant-service-admin` role | Permanently deletes a tenant and its Keycloak realm. Prompts for confirmation by re-typing the tenant name before proceeding. |
 | `help`, `--help`, `-h` | No | Prints a full command/flag reference and exits 0 (distinct from the "Unknown command" error path, which exits 1). |
 
 ## Environment variables
@@ -175,7 +177,7 @@ for the one-time manual setup steps. `--realm`/`--tenant` logins are unaffected 
 ## Library usage
 
 ```typescript
-import { getAccessToken, getDirectoryServiceUrl, getServiceUrls, getConfiguration, getServiceRoles } from '@abgov/adsp-cli';
+import { getAccessToken, getDirectoryServiceUrl, getServiceUrls, getConfiguration, getServiceRoles, registerDirectoryService } from '@abgov/adsp-cli';
 
 const result = await getAccessToken();
 if (result.status !== 'ok') {
@@ -189,6 +191,10 @@ const serviceUrls = await getServiceUrls(directoryServiceUrl);
 
 // Or, for the common "which roles can I assign" case directly:
 const roles = await getServiceRoles(result.token, directoryServiceUrl);
+
+// Register a service entry in the directory (register-once — skips on 409):
+const outcome = await registerDirectoryService(directoryServiceUrl, 'my-tenant', 'my-service', 'https://my-service.example.com', result.token);
+// outcome: 'registered' | 'exists'
 ```
 
 `getAccessToken()` checks in priority order: `ADSP_ACCESS_TOKEN` env var → valid cached token → token refresh →

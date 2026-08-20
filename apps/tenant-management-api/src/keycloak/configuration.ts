@@ -159,6 +159,7 @@ export const createAdspCliAdminClientScopeConfig = (): ClientScopeRepresentation
 export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
   { client: 'urn:ads:platform:agent-service', roles: ['agent-user'] },
+  { client: 'urn:ads:platform:directory-service', roles: ['directory-admin'] },
 ];
 
 export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';

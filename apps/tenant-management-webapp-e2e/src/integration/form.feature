@@ -116,7 +116,7 @@ Feature: Form
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
 
-  # Ignore the test as it crashes chrome. Need futher investigation.
+  # CS-5291 Roles aren't properly saved in form definition editor. Ignore the test for now until the issue is fixed.
   @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression @ignore
   Scenario: As a tenant admin, I can add, edit and delete a form definition
     Given a tenant admin user is on form service overview page
@@ -205,9 +205,8 @@ Feature: Form
     And the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "enabling" create submission records on submit
 
-  # Ignore the test as it crashes chrome. Need futher investigation.
   # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
-  @TEST_CS-3224 @REQ_CS-2468 @regression @ignore
+  @TEST_CS-3224 @REQ_CS-2468 @regression
   Scenario: As a tenant admin, I can add, order, edit and delete disposition states
     Given a tenant admin user is on form definitions page
     When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
