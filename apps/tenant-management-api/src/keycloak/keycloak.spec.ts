@@ -185,10 +185,11 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
-        // grantAdspCliClientScopeMappings: adsp-cli, config-service, agent-service (not in realm → [])
+        // grantAdspCliClientScopeMappings: adsp-cli, config-service, agent-service (not in realm → []), directory-service
         .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -199,8 +200,9 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce(testerRole)
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
-        // grantAdspCliClientScopeMappings: configuration-admin from config-service
+        // grantAdspCliClientScopeMappings: configuration-admin from config-service, directory-admin from directory-service
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
+        .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -318,6 +320,7 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -329,6 +332,7 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
+        .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -370,6 +374,7 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -381,6 +386,7 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
+        .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
