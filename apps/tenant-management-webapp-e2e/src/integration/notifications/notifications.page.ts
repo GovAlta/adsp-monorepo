@@ -551,9 +551,9 @@ class NotificationsPage {
     return cy.xpath('//*[@data-testid="template-form"]//goa-form-item[contains(@helptext, "*")]');
   }
 
-  templateModalEmailHelpText() {
+  templateModalEmailHelpTextTooltip() {
     return cy.xpath(
-      '//*[@data-testid="template-form"]//div[@data-testid="Email-tab"]//goa-checkbox[@data-testid="default-template-checkbox"]/preceding-sibling::span'
+      '//*[@data-testid="template-form"]//div[@data-testid="Email-tab"]//goa-checkbox[@data-testid="default-template-checkbox"]/following-sibling::goa-tooltip'
     );
   }
 
