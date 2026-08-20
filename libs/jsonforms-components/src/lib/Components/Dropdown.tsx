@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { GoabInput, GoabInputProps } from '@abgov/react-components-ds1';
+import { GoabInput, GoabInputProps } from '@abgov/react-components';
 import { isEqual } from 'lodash';
 import {
   ALT_KEY,

@@ -1,4 +1,4 @@
-import { GoabBadge } from '@abgov/react-components-ds1';
+import { GoabBadge } from '@abgov/react-components';
 import { CategoryState } from './context';
 
 export enum PageStatus {

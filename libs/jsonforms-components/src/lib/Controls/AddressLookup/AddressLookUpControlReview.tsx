@@ -12,7 +12,7 @@ import {
   RequiredTextLabel,
   NoneGivenText,
 } from '../Inputs/style-component';
-import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { useJsonForms } from '@jsonforms/react';
 import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 

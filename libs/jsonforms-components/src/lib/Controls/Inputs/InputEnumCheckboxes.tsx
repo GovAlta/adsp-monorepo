@@ -5,7 +5,7 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoabCheckbox } from '@abgov/react-components-ds1';
+import { GoabCheckbox } from '@abgov/react-components';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import Checkboxes from '../../Components/CheckboxGroup';
 import { GoabCheckboxListOnChangeDetail } from '@abgov/ui-components-common';

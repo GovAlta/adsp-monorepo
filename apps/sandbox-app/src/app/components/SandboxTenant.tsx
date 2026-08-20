@@ -24,7 +24,7 @@ import { StatusServiceMain } from './services/StatusServiceMain';
 import { ValueServiceMain } from './services/ValueServiceMain';
 import { TaskServiceMain } from './services/TaskServiceMain';
 import { FileServiceMain } from './services/FileServiceMain';
-import { GoabAppFooter, GoabButton, GoabButtonGroup, GoabCircularProgress } from '@abgov/react-components';
+import { GoabAppFooter, GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { ScriptServiceMain } from './services/ScriptServiceMain';
 import { CacheServiceMain } from './services/CacheServiceMain';
 import { DirectoryServiceMain } from './services/DirectoryServiceMain';
@@ -47,6 +47,11 @@ export const SandBoxTenant = () => {
   const configInitialized = useSelector(configInitializedSelector);
 
   const environment = useSelector(environmentSelector);
+  const activeTenantName = environment.tenantName || tenantName;
+  const isFormServicePath = location.pathname.endsWith('/services/form');
+  const isJsonformsControlExamplesPath = location.pathname.includes('/services/jsonforms/example1/control-examples');
+  const isLocalJsonformsTestPath = isFormServicePath || isJsonformsControlExamplesPath;
+  const canShowServiceContent = Boolean(authenticatedUser) || isLocalJsonformsTestPath;
 
   useEffect(() => {
     if (configInitialized) {
@@ -55,29 +60,29 @@ export const SandBoxTenant = () => {
   }, [configInitialized, dispatch, tenantName]);
 
   useEffect(() => {
-    if (authenticatedUser && location.pathname.endsWith(`/${environment.tenantName}`)) {
-      navigate(`/${environment.tenantName}/services`);
+    if (authenticatedUser && activeTenantName && location.pathname.endsWith(`/${activeTenantName}`)) {
+      navigate(`/${activeTenantName}/services`);
     }
-  }, [authenticatedUser, environment.tenantName, location.pathname, navigate]);
+  }, [activeTenantName, authenticatedUser, location.pathname, navigate]);
 
-  useFeedbackWidget(environment.tenantName);
+  useFeedbackWidget(activeTenantName);
   return (
     <React.Fragment>
       <Header />
       <FeedbackNotification />
       <main>
-        {authenticatedUser === null ? (
+        {authenticatedUser === null && !isLocalJsonformsTestPath ? (
           <SignIn url={window.location.href} />
         ) : (
-          authenticatedUser && (
+          canShowServiceContent && (
             <section>
               <Band title="Sandbox services">Services/libraries available for POC</Band>
-              {authenticatedUser && !location.pathname.endsWith(`${environment.tenantName}`) && (
+              {authenticatedUser && activeTenantName && !location.pathname.endsWith(`/${activeTenantName}`) && (
                 <GoabButtonGroup alignment="end" mr={'xl'} mt="l">
                   <GoabButton
                     type="tertiary"
                     onClick={() => {
-                      navigate(`/${tenantName}/services`);
+                      navigate(`/${activeTenantName}/services`);
                     }}
                   >
                     Back to services

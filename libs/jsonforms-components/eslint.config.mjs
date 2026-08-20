@@ -33,8 +33,6 @@ export default [
         {
           ignoredDependencies: [
             '@abgov/react-components',
-            '@abgov/react-components-ds1',
-            '@abgov/react-components-new',
           ],
           ignoredFiles: ['libs/jsonforms-components/rollup.config.js'],
         },

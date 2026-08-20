@@ -2,7 +2,7 @@ import { CellProps, WithClassname, ControlProps, StatePropsOfControl } from '@js
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabIcon } from '@abgov/react-components-ds1';
+import { GoabIcon } from '@abgov/react-components';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
 import { getControlLabelText, to12HourFormat, UTCToFullLocalTime } from '../../util';
 

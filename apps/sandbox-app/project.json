@@ -20,6 +20,11 @@
           "apps/sandbox-app/src/favicon.ico",
           "apps/sandbox-app/src/assets",
           {
+            "glob": "config.json",
+            "input": "apps/sandbox-app/src/config/",
+            "output": "./config/"
+          },
+          {
             "glob": "silent-check-sso.html",
             "input": "apps/sandbox-app/src/",
             "output": "./"
@@ -67,6 +72,18 @@
           "buildTarget": "sandbox-app:build:production",
           "hmr": false
         }
+      }
+    },
+    "serve-ds1": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "SANDBOX_DESIGN_SYSTEMS_VERSION=1.0 ./node_modules/.bin/nx run sandbox-app:serve:development --port=4200"
+      }
+    },
+    "serve-ds2": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "SANDBOX_DESIGN_SYSTEMS_VERSION=2.0 ./node_modules/.bin/nx run sandbox-app:serve:development --port=4201"
       }
     },
     "lint": {
