@@ -16,6 +16,7 @@ import {
   filesSelector,
   formSelector,
   loadForm,
+  setShowMessages,
   showSubmitSelector,
   submitForm,
   updateForm,
@@ -62,9 +63,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
     // when the form has a support topic configured
     dispatch(loadForm(formId));
 
-    // Cleanup comment stream socket on unmount
+    // Cleanup comment stream socket on unmount, and close the drawer so it doesn't carry over.
     return () => {
       dispatch(disconnectStream());
+      dispatch(setShowMessages(false));
     };
   }, [dispatch, formId]);
 
@@ -112,7 +114,8 @@ export const Form = styled(FormComponent)`
   left: 0;
   right: 0;
   display: flex;
-  flex-direction: row-reverse;
+  /* The support pane follows the form content so that it sits on the right hand side. */
+  flex-direction: row;
 
   @media (max-width: 639px) {
     flex-direction: column;

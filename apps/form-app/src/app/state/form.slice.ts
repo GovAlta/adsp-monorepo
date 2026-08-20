@@ -9,7 +9,7 @@ import { DateTime } from 'luxon';
 import { AppState } from './store';
 import { hashData } from './util';
 import { getAccessToken } from './user.slice';
-import { connectStream, loadTopic, selectTopic } from './comment.slice';
+import { connectStream, loadTopic, loadUnreadMessages, selectTopic } from './comment.slice';
 import { loadFileMetadata } from './file.slice';
 import { PagedResults } from './types';
 
@@ -26,6 +26,7 @@ interface SerializableFormDefinition {
   registerData?: RegisterData;
   anonymousApply: boolean;
   generatesPdf?: boolean;
+  supportTopic?: boolean;
   scheduledIntakes: boolean;
   intake?: {
     start: string;
@@ -316,6 +317,7 @@ export const loadForm = createAsyncThunk(
       const result = await dispatch(loadTopic({ resourceId: form.urn, typeId: SUPPORT_TOPIC_TYPE_ID })).unwrap();
       if (result) {
         dispatch(selectTopic({ resourceId: form.urn }));
+        dispatch(loadUnreadMessages({ topicId: result.id }));
         dispatch(
           connectStream({
             stream: SUPPORT_TOPIC_STREAM_ID,

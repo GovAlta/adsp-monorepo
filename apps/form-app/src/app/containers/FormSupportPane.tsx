@@ -1,4 +1,3 @@
-import { GoabIconButton } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
@@ -11,6 +10,7 @@ import {
   getAccessToken,
   selectTopic,
   selectedTopicSelector,
+  showMessagesSelector,
 } from '../state';
 import CommentsViewer from './CommentsViewer';
 import { FormAgentChat } from './FormAgentChat';
@@ -50,13 +50,13 @@ const FormSupportPaneComponent: FunctionComponent<FormSupportPaneProps> = ({ cla
 
   const agentServiceUrl = useMemo(() => resolveAgentServiceUrl(directory), [directory]);
 
-  const [showSupportPane, setShowSupportPane] = useState(false);
+  // The pane is opened from the Messages control in the app header, so its visibility is shared state.
+  const showSupportPane = useSelector(showMessagesSelector);
   const [supportTab, setSupportTab] = useState<'comments' | 'agent'>('agent');
   const [agentConnected, setAgentConnected] = useState(false);
 
   const showCommentsFeature = !!topic;
   const showAgentFeature = !!agentServiceUrl && agentConnected;
-  const hasSupportFeature = showCommentsFeature || showAgentFeature;
   const showSupportTabs = showCommentsFeature && showAgentFeature;
 
   useEffect(() => {
@@ -91,6 +91,13 @@ const FormSupportPaneComponent: FunctionComponent<FormSupportPaneProps> = ({ cla
       socket.disconnect();
     };
   }, [agentServiceUrl, connectedUser]);
+
+  // The Messages control in the header opens the drawer on the questions, not on the AI chat.
+  useEffect(() => {
+    if (showSupportPane && showCommentsFeature) {
+      setSupportTab('comments');
+    }
+  }, [showSupportPane, showCommentsFeature]);
 
   useEffect(() => {
     if (supportTab === 'comments' && showCommentsFeature) {
@@ -148,24 +155,6 @@ const FormSupportPaneComponent: FunctionComponent<FormSupportPaneProps> = ({ cla
           ) : null}
         </div>
       </div>
-      <GoabIconButton
-        disabled={!form || !hasSupportFeature}
-        icon="help-circle"
-        size="large"
-        title="Support"
-        onClick={() => {
-          if (!hasSupportFeature) {
-            return;
-          }
-
-          const nextShow = !showSupportPane;
-          setShowSupportPane(nextShow);
-
-          if (nextShow && supportTab === 'comments' && topic?.resourceId !== form?.urn) {
-            dispatch(selectTopic({ resourceId: form.urn }));
-          }
-        }}
-      />
     </div>
   );
 };
@@ -181,7 +170,7 @@ export const FormSupportPane = styled(FormSupportPaneComponent)`
     display: none;
     height: 100%;
     width: 100%;
-    border-right: 1px solid var(--goa-color-greyscale-200);
+    border-left: 1px solid var(--goa-color-greyscale-200);
     background: white;
 
     .supportTabs {
@@ -246,17 +235,5 @@ export const FormSupportPane = styled(FormSupportPaneComponent)`
     flex: 1 1 30%;
     width: auto;
     min-width: 300px;
-  }
-
-  > :last-child {
-    z-index: 3;
-    position: absolute;
-    bottom: var(--goa-space-l);
-    left: var(--goa-space-l);
-    background: white;
-  }
-
-  &[data-show='true'] > :last-child {
-    background: var(--goa-color-greyscale-100);
   }
 `;
