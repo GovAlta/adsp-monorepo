@@ -64,6 +64,14 @@ State groups with an explicit ordering where one exists.
 
 **Shared library risk.** A service whose own directory barely moved can be running a renderer hundreds of commits old — `dependencyBreakdown` shows this. When one library dominates the estate, analyse it once, thoroughly, and reference that analysis from every affected service.
 
+**Does it actually work?** Deploy-time risk is what a promotion *disturbs*; this is whether what you are shipping *functions*. Ask it explicitly for every feature you would recommend promoting — it is the question a commit list never answers, and it has produced the most consequential findings in practice:
+
+- **Wired end to end?** Follow the feature across the codebases it touches. A setting written by an editor and read by nothing is a dead end that ships as a broken promise to users. Search for the field or config name in the consuming app, not just the producing one — `reviewConfiguration` is configurable in `libs/form-editor-common` and read nowhere in `apps/form-admin-app`.
+- **Did a recent commit break something?** The newest commits in the range are the least exercised. Read the last week or two properly rather than skimming subjects. Watch for state that is set but never cleared, conditions widened past their intent, and defaults that changed.
+- **Does the fix take effect alone?** A change spanning services may be inert rather than broken when only one side ships — before CS-5713, task-service ignored `priority` entirely, so promoting the webapp alone leaves the bug exactly as it is. Say which it is: broken, or merely ineffective.
+
+Report a functional blocker as a **hold**, above any deploy-time concern. Shipping a feature that does not work costs more than shipping one that needs an off-peak window.
+
 **Risk the checks do not cover** — read for these yourself:
 
 - role, scope, or auth changes (can lock users out; note the tenant impact)
@@ -79,8 +87,8 @@ State groups with an explicit ordering where one exists.
 
 Structure it for someone deciding in a sprint review, not reading a changelog:
 
-1. **Bottom line** — how many services differ, and the two or three things that matter most. Lead with any coupled group.
-2. **Promotion candidates** — grouped, each with what shipping it delivers in operational or user terms, what the risk is, and what it depends on. Recommend; do not merely enumerate.
+1. **Bottom line** — how many services differ, and the two or three things that matter most. Lead with a functional blocker if there is one, then coupled groups.
+2. **Promotion candidates** — grouped, each with what shipping it delivers in operational or user terms, what the risk is, and what it depends on. Where a group has an internal ordering, state it. Recommend; do not merely enumerate.
 3. **Low-risk / routine** — small self-contained changes, listed compactly. The easy yeses.
 4. **Needs investigation** — where you could not conclude, with the specific question and a compare link.
 5. **Not promotable / anomalies** — orphaned deployments, never-promoted services, unresolved entries.
