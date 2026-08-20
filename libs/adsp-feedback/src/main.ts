@@ -869,19 +869,19 @@ export class AdspFeedback implements AdspFeedbackApi {
                             we are experiencing an issue trying to load this page. Please try again in a few minutes. We
                             apologize for the inconvenience.
                           </p>
-                          <div class="errorButton">
-                            <button
-                              ${ref(this.feedbackCloseErrorButton)}
-                              @click=${this.closeErrorForm}
-                              class="adsp-fb-form-primary"
-                              id="feedback-close-error"
-                              type="button"
-                              tabindex="0"
-                              aria-label="Close feedback error button"
-                            >
-                              Close
-                            </button>
-                          </div>
+                          <br />
+
+                          <button
+                            ${ref(this.feedbackCloseErrorButton)}
+                            @click=${this.closeErrorForm}
+                            class="adsp-fb-form-primary"
+                            id="feedback-close-error"
+                            type="button"
+                            tabindex="0"
+                            aria-label="Close feedback error button"
+                          >
+                            Close
+                          </button>
                         </div>
                       </div>
                     </div>
