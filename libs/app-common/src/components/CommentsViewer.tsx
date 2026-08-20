@@ -174,10 +174,10 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   );
 };
 
-export const CommentsViewer = styled(CommentsViewerComponent)`
+export const CommentsViewer = styled(CommentsViewerComponent)<{ $commentsHeight?: string }>`
   display: flex;
   flex-direction: column;
-  padding-bottom: var(--goa-space-l);
+
   & > h3 {
     text-transform: capitalize;
     padding-left: var(--goa-space-l);
@@ -193,7 +193,7 @@ export const CommentsViewer = styled(CommentsViewerComponent)`
     padding-top: var(--goa-space-s);
   }
   & > .comments {
-    height: 250px;
+    height: ${({ $commentsHeight }) => ($commentsHeight ? `${$commentsHeight}` : 'auto')};
     overflow-y: scroll;
     flex-direction: column-reverse;
     padding-left: var(--goa-space-l);
