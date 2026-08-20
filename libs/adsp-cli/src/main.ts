@@ -9,7 +9,7 @@ const USAGE =
   'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] | ' +
   'login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>] | ' +
   'status | logout | token | tenants [name] | service-roles | delete-tenant <name> | ' +
-  'directory register --service <name> --url <url> [--namespace <ns>]>';
+  'directory register --service <name> --url <url>>';
 
 const HELP_TEXT = `adsp-cli — CLI and client library for authenticating against ADSP and calling its live APIs.
 
@@ -39,12 +39,12 @@ Commands:
   delete-tenant <name>    Permanently delete a tenant and its Keycloak realm. Requires a cached
                           core-realm session with the tenant-service-admin role. Prompts for
                           confirmation before deleting.
-  directory register --service <name> --url <url> [--namespace <ns>]
-                          Register a service entry in the ADSP directory under the tenant's
-                          namespace. Skips silently if the entry already exists (register-once
-                          semantics — no overwrite). --namespace defaults to the kebab-case of
-                          the tenant name from the current login session. Requires the
-                          'directory-admin' role (tenant admins have it automatically).
+  directory register --service <name> --url <url>
+                          Register a service entry in the ADSP directory under the current
+                          tenant's namespace (derived from the login session). Skips silently
+                          if the entry already exists (register-once semantics — no overwrite).
+                          Requires the 'directory-admin' role (tenant admins have it
+                          automatically).
   help, --help, -h        Show this help.
 
 Flags (login only):
@@ -275,15 +275,13 @@ async function runDeleteTenant(argv: string[]): Promise<void> {
   );
 }
 
-export function parseDirectoryRegisterArgs(argv: string[]): { service?: string; url?: string; namespace?: string } {
-  const options: { service?: string; url?: string; namespace?: string } = {};
+export function parseDirectoryRegisterArgs(argv: string[]): { service?: string; url?: string } {
+  const options: { service?: string; url?: string } = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--service' && argv[i + 1]) {
       options.service = argv[++i];
     } else if (argv[i] === '--url' && argv[i + 1]) {
       options.url = argv[++i];
-    } else if (argv[i] === '--namespace' && argv[i + 1]) {
-      options.namespace = argv[++i];
     }
   }
   return options;
@@ -299,17 +297,14 @@ async function runDirectoryRegister(argv: string[]): Promise<void> {
     throw new Error('--url <url> is required.');
   }
 
-  let namespace = options.namespace;
-  if (!namespace) {
-    const status = getStatus();
-    if (!status.tenantName) {
-      throw new Error(
-        'Could not determine the directory namespace — no tenant found in the current login session. ' +
-          'Pass --namespace explicitly or run `adsp login --tenant <name>` first.',
-      );
-    }
-    namespace = status.tenantName.toLowerCase().replace(/ /g, '-');
+  const status = getStatus();
+  if (!status.tenantName) {
+    throw new Error(
+      'Could not determine the directory namespace — no tenant found in the current login session. ' +
+        'Run `adsp login --tenant <name>` first.',
+    );
   }
+  const namespace = status.tenantName.toLowerCase().replace(/ /g, '-');
 
   const tokenResult = await getAccessToken();
   if (tokenResult.status === 'not-authenticated') {

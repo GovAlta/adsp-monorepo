@@ -53,16 +53,6 @@ describe('parseDirectoryRegisterArgs', () => {
     });
   });
 
-  it('parses an explicit --namespace', () => {
-    expect(
-      parseDirectoryRegisterArgs(['--service', 'my-service', '--url', 'https://my-service.example.com', '--namespace', 'my-tenant']),
-    ).toEqual({
-      service: 'my-service',
-      url: 'https://my-service.example.com',
-      namespace: 'my-tenant',
-    });
-  });
-
   it('returns empty object when no flags are provided', () => {
     expect(parseDirectoryRegisterArgs([])).toEqual({});
   });
