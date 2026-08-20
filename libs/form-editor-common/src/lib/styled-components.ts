@@ -255,10 +255,11 @@ export const NameDescriptionDataSchema = styled.div`
   flex: 6;
   min-width: 0; /* Allow flex item to shrink below content width */
   padding-right: 3rem;
+`;
 
-  .life-cycle-auto-scroll {
-    overflow-y: auto;
-  }
+export const EditorTabScroll = styled.div<{ $height: number }>`
+  height: ${({ $height }) => `${$height}px`};
+  overflow-y: auto;
 `;
 
 export const GoACheckboxPad = styled.div`

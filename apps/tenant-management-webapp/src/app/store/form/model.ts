@@ -28,11 +28,20 @@ export interface FormDefinition {
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
   customSubmissionEvent?: CustomSubmissionEvent;
+  reviewConfiguration?: ReviewConfiguration;
 }
 
 export interface CustomSubmissionEvent {
   namespace: string;
   name: string;
+}
+
+export interface ReviewColumn {
+  path: string;
+}
+
+export interface ReviewConfiguration {
+  columns: ReviewColumn[];
 }
 
 export interface FormResourceTagResponse {
@@ -86,6 +95,7 @@ export const defaultFormDefinition: FormDefinition = {
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
   customSubmissionEvent: null,
+  reviewConfiguration: { columns: [] },
 };
 export interface Stream {
   namespace: string;
