@@ -24,6 +24,7 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     scheduledIntakes: entity.scheduledIntakes,
     supportTopic: entity.supportTopic,
     registeredId: entity.registeredId,
+    reviewConfiguration: entity.reviewConfiguration || { columns: [] },
     created,
     intake: intake ? intake : null,
   };

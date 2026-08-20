@@ -175,6 +175,9 @@ export const addService =
     const entry = service;
     try {
       const result = await addEntry(namespace, entry, url, directoryRepository);
+      if (result === 'exists') {
+        return res.sendStatus(HttpStatusCodes.CONFLICT);
+      }
       if (!result) {
         return res.sendStatus(HttpStatusCodes.CREATED);
       }
@@ -196,6 +199,9 @@ export const addServiceApi =
     const entry = `${service}:${api}`;
     try {
       const result = await addEntry(namespace, entry, url, directoryRepository);
+      if (result === 'exists') {
+        return res.sendStatus(HttpStatusCodes.CONFLICT);
+      }
       if (!result) {
         return res.sendStatus(HttpStatusCodes.CREATED);
       }
@@ -212,7 +218,7 @@ const addEntry = async (
   entry: string,
   url: string,
   directoryRepository: DirectoryRepository
-): Promise<Service> => {
+): Promise<Service | 'exists' | null> => {
   const result = await directoryRepository.getDirectories(namespace);
 
   const mappingService = {
@@ -228,7 +234,7 @@ const addEntry = async (
   const isExist = services.find((x) => x.service === entry);
 
   if (isExist) {
-    throw new InvalidValueError('Create new service', `${entry} already exists in ${namespace}`);
+    return 'exists';
   } else {
     services.push(mappingService);
     const directory = { name: namespace, services: services };

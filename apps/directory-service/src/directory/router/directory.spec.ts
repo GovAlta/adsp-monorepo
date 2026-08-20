@@ -674,6 +674,18 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
     });
+    it('returns 409 when the service entry already exists', async () => {
+      const testDirectory = {
+        name: 'platform',
+        services: [{ service: 'added-service', host: '/existing/url' }],
+      };
+      const res = {
+        sendStatus: jest.fn(),
+      };
+      repositoryMock.getDirectories.mockResolvedValueOnce(testDirectory);
+      await handler(req, res as unknown as Response, next);
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
+    });
     it('addService can call next with not found', async () => {
       const testDirectory = {
         name: 'platform',
@@ -729,6 +741,27 @@ describe('router', () => {
       });
       await handler(req, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+    });
+    it('returns 409 when the service api entry already exists', async () => {
+      const handler = addServiceApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const testDirectory = {
+        name: 'platform',
+        services: [{ service: 'added-service:v1', host: '/existing/url' }],
+      };
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+        params: { namespace, service: 'added-service' },
+        query: {},
+        body: { api: 'v1', url: '/new/url' },
+      } as unknown as Request;
+      const res = {
+        sendStatus: jest.fn(),
+      };
+      const next = jest.fn();
+      repositoryMock.getDirectories.mockResolvedValueOnce(testDirectory);
+      await handler(req, res as unknown as Response, next);
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
     });
     it('addServiceApi can call next with not found', async () => {
       const handler = addServiceApi(repositoryMock, eventServiceMock, loggerMock as Logger);

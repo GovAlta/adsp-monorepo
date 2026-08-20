@@ -58,6 +58,23 @@ export const configurationSchema = {
         { type: 'null' },
       ],
     },
+    reviewConfiguration: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        columns: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['path'],
+            properties: {
+              path: { type: 'string', minLength: 1 },
+            },
+          },
+        },
+      },
+    },
   },
   required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
 };
