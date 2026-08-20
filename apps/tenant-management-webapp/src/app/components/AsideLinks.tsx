@@ -44,7 +44,7 @@ const AsideLinks = ({ serviceName, noDocsLink = false, feedbackTutorialLink }: A
         <HyperLinkColor>
           <ExternalLink
             testId="feedback-tutorial-link"
-            link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html"
+            link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/feedback-service.html"
             text="Feedback service tutorial"
           />
         </HyperLinkColor>

@@ -18,7 +18,7 @@ describe('AsideLinks', () => {
     return render(
       <Provider store={store}>
         <AsideLinks {...props} />
-      </Provider>
+      </Provider>,
     );
   };
 
@@ -33,7 +33,7 @@ describe('AsideLinks', () => {
 
     expect(getByTestId('code-link').querySelector('a')).toHaveAttribute(
       'href',
-      'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service'
+      'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service',
     );
   });
 
@@ -42,7 +42,7 @@ describe('AsideLinks', () => {
 
     expect(getByTestId('docs-link').querySelector('a')).toHaveAttribute(
       'href',
-      'https://api-docs.adsp.alberta.ca/auto-test?urls.primaryName=File service'
+      'https://api-docs.adsp.alberta.ca/auto-test?urls.primaryName=File service',
     );
   });
 
@@ -51,7 +51,7 @@ describe('AsideLinks', () => {
 
     expect(getByTestId('docs-link').querySelector('a')).toHaveAttribute(
       'href',
-      'https://api-docs.adsp.alberta.ca/auto-test?urls.primaryName=PDF service'
+      'https://api-docs.adsp.alberta.ca/auto-test?urls.primaryName=PDF service',
     );
   });
 
@@ -72,12 +72,12 @@ describe('AsideLinks', () => {
     rerender(
       <Provider store={store}>
         <AsideLinks serviceName="feedback" feedbackTutorialLink={true} />
-      </Provider>
+      </Provider>,
     );
 
     expect(queryByTestId('feedback-tutorial-link')?.querySelector('a')).toHaveAttribute(
       'href',
-      'https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html'
+      'https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/feedback-service.html',
     );
   });
 });
