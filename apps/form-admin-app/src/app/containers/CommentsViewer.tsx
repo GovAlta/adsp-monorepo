@@ -32,6 +32,7 @@ export const CommentsViewer: FunctionComponent = () => {
   return (
     <CommentsViewerComponent
       heading=" "
+      $commentsHeight={'30vh'}
       addCommentLabel="Add response"
       comments={results}
       canComment={canComment}
