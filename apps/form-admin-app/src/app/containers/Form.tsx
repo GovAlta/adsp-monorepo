@@ -1,6 +1,6 @@
 import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { DateTime } from 'luxon';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -19,6 +19,7 @@ import {
   selectTopic,
   topicSelector,
   AppState,
+  submissionSelector,
 } from '../state';
 import { FormViewer } from './FormViewer';
 import { DetailsLayout } from '../components/DetailsLayout';
@@ -43,6 +44,7 @@ export const Form = () => {
 
   const definition = useSelector(definitionSelector);
   const { form, next } = useSelector(formSelector);
+  const { submission } = useSelector(submissionSelector);
 
   const files = useSelector(formFilesSelector);
   const topic = useSelector((state: AppState) => topicSelector(state, form?.urn));
@@ -75,6 +77,12 @@ export const Form = () => {
     }
   }, [form]);
 
+  //Messages tab will be hidden if there is a form has been submitted, otherwise we will use the supportTopic to
+  //determine if it should be shown.
+  const hideMessageTab = useMemo(() => {
+    return submission ? true : !definition.supportTopic;
+  }, [definition.supportTopic, submission]);
+
   return (
     <DetailsLayout
       initialized={!!(definition && form)}
@@ -106,7 +114,7 @@ export const Form = () => {
       nextTo={next && `../forms/${next}`}
     >
       <Tabs>
-        <Tab heading="Form">
+        <Tab heading="Form" key="form">
           <FormContainer>
             <ContentContainer>
               <FormViewer
@@ -163,9 +171,11 @@ export const Form = () => {
             </GoabModal>
           </FormContainer>
         </Tab>
+
         <Tab
+          key="applicantQuestions"
           heading="Applicant questions"
-          hide={!definition.supportTopic}
+          hide={hideMessageTab}
           icon={topic?.requiresAttention ? 'mail-unread' : null}
         >
           <CommentsViewer />
