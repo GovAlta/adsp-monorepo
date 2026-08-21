@@ -18,35 +18,44 @@ export const createDocsRouter = async ({
   const router = Router();
 
   router.get('/docs/:namespace/:service', async (req: Request, res: Response, next: NextFunction) => {
-    const { namespace, service } = req.params;
-    const tenantId = req.query.tenant ? AdspId.parse(req.query.tenant as string) : null;
-    const tenant = tenantId ? await tenantService.getTenant(tenantId) : null;
+    try {
+      const { namespace, service } = req.params;
+      const tenantId = req.query.tenant ? AdspId.parse(req.query.tenant as string) : null;
+      const tenant = tenantId ? await tenantService.getTenant(tenantId) : null;
 
-    const serviceId = adspId`urn:ads:${namespace}:${service}`;
+      const serviceId = adspId`urn:ads:${namespace}:${service}`;
 
-    const serviceDoc = (await serviceDocs.getDocs(serviceId))[serviceId.toString()];
-    if (!serviceDoc) {
-      next(new NotFoundError('API docs', service));
-      return;
+      const serviceDoc = (await serviceDocs.getDocs(serviceId))[serviceId.toString()];
+      if (!serviceDoc) {
+        next(new NotFoundError('API docs', service));
+        return;
+      }
+
+      if (!serviceDoc.docs) {
+        next(new NotFoundError('API docs', service));
+        return;
+      }
+
+      if (tenant && serviceDoc.docs?.components?.securitySchemes) {
+        const oidcUrl = new URL(`auth/realms/${tenant.realm}/.well-known/openid-configuration`, accessServiceUrl);
+        serviceDoc.docs.components.securitySchemes = {
+          ...serviceDoc.docs.components.securitySchemes,
+          openId: {
+            type: 'openIdConnect',
+            openIdConnectUrl: oidcUrl.href,
+          },
+        };
+        serviceDoc.docs.security = [
+          ...(serviceDoc.docs.security || []),
+          {
+            openId: [],
+          },
+        ];
+      }
+      res.send(serviceDoc.docs);
+    } catch (err) {
+      next(err);
     }
-
-    if (tenant && serviceDoc.docs?.components?.securitySchemes) {
-      const oidcUrl = new URL(`auth/realms/${tenant.realm}/.well-known/openid-configuration`, accessServiceUrl);
-      serviceDoc.docs.components.securitySchemes = {
-        ...serviceDoc.docs.components.securitySchemes,
-        openId: {
-          type: 'openIdConnect',
-          openIdConnectUrl: oidcUrl.href,
-        },
-      };
-      serviceDoc.docs.security = [
-        ...(serviceDoc.docs.security || []),
-        {
-          openId: [],
-        },
-      ];
-    }
-    res.send(serviceDoc.docs);
   });
 
   // NOTE: This is not a normal use of swagger-ui-express. We are dynamically resolving swagger URLs based on tenant

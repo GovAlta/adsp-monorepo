@@ -46,6 +46,33 @@ export interface ServiceDocs {
   refresh(id: AdspId): Promise<Record<string, ServiceDoc>>;
 }
 
+const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+
+type Operation = { operationId?: string; responses?: Record<string, unknown> };
+
+const normalizeSpec = (doc: JsonObject): JsonObject => {
+  const paths = doc.paths as Record<string, Record<string, Operation>>;
+  if (!paths) return doc;
+
+  for (const [path, pathItem] of Object.entries(paths)) {
+    for (const method of HTTP_METHODS) {
+      const operation = pathItem?.[method];
+      if (!operation) continue;
+
+      if (!operation.operationId) {
+        const pathPart = path.replace(/[{}]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+        operation.operationId = `${method}_${pathPart}`;
+      }
+
+      if (!operation.responses || Object.keys(operation.responses).length === 0) {
+        operation.responses = { '200': { description: 'OK' } };
+      }
+    }
+  }
+
+  return doc;
+};
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delayMs = 1000): Promise<T> => {
@@ -72,7 +99,7 @@ class ServiceDocsImpl {
     try {
       const doc = (await withRetry(() => axios.get(docUrl)))?.data as JsonObject;
       if (doc?.openapi) {
-        return doc;
+        return normalizeSpec(doc);
       }
     } catch (err) {
       this.logger.warn(`Failed retrieving doc from ${docUrl}`);
@@ -95,11 +122,15 @@ class ServiceDocsImpl {
         this.logger.warn(`Failed retrieving directory entries for namespace ${namespace}: ${err.message}`);
         return docs;
       }
+      if (!Array.isArray(data)) {
+        this.logger.warn(`Unexpected response shape for namespace ${namespace} directory entries`);
+        return docs;
+      }
       for (const entry of data) {
         const url = entry.url;
-        const id = adspId`${entry.urn}`;
-        if (id.type === 'service') {
-          try {
+        try {
+          const id = adspId`${entry.urn}`;
+          if (id.type === 'service') {
             const serviceDirectoryUrl = new URL(
               `directory/v2/namespaces/${namespace}/services/${id.service}`,
               directoryServiceUrl.href
@@ -117,9 +148,9 @@ class ServiceDocsImpl {
                 docUrl: metadata?._links?.docs?.href,
               };
             }
-          } catch (err) {
-            this.logger.warn(`Failed retrieving docs for ${id} with error ${err.message}`);
           }
+        } catch (err) {
+          this.logger.warn(`Failed processing entry ${entry.urn}: ${err.message}`);
         }
       }
     }
@@ -137,10 +168,10 @@ class ServiceDocsImpl {
   async getDocs(id?: AdspId): Promise<Record<string, ServiceDoc>> {
     // Kick off background loads without awaiting — callers get whatever is currently cached.
     if (!this.cache.keys().includes(id.namespace)) {
-      this.loadNamespace(id.namespace);
+      this.loadNamespace(id.namespace).catch((err) => this.logger.warn(`Failed loading namespace ${id.namespace}: ${err.message}`));
     }
     if (id.namespace !== 'platform' && !this.cache.keys().includes('platform')) {
-      this.loadNamespace('platform');
+      this.loadNamespace('platform').catch((err) => this.logger.warn(`Failed loading namespace platform: ${err.message}`));
     }
 
     const mergedDocs: Record<string, ServiceDoc> =
@@ -175,7 +206,7 @@ class ServiceDocsImpl {
   invalidate(id: AdspId): void {
     if (this.cache.keys().includes(id.namespace)) {
       this.cache.del(id.namespace);
-      this.loadNamespace(id.namespace);
+      this.loadNamespace(id.namespace).catch((err) => this.logger.warn(`Failed reloading namespace ${id.namespace}: ${err.message}`));
     }
   }
 
