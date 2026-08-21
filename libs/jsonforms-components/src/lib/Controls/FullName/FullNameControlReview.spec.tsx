@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { FullNameControlReview } from './FullNameControlReview';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { JsonFormContext } from '../../Context';
 
 describe('FullNameControlReview', () => {
   const mockGoToPage = jest.fn();
@@ -140,6 +141,23 @@ describe('FullNameControlReview', () => {
     const lastNameError = baseElement.querySelector('goa-form-item[error="Last name is required"]');
     expect(firstNameError).toBeInTheDocument();
     expect(lastNameError).toBeInTheDocument();
+  });
+
+  it('does not render Change button when the host turns change buttons off', () => {
+    render(
+      <table>
+        <tbody>
+          <JsonFormContext.Provider value={{ showChangeButtons: false }}>
+            <JsonFormsStepperContext.Provider value={stepperContextValue}>
+              <FullNameControlReview {...defaultProps} />
+            </JsonFormsStepperContext.Provider>
+          </JsonFormContext.Provider>
+        </tbody>
+      </table>,
+    );
+
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+    expect(screen.getByText('John')).toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {

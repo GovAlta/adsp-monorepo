@@ -4,11 +4,13 @@ import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useShowChangeButtons } from '../../Context/ContextProvider';
 
 type ContractInfoControlReviewProps = ControlProps;
 
 export const ContractInfoControlReview = (props: ContractInfoControlReviewProps): JSX.Element => {
   const context = useContext(JsonFormsStepperContext);
+  const showChangeButtons = useShowChangeButtons();
   const stepId = props.uischema?.options?.stepId;
 
   const { uischema, data = {}, id, schema } = props;
@@ -23,7 +25,7 @@ export const ContractInfoControlReview = (props: ContractInfoControlReviewProps)
       <PageReviewContainer colSpan={3}>
         <ReviewHeader>
           <ReviewLabel>{fieldLabel}</ReviewLabel>
-          {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
+          {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="text"
               size="compact"

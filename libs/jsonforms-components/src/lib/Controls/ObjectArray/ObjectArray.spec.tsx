@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ObjectArrayControl, NonEmptyCellComponent } from './ObjectListControl';
 import { ControlElement, ArrayTranslations } from '@jsonforms/core';
+import { JsonFormContext } from '../../Context';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 jest.mock('@jsonforms/react');
 
@@ -99,6 +100,52 @@ const baseMockProps = {
   addItem: jest.fn(),
 };
 describe('Object List component', () => {
+  const reviewProps = {
+    ...baseMockProps,
+    data: [{ date: '2026-01-01', message: 'Hi' }],
+    isStepperReview: true,
+    uischema: { ...mockUISchema, options: { stepId: 0 } },
+  };
+
+  it('renders a Change button in review by default', async () => {
+    (useJsonForms as jest.Mock).mockReturnValue({
+      core: { schema: rootSchema, errors: [] },
+      cells: [],
+      renderers: [],
+    });
+
+    render(
+      <table>
+        <tbody>
+          <ObjectArrayControl {...reviewProps} />
+        </tbody>
+      </table>,
+    );
+
+    expect(screen.getByText('Change')).toBeInTheDocument();
+  });
+
+  it('does not render a Change button in review when the host turns change buttons off', async () => {
+    (useJsonForms as jest.Mock).mockReturnValue({
+      core: { schema: rootSchema, errors: [] },
+      cells: [],
+      renderers: [],
+    });
+
+    render(
+      <JsonFormContext.Provider value={{ showChangeButtons: false }}>
+        <table>
+          <tbody>
+            <ObjectArrayControl {...reviewProps} />
+          </tbody>
+        </table>
+      </JsonFormContext.Provider>,
+    );
+
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+    expect(screen.getByText('Comments')).toBeInTheDocument();
+  });
+
   it('Can render the object array component', async () => {
     render(<ObjectArrayControl {...baseMockProps} />);
     const ObjectListWrapper = screen.getByTestId('jsonforms-object-list-wrapper');

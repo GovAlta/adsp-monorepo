@@ -1,4 +1,4 @@
-import { TenantService, adspId } from '@abgov/adsp-service-sdk';
+import { TenantService, adspId, toKebabName } from '@abgov/adsp-service-sdk';
 
 import { Logger } from 'winston';
 import { ServiceDocs } from '../docs/serviceDocs';
@@ -15,9 +15,9 @@ export const createFetchJob =
     try {
       logger.info('Starting fetch api docs and put into cache');
       const tenants = await tenantService.getTenants();
-      tenants.map(async (tenant) => {
-        serviceDocs.getDocs(adspId`urn:ads:${tenant.name}`);
-      });
+      await Promise.all(
+        tenants.map((tenant) => serviceDocs.refresh(adspId`urn:ads:${toKebabName(tenant.name)}`))
+      );
       logger.info('Ending fetch api docs and put into cache');
     } catch (err) {
       const errMessage = `Error getting notices: ${err.message}`;

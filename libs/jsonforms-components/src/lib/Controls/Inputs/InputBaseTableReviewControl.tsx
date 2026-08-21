@@ -23,12 +23,14 @@ import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { useReviewContext } from '../../Context/ReviewRenderContext';
+import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const context = useContext(JsonFormsStepperContext);
   const reviewCtx = useReviewContext();
+  const showChangeButtons = useShowChangeButtons();
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
   const propLabel = typeof label === 'string' ? label : '';
@@ -248,7 +250,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {labelToUpdate}
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
-          {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
+          {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton type="text" size="compact" onClick={handleChangeClick}>
               Change
             </GoabButton>
