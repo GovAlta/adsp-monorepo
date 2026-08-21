@@ -48,16 +48,24 @@ export interface ServiceDocs {
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
-const ensureOperationIds = (doc: JsonObject): JsonObject => {
-  const paths = doc.paths as Record<string, Record<string, { operationId?: string }>>;
+type Operation = { operationId?: string; responses?: Record<string, unknown> };
+
+const normalizeSpec = (doc: JsonObject): JsonObject => {
+  const paths = doc.paths as Record<string, Record<string, Operation>>;
   if (!paths) return doc;
 
   for (const [path, pathItem] of Object.entries(paths)) {
     for (const method of HTTP_METHODS) {
       const operation = pathItem?.[method];
-      if (operation && !operation.operationId) {
+      if (!operation) continue;
+
+      if (!operation.operationId) {
         const pathPart = path.replace(/[{}]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
         operation.operationId = `${method}_${pathPart}`;
+      }
+
+      if (!operation.responses || Object.keys(operation.responses).length === 0) {
+        operation.responses = { '200': { description: 'OK' } };
       }
     }
   }
@@ -91,7 +99,7 @@ class ServiceDocsImpl {
     try {
       const doc = (await withRetry(() => axios.get(docUrl)))?.data as JsonObject;
       if (doc?.openapi) {
-        return ensureOperationIds(doc);
+        return normalizeSpec(doc);
       }
     } catch (err) {
       this.logger.warn(`Failed retrieving doc from ${docUrl}`);
@@ -134,7 +142,7 @@ class ServiceDocsImpl {
               docs[id.toString()] = {
                 service: {
                   id: id,
-                  name: metadata?.displayName || metadata?.name,
+                  name: metadata?.displayName || metadata?.name || id.service,
                 },
                 url,
                 docUrl: metadata?._links?.docs?.href,
