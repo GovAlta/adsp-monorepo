@@ -95,11 +95,15 @@ class ServiceDocsImpl {
         this.logger.warn(`Failed retrieving directory entries for namespace ${namespace}: ${err.message}`);
         return docs;
       }
+      if (!Array.isArray(data)) {
+        this.logger.warn(`Unexpected response shape for namespace ${namespace} directory entries`);
+        return docs;
+      }
       for (const entry of data) {
         const url = entry.url;
-        const id = adspId`${entry.urn}`;
-        if (id.type === 'service') {
-          try {
+        try {
+          const id = adspId`${entry.urn}`;
+          if (id.type === 'service') {
             const serviceDirectoryUrl = new URL(
               `directory/v2/namespaces/${namespace}/services/${id.service}`,
               directoryServiceUrl.href
@@ -117,9 +121,9 @@ class ServiceDocsImpl {
                 docUrl: metadata?._links?.docs?.href,
               };
             }
-          } catch (err) {
-            this.logger.warn(`Failed retrieving docs for ${id} with error ${err.message}`);
           }
+        } catch (err) {
+          this.logger.warn(`Failed processing entry ${entry.urn}: ${err.message}`);
         }
       }
     }
@@ -137,10 +141,10 @@ class ServiceDocsImpl {
   async getDocs(id?: AdspId): Promise<Record<string, ServiceDoc>> {
     // Kick off background loads without awaiting — callers get whatever is currently cached.
     if (!this.cache.keys().includes(id.namespace)) {
-      this.loadNamespace(id.namespace);
+      this.loadNamespace(id.namespace).catch((err) => this.logger.warn(`Failed loading namespace ${id.namespace}: ${err.message}`));
     }
     if (id.namespace !== 'platform' && !this.cache.keys().includes('platform')) {
-      this.loadNamespace('platform');
+      this.loadNamespace('platform').catch((err) => this.logger.warn(`Failed loading namespace platform: ${err.message}`));
     }
 
     const mergedDocs: Record<string, ServiceDoc> =
@@ -175,7 +179,7 @@ class ServiceDocsImpl {
   invalidate(id: AdspId): void {
     if (this.cache.keys().includes(id.namespace)) {
       this.cache.del(id.namespace);
-      this.loadNamespace(id.namespace);
+      this.loadNamespace(id.namespace).catch((err) => this.logger.warn(`Failed reloading namespace ${id.namespace}: ${err.message}`));
     }
   }
 
