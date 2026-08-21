@@ -46,6 +46,25 @@ export interface ServiceDocs {
   refresh(id: AdspId): Promise<Record<string, ServiceDoc>>;
 }
 
+const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+
+const ensureOperationIds = (doc: JsonObject): JsonObject => {
+  const paths = doc.paths as Record<string, Record<string, { operationId?: string }>>;
+  if (!paths) return doc;
+
+  for (const [path, pathItem] of Object.entries(paths)) {
+    for (const method of HTTP_METHODS) {
+      const operation = pathItem?.[method];
+      if (operation && !operation.operationId) {
+        const pathPart = path.replace(/[{}]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+        operation.operationId = `${method}_${pathPart}`;
+      }
+    }
+  }
+
+  return doc;
+};
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delayMs = 1000): Promise<T> => {
@@ -72,7 +91,7 @@ class ServiceDocsImpl {
     try {
       const doc = (await withRetry(() => axios.get(docUrl)))?.data as JsonObject;
       if (doc?.openapi) {
-        return doc;
+        return ensureOperationIds(doc);
       }
     } catch (err) {
       this.logger.warn(`Failed retrieving doc from ${docUrl}`);
