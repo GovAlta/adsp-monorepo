@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { GoabCheckbox, GoabTable } from '@abgov/react-components';
 import styles from './RoleTable.module.scss';
 import { useSelector } from 'react-redux';
@@ -33,7 +33,10 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
     tenantName: state.user.tenant.name,
   }));
 
-  const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
+  // Selections are rendered straight from props. A table is mounted per client, but they all edit the
+  // same role arrays, so keeping a local copy lets one table overwrite another table's changes with a
+  // stale snapshot taken when it mounted (CS-5291).
+  const { checkedRoles, roleSelectFunc } = props;
 
   const scrollPaneRef = useRef<HTMLDivElement | null>(null);
 
@@ -54,25 +57,11 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
 
   const handleCheckboxChange = useCallback(
     (checkedRole: SelectedRoles, compositeRole: string) => {
-      setCheckedRoles((prev) => {
-        const updated = prev.map((cr) =>
-          cr.title === checkedRole.title
-            ? {
-                ...cr,
-                selectedRoles: cr.selectedRoles.includes(compositeRole)
-                  ? cr.selectedRoles.filter((r) => r !== compositeRole)
-                  : [...cr.selectedRoles, compositeRole],
-              }
-            : cr
-        );
-
-        const updatedRole = updated.find((cr) => cr.title === checkedRole.title);
-        if (updatedRole) {
-          props.roleSelectFunc(updatedRole.selectedRoles, checkedRole.title);
-        }
-
-        return updated;
-      });
+      const selectedRoles = checkedRole.selectedRoles ?? [];
+      const newRoles = selectedRoles.includes(compositeRole)
+        ? selectedRoles.filter((r) => r !== compositeRole)
+        : [...selectedRoles, compositeRole];
+      roleSelectFunc(newRoles, checkedRole.title);
 
       // Save scroll position
       if (scrollPaneRef.current) {
@@ -82,7 +71,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
         });
       }
     },
-    [props.roleSelectFunc]
+    [roleSelectFunc]
   );
 
   const tableBody = useMemo(() => {
@@ -98,7 +87,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             <td className="role" key={`${props.service}-${role}-checkbox-${index}`}>
               <GoabCheckbox size="compact"
                 name={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
-                checked={checkedRole.selectedRoles.includes(compositeRole)}
+                checked={(checkedRole.selectedRoles ?? []).includes(compositeRole)}
                 testId={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                 disabled={(props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled}
                 ariaLabel={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
