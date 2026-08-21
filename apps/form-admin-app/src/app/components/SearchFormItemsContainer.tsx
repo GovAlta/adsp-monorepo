@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — styled component declarations only; exercised via FormDefinitions.spec.tsx.
 import styled from 'styled-components';
 
 export const SearchFormItemsContainer = styled.div`
