@@ -25,7 +25,8 @@ const SummaryCount = styled.strong`
 
 interface ResultsSummaryProps {
   visible: number;
-  total: number;
+  // Total is not known for searches that resolve results by tag.
+  total?: number | null;
   itemLabel: string;
   loading?: boolean;
   onClearFilters: () => void;
@@ -41,9 +42,7 @@ export const ResultsSummary: FunctionComponent<ResultsSummaryProps> = ({
   <ResultsSummaryContainer>
     <SummaryText>
       Showing{' '}
-      <SummaryCount>
-        {visible} of {total}
-      </SummaryCount>{' '}
+      <SummaryCount>{typeof total === 'number' ? `${visible} of ${total}` : visible}</SummaryCount>{' '}
       {itemLabel} matching your current filters.
     </SummaryText>
     <GoabButton size="compact" type="secondary" disabled={loading} onClick={onClearFilters}>
