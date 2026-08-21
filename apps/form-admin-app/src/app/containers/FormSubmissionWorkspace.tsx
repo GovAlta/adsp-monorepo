@@ -5,6 +5,7 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
+  GoabIcon,
   GoabTextArea,
 } from '@abgov/react-components';
 import { GoabDropdownOnChangeDetail, GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
@@ -14,8 +15,14 @@ import {
   dispositionDraftSelector,
   formActions,
   formBusySelector,
+  loadTopic,
+  selectTopic,
   submissionSelector,
+  topicSelector,
   updateFormDisposition,
+  AppState,
+  formSelector,
+  selectForm,
 } from '../state';
 import { AdspId } from '../../lib/adspId';
 import { DateTime } from 'luxon';
@@ -23,7 +30,9 @@ import { SubmissionNotes } from './SubmissionNotes';
 import { Tags } from './Tags';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import styled from 'styled-components';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import CommentsViewer from './CommentsViewer';
 
 const AccordionDisplayDiv = styled.main`
   display: block;
@@ -50,12 +59,34 @@ export const FormSubmissionWorkspace: FunctionComponent<FormSubmissionWorkspaceP
   busy,
   onOpenTag,
 }) => {
+  const { form } = useSelector(formSelector);
+  const topic = useSelector((state: AppState) => topicSelector(state, form?.urn));
+
+  useEffect(() => {
+    dispatch(selectForm(submission.formId));
+  }, [dispatch, submission.formId]);
+
+  useEffect(() => {
+    if (form) {
+      (async () => {
+        await dispatch(loadTopic({ resourceId: form.urn, typeId: 'form-questions' }));
+        await dispatch(selectTopic({ resourceId: form.urn }));
+      })();
+    }
+  }, [dispatch, definition, form]);
+
   return (
     <AccordionDisplayDiv>
-      <GoabAccordion heading="Communication/Messages" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
-        Communication section
-        {/* TODO: Add Communication/Messages content */}
-      </GoabAccordion>
+      {definition.supportTopic && (
+        <GoabAccordion
+          heading="Messages"
+          maxWidth={ACCORDION_MAX_WIDTH}
+          mb="m"
+          headingContent={topic?.requiresAttention ? <GoabIcon type="mail-unread" /> : undefined}
+        >
+          <CommentsViewer />
+        </GoabAccordion>
+      )}
       <GoabAccordion heading="Notes" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
         <SubmissionNotes dispatch={dispatch} submission={submission} busy={busy} />
       </GoabAccordion>

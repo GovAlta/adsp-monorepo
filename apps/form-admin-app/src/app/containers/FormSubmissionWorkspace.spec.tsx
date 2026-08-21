@@ -19,6 +19,7 @@ const busy = { initializing: false, loading: false, findPdf: false, executing: f
 const definition = {
   id: 'test',
   name: 'Test definition',
+  supportTopic: true,
   dispositionStates: [{ id: 'rejected', name: 'rejected', description: 'Rejected' }],
 };
 
@@ -45,8 +46,29 @@ const submission = {
   hash: 'hash',
 };
 
+const form = {
+  id: 'form-1',
+  urn: 'urn:ads:platform:form-service:v1:/forms/form-1',
+  definitionId: 'test',
+};
+
 const renderWorkspace = (props = {}) => {
   const store = mockStore({
+    form: {
+      forms: { [form.id]: form },
+      selectedForm: form.id,
+      results: { forms: [form.id] },
+    },
+    comment: {
+      topics: {},
+      selected: { resourceId: null, canRead: false, canComment: false },
+      comments: { results: [], next: null },
+      draft: { title: null, content: null },
+      busy: { loading: false, executing: false },
+    },
+    user: {
+      user: { id: 'user-1', name: 'Test User', email: 'test@gov.ab.ca', roles: [] },
+    },
     directory: {
       resourceTags: {},
       tagResources: {},
@@ -84,7 +106,7 @@ describe('FormSubmissionWorkspace', () => {
     const headings = Array.from(baseElement.querySelectorAll('goa-accordion')).map((accordion) =>
       accordion.getAttribute('heading'),
     );
-    expect(headings).toEqual(['Communication/Messages', 'Notes', 'Tags', 'History', 'Disposition']);
+    expect(headings).toEqual(['Messages', 'Notes', 'Tags', 'History', 'Disposition']);
   });
 
   it('should render the notes of the submission in the notes section', () => {

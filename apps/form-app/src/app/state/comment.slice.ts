@@ -63,6 +63,14 @@ function writeLastReadCommentId(topicId: number, commentId: number): void {
   }
 }
 
+// Recording the newest comment seen is what marks messages as read; it happens both when the drawer
+// is opened and when a message arrives while it is already open.
+function markMessagesRead(topicId: number, latestCommentId: number, lastReadCommentId: number): void {
+  if (latestCommentId > lastReadCommentId) {
+    writeLastReadCommentId(topicId, latestCommentId);
+  }
+}
+
 function latestOf(commentId: number, comments: Comment[]): number {
   return comments.reduce((latest, { id }) => (id > latest ? id : latest), commentId);
 }
@@ -127,6 +135,9 @@ export const connectStream = createAsyncThunk(
       const { comment } = getState() as AppState;
       if (comment.selected.resourceId === topic.resourceId) {
         dispatch(loadComments({ topic: comment.topics[topic.resourceId] }));
+        // Loading the comments doesn't recount them, and the update event doesn't say who wrote the
+        // comment, so the count is refreshed from the service rather than incremented here.
+        dispatch(loadUnreadMessages({ topicId: topic.id }));
       }
     };
 
@@ -226,29 +237,42 @@ export const selectTopic = createAsyncThunk(
 export const loadUnreadMessages = createAsyncThunk(
   'comment/load-unread-messages',
   async ({ topicId }: { topicId: number }, { getState }) => {
-    const { config, user } = getState() as AppState;
+    const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
     const lastReadCommentId = readLastReadCommentId(topicId);
 
-    const token = await getAccessToken();
-    const { data } = await axios.get<{ results: Comment[] }>(
-      new URL(`/comment/v1/topics/${topicId}/comments`, commentServiceUrl).href,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          top: UNREAD_MESSAGES_MAX,
-          criteria: JSON.stringify({ idGreaterThan: lastReadCommentId }),
+    try {
+      const token = await getAccessToken();
+      const { data } = await axios.get<{ results: Comment[] }>(
+        new URL(`/comment/v1/topics/${topicId}/comments`, commentServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            top: UNREAD_MESSAGES_MAX,
+            criteria: JSON.stringify({ idGreaterThan: lastReadCommentId }),
+          },
         },
-      },
-    );
+      );
 
-    const userId = user.user?.id;
-    return {
-      lastReadCommentId,
-      latestCommentId: latestOf(lastReadCommentId, data.results),
-      // Comments the applicant wrote themselves were never unread.
-      unread: data.results.filter(({ createdBy }) => createdBy?.id !== userId).length,
-    };
+      // The comments may have been reloaded into the drawer while this was in flight.
+      const { comment, user } = getState() as AppState;
+      const latestCommentId = Math.max(latestOf(lastReadCommentId, data.results), comment.messages.latestCommentId);
+
+      if (comment.messages.show) {
+        markMessagesRead(topicId, latestCommentId, lastReadCommentId);
+      }
+
+      return {
+        lastReadCommentId,
+        latestCommentId,
+        // Comments the applicant wrote themselves were never unread.
+        unread: data.results.filter(({ createdBy }) => createdBy?.id !== user.user?.id).length,
+      };
+    } catch (err) {
+      // clean-code-ignore: 2.13
+      console.error('Loading unread messages error: ' + err.message);
+      return null;
+    }
   },
 );
 
@@ -258,8 +282,8 @@ export const setShowMessages = createAsyncThunk('comment/set-show-messages', (sh
   const topic = comment.topics[comment.selected.resourceId];
   const { latestCommentId, lastReadCommentId } = comment.messages;
 
-  if (show && topic && latestCommentId > lastReadCommentId) {
-    writeLastReadCommentId(topic.id, latestCommentId);
+  if (show && topic) {
+    markMessagesRead(topic.id, latestCommentId, lastReadCommentId);
   }
 
   return show;
@@ -384,6 +408,13 @@ const commentSlice = createSlice({
         state.busy.loading = false;
       })
       .addCase(selectTopic.fulfilled, (state, { meta, payload }) => {
+        // Message ids are per topic, so what was tracked for a previously opened form has to go.
+        if (state.selected.resourceId !== meta.arg.resourceId) {
+          state.messages.unread = 0;
+          state.messages.latestCommentId = 0;
+          state.messages.lastReadCommentId = 0;
+        }
+
         state.selected.resourceId = meta.arg.resourceId;
         state.selected.canComment = payload.canComment;
         state.selected.canRead = payload.canRead;
@@ -417,17 +448,21 @@ const commentSlice = createSlice({
       .addCase(addComment.rejected, (state) => {
         state.busy.executing = false;
       })
-      .addCase(loadUnreadMessages.pending, (state) => {
-        // The counts are for a single topic, so drop what was tracked for the previously loaded form.
-        state.messages.unread = 0;
-        state.messages.latestCommentId = 0;
-        state.messages.lastReadCommentId = 0;
-      })
       .addCase(loadUnreadMessages.fulfilled, (state, { payload }) => {
+        // The count couldn't be loaded, so leave the messages counted before it as they were.
+        if (!payload) {
+          return;
+        }
+
         state.messages.lastReadCommentId = Math.max(state.messages.lastReadCommentId, payload.lastReadCommentId);
         state.messages.latestCommentId = Math.max(state.messages.latestCommentId, payload.latestCommentId);
-        // The drawer may have been opened while the count was loading, which already read them.
-        state.messages.unread = state.messages.show ? 0 : payload.unread;
+        if (state.messages.show) {
+          // The drawer is open, so the counted messages have been read as they arrived.
+          state.messages.unread = 0;
+          state.messages.lastReadCommentId = Math.max(state.messages.lastReadCommentId, state.messages.latestCommentId);
+        } else {
+          state.messages.unread = payload.unread;
+        }
       })
       .addCase(setShowMessages.fulfilled, (state, { payload }) => {
         state.messages.show = payload;

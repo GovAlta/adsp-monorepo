@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { FullNameDobReviewControl } from './FullNameDobReviewControl';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { JsonFormContext } from '../../Context';
 
 describe('FullNameDobReviewControl', () => {
   const mockGoToPage = jest.fn();
@@ -148,6 +149,22 @@ describe('FullNameDobReviewControl', () => {
     expect(firstNameError).toBeInTheDocument();
     expect(lastNameError).toBeInTheDocument();
     expect(dobError).toBeInTheDocument();
+  });
+
+  it('does not render Change button when the host turns change buttons off', () => {
+    render(
+      <table>
+        <tbody>
+          <JsonFormContext.Provider value={{ showChangeButtons: false }}>
+            <JsonFormsStepperContext.Provider value={stepperContextValue}>
+              <FullNameDobReviewControl {...defaultProps} />
+            </JsonFormsStepperContext.Provider>
+          </JsonFormContext.Provider>
+        </tbody>
+      </table>,
+    );
+
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {

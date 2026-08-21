@@ -18,35 +18,44 @@ export const createDocsRouter = async ({
   const router = Router();
 
   router.get('/docs/:namespace/:service', async (req: Request, res: Response, next: NextFunction) => {
-    const { namespace, service } = req.params;
-    const tenantId = req.query.tenant ? AdspId.parse(req.query.tenant as string) : null;
-    const tenant = tenantId ? await tenantService.getTenant(tenantId) : null;
+    try {
+      const { namespace, service } = req.params;
+      const tenantId = req.query.tenant ? AdspId.parse(req.query.tenant as string) : null;
+      const tenant = tenantId ? await tenantService.getTenant(tenantId) : null;
 
-    const serviceId = adspId`urn:ads:${namespace}:${service}`;
+      const serviceId = adspId`urn:ads:${namespace}:${service}`;
 
-    const serviceDoc = (await serviceDocs.getDocs(serviceId))[serviceId.toString()];
-    if (!serviceDoc) {
-      next(new NotFoundError('API docs', service));
-      return;
+      const serviceDoc = (await serviceDocs.getDocs(serviceId))[serviceId.toString()];
+      if (!serviceDoc) {
+        next(new NotFoundError('API docs', service));
+        return;
+      }
+
+      if (!serviceDoc.docs) {
+        next(new NotFoundError('API docs', service));
+        return;
+      }
+
+      if (tenant && serviceDoc.docs?.components?.securitySchemes) {
+        const oidcUrl = new URL(`auth/realms/${tenant.realm}/.well-known/openid-configuration`, accessServiceUrl);
+        serviceDoc.docs.components.securitySchemes = {
+          ...serviceDoc.docs.components.securitySchemes,
+          openId: {
+            type: 'openIdConnect',
+            openIdConnectUrl: oidcUrl.href,
+          },
+        };
+        serviceDoc.docs.security = [
+          ...(serviceDoc.docs.security || []),
+          {
+            openId: [],
+          },
+        ];
+      }
+      res.send(serviceDoc.docs);
+    } catch (err) {
+      next(err);
     }
-
-    if (tenant && serviceDoc.docs?.components?.securitySchemes) {
-      const oidcUrl = new URL(`auth/realms/${tenant.realm}/.well-known/openid-configuration`, accessServiceUrl);
-      serviceDoc.docs.components.securitySchemes = {
-        ...serviceDoc.docs.components.securitySchemes,
-        openId: {
-          type: 'openIdConnect',
-          openIdConnectUrl: oidcUrl.href,
-        },
-      };
-      serviceDoc.docs.security = [
-        ...(serviceDoc.docs.security || []),
-        {
-          openId: [],
-        },
-      ];
-    }
-    res.send(serviceDoc.docs);
   });
 
   // NOTE: This is not a normal use of swagger-ui-express. We are dynamically resolving swagger URLs based on tenant
@@ -64,22 +73,27 @@ export const createDocsRouter = async ({
       const { tenant: tenantName } = req.params as unknown as { tenant: string };
 
       if (req.url === '/swagger-ui-init.js') {
-        const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace(/-/g, ' ') as string) : null;
-        const namespace = tenant ? toKebabName(tenant.name) : null;
-        const docs = {
-          ...(await serviceDocs.getDocs(adspId`urn:ads:platform`)),
-          ...(namespace ? await serviceDocs.getDocs(adspId`urn:ads:${namespace}`) : null),
-        };
-
-        const swaggerUrls = Object.entries(docs).map(([id, serviceDoc]) => {
-          const serviceId = AdspId.parse(id);
-          return {
-            name: serviceDoc.service.name,
-            url: `/docs/${serviceId.namespace}/${serviceId.service}${tenant ? `?tenant=${tenant.id}` : ''}`,
+        try {
+          const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace(/-/g, ' ') as string) : null;
+          const namespace = tenant ? toKebabName(tenant.name) : null;
+          const docs = {
+            ...(await serviceDocs.getDocs(adspId`urn:ads:platform`)),
+            ...(namespace ? await serviceDocs.getDocs(adspId`urn:ads:${namespace}`) : null),
           };
-        });
-        swaggerUrls.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-        req['options'] = { swaggerUrls };
+
+          const swaggerUrls = Object.entries(docs).map(([id, serviceDoc]) => {
+            const serviceId = AdspId.parse(id);
+            return {
+              name: serviceDoc.service.name,
+              url: `/docs/${serviceId.namespace}/${serviceId.service}${tenant ? `?tenant=${tenant.id}` : ''}`,
+            };
+          });
+          swaggerUrls.sort((a, b) => (a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase()));
+          req['options'] = { swaggerUrls };
+        } catch (err) {
+          next(err);
+          return;
+        }
       }
       next();
     },

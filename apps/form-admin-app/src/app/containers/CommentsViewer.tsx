@@ -9,13 +9,18 @@ import {
   commentExecutingSelector,
   commentLoadingSelector,
   commentsSelector,
+  deleteComment,
   draftSelector,
   loadComments,
   selectedTopicSelector,
+  userSelector,
 } from '../state';
 
 export const CommentsViewer: FunctionComponent = () => {
   const topic = useSelector(selectedTopicSelector);
+  const { user } = useSelector(userSelector);
+  const busy = useSelector(commentExecutingSelector);
+
   const { results, next } = useSelector(commentsSelector);
   const loading = useSelector(commentLoadingSelector);
   const executing = useSelector(commentExecutingSelector);
@@ -26,17 +31,22 @@ export const CommentsViewer: FunctionComponent = () => {
 
   return (
     <CommentsViewerComponent
-      heading="Questions"
+      heading=" "
+      $commentsHeight={'30vh'}
       addCommentLabel="Add response"
       comments={results}
       canComment={canComment}
       canLoadMore={!!next}
+      topicId={topic?.id}
       loading={loading}
+      busy={busy}
       commenting={executing}
+      userId={user.id}
       draft={draft}
       onLoadMore={() => dispatch(loadComments({ after: next, topic }))}
       onUpdateDraft={(draft) => dispatch(commentActions.setDraftComment(draft))}
       onAddComment={(draft) => dispatch(addComment({ topic, comment: draft, requiresAttention: false }))}
+      onDeleteComment={(topicId, commentId) => dispatch(deleteComment({ topicId: topic.id, commentId }))}
     />
   );
 };

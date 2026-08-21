@@ -37,7 +37,29 @@ describe('FormDefinitionEntity', () => {
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
     expect(entity).toBeTruthy();
+    expect(entity.reviewConfiguration).toEqual({ columns: [] });
     expect(validationService.setSchema).toHaveBeenCalledWith(`${tenantId.resource}:${entity.id}`, expect.any(Object));
+  });
+
+  it('can copy review configuration from the definition', () => {
+    const reviewConfiguration = { columns: [{ path: 'applicant.firstName' }, { path: 'fileNumber' }] };
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: ['test-applicant'],
+      assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: null,
+      submissionRecords: false,
+      submissionPdfTemplate: '',
+      supportTopic: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
+      reviewConfiguration,
+    });
+    expect(entity.reviewConfiguration).toEqual(reviewConfiguration);
   });
 
   it('can be created with null roles', () => {

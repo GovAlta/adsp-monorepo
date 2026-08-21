@@ -1,11 +1,23 @@
 import '@testing-library/jest-dom';
 import axios from 'axios';
-import { commentReducer, loadComments, loadUnreadMessages, setShowMessages } from './comment.slice';
+import { io } from 'socket.io-client';
+import {
+  commentReducer,
+  connectStream,
+  loadComments,
+  loadUnreadMessages,
+  selectTopic,
+  setShowMessages,
+} from './comment.slice';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
+jest.mock('socket.io-client', () => ({ io: jest.fn() }));
+const ioMock = io as jest.MockedFunction<typeof io>;
+
 const COMMENT_SERVICE_URL = 'https://comment-service';
+const PUSH_SERVICE_URL = 'https://push-service';
 const TOPIC = { resourceId: 'urn:ads:platform:form-service:v1:/forms/form-1', id: 12, name: 'form-1', commenters: [] };
 
 const initialState = commentReducer(undefined, { type: 'unknown' });
@@ -20,7 +32,12 @@ const getState =
   (comment: unknown = stateWithTopic) =>
   () =>
     ({
-      config: { directory: { 'urn:ads:platform:comment-service': COMMENT_SERVICE_URL } },
+      config: {
+        directory: {
+          'urn:ads:platform:comment-service': COMMENT_SERVICE_URL,
+          'urn:ads:platform:push-service': PUSH_SERVICE_URL,
+        },
+      },
       user: { user: { id: 'applicant' } },
       comment,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,14 +82,24 @@ describe('comment slice messages', () => {
       expect(payload).toEqual({ lastReadCommentId: 5, latestCommentId: 5, unread: 0 });
     });
 
-    // Message ids are per topic, so what was tracked for a previously opened form has to go.
-    it('drops the counts of the previous form', () => {
+    it('keeps the previous count when the request fails', () => {
       const state = commentReducer(
         { ...stateWithTopic, messages: { show: false, latestCommentId: 40, lastReadCommentId: 38, unread: 2 } },
-        { type: loadUnreadMessages.pending.type },
+        { type: loadUnreadMessages.fulfilled.type, payload: null },
       );
 
-      expect(state.messages).toEqual({ show: false, latestCommentId: 0, lastReadCommentId: 0, unread: 0 });
+      expect(state.messages).toEqual({ show: false, latestCommentId: 40, lastReadCommentId: 38, unread: 2 });
+    });
+
+    // Anything that arrives while the drawer is open has been read as it came in, and the id has to
+    // be recorded so a reload doesn't count it again.
+    it('marks arriving messages read while the drawer is open', async () => {
+      const comment = { ...stateWithTopic, messages: { ...initialState.messages, show: true } };
+      axiosMock.get.mockResolvedValue({ data: { results: [{ id: 8, createdBy: { id: 'assessor' } }] } });
+
+      await loadUnreadMessages({ topicId: TOPIC.id })(jest.fn(), getState(comment), undefined);
+
+      expect(localStorage.getItem(`form-app.messages.last-read.${TOPIC.id}`)).toBe('8');
     });
 
     it('stays clear when the drawer was opened while loading', () => {
@@ -91,6 +118,35 @@ describe('comment slice messages', () => {
       });
 
       expect(state.messages).toEqual(expect.objectContaining({ unread: 2, lastReadCommentId: 5, latestCommentId: 8 }));
+    });
+  });
+
+  describe('selectTopic', () => {
+    // Message ids are per topic, so what was tracked for a previously opened form has to go.
+    it('drops the counts of the previous form', () => {
+      const state = commentReducer(
+        { ...stateWithTopic, messages: { show: false, latestCommentId: 40, lastReadCommentId: 38, unread: 2 } },
+        {
+          type: selectTopic.fulfilled.type,
+          meta: { arg: { resourceId: 'urn:ads:platform:form-service:v1:/forms/form-2' } },
+          payload: { canRead: true, canComment: true },
+        },
+      );
+
+      expect(state.messages).toEqual({ show: false, latestCommentId: 0, lastReadCommentId: 0, unread: 0 });
+    });
+
+    it('keeps the counts when the same form is selected again', () => {
+      const state = commentReducer(
+        { ...stateWithTopic, messages: { show: false, latestCommentId: 40, lastReadCommentId: 38, unread: 2 } },
+        {
+          type: selectTopic.fulfilled.type,
+          meta: { arg: { resourceId: TOPIC.resourceId } },
+          payload: { canRead: true, canComment: true },
+        },
+      );
+
+      expect(state.messages).toEqual({ show: false, latestCommentId: 40, lastReadCommentId: 38, unread: 2 });
     });
   });
 
@@ -129,6 +185,41 @@ describe('comment slice messages', () => {
 
       expect(state.messages).toEqual(expect.objectContaining({ show: false, lastReadCommentId: 8 }));
     });
+  });
+
+  // The stream event carries no author, so the count is refreshed from the service instead.
+  it('refreshes the unread count when a comment arrives on the stream', async () => {
+    const handlers: Record<string, (update: { topic: typeof TOPIC }) => void> = {};
+    ioMock.mockReturnValue({
+      connected: false,
+      disconnect: jest.fn(),
+      on: (event: string, handler: (update: { topic: typeof TOPIC }) => void) => {
+        handlers[event] = handler;
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    axiosMock.get.mockResolvedValue({ data: { results: [], page: {} } });
+
+    // Stands in for the thunk middleware so the dispatches the handler makes actually run.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dispatch: any = jest.fn((action: unknown) =>
+      typeof action === 'function' ? action(dispatch, getState(), undefined) : action,
+    );
+
+    await connectStream({ stream: 'form-questions-updates', typeId: 'form-questions', topicId: TOPIC.id })(
+      dispatch,
+      getState(),
+      undefined,
+    );
+    axiosMock.get.mockClear();
+
+    handlers['comment-service:comment-created']({ topic: TOPIC });
+    await new Promise(process.nextTick);
+
+    expect(axiosMock.get).toHaveBeenCalledWith(
+      `${COMMENT_SERVICE_URL}/comment/v1/topics/${TOPIC.id}/comments`,
+      expect.objectContaining({ params: expect.objectContaining({ top: 100 }) }),
+    );
   });
 
   // Comments loaded into the drawer are what the next open marks as read.

@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { ControlProps } from '@jsonforms/core';
 import { ContractInfoControlReview } from './ContactInfoControlReview';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { JsonFormContext } from '../../Context';
 
 describe('ContractInfoControlReview', () => {
   const mockGoToPage = jest.fn();
@@ -74,6 +75,23 @@ describe('ContractInfoControlReview', () => {
 
     const changeButtons = screen.getAllByText('Change');
     expect(changeButtons).toHaveLength(3);
+  });
+
+  it('does not render Change buttons when the host turns change buttons off', () => {
+    render(
+      <table>
+        <tbody>
+          <JsonFormContext.Provider value={{ showChangeButtons: false }}>
+            <JsonFormsStepperContext.Provider value={stepperContextValue}>
+              <ContractInfoControlReview {...defaultProps} />
+            </JsonFormsStepperContext.Provider>
+          </JsonFormContext.Provider>
+        </tbody>
+      </table>,
+    );
+
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+    expect(screen.getByTestId('email-control-contact-1')).toHaveTextContent('john@example.com');
   });
 
   it('does not render Change buttons when stepId is undefined', () => {

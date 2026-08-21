@@ -6,11 +6,13 @@ import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { isNilOrEmptyString } from '../../util';
 import { RequiredTextLabel } from '../Inputs/style-component';
+import { useShowChangeButtons } from '../../Context/ContextProvider';
 
 type FullNameControlReviewProps = ControlProps;
 
 export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.Element => {
   const context = useContext(JsonFormsStepperContext);
+  const showChangeButtons = useShowChangeButtons();
   const stepId = props.uischema?.options?.stepId;
   const { uischema, data, id } = props;
   const requiredFields = props.schema?.required ?? [];
@@ -24,7 +26,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
             {fieldLabel}
             {requiredFields.includes(fieldName) && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
-          {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
+          {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="text"
               onClick={() => context?.goToPage(stepId, uischema.scope)}

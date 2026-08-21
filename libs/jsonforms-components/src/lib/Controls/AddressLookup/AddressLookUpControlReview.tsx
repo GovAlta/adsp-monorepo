@@ -15,6 +15,7 @@ import {
 import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
 import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
+import { useShowChangeButtons } from '../../Context/ContextProvider';
 
 type AddressViewProps = ControlProps;
 
@@ -32,6 +33,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
 
   const stepId = uischema.options?.stepId;
   const formStepperCtx = useContext(JsonFormsStepperContext);
+  const showChangeButtons = useShowChangeButtons();
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
 
   const provinces = [
@@ -139,7 +141,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
               {label}
               {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
             </ReviewLabel>
-            {showButton && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
+            {showButton && showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
               <GoabButton
                 type="text"
                 size="compact"
@@ -165,7 +167,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
         <PageReviewContainer colSpan={3}>
           <ReviewHeader>
             <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
-            {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
+            {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
               <GoabButton
                 type="text"
                 size="compact"

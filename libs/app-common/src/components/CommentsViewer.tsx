@@ -1,9 +1,16 @@
-import { GoabButton, GoabButtonGroup, GoabCircularProgress, GoabFormItem, GoabTextArea } from '@abgov/react-components';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabCircularProgress,
+  GoabFormItem,
+  GoabIconButton,
+  GoabModal,
+  GoabTextArea,
+} from '@abgov/react-components';
 import moment from 'moment';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useState } from 'react';
 import styled from 'styled-components';
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
-
 interface Comment {
   id: number;
   byCurrentUser: boolean;
@@ -26,15 +33,19 @@ interface CommentsViewerProps {
   heading?: string;
   addCommentLabel?: string;
   anonymousName?: string;
+  userId?: string;
   canComment: boolean;
   canLoadMore: boolean;
+  topicId?: number | null;
   comments: Comment[];
   draft: DraftComment;
   loading: boolean;
+  busy?: boolean;
   commenting: boolean;
   onLoadMore: () => void;
   onUpdateDraft: (draft: DraftComment) => void;
   onAddComment: (draft: DraftComment) => void;
+  onDeleteComment?: (topicId: number, commentId: number) => void;
 }
 
 function formatTimestamp(timestamp: Date): string {
@@ -54,17 +65,23 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   anonymousName,
   canComment,
   canLoadMore,
+  topicId,
   draft,
+  userId,
   comments,
   loading,
+  busy,
   commenting,
   onLoadMore,
   onUpdateDraft,
   onAddComment,
+  onDeleteComment,
 }) => {
   heading = heading || 'Comments';
   addCommentLabel = addCommentLabel || 'Add comment';
   anonymousName = anonymousName || 'Commenter';
+  const [deleting, setDeleting] = useState<Comment>(null);
+
   return (
     <div className={className}>
       <h3>{heading}</h3>
@@ -72,8 +89,22 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
         {comments.map((result) => (
           <div key={result.id} className="comment" data-user-comment={result.byCurrentUser}>
             <div>
-              <span>{result.createdBy.name || anonymousName}</span>
+              <span>{result.createdBy.name || anonymousName} </span>
               <span>{formatTimestamp(result.createdOn)}</span>
+              {/* Only allow the user that created the message to be able to delete it */}
+              {userId && userId === result.createdBy.id && (
+                <span>
+                  <GoabIconButton
+                    title="delete message"
+                    icon="trash"
+                    variant="color"
+                    size="small"
+                    onClick={() => {
+                      setDeleting(result);
+                    }}
+                  />
+                </span>
+              )}
             </div>
             <div>
               <p>{result.content}</p>
@@ -100,7 +131,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             width="100%"
           />
         </GoabFormItem>
-        <GoabButtonGroup alignment="end" mt="l">
+        <GoabButtonGroup alignment="start" mt="l">
           <GoabButton
             size="compact"
             type="secondary"
@@ -119,13 +150,34 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
           </GoabButton>
         </GoabButtonGroup>
       </form>
+      <GoabModal heading="Are you sure you want to delete this message?" open={!!deleting}>
+        <div>This action cannot be undone.</div>
+        <GoabButtonGroup alignment="end" mt="xl">
+          <GoabButton size="compact" type="secondary" onClick={() => setDeleting(null)}>
+            Cancel
+          </GoabButton>
+          <GoabButton
+            size="compact"
+            type="primary"
+            variant="destructive"
+            disabled={busy}
+            onClick={async () => {
+              await onDeleteComment(topicId, deleting.id);
+              setDeleting(null);
+            }}
+          >
+            Delete
+          </GoabButton>
+        </GoabButtonGroup>
+      </GoabModal>
     </div>
   );
 };
 
-export const CommentsViewer = styled(CommentsViewerComponent)`
+export const CommentsViewer = styled(CommentsViewerComponent)<{ $commentsHeight?: string }>`
   display: flex;
   flex-direction: column;
+
   & > h3 {
     text-transform: capitalize;
     padding-left: var(--goa-space-l);
@@ -141,18 +193,20 @@ export const CommentsViewer = styled(CommentsViewerComponent)`
     padding-top: var(--goa-space-s);
   }
   & > .comments {
-    flex: 1 1 0;
-    overflow-y: auto;
-    display: flex;
+    height: ${({ $commentsHeight }) => ($commentsHeight ? `${$commentsHeight}` : 'auto')};
+    overflow-y: scroll;
     flex-direction: column-reverse;
     padding-left: var(--goa-space-l);
     padding-right: var(--goa-space-l);
+    margin-bottom: var(--goa-space-l);
+
     > .comment {
       margin: var(--goa-space-s);
       margin-bottom: var(--goa-space-l);
 
       span:first-child {
         font-weight: bold;
+        padding-right: var(--goa-space-s);
       }
 
       span:last-child {
