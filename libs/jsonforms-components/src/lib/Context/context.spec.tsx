@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { enumerators, ContextProviderC, ContextProviderFactory } from '.';
+import { enumerators, ContextProviderC, ContextProviderFactory, useShowChangeButtons } from '.';
 import axios from 'axios';
 import { JsonFormContext } from '.';
 
@@ -223,5 +223,45 @@ describe('contextProvider', () => {
     expect(component.getByText('Dolphin')).toBeInTheDocument();
     expect(component.getByText('Kangaroo')).toBeInTheDocument();
     expect(component.getByText('Penguin')).toBeInTheDocument();
+  });
+
+  describe('useShowChangeButtons', () => {
+    const ShowsFlag = () => <div>{useShowChangeButtons() ? 'shown' : 'hidden'}</div>;
+
+    it('keeps change buttons when the host says nothing', () => {
+      const component = render(
+        <ContextProvider>
+          <ShowsFlag />
+        </ContextProvider>
+      );
+
+      expect(component.getByText('shown')).toBeInTheDocument();
+    });
+
+    it('hides change buttons when the host opts out', () => {
+      const component = render(
+        <ContextProvider showChangeButtons={false}>
+          <ShowsFlag />
+        </ContextProvider>
+      );
+
+      expect(component.getByText('hidden')).toBeInTheDocument();
+    });
+
+    it('keeps change buttons when the host opts in', () => {
+      const component = render(
+        <ContextProvider showChangeButtons={true}>
+          <ShowsFlag />
+        </ContextProvider>
+      );
+
+      expect(component.getByText('shown')).toBeInTheDocument();
+    });
+
+    it('keeps change buttons when rendered without a provider', () => {
+      const component = render(<ShowsFlag />);
+
+      expect(component.getByText('shown')).toBeInTheDocument();
+    });
   });
 });

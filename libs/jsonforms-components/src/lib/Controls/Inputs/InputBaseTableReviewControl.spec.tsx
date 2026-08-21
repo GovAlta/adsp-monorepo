@@ -9,6 +9,7 @@ import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context/StepperContext';
 import { invalidSin } from '../../common/Constants';
 import { ReviewRenderProvider } from '../../Context/ReviewRenderContext';
+import { JsonFormContext } from '../../Context';
 
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
@@ -430,6 +431,59 @@ describe('InputBaseTableReviewControl', () => {
         </tbody>
       </table>,
     );
+
+  it('renders a Change button for a step-scoped row by default', () => {
+    renderReviewRow({
+      data: 'Bob',
+      path: 'firstName',
+      schema: { type: 'string' },
+      uischema: {
+        type: 'Control',
+        scope: '#/properties/firstName',
+        label: 'First name',
+        options: { stepId: 0 },
+      },
+      required: false,
+    });
+
+    expect(screen.getByText('Change')).toBeInTheDocument();
+  });
+
+  it('does not render a Change button when the host turns change buttons off', () => {
+    render(
+      <JsonFormContext.Provider value={{ showChangeButtons: false }}>
+        <table>
+          <tbody>
+            <GoAInputBaseTableReview
+              data="Bob"
+              visible={true}
+              label="First name"
+              path="firstName"
+              schema={{ type: 'string' }}
+              uischema={{
+                type: 'Control',
+                scope: '#/properties/firstName',
+                label: 'First name',
+                options: { stepId: 0 },
+              }}
+              enabled={true}
+              errors=""
+              cells={[]}
+              required={false}
+              id="firstName"
+              rootSchema={{ type: 'object', properties: {} }}
+              config={{}}
+              renderers={[]}
+              handleChange={jest.fn()}
+            />
+          </tbody>
+        </table>
+      </JsonFormContext.Provider>,
+    );
+
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+    expect(screen.getByTestId('review-value-First name')).toHaveTextContent('Bob');
+  });
 
   it('renders without crashing', () => {
     expect(stepperBasePropsReview).toBeDefined();

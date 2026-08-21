@@ -203,6 +203,41 @@ describe('AddressLoopUpControlTableReview', () => {
     expect(screen.getByText('Change')).toBeInTheDocument();
   });
 
+  it('should not render Change button when the host turns change buttons off', () => {
+    const propsWithStepId = {
+      ...defaultProps,
+      uischema: {
+        ...defaultProps.uischema,
+        options: {
+          ...defaultProps.uischema.options,
+          stepId: 'step-address',
+        },
+      },
+    };
+
+    render(
+      <JsonFormsStepperContextProvider
+        StepperProps={stepperBaseProps}
+        children={
+          <JsonFormContext.Provider value={{ ...mockFormContext, showChangeButtons: false }}>
+            <AddressLoopUpControlTableReview
+              label={''}
+              errors={''}
+              rootSchema={{}}
+              id={''}
+              enabled={false}
+              visible={false}
+              {...propsWithStepId}
+            />
+          </JsonFormContext.Provider>
+        }
+      />,
+    );
+
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+    expect(screen.getByText('Edmonton')).toBeInTheDocument();
+  });
+
   it('should not render Change button when stepId is undefined', () => {
     renderComponent();
     expect(screen.queryByText('Change')).not.toBeInTheDocument();
