@@ -20,6 +20,7 @@ export interface enumerators {
   getAllFormContextData: () => AllData;
   isFormSubmitted: boolean;
   formUrl: string;
+  showChangeButtons: boolean;
 }
 
 interface FileManagement {
@@ -46,6 +47,10 @@ type Props = {
   fileManagement?: FileManagement;
   submit?: SubmitManagement;
   isFormSubmitted?: boolean;
+  // Whether the review renderers offer "Change" links back to the step that owns each answer.
+  // Hosts that only display a submission - form reviewers, for one - turn these off so the answers
+  // read as a record rather than something still being filled in. Defaults to true.
+  showChangeButtons?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,6 +98,7 @@ export class ContextProviderClass {
     getFormContextData: (key: string) => Record<string, any> | undefined;
     getAllFormContextData: () => AllData;
     isFormSubmitted?: boolean;
+    showChangeButtons?: boolean;
     formUrl: string | null | undefined;
     autoPopulatedData?: AutoPopulatedValue[];
     formId?: string;
@@ -177,6 +183,7 @@ export class ContextProviderClass {
       this.baseEnumerator.formUrl = props.formUrl;
     }
     this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
+    this.baseEnumerator.showChangeButtons = props.showChangeButtons ?? true;
     this.baseEnumerator.autoPopulatedData = props.autoPopulatedData ?? [];
     this.baseEnumerator.formId = props.formId;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
@@ -229,3 +236,12 @@ export const ContextProviderC = new ContextProviderClass();
 export const ContextProviderFactory = () => new ContextProviderClass().setup;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const JsonFormContext = createContext<any>(null);
+
+/**
+ * Whether review renderers should show their "Change" buttons. Hosts opt out through the context
+ * provider; anything rendered without a provider keeps the buttons.
+ */
+export const useShowChangeButtons = (): boolean => {
+  const enumerators = useContext(JsonFormContext);
+  return enumerators?.showChangeButtons !== false;
+};

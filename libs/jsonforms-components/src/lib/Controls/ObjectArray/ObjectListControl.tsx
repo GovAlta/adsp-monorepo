@@ -24,6 +24,7 @@ import merge from 'lodash/merge';
 import range from 'lodash/range';
 import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {
   ADD_DATA_ACTION,
@@ -604,6 +605,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const [rowData, setRowData] = useState<number>(0);
   const [maxItemsError, setMaxItemsError] = useState('');
   const context = useContext(JsonFormsStepperContext);
+  const showChangeButtons = useShowChangeButtons();
 
   const {
     label,
@@ -792,15 +794,17 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                   <span>{additionalProps.required && '(required)'}</span>
                   {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
                 </ReviewLabel>
-                {uischema.options?.stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-                  <GoabButton
-                    type="text"
-                    size="compact"
-                    onClick={() => context?.goToPage(uischema.options?.stepId as number)}
-                  >
-                    Change
-                  </GoabButton>
-                )}
+                {showChangeButtons &&
+                  uischema.options?.stepId !== undefined &&
+                  !uischema.options?.componentProps?.readOnly && (
+                    <GoabButton
+                      type="text"
+                      size="compact"
+                      onClick={() => context?.goToPage(uischema.options?.stepId as number)}
+                    >
+                      Change
+                    </GoabButton>
+                  )}
               </ReviewHeader>
             )
           ) : null}

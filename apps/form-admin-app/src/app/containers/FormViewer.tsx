@@ -32,6 +32,7 @@ export const FormViewer: FunctionComponent<SubmittedFormProps> = ({ dataSchema, 
   return dataSchema && uiSchema ? (
     <ContextProvider
       isFormSubmitted={true}
+      showChangeButtons={false}
       fileManagement={{
         fileList: files,
         downloadFile: downloadFileHandler,
