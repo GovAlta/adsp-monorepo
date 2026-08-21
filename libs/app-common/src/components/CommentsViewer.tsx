@@ -95,8 +95,8 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
               {userId && userId === result.createdBy.id && (
                 <span>
                   <GoabIconButton
-                    title="remove message"
-                    icon="trash-bin:outline"
+                    title="delete message"
+                    icon="trash"
                     variant="color"
                     size="small"
                     onClick={() => {

@@ -77,12 +77,6 @@ export const Form = () => {
     }
   }, [form]);
 
-  //Messages tab will be hidden if there is a form has been submitted, otherwise we will use the supportTopic to
-  //determine if it should be shown.
-  const hideMessageTab = useMemo(() => {
-    return submission ? true : !definition.supportTopic;
-  }, [definition.supportTopic, submission]);
-
   return (
     <DetailsLayout
       initialized={!!(definition && form)}
@@ -175,7 +169,7 @@ export const Form = () => {
         <Tab
           key="applicantQuestions"
           heading="Applicant questions"
-          hide={hideMessageTab}
+          hide={true}
           icon={topic?.requiresAttention ? 'mail-unread' : null}
         >
           <CommentsViewer />
