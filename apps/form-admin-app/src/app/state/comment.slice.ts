@@ -218,8 +218,8 @@ export const selectTopic = createAsyncThunk(
     if (toSelect) {
       const type = comment.topicTypes[toSelect.typeId];
       canComment =
-        hasRole('urn:ads:platform:comment-service:comment-admin', user.user) || hasRole(type.commenterRoles, user.user);
-      canRead = canComment || hasRole(type.readerRoles, user.user);
+        hasRole('urn:ads:platform:comment-service:comment-admin', user.user) || hasRole(type?.commenterRoles, user.user);
+      canRead = canComment || hasRole(type?.readerRoles, user.user);
     }
 
     // Load comments if this is changing the selected topic, and user can read the new topic.
@@ -305,6 +305,9 @@ interface CommentState {
   };
   updateStreamConnected: boolean;
   comments: {
+    // The topic the loaded comments belong to; comments are per topic, so this is what keeps one
+    // form's messages out of another's.
+    topicId: number;
     results: Comment[];
     next: string;
   };
@@ -327,6 +330,7 @@ const initialCommentState: CommentState = {
   },
   updateStreamConnected: false,
   comments: {
+    topicId: null,
     results: [],
     next: null,
   },
@@ -391,19 +395,35 @@ const commentSlice = createSlice({
         state.busy.loading = false;
       })
       .addCase(selectTopic.fulfilled, (state, { meta, payload }) => {
+        // Selecting a form that has no topic, or one the user can't read, doesn't load any comments,
+        // so the previously selected form's messages are cleared here instead.
+        if (state.comments.topicId !== (state.topics[meta.arg.resourceId]?.id ?? null)) {
+          state.comments.topicId = null;
+          state.comments.results = [];
+          state.comments.next = null;
+        }
+
         state.selected.resourceId = meta.arg.resourceId;
         state.selected.canComment = payload.canComment;
         state.selected.canRead = payload.canRead;
       })
       .addCase(loadComments.pending, (state, { meta }) => {
         state.busy.loading = true;
-        if (!meta.arg.after) {
+        // Only a paged load of the topic already in state appends to it.
+        if (!meta.arg.after || state.comments.topicId !== meta.arg.topic?.id) {
           state.comments.results = [];
           state.comments.next = null;
         }
+        state.comments.topicId = meta.arg.topic?.id ?? null;
       })
-      .addCase(loadComments.fulfilled, (state, { payload }) => {
+      .addCase(loadComments.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
+
+        // Requests for two topics can be in flight at once, and the response that loses the race
+        // belongs to a form that is no longer selected.
+        if (state.comments.topicId !== meta.arg.topic?.id) {
+          return;
+        }
 
         state.comments.results = [...state.comments.results, ...payload.results];
         state.comments.next = payload.page.next;
@@ -414,9 +434,11 @@ const commentSlice = createSlice({
       .addCase(addComment.pending, (state) => {
         state.busy.executing = true;
       })
-      .addCase(addComment.fulfilled, (state, { payload }) => {
+      .addCase(addComment.fulfilled, (state, { payload, meta }) => {
         state.busy.executing = false;
-        state.comments.results.unshift(payload);
+        if (state.comments.topicId === meta.arg.topic?.id) {
+          state.comments.results.unshift(payload);
+        }
         state.draft = { title: null, content: null };
       })
       .addCase(addComment.rejected, (state) => {
@@ -428,7 +450,11 @@ const commentSlice = createSlice({
       })
       .addCase(deleteComment.fulfilled, (state, { meta }) => {
         state.busy.executing = false;
-        state.comments.results = state.comments.results.filter((y) => y.id !== meta.arg.commentId);
+        // Comment ids are per topic, so filtering a list belonging to another topic can drop the
+        // wrong message.
+        if (state.comments.topicId === meta.arg.topicId) {
+          state.comments.results = state.comments.results.filter((y) => y.id !== meta.arg.commentId);
+        }
       })
       .addCase(deleteComment.rejected, (state) => {
         state.busy.executing = false;
@@ -456,17 +482,23 @@ export const selectedTopicSelector = createSelector(
 
 export const commentsSelector = createSelector(
   (state: AppState) => state.comment.comments,
+  selectedTopicSelector,
   (state: AppState) => state.user.user?.id,
-  ({ results, next }, userId) => ({
-    results: [...results]
-      .map((r) => ({
-        ...r,
-        createdOn: new Date(r.createdOn),
-        byCurrentUser: r.createdBy.id === userId,
-      }))
-      .sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()),
-    next,
-  }),
+  ({ topicId, results, next }, selectedTopic, userId) => {
+    // Comments loaded for another topic are never shown against the selected form.
+    const forSelectedTopic = topicId !== null && topicId === selectedTopic?.id;
+
+    return {
+      results: (forSelectedTopic ? [...results] : [])
+        .map((r) => ({
+          ...r,
+          createdOn: new Date(r.createdOn),
+          byCurrentUser: r.createdBy.id === userId,
+        }))
+        .sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()),
+      next: forSelectedTopic ? next : null,
+    };
+  },
 );
 
 export const commentExecutingSelector = (state: AppState) => state.comment.busy.executing;
