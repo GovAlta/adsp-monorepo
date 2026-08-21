@@ -1,4 +1,4 @@
-import { adspId, AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, LimitToOne, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import { JsonObject } from 'swagger-ui-express';
@@ -42,6 +42,8 @@ interface Directory {
 
 export interface ServiceDocs {
   getDocs(id: AdspId): Promise<Record<string, ServiceDoc>>;
+  invalidate(id: AdspId): void;
+  refresh(id: AdspId): Promise<Record<string, ServiceDoc>>;
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -86,7 +88,13 @@ class ServiceDocsImpl {
 
       const tenantDirectoryUrl = new URL(`directory/v2/namespaces/${namespace}/entries`, directoryServiceUrl);
 
-      const { data } = await axios.get<Array<Directory>>(tenantDirectoryUrl.href);
+      let data: Array<Directory>;
+      try {
+        ({ data } = await axios.get<Array<Directory>>(tenantDirectoryUrl.href));
+      } catch (err) {
+        this.logger.warn(`Failed retrieving directory entries for namespace ${namespace}: ${err.message}`);
+        return docs;
+      }
       for (const entry of data) {
         const url = entry.url;
         const id = adspId`${entry.urn}`;
@@ -120,45 +128,39 @@ class ServiceDocsImpl {
     return docs;
   };
 
+  @LimitToOne((propertyKey, namespace: string, force = false) => (force ? '' : `${propertyKey}:${namespace}`))
+  private async loadNamespace(namespace: string, force = false): Promise<void> {
+    const docs = await this.#retrieveDocEntries(namespace);
+    this.cache.set(namespace, docs);
+  }
+
   async getDocs(id?: AdspId): Promise<Record<string, ServiceDoc>> {
-    const namespaces = this.cache.keys();
-    let mergedDocs: Record<string, ServiceDoc> = {};
-    const docs: Record<string, ServiceDoc> = {};
-    if (!namespaces.includes(id.namespace)) {
-      const docs = await this.#retrieveDocEntries(id.namespace);
-      this.cache.set(id.namespace, docs);
+    // Kick off background loads without awaiting — callers get whatever is currently cached.
+    if (!this.cache.keys().includes(id.namespace)) {
+      this.loadNamespace(id.namespace);
     }
-    // Avoid re-cache of platform
-    if (id.namespace !== 'platform' && !namespaces.includes('platform')) {
-      const docs = await this.#retrieveDocEntries('platform');
-      this.cache.set('platform', docs);
+    if (id.namespace !== 'platform' && !this.cache.keys().includes('platform')) {
+      this.loadNamespace('platform');
     }
 
-    if (id.namespace === 'platform') {
-      mergedDocs = {
-        ...this.cache.get<Record<string, ServiceDoc>>('platform'),
-      };
-    } else {
-      // Merge the platform and tenant docs
-      mergedDocs = {
-        ...this.cache.get<Record<string, ServiceDoc>>('platform'),
-        ...this.cache.get<Record<string, ServiceDoc>>(id.namespace),
-      };
-    }
+    const mergedDocs: Record<string, ServiceDoc> =
+      id.namespace === 'platform'
+        ? { ...(this.cache.get<Record<string, ServiceDoc>>('platform') ?? {}) }
+        : {
+            ...(this.cache.get<Record<string, ServiceDoc>>('platform') ?? {}),
+            ...(this.cache.get<Record<string, ServiceDoc>>(id.namespace) ?? {}),
+          };
 
     if (id.type === 'service') {
+      const docs: Record<string, ServiceDoc> = {};
       let doc = id.toString() in mergedDocs ? { ...mergedDocs[id.toString()] } : null;
 
       if (doc) {
-        // metadata has been fetched, but the actual doc swagger has not
         if (doc?.docUrl && !doc?.docs) {
           const docJson = await this.#retrieveDocJson(doc.docUrl);
           if (docJson) {
             docJson.servers = [{ url: doc.url }];
-            doc = {
-              ...doc,
-              docs: docJson,
-            };
+            doc = { ...doc, docs: docJson };
             mergedDocs[id.toString()] = doc;
             this.cache.set(id.namespace, { ...mergedDocs });
           }
@@ -168,6 +170,19 @@ class ServiceDocsImpl {
       return docs;
     }
     return mergedDocs;
+  }
+
+  invalidate(id: AdspId): void {
+    if (this.cache.keys().includes(id.namespace)) {
+      this.cache.del(id.namespace);
+      this.loadNamespace(id.namespace);
+    }
+  }
+
+  async refresh(id: AdspId): Promise<Record<string, ServiceDoc>> {
+    this.cache.del(id.namespace);
+    await this.loadNamespace(id.namespace, true);
+    return this.getDocs(id);
   }
 }
 

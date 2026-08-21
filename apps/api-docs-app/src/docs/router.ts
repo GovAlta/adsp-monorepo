@@ -64,22 +64,27 @@ export const createDocsRouter = async ({
       const { tenant: tenantName } = req.params as unknown as { tenant: string };
 
       if (req.url === '/swagger-ui-init.js') {
-        const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace(/-/g, ' ') as string) : null;
-        const namespace = tenant ? toKebabName(tenant.name) : null;
-        const docs = {
-          ...(await serviceDocs.getDocs(adspId`urn:ads:platform`)),
-          ...(namespace ? await serviceDocs.getDocs(adspId`urn:ads:${namespace}`) : null),
-        };
-
-        const swaggerUrls = Object.entries(docs).map(([id, serviceDoc]) => {
-          const serviceId = AdspId.parse(id);
-          return {
-            name: serviceDoc.service.name,
-            url: `/docs/${serviceId.namespace}/${serviceId.service}${tenant ? `?tenant=${tenant.id}` : ''}`,
+        try {
+          const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace(/-/g, ' ') as string) : null;
+          const namespace = tenant ? toKebabName(tenant.name) : null;
+          const docs = {
+            ...(await serviceDocs.getDocs(adspId`urn:ads:platform`)),
+            ...(namespace ? await serviceDocs.getDocs(adspId`urn:ads:${namespace}`) : null),
           };
-        });
-        swaggerUrls.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-        req['options'] = { swaggerUrls };
+
+          const swaggerUrls = Object.entries(docs).map(([id, serviceDoc]) => {
+            const serviceId = AdspId.parse(id);
+            return {
+              name: serviceDoc.service.name,
+              url: `/docs/${serviceId.namespace}/${serviceId.service}${tenant ? `?tenant=${tenant.id}` : ''}`,
+            };
+          });
+          swaggerUrls.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+          req['options'] = { swaggerUrls };
+        } catch (err) {
+          next(err);
+          return;
+        }
       }
       next();
     },
