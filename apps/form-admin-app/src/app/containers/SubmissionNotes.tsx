@@ -50,6 +50,7 @@ const NotesList = styled.div`
     > .note-content {
       margin: var(--goa-space-2xs) 0 0 0;
       white-space: pre-wrap;
+      overflow-wrap: break-word;
     }
   }
 `;
