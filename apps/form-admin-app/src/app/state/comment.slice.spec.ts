@@ -1,7 +1,9 @@
+import { addComment, commentReducer, commentsSelector, deleteComment, loadComments, selectTopic } from './comment.slice';
+
+// babel-jest hoists these above the import; the slice creates an axios client and a socket at
+// module load, and neither is exercised by reducer and selector tests.
 jest.mock('axios');
 jest.mock('socket.io-client', () => ({ io: jest.fn() }));
-
-import { addComment, commentReducer, commentsSelector, deleteComment, loadComments, selectTopic } from './comment.slice';
 
 type CommentState = ReturnType<typeof commentReducer>;
 
