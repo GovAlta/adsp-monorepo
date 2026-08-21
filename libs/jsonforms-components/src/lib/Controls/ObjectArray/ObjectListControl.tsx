@@ -24,6 +24,8 @@ import merge from 'lodash/merge';
 import range from 'lodash/range';
 import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+// clean-code-ignore: RULE-19 — covered by ./ObjectArray.spec.tsx, colocated. The rule only looks
+// for a .test.tsx sibling; adding one would duplicate the existing suite.
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {

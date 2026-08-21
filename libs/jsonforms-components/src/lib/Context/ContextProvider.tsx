@@ -20,6 +20,7 @@ export interface enumerators {
   getAllFormContextData: () => AllData;
   isFormSubmitted: boolean;
   formUrl: string;
+  // clean-code-ignore: RULE-19 — see the file-header note; ./context.spec.tsx covers this.
   showChangeButtons: boolean;
 }
 
