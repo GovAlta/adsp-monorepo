@@ -5,6 +5,7 @@ export const SearchFormItemsContainer = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  margin-bottom: var(--goa-space-m);
 `;
 
 // Aligns an action control with the inputs of the search form items it sits beside,
