@@ -121,7 +121,7 @@ Nx CLI is installed local to the project. Use `npx` to run `nx` cli commands.
 
 > **🏗️ Service design patterns**: See [architecture/service-design-patterns.md](architecture/service-design-patterns.md) for deciding where to build new features (service vs. gateway).
 
-> **🤖 Agent workflow**: Use `@adsp-code` (orchestrator) to plan → implement → review → test. Or invoke specialists directly: `@adsp-plan`, `@adsp-impl`, `@clean-code`, `@unit-testing`.
+> **🤖 Agent workflow**: Use `@adsp-code` (orchestrator) to plan → implement → review → test. Or invoke specialists directly: `@adsp-plan`, `@adsp-impl`, `@clean-code`, `@unit-testing`, `@release-review`.
 
 **Quick commands:**
 ```bash
@@ -374,6 +374,7 @@ You can invoke `@adsp-code` for the full orchestrated workflow, or call any spec
 - `@adsp-impl` — implementation only (assumes placement is decided)
 - `@clean-code` — review only (no code changes)
 - `@unit-testing` — test writing only
+- `@release-review` — what is deployed to production vs `main`, and what is safe to promote (runs `tools/release-diff/collect.mjs`; no code changes)
 
 ### Shared Knowledge (`architecture/`)
 

@@ -1,4 +1,11 @@
-import { GoabBadge, GoabButton, GoabButtonGroup, GoabCallout, GoabTable } from '@abgov/react-components';
+import {
+  GoabBadge,
+  GoabButton,
+  GoabButtonGroup,
+  GoabCallout,
+  GoabIconButton,
+  GoabTable,
+} from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +28,7 @@ import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';
-import { SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
+import { SearchFormActionItem, SearchFormItemsContainer } from '../components/SearchFormItemsContainer';
 import { DateRangeCriteriaItem, isSearchDisabled } from '../components/DateRangeCriteriaItem';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
@@ -111,17 +118,24 @@ export const FormsDefinitions = () => {
                 onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
               />
               <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
+              <SearchFormActionItem>
+                <GoabIconButton
+                  icon="search"
+                  ariaLabel="Load definitions"
+                  title="Load definitions"
+                  testId="load-definitions"
+                  disabled={searchDisabled}
+                  onClick={() => handleLoadDefinitions()}
+                />
+              </SearchFormActionItem>
             </SearchFormItemsContainer>
-            <GoabButtonGroup alignment="end" mt="l">
-              <GoabButton
-                size="compact"
-                type="primary"
-                disabled={searchDisabled}
-                onClick={() => handleLoadDefinitions()}
-              >
-                Load definitions
-              </GoabButton>
-            </GoabButtonGroup>
+            <ResultsSummary
+              visible={definitions.length}
+              total={totalDefinitions}
+              itemLabel="definitions"
+              loading={busy.loading}
+              onClearFilters={clearFilters}
+            />
           </form>
         ) : (
           <div>
@@ -134,13 +148,6 @@ export const FormsDefinitions = () => {
       }
     >
       <ContentContainer>
-        <ResultsSummary
-          visible={definitions.length}
-          total={totalDefinitions}
-          itemLabel="definitions"
-          loading={busy.loading}
-          onClearFilters={clearFilters}
-        />
         <GoabTable width="100%">
           <thead>
             <tr>

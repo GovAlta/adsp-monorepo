@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 export const DIVIDER_WIDTH = 9;
 
@@ -12,20 +12,30 @@ export const SplitPaneContainer = styled.div<{ $dragging: boolean }>`
   user-select: ${({ $dragging }) => ($dragging ? 'none' : 'auto')};
 `;
 
-export const SplitPanePanel = styled.div<{ $fill?: boolean; $width?: number }>`
+// The pane width is applied inline rather than interpolated here so that a drag does not inject a
+// new generated class for every pixel of movement.
+export const SplitPanePanel = styled.div<{ $fill?: boolean; $collapsed?: boolean }>`
   display: flex;
-  flex: ${({ $fill, $width }) => ($fill ? '1 1 0' : $width === undefined ? '1 1 100%' : `0 0 ${$width}px`)};
-  width: ${({ $width }) => ($width === undefined ? '100%' : `${$width}px`)};
+  flex: ${({ $fill }) => ($fill ? '1 1 0' : '1 1 100%')};
+  width: 100%;
   height: 100%;
   min-width: 0;
   overflow: hidden;
+
+  ${({ $collapsed }) =>
+    $collapsed &&
+    css`
+      display: none;
+    `}
 `;
 
 export const SplitPaneDivider = styled.div<{ $dragging: boolean }>`
   position: relative;
   flex: 0 0 ${DIVIDER_WIDTH}px;
   width: ${DIVIDER_WIDTH}px;
-  height: 100%;
+  /* The divider has no content, so height: 100% against an indefinite container collapsed it to zero
+     and left nothing to see or grab. */
+  align-self: stretch;
   cursor: col-resize;
   touch-action: none;
   outline: none;

@@ -22,6 +22,8 @@ class ResizeObserverMock {
 describe('ResizableSplitPane', () => {
   beforeAll(() => {
     global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+    // jsdom has no PointerEvent, so pointer events would otherwise drop clientX.
+    global.PointerEvent = MouseEvent as unknown as typeof PointerEvent;
   });
 
   beforeEach(() => {
@@ -67,24 +69,49 @@ describe('ResizableSplitPane', () => {
     expect(separator).toHaveAttribute('aria-valuenow', '691');
   });
 
+  it('stretches the divider to the full height of the container', () => {
+    const { getByRole } = render(<ResizableSplitPane left={<div>Editor</div>} right={<div>Preview</div>} />);
+
+    // height: 100% collapses to zero when the host gives the container an indefinite height, which
+    // leaves nothing to see or grab.
+    expect(getByRole('separator')).toHaveStyle('align-self: stretch');
+  });
+
   it('renders only the editor when the right pane is hidden', () => {
     const { getByText, queryByRole, queryByText } = render(
       <ResizableSplitPane left={<div>Editor</div>} right={<div>Preview</div>} rightHidden />,
     );
+    const editorPane = getByText('Editor').parentElement;
 
     expect(getByText('Editor')).toBeInTheDocument();
+    expect(editorPane).toHaveStyle({ flex: '1 1 100%', width: '100%' });
     expect(queryByText('Preview')).not.toBeInTheDocument();
     expect(queryByRole('separator')).not.toBeInTheDocument();
   });
 
-  it('falls back to the editor when the container cannot fit both minimum widths', () => {
+  it('collapses but keeps the right pane mounted when the container cannot fit both minimum widths', () => {
     observedWidth = 600;
-    const { getByText, queryByRole, queryByText } = render(
+    const { getByTestId, getByText, queryByRole } = render(
       <ResizableSplitPane left={<div>Editor</div>} right={<div>Preview</div>} />,
     );
 
     expect(getByText('Editor')).toBeInTheDocument();
-    expect(queryByText('Preview')).not.toBeInTheDocument();
     expect(queryByRole('separator')).not.toBeInTheDocument();
+    // Still mounted: unmounting the preview tears down host state that only a page reload restores.
+    expect(getByText('Preview')).toBeInTheDocument();
+    expect(getByTestId('resizable-split-pane-right')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('stops dragging when pointer capture is lost', () => {
+    const { getByRole } = render(<ResizableSplitPane left={<div />} right={<div />} />);
+    const separator = getByRole('separator');
+
+    fireEvent.pointerDown(separator, { pointerId: 1 });
+    fireEvent.pointerMove(separator, { pointerId: 1, clientX: 400 });
+    expect(separator).toHaveAttribute('aria-valuenow', '400');
+
+    fireEvent.lostPointerCapture(separator, { pointerId: 1 });
+    fireEvent.pointerMove(separator, { pointerId: 1, clientX: 600 });
+    expect(separator).toHaveAttribute('aria-valuenow', '400');
   });
 });

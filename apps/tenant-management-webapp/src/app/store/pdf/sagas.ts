@@ -1,7 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
 import { RootState, store } from '../index';
-import { select, call, put, takeEvery, takeLatest, take, apply, fork } from 'redux-saga/effects';
+import { select, call, put, takeEvery, takeLatest, take, apply, fork, delay } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -49,7 +49,7 @@ import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
 import { getAccessToken as getAccessTokenThunk } from '@store/tenant/actions';
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse, PdfTemplate, CreatePdfConfig } from './model'; // clean-code-ignore: RULE-19 — covered by ./saga.spec.tsx, the established one-spec-per-slice convention in this folder
+import { PdfGenerationResponse, PdfTemplate, CreatePdfConfig } from './model'; // clean-code-ignore: RULE-19 — covered by ./sagas.spec.ts, the established one-spec-per-slice convention in this folder
 import {
   fetchPdfTemplatesApi,
   createPdfTemplateApi,
@@ -176,9 +176,25 @@ export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): Sag
 // wrapping function for socket.on
 let socket;
 
+// Long enough that a push service that keeps refusing us cannot be hammered, short enough that the
+// preview recovers on its own once the token refreshes.
+const RECONNECT_DELAY_MS = 5000;
+
+const teardownSocket = (target) => {
+  if (!target) {
+    return;
+  }
+
+  target.removeAllListeners();
+  target.disconnect();
+  if (socket === target) {
+    socket = undefined;
+  }
+};
+
 const connect = (pushServiceUrl, stream) => {
-  return new Promise((resolve) => {
-    socket = io(`${pushServiceUrl}`, {
+  return new Promise((resolve, reject) => {
+    const pending = io(`${pushServiceUrl}`, {
       query: {
         stream: stream,
       },
@@ -195,15 +211,20 @@ const connect = (pushServiceUrl, stream) => {
       },
     });
 
-    socket.on('connect', () => {
-      resolve(socket);
+    socket = pending;
+
+    pending.once('connect', () => {
+      resolve(pending);
     });
 
-    socket.on('disconnect', () => {
-      resolve(socket);
+    // The push service refuses unauthorized subscribers from io.use middleware, and socket.io treats
+    // that as terminal: it stops retrying and the connection is gone for good. Fail the connect so the
+    // subscription is rebuilt rather than handing back a socket that will never deliver an event.
+    pending.on('connect_error', () => {
+      if (!pending.active) {
+        reject(new Error('Connection to the push service was refused.'));
+      }
     });
-
-    return socket;
   });
 };
 
@@ -333,49 +354,80 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   // This is how a channel is created
   const createSocketChannel = (socket) =>
     eventChannel((emit) => {
-      const currentEvents = [];
-
       const handler = (data) => {
-        currentEvents.push(data);
-        emit(data);
+        emit({ payload: data });
       };
 
-      const doneHandler = (data) => {
-        currentEvents.push(data);
-        emit(data);
+      // A drop that socket.io will not retry has to end the subscription so that it can be rebuilt.
+      const dropHandler = () => {
+        if (!socket.active) {
+          emit({ dropped: true });
+        }
       };
 
-      socket.on('pdf-service:pdf-generated', doneHandler);
-      socket.on('pdf-service:pdf-generation-queued', handler);
-      socket.on('pdf-service:pdf-generation-failed', doneHandler);
-      socket.on('error', handler);
+      const events = [
+        'pdf-service:pdf-generated',
+        'pdf-service:pdf-generation-queued',
+        'pdf-service:pdf-generation-failed',
+        'error',
+      ];
+
+      events.forEach((event) => socket.on(event, handler));
+      socket.on('disconnect', dropHandler);
+      socket.on('connect_error', dropHandler);
 
       const unsubscribe = () => {
-        socket.off('ping', handler);
+        events.forEach((event) => socket.off(event, handler));
+        socket.off('disconnect', dropHandler);
+        socket.off('connect_error', dropHandler);
       };
 
       return unsubscribe;
     });
   if (disconnect === true) {
-    socket.disconnect();
-  } else {
-    const sk = yield call(connect, pushServiceUrl, 'pdf-generation-updates');
-    const socketChannel = yield call(createSocketChannel, sk);
+    teardownSocket(socket);
+    yield put({ socketChannel: false, type: SOCKET_CHANNEL });
+    return;
+  }
+
+  // Never leave an earlier connection behind. The socket is module level, so an orphaned one keeps its
+  // handlers and delivers into a channel that nothing is reading from any more.
+  teardownSocket(socket);
+
+  let sk;
+  let socketChannel;
+  try {
+    sk = yield call(connect, pushServiceUrl, 'pdf-generation-updates');
+    socketChannel = yield call(createSocketChannel, sk);
     yield put({ socketChannel: true, type: SOCKET_CHANNEL });
 
-    try {
-      const currentEvents = [];
-      while (true) {
-        const payload = yield take(socketChannel);
-        currentEvents.push(payload);
-        yield put(addToStream(payload));
-        yield put(generatePdfSuccessProcessing(payload));
-        yield fork(emitResponse, socket);
+    while (true) {
+      const message = yield take(socketChannel);
+      if (message.dropped) {
+        break;
       }
-    } catch (err) {
-      console.error('socket error: ', err);
+
+      yield put(addToStream(message.payload));
+      yield put(generatePdfSuccessProcessing(message.payload));
+      yield fork(emitResponse, sk);
     }
+  } catch (err) {
+    console.error('socket error: ', err);
+  } finally {
+    if (socketChannel) {
+      socketChannel.close();
+    }
+    teardownSocket(sk || socket);
   }
+
+  // The completion event is only cleared by the socket, so a drop mid generation would otherwise pin the
+  // page behind the processing spinner with Generate PDF disabled.
+  yield put(UpdateIndicator({ show: false }));
+
+  // A newer subscription cancels this saga and stops here. Otherwise clear the flag, which is what lets
+  // PreviewTemplate subscribe again with a fresh token instead of staying dead until the page reloads.
+  yield delay(RECONNECT_DELAY_MS);
+  yield put({ socketChannel: false, type: SOCKET_CHANNEL });
 }
 
 function* emitResponse(socket) {
@@ -513,7 +565,7 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(UPDATE_PDF_TEMPLATE_ACTION, updatePdfTemplate);
   yield takeEvery(FETCH_PDF_METRICS_ACTION, fetchPdfMetrics);
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);
-  yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
+  yield takeLatest(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
   yield takeEvery(DELETE_PDF_FILE_SERVICE, deletePdfFileService);
   yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);

@@ -1,5 +1,6 @@
 import { FunctionComponent, ReactNode } from 'react';
 import styled from 'styled-components';
+import { ResizableSplitPane } from '@core-services/app-common';
 import { NotificationBanner } from 'app/notificationBanner';
 import { TabletMessage } from './TabletMessage';
 
@@ -15,7 +16,7 @@ const Modal = styled.div`
   flex-direction: column;
 `;
 
-const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
+const OuterEditorContainer = styled.div<{ $previewWidth: string; $resizable: boolean }>`
   flex: 1;
   width: 100%;
   overflow: hidden;
@@ -35,7 +36,8 @@ const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
     width: 100%;
     overflow: hidden;
     box-sizing: border-box;
-    > section {
+    > section,
+    .editor-pane > section {
       display: flex;
       flex: 1;
       flex-direction: column;
@@ -47,6 +49,13 @@ const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
         overflow: hidden;
       }
     }
+    .editor-pane {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
     h2 {
       font-size: var(--goa-font-size-7);
       line-height: var(--lh-lg);
@@ -56,7 +65,7 @@ const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
     }
   }
   & .preview {
-    width: ${({ $previewWidth }) => $previewWidth || 'calc(40vw + 3.9rem)'};
+    width: ${({ $previewWidth, $resizable }) => ($resizable ? '100%' : $previewWidth || 'calc(40vw + 3.9rem)')};
     flex: 1;
     margin-right: var(--goa-space-xl);
     margin-left: var(--goa-space-xl);
@@ -71,6 +80,8 @@ interface FullScreenEditorProps {
   editor: ReactNode;
   preview: ReactNode;
   previewWidth?: string;
+  previewHidden?: boolean;
+  resizable?: boolean;
   onGoBack: () => void;
 }
 
@@ -78,16 +89,31 @@ export const FullScreenEditor: FunctionComponent<FullScreenEditorProps> = ({
   editor,
   preview,
   previewWidth,
+  previewHidden = false,
+  resizable = false,
   onGoBack,
 }) => {
+  const previewPane = <div className="preview">{preview}</div>;
+
   return (
     <Modal>
       <NotificationBanner />
-      <OuterEditorContainer $previewWidth={previewWidth}>
+      <OuterEditorContainer $previewWidth={previewWidth} $resizable={resizable}>
         <TabletMessage goBack={onGoBack} />
         <div className="editor">
-          {editor}
-          <div className="preview">{preview}</div>
+          {resizable ? (
+            <ResizableSplitPane
+              left={<div className="editor-pane">{editor}</div>}
+              right={previewPane}
+              rightHidden={previewHidden}
+              testId="full-screen-editor-split"
+            />
+          ) : (
+            <>
+              {editor}
+              {!previewHidden && previewPane}
+            </>
+          )}
         </div>
       </OuterEditorContainer>
     </Modal>

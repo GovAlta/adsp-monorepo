@@ -1,7 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { act, render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { PDFConfigForm } from './PDFConfigForm';
 import '@testing-library/jest-dom';
@@ -351,5 +351,45 @@ describe('Test pdf template preview', () => {
 
     expect(await queryByTestId('form-save')).toBeDefined();
     expect(await queryByTestId('download-icon')).toBeDefined();
+  });
+
+  it('re-enables PDF generation when the preview socket drops', async () => {
+    // Arrange
+    let state = {
+      fileService: { fileList: [] },
+      session: { indicator: { show: false } },
+      pdf: {
+        currentId: null,
+        files: {},
+        jobs: [],
+        pdfTemplates: {
+          'mock-id': {
+            id: 'mock-id',
+            variables: '{}',
+          },
+        },
+        socketChannel: true,
+      },
+    };
+    const store = mockStore(() => state);
+    const { baseElement } = render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/admin/services/pdf/edit/mock-id']}>
+          <Routes>
+            <Route path="/admin/services/pdf/edit/:id" element={<PreviewTemplate channelTitle="PDF preview" />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>,
+    );
+    const generateButton = baseElement.querySelector("goa-button[testid='generate-template']");
+    fireEvent(generateButton, new CustomEvent('_click'));
+    expect(generateButton).toHaveAttribute('disabled', 'true');
+
+    // Act
+    state = { ...state, pdf: { ...state.pdf, socketChannel: false } };
+    act(() => store.dispatch({ type: 'test/pdfSocketDropped' }));
+
+    // Assert
+    await waitFor(() => expect(generateButton).not.toHaveAttribute('disabled'));
   });
 });
