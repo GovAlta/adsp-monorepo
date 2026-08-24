@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { TemplateEditor } from './TemplateEditor';
 import { Provider } from 'react-redux';
 import { SESSION_INIT } from '@store/session/models';
@@ -111,5 +112,38 @@ describe('Pdf Component', () => {
     await waitFor(() => {
       expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
     });
+  });
+
+  it('offers the preview toggle beside the PDF editor title', () => {
+    // Arrange
+    const onTogglePreview = jest.fn();
+    const { baseElement, getByText } = render(
+      <Provider store={store}>
+        <TemplateEditor previewVisible onTogglePreview={onTogglePreview} />
+      </Provider>,
+    );
+    const toggleButton = baseElement.querySelector("goa-button[testid='toggle-pdf-preview']");
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByText('Hide preview')).toBeInTheDocument();
+    expect(onTogglePreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers to show the PDF preview when it is hidden', () => {
+    // Arrange
+    const { getByText } = render(
+      <Provider store={store}>
+        <TemplateEditor previewVisible={false} onTogglePreview={jest.fn()} />
+      </Provider>,
+    );
+
+    // Act
+    const toggleLabel = getByText('Show preview');
+
+    // Assert
+    expect(toggleLabel).toBeInTheDocument();
   });
 });

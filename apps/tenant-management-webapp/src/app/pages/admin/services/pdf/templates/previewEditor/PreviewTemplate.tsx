@@ -89,6 +89,14 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     }
   }, [socketChannel, dispatch]);
 
+  useEffect(() => {
+    // A dropped subscription means the completion event is never arriving, so stop waiting on it rather
+    // than leaving Generate PDF disabled behind a spinner that never resolves.
+    if (socketChannel === false) {
+      setIsGenerating(false);
+    }
+  }, [socketChannel]);
+
   const generateTemplate = () => {
     const payload = {
       templateId: pdfTemplate.id,

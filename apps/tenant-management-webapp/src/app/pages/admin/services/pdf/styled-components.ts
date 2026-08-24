@@ -77,7 +77,9 @@ export const TemplateEditorContainerPdf = styled.div`
   &:hover {
     overflow: auto;
   }
-  width: calc(100vw - 40vw - 9.9rem);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   padding-top: var(--goa-space-xs);
   height: calc(100vh - 0px);
 
@@ -416,6 +418,22 @@ export const PDFTitle = styled.div`
   font-family: var(--goa-font-family-sans);
   margin-bottom: var(--goa-space-s);
 }
+`;
+
+export const PdfEditorHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--goa-space-m);
+
+  > ${PDFTitle} {
+    flex: 0 0 auto;
+  }
+
+  > goa-button {
+    margin-left: auto;
+    margin-bottom: 10px;
+  }
 `;
 
 export const HideTablet = styled.div`

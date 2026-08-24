@@ -8,6 +8,7 @@ import {
   PdfEditActionLayout,
   GeneratorStyling,
   PDFTitle,
+  PdfEditorHeader,
   ButtonRight,
   EditorLHSWrapper,
 } from '../../styled-components';
@@ -60,6 +61,8 @@ const getFileTypesForAttachment = (type: Attachment['type']): string[] =>
 interface TemplateEditorProps {
   //eslint-disable-next-line
   errors?: any;
+  previewVisible?: boolean;
+  onTogglePreview?: () => void;
 }
 
 // A segment that has never been set comes back undefined, while Monaco reports an empty editor as
@@ -77,7 +80,11 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   );
 };
 
-export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => {
+export const TemplateEditor = ({
+  errors,
+  previewVisible = true,
+  onTogglePreview,
+}: TemplateEditorProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { height } = useWindowDimensions();
@@ -143,7 +150,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
               type: fileTypes[i],
               file,
               recordId: tmpTemplate.id,
-            })
+            }),
           );
           return {
             urn: uploadedFile.urn,
@@ -278,7 +285,20 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
         <EditorLHSWrapper>
           <section>
             {customIndicator && <CustomLoader />}
-            <PDFTitle>PDF / Template Editor</PDFTitle>
+            <PdfEditorHeader>
+              <PDFTitle>PDF / Template Editor</PDFTitle>
+              {onTogglePreview && (
+                <GoabButton
+                  type="tertiary"
+                  size="compact"
+                  leadingIcon={previewVisible ? 'eye-off' : 'eye'}
+                  testId="toggle-pdf-preview"
+                  onClick={onTogglePreview}
+                >
+                  {previewVisible ? 'Hide preview' : 'Show preview'}
+                </GoabButton>
+              )}
+            </PdfEditorHeader>
             <hr />
 
             {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
@@ -425,7 +445,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             <hr className="styled-hr styled-hr-bottom" />
             <PdfEditActionLayout>
               <GoabButtonGroup alignment="start">
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
                   onClick={() => {
                     setCustomIndicator(true);
@@ -436,7 +457,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                 >
                   Save
                 </GoabButton>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   onClick={() => {
                     if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
                       setSaveModal({ visible: true, closeEditor: false });
