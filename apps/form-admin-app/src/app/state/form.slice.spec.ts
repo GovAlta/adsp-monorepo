@@ -1,4 +1,4 @@
-import { countActiveFilters, formFilterCountSelector, getDefaultFormCriteria } from './form.slice';
+import { countActiveFilters, formFilterCountSelector, getDefaultFormCriteria, resolveResultTotal } from './form.slice';
 
 describe('countActiveFilters', () => {
   it('should return zero for empty criteria', () => {
@@ -37,5 +37,27 @@ describe('formFilterCountSelector', () => {
     >[0];
 
     expect(formFilterCountSelector(state)).toBe(2);
+  });
+});
+
+describe('resolveResultTotal', () => {
+  it('should use the total from the page when it is included', () => {
+    expect(resolveResultTotal(null, { total: 12 })).toBe(12);
+  });
+
+  it('should use a zero total from the page', () => {
+    expect(resolveResultTotal(12, { total: 0 })).toBe(0);
+  });
+
+  it('should clear the previous total for a new search without a total', () => {
+    expect(resolveResultTotal(12, {})).toBeNull();
+  });
+
+  it('should keep the total for a subsequent page of the same search', () => {
+    expect(resolveResultTotal(12, { after: 'MTA=' })).toBe(12);
+  });
+
+  it('should keep an unknown total for a subsequent page of the same search', () => {
+    expect(resolveResultTotal(null, { after: 'MTA=' })).toBeNull();
   });
 });

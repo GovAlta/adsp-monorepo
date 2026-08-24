@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { GoabTable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { Checkbox } from './Checkbox';
@@ -49,7 +49,10 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
       tenantName: state.tenant.name,
     };
   });
-  const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
+  // Selections are rendered straight from props. A table is mounted per client, but they all edit the
+  // same role arrays, so keeping a local copy lets one table overwrite another table's changes with a
+  // stale snapshot taken when it mounted (CS-5291).
+  const checkedRoles = props.checkedRoles;
   const service = props.service;
   const nameColumnStyle = {
     width: props?.nameColumnWidth ? `${props.nameColumnWidth}%` : '',
@@ -69,7 +72,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             <th id={`${service}-roles-${getClientId()}`} style={nameColumnStyle}>
               Roles
             </th>
-            {props.checkedRoles.map((role, index) => {
+            {checkedRoles.map((role, index) => {
               return (
                 <th key={`${role.title}-${index}`} id={`${role.title}-role-action-${getClientId()}`} className="role">
                   <div>{capitalizeFirstLetter(role.title)}</div>
@@ -90,28 +93,23 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                   {role}
                 </td>
                 {checkedRoles.map((checkedRole, index) => {
+                  const selectedRoles = checkedRole.selectedRoles ?? [];
+                  const isChecked = selectedRoles.includes(compositeRole);
+
                   return (
                     <td className="role" key={`${service}-${role}-checkbox-${index}`}>
                       <Checkbox
-                        checked={checkedRole.selectedRoles?.includes(compositeRole)}
+                        checked={isChecked}
                         disabled={
                           (props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled === true
                         }
                         ariaLabel={`${role} ${checkedRole.title}`}
                         onChange={() => {
-                          if (checkedRole.selectedRoles?.includes(compositeRole)) {
-                            const newRoles = checkedRole.selectedRoles.filter((readRole) => {
-                              return readRole !== compositeRole;
-                            });
-                            checkedRole.selectedRoles = newRoles;
-                            setCheckedRoles(checkedRoles);
-                            props.roleSelectFunc(newRoles, checkedRole.title);
-                          } else {
-                            const newRoles = [...checkedRole.selectedRoles, compositeRole];
-                            checkedRole.selectedRoles = newRoles;
-                            setCheckedRoles(checkedRoles);
-                            props.roleSelectFunc(newRoles, checkedRole.title);
-                          }
+                          const newRoles = isChecked
+                            ? selectedRoles.filter((selected) => selected !== compositeRole)
+                            : [...selectedRoles, compositeRole];
+                          props.roleSelectFunc(newRoles, checkedRole.title);
+
                           const scrollPane = document.querySelector('.roles-scroll-pane');
                           const scrollTop = scrollPane ? scrollPane.scrollTop : 0;
                           setTimeout(() => {

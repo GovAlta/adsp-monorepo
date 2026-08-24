@@ -90,6 +90,20 @@ export const countActiveFilters = (criteria: { dataCriteria?: Record<string, unk
   return [...Object.values(fields), ...Object.values(dataCriteria || {})].filter(hasFilterValue).length;
 };
 
+// Tag based searches resolve results via the directory service, which doesn't include a total in the page.
+// Carry the total across pages of the same search, but clear it when a new search comes back without one,
+// so the total of a previous search isn't reported against the current results.
+export const resolveResultTotal = (
+  current: number | null,
+  page: { after?: string; total?: number },
+): number | null => {
+  if (page.total !== undefined) {
+    return page.total;
+  }
+
+  return page.after ? current : null;
+};
+
 interface DataValue {
   name: string;
   path: string;
@@ -131,9 +145,9 @@ export interface FormState {
     submissions: string[];
   };
   resultTotals: {
-    definitions: number;
-    forms: number;
-    submissions: number;
+    definitions: number | null;
+    forms: number | null;
+    submissions: number | null;
   };
   definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
@@ -1035,9 +1049,7 @@ const formSlice = createSlice({
           ...payload.results.map((result) => result.id),
         ];
         state.results.definitions = results;
-        if (payload.page.total !== undefined) {
-          state.resultTotals.definitions = payload.page.total;
-        }
+        state.resultTotals.definitions = resolveResultTotal(state.resultTotals.definitions, payload.page);
         state.next.definitions = payload.page.next;
       })
       .addCase(loadDefinitions.rejected, (state) => {
@@ -1096,9 +1108,7 @@ const formSlice = createSlice({
           ...payload.results.map((result) => result.id),
         ];
         state.results.forms = results;
-        if (payload.page.total !== undefined) {
-          state.resultTotals.forms = payload.page.total;
-        }
+        state.resultTotals.forms = resolveResultTotal(state.resultTotals.forms, payload.page);
         state.next.forms = payload.page.next;
       })
       .addCase(findForms.rejected, (state) => {
@@ -1118,9 +1128,7 @@ const formSlice = createSlice({
           ...payload.results.map((result) => result.id),
         ];
         state.results.submissions = results;
-        if (payload.page.total !== undefined) {
-          state.resultTotals.submissions = payload.page.total;
-        }
+        state.resultTotals.submissions = resolveResultTotal(state.resultTotals.submissions, payload.page);
         state.next.submissions = payload.page.next;
       })
       .addCase(findSubmissions.rejected, (state) => {
