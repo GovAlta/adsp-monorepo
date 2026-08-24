@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 export const DIVIDER_WIDTH = 9;
 
@@ -12,15 +12,21 @@ export const SplitPaneContainer = styled.div<{ $dragging: boolean }>`
   user-select: ${({ $dragging }) => ($dragging ? 'none' : 'auto')};
 `;
 
-export const SplitPanePanel = styled.div<{ $fill?: boolean; $width?: number }>`
+// The pane width is applied inline rather than interpolated here so that a drag does not inject a
+// new generated class for every pixel of movement.
+export const SplitPanePanel = styled.div<{ $fill?: boolean; $collapsed?: boolean }>`
   display: flex;
-  flex: ${({ $fill, $width }) => ($fill ? '1 1 0' : $width === undefined ? '1 1 100%' : `0 0 ${$width}px`)};
-  width: ${({ $width }) => ($width === undefined ? '100%' : `${$width}px`)};
-  /* Stretch rather than height: 100%, which collapses to auto when the host gives the container an
-     indefinite height. */
-  align-self: stretch;
+  flex: ${({ $fill }) => ($fill ? '1 1 0' : '1 1 100%')};
+  width: 100%;
+  height: 100%;
   min-width: 0;
   overflow: hidden;
+
+  ${({ $collapsed }) =>
+    $collapsed &&
+    css`
+      display: none;
+    `}
 `;
 
 export const SplitPaneDivider = styled.div<{ $dragging: boolean }>`

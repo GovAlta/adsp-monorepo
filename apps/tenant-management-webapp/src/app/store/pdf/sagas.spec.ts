@@ -1,5 +1,13 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchPdfTemplates, createPdfTemplateSaga, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
+import { io } from 'socket.io-client';
+import {
+  fetchPdfTemplates,
+  createPdfTemplateSaga,
+  deletePdfTemplate,
+  updatePdfTemplate,
+  generatePdf,
+  streamPdfSocket,
+} from './sagas';
 import {
   fetchPdfTemplatesApi,
   createPdfTemplateApi,
@@ -14,7 +22,44 @@ import {
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
+  SOCKET_CHANNEL,
 } from './action';
+
+jest.mock('socket.io-client', () => ({ io: jest.fn() }));
+
+// redux-saga builds `delay` as a call to an internal `delayP`; skipping it keeps the reconnect
+// throttle out of the test's runtime.
+const skipReconnectDelay = {
+  call: (effect, next) => (effect.fn && effect.fn.name === 'delayP' ? null : next()),
+};
+
+const createFakeSocket = () => {
+  const handlers: Record<string, ((data?: unknown) => void)[]> = {};
+
+  const fake = {
+    active: true,
+    onSubscribe: null as null | ((event: string) => void),
+    on(event: string, handler: (data?: unknown) => void) {
+      handlers[event] = [...(handlers[event] || []), handler];
+      fake.onSubscribe?.(event);
+    },
+    once(event: string, handler: (data?: unknown) => void) {
+      fake.on(event, handler);
+    },
+    off(event: string, handler: (data?: unknown) => void) {
+      handlers[event] = (handlers[event] || []).filter((registered) => registered !== handler);
+    },
+    trigger(event: string, data?: unknown) {
+      (handlers[event] || []).forEach((handler) => handler(data));
+    },
+    removeAllListeners: jest.fn(),
+    disconnect: jest.fn(),
+  };
+
+  return fake;
+};
+
+const socketState = { config: { serviceUrls: { pushServiceApiUrl: 'http://push-service' } } };
 
 const mockTemplates = {
   'mock-template': {
@@ -221,4 +266,45 @@ it('Generate Pdf template', () => {
       },
     })
     .run();
+});
+
+describe('streamPdfSocket', () => {
+  beforeEach(() => (io as jest.Mock).mockReset());
+
+  it('clears the socket flag when the push service drops the connection for good', async () => {
+    const fake = createFakeSocket();
+    (io as jest.Mock).mockImplementation(() => {
+      // 'connect' is registered first and resolves the connect promise.
+      setTimeout(() => fake.trigger('connect'), 0);
+      return fake;
+    });
+
+    // Once the lifecycle handlers are wired the channel exists and the saga is reading from it, so a
+    // terminal drop at that point exercises the recovery path rather than racing it.
+    fake.onSubscribe = (event) => {
+      if (event === 'connect_error') {
+        setTimeout(() => {
+          fake.active = false;
+          fake.trigger('disconnect');
+        }, 0);
+      }
+    };
+
+    await expectSaga(streamPdfSocket, { disconnect: false })
+      .withState(socketState)
+      .provide(skipReconnectDelay)
+      .put({ socketChannel: true, type: SOCKET_CHANNEL })
+      .put({ socketChannel: false, type: SOCKET_CHANNEL })
+      .run(false);
+
+    expect(fake.disconnect).toHaveBeenCalled();
+  });
+
+  it('clears the socket flag on an explicit disconnect', async () => {
+    await expectSaga(streamPdfSocket, { disconnect: true })
+      .withState(socketState)
+      .provide(skipReconnectDelay)
+      .put({ socketChannel: false, type: SOCKET_CHANNEL })
+      .run(false);
+  });
 });
