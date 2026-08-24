@@ -191,11 +191,11 @@ Then('the user views {string} API documentation', function (serviceName) {
 
 When('the user selects {string} tab for {string}', function (tab, menuItem) {
   commonObj.serviceTab(menuItem, tab).click();
-  cy.wait(3000);
+  cy.wait(2000);
 });
 
 Then('the user views a notification message of {string}', function (message) {
-  cy.wait(4000); // Wait for the message to show up
+  cy.wait(2000); // Wait for the message to show up
   commonObj.notificationMessage().invoke('text').should('contain', message);
 });
 
@@ -203,7 +203,7 @@ Then('the user views delete {string} confirmation modal for {string}', function 
   if (String(deleteItemName).includes('<$ph>')) {
     deleteItemName = commonlib.stringReplacement(deleteItemName, replacementString);
   }
-  cy.wait(4000);
+  cy.wait(2000);
   commonObj
     .deleteConfirmationModalTitle()
     .invoke('text')
@@ -224,7 +224,7 @@ When('the user clicks Cancel button in delete confirmation modal', function () {
     .scrollIntoView()
     // .should('be.visible')  // Not working with form disposition modal
     .click({ force: true });
-  cy.wait(4000); // Wait for the record to be removed from the page
+  cy.wait(2000); // Wait for the record to be removed from the page
 });
 
 When('the user waits {string} seconds', function (seconds: number) {
