@@ -59,12 +59,17 @@ const createState = ({
         supportTopic: false,
         anonymousApply: false,
         assessorRoles: [],
+        dataSchema: {
+          type: 'object',
+          properties: {
+            firstName: { type: 'string', title: 'First name' },
+            lastName: { type: 'string', title: 'Last name' },
+          },
+        },
+        reviewConfiguration: { columns: [{ path: 'firstName' }] },
       },
     },
     pdfs: {},
-    dataValues: {
-      [definitionId]: [{ name: 'First name', path: 'firstName', type: 'string', selected: true }],
-    },
     results: {
       definitions: [],
       forms: formResults,
@@ -164,6 +169,30 @@ describe('Forms', () => {
     expect(getByText('Ada')).toBeTruthy();
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeTruthy();
     expect(baseElement.querySelector("goa-button[testId='export-forms']")).toBeTruthy();
+  });
+
+  it('should not render form data that is not in the review configuration', () => {
+    const { queryByText } = renderForms(
+      createState({
+        forms: {
+          'form-1': {
+            urn: formUrn,
+            id: 'form-1',
+            formId: 'form-1',
+            status: FormStatus.submitted,
+            created: '2026-08-01T12:00:00.000Z',
+            submitted: '2026-08-01T12:00:00.000Z',
+            lastAccessed: '2026-08-01T12:00:00.000Z',
+            createdBy: { id: 'user-1', name: 'Test User' },
+            applicant: { addressAs: 'Test User' },
+            data: { firstName: 'Ada', lastName: 'Lovelace' },
+          },
+        },
+        formResults: ['form-1'],
+      }),
+    );
+
+    expect(queryByText('Lovelace')).toBeNull();
   });
 
   it('should dispatch findForms on mount when no forms are loaded', () => {
