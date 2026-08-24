@@ -33,7 +33,9 @@ export const SplitPaneDivider = styled.div<{ $dragging: boolean }>`
   position: relative;
   flex: 0 0 ${DIVIDER_WIDTH}px;
   width: ${DIVIDER_WIDTH}px;
-  height: 100%;
+  /* The divider has no content, so height: 100% against an indefinite container collapsed it to zero
+     and left nothing to see or grab. */
+  align-self: stretch;
   cursor: col-resize;
   touch-action: none;
   outline: none;
