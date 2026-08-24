@@ -56,12 +56,18 @@ const createState = ({
         supportTopic: false,
         anonymousApply: false,
         assessorRoles: [],
+        dataSchema: {
+          type: 'object',
+          properties: {
+            firstName: { type: 'string', title: 'First name' },
+            lastName: { type: 'string', title: 'Last name' },
+            fileNumber: { type: 'number', title: 'File number' },
+          },
+        },
+        reviewConfiguration: { columns: [{ path: 'firstName' }] },
       },
     },
     pdfs: {},
-    dataValues: {
-      [definitionId]: [{ name: 'First name', path: 'firstName', type: 'string', selected: true }],
-    },
     results: {
       definitions: [],
       forms: [],
@@ -157,6 +163,85 @@ describe('FormSubmissions', () => {
 
     expect(getByText('Submitted on')).toBeTruthy();
     expect(getByText('Ada')).toBeTruthy();
+  });
+
+  it('should render review configuration columns in the specified order', () => {
+    const state = createState({
+      submissions: {
+        'submission-1': {
+          urn: submissionUrn,
+          id: 'submission-1',
+          formId: 'form-1',
+          created: '2026-08-01T12:00:00.000Z',
+          updated: '2026-08-01T12:00:00.000Z',
+          createdBy: { id: 'user-1', name: 'Test User' },
+          disposition: { id: 'accepted', status: 'accepted', reason: '', date: '2026-08-02T12:00:00.000Z' },
+          formData: { firstName: 'Ada', lastName: 'Lovelace', fileNumber: 42 },
+        },
+      },
+      submissionResults: ['submission-1'],
+    });
+    state.form.definitions[definitionId] = {
+      ...state.form.definitions[definitionId],
+      reviewConfiguration: { columns: [{ path: 'lastName' }, { path: 'firstName' }] },
+    };
+
+    const { baseElement, getByText } = renderSubmissions(state);
+    const headers = Array.from(baseElement.querySelectorAll('thead th')).map((header) => header.textContent.trim());
+
+    expect(headers).toEqual(['Submitted on', 'Disposition', 'Tags', 'Last name', 'First name', 'Actions']);
+    expect(getByText('Lovelace')).toBeTruthy();
+    expect(getByText('Ada')).toBeTruthy();
+  });
+
+  it('should not render submitted values that are not in the review configuration', () => {
+    const { queryByText } = renderSubmissions(
+      createState({
+        submissions: {
+          'submission-1': {
+            urn: submissionUrn,
+            id: 'submission-1',
+            formId: 'form-1',
+            created: '2026-08-01T12:00:00.000Z',
+            updated: '2026-08-01T12:00:00.000Z',
+            createdBy: { id: 'user-1', name: 'Test User' },
+            disposition: { id: 'accepted', status: 'accepted', reason: '', date: '2026-08-02T12:00:00.000Z' },
+            formData: { firstName: 'Ada', lastName: 'Lovelace', fileNumber: 42 },
+          },
+        },
+        submissionResults: ['submission-1'],
+      }),
+    );
+
+    expect(queryByText('File number')).toBeNull();
+    expect(queryByText('42')).toBeNull();
+  });
+
+  it('should show only system columns when no review configuration is specified', () => {
+    const state = createState({
+      submissions: {
+        'submission-1': {
+          urn: submissionUrn,
+          id: 'submission-1',
+          formId: 'form-1',
+          created: '2026-08-01T12:00:00.000Z',
+          updated: '2026-08-01T12:00:00.000Z',
+          createdBy: { id: 'user-1', name: 'Test User' },
+          disposition: { id: 'accepted', status: 'accepted', reason: '', date: '2026-08-02T12:00:00.000Z' },
+          formData: { firstName: 'Ada' },
+        },
+      },
+      submissionResults: ['submission-1'],
+    });
+    state.form.definitions[definitionId] = {
+      ...state.form.definitions[definitionId],
+      reviewConfiguration: { columns: [] },
+    };
+
+    const { baseElement } = renderSubmissions(state);
+    const headers = Array.from(baseElement.querySelectorAll('thead th')).map((header) => header.textContent.trim());
+
+    expect(headers).toEqual(['Submitted on', 'Disposition', 'Tags', 'Actions']);
   });
 
   it('should dispatch findSubmissions on mount when no submissions are loaded', () => {
