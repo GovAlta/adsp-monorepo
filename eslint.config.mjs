@@ -89,6 +89,13 @@ export default [
     },
   },
   {
+    // Standalone Node scripts under tools/ run directly, outside any nx project.
+    files: ['tools/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     ignores: ['dist', '**/*.config.js', '**/*.config.mjs', '**/*.config.old.js'],
   },
 ];

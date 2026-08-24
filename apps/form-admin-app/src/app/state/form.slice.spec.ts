@@ -1,4 +1,11 @@
-import { countActiveFilters, formFilterCountSelector, getDefaultFormCriteria } from './form.slice';
+import { AppState } from './store';
+import {
+  countActiveFilters,
+  formFilterCountSelector,
+  getDefaultFormCriteria,
+  resolveResultTotal,
+  selectedDataValuesSelector,
+} from './form.slice';
 
 describe('countActiveFilters', () => {
   it('should return zero for empty criteria', () => {
@@ -37,5 +44,93 @@ describe('formFilterCountSelector', () => {
     >[0];
 
     expect(formFilterCountSelector(state)).toBe(2);
+  });
+});
+
+describe('resolveResultTotal', () => {
+  it('should use the total from the page when it is included', () => {
+    expect(resolveResultTotal(null, { total: 12 })).toBe(12);
+  });
+
+  it('should use a zero total from the page', () => {
+    expect(resolveResultTotal(12, { total: 0 })).toBe(0);
+  });
+
+  it('should clear the previous total for a new search without a total', () => {
+    expect(resolveResultTotal(12, {})).toBeNull();
+  });
+
+  it('should keep the total for a subsequent page of the same search', () => {
+    expect(resolveResultTotal(12, { after: 'MTA=' })).toBe(12);
+  });
+
+  it('should keep an unknown total for a subsequent page of the same search', () => {
+    expect(resolveResultTotal(null, { after: 'MTA=' })).toBeNull();
+  });
+});
+
+const reviewDefinitionState = {
+  form: {
+    selectedDefinition: 'intake',
+    definitions: {
+      intake: {
+        id: 'intake',
+        dataSchema: {
+          type: 'object',
+          properties: {
+            firstName: { type: 'string', title: 'First name' },
+            lastName: { type: 'string', title: 'Last name' },
+            fileNumber: { type: 'number' },
+          },
+        },
+        reviewConfiguration: { columns: [{ path: 'lastName' }, { path: 'firstName' }] },
+      },
+    },
+  },
+} as unknown as AppState;
+
+describe('selectedDataValuesSelector', () => {
+  it('returns configured review columns in the specified order', () => {
+    expect(selectedDataValuesSelector(reviewDefinitionState).map((column) => column.path)).toEqual([
+      'lastName',
+      'firstName',
+    ]);
+  });
+
+  it('does not include schema fields that are not in the review configuration', () => {
+    expect(selectedDataValuesSelector(reviewDefinitionState).map((column) => column.path)).not.toContain('fileNumber');
+  });
+
+  it('returns no columns when the definition has no review configuration', () => {
+    const state = {
+      form: {
+        selectedDefinition: 'intake',
+        definitions: {
+          intake: {
+            id: 'intake',
+            dataSchema: reviewDefinitionState.form.definitions.intake.dataSchema,
+          },
+        },
+      },
+    } as unknown as AppState;
+
+    expect(selectedDataValuesSelector(state)).toEqual([]);
+  });
+
+  it('returns no columns when review configuration is empty', () => {
+    const state = {
+      form: {
+        selectedDefinition: 'intake',
+        definitions: {
+          intake: {
+            id: 'intake',
+            dataSchema: reviewDefinitionState.form.definitions.intake.dataSchema,
+            reviewConfiguration: { columns: [] },
+          },
+        },
+      },
+    } as unknown as AppState;
+
+    expect(selectedDataValuesSelector(state)).toEqual([]);
   });
 });

@@ -2,7 +2,6 @@ import {
   GoabBadge,
   GoabButton,
   GoabButtonGroup,
-  GoabCheckbox,
   GoabContainer,
   GoabDetails,
   GoabFormItem,
@@ -20,17 +19,15 @@ import {
   calendarBusySelector,
   canGetIntakeCalendarSelector,
   createEvent,
-  dataValuesSelector,
   definitionSelector,
   deleteEvent,
   getEvents,
   recordEventsSelector,
-  updateDataValue,
+  selectedDataValuesSelector,
 } from '../state';
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
-import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 
 const OverviewLayout = styled.div`
   position: absolute;
@@ -52,7 +49,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
 
   const canGetIntakeCalendar = useSelector(canGetIntakeCalendarSelector);
   const definition = useSelector(definitionSelector);
-  const dataValues = useSelector(dataValuesSelector);
+  const reviewColumns = useSelector(selectedDataValuesSelector);
 
   const calendarBusy = useSelector(calendarBusySelector);
   const intakeEvents = useSelector((state: AppState) => recordEventsSelector(state, definition.urn));
@@ -228,40 +225,35 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             </form>
           </>
         )}
-        <h3>Data value columns</h3>
+        <h3>Review columns</h3>
         <p>
-          Select the form data values to show as columns so that forms and submissions are easier to view at a glance.
-          The preferences shown here are saved and shared between users accessing this application from this
-          workstation.
+          These columns come from the Form Definition Review Configuration and appear in the submissions and forms
+          lists.
         </p>
-        <GoabTable width="100%" mt="m">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Path</th>
-              <th>Show column</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dataValues.map(({ name, path, selected }) => (
-              <tr key={path}>
-                <td>{name}</td>
-                <td>{path}</td>
-                <td>
-                  <GoabCheckbox
-                    size="compact"
-                    name="Show column"
-                    mt="s"
-                    checked={!!selected}
-                    onChange={(detail: GoabCheckboxOnChangeDetail) =>
-                      dispatch(updateDataValue({ definitionId: definition.id, path, selected: detail?.checked }))
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </GoabTable>
+        {reviewColumns.length === 0 ? (
+          <p data-testid="review-columns-empty">
+            No review columns are configured. The lists show only system columns.
+          </p>
+        ) : (
+          <div data-testid="review-columns-recap">
+            <GoabTable width="100%" mt="m">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Path</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviewColumns.map(({ name, path }) => (
+                  <tr key={path}>
+                    <td data-testid={`review-column-name-${path}`}>{name}</td>
+                    <td data-testid={`review-column-path-${path}`}>{path}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </GoabTable>
+          </div>
+        )}
       </ContentContainer>
     </OverviewLayout>
   );

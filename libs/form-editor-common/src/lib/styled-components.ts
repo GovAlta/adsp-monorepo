@@ -207,6 +207,14 @@ export const FormEditorTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+// Keeps the preview toggle on the title line, aligned to the editor pane's right edge.
+export const FormEditorTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--goa-space-m);
+`;
+
 export const BadgeWrapper = styled.div`
   margin-left: 1rem;
 `;
@@ -531,7 +539,12 @@ export const FormEditorContainer = styled.div`
   width: 50%;
 `;
 export const FormPreviewContainer = styled.div`
-  width: 50%;
+  /* Fills its resizable pane; the split pane owns the editor/preview ratio now. */
+  width: 100%;
+  min-width: 0;
+  /* Mirrors the editor pane's padding-right so the divider sits evenly between the two. */
+  padding-left: 3rem;
+  box-sizing: border-box;
 `;
 
 export const TabletMessage = styled.div`

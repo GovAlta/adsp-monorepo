@@ -67,6 +67,14 @@ describe('ResizableSplitPane', () => {
     expect(separator).toHaveAttribute('aria-valuenow', '691');
   });
 
+  it('stretches the divider to the full height of the container', () => {
+    const { getByRole } = render(<ResizableSplitPane left={<div>Editor</div>} right={<div>Preview</div>} />);
+
+    // height: 100% collapses to zero when the host gives the container an indefinite height, which
+    // leaves nothing to see or grab.
+    expect(getByRole('separator')).toHaveStyle('align-self: stretch');
+  });
+
   it('renders only the editor when the right pane is hidden', () => {
     const { getByText, queryByRole, queryByText } = render(
       <ResizableSplitPane left={<div>Editor</div>} right={<div>Preview</div>} rightHidden />,

@@ -1,11 +1,11 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
-import { JsonSchema } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import dashify from 'dashify';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
+import { resolveReviewColumns, ReviewColumnValue } from './reviewColumns';
 import { AppState } from './store';
 import {
   FeedbackMessage,
@@ -90,12 +90,19 @@ export const countActiveFilters = (criteria: { dataCriteria?: Record<string, unk
   return [...Object.values(fields), ...Object.values(dataCriteria || {})].filter(hasFilterValue).length;
 };
 
-interface DataValue {
-  name: string;
-  path: string;
-  selected?: boolean;
-  type: string | string[];
-}
+// Tag based searches resolve results via the directory service, which doesn't include a total in the page.
+// Carry the total across pages of the same search, but clear it when a new search comes back without one,
+// so the total of a previous search isn't reported against the current results.
+export const resolveResultTotal = (
+  current: number | null,
+  page: { after?: string; total?: number },
+): number | null => {
+  if (page.total !== undefined) {
+    return page.total;
+  }
+
+  return page.after ? current : null;
+};
 
 interface Job {
   id: string;
@@ -124,16 +131,15 @@ export interface FormState {
   submissions: Record<string, FormSubmission>;
   definitions: Record<string, FormDefinition>;
   pdfs: Record<string, string>;
-  dataValues: Record<string, DataValue[]>;
   results: {
     definitions: string[];
     forms: string[];
     submissions: string[];
   };
   resultTotals: {
-    definitions: number;
-    forms: number;
-    submissions: number;
+    definitions: number | null;
+    forms: number | null;
+    submissions: number | null;
   };
   definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
@@ -164,7 +170,6 @@ export const initialFormState: FormState = {
     exporting: false,
   },
   definitions: {},
-  dataValues: {},
   forms: {},
   submissions: {},
   pdfs: {},
@@ -423,24 +428,9 @@ export const selectSubmission = createAsyncThunk('form/select-submission', (subm
   }
 });
 
-function getDataValues(schema: JsonSchema, path: string[]): DataValue[] {
-  const dataValues = [];
-  if (schema.type === 'object' && typeof schema.properties === 'object') {
-    for (const [propertyName, value] of Object.entries(schema.properties)) {
-      if (value) {
-        dataValues.push(...getDataValues(value, [...path, propertyName]));
-      }
-    }
-  } else {
-    dataValues.push({ name: path[path.length - 1], path: path.join('.'), type: schema.type });
-  }
-
-  return dataValues;
-}
-
 export const loadDefinition = createAsyncThunk(
   'form/load-definition',
-  async (definitionId: string, { dispatch, getState, rejectWithValue }) => {
+  async (definitionId: string, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
@@ -458,92 +448,12 @@ export const loadDefinition = createAsyncThunk(
         if (!error) {
           data.dataSchema = resolved;
         }
-
-        await dispatch(initializeDataValues({ definitionId, schema: data.dataSchema }));
       }
 
       return {
         ...data,
         urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${data.id}`,
       };
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
-    }
-  },
-);
-
-function getDataValuePreferenceKey(tenantId: string, definitionId: string) {
-  return [tenantId, definitionId].join(':');
-}
-function getDataValuePreferences(tenantId: string, definitionId: string) {
-  const key = getDataValuePreferenceKey(tenantId, definitionId);
-  const preferencesValue = localStorage.getItem(key);
-  const preferences: { selected: string[] } = preferencesValue ? JSON.parse(preferencesValue) : {};
-  return preferences.selected || [];
-}
-
-const savePreferences = _.debounce(function (tenantId: string, definitionId: string, selected: string[]) {
-  const key = getDataValuePreferenceKey(tenantId, definitionId);
-  localStorage.setItem(key, JSON.stringify({ selected }));
-}, 2000);
-
-export const initializeDataValues = createAsyncThunk(
-  'form/initialize-data-values',
-  async ({ definitionId, schema }: { definitionId: string; schema: JsonSchema }, { getState, rejectWithValue }) => {
-    try {
-      const { user } = getState() as AppState;
-
-      const dataValues = getDataValues(schema, []);
-      const selectedValues = getDataValuePreferences(user.tenant.id, definitionId);
-
-      return dataValues.map(({ selected, ...dataValue }) => ({
-        ...dataValue,
-        selected: selected || selectedValues.includes(dataValue.path),
-      }));
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
-    }
-  },
-);
-
-export const updateDataValue = createAsyncThunk(
-  'form/update-data-value',
-  async (
-    { definitionId, path, selected }: { definitionId: string; path: string; selected: boolean },
-    { getState, rejectWithValue },
-  ) => {
-    try {
-      const { form, user } = getState() as AppState;
-
-      const definitionDataValues = form.dataValues[definitionId].map((dataValue) => {
-        if (dataValue.path === path) {
-          return { ...dataValue, selected };
-        } else {
-          return dataValue;
-        }
-      });
-
-      savePreferences(
-        user.tenant.id,
-        definitionId,
-        definitionDataValues.filter(({ selected }) => selected).map(({ path }) => path),
-      );
-
-      return definitionDataValues;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -712,21 +622,24 @@ const submissionExportColumns: ExportColumn[] = [
   { key: 'disposition.reason', header: 'Disposition reason' },
 ];
 
-// Limit export to base columns plus data values selected in the overview page, so output matches what users see on screen.
+// Limit export to base columns plus Review Configuration columns, so output matches the lists.
 function getExportFormatOptions( // clean-code-ignore: 2.3
   format: 'json' | 'csv',
   baseColumns: ExportColumn[],
   dataPath: string,
-  dataValues: DataValue[],
+  dataValues: ReviewColumnValue[],
 ) {
   const columns = [
     ...baseColumns,
-    ...dataValues
-      .filter(({ selected }) => !!selected)
-      .map(({ name, path }) => ({ key: `${dataPath}.${path}`, header: name })),
+    ...dataValues.map(({ name, path }) => ({ key: `${dataPath}.${path}`, header: name })),
   ];
 
   return format === 'csv' ? { columns } : { fields: columns.map(({ key }) => key) };
+}
+
+function reviewColumnsForDefinition(form: FormState, definitionId: string): ReviewColumnValue[] {
+  const definition = form.definitions[definitionId];
+  return resolveReviewColumns(definition?.dataSchema, definition?.reviewConfiguration);
 }
 
 export const exportForms = createAsyncThunk(
@@ -745,7 +658,12 @@ export const exportForms = createAsyncThunk(
         {
           resourceId: 'urn:ads:platform:form-service:v1:/forms',
           format,
-          formatOptions: getExportFormatOptions(format, formExportColumns, 'data', form.dataValues[definitionId] || []),
+          formatOptions: getExportFormatOptions(
+            format,
+            formExportColumns,
+            'data',
+            reviewColumnsForDefinition(form, definitionId),
+          ),
           fileType: 'form-export',
           params: {
             includeData: true,
@@ -800,7 +718,7 @@ export const exportSubmissions = createAsyncThunk(
             format,
             submissionExportColumns,
             'formData',
-            form.dataValues[definitionId] || [],
+            reviewColumnsForDefinition(form, definitionId),
           ),
           fileType: 'form-export',
           params: {
@@ -1035,9 +953,7 @@ const formSlice = createSlice({
           ...payload.results.map((result) => result.id),
         ];
         state.results.definitions = results;
-        if (payload.page.total !== undefined) {
-          state.resultTotals.definitions = payload.page.total;
-        }
+        state.resultTotals.definitions = resolveResultTotal(state.resultTotals.definitions, payload.page);
         state.next.definitions = payload.page.next;
       })
       .addCase(loadDefinitions.rejected, (state) => {
@@ -1055,12 +971,6 @@ const formSlice = createSlice({
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.initializing = false;
         state.busy.loading = false;
-      })
-      .addCase(initializeDataValues.fulfilled, (state, { payload, meta }) => {
-        state.dataValues[meta.arg.definitionId] = payload;
-      })
-      .addCase(updateDataValue.fulfilled, (state, { payload, meta }) => {
-        state.dataValues[meta.arg.definitionId] = payload;
       })
       .addCase(loadForm.pending, (state) => {
         state.busy.loading = true;
@@ -1096,9 +1006,7 @@ const formSlice = createSlice({
           ...payload.results.map((result) => result.id),
         ];
         state.results.forms = results;
-        if (payload.page.total !== undefined) {
-          state.resultTotals.forms = payload.page.total;
-        }
+        state.resultTotals.forms = resolveResultTotal(state.resultTotals.forms, payload.page);
         state.next.forms = payload.page.next;
       })
       .addCase(findForms.rejected, (state) => {
@@ -1118,9 +1026,7 @@ const formSlice = createSlice({
           ...payload.results.map((result) => result.id),
         ];
         state.results.submissions = results;
-        if (payload.page.total !== undefined) {
-          state.resultTotals.submissions = payload.page.total;
-        }
+        state.resultTotals.submissions = resolveResultTotal(state.resultTotals.submissions, payload.page);
         state.next.submissions = payload.page.next;
       })
       .addCase(findSubmissions.rejected, (state) => {
@@ -1251,14 +1157,13 @@ export const definitionSelector = createSelector(
   },
 );
 
-export const dataValuesSelector = createSelector(
-  (state: AppState) => state.form.dataValues,
+export const selectedDataValuesSelector = createSelector(
+  (state: AppState) => state.form.definitions,
   (state: AppState) => state.form.selectedDefinition,
-  (dataValues, selected) => dataValues[selected] || [],
-);
-
-export const selectedDataValuesSelector = createSelector(dataValuesSelector, (values) =>
-  values.filter(({ selected }) => !!selected),
+  (definitions, selected) => {
+    const definition = selected ? definitions[selected] : undefined;
+    return resolveReviewColumns(definition?.dataSchema, definition?.reviewConfiguration);
+  },
 );
 
 export const formResultTotalsSelector = createSelector(
