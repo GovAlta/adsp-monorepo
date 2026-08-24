@@ -16,7 +16,9 @@ export const SplitPanePanel = styled.div<{ $fill?: boolean; $width?: number }>`
   display: flex;
   flex: ${({ $fill, $width }) => ($fill ? '1 1 0' : $width === undefined ? '1 1 100%' : `0 0 ${$width}px`)};
   width: ${({ $width }) => ($width === undefined ? '100%' : `${$width}px`)};
-  height: 100%;
+  /* Stretch rather than height: 100%, which collapses to auto when the host gives the container an
+     indefinite height. */
+  align-self: stretch;
   min-width: 0;
   overflow: hidden;
 `;
@@ -25,7 +27,9 @@ export const SplitPaneDivider = styled.div<{ $dragging: boolean }>`
   position: relative;
   flex: 0 0 ${DIVIDER_WIDTH}px;
   width: ${DIVIDER_WIDTH}px;
-  height: 100%;
+  /* The divider has no content, so height: 100% against an indefinite container collapsed it to zero
+     and left nothing to see or grab. */
+  align-self: stretch;
   cursor: col-resize;
   touch-action: none;
   outline: none;

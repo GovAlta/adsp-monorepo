@@ -60,6 +60,7 @@ import {
   EditorPadding,
   FinalButtonPadding,
   FormEditorTitle,
+  FormEditorTitleRow,
   FormEditor,
   FormFormItem,
   ScrollPane,
@@ -96,7 +97,7 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { AgentChat } from '@core-services/app-common';
+import { AgentChat, ResizableSplitPane } from '@core-services/app-common';
 import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
 import { messageAgent, startThread, connectAgent } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
@@ -257,6 +258,7 @@ export function AddEditFormDefinitionEditor({
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [previewVisible, setPreviewVisible] = useState(true);
   const [data, setData] = useState<unknown>({});
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
@@ -510,749 +512,771 @@ export function AddEditFormDefinitionEditor({
       ) : (
         <FlexRow>
           {isSaving && <CustomLoader />}
-          <NameDescriptionDataSchema>
-            <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
-            <hr className="hr-resize" />
-            {definition && <FormConfigDefinition definition={definition} />}
+          <ResizableSplitPane
+            initialLeftPercent={50}
+            minPaneWidth={300}
+            rightHidden={!previewVisible}
+            testId="form-definition-editor-split"
+            left={
+              <NameDescriptionDataSchema>
+                <FormEditorTitleRow>
+                  <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
+                  <GoabButton
+                    type="tertiary"
+                    size="compact"
+                    leadingIcon={previewVisible ? 'eye-off' : 'eye'}
+                    testId="toggle-form-preview"
+                    onClick={() => setPreviewVisible((visible) => !visible)}
+                  >
+                    {previewVisible ? 'Hide preview' : 'Show preview'}
+                  </GoabButton>
+                </FormEditorTitleRow>
+                <hr className="hr-resize" />
+                {definition && <FormConfigDefinition definition={definition} />}
 
-            <Tabs
-              activeIndex={activeIndex}
-              changeTabCallback={(index) => {
-                setActiveIndex(index);
-              }}
-              data-testid="form-editor-tabs"
-            >
-              <Tab label="Data schema" data-testid="form-editor-data-schema-tab" isTightContent={true}>
-                <GoabFormItem
-                  error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
-                  label=""
+                <Tabs
+                  activeIndex={activeIndex}
+                  changeTabCallback={(index) => {
+                    setActiveIndex(index);
+                  }}
+                  data-testid="form-editor-tabs"
                 >
-                  <EditorPadding>
-                    <MonacoEditor
-                      data-testid="form-data-schema"
-                      height={EditorHeight}
-                      value={tempDataSchema}
-                      onMount={handleEditorDidMountData}
-                      onChange={(value) => {
-                        const jsonSchemaValidResult = JSONSchemaValidator(value);
-                        dispatch(setDraftDataSchema(value));
+                  <Tab label="Data schema" data-testid="form-editor-data-schema-tab" isTightContent={true}>
+                    <GoabFormItem
+                      error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
+                      label=""
+                    >
+                      <EditorPadding>
+                        <MonacoEditor
+                          data-testid="form-data-schema"
+                          height={EditorHeight}
+                          value={tempDataSchema}
+                          onMount={handleEditorDidMountData}
+                          onChange={(value) => {
+                            const jsonSchemaValidResult = JSONSchemaValidator(value);
+                            dispatch(setDraftDataSchema(value));
 
-                        if (jsonSchemaValidResult === '') {
-                          setEditorErrors({
-                            ...editorErrors,
-                            dataSchemaJSONSchema: null,
-                          });
-                        } else {
-                          setEditorErrors({
-                            ...editorErrors,
-                            dataSchemaJSONSchema: jsonSchemaValidResult,
-                          });
-                        }
-                      }}
-                      onValidate={(makers) => {
-                        if (makers.length === 0) {
-                          setEditorErrors({
-                            ...editorErrors,
-                            dataSchemaJSON: null,
-                          });
-                          return;
-                        }
-                        setEditorErrors({
-                          ...editorErrors,
-                          dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                        });
-                      }}
-                      language="json"
-                      options={{
-                        autoClosingQuotes: 'never',
-                        automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                        lineNumbersMinChars: 2,
-                        tabSize: 2,
-                        padding: {
-                          top: 8,
-                        },
-                        minimap: { enabled: isUseMiniMap },
-                        folding: true,
-                        foldingStrategy: 'auto',
-                        showFoldingControls: 'always',
-                      }}
-                    />
-                  </EditorPadding>
-                </GoabFormItem>
-              </Tab>
-              <Tab label="UI schema" data-testid="form-editor-ui-schema-tab" isTightContent={true}>
-                <GoabFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
-                  <EditorPadding>
-                    <MonacoEditor
-                      data-testid="form-ui-schema"
-                      height={EditorHeight}
-                      value={tempUiSchema}
-                      {...formEditorJsonConfig}
-                      onValidate={(makers) => {
-                        if (makers.length === 0) {
-                          setEditorErrors({
-                            ...editorErrors,
-                            uiSchema: null,
-                          });
-                          return;
-                        }
-                        setEditorErrors({
-                          ...editorErrors,
-                          uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                        });
-                      }}
-                      onMount={handleEditorDidMountUi}
-                      onChange={(value) => {
-                        dispatch(setDraftUISchema(value));
-                      }}
-                      language="json"
-                      options={{
-                        autoClosingQuotes: 'never',
-                        automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                        wordWrap: 'on',
-                        tabSize: 2,
-                        padding: {
-                          top: 8,
-                        },
-                        minimap: { enabled: isUseMiniMap },
-                        folding: true,
-                        foldingStrategy: 'auto',
-                        showFoldingControls: 'always',
-                      }}
-                    />
-                  </EditorPadding>
-                </GoabFormItem>
-              </Tab>
-              {formAIEnabled && (
-                <Tab
-                  label={
-                    <span>
-                      AI
-                      <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
-                    </span>
-                  }
-                  data-testid="form-editor-agent-tab"
-                  isTightContent={true}
-                >
-                  <div style={{ height: EditorHeight }}>
-                    <AgentChat
-                      threadId={threadId}
-                      context={{ formDefinitionId: definition.id }}
-                      messages={messages}
-                      disabled={!agentConnected || !thread}
-                      onSend={handleAgentSend}
-                      onAttachmentUpload={handleAgentAttachmentUpload}
-                    />
-                  </div>
-                </Tab>
-              )}
-              <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
-                <BorderBottom>
-                  <AddToggleButtonPadding>
-                    <GoabButtonGroup alignment="start">
-                      <GoabCheckbox
-                        name="showSelectedRoles"
-                        text="Show selected roles"
-                        size="compact"
-                        checked={showSelectedRoles}
-                        onChange={() => setShowSelectedRoles((prev) => !prev)}
-                      />
-                    </GoabButtonGroup>
-                  </AddToggleButtonPadding>
-                  <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
-                    <ScrollPane>
-                      {roles.map((e, key) => {
-                        const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
-                          applicantRoles: definition?.applicantRoles,
-                          clerkRoles: definition?.clerkRoles,
-                          assessorRoles: definition?.assessorRoles,
-                        });
-                        return (
-                          rolesMap.length > 0 && (
-                            <ClientRole
-                              roleNames={rolesMap}
-                              key={key}
-                              clientId={e.clientId}
-                              anonymousRead={definition.anonymousApply}
-                              configuration={{
-                                applicantRoles: definition.applicantRoles,
-                                clerkRoles: definition.clerkRoles,
-                                assessorRoles: definition.assessorRoles,
-                              }}
-                              onUpdateRoles={(roles, type) => {
-                                if (type === applicantRoles.name) {
-                                  setDefinition({
-                                    applicantRoles: [...new Set(roles)],
-                                  });
-                                } else if (type === clerkRoles.name) {
-                                  setDefinition({
-                                    clerkRoles: [...new Set(roles)],
-                                  });
-                                } else {
-                                  setDefinition({
-                                    assessorRoles: [...new Set(roles)],
-                                  });
-                                }
-                              }}
-                            />
-                          )
-                        );
-                      })}
-                      {isLoadingRoles && <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>}
-                    </ScrollPane>
-                  </RolesTabBody>
-                </BorderBottom>
-              </Tab>
-              <Tab label="Lifecycle" data-testid="lifecycle" isTightContent={true}>
-                <BorderBottom>
-                  <EditorTabScroll $height={EditorHeight + 7}>
-                    <H3>Application</H3>
-                    <div>
-                      <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
-                        <FormFormItem>
-                          <GoabInput
-                            size="compact"
-                            name="form-url-id"
-                            value={definition?.formDraftUrlTemplate}
-                            testId="form-url-id"
-                            disabled={true}
-                            width="100%"
-                            onChange={null}
-                          />
-                        </FormFormItem>
-                      </GoabFormItem>
-                      <FlexRow>
-                        <GoACheckboxPad>
-                          <GoabCheckbox
-                            size="compact"
-                            name="form-definition-anonymous-apply"
-                            key="form-definition-anonymous-apply-checkbox"
-                            checked={definition.anonymousApply === true}
-                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
-                              setDefinition({ anonymousApply: detail.checked });
-                            }}
-                            text={'Allow anonymous application'}
-                            mt="s"
-                          />
-                        </GoACheckboxPad>
-                        <GoabTooltip
-                          content={
-                            definition.anonymousApply
-                              ? 'Forms of this type will allow anonymous user to apply.'
-                              : 'Forms of this type will not allow anonymous user to apply.'
-                          }
-                          position="top"
-                        >
-                          <GoabIcon type="information-circle" ariaLabel="anonymous-icon"></GoabIcon>
-                        </GoabTooltip>
-                      </FlexRow>
-                      <FlexRow>
-                        <GoACheckboxPad>
-                          <GoabCheckbox
-                            name="form-definition-allow-multiple-forms-checkbox"
-                            key="form-definition-allow-multiple-forms-checkbox"
-                            disabled={definition.anonymousApply}
-                            size="compact"
-                            checked={
-                              !(
-                                definition.oneFormPerApplicant === true ||
-                                definition.oneFormPerApplicant === undefined ||
-                                definition.oneFormPerApplicant === null
-                              )
-                            }
-                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
-                              setDefinition({ oneFormPerApplicant: !detail.value });
-                            }}
-                            text={'Allow multiple forms per applicant'}
-                            mt="s"
-                          />
-                        </GoACheckboxPad>
-                        <GoabTooltip
-                          content={
-                            definition.oneFormPerApplicant
-                              ? 'Forms of this type will only allow applicants to have one form created and submitted at a time.'
-                              : 'Forms of this type will allow applicants to have multiple forms be created and submitted at a time.'
-                          }
-                          position="top"
-                        >
-                          <GoabIcon type="information-circle" ariaLabel="allow-multiple-icon"></GoabIcon>
-                        </GoabTooltip>
-                      </FlexRow>
-                      <FlexRow>
-                        <GoACheckboxPad>
-                          <GoabCheckbox
-                            name="support-topic"
-                            key="support-topic"
-                            disabled={definition.anonymousApply}
-                            checked={definition.supportTopic}
-                            testId="support-topic"
-                            size="compact"
-                            onChange={() => {
-                              const supportTopic = definition.supportTopic ? false : true;
-                              setDefinition({ supportTopic });
-                            }}
-                            text="Create support topic"
-                            mt="m"
-                          />
-                        </GoACheckboxPad>
-                        <GoabTooltip
-                          content={
-                            definition.supportTopic
-                              ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
-                              : 'Forms of this type will not create a comment topic used for supporting applicants.'
-                          }
-                          position="top"
-                        >
-                          <GoabIcon type="information-circle" ariaLabel="support-topic-icon"></GoabIcon>
-                        </GoabTooltip>
-                      </FlexRow>
-                      <FlexRow>
-                        <GoACheckboxPad>
-                          <GoabCheckbox
-                            name="form-definition-scheduled-intakes-checkbox"
-                            key="form-definition-scheduled-intakes-checkbox"
-                            checked={definition.scheduledIntakes}
-                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
-                              setDefinition({ scheduledIntakes: detail.checked });
-                            }}
-                            size="compact"
-                            text={'Use scheduled intakes'}
-                            mt="m"
-                            mb="m"
-                          />
-                        </GoACheckboxPad>
-                        <GoabTooltip
-                          content={
-                            definition.scheduledIntakes
-                              ? 'Forms of this type will have a timeframe to complete and submit a form.'
-                              : 'Forms of this type will not have a timeframe to complete and submit a form.'
-                          }
-                          position="top"
-                        >
-                          <GoabIcon type="information-circle" ariaLabel="scheduled-icon"></GoabIcon>
-                        </GoabTooltip>
-                      </FlexRow>
-                      {definition.scheduledIntakes && (
-                        <div style={{ marginBottom: '0.5rem', marginLeft: '0.125rem' }}>
-                          <GoabButton
-                            size="compact"
-                            type="secondary"
-                            testId="set-intake-period"
-                            onClick={() => {
-                              setIntakePeriodModal(true);
-                            }}
-                          >
-                            Intake periods
-                          </GoabButton>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <GoabFormItem error={''} label="Security classification">
-                        {/* The style below is to fix an UI component bug */}
-                        <div style={{ paddingLeft: '3px' }}>
-                          <GoabDropdown
-                            name="securityClassifications"
-                            width="25rem"
-                            size="compact"
-                            value={definition?.securityClassification || ''}
-                            onChange={(detail: GoabDropdownOnChangeDetail) => {
-                              setDefinition({ securityClassification: detail.value as SecurityClassification });
-                            }}
-                          >
-                            <GoabDropdownItem value={SecurityClassification.Public} label="Public" />
-                            <GoabDropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
-                            <GoabDropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
-                            <GoabDropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
-                          </GoabDropdown>
-                        </div>
-                      </GoabFormItem>
-                    </div>
-                    <h3>Submission</h3>
-                    <FlexRow>
-                      <SubmissionRecordsBox>
-                        <GoabCheckbox
-                          name="generate-pdf-on-submit"
-                          key="generate-pdf-on-submit"
-                          size="compact"
-                          checked={definition.submissionPdfTemplate ? true : false}
-                          testId="generate-pdf-on-submit"
-                          onChange={() => {
-                            const records = definition.submissionPdfTemplate ? '' : 'submitted-form';
-                            setDefinition({ submissionPdfTemplate: records });
-                          }}
-                          text="Create PDF on submit"
-                          mt="s"
-                        />
-                      </SubmissionRecordsBox>
-                      <GoabTooltip
-                        content={
-                          definition.submissionPdfTemplate
-                            ? 'Forms of this type will generate a PDF on submission '
-                            : 'Forms of this type will not generate a PDF on submission'
-                        }
-                        position="top"
-                      >
-                        <GoabIcon type="information-circle" ariaLabel="generate-pdf-icon"></GoabIcon>
-                      </GoabTooltip>
-                    </FlexRow>
-                    <FlexRow>
-                      <SubmissionRecordsBox>
-                        <GoabCheckbox
-                          name="submission-records"
-                          key="submission-records"
-                          size="compact"
-                          checked={definition.submissionRecords}
-                          testId="submission-records"
-                          onChange={() => {
-                            const records = definition.submissionRecords ? false : true;
-                            setDefinition({ submissionRecords: records });
-                          }}
-                          text="Create submission records on submit"
-                          mt="s"
-                        />
-                      </SubmissionRecordsBox>
-                      <GoabTooltip
-                        content={
-                          definition.submissionRecords
-                            ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
-                            : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
-                        }
-                        position="top"
-                      >
-                        <GoabIcon type="information-circle" ariaLabel="submission-icon"></GoabIcon>
-                      </GoabTooltip>
-                    </FlexRow>
-                    <FlexRow>
-                      <SubmissionRecordsBox>
-                        <GoabCheckbox
-                          name="include-data-in-submission"
-                          key="include-data-in-submission"
-                          checked={definition.includeDataInSubmission}
-                          testId="include-data-in-submission"
-                          size="compact"
-                          onChange={() => {
-                            setDefinition({ includeDataInSubmission: !definition.includeDataInSubmission });
-                          }}
-                          text="Include data in submission event"
-                          mt="s"
-                        />
-                      </SubmissionRecordsBox>
-                      <GoabTooltip
-                        content={
-                          definition.includeDataInSubmission
-                            ? 'Form data will be included in the submission event payload.'
-                            : 'Form data will not be included in the submission event payload.'
-                        }
-                        position="top"
-                      >
-                        <GoabIcon type="information-circle" ariaLabel="include-data-in-submission-icon"></GoabIcon>
-                      </GoabTooltip>
-                    </FlexRow>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <FlexRow style={{ alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <label style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>Custom submission event</label>
-                        <GoabTooltip
-                          content="Optional custom event to be issued when the form is submitted. The form-submitted event will always be issued. The custom event payload will include the form data."
-                          position="top"
-                        >
-                          <GoabIcon type="information-circle" ariaLabel="custom-event-icon"></GoabIcon>
-                        </GoabTooltip>
-                      </FlexRow>
-                      <div style={{ paddingLeft: '3px' }}>
-                        <GoabDropdown
-                          name="customSubmissionEvent"
-                          width="25rem"
-                          size="compact"
-                          value={
-                            definition.customSubmissionEvent
-                              ? `${definition.customSubmissionEvent.namespace}:${definition.customSubmissionEvent.name}`
-                              : ''
-                          }
-                          onChange={(detail: GoabDropdownOnChangeDetail) => {
-                            if (detail.value) {
-                              const [namespace, name] = detail.value.split(':');
-                              setDefinition({ customSubmissionEvent: { namespace, name } });
+                            if (jsonSchemaValidResult === '') {
+                              setEditorErrors({
+                                ...editorErrors,
+                                dataSchemaJSONSchema: null,
+                              });
                             } else {
-                              setDefinition({ customSubmissionEvent: null });
+                              setEditorErrors({
+                                ...editorErrors,
+                                dataSchemaJSONSchema: jsonSchemaValidResult,
+                              });
                             }
                           }}
-                        >
-                          <GoabDropdownItem value="" label="No custom event" />
-                          {Object.values(eventDefinitions || {})
-                            .filter((def) => !def.isCore)
-                            .sort((a, b) => {
-                              const aKey = `${a.namespace}:${a.name}`;
-                              const bKey = `${b.namespace}:${b.name}`;
-                              return aKey.localeCompare(bKey);
-                            })
-                            .map((def) => {
-                              const eventKey = `${def.namespace}:${def.name}`;
-                              return (
-                                <GoabDropdownItem
-                                  key={eventKey}
-                                  value={eventKey}
-                                  label={`${def.namespace}:${def.name}`}
-                                />
-                              );
-                            })}
-                        </GoabDropdown>
+                          onValidate={(makers) => {
+                            if (makers.length === 0) {
+                              setEditorErrors({
+                                ...editorErrors,
+                                dataSchemaJSON: null,
+                              });
+                              return;
+                            }
+                            setEditorErrors({
+                              ...editorErrors,
+                              dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                            });
+                          }}
+                          language="json"
+                          options={{
+                            autoClosingQuotes: 'never',
+                            automaticLayout: true,
+                            scrollBeyondLastLine: false,
+                            lineNumbersMinChars: 2,
+                            tabSize: 2,
+                            padding: {
+                              top: 8,
+                            },
+                            minimap: { enabled: isUseMiniMap },
+                            folding: true,
+                            foldingStrategy: 'auto',
+                            showFoldingControls: 'always',
+                          }}
+                        />
+                      </EditorPadding>
+                    </GoabFormItem>
+                  </Tab>
+                  <Tab label="UI schema" data-testid="form-editor-ui-schema-tab" isTightContent={true}>
+                    <GoabFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                      <EditorPadding>
+                        <MonacoEditor
+                          data-testid="form-ui-schema"
+                          height={EditorHeight}
+                          value={tempUiSchema}
+                          {...formEditorJsonConfig}
+                          onValidate={(makers) => {
+                            if (makers.length === 0) {
+                              setEditorErrors({
+                                ...editorErrors,
+                                uiSchema: null,
+                              });
+                              return;
+                            }
+                            setEditorErrors({
+                              ...editorErrors,
+                              uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                            });
+                          }}
+                          onMount={handleEditorDidMountUi}
+                          onChange={(value) => {
+                            dispatch(setDraftUISchema(value));
+                          }}
+                          language="json"
+                          options={{
+                            autoClosingQuotes: 'never',
+                            automaticLayout: true,
+                            scrollBeyondLastLine: false,
+                            wordWrap: 'on',
+                            tabSize: 2,
+                            padding: {
+                              top: 8,
+                            },
+                            minimap: { enabled: isUseMiniMap },
+                            folding: true,
+                            foldingStrategy: 'auto',
+                            showFoldingControls: 'always',
+                          }}
+                        />
+                      </EditorPadding>
+                    </GoabFormItem>
+                  </Tab>
+                  {formAIEnabled && (
+                    <Tab
+                      label={
+                        <span>
+                          AI
+                          <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                        </span>
+                      }
+                      data-testid="form-editor-agent-tab"
+                      isTightContent={true}
+                    >
+                      <div style={{ height: EditorHeight }}>
+                        <AgentChat
+                          threadId={threadId}
+                          context={{ formDefinitionId: definition.id }}
+                          messages={messages}
+                          disabled={!agentConnected || !thread}
+                          onSend={handleAgentSend}
+                          onAttachmentUpload={handleAgentAttachmentUpload}
+                        />
                       </div>
-                    </div>
-                    <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
-                      <SubmissionConfigurationPadding>
-                        <LifecycleLabelRow>
-                          <H3Inline>Task queue to process</H3Inline>
-                          <ToolTipAdjust>
-                            {definition.submissionRecords && (
-                              <GoabTooltip
-                                content={
-                                  getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
-                                    ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
-                                    : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
-                                }
-                              >
-                                <GoabIcon type="information-circle" ariaLabel="queue"></GoabIcon>
-                              </GoabTooltip>
-                            )}
-                          </ToolTipAdjust>
-                        </LifecycleLabelRow>
-                        <QueueTaskDropdown>
-                          {queueTasks && Object.keys(queueTasks).length > 0 && (
-                            <GoabDropdown
-                              data-test-id="form-submission-select-queue-task-dropdown"
-                              name="queueTasks"
-                              size="compact"
-                              disabled={!definition.submissionRecords}
-                              value={[getQueueTaskToProcessValue()]}
-                              onChange={(detail: GoabDropdownOnChangeDetail) => {
-                                const separatedQueueTask = detail.value.split(':');
-                                if (separatedQueueTask.length > 1) {
-                                  setDefinition({
-                                    queueTaskToProcess: {
-                                      queueNameSpace: separatedQueueTask[0],
-                                      queueName: separatedQueueTask[1],
-                                    },
-                                  });
-                                } else {
-                                  setDefinition({
-                                    queueTaskToProcess: {
-                                      queueNameSpace: '',
-                                      queueName: '',
-                                    },
-                                  });
-                                }
-                              }}
-                            >
-                              <GoabDropdownItem
-                                data-testId={`task-Queue-ToCreate-DropDown`}
-                                key={`No-Task-Created`}
-                                value={NO_TASK_CREATED_OPTION}
-                                label={NO_TASK_CREATED_OPTION}
-                              />
-                              {queueTasks &&
-                                Object.keys(queueTasks)
-                                  .sort()
-                                  .map((item) => (
-                                    <GoabDropdownItem data-testId={item} key={item} value={item} label={item} />
-                                  ))}
-                            </GoabDropdown>
+                    </Tab>
+                  )}
+                  <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
+                    <BorderBottom>
+                      <AddToggleButtonPadding>
+                        <GoabButtonGroup alignment="start">
+                          <GoabCheckbox
+                            name="showSelectedRoles"
+                            text="Show selected roles"
+                            size="compact"
+                            checked={showSelectedRoles}
+                            onChange={() => setShowSelectedRoles((prev) => !prev)}
+                          />
+                        </GoabButtonGroup>
+                      </AddToggleButtonPadding>
+                      <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
+                        <ScrollPane>
+                          {roles.map((e, key) => {
+                            const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
+                              applicantRoles: definition?.applicantRoles,
+                              clerkRoles: definition?.clerkRoles,
+                              assessorRoles: definition?.assessorRoles,
+                            });
+                            return (
+                              rolesMap.length > 0 && (
+                                <ClientRole
+                                  roleNames={rolesMap}
+                                  key={key}
+                                  clientId={e.clientId}
+                                  anonymousRead={definition.anonymousApply}
+                                  configuration={{
+                                    applicantRoles: definition.applicantRoles,
+                                    clerkRoles: definition.clerkRoles,
+                                    assessorRoles: definition.assessorRoles,
+                                  }}
+                                  onUpdateRoles={(roles, type) => {
+                                    if (type === applicantRoles.name) {
+                                      setDefinition({
+                                        applicantRoles: [...new Set(roles)],
+                                      });
+                                    } else if (type === clerkRoles.name) {
+                                      setDefinition({
+                                        clerkRoles: [...new Set(roles)],
+                                      });
+                                    } else {
+                                      setDefinition({
+                                        assessorRoles: [...new Set(roles)],
+                                      });
+                                    }
+                                  }}
+                                />
+                              )
+                            );
+                          })}
+                          {isLoadingRoles && (
+                            <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
                           )}
-                        </QueueTaskDropdown>
-                        <RowFlex>
-                          <LifecycleLabelRow>
-                            <H3Inline>Disposition states</H3Inline>
-                            <ToolTipAdjust>
-                              {definition.submissionRecords ? (
-                                <GoabTooltip
-                                  content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
-                                  position="top"
-                                >
-                                  <GoabIcon type="information-circle" ariaLabel="disposition-icon"></GoabIcon>
-                                </GoabTooltip>
-                              ) : (
-                                <FakeButton />
-                              )}
-                            </ToolTipAdjust>
-                          </LifecycleLabelRow>
-                          <RightAlign>
-                            {definition.submissionRecords ? (
+                        </ScrollPane>
+                      </RolesTabBody>
+                    </BorderBottom>
+                  </Tab>
+                  <Tab label="Lifecycle" data-testid="lifecycle" isTightContent={true}>
+                    <BorderBottom>
+                      <EditorTabScroll $height={EditorHeight + 7}>
+                        <H3>Application</H3>
+                        <div>
+                          <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+                            <FormFormItem>
+                              <GoabInput
+                                size="compact"
+                                name="form-url-id"
+                                value={definition?.formDraftUrlTemplate}
+                                testId="form-url-id"
+                                disabled={true}
+                                width="100%"
+                                onChange={null}
+                              />
+                            </FormFormItem>
+                          </GoabFormItem>
+                          <FlexRow>
+                            <GoACheckboxPad>
+                              <GoabCheckbox
+                                size="compact"
+                                name="form-definition-anonymous-apply"
+                                key="form-definition-anonymous-apply-checkbox"
+                                checked={definition.anonymousApply === true}
+                                onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                                  setDefinition({ anonymousApply: detail.checked });
+                                }}
+                                text={'Allow anonymous application'}
+                                mt="s"
+                              />
+                            </GoACheckboxPad>
+                            <GoabTooltip
+                              content={
+                                definition.anonymousApply
+                                  ? 'Forms of this type will allow anonymous user to apply.'
+                                  : 'Forms of this type will not allow anonymous user to apply.'
+                              }
+                              position="top"
+                            >
+                              <GoabIcon type="information-circle" ariaLabel="anonymous-icon"></GoabIcon>
+                            </GoabTooltip>
+                          </FlexRow>
+                          <FlexRow>
+                            <GoACheckboxPad>
+                              <GoabCheckbox
+                                name="form-definition-allow-multiple-forms-checkbox"
+                                key="form-definition-allow-multiple-forms-checkbox"
+                                disabled={definition.anonymousApply}
+                                size="compact"
+                                checked={
+                                  !(
+                                    definition.oneFormPerApplicant === true ||
+                                    definition.oneFormPerApplicant === undefined ||
+                                    definition.oneFormPerApplicant === null
+                                  )
+                                }
+                                onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                                  setDefinition({ oneFormPerApplicant: !detail.value });
+                                }}
+                                text={'Allow multiple forms per applicant'}
+                                mt="s"
+                              />
+                            </GoACheckboxPad>
+                            <GoabTooltip
+                              content={
+                                definition.oneFormPerApplicant
+                                  ? 'Forms of this type will only allow applicants to have one form created and submitted at a time.'
+                                  : 'Forms of this type will allow applicants to have multiple forms be created and submitted at a time.'
+                              }
+                              position="top"
+                            >
+                              <GoabIcon type="information-circle" ariaLabel="allow-multiple-icon"></GoabIcon>
+                            </GoabTooltip>
+                          </FlexRow>
+                          <FlexRow>
+                            <GoACheckboxPad>
+                              <GoabCheckbox
+                                name="support-topic"
+                                key="support-topic"
+                                disabled={definition.anonymousApply}
+                                checked={definition.supportTopic}
+                                testId="support-topic"
+                                size="compact"
+                                onChange={() => {
+                                  const supportTopic = definition.supportTopic ? false : true;
+                                  setDefinition({ supportTopic });
+                                }}
+                                text="Create support topic"
+                                mt="m"
+                              />
+                            </GoACheckboxPad>
+                            <GoabTooltip
+                              content={
+                                definition.supportTopic
+                                  ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
+                                  : 'Forms of this type will not create a comment topic used for supporting applicants.'
+                              }
+                              position="top"
+                            >
+                              <GoabIcon type="information-circle" ariaLabel="support-topic-icon"></GoabIcon>
+                            </GoabTooltip>
+                          </FlexRow>
+                          <FlexRow>
+                            <GoACheckboxPad>
+                              <GoabCheckbox
+                                name="form-definition-scheduled-intakes-checkbox"
+                                key="form-definition-scheduled-intakes-checkbox"
+                                checked={definition.scheduledIntakes}
+                                onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                                  setDefinition({ scheduledIntakes: detail.checked });
+                                }}
+                                size="compact"
+                                text={'Use scheduled intakes'}
+                                mt="m"
+                                mb="m"
+                              />
+                            </GoACheckboxPad>
+                            <GoabTooltip
+                              content={
+                                definition.scheduledIntakes
+                                  ? 'Forms of this type will have a timeframe to complete and submit a form.'
+                                  : 'Forms of this type will not have a timeframe to complete and submit a form.'
+                              }
+                              position="top"
+                            >
+                              <GoabIcon type="information-circle" ariaLabel="scheduled-icon"></GoabIcon>
+                            </GoabTooltip>
+                          </FlexRow>
+                          {definition.scheduledIntakes && (
+                            <div style={{ marginBottom: '0.5rem', marginLeft: '0.125rem' }}>
                               <GoabButton
                                 size="compact"
                                 type="secondary"
-                                testId="Add state"
-                                disabled={!definition.submissionRecords}
+                                testId="set-intake-period"
                                 onClick={() => {
-                                  setNewDisposition(true);
-                                  setSelectedEditModalIndex(null);
+                                  setIntakePeriodModal(true);
                                 }}
                               >
-                                Add state
+                                Intake periods
                               </GoabButton>
-                            ) : (
-                              <FakeButton />
-                            )}
-                          </RightAlign>
-                        </RowFlex>
-
-                        <div
-                          style={{
-                            overflowY: 'auto',
-                            zIndex: 0,
-                          }}
-                        >
-                          {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
-                            'No disposition states'
-                          ) : (
-                            <DataTable>
-                              <thead>
-                                <tr>
-                                  <th>Name</th>
-                                  <th>Description</th>
-                                  <th>Order</th>
-                                  <th>Action</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {definition && (
-                                  <DispositionItems
-                                    openModalFunction={openModalFunction}
-                                    updateDispositions={updateDispositionFunction}
-                                    openDeleteModalFunction={openDeleteModalFunction}
-                                    dispositions={definition.dispositionStates}
-                                    submissionRecords={definition.submissionRecords}
-                                  />
-                                )}
-                              </tbody>
-                            </DataTable>
+                            </div>
                           )}
                         </div>
-                      </SubmissionConfigurationPadding>
-                    </div>
-                  </EditorTabScroll>
-                </BorderBottom>
-              </Tab>
-              <Tab label="Review" data-testid="form-editor-review-tab" isTightContent={true}>
-                <BorderBottom>
-                  <EditorTabScroll $height={EditorHeight + 7}>
-                    <ReviewConfigurationTab
-                      schema={dataSchema}
-                      reviewConfiguration={definition.reviewConfiguration}
-                      onChange={(reviewConfiguration) => setDefinition({ reviewConfiguration })}
-                    />
-                  </EditorTabScroll>
-                </BorderBottom>
-              </Tab>
-            </Tabs>
+                        <div>
+                          <GoabFormItem error={''} label="Security classification">
+                            {/* The style below is to fix an UI component bug */}
+                            <div style={{ paddingLeft: '3px' }}>
+                              <GoabDropdown
+                                name="securityClassifications"
+                                width="25rem"
+                                size="compact"
+                                value={definition?.securityClassification || ''}
+                                onChange={(detail: GoabDropdownOnChangeDetail) => {
+                                  setDefinition({ securityClassification: detail.value as SecurityClassification });
+                                }}
+                              >
+                                <GoabDropdownItem value={SecurityClassification.Public} label="Public" />
+                                <GoabDropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                                <GoabDropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                                <GoabDropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                              </GoabDropdown>
+                            </div>
+                          </GoabFormItem>
+                        </div>
+                        <h3>Submission</h3>
+                        <FlexRow>
+                          <SubmissionRecordsBox>
+                            <GoabCheckbox
+                              name="generate-pdf-on-submit"
+                              key="generate-pdf-on-submit"
+                              size="compact"
+                              checked={definition.submissionPdfTemplate ? true : false}
+                              testId="generate-pdf-on-submit"
+                              onChange={() => {
+                                const records = definition.submissionPdfTemplate ? '' : 'submitted-form';
+                                setDefinition({ submissionPdfTemplate: records });
+                              }}
+                              text="Create PDF on submit"
+                              mt="s"
+                            />
+                          </SubmissionRecordsBox>
+                          <GoabTooltip
+                            content={
+                              definition.submissionPdfTemplate
+                                ? 'Forms of this type will generate a PDF on submission '
+                                : 'Forms of this type will not generate a PDF on submission'
+                            }
+                            position="top"
+                          >
+                            <GoabIcon type="information-circle" ariaLabel="generate-pdf-icon"></GoabIcon>
+                          </GoabTooltip>
+                        </FlexRow>
+                        <FlexRow>
+                          <SubmissionRecordsBox>
+                            <GoabCheckbox
+                              name="submission-records"
+                              key="submission-records"
+                              size="compact"
+                              checked={definition.submissionRecords}
+                              testId="submission-records"
+                              onChange={() => {
+                                const records = definition.submissionRecords ? false : true;
+                                setDefinition({ submissionRecords: records });
+                              }}
+                              text="Create submission records on submit"
+                              mt="s"
+                            />
+                          </SubmissionRecordsBox>
+                          <GoabTooltip
+                            content={
+                              definition.submissionRecords
+                                ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
+                                : 'Forms of this type will not create a submission record when submitted. Applications are responsible for managing how forms are processed after they are submitted.'
+                            }
+                            position="top"
+                          >
+                            <GoabIcon type="information-circle" ariaLabel="submission-icon"></GoabIcon>
+                          </GoabTooltip>
+                        </FlexRow>
+                        <FlexRow>
+                          <SubmissionRecordsBox>
+                            <GoabCheckbox
+                              name="include-data-in-submission"
+                              key="include-data-in-submission"
+                              checked={definition.includeDataInSubmission}
+                              testId="include-data-in-submission"
+                              size="compact"
+                              onChange={() => {
+                                setDefinition({ includeDataInSubmission: !definition.includeDataInSubmission });
+                              }}
+                              text="Include data in submission event"
+                              mt="s"
+                            />
+                          </SubmissionRecordsBox>
+                          <GoabTooltip
+                            content={
+                              definition.includeDataInSubmission
+                                ? 'Form data will be included in the submission event payload.'
+                                : 'Form data will not be included in the submission event payload.'
+                            }
+                            position="top"
+                          >
+                            <GoabIcon type="information-circle" ariaLabel="include-data-in-submission-icon"></GoabIcon>
+                          </GoabTooltip>
+                        </FlexRow>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <FlexRow style={{ alignItems: 'center', marginBottom: '0.5rem' }}>
+                            <label style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>Custom submission event</label>
+                            <GoabTooltip
+                              content="Optional custom event to be issued when the form is submitted. The form-submitted event will always be issued. The custom event payload will include the form data."
+                              position="top"
+                            >
+                              <GoabIcon type="information-circle" ariaLabel="custom-event-icon"></GoabIcon>
+                            </GoabTooltip>
+                          </FlexRow>
+                          <div style={{ paddingLeft: '3px' }}>
+                            <GoabDropdown
+                              name="customSubmissionEvent"
+                              width="25rem"
+                              size="compact"
+                              value={
+                                definition.customSubmissionEvent
+                                  ? `${definition.customSubmissionEvent.namespace}:${definition.customSubmissionEvent.name}`
+                                  : ''
+                              }
+                              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                                if (detail.value) {
+                                  const [namespace, name] = detail.value.split(':');
+                                  setDefinition({ customSubmissionEvent: { namespace, name } });
+                                } else {
+                                  setDefinition({ customSubmissionEvent: null });
+                                }
+                              }}
+                            >
+                              <GoabDropdownItem value="" label="No custom event" />
+                              {Object.values(eventDefinitions || {})
+                                .filter((def) => !def.isCore)
+                                .sort((a, b) => {
+                                  const aKey = `${a.namespace}:${a.name}`;
+                                  const bKey = `${b.namespace}:${b.name}`;
+                                  return aKey.localeCompare(bKey);
+                                })
+                                .map((def) => {
+                                  const eventKey = `${def.namespace}:${def.name}`;
+                                  return (
+                                    <GoabDropdownItem
+                                      key={eventKey}
+                                      value={eventKey}
+                                      label={`${def.namespace}:${def.name}`}
+                                    />
+                                  );
+                                })}
+                            </GoabDropdown>
+                          </div>
+                        </div>
+                        <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
+                          <SubmissionConfigurationPadding>
+                            <LifecycleLabelRow>
+                              <H3Inline>Task queue to process</H3Inline>
+                              <ToolTipAdjust>
+                                {definition.submissionRecords && (
+                                  <GoabTooltip
+                                    content={
+                                      getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
+                                        ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
+                                        : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
+                                    }
+                                  >
+                                    <GoabIcon type="information-circle" ariaLabel="queue"></GoabIcon>
+                                  </GoabTooltip>
+                                )}
+                              </ToolTipAdjust>
+                            </LifecycleLabelRow>
+                            <QueueTaskDropdown>
+                              {queueTasks && Object.keys(queueTasks).length > 0 && (
+                                <GoabDropdown
+                                  data-test-id="form-submission-select-queue-task-dropdown"
+                                  name="queueTasks"
+                                  size="compact"
+                                  disabled={!definition.submissionRecords}
+                                  value={[getQueueTaskToProcessValue()]}
+                                  onChange={(detail: GoabDropdownOnChangeDetail) => {
+                                    const separatedQueueTask = detail.value.split(':');
+                                    if (separatedQueueTask.length > 1) {
+                                      setDefinition({
+                                        queueTaskToProcess: {
+                                          queueNameSpace: separatedQueueTask[0],
+                                          queueName: separatedQueueTask[1],
+                                        },
+                                      });
+                                    } else {
+                                      setDefinition({
+                                        queueTaskToProcess: {
+                                          queueNameSpace: '',
+                                          queueName: '',
+                                        },
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <GoabDropdownItem
+                                    data-testId={`task-Queue-ToCreate-DropDown`}
+                                    key={`No-Task-Created`}
+                                    value={NO_TASK_CREATED_OPTION}
+                                    label={NO_TASK_CREATED_OPTION}
+                                  />
+                                  {queueTasks &&
+                                    Object.keys(queueTasks)
+                                      .sort()
+                                      .map((item) => (
+                                        <GoabDropdownItem data-testId={item} key={item} value={item} label={item} />
+                                      ))}
+                                </GoabDropdown>
+                              )}
+                            </QueueTaskDropdown>
+                            <RowFlex>
+                              <LifecycleLabelRow>
+                                <H3Inline>Disposition states</H3Inline>
+                                <ToolTipAdjust>
+                                  {definition.submissionRecords ? (
+                                    <GoabTooltip
+                                      content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
+                                      position="top"
+                                    >
+                                      <GoabIcon type="information-circle" ariaLabel="disposition-icon"></GoabIcon>
+                                    </GoabTooltip>
+                                  ) : (
+                                    <FakeButton />
+                                  )}
+                                </ToolTipAdjust>
+                              </LifecycleLabelRow>
+                              <RightAlign>
+                                {definition.submissionRecords ? (
+                                  <GoabButton
+                                    size="compact"
+                                    type="secondary"
+                                    testId="Add state"
+                                    disabled={!definition.submissionRecords}
+                                    onClick={() => {
+                                      setNewDisposition(true);
+                                      setSelectedEditModalIndex(null);
+                                    }}
+                                  >
+                                    Add state
+                                  </GoabButton>
+                                ) : (
+                                  <FakeButton />
+                                )}
+                              </RightAlign>
+                            </RowFlex>
 
-            <FinalButtonPadding>
-              <GoabButtonGroup alignment="start">
-                <GoabButton
-                  size="compact"
-                  type="text"
-                  testId="collapse-all"
-                  onClick={() => {
-                    const editor = getCurrentEditorRef();
-                    if (editor) foldAll(editor);
-                  }}
-                  disabled={activeIndex > 1}
-                >
-                  Collapse all
-                </GoabButton>
-                <GoabButton
-                  size="compact"
-                  testId="expand-all"
-                  type="text"
-                  disabled={activeIndex > 1}
-                  onClick={() => {
-                    const editor = getCurrentEditorRef();
-                    if (editor) unfoldAll(editor);
-                  }}
-                >
-                  Expand all
-                </GoabButton>
-              </GoabButtonGroup>
+                            <div
+                              style={{
+                                overflowY: 'auto',
+                                zIndex: 0,
+                              }}
+                            >
+                              {definition.dispositionStates && definition.dispositionStates.length === 0 ? (
+                                'No disposition states'
+                              ) : (
+                                <DataTable>
+                                  <thead>
+                                    <tr>
+                                      <th>Name</th>
+                                      <th>Description</th>
+                                      <th>Order</th>
+                                      <th>Action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {definition && (
+                                      <DispositionItems
+                                        openModalFunction={openModalFunction}
+                                        updateDispositions={updateDispositionFunction}
+                                        openDeleteModalFunction={openDeleteModalFunction}
+                                        dispositions={definition.dispositionStates}
+                                        submissionRecords={definition.submissionRecords}
+                                      />
+                                    )}
+                                  </tbody>
+                                </DataTable>
+                              )}
+                            </div>
+                          </SubmissionConfigurationPadding>
+                        </div>
+                      </EditorTabScroll>
+                    </BorderBottom>
+                  </Tab>
+                  <Tab label="Review" data-testid="form-editor-review-tab" isTightContent={true}>
+                    <BorderBottom>
+                      <EditorTabScroll $height={EditorHeight + 7}>
+                        <ReviewConfigurationTab
+                          schema={dataSchema}
+                          reviewConfiguration={definition.reviewConfiguration}
+                          onChange={(reviewConfiguration) => setDefinition({ reviewConfiguration })}
+                        />
+                      </EditorTabScroll>
+                    </BorderBottom>
+                  </Tab>
+                </Tabs>
 
-              <GoabButtonGroup alignment="end">
-                <GoabButton
-                  size="compact"
-                  type="primary"
-                  testId="definition-form-save"
-                  disabled={
-                    !isFormUpdated ||
-                    !definition.name ||
-                    validators.haveErrors() ||
-                    editorErrors.dataSchemaJSON !== null ||
-                    editorErrors.dataSchemaJSONSchema !== null ||
-                    editorErrors.uiSchema !== null
-                  }
-                  onClick={() => {
-                    if (indicator.show !== true) {
-                      dispatch(updateFormDefinition(definition));
-                    }
-                  }}
-                >
-                  Save
-                </GoabButton>
-                <GoabButton
-                  size="compact"
-                  testId="form-editor-cancel"
-                  type="secondary"
-                  onClick={() => {
-                    if (isFormUpdated) {
-                      setSaveModal({ visible: true });
-                    } else {
-                      validators.clear();
+                <FinalButtonPadding>
+                  <GoabButtonGroup alignment="start">
+                    <GoabButton
+                      size="compact"
+                      type="text"
+                      testId="collapse-all"
+                      onClick={() => {
+                        const editor = getCurrentEditorRef();
+                        if (editor) foldAll(editor);
+                      }}
+                      disabled={activeIndex > 1}
+                    >
+                      Collapse all
+                    </GoabButton>
+                    <GoabButton
+                      size="compact"
+                      testId="expand-all"
+                      type="text"
+                      disabled={activeIndex > 1}
+                      onClick={() => {
+                        const editor = getCurrentEditorRef();
+                        if (editor) unfoldAll(editor);
+                      }}
+                    >
+                      Expand all
+                    </GoabButton>
+                  </GoabButtonGroup>
 
-                      close();
-                    }
-                  }}
-                >
-                  Back
-                </GoabButton>
-              </GoabButtonGroup>
-            </FinalButtonPadding>
-          </NameDescriptionDataSchema>
+                  <GoabButtonGroup alignment="end">
+                    <GoabButton
+                      size="compact"
+                      type="primary"
+                      testId="definition-form-save"
+                      disabled={
+                        !isFormUpdated ||
+                        !definition.name ||
+                        validators.haveErrors() ||
+                        editorErrors.dataSchemaJSON !== null ||
+                        editorErrors.dataSchemaJSONSchema !== null ||
+                        editorErrors.uiSchema !== null
+                      }
+                      onClick={() => {
+                        if (indicator.show !== true) {
+                          dispatch(updateFormDefinition(definition));
+                        }
+                      }}
+                    >
+                      Save
+                    </GoabButton>
+                    <GoabButton
+                      size="compact"
+                      testId="form-editor-cancel"
+                      type="secondary"
+                      onClick={() => {
+                        if (isFormUpdated) {
+                          setSaveModal({ visible: true });
+                        } else {
+                          validators.clear();
 
-          <FormPreviewContainer>
-            <Tabs data-testid="preview-tabs" activeIndex={0} changeTabCallback={saveCurrentTab}>
-              <Tab label="Preview" data-testid="preview-view-tab">
-                <FormPreviewScrollPane>
-                  <ContextProvider
-                    fileManagement={{
-                      fileList: fileList,
-                      uploadFile: uploadFile,
-                      downloadFile: downloadFile,
-                      deleteFile: deleteFile,
-                    }}
-                    formUrl={formServiceApiUrl}
-                  >
-                    <GoabFormItem error={schemaError} label="">
-                      <JSONFormPreviewer
-                        onChange={({ data }) => {
-                          setData(data);
+                          close();
+                        }
+                      }}
+                    >
+                      Back
+                    </GoabButton>
+                  </GoabButtonGroup>
+                </FinalButtonPadding>
+              </NameDescriptionDataSchema>
+            }
+            right={
+              <FormPreviewContainer>
+                <Tabs data-testid="preview-tabs" activeIndex={0} changeTabCallback={saveCurrentTab}>
+                  <Tab label="Preview" data-testid="preview-view-tab">
+                    <FormPreviewScrollPane>
+                      <ContextProvider
+                        fileManagement={{
+                          fileList: fileList,
+                          uploadFile: uploadFile,
+                          downloadFile: downloadFile,
+                          deleteFile: deleteFile,
                         }}
-                        data={data}
-                      />
-                    </GoabFormItem>
-                  </ContextProvider>
-                </FormPreviewScrollPane>
-              </Tab>
-              <Tab label="Data" data-testid="data-view">
-                <ReviewPageTabWrapper>{data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}</ReviewPageTabWrapper>
-              </Tab>
-              {definition?.submissionPdfTemplate ? (
-                <Tab
-                  label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
-                  data-testid="data-view"
-                >
-                  <PDFPreviewTemplateCore formName={definition.name} />
-                </Tab>
-              ) : null}
-            </Tabs>
-          </FormPreviewContainer>
+                        formUrl={formServiceApiUrl}
+                      >
+                        <GoabFormItem error={schemaError} label="">
+                          <JSONFormPreviewer
+                            onChange={({ data }) => {
+                              setData(data);
+                            }}
+                            data={data}
+                          />
+                        </GoabFormItem>
+                      </ContextProvider>
+                    </FormPreviewScrollPane>
+                  </Tab>
+                  <Tab label="Data" data-testid="data-view">
+                    <ReviewPageTabWrapper>{data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}</ReviewPageTabWrapper>
+                  </Tab>
+                  {definition?.submissionPdfTemplate ? (
+                    <Tab
+                      label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
+                      data-testid="data-view"
+                    >
+                      <PDFPreviewTemplateCore formName={definition.name} />
+                    </Tab>
+                  ) : null}
+                </Tabs>
+              </FormPreviewContainer>
+            }
+          />
         </FlexRow>
       )}
       <SaveFormModal
