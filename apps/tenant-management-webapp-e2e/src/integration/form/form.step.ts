@@ -417,20 +417,22 @@ Then(
   function (applicantRole: string, clerkRole: string, assessorRole: string) {
     const assertSelectedRoles = (roleType: string, expectedRolesInput: string) => {
       const expectedRoles =
-        expectedRolesInput.toLowerCase() === 'empty' ? [] : expectedRolesInput.split(',').map((role) => role.trim());
+        expectedRolesInput.trim().toLowerCase() === 'empty'
+          ? []
+          : expectedRolesInput.split(',').map((role) => role.trim());
 
-      formObj
-        .definitionEditorRolesTables()
-        .find(`input[type="checkbox"][aria-label$=" ${roleType}"]:checked`)
-        .then((selectedCheckboxes) => {
-          const selectedRoles = selectedCheckboxes
-            .toArray()
-            .map((checkbox) => checkbox.getAttribute('aria-label')?.replace(` ${roleType}`, ''))
-            .filter((role): role is string => role !== undefined);
+      formObj.definitionEditorRolesTables().then((roleTables) => {
+        const selectedCheckboxes = roleTables
+          .find(`input[type="checkbox"][aria-label$=" ${roleType}"]`)
+          .filter((_index, checkbox) => (checkbox as HTMLInputElement).checked);
+        const selectedRoles = selectedCheckboxes
+          .toArray()
+          .map((checkbox) => checkbox.getAttribute('aria-label')?.replace(` ${roleType}`, ''))
+          .filter((role): role is string => role !== undefined);
 
-          expect(selectedRoles, `selected ${roleType}`).to.have.length(expectedRoles.length);
-          expect(selectedRoles, `selected ${roleType}`).to.have.members(expectedRoles);
-        });
+        expect(selectedRoles, `selected ${roleType}`).to.have.length(expectedRoles.length);
+        expect(selectedRoles, `selected ${roleType}`).to.have.members(expectedRoles);
+      });
     };
 
     assertSelectedRoles('Applicant roles', applicantRole);
