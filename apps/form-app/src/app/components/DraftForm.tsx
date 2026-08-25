@@ -9,6 +9,8 @@ import {
   createAutoPopulateMiddleware,
   getAutoPopulatedData,
   mergeAutoPopulatedData,
+  NavigationOutcome,
+  NavigationTarget,
 } from '@abgov/jsonforms-components';
 import { GoabBadge } from '@abgov/react-components';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
@@ -50,6 +52,8 @@ interface DraftFormProps {
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
   onSave: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
+  navigationTarget?: NavigationTarget;
+  onNavigationChange?: (outcome: NavigationOutcome) => void;
 }
 
 export const populateDropdown = (schema, enumerators) => {
@@ -108,6 +112,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   onChange,
   onSubmit,
   onSave,
+  navigationTarget,
+  onNavigationChange,
 }) => {
   const user = useSelector((state: AppState) => state.user);
   const resolvedUser = user?.user as User;
@@ -222,6 +228,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
         formUrl="https://form.adsp-uat.alberta.ca"
         autoPopulatedData={autoPopulatedData}
         formId={form?.id}
+        navigationTarget={navigationTarget}
+        onNavigationChange={onNavigationChange}
       >
         <JsonFormsWrapper
           definition={definition}

@@ -116,7 +116,7 @@ describe('contextProvider', () => {
     const component = render(
       <ContextProvider>
         <div>xxx</div>
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     expect(component.getByText('xxx')).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('contextProvider', () => {
     const component = render(
       <ContextProvider autoPopulatedData={autoPopulatedData}>
         <Probe />
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     // Assert
@@ -153,11 +153,49 @@ describe('contextProvider', () => {
     const component = render(
       <ContextProvider>
         <Probe />
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     // Assert
     expect(component.getByTestId('auto-populated').textContent).toBe('[]');
+  });
+
+  it('exposes an external navigation target to the form tree', () => {
+    // Arrange
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext);
+      return <div data-testid="navigation-target">{JSON.stringify(ctx.navigationTarget)}</div>;
+    };
+
+    // Act
+    const component = render(
+      <ContextProvider navigationTarget={{ pageId: 'contact-details' }}>
+        <Probe />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(component.getByTestId('navigation-target').textContent).toBe('{"pageId":"contact-details"}');
+  });
+
+  it('exposes the navigation outcome callback to the form tree', () => {
+    // Arrange
+    const onNavigationChange = jest.fn();
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext);
+      ctx.onNavigationChange({ status: 'navigated', pageId: 'contact-details' });
+      return null;
+    };
+
+    // Act
+    render(
+      <ContextProvider onNavigationChange={onNavigationChange}>
+        <Probe />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(onNavigationChange).toHaveBeenCalledWith({ status: 'navigated', pageId: 'contact-details' });
   });
 
   it('works with submit props', async () => {
@@ -181,7 +219,7 @@ describe('contextProvider', () => {
         <div>
           <SubmitComponent />
         </div>
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     expect(ContextProviderC.getFormContextData('submittedData')).toEqual({ text: 'abc' });
@@ -217,7 +255,7 @@ describe('contextProvider', () => {
         <div>
           <DataComponent />
         </div>
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     expect(component.getByText('Dolphin')).toBeInTheDocument();
@@ -232,7 +270,7 @@ describe('contextProvider', () => {
       const component = render(
         <ContextProvider>
           <ShowsFlag />
-        </ContextProvider>
+        </ContextProvider>,
       );
 
       expect(component.getByText('shown')).toBeInTheDocument();
@@ -242,7 +280,7 @@ describe('contextProvider', () => {
       const component = render(
         <ContextProvider showChangeButtons={false}>
           <ShowsFlag />
-        </ContextProvider>
+        </ContextProvider>,
       );
 
       expect(component.getByText('hidden')).toBeInTheDocument();
@@ -252,7 +290,7 @@ describe('contextProvider', () => {
       const component = render(
         <ContextProvider showChangeButtons={true}>
           <ShowsFlag />
-        </ContextProvider>
+        </ContextProvider>,
       );
 
       expect(component.getByText('shown')).toBeInTheDocument();

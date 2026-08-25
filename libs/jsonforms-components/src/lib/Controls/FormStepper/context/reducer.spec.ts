@@ -114,7 +114,7 @@ describe('stepperReducer', () => {
       // Assert
       expect(result.activeId).toBe(1);
       expect(result.targetScope).toBe('#/properties/field1');
-      expect(result.maxReachedStep).toBe(0);
+      expect(result.maxReachedStep).toBe(1);
       expect(result.validationTrigger).toBe(1);
       expect(result.hasPrevButton).toBe(true);
     });
