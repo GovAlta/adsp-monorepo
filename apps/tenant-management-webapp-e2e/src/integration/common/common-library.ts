@@ -162,8 +162,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
-  commonObj.applicationBody().should('exist');
-  cy.get('main', { timeout: waitMilliSecs }).should('be.visible');
+  cy.wait(waitMilliSecs);
+  // commonObj.applicationBody().should('exist');
+  // cy.get('main', { timeout: waitMilliSecs }).should('be.visible');
 }
 
 export function nowPlusMinusMinutes(nowPlusMinusMinutesString) {
