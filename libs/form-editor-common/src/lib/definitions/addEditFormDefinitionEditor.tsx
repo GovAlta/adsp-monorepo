@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — no test harness for this editor container; the padding change here is a
+// prop pass-through covered by ../styled-components.spec.ts.
 import React from 'react';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import {
@@ -518,7 +520,7 @@ export function AddEditFormDefinitionEditor({
             rightHidden={!previewVisible}
             testId="form-definition-editor-split"
             left={
-              <NameDescriptionDataSchema>
+              <NameDescriptionDataSchema $previewHidden={!previewVisible}>
                 <FormEditorTitleRow>
                   <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
                   <GoabButton
