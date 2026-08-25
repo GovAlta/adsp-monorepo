@@ -4,7 +4,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
-import { Resource } from '@opentelemetry/resources';
+import { defaultResource, resourceFromAttributes } from '@opentelemetry/resources';
 import { createRealmStrategy, createTenantStrategy, createTokenProvider } from '../access';
 import { createConfigurationHandler, createConfigurationService } from '../configuration';
 import { createDirectory } from '../directory';
@@ -139,10 +139,14 @@ export async function initializePlatform(
 
   const serviceName = serviceId.service;
   const serviceVersion = '1.0.0';
-  const resource = new Resource({
-    'service.name': serviceName,
-    'service.version': serviceVersion,
-  });
+  // Providers no longer merge the default resource in @opentelemetry/sdk-* 2.x, so merge it explicitly to
+  // retain the telemetry.sdk.* attributes that downstream collectors convert to metric labels.
+  const resource = defaultResource().merge(
+    resourceFromAttributes({
+      'service.name': serviceName,
+      'service.version': serviceVersion,
+    }),
+  );
   const tracingOptions = normalizeTelemetryOptions(tracing);
   const metricsOptions = normalizeTelemetryOptions(metrics);
 
@@ -161,7 +165,7 @@ export async function initializePlatform(
       meterProvider = new MeterProvider({
         resource,
         readers: [metricReader],
-      } as unknown as never);
+      });
 
       // Explicitly initialize benchmark metrics with the configured provider to avoid race conditions.
       initializeBenchmarkMetrics(meterProvider);
@@ -199,26 +203,24 @@ export async function initializePlatform(
       const endpoint = tracingOptions.endpoint;
       const sampleRate = tracingOptions.sampleRate ?? 1.0;
 
-      // Create tracer provider with semantic attributes
-      tracerProvider = new NodeTracerProvider({
-        sampler: new TraceIdRatioBasedSampler(sampleRate),
-        resource,
-      });
-
       const exporter = new OTLPTraceExporter({
         url: `${endpoint}/v1/traces`,
         headers: tracingOptions.headers,
       });
 
-      // Add span processor
-      tracerProvider.addSpanProcessor(
-        new BatchSpanProcessor(exporter, {
-          maxQueueSize: 2048,
-          maxExportBatchSize: 512,
-          scheduledDelayMillis: 5000,
-          exportTimeoutMillis: 30000,
-        }),
-      );
+      // Create tracer provider with semantic attributes and its span processor.
+      tracerProvider = new NodeTracerProvider({
+        sampler: new TraceIdRatioBasedSampler(sampleRate),
+        resource,
+        spanProcessors: [
+          new BatchSpanProcessor(exporter, {
+            maxQueueSize: 2048,
+            maxExportBatchSize: 512,
+            scheduledDelayMillis: 5000,
+            exportTimeoutMillis: 30000,
+          }),
+        ],
+      });
 
       tracerProvider.register();
 
