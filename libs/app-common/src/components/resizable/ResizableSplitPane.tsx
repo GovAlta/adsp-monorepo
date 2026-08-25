@@ -81,6 +81,8 @@ export const ResizableSplitPane: FunctionComponent<ResizableSplitPaneProps> = ({
     updateLeftWidth(event.clientX - containerRef.current.getBoundingClientRect().left);
   };
 
+  // Also runs on lost pointer capture (window blur, tab switch, a native plugin taking the pointer);
+  // without it dragging stays latched on and the divider keeps tracking the pointer without a button held.
   const stopDragging = (event: PointerEvent<HTMLDivElement>) => {
     setDragging(false);
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
@@ -109,30 +111,38 @@ export const ResizableSplitPane: FunctionComponent<ResizableSplitPaneProps> = ({
 
   return (
     <SplitPaneContainer ref={containerRef} $dragging={dragging} data-testid={testId}>
-      <SplitPanePanel $width={showSplit ? leftWidth : undefined}>{left}</SplitPanePanel>
+      <SplitPanePanel style={showSplit ? { flex: `0 0 ${leftWidth}px`, width: `${leftWidth}px` } : undefined}>
+        {left}
+      </SplitPanePanel>
       {showSplit && (
-        <>
-          <SplitPaneDivider
-            role="separator"
-            aria-label={ariaLabel}
-            aria-orientation="vertical"
-            aria-valuemin={minPaneWidth}
-            aria-valuemax={Math.round(maximumLeftWidth)}
-            aria-valuenow={Math.round(leftWidth)}
-            tabIndex={0}
-            $dragging={dragging}
-            onDoubleClick={resetLeftWidth}
-            onKeyDown={handleKeyDown}
-            onPointerDown={(event) => {
-              setDragging(true);
-              event.currentTarget.setPointerCapture?.(event.pointerId);
-            }}
-            onPointerMove={handlePointerMove}
-            onPointerUp={stopDragging}
-            onPointerCancel={stopDragging}
-          />
-          <SplitPanePanel $fill>{right}</SplitPanePanel>
-        </>
+        <SplitPaneDivider
+          role="separator"
+          aria-label={ariaLabel}
+          aria-orientation="vertical"
+          aria-valuemin={minPaneWidth}
+          aria-valuemax={Math.round(maximumLeftWidth)}
+          aria-valuenow={Math.round(leftWidth)}
+          tabIndex={0}
+          $dragging={dragging}
+          onDoubleClick={resetLeftWidth}
+          onKeyDown={handleKeyDown}
+          onPointerDown={(event) => {
+            setDragging(true);
+            event.currentTarget.setPointerCapture?.(event.pointerId);
+          }}
+          onPointerMove={handlePointerMove}
+          onPointerUp={stopDragging}
+          onPointerCancel={stopDragging}
+          onLostPointerCapture={stopDragging}
+        />
+      )}
+      {/* Collapsed with CSS rather than unmounted: the right pane is measurement driven, and tearing it
+          down whenever the container is unmeasured or too narrow destroys host state that only a page
+          reload restores. rightHidden stays an unmount because that is the host asking for it. */}
+      {!rightHidden && (
+        <SplitPanePanel $fill $collapsed={!showSplit} aria-hidden={!showSplit} data-testid={`${testId}-right`}>
+          {right}
+        </SplitPanePanel>
       )}
     </SplitPaneContainer>
   );
