@@ -60,6 +60,7 @@ export interface FeatureFlags {
   NotificationEmailAI: boolean;
   PDF: boolean;
   Script: boolean;
+  Secret: boolean;
   SharePoint: boolean;
   Status: boolean;
   Task: boolean;
