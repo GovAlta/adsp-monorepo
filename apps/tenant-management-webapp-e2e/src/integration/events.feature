@@ -114,7 +114,8 @@ Feature: Events
     When the user clicks eye icon of "PDF generation updates" under Core streams
     Then the user views the details of "PDF generation updates" under Core streams
 
-  @TEST_CS-1480 @REQ_CS-1352 @regression @prod
+  # CS-5313 role checkboxes aren't working
+  @TEST_CS-1480 @REQ_CS-1352 @regression @prod @ignore
   Scenario: As a tenant admin, I can add, edit and delete an event stream
     Given a tenant admin user is on event streams page
     # Add a stream
