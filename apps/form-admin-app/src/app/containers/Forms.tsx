@@ -5,7 +5,6 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabIcon,
-  GoabTable,
 } from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -39,6 +38,7 @@ import {
 import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { DataValueCell } from '../components/DataValueCell';
+import { ActionsCell, ActionsColumnHeader, ResultsTable } from '../components/ResultsTable';
 import { ExportModal } from '../components/ExportModal';
 import { FilterFormItemsContainer } from '../components/FilterFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
@@ -84,13 +84,13 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
           </DataValueCell>
         );
       })}
-      <td>
+      <ActionsCell>
         <GoabButtonGroup alignment="end">
           <GoabButton size="compact" type="secondary" onClick={() => navigate(form.id)}>
             Open
           </GoabButton>
         </GoabButtonGroup>
-      </td>
+      </ActionsCell>
     </tr>
   );
 };
@@ -239,7 +239,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           loading={busy.loading}
           onClearFilters={clearFilters}
         />
-        <GoabTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
+        <ResultsTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
           <thead>
             <tr>
               <th></th>
@@ -255,7 +255,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                   {name}
                 </SortableColumnHeader>
               ))}
-              <th>Actions</th>
+              <ActionsColumnHeader>Actions</ActionsColumnHeader>
             </tr>
           </thead>
           <tbody>
@@ -278,7 +278,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               onLoadMore={handleFindForms}
             />
           </tbody>
-        </GoabTable>
+        </ResultsTable>
       </ContentContainer>
       <AddTagModal
         open={!!showTagForm}
