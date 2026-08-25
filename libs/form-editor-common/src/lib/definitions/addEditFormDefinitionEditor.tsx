@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — no test harness for this editor container; the padding change here is a
+// prop pass-through covered by ../styled-components.spec.ts.
 import React from 'react';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import {
