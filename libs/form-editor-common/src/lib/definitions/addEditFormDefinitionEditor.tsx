@@ -518,7 +518,7 @@ export function AddEditFormDefinitionEditor({
             rightHidden={!previewVisible}
             testId="form-definition-editor-split"
             left={
-              <NameDescriptionDataSchema>
+              <NameDescriptionDataSchema $previewHidden={!previewVisible}>
                 <FormEditorTitleRow>
                   <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
                   <GoabButton
