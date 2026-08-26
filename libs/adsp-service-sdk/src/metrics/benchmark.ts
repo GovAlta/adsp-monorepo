@@ -3,6 +3,12 @@ import { metrics, trace } from '@opentelemetry/api';
 import type { Histogram, MeterProvider } from '@opentelemetry/api';
 import { EndBenchmark, RequestBenchmark, REQ_BENCHMARK } from './types';
 import { getRouteTemplate } from '../utils/route';
+import { formatTenantAttribute } from './attributes';
+
+// The default OTel boundaries start at 5ms, which collapses the sub-millisecond phases into one
+// bucket and makes their quantiles meaningless. These span the measured range of all five
+// benchmarks in 13 buckets, against 16 for the defaults.
+const BENCHMARK_DURATION_BOUNDARIES = [0.1, 0.5, 1, 2.5, 5, 10, 25, 50, 100, 250, 1000, 5000];
 
 const BENCHMARK_METRIC_ALLOWLIST = new Set([
   'operation-handler-time',
@@ -29,6 +35,7 @@ export function initializeBenchmarkMetrics(meterProvider: MeterProvider): void {
     benchmarkDuration = benchmarkMeter.createHistogram('adsp.benchmark.duration', {
       description: 'Benchmark duration measurements recorded by ADSP request handlers.',
       unit: 'ms',
+      advice: { explicitBucketBoundaries: BENCHMARK_DURATION_BOUNDARIES },
     });
     isExplicitlyInitialized = true;
   }
@@ -41,6 +48,7 @@ function getBenchmarkDurationHistogram(): Histogram {
     benchmarkDuration = benchmarkMeter.createHistogram('adsp.benchmark.duration', {
       description: 'Benchmark duration measurements recorded by ADSP request handlers.',
       unit: 'ms',
+      advice: { explicitBucketBoundaries: BENCHMARK_DURATION_BOUNDARIES },
     });
   }
   return benchmarkDuration;
@@ -62,11 +70,9 @@ function getBenchmarkMetricAttributes(req: Request, metric: string): Record<stri
   if (route) {
     attributes['http.route'] = route;
   }
-  if (tenantId) {
-    attributes['adsp.tenant.id'] = tenantId.toString();
-  }
-  if (tenantName) {
-    attributes['adsp.tenant.name'] = tenantName;
+  const tenant = formatTenantAttribute(tenantId?.toString(), tenantName);
+  if (tenant) {
+    attributes['adsp.tenant'] = tenant;
   }
 
   return attributes;
@@ -101,7 +107,6 @@ export function benchmark(req: Request, metric: string, value?: number): void {
         trace.getActiveSpan()?.addEvent(`adsp.benchmark.${metric}`, { 'benchmark.duration_ms': duration });
       } else {
         benchmark.timings[metric] = process.hrtime();
-        trace.getActiveSpan()?.addEvent(`adsp.benchmark.${metric}.start`);
       }
     }
   }
@@ -115,8 +120,6 @@ export function startBenchmark(req: Request, metric: string): EndBenchmark {
   const benchmark: RequestBenchmark = req[REQ_BENCHMARK];
   if (benchmark) {
     const startAt = process.hrtime();
-    const span = trace.getActiveSpan();
-    span?.addEvent(`adsp.benchmark.${metric}.start`);
     return () => {
       const [sec, nano] = process.hrtime(startAt);
       const value = sec * 1e3 + nano * 1e-6;
