@@ -52,7 +52,7 @@ Given('a tenant admin user is on configuration overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonlib.tenantAdminMenuItem('Configuration', 2000);
 });
 
 Given('a tenant admin user is on configuration definitions page', function () {
@@ -62,7 +62,7 @@ Given('a tenant admin user is on configuration definitions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonlib.tenantAdminMenuItem('Configuration', 2000);
   commonObj.serviceTab('Configuration', 'Definitions').click();
 });
 
@@ -272,7 +272,7 @@ Given('a tenant admin user is on configuration export page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonlib.tenantAdminMenuItem('Configuration', 2000);
   commonObj.serviceTab('Configuration', 'Export').click();
   cy.wait(2000);
 });
@@ -302,7 +302,7 @@ Given('a tenant admin user is on configuration revisions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonlib.tenantAdminMenuItem('Configuration', 2000);
   commonObj.serviceTab('Configuration', 'Revisions').click();
   cy.wait(3000);
 });

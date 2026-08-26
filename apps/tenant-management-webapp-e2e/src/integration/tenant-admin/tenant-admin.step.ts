@@ -944,7 +944,7 @@ Given('an admin user is on event log page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Event log', 4000);
+  commonlib.tenantAdminMenuItem('Event log', 2000);
 });
 
 When('the user changes the resolution to a low resolution not supported by tenant management app', function () {

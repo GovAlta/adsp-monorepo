@@ -29,7 +29,7 @@ Given('a tenant admin user is on notification overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
+  commonlib.tenantAdminMenuItem('Notification', 2000);
 });
 
 When('the user clicks Add notification type button', function () {
@@ -282,7 +282,7 @@ Given('a tenant admin user is on notification types page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
+  commonlib.tenantAdminMenuItem('Notification', 2000);
   commonObj.serviceTab('Notification', 'Notification types').click();
   cy.wait(2000);
 });
@@ -501,7 +501,7 @@ Given('a tenant admin user is on notification subscribers page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
+  commonlib.tenantAdminMenuItem('Notification', 2000);
   commonObj.serviceTab('Notification', 'Subscribers').click();
   cy.wait(4000);
 });

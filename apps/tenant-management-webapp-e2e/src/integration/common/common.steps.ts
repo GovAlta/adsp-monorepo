@@ -427,7 +427,7 @@ Given('an admin user is on event log page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Event log', 4000);
+  commonlib.tenantAdminMenuItem('Event log', 2000);
   cy.viewport(1920, 1080);
 });
 
@@ -795,7 +795,7 @@ Given('a tenant admin user is on task service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Task', 4000);
+  commonlib.tenantAdminMenuItem('Task', 2000);
 });
 
 When('the user selects {string} in Select a queue dropdown', function (dropdownItem: string) {
@@ -911,7 +911,7 @@ Given('a tenant admin user is on status applications page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Status', 4000);
+  commonlib.tenantAdminMenuItem('Status', 2000);
   commonObj.serviceTab('Status', 'Applications').click();
   cy.wait(2000); // Applications page is slow to load applications and healt check info
 });
@@ -989,7 +989,7 @@ Given('a tenant admin user is on notification subscriptions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
+  commonlib.tenantAdminMenuItem('Notification', 2000);
   commonObj.serviceTab('Notification', 'Subscriptions').click();
   cy.wait(4000);
 });

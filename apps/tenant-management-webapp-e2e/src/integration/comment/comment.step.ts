@@ -15,7 +15,7 @@ Given('a tenant admin user is on comment service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Comment', 4000);
+  commonlib.tenantAdminMenuItem('Comment', 2000);
 });
 
 When('the user clicks Add topic type button on comment service overview page', function () {

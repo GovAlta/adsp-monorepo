@@ -157,12 +157,12 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Task',
         'Form',
         'Comment',
-        'feedback',
-        'value',
+        'Feedback',
+        'Value',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
-  // cy.wait(waitMilliSecs);
+  cy.wait(waitMilliSecs);
   commonObj.applicationBody().should('exist');
   cy.get('main', { timeout: waitMilliSecs }).should('be.visible');
 }

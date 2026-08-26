@@ -14,7 +14,7 @@ Given('a tenant admin user is on value overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Value', 4000);
+  commonlib.tenantAdminMenuItem('Value', 2000);
 });
 
 Given('a tenant admin user is on value definitions page', function () {
@@ -24,7 +24,7 @@ Given('a tenant admin user is on value definitions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Value', 4000);
+  commonlib.tenantAdminMenuItem('Value', 2000);
   commonObj.serviceTab('Value', 'Definitions').click();
   cy.wait(4000);
 });
