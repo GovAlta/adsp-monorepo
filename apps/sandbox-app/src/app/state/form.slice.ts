@@ -383,6 +383,88 @@ export const createForm = createAsyncThunk(
   },
 );
 
+interface DefinitionTemplate {
+  name: string;
+  description: string;
+  dataSchema: unknown;
+  uiSchema: unknown;
+  applicantRoles: string[];
+}
+
+// form-service takes a new definition in three calls rather than one: POST creates the record and
+// derives its id from the name, then the schemas and roles are set on their own endpoints. All
+// three require the form-admin role, so a user without it fails on the first and never gets a
+// half-built definition.
+// Just the saved answers. loadForm also wires up file metadata, the support topic and its socket,
+// which a read-only summary neither needs nor should open.
+export const loadFormData = createAsyncThunk(
+  'form/load-form-data',
+  async (formId: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const token = await getAccessToken();
+      const { data } = await axios.get<FormDataResponse>(
+        new URL(`/form/v1/forms/${formId}/data`, formServiceUrl).href,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      return data.data ?? {};
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
+);
+
+export const createDefinitionFromTemplate = createAsyncThunk(
+  'form/create-definition-from-template',
+  async (template: DefinitionTemplate, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const token = await getAccessToken();
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const { data: created } = await axios.post<{ id: string }>(
+        new URL(`/form/v1/definitions`, formServiceUrl).href,
+        { name: template.name, description: template.description },
+        { headers },
+      );
+
+      const definitionId = created.id;
+      await axios.put(
+        new URL(`/form/v1/definitions/${definitionId}/schemas`, formServiceUrl).href,
+        { 'data-schema': template.dataSchema, 'ui-schema': template.uiSchema },
+        { headers },
+      );
+
+      await axios.put(
+        new URL(`/form/v1/definitions/${definitionId}/roles`, formServiceUrl).href,
+        { applicantRoles: template.applicantRoles },
+        { headers },
+      );
+
+      return definitionId;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
+);
+
 export const updateForm = createAsyncThunk(
   'form/update-form',
   async (

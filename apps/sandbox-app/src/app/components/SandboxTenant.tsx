@@ -34,6 +34,7 @@ import { EventServiceMain } from './services/EventServiceMain';
 import { ConfigurationServiceMain } from './services/ConfigurationServiceMain';
 import { FeedbackCSSLeak } from './services/feedback/FeedbackCSSLeak';
 import { JsonformsExampleOne } from './services/jsonforms/JsonformsExampleOne';
+import { JsonformsExternalNavigation } from './services/jsonforms/JsonformsExternalNavigation';
 import { DesignSystemsMain } from './services/DesignSystemsMain';
 import { DesignSystemsExampleOne } from './services/design-systems/DesignSystemsExampleOne';
 import { FeedbackNotification } from './FeedbackNotification';
@@ -103,6 +104,7 @@ export const SandBoxTenant = () => {
 
                 <Route path="/services/jsonforms" element={<JsonformsMain tenantName={tenantName} />} />
                 <Route path="/services/jsonforms/example1/:definitionId" element={<JsonformsExampleOne />} />
+                <Route path="/services/jsonforms/external-navigation" element={<JsonformsExternalNavigation />} />
 
                 <Route path="/services/notification" element={<NotificationServiceMain tenantName={tenantName} />} />
                 <Route path="/services/pdf" element={<PDFServiceMain tenantName={tenantName} />} />

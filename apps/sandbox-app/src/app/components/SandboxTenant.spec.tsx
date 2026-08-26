@@ -70,7 +70,10 @@ jest.mock('./services/feedback/FeedbackCSSLeak', () => ({ FeedbackCSSLeak: () =>
 jest.mock('./services/jsonforms/JsonformsExampleOne', () => ({ JsonformsExampleOne: () => null }));
 jest.mock('./services/DesignSystemsMain', () => ({ DesignSystemsMain: () => null }));
 jest.mock('./services/design-systems/DesignSystemsExampleOne', () => ({ DesignSystemsExampleOne: () => null }));
-jest.mock('@core-services/app-common', () => ({ Band: () => null }));
+jest.mock('@core-services/app-common', () => ({
+  ...jest.requireActual('@core-services/app-common'),
+  Band: () => null,
+}));
 
 describe('SandBoxTenant', () => {
   const mockDispatch = jest.fn();
