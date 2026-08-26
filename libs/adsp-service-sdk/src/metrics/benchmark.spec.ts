@@ -79,15 +79,45 @@ describe('benchmark', () => {
 
   describe('benchmark metric attributes', () => {
     const record = jest.fn();
+    const createHistogram = jest.fn().mockReturnValue({ record });
 
     beforeAll(() => {
-      initializeBenchmarkMetrics({
-        getMeter: () => ({ createHistogram: () => ({ record }) }),
-      } as unknown as MeterProvider);
+      initializeBenchmarkMetrics({ getMeter: () => ({ createHistogram }) } as unknown as MeterProvider);
     });
 
     beforeEach(() => {
       record.mockClear();
+    });
+
+    it('can create the histogram with boundaries covering the measured range', () => {
+      expect(createHistogram).toHaveBeenCalledWith(
+        'adsp.benchmark.duration',
+        expect.objectContaining({
+          advice: { explicitBucketBoundaries: [0.1, 0.5, 1, 2.5, 5, 10, 25, 50, 100, 250, 1000, 5000] },
+        })
+      );
+    });
+
+    it('can combine the tenant name and urn into one label', () => {
+      const urn = 'urn:ads:platform:tenant-service:v2:/tenants/64d4eef5abc788a358dece8c';
+      const req = {
+        [REQ_BENCHMARK]: { timings: {}, metrics: {} },
+        method: 'GET',
+        baseUrl: '/form/v1',
+        route: { path: '/forms' },
+        tenant: { id: urn, name: 'Wildfire' },
+      };
+
+      startBenchmark(req as unknown as Request, 'get-tenant-time')();
+
+      expect(record).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.objectContaining({ 'adsp.tenant': `Wildfire (${urn})` })
+      );
+      expect(record).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.not.objectContaining({ 'adsp.tenant.id': expect.anything() })
+      );
     });
 
     it('can label the route of a matched request', () => {
