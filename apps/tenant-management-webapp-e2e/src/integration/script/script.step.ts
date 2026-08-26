@@ -11,7 +11,7 @@ Given('a tenant admin user is on script service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Script', 4000);
+  commonlib.tenantAdminMenuItem('Script', 2000);
 });
 
 When('the user clicks Add script button', function () {

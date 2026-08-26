@@ -286,7 +286,7 @@ Given('a service owner user is on Files overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('File', 4000);
+  commonlib.tenantAdminMenuItem('File', 2000);
 });
 
 When('the user {string} file service', function (action) {

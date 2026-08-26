@@ -56,7 +56,7 @@ Given('a tenant admin user is on Feedback Sites page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Feedback', 4000);
+  commonlib.tenantAdminMenuItem('Feedback', 2000);
   commonObj.serviceTab('Feedback', 'Sites').click();
   cy.wait(4000);
 });
@@ -434,7 +434,7 @@ Given('a tenant admin user is on Feedback service Feedback page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Feedback', 4000);
+  commonlib.tenantAdminMenuItem('Feedback', 2000);
   commonObj.serviceTab('Feedback', 'Feedback').click();
   cy.wait(4000);
 });

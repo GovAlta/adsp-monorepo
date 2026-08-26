@@ -29,7 +29,7 @@ Given('a tenant admin user is on directory entries page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Directory', 4000);
+  commonlib.tenantAdminMenuItem('Directory', 2000);
   commonObj.serviceTab('Directory', 'Entries').click();
   cy.wait(4000);
 });
@@ -223,7 +223,7 @@ Given('a tenant admin user is on resource types page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Directory', 4000);
+  commonlib.tenantAdminMenuItem('Directory', 2000);
   commonObj.serviceTab('Directory', 'Resource types').click();
   cy.wait(4000);
 });

@@ -32,8 +32,9 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
       }
     })
     .then(() => {
-      cy.wait(6000);
-      cy.url().should('include', '/admin');
+      cy.wait(2000);
+      cy.url({ timeout: 30000 }).should('include', '/admin');
+      commonObj.adminMenuItem('menu-dashboard').should('be.visible', { timeout: 30000 });
     });
 }
 
@@ -156,12 +157,14 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Task',
         'Form',
         'Comment',
-        'feedback',
-        'value',
+        'Feedback',
+        'Value',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
   cy.wait(waitMilliSecs);
+  commonObj.applicationBody().should('exist');
+  cy.get('main', { timeout: waitMilliSecs }).should('be.visible');
 }
 
 export function nowPlusMinusMinutes(nowPlusMinusMinutesString) {

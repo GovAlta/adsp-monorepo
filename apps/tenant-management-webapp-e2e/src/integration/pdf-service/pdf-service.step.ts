@@ -12,7 +12,7 @@ Given('a tenant admin user is on PDF service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('PDF', 4000);
+  commonlib.tenantAdminMenuItem('PDF', 2000);
 });
 
 Given('a tenant admin user is on PDF service templates page', function () {
@@ -22,7 +22,7 @@ Given('a tenant admin user is on PDF service templates page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('PDF', 4000);
+  commonlib.tenantAdminMenuItem('PDF', 2000);
   commonObj.serviceTab('PDF', 'Templates').click();
   cy.wait(4000);
 });

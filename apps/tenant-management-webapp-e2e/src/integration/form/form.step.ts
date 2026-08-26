@@ -15,7 +15,7 @@ Given('a tenant admin user is on form service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Form', 4000);
+  commonlib.tenantAdminMenuItem('Form', 2000);
 });
 
 Given('a tenant admin user is on form definitions page', function () {
@@ -25,7 +25,7 @@ Given('a tenant admin user is on form definitions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Form', 4000);
+  commonlib.tenantAdminMenuItem('Form', 2000);
   commonObj.serviceTab('Form', 'Definitions').click();
   cy.wait(3000);
 });
