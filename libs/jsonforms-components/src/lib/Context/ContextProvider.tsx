@@ -2,6 +2,8 @@
 // .test.tsx sibling; adding one would duplicate the existing suite.
 import React, { createContext, useContext } from 'react';
 import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
+// clean-code-ignore: RULE-19 — navigation context behavior is covered by ./context.spec.tsx.
+import type { NavigationOutcome, NavigationTarget } from '../Controls/FormStepper/util/navigationTarget';
 
 interface AllData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,7 +45,12 @@ export interface AutoPopulatedValue {
   value: unknown;
 }
 
-type Props = {
+export interface ExternalNavigationProps {
+  navigationTarget?: NavigationTarget;
+  onNavigationChange?: (outcome: NavigationOutcome) => void;
+}
+
+type Props = ExternalNavigationProps & {
   children?: React.ReactNode;
   fileManagement?: FileManagement;
   submit?: SubmitManagement;
@@ -103,6 +110,8 @@ export class ContextProviderClass {
     formUrl: string | null | undefined;
     autoPopulatedData?: AutoPopulatedValue[];
     formId?: string;
+    navigationTarget?: NavigationTarget;
+    onNavigationChange?: (outcome: NavigationOutcome) => void;
   };
 
   addFormContextData = (key: string, data: Record<string, unknown> | unknown[]) => {
@@ -187,6 +196,8 @@ export class ContextProviderClass {
     this.baseEnumerator.showChangeButtons = props.showChangeButtons ?? true;
     this.baseEnumerator.autoPopulatedData = props.autoPopulatedData ?? [];
     this.baseEnumerator.formId = props.formId;
+    this.baseEnumerator.navigationTarget = props.navigationTarget;
+    this.baseEnumerator.onNavigationChange = props.onNavigationChange;
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 

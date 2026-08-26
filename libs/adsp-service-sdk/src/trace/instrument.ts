@@ -3,6 +3,7 @@ import type { Request, RequestHandler } from 'express';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { Logger } from 'winston';
 import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
+import { getRouteTemplate } from '../utils/route';
 
 function getTenantId(req: Request): string | undefined {
   const tenantId = req.tenant?.id || req.user?.tenantId;
@@ -65,8 +66,12 @@ export function createHttpServerTraceHandler(tracerProvider: NodeTracerProvider)
     const tenantId = getTenantId(req);
     const tenantName = getTenantName(req);
 
+    // This middleware runs before Express matches a route, so req.route is not populated yet and
+    // the span starts named by method alone. It is renamed to the route template on completion.
+    // Naming it from req.path here would bake resource IDs into the span name, which the collector
+    // turns into an unbounded spanmetrics label.
     const span = tracer.startSpan(
-      `${req.method} ${req.route?.path || req.path}`,
+      req.method,
       {
         kind: SpanKind.SERVER,
         attributes: {
@@ -90,9 +95,15 @@ export function createHttpServerTraceHandler(tracerProvider: NodeTracerProvider)
     const originalSend = res.send.bind(res);
 
     const recordSpanCompletion = () => {
+      const route = getRouteTemplate(req);
+      span.updateName(route ? `${req.method} ${route}` : `${req.method} <unmatched>`);
+
       const completionAttributes: Record<string, string | number> = {
         'http.status_code': res.statusCode,
       };
+      if (route) {
+        completionAttributes['http.route'] = route;
+      }
       const completionTenantId = getTenantId(req);
       if (completionTenantId) {
         completionAttributes['adsp.tenant.id'] = completionTenantId;

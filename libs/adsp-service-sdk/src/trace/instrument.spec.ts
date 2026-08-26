@@ -43,6 +43,7 @@ describe('instrument', () => {
     it('can create span and complete it on json response', () => {
       const span = {
         setAttributes: jest.fn(),
+        updateName: jest.fn(),
         setStatus: jest.fn(),
         end: jest.fn(),
         isRecording: jest.fn().mockReturnValue(false),
@@ -92,7 +93,8 @@ describe('instrument', () => {
 
       (res.json as (body: unknown) => unknown)({ ok: true });
 
-      expect(span.setAttributes).toHaveBeenCalledWith({ 'http.status_code': 200 });
+      expect(span.updateName).toHaveBeenCalledWith('GET /resource');
+      expect(span.setAttributes).toHaveBeenCalledWith({ 'http.status_code': 200, 'http.route': '/resource' });
       expect(span.setStatus).toHaveBeenCalledWith({ code: SpanStatusCode.OK });
       expect(span.end).toHaveBeenCalled();
 
@@ -104,6 +106,7 @@ describe('instrument', () => {
     it('can record errors and finish completion', () => {
       const span = {
         setAttributes: jest.fn(),
+        updateName: jest.fn(),
         setStatus: jest.fn(),
         end: jest.fn(),
         isRecording: jest.fn().mockReturnValue(true),
@@ -160,6 +163,7 @@ describe('instrument', () => {
     it('can set tenant attribute from resolved tenant context', () => {
       const span = {
         setAttributes: jest.fn(),
+        updateName: jest.fn(),
         setStatus: jest.fn(),
         end: jest.fn(),
         isRecording: jest.fn().mockReturnValue(false),
@@ -229,6 +233,7 @@ describe('instrument', () => {
     it('can set tenant attribute from user context fallback', () => {
       const span = {
         setAttributes: jest.fn(),
+        updateName: jest.fn(),
         setStatus: jest.fn(),
         end: jest.fn(),
         isRecording: jest.fn().mockReturnValue(false),

@@ -1,8 +1,9 @@
 // clean-code-ignore: RULE-19
 import { Container } from '@core-services/app-common';
-import { FunctionComponent, useEffect } from 'react';
+import { getNavigationTargetFromParams, NAVIGATION_PARAMS, NavigationOutcome } from '@abgov/jsonforms-components';
+import { FunctionComponent, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
@@ -40,6 +41,19 @@ interface FormProps {
 const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const { formId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigationTarget = useMemo(() => getNavigationTargetFromParams(searchParams), [searchParams]);
+
+  const handleNavigationChange = useCallback(
+    (outcome: NavigationOutcome) => {
+      if (outcome.status === 'unknown') {
+        const nextParams = new URLSearchParams(searchParams);
+        Object.values(NAVIGATION_PARAMS).forEach((param) => nextParams.delete(param));
+        setSearchParams(nextParams, { replace: true });
+      }
+    },
+    [searchParams, setSearchParams],
+  );
 
   const { definition } = useSelector(definitionSelector);
   const form = useSelector((state: AppState) => formSelector(state, formId));
@@ -94,6 +108,8 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   onChange={({ data, errors }) => saveDraft({ data, errors: resolveFormChangeErrors(errors) })}
                   onSave={saveDraft}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
+                  navigationTarget={navigationTarget}
+                  onNavigationChange={handleNavigationChange}
                 />
               )}
             </>

@@ -133,6 +133,96 @@ describe('JsonFormsStepperContext', () => {
     expect(screen.getByTestId('completed-categories').textContent).toBe('0');
   });
 
+  describe('external navigation', () => {
+    const navigationUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'Personal details',
+          options: { id: 'personal-details' },
+          elements: [{ type: 'Control', scope: '#/properties/firstName' }],
+        },
+        {
+          type: 'Category',
+          label: 'Contact details',
+          options: { id: 'contact-details' },
+          elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+        },
+      ],
+      options: { variant: 'pages', showNavButtons: true },
+    };
+
+    const renderExternalStepper = (contextValue: Record<string, unknown>) =>
+      render(
+        <JsonFormContext.Provider value={contextValue}>
+          <JsonFormsStepperContextProvider
+            StepperProps={
+              {
+                ...stepperBaseProps,
+                uischema: navigationUischema,
+                data: { firstName: 'Alex' },
+                customDispatch: mockDispatch,
+              } as unknown as CategorizationStepperLayoutRendererProps
+            }
+          >
+            <div />
+          </JsonFormsStepperContextProvider>
+        </JsonFormContext.Provider>,
+      );
+
+    test('navigates to the index resolved from an authored page id', () => {
+      // Arrange
+      const onNavigationChange = jest.fn();
+
+      // Act
+      renderExternalStepper({ navigationTarget: { pageId: 'contact-details' }, onNavigationChange });
+
+      // Assert
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'page/to/index',
+        payload: { id: 1, targetScope: undefined },
+      });
+    });
+
+    test('passes a field scope through the existing page navigation action', () => {
+      // Arrange
+      const scope = '#/properties/lastName';
+
+      // Act
+      renderExternalStepper({ navigationTarget: { scope } });
+
+      // Assert
+      expect(mockDispatch).toHaveBeenCalledWith({ type: 'page/to/index', payload: { id: 1, targetScope: scope } });
+    });
+
+    test('saves current form data before external navigation', () => {
+      // Arrange
+      const saveForm = jest.fn();
+      const saveFunction = new Map([['save-form', () => saveForm]]);
+
+      // Act
+      renderExternalStepper({ navigationTarget: { pageId: 'contact-details' }, saveFunction });
+
+      // Assert
+      expect(saveForm).toHaveBeenCalledWith({ firstName: 'Alex' });
+    });
+
+    test('reports an unknown page without dispatching navigation', () => {
+      // Arrange
+      const onNavigationChange = jest.fn();
+
+      // Act
+      renderExternalStepper({ navigationTarget: { pageId: 'removed-page' }, onNavigationChange });
+
+      // Assert
+      expect(onNavigationChange).toHaveBeenCalledWith({
+        status: 'unknown',
+        requested: { pageId: 'removed-page' },
+      });
+    });
+  });
+
   // CS-5233: a page whose fields are all auto-populated has no user data to derive "started" from,
   // so the recompute that runs on every data change must not discard what the user already visited.
   describe('auto-populated pages', () => {

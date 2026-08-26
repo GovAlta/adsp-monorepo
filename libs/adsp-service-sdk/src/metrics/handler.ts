@@ -10,13 +10,11 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
 import { getContextTrace } from '../trace';
+import { getRouteTemplate } from '../utils/route';
+import { formatTenantAttribute } from './attributes';
 
 function getRoute(req: Request): string {
-  if (typeof req.route?.path === 'string') {
-    return `${req.baseUrl || ''}${req.route.path}`;
-  }
-
-  return req.baseUrl || req.path || req.originalUrl || 'unknown';
+  return getRouteTemplate(req) ?? (req.baseUrl || req.path || req.originalUrl || 'unknown');
 }
 
 function resolveTenantId(req: Request, defaultTenantId?: AdspId): string | undefined {
@@ -35,14 +33,9 @@ function getMetricAttributes(req: Request, res: Response, defaultTenantId?: Adsp
     'http.response.status_code': res.statusCode || 0,
   };
 
-  const tenantId = resolveTenantId(req, defaultTenantId);
-  if (tenantId) {
-    attributes['adsp.tenant.id'] = tenantId;
-  }
-
-  const tenantName = resolveTenantName(req);
-  if (tenantName) {
-    attributes['adsp.tenant.name'] = tenantName;
+  const tenant = formatTenantAttribute(resolveTenantId(req, defaultTenantId), resolveTenantName(req));
+  if (tenant) {
+    attributes['adsp.tenant'] = tenant;
   }
 
   return attributes;
