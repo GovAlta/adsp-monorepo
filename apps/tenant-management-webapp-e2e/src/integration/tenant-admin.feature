@@ -76,7 +76,7 @@ Feature: Tenant admin
     Then the user views the message of "Copy link" from clicking Copy login link
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # Then the login link is copied to the clipboard
-    And the user views introductions and links for "Access", "Agent", "Cache", "Calendar", "Comment", "Configuration", "Directory", "Event", "Feedback", "File", "Form", "Notification", "PDF", "Script", "SharePoint", "Status", "Task", "Value"
+    And the user views introductions and links for "Access", "Agent", "Cache", "Calendar", "Comment", "Configuration", "Directory", "Event", "Feedback", "File", "Form", "Notification", "PDF", "Script", "Secret", "SharePoint", "Status", "Task", "Value"
     When the user clicks "Access" link
     Then the user is directed to "Access service" page
     When the user selects the "Dashboard" menu item
@@ -110,8 +110,8 @@ Feature: Tenant admin
     And the user clicks "Configuration" link
     Then the user is directed to "Configuration service" page
     When the user selects the "Dashboard" menu item
-    And the user clicks "Script" link
-    Then the user is directed to "Script service" page
+    And the user clicks "Secret" link
+    Then the user is directed to "Secret service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Task" link
     Then the user is directed to "Task service" page
