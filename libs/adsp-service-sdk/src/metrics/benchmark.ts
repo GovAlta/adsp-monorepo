@@ -2,6 +2,7 @@ import { Request } from 'express';
 import { metrics, trace } from '@opentelemetry/api';
 import type { Histogram, MeterProvider } from '@opentelemetry/api';
 import { EndBenchmark, RequestBenchmark, REQ_BENCHMARK } from './types';
+import { getRouteTemplate } from '../utils/route';
 
 const BENCHMARK_METRIC_ALLOWLIST = new Set([
   'operation-handler-time',
@@ -46,7 +47,11 @@ function getBenchmarkDurationHistogram(): Histogram {
 }
 
 function getBenchmarkMetricAttributes(req: Request, metric: string): Record<string, string> {
-  const route = req.route?.path ? `${req.baseUrl || ''}${req.route.path}` : `${req.baseUrl || ''}${req.path || ''}`;
+  // Benchmarks are recorded mid-request, and the ones started from middleware that runs before
+  // Express matches a route have no route to report. Falling back to the raw path there would
+  // label the histogram with resource IDs, so the attribute is omitted instead; http.route is only
+  // meaningful for a matched route.
+  const route = getRouteTemplate(req);
   const attributes: Record<string, string> = { 'benchmark.name': metric };
   const tenantId = req.tenant?.id || req.user?.tenantId;
   const tenantName = req.tenant?.name;

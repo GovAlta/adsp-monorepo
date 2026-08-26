@@ -1,5 +1,6 @@
 import { Request } from 'express';
-import { benchmark, startBenchmark } from './benchmark';
+import type { MeterProvider } from '@opentelemetry/api';
+import { benchmark, initializeBenchmarkMetrics, startBenchmark } from './benchmark';
 import { REQ_BENCHMARK } from './types';
 
 describe('benchmark', () => {
@@ -73,6 +74,53 @@ describe('benchmark', () => {
 
       const end = startBenchmark(req as unknown as Request, 'test');
       expect(() => end()).not.toThrow();
+    });
+  });
+
+  describe('benchmark metric attributes', () => {
+    const record = jest.fn();
+
+    beforeAll(() => {
+      initializeBenchmarkMetrics({
+        getMeter: () => ({ createHistogram: () => ({ record }) }),
+      } as unknown as MeterProvider);
+    });
+
+    beforeEach(() => {
+      record.mockClear();
+    });
+
+    it('can label the route of a matched request', () => {
+      const req = {
+        [REQ_BENCHMARK]: { timings: {}, metrics: {} },
+        method: 'GET',
+        baseUrl: '/form/v1',
+        route: { path: '/forms/:id' },
+        path: '/forms/a6bf5c59-b56c-45a5-839d-6e38ac926748',
+      };
+
+      startBenchmark(req as unknown as Request, 'get-tenant-time')();
+
+      expect(record).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.objectContaining({ 'benchmark.name': 'get-tenant-time', 'http.route': '/form/v1/forms/:id' })
+      );
+    });
+
+    it('can omit the route when the request has not matched one', () => {
+      const req = {
+        [REQ_BENCHMARK]: { timings: {}, metrics: {} },
+        method: 'GET',
+        baseUrl: '',
+        path: '/form/v1/forms/a6bf5c59-b56c-45a5-839d-6e38ac926748',
+      };
+
+      startBenchmark(req as unknown as Request, 'get-tenant-time')();
+
+      expect(record).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.not.objectContaining({ 'http.route': expect.anything() })
+      );
     });
   });
 });

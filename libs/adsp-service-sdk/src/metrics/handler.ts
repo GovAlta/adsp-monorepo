@@ -10,13 +10,10 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
 import { getContextTrace } from '../trace';
+import { getRouteTemplate } from '../utils/route';
 
 function getRoute(req: Request): string {
-  if (typeof req.route?.path === 'string') {
-    return `${req.baseUrl || ''}${req.route.path}`;
-  }
-
-  return req.baseUrl || req.path || req.originalUrl || 'unknown';
+  return getRouteTemplate(req) ?? (req.baseUrl || req.path || req.originalUrl || 'unknown');
 }
 
 function resolveTenantId(req: Request, defaultTenantId?: AdspId): string | undefined {
