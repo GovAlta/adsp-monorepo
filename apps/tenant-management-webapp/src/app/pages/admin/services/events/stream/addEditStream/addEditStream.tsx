@@ -44,7 +44,8 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
   const isOpen = editModal?.isOpen || addModal?.isOpen;
   const isEdit = editModal.isOpen;
   const rolesObj = useSelector(selectRolesObject);
-  const selectedRoles = constructRoleObjFromUrns(initStream?.subscriberRoles);
+  // Derived from state, not initStream, so the role tables re-render with each selection (CS-5313).
+  const selectedRoles = useMemo(() => constructRoleObjFromUrns(stream?.subscriberRoles), [stream?.subscriberRoles]);
 
   const { errors, validators } = useValidators(
     'name',
@@ -219,14 +220,13 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             return (
               <ClientRoleTable
                 roles={roles || []}
-                roleSelectFunc={(roleNames, type) => {
-                  if (roleNames && roleNames.length > 0) {
-                    selectedRoles[clientId] = roleNames.map((r) => r.split(':').pop());
-                  } else {
-                    selectedRoles[clientId] = [];
-                  }
-                  // no need to use setStream here.
-                  stream.subscriberRoles = roleObjectToUrns(selectedRoles);
+                roleSelectFunc={(roleNames) => {
+                  // Read from the previous state so a table for one client cannot clobber another's selections.
+                  setStream((previous) => {
+                    const updatedRoles = constructRoleObjFromUrns(previous?.subscriberRoles);
+                    updatedRoles[clientId] = (roleNames || []).map((r) => r.split(':').pop());
+                    return { ...previous, subscriberRoles: roleObjectToUrns(updatedRoles) };
+                  });
                 }}
                 clientId={clientId}
                 key={`client-role-group-${clientId}`}
