@@ -96,6 +96,14 @@ const completeServiceVariables = [
     beta: true,
   },
   {
+    name: 'Secret',
+    link: 'services/secret',
+    description:
+      'The secret service allows applications to save sensitive data in a highly secure storage facility. Once a secret has been saved, it will not be accessible to anyone outside of the secret service itself. Applications can use the data indirectly through a callback function that has been registered through the service.',
+    beta: false,
+    alpha: true,
+  },
+  {
     name: 'SharePoint',
     link: 'services/sharepoint',
     description:
@@ -141,6 +149,7 @@ export const defaultFeaturesVisible = {
   NotificationEmailAI: true,
   PDF: true,
   Script: true,
+  Secret: false,
   SharePoint: false,
   Status: true,
   Task: false,
@@ -151,7 +160,9 @@ export const defaultFeaturesVisible = {
 
 export const serviceVariables = (featuresVisible = {}) => {
   const mergedFeaturesVisible = { ...defaultFeaturesVisible, ...featuresVisible };
-  return completeServiceVariables.filter((adminF) => {
-    return mergedFeaturesVisible[adminF.name];
-  });
+  return completeServiceVariables
+    .filter((adminF) => {
+      return mergedFeaturesVisible[adminF.name];
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 };

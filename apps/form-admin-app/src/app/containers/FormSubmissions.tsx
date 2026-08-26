@@ -1,11 +1,4 @@
-import {
-  GoabButton,
-  GoabButtonGroup,
-  GoabDropdown,
-  GoabDropdownItem,
-  GoabFormItem,
-  GoabTable,
-} from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabDropdown, GoabDropdownItem, GoabFormItem } from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -33,6 +26,7 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
 import { DataValueCell } from '../components/DataValueCell';
+import { ActionsCell, ActionsColumnHeader, ResultsTable } from '../components/ResultsTable';
 import { ExportModal } from '../components/ExportModal';
 import { FilterFormItemsContainer } from '../components/FilterFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
@@ -189,7 +183,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           loading={busy.loading}
           onClearFilters={clearFilters}
         />
-        <GoabTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
+        <ResultsTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
           <thead>
             <tr>
               <SortableColumnHeader name="created" sort={sort}>
@@ -204,7 +198,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   {name}
                 </SortableColumnHeader>
               ))}
-              <th>Actions</th>
+              <ActionsColumnHeader>Actions</ActionsColumnHeader>
             </tr>
           </thead>
           <tbody>
@@ -227,13 +221,13 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                     </DataValueCell>
                   );
                 })}
-                <td>
+                <ActionsCell>
                   <GoabButtonGroup alignment="end">
                     <GoabButton type="secondary" size="compact" onClick={() => navigate(submission.id)}>
                       Open
                     </GoabButton>
                   </GoabButtonGroup>
-                </td>
+                </ActionsCell>
               </tr>
             ))}
             <RowSkeleton columns={4 + dataValues.length} show={busy.loading} />
@@ -244,7 +238,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               onLoadMore={handleFindSubmissions}
             />
           </tbody>
-        </GoabTable>
+        </ResultsTable>
       </ContentContainer>
       <AddTagModal
         open={!!showTagSubmission}
