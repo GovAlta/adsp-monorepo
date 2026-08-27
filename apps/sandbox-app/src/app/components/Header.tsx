@@ -11,6 +11,12 @@ import {
   tenantSelector,
   userSelector,
 } from '../state';
+import styled from 'styled-components';
+
+const UserSpan = styled.span`
+  margin-left: var(--goa-space-l);
+  margin-right: var(--goa-space-xs);
+`;
 
 export default function Header() {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -30,32 +36,22 @@ export default function Header() {
     <>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" />
       <GoabAppHeader url="/" heading={'Alberta Digital Service Platform - Sandbox app'}>
-        <>
-          <span style={{ display: 'none' }}></span>
+        <AccountActionsDiv slot="utilities">
           {userInitialized && user && (
-            <AccountActionsDiv>
-              {
-                <>
-                  <span className="username">{user?.name}</span>
-                  <GoabButton
-                    ml="s"
-                    type="tertiary"
-                    data-testid="sandbox  -sign-out"
-                    onClick={() => {
-                      if (tenant && tenant.name) {
-                        dispatch(logoutUser({ tenant, from: `/${tenant.name}` }));
-                      } else {
-                        dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
-                      }
-                    }}
-                  >
-                    Sign out
-                  </GoabButton>
-                </>
-              }
-            </AccountActionsDiv>
+            <span>
+              <UserSpan>{user.name}</UserSpan>
+              <GoabButton
+                size="compact"
+                mt="s"
+                mr="s"
+                type="tertiary"
+                onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
+              >
+                Sign out
+              </GoabButton>
+            </span>
           )}
-        </>
+        </AccountActionsDiv>
       </GoabAppHeader>
     </>
   );
