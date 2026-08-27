@@ -46,37 +46,37 @@ describe('handler', () => {
 
     it('can handle request', async () => {
       const req = { tenant: { id: tenantId } };
-      const res = {};
+      const res = { on: jest.fn(), writeHead: jest.fn() };
       const next = jest.fn();
 
       responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
       const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
-      handler(req as unknown as Request, res as Response, next);
+      handler(req as unknown as Request, res as unknown as Response, next);
     });
 
     it('can handle request with user tenant context', async () => {
       const req = { user: { tenantId } };
-      const res = {};
+      const res = { on: jest.fn(), writeHead: jest.fn() };
       const next = jest.fn();
 
       responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
       const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
-      handler(req as unknown as Request, res as Response, next);
+      handler(req as unknown as Request, res as unknown as Response, next);
     });
 
     it('can handle request with static tenant context', async () => {
       const req = { user: { tenantId } };
-      const res = {};
+      const res = { on: jest.fn(), writeHead: jest.fn() };
       const next = jest.fn();
 
       responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
       const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock, tenantId);
-      handler(req as unknown as Request, res as Response, next);
+      handler(req as unknown as Request, res as unknown as Response, next);
     });
 
     it('can handle request with benchmark metric', async () => {
       const req = { user: { tenantId } };
-      const res = {};
+      const res = { on: jest.fn(), writeHead: jest.fn() };
       const next = jest.fn();
 
       responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => {
@@ -84,7 +84,43 @@ describe('handler', () => {
         fn(req, res, 123);
       });
       const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock, tenantId);
-      handler(req as unknown as Request, res as Response, next);
+      handler(req as unknown as Request, res as unknown as Response, next);
+    });
+
+    it('can release the active gauge when a request is aborted without finishing', async () => {
+      const activeRequestsAdd = jest.fn();
+      const meterProviderMock = {
+        getMeter: () => ({
+          createCounter: () => ({ add: jest.fn() }),
+          createHistogram: () => ({ record: jest.fn() }),
+          createUpDownCounter: () => ({ add: activeRequestsAdd }),
+        }),
+      };
+      const listeners: Record<string, Array<() => void>> = {};
+      const req = { method: 'GET' };
+      const res = {
+        on: jest.fn((event: string, cb: () => void) => {
+          (listeners[event] = listeners[event] || []).push(cb);
+        }),
+        writeHead: jest.fn(),
+      };
+
+      responseTimeMock.mockImplementationOnce(() => (_req, _res, _next) => undefined);
+      const handler = await createMetricsHandler(
+        serviceId,
+        loggerMock,
+        tokenProviderMock,
+        directoryMock,
+        tenantId,
+        meterProviderMock as never,
+      );
+
+      handler(req as unknown as Request, res as unknown as Response, jest.fn());
+      expect(activeRequestsAdd).toHaveBeenCalledWith(1, { 'http.request.method': 'GET' });
+
+      // No finish: the client went away. response-time never fires, so only close can release it.
+      listeners['close'].forEach((cb) => cb());
+      expect(activeRequestsAdd).toHaveBeenCalledWith(-1, { 'http.request.method': 'GET' });
     });
 
     it('can record OpenTelemetry metrics when meter provider is provided', async () => {
@@ -109,7 +145,14 @@ describe('handler', () => {
         route: { path: '/:id' },
         user: { tenantId },
       };
-      const res = { statusCode: 503 };
+      const listeners: Record<string, Array<() => void>> = {};
+      const res = {
+        on: jest.fn((event: string, cb: () => void) => {
+          (listeners[event] = listeners[event] || []).push(cb);
+        }),
+        writeHead: jest.fn(),
+        statusCode: 503,
+      };
       const next = jest.fn();
 
       responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
@@ -122,7 +165,7 @@ describe('handler', () => {
         meterProviderMock as never,
       );
 
-      handler(req as unknown as Request, res as Response, next);
+      handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(requestCountAdd).toHaveBeenCalledWith(
         1,
@@ -141,7 +184,16 @@ describe('handler', () => {
         }),
       );
       expect(activeRequestsAdd).toHaveBeenCalledWith(1, { 'http.request.method': 'GET' });
+
+      // The gauge is released on the response terminating, not from the response-time callback,
+      // so that an aborted connection (close without finish) does not leave it incremented.
+      expect(activeRequestsAdd).not.toHaveBeenCalledWith(-1, { 'http.request.method': 'GET' });
+      listeners['finish'].forEach((cb) => cb());
       expect(activeRequestsAdd).toHaveBeenCalledWith(-1, { 'http.request.method': 'GET' });
+
+      // finish and close both fire on a normal response; the release must be idempotent.
+      listeners['close'].forEach((cb) => cb());
+      expect(activeRequestsAdd.mock.calls.filter(([delta]) => delta === -1)).toHaveLength(1);
       expect(errorCountAdd).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
@@ -173,14 +225,14 @@ describe('handler', () => {
           ip: '127.0.0.1',
           user: { tenantId },
         };
-        const res = { statusCode: 200 };
+        const res = { on: jest.fn(), writeHead: jest.fn(), statusCode: 200 };
         const next = jest.fn();
 
         responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
         const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
 
         await otelContext.with(otelContext.active().setValue(testKey, 'request-span-context'), async () => {
-          handler(req as unknown as Request, res as Response, next);
+          handler(req as unknown as Request, res as unknown as Response, next);
         });
 
         await jest.advanceTimersByTimeAsync(60000);

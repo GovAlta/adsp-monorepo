@@ -16,7 +16,7 @@ const loggerMock = {
 describe('handler', () => {
   describe('createTraceHandler', () => {
     it('can create handler', () => {
-      const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+      const handler = createTraceHandler({ logger: loggerMock });
       expect(handler).toBeTruthy();
       expect(axiosMock.interceptors.request.use).toHaveBeenCalled();
     });
@@ -28,7 +28,6 @@ describe('handler', () => {
 
       const handler = createTraceHandler({
         logger: loggerMock,
-        sampleRate: 0,
         tracerProvider: tracerProvider as never,
       });
 
@@ -45,7 +44,7 @@ describe('handler', () => {
         const res = {};
         const next = jest.fn();
 
-        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+        const handler = createTraceHandler({ logger: loggerMock });
         handler(req as unknown as Request, res as Response, next);
         expect(next).toHaveBeenCalledWith(undefined);
       });
@@ -57,7 +56,7 @@ describe('handler', () => {
         const res = {};
         const next = jest.fn();
 
-        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+        const handler = createTraceHandler({ logger: loggerMock });
         handler(req as unknown as Request, res as Response, next);
         // Without tracerProvider there is no error path; handler calls next() directly
         expect(next).toHaveBeenCalled();
@@ -204,7 +203,7 @@ describe('handler', () => {
         getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn().mockReturnValue(clientSpan) }),
       };
 
-      createTraceHandler({ logger: loggerMock, sampleRate: 0, tracerProvider: tracerProvider as never });
+      createTraceHandler({ logger: loggerMock, tracerProvider: tracerProvider as never });
 
       const responseUse = axiosMock.interceptors.response.use as unknown as jest.Mock;
       const onError = responseUse.mock.lastCall?.[1] as (error: unknown) => Promise<unknown>;
