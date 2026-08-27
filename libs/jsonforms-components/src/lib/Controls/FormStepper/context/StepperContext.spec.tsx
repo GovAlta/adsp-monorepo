@@ -328,6 +328,123 @@ describe('JsonFormsStepperContext', () => {
     });
   });
 
+  // CS-5333: a pages variant form opens on the task list, and the recompute that runs on mount and
+  // on every data change afterwards must not move the user off it.
+  describe('task list landing', () => {
+    const taskListUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'Personal details',
+          elements: [{ type: 'Control', scope: '#/properties/firstName' }],
+        },
+        {
+          type: 'Category',
+          label: 'Contact details',
+          elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+        },
+      ],
+      options: { variant: 'pages', showNavButtons: true },
+    };
+
+    const ActiveIdProbe = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
+      const { activeId, categories } = ctx.selectStepperState();
+
+      return (
+        <div>
+          <div data-testid="active-id">{activeId}</div>
+          {/* The task list is rendered for the sentinel id one past the last page. */}
+          <div data-testid="is-task-list">{(activeId === categories.length + 1).toString()}</div>
+          <button data-testid="open-page-1" onClick={() => ctx.goToPage(1)}>
+            open
+          </button>
+        </div>
+      );
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const renderTaskListStepper = (data: any, uischema: unknown = taskListUischema) => (
+      <JsonFormsStepperContextProvider
+        StepperProps={
+          {
+            ...stepperBaseProps,
+            uischema,
+            data,
+          } as unknown as CategorizationStepperLayoutRendererProps
+        }
+      >
+        <ActiveIdProbe />
+      </JsonFormsStepperContextProvider>
+    );
+
+    test('opens on the task list rather than the first page', () => {
+      // Arrange / Act
+      render(renderTaskListStepper({}));
+
+      // Assert
+      expect(screen.getByTestId('is-task-list').textContent).toBe('true');
+      expect(screen.getByTestId('active-id').textContent).toBe('3');
+    });
+
+    test('stays on the task list when saved data arrives after mount', () => {
+      // Arrange
+      const { rerender } = render(renderTaskListStepper({}));
+
+      // Act: the form loads its draft, which re-runs the recompute.
+      act(() => {
+        rerender(renderTaskListStepper({ firstName: 'Alex' }));
+      });
+
+      // Assert
+      expect(screen.getByTestId('is-task-list').textContent).toBe('true');
+    });
+
+    test('stays on the task list when a page count change shifts the sentinel', () => {
+      // Arrange
+      const { rerender } = render(renderTaskListStepper({}));
+
+      // Act: a conditional page appears, so the sentinel is no longer the id it was on mount.
+      const withExtraPage = {
+        ...taskListUischema,
+        elements: [
+          ...taskListUischema.elements,
+          {
+            type: 'Category',
+            label: 'Extra details',
+            elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+          },
+        ],
+      };
+      act(() => {
+        rerender(renderTaskListStepper({ firstName: 'Alex' }, withExtraPage));
+      });
+
+      // Assert: the review page would be id 3, so the sentinel has to move to 4 with it.
+      expect(screen.getByTestId('is-task-list').textContent).toBe('true');
+      expect(screen.getByTestId('active-id').textContent).toBe('4');
+    });
+
+    test('keeps the user on the page they opened when data changes', () => {
+      // Arrange
+      const { rerender } = render(renderTaskListStepper({}));
+      act(() => {
+        fireEvent.click(screen.getByTestId('open-page-1'));
+      });
+      expect(screen.getByTestId('active-id').textContent).toBe('1');
+
+      // Act
+      act(() => {
+        rerender(renderTaskListStepper({ lastName: 'Smith' }));
+      });
+
+      // Assert
+      expect(screen.getByTestId('active-id').textContent).toBe('1');
+      expect(screen.getByTestId('is-task-list').textContent).toBe('false');
+    });
+  });
+
   test('handles missing context gracefully', () => {
     // Arrange
     const MissingContextComponent = (): JSX.Element => {
