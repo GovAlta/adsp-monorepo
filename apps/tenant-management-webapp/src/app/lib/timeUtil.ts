@@ -39,12 +39,44 @@ export const getTimeFromGMT = (date: Date): string => {
   return `${formattedHours}:${formattedMinutes}`;
 };
 
-export const getDateTime = (date, time) => {
-  const newDate = new Date(date);
-  const combinedDateTime = new Date(
-    newDate.getMonth() + 1 + '/' + newDate.getDate() + '/' + newDate.getFullYear() + ' ' + time
+const DATE_ONLY_PATTERN = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+
+// The Date constructor reads a date only string (yyyy-mm-dd) as UTC midnight, which lands on the previous
+// day in negative offset timezones like Alberta's; parse the parts so the date stays the one that was entered.
+export const parseLocalDate = (date: string | Date): Date => {
+  if (date instanceof Date) {
+    return date;
+  }
+
+  const parts = DATE_ONLY_PATTERN.exec((date || '').trim());
+  if (!parts) {
+    return new Date(date);
+  }
+
+  const [, year, month, day] = parts;
+  return new Date(Number(year), Number(month) - 1, Number(day));
+};
+
+// Value for a date input, using the local date so it matches what the user sees in the rest of the form.
+export const toDateInputValue = (date: Date): string => {
+  if (!date || isNaN(date.getTime())) {
+    return '';
+  }
+
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
+};
+
+export const getDateTime = (date: string | Date, time: string): Date => {
+  const newDate = parseLocalDate(date);
+  const [hours, minutes, seconds] = (time || '').split(':').map(Number);
+  return new Date(
+    newDate.getFullYear(),
+    newDate.getMonth(),
+    newDate.getDate(),
+    hours || 0,
+    minutes || 0,
+    seconds || 0
   );
-  return combinedDateTime;
 };
 
 export const getLocalISOString = (date: Date): string => {
