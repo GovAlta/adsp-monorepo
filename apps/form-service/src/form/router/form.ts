@@ -125,6 +125,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
+      const tenantId = req.tenant.id;
       const { top: topValue, after, criteria: criteriaValue, includeData: includeDataValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const includeData = includeDataValue === 'true';
@@ -136,18 +137,26 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         throw new InvalidOperationError('Bad form criteria');
       }
 
-      const hasAccessToAll = isAllowedUser(
-        user,
-        req.tenant.id,
-        [FormServiceRoles.Admin, ExportServiceRoles.ExportJob],
-        true,
-      );
-      if (!hasAccessToAll) {
-        // If user is not a form service admin, then limit search to only forms created by the user.
+      // Assessors are allowed to find the forms of definitions they assess, so the definition of a
+      // search scoped to one is resolved for its assessor roles.
+      let definition: FormDefinitionEntity;
+      if (criteria.definitionIdEquals) {
+        [definition] = await req.getServiceConfiguration(criteria.definitionIdEquals, tenantId);
+      }
+
+      const isAdmin = isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ExportServiceRoles.ExportJob], true);
+      const isAssessor = isAllowedUser(user, tenantId, definition?.assessorRoles || []);
+      if (!isAdmin && !isAssessor) {
+        // If user is not a form service admin or an assessor of the definition, then limit search to
+        // only forms created by the user.
         criteria.createdByIdEquals = user.id;
         if (includeData) {
           throw new UnauthorizedUserError('find forms include data', user);
         }
+      } else if (!isAdmin) {
+        // Assessors are only allowed to access submitted forms (FormEntity.accessByUser), so the
+        // search is limited to them and every result of the search can also be opened.
+        criteria.statusEquals = FormStatus.Submitted;
       }
 
       if (user.tenantId) {
@@ -158,7 +167,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
 
       end();
       res.send({
-        results: results.filter((r) => hasAccessToAll || r.canRead(user)).map((r) => mapForm(apiId, r, includeData)),
+        results: results.filter((r) => isAdmin || r.canRead(user)).map((r) => mapForm(apiId, r, includeData)),
         page,
       });
     } catch (err) {
