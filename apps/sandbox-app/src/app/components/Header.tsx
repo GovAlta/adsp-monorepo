@@ -45,7 +45,13 @@ export default function Header() {
                 mt="s"
                 mr="s"
                 type="tertiary"
-                onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
+                onClick={() => {
+                  if (tenant && tenant.name) {
+                    dispatch(logoutUser({ tenant, from: `/${tenant.name}` }));
+                  } else {
+                    dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+                  }
+                }}
               >
                 Sign out
               </GoabButton>
