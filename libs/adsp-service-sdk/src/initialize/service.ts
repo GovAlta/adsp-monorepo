@@ -41,6 +41,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tracerProvider,
     meterProvider,
     traceHandler,
+    shutdownTelemetry,
     logger,
   } = await initializePlatform({ ...options }, logOptions);
 
@@ -75,6 +76,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     traceHandler,
     tracerProvider,
     meterProvider,
+    shutdownTelemetry,
     logger,
     clearCached: (serviceId) => clearCached(tenant?.id, serviceId),
   };

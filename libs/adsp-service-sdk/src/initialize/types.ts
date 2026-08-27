@@ -311,6 +311,15 @@ export interface PlatformCapabilities extends PlatformServices {
    * @memberof PlatformCapabilities
    */
   meterProvider?: MeterProvider;
+
+  /**
+   * Flush and shut down the telemetry providers.
+   *
+   * Registered on SIGTERM and SIGINT by the SDK, so most services need not call it. Await it from
+   * your own signal handler if you call process.exit there: Node does not wait for async listeners,
+   * so an immediate exit truncates the flush and discards buffered spans and metrics.
+   */
+  shutdownTelemetry: () => Promise<void>;
   /**
    * Logger used by SDK components.
    *

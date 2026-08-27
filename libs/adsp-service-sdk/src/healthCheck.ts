@@ -102,9 +102,10 @@ export const createHealthCheck = (
           dependency,
           cache_hit: 'false',
         });
-        if (!healthy) {
-          dependencyFailureMetric?.add(1, { dependency });
-        }
+        // Record 0 for healthy dependencies too. An OTel counter that is never incremented is
+        // never exported, so a platform with no failures produced no series at all -- and a panel
+        // built on it read "No data", indistinguishable from broken instrumentation.
+        dependencyFailureMetric?.add(healthy ? 0 : 1, { dependency });
       });
 
       resultCache.set('health', results);
