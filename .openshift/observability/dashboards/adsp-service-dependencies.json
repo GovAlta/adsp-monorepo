@@ -1,0 +1,1205 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Outbound dependency latency, service graph and event bus flow for ADSP services. Built on the bounded span names and collector self-telemetry added in Aug 2026.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "ADSP Service Overview",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/adsp-service-overview"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 1,
+      "type": "stat",
+      "title": "Outbound Calls / sec",
+      "description": "Client spans from the SDK's axios interceptor. Named 'METHOD host', so bounded per callee.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval]))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 2,
+      "type": "stat",
+      "title": "Outbound Error Rate",
+      "description": "Share of outbound calls returning 5xx. Uses the http_status_code spanmetrics dimension, not span status: the SDK marks a span ERROR at >=400, so span status would count 404s as failures. Reads 0% when healthy rather than 'No data'.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * (sum(rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\", http_status_code=~\"5..\"}[$__rate_interval])) or vector(0)) / clamp_min(sum(rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval])), 1e-9)",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 3,
+      "type": "stat",
+      "title": "Slowest Dependency P95",
+      "description": "Worst P95 across all callees currently in scope.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 250
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max(histogram_quantile(0.95, sum by (span_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval]))) and on (span_name) (sum by (span_name) (rate(traces_span_metrics_duration_milliseconds_count{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval])) > 0))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 4,
+      "type": "stat",
+      "title": "Telemetry Dropped / sec",
+      "description": "Collector self-telemetry. Non-zero means this dashboard is missing data - check it before trusting the rest.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.001
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(sum(rate(otelcol_exporter_send_failed_spans_total[$__rate_interval])) or vector(0)) + (sum(rate(otelcol_receiver_refused_spans_total[$__rate_interval])) or vector(0))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 5,
+      "type": "timeseries",
+      "title": "Outbound Call Rate by Dependency",
+      "description": "topk(8) keeps the series count inside a readable categorical palette.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "topk(8, sum by (span_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval])))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "{{span_name}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 6,
+      "type": "timeseries",
+      "title": "Outbound P95 Latency by Dependency",
+      "description": "What a slow service is waiting on. Compare against inbound P95 on ADSP Service Overview.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "topk(8, histogram_quantile(0.95, sum by (span_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval]))) and on (span_name) (sum by (span_name) (rate(traces_span_metrics_duration_milliseconds_count{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\"}[$__rate_interval])) > 0))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "{{span_name}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 7,
+      "type": "timeseries",
+      "title": "Outbound 5xx by Dependency",
+      "description": "Empty is the healthy state; the tile above reads 0%. For 4xx (a dependency rejecting requests rather than failing) swap the matcher to http_status_code=~\"4..\" - useful when a caller is sending bad input.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (span_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service_name=~\"${service:pipe}\", span_name=~\"${dependency:pipe}\", http_status_code=~\"5..\"}[$__rate_interval]))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "{{span_name}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 8,
+      "type": "timeseries",
+      "title": "Request Self-Time Decomposition (P95)",
+      "description": "SDK stopwatch phases inside the request, excluding outbound HTTP. Buckets now start at 0.1ms so sub-millisecond phases have real resolution. get-tenant-time carries no http_route label because it runs before Express routing.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (benchmark_name, le) (rate(adsp_benchmark_duration_milliseconds_bucket{service_name=~\"${service:pipe}\"}[$__rate_interval])))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "{{benchmark_name}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 9,
+      "type": "timeseries",
+      "title": "Consumer Span Rate by Service",
+      "description": "RabbitMQ consumers, from core-common's amqp CONSUMER spans. Grouped by service rather than span_name because those names embed the tenant URN and are unbounded.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CONSUMER\"}[$__rate_interval]))",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "{{service_name}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 10,
+      "type": "timeseries",
+      "title": "Event Bus Depth by Broker Node",
+      "description": "Both series are message counts, so they share one axis. Per-node rather than per-queue: the broker serves aggregated metrics by default and per-object metrics scale with connections and channels.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rabbitmq_queue_messages_ready)",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "legendFormat": "ready - {{instance}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rabbitmq_channel_messages_unacked)",
+          "range": true,
+          "instant": false,
+          "refId": "B",
+          "legendFormat": "unacked - {{instance}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 11,
+      "type": "table",
+      "title": "Service Graph Edges",
+      "description": "Caller/callee pairs Tempo derived from paired client and server spans.\n\nFailed % counts an edge as failed when either span has ERROR status. Server spans only do so for 5xx, but CLIENT spans treat any >=400 as an error -- correctly, since a 4xx outbound call did fail for the caller. So edges to \"unknown\" (an uninstrumented callee, e.g. status-service probing external URLs) can legitimately sit near 100% without anything being down.\n\nEdges can also be missing when a call's two spans land on different collector replicas.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Calls/sec"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "reqps"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P95 (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Calls/sec"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (client, server) (rate(traces_service_graph_request_total[$__rate_interval]))",
+          "range": false,
+          "instant": true,
+          "refId": "A",
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * (sum by (client, server) (rate(traces_service_graph_request_failed_total[$__rate_interval])) or vector(0)) / clamp_min(sum by (client, server) (rate(traces_service_graph_request_total[$__rate_interval])), 1e-9)",
+          "range": false,
+          "instant": true,
+          "refId": "B",
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "1000 * histogram_quantile(0.95, sum by (client, server, le) (rate(traces_service_graph_request_server_seconds_bucket[$__rate_interval]))) and on (client, server) (sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[$__rate_interval])) > 0)",
+          "range": false,
+          "instant": true,
+          "refId": "C",
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "client",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true
+            },
+            "renameByName": {
+              "client": "Caller",
+              "server": "Callee",
+              "server 1": "Callee",
+              "Value #A": "Calls/sec",
+              "Value #B": "Failed %",
+              "Value #C": "P95 (ms)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 12,
+      "type": "text",
+      "title": "How To Read It",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**This dashboard answers \"what is this service waiting on?\"** Inbound health lives on\n*ADSP Service Overview*; this is the outbound and event-driven side.\n\n**Order to read it in**\n1. **Telemetry Dropped / sec** first. Non-zero means the collector is shedding data and every other\n   panel is understated.\n2. **Outbound P95 Latency by Dependency** against inbound P95 on *ADSP Service Overview*. If inbound is\n   slow and one dependency matches it, you have your answer.\n3. **Request Self-Time Decomposition** if no dependency accounts for the latency. These are the SDK\n   stopwatch phases. If they don't add up either, the remaining time is uninstrumented work - database\n   queries have no spans yet.\n4. **Service Graph Edges** for topology, and **Event Bus Depth** if the symptom is lag rather than latency.\n\n**Caveats**\n- Dependency names come from client span names, which are `METHOD host` - the callee, not the endpoint.\n  The full URL is on the span's `http.url` attribute in Tempo.\n- Consumer spans are grouped by service, not span name: those names embed the tenant URN.\n- Service graph edges need a call's client and server spans on the same collector replica, so edges can\n  be missing while more than one replica runs.\n\n**Drill down:** pick a slow dependency, then query Tempo with\n`{resource.service.name=\"<service>\" && span.kind=client && duration > 250ms}`.\n"
+      }
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 40,
+  "tags": [
+    "adsp",
+    "opentelemetry",
+    "dependencies",
+    "tracing"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(traces_span_metrics_calls_total, service_name)",
+        "includeAll": true,
+        "label": "Service",
+        "multi": true,
+        "name": "service",
+        "options": [],
+        "refresh": 2,
+        "query": {
+          "qryType": 1,
+          "query": "label_values(traces_span_metrics_calls_total, service_name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*"
+      },
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}, span_name)",
+        "includeAll": true,
+        "label": "Dependency",
+        "multi": true,
+        "name": "dependency",
+        "description": "Client span names, formatted 'METHOD host'.",
+        "options": [],
+        "refresh": 2,
+        "query": {
+          "qryType": 1,
+          "query": "label_values(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}, span_name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "ADSP Service Dependencies",
+  "uid": "adsp-service-dependencies",
+  "weekStart": ""
+}

@@ -6,7 +6,7 @@ the shared collector endpoint and should not deploy their own tracing stack.
 
 Files in this folder:
 
-- `stack.yml`: one-template deployment of Tempo + Collector + Grafana.
+- `observability-stack.yml`: one-template deployment of Tempo + Collector + Grafana.
 
 ## Topology
 
@@ -18,7 +18,7 @@ Run one stack per environment, owned by the platform team.
 
 ## Components
 
-`stack.yml` deploys all three components together:
+`observability-stack.yml` deploys all three components together:
 
 - Tempo with persistent local storage and OTLP ingest (`4317`/`4318`)
 - OpenTelemetry Collector with retry queue, batching, and environment tagging
@@ -31,7 +31,7 @@ Application services should target the collector service, not Tempo directly.
 Fastest path: deploy the whole stack with one template.
 
 ```sh
-oc process -f .openshift/observability/stack.yml \
+oc process -f .openshift/observability/observability-stack.yml \
   -p ENVIRONMENT_NAME=dev \
   -p INFRA_NAMESPACE=core-services-infra \
   -p IMAGE_TAG=latest \
@@ -100,3 +100,61 @@ Grafana reaches Tempo internally at:
 - Tempo uses a persistent volume in this configuration so traces survive pod restarts.
 - For larger-scale production, the next step would typically be distributed Tempo with object storage.
 - Suggested evaluation path: deploy the stack in one environment, point one or two services at the collector, validate HTTP and RabbitMQ trace flows, then standardize SDK configuration for all teams.
+
+## Dashboards
+
+`dashboards/` holds the Grafana dashboards as JSON, and they are provisioned rather than imported by
+hand. `observability-stack.yml` mounts two ConfigMaps into Grafana:
+
+- `grafana-dashboard-provider` -- the provisioning provider config, inline in `observability-stack.yml`, mounted at
+  `/etc/grafana/provisioning/dashboards`.
+- `grafana-dashboards` -- the dashboard JSON itself, mounted at `/etc/grafana/dashboards`. This one is
+  built from the files in this directory rather than inlined, because ~100KB of JSON in the template
+  would make it unreadable. The volume is marked optional, so Grafana starts even before it exists.
+
+Apply or update the dashboards with:
+
+```sh
+tools/observability/apply-dashboards.sh adsp-dev
+```
+
+The script validates each file against the conventions below and fails rather than shipping something
+Grafana would reject. It is idempotent, so it is safe to re-run.
+
+UI edits are permitted (`allowUiUpdates: true`) so panels can be iterated on, but the ConfigMap is
+reloaded on pod restart and every 60s, so anything not exported back into this directory is eventually
+overwritten. Export and commit when you are happy with a change.
+
+| File | Answers |
+|---|---|
+| `adsp-service-overview.json` | Is a service healthy, and which routes are slow or failing? |
+| `configuration-service-performance.json` | The same, narrowed to configuration-service, plus its internal benchmark phases. |
+| `adsp-service-dependencies.json` | What is a service waiting on? Outbound latency per callee, service graph edges, event bus depth. |
+| `adsp-event-bus-rabbitmq.json` | Is the event bus about to block, and are domain events flowing without loss? Broker-side view. |
+
+`adsp-event-bus-rabbitmq.json` covers only per-node aggregates, because
+`prometheus.return_per_object_metrics` is deliberately off -- per-object series scale with
+queues x channels x connections. It can show that the bus is backing up but not which queue is
+responsible; use the management UI on the affected node for that.
+
+### Conventions
+
+Keep these so the files stay diffable:
+
+- **Filename is the dashboard `uid`**, kebab-case. The uid is the stable identifier Grafana uses in
+  links and provisioning; the title is not. Grafana's own export adds a timestamp suffix and spaces,
+  so rename before committing.
+- **`id` must be `null`.** Grafana's export writes its own instance-local numeric id, which collides
+  when the file is imported into a different Grafana. `null` means "create new".
+- **No `version` key.** Grafana increments it on every save, so leaving it in makes every re-export
+  a diff even when nothing changed.
+
+After exporting from the UI, normalise before committing with
+`tools/observability/normalize-dashboard.mjs <exported-file>`.
+
+### Template variables
+
+Interpolate with `${var:pipe}`, never `${var:regex}`. The regex formatter backslash-escapes regex
+metacharacters and PromQL rejects escapes such as `\(` and `\.`, so a label value containing a dot
+or a bracket makes the panel fail to parse rather than return no data. Set `allValue` to `.*` on
+multi-select variables so "All" also matches series where the label is absent.
