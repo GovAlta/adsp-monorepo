@@ -146,4 +146,37 @@ describe('Pdf Component', () => {
     // Assert
     expect(toggleLabel).toBeInTheDocument();
   });
+
+  it('puts the template editor into full page mode', () => {
+    // Arrange
+    const { baseElement, getByTestId } = render(
+      <Provider store={store}>
+        <TemplateEditor previewVisible onTogglePreview={jest.fn()} />
+      </Provider>,
+    );
+    const toggleButton = baseElement.querySelector("goa-icon-button[testid='pdf-header-editor-toggle']");
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByTestId('pdf-header-editor')).toHaveAttribute('data-full-page', 'true');
+  });
+
+  it('returns the template editor to its regular size', () => {
+    // Arrange
+    const { baseElement, getByTestId } = render(
+      <Provider store={store}>
+        <TemplateEditor previewVisible onTogglePreview={jest.fn()} />
+      </Provider>,
+    );
+    const toggleButton = baseElement.querySelector("goa-icon-button[testid='pdf-header-editor-toggle']");
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByTestId('pdf-header-editor')).toHaveAttribute('data-full-page', 'false');
+  });
 });
