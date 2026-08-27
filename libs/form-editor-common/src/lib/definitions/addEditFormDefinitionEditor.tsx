@@ -25,7 +25,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
-import { FullPagePane } from '@components/FullPagePane';
+import { FullPagePane } from '@components/FullPagePane'; // clean-code-ignore: RULE-19 — see the note at the top of this file.
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
