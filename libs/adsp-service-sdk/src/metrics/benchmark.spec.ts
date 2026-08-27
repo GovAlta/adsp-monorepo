@@ -112,7 +112,7 @@ describe('benchmark', () => {
 
       expect(record).toHaveBeenCalledWith(
         expect.any(Number),
-        expect.objectContaining({ 'adsp.tenant': `Wildfire (${urn})` })
+        expect.objectContaining({ 'adsp.tenant': 'Wildfire 64d4eef5abc788a358dece8c' })
       );
       expect(record).toHaveBeenCalledWith(
         expect.any(Number),
