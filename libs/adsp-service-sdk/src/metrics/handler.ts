@@ -10,12 +10,8 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
 import { getContextTrace } from '../trace';
-import { getRouteTemplate } from '../utils/route';
+import { getRouteLabel } from '../utils/route';
 import { formatTenantAttribute } from './attributes';
-
-function getRoute(req: Request): string {
-  return getRouteTemplate(req) ?? (req.baseUrl || req.path || req.originalUrl || 'unknown');
-}
 
 function resolveTenantId(req: Request, defaultTenantId?: AdspId): string | undefined {
   const tenantId = defaultTenantId || req.tenant?.id || req.user?.tenantId;
@@ -29,7 +25,7 @@ function resolveTenantName(req: Request): string | undefined {
 function getMetricAttributes(req: Request, res: Response, defaultTenantId?: AdspId): Record<string, string | number> {
   const attributes: Record<string, string | number> = {
     'http.request.method': req.method,
-    'http.route': getRoute(req),
+    'http.route': getRouteLabel(req),
     'http.response.status_code': res.statusCode || 0,
   };
 
