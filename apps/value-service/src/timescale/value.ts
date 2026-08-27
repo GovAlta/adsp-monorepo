@@ -1,12 +1,37 @@
 import { Knex } from 'knex';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
+import { Logger } from 'winston';
 import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria, Page } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { stripNul } from './sanitize';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 
 export class TimescaleValuesRepository implements ValuesRepository {
-  constructor(private knex: Knex) {}
+  constructor(
+    private knex: Knex,
+    private logger?: Logger
+  ) {}
+
+  /**
+   * Strip U+0000 before it reaches a text or jsonb column, where PostgreSQL cannot represent it.
+   *
+   * stripNul returns the same reference when nothing changed, so the warning fires only when a
+   * payload was actually altered -- which is worth surfacing, since the stored value then differs
+   * from what the publisher sent.
+   */
+  private sanitize<T>(namespace: string, name: string, value: T): T {
+    const sanitized = stripNul(value);
+    if (sanitized !== value) {
+      this.logger?.warn(
+        `Removed null characters from value ${namespace}:${name} before write; ` +
+          'the stored value differs from what was submitted.',
+        { context: 'TimescaleValuesRepository' }
+      );
+    }
+
+    return sanitized;
+  }
 
   async writeValues(
     namespace: string,
@@ -22,9 +47,9 @@ export class TimescaleValuesRepository implements ValuesRepository {
             name,
             timestamp,
             tenant: tenantId?.toString(),
-            correlationId: correlationId,
-            context: context || {},
-            value,
+            correlationId: this.sanitize(namespace, name, correlationId),
+            context: this.sanitize(namespace, name, context || {}),
+            value: this.sanitize(namespace, name, value),
           }))
         )
         .returning('*');
@@ -355,7 +380,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           namespace,
           name,
           tenant: tenantId?.toString(),
-          metric,
+          metric: this.sanitize(namespace, name, metric),
           timestamp,
           value,
         }))
