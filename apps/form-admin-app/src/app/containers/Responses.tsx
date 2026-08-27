@@ -33,6 +33,7 @@ import {
   tagResource,
   formResultTotalsSelector,
   formSortSelector,
+  isFormAdminSelector,
   DATA_VALUE_SORT_PREFIX,
 } from '../state';
 import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
@@ -50,7 +51,7 @@ import { GoabDropdownOnChangeDetail, GoabTableOnSortDetail } from '@abgov/ui-com
 import { ResultsSummary } from '../components/ResultsSummary';
 import { SortableColumnHeader, toSortChange } from '../components/SortableColumnHeader';
 
-interface FormRowProps {
+interface ResponseRowProps {
   dispatch: AppDispatch;
   navigate: NavigateFunction;
   hasSupportTopic: boolean;
@@ -59,7 +60,14 @@ interface FormRowProps {
   onTag: () => void;
 }
 
-const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSupportTopic, form, dataValues, onTag }) => {
+const ResponseRow: FunctionComponent<ResponseRowProps> = ({
+  dispatch,
+  navigate,
+  hasSupportTopic,
+  form,
+  dataValues,
+  onTag,
+}) => {
   const topic = useSelector((state: AppState) => topicSelector(state, form.urn));
 
   useEffect(() => {
@@ -95,19 +103,23 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
   );
 };
 
-interface FormsProps {
+interface ResponsesProps {
   definitionId: string;
 }
 
-export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
+// Responses are keyed on the form; the submission record of a submitted response is handled on its
+// details page rather than as a separate list.
+export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const [showTagForm, setShowTagForm] = useState<Pick<Resource, 'name' | 'urn'>>(null);
+  const [showTagResponse, setShowTagResponse] = useState<Pick<Resource, 'name' | 'urn'>>(null);
   const [showExport, setShowExport] = useState(false);
 
   const directoryBusy = useSelector(directoryBusySelector);
   const canExport = useSelector(canExportSelector);
+  // Assessors are only served submitted responses, so the status filter is of no use to them.
+  const isFormAdmin = useSelector(isFormAdminSelector);
   const busy = useSelector(formBusySelector);
   const definition = useSelector(definitionSelector);
   const forms = useSelector(formsSelector);
@@ -137,7 +149,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
   const sortableColumnsKey = dataValues.map(({ path }) => path).join('|');
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
-  const handleFindForms = (after?: string) => dispatch(findForms({ definitionId, criteria, sort, after })); // clean-code-ignore: 2.10
+  const handleFindResponses = (after?: string) => dispatch(findForms({ definitionId, criteria, sort, after })); // clean-code-ignore: 2.10
   const clearFilters = () => {
     const criteria = {};
     dispatch(formActions.setFormCriteria(criteria));
@@ -159,7 +171,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           <GoabButton
             type="tertiary"
             size="compact"
-            testId="export-forms"
+            testId="export-responses"
             disabled={!!criteria.tag}
             onClick={() => setShowExport(true)}
           >
@@ -178,22 +190,24 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
             />
             <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
-            <GoabFormItem label="Status" mr="m">
-              <GoabDropdown
-                size="compact"
-                name="form-status"
-                disabled={!!criteria.tag}
-                value={criteria.statusEquals}
-                onChange={(detail: GoabDropdownOnChangeDetail) =>
-                  updateCriteria({ ...criteria, statusEquals: detail.value })
-                }
-              >
-                <GoabDropdownItem value="" label="<No status filter>" />
-                <GoabDropdownItem value="submitted" label="Submitted" />
-                <GoabDropdownItem value="draft" label="Draft" />
-                <GoabDropdownItem value="archived" label="Archived" />
-              </GoabDropdown>
-            </GoabFormItem>
+            {isFormAdmin && (
+              <GoabFormItem label="Status" mr="m">
+                <GoabDropdown
+                  size="compact"
+                  name="form-status"
+                  disabled={!!criteria.tag}
+                  value={criteria.statusEquals}
+                  onChange={(detail: GoabDropdownOnChangeDetail) =>
+                    updateCriteria({ ...criteria, statusEquals: detail.value })
+                  }
+                >
+                  <GoabDropdownItem value="" label="<No status filter>" />
+                  <GoabDropdownItem value="submitted" label="Submitted" />
+                  <GoabDropdownItem value="draft" label="Draft" />
+                  <GoabDropdownItem value="archived" label="Archived" />
+                </GoabDropdown>
+              </GoabFormItem>
+            )}
             {dataValues.map(({ name, path, type }) => (
               <DataValueCriteriaItem
                 key={path}
@@ -222,11 +236,11 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
             type="primary"
             size="compact"
             leadingIcon="search"
-            testId="find-forms"
+            testId="find-responses"
             disabled={searchDisabled}
-            onClick={() => handleFindForms()}
+            onClick={() => handleFindResponses()}
           >
-            Find forms
+            Find responses
           </GoabButton>
         </GoabButtonGroup>
       }
@@ -235,7 +249,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
         <ResultsSummary
           visible={forms.length}
           total={totalForms}
-          itemLabel="forms"
+          itemLabel="responses"
           loading={busy.loading}
           onClearFilters={clearFilters}
         />
@@ -260,14 +274,14 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
           </thead>
           <tbody>
             {forms.map((form) => (
-              <FormRow
+              <ResponseRow
                 key={form.urn}
                 dispatch={dispatch}
                 navigate={navigate}
                 hasSupportTopic={definition?.supportTopic}
                 form={form}
                 dataValues={dataValues}
-                onTag={() => setShowTagForm({ name: '', urn: form.urn })}
+                onTag={() => setShowTagResponse({ name: '', urn: form.urn })}
               />
             ))}
             <RowSkeleton columns={5 + dataValues.length} show={busy.loading} />
@@ -275,24 +289,24 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               columns={4 + dataValues.length}
               next={next}
               loading={busy.loading}
-              onLoadMore={handleFindForms}
+              onLoadMore={handleFindResponses}
             />
           </tbody>
         </ResultsTable>
       </ContentContainer>
       <AddTagModal
-        open={!!showTagForm}
-        resource={showTagForm}
+        open={!!showTagResponse}
+        resource={showTagResponse}
         tagging={directoryBusy.executing}
-        onClose={() => setShowTagForm(null)}
+        onClose={() => setShowTagResponse(null)}
         onTag={async (urn, label) => {
           await dispatch(tagResource({ urn, label }));
-          setShowTagForm(null);
+          setShowTagResponse(null);
         }}
       />
       <ExportModal
         open={showExport}
-        heading="Export forms to file"
+        heading="Export responses to file"
         state={formsExport}
         onClose={() => setShowExport(false)}
         onStartExport={(format) => dispatch(exportForms({ definitionId, criteria, format }))}

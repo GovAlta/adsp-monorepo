@@ -80,36 +80,24 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           </a>
           {definition && (
             <>
-              <GoabSideMenuHeading icon="document">{definition.name}</GoabSideMenuHeading>
               <a
-                href={`/${tenantName}/definitions/${definition.id}/overview`}
+                href={`/${tenantName}/definitions/${definition.id}/responses`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/overview`);
+                  navigate(`definitions/${definition.id}/responses`);
                   e.preventDefault();
                 }}
               >
-                Overview
+                Responses
               </a>
               <a
-                href={`/${tenantName}/definitions/${definition.id}/forms`}
+                href={`/${tenantName}/definitions/${definition.id}/configuration`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/forms`);
+                  navigate(`definitions/${definition.id}/configuration`);
                   e.preventDefault();
                 }}
               >
-                Forms
+                Configuration
               </a>
-              {definition.submissionRecords && (
-                <a
-                  href={`/${tenantName}/definitions/${definition.id}/submissions`}
-                  onClick={(e) => {
-                    navigate(`definitions/${definition.id}/submissions`);
-                    e.preventDefault();
-                  }}
-                >
-                  Submissions
-                </a>
-              )}
             </>
           )}
         </GoabSideMenu>

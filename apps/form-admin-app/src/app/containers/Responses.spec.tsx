@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
-import { Forms } from './Forms';
+import { Responses } from './Responses';
 import { findForms, getDefaultFormCriteria, getDefaultResultsSort } from '../state';
 import { FormStatus } from '../state/types';
 
@@ -28,18 +28,20 @@ const createState = ({
   formResults = [],
   formCriteria = getDefaultFormCriteria(),
   formSort = getDefaultResultsSort(),
+  roles = ['urn:ads:platform:form-service:form-admin'],
 }: {
   forms?: Record<string, unknown>;
   formResults?: string[];
   formCriteria?: ReturnType<typeof getDefaultFormCriteria>;
   formSort?: ReturnType<typeof getDefaultResultsSort>;
+  roles?: string[];
 } = {}) => ({
   user: {
     user: {
       id: 'user-1',
       name: 'Test User',
       email: 'test@gov.ab.ca',
-      roles: ['urn:ads:platform:form-service:form-admin'],
+      roles,
     },
   },
   form: {
@@ -73,22 +75,17 @@ const createState = ({
     results: {
       definitions: [],
       forms: formResults,
-      submissions: [],
     },
     resultTotals: {
       definitions: 0,
       forms: formResults.length,
-      submissions: 0,
     },
     definitionCriteria: {},
     formCriteria,
-    submissionCriteria: {},
     formSort,
-    submissionSort: getDefaultResultsSort(),
     next: {
       definitions: null,
       forms: null,
-      submissions: null,
     },
     selectedDefinition: definitionId,
     selectedForm: null,
@@ -96,7 +93,6 @@ const createState = ({
     dispositionDraft: { status: '', reason: '' },
     export: {
       forms: {},
-      submissions: {},
     },
   },
   directory: {
@@ -126,12 +122,12 @@ const createState = ({
   },
 });
 
-const renderForms = (state = createState()) => {
+const renderResponses = (state = createState()) => {
   const store = mockStore(state);
   const view = render(
     <Provider store={store}>
       <MemoryRouter>
-        <Forms definitionId={definitionId} />
+        <Responses definitionId={definitionId} />
       </MemoryRouter>
     </Provider>,
   );
@@ -139,13 +135,13 @@ const renderForms = (state = createState()) => {
   return { store, ...view };
 };
 
-describe('Forms', () => {
+describe('Responses', () => {
   beforeEach(() => {
     (findForms as unknown as jest.Mock).mockClear();
   });
 
-  it('should render the forms table and filters trigger', () => {
-    const { baseElement, getByText } = renderForms(
+  it('should render the responses table and filters trigger', () => {
+    const { baseElement, getByText } = renderResponses(
       createState({
         forms: {
           'form-1': {
@@ -168,11 +164,11 @@ describe('Forms', () => {
     expect(getByText('Created on')).toBeTruthy();
     expect(getByText('Ada')).toBeTruthy();
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeTruthy();
-    expect(baseElement.querySelector("goa-button[testId='export-forms']")).toBeTruthy();
+    expect(baseElement.querySelector("goa-button[testId='export-responses']")).toBeTruthy();
   });
 
   it('should not render form data that is not in the review configuration', () => {
-    const { queryByText } = renderForms(
+    const { queryByText } = renderResponses(
       createState({
         forms: {
           'form-1': {
@@ -196,7 +192,7 @@ describe('Forms', () => {
   });
 
   it('should dispatch findForms on mount when no forms are loaded', () => {
-    renderForms();
+    renderResponses();
 
     expect(findForms).toHaveBeenCalledWith({
       definitionId,
@@ -206,19 +202,19 @@ describe('Forms', () => {
   });
 
   it('should show the active filter badge for default form criteria', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
 
     expect(baseElement.querySelector("goa-badge[testId='active-filter-count']").getAttribute('content')).toBe(
       '2 active',
     );
   });
 
-  it('should keep filter controls mounted and find forms from the drawer', () => {
-    const { baseElement } = renderForms();
+  it('should keep filter controls mounted and find responses from the drawer', () => {
+    const { baseElement } = renderResponses();
 
     expect(baseElement.querySelector("goa-dropdown[name='form-status']")).toBeTruthy();
 
-    fireEvent(baseElement.querySelector("goa-button[testId='find-forms']"), new CustomEvent('_click'));
+    fireEvent(baseElement.querySelector("goa-button[testId='find-responses']"), new CustomEvent('_click'));
 
     expect(findForms).toHaveBeenCalledWith({
       definitionId,
@@ -228,8 +224,15 @@ describe('Forms', () => {
     });
   });
 
+  it('should not offer the status filter to a user who is not a form admin', () => {
+    const { baseElement } = renderResponses(createState({ roles: ['test-assessor'] }));
+
+    expect(baseElement.querySelector("goa-dropdown[name='form-status']")).toBeFalsy();
+    expect(baseElement.querySelector("goa-button[testId='find-responses']")).toBeTruthy();
+  });
+
   it('should indicate the created on column is sorted descending by default', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
 
     expect(baseElement.querySelector("goa-table-sort-header[name='created']").getAttribute('direction')).toBe('desc');
     expect(baseElement.querySelector("goa-table-sort-header[name='status']").getAttribute('direction')).toBe('none');
@@ -237,7 +240,7 @@ describe('Forms', () => {
   });
 
   it('should find forms with the selected sort', () => {
-    const { baseElement, store } = renderForms();
+    const { baseElement, store } = renderResponses();
 
     fireEvent(
       baseElement.querySelector('goa-table'),
@@ -256,7 +259,7 @@ describe('Forms', () => {
   });
 
   it('should not find forms again for the sort the results already have', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
     (findForms as unknown as jest.Mock).mockClear();
 
     fireEvent(
@@ -268,7 +271,7 @@ describe('Forms', () => {
   });
 
   it('should hide the filters trigger while the drawer is open', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
 
     fireEvent(baseElement.querySelector("goa-button[testId='show-filters']"), new CustomEvent('_click'));
 

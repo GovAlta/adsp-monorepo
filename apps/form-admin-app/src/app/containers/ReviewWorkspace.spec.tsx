@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import { FormSubmissionWorkspace } from './FormSubmissionWorkspace';
+import { ReviewWorkspace } from './ReviewWorkspace';
 import { updateFormDisposition } from '../state';
 
 jest.mock('../state', () => {
@@ -80,9 +80,10 @@ const renderWorkspace = (props = {}) => {
   const dispatch = jest.fn().mockResolvedValue({ type: 'form/update-form-disposition/fulfilled' });
   const view = render(
     <Provider store={store}>
-      <FormSubmissionWorkspace
+      <ReviewWorkspace
         dispatch={dispatch as never}
         definition={definition as never}
+        form={form as never}
         submission={submission as never}
         draft={{ status: 'rejected', reason: 'invalid data' }}
         busy={busy}
@@ -95,7 +96,7 @@ const renderWorkspace = (props = {}) => {
   return { dispatch, ...view };
 };
 
-describe('FormSubmissionWorkspace', () => {
+describe('ReviewWorkspace', () => {
   beforeEach(() => {
     (updateFormDisposition as unknown as jest.Mock).mockClear();
   });
@@ -107,6 +108,15 @@ describe('FormSubmissionWorkspace', () => {
       accordion.getAttribute('heading'),
     );
     expect(headings).toEqual(['Messages', 'Notes', 'Tags', 'History', 'Disposition']);
+  });
+
+  it('should omit the submission record sections for a response without a submission', () => {
+    const { baseElement } = renderWorkspace({ submission: null });
+
+    const headings = Array.from(baseElement.querySelectorAll('goa-accordion')).map((accordion) =>
+      accordion.getAttribute('heading'),
+    );
+    expect(headings).toEqual(['Messages', 'Tags', 'History']);
   });
 
   it('should render the notes of the submission in the notes section', () => {

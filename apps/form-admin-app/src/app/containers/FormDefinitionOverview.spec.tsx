@@ -122,7 +122,7 @@ describe('FormDefinitionOverview', () => {
     const { getByTestId, queryByTestId } = renderOverview({ columns: [] });
 
     expect(getByTestId('review-columns-empty').textContent).toContain(
-      'No review columns are configured. The lists show only system columns.',
+      'No review columns are configured. The list shows only system columns.',
     );
     expect(queryByTestId('review-columns-recap')).toBeNull();
   });
