@@ -44,6 +44,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
 import { CustomLoader } from '@components/CustomLoader';
+import { FullPagePane } from '@components/FullPagePane';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { v4 as uuid } from 'uuid';
 
@@ -308,92 +309,102 @@ export const TemplateEditor = ({
                   <GoabFormItem error={errors?.header ?? ''} label="">
                     <div>
                       {pdfTemplate && (
-                        <MonacoDivBody>
-                          <MonacoEditor
-                            height={monacoHeight}
-                            language={'handlebars'}
-                            value={tmpTemplate?.header}
-                            data-testid="templateForm-header"
-                            onChange={(value) => {
-                              setTmpTemplate({ ...tmpTemplate, header: value });
-                            }}
-                            {...bodyEditorConfig}
-                          />
-                        </MonacoDivBody>
+                        <FullPagePane label="Header" testId="pdf-header-editor" height={monacoHeight}>
+                          <MonacoDivBody>
+                            <MonacoEditor
+                              height="100%"
+                              language={'handlebars'}
+                              value={tmpTemplate?.header}
+                              data-testid="templateForm-header"
+                              onChange={(value) => {
+                                setTmpTemplate({ ...tmpTemplate, header: value });
+                              }}
+                              {...bodyEditorConfig}
+                            />
+                          </MonacoDivBody>
+                        </FullPagePane>
                       )}
                     </div>
                   </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
                   <GoabFormItem error={errors?.body ?? null} label="">
-                    <MonacoDivBody>
-                      <MonacoEditor
-                        height={monacoHeight}
-                        language={'handlebars'}
-                        value={tmpTemplate?.template}
-                        data-testid="templateForm-body"
-                        onChange={(value) => {
-                          setTmpTemplate({ ...tmpTemplate, template: value });
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
+                    <FullPagePane label="Body" testId="pdf-body-editor" height={monacoHeight}>
+                      <MonacoDivBody>
+                        <MonacoEditor
+                          height="100%"
+                          language={'handlebars'}
+                          value={tmpTemplate?.template}
+                          data-testid="templateForm-body"
+                          onChange={(value) => {
+                            setTmpTemplate({ ...tmpTemplate, template: value });
+                          }}
+                          {...bodyEditorConfig}
+                        />
+                      </MonacoDivBody>
+                    </FullPagePane>
                   </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
                   <GoabFormItem error={errors?.footer ?? ''} label="">
-                    <MonacoDivBody style={{ height: monacoHeight }}>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={tmpTemplate?.footer}
-                        data-testid="templateForm-footer"
-                        onChange={(value) => {
-                          setTmpTemplate({ ...tmpTemplate, footer: value });
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
+                    <FullPagePane label="Footer" testId="pdf-footer-editor" height={monacoHeight}>
+                      <MonacoDivBody>
+                        <MonacoEditor
+                          language={'handlebars'}
+                          value={tmpTemplate?.footer}
+                          data-testid="templateForm-footer"
+                          onChange={(value) => {
+                            setTmpTemplate({ ...tmpTemplate, footer: value });
+                          }}
+                          {...bodyEditorConfig}
+                        />
+                      </MonacoDivBody>
+                    </FullPagePane>
                   </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
                   <GoabFormItem error={errors?.body ?? null} label="">
-                    <MonacoDivBody style={{ height: monacoHeight }}>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={tmpTemplate?.additionalStyles}
-                        data-testid="templateForm-css"
-                        onChange={(value) => {
-                          setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
+                    <FullPagePane label="CSS" testId="pdf-css-editor" height={monacoHeight}>
+                      <MonacoDivBody>
+                        <MonacoEditor
+                          language={'handlebars'}
+                          value={tmpTemplate?.additionalStyles}
+                          data-testid="templateForm-css"
+                          onChange={(value) => {
+                            setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
+                          }}
+                          {...bodyEditorConfig}
+                        />
+                      </MonacoDivBody>
+                    </FullPagePane>
                   </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
                   <GoabFormItem error={errors?.body ?? EditorError?.testData ?? null} label="">
-                    <MonacoDivBody style={{ height: monacoHeight }}>
-                      <MonacoEditor
-                        data-testid="form-schema"
-                        value={tmpTemplate?.variables}
-                        onChange={(value) => {
-                          setTmpTemplate({ ...tmpTemplate, variables: value });
-                        }}
-                        onValidate={(makers) => {
-                          if (makers.length !== 0) {
-                            setEditorError({
-                              testData: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                            });
-                          } else {
-                            setEditorError({
-                              testData: null,
-                            });
-                          }
-                        }}
-                        language="json"
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
+                    <FullPagePane label="Test data" testId="pdf-test-data-editor" height={monacoHeight}>
+                      <MonacoDivBody>
+                        <MonacoEditor
+                          data-testid="form-schema"
+                          value={tmpTemplate?.variables}
+                          onChange={(value) => {
+                            setTmpTemplate({ ...tmpTemplate, variables: value });
+                          }}
+                          onValidate={(makers) => {
+                            if (makers.length !== 0) {
+                              setEditorError({
+                                testData: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                              });
+                            } else {
+                              setEditorError({
+                                testData: null,
+                              });
+                            }
+                          }}
+                          language="json"
+                          {...bodyEditorConfig}
+                        />
+                      </MonacoDivBody>
+                    </FullPagePane>
                   </GoabFormItem>
                 </Tab>
 
