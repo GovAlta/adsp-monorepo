@@ -15,7 +15,7 @@ import {
   GoabDropdownItem,
   GoabGrid,
 } from '@abgov/react-components';
-import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
+import { getTimeFromGMT, getDateTime, parseLocalDate, toDateInputValue } from '@lib/timeUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
   GoabTextAreaOnChangeDetail,
@@ -142,10 +142,16 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     setEndTime('14:00');
     setSelectedApplications([]);
   }
-  const isValidDateString = (dateString) => {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  };
+  function onDateChange(value: string, setDate: (date: Date) => void, errorMessage: string) {
+    const date = parseLocalDate(value);
+    if (isNaN(date.getTime())) {
+      setErrors({ date: errorMessage });
+      return;
+    }
+
+    setErrors({});
+    setDate(date);
+  }
 
   return (
     <GoabModal
@@ -218,16 +224,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoabInput size="compact"
             type="date"
             name="StartDate"
-            value={startDate.toISOString().slice(0, 10)}
+            value={toDateInputValue(startDate)}
             width="100%"
             testId="notice-form-start-date-picker"
             onChange={(detail: GoabInputOnChangeDetail) => {
-              if (isValidDateString(detail.value)) {
-                setErrors({});
-                setStartDate(new Date(detail.value));
-              } else {
-                setErrors({ date: 'Please input right start date format!' });
-              }
+              onDateChange(detail.value, setStartDate, 'Please input right start date format!');
             }}
           />
         </GoabFormItem>
@@ -249,16 +250,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoabInput size="compact"
             type="date"
             name="EndDate"
-            value={endDate.toISOString().slice(0, 10)}
+            value={toDateInputValue(endDate)}
             width="100%"
             testId="notice-form-end-date-picker"
             onChange={(detail: GoabInputOnChangeDetail) => {
-              if (isValidDateString(detail.value)) {
-                setErrors({});
-                setEndDate(new Date(detail.value));
-              } else {
-                setErrors({ date: 'Please input right end date format!' });
-              }
+              onDateChange(detail.value, setEndDate, 'Please input right end date format!');
             }}
           />
         </GoabFormItem>

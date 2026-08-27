@@ -1,4 +1,4 @@
-import { getTimeFromGMT, getDateTime, getLocalISOString } from './timeUtil';
+import { getTimeFromGMT, getDateTime, getLocalISOString, parseLocalDate, toDateInputValue } from './timeUtil';
 
 describe('getTimeFromGMT', () => {
   it('should format the time correctly for times with double-digit hours and minutes', () => {
@@ -67,5 +67,52 @@ describe('getLocalISOString', () => {
 
     expect(resultPositive).toBe(expectedPositive);
     expect(resultNegative).toBe(expectedNegative);
+  });
+});
+
+describe('date only handling', () => {
+  // Tests run with TZ=UTC (jest.preset.js), so these pin down the local time semantics the browser relies on:
+  // a date only string is the day the user picked, not that day at UTC midnight.
+  it('parses a date only string as local midnight rather than UTC midnight', () => {
+    const parsed = parseLocalDate('2026-08-20');
+    const offsetMs = parsed.getTimezoneOffset() * 60000;
+
+    expect(parsed.getTime()).toBe(Date.parse('2026-08-20T00:00:00.000Z') + offsetMs);
+    expect(parsed.getDate()).toBe(20);
+    expect(parsed.getHours()).toBe(0);
+  });
+
+  it('parses other date formats the way the Date constructor does', () => {
+    expect(parseLocalDate('10/02/2023').getDate()).toBe(2);
+    expect(isNaN(parseLocalDate('not a date').getTime())).toBe(true);
+  });
+
+  it('returns the date it is given', () => {
+    const date = new Date(2026, 7, 20, 20, 0);
+
+    expect(parseLocalDate(date)).toBe(date);
+  });
+
+  it('formats a date input value from the local date', () => {
+    expect(toDateInputValue(new Date(2026, 7, 20, 20, 0))).toBe('2026-08-20');
+    expect(toDateInputValue(new Date(2026, 0, 5))).toBe('2026-01-05');
+    expect(toDateInputValue(new Date('not a date'))).toBe('');
+  });
+
+  it('combines a date only string with a local time', () => {
+    const result = getDateTime('2026-08-20', '00:00');
+
+    expect(result.getDate()).toBe(20);
+    expect(result.getHours()).toBe(0);
+    expect(result.getMinutes()).toBe(0);
+  });
+
+  it('keeps the entered day through a date input round trip', () => {
+    const result = getDateTime(parseLocalDate('2026-08-20'), '12:30:45');
+
+    expect(toDateInputValue(result)).toBe('2026-08-20');
+    expect(result.getHours()).toBe(12);
+    expect(result.getMinutes()).toBe(30);
+    expect(result.getSeconds()).toBe(45);
   });
 });
