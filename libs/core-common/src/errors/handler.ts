@@ -39,11 +39,20 @@ export const createErrorHandler =
         errorMessage: `Malformed request body: ${err.message}`,
       });
     } else {
-      // res.statusCode is still the default 200 at this point, so logging it here reported every
-      // unhandled error as "(status: 200)" -- which reads as a success and misleads anyone
-      // triaging from logs. Log the status actually being sent instead.
-      const sending = res.headersSent ? res.statusCode : HttpStatusCodes.INTERNAL_SERVER_ERROR;
-      logger.warn(`Unexpected error encountered in handler for request ${req.path} (status: ${sending}). ${err}`);
+      // Log the status the client actually receives. res.statusCode alone is misleading: for a
+      // plain throw it is still the default 200, which reads as a success, and sendStatus below
+      // overrides whatever it holds anyway.
+      const sent = res.headersSent ? res.statusCode : HttpStatusCodes.INTERNAL_SERVER_ERROR;
+
+      // A handler may have called res.status(...) and then failed -- res.status sets the code
+      // without sending headers. That intent does not survive into the response, but it says
+      // something about how far the request got, so keep it alongside rather than discarding it.
+      const preset =
+        !res.headersSent && res.statusCode !== HttpStatusCodes.OK ? ` (handler had set ${res.statusCode})` : '';
+
+      logger.warn(
+        `Unexpected error encountered in handler for request ${req.path} (status: ${sent})${preset}. ${err}`
+      );
 
       if (!res.headersSent) {
         res.sendStatus(HttpStatusCodes.INTERNAL_SERVER_ERROR);

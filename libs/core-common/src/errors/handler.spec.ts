@@ -79,6 +79,19 @@ describe('createErrorHandler', () => {
     expect(loggerMock.warn).not.toHaveBeenCalledWith(expect.stringContaining('(status: 200)'));
   });
 
+  it('keeps a status the handler set before failing', () => {
+    // res.status(409) sets the code without sending headers. The client still receives 500 because
+    // sendStatus overrides it, but the 409 says where the handler got to.
+    const res = createRes();
+    res.statusCode = 409;
+
+    createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      expect.stringContaining('(status: 500) (handler had set 409)')
+    );
+  });
+
   it('logs the real status when headers were already sent', () => {
     const res = createRes();
     res.headersSent = true;
