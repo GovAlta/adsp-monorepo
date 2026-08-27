@@ -293,13 +293,22 @@ export const JsonFormsStepperContextProvider = ({
   useEffect(() => {
     if (context?.isProvided === true) {
       /* The block is used to cache the state for the tenant web app review editor  */
+      // The task list is the sentinel id past the last page, which sits above maxReachedStep until
+      // the user opens something, so clamping would drop them onto the first page on the recompute
+      // that follows mount. Real pages survive the clamp only because the goToPage pair below puts
+      // them back, and that is deliberately skipped while the task list is showing.
+      const isOnTaskList = stepperState.activeId === stepperState.categories.length + 1;
+
       stepperDispatch({
         type: 'update/uischema',
         payload: {
           state: createStepperContextInitData(
             {
               ...StepperProps,
-              activeId: Math.min(stepperState?.activeId, stepperState.maxReachedStep),
+              // Leaving activeId out lets init recompute the sentinel from the categories this
+              // recompute produced, so a conditional page appearing or disappearing still lands on
+              // the task list rather than on the review page.
+              activeId: isOnTaskList ? undefined : Math.min(stepperState?.activeId, stepperState.maxReachedStep),
             },
             {
               visitedIds: new Set([
@@ -312,7 +321,7 @@ export const JsonFormsStepperContextProvider = ({
         },
       });
 
-      if (stepperState.activeId !== stepperState.categories.length + 1) {
+      if (!isOnTaskList) {
         context.goToPage(stepperState.maxReachedStep);
         context.goToPage(stepperState.activeId);
       }
