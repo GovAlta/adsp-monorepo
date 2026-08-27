@@ -65,6 +65,6 @@ export const createRepositories = async ({
         return false;
       }
     },
-    valueRepository: new TimescaleValuesRepository(knex),
+    valueRepository: new TimescaleValuesRepository(knex, logger),
   };
 };

@@ -39,13 +39,14 @@ export const createErrorHandler =
         errorMessage: `Malformed request body: ${err.message}`,
       });
     } else {
-      logger.warn(
-        `Unexpected error encountered in handler for request ${req.path} ${
-          res.statusCode ? `(status: ${res.statusCode})` : ''
-        }. ${err}`
-      );
+      // res.statusCode is still the default 200 at this point, so logging it here reported every
+      // unhandled error as "(status: 200)" -- which reads as a success and misleads anyone
+      // triaging from logs. Log the status actually being sent instead.
+      const sending = res.headersSent ? res.statusCode : HttpStatusCodes.INTERNAL_SERVER_ERROR;
+      logger.warn(`Unexpected error encountered in handler for request ${req.path} (status: ${sending}). ${err}`);
+
       if (!res.headersSent) {
-        res.sendStatus(500);
+        res.sendStatus(HttpStatusCodes.INTERNAL_SERVER_ERROR);
       } else {
         res.end();
       }
