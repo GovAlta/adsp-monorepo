@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { getRouteTemplate } from './route';
+import { getRouteLabel, getRouteTemplate, UNMATCHED_ROUTE } from './route';
 
 describe('getRouteTemplate', () => {
   it('can resolve a mounted route template', () => {
@@ -30,5 +30,32 @@ describe('getRouteTemplate', () => {
     const req = { baseUrl: '/form/v1', route: { path: /^\/forms$/ } };
 
     expect(getRouteTemplate(req as unknown as Request)).toBeUndefined();
+  });
+});
+
+describe('getRouteLabel', () => {
+  it('can use the matched route template', () => {
+    const req = { baseUrl: '/form/v1', route: { path: '/forms/:id' }, path: '/forms/abc' };
+
+    expect(getRouteLabel(req as unknown as Request)).toBe('/form/v1/forms/:id');
+  });
+
+  it('can fall back to the router mount path when no route matched', () => {
+    const req = { baseUrl: '/form/v1', path: '/does-not-exist' };
+
+    expect(getRouteLabel(req as unknown as Request)).toBe('/form/v1');
+  });
+
+  it('can label an unmatched request without leaking its path', () => {
+    // Scanner traffic: no router matched, so Express leaves baseUrl as an empty string.
+    const req = { baseUrl: '', path: '/.aws/credentials', originalUrl: '/.aws/credentials' };
+
+    expect(getRouteLabel(req as unknown as Request)).toBe(UNMATCHED_ROUTE);
+  });
+
+  it('can label an unmatched request when baseUrl is absent entirely', () => {
+    const req = { path: '/.env' };
+
+    expect(getRouteLabel(req as unknown as Request)).toBe(UNMATCHED_ROUTE);
   });
 });
