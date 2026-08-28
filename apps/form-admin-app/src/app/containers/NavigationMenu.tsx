@@ -67,7 +67,12 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
         </span>
       )}
       <Nav type={type}>
-        <GoabSideMenu data-side-nav={true}>
+        {/*
+          goa-side-menu reads its links once when it mounts and never looks again, so links added
+          later are never marked as current. Key it on the definition to recreate it whenever the
+          definition scoped links come and go.
+        */}
+        <GoabSideMenu key={definition?.id ?? 'no-definition'} data-side-nav={true}>
           <GoabSideMenuHeading icon="documents">Form definitions</GoabSideMenuHeading>
           <a
             href={`/${tenantName}/definitions`}
