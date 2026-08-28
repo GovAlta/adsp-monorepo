@@ -115,4 +115,32 @@ describe('date only handling', () => {
     expect(result.getMinutes()).toBe(30);
     expect(result.getSeconds()).toBe(45);
   });
+
+  // A date input reports every keystroke in the year, so typing 2020 arrives as 0002, 0020, 0202 and
+  // then 2020. Each of those has to survive the round trip, or the value written back to the input
+  // replaces what the user is typing.
+  it('keeps a year in the first two centuries out of the 1900s', () => {
+    expect(parseLocalDate('0020-08-20').getFullYear()).toBe(20);
+    expect(parseLocalDate('0002-08-20').getFullYear()).toBe(2);
+    expect(parseLocalDate('0202-08-20').getFullYear()).toBe(202);
+  });
+
+  it('pads a short year to the four digits a date input needs', () => {
+    expect(toDateInputValue(parseLocalDate('0020-08-20'))).toBe('0020-08-20');
+    expect(toDateInputValue(parseLocalDate('0002-08-20'))).toBe('0002-08-20');
+    expect(toDateInputValue(parseLocalDate('0202-08-20'))).toBe('0202-08-20');
+  });
+
+  it('round trips each year a date input reports while 2020 is typed', () => {
+    ['0002-08-20', '0020-08-20', '0202-08-20', '2020-08-20'].forEach((entered) => {
+      expect(toDateInputValue(parseLocalDate(entered))).toBe(entered);
+    });
+  });
+
+  it('keeps a short year when the date is combined with a time', () => {
+    const result = getDateTime('0020-08-20', '12:30');
+
+    expect(result.getFullYear()).toBe(20);
+    expect(toDateInputValue(result)).toBe('0020-08-20');
+  });
 });
