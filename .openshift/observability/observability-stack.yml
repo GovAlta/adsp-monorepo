@@ -503,11 +503,23 @@ objects:
               - http.method
               - http.status_code
             store:
-              ttl: 2s
+              # The connector holds a span here waiting for its pair. The batch processor above uses a
+              # 5s timeout, so a client span and its server span can legitimately arrive up to ~5s
+              # apart from two different services -- at the 2s default the edge expired unpaired,
+              # which is one reason edges show a callee of "unknown". Bounded by max_items so a burst
+              # of unpaired spans cannot grow the collector's heap without limit.
+              ttl: 10s
+              max_items: 10000
           # NOTE: these buckets and dimensions multiply the spanmetrics series count. Do not apply
           # them to an environment until every service runs an adsp-service-sdk with bounded span
           # names (the route-template fix), or Prometheus will OOM on span_name cardinality.
           spanmetrics:
+            # Without this the connector exports every span name it has ever seen, forever. Measured
+            # before the change: 113 of 127 span names in dev (89%) and 245 of 319 in uat (77%) had
+            # seen no call in 15 minutes yet were still being scraped every interval -- so they never
+            # went stale in Prometheus and retention never expired them. Series that go quiet now
+            # stop being exported and age out normally.
+            metrics_expiration: 15m
             histogram:
               explicit:
                 buckets: [2ms, 5ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
