@@ -26,16 +26,17 @@ const createState = (selectedDefinition: string = null) => ({
   },
 });
 
-const renderMenu = (selectedDefinition: string = null) =>
-  render(
-    <Provider store={mockStore(createState(selectedDefinition))}>
-      <MemoryRouter initialEntries={[`/${tenantName}/definitions`]}>
-        <Routes>
-          <Route path="/:tenant/*" element={<NavigationMenu type="side" />} />
-        </Routes>
-      </MemoryRouter>
-    </Provider>,
-  );
+const menu = (selectedDefinition: string = null) => (
+  <Provider store={mockStore(createState(selectedDefinition))}>
+    <MemoryRouter initialEntries={[`/${tenantName}/definitions`]}>
+      <Routes>
+        <Route path="/:tenant/*" element={<NavigationMenu type="side" />} />
+      </Routes>
+    </MemoryRouter>
+  </Provider>
+);
+
+const renderMenu = (selectedDefinition: string = null) => render(menu(selectedDefinition));
 
 const menuLinks = (baseElement: Element) => Array.from(baseElement.querySelectorAll('goa-side-menu a'));
 
@@ -60,6 +61,17 @@ describe('NavigationMenu', () => {
     const { queryByText } = renderMenu(definitionId);
 
     expect(queryByText('Affordability Example')).toBeNull();
+  });
+
+  it('should recreate the side menu when the selected definition changes', () => {
+    // goa-side-menu only collects its links on mount, so it has to be a new element for the
+    // definition scoped links to be highlighted when they are the current page.
+    const { baseElement, rerender } = renderMenu();
+    const before = baseElement.querySelector('goa-side-menu');
+
+    rerender(menu(definitionId));
+
+    expect(baseElement.querySelector('goa-side-menu')).not.toBe(before);
   });
 
   it('should link responses and configuration under the selected definition', () => {
