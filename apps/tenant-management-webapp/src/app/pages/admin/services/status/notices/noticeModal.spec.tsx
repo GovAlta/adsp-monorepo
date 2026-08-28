@@ -28,12 +28,13 @@ describe('NoticeModal', () => {
       notice: { notices: [notice] },
     });
 
-  const renderModal = (store, noticeId?: string) =>
-    render(
-      <Provider store={store}>
-        <NoticeModal title={noticeId ? 'Edit notice' : 'Add notice'} isOpen={true} noticeId={noticeId} />
-      </Provider>
-    );
+  const modal = (store, isOpen: boolean, noticeId?: string) => (
+    <Provider store={store}>
+      <NoticeModal title={noticeId ? 'Edit notice' : 'Add notice'} isOpen={isOpen} noticeId={noticeId} />
+    </Provider>
+  );
+
+  const renderModal = (store, noticeId?: string) => render(modal(store, true, noticeId));
 
   const changeValue = (baseElement: Element, selector: string, value: string) => {
     const element = baseElement.querySelector(selector);
@@ -68,6 +69,22 @@ describe('NoticeModal', () => {
     );
     expect(baseElement.querySelector("goa-input[testId='notice-form-end-date-picker']").getAttribute('value')).toBe(
       '2026-08-27'
+    );
+  });
+
+  it('clears the form when the add notice modal is reopened', () => {
+    const store = createStore();
+    const { baseElement, rerender } = renderModal(store);
+
+    changeValue(baseElement, "goa-textarea[testId='notice-form-description']", 'howard-test');
+    changeValue(baseElement, "goa-dropdown[testId='application-dropdown-list']", 'Autotest');
+
+    rerender(modal(store, false));
+    rerender(modal(store, true));
+
+    expect(baseElement.querySelector("goa-textarea[testId='notice-form-description']").getAttribute('value')).toBe('');
+    expect(baseElement.querySelector("goa-dropdown[testId='application-dropdown-list']").getAttribute('value')).toBe(
+      ''
     );
   });
 
