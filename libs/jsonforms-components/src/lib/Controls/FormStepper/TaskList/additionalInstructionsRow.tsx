@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoabCallout } from '@abgov/react-components-ds1';
+import { GoabCallout } from '@abgov/react-components';
 import { GoabCalloutType } from '@abgov/ui-components-common';
 import { sanitizeHtml } from '../../../common/sanitize';
 

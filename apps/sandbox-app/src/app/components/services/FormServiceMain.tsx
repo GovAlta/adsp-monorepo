@@ -1,10 +1,13 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
-import { GoabContainer, GoabText } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
-import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
+import { useNavigate } from 'react-router-dom';
 
 export const FormServiceMain = ({ tenantName }: ServiceMainProps) => {
+  const navigate = useNavigate();
+  const jsonformsExampleUrl = `/${tenantName}/services/jsonforms/example1/control-examples`;
+
   return (
     <ServiceContainer>
       <GoabContainer
@@ -17,7 +20,22 @@ export const FormServiceMain = ({ tenantName }: ServiceMainProps) => {
         <GoabText size="body-m" mb="none">
           The following contains POC or samples for the Form service.
         </GoabText>
-        <DefaultServiceListTemplate prefix="Form service item " />
+        <GoabButtonGroup alignment="start" mt="m">
+          <GoabButton
+            type="secondary"
+            testId="jsonforms-ds1-test"
+            onClick={() => navigate(`${jsonformsExampleUrl}?designSystemsVersion=1.0`)}
+          >
+            Test JSONForms DS1
+          </GoabButton>
+          <GoabButton
+            type="primary"
+            testId="jsonforms-ds2-test"
+            onClick={() => navigate(`${jsonformsExampleUrl}?designSystemsVersion=2.0`)}
+          >
+            Test JSONForms DS2
+          </GoabButton>
+        </GoabButtonGroup>
       </GoabContainer>
     </ServiceContainer>
   );

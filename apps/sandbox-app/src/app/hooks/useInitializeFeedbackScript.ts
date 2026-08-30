@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { environmentSelector } from '../state';
-import { getFeedbackContext } from './useFeedbackWidget';
+import { getFeedbackContext, resolveFeedbackTenant } from './useFeedbackWidget';
 
 export const useInitializeFeedbackScript = (tenantName?: string) => {
   const environment = useSelector(environmentSelector);
@@ -19,8 +19,13 @@ export const useInitializeFeedbackScript = (tenantName?: string) => {
     script.async = true;
     script.src = src;
     script.onload = () => {
+      const tenant = resolveFeedbackTenant(tenantName);
+      if (!tenant) {
+        return;
+      }
+
       globalThis.adspFeedback?.initialize({
-        tenant: tenantName ?? '',
+        tenant,
         getContext: () => getFeedbackContext(),
       });
     };

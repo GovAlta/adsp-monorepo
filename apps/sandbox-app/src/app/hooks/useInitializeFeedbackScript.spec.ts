@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { useInitializeFeedbackScript } from './useInitializeFeedbackScript';
 import { useSelector } from 'react-redux';
-import { getFeedbackContext } from './useFeedbackWidget';
+import { getFeedbackContext, resolveFeedbackTenant } from './useFeedbackWidget';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -12,14 +12,15 @@ jest.mock('../state', () => ({
 }));
 
 jest.mock('./useFeedbackWidget', () => ({
-  DEFAULT_TENANT: 'default-tenant',
   getFeedbackContext: jest.fn(),
+  resolveFeedbackTenant: jest.fn(),
 }));
 
 describe('useInitializeFeedbackScript', () => {
   afterEach(() => {
     jest.clearAllMocks();
     document.head.innerHTML = ''; // Clean up DOM
+    delete globalThis.adspFeedback;
   });
 
   test('does not append script if environment.feedback.url is undefined', () => {
@@ -72,6 +73,7 @@ describe('useInitializeFeedbackScript', () => {
 
     (useSelector as jest.Mock).mockReturnValue({ feedback: { url: mockUrl } });
     (getFeedbackContext as jest.Mock).mockReturnValue({ user: 'test-user' });
+    (resolveFeedbackTenant as jest.Mock).mockReturnValue('custom-tenant');
 
     // Act
     renderHook(() => useInitializeFeedbackScript('custom-tenant'));
@@ -88,5 +90,24 @@ describe('useInitializeFeedbackScript', () => {
     // Verify getContext function
     const getContext = mockInitialize.mock.calls[0][0].getContext;
     expect(getContext()).toEqual({ user: 'test-user' });
+  });
+
+  test('does not initialize feedback when script loads without tenant context', () => {
+    // Arrange
+    const mockUrl = 'https://feedback.example.com/script.js';
+    const mockInitialize = jest.fn();
+    globalThis.adspFeedback = { initialize: mockInitialize };
+
+    (useSelector as jest.Mock).mockReturnValue({ feedback: { url: mockUrl } });
+    (resolveFeedbackTenant as jest.Mock).mockReturnValue('');
+
+    // Act
+    renderHook(() => useInitializeFeedbackScript());
+
+    const script = document.querySelector(`script[src="${mockUrl}"]`);
+    script?.onload?.(new Event('load'));
+
+    // Assert
+    expect(mockInitialize).not.toHaveBeenCalled();
   });
 });

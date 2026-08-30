@@ -7,7 +7,7 @@ import {
   GoabModal,
   GoabButtonGroup,
   GoabGrid,
-} from '@abgov/react-components-ds1';
+} from '@abgov/react-components';
 import { GoabButtonType } from '@abgov/ui-components-common';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
