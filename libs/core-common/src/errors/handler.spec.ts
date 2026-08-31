@@ -12,6 +12,9 @@ describe('createErrorHandler', () => {
   const createRes = () => {
     const res = {
       headersSent: false,
+      // Express leaves this at the default until something sets it, which is the bug the status
+      // logging tests below pin down.
+      statusCode: 200,
       status: jest.fn(() => res),
       json: jest.fn(() => res),
       sendStatus: jest.fn(() => res),
@@ -63,6 +66,41 @@ describe('createErrorHandler', () => {
     createErrorHandler(loggerMock)(err, req as never, res as never, jest.fn());
 
     expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.BAD_REQUEST);
+  });
+
+  it('logs the status it is actually sending, not the unset default', () => {
+    // res.statusCode is still 200 when the handler runs, so logging it directly reported every
+    // unhandled error as a success and misled anyone triaging from logs.
+    const res = createRes();
+
+    createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('(status: 500)'));
+    expect(loggerMock.warn).not.toHaveBeenCalledWith(expect.stringContaining('(status: 200)'));
+  });
+
+  it('keeps a status the handler set before failing', () => {
+    // res.status(409) sets the code without sending headers. The client still receives 500 because
+    // sendStatus overrides it, but the 409 says where the handler got to.
+    const res = createRes();
+    res.statusCode = 409;
+
+    createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      expect.stringContaining('(status: 500) (handler had set 409)')
+    );
+  });
+
+  it('logs the real status when headers were already sent', () => {
+    const res = createRes();
+    res.headersSent = true;
+    res.statusCode = 206;
+
+    createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('(status: 206)'));
+    expect(res.end).toHaveBeenCalled();
   });
 
   it('does not treat an ordinary SyntaxError as a body parse failure', () => {

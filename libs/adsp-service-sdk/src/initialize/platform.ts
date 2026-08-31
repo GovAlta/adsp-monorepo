@@ -4,6 +4,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { registerTelemetryShutdown } from './telemetryShutdown';
 import { defaultResource, resourceFromAttributes } from '@opentelemetry/resources';
 import { createRealmStrategy, createTenantStrategy, createTokenProvider } from '../access';
 import { createConfigurationHandler, createConfigurationService } from '../configuration';
@@ -234,9 +235,12 @@ export async function initializePlatform(
   }
 
   // Note: Sample rate is not currently used in the SDK.
-  const traceHandler = createTraceHandler({ logger, sampleRate: 0, tracerProvider });
+  const traceHandler = createTraceHandler({ logger, tracerProvider });
+
+  const shutdownTelemetry = registerTelemetryShutdown({ tracerProvider, meterProvider }, logger);
 
   return {
+    shutdownTelemetry,
     tokenProvider,
     coreStrategy,
     tenantService,

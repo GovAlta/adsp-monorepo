@@ -407,7 +407,9 @@ objects:
         component: observability
         environment: ${ENVIRONMENT_NAME}
     spec:
-      minAvailable: 1
+      # Single replica: minAvailable: 1 here would make the pod ineligible for voluntary
+      # eviction and stall node drains.
+      maxUnavailable: 1
       selector:
         matchLabels:
           app: ${TEMPO_NAME}
@@ -457,8 +459,10 @@ objects:
         processors:
           memory_limiter:
             check_interval: 1s
-            limit_mib: 1024
-            spike_limit_mib: 256
+            # Keep limit_mib at roughly 80% of the container memory limit below. Set above it and
+            # the soft limiter never engages -- the kernel OOM-kills first.
+            limit_mib: 800
+            spike_limit_mib: 200
           filter/drop-low-value-http-spans:
             error_mode: ignore
             traces:
@@ -499,8 +503,23 @@ objects:
               - http.method
               - http.status_code
             store:
-              ttl: 2s
+              # The connector holds a span here waiting for its pair. The batch processor above uses a
+              # 5s timeout, so a client span and its server span can legitimately arrive up to ~5s
+              # apart from two different services -- at the 2s default the edge expired unpaired,
+              # which is one reason edges show a callee of "unknown". Bounded by max_items so a burst
+              # of unpaired spans cannot grow the collector's heap without limit.
+              ttl: 10s
+              max_items: 10000
+          # NOTE: these buckets and dimensions multiply the spanmetrics series count. Do not apply
+          # them to an environment until every service runs an adsp-service-sdk with bounded span
+          # names (the route-template fix), or Prometheus will OOM on span_name cardinality.
           spanmetrics:
+            # Without this the connector exports every span name it has ever seen, forever. Measured
+            # before the change: 113 of 127 span names in dev (89%) and 245 of 319 in uat (77%) had
+            # seen no call in 15 minutes yet were still being scraped every interval -- so they never
+            # went stale in Prometheus and retention never expired them. Series that go quiet now
+            # stop being exported and age out normally.
+            metrics_expiration: 15m
             histogram:
               explicit:
                 buckets: [2ms, 5ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
@@ -514,6 +533,16 @@ objects:
 
         service:
           extensions: [health_check]
+          # Without this the collector's own queue depth, refused spans and export failures are
+          # not reported anywhere, so dropped telemetry is invisible.
+          telemetry:
+            metrics:
+              readers:
+                - pull:
+                    exporter:
+                      prometheus:
+                        host: 0.0.0.0
+                        port: 8888
           pipelines:
             traces:
               receivers: [otlp]
@@ -575,6 +604,9 @@ objects:
                 - containerPort: 8889
                   name: metrics
                   protocol: TCP
+                - containerPort: 8888
+                  name: internal
+                  protocol: TCP
                 - containerPort: 13133
                   name: health
                   protocol: TCP
@@ -596,7 +628,8 @@ objects:
                   memory: 256Mi
                 limits:
                   cpu: 500m
-                  memory: 512Mi
+                  # Paired with memory_limiter.limit_mib in the ConfigMap above; change together.
+                  memory: 1Gi
               volumeMounts:
                 - name: config
                   mountPath: /conf
@@ -641,9 +674,38 @@ objects:
           port: 8889
           targetPort: metrics
           protocol: TCP
+        - name: internal
+          port: 8888
+          targetPort: internal
+          protocol: TCP
         - name: health
           port: 13133
           targetPort: health
+          protocol: TCP
+  # Headless sibling of the service above, used only as a Prometheus DNS-SD target. The ClusterIP
+  # service load-balances, which is correct for OTLP ingest and wrong for scraping: each replica
+  # holds its own spanmetrics and servicegraph counters, so a load-balanced scrape captures a
+  # random subset of the series.
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${COLLECTOR_NAME}-metrics
+      labels:
+        app: ${COLLECTOR_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      clusterIP: None
+      selector:
+        app: ${COLLECTOR_NAME}
+      ports:
+        - name: metrics
+          port: 8889
+          targetPort: metrics
+          protocol: TCP
+        - name: internal
+          port: 8888
+          targetPort: internal
           protocol: TCP
 
   - apiVersion: v1
@@ -662,16 +724,37 @@ objects:
 
         scrape_configs:
           - job_name: otel-collector
-            static_configs:
-              - targets: ['${COLLECTOR_NAME}:8889']
+            # Guardrail. A misbehaving service can otherwise grow the collector's exported series
+            # without bound; a failed scrape is visible and recoverable, an OOMKill loses the
+            # whole TSDB head.
+            sample_limit: 150000
+            label_limit: 40
+            label_value_length_limit: 512
+            dns_sd_configs:
+              - names: ['${COLLECTOR_NAME}-metrics']
+                type: A
+                port: 8889
+
+          - job_name: otel-collector-internal
+            dns_sd_configs:
+              - names: ['${COLLECTOR_NAME}-metrics']
+                type: A
+                port: 8888
 
           - job_name: prometheus
             static_configs:
               - targets: ['127.0.0.1:9090']
 
+          # Per-node RabbitMQ metrics. Targets the headless service so all cluster nodes are
+          # scraped -- queue depth and memory are per-node, and the balancer service would return
+          # one node at random. Requires rabbitmq_prometheus in the broker's enabled_plugins (see
+          # .openshift/managed/event-service.yml); until that is enabled this job finds no targets.
+          # The port comes from the scrape config and DNS-SD resolves to pod IPs, so the broker does
+          # not need a containerPort or Service port declared for 15692.
           - job_name: rabbitmq
             dns_sd_configs:
-              - names: ['event-service-rabbitmq.default.svc.cluster.local']
+              - names: ['event-service-rabbitmq']
+                type: A
                 port: 15692
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -755,7 +838,9 @@ objects:
                   memory: 256Mi
                 limits:
                   cpu: 500m
-                  memory: 1Gi
+                  # 2Gi in dev and uat. The template previously said 1Gi, so applying it would have
+                  # halved the limit on a Prometheus that has been OOMKilling at 2Gi.
+                  memory: 2Gi
               volumeMounts:
                 - name: config
                   mountPath: /etc/prometheus
@@ -777,7 +862,9 @@ objects:
         component: observability
         environment: ${ENVIRONMENT_NAME}
     spec:
-      minAvailable: 1
+      # Single replica: minAvailable: 1 here would make the pod ineligible for voluntary
+      # eviction and stall node drains.
+      maxUnavailable: 1
       selector:
         matchLabels:
           app: ${PROMETHEUS_NAME}
@@ -798,6 +885,33 @@ objects:
           targetPort: http
           protocol: TCP
 
+  # Tells Grafana to load dashboards from a directory. The dashboard JSON itself lives in the
+  # ${GRAFANA_NAME}-dashboards ConfigMap, built from .openshift/observability/dashboards/ by
+  # tools/observability/apply-dashboards.sh -- keeping ~100KB of JSON out of this template.
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${GRAFANA_NAME}-dashboard-provider
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    data:
+      dashboards.yaml: |
+        apiVersion: 1
+        providers:
+          - name: adsp
+            orgId: 1
+            type: file
+            # UI edits are allowed so panels can be iterated on, but the ConfigMap is reloaded on
+            # pod restart and on updateIntervalSeconds, so anything not exported back to the repo
+            # is eventually overwritten. See the README for the export workflow.
+            allowUiUpdates: true
+            disableDeletion: false
+            updateIntervalSeconds: 60
+            options:
+              path: /etc/grafana/dashboards
+              foldersFromFilesStructure: false
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -969,12 +1083,25 @@ objects:
               volumeMounts:
                 - name: datasources
                   mountPath: /etc/grafana/provisioning/datasources
+                - name: dashboard-provider
+                  mountPath: /etc/grafana/provisioning/dashboards
+                - name: dashboards
+                  mountPath: /etc/grafana/dashboards
                 - name: storage
                   mountPath: /var/lib/grafana
           volumes:
             - name: datasources
               configMap:
                 name: ${GRAFANA_NAME}-datasources
+            - name: dashboard-provider
+              configMap:
+                name: ${GRAFANA_NAME}-dashboard-provider
+            - name: dashboards
+              configMap:
+                name: ${GRAFANA_NAME}-dashboards
+                # Optional so Grafana still starts before the dashboard ConfigMap is created, and
+                # so a missing ConfigMap degrades to "no dashboards" rather than a crash loop.
+                optional: true
             - name: storage
               persistentVolumeClaim:
                 claimName: ${GRAFANA_NAME}-storage
@@ -987,7 +1114,9 @@ objects:
         component: observability
         environment: ${ENVIRONMENT_NAME}
     spec:
-      minAvailable: 1
+      # Single replica: minAvailable: 1 here would make the pod ineligible for voluntary
+      # eviction and stall node drains.
+      maxUnavailable: 1
       selector:
         matchLabels:
           app: ${GRAFANA_NAME}

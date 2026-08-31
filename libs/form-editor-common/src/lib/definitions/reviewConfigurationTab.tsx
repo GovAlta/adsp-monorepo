@@ -54,8 +54,8 @@ export const ReviewConfigurationTab: FunctionComponent<ReviewConfigurationTabPro
             order.
           </p>
           <p>
-            Pick values that help reviewers identify a submission quickly, for example first and last name. Keep the list
-            small so the table stays manageable.
+            Pick values that help reviewers identify a submission quickly, for example first and last name. Keep the
+            number of columns small so the table stays manageable.
           </p>
         </ReviewDescription>
       </GoabAccordion>

@@ -49,6 +49,12 @@ describe('ReviewConfigurationTab', () => {
     expect(screen.getByTestId('review-config-empty').textContent).toContain('No fields selected');
   });
 
+  it('directs the author to keep the number of columns small', () => {
+    render(<ReviewConfigurationTab schema={schema} onChange={jest.fn()} />);
+
+    expect(screen.getByText(/Keep the number of columns small so the table stays manageable\./)).toBeTruthy();
+  });
+
   it('adds a selected field to the configuration', () => {
     const onChange = jest.fn();
     const { container } = render(<ReviewConfigurationTab schema={schema} onChange={onChange} />);

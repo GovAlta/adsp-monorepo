@@ -67,7 +67,12 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
         </span>
       )}
       <Nav type={type}>
-        <GoabSideMenu data-side-nav={true}>
+        {/*
+          goa-side-menu reads its links once when it mounts and never looks again, so links added
+          later are never marked as current. Key it on the definition to recreate it whenever the
+          definition scoped links come and go.
+        */}
+        <GoabSideMenu key={definition?.id ?? 'no-definition'} data-side-nav={true}>
           <GoabSideMenuHeading icon="documents">Form definitions</GoabSideMenuHeading>
           <a
             href={`/${tenantName}/definitions`}
@@ -80,36 +85,24 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           </a>
           {definition && (
             <>
-              <GoabSideMenuHeading icon="document">{definition.name}</GoabSideMenuHeading>
               <a
-                href={`/${tenantName}/definitions/${definition.id}/overview`}
+                href={`/${tenantName}/definitions/${definition.id}/responses`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/overview`);
+                  navigate(`definitions/${definition.id}/responses`);
                   e.preventDefault();
                 }}
               >
-                Overview
+                Responses
               </a>
               <a
-                href={`/${tenantName}/definitions/${definition.id}/forms`}
+                href={`/${tenantName}/definitions/${definition.id}/configuration`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/forms`);
+                  navigate(`definitions/${definition.id}/configuration`);
                   e.preventDefault();
                 }}
               >
-                Forms
+                Configuration
               </a>
-              {definition.submissionRecords && (
-                <a
-                  href={`/${tenantName}/definitions/${definition.id}/submissions`}
-                  onClick={(e) => {
-                    navigate(`definitions/${definition.id}/submissions`);
-                    e.preventDefault();
-                  }}
-                >
-                  Submissions
-                </a>
-              )}
             </>
           )}
         </GoabSideMenu>

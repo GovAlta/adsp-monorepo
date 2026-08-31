@@ -1,3 +1,6 @@
+// Must stay first: it patches mongoose via require-hook, and ./mongo below loads mongoose
+// during the import phase.
+import './tracing';
 import * as express from 'express';
 import { readFile } from 'fs';
 import { promisify } from 'util';

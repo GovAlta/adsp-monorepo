@@ -15,7 +15,7 @@ import {
   GoabDropdownItem,
   GoabGrid,
 } from '@abgov/react-components';
-import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
+import { getTimeFromGMT, getDateTime, parseLocalDate, toDateInputValue } from '@lib/timeUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
   GoabTextAreaOnChangeDetail,
@@ -49,29 +49,31 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
   const noMonitorOnlyApplications = applications.filter((application) => !application.monitorOnly);
 
+  // The modal stays mounted between uses, so reset it to the notice being edited, or to
+  // empty defaults when adding, every time it is opened.
   useEffect(() => {
-    if (props.noticeId) {
-      const notice = notices.find((nt) => props?.noticeId === nt.id);
-      const currentStartDate = new Date(notice.startDate);
-      const currentEndDate = new Date(notice.endDate);
-      setStartDate(currentStartDate);
-      setEndDate(currentEndDate);
-
-      setStartTime(getTimeFromGMT(currentStartDate));
-      setEndTime(getTimeFromGMT(currentEndDate));
-      setMessage(notice.message);
-
-      let parsedApplications = [];
-      try {
-        parsedApplications = notice.tennantServRef;
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setSelectedApplications(parsedApplications);
-        setIsAllApplications(notice.isAllApplications);
-      }
+    if (!props.isOpen) {
+      return;
     }
-  }, [props.noticeId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const notice = props.noticeId && notices.find((nt) => props.noticeId === nt.id);
+    if (!notice) {
+      setNoticeDefaults();
+      return;
+    }
+
+    const currentStartDate = new Date(notice.startDate);
+    const currentEndDate = new Date(notice.endDate);
+    setStartDate(currentStartDate);
+    setEndDate(currentEndDate);
+
+    setStartTime(getTimeFromGMT(currentStartDate));
+    setEndTime(getTimeFromGMT(currentEndDate));
+    setMessage(notice.message);
+    setErrors({});
+    setSelectedApplications(notice.tennantServRef ?? []);
+    setIsAllApplications(notice.isAllApplications);
+  }, [props.isOpen, props.noticeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validDateRangeErrors() {
     if (getDateTime(endDate, endTime) < getDateTime(startDate, startTime)) {
@@ -122,7 +124,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }
 
   function cancel() {
-    setNoticeDefaults();
     if (props.onCancel) props.onCancel();
   }
 
@@ -142,10 +143,16 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     setEndTime('14:00');
     setSelectedApplications([]);
   }
-  const isValidDateString = (dateString) => {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  };
+  function onDateChange(value: string, setDate: (date: Date) => void, errorMessage: string) {
+    const date = parseLocalDate(value);
+    if (isNaN(date.getTime())) {
+      setErrors({ date: errorMessage });
+      return;
+    }
+
+    setErrors({});
+    setDate(date);
+  }
 
   return (
     <GoabModal
@@ -218,16 +225,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoabInput size="compact"
             type="date"
             name="StartDate"
-            value={startDate.toISOString().slice(0, 10)}
+            value={toDateInputValue(startDate)}
             width="100%"
             testId="notice-form-start-date-picker"
             onChange={(detail: GoabInputOnChangeDetail) => {
-              if (isValidDateString(detail.value)) {
-                setErrors({});
-                setStartDate(new Date(detail.value));
-              } else {
-                setErrors({ date: 'Please input right start date format!' });
-              }
+              onDateChange(detail.value, setStartDate, 'Please input right start date format!');
             }}
           />
         </GoabFormItem>
@@ -249,16 +251,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoabInput size="compact"
             type="date"
             name="EndDate"
-            value={endDate.toISOString().slice(0, 10)}
+            value={toDateInputValue(endDate)}
             width="100%"
             testId="notice-form-end-date-picker"
             onChange={(detail: GoabInputOnChangeDetail) => {
-              if (isValidDateString(detail.value)) {
-                setErrors({});
-                setEndDate(new Date(detail.value));
-              } else {
-                setErrors({ date: 'Please input right end date format!' });
-              }
+              onDateChange(detail.value, setEndDate, 'Please input right end date format!');
             }}
           />
         </GoabFormItem>

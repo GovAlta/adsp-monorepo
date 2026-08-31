@@ -54,6 +54,7 @@ describe('Sidebar', () => {
     ['menu-value', 'a second service'],
     ['menu-dashboard', 'the dashboard'],
     ['menu-eventLog', 'the event log'],
+    ['menu-reports', 'reports'],
   ])('scrolls the app container back to the top when %s is clicked', (testId) => {
     const container = addScrollContainer(800);
     const { getByTestId } = renderSidebar();
@@ -63,9 +64,26 @@ describe('Sidebar', () => {
     expect(container.scrollTop).toBe(0);
   });
 
+  it('links the reports menu item to the reports page', () => {
+    const { getByTestId } = renderSidebar();
+
+    expect(getByTestId('menu-reports')).toHaveAttribute('href', '/reports');
+  });
+
   it('does not throw when the scroll container is absent', () => {
     const { getByTestId } = renderSidebar();
 
     expect(() => fireEvent.click(getByTestId('menu-task'))).not.toThrow();
+  });
+  it('marks the reports menu item as beta', () => {
+    const { getByTestId } = renderSidebar();
+
+    expect(getByTestId('menu-reports').querySelector('img')).toHaveAttribute('alt', 'Reports beta');
+  });
+
+  it('names the service each beta badge belongs to', () => {
+    const { getByTestId } = renderSidebar();
+
+    expect(getByTestId('menu-task').querySelector('img')).toHaveAttribute('alt', 'Task beta');
   });
 });

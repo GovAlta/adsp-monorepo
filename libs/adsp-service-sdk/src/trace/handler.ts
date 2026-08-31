@@ -9,7 +9,6 @@ import { createHttpServerTraceHandler } from './instrument';
 
 interface TraceHandlerOptions {
   logger: Logger;
-  sampleRate: number;
   tracerProvider?: NodeTracerProvider;
 }
 
@@ -136,11 +135,7 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig, trac
   return config;
 }
 
-export function createTraceHandler({
-  logger,
-  sampleRate: _sampleRate,
-  tracerProvider,
-}: TraceHandlerOptions): RequestHandler {
+export function createTraceHandler({ logger, tracerProvider }: TraceHandlerOptions): RequestHandler {
   const tracer = tracerProvider?.getTracer('adsp-service-sdk');
 
   // Use an axios interceptor to inject trace context into outbound request headers.

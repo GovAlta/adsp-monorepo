@@ -285,4 +285,93 @@ describe('instrument', () => {
       setSpanSpy.mockRestore();
     });
   });
+
+  describe('server span status', () => {
+    const runWith = (statusCode: number) => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        updateName: jest.fn(),
+        end: jest.fn(),
+        isRecording: jest.fn().mockReturnValue(true),
+        recordException: jest.fn(),
+      };
+      const tracerProvider = { getTracer: () => ({ startSpan: () => span }) };
+      const listeners: Record<string, (arg?: unknown) => void> = {};
+      const req = { method: 'GET', path: '/x', route: { path: '/x' }, headers: {}, get: jest.fn() };
+      const res = {
+        statusCode,
+        json: jest.fn((b) => b),
+        send: jest.fn((b) => b),
+        on: jest.fn((e: string, cb: (arg?: unknown) => void) => {
+          listeners[e] = cb;
+          return res;
+        }),
+      };
+
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, fn) => fn());
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      createHttpServerTraceHandler(tracerProvider as never)(req as never, res as never, jest.fn());
+      (res.json as (b: unknown) => unknown)({});
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+      return { span, listeners };
+    };
+
+    it('can leave a 4xx server span status unset, per semconv', () => {
+      // A 4xx is the caller's failure, not the server's. Marking it ERROR made every expected
+      // rejection show up as a failed edge in the service graph.
+      const { span } = runWith(424);
+
+      expect(span.setStatus).not.toHaveBeenCalled();
+    });
+
+    it('can mark a 5xx server span as an error', () => {
+      const { span } = runWith(503);
+
+      expect(span.setStatus).toHaveBeenCalledWith(expect.objectContaining({ code: SpanStatusCode.ERROR }));
+    });
+
+    it('can mark a 2xx server span as ok', () => {
+      const { span } = runWith(200);
+
+      expect(span.setStatus).toHaveBeenCalledWith({ code: SpanStatusCode.OK });
+    });
+  });
+
+  describe('aborted requests', () => {
+    it('can end the span when the client aborts without finishing', () => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        updateName: jest.fn(),
+        end: jest.fn(),
+        isRecording: jest.fn().mockReturnValue(true),
+        recordException: jest.fn(),
+      };
+      const tracerProvider = { getTracer: () => ({ startSpan: () => span }) };
+      const listeners: Record<string, (arg?: unknown) => void> = {};
+      const req = { method: 'GET', path: '/x', headers: {}, get: jest.fn() };
+      const res = {
+        statusCode: 200,
+        json: jest.fn(),
+        send: jest.fn(),
+        on: jest.fn((e: string, cb: (arg?: unknown) => void) => {
+          listeners[e] = cb;
+          return res;
+        }),
+      };
+
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, fn) => fn());
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      createHttpServerTraceHandler(tracerProvider as never)(req as never, res as never, jest.fn());
+
+      // No finish: an aborted connection emits only close, and previously produced no span at all.
+      listeners['close']();
+
+      expect(span.end).toHaveBeenCalled();
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+    });
+  });
 });

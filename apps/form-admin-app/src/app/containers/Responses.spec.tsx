@@ -2,9 +2,15 @@ import { fireEvent, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
-import { Forms } from './Forms';
+import { Responses } from './Responses';
 import { findForms, getDefaultFormCriteria, getDefaultResultsSort } from '../state';
 import { FormStatus } from '../state/types';
+
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
 
 jest.mock('../state', () => {
   const actual = jest.requireActual('../state');
@@ -28,18 +34,20 @@ const createState = ({
   formResults = [],
   formCriteria = getDefaultFormCriteria(),
   formSort = getDefaultResultsSort(),
+  roles = ['urn:ads:platform:form-service:form-admin'],
 }: {
   forms?: Record<string, unknown>;
   formResults?: string[];
   formCriteria?: ReturnType<typeof getDefaultFormCriteria>;
   formSort?: ReturnType<typeof getDefaultResultsSort>;
+  roles?: string[];
 } = {}) => ({
   user: {
     user: {
       id: 'user-1',
       name: 'Test User',
       email: 'test@gov.ab.ca',
-      roles: ['urn:ads:platform:form-service:form-admin'],
+      roles,
     },
   },
   form: {
@@ -73,22 +81,17 @@ const createState = ({
     results: {
       definitions: [],
       forms: formResults,
-      submissions: [],
     },
     resultTotals: {
       definitions: 0,
       forms: formResults.length,
-      submissions: 0,
     },
     definitionCriteria: {},
     formCriteria,
-    submissionCriteria: {},
     formSort,
-    submissionSort: getDefaultResultsSort(),
     next: {
       definitions: null,
       forms: null,
-      submissions: null,
     },
     selectedDefinition: definitionId,
     selectedForm: null,
@@ -96,7 +99,6 @@ const createState = ({
     dispositionDraft: { status: '', reason: '' },
     export: {
       forms: {},
-      submissions: {},
     },
   },
   directory: {
@@ -126,12 +128,12 @@ const createState = ({
   },
 });
 
-const renderForms = (state = createState()) => {
+const renderResponses = (state = createState()) => {
   const store = mockStore(state);
   const view = render(
     <Provider store={store}>
       <MemoryRouter>
-        <Forms definitionId={definitionId} />
+        <Responses definitionId={definitionId} />
       </MemoryRouter>
     </Provider>,
   );
@@ -139,13 +141,14 @@ const renderForms = (state = createState()) => {
   return { store, ...view };
 };
 
-describe('Forms', () => {
+describe('Responses', () => {
   beforeEach(() => {
     (findForms as unknown as jest.Mock).mockClear();
+    mockNavigate.mockClear();
   });
 
-  it('should render the forms table and filters trigger', () => {
-    const { baseElement, getByText } = renderForms(
+  it('should render the responses table and filters trigger', () => {
+    const { baseElement, getByText } = renderResponses(
       createState({
         forms: {
           'form-1': {
@@ -168,11 +171,11 @@ describe('Forms', () => {
     expect(getByText('Created on')).toBeTruthy();
     expect(getByText('Ada')).toBeTruthy();
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeTruthy();
-    expect(baseElement.querySelector("goa-button[testId='export-forms']")).toBeTruthy();
+    expect(baseElement.querySelector("goa-button[testId='export-responses']")).toBeTruthy();
   });
 
   it('should not render form data that is not in the review configuration', () => {
-    const { queryByText } = renderForms(
+    const { queryByText } = renderResponses(
       createState({
         forms: {
           'form-1': {
@@ -196,7 +199,7 @@ describe('Forms', () => {
   });
 
   it('should dispatch findForms on mount when no forms are loaded', () => {
-    renderForms();
+    renderResponses();
 
     expect(findForms).toHaveBeenCalledWith({
       definitionId,
@@ -206,19 +209,19 @@ describe('Forms', () => {
   });
 
   it('should show the active filter badge for default form criteria', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
 
     expect(baseElement.querySelector("goa-badge[testId='active-filter-count']").getAttribute('content')).toBe(
       '2 active',
     );
   });
 
-  it('should keep filter controls mounted and find forms from the drawer', () => {
-    const { baseElement } = renderForms();
+  it('should keep filter controls mounted and find responses from the drawer', () => {
+    const { baseElement } = renderResponses();
 
     expect(baseElement.querySelector("goa-dropdown[name='form-status']")).toBeTruthy();
 
-    fireEvent(baseElement.querySelector("goa-button[testId='find-forms']"), new CustomEvent('_click'));
+    fireEvent(baseElement.querySelector("goa-button[testId='find-responses']"), new CustomEvent('_click'));
 
     expect(findForms).toHaveBeenCalledWith({
       definitionId,
@@ -228,8 +231,15 @@ describe('Forms', () => {
     });
   });
 
+  it('should not offer the status filter to a user who is not a form admin', () => {
+    const { baseElement } = renderResponses(createState({ roles: ['test-assessor'] }));
+
+    expect(baseElement.querySelector("goa-dropdown[name='form-status']")).toBeFalsy();
+    expect(baseElement.querySelector("goa-button[testId='find-responses']")).toBeTruthy();
+  });
+
   it('should indicate the created on column is sorted descending by default', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
 
     expect(baseElement.querySelector("goa-table-sort-header[name='created']").getAttribute('direction')).toBe('desc');
     expect(baseElement.querySelector("goa-table-sort-header[name='status']").getAttribute('direction')).toBe('none');
@@ -237,7 +247,7 @@ describe('Forms', () => {
   });
 
   it('should find forms with the selected sort', () => {
-    const { baseElement, store } = renderForms();
+    const { baseElement, store } = renderResponses();
 
     fireEvent(
       baseElement.querySelector('goa-table'),
@@ -256,7 +266,7 @@ describe('Forms', () => {
   });
 
   it('should not find forms again for the sort the results already have', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
     (findForms as unknown as jest.Mock).mockClear();
 
     fireEvent(
@@ -268,11 +278,68 @@ describe('Forms', () => {
   });
 
   it('should hide the filters trigger while the drawer is open', () => {
-    const { baseElement } = renderForms();
+    const { baseElement } = renderResponses();
 
     fireEvent(baseElement.querySelector("goa-button[testId='show-filters']"), new CustomEvent('_click'));
 
     expect(baseElement.querySelector("goa-push-drawer[testid='filter-drawer']").getAttribute('open')).toBe('true');
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeFalsy();
+  });
+  const stateWithForm = () =>
+    createState({
+      forms: {
+        'form-1': {
+          urn: formUrn,
+          id: 'form-1',
+          formId: 'form-1',
+          status: FormStatus.submitted,
+          created: '2026-08-01T12:00:00.000Z',
+          submitted: '2026-08-01T12:00:00.000Z',
+          lastAccessed: '2026-08-01T12:00:00.000Z',
+          createdBy: { id: 'user-1', name: 'Test User' },
+          applicant: { addressAs: 'Test User' },
+          data: { firstName: 'Ada' },
+        },
+      },
+      formResults: ['form-1'],
+    });
+
+  it('should open the response when its row is selected', () => {
+    const { getByText } = renderResponses(stateWithForm());
+
+    fireEvent.click(getByText('Ada').closest('tr'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('form-1');
+  });
+
+  it('should open the response when its row is selected from the keyboard', () => {
+    const { getByText } = renderResponses(stateWithForm());
+
+    fireEvent.keyDown(getByText('Ada').closest('tr'), { key: 'Enter' });
+
+    expect(mockNavigate).toHaveBeenCalledWith('form-1');
+  });
+
+  it('should not open the response when a control in the row is used', () => {
+    const { baseElement } = renderResponses(stateWithForm());
+
+    fireEvent.click(baseElement.querySelector('goa-icon-button'));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('should no longer offer a separate actions column', () => {
+    const { queryByText } = renderResponses(stateWithForm());
+
+    expect(queryByText('Actions')).toBeNull();
+  });
+  it('should not shade the data value columns differently from the rest of the row', () => {
+    const { getByText } = renderResponses(stateWithForm());
+
+    const dataValue = getByText('Ada');
+    // The leading cell carries no styling of its own, so it stands for the rest of the row.
+    const plainCell = dataValue.closest('tr').querySelector('td');
+
+    expect(getComputedStyle(dataValue).background).toBe(getComputedStyle(plainCell).background);
   });
 });
