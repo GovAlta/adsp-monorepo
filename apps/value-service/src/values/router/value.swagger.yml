@@ -288,6 +288,7 @@ components:
             - hourly
             - daily
             - weekly
+            - monthly
       - name: top
         description: Number of results to read.
         in: query
@@ -372,6 +373,7 @@ components:
             - hourly
             - daily
             - weekly
+            - monthly
       - name: top
         description: Number of results to read.
         in: query

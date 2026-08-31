@@ -220,6 +220,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       case 'hourly':
       case 'daily':
       case 'weekly':
+      case 'monthly':
         view = `metrics_${criteria.interval}`;
         break;
       default:
@@ -306,6 +307,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       case 'hourly':
       case 'daily':
       case 'weekly':
+      case 'monthly':
         view = `metrics_${criteria.interval}`;
         break;
       default:
