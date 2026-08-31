@@ -333,4 +333,13 @@ describe('Responses', () => {
 
     expect(queryByText('Actions')).toBeNull();
   });
+  it('should not shade the data value columns differently from the rest of the row', () => {
+    const { getByText } = renderResponses(stateWithForm());
+
+    const dataValue = getByText('Ada');
+    // The leading cell carries no styling of its own, so it stands for the rest of the row.
+    const plainCell = dataValue.closest('tr').querySelector('td');
+
+    expect(getComputedStyle(dataValue).background).toBe(getComputedStyle(plainCell).background);
+  });
 });
