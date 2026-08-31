@@ -420,4 +420,114 @@ describe('CommentsViewer', () => {
     // Assert
     expect(props.onAddComment).toHaveBeenCalledWith(draft);
   });
+  test('marks a comment from the current user so the messaging layout can position it', () => {
+    const props = createProps({ comments: [createComment({ byCurrentUser: true })] });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    expect(container.querySelector('.comment')).toHaveAttribute('data-user-comment', 'true');
+  });
+
+  test('marks a comment from the other participant so the messaging layout can position it', () => {
+    const props = createProps({ comments: [createComment({ byCurrentUser: false })] });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    expect(container.querySelector('.comment')).toHaveAttribute('data-user-comment', 'false');
+  });
+
+  test('gives sent and received messages distinct backgrounds in the messaging layout', () => {
+    const props = createProps({
+      comments: [createComment({ id: 1, byCurrentUser: false }), createComment({ id: 2, byCurrentUser: true })],
+    });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    const [received, sent] = Array.from(container.querySelectorAll('.comment .message'));
+
+    expect(getComputedStyle(received).background).not.toBe(getComputedStyle(sent).background);
+  });
+  test('leaves sent and received messages styled alike without the messaging layout', () => {
+    const props = createProps({
+      comments: [createComment({ id: 1, byCurrentUser: false }), createComment({ id: 2, byCurrentUser: true })],
+    });
+    const { container } = render(<CommentsViewer {...props} />);
+
+    const [received, sent] = Array.from(container.querySelectorAll('.comment .message'));
+
+    expect(getComputedStyle(received).background).toBe(getComputedStyle(sent).background);
+  });
+  test('uses light text on the dark sent bubble in the messaging layout', () => {
+    const props = createProps({
+      comments: [createComment({ id: 1, byCurrentUser: false }), createComment({ id: 2, byCurrentUser: true })],
+    });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    const [received, sent] = Array.from(container.querySelectorAll('.comment .message p'));
+
+    expect(getComputedStyle(received).color).not.toBe(getComputedStyle(sent).color);
+  });
+
+  test('sits each bubble on its own side, sized to its own content', () => {
+    const props = createProps({
+      comments: [createComment({ id: 1, byCurrentUser: false }), createComment({ id: 2, byCurrentUser: true })],
+    });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    const [received, sent] = Array.from(container.querySelectorAll('.comment .message'));
+
+    // Each bubble is placed in its own grid cell, so it sizes independently of the byline.
+    expect(getComputedStyle(received).justifySelf).toBe('start');
+    expect(getComputedStyle(sent).justifySelf).toBe('end');
+  });
+  test('carries one byline for a run of messages from the same person', () => {
+    const props = createProps({
+      comments: [
+        createComment({ id: 1, createdBy: { id: 'a', name: 'Abhishek' } }),
+        createComment({ id: 2, createdBy: { id: 'a', name: 'Abhishek' } }),
+        createComment({ id: 3, createdBy: { id: 'b', name: 'Sreesh' } }),
+      ],
+    });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    expect(container.querySelectorAll('.message')).toHaveLength(3);
+    expect(container.querySelectorAll('.byline')).toHaveLength(2);
+    expect(container.querySelectorAll('.comment')[1]).toHaveAttribute('data-continues', 'true');
+  });
+
+  test('gives every comment its own byline without the messaging layout', () => {
+    const props = createProps({
+      comments: [
+        createComment({ id: 1, createdBy: { id: 'a', name: 'Abhishek' } }),
+        createComment({ id: 2, createdBy: { id: 'a', name: 'Abhishek' } }),
+      ],
+    });
+    const { container } = render(<CommentsViewer {...props} />);
+
+    expect(container.querySelectorAll('.byline')).toHaveLength(2);
+  });
+
+  test('keeps a delete control on a grouped message', () => {
+    const props = createProps({
+      comments: [
+        createComment({ id: 1, createdBy: { id: 'a', name: 'Abhishek' } }),
+        createComment({ id: 2, createdBy: { id: 'a', name: 'Abhishek' } }),
+      ],
+      userId: 'a',
+    });
+    const { getAllByTitle } = render(<CommentsViewer {...props} messaging={true} />);
+
+    // The control sits outside the byline, so grouping must not take it away.
+    expect(getAllByTitle('delete message')).toHaveLength(2);
+  });
+  test('reserves no heading space when the caller passes a blank heading', () => {
+    const props = createProps();
+    const { container } = render(<CommentsViewer {...props} heading=" " messaging={true} />);
+
+    expect(container.querySelector('h3')).toBeNull();
+  });
+  test('caps a bubble well short of the full width', () => {
+    const props = createProps({ comments: [createComment({ content: 'a'.repeat(400) })] });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    // Without a cap a long message fills the pane and loses the sense of which side it came from.
+    expect(getComputedStyle(container.querySelector('.message')).maxWidth).toBe('80%');
+  });
 });

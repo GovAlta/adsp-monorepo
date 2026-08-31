@@ -27,6 +27,7 @@ export const CommentsViewer: FunctionComponent = () => {
   return (
     <CommentsViewerComponent
       heading="Questions"
+      messaging={true}
       addCommentLabel="Add question"
       anonymousName="Support"
       comments={results}
