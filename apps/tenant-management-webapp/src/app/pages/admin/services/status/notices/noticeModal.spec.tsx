@@ -85,4 +85,17 @@ describe('NoticeModal', () => {
     expect(saved.startDate.getDate()).toBe(10);
     expect(saved.endDate.getDate()).toBe(22);
   });
+
+  // The date input reports the year on every keystroke, so typing 2020 arrives a digit at a time. The
+  // value put back into the input has to match what was reported, or it replaces what is being typed.
+  it('leaves the year alone while it is being typed', () => {
+    const { baseElement } = renderModal(createStore());
+    const startDate = "goa-input[testId='notice-form-start-date-picker']";
+
+    ['0002-08-20', '0020-08-20', '0202-08-20', '2020-08-20'].forEach((entered) => {
+      changeValue(baseElement, startDate, entered);
+
+      expect(baseElement.querySelector(startDate).getAttribute('value')).toBe(entered);
+    });
+  });
 });
