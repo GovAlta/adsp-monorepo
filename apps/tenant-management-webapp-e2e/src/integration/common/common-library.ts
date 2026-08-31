@@ -123,7 +123,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Service metrics':
       menuItemTestid = 'menu-service-metrics';
       break;
-    case 'Reports':
+    case 'Reports': // clean-code-ignore: RULE-19
       menuItemTestid = 'menu-reports';
       break;
     case 'Task':
