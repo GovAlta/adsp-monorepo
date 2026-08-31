@@ -54,6 +54,7 @@ describe('Sidebar', () => {
     ['menu-value', 'a second service'],
     ['menu-dashboard', 'the dashboard'],
     ['menu-eventLog', 'the event log'],
+    ['menu-reports', 'reports'],
   ])('scrolls the app container back to the top when %s is clicked', (testId) => {
     const container = addScrollContainer(800);
     const { getByTestId } = renderSidebar();
@@ -61,6 +62,12 @@ describe('Sidebar', () => {
     fireEvent.click(getByTestId(testId));
 
     expect(container.scrollTop).toBe(0);
+  });
+
+  it('links the reports menu item to the reports page', () => {
+    const { getByTestId } = renderSidebar();
+
+    expect(getByTestId('menu-reports')).toHaveAttribute('href', '/reports');
   });
 
   it('does not throw when the scroll container is absent', () => {
