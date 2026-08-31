@@ -123,6 +123,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Service metrics':
       menuItemTestid = 'menu-service-metrics';
       break;
+    case 'Reports':
+      menuItemTestid = 'menu-reports';
+      break;
     case 'Task':
       menuItemTestid = 'menu-task';
       break;
@@ -154,6 +157,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Calendar',
         'Script',
         'Service metrics',
+        'Reports',
         'Task',
         'Form',
         'Comment',

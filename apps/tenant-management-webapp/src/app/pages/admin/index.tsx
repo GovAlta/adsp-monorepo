@@ -15,6 +15,7 @@ import Status from './services/status';
 import { TaskRouter } from './services/task';
 import { EventLog } from './event-log';
 import { ServiceMetrics } from './service-metrics';
+import { Reports } from './reports';
 import { Events } from './services/events';
 import { Notifications } from './services/notifications';
 import { ConfigurationRouter } from './services/configuration/routers';
@@ -112,6 +113,7 @@ const TenantManagement = (): JSX.Element => {
           <Route index element={<Dashboard />} />
           <Route path="/event-log" element={<EventLog />} />
           <Route path="/service-metrics" element={<ServiceMetrics />} />
+          <Route path="/reports" element={<Reports />} />
 
           {serviceVariables(config.featureFlags).map((service) => {
             return (
