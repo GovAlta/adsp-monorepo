@@ -45,7 +45,8 @@ export const SelectableRow = styled.tr`
   }
 
   &:focus-visible {
-    outline: 2px solid var(--goa-color-interactive-focus);
-    outline-offset: -2px;
+    outline: var(--goa-space-3xs) solid var(--goa-color-interactive-focus);
+    /* Drawn inside the row, so the outline isn't clipped by the table's rounded corners. */
+    outline-offset: calc(var(--goa-space-3xs) * -1);
   }
 `;
