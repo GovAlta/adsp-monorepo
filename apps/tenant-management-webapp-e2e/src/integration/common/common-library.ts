@@ -32,7 +32,7 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
       }
     })
     .then(() => {
-      // cy.wait(2000);
+      cy.wait(2000);
       cy.url({ timeout: 30000 }).should('include', '/admin');
       commonObj.adminMenuItem('menu-dashboard').should('be.visible', { timeout: 30000 });
     });
@@ -162,7 +162,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
-  // cy.wait(waitMilliSecs);
+  cy.wait(waitMilliSecs);
   commonObj.applicationBody().should('exist');
   cy.get('main', { timeout: waitMilliSecs }).should('be.visible');
 }
