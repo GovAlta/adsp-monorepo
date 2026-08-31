@@ -873,7 +873,8 @@ When('the user saves the changes if any and go back out of form definition edito
     cy.log(element.prop('disabled'));
     if (element.prop('disabled') == null) {
       formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
-      cy.wait(6000);
+      formObj.formEditorCircularProgress().should('not.exist');
+      formObj.editorSaveButton().should('have.attr', 'disabled');
     }
   });
   formObj.editorBackButton().shadow().find('button').click({ force: true });
