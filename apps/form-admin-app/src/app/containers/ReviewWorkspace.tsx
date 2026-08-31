@@ -39,6 +39,14 @@ const AccordionDisplayDiv = styled.main`
 
 const ACCORDION_MAX_WIDTH = '1200px';
 
+// The message thread paints its own tinted area, so it runs to the edges of the accordion
+// instead of sitting in the accordion's content padding. Custom properties inherit into the
+// component's shadow DOM, so this reaches the padding the accordion applies to its content.
+const MessagesAccordionDiv = styled.div`
+  --goa-accordion-padding-content-wide: 0;
+  --goa-accordion-padding-content-narrow: 0;
+`;
+
 interface ReviewWorkspaceProps {
   dispatch: AppDispatch;
   definition: ReturnType<typeof definitionSelector>;
@@ -65,14 +73,16 @@ export const ReviewWorkspace: FunctionComponent<ReviewWorkspaceProps> = ({
   return (
     <AccordionDisplayDiv>
       {definition?.supportTopic && (
-        <GoabAccordion
-          heading="Messages"
-          maxWidth={ACCORDION_MAX_WIDTH}
-          mb="m"
-          headingContent={topic?.requiresAttention ? <GoabIcon type="mail-unread" /> : undefined}
-        >
-          <CommentsViewer />
-        </GoabAccordion>
+        <MessagesAccordionDiv>
+          <GoabAccordion
+            heading="Messages"
+            maxWidth={ACCORDION_MAX_WIDTH}
+            mb="m"
+            headingContent={topic?.requiresAttention ? <GoabIcon type="mail-unread" /> : undefined}
+          >
+            <CommentsViewer />
+          </GoabAccordion>
+        </MessagesAccordionDiv>
       )}
       {submission && (
         <GoabAccordion heading="Notes" maxWidth={ACCORDION_MAX_WIDTH} mb="m">
