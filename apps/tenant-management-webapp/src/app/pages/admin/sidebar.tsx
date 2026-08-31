@@ -34,10 +34,10 @@ const Sidebar = ({ type }: SidebarProps) => {
         state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
-  const betaBadge = () => {
+  const betaBadge = (label: string) => {
     return (
       <BetaBadgeStyle>
-        <img src={BetaBadge} alt="Files Service" />
+        <img src={BetaBadge} alt={`${label} beta`} />
       </BetaBadgeStyle>
     );
   };
@@ -92,6 +92,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                     data-testid="menu-reports"
                   >
                     <span>Reports</span>
+                    {betaBadge('Reports')}
                   </NavLink>
                   <NavLink
                     to="/admin"
@@ -119,7 +120,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                     data-testid={`menu-${service.name.toLowerCase()}`}
                   >
                     <span>{service.name}</span>
-                    {service.beta && betaBadge()}
+                    {service.beta && betaBadge(service.name)}
                     {service.alpha && alphaBadge()}
                   </NavLink>
                 ))}
