@@ -39,7 +39,7 @@ import {
 import { FilterDrawerLayout } from '../components/FilterDrawerLayout';
 import { ContentContainer } from '../components/ContentContainer';
 import { DataValueCell } from '../components/DataValueCell';
-import { ActionsCell, ActionsColumnHeader, ResultsTable } from '../components/ResultsTable';
+import { ResultsTable, SelectableRow } from '../components/ResultsTable';
 import { ExportModal } from '../components/ExportModal';
 import { FilterFormItemsContainer } from '../components/FilterFormItemsContainer';
 import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
@@ -50,6 +50,12 @@ import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail, GoabTableOnSortDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
 import { SortableColumnHeader, toSortChange } from '../components/SortableColumnHeader';
+
+// Tags are managed from within the row, so a click on one of their controls selects the tag rather
+// than opening the response.
+const ROW_CONTROLS = 'a, button, input, select, textarea, [role="button"], goa-filter-chip, goa-icon-button';
+
+const isRowControl = (target: EventTarget) => target instanceof Element && !!target.closest(ROW_CONTROLS);
 
 interface ResponseRowProps {
   dispatch: AppDispatch;
@@ -76,8 +82,25 @@ const ResponseRow: FunctionComponent<ResponseRowProps> = ({
     }
   }, [dispatch, hasSupportTopic, form, topic]);
 
+  const open = () => navigate(form.id);
+
   return (
-    <tr key={form.urn}>
+    <SelectableRow
+      tabIndex={0}
+      aria-label={`Open response created ${form.created.toFormat('LLL d, yyyy')}`}
+      onClick={(event) => {
+        if (!isRowControl(event.target)) {
+          open();
+        }
+      }}
+      onKeyDown={(event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && !isRowControl(event.target)) {
+          // Space would otherwise scroll the results.
+          event.preventDefault();
+          open();
+        }
+      }}
+    >
       <td>{topic?.requiresAttention && <GoabIcon type="mail-unread" size="small" ariaLabel="mail-unread" />}</td>
       <td>{form.created.toFormat('LLL d, yyyy')}</td>
       <td>{form.status}</td>
@@ -92,14 +115,7 @@ const ResponseRow: FunctionComponent<ResponseRowProps> = ({
           </DataValueCell>
         );
       })}
-      <ActionsCell>
-        <GoabButtonGroup alignment="end">
-          <GoabButton size="compact" type="secondary" onClick={() => navigate(form.id)}>
-            Open
-          </GoabButton>
-        </GoabButtonGroup>
-      </ActionsCell>
-    </tr>
+    </SelectableRow>
   );
 };
 
@@ -269,7 +285,6 @@ export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) =
                   {name}
                 </SortableColumnHeader>
               ))}
-              <ActionsColumnHeader>Actions</ActionsColumnHeader>
             </tr>
           </thead>
           <tbody>
@@ -284,7 +299,7 @@ export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) =
                 onTag={() => setShowTagResponse({ name: '', urn: form.urn })}
               />
             ))}
-            <RowSkeleton columns={5 + dataValues.length} show={busy.loading} />
+            <RowSkeleton columns={4 + dataValues.length} show={busy.loading} />
             <RowLoadMore
               columns={4 + dataValues.length}
               next={next}
