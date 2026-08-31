@@ -6,6 +6,12 @@ import { Responses } from './Responses';
 import { findForms, getDefaultFormCriteria, getDefaultResultsSort } from '../state';
 import { FormStatus } from '../state/types';
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
+
 jest.mock('../state', () => {
   const actual = jest.requireActual('../state');
   return {
@@ -138,6 +144,7 @@ const renderResponses = (state = createState()) => {
 describe('Responses', () => {
   beforeEach(() => {
     (findForms as unknown as jest.Mock).mockClear();
+    mockNavigate.mockClear();
   });
 
   it('should render the responses table and filters trigger', () => {
@@ -277,5 +284,53 @@ describe('Responses', () => {
 
     expect(baseElement.querySelector("goa-push-drawer[testid='filter-drawer']").getAttribute('open')).toBe('true');
     expect(baseElement.querySelector("goa-button[testId='show-filters']")).toBeFalsy();
+  });
+  const stateWithForm = () =>
+    createState({
+      forms: {
+        'form-1': {
+          urn: formUrn,
+          id: 'form-1',
+          formId: 'form-1',
+          status: FormStatus.submitted,
+          created: '2026-08-01T12:00:00.000Z',
+          submitted: '2026-08-01T12:00:00.000Z',
+          lastAccessed: '2026-08-01T12:00:00.000Z',
+          createdBy: { id: 'user-1', name: 'Test User' },
+          applicant: { addressAs: 'Test User' },
+          data: { firstName: 'Ada' },
+        },
+      },
+      formResults: ['form-1'],
+    });
+
+  it('should open the response when its row is selected', () => {
+    const { getByText } = renderResponses(stateWithForm());
+
+    fireEvent.click(getByText('Ada').closest('tr'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('form-1');
+  });
+
+  it('should open the response when its row is selected from the keyboard', () => {
+    const { getByText } = renderResponses(stateWithForm());
+
+    fireEvent.keyDown(getByText('Ada').closest('tr'), { key: 'Enter' });
+
+    expect(mockNavigate).toHaveBeenCalledWith('form-1');
+  });
+
+  it('should not open the response when a control in the row is used', () => {
+    const { baseElement } = renderResponses(stateWithForm());
+
+    fireEvent.click(baseElement.querySelector('goa-icon-button'));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('should no longer offer a separate actions column', () => {
+    const { queryByText } = renderResponses(stateWithForm());
+
+    expect(queryByText('Actions')).toBeNull();
   });
 });

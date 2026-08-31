@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
-import { ActionsCell, ActionsColumnHeader, ResultsTable } from './ResultsTable';
+import { fireEvent, render } from '@testing-library/react';
+import { ResultsTable, SelectableRow } from './ResultsTable';
 
 // goa-table isn't registered in tests, so a stub with a shadow root stands in for it.
 class StubTable extends HTMLElement {
@@ -9,23 +9,23 @@ class StubTable extends HTMLElement {
   }
 }
 
-const renderTable = () =>
-  render(
+const renderTable = (onSelect = jest.fn()) => ({
+  onSelect,
+  ...render(
     <ResultsTable width="100%">
       <thead>
         <tr>
           <th>Submitted on</th>
-          <ActionsColumnHeader>Actions</ActionsColumnHeader>
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <SelectableRow onClick={onSelect}>
           <td>Aug 25, 2026</td>
-          <ActionsCell>Open</ActionsCell>
-        </tr>
+        </SelectableRow>
       </tbody>
     </ResultsTable>,
-  );
+  ),
+});
 
 describe('ResultsTable', () => {
   beforeAll(() => {
@@ -39,16 +39,17 @@ describe('ResultsTable', () => {
     expect(style.textContent).toContain('overflow-x: auto');
   });
 
-  it('should render the actions column as a heading and cell of the table', () => {
+  it('should show a selectable row as clickable', () => {
     const { getByText } = renderTable();
 
-    expect(getByText('Actions').tagName).toBe('TH');
-    expect(getByText('Open').tagName).toBe('TD');
+    expect(getComputedStyle(getByText('Aug 25, 2026').closest('tr')).cursor).toBe('pointer');
   });
 
-  it('should stick the actions column to the right edge of the table', () => {
-    const { getByText } = renderTable();
+  it('should select the row when it is clicked', () => {
+    const { getByText, onSelect } = renderTable();
 
-    expect(getComputedStyle(getByText('Open')).position).toBe('sticky');
+    fireEvent.click(getByText('Aug 25, 2026').closest('tr'));
+
+    expect(onSelect).toHaveBeenCalled();
   });
 });

@@ -35,19 +35,17 @@ export const ResultsTable: FunctionComponent<GoabTableProps> = (props) => {
   );
 };
 
-// Heading and cell of the trailing column of row actions. The column sticks to the right edge so
-// that actions are still reachable when the table is scrolled.
-const stickyRight = `
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  border-left: 1px solid var(--goa-color-greyscale-200);
-`;
+// Row of a results table that opens its item when selected. The whole row is the target, so it
+// highlights under the pointer and takes focus so it can be selected from the keyboard.
+export const SelectableRow = styled.tr`
+  cursor: pointer;
 
-export const ActionsColumnHeader = styled.th`
-  ${stickyRight}
-`;
+  &:hover td {
+    background: var(--goa-color-surface-item-hover);
+  }
 
-export const ActionsCell = styled.td`
-  ${stickyRight}
+  &:focus-visible {
+    outline: 2px solid var(--goa-color-interactive-focus);
+    outline-offset: -2px;
+  }
 `;
