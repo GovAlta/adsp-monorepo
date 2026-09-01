@@ -171,7 +171,7 @@ describe('CommentsViewer', () => {
     expect(screen.getByText('March 1 2024, 9:00 am')).toBeInTheDocument();
   });
 
-  test('names today rather than giving it a weekday', () => {
+  test('shows only the time for a comment created today', () => {
     // Arrange
     const props = createProps({ comments: [createComment({ createdOn: new Date(2026, 7, 21, 9, 30, 0) })] });
 
@@ -179,7 +179,7 @@ describe('CommentsViewer', () => {
     render(<CommentsViewer {...props} />);
 
     // Assert
-    expect(screen.getByText('Today, 9:30 am')).toBeInTheDocument();
+    expect(screen.getByText('9:30 am')).toBeInTheDocument();
   });
 
   test('formats the timestamp with a date for the same week number of a past year', () => {

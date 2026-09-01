@@ -53,10 +53,10 @@ interface CommentsViewerProps {
 function formatTimestamp(timestamp: Date): string {
   const now = moment();
   const value = moment(timestamp);
-  // Today is named rather than given its weekday, the way a messaging app labels it; "Tuesday"
-  // reads as some other Tuesday when it is in fact the last hour.
+  // Today carries no day at all, the way a text message thread shows only a time; naming the
+  // weekday reads as some other Tuesday when it is in fact the last hour.
   if (value.isSame(now, 'day')) {
-    return value.format('[Today], h:mm a');
+    return value.format('h:mm a');
   }
   // Don't include the year if the timestamp is for the current year.
   const sameYear = value.year() === now.year();
