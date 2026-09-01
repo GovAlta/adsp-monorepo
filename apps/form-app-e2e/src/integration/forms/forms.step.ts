@@ -656,6 +656,7 @@ When(
       .find('li')
       .contains(addressParts[2])
       .click({ force: true });
+    cy.wait(1000);
   }
 );
 
