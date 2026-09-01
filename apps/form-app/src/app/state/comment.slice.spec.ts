@@ -250,7 +250,7 @@ describe('comment slice messages', () => {
     const paged = commentReducer(loaded, {
       type: loadComments.fulfilled.type,
       payload: { results: [{ id: 8, content: 'older' }], page: {} },
-      meta: { arg: { topic: TOPIC, after: 'page-2' } },
+      meta: { arg: { topic: TOPIC, next: 'page-2' } },
     });
 
     expect(paged.comments.results.map((r) => r.id)).toEqual([9, 8]);
