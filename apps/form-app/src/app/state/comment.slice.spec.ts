@@ -222,6 +222,40 @@ describe('comment slice messages', () => {
     );
   });
 
+  // The socket refresh after a new comment reloads the first page with no cursor; appending it
+  // duplicated every message already on screen.
+  it('replaces rather than appends when refreshing without a cursor', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8, content: 'first' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const refreshed = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9, content: 'second' }, { id: 8, content: 'first' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    expect(refreshed.comments.results.map((r) => r.id)).toEqual([9, 8]);
+  });
+
+  it('still appends when loading an older page with a cursor', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9, content: 'newer' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const paged = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8, content: 'older' }], page: {} },
+      meta: { arg: { topic: TOPIC, after: 'page-2' } },
+    });
+
+    expect(paged.comments.results.map((r) => r.id)).toEqual([9, 8]);
+  });
+
   // Comments loaded into the drawer are what the next open marks as read.
   it('tracks the latest comment loaded into the drawer', () => {
     const state = commentReducer(stateWithTopic, {
