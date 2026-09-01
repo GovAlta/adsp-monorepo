@@ -53,11 +53,18 @@ interface CommentsViewerProps {
 function formatTimestamp(timestamp: Date): string {
   const now = moment();
   const value = moment(timestamp);
+  // Today is named rather than given its weekday, the way a messaging app labels it; "Tuesday"
+  // reads as some other Tuesday when it is in fact the last hour.
+  if (value.isSame(now, 'day')) {
+    return value.format('[Today], h:mm a');
+  }
   // Don't include the year if the timestamp is for the current year.
-  const year = value?.year() === now.year() ? '' : ' YYYY';
-  // Show day of the week if in the current week.
-  const day = value?.week() === now.week() ? 'dddd' : 'MMMM D';
-  return value?.format(`${day}${year}, h:mm a`);
+  const sameYear = value.year() === now.year();
+  const year = sameYear ? '' : ' YYYY';
+  // Show day of the week if in the current week. Week numbers repeat every year, so the year has
+  // to match too, or a message from a year ago reads as one from this week.
+  const day = sameYear && value.week() === now.week() ? 'dddd' : 'MMMM D';
+  return value.format(`${day}${year}, h:mm a`);
 }
 
 const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
@@ -224,7 +231,10 @@ const messagingLayout = css`
         grid-row: 1;
         grid-column: 1;
         justify-self: start;
-        padding: 0 var(--goa-space-xs) var(--goa-space-xs) var(--goa-space-xs);
+        /* Horizontal padding matches the bubble's, so the name and the message text below it
+           start on the same line. The byline and bubble share an edge, whichever side they
+           sit on, so one value lines both sides up. */
+        padding: 0 var(--goa-space-m) var(--goa-space-xs) var(--goa-space-m);
 
         /* Sized with the timestamp so the two read as one line, not a heading over a caption. */
         .author {
