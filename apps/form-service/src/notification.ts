@@ -22,6 +22,7 @@ export interface NotificationService {
     subscriber?: Omit<Subscriber, 'urn'>
   ): Promise<Subscriber>;
   unsubscribe(tenantId: AdspId, urn: AdspId, formId: string): Promise<boolean>;
+  hasSubscribers(tenantId: AdspId, typeId: string, correlationId: string): Promise<boolean>;
   sendCode(tenantId: AdspId, subscriber: Subscriber): Promise<void>;
   verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean>;
 }
@@ -146,6 +147,35 @@ class NotificationServiceImpl implements NotificationService {
       return deleted;
     } catch (err) {
       this.logger.warn(`Error encountered unsubscribing for subscriber ${urn}. ${err}`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
+
+      return false;
+    }
+  }
+
+  // A reviewer becomes reachable for a form by subscribing when they reply, so the presence of a
+  // subscription is what tells us whether anyone is part of the conversation.
+  async hasSubscribers(tenantId: AdspId, typeId: string, correlationId: string): Promise<boolean> {
+    try {
+      const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
+      const subscriptionUrl = new URL(`v1/types/${typeId}/subscriptions`, apiUrl);
+
+      const token = await this.tokenProvider.getAccessToken();
+      const { data } = await axios.get<{ results: unknown[] }>(subscriptionUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          tenantId: tenantId.toString(),
+          top: 1,
+          criteria: JSON.stringify({ subscriptionMatch: { correlationId } }),
+        },
+      });
+
+      return data?.results?.length > 0;
+    } catch (err) {
+      // Treated as nobody being subscribed, so the question still reaches the configured address.
+      this.logger.warn(`Error encountered checking subscribers of ${typeId} for ${correlationId}. ${err}`, {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });

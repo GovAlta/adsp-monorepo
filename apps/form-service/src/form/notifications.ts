@@ -1,5 +1,14 @@
 import { Channel, NotificationType } from '@abgov/adsp-service-sdk';
-import { FORM_CREATED, FORM_LOCKED, FORM_SUBMITTED, FORM_UNLOCKED, FORM_SET_TO_DRAFT } from './events';
+import {
+  FORM_CREATED,
+  FORM_LOCKED,
+  FORM_MESSAGE_FORWARDED,
+  FORM_MESSAGE_TO_APPLICANT,
+  FORM_MESSAGE_TO_REVIEWER,
+  FORM_SUBMITTED,
+  FORM_UNLOCKED,
+  FORM_SET_TO_DRAFT,
+} from './events';
 
 const FORM_EVENT_NAMESPACE = 'form-service';
 
@@ -128,6 +137,81 @@ export const FormStatusNotificationType: NotificationType = {
             '{{#if event.payload.form.formDraftUrl}} ' +
             'Use the following link to see a copy of your submitted form: {{ event.payload.form.formDraftUrl }}' +
             '{{/if}}',
+        },
+      },
+    },
+  ],
+};
+
+// Messages between an applicant and a reviewer are notified by email so that neither has to sign in
+// to find out something is waiting. The address is read off the event rather than from a
+// subscription, so no subscriber has to be registered per form.
+export const FormMessageNotificationType: NotificationType = {
+  name: 'form-message-notifications',
+  displayName: 'Form message notifications',
+  description: 'Provides notification of messages sent between a form applicant and a reviewer.',
+  publicSubscribe: true,
+  subscriberRoles: [],
+  channels: [Channel.email],
+  addressPath: 'recipientEmail',
+  events: [
+    {
+      namespace: FORM_EVENT_NAMESPACE,
+      name: FORM_MESSAGE_TO_APPLICANT,
+      templates: {
+        email: {
+          subject: 'New message about your {{ event.payload.form.definition.name }} submission',
+          title: '{{ event.payload.form.definition.name }}',
+          subtitle: 'You have a new message',
+          body: `
+<section>
+  <p>You have received a message regarding your <b>{{ event.payload.form.definition.name }}</b> submission. Please log in to the form application to read your message and respond.</p>
+</section>`,
+        },
+      },
+    },
+    {
+      namespace: FORM_EVENT_NAMESPACE,
+      name: FORM_MESSAGE_FORWARDED,
+      templates: {
+        email: {
+          subject: 'New message from a {{ event.payload.form.definition.name }} applicant',
+          title: '{{ event.payload.form.definition.name }}',
+          subtitle: 'A message needs a response',
+          body: `
+<section>
+  <p>The following message from a <b>{{ event.payload.form.definition.name }}</b> applicant has been received.</p>
+  <blockquote>{{ event.payload.message }}</blockquote>
+  <p>Please log in to the form admin application to read the message and respond.</p>
+</section>`,
+        },
+      },
+    },
+  ],
+};
+
+// Reviewers aren't recorded against a form, so they make themselves reachable by subscribing when
+// they reply. That subscription is what makes a reviewer "known" for a conversation.
+export const FormMessageReviewerNotificationType: NotificationType = {
+  name: 'form-message-reviewer-notifications',
+  displayName: 'Form message notifications for reviewers',
+  description: 'Provides notification to reviewers of messages sent by a form applicant.',
+  publicSubscribe: false,
+  subscriberRoles: [],
+  channels: [Channel.email],
+  events: [
+    {
+      namespace: FORM_EVENT_NAMESPACE,
+      name: FORM_MESSAGE_TO_REVIEWER,
+      templates: {
+        email: {
+          subject: 'New message from a {{ event.payload.form.definition.name }} applicant',
+          title: '{{ event.payload.form.definition.name }}',
+          subtitle: 'You have a new message',
+          body: `
+<section>
+  <p>You have received a message from a <b>{{ event.payload.form.definition.name }}</b> applicant. Please log in to the form admin application to read your message and respond.</p>
+</section>`,
         },
       },
     },

@@ -38,6 +38,7 @@ describe('delete', () => {
     unsubscribe: jest.fn(),
     sendCode: jest.fn(),
     verifyCode: jest.fn(),
+    hasSubscribers: jest.fn(),
   };
 
   const validationService: ValidationService = {

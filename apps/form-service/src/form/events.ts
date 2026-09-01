@@ -14,6 +14,10 @@ export const FORM_SET_TO_DRAFT = 'form-to-draft';
 export const FORM_SUBMITTED = 'form-submitted';
 export const FORM_ARCHIVED = 'form-archived';
 
+export const FORM_MESSAGE_TO_APPLICANT = 'form-message-to-applicant';
+export const FORM_MESSAGE_TO_REVIEWER = 'form-message-to-reviewer';
+export const FORM_MESSAGE_FORWARDED = 'form-message-forwarded';
+
 export const SUBMISSION_DISPOSITIONED = 'submission-dispositioned';
 export const SUBMISSION_DELETED = 'submission-deleted';
 
@@ -568,3 +572,122 @@ export const FormQuestionUpdatesStream: Stream = {
     },
   ],
 };
+
+// Notification events for form messages. The payload carries only what the templates need; the
+// message itself is included on the forwarded event alone, since that address is triaging the
+// question rather than reading it in the app.
+const messageFormSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    urn: { type: 'string' },
+    definition: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string', examples: ['Business licence application'] },
+      },
+    },
+  },
+};
+
+export const FormMessageToApplicantDefinition: DomainEventDefinition = {
+  name: FORM_MESSAGE_TO_APPLICANT,
+  description: 'Signalled when a reviewer sends a message to the applicant of a form.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      form: messageFormSchema,
+      recipientEmail: { type: 'string' },
+    },
+  },
+};
+
+export const FormMessageToReviewerDefinition: DomainEventDefinition = {
+  name: FORM_MESSAGE_TO_REVIEWER,
+  description: 'Signalled when an applicant sends a message and a reviewer is part of the conversation.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      form: messageFormSchema,
+    },
+  },
+};
+
+export const FormMessageForwardedDefinition: DomainEventDefinition = {
+  name: FORM_MESSAGE_FORWARDED,
+  description:
+    'Signalled when an applicant sends a message, no reviewer is part of the conversation, and the ' +
+    'form definition configures an address to forward questions to.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      form: messageFormSchema,
+      recipientEmail: { type: 'string' },
+      message: { type: 'string' },
+    },
+  },
+};
+
+function mapMessageForm(apiId: AdspId, form: FormEntity) {
+  return {
+    id: form.id,
+    urn: `${apiId}:/forms/${form.id}`,
+    definition: {
+      id: form.definition?.id,
+      name: form.definition?.name,
+    },
+  };
+}
+
+function messageCorrelationId(apiId: AdspId, form: FormEntity) {
+  return `${apiId}:/forms/${form.id}`;
+}
+
+function messageContext(form: FormEntity) {
+  return { definitionId: form.definition?.id, formId: form.id };
+}
+
+export function formMessageToApplicant(
+  apiId: AdspId,
+  form: FormEntity,
+  recipientEmail: string,
+  timestamp: Date,
+): DomainEvent {
+  return {
+    name: FORM_MESSAGE_TO_APPLICANT,
+    timestamp,
+    tenantId: form.tenantId,
+    correlationId: messageCorrelationId(apiId, form),
+    context: messageContext(form),
+    payload: { form: mapMessageForm(apiId, form), recipientEmail },
+  };
+}
+
+export function formMessageToReviewer(apiId: AdspId, form: FormEntity, timestamp: Date): DomainEvent {
+  return {
+    name: FORM_MESSAGE_TO_REVIEWER,
+    timestamp,
+    tenantId: form.tenantId,
+    correlationId: messageCorrelationId(apiId, form),
+    context: messageContext(form),
+    payload: { form: mapMessageForm(apiId, form) },
+  };
+}
+
+export function formMessageForwarded(
+  apiId: AdspId,
+  form: FormEntity,
+  recipientEmail: string,
+  message: string,
+  timestamp: Date,
+): DomainEvent {
+  return {
+    name: FORM_MESSAGE_FORWARDED,
+    timestamp,
+    tenantId: form.tenantId,
+    correlationId: messageCorrelationId(apiId, form),
+    context: messageContext(form),
+    payload: { form: mapMessageForm(apiId, form), recipientEmail, message },
+  };
+}
