@@ -231,10 +231,10 @@ const messagingLayout = css`
         grid-row: 1;
         grid-column: 1;
         justify-self: start;
-        /* Horizontal padding matches the bubble's, so the name and the message text below it
-           start on the same line. The byline and bubble share an edge, whichever side they
-           sit on, so one value lines both sides up. */
-        padding: 0 var(--goa-space-m) var(--goa-space-xs) var(--goa-space-m);
+        /* No horizontal padding, so the byline sits flush with the edge of the bubble below it.
+           The byline and bubble share an edge whichever side they sit on, so dropping both
+           lines up the received and sent sides alike. */
+        padding: 0 0 var(--goa-space-xs) 0;
 
         /* Sized with the timestamp so the two read as one line, not a heading over a caption. */
         .author {
