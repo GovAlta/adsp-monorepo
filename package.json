@@ -347,6 +347,7 @@
     "yaml": "^2.4.2"
   },
   "overrides": {
+    "less": "4.8.1",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/core": "2.10.0",
     "nx": {
