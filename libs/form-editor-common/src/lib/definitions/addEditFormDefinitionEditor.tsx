@@ -38,7 +38,15 @@ import {
 } from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+// clean-code-ignore: RULE-19 — no test harness for this editor container; the review tab it hosts is
+// covered by ./reviewConfigurationTab.spec.tsx.
+import {
+  isNotEmptyCheck,
+  wordMaxLengthCheck,
+  badCharsCheck,
+  characterCheck,
+  validationPattern,
+} from '@lib/validation/checkInput';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { AppDispatch, RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -380,6 +388,8 @@ export function AddEditFormDefinitionEditor({
     isNotEmptyCheck('name'),
   )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
+    // Optional, so an empty value passes; characterCheck returns no error for one.
+    .add('questionsEmail', 'questionsEmail', characterCheck(validationPattern.validEmail))
     .build();
 
   const getQueueTaskToProcessValue = () => {
@@ -1168,7 +1178,12 @@ export function AddEditFormDefinitionEditor({
                         <ReviewConfigurationTab
                           schema={dataSchema}
                           reviewConfiguration={definition.reviewConfiguration}
-                          onChange={(reviewConfiguration) => setDefinition({ reviewConfiguration })}
+                          questionsEmailError={errors?.['questionsEmail']}
+                          onChange={(reviewConfiguration) => {
+                            validators.remove('questionsEmail');
+                            validators['questionsEmail'].check(reviewConfiguration.questionsEmail || '');
+                            setDefinition({ reviewConfiguration });
+                          }}
                         />
                       </EditorTabScroll>
                     </BorderBottom>

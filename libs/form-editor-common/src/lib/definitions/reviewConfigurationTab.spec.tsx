@@ -182,4 +182,64 @@ describe('ReviewConfigurationTab', () => {
     expect(queryByTestIdAttr(container, 'stale-path-badge')).toBeTruthy();
     expect(screen.getByTestId('review-column-path-removedField').textContent).toBe('removedField');
   });
+  it('edits the address that questions are forwarded to', () => {
+    const onChange = jest.fn();
+    const { container } = render(
+      <ReviewConfigurationTab schema={schema} reviewConfiguration={{ columns: [] }} onChange={onChange} />,
+    );
+
+    fireEvent(
+      container.querySelector('goa-input[name="questions-email"]'),
+      new CustomEvent('_change', { detail: { value: 'intake@gov.ab.ca' } }),
+    );
+
+    expect(onChange).toHaveBeenCalledWith({ columns: [], questionsEmail: 'intake@gov.ab.ca' });
+  });
+
+  it('keeps the forwarding address when a column is added', () => {
+    const onChange = jest.fn();
+    const { container } = render(
+      <ReviewConfigurationTab
+        schema={schema}
+        reviewConfiguration={{ columns: [], questionsEmail: 'intake@gov.ab.ca' }}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent(
+      container.querySelector('goa-dropdown[name="review-field"]'),
+      new CustomEvent('_change', { detail: { value: 'firstName' } }),
+    );
+    fireEvent(queryByTestIdAttr(container, 'add-review-field'), new CustomEvent('_click'));
+
+    expect(onChange).toHaveBeenCalledWith({ columns: [{ path: 'firstName' }], questionsEmail: 'intake@gov.ab.ca' });
+  });
+
+  it('keeps the forwarding address when a column is removed', () => {
+    const onChange = jest.fn();
+    render(
+      <ReviewConfigurationTab
+        schema={schema}
+        reviewConfiguration={{ columns: [{ path: 'firstName' }], questionsEmail: 'intake@gov.ab.ca' }}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('review-column-delete-firstName'));
+
+    expect(onChange).toHaveBeenCalledWith({ columns: [], questionsEmail: 'intake@gov.ab.ca' });
+  });
+
+  it('shows an error for an invalid forwarding address', () => {
+    const { container } = render(
+      <ReviewConfigurationTab
+        schema={schema}
+        reviewConfiguration={{ columns: [] }}
+        questionsEmailError="Please enter a valid email address"
+        onChange={jest.fn()}
+      />,
+    );
+
+    expect(container.querySelector('goa-form-item[error="Please enter a valid email address"]')).toBeTruthy();
+  });
 });

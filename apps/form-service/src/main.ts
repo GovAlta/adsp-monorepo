@@ -17,7 +17,8 @@ import {
   instrumentAxios,
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
+// clean-code-ignore: RULE-19 — service bootstrap; the routers, jobs and types it wires are covered by their own specs.
+import { createLogger, createErrorHandler, AjvValidationService, createAmqpEventService } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyFormMiddleware,
@@ -43,6 +44,12 @@ import {
   FormExportFileType,
   FormQuestionUpdatesStream,
   SubmissionDeletedDefinition,
+  FormMessageToApplicantDefinition,
+  FormMessageToReviewerDefinition,
+  FormMessageForwardedDefinition,
+  FormMessageNotificationType,
+  FormMessageReviewerNotificationType,
+  createMessageNotificationJob,
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -138,9 +145,12 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSetToDraftDefinition,
         SubmissionDispositionedDefinition,
         SubmissionDeletedDefinition,
+        FormMessageToApplicantDefinition,
+        FormMessageToReviewerDefinition,
+        FormMessageForwardedDefinition,
       ],
       eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
-      notifications: [FormStatusNotificationType],
+      notifications: [FormStatusNotificationType, FormMessageNotificationType, FormMessageReviewerNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
         // Register comment service form support comment topic.
@@ -280,6 +290,27 @@ const initializeApp = async (): Promise<express.Application> => {
     logger,
     configurationService,
     notificationService,
+  });
+
+  // Messages are posted straight to the comment service, so form message notifications are driven
+  // off the resulting domain event rather than from the request path.
+  const eventSubscriber = await createAmqpEventService({
+    ...environment,
+    queue: 'form-message-notification',
+    logger,
+  });
+
+  const messageNotificationJob = createMessageNotificationJob({
+    apiId: adspId`${serviceId}:v1`,
+    logger,
+    repository: repositories.formRepository,
+    commentService,
+    notificationService,
+    eventService,
+  });
+
+  eventSubscriber.getItems().subscribe(({ item, done }) => {
+    messageNotificationJob(item).finally(() => done());
   });
 
   applyFormMiddleware(app, {

@@ -73,6 +73,13 @@ export const configurationSchema = {
             },
           },
         },
+        questionsEmail: {
+          anyOf: [
+            { type: 'string', pattern: '^\\S+@\\S+\\.\\S+$' },
+            { type: 'string', maxLength: 0 },
+            { type: 'null' },
+          ],
+        },
       },
     },
   },

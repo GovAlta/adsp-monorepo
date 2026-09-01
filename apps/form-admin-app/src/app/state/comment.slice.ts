@@ -40,6 +40,25 @@ interface NewComment {
 }
 
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
+const NOTIFICATION_SERVICE_ID = 'urn:ads:platform:notification-service';
+const REVIEWER_NOTIFICATION_TYPE_ID = 'form-message-reviewer-notifications';
+
+// Reviewers aren't recorded against a form, so replying is what makes one reachable: it subscribes
+// them for this form using their own token, and that subscription is what tells the form service a
+// reviewer is part of the conversation. Best effort — the reply stands whether or not it succeeds.
+async function subscribeToFormMessages(notificationServiceUrl: string, resourceId: string): Promise<void> {
+  try {
+    const token = await getAccessToken();
+    await axios.post(
+      new URL(`/subscription/v1/types/${REVIEWER_NOTIFICATION_TYPE_ID}/subscriptions`, notificationServiceUrl).href,
+      { criteria: { description: 'Messages from the applicant.', correlationId: resourceId } },
+      { headers: { Authorization: `Bearer ${token}` }, params: { userSub: true } },
+    );
+  } catch (err) {
+    // Nothing to surface to the reviewer; they simply won't be emailed about replies.
+    console.warn(`Unable to subscribe for messages on ${resourceId}.`, err);
+  }
+}
 
 let socket: Socket;
 export const connectStream = createAsyncThunk(
@@ -249,6 +268,10 @@ export const addComment = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+
+      if (topic.resourceId) {
+        await subscribeToFormMessages(config.directory[NOTIFICATION_SERVICE_ID], topic.resourceId);
+      }
 
       return data;
     } catch (err) {
