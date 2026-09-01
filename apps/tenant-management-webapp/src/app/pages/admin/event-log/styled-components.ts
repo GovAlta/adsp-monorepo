@@ -77,3 +77,18 @@ export const DateTimeInput = styled.input`
     outline: none;
   }
 `;
+
+export const SearchActions = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--goa-space-m);
+  margin: var(--goa-space-l) 0;
+`;
+
+export const SmallButton = styled.span`
+  display: inline-block;
+  transform: scale(0.85);
+  transform-origin: left center;
+`;
+
