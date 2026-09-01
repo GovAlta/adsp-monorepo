@@ -347,6 +347,8 @@
     "yaml": "^2.4.2"
   },
   "overrides": {
+    "brace-expansion@1": "1.1.18",
+    "brace-expansion@5": "5.0.9",
     "less": "4.8.1",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/core": "2.10.0",
