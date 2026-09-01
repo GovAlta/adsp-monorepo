@@ -8,9 +8,9 @@ describe('Reports', () => {
 
     expect(getByTestId('reports-title')).toHaveTextContent('Reports');
   });
-  it('marks the page as beta', () => {
-    const { getByAltText } = render(<Reports />);
+  it('marks the page as alpha', () => {
+    const { getByText } = render(<Reports />);
 
-    expect(getByAltText('Reports beta')).toBeInTheDocument();
+    expect(getByText('Alpha')).toBeInTheDocument();
   });
 });
