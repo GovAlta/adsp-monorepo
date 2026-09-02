@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TenantService, TokenProvider, instrumentJob } from '@abgov/adsp-service-sdk';
 import * as schedule from 'node-schedule';
 import { Logger } from 'winston';
 import { createCollectMetricsJob } from './metrics';
@@ -26,7 +26,11 @@ export const createMetricsJobs = ({
   tokenProvider,
   repository,
 }: MetricsJobProps): void => {
-  const collectMetricsJob = createCollectMetricsJob(logger, directory, tenantService, tokenProvider, repository);
+  const collectMetricsJob = instrumentJob(
+    'collect-metrics',
+    createCollectMetricsJob(logger, directory, tenantService, tokenProvider, repository),
+    { logger }
+  );
 
   // Schedule collect metrics job (e.g., daily at midnight)
   schedule.scheduleJob('0 0 * * *', collectMetricsJob);

@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
 import { adspId, AdspId, assertAdspId, LimitToOne, retry } from '../utils';
+import { CacheName, recordCacheResult } from '../metrics/cache';
 
 interface DirectoryEntry {
   urn: string;
@@ -108,6 +109,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
 
     const key = `${id}`;
     let value = this.#directoryCache.get<URL>(key);
+    recordCacheResult(CacheName.Directory, !!value);
     if (!value) {
       await this.retrieveDirectory(id.namespace);
       value = this.#directoryCache.get<URL>(key);
