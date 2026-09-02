@@ -58,6 +58,22 @@ describe('commentReducer', () => {
       expect(state.comments.results.map((r) => r.id)).toEqual([10, 11]);
     });
 
+    it('should replace rather than append when refreshing without a cursor', () => {
+      // The socket refresh after a new comment reloads the first page with no cursor; appending it
+      // duplicated every message already on screen.
+      let state = loadedState(topicA, [comment(10, 'from form A')]);
+      state = commentReducer(
+        state,
+        loadComments.fulfilled(
+          { results: [comment(11, 'the new one'), comment(10, 'from form A')], page: {} },
+          'req',
+          { topic: topicA },
+        ),
+      );
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
+    });
+
     it('should ignore a response for a topic that is no longer loaded', () => {
       let state = loadedState(topicB, []);
       state = commentReducer(state, loadComments.pending('req-b', { topic: topicB }));

@@ -426,10 +426,15 @@ const commentSlice = createSlice({
           state.comments.next = null;
         }
       })
-      .addCase(loadComments.fulfilled, (state, { payload }) => {
+      .addCase(loadComments.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
 
-        state.comments.results = [...state.comments.results, ...payload.results];
+        // A load without a cursor is a refresh of the first page, not a further page to add to
+        // what is already held. Appending it duplicates every message already on screen, which is
+        // what the socket refresh after a new comment was doing.
+        state.comments.results = meta?.arg?.next
+          ? [...state.comments.results, ...payload.results]
+          : payload.results;
         state.comments.next = payload.page.next;
         state.messages.latestCommentId = latestOf(state.messages.latestCommentId, payload.results);
       })
