@@ -128,8 +128,10 @@ class PuppeteerPdfService implements PdfService {
         pdfOptions.footerTemplate = footer || '';
       }
 
-      const buffer = await timeIt(logger, () => page.pdf(pdfOptions));
-      return Readable.from(buffer);
+      const pdf = await timeIt(logger, () => page.pdf(pdfOptions));
+      // page.pdf resolves to a Uint8Array. Readable.from emits a Buffer as a single chunk but
+      // iterates a plain Uint8Array, which would stream the PDF one byte-sized number at a time.
+      return Readable.from(Buffer.from(pdf));
     } finally {
       if (page) await page.close().catch((err) => logger.error('Error closing page:', err));
       if (context) await context.close().catch((err) => logger.error('Error closing context:', err));
