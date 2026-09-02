@@ -1,4 +1,11 @@
-import { AdspId, EventService, TenantService, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  EventService,
+  TenantService,
+  TokenProvider,
+  ConfigurationService,
+  instrumentJob,
+} from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
 import * as schedule from 'node-schedule';
 import { Logger } from 'winston';
@@ -39,7 +46,7 @@ export const createFileJobs = (props: FileJobProps): void => {
 
   // Job pod runs scheduled jobs, and also can handle work items.
   if (environment.POD_TYPE === POD_TYPES.job) {
-    schedule.scheduleJob('0 2 * * *', deleteOldFilesJob);
+    schedule.scheduleJob('0 2 * * *', instrumentJob('delete-old-files', deleteOldFilesJob, { logger: props.logger }));
     props.logger.info(`Scheduled daily delete job.`);
   }
 
