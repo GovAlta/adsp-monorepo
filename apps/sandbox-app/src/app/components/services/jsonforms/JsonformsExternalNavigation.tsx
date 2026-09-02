@@ -46,6 +46,7 @@ import {
 } from './externalNavigationDefinition';
 
 const FORM_APP_ID = 'urn:ads:platform:form-app';
+const HOW_TO_URL = 'https://govalta.github.io/adsp-monorepo/tutorials/form-service/external-navigation.html';
 
 const ContextProvider = ContextProviderFactory();
 
@@ -299,6 +300,16 @@ export const JsonformsExternalNavigation = (): JSX.Element => {
             </ContextProvider>
           </>
         )}
+
+        <h3>How to implement this in your application</h3>
+        <GoabText size="body-m">
+          None of the wiring above is discoverable from the rendered result, so it is written up in the ADSP guide:{' '}
+          <a href={HOW_TO_URL} target="_blank" rel="noopener noreferrer">
+            External navigation
+          </a>
+          . It covers both host shapes — a form in a different application, which is what this page demonstrates, and a
+          form on another page of the same application.
+        </GoabText>
       </GoabContainer>
     </ServiceContainer>
   );

@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import {
   PageReviewContainer,
   ReviewHeader,
@@ -32,7 +32,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
   const jsonForms = useJsonForms();
 
   const stepId = uischema.options?.stepId;
-  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const reportChange = useReviewChange();
   const showChangeButtons = useShowChangeButtons();
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
 
@@ -145,7 +145,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
               <GoabButton
                 type="text"
                 size="compact"
-                onClick={() => formStepperCtx?.goToPage(stepId, targetScope)}
+                onClick={() => reportChange(stepId, targetScope)}
                 testId="address-change-btn"
               >
                 Change
@@ -171,7 +171,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
               <GoabButton
                 type="text"
                 size="compact"
-                onClick={() => formStepperCtx?.goToPage(stepId, targetScope)}
+                onClick={() => reportChange(stepId, targetScope)}
                 testId="address-change-btn"
               >
                 Change
