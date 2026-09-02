@@ -5,7 +5,7 @@ import type { EventSearchCriteria } from '@store/event/models';
 import { distance } from 'fastest-levenshtein';
 import { getEventDefinitions } from '@store/event/actions';
 import { useSearchableDropdown } from '@core-services/app-common';
-import { SearchBox, DateTimeInput } from './styled-components';
+import { SearchBox, DateTimeInput, SearchActions } from './styled-components';
 import { validateEventKey } from './util';
 import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
 
@@ -36,9 +36,10 @@ interface EventSearchFormProps {
   initialValue?: EventSearchCriteria;
   onCancel?: () => void;
   onSearch?: (searchCriteria: EventSearchCriteria) => void;
+  leftAction?: React.ReactNode;
 }
 
-export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCancel, onSearch }) => {
+export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCancel, onSearch, leftAction }) => {
   const [searchCriteria, setSearchCriteria] = useState(() => defaultWeekCriteria());
   const [error, setError] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -190,6 +191,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       setSearchCriteria(resolved);
       dd.setOpen(false);
       dd.setQuery(`${resolved.namespace}:${resolved.name}`);
+      onSearch?.(resolved);
     },
   });
   useEffect(() => {
@@ -331,44 +333,49 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           />
         </GoabFormItem>
       </GoabGrid>
-      <GoabButtonGroup alignment="end">
-        <GoabButton size="compact"
-          type="secondary"
-          onClick={() => {
-            dd.reset();
-            setError(false);
-            setSearchCriteria(initCriteria);
-            onCancel?.();
-          }}
-        >
-          Reset
-        </GoabButton>
-        <GoabButton size="compact"
-          disabled={dd.query.indexOf(':') === -1}
-          onClick={() => {
-            dd.setOpen(false);
-            setError(false);
+      <SearchActions>
+        <div>{leftAction}</div>
+        <GoabButtonGroup alignment="end">
+          <GoabButton
+            size="compact"
+            type="secondary"
+            onClick={() => {
+              dd.reset();
+              setError(false);
+              setSearchCriteria(initCriteria);
+              onCancel?.();
+            }}
+          >
+            Reset
+          </GoabButton>
+          <GoabButton
+            size="compact"
+            disabled={dd.query.indexOf(':') === -1}
+            onClick={() => {
+              dd.setOpen(false);
+              setError(false);
 
-            const resolved = resolveCriteriaFromInput(dd.query);
-            if (!resolved) {
-              setError(true);
-              return;
-            }
-            const validEvent = validateEventKey(dd.query, eventKey);
-            if (!validEvent.ok) {
-              setError(true);
-              setMessage(validEvent.ok ? '' : validEvent.reason);
-            } else {
-              setSearchCriteria(resolved);
-              setMessage(defaultMessage);
-              dd.setQuery(`${resolved.namespace}:${resolved.name}`);
-              onSearch?.(resolved);
-            }
-          }}
-        >
-          Search
-        </GoabButton>
-      </GoabButtonGroup>
+              const resolved = resolveCriteriaFromInput(dd.query);
+              if (!resolved) {
+                setError(true);
+                return;
+              }
+              const validEvent = validateEventKey(dd.query, eventKey);
+              if (!validEvent.ok) {
+                setError(true);
+                setMessage(validEvent.ok ? '' : validEvent.reason);
+              } else {
+                setSearchCriteria(resolved);
+                setMessage(defaultMessage);
+                dd.setQuery(`${resolved.namespace}:${resolved.name}`);
+                onSearch?.(resolved);
+              }
+            }}
+          >
+            Search
+          </GoabButton>
+        </GoabButtonGroup>
+      </SearchActions>
     </div>
   );
 };
