@@ -38,6 +38,7 @@
   },
   "private": true,
   "dependencies": {
+    "@ai-sdk/provider-utils": "^4.0.50",
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
