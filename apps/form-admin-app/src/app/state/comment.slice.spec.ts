@@ -126,6 +126,17 @@ describe('commentReducer', () => {
       expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
     });
 
+    // Posting waits on the subscription call, so the refresh the comment-created event triggers
+    // usually gets the comment into the list first.
+    it('should not add the comment a refresh has already brought in', () => {
+      const state = commentReducer(
+        loadedState(topicA, [comment(11, 'new'), comment(10, 'from form A')]),
+        addComment.fulfilled(comment(11, 'new'), 'req', { topic: topicA, comment: { content: 'new' } }),
+      );
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
+    });
+
     it('should not add the comment to a list of another topic', () => {
       const state = commentReducer(
         loadedState(topicA, [comment(10, 'from form A')]),

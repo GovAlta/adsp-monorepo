@@ -446,7 +446,11 @@ const commentSlice = createSlice({
       })
       .addCase(addComment.fulfilled, (state, { payload }) => {
         state.busy.executing = false;
-        state.comments.results.unshift(payload);
+        // The comment-created event refreshes the list, and that refresh can land first, so the
+        // comment posted may already be held; adding it again shows the message twice.
+        if (!state.comments.results.some(({ id }) => id === payload.id)) {
+          state.comments.results.unshift(payload);
+        }
         state.draft = { title: null, content: null };
         state.messages.latestCommentId = latestOf(state.messages.latestCommentId, [payload]);
       })
