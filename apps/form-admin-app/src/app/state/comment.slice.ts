@@ -464,7 +464,13 @@ const commentSlice = createSlice({
       })
       .addCase(addComment.fulfilled, (state, { payload, meta }) => {
         state.busy.executing = false;
-        if (state.comments.topicId === meta.arg.topic?.id) {
+        // The comment-created event refreshes the list, and that refresh can land first, so the
+        // comment posted may already be held. Adding it again showed the poster's own message
+        // twice, and nothing replaced the list afterwards to take the second copy away.
+        if (
+          state.comments.topicId === meta.arg.topic?.id &&
+          !state.comments.results.some(({ id }) => id === payload.id)
+        ) {
           state.comments.results.unshift(payload);
         }
         state.draft = { title: null, content: null };

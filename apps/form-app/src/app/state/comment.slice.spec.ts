@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import {
+  addComment,
   commentReducer,
   connectStream,
   loadComments,
@@ -254,6 +255,38 @@ describe('comment slice messages', () => {
     });
 
     expect(paged.comments.results.map((r) => r.id)).toEqual([9, 8]);
+  });
+
+  // The refresh the comment-created event triggers can land before the post resolves, and the
+  // message was then held twice with nothing to take the second copy away.
+  it('does not add a posted comment the refresh already brought in', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9, content: 'mine' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const posted = commentReducer(loaded, {
+      type: addComment.fulfilled.type,
+      payload: { id: 9, content: 'mine' },
+    });
+
+    expect(posted.comments.results.map((r) => r.id)).toEqual([9]);
+  });
+
+  it('adds a posted comment the refresh has not brought in', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8, content: 'theirs' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const posted = commentReducer(loaded, {
+      type: addComment.fulfilled.type,
+      payload: { id: 9, content: 'mine' },
+    });
+
+    expect(posted.comments.results.map((r) => r.id)).toEqual([9, 8]);
   });
 
   // Comments loaded into the drawer are what the next open marks as read.
