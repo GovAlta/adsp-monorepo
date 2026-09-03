@@ -11,9 +11,12 @@ import {
   UnsubscribeAction,
   FindSubscribersAction,
   FindSubscribersSuccess,
+  CreateSubscriberAction,
+  CreateSubscriberSuccess,
   UpdateSubscriberAction,
   UpdateSubscriberSuccess,
   FIND_SUBSCRIBERS,
+  CREATE_SUBSCRIBER,
   UPDATE_SUBSCRIBER,
   GET_TYPE_SUBSCRIPTIONS,
   GetTypeSubscriptionsActions,
@@ -56,7 +59,7 @@ export function* getMySubscriber(): SagaIterator {
         `${configBaseUrl}/subscription/v1/subscribers/my-subscriber?includeSubscriptions=true`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const result = response.data;
@@ -86,7 +89,7 @@ function* subscribe(action: SubscribeAction): SagaIterator {
         { data: 'data' },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const result = response.data.subscriber;
@@ -100,7 +103,7 @@ function* subscribe(action: SubscribeAction): SagaIterator {
       yield put(
         SuccessNotification({
           message: `You are subscribed! You will receive notifications on ${email} for ${action.payload.notificationInfo.data.type}.`,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -128,7 +131,7 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
         yield put(
           SuccessNotification({
             message: `You are unsubscribed! You will no longer receive notifications for ${type}.`,
-          })
+          }),
         );
       }
     } catch (err) {
@@ -169,14 +172,14 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
       UpdateIndicator({
         show: true,
         message: 'Loading...',
-      })
+      }),
     );
 
     yield put(
       UpdateLoadingState({
         name: Events.search,
         state: 'start',
-      })
+      }),
     );
 
     yield call(fetchCoreNotificationTypes);
@@ -193,27 +196,27 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
 
     yield put(
       UpdateLoadingState({
         name: Events.search,
         state: 'completed',
-      })
+      }),
     );
   } catch {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
 
     yield put(
       UpdateLoadingState({
         name: Events.search,
         state: 'error',
-      })
+      }),
     );
   }
 }
@@ -239,7 +242,7 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
         `${configBaseUrl}/subscription/v1/types/${type}/subscriptions?${
           subscriberCriteria ? `subscriberCriteria=${subscriberCriteria}` : ''
         }&top=10${after ? `&after=${after}` : ''}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const subscriptions = response.data.results;
@@ -270,6 +273,22 @@ function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
   }
 }
 
+function* createSubscriber(action: CreateSubscriberAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (configBaseUrl && token) {
+    try {
+      const api = new Api(configBaseUrl, token);
+      const subscriber: Subscriber = yield call([api, api.create], action.payload.subscriber);
+      yield put(CreateSubscriberSuccess(subscriber));
+      yield put(SuccessNotification({ message: 'Subscriber added successfully.' }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield call(getAccessToken);
@@ -286,7 +305,7 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   if (criteria.email) {
@@ -319,14 +338,14 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -356,8 +375,8 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
       yield put(
         ResolveSubscriberUserSuccess(
           action.payload.subscriberId,
-          `${baseUrl}/admin/${realm}/console/#/realms/${realm}/users/${user.id}`
-        )
+          `${baseUrl}/admin/${realm}/console/#/realms/${realm}/users/${user.id}`,
+        ),
       );
     }
   } catch {
@@ -391,6 +410,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);
   yield takeEvery(FIND_SUBSCRIBERS_SUCCESS, resolveSubscriberUsers);
   yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);
+  yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
 }
