@@ -392,6 +392,32 @@ describe('SubscriptionEntity', () => {
       expect(updated.criteria).toMatchObject(expect.arrayContaining([expect.any(Object), criteria]));
     });
 
+    // Subscribing is repeated to keep a subscription current; e.g. a form reviewer subscribes for
+    // the form on each message they send, and the criteria would otherwise grow without bound.
+    it('can skip an equivalent criteria', async () => {
+      const criteria = {
+        correlationId: 'test',
+        context: {
+          value: 'test',
+        },
+      };
+
+      const entity = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          criteria: { ...criteria },
+          subscriberId: 'test',
+        },
+        type,
+        subscriber
+      );
+
+      const updated = await entity.updateCriteria(user, { description: 'Again.', ...criteria });
+      expect(updated.criteria).toEqual([criteria]);
+    });
+
     it('can updated criteria with empty criteria', async () => {
       const entity = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,

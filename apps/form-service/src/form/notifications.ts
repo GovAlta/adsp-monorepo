@@ -9,6 +9,7 @@ import {
   FORM_UNLOCKED,
   FORM_SET_TO_DRAFT,
 } from './events';
+import { FormServiceRoles } from './roles';
 
 const FORM_EVENT_NAMESPACE = 'form-service';
 
@@ -193,13 +194,19 @@ export const FormMessageNotificationType: NotificationType = {
 };
 
 // Reviewers aren't recorded against a form, so they make themselves reachable by subscribing when
-// they reply. That subscription is what makes a reviewer "known" for a conversation.
+// they reply. That subscription is what makes a reviewer "known" for a conversation, so the
+// reviewer roles that can post on a form questions topic have to be able to subscribe themselves;
+// without manageSubscribe notification service rejects a subscriber that isn't a subscription admin.
 export const FormMessageReviewerNotificationType: NotificationType = {
   name: 'form-message-reviewer-notifications',
   displayName: 'Form message notifications for reviewers',
   description: 'Provides notification to reviewers of messages sent by a form applicant.',
   publicSubscribe: false,
-  subscriberRoles: [],
+  manageSubscribe: true,
+  subscriberRoles: [
+    `urn:ads:platform:form-service:${FormServiceRoles.Admin}`,
+    `urn:ads:platform:form-service:${FormServiceRoles.Support}`,
+  ],
   channels: [Channel.email],
   events: [
     {
