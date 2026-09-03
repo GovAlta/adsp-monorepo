@@ -29,7 +29,7 @@ import {
 } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { ServiceContainer } from '../../styled-components';
-import { condoTribunalDataSchema, condoTribunalUiSchema } from './condoTribunal';
+import { condoTribunalDataSchema, condoTribunalUiSchema, sampleApplication } from './condoTribunal';
 
 const ContextProvider = ContextProviderFactory();
 
@@ -54,43 +54,9 @@ const describeOutcome = (outcome?: NavigationOutcome): string => {
   }
 };
 
-// Sample answers, so the summary has something to render and every page reports a status. Kept to
-// the fields the review shows a Change button for — filling the whole application is not the point.
-const SAMPLE_DATA: Record<string, unknown> = {
-  whichOfThemApplies: ['Access to condominium documents'],
-  disputeAlreadyTakenToCourt: 'No, there are no other applications',
-  fillingApplicationOnbehalf: 'No',
-  applicantContactDetails: {
-    firstName: 'Dana',
-    lastName: 'Okafor',
-    email: 'dana.okafor@example.com',
-    telephone: '780-555-0134',
-    applicantPhysicalAddress: {
-      addressLine1: '10611 98 Ave NW',
-      city: 'Edmonton',
-      provinceState: 'Alberta',
-      country: 'Canada',
-      postalCodeZip: 'T5K 2P7',
-    },
-  },
-  otherPartyDisputeDetails: {
-    otherPartyPrimaryFirstName: 'Riley',
-    otherPartyPrimaryLastName: 'Chen',
-    otherPartyPrimaryCondoCorporationName: 'Condominium Corporation No. 012 3456',
-  },
-  whenDidIssueHappen: {
-    whenWasIssueDate: '2026-04-17',
-  },
-  describeDispute: {
-    disputeDescription: 'The corporation has not provided the approved AGM minutes after three written requests.',
-    resultOfApplication: 'An order requiring the corporation to release the requested records.',
-  },
-  addSupportingDocuments: 'No, not right now',
-};
-
 export const JsonformsReviewNavigation = (): JSX.Element => {
   const ajv = useMemo(() => createDefaultAjv(), []);
-  const [formData, setFormData] = useState<Record<string, unknown>>(SAMPLE_DATA);
+  const [formData, setFormData] = useState<Record<string, unknown>>(sampleApplication);
   const [navigationTarget, setNavigationTarget] = useState<NavigationTarget>();
   const [log, setLog] = useState<ClickLogEntry[]>([]);
 
@@ -122,7 +88,7 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
   }, []);
 
   const handleReset = useCallback(() => {
-    setFormData(SAMPLE_DATA);
+    setFormData(sampleApplication);
     setNavigationTarget(undefined);
     setLog([]);
   }, []);
