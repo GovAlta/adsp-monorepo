@@ -136,9 +136,10 @@ describe('Notification - Subscribers Tab', () => {
     const addBtn = baseElement.querySelector("goa-button[testId='add-subscriber']");
     fireEvent(addBtn, new CustomEvent('_click'));
 
-    const name = baseElement.querySelector("goa-input[testId='form-name']");
-    const email = baseElement.querySelector("goa-input[testId='form-email']");
-    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
+    await waitFor(() => expect(baseElement.querySelectorAll("goa-input[testId='form-name']")).toHaveLength(2));
+    const name = baseElement.querySelectorAll("goa-input[testId='form-name']")[1];
+    const email = baseElement.querySelectorAll("goa-input[testId='form-email']")[1];
+    const saveBtn = baseElement.querySelectorAll("goa-button[testId='form-save']")[1];
 
     fireEvent(name, new CustomEvent('_change', { detail: { value: 'General mailbox' } }));
     fireEvent(email, new CustomEvent('_change', { detail: { value: 'general.mailbox@gov.ab.ca' } }));
@@ -158,7 +159,7 @@ describe('Notification - Subscribers Tab', () => {
     });
   });
 
-  it('requires a name and valid email when adding a subscriber', () => {
+  it('requires a name and valid email when adding a subscriber', async () => {
     const { baseElement } = render(
       <Provider store={store}>
         <Subscribers />
@@ -167,7 +168,8 @@ describe('Notification - Subscribers Tab', () => {
 
     const createActionCount = store.getActions().filter((action) => action.type === CREATE_SUBSCRIBER).length;
     fireEvent(baseElement.querySelector("goa-button[testId='add-subscriber']"), new CustomEvent('_click'));
-    fireEvent(baseElement.querySelector("goa-button[testId='form-save']"), new CustomEvent('_click'));
+    await waitFor(() => expect(baseElement.querySelectorAll("goa-button[testId='form-save']")).toHaveLength(2));
+    fireEvent(baseElement.querySelectorAll("goa-button[testId='form-save']")[1], new CustomEvent('_click'));
 
     expect(store.getActions().filter((action) => action.type === CREATE_SUBSCRIBER)).toHaveLength(createActionCount);
   });
