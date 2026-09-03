@@ -24,6 +24,12 @@ describe('servicePageUtils', () => {
           url: '/testTenant/services/jsonforms/external-navigation',
           testId: 'jsonformsExternalNavigation',
         },
+        {
+          id: 'jsonformsReviewNavigation',
+          name: 'Review change navigation (CDRT application)',
+          url: '/testTenant/services/jsonforms/review-navigation',
+          testId: 'jsonformsReviewNavigation',
+        },
       ]);
     });
 
@@ -48,6 +54,12 @@ describe('servicePageUtils', () => {
           name: 'External form navigation',
           url: '//services/jsonforms/external-navigation',
           testId: 'jsonformsExternalNavigation',
+        },
+        {
+          id: 'jsonformsReviewNavigation',
+          name: 'Review change navigation (CDRT application)',
+          url: '//services/jsonforms/review-navigation',
+          testId: 'jsonformsReviewNavigation',
         },
       ]);
     });

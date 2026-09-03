@@ -178,6 +178,61 @@ describe('contextProvider', () => {
     expect(component.getByTestId('navigation-target').textContent).toBe('{"pageId":"contact-details"}');
   });
 
+  it('reaches a memoised form tree with a navigation target set after mount', () => {
+    // Arrange
+    // JsonForms memoises its renderers on the form's own state, so the stepper is not re-rendered
+    // by the host changing a target. Reaching it depends entirely on the provider handing out a
+    // different value, which is what mutating the enumerator in place used to prevent.
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext);
+      return <div data-testid="navigation-target">{JSON.stringify(ctx.navigationTarget ?? null)}</div>;
+    };
+    const MemoisedTree = React.memo(() => <Probe />);
+    MemoisedTree.displayName = 'MemoisedTree';
+
+    const component = render(
+      <ContextProvider>
+        <MemoisedTree />
+      </ContextProvider>,
+    );
+    expect(component.getByTestId('navigation-target').textContent).toBe('null');
+
+    // Act
+    component.rerender(
+      <ContextProvider navigationTarget={{ pageId: 'contact-details' }}>
+        <MemoisedTree />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(component.getByTestId('navigation-target').textContent).toBe('{"pageId":"contact-details"}');
+  });
+
+  it('leaves the context value alone when nothing a host controls has changed', () => {
+    // Arrange
+    const seen: unknown[] = [];
+    const Probe = () => {
+      seen.push(useContext(JsonFormContext));
+      return null;
+    };
+
+    // Act
+    const component = render(
+      <ContextProvider showChangeButtons={false}>
+        <Probe />
+      </ContextProvider>,
+    );
+    component.rerender(
+      <ContextProvider showChangeButtons={false}>
+        <Probe />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(seen[1]);
+  });
+
   it('exposes the navigation outcome callback to the form tree', () => {
     // Arrange
     const onNavigationChange = jest.fn();

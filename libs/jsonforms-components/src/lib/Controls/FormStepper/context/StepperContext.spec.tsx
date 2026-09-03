@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './index';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import Ajv from 'ajv';
-import { JsonFormContext } from '../../../Context';
+import { ContextProviderFactory, JsonFormContext } from '../../../Context';
 import { getCategoryStatus, PageStatus } from '../CategoryStatus';
 
 describe('JsonFormsStepperContext', () => {
@@ -206,6 +206,49 @@ describe('JsonFormsStepperContext', () => {
 
       // Assert
       expect(saveForm).toHaveBeenCalledWith({ firstName: 'Alex' });
+    });
+
+    // The other tests here hand the stepper a fresh context object, which is not what a host does.
+    // A host renders ContextProviderFactory's provider and changes navigationTarget on it, and the
+    // stepper sits inside JsonForms' memoised renderers — so the target only arrives if the
+    // provider hands out a different value. It used to hand out the same mutated object, and a
+    // target set on a Change click went nowhere.
+    test('applies a target the host sets after the form has mounted', () => {
+      // Arrange
+      const ContextProvider = ContextProviderFactory();
+      const MemoisedStepper = React.memo(() => (
+        <JsonFormsStepperContextProvider
+          StepperProps={
+            {
+              ...stepperBaseProps,
+              uischema: navigationUischema,
+              data: { firstName: 'Alex' },
+              customDispatch: mockDispatch,
+            } as unknown as CategorizationStepperLayoutRendererProps
+          }
+        >
+          <div />
+        </JsonFormsStepperContextProvider>
+      ));
+      MemoisedStepper.displayName = 'MemoisedStepper';
+
+      const tree = (navigationTarget?: { pageId: string }) => (
+        <ContextProvider navigationTarget={navigationTarget}>
+          <MemoisedStepper />
+        </ContextProvider>
+      );
+
+      const { rerender } = render(tree());
+      expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'page/to/index' }));
+
+      // Act
+      rerender(tree({ pageId: 'contact-details' }));
+
+      // Assert
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'page/to/index',
+        payload: { id: 1, targetScope: undefined },
+      });
     });
 
     test('reports an unknown page without dispatching navigation', () => {

@@ -72,6 +72,22 @@ type Props = ExternalNavigationProps & {
   formId?: string;
 };
 
+// clean-code-ignore: RULE-19 — see the file-header note; ./context.spec.tsx covers this.
+// A shared empty default: a fresh [] on every render would read as a change and hand consumers a
+// new context value for nothing.
+const NO_AUTO_POPULATED_DATA: AutoPopulatedValue[] = [];
+
+// The props a host can change after mount. See the note where they are applied.
+const HOST_CONTROLLED_KEYS = [
+  'formUrl',
+  'isFormSubmitted',
+  'showChangeButtons',
+  'autoPopulatedData',
+  'formId',
+  'navigationTarget',
+  'onNavigationChange',
+] as const;
+
 export class ContextProviderClass {
   selfProps: Props | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,15 +205,28 @@ export class ContextProviderClass {
     if (!props.children) {
       return null;
     }
-    if (props.formUrl) {
-      this.baseEnumerator.formUrl = props.formUrl;
+    // Everything below is a value a host can change while the form is mounted, so it is applied by
+    // replacing the enumerator rather than by writing into it. The consumers all sit behind
+    // JsonForms' memoised renderers, which re-render only when the form's own state changes — React
+    // reaches past that memoisation for a context consumer, but only when the provider's value is a
+    // different object. Mutating the enumerator in place left every one of these stale until
+    // something else happened to re-render the form: a navigation target a host set on a Change
+    // click was simply never seen.
+    const next = {
+      ...this.baseEnumerator,
+      formUrl: props.formUrl || this.baseEnumerator.formUrl,
+      isFormSubmitted: props.isFormSubmitted ?? false,
+      showChangeButtons: props.showChangeButtons ?? true,
+      autoPopulatedData: props.autoPopulatedData ?? NO_AUTO_POPULATED_DATA,
+      formId: props.formId,
+      navigationTarget: props.navigationTarget,
+      onNavigationChange: props.onNavigationChange,
+    };
+
+    if (HOST_CONTROLLED_KEYS.some((key) => next[key] !== this.baseEnumerator[key])) {
+      this.baseEnumerator = next;
     }
-    this.baseEnumerator.isFormSubmitted = props.isFormSubmitted ?? false;
-    this.baseEnumerator.showChangeButtons = props.showChangeButtons ?? true;
-    this.baseEnumerator.autoPopulatedData = props.autoPopulatedData ?? [];
-    this.baseEnumerator.formId = props.formId;
-    this.baseEnumerator.navigationTarget = props.navigationTarget;
-    this.baseEnumerator.onNavigationChange = props.onNavigationChange;
+
     return <JsonFormContext.Provider value={this.baseEnumerator}>{this.selfProps?.children}</JsonFormContext.Provider>;
   };
 
