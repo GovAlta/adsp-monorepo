@@ -15,6 +15,12 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/external-navigation`,
       testId: 'jsonformsExternalNavigation',
     },
+    {
+      id: 'jsonformsReviewNavigation',
+      name: 'Review change navigation (CDRT application)',
+      url: `${prefix}/review-navigation`,
+      testId: 'jsonformsReviewNavigation',
+    },
   ];
 
   return jsonformsPages;

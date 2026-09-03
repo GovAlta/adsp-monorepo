@@ -61,6 +61,8 @@ const handleReviewChange = (stepId: number | undefined, scope: string) => {
 
 Both routes above end here. The provider applies a target once and reports what happened; it will not pull the user back to the requested page after they navigate away themselves.
 
+Treat the target as a request rather than a setting, and clear it once the form has answered - whatever the answer was. A target left standing has already been applied, so a second Change click on the same field is indistinguishable from a re-render and goes nowhere. That second click is a real path: open a field, walk back to the overview, and click the same Change again.
+
 ```javascript
 import { ContextProviderFactory, GoACells, GoARenderers } from '@abgov/jsonforms-components';
 
@@ -70,9 +72,7 @@ const ContextProvider = ContextProviderFactory();
   navigationTarget={navigationTarget}
   onNavigationChange={(outcome) => {
     // 'navigated' | 'unavailable' (hidden, disabled, not-yet-reachable) | 'unknown'
-    if (outcome.status !== 'navigated') {
-      setNavigationTarget(undefined);
-    }
+    setNavigationTarget(undefined);
   }}
 >
   <JsonForms
@@ -124,4 +124,4 @@ import { GoACells, GoAReviewRenderers, ReviewRenderProvider } from '@abgov/jsonf
 </ContextProvider>
 ```
 
-**NOTE**: Every control reports, including the composite ones. Address, full name, full name with date of birth, contact information and list controls report through `onReviewChange` exactly like a plain text field does. If a Change button appears to do nothing, check that `ReviewRenderProvider` is above the `JsonForms` element rather than beside it, and that the category carries the `options.id` you are matching on.
+**NOTE**: Every control reports, including the composite ones. Address, full name, full name with date of birth, contact information and list controls report through `onReviewChange` exactly like a plain text field does. If a Change button appears to do nothing, check that `ReviewRenderProvider` is above the `JsonForms` element rather than beside it, that the category carries the `options.id` you are matching on, and that the previous target was cleared in `onNavigationChange`.
