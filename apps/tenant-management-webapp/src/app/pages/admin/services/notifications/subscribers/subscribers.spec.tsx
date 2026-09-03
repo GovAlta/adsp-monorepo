@@ -5,7 +5,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SUBSCRIBER_INIT } from '@store/subscription/models';
 import { Subscribers } from '.';
-import { UPDATE_SUBSCRIBER } from '@store/subscription/actions';
+import { CREATE_SUBSCRIBER, UPDATE_SUBSCRIBER } from '@store/subscription/actions';
 
 describe('Notification - Subscribers Tab', () => {
   const mockStore = configureStore([]);
@@ -77,7 +77,7 @@ describe('Notification - Subscribers Tab', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <Subscribers />
-      </Provider>
+      </Provider>,
     );
 
     const tabTitle = queryByTestId('subscribers-list-title');
@@ -88,10 +88,10 @@ describe('Notification - Subscribers Tab', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <Subscribers />
-      </Provider>
+      </Provider>,
     );
     const editBtn = baseElement.querySelector(
-      "goa-icon-button[testId='edit-subscription-item-61bd151b6d95d24f4cf632cf']"
+      "goa-icon-button[testId='edit-subscription-item-61bd151b6d95d24f4cf632cf']",
     );
     await waitFor(() => {
       fireEvent.click(editBtn);
@@ -110,13 +110,13 @@ describe('Notification - Subscribers Tab', () => {
       name,
       new CustomEvent('_change', {
         detail: { value: 'Bob Smith' },
-      })
+      }),
     );
     fireEvent(
       email,
       new CustomEvent('_change', {
         detail: { value: 'bob.smith@gmail.com' },
-      })
+      }),
     );
 
     fireEvent(saveBtn, new CustomEvent('_click'));
@@ -124,5 +124,51 @@ describe('Notification - Subscribers Tab', () => {
 
     const saveAction = actions.find((action) => action.type === UPDATE_SUBSCRIBER);
     expect(saveAction).toBeTruthy();
+  });
+
+  it('adds a subscriber with a name and email', async () => {
+    const { baseElement } = render(
+      <Provider store={store}>
+        <Subscribers />
+      </Provider>,
+    );
+
+    const addBtn = baseElement.querySelector("goa-button[testId='add-subscriber']");
+    fireEvent(addBtn, new CustomEvent('_click'));
+
+    const name = baseElement.querySelector("goa-input[testId='form-name']");
+    const email = baseElement.querySelector("goa-input[testId='form-email']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
+
+    fireEvent(name, new CustomEvent('_change', { detail: { value: 'General mailbox' } }));
+    fireEvent(email, new CustomEvent('_change', { detail: { value: 'general.mailbox@gov.ab.ca' } }));
+    fireEvent(saveBtn, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      const createAction = store.getActions().find((action) => action.type === CREATE_SUBSCRIBER);
+      expect(createAction).toEqual({
+        type: CREATE_SUBSCRIBER,
+        payload: {
+          subscriber: {
+            addressAs: 'General mailbox',
+            channels: [{ channel: 'email', address: 'general.mailbox@gov.ab.ca', verified: false }],
+          },
+        },
+      });
+    });
+  });
+
+  it('requires a name and valid email when adding a subscriber', () => {
+    const { baseElement } = render(
+      <Provider store={store}>
+        <Subscribers />
+      </Provider>,
+    );
+
+    const createActionCount = store.getActions().filter((action) => action.type === CREATE_SUBSCRIBER).length;
+    fireEvent(baseElement.querySelector("goa-button[testId='add-subscriber']"), new CustomEvent('_click'));
+    fireEvent(baseElement.querySelector("goa-button[testId='form-save']"), new CustomEvent('_click'));
+
+    expect(store.getActions().filter((action) => action.type === CREATE_SUBSCRIBER)).toHaveLength(createActionCount);
   });
 });
