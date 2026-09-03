@@ -11,12 +11,14 @@ import { createSdkTools } from './tools/registerSdkTools';
 export interface CreateAdspMcpServerOptions {
   /** Root directory of bundled ADSP docs. Defaults to the assets copied alongside the built package. */
   docsRoot?: string;
+  /** Pre-built docs repository. When provided, docsRoot is ignored. */
+  docs?: DocsRepository;
 }
 
 export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): Server {
   // Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
   const docsRoot = options.docsRoot ?? join(__dirname, '..', 'assets', 'docs');
-  const docs = new DocsRepository(docsRoot);
+  const docs = options.docs ?? new DocsRepository(docsRoot);
 
   const tools = [
     ...createDocsTools(docs),
