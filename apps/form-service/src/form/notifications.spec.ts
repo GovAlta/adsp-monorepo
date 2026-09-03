@@ -37,6 +37,17 @@ describe('form message notification types', () => {
       expect(FormMessageNotificationType.channels).toEqual([Channel.email]);
     });
 
+    // A message can be sent about a draft, not just a submitted form, and drafts and submissions
+    // were merged into 'responses'. Calling it a submission in the applicant's email is wrong for
+    // every draft conversation, so pin the word.
+    it('calls the form a response rather than a submission', () => {
+      const toApplicant = FormMessageNotificationType.events.find(({ name }) => name === FORM_MESSAGE_TO_APPLICANT);
+      const email = JSON.stringify(toApplicant.templates.email);
+
+      expect(email).toContain('response');
+      expect(email).not.toContain('submission');
+    });
+
     it('includes the message only when forwarding to the configured address', () => {
       const toApplicant = FormMessageNotificationType.events.find(({ name }) => name === FORM_MESSAGE_TO_APPLICANT);
       const forwarded = FormMessageNotificationType.events.find(({ name }) => name === FORM_MESSAGE_FORWARDED);

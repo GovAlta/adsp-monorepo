@@ -156,16 +156,18 @@ export const FormMessageNotificationType: NotificationType = {
   addressPath: 'recipientEmail',
   events: [
     {
+      // Messages are available on a draft as well as a submitted form, and the two were merged into
+      // "responses", so this copy says response rather than submission.
       namespace: FORM_EVENT_NAMESPACE,
       name: FORM_MESSAGE_TO_APPLICANT,
       templates: {
         email: {
-          subject: 'New message about your {{ event.payload.form.definition.name }} submission',
+          subject: 'New message about your {{ event.payload.form.definition.name }} response',
           title: '{{ event.payload.form.definition.name }}',
           subtitle: 'You have a new message',
           body: `
 <section>
-  <p>You have received a message regarding your <b>{{ event.payload.form.definition.name }}</b> submission. Please log in to the form application to read your message and respond.</p>
+  <p>You have received a message regarding your <b>{{ event.payload.form.definition.name }}</b> response. Please log in to the form application to read your message and respond.</p>
 </section>`,
         },
       },
