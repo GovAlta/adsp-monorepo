@@ -168,7 +168,9 @@ class NotificationServiceImpl implements NotificationService {
         params: {
           tenantId: tenantId.toString(),
           top: 1,
-          criteria: JSON.stringify({ subscriptionMatch: { correlationId } }),
+          // Notification service reads the subscription filter from its own query parameter; a
+          // criteria parameter is ignored, which would match the first subscriber of any form.
+          subscriptionMatch: JSON.stringify({ correlationId }),
         },
       });
 

@@ -215,6 +215,47 @@ describe('notification', () => {
       });
     });
 
+    describe('hasSubscribers', () => {
+      const notificationApiUrl = new URL('https://notification-service/notification/v1');
+      const correlationId = `${apiId}:/forms/test`;
+
+      // Notification service reads the subscription filter from the subscriptionMatch query
+      // parameter. Sending it under any other name is not an error; the filter is simply dropped
+      // and the first subscriber of any form comes back as a match.
+      it('can filter subscribers by correlation id', async () => {
+        directoryMock.getServiceUrl.mockResolvedValueOnce(notificationApiUrl);
+        axiosMock.get.mockResolvedValueOnce({ data: { results: [{ id: 'subscription' }] } });
+
+        const result = await service.hasSubscribers(tenantId, 'form-message-reviewer-notifications', correlationId);
+        expect(result).toBe(true);
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          'https://notification-service/notification/v1/types/form-message-reviewer-notifications/subscriptions',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              tenantId: tenantId.toString(),
+              subscriptionMatch: JSON.stringify({ correlationId }),
+            }),
+          }),
+        );
+      });
+
+      it('can return false for no subscribers', async () => {
+        directoryMock.getServiceUrl.mockResolvedValueOnce(notificationApiUrl);
+        axiosMock.get.mockResolvedValueOnce({ data: { results: [] } });
+
+        const result = await service.hasSubscribers(tenantId, 'form-message-reviewer-notifications', correlationId);
+        expect(result).toBe(false);
+      });
+
+      it('can return false for error', async () => {
+        directoryMock.getServiceUrl.mockResolvedValueOnce(notificationApiUrl);
+        axiosMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+
+        const result = await service.hasSubscribers(tenantId, 'form-message-reviewer-notifications', correlationId);
+        expect(result).toBe(false);
+      });
+    });
+
     describe('sendCode', () => {
       it('can send code', async () => {
         directoryMock.getResourceUrl.mockResolvedValueOnce(subscriberUrl);
