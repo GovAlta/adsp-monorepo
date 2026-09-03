@@ -5,12 +5,15 @@ import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
-import { ValuesRepository } from '../repository';
+import { ServiceMetricRollupRepository, ValuesRepository } from '../repository';
 import { ExportServiceRoles, MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria } from '../types';
+import { createServiceMetricRollupJob, getTrailingCompletedDayRange } from '../jobs/serviceMetricRollup';
 
 interface ValueRouterProps {
   logger: Logger;
   repository: ValuesRepository;
+  serviceMetricRollupRepository: ServiceMetricRollupRepository;
+  serviceMetricRollupTrailingDays: number;
   eventService: EventService;
 }
 
@@ -349,7 +352,64 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
   };
 }
 
-export const createValueRouter = ({ logger, repository, eventService }: ValueRouterProps): Router => {
+export function runServiceMetricRollup(
+  logger: Logger,
+  repository: ServiceMetricRollupRepository,
+  trailingDays: number
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user as User;
+      const { start: startValue, end: endValue } = req.body || {};
+
+      if (!isAllowedUser(user, null, ServiceUserRoles.Writer, true) || !user.isCore) {
+        throw new UnauthorizedUserError('run service metric rollup', user);
+      }
+
+      const range =
+        startValue || endValue
+          ? {
+              start: toStartOfUtcDay(new Date(startValue || endValue)),
+              end: toStartOfUtcDay(new Date(endValue || startValue)),
+            }
+          : getTrailingCompletedDayRange(trailingDays);
+
+      const lastCompletedDay = toStartOfUtcDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
+      if (range.start > range.end) {
+        throw new InvalidOperationError('Rollup start date must be before or equal to end date.');
+      }
+      if (range.end > lastCompletedDay) {
+        throw new InvalidOperationError('Cannot roll up the current partial day or a future day.');
+      }
+
+      const rollupCount = await createServiceMetricRollupJob(repository, logger)(range);
+
+      res.send({
+        start: formatDay(range.start),
+        end: formatDay(range.end),
+        rollups: rollupCount,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+function toStartOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function formatDay(day: Date): string {
+  return day.toISOString().slice(0, 10);
+}
+
+export const createValueRouter = ({
+  logger,
+  repository,
+  serviceMetricRollupRepository,
+  serviceMetricRollupTrailingDays,
+  eventService,
+}: ValueRouterProps): Router => {
   const valueRouter = Router();
 
   const validateNamespaceNameHandler = createValidationHandler(
@@ -369,6 +429,20 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       query('names').optional().isString()
     ),
     readValues
+  );
+
+  valueRouter.post(
+    '/service-metric-rollups/run',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          start: { optional: true, isISO8601: true },
+          end: { optional: true, isISO8601: true },
+        },
+        ['body']
+      )
+    ),
+    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays)
   );
 
   valueRouter.get(
