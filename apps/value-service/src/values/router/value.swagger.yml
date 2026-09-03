@@ -42,6 +42,43 @@ components:
           items:
             $ref: '#/components/schemas/MetricIntervalValue'
 
+/value/v1/service-metric-rollups/run:
+  post:
+    tags:
+      - Value
+    description: Manually triggers service metric rollup processing for completed days. Requires a core value-writer user.
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              start:
+                type: string
+                format: date
+                description: First completed day to roll up. Defaults to the configured trailing window.
+              end:
+                type: string
+                format: date
+                description: Last completed day to roll up. Defaults to start when only start is supplied.
+    responses:
+      200:
+        description: Service metric rollup completed.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date
+                end:
+                  type: string
+                  format: date
+                rollups:
+                  type: integer
+
 /value/v1/{namespace}/values:
   get:
     tags:

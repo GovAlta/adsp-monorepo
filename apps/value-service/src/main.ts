@@ -20,6 +20,7 @@ import { createRepositories } from './timescale';
 import { adspId, AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
+import { scheduleServiceMetricRollupJob } from './values/jobs/serviceMetricRollup';
 
 const initializeApp = async () => {
   const app = express();
@@ -130,7 +131,22 @@ const initializeApp = async () => {
     configurationHandler,
   );
 
-  applyValuesMiddleware(app, { logger, repository: repositories.valueRepository, eventService });
+  applyValuesMiddleware(app, {
+    logger,
+    repository: repositories.valueRepository,
+    serviceMetricRollupRepository: repositories.serviceMetricRollupRepository,
+    serviceMetricRollupTrailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
+    eventService,
+  });
+
+  if (environment.SERVICE_METRIC_ROLLUP_JOB_ENABLED) {
+    await scheduleServiceMetricRollupJob({
+      logger,
+      repository: repositories.serviceMetricRollupRepository,
+      trailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
+      backfillOnStartup: environment.SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP,
+    });
+  }
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

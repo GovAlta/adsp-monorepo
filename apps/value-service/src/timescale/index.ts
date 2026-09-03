@@ -1,8 +1,9 @@
 import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-import { ValuesRepository } from '../values';
+import { ServiceMetricRollupRepository, ValuesRepository } from '../values';
 import { TimescaleValuesRepository } from './value';
+import { TimescaleServiceMetricRollupRepository } from '../values/repository';
 
 interface TimescaleRepositoryProps {
   logger: Logger;
@@ -17,6 +18,7 @@ interface TimescaleRepositoryProps {
 interface Repositories {
   isConnected: () => Promise<boolean>;
   valueRepository: ValuesRepository;
+  serviceMetricRollupRepository: ServiceMetricRollupRepository;
 }
 
 export const createRepositories = async ({
@@ -61,10 +63,11 @@ export const createRepositories = async ({
       try {
         await knex.raw('SELECT 1');
         return true;
-      } catch (err) {
+      } catch {
         return false;
       }
     },
     valueRepository: new TimescaleValuesRepository(knex, logger),
+    serviceMetricRollupRepository: new TimescaleServiceMetricRollupRepository(knex),
   };
 };
