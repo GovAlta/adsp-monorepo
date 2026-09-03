@@ -1,15 +1,15 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 
 type ContractInfoControlReviewProps = ControlProps;
 
 export const ContractInfoControlReview = (props: ContractInfoControlReviewProps): JSX.Element => {
-  const context = useContext(JsonFormsStepperContext);
+  const reportChange = useReviewChange();
   const showChangeButtons = useShowChangeButtons();
   const stepId = props.uischema?.options?.stepId;
 
@@ -29,7 +29,7 @@ export const ContractInfoControlReview = (props: ContractInfoControlReviewProps)
             <GoabButton
               type="text"
               size="compact"
-              onClick={() => context?.goToPage(stepId, uischema.scope)}
+              onClick={() => reportChange(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >
               Change

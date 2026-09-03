@@ -7,6 +7,7 @@ import { JsonFormsStepperContextProvider } from '../FormStepper/context';
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import Ajv from 'ajv';
 import { ControlElement } from '@jsonforms/core';
+import { ReviewRenderProvider } from '../../Context/ReviewRenderContext';
 
 jest.mock('./utils', () => ({
   fetchAddressSuggestions: jest.fn(),
@@ -341,5 +342,40 @@ describe('AddressLoopUpControlTableReview', () => {
     // Required fields with values should NOT show (none given)
     expect(screen.getByText('123 Test St')).toBeInTheDocument();
     expect(screen.queryAllByText('(none given)').length).toBe(0);
+  });
+});
+
+describe('AddressLoopUpControlTableReview change reporting', () => {
+  it('reports the step and scope to a host with no stepper in the tree', () => {
+    const onReviewChange = jest.fn();
+    const { baseElement } = render(
+      <ReviewRenderProvider onReviewChange={onReviewChange}>
+        <JsonFormContext.Provider value={mockFormContext}>
+          <table>
+            <tbody>
+              <AddressLoopUpControlTableReview
+                label={''}
+                errors={''}
+                rootSchema={{}}
+                id={'address-report'}
+                enabled={false}
+                visible={false}
+                {...defaultProps}
+                uischema={
+                  {
+                    ...defaultProps.uischema,
+                    options: { ...defaultProps.uischema.options, stepId: 4 },
+                  } as ControlElement
+                }
+              />
+            </tbody>
+          </table>
+        </JsonFormContext.Provider>
+      </ReviewRenderProvider>,
+    );
+
+    fireEvent(baseElement.querySelector('goa-button')!, new CustomEvent('_click'));
+
+    expect(onReviewChange).toHaveBeenCalledWith(4, '#/properties/lastName');
   });
 });

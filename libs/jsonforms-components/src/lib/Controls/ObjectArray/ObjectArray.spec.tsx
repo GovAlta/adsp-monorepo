@@ -4,6 +4,7 @@ import { ObjectArrayControl, NonEmptyCellComponent } from './ObjectListControl';
 import { ControlElement, ArrayTranslations } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
+import { ReviewRenderProvider } from '../../Context/ReviewRenderContext';
 jest.mock('@jsonforms/react');
 
 const mockUISchema: ControlElement = {
@@ -240,5 +241,35 @@ describe('Object List component', () => {
     render(<NonEmptyCellComponent openDeleteDialog={() => {}} handleChange={() => {}} {...props} />);
 
     expect(JsonFormsDispatch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Object List change reporting', () => {
+  it('reports the step and scope to a host with no stepper in the tree', () => {
+    (useJsonForms as jest.Mock).mockReturnValue({
+      core: { schema: rootSchema, errors: [] },
+      cells: [],
+      renderers: [],
+    });
+
+    const onReviewChange = jest.fn();
+    const { baseElement } = render(
+      <ReviewRenderProvider onReviewChange={onReviewChange}>
+        <table>
+          <tbody>
+            <ObjectArrayControl
+              {...baseMockProps}
+              data={[{ date: '2026-01-01', message: 'Hi' }]}
+              isStepperReview={true}
+              uischema={{ ...mockUISchema, options: { stepId: 5 } }}
+            />
+          </tbody>
+        </table>
+      </ReviewRenderProvider>,
+    );
+
+    fireEvent(baseElement.querySelector('goa-button')!, new CustomEvent('_click'));
+
+    expect(onReviewChange).toHaveBeenCalledWith(5, '#/properties/comments');
   });
 });
