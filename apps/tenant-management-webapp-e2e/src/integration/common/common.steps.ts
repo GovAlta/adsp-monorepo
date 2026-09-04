@@ -881,7 +881,7 @@ When('the user is logged in to see {string} application', function (formDefiniti
       commonObj.formAppLoginButton().click();
     }
   });
-  cy.wait(10000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 Then('the user views a from draft of {string}', function (formDefinition) {
