@@ -81,10 +81,25 @@ describe('service metric rollup job', () => {
     });
 
     expect(count).toBe(2);
+    expect(repository.getKnownTenantServices).toHaveBeenCalledWith([mapping], undefined);
     expect(repository.readRollup).toHaveBeenCalledTimes(2);
     expect(repository.readRollup).toHaveBeenCalledWith(new Date('2026-08-23T00:00:00.000Z'), 'autotest', mapping);
     expect(repository.readRollup).toHaveBeenCalledWith(new Date('2026-08-24T00:00:00.000Z'), 'autotest', mapping);
     expect(repository.upsertRollups).toHaveBeenCalledWith([rollup, rollup]);
+  });
+
+  it('can pass criteria to known tenant service lookup', async () => {
+    const job = createServiceMetricRollupJob(repository, logger, [mapping]);
+
+    await job(
+      {
+        start: new Date('2026-08-23T00:00:00.000Z'),
+        end: new Date('2026-08-23T00:00:00.000Z'),
+      },
+      { tenant: 'tenant-a' }
+    );
+
+    expect(repository.getKnownTenantServices).toHaveBeenCalledWith([mapping], { tenant: 'tenant-a' });
   });
 
   it('skips storing rollups when there are no known tenant services', async () => {

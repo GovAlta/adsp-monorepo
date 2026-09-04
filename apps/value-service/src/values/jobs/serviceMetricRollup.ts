@@ -2,7 +2,7 @@ import { instrumentJob } from '@abgov/adsp-service-sdk';
 import * as schedule from 'node-schedule';
 import { Logger } from 'winston';
 import { ServiceMetricRollupMapping } from '../types';
-import { ServiceMetricRollupRepository } from '../repository';
+import { ServiceMetricRollupCriteria, ServiceMetricRollupRepository } from '../repository';
 import { serviceMetricRollupMappings } from '../serviceMetricRollupMappings';
 
 interface ServiceMetricRollupJobProps {
@@ -20,8 +20,8 @@ export const createServiceMetricRollupJob =
     logger: Logger,
     mappings: ServiceMetricRollupMapping[] = serviceMetricRollupMappings
   ) =>
-  async (range = getTrailingCompletedDayRange(3)): Promise<number> => {
-    const knownTenantServices = await repository.getKnownTenantServices(mappings);
+  async (range = getTrailingCompletedDayRange(3), criteria?: ServiceMetricRollupCriteria): Promise<number> => {
+    const knownTenantServices = await repository.getKnownTenantServices(mappings, criteria);
 
     if (knownTenantServices.length === 0) {
       logger.info('No known tenant services found for service metric rollups.');
