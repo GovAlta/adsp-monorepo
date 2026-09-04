@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — environment configuration; there is no behaviour to test.
 import * as dotenv from 'dotenv';
 import * as envalid from 'envalid';
 import * as util from 'util';
@@ -17,6 +18,9 @@ export const environment = envalid.cleanEnv(
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
     MONGO_TLS: envalid.bool({ default: false }),
+    AMQP_HOST: envalid.str({ default: '127.0.0.1' }),
+    AMQP_USER: envalid.str({ default: 'guest' }),
+    AMQP_PASSWORD: envalid.str({ default: 'guest' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3343 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),

@@ -6,8 +6,9 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
+  GoabInput,
 } from '@abgov/react-components';
-import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabDropdownOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import DataTable from '@components/DataTable';
 import type { ReviewConfiguration } from '@store/form/model';
 import { ReviewColumnItems } from './reviewColumnItems';
@@ -19,12 +20,14 @@ const LARGE_COLUMN_COUNT = 6;
 interface ReviewConfigurationTabProps {
   schema: unknown;
   reviewConfiguration?: ReviewConfiguration;
+  questionsEmailError?: string;
   onChange: (reviewConfiguration: ReviewConfiguration) => void;
 }
 
 export const ReviewConfigurationTab: FunctionComponent<ReviewConfigurationTabProps> = ({
   schema,
   reviewConfiguration,
+  questionsEmailError,
   onChange,
 }) => {
   const [selectedPath, setSelectedPath] = useState('');
@@ -38,7 +41,7 @@ export const ReviewConfigurationTab: FunctionComponent<ReviewConfigurationTabPro
       return;
     }
 
-    onChange({ columns: [...columns, { path: selectedPath }] });
+    onChange({ ...reviewConfiguration, columns: [...columns, { path: selectedPath }] });
     setSelectedPath('');
   };
 
@@ -92,6 +95,25 @@ export const ReviewConfigurationTab: FunctionComponent<ReviewConfigurationTabPro
         </ReviewAddFieldRow>
       </GoabFormItem>
 
+      <GoabFormItem
+        label="Forward questions to"
+        error={questionsEmailError}
+        helpText="Applicant questions are emailed here until a reviewer replies. Leave blank to send nothing."
+        mt="l"
+      >
+        <GoabInput
+          name="questions-email"
+          testId="review-questions-email"
+          type="email"
+          size="compact"
+          width="100%"
+          value={reviewConfiguration?.questionsEmail || ''}
+          onChange={(detail: GoabInputOnChangeDetail) =>
+            onChange({ ...reviewConfiguration, columns, questionsEmail: detail.value })
+          }
+        />
+      </GoabFormItem>
+
       {columns.length > LARGE_COLUMN_COUNT && (
         <GoabCallout type="important" size="medium" mt="m" testId="review-config-large-list">
           Keep the list of columns small so the Form Admin submission table stays easy to scan.
@@ -117,7 +139,7 @@ export const ReviewConfigurationTab: FunctionComponent<ReviewConfigurationTabPro
             <ReviewColumnItems
               columns={columns}
               fieldsByPath={fieldsByPath}
-              onChange={(nextColumns) => onChange({ columns: nextColumns })}
+              onChange={(nextColumns) => onChange({ ...reviewConfiguration, columns: nextColumns })}
             />
           </tbody>
         </DataTable>

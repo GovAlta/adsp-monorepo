@@ -24,7 +24,9 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     scheduledIntakes: entity.scheduledIntakes,
     supportTopic: entity.supportTopic,
     registeredId: entity.registeredId,
-    reviewConfiguration: entity.reviewConfiguration || { columns: [] },
+    // Only the columns are of interest to clients; the questions email is internal routing
+    // configuration and is deliberately not exposed to form applicants.
+    reviewConfiguration: { columns: entity.reviewConfiguration?.columns || [] },
     created,
     intake: intake ? intake : null,
   };

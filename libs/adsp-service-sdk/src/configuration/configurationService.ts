@@ -6,6 +6,7 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId, assertAdspId, LimitToOne } from '../utils';
 import type { CombineConfiguration, ConfigurationConverter } from './configuration';
 import { TokenProvider } from '../access';
+import { CacheName, recordCacheResult } from '../metrics/cache';
 
 /**
  * Interface to configuration service for retrieval of service configuration.
@@ -223,6 +224,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       readRevision: number;
 
     const cached = this.#configuration.get<Revision<C>>(this.getCacheKey(namespace, name, tenantId, revision));
+    recordCacheResult(CacheName.Configuration, !!cached);
 
     if (cached) {
       configuration = cached.configuration;

@@ -75,10 +75,10 @@ describe('Sidebar', () => {
 
     expect(() => fireEvent.click(getByTestId('menu-task'))).not.toThrow();
   });
-  it('marks the reports menu item as beta', () => {
+  it('marks the reports menu item as alpha', () => {
     const { getByTestId } = renderSidebar();
 
-    expect(getByTestId('menu-reports').querySelector('img')).toHaveAttribute('alt', 'Reports beta');
+    expect(getByTestId('menu-reports')).toHaveTextContent('Alpha');
   });
 
   it('names the service each beta badge belongs to', () => {

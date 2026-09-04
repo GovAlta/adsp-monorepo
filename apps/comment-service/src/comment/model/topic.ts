@@ -1,4 +1,4 @@
-import { AdspId, AssertRole, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, AssertRole, UnauthorizedUserError, User, isAllowedUser } from '@abgov/adsp-service-sdk';
 import { New, Results } from '@core-services/core-common';
 import { TopicRepository } from '../repository';
 import { Comment, CommentCriteria, Topic } from '../types';
@@ -102,8 +102,22 @@ export class TopicEntity implements Topic {
     return user && this.commenters.includes(user.id);
   }
 
+  /**
+   * Gets a flag indicating if the user is a platform service acting on a topic it set up.
+   * Services authenticate as core users, so they can never satisfy the tenant scoped type roles;
+   * the topic router already admits them, and comments have to follow or a service can create a
+   * topic it is unable to read back.
+   *
+   * @param {User} user
+   * @returns {boolean}
+   * @memberof TopicEntity
+   */
+  private isTopicSetter(user: User): boolean {
+    return isAllowedUser(user, this.tenantId, [ServiceRoles.Admin, ServiceRoles.TopicSetter], true);
+  }
+
   public canRead(user: User): boolean {
-    return this.type?.canRead(user) || this.isCommenter(user);
+    return this.type?.canRead(user) || this.isCommenter(user) || this.isTopicSetter(user);
   }
 
   public canComment(user: User): boolean {

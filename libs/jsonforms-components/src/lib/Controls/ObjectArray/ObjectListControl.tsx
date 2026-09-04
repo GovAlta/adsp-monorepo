@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — covered by ./ObjectArray.spec.tsx, colocated. The rule only looks
+// for a .test.tsx sibling; adding one would duplicate the existing suite.
 import {
   GoabButton,
   GoabCallout,
@@ -22,10 +24,8 @@ import { ErrorObject } from 'ajv';
 import isEmpty from 'lodash/isEmpty';
 import merge from 'lodash/merge';
 import range from 'lodash/range';
-import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
-// clean-code-ignore: RULE-19 — covered by ./ObjectArray.spec.tsx, colocated. The rule only looks
-// for a .test.tsx sibling; adding one would duplicate the existing suite.
+import React, { useCallback, useEffect, useReducer, useState } from 'react'; // clean-code-ignore: RULE-19 — see the note at the top of this file.
+import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {
@@ -606,7 +606,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const [open, setOpen] = useState(false);
   const [rowData, setRowData] = useState<number>(0);
   const [maxItemsError, setMaxItemsError] = useState('');
-  const context = useContext(JsonFormsStepperContext);
+  const reportChange = useReviewChange();
   const showChangeButtons = useShowChangeButtons();
 
   const {
@@ -802,7 +802,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                     <GoabButton
                       type="text"
                       size="compact"
-                      onClick={() => context?.goToPage(uischema.options?.stepId as number)}
+                      onClick={() => reportChange(uischema.options?.stepId as number, uischema.scope)}
                     >
                       Change
                     </GoabButton>

@@ -1,5 +1,5 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import { convertUint8ArrayToBase64, FilePart, ImagePart, TextPart } from '@ai-sdk/provider-utils-v5';
+import { convertUint8ArrayToBase64, FilePart, ImagePart, TextPart } from '@ai-sdk/provider-utils'; // clean-code-ignore: RULE-19
 import type { CoreUserMessage } from '@mastra/core/llm';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';

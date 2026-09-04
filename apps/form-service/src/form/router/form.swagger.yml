@@ -108,6 +108,11 @@ components:
                     type: string
                     description: Dot-separated path of a leaf field in the form data schema.
                     minLength: 1
+            questionsEmail:
+              type: string
+              description: >-
+                Address that applicant questions are forwarded to while no reviewer is part of the
+                conversation. Not returned by the form APIs.
         dryRun:
           type: boolean
         intake:

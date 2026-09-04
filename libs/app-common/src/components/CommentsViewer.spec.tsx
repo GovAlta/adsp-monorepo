@@ -171,6 +171,29 @@ describe('CommentsViewer', () => {
     expect(screen.getByText('March 1 2024, 9:00 am')).toBeInTheDocument();
   });
 
+  test('shows only the time for a comment created today', () => {
+    // Arrange
+    const props = createProps({ comments: [createComment({ createdOn: new Date(2026, 7, 21, 9, 30, 0) })] });
+
+    // Act
+    render(<CommentsViewer {...props} />);
+
+    // Assert
+    expect(screen.getByText('9:30 am')).toBeInTheDocument();
+  });
+
+  test('formats the timestamp with a date for the same week number of a past year', () => {
+    // Arrange
+    // Week numbers repeat, so this date falls in the same week of the year as the system time.
+    const props = createProps({ comments: [createComment({ createdOn: new Date(2025, 7, 21, 9, 0, 0) })] });
+
+    // Act
+    render(<CommentsViewer {...props} />);
+
+    // Assert
+    expect(screen.getByText('August 21 2025, 9:00 am')).toBeInTheDocument();
+  });
+
   test('renders a delete button when userId matches the comment creator', () => {
     // Arrange
     const props = createProps({

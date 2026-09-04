@@ -12,6 +12,8 @@ export const DELETE_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/delete-sub
 
 export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
 export const UPDATE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/update-subscriber-success';
+export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
+export const CREATE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/create-subscriber-success';
 
 export const GET_ALL_TYPE_SUBSCRIPTIONS = 'tenant/subscriber-service/get-all-type-subscriptions';
 export const GET_TYPE_SUBSCRIPTIONS = 'tenant/subscriber-service/get-type-subscription';
@@ -38,6 +40,7 @@ export type ActionTypes =
   | UnsubscribeSuccessAction
   | FindSubscribersAction
   | FindSubscribersSuccessAction
+  | CreateSubscriberSuccessAction
   | UpdateSubscriberSuccessAction
   | GetTypeSubscriptionsSuccessAction
   | ResolveSubscriberUserAction
@@ -178,6 +181,20 @@ export interface UpdateSubscriberSuccessAction {
   };
 }
 
+export interface CreateSubscriberAction {
+  type: typeof CREATE_SUBSCRIBER;
+  payload: {
+    subscriber: Omit<Subscriber, 'id'>;
+  };
+}
+
+export interface CreateSubscriberSuccessAction {
+  type: typeof CREATE_SUBSCRIBER_SUCCESS;
+  payload: {
+    subscriberInfo: Subscriber;
+  };
+}
+
 // ==============
 // Action Methods
 // ==============
@@ -187,7 +204,7 @@ export const GetMySubscriber = (): GetMySubscriberAction => ({
 });
 
 export const GetMySubscriberSuccess = (
-  subscriberInfo: Subscriber & { subscriptions: SubscriptionWrapper[] }
+  subscriberInfo: Subscriber & { subscriptions: SubscriptionWrapper[] },
 ): GetMySubscriberSuccessAction => ({
   type: GET_MY_SUBSCRIBER_SUCCESS,
   payload: {
@@ -245,7 +262,7 @@ export const GetAllTypeSubscriptions = (criteria: SubscriptionSearchCriteria): G
 export const GetTypeSubscriptions = (
   type: string,
   criteria: SubscriptionSearchCriteria,
-  after: string
+  after: string,
 ): GetTypeSubscriptionsActions => ({
   type: GET_TYPE_SUBSCRIPTIONS,
   payload: { type, criteria, after },
@@ -255,7 +272,7 @@ export const GetTypeSubscriptionSuccess = (
   typeId: string,
   subscriptions: SubscriptionWrapper[],
   after: string,
-  next: string
+  next: string,
 ): GetTypeSubscriptionsSuccessAction => ({
   type: GET_TYPE_SUBSCRIPTIONS_SUCCESS,
   payload: {
@@ -268,7 +285,7 @@ export const GetTypeSubscriptionSuccess = (
 
 export const GetSubscriberSubscriptions = (
   subscriber: Subscriber,
-  after: string
+  after: string,
 ): GetSubscriberSubscriptionsAction => ({
   type: GET_SUBSCRIBER_SUBSCRIPTIONS,
   payload: { subscriber, after },
@@ -282,7 +299,7 @@ export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscri
 export const FindSubscribersSuccess = (
   subscribers: Subscriber[],
   next: string,
-  after?: string
+  after?: string,
 ): FindSubscribersSuccessAction => ({
   type: FIND_SUBSCRIBERS_SUCCESS,
   payload: {
@@ -299,7 +316,7 @@ export const ResolveSubscriberUser = (subscriberId: string, userId: string): Res
 
 export const ResolveSubscriberUserSuccess = (
   subscriberId: string,
-  accountLink: string
+  accountLink: string,
 ): ResolveSubscriberUserSuccessAction => ({
   type: RESOLVE_SUBSCRIBER_USER_SUCCESS,
   payload: { subscriberId, accountLink },
@@ -315,6 +332,16 @@ export const UpdateSubscriberSuccess = (subscriberInfo: Subscriber): UpdateSubsc
   payload: {
     subscriberInfo,
   },
+});
+
+export const CreateSubscriber = (subscriber: Omit<Subscriber, 'id'>): CreateSubscriberAction => ({
+  type: CREATE_SUBSCRIBER,
+  payload: { subscriber },
+});
+
+export const CreateSubscriberSuccess = (subscriberInfo: Subscriber): CreateSubscriberSuccessAction => ({
+  type: CREATE_SUBSCRIBER_SUCCESS,
+  payload: { subscriberInfo },
 });
 
 export const DeleteSubscriber = (subscriberId: string): DeleteSubscriberAction => ({

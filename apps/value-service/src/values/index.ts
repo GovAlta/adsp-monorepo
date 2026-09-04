@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { EventService } from '@abgov/adsp-service-sdk';
-import { ValuesRepository } from './repository';
+import { ServiceMetricRollupRepository, ValuesRepository } from './repository';
 import { createValueRouter } from './router';
 
 export * from './types';
@@ -13,6 +13,8 @@ export * from './configuration';
 interface ValuesMiddlewareProps {
   logger: Logger;
   repository: ValuesRepository;
+  serviceMetricRollupRepository: ServiceMetricRollupRepository;
+  serviceMetricRollupTrailingDays: number;
   eventService: EventService;
 }
 

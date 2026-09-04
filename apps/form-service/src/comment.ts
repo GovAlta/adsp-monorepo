@@ -1,4 +1,4 @@
-import { ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { CommentService, FormEntity } from './form';
@@ -40,6 +40,30 @@ class CommentServiceImpl implements CommentService {
           axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
         }`
       );
+    }
+  }
+
+  // The comment created event carries only metadata, so the message itself is read back when it
+  // needs to be included in a notification.
+  async getComment(tenantId: AdspId, topicId: number, commentId: number): Promise<{ content: string } | null> {
+    try {
+      const token = await this.tokenProvider.getAccessToken();
+      const { data } = await axios.get<{ content: string }>(
+        new URL(`${this.commentTopicUrl.pathname}/${topicId}/comments/${commentId}`, this.commentTopicUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId.toString() },
+        }
+      );
+
+      return data;
+    } catch (err) {
+      this.logger.error(
+        `Failed to read comment ${commentId} of topic ${topicId}: ${
+          axios.isAxiosError(err) ? err.response?.data?.errorMessage || err.message : err
+        }`
+      );
+      return null;
     }
   }
 }

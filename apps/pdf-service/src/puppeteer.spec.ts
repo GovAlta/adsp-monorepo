@@ -5,7 +5,9 @@ import { EventEmitter } from 'events';
 import { promises as fs } from 'fs';
 import { withTimeout } from './puppeteer';
 
-jest.mock('puppeteer');
+// puppeteer ships ESM only, which jest's CommonJS registry cannot load, so an automock — which
+// has to introspect the real module — fails to parse it. A factory keeps it out of the test.
+jest.mock('puppeteer', () => ({ launch: jest.fn() }));
 const puppeteerMock = puppeteer as jest.Mocked<typeof puppeteer>;
 
 const loggerMock = {
@@ -33,7 +35,8 @@ const pageMock = {
   setJavaScriptEnabled: jest.fn().mockResolvedValue(undefined),
   setRequestInterception: jest.fn().mockResolvedValue(undefined),
   setContent: jest.fn().mockResolvedValue(undefined),
-  pdf: jest.fn().mockResolvedValue(Buffer.from('result')),
+  // puppeteer resolves page.pdf to a Uint8Array, not a Buffer; mock the real shape.
+  pdf: jest.fn().mockResolvedValue(new Uint8Array(Buffer.from('result'))),
   close: jest.fn().mockResolvedValue(undefined),
   on: jest.fn(),
 };
@@ -86,6 +89,23 @@ describe('puppeteer', () => {
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalled();
       expect(pageMock.close).toHaveBeenCalled();
+    });
+
+    it('streams the pdf as a single buffer rather than byte by byte', async () => {
+      const service = await createPdfService(loggerMock, browserMock);
+
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const result = await service.generatePdf({ content: '<html></html>', logger: loggerMock });
+
+      const chunks = [];
+      for await (const chunk of result) {
+        chunks.push(chunk);
+      }
+
+      // Readable.from iterates a plain Uint8Array, which would yield one number per byte.
+      expect(chunks).toHaveLength(1);
+      expect(Buffer.isBuffer(chunks[0])).toBe(true);
+      expect(chunks[0]).toEqual(Buffer.from('result'));
     });
 
     it('can generate pdf wit footer and header', async () => {

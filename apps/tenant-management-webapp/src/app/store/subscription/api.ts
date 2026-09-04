@@ -11,6 +11,13 @@ export class Api {
     this.token = token;
   }
 
+  async create(subscriber: Omit<Subscriber, 'id'>): Promise<Subscriber> {
+    const res = await this.http.post(`${this.baseUrl}/subscription/v1/subscribers`, subscriber, {
+      headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+    });
+    return res.data;
+  }
+
   async update(subscriber: Subscriber): Promise<Subscriber> {
     const res = await this.http
       .patch(`${this.baseUrl}/subscription/v1/subscribers/${subscriber.id}`, subscriber, {

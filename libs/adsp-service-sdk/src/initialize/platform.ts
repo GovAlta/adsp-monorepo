@@ -11,7 +11,8 @@ import { createConfigurationHandler, createConfigurationService } from '../confi
 import { createDirectory } from '../directory';
 import { createEventService } from '../event';
 import { createHealthCheck } from '../healthCheck';
-import { createMetricsHandler, initializeBenchmarkMetrics } from '../metrics';
+import { createMetricsHandler, initializeBenchmarkMetrics, initializeCacheMetrics } from '../metrics';
+import { initializeJobMetrics } from '../jobs';
 import { createServiceRegistrar } from '../registration';
 import { createTenantHandler, createTenantService } from '../tenant';
 import { createTraceHandler } from '../trace';
@@ -170,6 +171,8 @@ export async function initializePlatform(
 
       // Explicitly initialize benchmark metrics with the configured provider to avoid race conditions.
       initializeBenchmarkMetrics(meterProvider);
+      initializeCacheMetrics(meterProvider);
+      initializeJobMetrics(meterProvider);
 
       logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metricsOptions.endpoint}`);
     } catch (err) {

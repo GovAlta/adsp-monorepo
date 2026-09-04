@@ -1,6 +1,7 @@
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import type { Tenant, TenantService } from '../tenant';
+import { CacheName, recordCacheResult } from '../metrics/cache';
 
 export class IssuerCache {
   private readonly LOG_CONTEXT = { context: 'IssuerCache' };
@@ -45,6 +46,7 @@ export class IssuerCache {
 
   getTenantByIssuer = async (issuer: string): Promise<Tenant> => {
     let tenant = this.#issuers.get<Tenant>(issuer);
+    recordCacheResult(CacheName.Issuer, !!tenant);
     if (!tenant) {
       try {
         await this.#updateIssuers();

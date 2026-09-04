@@ -1,8 +1,8 @@
 import { Main } from '@components/Html';
-import BetaBadge from '@icons/beta-badge.svg';
 import React, { FunctionComponent } from 'react';
 import { ServiceColumnLayoutWithMargin } from '../../admin';
 import { HeadingDiv } from '../services/styled-components';
+import { alphaBadge } from '../sidebar';
 
 export const Reports: FunctionComponent = () => {
   return (
@@ -10,7 +10,7 @@ export const Reports: FunctionComponent = () => {
       <ServiceColumnLayoutWithMargin>
         <HeadingDiv>
           <h1 data-testid="reports-title">Reports</h1>
-          <img src={BetaBadge} alt="Reports beta" />
+          {alphaBadge()}
         </HeadingDiv>
       </ServiceColumnLayoutWithMargin>
     </Main>

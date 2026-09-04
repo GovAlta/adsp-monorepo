@@ -1,9 +1,11 @@
+import axios from 'axios';
 import { addComment, commentReducer, commentsSelector, deleteComment, loadComments, selectTopic } from './comment.slice';
 
 // babel-jest hoists these above the import; the slice creates an axios client and a socket at
 // module load, and neither is exercised by reducer and selector tests.
 jest.mock('axios');
 jest.mock('socket.io-client', () => ({ io: jest.fn() }));
+jest.mock('./user.slice', () => ({ getAccessToken: jest.fn(async () => 'token') }));
 
 type CommentState = ReturnType<typeof commentReducer>;
 
@@ -54,6 +56,22 @@ describe('commentReducer', () => {
       );
 
       expect(state.comments.results.map((r) => r.id)).toEqual([10, 11]);
+    });
+
+    it('should replace rather than append when refreshing without a cursor', () => {
+      // The socket refresh after a new comment reloads the first page with no cursor; appending it
+      // duplicated every message already on screen.
+      let state = loadedState(topicA, [comment(10, 'from form A')]);
+      state = commentReducer(
+        state,
+        loadComments.fulfilled(
+          { results: [comment(11, 'the new one'), comment(10, 'from form A')], page: {} },
+          'req',
+          { topic: topicA },
+        ),
+      );
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
     });
 
     it('should ignore a response for a topic that is no longer loaded', () => {
@@ -108,6 +126,17 @@ describe('commentReducer', () => {
       expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
     });
 
+    // Posting waits on the subscription call, so the refresh the comment-created event triggers
+    // usually gets the comment into the list first.
+    it('should not add the comment a refresh has already brought in', () => {
+      const state = commentReducer(
+        loadedState(topicA, [comment(11, 'new'), comment(10, 'from form A')]),
+        addComment.fulfilled(comment(11, 'new'), 'req', { topic: topicA, comment: { content: 'new' } }),
+      );
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
+    });
+
     it('should not add the comment to a list of another topic', () => {
       const state = commentReducer(
         loadedState(topicA, [comment(10, 'from form A')]),
@@ -149,5 +178,47 @@ describe('commentsSelector', () => {
 
     expect(results).toEqual([]);
     expect(next).toBeNull();
+  });
+});
+
+describe('addComment', () => {
+  const directoryState = {
+    config: {
+      directory: {
+        'urn:ads:platform:comment-service': 'https://comment-service',
+        'urn:ads:platform:notification-service': 'https://notification-service',
+      },
+    },
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const run = () => addComment({ topic: topicA, comment: { content: 'A reply' } })(jest.fn(), () => directoryState as any, undefined);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  // A reviewer isn't recorded against a form, so replying is what makes them reachable by email.
+  it('should subscribe the replying reviewer for messages on the form', async () => {
+    (axios.post as jest.Mock).mockResolvedValue({ data: comment(1, 'A reply') });
+
+    await run();
+
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/subscription/v1/types/form-message-reviewer-notifications/subscriptions'),
+      expect.objectContaining({ criteria: expect.objectContaining({ correlationId: topicA.resourceId }) }),
+      expect.objectContaining({ params: { userSub: true } }),
+    );
+  });
+
+  it('should keep the reply when subscribing fails', async () => {
+    (axios.post as jest.Mock)
+      .mockResolvedValueOnce({ data: comment(1, 'A reply') })
+      .mockRejectedValueOnce(new Error('no subscription for you'));
+
+    const result = await run();
+
+    expect(result.type).toBe('comment/add-comment/fulfilled');
   });
 });

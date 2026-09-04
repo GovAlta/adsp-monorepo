@@ -92,7 +92,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                     data-testid="menu-reports"
                   >
                     <span>Reports</span>
-                    {betaBadge('Reports')}
+                    {alphaBadge()}
                   </NavLink>
                   <NavLink
                     to="/admin"

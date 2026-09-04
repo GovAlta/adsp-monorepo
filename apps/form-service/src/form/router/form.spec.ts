@@ -167,6 +167,7 @@ describe('form router', () => {
     unsubscribe: jest.fn(),
     sendCode: jest.fn(),
     verifyCode: jest.fn(),
+    hasSubscribers: jest.fn(),
   };
 
   const fileServiceMock = {
@@ -175,6 +176,7 @@ describe('form router', () => {
 
   const commentServiceMock = {
     createSupportTopic: jest.fn(),
+    getComment: jest.fn(),
   };
 
   const pdfServiceMock = {
