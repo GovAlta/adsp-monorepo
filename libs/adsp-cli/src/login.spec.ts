@@ -558,7 +558,7 @@ describe('login', () => {
         return call?.[0].choices ?? [];
       }
 
-      it('adds a create-tenant entry when logging into a pre-prod env with no owned tenant and the beta-tester role', async () => {
+      it('adds a create-tenant entry for a caller with no owned tenant and the beta-tester role', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
         mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
@@ -574,7 +574,7 @@ describe('login', () => {
         expect(autocompleteChoices()).toContainEqual({ name: '__create_tenant__', message: '+ Create a new tenant' });
       });
 
-      it('never adds a create-tenant entry when logging into prod, even with no owned tenant and the beta-tester role', async () => {
+      it('adds a create-tenant entry when logging into prod with no owned tenant and the beta-tester role', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
         mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
@@ -587,10 +587,10 @@ describe('login', () => {
         lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
         await loginPromise;
 
-        expect(autocompleteChoices()).toEqual(['tenant-a']);
+        expect(autocompleteChoices()).toContainEqual({ name: '__create_tenant__', message: '+ Create a new tenant' });
       });
 
-      it('never adds a create-tenant entry in pre-prod for a caller with no owned tenant but neither the beta-tester nor tenant-service-admin role', async () => {
+      it('never adds a create-tenant entry for a caller with no owned tenant but neither the beta-tester nor tenant-service-admin role', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'someone.else@example.com' }]);
         mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: [] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
@@ -608,7 +608,7 @@ describe('login', () => {
         );
       });
 
-      it('never adds a create-tenant entry in pre-prod for a non-admin beta-tester who already owns a tenant', async () => {
+      it('never adds a create-tenant entry for a non-admin beta-tester who already owns a tenant', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' }]);
         mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['beta-tester'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
@@ -626,7 +626,7 @@ describe('login', () => {
         );
       });
 
-      it('still adds a create-tenant entry in pre-prod for a tenant-service-admin who already owns a tenant', async () => {
+      it('still adds a create-tenant entry for a tenant-service-admin who already owns a tenant', async () => {
         mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a', adminEmail: 'me@example.com' }]);
         mockJwtDecode.mockReturnValue({ email: 'me@example.com', realm_access: { roles: ['tenant-service-admin'] } });
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
