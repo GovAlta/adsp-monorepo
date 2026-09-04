@@ -334,14 +334,16 @@ async function createTenantInteractive(directoryServiceUrl: string, coreToken: s
   }
 }
 
-async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string, preProd: boolean): Promise<Tenant> {
+async function promptForTenantRealm(directoryServiceUrl: string, coreToken: string): Promise<Tenant> {
   const tenants = await listTenants(directoryServiceUrl, coreToken);
 
   const email = decodeEmail(coreToken);
   const byName = (a: Tenant, b: Tenant) => a.name.localeCompare(b.name);
   const owned = tenants.filter((t) => email && t.adminEmail === email).sort(byName);
   const rest = tenants.filter((t) => !(email && t.adminEmail === email)).sort(byName);
-  const showCreateOption = preProd && canCreateTenant(coreToken) && (owned.length === 0 || isTenantServiceAdmin(coreToken));
+  // Offered in every environment, prod included — the roles below (mirroring POST /tenants' own guard) are
+  // the only gate, so a caller who can create a tenant through the API can create one through the CLI too.
+  const showCreateOption = canCreateTenant(coreToken) && (owned.length === 0 || isTenantServiceAdmin(coreToken));
 
   if (tenants.length === 0 && !showCreateOption) {
     throw new Error('No tenants found.');
@@ -451,8 +453,7 @@ export async function loginInteractive(
     // doesn't have (and doesn't need) scopes like adsp-cli-admin registered; that scope is only
     // meaningful on the tenant-realm login below, once a realm is actually known.
     const core = await getOrLogin(accessServiceUrl, CORE_REALM, ['email']);
-    const preProd = resolveEnvironmentName(options.env) !== 'prod';
-    const picked = await promptForTenantRealm(directoryServiceUrl, core.token, preProd);
+    const picked = await promptForTenantRealm(directoryServiceUrl, core.token);
     realm = picked.realm;
     tenantName = picked.name;
   }
