@@ -41,7 +41,6 @@ describe('KeycloakRealmService', () => {
       create: jest.fn(),
       findOneByName: jest.fn(),
       addClientScopeMappings: jest.fn(),
-      addDefaultOptionalClientScope: jest.fn(),
     },
     roles: {
       createComposite: jest.fn(),
@@ -82,7 +81,6 @@ describe('KeycloakRealmService', () => {
     keycloakClientMock.clientScopes.create.mockReset();
     keycloakClientMock.clientScopes.findOneByName.mockReset();
     keycloakClientMock.clientScopes.addClientScopeMappings.mockReset();
-    keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockReset();
 
     keycloakClientMock.users.create.mockReset();
     keycloakClientMock.users.addClientRoleMappings.mockReset();
@@ -183,6 +181,8 @@ describe('KeycloakRealmService', () => {
 
       keycloakClientMock.clients.find
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
+        // createAdspCliAdminScope looks up adsp-cli before createTenantAdminComposite runs
+        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         // grantAdspCliClientScopeMappings: adsp-cli, config-service, agent-service (not in realm → []), directory-service
@@ -211,7 +211,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clientScopes.findOneByName
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' })
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' });
-      keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockResolvedValueOnce(undefined);
+      keycloakClientMock.clients.addOptionalClientScope.mockResolvedValueOnce(undefined);
       keycloakClientMock.clients.getServiceAccountUser.mockResolvedValueOnce({ id: 'ci-service-account-user-123' });
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });
@@ -256,6 +256,13 @@ describe('KeycloakRealmService', () => {
       expect(keycloakClientMock.clientScopes.findOneByName).toHaveBeenCalledWith(
         expect.objectContaining({ realm, name: 'adsp-cli-admin' }),
       );
+      // Must target the adsp-cli CLIENT. A realm-level optional scope only seeds clients created after it,
+      // and adsp-cli is created earlier in the realm payload, so it would silently never get the scope.
+      expect(keycloakClientMock.clients.addOptionalClientScope).toHaveBeenCalledWith({
+        realm,
+        id: 'adsp-cli-client-123',
+        clientScopeId: 'adsp-cli-admin-scope-123',
+      });
       expect(keycloakClientMock.clientScopes.addClientScopeMappings).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'adsp-cli-admin-scope-123', client: 'realm-management-client-123' }),
         expect.arrayContaining([
@@ -315,6 +322,8 @@ describe('KeycloakRealmService', () => {
 
       keycloakClientMock.clients.find
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
+        // createAdspCliAdminScope looks up adsp-cli before createTenantAdminComposite runs
+        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
@@ -341,7 +350,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clientScopes.findOneByName
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' })
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' });
-      keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockResolvedValueOnce(undefined);
+      keycloakClientMock.clients.addOptionalClientScope.mockResolvedValueOnce(undefined);
       keycloakClientMock.clients.getServiceAccountUser.mockResolvedValueOnce({ id: 'ci-service-account-user-123' });
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });
@@ -369,6 +378,8 @@ describe('KeycloakRealmService', () => {
 
       keycloakClientMock.clients.find
         .mockResolvedValueOnce([{ id: 'tenant-service-client-123' }])
+        // createAdspCliAdminScope looks up adsp-cli before createTenantAdminComposite runs
+        .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
         .mockResolvedValueOnce([{ id: 'test-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-client-123' }])
@@ -395,7 +406,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clientScopes.findOneByName
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' })
         .mockResolvedValueOnce({ id: 'adsp-cli-admin-scope-123' });
-      keycloakClientMock.clientScopes.addDefaultOptionalClientScope.mockResolvedValueOnce(undefined);
+      keycloakClientMock.clients.addOptionalClientScope.mockResolvedValueOnce(undefined);
       keycloakClientMock.clients.getServiceAccountUser.mockResolvedValueOnce({ id: 'ci-service-account-user-123' });
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });

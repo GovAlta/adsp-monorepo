@@ -212,9 +212,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
   /**
    * Explicitly adds the ADSP_CLI_CLIENT_SCOPE_MAPPINGS role restrictions to the adsp-cli client via
    * the scope-mappings API. The clientScopeMappings key in the realm creation JSON sets the same
-   * restriction declaratively but KC 24 does not apply it — same pattern as the addOptionalClientScope
-   * regression fixed in createAdspCliAdminScope. Source clients absent from the realm are skipped so
-   * a not-yet-registered optional service does not break realm creation.
+   * restriction declaratively but KC 24 does not apply it. Source clients absent from the realm are
+   * skipped so a not-yet-registered optional service does not break realm creation.
    */
   private async grantAdspCliClientScopeMappings(client: KeycloakAdminClient, realm: string): Promise<void> {
     this.logger.debug(`Granting client scope mappings to 'adsp-cli' in realm '${realm}'...`, LOG_CONTEXT);
@@ -259,18 +258,30 @@ export class KeycloakRealmServiceImpl implements RealmService {
     this.logger.info(`Granted service account roles to '${ADSP_CLI_CI_CLIENT_ID}' in realm '${realm}'.`, LOG_CONTEXT);
   }
 
+  /**
+   * Creates the adsp-cli-admin client scope and assigns it to the adsp-cli client as an optional scope.
+   *
+   * The assignment must be per-client. The realm-level alternative (clientScopes.addDefaultOptionalClientScope)
+   * only seeds the optional scopes of clients created AFTER it runs — verified against KC 24.0.5 — and adsp-cli
+   * is created earlier, inside the realm creation payload, so it would never pick the scope up. Declaring
+   * optionalClientScopes on the client representation instead is also wrong: supplying either scope list
+   * suppresses KC's realm-default scope assignment entirely, stripping email/profile/roles from the client
+   * (that is the bug PR #5646 fixed by moving to this imperative call in the first place).
+   */
   private async createAdspCliAdminScope(client: KeycloakAdminClient, realm: string): Promise<void> {
     await client.clientScopes.create({ realm, ...createAdspCliAdminClientScopeConfig() });
 
     const adminScope = await client.clientScopes.findOneByName({ realm, name: ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME });
+    const adspCliClient = (await client.clients.find({ realm, clientId: 'adsp-cli' }))[0];
 
-    // KC 24 deprecated per-client optional scope assignment for scopes that may be treated as realm-level.
-    // Use the realm-level optional scope endpoint instead — equivalent effect for adsp-cli since it is a
-    // client within this realm and will pick up realm-level optional scopes.
-    await client.clientScopes.addDefaultOptionalClientScope({ realm, id: adminScope.id });
+    await client.clients.addOptionalClientScope({
+      realm,
+      id: adspCliClient.id,
+      clientScopeId: adminScope.id,
+    });
 
     this.logger.debug(
-      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and added as realm optional scope.`,
+      `Created '${ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME}' client scope and assigned to adsp-cli as optional.`,
       LOG_CONTEXT,
     );
   }
