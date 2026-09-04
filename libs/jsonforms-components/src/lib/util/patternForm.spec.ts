@@ -48,6 +48,14 @@ describe('DEFAULT_PATTERNS', () => {
   it('rejects a driver licence number without a dash', () => {
     expect(DEFAULT_PATTERNS.driverId.pattern.test('123456789')).toBe(false);
   });
+
+  it('accepts a formatted motor vehicle ID', () => {
+    expect(DEFAULT_PATTERNS.mvid.pattern.test('1234-56789')).toBe(true);
+  });
+
+  it('rejects a motor vehicle ID without a dash', () => {
+    expect(DEFAULT_PATTERNS.mvid.pattern.test('123456789')).toBe(false);
+  });
 });
 
 describe('shouldBlockKey', () => {
@@ -103,6 +111,10 @@ describe('formatWithPattern', () => {
 
   it('formats a driver licence number', () => {
     expect(formatWithPattern('123456789', DEFAULT_PATTERNS.driverId.mask)).toBe('123456-789');
+  });
+
+  it('formats a motor vehicle ID', () => {
+    expect(formatWithPattern('123456789', DEFAULT_PATTERNS.mvid.mask)).toBe('1234-56789');
   });
 
   it('formats a postal code', () => {

@@ -864,8 +864,12 @@ describe('applyFormatPattern', () => {
     expect(applyFormatPattern('7801234567', '(###) ###-####')).toBe('(780) 123-4567');
   });
 
-  it('formats a motor vehicle id', () => {
+  it('formats a driver licence number', () => {
     expect(applyFormatPattern('123456789', '######-###')).toBe('123456-789');
+  });
+
+  it('formats a motor vehicle ID', () => {
+    expect(applyFormatPattern('123456789', '####-#####')).toBe('1234-56789');
   });
 
   it('formats a postal code', () => {

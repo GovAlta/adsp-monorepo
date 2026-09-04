@@ -34,6 +34,13 @@ export const DEFAULT_PATTERNS: Record<string, MaskPattern> = {
     error: "Must be a valid driver's licence number in format 000000-000",
     allowedKeys: /[0-9]/,
   },
+  mvid: {
+    // Motor vehicle ID: four digits, a dash, then five digits.
+    mask: '####-#####',
+    pattern: /^\d{4}-\d{5}$/,
+    error: 'Must be a valid motor vehicle ID in format 0000-00000',
+    allowedKeys: /[0-9]/,
+  },
 };
 
 // Mask placeholder characters; each consumes one input character. Any other mask character is treated as a literal.

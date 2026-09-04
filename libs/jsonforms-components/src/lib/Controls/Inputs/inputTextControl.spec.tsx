@@ -913,6 +913,30 @@ describe('Input Text Control tests', () => {
       expect(handleChange).toHaveBeenCalledWith('postalCode', 'T2P 1A1');
     });
 
+    it('formats a motor vehicle ID from schema format mvid', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'mvid',
+        id: 'mvid',
+        handleChange,
+        schema: { type: 'string', format: 'mvid' },
+        uischema: { type: 'Control', scope: '#/properties/mvid' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='mvid-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456789' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('mvid', '1234-56789');
+    });
+
     it('formats a driver licence from schema format driverId', async () => {
       const handleChange = jest.fn();
       const props = {

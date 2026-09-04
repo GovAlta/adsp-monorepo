@@ -101,21 +101,24 @@ describe('Ajv tests', () => {
         sinByFormat: { type: 'string', format: 'sin' },
         postalCode: { type: 'string', format: 'postalCode' },
         driverId: { type: 'string', format: 'driverId' },
+        mvid: { type: 'string', format: 'mvid' },
       },
     };
 
     expect(ajv.validate(schema, {})).toBe(true);
-    expect(ajv.validate(schema, { sinByFormat: '', postalCode: '', driverId: '' })).toBe(true);
+    expect(ajv.validate(schema, { sinByFormat: '', postalCode: '', driverId: '', mvid: '' })).toBe(true);
     expect(
       ajv.validate(schema, {
         sinByFormat: '123 456 789',
         postalCode: 'T2P 1A1',
         driverId: '123456-789',
+        mvid: '1234-56789',
       }),
     ).toBe(true);
     expect(ajv.validate(schema, { sinByFormat: '123456789' })).toBe(false);
     expect(ajv.validate(schema, { postalCode: 'T2P1A1' })).toBe(false);
     expect(ajv.validate(schema, { driverId: '123456789' })).toBe(false);
+    expect(ajv.validate(schema, { mvid: '123456789' })).toBe(false);
   });
 
   describe('can generate inital data ', () => {
