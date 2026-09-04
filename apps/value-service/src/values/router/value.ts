@@ -362,7 +362,7 @@ export function runServiceMetricRollup(
       const user = req.user as User;
       const { start: startValue, end: endValue } = req.body || {};
 
-      if (!isAllowedUser(user, null, ServiceUserRoles.Writer, true) || !user.isCore) {
+      if (!isAllowedUser(user, null, ServiceUserRoles.Writer, true)) {
         throw new UnauthorizedUserError('run service metric rollup', user);
       }
 

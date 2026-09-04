@@ -46,7 +46,7 @@ components:
   post:
     tags:
       - Value
-    description: Manually triggers service metric rollup processing for completed days. Requires a core value-writer user.
+    description: Manually triggers service metric rollup processing for completed days. Requires the value-writer role.
     requestBody:
       required: false
       content:
