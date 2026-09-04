@@ -70,7 +70,7 @@ When('the user clicks Save button in Add topic type modal', function () {
 
 Then('the user views topic type editor for {string}', function (name) {
   cy.viewport(1920, 1080);
-  cy.wait(4000);
+  cy.wait(2000);
   const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
   commentObj.editorTopicTypeNameValue().should('contain.text', nameAfterReplacement);
 });
@@ -716,7 +716,7 @@ When('the user clicks {string} icon for the topic of {string}, {string}', functi
     switch (iconName) {
       case 'eye':
         commentObj.topicEyeIcon(rowNumber).shadow().find('button').click({ force: true });
-        cy.wait(4000);
+        cy.wait(2000);
         break;
       case 'eye-off':
         commentObj.topicEyeOffIcon(rowNumber).shadow().find('button').click({ force: true });

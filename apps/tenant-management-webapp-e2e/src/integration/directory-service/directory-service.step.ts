@@ -31,7 +31,7 @@ Given('a tenant admin user is on directory entries page', function () {
   );
   commonlib.tenantAdminMenuItem('Directory', 2000);
   commonObj.serviceTab('Directory', 'Entries').click();
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 When('the user clicks Add entry button', function () {

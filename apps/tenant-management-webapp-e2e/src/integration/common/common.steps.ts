@@ -26,7 +26,7 @@ When('the user enters credentials and clicks login button', function () {
   commonObj.usernameEmailField().type(Cypress.env('email'));
   commonObj.passwordField().type(Cypress.env('password'));
   commonObj.loginButton().click();
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 When('the user enters {string} and {string}, and clicks login button', function (username: string, password: string) {
@@ -52,7 +52,7 @@ When('the user enters {string} and {string}, and clicks login button', function 
   commonObj.usernameEmailField().type(user);
   commonObj.passwordField().type(pwd);
   commonObj.loginButton().click();
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(4000); // Wait all the redirects to settle down
 });
 
 Given('a tenant admin user is on tenant admin page', function () {
@@ -898,7 +898,7 @@ When('the user enters {string} in a text field labelled {string}', function (tex
 });
 
 When('the user clicks submit button in the form', function () {
-  cy.wait(4000);
+  cy.wait(2000);
   commonObj.formAppFormSubmitButton().shadow().find('button').click({ force: true });
   cy.wait(5000);
 });
@@ -991,7 +991,7 @@ Given('a tenant admin user is on notification subscriptions page', function () {
   );
   commonlib.tenantAdminMenuItem('Notification', 2000);
   commonObj.serviceTab('Notification', 'Subscriptions').click();
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 When('the user types {string} in Search subscriber email field', function (email: string) {

@@ -48,7 +48,7 @@ When('an authenticated user is logged in to see {string} application', function 
   formsObj.usernameEmailField().type(Cypress.env('email'));
   formsObj.passwordField().type(Cypress.env('password'));
   formsObj.loginButton().click();
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 When('autotest user 3 is logged in to see {string} application', function (formDefinition) {
@@ -57,7 +57,7 @@ When('autotest user 3 is logged in to see {string} application', function (formD
   formsObj.usernameEmailField().type(Cypress.env('email3'));
   formsObj.passwordField().type(Cypress.env('password3'));
   formsObj.loginButton().click();
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 Then('the user views a form page with primary application button enabled for {string}', function (formName) {
@@ -67,7 +67,7 @@ Then('the user views a form page with primary application button enabled for {st
 
 Given('an anonymous applicant goes to {string} application', function (formDefinition) {
   cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition);
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 Then('the user views a form draft of {string}', function (formDefinition) {
