@@ -39,6 +39,7 @@ describe('metric continuous aggregate migration', () => {
     expect(sql.match(/WITH NO DATA/g)).toHaveLength(aggregateNames.length);
     expect(sql).toContain('SUM(value) AS sum');
     expect(sql).toContain('COUNT(value) AS count');
+    expect(sql).not.toContain('AVG(value)');
     expect(sql).toContain("time_bucket(INTERVAL '1 month', timestamp)");
     expect(sql).toContain('CREATE PROCEDURE backfill_metric_continuous_aggregate');
     expect(sql).toContain("p_window_end - p_window_start > INTERVAL '31 days'");

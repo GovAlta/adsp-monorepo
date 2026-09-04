@@ -27,7 +27,7 @@ const createAggregate = (knex, aggregate) =>
       'WITH (timescaledb.continuous, timescaledb.materialized_only = true) AS ' +
       'SELECT namespace, name, tenant, metric, ' +
       `time_bucket(INTERVAL '${aggregate.bucket}', timestamp) AS bucket, ` +
-      'SUM(value) AS sum, COUNT(value) AS count, MIN(value) AS min, MAX(value) AS max, AVG(value) AS avg ' +
+      'SUM(value) AS sum, COUNT(value) AS count, MIN(value) AS min, MAX(value) AS max ' +
       'FROM metrics GROUP BY namespace, name, tenant, metric, bucket WITH NO DATA;',
   );
 
