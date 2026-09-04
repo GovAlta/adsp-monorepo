@@ -1015,7 +1015,7 @@ Then('the user views files with {string} type on uploaded files page', function 
 
 When('the user clicks Reset button on uploaded files page', function () {
   fileServiceObj.uploadedFilesResetButton().shadow().find('button').click({ force: true });
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 Then('the user views files for other types than {string} on uploaded files page', function (fileType) {

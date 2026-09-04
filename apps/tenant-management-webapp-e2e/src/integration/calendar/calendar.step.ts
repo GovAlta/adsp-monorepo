@@ -517,7 +517,7 @@ When('the user clicks Save button in calendar event modal', function () {
 
 When('the user clicks Cancel button in calendar event modal', function () {
   calendarObj.eventsCalendarEventModalCancelButton().shadow().find('button').click({ force: true });
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 Then(
