@@ -2,44 +2,43 @@ import { defaultFeaturesVisible, serviceVariables } from './featureFlag';
 
 describe('serviceVariables', () => {
   it('returns only the services enabled by the merged flags', () => {
-    const names = serviceVariables({ Secret: true }).map((service) => service.name);
+    const names = serviceVariables({ SharePoint: true }).map((service) => service.name);
 
-    expect(names).toContain('Secret');
-    expect(names).not.toContain('SharePoint');
+    expect(names).toContain('SharePoint');
+    expect(names).not.toContain('Task');
   });
 
   it('lets caller flags override the defaults in both directions', () => {
-    const names = serviceVariables({ Secret: true, Value: false }).map((service) => service.name);
+    const names = serviceVariables({ SharePoint: true, Value: false }).map((service) => service.name);
 
-    expect(names).toContain('Secret');
+    expect(names).toContain('SharePoint');
     expect(names).not.toContain('Value');
   });
 
   it('sorts the enabled services by name', () => {
-    const names = serviceVariables({ Secret: true, SharePoint: true, Task: true }).map((service) => service.name);
+    const names = serviceVariables({ SharePoint: true, Task: true }).map((service) => service.name);
 
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
-    expect(names.indexOf('Secret')).toBe(names.indexOf('Script') + 1);
-    expect(names.indexOf('SharePoint')).toBe(names.indexOf('Secret') + 1);
+    expect(names.indexOf('SharePoint')).toBe(names.indexOf('Script') + 1);
   });
 
   it('does not mutate the underlying service list when sorting', () => {
-    const first = serviceVariables({ Secret: true }).map((service) => service.name);
-    const second = serviceVariables({ Secret: true }).map((service) => service.name);
+    const first = serviceVariables({ SharePoint: true }).map((service) => service.name);
+    const second = serviceVariables({ SharePoint: true }).map((service) => service.name);
 
     expect(second).toEqual(first);
   });
 });
 
-describe('secret service flag', () => {
+describe('sharepoint service flag', () => {
   it('is hidden by default', () => {
-    expect(defaultFeaturesVisible.Secret).toBe(false);
-    expect(serviceVariables().find((service) => service.name === 'Secret')).toBeUndefined();
+    expect(defaultFeaturesVisible.SharePoint).toBe(false);
+    expect(serviceVariables().find((service) => service.name === 'SharePoint')).toBeUndefined();
   });
 
-  it('is an alpha service linking to the secret overview page', () => {
-    const secret = serviceVariables({ Secret: true }).find((service) => service.name === 'Secret');
+  it('is an alpha service linking to the sharepoint overview page', () => {
+    const sharePoint = serviceVariables({ SharePoint: true }).find((service) => service.name === 'SharePoint');
 
-    expect(secret).toMatchObject({ link: 'services/secret', alpha: true, beta: false });
+    expect(sharePoint).toMatchObject({ link: 'services/sharepoint', alpha: true, beta: false });
   });
 });
