@@ -33,6 +33,13 @@ jest.mock('../state', () => ({
 const { CommentsViewer } = require('./CommentsViewer');
 
 describe('form-app CommentsViewer', () => {
+  it('labels the send button "Send" while the draft field keeps its own label', () => {
+    render(<CommentsViewer />);
+
+    expect(capturedProps.addCommentButtonLabel).toBe('Send');
+    expect(capturedProps.addCommentLabel).toBe('Add question');
+  });
+
   it('renders the questions conversation with the messaging layout', () => {
     const { getByTestId } = render(<CommentsViewer />);
 
