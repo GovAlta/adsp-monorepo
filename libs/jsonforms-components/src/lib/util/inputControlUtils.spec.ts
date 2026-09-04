@@ -14,6 +14,7 @@ import {
   onChangeForDateTimeControl,
   isRequiredAndHasNoData,
   isNotKeyPressTabOrShift,
+  applyFormatPattern,
 } from './inputControlUtils';
 import { ControlProps } from '@jsonforms/core';
 
@@ -94,13 +95,13 @@ describe('onChangeForNumericControl', () => {
   });
 
   it('should clear numeric value when input is empty and data has a number', () => {
-  onChangeForNumericControl({
-    value: '',
-    controlProps: { ...baseControlProps, data: 50 } as ControlProps,
-  });
+    onChangeForNumericControl({
+      value: '',
+      controlProps: { ...baseControlProps, data: 50 } as ControlProps,
+    });
 
-  expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
-});
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+  });
 
   it('should NOT call handleChange when value is same as data', () => {
     onChangeForNumericControl({
@@ -118,14 +119,14 @@ describe('onChangeForNumericControl', () => {
     expect(mockHandleChange).toHaveBeenCalledWith('testPath', 0);
   });
 
-it('should not call handleChange when value is null and data is already undefined', () => {
-  onChangeForNumericControl({
-    value: null,
-    controlProps: { ...baseControlProps, data: undefined } as ControlProps,
-  });
+  it('should not call handleChange when value is null and data is already undefined', () => {
+    onChangeForNumericControl({
+      value: null,
+      controlProps: { ...baseControlProps, data: undefined } as ControlProps,
+    });
 
-  expect(mockHandleChange).not.toHaveBeenCalled();
-});
+    expect(mockHandleChange).not.toHaveBeenCalled();
+  });
 
   it('should handle negative numbers', () => {
     onChangeForNumericControl({
@@ -420,7 +421,7 @@ describe('onKeyPressForTimeControl', () => {
       key: 'Enter',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 
   it('should handle time with seconds', () => {
@@ -469,7 +470,7 @@ describe('onKeyPressForDateControl', () => {
       key: 'Enter',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 
   it('should call handleChange with empty string for empty date', () => {
@@ -478,7 +479,7 @@ describe('onKeyPressForDateControl', () => {
       key: 'Enter',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 });
 
@@ -515,7 +516,7 @@ describe('onBlurForTextControl', () => {
       value: '',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 
   it('should not call handleChange when required but data already has value', () => {
@@ -613,7 +614,7 @@ describe('onBlurForDateControl', () => {
       value: 'invalid',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 
   it('should call handleChange with empty string for empty date when required and empty', () => {
@@ -621,7 +622,7 @@ describe('onBlurForDateControl', () => {
       value: '',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 });
 
@@ -658,7 +659,7 @@ describe('onBlurForTimeControl', () => {
       value: '',
       controlProps: { ...baseControlProps, required: true, data: '' } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 
   it('should call handleChange with invalid time value when required and empty', () => {
@@ -695,7 +696,7 @@ describe('onChangeForInputControl', () => {
       value: '',
       controlProps: { ...baseControlProps } as ControlProps,
     });
-    expect(mockHandleChange).toHaveBeenCalledWith('testPath', "");
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', '');
   });
 
   it('should handle special characters', () => {
@@ -855,5 +856,47 @@ describe('onChangeForDateTimeControl', () => {
       controlProps: { ...baseControlProps, data: 42 } as ControlProps,
     });
     expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+  });
+});
+
+describe('applyFormatPattern', () => {
+  it('formats a phone number', () => {
+    expect(applyFormatPattern('7801234567', '(###) ###-####')).toBe('(780) 123-4567');
+  });
+
+  it('formats a motor vehicle id', () => {
+    expect(applyFormatPattern('123456789', '######-###')).toBe('123456-789');
+  });
+
+  it('formats a postal code', () => {
+    expect(applyFormatPattern('A1A1A1', '### ###')).toBe('A1A 1A1');
+  });
+
+  it('formats a social insurance number', () => {
+    expect(applyFormatPattern('123456789', '### ### ###')).toBe('123 456 789');
+  });
+
+  it('is idempotent when the value is already formatted', () => {
+    expect(applyFormatPattern('(780) 123-4567', '(###) ###-####')).toBe('(780) 123-4567');
+  });
+
+  it('returns the value unchanged when the mask is empty', () => {
+    expect(applyFormatPattern('7801234567', '')).toBe('7801234567');
+  });
+
+  it('returns the value unchanged when the mask is undefined', () => {
+    expect(applyFormatPattern('7801234567', undefined)).toBe('7801234567');
+  });
+
+  it('returns the value unchanged for an empty value', () => {
+    expect(applyFormatPattern('', '(###) ###-####')).toBe('');
+  });
+
+  it('passes through partial input without adding trailing literals', () => {
+    expect(applyFormatPattern('780123', '(###) ###-####')).toBe('(780) 123');
+  });
+
+  it('appends leftover content characters that do not fit the mask', () => {
+    expect(applyFormatPattern('12345678901234', '######-###')).toBe('123456-78901234');
   });
 });

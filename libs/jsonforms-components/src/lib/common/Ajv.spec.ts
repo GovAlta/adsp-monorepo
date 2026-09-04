@@ -63,7 +63,7 @@ describe('Ajv tests', () => {
       },
       {
         'file-urn': 'urn:ads:platfor:file-service:v1:/files/c7f1c6aa-3564-4541-a6f4-a0915dcb8906',
-      }
+      },
     );
     expect(valid).toBe(false);
     valid = ajv.validate(
@@ -75,7 +75,7 @@ describe('Ajv tests', () => {
       },
       {
         'file-urn': 'urn:ads:platform:file-service:v1:/files/c7f1c6aa-3564-4541-a6f4-a0915dcb8906',
-      }
+      },
     );
     expect(valid).toBe(true);
     valid = ajv.validate(
@@ -88,9 +88,34 @@ describe('Ajv tests', () => {
       {
         'file-urn':
           'urn:ads:platform:file-service:v1:/files/c7f1c6aa-3564-4541-a6f4-a0915dcb8906;urn:ads:platform:file-service:v1:/files/c7f1c6aa-3564-4541-a6f4-a0915dcb8906',
-      }
+      },
     );
     expect(valid).toBe(true);
+  });
+
+  it('accepts custom pattern formats without unknown-format warnings', () => {
+    const ajv = createDefaultAjv();
+    const schema = {
+      type: 'object',
+      properties: {
+        sinByFormat: { type: 'string', format: 'sin' },
+        postalCode: { type: 'string', format: 'postalCode' },
+        driverId: { type: 'string', format: 'driverId' },
+      },
+    };
+
+    expect(ajv.validate(schema, {})).toBe(true);
+    expect(ajv.validate(schema, { sinByFormat: '', postalCode: '', driverId: '' })).toBe(true);
+    expect(
+      ajv.validate(schema, {
+        sinByFormat: '123 456 789',
+        postalCode: 'T2P 1A1',
+        driverId: '123456-789',
+      }),
+    ).toBe(true);
+    expect(ajv.validate(schema, { sinByFormat: '123456789' })).toBe(false);
+    expect(ajv.validate(schema, { postalCode: 'T2P1A1' })).toBe(false);
+    expect(ajv.validate(schema, { driverId: '123456789' })).toBe(false);
   });
 
   describe('can generate inital data ', () => {
