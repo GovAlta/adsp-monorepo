@@ -30,12 +30,17 @@ import {
   DeleteSubscriberAction,
   DELETE_SUBSCRIBER,
   GetAllTypeSubscriptionsAction,
+  GetAllTypeSubscriptions,
   GetTypeSubscriptions as getTypeSubscriptionsAction,
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
   DeleteSubscriberSuccess,
   DELETE_SUBSCRIPTION,
   DeleteSubscriptionSuccess,
+  CreateTypeSubscriptionAction,
+  CreateTypeSubscriptionSuccess,
+  CreateTypeSubscriptionFailed,
+  CREATE_TYPE_SUBSCRIPTION,
 } from './actions';
 import { Subscriber, Events } from './models';
 import { RootState } from '../index';
@@ -157,6 +162,40 @@ function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
 
       yield put(DeleteSubscriptionSuccess(subscriber, type));
     } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
+export function* createTypeSubscription(action: CreateTypeSubscriptionAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield call(getAccessToken);
+  const { typeId, subscriber } = action.payload;
+
+  if (configBaseUrl && token) {
+    try {
+      if ('id' in subscriber && subscriber.id) {
+        const existing = yield call(
+          axios.get,
+          `${configBaseUrl}/subscription/v1/types/${typeId}/subscriptions/${subscriber.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (existing.data) {
+          throw new Error('This subscriber is already subscribed to the selected notification type.');
+        }
+      }
+
+      yield call(
+        axios.post,
+        `${configBaseUrl}/subscription/v1/types/${typeId}/subscriptions`,
+        { ...subscriber, criteria: {} },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      yield put(CreateTypeSubscriptionSuccess());
+      yield put(SuccessNotification({ message: 'Subscription created successfully.' }));
+      yield put(GetAllTypeSubscriptions({}));
+    } catch (err) {
+      yield put(CreateTypeSubscriptionFailed());
       yield put(ErrorNotification({ error: err }));
     }
   }
@@ -295,7 +334,7 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
 
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: Record<string, string | number> = { top: 10 };
+  const params: Record<string, string | number> = { top: criteria.top || 10 };
 
   if (action.payload.reset) {
     yield put(FindSubscribersSuccess(null, ''));
@@ -405,6 +444,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(SUBSCRIBE, subscribe);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
+  yield takeEvery(CREATE_TYPE_SUBSCRIPTION, createTypeSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
   yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);

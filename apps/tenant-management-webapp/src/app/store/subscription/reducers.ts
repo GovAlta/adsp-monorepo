@@ -10,6 +10,10 @@ import {
   SUBSCRIBE_SUCCESS,
   DELETE_SUBSCRIBER_SUCCESS,
   DELETE_SUBSCRIPTION_SUCCESS,
+  CREATE_TYPE_SUBSCRIPTION,
+  CREATE_TYPE_SUBSCRIPTION_SUCCESS,
+  CREATE_TYPE_SUBSCRIPTION_FAILED,
+  RESET_TYPE_SUBSCRIPTION_CREATION,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
@@ -132,7 +136,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           results: results,
           next,
         },
-        typeSubscriptionSearch: {},
       };
     }
     case RESOLVE_SUBSCRIBER_USER_SUCCESS: {
@@ -175,6 +178,14 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         },
       };
     }
+    case CREATE_TYPE_SUBSCRIPTION:
+      return { ...state, subscriptionCreation: { state: 'loading' } };
+    case CREATE_TYPE_SUBSCRIPTION_SUCCESS:
+      return { ...state, subscriptionCreation: { state: 'succeeded' } };
+    case CREATE_TYPE_SUBSCRIPTION_FAILED:
+      return { ...state, subscriptionCreation: { state: 'failed' } };
+    case RESET_TYPE_SUBSCRIPTION_CREATION:
+      return { ...state, subscriptionCreation: { state: 'idle' } };
     case DELETE_SUBSCRIBER_SUCCESS: {
       delete state.subscribers[action.payload.subscriberId];
       Object.keys(state.subscriptions)
