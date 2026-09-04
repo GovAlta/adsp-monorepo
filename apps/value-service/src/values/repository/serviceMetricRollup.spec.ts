@@ -118,6 +118,18 @@ describe('TimescaleServiceMetricRollupRepository', () => {
     ]);
   });
 
+  it('can filter known tenant services by tenant', async () => {
+    const { knex } = createKnex([[{ tenant: 'tenant-a' }]]);
+    const repository = new TimescaleServiceMetricRollupRepository(knex);
+
+    await expect(
+      repository.getKnownTenantServices(
+        [{ service: 'pdf-service', initiated: { namespace: 'pdf-service', name: 'pdf-generation-queued' } }],
+        { tenant: 'tenant-a' }
+      )
+    ).resolves.toEqual([{ tenant: 'tenant-a', service: 'pdf-service' }]);
+  });
+
   it('can read a rollup from metric, payload, duration, and resource sources', async () => {
     const { knex } = createKnex([
       { sum: '4' },

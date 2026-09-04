@@ -12,10 +12,17 @@ export interface TenantServiceKey {
   service: string;
 }
 
+export interface ServiceMetricRollupCriteria {
+  tenant?: string;
+}
+
 export interface ServiceMetricRollupRepository {
   hasRollups(): Promise<boolean>;
   getHistoricalRollupRange(mappings: ServiceMetricRollupMapping[]): Promise<RollupDateRange | null>;
-  getKnownTenantServices(mappings: ServiceMetricRollupMapping[]): Promise<TenantServiceKey[]>;
+  getKnownTenantServices(
+    mappings: ServiceMetricRollupMapping[],
+    criteria?: ServiceMetricRollupCriteria
+  ): Promise<TenantServiceKey[]>;
   readRollup(day: Date, tenant: string, mapping: ServiceMetricRollupMapping): Promise<ServiceMetricRollup>;
   upsertRollups(rollups: ServiceMetricRollup[]): Promise<void>;
 }
@@ -66,13 +73,20 @@ export class TimescaleServiceMetricRollupRepository implements ServiceMetricRoll
         };
   }
 
-  async getKnownTenantServices(mappings: ServiceMetricRollupMapping[]): Promise<TenantServiceKey[]> {
+  async getKnownTenantServices(
+    mappings: ServiceMetricRollupMapping[],
+    criteria?: ServiceMetricRollupCriteria
+  ): Promise<TenantServiceKey[]> {
     const keys = await Promise.all(
       mappings.map(async (mapping) => {
         const metricSources = this.getMetricSources(mapping);
-        const rows = await this.applyMetricSourceFilter(this.knex('metrics'), metricSources)
-          .whereNotNull('tenant')
-          .distinct<{ tenant: string }[]>('tenant');
+        let query = this.applyMetricSourceFilter(this.knex('metrics'), metricSources).whereNotNull('tenant');
+
+        if (criteria?.tenant) {
+          query = query.where({ tenant: criteria.tenant });
+        }
+
+        const rows = await query.distinct<{ tenant: string }[]>('tenant');
 
         return rows.map(({ tenant }) => ({ tenant, service: mapping.service }));
       })
