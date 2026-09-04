@@ -384,6 +384,7 @@
     "piscina": "5.3.0",
     "js-yaml": "4.3.1",
     "@grpc/grpc-js": "1.14.4",
+    "browserslist": "4.28.9",
     "swagger-jsdoc": {
       "js-yaml": "3.15.1"
     },

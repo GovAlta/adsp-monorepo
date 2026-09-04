@@ -66,6 +66,7 @@
     "postcss": "8.5.23",
     "axios": "1.18.1",
     "js-yaml": "4.3.1",
-    "websocket-driver": "0.7.5"
+    "websocket-driver": "0.7.5",
+    "browserslist": "4.28.9"
   }
 }
