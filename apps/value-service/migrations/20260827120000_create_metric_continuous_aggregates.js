@@ -24,7 +24,7 @@ const aggregates = [
 const createAggregate = (knex, aggregate) =>
   knex.schema.raw(
     `CREATE MATERIALIZED VIEW ${aggregate.name} ` +
-      'WITH (timescaledb.continuous, timescaledb.materialized_only = true) AS ' +
+      'WITH (timescaledb.continuous) AS ' +
       'SELECT namespace, name, tenant, metric, ' +
       `time_bucket(INTERVAL '${aggregate.bucket}', timestamp) AS bucket, ` +
       'SUM(value) AS sum, COUNT(value) AS count, MIN(value) AS min, MAX(value) AS max ' +

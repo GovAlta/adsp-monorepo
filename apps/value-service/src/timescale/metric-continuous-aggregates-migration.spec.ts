@@ -36,6 +36,8 @@ describe('metric continuous aggregate migration', () => {
       expect(sql).toContain(`CREATE MATERIALIZED VIEW ${name}`);
       expect(sql).toContain(`add_continuous_aggregate_policy('${name}'`);
     });
+    expect(sql).toContain('WITH (timescaledb.continuous) AS');
+    expect(sql).not.toContain('timescaledb.materialized_only');
     expect(sql.match(/WITH NO DATA/g)).toHaveLength(aggregateNames.length);
     expect(sql).toContain('SUM(value) AS sum');
     expect(sql).toContain('COUNT(value) AS count');
