@@ -51,17 +51,23 @@ export const scheduleServiceMetricRollupJob = async ({
 }: ServiceMetricRollupJobProps): Promise<void> => {
   const rollupJob = createServiceMetricRollupJob(repository, logger);
 
-  if (backfillOnStartup && !(await repository.hasRollups())) {
-    const historicalRange = await repository.getHistoricalRollupRange(serviceMetricRollupMappings);
-    if (historicalRange) {
-      await instrumentJob(
-        'service-metric-rollup-backfill',
-        async () => {
-          await rollupJob(historicalRange);
-        },
-        { logger }
-      )();
-    }
+  if (backfillOnStartup) {
+    void instrumentJob(
+      'service-metric-rollup-backfill',
+      async () => {
+        if (!(await repository.hasRollups())) {
+          const historicalRange = await repository.getHistoricalRollupRange(serviceMetricRollupMappings);
+          if (historicalRange) {
+            await rollupJob(historicalRange);
+          }
+        }
+      },
+      { logger }
+    )().catch((err) => {
+      logger.error(`Error encountered running service metric rollup backfill. ${err}`, {
+        context: 'ServiceMetricRollup',
+      });
+    });
   }
 
   schedule.scheduleJob(
@@ -75,6 +81,21 @@ export const scheduleServiceMetricRollupJob = async ({
     )
   );
   logger.info('Scheduled daily service metric rollup job.');
+};
+
+export const runServiceMetricRollupBackfill = async (
+  repository: ServiceMetricRollupRepository,
+  logger: Logger,
+  mappings: ServiceMetricRollupMapping[] = serviceMetricRollupMappings
+): Promise<number> => {
+  const rollupJob = createServiceMetricRollupJob(repository, logger, mappings);
+
+  if (await repository.hasRollups()) {
+    return 0;
+  }
+
+  const historicalRange = await repository.getHistoricalRollupRange(mappings);
+  return historicalRange ? rollupJob(historicalRange) : 0;
 };
 
 export function getTrailingCompletedDayRange(trailingDays: number, now = new Date()): { start: Date; end: Date } {

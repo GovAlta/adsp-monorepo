@@ -6,6 +6,7 @@ import {
   createServiceMetricRollupJob,
   getDays,
   getTrailingCompletedDayRange,
+  runServiceMetricRollupBackfill,
   scheduleServiceMetricRollupJob,
 } from './serviceMetricRollup';
 
@@ -19,6 +20,7 @@ jest.mock('@abgov/adsp-service-sdk', () => ({
 
 describe('service metric rollup job', () => {
   const logger = {
+    error: jest.fn(),
     info: jest.fn(),
   } as unknown as Logger;
 
@@ -116,19 +118,14 @@ describe('service metric rollup job', () => {
     expect(repository.upsertRollups).not.toHaveBeenCalled();
   });
 
-  it('runs startup backfill when no rollups exist', async () => {
+  it('runs backfill when no rollups exist', async () => {
     repository.hasRollups.mockResolvedValue(false);
     repository.getHistoricalRollupRange.mockResolvedValue({
       start: new Date('2026-08-23T00:00:00.000Z'),
       end: new Date('2026-08-23T00:00:00.000Z'),
     });
 
-    await scheduleServiceMetricRollupJob({
-      logger,
-      repository,
-      trailingDays: 3,
-      backfillOnStartup: true,
-    });
+    await runServiceMetricRollupBackfill(repository, logger, [mapping]);
 
     expect(repository.upsertRollups).toHaveBeenCalledWith([rollup]);
   });
