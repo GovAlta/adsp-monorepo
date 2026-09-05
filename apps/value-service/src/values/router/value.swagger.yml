@@ -46,7 +46,7 @@ components:
   post:
     tags:
       - Value
-    description: Manually triggers service metric rollup processing for completed days. Requires a core value-writer user.
+    description: Manually triggers service metric rollup processing for completed days. Requires the value-writer role.
     requestBody:
       required: false
       content:
@@ -62,6 +62,9 @@ components:
                 type: string
                 format: date
                 description: Last completed day to roll up. Defaults to start when only start is supplied.
+              tenantId:
+                type: string
+                description: Tenant ID to roll up. Tenant users are always restricted to their own tenant.
     responses:
       200:
         description: Service metric rollup completed.
@@ -76,6 +79,10 @@ components:
                 end:
                   type: string
                   format: date
+                tenant:
+                  type:
+                    - string
+                    - 'null'
                 rollups:
                   type: integer
 

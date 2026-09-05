@@ -1,4 +1,10 @@
-import { Subscriber, SubscriptionWrapper, SubscriberSearchCriteria, SubscriptionSearchCriteria } from './models';
+import {
+  Subscriber,
+  SubscriberSearchCriteria,
+  SubscriptionSearchCriteria,
+  SubscriptionWrapper,
+  TypeSubscriptionSubscriber,
+} from './models';
 
 export const GET_MY_SUBSCRIBER = 'tenant/subscriber-service/get-my-subscriber';
 export const GET_MY_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-my-subscriber-success';
@@ -9,6 +15,10 @@ export const UNSUBSCRIBE = 'tenant/subscriber-service/unsubscribe';
 export const UNSUBSCRIBE_SUCCESS = 'tenant/subscriber-service/unsubscribe-success';
 export const DELETE_SUBSCRIPTION = 'tenant/subscriber-service/delete-subscription';
 export const DELETE_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/delete-subscription-success';
+export const CREATE_TYPE_SUBSCRIPTION = 'tenant/subscriber-service/create-type-subscription';
+export const CREATE_TYPE_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/create-type-subscription-success';
+export const CREATE_TYPE_SUBSCRIPTION_FAILED = 'tenant/subscriber-service/create-type-subscription-failed';
+export const RESET_TYPE_SUBSCRIPTION_CREATION = 'tenant/subscriber-service/reset-type-subscription-creation';
 
 export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
 export const UPDATE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/update-subscriber-success';
@@ -47,7 +57,31 @@ export type ActionTypes =
   | ResolveSubscriberUserSuccessAction
   | DeleteSubscriberSuccessAction
   | DeleteSubscriptionAction
-  | DeleteSubscriptionSuccessAction;
+  | DeleteSubscriptionSuccessAction
+  | CreateTypeSubscriptionAction
+  | CreateTypeSubscriptionSuccessAction
+  | CreateTypeSubscriptionFailedAction
+  | ResetTypeSubscriptionCreationAction;
+
+export interface CreateTypeSubscriptionAction {
+  type: typeof CREATE_TYPE_SUBSCRIPTION;
+  payload: {
+    typeId: string;
+    subscriber: TypeSubscriptionSubscriber;
+  };
+}
+
+export interface CreateTypeSubscriptionSuccessAction {
+  type: typeof CREATE_TYPE_SUBSCRIPTION_SUCCESS;
+}
+
+export interface CreateTypeSubscriptionFailedAction {
+  type: typeof CREATE_TYPE_SUBSCRIPTION_FAILED;
+}
+
+export interface ResetTypeSubscriptionCreationAction {
+  type: typeof RESET_TYPE_SUBSCRIPTION_CREATION;
+}
 
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER;
@@ -252,6 +286,26 @@ export const UnsubscribeSuccess = (subscriber: Subscriber, type: string): Unsubs
 export const DeleteSubscriptionSuccess = (subscriber: Subscriber, type: string): DeleteSubscriptionSuccessAction => ({
   type: DELETE_SUBSCRIPTION_SUCCESS,
   payload: { subscriber, type },
+});
+
+export const CreateTypeSubscription = (
+  typeId: string,
+  subscriber: TypeSubscriptionSubscriber,
+): CreateTypeSubscriptionAction => ({
+  type: CREATE_TYPE_SUBSCRIPTION,
+  payload: { typeId, subscriber },
+});
+
+export const CreateTypeSubscriptionSuccess = (): CreateTypeSubscriptionSuccessAction => ({
+  type: CREATE_TYPE_SUBSCRIPTION_SUCCESS,
+});
+
+export const CreateTypeSubscriptionFailed = (): CreateTypeSubscriptionFailedAction => ({
+  type: CREATE_TYPE_SUBSCRIPTION_FAILED,
+});
+
+export const ResetTypeSubscriptionCreation = (): ResetTypeSubscriptionCreationAction => ({
+  type: RESET_TYPE_SUBSCRIPTION_CREATION,
 });
 
 export const GetAllTypeSubscriptions = (criteria: SubscriptionSearchCriteria): GetAllTypeSubscriptionsAction => ({

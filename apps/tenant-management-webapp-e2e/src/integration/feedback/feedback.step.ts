@@ -436,7 +436,7 @@ Given('a tenant admin user is on Feedback service Feedback page', function () {
   );
   commonlib.tenantAdminMenuItem('Feedback', 2000);
   commonObj.serviceTab('Feedback', 'Feedback').click();
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 Then('the user views site URLs from sites page in Registered sites dropdown', function () {
@@ -464,7 +464,7 @@ Then('the user views site URLs from sites page in Registered sites dropdown', fu
 
   //Go back to feedback page
   commonObj.serviceTab('Feedback', 'Feedback').click();
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 When('the user selects the adsp site in Registered sites dropdown', function () {

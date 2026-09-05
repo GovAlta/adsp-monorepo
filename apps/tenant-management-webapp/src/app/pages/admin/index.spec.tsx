@@ -32,15 +32,15 @@ const renderAt = (path: string, featureFlags: Record<string, boolean>) =>
   );
 
 describe('TenantManagement routing', () => {
-  it('routes to the secret service overview when the flag is on', () => {
-    const { getByTestId } = renderAt('/services/secret', { Secret: true });
+  it('routes to the SharePoint service overview when the flag is on', () => {
+    const { getByTestId } = renderAt('/services/sharepoint', { SharePoint: true });
 
-    expect(getByTestId('secret-title')).toHaveTextContent('Secret service');
+    expect(getByTestId('sharepoint-title')).toHaveTextContent('SharePoint service');
   });
 
-  it('does not register the secret route when the flag is off', () => {
-    const { queryByTestId } = renderAt('/services/secret', { Secret: false });
+  it('does not register the SharePoint route when the flag is off', () => {
+    const { queryByTestId } = renderAt('/services/sharepoint', { SharePoint: false });
 
-    expect(queryByTestId('secret-title')).toBeNull();
+    expect(queryByTestId('sharepoint-title')).toBeNull();
   });
 });

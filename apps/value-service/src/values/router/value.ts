@@ -360,9 +360,9 @@ export function runServiceMetricRollup(
   return async (req, res, next) => {
     try {
       const user = req.user as User;
-      const { start: startValue, end: endValue } = req.body || {};
+      const { start: startValue, end: endValue, tenantId: tenantIdValue } = req.body || {};
 
-      if (!isAllowedUser(user, null, ServiceUserRoles.Writer, true) || !user.isCore) {
+      if (!isAllowedUser(user, null, ServiceUserRoles.Writer, true)) {
         throw new UnauthorizedUserError('run service metric rollup', user);
       }
 
@@ -382,11 +382,13 @@ export function runServiceMetricRollup(
         throw new InvalidOperationError('Cannot roll up the current partial day or a future day.');
       }
 
-      const rollupCount = await createServiceMetricRollupJob(repository, logger)(range);
+      const tenant = user.isCore ? tenantIdValue : user.tenantId?.toString();
+      const rollupCount = await createServiceMetricRollupJob(repository, logger)(range, { tenant });
 
       res.send({
         start: formatDay(range.start),
         end: formatDay(range.end),
+        tenant: tenant || null,
         rollups: rollupCount,
       });
     } catch (err) {
@@ -438,6 +440,7 @@ export const createValueRouter = ({
         {
           start: { optional: true, isISO8601: true },
           end: { optional: true, isISO8601: true },
+          tenantId: { optional: true, isString: true },
         },
         ['body']
       )
