@@ -1,4 +1,7 @@
 /* eslint-disable no-undef */
+// clean-code-ignore: RULE-19 - covered by src/timescale/metric-continuous-aggregates-migration.spec.ts.
+// The test cannot be colocated: knex loads every .js in this directory as a migration, so a test file
+// here fails the migration run at startup.
 
 const aggregates = [
   {
@@ -18,12 +21,18 @@ const aggregates = [
   { name: 'metrics_hourly_continuous', bucket: '1 hour', schedule: '15 minutes', start: '3 hours', end: '1 hour' },
   { name: 'metrics_daily_continuous', bucket: '1 day', schedule: '1 hour', start: '3 days', end: '1 day' },
   { name: 'metrics_weekly_continuous', bucket: '1 week', schedule: '1 day', start: '3 weeks', end: '1 week' },
-  { name: 'metrics_monthly_continuous', bucket: '1 month', schedule: '1 day', start: '3 months', end: '1 month' },
+  // A month is a variable-width bucket, so Timescale requires the refresh window to span more than two
+  // of them rather than the exactly-two the fixed-width buckets above get away with; '3 months' here
+  // is rejected with 'policy refresh window too small'.
+  { name: 'metrics_monthly_continuous', bucket: '1 month', schedule: '1 day', start: '4 months', end: '1 month' },
 ];
 
+// Timescale cannot create continuous aggregates inside a transaction, so this migration runs unwrapped
+// (see exports.config below) and every statement has to be safe to re-run: a failure part way through
+// leaves the earlier statements applied, and knex will start again from the top on the next boot.
 const createAggregate = (knex, aggregate) =>
   knex.schema.raw(
-    `CREATE MATERIALIZED VIEW ${aggregate.name} ` +
+    `CREATE MATERIALIZED VIEW IF NOT EXISTS ${aggregate.name} ` +
       'WITH (timescaledb.continuous) AS ' +
       'SELECT namespace, name, tenant, metric, ' +
       `time_bucket(INTERVAL '${aggregate.bucket}', timestamp) AS bucket, ` +
@@ -31,22 +40,30 @@ const createAggregate = (knex, aggregate) =>
       'FROM metrics GROUP BY namespace, name, tenant, metric, bucket WITH NO DATA;',
   );
 
+// IF NOT EXISTS above skips an aggregate left behind by an earlier attempt, which would otherwise keep
+// whatever settings that attempt created it with. Set them explicitly so the end state is the same
+// whether the view is new or pre-existing.
+const setAggregateOptions = (knex, aggregate) =>
+  knex.schema.raw(`ALTER MATERIALIZED VIEW ${aggregate.name} SET (timescaledb.materialized_only = false);`);
+
 const addRefreshPolicy = (knex, aggregate) =>
   knex.schema.raw(
     `SELECT add_continuous_aggregate_policy('${aggregate.name}', ` +
       `start_offset => INTERVAL '${aggregate.start}', ` +
       `end_offset => INTERVAL '${aggregate.end}', ` +
-      `schedule_interval => INTERVAL '${aggregate.schedule}');`,
+      `schedule_interval => INTERVAL '${aggregate.schedule}', ` +
+      'if_not_exists => TRUE);',
   );
 
 exports.up = async function (knex) {
   for (const aggregate of aggregates) {
     await createAggregate(knex, aggregate);
+    await setAggregateOptions(knex, aggregate);
     await addRefreshPolicy(knex, aggregate);
   }
 
   await knex.schema.raw(`
-    CREATE TABLE metric_continuous_aggregate_backfills (
+    CREATE TABLE IF NOT EXISTS metric_continuous_aggregate_backfills (
       aggregate_name TEXT NOT NULL,
       window_start TIMESTAMPTZ NOT NULL,
       window_end TIMESTAMPTZ NOT NULL,
@@ -54,7 +71,7 @@ exports.up = async function (knex) {
       PRIMARY KEY (aggregate_name, window_start, window_end)
     );
 
-    CREATE PROCEDURE backfill_metric_continuous_aggregate(
+    CREATE OR REPLACE PROCEDURE backfill_metric_continuous_aggregate(
       p_aggregate REGCLASS,
       p_window_start TIMESTAMPTZ,
       p_window_end TIMESTAMPTZ
@@ -105,11 +122,13 @@ exports.up = async function (knex) {
 };
 
 exports.down = async function (knex) {
-  await knex.schema.raw('DROP PROCEDURE backfill_metric_continuous_aggregate(REGCLASS, TIMESTAMPTZ, TIMESTAMPTZ);');
-  await knex.schema.raw('DROP TABLE metric_continuous_aggregate_backfills;');
+  await knex.schema.raw(
+    'DROP PROCEDURE IF EXISTS backfill_metric_continuous_aggregate(REGCLASS, TIMESTAMPTZ, TIMESTAMPTZ);',
+  );
+  await knex.schema.raw('DROP TABLE IF EXISTS metric_continuous_aggregate_backfills;');
 
   for (const aggregate of [...aggregates].reverse()) {
-    await knex.schema.raw(`DROP MATERIALIZED VIEW ${aggregate.name};`);
+    await knex.schema.raw(`DROP MATERIALIZED VIEW IF EXISTS ${aggregate.name};`);
   }
 };
 
