@@ -27,7 +27,7 @@ export const environment = envalid.cleanEnv(
     METRIC_INTERVAL_ROLLUP_JOB_ENABLED: envalid.bool({ default: true }),
     // clean-code-ignore: RULE-19 — envalid declarations, exercised through the modules that read them.
     METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS: envalid.num({ default: 7 * 24 }),
-    METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS: envalid.num({ default: 120000 }),
+    METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS: envalid.num({ default: 600000 }), // clean-code-ignore: RULE-19
     DB_POOL_MAX: envalid.num({ default: 10 }),
   },
   {

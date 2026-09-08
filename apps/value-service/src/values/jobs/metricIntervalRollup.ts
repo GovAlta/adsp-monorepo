@@ -60,31 +60,47 @@ export const createMetricIntervalRollupJob =
     definitions: MetricIntervalDefinition[] = boundMetricIntervalDefinitions(Number.POSITIVE_INFINITY),
   ) =>
   async (now = new Date()): Promise<number> => {
-    // The whole run goes under the lock rather than each interval separately: coverage is read and
-    // then extended from what was read, so two runs interleaving between those two steps would each
-    // advance from the same edge and leave a window neither of them filled.
-    const refreshed = await repository.withRollupLock(async (locked) => {
-      const metricsWindow = await locked.getMetricsWindow();
-      if (!metricsWindow) {
-        logger.debug('No metrics recorded yet; skipping metric interval rollup.', { context: 'MetricIntervalRollup' });
-        return 0;
-      }
-
-      let total = 0;
-      for (const definition of definitions) {
-        total += await advanceMetricInterval(locked, definition, metricsWindow, now);
-      }
-
-      logger.info(`Refreshed ${total} metric interval rollup record(s).`, { context: 'MetricIntervalRollup' });
-      return total;
-    });
-
-    if (refreshed === null) {
-      logger.debug('Another instance holds the metric interval rollup lock; skipping this run.', {
-        context: 'MetricIntervalRollup',
-      });
+    const metricsWindow = await repository.getMetricsWindow();
+    if (!metricsWindow) {
+      logger.debug('No metrics recorded yet; skipping metric interval rollup.', { context: 'MetricIntervalRollup' });
       return 0;
     }
+
+    let refreshed = 0;
+    let failed = 0;
+
+    // One transaction per interval, not one for the whole run. Coverage is per interval, so the
+    // read-and-extend that has to be atomic is already contained here; taking the lock once for the
+    // run instead meant a statement timeout on any one interval rolled back every interval that had
+    // already succeeded, and the job committed nothing at all.
+    for (const definition of definitions) {
+      try {
+        const advanced = await repository.withRollupLock((locked) =>
+          advanceMetricInterval(locked, definition, metricsWindow, now),
+        );
+
+        if (advanced === null) {
+          logger.debug(`Another instance holds the ${definition.interval} rollup lock; skipping it this run.`, {
+            context: 'MetricIntervalRollup',
+          });
+        } else {
+          refreshed += advanced;
+        }
+      } catch (err) {
+        // An interval that cannot finish inside its statement timeout must not stop the rest. The
+        // coarse intervals read the most history and so are the ones that time out, and they run
+        // last, which would otherwise be indistinguishable from the whole job being broken.
+        failed++;
+        logger.warn(`Failed to advance the ${definition.interval} metric interval rollup. ${err}`, {
+          context: 'MetricIntervalRollup',
+        });
+      }
+    }
+
+    logger.info(
+      `Refreshed ${refreshed} metric interval rollup record(s)${failed > 0 ? `; ${failed} interval(s) failed` : ''}.`,
+      { context: 'MetricIntervalRollup' },
+    );
 
     return refreshed;
   };
