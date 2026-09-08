@@ -40,6 +40,10 @@ The job runs every five minutes and moves one interval's coverage by at most a c
 
 Reads consult that coverage. A request whose window falls entirely inside it is served from the rollups; anything reaching outside falls back to the `metrics_*` view, which aggregates on read and is always complete. Rollups can therefore be populated progressively without the API losing data in the meantime.
 
+A refresh reads the raw `metrics` table over its window, so what a run costs follows the span of that window rather than the width of the bucket being filled — a month of metrics is the same read whether it lands in daily buckets or one monthly bucket. `METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS` caps that span, defaulting to a week; it cannot cut a window below a single bucket, since an interval whose chunk is narrower than its bucket would never finish backfilling. Lower it where the table is large enough that a week is too much to read at once, at the cost of history filling in more slowly.
+
+Only one run happens at a time. The job takes a Postgres advisory lock for the run, so of the replicas that all schedule it, whichever gets the lock does the work and the rest skip that tick; within a replica, a tick arriving while the last run is still going is skipped as well. `METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS` bounds how long a single refresh may hold its connection, and `DB_POOL_MAX` bounds how many connections a replica can hold at all — worth setting deliberately, since it is multiplied by the replica count against one database.
+
 Set `METRIC_INTERVAL_ROLLUP_JOB_ENABLED=false` to stop the job. Reads keep working — they fall back to the views — but the rollups stop advancing and stale coverage will gradually stop matching incoming requests.
 
 ```sql

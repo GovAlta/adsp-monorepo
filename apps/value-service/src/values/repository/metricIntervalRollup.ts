@@ -7,7 +7,15 @@ export interface MetricIntervalRollupRepository {
   // Callers must pass a window that touches or overlaps existing coverage; coverage is stored as a
   // single span, so a detached window would report the gap between them as rolled up.
   refresh(interval: MetricInterval, bucket: string, window: MetricIntervalWindow): Promise<number>;
+  // Runs work while holding the rollup lock, resolving to null without running it when another
+  // instance holds the lock. The repository handed to the callback is bound to the locked
+  // connection, so callers must use it rather than the one they called this on.
+  withRollupLock<T>(work: (repository: MetricIntervalRollupRepository) => Promise<T>): Promise<T | null>;
 }
+
+// Every replica has to ask for the same key for the lock to mean anything, so this is arbitrary but
+// has to stay stable. Advisory keys share one database-wide space; this one is the ticket number.
+export const METRIC_INTERVAL_ROLLUP_LOCK_KEY = 5318;
 
 type RangeRow = {
   start?: Date | string | null;
@@ -20,7 +28,46 @@ type CoverageRow = {
 };
 
 export class TimescaleMetricIntervalRollupRepository implements MetricIntervalRollupRepository {
-  constructor(private knex: Knex) {}
+  constructor(
+    private knex: Knex,
+    private statementTimeoutMs = 0,
+  ) {}
+
+  /**
+   * Hold the rollup lock for one run.
+   *
+   * Every replica schedules this job, and the cron tick fires whether or not the last run finished,
+   * so without a lock the same windows are recomputed several times over concurrently -- which is
+   * what exhausted the database's connection slots in dev.
+   *
+   * pg_try_advisory_xact_lock is scoped to the transaction: it is taken on that transaction's own
+   * connection and released when it ends, so the lock cannot be released onto a different pooled
+   * connection than the one that took it, nor outlive a run whose pod was killed. The try_ form
+   * rather than the blocking one, because a replica that loses the race should skip this tick
+   * instead of queueing up behind the winner and running the same work a moment later.
+   */
+  async withRollupLock<T>(work: (repository: MetricIntervalRollupRepository) => Promise<T>): Promise<T | null> {
+    return this.knex.transaction(async (trx) => {
+      const result = await trx.raw<{ rows: { locked: boolean }[] }>('SELECT pg_try_advisory_xact_lock(?) AS locked', [
+        METRIC_INTERVAL_ROLLUP_LOCK_KEY,
+      ]);
+
+      if (!result?.rows?.[0]?.locked) {
+        return null;
+      }
+
+      if (this.statementTimeoutMs > 0) {
+        // A refresh that runs away holds its connection for as long as it takes, and the pool is
+        // shared with the API. SET LOCAL so the timeout reverts when the transaction ends rather
+        // than sticking to a pooled connection that goes on to serve a request. The value is
+        // interpolated because SET does not take a bind parameter; it is truncated to an integer
+        // rather than passed through as given.
+        await trx.raw(`SET LOCAL statement_timeout = ${Math.trunc(this.statementTimeoutMs)}`);
+      }
+
+      return work(new TimescaleMetricIntervalRollupRepository(trx, this.statementTimeoutMs));
+    });
+  }
 
   async getMetricsWindow(): Promise<MetricIntervalWindow | null> {
     const row = await this.knex('metrics').min({ start: 'timestamp' }).max({ end: 'timestamp' }).first<RangeRow>();
