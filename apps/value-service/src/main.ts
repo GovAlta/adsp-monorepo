@@ -150,7 +150,12 @@ const initializeApp = async () => {
   }
 
   if (environment.METRIC_INTERVAL_ROLLUP_JOB_ENABLED) {
-    scheduleMetricIntervalRollupJob({ logger, repository: repositories.metricIntervalRollupRepository });
+    // clean-code-ignore: RULE-19 — app bootstrap; the job it wires up is covered in its own spec.
+    scheduleMetricIntervalRollupJob({
+      logger,
+      repository: repositories.metricIntervalRollupRepository,
+      maxChunkHours: environment.METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS,
+    });
   }
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

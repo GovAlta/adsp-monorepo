@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TimescaleMetricIntervalRollupRepository } from './metricIntervalRollup';
+import { METRIC_INTERVAL_ROLLUP_LOCK_KEY, TimescaleMetricIntervalRollupRepository } from './metricIntervalRollup';
 
 const createQueryStub = (result: unknown) => {
   const stub: any = {};
@@ -10,14 +10,18 @@ const createQueryStub = (result: unknown) => {
   return stub;
 };
 
-const createKnex = (result: unknown = undefined, rowCount = 2) => {
+const createKnex = (result: unknown = undefined, rowCount = 2, locked = true) => {
   const raws: { sql: string; bindings: unknown[] }[] = [];
   const query = createQueryStub(result);
   const knex: any = jest.fn(() => query);
   knex.raw = jest.fn((sql: string, bindings: unknown[] = []) => {
     raws.push({ sql, bindings });
-    return Promise.resolve({ rowCount });
+
+    return Promise.resolve(sql.includes('pg_try_advisory_xact_lock') ? { rows: [{ locked }] } : { rowCount });
   });
+  // The transaction is the lock's scope, so the stub hands the callback the same query surface
+  // rather than a separate one; the repository is expected to work through what it is given.
+  knex.transaction = jest.fn((work: (trx: unknown) => Promise<unknown>) => work(knex));
 
   return { knex, query, raws };
 };
@@ -63,6 +67,61 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
       const { knex } = createKnex(undefined);
 
       expect(await new TimescaleMetricIntervalRollupRepository(knex).getCoverage('hourly')).toBeNull();
+    });
+  });
+
+  describe('withRollupLock', () => {
+    it('runs the work when the lock is free', async () => {
+      const { knex, raws } = createKnex();
+      const work = jest.fn().mockResolvedValue(4);
+
+      const result = await new TimescaleMetricIntervalRollupRepository(knex).withRollupLock(work);
+
+      expect(result).toBe(4);
+      expect(raws[0].sql).toContain('pg_try_advisory_xact_lock');
+      expect(raws[0].bindings).toEqual([METRIC_INTERVAL_ROLLUP_LOCK_KEY]);
+    });
+
+    // A replica that loses the race has to leave the run to the winner rather than repeating it.
+    it('skips the work and resolves null when another instance holds the lock', async () => {
+      const { knex } = createKnex(undefined, 2, false);
+      const work = jest.fn();
+
+      expect(await new TimescaleMetricIntervalRollupRepository(knex).withRollupLock(work)).toBeNull();
+      expect(work).not.toHaveBeenCalled();
+    });
+
+    // The work has to run on the connection holding the lock, so the callback gets a repository
+    // bound to the transaction rather than the one withRollupLock was called on.
+    it('hands the work a repository bound to the locked transaction', async () => {
+      const { knex } = createKnex();
+      let handed: unknown;
+
+      await new TimescaleMetricIntervalRollupRepository(knex).withRollupLock(async (repository) => {
+        handed = repository;
+        return 0;
+      });
+
+      expect(handed).toBeInstanceOf(TimescaleMetricIntervalRollupRepository);
+      expect(knex.transaction).toHaveBeenCalled();
+    });
+
+    // SET takes no bind parameter, so the value is interpolated; it is truncated rather than
+    // passed through, and SET LOCAL keeps it off the connection once it goes back to the pool.
+    it('applies a statement timeout to the locked connection only', async () => {
+      const { knex, raws } = createKnex();
+
+      await new TimescaleMetricIntervalRollupRepository(knex, 90000.7).withRollupLock(async () => 0);
+
+      expect(raws[1].sql).toBe('SET LOCAL statement_timeout = 90000');
+    });
+
+    it('leaves the timeout at the server default when none is configured', async () => {
+      const { knex, raws } = createKnex();
+
+      await new TimescaleMetricIntervalRollupRepository(knex).withRollupLock(async () => 0);
+
+      expect(raws.some(({ sql }) => sql.includes('statement_timeout'))).toBe(false);
     });
   });
 
