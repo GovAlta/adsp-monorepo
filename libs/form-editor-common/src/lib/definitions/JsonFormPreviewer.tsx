@@ -24,7 +24,11 @@ interface JSONFormPreviewerProps {
   useReviewRenderers?: boolean;
 }
 
-export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false }: JSONFormPreviewerProps): JSX.Element => {
+export const JSONFormPreviewer = ({
+  data,
+  onChange,
+  useReviewRenderers = false,
+}: JSONFormPreviewerProps): JSX.Element => {
   // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema);
   const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema);

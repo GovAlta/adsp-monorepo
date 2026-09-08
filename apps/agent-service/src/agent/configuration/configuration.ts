@@ -15,7 +15,18 @@ import { createBrokerInputProcessors, createInputProcessors } from '../processor
 import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
+import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
+
+function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
+  return new Memory({
+    storage,
+    options: {
+      lastMessages: environment.AGENT_LAST_MESSAGES,
+      observationalMemory: observationalMemoryEnabled ? { model: getAgentModelConfiguration() } : false,
+    },
+  });
+}
 
 /**
  * Wraps agent instructions to automatically inject contextual information on each request.
@@ -156,24 +167,8 @@ export class AgentServiceConfiguration {
             url: ':memory:',
           });
 
-      const sharedMemory = new Memory({
-        storage,
-        options: {
-          lastMessages: environment.AGENT_LAST_MESSAGES,
-          observationalMemory: environment.AGENT_OBSERVATIONAL_MEMORY
-            ? {
-                model: environment.MODEL_URL
-                  ? {
-                      providerId: 'custom',
-                      modelId: environment.MODEL,
-                      url: environment.MODEL_URL,
-                      apiKey: environment.MODEL_API_KEY,
-                    }
-                  : environment.MODEL,
-              }
-            : false,
-        },
-      });
+      const sharedMemory = createAgentMemory(storage, environment.AGENT_OBSERVATIONAL_MEMORY);
+      const formGenerationMemory = createAgentMemory(storage, false);
 
       const mcpToolsByAgent = Object.fromEntries(
         await Promise.all(
@@ -192,6 +187,7 @@ export class AgentServiceConfiguration {
             (agents, [key, configuration]) => {
               const externalTools = mcpToolsByAgent[key] || {};
               const availableToolMap = availableTools as Record<string, unknown>;
+              const modelId = getAgentModelId(key);
 
               return {
                 ...agents,
@@ -200,14 +196,7 @@ export class AgentServiceConfiguration {
                   name: configuration.name,
                   description: configuration.description,
                   instructions: withContextualInstructions(configuration.instructions),
-                  model: environment.MODEL_URL
-                    ? {
-                        id: `custom/${environment.MODEL}`,
-                        modelId: environment.MODEL,
-                        url: environment.MODEL_URL,
-                        apiKey: environment.MODEL_API_KEY,
-                      }
-                    : environment.MODEL,
+                  model: getAgentModelConfiguration(modelId),
                   defaultOptions: (configuration.outputSchema
                     ? {
                         structuredOutput: {
@@ -261,7 +250,7 @@ export class AgentServiceConfiguration {
                       {} as Record<string, unknown>,
                     ) || {}),
                   } as unknown as never,
-                  memory: sharedMemory,
+                  memory: key === 'formGenerationAgent' ? formGenerationMemory : sharedMemory,
                   workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
                   inputProcessors: ({ requestContext }) =>
                     createInputProcessors({

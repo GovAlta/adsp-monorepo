@@ -34,7 +34,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ''
+    value: ""
 objects:
   # Service Objects
 
@@ -46,7 +46,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-infra: 'true'
+        apply-infra: "true"
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -65,10 +65,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-uat: 'true'
-        apply-prod: 'true'
+        apply-dev: "true"
+        apply-test: "true"
+        apply-uat: "true"
+        apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
       annotations:
@@ -109,7 +109,7 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: '3333'
+                  value: "3333"
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               volumeMounts:
@@ -124,11 +124,31 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 100m
-                  memory: 512Mi
+                  cpu: "1"
+                  memory: 2Gi
                 requests:
-                  cpu: 20m
-                  memory: 100Mi
+                  cpu: 250m
+                  memory: 512Mi
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: http
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 5
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: http
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 5
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
           volumes:
@@ -143,23 +163,24 @@ objects:
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
-          terminationGracePeriodSeconds: 30
+          # A form generation run holds its socket for up to 15 minutes; give it that long to drain.
+          terminationGracePeriodSeconds: 960
       strategy:
         type: RollingUpdate
         rollingUpdate:
-          maxUnavailable: 25%
-          maxSurge: 25%
-      progressDeadlineSeconds: 600
+          maxUnavailable: 0
+          maxSurge: 1
+      progressDeadlineSeconds: 1200
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-uat: 'true'
-        apply-prod: 'true'
+        apply-dev: "true"
+        apply-test: "true"
+        apply-uat: "true"
+        apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:
@@ -179,12 +200,16 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-uat: 'true'
-        apply-prod: 'true'
+        apply-dev: "true"
+        apply-test: "true"
+        apply-uat: "true"
+        apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
+      annotations:
+        # Agent streams are socket.io tunnels that stay open for the length of a generation run.
+        haproxy.router.openshift.io/timeout: 960s
+        haproxy.router.openshift.io/timeout-tunnel: 960s
     spec:
       host: ${ROUTE_HOST}
       port:

@@ -4,6 +4,8 @@ import * as util from 'util';
 
 dotenv.config();
 
+const reasoningEffortChoices = ['', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+
 export const environment = envalid.cleanEnv(
   process.env,
   {
@@ -32,6 +34,20 @@ export const environment = envalid.cleanEnv(
     AGENT_SOCKET_MAX_BUFFER_SIZE: envalid.num({ default: 50 * 1024 * 1024 }),
     AGENT_MAX_FILE_SIZE_BYTES: envalid.num({ default: 50 * 1024 * 1024 }),
     AGENT_MAX_TARBALL_SIZE_BYTES: envalid.num({ default: 500 * 1024 * 1024 }),
+    AGENT_REQUEST_TIMEOUT_MS: envalid.num({ default: 240000 }),
+    // Tool calls the chat agent may make in one turn. The plan's own cap is MAX_PLAN_STEPS in llm/planner.ts.
+    AGENT_FORM_GENERATION_MAX_STEPS: envalid.num({ default: 12 }),
+    // Generation is a long multi-call job, so it replaces AGENT_REQUEST_TIMEOUT_MS for this agent only.
+    AGENT_FORM_GENERATION_TIMEOUT_MS: envalid.num({ default: 900000 }),
+    // Overrides MODEL for every generation call: chat agent, planner and step builder.
+    AGENT_FORM_GENERATION_MODEL: envalid.str({ default: '' }),
+    // Narrows the above to step building, which is mechanical enough to run on a smaller model than planning.
+    AGENT_FORM_GENERATION_STEP_MODEL: envalid.str({ default: '' }),
+    // Effort for the chat agent, and the fallback for the two role overrides below.
+    AGENT_FORM_GENERATION_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
+    // Planning is one judgement-heavy call; step building is many mechanical ones and sets the wall clock.
+    AGENT_FORM_GENERATION_PLANNER_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
+    AGENT_FORM_GENERATION_STEP_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
     AGENT_MCP_SERVER_CREDENTIALS_FILE: envalid.str({ default: '/var/run/secrets/adsp/mcp/mcp-servers.json' }),
     AGENT_WORKSPACE_INIT_RETRY_ATTEMPTS: envalid.num({ default: 5 }),
     AGENT_WORKSPACE_INIT_RETRY_DELAY_MS: envalid.num({ default: 50 }),

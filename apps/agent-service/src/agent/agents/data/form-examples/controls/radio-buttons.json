@@ -5,7 +5,8 @@
   "summary": "Radio button group using `enum` in data schema and `format: radio` in UI schema",
   "whenToUse": [
     "Selecting one option from 2-4 predefined choices",
-    "When all options should be visible at once without opening a dropdown"
+    "When all options should be visible at once without opening a dropdown",
+    "Likert or rating questions that reuse the same option list (Very good … Very poor, Definitely would … Definitely would not)"
   ],
   "dataSchema": {
     "type": "object",
@@ -30,6 +31,7 @@
   "notes": [
     "Set `options.format` to `\"radio\"` to render enum values as radio buttons instead of dropdown",
     "Use `componentProps.orientation` to control layout: `\"horizontal\"` or `\"vertical\"`",
-    "Radio buttons are best for 2-4 options; use dropdowns for longer lists"
+    "Radio buttons are best for 2-4 options; use dropdowns for longer lists",
+    "For a rating/Likert series, reuse the same enum on each question and set `componentProps.orientation` to `\"vertical\"`"
   ]
 }

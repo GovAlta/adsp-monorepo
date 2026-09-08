@@ -58,7 +58,6 @@ import {
   updateFormDefinition,
   updateEditorFormDefinition,
   getFormDefinitions,
-  openEditorForDefinition,
 } from '@store/form/action';
 import { Disposition, FormDefinition } from '@store/form/model';
 import { isFormUpdatedSelector, schemaErrorSelector } from '@store/form/selectors';
@@ -110,9 +109,15 @@ import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { AgentChat, ResizableSplitPane } from '@core-services/app-common';
 import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
-import { messageAgent, startThread, connectAgent } from '@store/agent/actions';
+import { messageAgent, startThread, connectAgent, clearThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
-import { Attachment, UserContent, AgentMessage, ToolCall } from '@core-services/app-common';
+import { Attachment, UserContent, ToolCall } from '@core-services/app-common';
+import { FormGenerationToolCall } from './FormGenerationToolCall';
+import {
+  FORM_GENERATION_CLIENT_DEADLINE_MS,
+  FORM_GENERATION_IDLE_HINT_MS,
+  isFormGenerationTool,
+} from './formGeneration';
 import { AnyAction } from 'redux';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
@@ -190,7 +195,6 @@ const NO_TASK_CREATED_OPTION = `No task created`;
 
 // Tab order in the editor: Data schema (0), UI schema (1), AI (2, when enabled).
 const AI_TAB_INDEX = 2;
-const PATCH_TOOL_NAME = 'patch-form-schema';
 
 export function AddEditFormDefinitionEditor({
   definition,
@@ -466,6 +470,12 @@ export function AddEditFormDefinitionEditor({
     }
   }, [dispatch, formAIEnabled, agentName, thread, threadId]);
 
+  useEffect(() => {
+    return () => {
+      dispatch(clearThread(threadId));
+    };
+  }, [dispatch, threadId]);
+
   // Open the agent socket lazily — only once the user actually lands on the AI
   // tab, rather than immediately when the editor opens.
   const agentConnectionRequested = useRef(false);
@@ -499,24 +509,12 @@ export function AddEditFormDefinitionEditor({
     [dispatch, resourceId],
   );
 
-  // Track the last patch message we reloaded for, so remounts don't re-fire.
-  const appliedPatchId = useRef<string | null>(null);
-
-  const latestPatchMessage =
-    [...messages]
-      .reverse()
-      .find(
-        (m): m is AgentMessage =>
-          m.from === 'agent' &&
-          !(m as AgentMessage).streaming &&
-          (m as AgentMessage).toolCalls?.some((tc: ToolCall) => tc.toolName === PATCH_TOOL_NAME && tc.result != null),
-      ) ?? null;
-
-  useEffect(() => {
-    if (!latestPatchMessage || latestPatchMessage.id === appliedPatchId.current) return;
-    appliedPatchId.current = latestPatchMessage.id;
-    dispatch(openEditorForDefinition(definition.id));
-  }, [latestPatchMessage, definition.id, dispatch]);
+  const renderFormToolCall = useCallback((toolCall: ToolCall) => {
+    if (!isFormGenerationTool(toolCall.toolName)) {
+      return null;
+    }
+    return <FormGenerationToolCall toolCall={toolCall} />;
+  }, []);
 
   return (
     <FormEditor>
@@ -680,6 +678,11 @@ export function AddEditFormDefinitionEditor({
                           disabled={!agentConnected || !thread}
                           onSend={handleAgentSend}
                           onAttachmentUpload={handleAgentAttachmentUpload}
+                          renderToolCall={renderFormToolCall}
+                          idleHintMs={FORM_GENERATION_IDLE_HINT_MS}
+                          idleHint="Still working…"
+                          deadlineMs={FORM_GENERATION_CLIENT_DEADLINE_MS}
+                          deadlineMessage="Anything already saved is in the editor."
                         />
                       </div>
                     </Tab>

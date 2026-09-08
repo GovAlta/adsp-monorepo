@@ -356,6 +356,67 @@ describe('onIoConnection workspace socket events', () => {
         }),
       );
     });
+
+    it('emits a stream error chunk when the agent stream aborts', async () => {
+      const abortError = Object.assign(new Error('aborted'), { name: 'AbortError' });
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield { type: 'text-delta', payload: { text: 'hello' } };
+          throw abortError;
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+      const { socket, eventHandlers } = await connect({ stream });
+
+      await eventHandlers['message']({
+        agent: 'formGenerationAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Build the form',
+        rawChunks: true,
+      });
+
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({
+          done: true,
+          chunk: {
+            type: 'error',
+            payload: expect.objectContaining({
+              code: 'GENERATION_DEADLINE',
+            }),
+          },
+        }),
+      );
+      expect(socket.emit).not.toHaveBeenCalledWith('error', expect.anything());
+    });
+
+    it('gives a Mastra error chunk a readable message', async () => {
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield { type: 'error', payload: { error: new Error('model refused') } };
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+      const { socket, eventHandlers } = await connect({ stream });
+
+      await eventHandlers['message']({
+        agent: 'formGenerationAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Build the form',
+        rawChunks: true,
+      });
+
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({
+          chunk: { type: 'error', payload: { message: 'model refused' } },
+        }),
+      );
+    });
   });
 
   // -------------------------------------------------------------------------

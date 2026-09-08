@@ -14,3 +14,5 @@ export type AdspRequestContext<TAdditional = never> = RequestContext<{
   user?: User;
   [MASTRA_THREAD_ID_KEY]?: string;
 } | TAdditional>
+
+export const SOURCE_DOCUMENTS_KEY = 'sourceDocuments';

@@ -106,6 +106,17 @@ interface ToolCallErrorChunk {
   };
 }
 
+// Emitted while a tool is still running; long-running tools use it to report progress.
+export const TOOL_OUTPUT = 'tool-output';
+interface ToolOutputChunk {
+  type: typeof TOOL_OUTPUT;
+  payload: {
+    toolCallId: string;
+    toolName: string;
+    output: unknown;
+  };
+}
+
 export const REASONING_START = 'reasoning-start';
 interface ReasoningStartChunk {
   type: typeof REASONING_START;
@@ -135,6 +146,7 @@ export const ERROR = 'error';
 interface ErrorChunk {
   type: typeof ERROR;
   payload: {
+    code?: string;
     message: string;
     details?: unknown;
   };
@@ -144,6 +156,7 @@ export const TRIPWIRE = 'tripwire';
 interface TripwireChunk {
   type: typeof TRIPWIRE;
   payload: {
+    code?: string;
     message: string;
     details?: unknown;
   };
@@ -158,6 +171,7 @@ export interface AgentResponseAction {
     | ToolCallChunk
     | ToolCallResultChunk
     | ToolCallErrorChunk
+    | ToolOutputChunk
     | ReasoningStartChunk
     | ReasoningDeltaChunk
     | ReasoningEndChunk

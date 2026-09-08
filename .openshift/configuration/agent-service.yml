@@ -13,6 +13,11 @@ items:
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       AGENT_WORKSPACE_ROOT: /var/lib/agent-workspace
       AGENT_MCP_SERVER_CREDENTIALS_FILE: /var/run/secrets/adsp/mcp/mcp-servers.json
+      # Planning is one judgement-heavy call; step building is ~13 mechanical calls and sets the wall clock.
+      AGENT_FORM_GENERATION_PLANNER_REASONING_EFFORT: medium
+      AGENT_FORM_GENERATION_STEP_REASONING_EFFORT: low
+      # Set to an Azure OpenAI deployment name to run step building on a smaller model than planning.
+      AGENT_FORM_GENERATION_STEP_MODEL: ""
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       LOG_LEVEL: debug
   - apiVersion: v1

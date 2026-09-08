@@ -5,9 +5,52 @@ exports[`loadFormExamples snapshot matches the expected full output snapshot 1`]
 
 ## Layout Selection
 Choose the right root layout based on form complexity. The Design System's basic layout pattern uses the page stepper (Categorization with variant='pages') as the preferred method for complex government forms.
-- **Simple forms (1-5 fields, single purpose)**: Use VerticalLayout as root
-- **Complex forms (6+ fields, multiple sections)**: Use Categorization with variant="pages" — the Design System's preferred basic layout pattern. This creates a Task List with section groupings, progress tracking, and a summary review page.
-- **Moderate forms for experienced/internal users**: Use Categorization with variant="stepper" for a simple step navigation bar. Less structure than pages but still organizes content into steps.
+- **SIMPLE — none of the COMPLEX signals (a one-page document of a handful of fields stays simple even if a file was attached)**: Use VerticalLayout as root. Do not promote it to Categorization.
+- **COMPLEX — any of: ≥2 named sections; ≥1 conditional branch; ≥12 inputs; extracted text ≥8,000 characters or PDF ≥4 pages; existing definition already has ≥2 categories or ≥12 properties. When unsure, treat as complex.**: Use Categorization with variant="pages" — the Design System's preferred basic layout pattern. This creates a Task List with section groupings, progress tracking, and a summary review page. Only COMPLEX generation may introduce Categorization.
+- **The user explicitly asked for a stepper (not merely a multi-section form)**: Use Categorization with variant="stepper" for a simple step navigation bar. Do not choose stepper just because the form is complex.
+- **Exception — single-purpose contact/feedback with follow-up fields and no named Category headings**: Stay on VerticalLayout. Use the Contact/Feedback Form with Conditional Routing example. Do not add Categorization just because one field has a SHOW rule.
+
+## Document use cases
+When a PDF or DOCX describes the form, classify the document's use case first, then reuse the matching examples. Do not force every document into the survey pattern or into Categorization.
+
+### Requirements document conventions
+- **Category:**: Named section. Do not include the text "Category:" in the displayed Category label. Two or more named sections → COMPLEX pages.
+- **Branch / Trigger question / Trigger values**: Conditional SHOW group. Place a Group (or VerticalLayout fallback) with a SHOW rule as the last child of the category. Use enum in the rule condition when several trigger values apply. Pair SHOW + required with if/then (conditional-required example).
+- **Help Text:**: HelpContent with markdown true, using the exact wording from the document.
+- **Question: / Control: / Options:**: One field. Map Control to the matching UI Control example. Use exact option wording as enum values.
+- **Control: Dropdown**: Dropdown Select (enum, 4+ options).
+- **Control: Radio buttons**: Radio Buttons (2–4 options, or a Likert/rating series that reuses the same enum).
+- **Control: Short text**: String Control. If required, use the minLength: 1 workaround.
+- **Control: Long text**: Text Area (options.multi true).
+- **Control: Multi-select / Maximum selections**: Multi-Select Checkboxes (array + uniqueItems + format checkbox). Set maxItems when Maximum selections is specified.
+- **Required: No**: Omit from the required array. Unless the document says otherwise, questions are required.
+- **Name / address / email / phone / SIN / dependents**: Prefer ADSP common schema $ref (personFullName, postalAddressAlberta, email, phoneNumber, socialInsuranceNumber, personDependents) instead of building from scratch.
+
+### Form types in a document
+- **Survey / questionnaire** (COMPLEX Categorization pages)
+  - Signals: Category headings; rating/Likert radios; Branch sections; multi-select factors; Help Text
+  - Use examples: Multi-Page Form Layout; Radio Buttons; Multi-Select Checkboxes; Help Content Block; Rule with Enum / Multi-Value Matching; Rule on Group Wrapper; Conditional Required (if/then)
+- **Government application (permits, licenses, benefits)** (COMPLEX Categorization pages)
+  - Signals: applicant name and address; FOIP or Notice of Collection; supporting documents; I declare / I certify
+  - Use examples: Full Government Application Form; Full Name (Common Field); Address (Common Field); File Upload; Required Declaration Checkbox; Help Content Block
+- **Vendor or program registration** (COMPLEX Categorization pages)
+  - Signals: business details; repeating products/services/team members; province or program dropdowns; license upload
+  - Use examples: Vendor Registration with Repeating Items; List with Detail (Repeating Items); Data Register — Configuration Service; File Upload; Required Declaration Checkbox
+- **Contact, feedback, or complaint** (SIMPLE VerticalLayout unless the document names 2+ categories or has 12+ inputs)
+  - Signals: single purpose; inquiry/issue category; follow-up fields that depend on category; no named sections
+  - Use examples: Contact/Feedback Form with Conditional Routing; Simple Vertical Layout; Show/Hide Rule; Custom Error Messages
+- **Eligibility calculator or computed totals** (Follow SIMPLE vs COMPLEX from sections/inputs, then add computed fields)
+  - Signals: fees, grants, or amounts calculated from other answers; tiered rates; caps; sum of a repeating list
+  - Use examples: Grant Eligibility Calculator; Basic Arithmetic Computed Fields; SUM Array Aggregate; Conditional Ternary Computed Field
+- **Simple single-purpose intake** (SIMPLE VerticalLayout — never Categorization)
+  - Signals: one page; fewer than 12 fields; no Category headings; no Branch
+  - Use examples: Simple Vertical Layout; Required String Field (minLength Workaround); Dropdown Select or Radio Buttons as specified
+- **Household, dependents, or other repeating people** (Follow SIMPLE vs COMPLEX from the rest of the document)
+  - Signals: list of children, dependents, employees, or previous addresses; add another
+  - Use examples: List with Detail (Repeating Items); personDependents common definition; Object Array (Simple Repeating Items) when each item has only 1–2 fields
+- **Shared lookup lists (ministries, provinces, programs)** (Does not change layout; wire a data register on the Control)
+  - Signals: dropdown values reused across forms; ministry/program lists that change independently of the form
+  - Use examples: Data Register — Weekdays (String Array); Data Register — Object Array with Label/Value Mapping; Data Register — Configuration Service
 
 ## Validation Checklist
 Pre-save validation checklist
@@ -32,17 +75,21 @@ Use ADSP common schema definitions instead of building fields from scratch
 Usage: Use schemaDefinitionTool to load definitions, then reference them with $ref in data schema properties
 
 ## Iterative Workflow
-1. Load existing form configuration with formConfigurationRetrievalTool
-2. Ask for the purpose of the form if unclear
-3. Start with 1-3 fields and apply via formConfigurationUpdateTool
-4. Ask for user feedback after each update
-5. Add more fields, refine layouts, and add help text incrementally
-6. Don't dump JSON — describe changes and use the update tool
+1. Call formSchemaIndex at session start. Do not call formConfigurationRetrievalTool during generation
+2. To build a form from a description or a requirements document, call formGenerationRun once and let it finish
+3. formGenerationRun plans the pages and branches, then builds and saves each one, so never hand-build a multi-page form
+4. Use formSchemaPatch only for a targeted change to content that already exists
+5. Never send a multi-category schema to formConfigurationUpdateTool
+6. Don't dump JSON — progress appears in the editor as the run saves each page
 
 # UI Control Examples
 
 ## Text Area
 Multi-line text input using the \`multi\` option on a string Control
+
+### When to use
+- Collecting longer text responses like descriptions, comments, or messages
+- When single-line input is insufficient for the expected content
 
 ### Data schema
 \`\`\`json
@@ -74,6 +121,11 @@ Multi-line text input using the \`multi\` option on a string Control
 ## Inline Help Content
 Add contextual help text to a form control using \`options.help\`
 
+### When to use
+- Providing guidance on how to fill in a specific field
+- Clarifying expected input format or source of information
+- Reducing user errors on fields that may be ambiguous
+
 ### UI schema
 \`\`\`json
 {
@@ -92,6 +144,10 @@ Add contextual help text to a form control using \`options.help\`
 
 ## File Upload
 File upload control using \`file-urn\` format on a string property
+
+### When to use
+- Collecting document uploads like photos, certificates, or supporting documents
+- When the form requires file attachments alongside other data
 
 ### Data schema
 \`\`\`json
@@ -122,6 +178,10 @@ File upload control using \`file-urn\` format on a string property
 ## Date Input
 Date picker control using the \`date\` format on a string property
 
+### When to use
+- Collecting dates like birth dates, appointment dates, or deadlines
+- When you need calendar-based date selection with built-in format validation
+
 ### Data schema
 \`\`\`json
 {
@@ -150,6 +210,10 @@ Date picker control using the \`date\` format on a string property
 
 ## Integer Input with Min/Max
 Numeric integer input with min, max, and step using \`componentProps\`
+
+### When to use
+- Collecting whole numbers like counts, quantities, or ages
+- When you need to constrain the numeric range with min/max bounds
 
 ### Data schema
 \`\`\`json
@@ -186,6 +250,10 @@ Numeric integer input with min, max, and step using \`componentProps\`
 ## Boolean Yes/No Radio
 Boolean field rendered as Yes/No radio buttons using \`format: radio\` option
 
+### When to use
+- Yes/No questions like 'Are you over 18?' or 'Do you have dependents?'
+- When you need a clear binary choice presented as radio buttons instead of a checkbox
+
 ### Data schema
 \`\`\`json
 {
@@ -220,6 +288,10 @@ Boolean field rendered as Yes/No radio buttons using \`format: radio\` option
 
 ## Dropdown Select
 Dropdown menu for selecting from a predefined list using \`enum\` in the data schema
+
+### When to use
+- Selecting one option from a list of 4+ predefined choices
+- Province/state selection, categories, or any fixed list of values
 
 ### Data schema
 \`\`\`json
@@ -259,6 +331,11 @@ Dropdown menu for selecting from a predefined list using \`enum\` in the data sc
 ## Radio Buttons
 Radio button group using \`enum\` in data schema and \`format: radio\` in UI schema
 
+### When to use
+- Selecting one option from 2-4 predefined choices
+- When all options should be visible at once without opening a dropdown
+- Likert or rating questions that reuse the same option list (Very good … Very poor, Definitely would … Definitely would not)
+
 ### Data schema
 \`\`\`json
 {
@@ -295,9 +372,69 @@ Radio button group using \`enum\` in data schema and \`format: radio\` in UI sch
 - Set \`options.format\` to \`"radio"\` to render enum values as radio buttons instead of dropdown
 - Use \`componentProps.orientation\` to control layout: \`"horizontal"\` or \`"vertical"\`
 - Radio buttons are best for 2-4 options; use dropdowns for longer lists
+- For a rating/Likert series, reuse the same enum on each question and set \`componentProps.orientation\` to \`"vertical"\`
+
+## Multi-Select Checkboxes
+Select several values from a list using an array of unique strings and \`format: checkbox\`
+
+### When to use
+- Requirements that say Control: Multi-select, checkboxes, or choose all that apply
+- Selecting several ADSP services, factors, or capabilities from a fixed list
+- When Maximum selections is specified (use maxItems)
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "servicesUsed": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "enum": [
+          "Forms",
+          "Notifications",
+          "File",
+          "PDF",
+          "Events",
+          "Other"
+        ]
+      }
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/servicesUsed",
+  "label": "Which services does your team currently use?",
+  "options": {
+    "format": "checkbox",
+    "componentProps": {
+      "orientation": "vertical"
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- Data type is \`array\` with \`uniqueItems: true\` — a string enum with format checkbox is single-select styling, not multi-select
+- Set \`options.format\` to \`"checkbox"\` so the array of enum values renders as checkboxes
+- Use \`maxItems\` when the document specifies Maximum selections; omit maxItems when any number of choices is allowed
+- Use \`minItems: 1\` when the multi-select itself is required
+- If an option is Other and a follow-up specify field is needed, SHOW that field with a rule condition \`contains: { const: "Other" }\`
 
 ## Required Declaration Checkbox
 Required checkbox that must be checked to submit, using \`allOf\` with \`enum: [true]\` validation
+
+### When to use
+- Declaration or consent checkboxes that must be accepted before submission
+- 'I agree to terms and conditions' or 'I certify this information is accurate' statements
 
 ### Data schema
 \`\`\`json
@@ -341,6 +478,10 @@ Required checkbox that must be checked to submit, using \`allOf\` with \`enum: [
 ## Required String Field (minLength Workaround)
 Required text field with \`minLength: 1\` workaround for the known JSON Forms empty-string bug
 
+### When to use
+- Any required string field — always add minLength: 1 alongside required
+- This is a mandatory workaround for a known JSON Forms issue
+
 ### Data schema
 \`\`\`json
 {
@@ -373,6 +514,10 @@ Required text field with \`minLength: 1\` workaround for the known JSON Forms em
 
 ## File Upload (Drag & Drop)
 Drag and drop file upload variant using \`file-urn\` format and \`variant: dragdrop\`
+
+### When to use
+- When a more prominent upload area is desired over a simple button
+- Forms where file upload is a primary action, not a secondary one
 
 ### Data schema
 \`\`\`json
@@ -409,6 +554,14 @@ Drag and drop file upload variant using \`file-urn\` format and \`variant: dragd
 
 ## Multi-Page Form Layout (Design System Basic Layout Pattern)
 Categorization with \`variant: pages\` implements the Design System's basic layout pattern — the preferred method for complex government forms. Creates a Task List (table of contents) with progress tracking, section groupings, and a summary review page.
+
+### When to use
+- COMPLEX forms: two or more named sections, a conditional branch, 12+ inputs, or a large source document
+- When the form benefits from breaking content into digestible steps
+- Government service applications that collect personal info, contact info, and supporting details
+- Surveys or questionnaires whose requirements document lists Category headings
+- When you want the Design System's recommended Task List pattern with progress tracking
+- When users need to see application status at a glance and enter at any step
 
 ### Data schema
 \`\`\`json
@@ -515,6 +668,11 @@ All available options on Category elements within a pages-variant Categorization
 ## Simple Vertical Layout
 VerticalLayout for simple single-page forms with a few fields
 
+### When to use
+- SIMPLE forms: no named sections, no conditional branches, fewer than 12 inputs
+- A one-page document of a handful of fields even if a file was attached
+- Quick feedback or contact forms that do not name categories
+
 ### Data schema
 \`\`\`json
 {
@@ -570,6 +728,10 @@ VerticalLayout for simple single-page forms with a few fields
 ## Horizontal Layout (Side by Side)
 HorizontalLayout to render fields side by side in a row
 
+### When to use
+- Placing related short fields on the same row (e.g., first name + last name)
+- When horizontal space is available and fields are logically grouped
+
 ### Data schema
 \`\`\`json
 {
@@ -610,6 +772,10 @@ HorizontalLayout to render fields side by side in a row
 
 ## Mixed Nested Layout
 VerticalLayout containing a HorizontalLayout to mix row and column arrangements
+
+### When to use
+- Forms that need some fields side-by-side and others stacked vertically
+- Combining first/last name on one row with a multi-line textarea below
 
 ### Data schema
 \`\`\`json
@@ -666,6 +832,10 @@ VerticalLayout containing a HorizontalLayout to mix row and column arrangements
 ## Group Layout with Label
 Group element that wraps controls in a labeled section (like a VerticalLayout with a heading)
 
+### When to use
+- Visually grouping related fields under a section heading
+- When you want a bordered/labeled container without full page separation
+
 ### Data schema
 \`\`\`json
 {
@@ -715,6 +885,12 @@ Group element that wraps controls in a labeled section (like a VerticalLayout wi
 
 ## Pages with Sections, Hidden Tasks, and Task List Options
 Advanced pages layout demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern
+
+### When to use
+- Large government application forms with distinct logical sections
+- When you want a task-list view with section groupings and progress tracking
+- When some steps should be hidden from the Task List (e.g. sub-steps rolled into a parent)
+- When you need to customize the review flow (hide summary, hide submit, change labels)
 
 ### Data schema
 \`\`\`json
@@ -857,6 +1033,11 @@ Advanced pages layout demonstrating section groupings, hidden task list items, a
 ## Simple Stepper with Navigation Buttons
 Categorization with \`variant: stepper\` for a simple form stepper with customizable navigation buttons and step tabs
 
+### When to use
+- Moderate-complexity forms where a simple step navigation bar is sufficient
+- Internal staff forms where the full Task List pattern is not needed
+- When users are experienced and benefit from seeing all steps at once in a tab bar
+
 ### Data schema
 \`\`\`json
 {
@@ -939,6 +1120,10 @@ All available options on the Categorization element when variant is 'stepper'
 ## Full Name (Common Field)
 Reusable full name field using the ADSP common schema $ref definition for person name
 
+### When to use
+- Any form that collects a person's full name
+- When you need first name, middle name, and last name subfields handled automatically
+
 ### Data schema
 \`\`\`json
 {
@@ -968,6 +1153,10 @@ Reusable full name field using the ADSP common schema $ref definition for person
 
 ## Address (Common Field)
 Reusable address field using the ADSP common schema $ref definition for postal address
+
+### When to use
+- Any form that collects a mailing or residential address
+- When you want structured address subfields (addressLine1, municipality, subdivisionCode, postalCode, country)
 
 ### Data schema
 \`\`\`json
@@ -1004,6 +1193,11 @@ Reusable address field using the ADSP common schema $ref definition for postal a
 ## Help Content Block
 Descriptive help or notice block using HelpContent element with markdown support
 
+### When to use
+- Displaying important notices like privacy collection statements
+- Adding instructional paragraphs or warnings between form sections
+- Providing rich-text guidance that is not tied to a specific field
+
 ### UI schema
 \`\`\`json
 {
@@ -1026,6 +1220,12 @@ Descriptive help or notice block using HelpContent element with markdown support
 
 ## Markdown Help Content
 Rich HelpContent using markdown for formatted text, links, images, and bullet points. This is the recommended way to add links and images in forms.
+
+### When to use
+- Adding formatted instructional text with headings, bold, italic, links, or bullets
+- Adding clickable hyperlinks — use \`[text](url)\` markdown syntax
+- Displaying images — use \`![alt](url)\` markdown syntax
+- When you need more control over formatting than plain HelpContent provides
 
 ### UI schema
 \`\`\`json
@@ -1058,6 +1258,11 @@ Rich HelpContent using markdown for formatted text, links, images, and bullet po
 
 ## Collapsible Details Section
 HelpContent with \`variant: details\` to create a click-to-expand section for long instructions
+
+### When to use
+- Long instructional text that would clutter the form if always visible
+- Optional reference information users may already be familiar with
+- Calculation instructions like 'How to calculate household income'
 
 ### UI schema
 \`\`\`json
@@ -1094,6 +1299,11 @@ HelpContent with \`variant: details\` to create a click-to-expand section for lo
 ## Markdown Link in Form
 Add clickable hyperlinks inside a form using markdown HelpContent with \`[text](url)\` syntax
 
+### When to use
+- Linking to external resources, policies, or reference documents
+- Providing 'Learn more' links within instructional sections
+- Adding privacy policy or terms-of-service links
+
 ### UI schema
 \`\`\`json
 {
@@ -1117,6 +1327,11 @@ Add clickable hyperlinks inside a form using markdown HelpContent with \`[text](
 
 ## Markdown Image in Form
 Display an image inside a form using markdown HelpContent with \`![alt](url)\` syntax
+
+### When to use
+- Showing a diagram, workflow illustration, or reference image
+- Visual instructions that complement text guidance
+- Displaying logos, charts, or sample documents
 
 ### UI schema
 \`\`\`json
@@ -1143,6 +1358,11 @@ Display an image inside a form using markdown HelpContent with \`![alt](url)\` s
 
 ## List with Detail (Repeating Items)
 ListWithDetail for collecting a variable number of complex items with full layout control
+
+### When to use
+- Collecting multiple entries like family members, vendors, or work history
+- When each item has multiple fields and you need control over their layout
+- Preferred over Object Array for items with 3+ fields or nested data
 
 ### Data schema
 \`\`\`json
@@ -1228,6 +1448,11 @@ ListWithDetail for collecting a variable number of complex items with full layou
 ## Object Array (Simple Repeating Items)
 Simple repeating items using a Control bound to an array property — auto-generated layout
 
+### When to use
+- Collecting a short list of simple items (1-2 fields per item)
+- Quick lists like contacts, names, or simple records
+- When you don't need control over the detail layout
+
 ### Data schema
 \`\`\`json
 {
@@ -1271,6 +1496,13 @@ Simple repeating items using a Control bound to an array property — auto-gener
 
 ## Show/Hide Rule (Conditional Visibility)
 SHOW or HIDE form elements based on boolean, string, or other field values using JSON Forms rules
+
+### When to use
+- Showing follow-up questions only when a prerequisite is answered
+- Hiding irrelevant sections based on prior answers
+- 'Do you have dependents?' → show dependent name fields
+- Hiding a warning message when conditions are met (HIDE effect)
+- String value matching — e.g., show fields when answer is 'yes'
 
 ### Data schema
 \`\`\`json
@@ -1423,6 +1655,12 @@ SHOW or HIDE form elements based on boolean, string, or other field values using
 ## Enable/Disable Rule
 ENABLE or DISABLE a field based on another field's value — field remains visible but read-only when disabled
 
+### When to use
+- Graying out a field until a prerequisite is completed
+- Making a 'Kind of death' field editable only when 'Is dead' is checked
+- When you want the field visible for context but not editable
+- Disabling a submit section until all required information is provided
+
 ### Data schema
 \`\`\`json
 {
@@ -1521,6 +1759,10 @@ ENABLE or DISABLE a field based on another field's value — field remains visib
 ## Rule with Enum / Multi-Value Matching
 Show or hide elements based on matching one of several values using \`enum\` in the rule condition
 
+### When to use
+- Showing different follow-up sections based on a dropdown or radio selection
+- When the trigger field can have multiple activating values
+
 ### Data schema
 \`\`\`json
 {
@@ -1616,6 +1858,11 @@ Show or hide elements based on matching one of several values using \`enum\` in 
 
 ## Multi-Criteria Rule (AND / OR Logic)
 Show, hide, enable, or disable an element based on multiple field values using \`scope: "#"\` with a full JSON Schema condition
+
+### When to use
+- Hide a field when two or more conditions are met simultaneously (AND logic)
+- Show a section only when field A has value X AND field B has value Y
+- Show a field when ANY of several conditions is true (OR logic with anyOf)
 
 ### Data schema
 \`\`\`json
@@ -1756,6 +2003,11 @@ Show, hide, enable, or disable an element based on multiple field values using \
 ## Rule on Group Wrapper (Multi-Element Rule)
 Attach a rule to a Group or VerticalLayout to show/hide multiple elements at once. Includes wrap and unwrap procedures.
 
+### When to use
+- Showing or hiding a group of related fields based on a single condition
+- When the user asks to add another field to an existing rule — wrap both in a layout and move the rule up
+- When a rule currently applies to multiple fields and one needs to be removed
+
 ### Data schema
 \`\`\`json
 {
@@ -1854,6 +2106,11 @@ Attach a rule to a Group or VerticalLayout to show/hide multiple elements at onc
 ## Conditional Required (if/then)
 Conditionally required fields using JSON Schema if/then/else — essential when using SHOW/HIDE rules
 
+### When to use
+- Making fields required only when a controlling field has a certain value
+- Preventing validation errors on hidden fields that use SHOW/HIDE rules
+- Dynamic required logic like 'if hasChildren is true, then childsName is required'
+
 ### Data schema
 \`\`\`json
 {
@@ -1940,6 +2197,10 @@ Conditionally required fields using JSON Schema if/then/else — essential when 
 ## Multiple Conditional Validations (allOf)
 Multiple if/then blocks wrapped in \`allOf\` for forms with several conditional required fields
 
+### When to use
+- Forms with two or more separate conditional validation rules
+- Complex government forms where different sections become required based on different triggers
+
 ### Data schema
 \`\`\`json
 {
@@ -2016,6 +2277,11 @@ Multiple if/then blocks wrapped in \`allOf\` for forms with several conditional 
 ## Custom Error Messages
 Override default AJV validation error messages with user-friendly text using \`errorMessage\` in schema
 
+### When to use
+- Making validation errors more helpful and human-readable
+- Providing guidance on the expected format (e.g., 'First name must only contain letters')
+- When default AJV messages like 'must match pattern' are not user-friendly
+
 ### Data schema
 \`\`\`json
 {
@@ -2073,6 +2339,10 @@ Override default AJV validation error messages with user-friendly text using \`e
 ## Data Register — Configuration Service
 Populate a dropdown with dynamic data from the ADSP Configuration Service using a URN register
 
+### When to use
+- Dropdown lists whose values are managed by admins and change over time
+- Province/territory lists, program options, or category lists maintained in ADSP configuration
+
 ### Data schema
 \`\`\`json
 {
@@ -2111,6 +2381,10 @@ Populate a dropdown with dynamic data from the ADSP Configuration Service using 
 
 ## Data Register — External API Endpoint
 Populate a dropdown with data from an external REST API using a URL register
+
+### When to use
+- Dropdown lists whose values come from a third-party API or external system
+- When the data source is not in the ADSP Configuration Service
 
 ### Data schema
 \`\`\`json
@@ -2152,6 +2426,11 @@ Populate a dropdown with data from an external REST API using a URL register
 ## Data Register — Weekdays (String Array)
 Populate a dropdown with a reusable list of weekdays stored as a string-array data register in the Configuration Service
 
+### When to use
+- Dropdown where the user selects a day of the week
+- Simple string-array data register where label and value are the same
+- Demonstrating the simplest data register pattern
+
 ### Data schema
 \`\`\`json
 {
@@ -2190,6 +2469,11 @@ Populate a dropdown with a reusable list of weekdays stored as a string-array da
 
 ## Data Register — Object Array with Label/Value Mapping
 Populate a dropdown from an object-array data register using options.label and options.value to map display text and stored value
+
+### When to use
+- Dropdown where the display label differs from the stored value (e.g. ministry name vs code)
+- Register data is an array of objects with named properties
+- When you need to store a code or ID but show a human-readable label
 
 ### Data schema
 \`\`\`json
@@ -2233,6 +2517,10 @@ Populate a dropdown from an object-array data register using options.label and o
 
 ## Full Government Application Form
 Complete multi-page government application with conditional fields, file uploads, common fields, FOIP notice, and declaration checkbox
+
+### When to use
+- Complex government service applications (permits, licenses, benefits)
+- Reference for how to combine multiple form features into a cohesive application
 
 ### Data schema
 \`\`\`json
@@ -2454,6 +2742,10 @@ Complete multi-page government application with conditional fields, file uploads
 ## Contact/Feedback Form with Conditional Routing
 Simple feedback form with category-based conditional fields and custom validation messages
 
+### When to use
+- Contact us, feedback, or complaint forms with category-based follow-up questions
+- Simple forms that still need conditional logic and good validation
+
 ### Data schema
 \`\`\`json
 {
@@ -2644,6 +2936,10 @@ Simple feedback form with category-based conditional fields and custom validatio
 
 ## Vendor Registration with Repeating Items
 Multi-page vendor registration form with repeating product list, data registers, and file upload
+
+### When to use
+- Registration forms that collect a list of items (products, services, team members)
+- Forms combining repeating items with multi-page navigation and dynamic dropdowns
 
 ### Data schema
 \`\`\`json
@@ -2888,6 +3184,10 @@ Multi-page vendor registration form with repeating product list, data registers,
 ## Basic Arithmetic Computed Fields
 Simple math operations: addition, subtraction, multiplication, division using \`format: computed\`
 
+### When to use
+- Auto-calculating totals, differences, or products from user-entered numbers
+- Displaying computed results without manual entry (e.g., subtotal = price × quantity)
+
 ### Data schema
 \`\`\`json
 {
@@ -2959,6 +3259,10 @@ Simple math operations: addition, subtraction, multiplication, division using \`
 
 ## Conditional Ternary Computed Field
 Use the ternary operator (\`? :\`) and \`if()\` function to compute values based on conditions
+
+### When to use
+- Applying different rates or formulas based on a threshold (e.g., tax bracket)
+- Showing different computed results based on user input values
 
 ### Data schema
 \`\`\`json
@@ -3034,6 +3338,10 @@ Use the ternary operator (\`? :\`) and \`if()\` function to compute values based
 ## SUM Array Aggregate
 Use \`SUM()\` to total a numeric column across an array of objects (repeating rows)
 
+### When to use
+- Summing line item costs, hours, quantities across repeating rows
+- Grand total of an expense report, invoice, or time sheet
+
 ### Data schema
 \`\`\`json
 {
@@ -3107,6 +3415,11 @@ Use \`SUM()\` to total a numeric column across an array of objects (repeating ro
 
 ## Rounding and Math Functions
 Use built-in functions like \`round()\`, \`ceil()\`, \`floor()\`, \`abs()\`, \`roundTo()\` for precise calculations
+
+### When to use
+- Rounding currency values to 2 decimal places
+- Ceiling/floor calculations for inventory or capacity planning
+- Absolute value for difference calculations
 
 ### Data schema
 \`\`\`json
@@ -3194,6 +3507,11 @@ Use built-in functions like \`round()\`, \`ceil()\`, \`floor()\`, \`abs()\`, \`r
 
 ## Min/Max Scalar Comparison
 Use \`min()\` and \`max()\` functions to compute bounded values, caps, and floors
+
+### When to use
+- Capping a reimbursement at a maximum allowance
+- Ensuring a computed value doesn't go below a minimum threshold
+- Choosing the lesser or greater of two user-entered values
 
 ### Data schema
 \`\`\`json
@@ -3309,6 +3627,11 @@ Use \`min()\` and \`max()\` functions to compute bounded values, caps, and floor
 ## Percentage and Ratio Calculations
 Compute percentages, ratios, and proportions with proper parenthesized expressions
 
+### When to use
+- Calculating tax, tip, or discount percentages
+- Computing completion ratios or proportional shares
+- Showing percentage breakdowns of a total
+
 ### Data schema
 \`\`\`json
 {
@@ -3401,6 +3724,11 @@ Compute percentages, ratios, and proportions with proper parenthesized expressio
 ## Nested Ternary and Logical Operators
 Chain ternary operators and use \`and\`/\`or\` for multi-condition computed fields
 
+### When to use
+- Tiered pricing or graduated rates (e.g., income tax brackets)
+- Complex eligibility scoring with multiple criteria
+- Multi-condition bonus or penalty calculations
+
 ### Data schema
 \`\`\`json
 {
@@ -3485,6 +3813,10 @@ Chain ternary operators and use \`and\`/\`or\` for multi-condition computed fiel
 
 ## Grant Eligibility Calculator
 Complex real-world example: multi-step grant calculation with tiered rates, caps, and array sums
+
+### When to use
+- Government grant or subsidy applications with formula-based funding
+- Complex multi-step financial calculations combining inputs, tiers, and caps
 
 ### Data schema
 \`\`\`json
@@ -3626,6 +3958,11 @@ Complex real-world example: multi-step grant calculation with tiered rates, caps
 ## Exponents, Square Root, and Advanced Math
 Use \`^\` exponentiation, \`sqrt()\`, \`pow()\`, \`abs()\`, and constants like \`PI\` for scientific calculations
 
+### When to use
+- Engineering or scientific forms requiring power/root calculations
+- Area or distance calculations (e.g., circle area = PI * r^2)
+- Absolute difference calculations
+
 ### Data schema
 \`\`\`json
 {
@@ -3760,6 +4097,10 @@ Use \`^\` exponentiation, \`sqrt()\`, \`pow()\`, \`abs()\`, and constants like \
 
 ## Mixed Computed Fields Overview
 Comprehensive example combining arithmetic, ternary conditions, and SUM aggregation in one form
+
+### When to use
+- Reference form demonstrating all computed field patterns in a single example
+- Testing or validating that the calculation engine handles diverse expressions
 
 ### Data schema
 \`\`\`json
@@ -4073,8 +4414,8 @@ Passing formDefinitionId as input to formConfigurationUpdateTool
 
 ## Design Anti-Patterns
 ### ❌ Too Many Fields on a Single Page (medium)
-Putting 6+ fields in a VerticalLayout without pagination
-**Fix:** Use Categorization with \`variant: "pages"\` when you have 6 or more fields. Group related fields into separate Category pages.
+Putting 12+ inputs, or two or more named sections, in a VerticalLayout without pagination
+**Fix:** Use Categorization with \`variant: "pages"\` when the form is COMPLEX (≥2 named sections, ≥1 conditional branch, or ≥12 inputs). SIMPLE forms must stay VerticalLayout — do not promote a one-page contact form to Categorization.
 
 ### ❌ Page Stepper Without Section Groupings (medium)
 Using Categorization with variant=pages and 4+ categories but no sectionTitle groupings — the Task List becomes a flat unorganized list

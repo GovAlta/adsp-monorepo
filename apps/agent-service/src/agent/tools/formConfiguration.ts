@@ -5,6 +5,7 @@ import axios, { isAxiosError } from 'axios';
 import type { Logger } from 'winston';
 import z from 'zod';
 import { AdspRequestContext } from '../types';
+import { countCategories, countProperties } from '../agents/forms/schema';
 
 interface FormConfigurationToolsProps {
   directory: ServiceDirectory;
@@ -109,12 +110,9 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
     }),
     outputSchema: z.object({
       name: z.string().describe('The name of the form.'),
-      description: z.string().describe('The description of the form.'),
-      dataSchema: z.object({}).passthrough().describe('The data schema for the JSON form.'),
-      uiSchema: z.object({}).passthrough().describe('The UI schema for the JSON form.'),
-      anonymousApply: z.boolean().describe('Flag indicating if form can be submit by unauthenticated users.'),
-      applicantRoles: z.array(z.string()).describe('Collection of roles permitted to submit a form.'),
-      assessorRoles: z.array(z.string()).describe('Collection of roles permitted to review submitted forms.'),
+      updatedFields: z.array(z.string()).describe('Configuration fields included in this update.'),
+      propertyCount: z.number().describe('Number of top-level dataSchema properties after the update.'),
+      categoryCount: z.number().describe('Number of Category elements after the update.'),
     }),
     execute: async (
       inputData,
@@ -153,14 +151,22 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
           },
         );
 
+        const updatedFields = Object.keys(inputData).filter((key) => inputData[key] !== undefined);
+        const configuration = data.latest.configuration;
+
         logger.info(`Form configuration updated successfully (status: ${status}).`, {
           context: 'formConfigurationUpdateTool',
           tenant: tenantId?.toString(),
           formDefinitionId,
-          updatedFields: Object.keys(inputData).filter((key) => inputData[key] !== undefined),
+          updatedFields,
         });
 
-        return data.latest.configuration;
+        return {
+          name: configuration.name,
+          updatedFields,
+          propertyCount: countProperties(configuration.dataSchema),
+          categoryCount: countCategories(configuration.uiSchema),
+        };
       } catch (err) {
         logger.error(`Form configuration update failed for definition ${formDefinitionId}.`, {
           context: 'formConfigurationUpdateTool',

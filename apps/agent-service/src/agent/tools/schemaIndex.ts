@@ -230,7 +230,7 @@ function buildDataProperties(
  * Builds the schema index from raw dataSchema and uiSchema objects.
  * This is a pure, deterministic function — no LLM involvement.
  */
-function buildSchemaIndex(
+export function buildSchemaIndex(
   dataSchema: Record<string, unknown>,
   uiSchema: Record<string, unknown>,
 ): SchemaIndex {

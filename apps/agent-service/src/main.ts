@@ -193,6 +193,9 @@ const initializeApp = async (): Promise<Server> => {
   return server;
 };
 
+// Node exits immediately on SIGTERM by default, which would abandon a form generation run mid-build.
+const SHUTDOWN_DRAIN_MS = 15 * 60 * 1000;
+
 initializeApp().then((app) => {
   const port = environment.PORT || 3380;
 
@@ -200,4 +203,13 @@ initializeApp().then((app) => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received; refusing new connections and draining in-flight agent runs.');
+    server.close(() => process.exit(0));
+    setTimeout(() => {
+      logger.warn('Drain window elapsed; exiting with agent runs still open.');
+      process.exit(0);
+    }, SHUTDOWN_DRAIN_MS).unref();
+  });
 });

@@ -3,9 +3,18 @@ import { convertUint8ArrayToBase64, FilePart, ImagePart, TextPart } from '@ai-sd
 import type { CoreUserMessage } from '@mastra/core/llm';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
-import { BrokerInputProcessor } from '../types';
+import { FORM_GENERATION_AGENT_ID } from '../model/executionLimits';
+import { BrokerInputProcessor, SOURCE_DOCUMENTS_KEY } from '../types';
 import { createFileServiceClient, FileTypeInfo } from '../clients';
-import { extractDocumentText, ExtractedImage, isExtractableDocument } from '../utils/documentParser';
+import { documentCacheKey, getCachedDocumentExtract } from '../utils/documentCache';
+import { buildDocumentOutline, formatDocumentOutline, type DocumentOutline } from '../utils/documentOutline';
+import {
+  extractDocumentText,
+  ExtractedImage,
+  DocumentExtractResult,
+  isExtractableDocument,
+} from '../utils/documentParser';
+import { FORM_GENERATION_MAX_PAGE_IMAGES, isLargeFormDocument } from '../utils/documentSize';
 
 // Rendered on its own line so no punctuation is adjacent to the URN token that precedes it.
 function formatStorageNote(typeInfo: FileTypeInfo | null): string {
@@ -42,15 +51,20 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
   readonly name = 'file-service-download-processor';
   private fileServiceClient: ReturnType<typeof createFileServiceClient>;
 
-  constructor(private logger: Logger, directory: ServiceDirectory, tokenProvider: TokenProvider) {
+  constructor(
+    private logger: Logger,
+    directory: ServiceDirectory,
+    tokenProvider: TokenProvider,
+  ) {
     this.fileServiceClient = createFileServiceClient({ logger, directory, tokenProvider });
   }
 
   async processInput(
     requestContext: RequestContext<Record<string, unknown>>,
-    input: CoreUserMessage | CoreUserMessage[]
+    input: CoreUserMessage | CoreUserMessage[],
   ): Promise<CoreUserMessage | CoreUserMessage[]> {
     const tenantId = requestContext.get<'tenantId', AdspId>('tenantId');
+    const agentId = requestContext.get('agentId') as string | undefined;
 
     const messages = Array.isArray(input) ? input : [input];
     for (const message of messages) {
@@ -60,7 +74,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
           switch (content.type) {
             case 'file':
             case 'image': {
-              const updated = await this.processContentData(tenantId, content);
+              const updated = await this.processContentData(tenantId, content, agentId, requestContext);
               if (updated) {
                 processed.push(...updated);
               }
@@ -78,7 +92,12 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return input;
   }
 
-  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<Array<TextPart | FilePart | ImagePart> | undefined> {
+  private async processContentData(
+    tenantId: AdspId,
+    content: Partial<FilePart> | ImagePart,
+    agentId: string | undefined,
+    requestContext: RequestContext<Record<string, unknown>>,
+  ): Promise<Array<TextPart | FilePart | ImagePart> | undefined> {
     const data = content.type === 'file' ? content.data : content.image;
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);
@@ -98,70 +117,29 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         const isExtractable = isExtractableDocument(mediaType, filename);
 
         if (isExtractable) {
-          try {
-            const extracted = await extractDocumentText(rawData, mediaType, filename, this.logger);
-            const storageNote = formatStorageNote(await typeInfoPromise);
-
-            if (extracted?.text) {
-              const prefix = extracted.xfaForm
-                ? `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form structure was extracted from the embedded XML:${storageNote}`
-                : `Provided document has filename '${filename}' and file service URN of: ${urn}${storageNote}`;
-
-              const contentLabel = extracted.format === 'html' ? 'Extracted HTML content' : 'Extracted text content';
-
-              const parts: Array<TextPart | FilePart | ImagePart> = [
-                { type: 'text', text: prefix },
-                { type: 'text', text: `${contentLabel} from '${filename}':\n\n${extracted.text}` },
-              ];
-
-              if (extracted.images?.length) {
-                parts.push({
-                  type: 'text',
-                  text: `The document contains ${extracted.images.length} embedded diagram(s). Each [DIAGRAM_N] marker in the HTML above shows where diagram N appears in the document. Reproduce each diagram in HTML/CSS at its marker position. The diagrams are provided as vision images below:`,
-                });
-                pushLabeledImageParts(parts, extracted.images, 'Diagram');
-              }
-
-              if (extracted.pageImages?.length) {
-                const totalPages = extracted.pageCount ?? extracted.pageImages.length;
-                const coverageNote =
-                  totalPages > extracted.pageImages.length
-                    ? ` (first ${extracted.pageImages.length} of ${totalPages} pages; describe to the user that remaining pages were not rendered)`
-                    : '';
-                parts.push({
-                  type: 'text',
-                  text: `Full-page visual renders of the document${coverageNote} are provided below. Use them as the visual design reference for page orientation, margins, columns, layout regions, colors, fonts, field placement, and logos. Use the extracted text above for accurate text content:`,
-                });
-                pushLabeledImageParts(parts, extracted.pageImages, 'Page');
-              }
-
-              return parts;
-            }
-
-            // XFA form detected but no content could be extracted
-            if (extracted?.xfaForm) {
-              return [
-                {
-                  type: 'text',
-                  text: `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form content could not be extracted automatically. Please ask the user to describe the form fields, or provide a DOCX/standard PDF version of the form requirements instead.`,
-                },
-              ];
-            }
-          } catch (err) {
-            this.logger.warn(`Failed to extract text from document '${filename}': ${err instanceof Error ? err.message : String(err)}`, {
-              context: 'FileServiceDownloadProcessor',
-              tenant: tenantId?.toString(),
-            });
-            // Fall through to send as file part if extraction fails
+          const extractedParts = await this.extractDocumentParts(
+            tenantId,
+            resourceId,
+            rawData,
+            mediaType,
+            filename,
+            urn,
+            agentId,
+            typeInfoPromise,
+            requestContext,
+          );
+          if (extractedParts) {
+            return extractedParts;
           }
         }
 
         // For images and non-extractable files, send the base64 data as before.
         const storageNote = formatStorageNote(await typeInfoPromise);
+        const dataUrl = url ?? `data:${mediaType};base64,${convertUint8ArrayToBase64(rawData)}`;
         return [
           content.type === 'file'
-            ? { type: 'file', data: url, mediaType, filename }
-            : { type: 'image', image: url, mediaType },
+            ? { type: 'file', data: dataUrl, mediaType, filename }
+            : { type: 'image', image: dataUrl, mediaType },
           {
             type: 'text',
             text: `Provided file or image has filename '${filename}' and file service URN of: ${urn}${storageNote}`,
@@ -172,6 +150,55 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return;
   }
 
+  private async extractDocumentParts(
+    tenantId: AdspId,
+    resourceId: AdspId,
+    rawData: Uint8Array,
+    mediaType: string,
+    filename: string,
+    urn: string,
+    agentId: string | undefined,
+    typeInfoPromise: Promise<FileTypeInfo | null>,
+    requestContext: RequestContext<Record<string, unknown>>,
+  ): Promise<Array<TextPart | FilePart | ImagePart> | undefined> {
+    try {
+      const isFormGeneration = agentId === FORM_GENERATION_AGENT_ID;
+      const extracted = await getCachedDocumentExtract(
+        documentCacheKey(tenantId?.toString(), fileIdFromResource(resourceId)),
+        async () => {
+          const result = await extractDocumentText(rawData, mediaType, filename, this.logger, {
+            maxPageImages: isFormGeneration ? FORM_GENERATION_MAX_PAGE_IMAGES : undefined,
+            skipPageImagesIf: isFormGeneration
+              ? (charCount, pageCount) => isLargeFormDocument(charCount, pageCount)
+              : undefined,
+          });
+          return result ?? { text: '' };
+        },
+      );
+      const storageNote = formatStorageNote(await typeInfoPromise);
+
+      if (isFormGeneration && extracted) {
+        const outline = buildDocumentOutline(extracted, filename, urn);
+        recordSourceDocument(requestContext, outline);
+
+        if (isLargeFormDocument(extracted.text?.length ?? 0, extracted.pageCount)) {
+          return [{ type: 'text', text: `${formatDocumentOutline(outline)}${storageNote}` }];
+        }
+      }
+
+      return buildExtractedDocumentParts(extracted, filename, urn, storageNote);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to extract text from document '${filename}': ${err instanceof Error ? err.message : String(err)}`,
+        {
+          context: 'FileServiceDownloadProcessor',
+          tenant: tenantId?.toString(),
+        },
+      );
+      return undefined;
+    }
+  }
+
   private async getFile(tenantId: AdspId, resourceId: AdspId) {
     const { data, metadata } = await this.fileServiceClient.getFileAndMetadata(tenantId, resourceId);
 
@@ -180,14 +207,93 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
       tenant: tenantId?.toString(),
     });
 
-    const imageStr = convertUint8ArrayToBase64(data);
+    const isExtractable = isExtractableDocument(metadata.mimeType, metadata.filename);
     return {
       rawData: data,
-      url: `data:${metadata.mimeType};base64,${imageStr}`,
+      url: isExtractable ? undefined : `data:${metadata.mimeType};base64,${convertUint8ArrayToBase64(data)}`,
       mediaType: metadata.mimeType,
       filename: metadata.filename,
       urn: metadata.urn,
       typeName: metadata.typeName,
     };
+  }
+}
+
+function recordSourceDocument(requestContext: RequestContext<Record<string, unknown>>, outline: DocumentOutline): void {
+  const existing = requestContext.get(SOURCE_DOCUMENTS_KEY);
+  const documents = Array.isArray(existing) ? (existing as DocumentOutline[]) : [];
+  if (documents.some((document) => document.urn === outline.urn)) {
+    return;
+  }
+
+  requestContext.set(SOURCE_DOCUMENTS_KEY, [...documents, outline]);
+}
+
+function buildExtractedDocumentParts(
+  extracted: DocumentExtractResult | null,
+  filename: string,
+  urn: string,
+  storageNote: string,
+): Array<TextPart | FilePart | ImagePart> | undefined {
+  if (extracted?.text) {
+    return buildTextDocumentParts(extracted, filename, urn, storageNote);
+  }
+
+  if (extracted?.xfaForm) {
+    return [
+      {
+        type: 'text',
+        text: `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form content could not be extracted automatically. Please ask the user to describe the form fields, or provide a DOCX/standard PDF version of the form requirements instead.`,
+      },
+    ];
+  }
+
+  return undefined;
+}
+
+function buildTextDocumentParts(
+  extracted: DocumentExtractResult,
+  filename: string,
+  urn: string,
+  storageNote: string,
+): Array<TextPart | FilePart | ImagePart> {
+  const prefix = extracted.xfaForm
+    ? `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form structure was extracted from the embedded XML:${storageNote}`
+    : `Provided document has filename '${filename}' and file service URN of: ${urn}${storageNote}`;
+  const contentLabel = extracted.format === 'html' ? 'Extracted HTML content' : 'Extracted text content';
+  const parts: Array<TextPart | FilePart | ImagePart> = [
+    { type: 'text', text: prefix },
+    { type: 'text', text: `${contentLabel} from '${filename}':\n\n${extracted.text}` },
+  ];
+  appendDocumentImages(parts, extracted);
+  return parts;
+}
+
+function fileIdFromResource(resourceId: AdspId): string {
+  const resource = resourceId.resource ?? resourceId.toString();
+  const parts = resource.split('/').filter(Boolean);
+  return parts[parts.length - 1] || resource;
+}
+
+function appendDocumentImages(parts: Array<TextPart | FilePart | ImagePart>, extracted: DocumentExtractResult): void {
+  if (extracted.images?.length) {
+    parts.push({
+      type: 'text',
+      text: `The document contains ${extracted.images.length} embedded diagram(s). Each [DIAGRAM_N] marker in the HTML above shows where diagram N appears in the document. Reproduce each diagram in HTML/CSS at its marker position. The diagrams are provided as vision images below:`,
+    });
+    pushLabeledImageParts(parts, extracted.images, 'Diagram');
+  }
+
+  if (extracted.pageImages?.length) {
+    const totalPages = extracted.pageCount ?? extracted.pageImages.length;
+    const coverageNote =
+      totalPages > extracted.pageImages.length
+        ? ` (first ${extracted.pageImages.length} of ${totalPages} pages; describe to the user that remaining pages were not rendered)`
+        : '';
+    parts.push({
+      type: 'text',
+      text: `Full-page visual renders of the document${coverageNote} are provided below. Use them as the visual design reference for page orientation, margins, columns, layout regions, colors, fonts, field placement, and logos. Use the extracted text above for accurate text content:`,
+    });
+    pushLabeledImageParts(parts, extracted.pageImages, 'Page');
   }
 }

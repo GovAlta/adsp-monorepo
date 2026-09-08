@@ -311,9 +311,9 @@
     {
       "id": "too-many-fields-single-page",
       "name": "Too Many Fields on a Single Page",
-      "description": "Putting 6+ fields in a VerticalLayout without pagination",
+      "description": "Putting 12+ inputs, or two or more named sections, in a VerticalLayout without pagination",
       "severity": "medium",
-      "solution": "Use Categorization with `variant: \"pages\"` when you have 6 or more fields. Group related fields into separate Category pages."
+      "solution": "Use Categorization with `variant: \"pages\"` when the form is COMPLEX (≥2 named sections, ≥1 conditional branch, or ≥12 inputs). SIMPLE forms must stay VerticalLayout — do not promote a one-page contact form to Categorization."
     },
     {
       "id": "pages-without-sections",

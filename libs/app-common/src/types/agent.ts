@@ -4,6 +4,8 @@ export interface ToolCall {
   args: Record<string, unknown>;
   error?: unknown;
   result?: unknown;
+  // Incremental output written by a long-running tool before it returns.
+  progress?: unknown[];
 }
 
 export type Message = UserMessage | AgentMessage;
@@ -40,7 +42,6 @@ export interface ResolvedFilePart extends FilePart {
   mediaType?: string;
 }
 export type ResolvedUserContent = Array<TextPart | ResolvedImagePart | ResolvedFilePart>;
-
 
 export interface Attachment {
   urn: string;

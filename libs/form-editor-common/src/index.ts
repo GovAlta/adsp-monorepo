@@ -7,3 +7,5 @@ export * from './lib/definitions/definitions'; // FormDefinitions (list/table)
 export * from './lib/definitions/definitionsList';
 export * from './lib/definitions/formDefinitionItem';
 export * from './lib/styled-components';
+export * from './lib/definitions/formGeneration';
+export * from './lib/definitions/FormGenerationToolCall';
