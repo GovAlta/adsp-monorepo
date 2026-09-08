@@ -21,6 +21,7 @@ import { adspId, AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp
 import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
 import { scheduleServiceMetricRollupJob } from './values/jobs/serviceMetricRollup';
+import { scheduleMetricIntervalRollupJob } from './values/jobs/metricIntervalRollup';
 
 const initializeApp = async () => {
   const app = express();
@@ -146,6 +147,10 @@ const initializeApp = async () => {
       trailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
       backfillOnStartup: environment.SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP,
     });
+  }
+
+  if (environment.METRIC_INTERVAL_ROLLUP_JOB_ENABLED) {
+    scheduleMetricIntervalRollupJob({ logger, repository: repositories.metricIntervalRollupRepository });
   }
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
