@@ -1,8 +1,9 @@
 import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-import { ValuesRepository } from '../values';
+import { MetricIntervalRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from '../values';
 import { TimescaleValuesRepository } from './value';
+import { TimescaleMetricIntervalRollupRepository, TimescaleServiceMetricRollupRepository } from '../values/repository';
 
 interface TimescaleRepositoryProps {
   logger: Logger;
@@ -12,11 +13,15 @@ interface TimescaleRepositoryProps {
   DB_USER: string;
   DB_PASSWORD: string;
   DB_TLS: boolean;
+  DB_POOL_MAX: number;
+  METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS: number;
 }
 
 interface Repositories {
   isConnected: () => Promise<boolean>;
   valueRepository: ValuesRepository;
+  serviceMetricRollupRepository: ServiceMetricRollupRepository;
+  metricIntervalRollupRepository: MetricIntervalRollupRepository;
 }
 
 export const createRepositories = async ({
@@ -27,6 +32,8 @@ export const createRepositories = async ({
   DB_USER,
   DB_PASSWORD,
   DB_TLS,
+  DB_POOL_MAX,
+  METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
 }: TimescaleRepositoryProps): Promise<Repositories> => {
   const knex = initKnex({
     client: 'postgresql',
@@ -39,6 +46,15 @@ export const createRepositories = async ({
       ssl: DB_TLS,
     },
     searchPath: ['public'],
+    // Left implicit, knex keeps a floor of two connections open per replica for the life of the
+    // process and caps at ten. The floor is dropped so idle replicas hand their connections back,
+    // and the ceiling is configurable because it is multiplied by the replica count against one
+    // shared server. Acquiring is bounded so a caller fails rather than queueing without end.
+    pool: {
+      min: 0,
+      max: DB_POOL_MAX,
+      acquireTimeoutMillis: 30000,
+    },
     migrations: {
       tableName: 'value_service_migrations',
       directory: __dirname + '/migrations',
@@ -61,10 +77,15 @@ export const createRepositories = async ({
       try {
         await knex.raw('SELECT 1');
         return true;
-      } catch (err) {
+      } catch {
         return false;
       }
     },
-    valueRepository: new TimescaleValuesRepository(knex),
+    valueRepository: new TimescaleValuesRepository(knex, logger),
+    serviceMetricRollupRepository: new TimescaleServiceMetricRollupRepository(knex),
+    metricIntervalRollupRepository: new TimescaleMetricIntervalRollupRepository(
+      knex,
+      METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+    ),
   };
 };

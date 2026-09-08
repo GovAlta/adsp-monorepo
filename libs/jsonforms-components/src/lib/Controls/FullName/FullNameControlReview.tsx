@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { isNilOrEmptyString } from '../../util';
 import { RequiredTextLabel } from '../Inputs/style-component';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
@@ -11,7 +11,7 @@ import { useShowChangeButtons } from '../../Context/ContextProvider';
 type FullNameControlReviewProps = ControlProps;
 
 export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.Element => {
-  const context = useContext(JsonFormsStepperContext);
+  const reportChange = useReviewChange();
   const showChangeButtons = useShowChangeButtons();
   const stepId = props.uischema?.options?.stepId;
   const { uischema, data, id } = props;
@@ -29,7 +29,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
           {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="text"
-              onClick={() => context?.goToPage(stepId, uischema.scope)}
+              onClick={() => reportChange(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >
               Change

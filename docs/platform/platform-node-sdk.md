@@ -431,3 +431,61 @@ Import a standard logger for platform services:
     ...sdkCapabilities,
   } = await initializePlatform(parameters);
 ```
+
+### Caches
+The SDK's own caches -- configuration, directory entries, tenants, issuers and JWKS clients -- report
+hit and miss counts on `adsp.cache.lookups`, so a cache that has stopped earning its keep shows up as
+something other than unexplained outbound calls. This needs no setup.
+
+To report a cache of your own, record the outcome where the cache is first consulted:
+```typescript
+  import { recordCacheResult } from '@abgov/adsp-service-sdk';
+
+  const cached = cache.get<Thing>(key);
+  recordCacheResult('my-thing', !!cached);
+  const thing = cached ?? (await retrieve(key));
+```
+
+Record once per *logical* lookup. A read-through cache that gets, refreshes on a miss, then gets
+again would otherwise count a single lookup as both a miss and a hit, and the hit ratio becomes
+meaningless. Keep the cache name a short constant: it is a metric label, so a key or tenant in it
+multiplies the number of series.
+
+### Scheduled jobs
+Wrap a scheduled job so each run reports a span and its duration on `adsp.job.duration`:
+```typescript
+  import { instrumentJob } from '@abgov/adsp-service-sdk';
+  import * as schedule from 'node-schedule';
+
+  schedule.scheduleJob('0 1 * * *', instrumentJob('lock-stale-forms', lockJob, { logger }));
+```
+
+The SDK takes no scheduler dependency, so it wraps the job rather than scheduling it and the cron
+expression stays with you. Each run is its own trace instead of being attributed to whatever was
+active when the timer fired.
+
+A job that throws is recorded on the span, counted under `adsp.job.result="error"`, and then
+swallowed rather than rethrown. Schedulers do not handle a rejected job, so the unhandled rejection
+would otherwise restart the service over one bad run -- which means a failing nightly job is
+something to look for in metrics, not in a crash loop.
+
+The job name is a metric label, so keep it constant. Per-run or per-tenant detail goes on the span,
+where an attribute costs nothing:
+```typescript
+  schedule.scheduleJob(
+    cron,
+    instrumentJob('thread-cleanup', cleanupJob, {
+      logger,
+      attributes: { 'adsp.tenant.id': tenantId.toString() },
+    })
+  );
+```
+
+The job function is also handed its span, so a run can report how much work it actually did -- the
+thing a duration alone will not tell you:
+```typescript
+  instrumentJob('lock-stale-forms', async (span) => {
+    const locked = await lockStaleForms();
+    span.setAttribute('adsp.job.items', locked);
+  });
+```

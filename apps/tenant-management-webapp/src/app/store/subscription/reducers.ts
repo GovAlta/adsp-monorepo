@@ -1,6 +1,7 @@
 import {
   ActionTypes,
   FIND_SUBSCRIBERS_SUCCESS,
+  CREATE_SUBSCRIBER_SUCCESS,
   UPDATE_SUBSCRIBER_SUCCESS,
   GET_TYPE_SUBSCRIPTIONS_SUCCESS,
   RESOLVE_SUBSCRIBER_USER_SUCCESS,
@@ -9,6 +10,10 @@ import {
   SUBSCRIBE_SUCCESS,
   DELETE_SUBSCRIBER_SUCCESS,
   DELETE_SUBSCRIPTION_SUCCESS,
+  CREATE_TYPE_SUBSCRIPTION,
+  CREATE_TYPE_SUBSCRIPTION_SUCCESS,
+  CREATE_TYPE_SUBSCRIPTION_FAILED,
+  RESET_TYPE_SUBSCRIPTION_CREATION,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
@@ -25,7 +30,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         },
         subscriptions: subscriptions.reduce(
           (subs, sub) => ({ ...subs, [`${sub.typeId}:${subscriber.id}`]: sub }),
-          state.subscriptions
+          state.subscriptions,
         ),
       };
     }
@@ -91,7 +96,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
             ...subs,
             [`${sub.typeId}:${sub.subscriberId}`]: sub,
           }),
-          state.subscriptions
+          state.subscriptions,
         ),
         subscribers: subscriptions
           .map(({ subscriber }) => subscriber)
@@ -115,7 +120,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       if (subscribers) {
         newSubscriber = subscribers.reduce(
           (subs, sub) => ({ ...subs, [sub.id]: { ...subs[sub.id], ...sub } }),
-          state.subscribers
+          state.subscribers,
         );
         results = [
           ...(after && state.subscriberSearch.results ? state.subscriberSearch.results : []),
@@ -131,7 +136,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           results: results,
           next,
         },
-        typeSubscriptionSearch: {},
       };
     }
     case RESOLVE_SUBSCRIBER_USER_SUCCESS: {
@@ -158,6 +162,30 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         },
       };
     }
+    case CREATE_SUBSCRIBER_SUCCESS: {
+      const subscriber = action.payload.subscriberInfo;
+      return {
+        ...state,
+        subscribers: {
+          ...state.subscribers,
+          [subscriber.id]: subscriber,
+        },
+        subscriberSearch: {
+          ...state.subscriberSearch,
+          results: state.subscriberSearch.results
+            ? [subscriber.id, ...state.subscriberSearch.results]
+            : [subscriber.id],
+        },
+      };
+    }
+    case CREATE_TYPE_SUBSCRIPTION:
+      return { ...state, subscriptionCreation: { state: 'loading' } };
+    case CREATE_TYPE_SUBSCRIPTION_SUCCESS:
+      return { ...state, subscriptionCreation: { state: 'succeeded' } };
+    case CREATE_TYPE_SUBSCRIPTION_FAILED:
+      return { ...state, subscriptionCreation: { state: 'failed' } };
+    case RESET_TYPE_SUBSCRIPTION_CREATION:
+      return { ...state, subscriptionCreation: { state: 'idle' } };
     case DELETE_SUBSCRIBER_SUCCESS: {
       delete state.subscribers[action.payload.subscriberId];
       Object.keys(state.subscriptions)

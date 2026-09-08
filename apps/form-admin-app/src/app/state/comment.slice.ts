@@ -40,6 +40,25 @@ interface NewComment {
 }
 
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
+const NOTIFICATION_SERVICE_ID = 'urn:ads:platform:notification-service';
+const REVIEWER_NOTIFICATION_TYPE_ID = 'form-message-reviewer-notifications';
+
+// Reviewers aren't recorded against a form, so replying is what makes one reachable: it subscribes
+// them for this form using their own token, and that subscription is what tells the form service a
+// reviewer is part of the conversation. Best effort — the reply stands whether or not it succeeds.
+async function subscribeToFormMessages(notificationServiceUrl: string, resourceId: string): Promise<void> {
+  try {
+    const token = await getAccessToken();
+    await axios.post(
+      new URL(`/subscription/v1/types/${REVIEWER_NOTIFICATION_TYPE_ID}/subscriptions`, notificationServiceUrl).href,
+      { criteria: { description: 'Messages from the applicant.', correlationId: resourceId } },
+      { headers: { Authorization: `Bearer ${token}` }, params: { userSub: true } },
+    );
+  } catch (err) {
+    // Nothing to surface to the reviewer; they simply won't be emailed about replies.
+    console.warn(`Unable to subscribe for messages on ${resourceId}.`, err);
+  }
+}
 
 let socket: Socket;
 export const connectStream = createAsyncThunk(
@@ -250,6 +269,10 @@ export const addComment = createAsyncThunk(
         },
       );
 
+      if (topic.resourceId) {
+        await subscribeToFormMessages(config.directory[NOTIFICATION_SERVICE_ID], topic.resourceId);
+      }
+
       return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -425,7 +448,12 @@ const commentSlice = createSlice({
           return;
         }
 
-        state.comments.results = [...state.comments.results, ...payload.results];
+        // A load without a cursor is a refresh of the first page, not a further page to add to
+        // what is already held. Appending it duplicates every message already on screen, which is
+        // what the socket refresh after a new comment was doing.
+        state.comments.results = meta.arg.after
+          ? [...state.comments.results, ...payload.results]
+          : payload.results;
         state.comments.next = payload.page.next;
       })
       .addCase(loadComments.rejected, (state) => {
@@ -436,7 +464,13 @@ const commentSlice = createSlice({
       })
       .addCase(addComment.fulfilled, (state, { payload, meta }) => {
         state.busy.executing = false;
-        if (state.comments.topicId === meta.arg.topic?.id) {
+        // The comment-created event refreshes the list, and that refresh can land first, so the
+        // comment posted may already be held. Adding it again showed the poster's own message
+        // twice, and nothing replaced the list afterwards to take the second copy away.
+        if (
+          state.comments.topicId === meta.arg.topic?.id &&
+          !state.comments.results.some(({ id }) => id === payload.id)
+        ) {
           state.comments.results.unshift(payload);
         }
         state.draft = { title: null, content: null };

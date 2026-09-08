@@ -46,4 +46,32 @@ describe('configuration', () => {
       }),
     ).toThrow();
   });
+  it.each([['intake@gov.ab.ca'], [''], [null]])('accepts a questions email of %p', (questionsEmail) => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('formDefinition', configurationSchema);
+    service.validate('test', 'formDefinition', {
+      id: 'intake',
+      name: 'Intake',
+      anonymousApply: false,
+      applicantRoles: [],
+      assessorRoles: [],
+      reviewConfiguration: { columns: [], questionsEmail },
+    });
+  });
+
+  it('rejects a questions email that is not an address', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('formDefinition', configurationSchema);
+
+    expect(() =>
+      service.validate('test', 'formDefinition', {
+        id: 'intake',
+        name: 'Intake',
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+        reviewConfiguration: { columns: [], questionsEmail: 'not an address' },
+      }),
+    ).toThrow();
+  });
 });

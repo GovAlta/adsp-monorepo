@@ -24,10 +24,12 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome for Testing — version is automatically derived from the puppeteer package in
-# node_modules/puppeteer-core/lib/cjs/puppeteer/revisions.js, so it stays in sync with
+# node_modules/puppeteer-core/lib/puppeteer/revisions.js, so it stays in sync with
 # whatever puppeteer version is installed. Uses the local binary to avoid npx prompt issues.
-# The yauzl-based extraction can silently fail for large binaries in buildah overlay builds,
-# so we fall back to system unzip if the chrome binary is missing after install.
+# Extraction has silently failed for large binaries in buildah overlay builds, so we fall back to
+# system unzip if the chrome binary is missing after install. That was first seen with the
+# yauzl-based extract-zip, which @puppeteer/browsers no longer uses; the fallback is kept as
+# defence because the failure was environmental rather than specific to that library.
 ENV HOME=/puppeteer
 RUN node_modules/.bin/puppeteer browsers install chrome \
   && CHROME_DIR=$(find /puppeteer/.cache/puppeteer/chrome -maxdepth 1 -name 'linux-*' -type d | head -1) \

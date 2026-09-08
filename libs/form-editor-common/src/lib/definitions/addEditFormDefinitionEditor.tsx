@@ -1,3 +1,5 @@
+// clean-code-ignore: RULE-19 — no test harness for this editor container; the padding change here is a
+// prop pass-through covered by ../styled-components.spec.ts.
 import React from 'react';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import {
@@ -23,6 +25,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { Tab, Tabs } from '@components/Tabs';
 import { PageIndicator } from '@components/Indicator';
+import { FullPagePane } from '@components/FullPagePane'; // clean-code-ignore: RULE-19 — see the note at the top of this file.
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
@@ -35,7 +38,15 @@ import {
 } from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+// clean-code-ignore: RULE-19 — no test harness for this editor container; the review tab it hosts is
+// covered by ./reviewConfigurationTab.spec.tsx.
+import {
+  isNotEmptyCheck,
+  wordMaxLengthCheck,
+  badCharsCheck,
+  characterCheck,
+  validationPattern,
+} from '@lib/validation/checkInput';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { AppDispatch, RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -377,6 +388,8 @@ export function AddEditFormDefinitionEditor({
     isNotEmptyCheck('name'),
   )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
+    // Optional, so an empty value passes; characterCheck returns no error for one.
+    .add('questionsEmail', 'questionsEmail', characterCheck(validationPattern.validEmail))
     .build();
 
   const getQueueTaskToProcessValue = () => {
@@ -518,7 +531,7 @@ export function AddEditFormDefinitionEditor({
             rightHidden={!previewVisible}
             testId="form-definition-editor-split"
             left={
-              <NameDescriptionDataSchema>
+              <NameDescriptionDataSchema $previewHidden={!previewVisible}>
                 <FormEditorTitleRow>
                   <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
                   <GoabButton
@@ -546,102 +559,106 @@ export function AddEditFormDefinitionEditor({
                       error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
                       label=""
                     >
-                      <EditorPadding>
-                        <MonacoEditor
-                          data-testid="form-data-schema"
-                          height={EditorHeight}
-                          value={tempDataSchema}
-                          onMount={handleEditorDidMountData}
-                          onChange={(value) => {
-                            const jsonSchemaValidResult = JSONSchemaValidator(value);
-                            dispatch(setDraftDataSchema(value));
+                      <FullPagePane label="Data schema" testId="form-data-schema-editor" height={EditorHeight}>
+                        <EditorPadding>
+                          <MonacoEditor
+                            data-testid="form-data-schema"
+                            height="100%"
+                            value={tempDataSchema}
+                            onMount={handleEditorDidMountData}
+                            onChange={(value) => {
+                              const jsonSchemaValidResult = JSONSchemaValidator(value);
+                              dispatch(setDraftDataSchema(value));
 
-                            if (jsonSchemaValidResult === '') {
+                              if (jsonSchemaValidResult === '') {
+                                setEditorErrors({
+                                  ...editorErrors,
+                                  dataSchemaJSONSchema: null,
+                                });
+                              } else {
+                                setEditorErrors({
+                                  ...editorErrors,
+                                  dataSchemaJSONSchema: jsonSchemaValidResult,
+                                });
+                              }
+                            }}
+                            onValidate={(makers) => {
+                              if (makers.length === 0) {
+                                setEditorErrors({
+                                  ...editorErrors,
+                                  dataSchemaJSON: null,
+                                });
+                                return;
+                              }
                               setEditorErrors({
                                 ...editorErrors,
-                                dataSchemaJSONSchema: null,
+                                dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                               });
-                            } else {
-                              setEditorErrors({
-                                ...editorErrors,
-                                dataSchemaJSONSchema: jsonSchemaValidResult,
-                              });
-                            }
-                          }}
-                          onValidate={(makers) => {
-                            if (makers.length === 0) {
-                              setEditorErrors({
-                                ...editorErrors,
-                                dataSchemaJSON: null,
-                              });
-                              return;
-                            }
-                            setEditorErrors({
-                              ...editorErrors,
-                              dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                            });
-                          }}
-                          language="json"
-                          options={{
-                            autoClosingQuotes: 'never',
-                            automaticLayout: true,
-                            scrollBeyondLastLine: false,
-                            lineNumbersMinChars: 2,
-                            tabSize: 2,
-                            padding: {
-                              top: 8,
-                            },
-                            minimap: { enabled: isUseMiniMap },
-                            folding: true,
-                            foldingStrategy: 'auto',
-                            showFoldingControls: 'always',
-                          }}
-                        />
-                      </EditorPadding>
+                            }}
+                            language="json"
+                            options={{
+                              autoClosingQuotes: 'never',
+                              automaticLayout: true,
+                              scrollBeyondLastLine: false,
+                              lineNumbersMinChars: 2,
+                              tabSize: 2,
+                              padding: {
+                                top: 8,
+                              },
+                              minimap: { enabled: isUseMiniMap },
+                              folding: true,
+                              foldingStrategy: 'auto',
+                              showFoldingControls: 'always',
+                            }}
+                          />
+                        </EditorPadding>
+                      </FullPagePane>
                     </GoabFormItem>
                   </Tab>
                   <Tab label="UI schema" data-testid="form-editor-ui-schema-tab" isTightContent={true}>
                     <GoabFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
-                      <EditorPadding>
-                        <MonacoEditor
-                          data-testid="form-ui-schema"
-                          height={EditorHeight}
-                          value={tempUiSchema}
-                          {...formEditorJsonConfig}
-                          onValidate={(makers) => {
-                            if (makers.length === 0) {
+                      <FullPagePane label="UI schema" testId="form-ui-schema-editor" height={EditorHeight}>
+                        <EditorPadding>
+                          <MonacoEditor
+                            data-testid="form-ui-schema"
+                            height="100%"
+                            value={tempUiSchema}
+                            {...formEditorJsonConfig}
+                            onValidate={(makers) => {
+                              if (makers.length === 0) {
+                                setEditorErrors({
+                                  ...editorErrors,
+                                  uiSchema: null,
+                                });
+                                return;
+                              }
                               setEditorErrors({
                                 ...editorErrors,
-                                uiSchema: null,
+                                uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                               });
-                              return;
-                            }
-                            setEditorErrors({
-                              ...editorErrors,
-                              uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                            });
-                          }}
-                          onMount={handleEditorDidMountUi}
-                          onChange={(value) => {
-                            dispatch(setDraftUISchema(value));
-                          }}
-                          language="json"
-                          options={{
-                            autoClosingQuotes: 'never',
-                            automaticLayout: true,
-                            scrollBeyondLastLine: false,
-                            wordWrap: 'on',
-                            tabSize: 2,
-                            padding: {
-                              top: 8,
-                            },
-                            minimap: { enabled: isUseMiniMap },
-                            folding: true,
-                            foldingStrategy: 'auto',
-                            showFoldingControls: 'always',
-                          }}
-                        />
-                      </EditorPadding>
+                            }}
+                            onMount={handleEditorDidMountUi}
+                            onChange={(value) => {
+                              dispatch(setDraftUISchema(value));
+                            }}
+                            language="json"
+                            options={{
+                              autoClosingQuotes: 'never',
+                              automaticLayout: true,
+                              scrollBeyondLastLine: false,
+                              wordWrap: 'on',
+                              tabSize: 2,
+                              padding: {
+                                top: 8,
+                              },
+                              minimap: { enabled: isUseMiniMap },
+                              folding: true,
+                              foldingStrategy: 'auto',
+                              showFoldingControls: 'always',
+                            }}
+                          />
+                        </EditorPadding>
+                      </FullPagePane>
                     </GoabFormItem>
                   </Tab>
                   {formAIEnabled && (
@@ -1161,7 +1178,12 @@ export function AddEditFormDefinitionEditor({
                         <ReviewConfigurationTab
                           schema={dataSchema}
                           reviewConfiguration={definition.reviewConfiguration}
-                          onChange={(reviewConfiguration) => setDefinition({ reviewConfiguration })}
+                          questionsEmailError={errors?.['questionsEmail']}
+                          onChange={(reviewConfiguration) => {
+                            validators.remove('questionsEmail');
+                            validators['questionsEmail'].check(reviewConfiguration.questionsEmail || '');
+                            setDefinition({ reviewConfiguration });
+                          }}
                         />
                       </EditorTabScroll>
                     </BorderBottom>

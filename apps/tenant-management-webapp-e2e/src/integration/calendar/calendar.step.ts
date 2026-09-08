@@ -13,7 +13,7 @@ Given('a tenant admin user is on calendar service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Calendar', 4000);
+  commonlib.tenantAdminMenuItem('Calendar', 2000);
 });
 
 When('the user clicks Add calendar button on overview tab', function () {
@@ -517,7 +517,7 @@ When('the user clicks Save button in calendar event modal', function () {
 
 When('the user clicks Cancel button in calendar event modal', function () {
   calendarObj.eventsCalendarEventModalCancelButton().shadow().find('button').click({ force: true });
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 Then(
@@ -652,7 +652,7 @@ Given('a tenant admin user is on Calendar service Calendars page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Calendar', 4000);
+  commonlib.tenantAdminMenuItem('Calendar', 2000);
   commonObj.serviceTab('Calendar', 'Calendars').click();
   cy.wait(2000);
 });

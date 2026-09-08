@@ -9,6 +9,18 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/example1/control-examples`,
       testId: 'jsonformsExample1',
     },
+    {
+      id: 'jsonformsExternalNavigation',
+      name: 'External form navigation',
+      url: `${prefix}/external-navigation`,
+      testId: 'jsonformsExternalNavigation',
+    },
+    {
+      id: 'jsonformsReviewNavigation',
+      name: 'Review change navigation (CDRT application)',
+      url: `${prefix}/review-navigation`,
+      testId: 'jsonformsReviewNavigation',
+    },
   ];
 
   return jsonformsPages;

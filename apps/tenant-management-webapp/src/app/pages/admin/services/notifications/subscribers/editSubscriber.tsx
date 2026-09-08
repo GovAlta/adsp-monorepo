@@ -9,7 +9,8 @@ import { emailError, smsError } from '@lib/inputValidation';
 import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface NotificationTypeFormProps {
-  initialValue?: Subscriber;
+  initialValue?: Partial<Subscriber>;
+  isNew?: boolean;
   onCancel?: () => void;
   onSave?: (type: Subscriber) => void;
   open: boolean;
@@ -18,6 +19,7 @@ interface NotificationTypeFormProps {
 
 export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
+  isNew = false,
   onCancel,
   onSave,
   errors,
@@ -75,8 +77,11 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
   const trySave = (subscriber) => {
     let formErrorList = {};
-    if (emailIndex !== -1) {
+    if (isNew || emailIndex !== -1) {
       formErrorList = Object.assign(formErrorList, emailError(email));
+    }
+    if (isNew && !address.trim()) {
+      formErrorList = Object.assign(formErrorList, { name: 'You must enter a name' });
     }
     let phoneIndex = smsIndex;
     if (smsIndex === -1) {
@@ -150,7 +155,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       <GoabModal
         testId="notification-types-form"
         open={open}
-        heading="Edit subscriber"
+        heading={isNew ? 'Add subscriber' : 'Edit subscriber'}
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton size="compact" testId="form-cancel" type="secondary" onClick={tryCancel}>
@@ -163,7 +168,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
         }
       >
         <ErrorWrapper>
-          <GoabFormItem error={formErrors?.['name']} label="Address as" mb="s">
+          <GoabFormItem error={formErrors?.['name']} label={isNew ? 'User name' : 'Address as'} mb="s">
             <GoabInput size="compact"
               type="text"
               name="name"
@@ -187,25 +192,27 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
               }}
             />
           </GoabFormItem>
-          <GoabFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
-            <div className="phoneInputStyle">
-              <GoabInput size="compact"
-                type="tel"
-                aria-label="sms"
-                name="sms"
-                width="100%"
-                value={phone}
-                testId="contact-sms-input"
-                onChange={(detail: GoabInputOnChangeDetail) => {
-                  if (detail.value) setPhone(detail.value);
-                }}
-                trailingIcon="close"
-                onTrailingIconClick={() => {
-                  setPhone('');
-                }}
-              />
-            </div>
-          </GoabFormItem>
+          {!isNew && (
+            <GoabFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
+              <div className="phoneInputStyle">
+                <GoabInput size="compact"
+                  type="tel"
+                  aria-label="sms"
+                  name="sms"
+                  width="100%"
+                  value={phone}
+                  testId="contact-sms-input"
+                  onChange={(detail: GoabInputOnChangeDetail) => {
+                    if (detail.value) setPhone(detail.value);
+                  }}
+                  trailingIcon="close"
+                  onTrailingIconClick={() => {
+                    setPhone('');
+                  }}
+                />
+              </div>
+            </GoabFormItem>
+          )}
 
           {botIndex !== -1 && (
             <GoabFormItem error={formErrors?.['slack'] || updateError} label="Slack">

@@ -392,6 +392,7 @@ describe('FormDefinitionEntity', () => {
       unsubscribe: jest.fn(),
       sendCode: jest.fn(),
       verifyCode: jest.fn(),
+      hasSubscribers: jest.fn(),
     };
 
     const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;

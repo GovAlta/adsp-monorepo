@@ -9,13 +9,27 @@ import { createHttpServerTraceHandler } from './instrument';
 
 interface TraceHandlerOptions {
   logger: Logger;
-  sampleRate: number;
   tracerProvider?: NodeTracerProvider;
 }
 
 interface AxiosConfigWithSpan extends InternalAxiosRequestConfig {
   _otelClientSpan?: Span;
   _otelSuppressTracing?: boolean;
+}
+
+function describeClientTarget(url: string | undefined): { host?: string; target?: string } {
+  if (!url) {
+    return {};
+  }
+
+  try {
+    const parsed = new URL(url);
+    return { host: parsed.host, target: `${parsed.pathname}${parsed.search}` };
+  } catch {
+    // Relative URL resolved against an axios baseURL: there is no host to report and the path
+    // is all we have.
+    return { target: url };
+  }
 }
 
 function endClientSpan(span: Span | undefined, status: number, error?: unknown) {
@@ -54,6 +68,8 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig, trac
     return config;
   }
 
+  const method = (config.method || 'GET').toUpperCase();
+
   const hasTraceparent =
     typeof config.headers?.has === 'function'
       ? config.headers.has(TRACE_PARENT_HEADER)
@@ -63,13 +79,20 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig, trac
   const parentContext = parentSpan ? otelTrace.setSpan(otelContext.active(), parentSpan) : otelContext.active();
 
   if (tracer && !configWithSpan._otelClientSpan) {
+    const { host, target } = describeClientTarget(config.url);
+
+    // Name by method and host only. There is no route template available on the client side, so
+    // the full URL would put resource IDs into the span name and, downstream, into the
+    // spanmetrics label set. The URL and path stay on attributes, which are not aggregated.
     const clientSpan = tracer.startSpan(
-      `${(config.method || 'GET').toUpperCase()} ${config.url || 'unknown'}`,
+      host ? `${method} ${host}` : method,
       {
         kind: SpanKind.CLIENT,
         attributes: {
-          'http.method': config.method,
+          'http.method': method,
           'http.url': config.url,
+          ...(host ? { 'http.host': host } : {}),
+          ...(target ? { 'http.target': target } : {}),
         },
       },
       parentContext,
@@ -99,12 +122,12 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig, trac
 
   if (configWithSpan._otelClientSpan) {
     configWithSpan._otelClientSpan.addEvent('http.client.request', {
-      'http.method': config.method,
+      'http.method': method,
       'http.url': config.url,
     });
   } else if (parentSpan) {
     parentSpan.addEvent('http.client.request', {
-      'http.method': config.method,
+      'http.method': method,
       'http.url': config.url,
     });
   }
@@ -112,11 +135,7 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig, trac
   return config;
 }
 
-export function createTraceHandler({
-  logger,
-  sampleRate: _sampleRate,
-  tracerProvider,
-}: TraceHandlerOptions): RequestHandler {
+export function createTraceHandler({ logger, tracerProvider }: TraceHandlerOptions): RequestHandler {
   const tracer = tracerProvider?.getTracer('adsp-service-sdk');
 
   // Use an axios interceptor to inject trace context into outbound request headers.

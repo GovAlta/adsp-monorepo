@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { isNilOrEmptyString } from '../../util';
 import { RequiredTextLabel } from '../Inputs/style-component';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
@@ -12,7 +12,7 @@ type DateOfBirthReviewControlProps = ControlProps;
 
 export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): JSX.Element => {
   const { data, id, uischema } = props;
-  const context = useContext(JsonFormsStepperContext);
+  const reportChange = useReviewChange();
   const showChangeButtons = useShowChangeButtons();
   const stepId = uischema?.options?.stepId;
   const requiredFields = props.schema?.required ?? [];
@@ -31,7 +31,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
             <GoabButton
               type="text"
               size="compact"
-              onClick={() => context?.goToPage(stepId, uischema.scope)}
+              onClick={() => reportChange(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >
               Change

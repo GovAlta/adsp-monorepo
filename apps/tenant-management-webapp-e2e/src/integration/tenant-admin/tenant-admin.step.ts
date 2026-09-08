@@ -375,7 +375,7 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
   function (
     access,
     agent,
@@ -391,6 +391,7 @@ Then(
     notification,
     pdf,
     script,
+    secret,
     sharepoint,
     status,
     task,
@@ -411,6 +412,7 @@ Then(
       'The notifications service provides',
       'The PDF service provides',
       'The script services provides',
+      'The secret service allows',
       'The SharePoint service allows',
       'The status service allows',
       'The task service provides',
@@ -431,6 +433,7 @@ Then(
       notification,
       pdf,
       script,
+      secret,
       sharepoint,
       status,
       task,
@@ -944,7 +947,7 @@ Given('an admin user is on event log page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Event log', 4000);
+  commonlib.tenantAdminMenuItem('Event log', 2000);
 });
 
 When('the user changes the resolution to a low resolution not supported by tenant management app', function () {

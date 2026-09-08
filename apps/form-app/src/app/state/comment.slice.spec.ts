@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import {
+  addComment,
   commentReducer,
   connectStream,
   loadComments,
@@ -220,6 +221,72 @@ describe('comment slice messages', () => {
       `${COMMENT_SERVICE_URL}/comment/v1/topics/${TOPIC.id}/comments`,
       expect.objectContaining({ params: expect.objectContaining({ top: 100 }) }),
     );
+  });
+
+  // The socket refresh after a new comment reloads the first page with no cursor; appending it
+  // duplicated every message already on screen.
+  it('replaces rather than appends when refreshing without a cursor', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8, content: 'first' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const refreshed = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9, content: 'second' }, { id: 8, content: 'first' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    expect(refreshed.comments.results.map((r) => r.id)).toEqual([9, 8]);
+  });
+
+  it('still appends when loading an older page with a cursor', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9, content: 'newer' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const paged = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8, content: 'older' }], page: {} },
+      meta: { arg: { topic: TOPIC, next: 'page-2' } },
+    });
+
+    expect(paged.comments.results.map((r) => r.id)).toEqual([9, 8]);
+  });
+
+  // The refresh the comment-created event triggers can land before the post resolves, and the
+  // message was then held twice with nothing to take the second copy away.
+  it('does not add a posted comment the refresh already brought in', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9, content: 'mine' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const posted = commentReducer(loaded, {
+      type: addComment.fulfilled.type,
+      payload: { id: 9, content: 'mine' },
+    });
+
+    expect(posted.comments.results.map((r) => r.id)).toEqual([9]);
+  });
+
+  it('adds a posted comment the refresh has not brought in', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8, content: 'theirs' }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const posted = commentReducer(loaded, {
+      type: addComment.fulfilled.type,
+      payload: { id: 9, content: 'mine' },
+    });
+
+    expect(posted.comments.results.map((r) => r.id)).toEqual([9, 8]);
   });
 
   // Comments loaded into the drawer are what the next open marks as read.

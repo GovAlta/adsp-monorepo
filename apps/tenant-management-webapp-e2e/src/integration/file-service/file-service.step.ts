@@ -286,7 +286,7 @@ Given('a service owner user is on Files overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('File', 4000);
+  commonlib.tenantAdminMenuItem('File', 2000);
 });
 
 When('the user {string} file service', function (action) {
@@ -1015,7 +1015,7 @@ Then('the user views files with {string} type on uploaded files page', function 
 
 When('the user clicks Reset button on uploaded files page', function () {
   fileServiceObj.uploadedFilesResetButton().shadow().find('button').click({ force: true });
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 Then('the user views files for other types than {string} on uploaded files page', function (fileType) {

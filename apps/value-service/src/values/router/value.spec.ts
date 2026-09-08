@@ -12,6 +12,7 @@ import {
   readMetrics,
   readValue,
   readValues,
+  runServiceMetricRollup,
   writeValue,
 } from './value';
 
@@ -38,6 +39,14 @@ describe('event router', () => {
     writeMetric: jest.fn(),
   };
 
+  const serviceMetricRollupRepositoryMock = {
+    hasRollups: jest.fn(),
+    getHistoricalRollupRange: jest.fn(),
+    getKnownTenantServices: jest.fn(),
+    readRollup: jest.fn(),
+    upsertRollups: jest.fn(),
+  };
+
   const eventServiceMock = {
     send: jest.fn(),
   };
@@ -48,6 +57,11 @@ describe('event router', () => {
     repositoryMock.readMetrics.mockReset();
     repositoryMock.readMetric.mockReset();
     repositoryMock.writeValues.mockReset();
+    serviceMetricRollupRepositoryMock.hasRollups.mockReset();
+    serviceMetricRollupRepositoryMock.getHistoricalRollupRange.mockReset();
+    serviceMetricRollupRepositoryMock.getKnownTenantServices.mockReset();
+    serviceMetricRollupRepositoryMock.readRollup.mockReset();
+    serviceMetricRollupRepositoryMock.upsertRollups.mockReset();
     eventServiceMock.send.mockReset();
   });
 
@@ -196,10 +210,219 @@ describe('event router', () => {
     const router = createValueRouter({
       logger: loggerMock,
       repository: repositoryMock,
+      serviceMetricRollupRepository: serviceMetricRollupRepositoryMock,
+      serviceMetricRollupTrailingDays: 3,
       eventService: eventServiceMock,
     });
 
     expect(router).toBeTruthy();
+  });
+
+  describe('runServiceMetricRollup', () => {
+    it('can run rollup for core writer', async () => {
+      const req = {
+        user: {
+          id: 'test-writer',
+          name: 'Test Writer',
+          isCore: true,
+          roles: [ServiceUserRoles.Writer],
+        },
+        body: {
+          start: '2026-08-23',
+          end: '2026-08-23',
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      serviceMetricRollupRepositoryMock.getKnownTenantServices.mockResolvedValueOnce([
+        { tenant: 'autotest', service: 'pdf-service' },
+      ]);
+      serviceMetricRollupRepositoryMock.readRollup.mockResolvedValueOnce({
+        day: new Date('2026-08-23T00:00:00.000Z'),
+        tenant: 'autotest',
+        service: 'pdf-service',
+        initiated: 2,
+        succeeded: 1,
+        failure_events: 0,
+        unreconciled: 1,
+        duration_sum: 10,
+        duration_count: 1,
+        duration_max: 10,
+        distinct_resources: 1,
+      });
+
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(serviceMetricRollupRepositoryMock.upsertRollups).toHaveBeenCalledWith([
+        expect.objectContaining({
+          tenant: 'autotest',
+          service: 'pdf-service',
+          day: new Date('2026-08-23T00:00:00.000Z'),
+        }),
+      ]);
+      expect(res.send).toHaveBeenCalledWith({
+        start: '2026-08-23',
+        end: '2026-08-23',
+        tenant: null,
+        rollups: 1,
+      });
+    });
+
+    it('can run rollup for tenant writer in their own tenant only', async () => {
+      const req = {
+        user: {
+          id: 'test-writer',
+          name: 'Test Writer',
+          isCore: false,
+          tenantId,
+          roles: [ServiceUserRoles.Writer],
+        },
+        body: {
+          start: '2026-08-23',
+          end: '2026-08-23',
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      serviceMetricRollupRepositoryMock.getKnownTenantServices.mockResolvedValueOnce([
+        { tenant: 'autotest', service: 'pdf-service' },
+      ]);
+      serviceMetricRollupRepositoryMock.readRollup.mockResolvedValueOnce({
+        day: new Date('2026-08-23T00:00:00.000Z'),
+        tenant: 'autotest',
+        service: 'pdf-service',
+        initiated: 2,
+        succeeded: 1,
+        failure_events: 0,
+        unreconciled: 1,
+        duration_sum: 10,
+        duration_count: 1,
+        duration_max: 10,
+        distinct_resources: 1,
+      });
+
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(serviceMetricRollupRepositoryMock.getKnownTenantServices).toHaveBeenCalledWith(expect.any(Array), {
+        tenant: tenantId.toString(),
+      });
+      expect(res.send).toHaveBeenCalledWith({
+        start: '2026-08-23',
+        end: '2026-08-23',
+        tenant: tenantId.toString(),
+        rollups: 1,
+      });
+    });
+
+    it('can run rollup for a specified tenant as core writer', async () => {
+      const req = {
+        user: {
+          id: 'test-writer',
+          name: 'Test Writer',
+          isCore: true,
+          roles: [ServiceUserRoles.Writer],
+        },
+        body: {
+          start: '2026-08-23',
+          end: '2026-08-23',
+          tenantId: tenantId.toString(),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      serviceMetricRollupRepositoryMock.getKnownTenantServices.mockResolvedValueOnce([
+        { tenant: tenantId.toString(), service: 'pdf-service' },
+      ]);
+      serviceMetricRollupRepositoryMock.readRollup.mockResolvedValueOnce({
+        day: new Date('2026-08-23T00:00:00.000Z'),
+        tenant: tenantId.toString(),
+        service: 'pdf-service',
+        initiated: 2,
+        succeeded: 1,
+        failure_events: 0,
+        unreconciled: 1,
+        duration_sum: 10,
+        duration_count: 1,
+        duration_max: 10,
+        distinct_resources: 1,
+      });
+
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(serviceMetricRollupRepositoryMock.getKnownTenantServices).toHaveBeenCalledWith(expect.any(Array), {
+        tenant: tenantId.toString(),
+      });
+      expect(res.send).toHaveBeenCalledWith({
+        start: '2026-08-23',
+        end: '2026-08-23',
+        tenant: tenantId.toString(),
+        rollups: 1,
+      });
+    });
+
+    it('can reject user without value writer role', async () => {
+      const req = {
+        user: {
+          id: 'test-reader',
+          name: 'Test Reader',
+          isCore: false,
+          tenantId,
+          roles: [ServiceUserRoles.Reader],
+        },
+        body: {
+          start: '2026-08-23',
+          end: '2026-08-23',
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can reject current or future day', async () => {
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const req = {
+        user: {
+          id: 'test-writer',
+          name: 'Test Writer',
+          isCore: true,
+          roles: [ServiceUserRoles.Writer],
+        },
+        body: {
+          start: tomorrow,
+          end: tomorrow,
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
   });
 
   describe('readValues', () => {

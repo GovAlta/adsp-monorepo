@@ -5,6 +5,7 @@ import { JwksClient } from 'jwks-rsa';
 import jwtDecode from 'jwt-decode';
 import type { Logger } from 'winston';
 import { IssuerCache } from './issuerCache';
+import { CacheName, recordCacheResult } from '../metrics/cache';
 
 type DoneCallback = (error: Error, result?: string) => void;
 type SecretCallback = (req: Request, token: string, done: DoneCallback) => Promise<void>;
@@ -58,7 +59,9 @@ export class TenantKeyProvider {
 
       this.logger.debug(`Decoded JWT from request with iss '${iss}' and kid '${kid}'...`, this.LOG_CONTEXT);
 
-      const client = this.#clientCache.get<JwksClient>(iss) || (await this.#createJwksClient(iss));
+      const cachedClient = this.#clientCache.get<JwksClient>(iss);
+      recordCacheResult(CacheName.JwksClient, !!cachedClient);
+      const client = cachedClient || (await this.#createJwksClient(iss));
 
       this.logger.debug(`Retrieving public key from JWKS client...'`, this.LOG_CONTEXT);
 

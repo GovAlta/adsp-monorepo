@@ -32,14 +32,6 @@ interface DefinitionCriteria {
   tag?: string;
 }
 
-export interface FormSubmissionCriteria {
-  dispositioned?: boolean;
-  createDateAfter?: string;
-  createDateBefore?: string;
-  dataCriteria?: Record<string, unknown>;
-  tag?: string;
-}
-
 interface FormCriteria {
   statusEquals?: string;
   createDateAfter?: string;
@@ -74,11 +66,6 @@ export const getDefaultDefinitionCriteria = (): DefinitionCriteria => ({
 
 export const getDefaultFormCriteria = (): FormCriteria => ({
   statusEquals: 'submitted',
-  createDateAfter: toDateRangeStart(DateTime.utc().minus({ weeks: 2 }).toISODate()),
-});
-
-export const getDefaultSubmissionCriteria = (): FormSubmissionCriteria => ({
-  dispositioned: false,
   createDateAfter: toDateRangeStart(DateTime.utc().minus({ weeks: 2 }).toISODate()),
 });
 
@@ -134,22 +121,17 @@ export interface FormState {
   results: {
     definitions: string[];
     forms: string[];
-    submissions: string[];
   };
   resultTotals: {
     definitions: number | null;
     forms: number | null;
-    submissions: number | null;
   };
   definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
-  submissionCriteria: FormSubmissionCriteria;
   formSort: ResultsSort;
-  submissionSort: ResultsSort;
   next: {
     definitions: string;
     forms: string;
-    submissions: string;
   };
   selectedDefinition: string;
   selectedForm: string;
@@ -157,7 +139,6 @@ export interface FormState {
   dispositionDraft: Omit<FormDisposition, 'id' | 'date'>;
   export: {
     forms: ExportState;
-    submissions: ExportState;
   };
 }
 
@@ -176,22 +157,17 @@ export const initialFormState: FormState = {
   results: {
     definitions: [],
     forms: [],
-    submissions: [],
   },
   resultTotals: {
     definitions: 0,
     forms: 0,
-    submissions: 0,
   },
   definitionCriteria: getDefaultDefinitionCriteria(),
   formCriteria: getDefaultFormCriteria(),
-  submissionCriteria: getDefaultSubmissionCriteria(),
   formSort: getDefaultResultsSort(),
-  submissionSort: getDefaultResultsSort(),
   next: {
     definitions: null,
     forms: null,
-    submissions: null,
   },
   selectedDefinition: null,
   selectedForm: null,
@@ -199,7 +175,6 @@ export const initialFormState: FormState = {
   dispositionDraft: { status: '', reason: '' },
   export: {
     forms: {},
-    submissions: {},
   },
 };
 
@@ -335,68 +310,6 @@ export const findForms = createAsyncThunk(
         ...result,
         results: result.results.map(({ status, ...result }) => ({ ...result, status: FormStatus[status] })),
       };
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
-    }
-  },
-);
-
-export const findSubmissions = createAsyncThunk(
-  'form/find-submissions',
-  async (
-    {
-      definitionId,
-      after,
-      criteria,
-      sort,
-    }: { definitionId: string; after?: string; criteria?: FormSubmissionCriteria; sort?: ResultsSort },
-    { dispatch, getState, rejectWithValue },
-  ) => {
-    const state = getState() as AppState;
-    const { directory } = state.config;
-
-    try {
-      let result: PagedResults<FormSubmission>;
-      if (criteria?.tag) {
-        const { results, page } = await dispatch(
-          getTaggedResources({ value: dashify(criteria.tag), after, includeRepresents: true, type: 'submission' }),
-        ).unwrap();
-
-        result = {
-          results: results.map((result) => result._embedded?.represents as FormSubmission).filter((result) => !!result),
-          page,
-        };
-      } else {
-        const accessToken = await getAccessToken();
-        const requestUrl = new URL('/form/v1/submissions', directory[FORM_SERVICE_ID]);
-        const { data } = await axios.get<PagedResults<FormSubmission>>(requestUrl.href, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params: {
-            top: 20,
-            after,
-            criteria: JSON.stringify({
-              ...criteria,
-              definitionIdEquals: definitionId,
-            }),
-            ...toSortParams(sort),
-          },
-        });
-
-        result = data;
-      }
-
-      if (result.results?.length > 0) {
-        await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
-      }
-
-      return result;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -613,15 +526,6 @@ const formExportColumns: ExportColumn[] = [
   { key: 'submitted', header: 'Submitted on' },
 ];
 
-const submissionExportColumns: ExportColumn[] = [
-  { key: 'id', header: 'ID' },
-  { key: 'formId', header: 'Form ID' },
-  { key: 'created', header: 'Created on' },
-  { key: 'updated', header: 'Updated on' },
-  { key: 'disposition.status', header: 'Disposition status' },
-  { key: 'disposition.reason', header: 'Disposition reason' },
-];
-
 // Limit export to base columns plus Review Configuration columns, so output matches the lists.
 function getExportFormatOptions( // clean-code-ignore: 2.3
   format: 'json' | 'csv',
@@ -667,61 +571,6 @@ export const exportForms = createAsyncThunk(
           fileType: 'form-export',
           params: {
             includeData: true,
-            criteria: JSON.stringify({
-              ...criteria,
-              definitionIdEquals: definitionId,
-            }),
-          },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      setTimeout(() => dispatch(getExportJobStatus(data.id)), 2000);
-
-      return data;
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
-    }
-  },
-);
-
-export const exportSubmissions = createAsyncThunk(
-  'form/export-submissions',
-  async (
-    {
-      definitionId,
-      criteria,
-      format,
-    }: { definitionId: string; criteria: FormSubmissionCriteria; format: 'json' | 'csv' },
-    { dispatch, getState, rejectWithValue },
-  ) => {
-    try {
-      const { config, form } = getState() as AppState;
-      const exportServiceUrl = config.directory[EXPORT_SERVICE_ID];
-      const token = await getAccessToken();
-
-      const { data } = await axios.post<Job>(
-        new URL('/export/v1/jobs', exportServiceUrl).href,
-        {
-          resourceId: 'urn:ads:platform:form-service:v1:/submissions',
-          format,
-          formatOptions: getExportFormatOptions(
-            format,
-            submissionExportColumns,
-            'formData',
-            reviewColumnsForDefinition(form, definitionId),
-          ),
-          fileType: 'form-export',
-          params: {
             criteria: JSON.stringify({
               ...criteria,
               definitionIdEquals: definitionId,
@@ -902,14 +751,8 @@ const formSlice = createSlice({
     setFormCriteria: (state, { payload }: { payload: FormCriteria }) => {
       state.formCriteria = payload;
     },
-    setSubmissionCriteria: (state, { payload }: { payload: FormSubmissionCriteria }) => {
-      state.submissionCriteria = payload;
-    },
     setFormSort: (state, { payload }: { payload: ResultsSort }) => {
       state.formSort = payload;
-    },
-    setSubmissionSort: (state, { payload }: { payload: ResultsSort }) => {
-      state.submissionSort = payload;
     },
     setDispositionDraft: (state, { payload }: { payload: Omit<FormDisposition, 'id' | 'date'> }) => {
       state.dispositionDraft = payload;
@@ -921,12 +764,9 @@ const formSlice = createSlice({
         // Clear the form if the form definition is changing.
         if (state.selectedDefinition !== meta.arg) {
           state.results.forms = [];
-          state.results.submissions = [];
           state.resultTotals.forms = 0;
-          state.resultTotals.submissions = 0;
           state.next.forms = null;
-          state.next.submissions = null;
-          state.export = { forms: {}, submissions: {} };
+          state.export = { forms: {} };
         }
       })
       .addCase(selectDefinition.fulfilled, (state, { meta }) => {
@@ -934,6 +774,9 @@ const formSlice = createSlice({
       })
       .addCase(selectForm.fulfilled, (state, { meta }) => {
         state.selectedForm = meta.arg;
+        // Clear the submission of the previously selected response until this one resolves its own.
+        state.selectedSubmission = null;
+        state.dispositionDraft = initialFormState.dispositionDraft;
       })
       .addCase(selectSubmission.fulfilled, (state, { meta }) => {
         state.selectedSubmission = meta.arg;
@@ -1012,26 +855,6 @@ const formSlice = createSlice({
       .addCase(findForms.rejected, (state) => {
         state.busy.loading = false;
       })
-      .addCase(findSubmissions.pending, (state) => {
-        state.busy.loading = true;
-      })
-      .addCase(findSubmissions.fulfilled, (state, { payload }) => {
-        state.busy.loading = false;
-        state.submissions = payload.results.reduce(
-          (results, form) => ({ ...results, [form.id]: form }),
-          state.submissions as Record<string, FormSubmission>,
-        );
-        const results = [
-          ...(payload.page.after ? state.results.submissions : []),
-          ...payload.results.map((result) => result.id),
-        ];
-        state.results.submissions = results;
-        state.resultTotals.submissions = resolveResultTotal(state.resultTotals.submissions, payload.page);
-        state.next.submissions = payload.page.next;
-      })
-      .addCase(findSubmissions.rejected, (state) => {
-        state.busy.loading = false;
-      })
       .addCase(exportForms.pending, (state, { meta }) => {
         state.busy.exporting = true;
         state.export.forms = { definitionId: meta.arg.definitionId };
@@ -1044,24 +867,10 @@ const formSlice = createSlice({
       .addCase(exportForms.rejected, (state) => {
         state.busy.exporting = false;
       })
-      .addCase(exportSubmissions.pending, (state, { meta }) => {
-        state.busy.exporting = true;
-        state.export.submissions = { definitionId: meta.arg.definitionId };
-      })
-      .addCase(exportSubmissions.fulfilled, (state, { payload, meta }) => {
-        if (state.export.submissions.definitionId === meta.arg.definitionId && !state.export.submissions.jobId) {
-          state.export.submissions.jobId = payload.id;
-        }
-      })
-      .addCase(exportSubmissions.rejected, (state) => {
-        state.busy.exporting = false;
-      })
       .addCase(getExportJobStatus.fulfilled, (state, { payload }) => {
         if (payload.status === 'completed') {
           if (state.export.forms.jobId === payload.id) {
             state.export.forms.result = payload.result;
-          } else if (state.export.submissions.jobId === payload.id) {
-            state.export.submissions.result = payload.result;
           }
           state.busy.exporting = false;
         }
@@ -1188,23 +997,6 @@ export const formsSelector = createSelector(
   },
 );
 
-export const submissionsSelector = createSelector(
-  (state: AppState) => state.form.submissions,
-  (state: AppState) => state.form.results.submissions,
-  selectedDataValuesSelector,
-  (submissions, results, values) => {
-    return results
-      .map((result) => submissions[result])
-      .filter((result) => !!result)
-      .map(({ created, updated, ...result }) => ({
-        ...result,
-        created: DateTime.fromISO(created),
-        updated: updated ? DateTime.fromISO(updated) : null,
-        values: values.reduce((values, value) => ({ ...values, [value.path]: _.get(result.formData, value.path) }), {}),
-      }));
-  },
-);
-
 export const formSelector = createSelector(
   (state: AppState) => state.form.forms,
   (state: AppState) => state.form.selectedForm,
@@ -1239,44 +1031,12 @@ export const formFilesSelector = createSelector(
 export const submissionSelector = createSelector(
   (state: AppState) => state.form.submissions,
   (state: AppState) => state.form.selectedSubmission,
-  (state: AppState) => state.form.results.submissions,
-  (submissions, selected, results) => {
-    const selectedIndex = results.indexOf(selected);
-    const next = selectedIndex >= 0 ? results[selectedIndex + 1] : undefined;
-    return { submission: submissions[selected], next };
-  },
-);
-
-export const submissionFilesSelector = createSelector(
-  (state: AppState) => state.file.metadata,
-  submissionSelector,
-  (metadata, { submission }) => {
-    return Object.entries(submission?.formFiles || {})
-      .filter(([key, urn]) => typeof urn === 'string')
-      .reduce((files, [key, urn]) => {
-        const root = key.slice(0, key.lastIndexOf('.'));
-        const fileItems = urn
-          ?.split(';')
-          .map((u) => metadata[u])
-          .filter((f) => f !== undefined);
-
-        return {
-          ...files,
-          [root]: fileItems,
-        };
-      }, {});
-  },
+  (submissions, selected) => ({ submission: selected ? submissions[selected] : undefined }),
 );
 
 export const formBusySelector = (state: AppState) => state.form.busy;
 
-export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
-
-export const submissionFilterCountSelector = createSelector(submissionCriteriaSelector, countActiveFilters);
-
 export const formSortSelector = (state: AppState) => state.form.formSort;
-
-export const submissionSortSelector = (state: AppState) => state.form.submissionSort;
 
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
 
@@ -1288,8 +1048,10 @@ export const nextSelector = (state: AppState) => state.form.next;
 
 export const dispositionDraftSelector = (state: AppState) => state.form.dispositionDraft;
 
-export const canExportSelector = (state: AppState) =>
+export const isFormAdminSelector = (state: AppState) =>
   state.user.user?.roles?.includes('urn:ads:platform:form-service:form-admin');
+
+export const canExportSelector = isFormAdminSelector;
 export const canGetIntakeCalendarSelector = canExportSelector;
 
 export const canAccessPdfSelector = (state: AppState) =>
@@ -1307,18 +1069,6 @@ export const canSetToDraftSelector = createSelector(
 
 export const formsExportSelector = createSelector(
   (state: AppState) => state.form.export.forms,
-  (state: AppState) => state.file.files,
-  (state: AppState) => state.form.busy.exporting,
-  (state: AppState) => state.file.busy.download,
-  (state, files, exporting, downloading) => ({
-    filename: state.result?.filename,
-    dataUri: state.result?.urn ? files[state.result.urn] : null,
-    working: exporting || (state.result?.urn && downloading[state.result.urn]),
-  }),
-);
-
-export const submissionsExportSelector = createSelector(
-  (state: AppState) => state.form.export.submissions,
   (state: AppState) => state.file.files,
   (state: AppState) => state.form.busy.exporting,
   (state: AppState) => state.file.busy.download,

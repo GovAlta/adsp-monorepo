@@ -10,7 +10,7 @@ import { environment, POD_TYPES } from './environments/environment';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
-import { AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, instrumentAxios, instrumentJob } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { configurationSchema } from './mongo/schema';
 import {
@@ -152,9 +152,16 @@ instrumentAxios(logger);
     logger.info(`Running Jobs`);
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
-      scheduleJob('0 0 * * *', async () => {
-        await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
-      });
+      scheduleJob(
+        '0 0 * * *',
+        instrumentJob(
+          'delete-old-url-status',
+          async () => {
+            await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
+          },
+          { logger }
+        )
+      );
 
       const healthCheckController = new HealthCheckController(
         {
@@ -177,9 +184,16 @@ instrumentAxios(logger);
 
     // reload the cache every 5 minutes
     const scheduleCacheReload = async () => {
-      scheduleJob('*/5 * * * *', async () => {
-        scheduler.reloadCache(applicationManager);
-      });
+      scheduleJob(
+        '*/5 * * * *',
+        instrumentJob(
+          'reload-health-check-cache',
+          async () => {
+            scheduler.reloadCache(applicationManager);
+          },
+          { logger }
+        )
+      );
     };
 
     scheduler.loadHealthChecks(getScheduler(healthCheckSchedulingProps), scheduleDataReset, scheduleCacheReload);

@@ -1,4 +1,6 @@
 import { getContextTrace } from '@abgov/adsp-service-sdk';
+import { SpanKind, SpanStatusCode, trace as otelTrace } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
 import type { DomainEvent } from '@core-services/core-common';
 import { AmqpEventSubscriberService, InvalidOperationError } from '@core-services/core-common';
 import { AmqpConnectionManager } from 'amqp-connection-manager';
@@ -19,6 +21,33 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
 
     const routingKey = this.getRoutingKey(event);
     const { namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
+
+    // This is the platform's domain event publish path and it overrides the base class enqueue, so
+    // it needs its own producer span. Named for the exchange rather than the routing key, since the
+    // routing key embeds the tenant URN and would grow the span name set with tenants.
+    await otelTrace
+      .getTracer('event-service.amqp')
+      .startActiveSpan(
+        'publish domain-events',
+        {
+          kind: SpanKind.PRODUCER,
+          attributes: {
+            'messaging.system': 'rabbitmq',
+            'messaging.operation': 'publish',
+            'messaging.destination.name': 'domain-events',
+            'messaging.rabbitmq.routing_key': routingKey,
+            'adsp.event.namespace': namespace,
+            'adsp.event.name': name,
+          },
+        },
+        (span) => this.publishWithin(span, event, routingKey)
+      );
+  }
+
+  private async publishWithin(span: Span, event: DomainEvent, routingKey: string): Promise<void> {
+    const { namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
+    // Read inside the producer span so the propagated traceparent points at the publish, making the
+    // consumer a child of the send rather than of whatever span was active upstream.
     const trace = getContextTrace();
 
     try {
@@ -42,9 +71,14 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
         this.logger.error(
           `Failed to publish domain event with routing key '${routingKey}' due to server reject or close of connection.`
         );
+        span.setStatus({ code: SpanStatusCode.ERROR, message: 'broker rejected the publish' });
       }
     } catch (err) {
       this.logger.error(`Error encountered on sending domain event: ${err}`);
+      span.recordException(err instanceof Error ? err : String(err));
+      span.setStatus({ code: SpanStatusCode.ERROR, message: err instanceof Error ? err.message : String(err) });
+    } finally {
+      span.end();
     }
   }
 

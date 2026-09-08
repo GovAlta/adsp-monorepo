@@ -116,7 +116,7 @@ describe('contextProvider', () => {
     const component = render(
       <ContextProvider>
         <div>xxx</div>
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     expect(component.getByText('xxx')).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('contextProvider', () => {
     const component = render(
       <ContextProvider autoPopulatedData={autoPopulatedData}>
         <Probe />
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     // Assert
@@ -153,11 +153,104 @@ describe('contextProvider', () => {
     const component = render(
       <ContextProvider>
         <Probe />
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     // Assert
     expect(component.getByTestId('auto-populated').textContent).toBe('[]');
+  });
+
+  it('exposes an external navigation target to the form tree', () => {
+    // Arrange
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext);
+      return <div data-testid="navigation-target">{JSON.stringify(ctx.navigationTarget)}</div>;
+    };
+
+    // Act
+    const component = render(
+      <ContextProvider navigationTarget={{ pageId: 'contact-details' }}>
+        <Probe />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(component.getByTestId('navigation-target').textContent).toBe('{"pageId":"contact-details"}');
+  });
+
+  it('reaches a memoised form tree with a navigation target set after mount', () => {
+    // Arrange
+    // JsonForms memoises its renderers on the form's own state, so the stepper is not re-rendered
+    // by the host changing a target. Reaching it depends entirely on the provider handing out a
+    // different value, which is what mutating the enumerator in place used to prevent.
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext);
+      return <div data-testid="navigation-target">{JSON.stringify(ctx.navigationTarget ?? null)}</div>;
+    };
+    const MemoisedTree = React.memo(() => <Probe />);
+    MemoisedTree.displayName = 'MemoisedTree';
+
+    const component = render(
+      <ContextProvider>
+        <MemoisedTree />
+      </ContextProvider>,
+    );
+    expect(component.getByTestId('navigation-target').textContent).toBe('null');
+
+    // Act
+    component.rerender(
+      <ContextProvider navigationTarget={{ pageId: 'contact-details' }}>
+        <MemoisedTree />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(component.getByTestId('navigation-target').textContent).toBe('{"pageId":"contact-details"}');
+  });
+
+  it('leaves the context value alone when nothing a host controls has changed', () => {
+    // Arrange
+    const seen: unknown[] = [];
+    const Probe = () => {
+      seen.push(useContext(JsonFormContext));
+      return null;
+    };
+
+    // Act
+    const component = render(
+      <ContextProvider showChangeButtons={false}>
+        <Probe />
+      </ContextProvider>,
+    );
+    component.rerender(
+      <ContextProvider showChangeButtons={false}>
+        <Probe />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(seen[1]);
+  });
+
+  it('exposes the navigation outcome callback to the form tree', () => {
+    // Arrange
+    const onNavigationChange = jest.fn();
+    const Probe = () => {
+      const ctx = useContext(JsonFormContext);
+      ctx.onNavigationChange({ status: 'navigated', pageId: 'contact-details' });
+      return null;
+    };
+
+    // Act
+    render(
+      <ContextProvider onNavigationChange={onNavigationChange}>
+        <Probe />
+      </ContextProvider>,
+    );
+
+    // Assert
+    expect(onNavigationChange).toHaveBeenCalledWith({ status: 'navigated', pageId: 'contact-details' });
   });
 
   it('works with submit props', async () => {
@@ -181,7 +274,7 @@ describe('contextProvider', () => {
         <div>
           <SubmitComponent />
         </div>
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     expect(ContextProviderC.getFormContextData('submittedData')).toEqual({ text: 'abc' });
@@ -217,7 +310,7 @@ describe('contextProvider', () => {
         <div>
           <DataComponent />
         </div>
-      </ContextProvider>
+      </ContextProvider>,
     );
 
     expect(component.getByText('Dolphin')).toBeInTheDocument();
@@ -232,7 +325,7 @@ describe('contextProvider', () => {
       const component = render(
         <ContextProvider>
           <ShowsFlag />
-        </ContextProvider>
+        </ContextProvider>,
       );
 
       expect(component.getByText('shown')).toBeInTheDocument();
@@ -242,7 +335,7 @@ describe('contextProvider', () => {
       const component = render(
         <ContextProvider showChangeButtons={false}>
           <ShowsFlag />
-        </ContextProvider>
+        </ContextProvider>,
       );
 
       expect(component.getByText('hidden')).toBeInTheDocument();
@@ -252,7 +345,7 @@ describe('contextProvider', () => {
       const component = render(
         <ContextProvider showChangeButtons={true}>
           <ShowsFlag />
-        </ContextProvider>
+        </ContextProvider>,
       );
 
       expect(component.getByText('shown')).toBeInTheDocument();

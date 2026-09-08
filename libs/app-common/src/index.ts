@@ -12,6 +12,8 @@ export * from './components/RowLoadMore';
 export * from './components/AgentChat';
 export * from './components/resizable';
 
+export * from './formTemplates/defaultMultiPageForm';
+
 export * from './types/agent';
 export * from './utils';
 export * from './useScripts';

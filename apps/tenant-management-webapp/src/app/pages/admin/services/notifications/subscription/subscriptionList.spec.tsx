@@ -2,9 +2,10 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import '@testing-library/jest-dom';
-import { render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { Events } from '@store/subscription/models';
 import { Subscriptions } from './subscriptions';
+import { CREATE_TYPE_SUBSCRIPTION, FIND_SUBSCRIBERS } from '@store/subscription/actions';
 
 describe('NotificationTypes Page', () => {
   const mockStore = configureStore([]);
@@ -45,6 +46,10 @@ describe('NotificationTypes Page', () => {
       },
     },
     subscription: {
+      subscriptionCreation: { state: 'idle' },
+      subscriberSearch: {
+        results: ['61b7c9755af1390a68dc3927', '61b7c130f60c055164af8a70', '61b7c3bff60c055164af8a7b'],
+      },
       subscriptionsHasNext: [{ id: 'status-application-status-change', hasNext: false, top: 40 }],
       subscribers: {
         '61b7c9755af1390a68dc3927': {
@@ -122,7 +127,7 @@ describe('NotificationTypes Page', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <Subscriptions />
-      </Provider>
+      </Provider>,
     );
 
     const subscriptionTable = queryByTestId('subscription-table-0');
@@ -130,5 +135,113 @@ describe('NotificationTypes Page', () => {
 
     expect(subscriptionTable).toBeTruthy();
     expect(addressAs).toBeTruthy();
+  });
+
+  it('creates a subscription for an existing subscriber', async () => {
+    const { baseElement } = render(
+      <Provider store={store}>
+        <Subscriptions />
+      </Provider>,
+    );
+
+    fireEvent(baseElement.querySelector("goa-button[testId='add-subscription']"), new CustomEvent('_click'));
+    await waitFor(() =>
+      expect(store.getActions()).toContainEqual({
+        type: FIND_SUBSCRIBERS,
+        payload: { reset: true, top: 5000 },
+      }),
+    );
+
+    fireEvent(
+      baseElement.querySelector("goa-dropdown[testId='subscription-type']"),
+      new CustomEvent('_change', { detail: { value: 'status-application-health-change' } }),
+    );
+    fireEvent(
+      baseElement.querySelector("goa-dropdown[testId='existing-subscriber']"),
+      new CustomEvent('_change', { detail: { value: '61b7c9755af1390a68dc3927' } }),
+    );
+    fireEvent(baseElement.querySelector("goa-button[testId='subscription-submit']"), new CustomEvent('_click'));
+
+    expect(store.getActions()).toContainEqual({
+      type: CREATE_TYPE_SUBSCRIPTION,
+      payload: {
+        typeId: 'status-application-health-change',
+        subscriber: expect.objectContaining({ id: '61b7c9755af1390a68dc3927' }),
+      },
+    });
+  });
+
+  it('creates a subscription with a new subscriber and contact channels', async () => {
+    const { baseElement } = render(
+      <Provider store={store}>
+        <Subscriptions />
+      </Provider>,
+    );
+
+    fireEvent(baseElement.querySelector("goa-button[testId='add-subscription']"), new CustomEvent('_click'));
+    fireEvent(
+      baseElement.querySelector("goa-dropdown[testId='subscription-type']"),
+      new CustomEvent('_change', { detail: { value: 'status-application-status-change' } }),
+    );
+    fireEvent(
+      baseElement.querySelector("goa-radio-group[testId='subscriber-mode']"),
+      new CustomEvent('_change', { detail: { value: 'new' } }),
+    );
+
+    await waitFor(() => expect(baseElement.querySelector("goa-input[testId='new-subscriber-name']")).toBeTruthy());
+    fireEvent(
+      baseElement.querySelector("goa-input[testId='new-subscriber-name']"),
+      new CustomEvent('_change', { detail: { value: 'General mailbox' } }),
+    );
+    fireEvent(
+      baseElement.querySelector("goa-input[testId='new-subscriber-email']"),
+      new CustomEvent('_change', { detail: { value: 'general.mailbox@gov.ab.ca' } }),
+    );
+    fireEvent(
+      baseElement.querySelector("goa-input[testId='new-subscriber-phone']"),
+      new CustomEvent('_change', { detail: { value: '7801234567' } }),
+    );
+    fireEvent(baseElement.querySelector("goa-button[testId='subscription-submit']"), new CustomEvent('_click'));
+
+    expect(store.getActions()).toContainEqual({
+      type: CREATE_TYPE_SUBSCRIPTION,
+      payload: {
+        typeId: 'status-application-status-change',
+        subscriber: {
+          addressAs: 'General mailbox',
+          channels: [
+            { channel: 'email', address: 'general.mailbox@gov.ab.ca', verified: false },
+            { channel: 'sms', address: '7801234567', verified: false },
+          ],
+        },
+      },
+    });
+  });
+
+  it('requires a contact channel for a new subscriber', async () => {
+    const createActionCount = store.getActions().filter(({ type }) => type === CREATE_TYPE_SUBSCRIPTION).length;
+    const { baseElement } = render(
+      <Provider store={store}>
+        <Subscriptions />
+      </Provider>,
+    );
+
+    fireEvent(baseElement.querySelector("goa-button[testId='add-subscription']"), new CustomEvent('_click'));
+    fireEvent(
+      baseElement.querySelector("goa-dropdown[testId='subscription-type']"),
+      new CustomEvent('_change', { detail: { value: 'status-application-status-change' } }),
+    );
+    fireEvent(
+      baseElement.querySelector("goa-radio-group[testId='subscriber-mode']"),
+      new CustomEvent('_change', { detail: { value: 'new' } }),
+    );
+    await waitFor(() => expect(baseElement.querySelector("goa-input[testId='new-subscriber-name']")).toBeTruthy());
+    fireEvent(
+      baseElement.querySelector("goa-input[testId='new-subscriber-name']"),
+      new CustomEvent('_change', { detail: { value: 'No contact' } }),
+    );
+    fireEvent(baseElement.querySelector("goa-button[testId='subscription-submit']"), new CustomEvent('_click'));
+
+    expect(store.getActions().filter(({ type }) => type === CREATE_TYPE_SUBSCRIPTION)).toHaveLength(createActionCount);
   });
 });

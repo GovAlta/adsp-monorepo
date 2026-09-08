@@ -144,6 +144,7 @@ export class AgentServiceConfiguration {
 
       const storage = environment.DB_HOST
         ? new PostgresStore({
+            id: 'memoryStore',
             host: environment.DB_HOST,
             port: environment.DB_PORT,
             user: environment.DB_USER,

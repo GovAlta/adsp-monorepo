@@ -22,7 +22,7 @@ Given('a tenant admin user is on cache overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Cache', 4000);
+  commonlib.tenantAdminMenuItem('Cache', 2000);
 });
 
 When('the user clicks Add cache target button on overview tab', function () {

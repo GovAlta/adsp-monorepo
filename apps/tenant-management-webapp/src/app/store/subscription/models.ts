@@ -49,6 +49,8 @@ export interface Subscriber {
   accountLink?: string;
 }
 
+export type TypeSubscriptionSubscriber = Pick<Subscriber, 'id'> | Omit<Subscriber, 'id'>;
+
 export interface HasNext {
   id: string;
   hasNext: boolean;
@@ -71,6 +73,9 @@ export interface SubscriberService {
   >;
   successMessage: string;
   updateError: string;
+  subscriptionCreation: {
+    state: 'idle' | 'loading' | 'succeeded' | 'failed';
+  };
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
@@ -83,6 +88,9 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   typeSubscriptionSearch: {},
   successMessage: null,
   updateError: '',
+  subscriptionCreation: {
+    state: 'idle',
+  },
 };
 
 export interface SubscriberSearchCriteria {
@@ -92,6 +100,7 @@ export interface SubscriberSearchCriteria {
   sms?: string;
   reset?: boolean;
   paginationReset?: boolean;
+  top?: number;
 }
 
 export interface SubscriptionSearchCriteria {

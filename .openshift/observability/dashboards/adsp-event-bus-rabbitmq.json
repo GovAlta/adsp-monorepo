@@ -1,0 +1,1095 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "id": null,
+  "description": "Broker-side health of the RabbitMQ event bus: resource alarms that block publishers, where messages are lost, throughput, capacity headroom and quorum queue health. Per-node aggregates only -- see the notes panel.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "ADSP Service Dependencies",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/adsp-service-dependencies"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 1,
+      "type": "stat",
+      "title": "Publishers Blocked",
+      "description": "Number of resource alarms active on any node. Non-zero means RabbitMQ is refusing publishes: services block on publish with no error returned, so this is the first thing to check when events stop flowing. Which alarm it is shows in the Capacity Headroom panel below.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max(rabbitmq_alarms_free_disk_space_watermark) + max(rabbitmq_alarms_memory_used_watermark) + max(rabbitmq_alarms_file_descriptor_limit)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 2,
+      "type": "stat",
+      "title": "Unreachable Peers",
+      "description": "Cluster peers a node cannot reach. Non-zero means a partition, and quorum queues lose availability if it reaches 2 of 3.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max(rabbitmq_unreachable_cluster_peers_count)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 3,
+      "type": "stat",
+      "title": "Ready Messages",
+      "description": "Messages waiting for a consumer, across all queues and nodes. A steady climb means consumers are not keeping up. Thresholds are placeholders -- set them from your own observed baseline.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rabbitmq_queue_messages_ready)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 4,
+      "type": "stat",
+      "title": "Messages Lost / sec",
+      "description": "Domain events discarded rather than delivered: unroutable (published with no matching binding) plus every dead-letter reason. Any non-zero value means events are being silently lost. Reads 0 rather than 'No data' when healthy.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.001
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(sum(rate(rabbitmq_global_messages_unroutable_dropped_total[$__rate_interval])) or vector(0)) + (sum(rate(rabbitmq_global_messages_dead_lettered_maxlen_total[$__rate_interval])) or vector(0)) + (sum(rate(rabbitmq_global_messages_dead_lettered_expired_total[$__rate_interval])) or vector(0)) + (sum(rate(rabbitmq_global_messages_dead_lettered_rejected_total[$__rate_interval])) or vector(0)) + (sum(rate(rabbitmq_global_messages_dead_lettered_delivery_limit_total[$__rate_interval])) or vector(0))",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "value"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 5,
+      "type": "timeseries",
+      "title": "Where Messages Are Lost",
+      "description": "Each series is a distinct way an event fails to reach a consumer. 'Unroutable - dropped' usually means an event was published to an exchange with no binding for its routing key, which is a configuration problem rather than a load problem.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_unroutable_dropped_total[$__rate_interval]))",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "unroutable - dropped"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_unroutable_returned_total[$__rate_interval]))",
+          "range": true,
+          "refId": "B",
+          "legendFormat": "unroutable - returned"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_dead_lettered_expired_total[$__rate_interval]))",
+          "range": true,
+          "refId": "C",
+          "legendFormat": "dead-lettered - expired (TTL)"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_dead_lettered_maxlen_total[$__rate_interval]))",
+          "range": true,
+          "refId": "D",
+          "legendFormat": "dead-lettered - queue full"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_dead_lettered_rejected_total[$__rate_interval]))",
+          "range": true,
+          "refId": "E",
+          "legendFormat": "dead-lettered - rejected"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_dead_lettered_delivery_limit_total[$__rate_interval]))",
+          "range": true,
+          "refId": "F",
+          "legendFormat": "dead-lettered - retry limit"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 6,
+      "type": "timeseries",
+      "title": "Backlog by Node",
+      "description": "Both series are message counts, so they share one axis. 'Ready' is waiting for a consumer; 'unacked' has been delivered but not yet acknowledged. Rising unacked with flat ready means consumers are slow to acknowledge rather than absent.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rabbitmq_queue_messages_ready)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "ready - {{instance}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rabbitmq_queue_messages_unacked)",
+          "range": true,
+          "refId": "B",
+          "legendFormat": "unacked - {{instance}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 7,
+      "type": "timeseries",
+      "title": "Message Flow",
+      "description": "Delivered is normally much higher than received -- one published event fans out to every bound queue, and ADSP routes domain events to several. What matters is that delivered and acknowledged track each other, and that routed does not fall away from received.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_received_total[$__rate_interval]))",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "received (published in)"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_routed_total[$__rate_interval]))",
+          "range": true,
+          "refId": "B",
+          "legendFormat": "routed to a queue"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_delivered_total[$__rate_interval]))",
+          "range": true,
+          "refId": "C",
+          "legendFormat": "delivered to consumers"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(rabbitmq_global_messages_acknowledged_total[$__rate_interval]))",
+          "range": true,
+          "refId": "D",
+          "legendFormat": "acknowledged"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 8,
+      "type": "timeseries",
+      "title": "Capacity Headroom (% of limit)",
+      "description": "Everything expressed against its own limit so one axis works: 100% is where the corresponding alarm fires and publishers get blocked. The disk series is the configured free-space floor (disk_free_limit.absolute, 2GB) as a share of the space actually available -- so it rises as the disk fills.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (instance) (rabbitmq_process_resident_memory_bytes) / sum by (instance) (rabbitmq_resident_memory_limit_bytes)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "memory - {{instance}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (instance) (rabbitmq_process_open_fds) / sum by (instance) (rabbitmq_process_max_fds)",
+          "range": true,
+          "refId": "B",
+          "legendFormat": "file descriptors - {{instance}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (instance) (rabbitmq_erlang_processes_used) / sum by (instance) (rabbitmq_erlang_processes_limit)",
+          "range": true,
+          "refId": "C",
+          "legendFormat": "erlang processes - {{instance}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (instance) (rabbitmq_disk_space_available_limit_bytes) / sum by (instance) (rabbitmq_disk_space_available_bytes)",
+          "range": true,
+          "refId": "D",
+          "legendFormat": "disk vs free-space floor - {{instance}}"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 9,
+      "type": "timeseries",
+      "title": "Quorum Queue Health",
+      "description": "Raft commit latency for quorum queues -- 24 of the queues in this cluster are quorum with target_group_size 3. A climbing latency means replication is struggling, which shows up to publishers as slow confirms before it shows up as anything else.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max(rabbitmq_raft_entry_commit_latency_seconds)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "worst commit latency"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 10,
+      "type": "timeseries",
+      "title": "Connections, Channels, Consumers, Queues",
+      "description": "All counts, so one axis. Connections and channels dropping together points at services restarting or losing the broker; consumers dropping while queues stay flat means something stopped consuming.",
+      "pluginVersion": "11.5.2",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rabbitmq_connections)",
+          "range": true,
+          "refId": "A",
+          "legendFormat": "connections"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rabbitmq_channels)",
+          "range": true,
+          "refId": "B",
+          "legendFormat": "channels"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rabbitmq_consumers)",
+          "range": true,
+          "refId": "C",
+          "legendFormat": "consumers"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rabbitmq_queues)",
+          "range": true,
+          "refId": "D",
+          "legendFormat": "queues"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 11,
+      "type": "text",
+      "title": "How To Read It",
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**This dashboard answers \"is the event bus about to block, and are domain events flowing without loss?\"**\n\n**Read it in this order**\n1. **Publishers Blocked.** Non-zero and nothing else matters: RabbitMQ has hit a resource watermark\n   and is refusing publishes. Services block on publish *without an error*, so the symptom elsewhere\n   is hung requests, not failures. Capacity Headroom shows which limit was hit.\n2. **Messages Lost / sec.** Non-zero means domain events are being discarded. `Where Messages Are Lost`\n   separates a routing misconfiguration (unroutable) from a load or retry problem (dead-lettered).\n3. **Backlog by Node** and **Message Flow.** A rising backlog with healthy flow means consumers are\n   behind; a backlog with flow at zero means they are gone.\n4. **Quorum Queue Health** if publishes are slow but nothing is blocked.\n\n**A limit worth knowing.** Every metric here is a **per-node aggregate**. RabbitMQ's `/metrics`\nendpoint returns per-object detail only when `prometheus.return_per_object_metrics` is enabled, and it\nis deliberately off: per-object series scale with queues x channels x connections, which is a large\ncardinality cost for this cluster. So this dashboard can tell you *that* the bus is backing up, but\nnot *which queue* is doing it. For that, use the management UI on the affected node, or enable\nper-object metrics temporarily.\n\n**Also deliberate:** there is no consumer-utilisation panel. `rabbitmq_queue_consumer_utilisation`\nexists, but on the aggregated endpoint it is the sum of per-queue ratios for a node (observed values\nof 9, 14 and 23 rather than 0-1), which has no useful interpretation.\n\n**Overlap with other dashboards.** *ADSP Service Dependencies* has an Event Bus Depth panel for the\nservice-centric view -- \"is the bus part of why my service is slow\". This dashboard is the broker's\nown view.\n\n**Thresholds on the tiles are placeholders.** Ready Messages in particular should be set from your own\nobserved baseline rather than the round numbers here.\n"
+      }
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 40,
+  "tags": [
+    "adsp",
+    "rabbitmq",
+    "event-bus",
+    "infrastructure"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "ADSP Event Bus (RabbitMQ)",
+  "uid": "adsp-event-bus-rabbitmq",
+  "weekStart": ""
+}

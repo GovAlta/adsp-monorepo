@@ -13,7 +13,7 @@ Given('a tenant admin user is on status overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Status', 4000);
+  commonlib.tenantAdminMenuItem('Status', 2000);
 });
 
 Then('the user views the health check guidelines', function () {
@@ -30,7 +30,7 @@ Given('a tenant admin user is on status notices page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Status', 4000);
+  commonlib.tenantAdminMenuItem('Status', 2000);
   commonObj.serviceTab('Status', 'Notices').click();
   cy.wait(4000);
 });

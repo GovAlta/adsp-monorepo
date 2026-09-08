@@ -259,10 +259,12 @@ export const FormTemplateEditorContainer = styled.div`
   box-sizing: border-box;
 `;
 
-export const NameDescriptionDataSchema = styled.div`
+export const NameDescriptionDataSchema = styled.div<{ $previewHidden?: boolean }>`
   flex: 6;
   min-width: 0; /* Allow flex item to shrink below content width */
-  padding-right: 3rem;
+  /* The gap toward the divider. With the preview hidden there is no divider, and this would stack on
+     top of the editor container's own padding-right, doubling the space at the far right edge. */
+  padding-right: ${({ $previewHidden }) => ($previewHidden ? '0' : '3rem')};
 `;
 
 export const EditorTabScroll = styled.div<{ $height: number }>`

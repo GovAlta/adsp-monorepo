@@ -1,4 +1,4 @@
-import React, { act, useContext } from 'react';
+import React from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -21,15 +21,13 @@ import {
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
 
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
-import { useReviewContext } from '../../Context/ReviewRenderContext';
+import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
-  const context = useContext(JsonFormsStepperContext);
-  const reviewCtx = useReviewContext();
+  const reportChange = useReviewChange();
   const showChangeButtons = useShowChangeButtons();
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
@@ -224,8 +222,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
   const stepId = uischema.options?.stepId;
 
   function handleChangeClick(): void {
-    context?.goToPage(stepId, uischema.scope);
-    reviewCtx?.onChangeDispatch(stepId, uischema.scope);
+    reportChange(stepId, uischema.scope);
   }
   const showInlineValue =
     reviewText === null ||

@@ -1,4 +1,4 @@
-export type MetricInterval = 'one_minute' | 'five_minutes' | 'hourly' | 'daily' | 'weekly';
+export type MetricInterval = 'one_minute' | 'five_minutes' | 'hourly' | 'daily' | 'weekly' | 'monthly';
 
 export interface MetricValue {
   namespace: string;

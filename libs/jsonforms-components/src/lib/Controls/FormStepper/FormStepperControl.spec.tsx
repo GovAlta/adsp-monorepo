@@ -444,7 +444,7 @@ describe('Form Stepper Control', () => {
     it('can render the content table', async () => {
       const newStepperProps = {
         ...pagesBaseProps,
-
+        activeId: undefined,
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
 
@@ -467,7 +467,7 @@ describe('Form Stepper Control', () => {
     it('can render back to application button', async () => {
       const newStepperProps = {
         ...pagesBaseProps,
-
+        activeId: undefined,
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
 

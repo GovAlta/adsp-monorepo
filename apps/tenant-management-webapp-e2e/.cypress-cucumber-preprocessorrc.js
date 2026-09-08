@@ -13,4 +13,9 @@ module.exports = {
     enabled: true,
     output: path.resolve(process.cwd(), '../../dist/cypress/apps/tenant-management-webapp-e2e/report/index.html'),
   },
+  // Avoid the plugin's internal step-tracking state errors (e.g. "Unexpected state in
+  // afterSpecHandler") from crashing an otherwise-passing full suite run; report to stderr instead.
+  state: {
+    softErrors: true,
+  },
 };

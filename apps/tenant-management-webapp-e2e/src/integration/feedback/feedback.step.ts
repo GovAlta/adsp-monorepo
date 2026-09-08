@@ -56,9 +56,9 @@ Given('a tenant admin user is on Feedback Sites page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Feedback', 4000);
+  commonlib.tenantAdminMenuItem('Feedback', 2000);
   commonObj.serviceTab('Feedback', 'Sites').click();
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 Then('the user views Site summary on feedback overview page', function () {
@@ -434,7 +434,7 @@ Given('a tenant admin user is on Feedback service Feedback page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Feedback', 4000);
+  commonlib.tenantAdminMenuItem('Feedback', 2000);
   commonObj.serviceTab('Feedback', 'Feedback').click();
   cy.wait(4000);
 });
@@ -451,7 +451,7 @@ Then('the user views site URLs from sites page in Registered sites dropdown', fu
 
     //Go to sites page to get all sites and compare
     commonObj.serviceTab('Feedback', 'Sites').click();
-    cy.wait(4000);
+    cy.wait(2000);
     feedbackObj.feedbackSitesSiteURLs().then((siteURLs) => {
       expect(dropdownItems.length).to.eq(siteURLs.length);
       for (let i = 0; i < siteURLs.length; i++) {

@@ -54,12 +54,12 @@ export const MonacoDiv = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
 `;
-export const MonacoDivBody = styled.div<{ $compact?: boolean }>`
+export const MonacoDivBody = styled.div`
   display: flex;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: ${({ $compact }) => ($compact ? 'max(200px, calc(100vh - 340px))' : 'max(200px, calc(100vh - 450px))')};
+  height: 100%;
   min-height: 200px;
 `;
 

@@ -63,21 +63,45 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
   };
 
   async enqueue(item: T): Promise<void> {
-    try {
-      const headers = {} as Record<string, unknown>;
-      propagation.inject(otelContext.active(), headers);
+    // A producer span makes publish latency and publish failures visible, and gives the consumer
+    // span a parent that represents the send rather than whatever span happened to be active. That
+    // matters when the broker blocks publishers on a resource alarm: without this the time is
+    // charged to the caller with nothing to explain it.
+    await this.tracer.startActiveSpan(
+      `publish ${this.queue}`,
+      {
+        kind: SpanKind.PRODUCER,
+        attributes: {
+          'messaging.system': 'rabbitmq',
+          'messaging.operation': 'publish',
+          'messaging.destination.name': this.queue,
+        },
+      },
+      async (span) => {
+        try {
+          const headers = {} as Record<string, unknown>;
+          propagation.inject(otelContext.active(), headers);
 
-      const sent = await this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(item)), {
-        contentType: 'application/json',
-        headers,
-      });
+          const sent = await this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(item)), {
+            contentType: 'application/json',
+            headers,
+          });
 
-      if (!sent) {
-        this.logger.error(`Failed to enqueue work item due to broker rejection or connection close.`);
+          if (!sent) {
+            // Backpressure or a closed connection. Previously only logged, so it was invisible to
+            // anything looking at traces.
+            this.logger.error(`Failed to enqueue work item due to broker rejection or connection close.`);
+            span.setStatus({ code: SpanStatusCode.ERROR, message: 'broker rejected the publish' });
+          }
+        } catch (err) {
+          this.logger.error(`Error encountered on sending work item: ${err}`);
+          span.recordException(err instanceof Error ? err : String(err));
+          span.setStatus({ code: SpanStatusCode.ERROR, message: err instanceof Error ? err.message : String(err) });
+        } finally {
+          span.end();
+        }
       }
-    } catch (err) {
-      this.logger.error(`Error encountered on sending work item: ${err}`);
-    }
+    );
   }
 
   protected convertMessage(msg: ConsumeMessage): T {
@@ -98,7 +122,12 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
         try {
           const extractedContext = propagation.extract(otelContext.active(), msg.properties?.headers || {});
           span = this.tracer.startSpan(
-            `amqp consume ${msg.fields?.routingKey || this.queue}`,
+            // Named for the destination, not the routing key. Domain event routing keys embed the
+            // tenant URN (`access-service.login.urn:ads:platform:tenant-service:v2:/tenants/...`),
+            // which produced 139 distinct span names in adsp-dev for a handful of queues and made
+            // the spanmetrics label set grow with tenants. The routing key is still recorded on
+            // messaging.rabbitmq.routing_key below, where it costs nothing.
+            `process ${this.queue}`,
             {
               kind: SpanKind.CONSUMER,
               attributes: {

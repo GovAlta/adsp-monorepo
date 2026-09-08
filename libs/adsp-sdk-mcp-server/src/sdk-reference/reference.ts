@@ -587,6 +587,68 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     deprecated: true,
     seeAlso: ['ValueDefinition'],
   },
+  {
+    name: 'CacheName',
+    kind: 'const',
+    module: 'metrics',
+    summary: 'Names of the caches the SDK instruments, used as the adsp.cache.name label on adsp.cache.lookups.',
+    details:
+      "CacheName: { Configuration: 'configuration'; Directory: 'directory'; Tenant: 'tenant'; Issuer: 'issuer'; " +
+      "JwksClient: 'jwks-client' }\n\n" +
+      'A fixed set on purpose: cache name x result is the whole cardinality of the lookup counter. Pass one of ' +
+      'these for an SDK cache; a service instrumenting its own cache should use its own short, constant name.',
+    seeAlso: ['recordCacheResult'],
+  },
+  {
+    name: 'recordCacheResult',
+    kind: 'function',
+    module: 'metrics',
+    summary: 'Records a cache lookup outcome on the adsp.cache.lookups counter.',
+    details:
+      'recordCacheResult(cache: string, hit: boolean): void\n\n' +
+      'Call once per *logical* lookup, where the cache is first consulted. Read-through caches -- get, and on a ' +
+      'miss refresh and get again -- would otherwise score one lookup as both a miss and a hit and make the hit ' +
+      'ratio meaningless. Labels are adsp.cache.name and adsp.cache.result (hit/miss) only; nothing per-key or ' +
+      'per-tenant should reach them.',
+    example:
+      "import { CacheName, recordCacheResult } from '@abgov/adsp-service-sdk';\n\n" +
+      'const cached = cache.get<Thing>(key);\n' +
+      'recordCacheResult(CacheName.Configuration, !!cached);\n' +
+      'const thing = cached ?? (await retrieve(key));',
+    seeAlso: ['CacheName'],
+  },
+
+  // jobs
+  {
+    name: 'instrumentJob',
+    kind: 'function',
+    module: 'jobs',
+    summary: 'Wraps a scheduled job so each run produces a span and an adsp.job.duration measurement.',
+    details:
+      'instrumentJob(name: string, work: (span: Span) => void | Promise<void>, options?: InstrumentJobOptions): ' +
+      '() => Promise<void>\n\n' +
+      'Wraps rather than schedules: the SDK takes no scheduler dependency, so the cron expression stays with the ' +
+      'caller. Each run starts from ROOT_CONTEXT so a job is its own trace instead of being grafted onto whatever ' +
+      'context was active when the timer fired. A thrown job is recorded on the span, counted under ' +
+      'adsp.job.result="error", and swallowed -- schedulers do not handle a rejected job, so the unhandled ' +
+      'rejection would restart the process over one bad run. Keep name a constant: it is a metric label.',
+    example:
+      "import { instrumentJob } from '@abgov/adsp-service-sdk';\n" +
+      "import * as schedule from 'node-schedule';\n\n" +
+      "schedule.scheduleJob('0 1 * * *', instrumentJob('form-lock', lockJob, { logger }));",
+    seeAlso: ['InstrumentJobOptions'],
+  },
+  {
+    name: 'InstrumentJobOptions',
+    kind: 'interface',
+    module: 'jobs',
+    summary: 'Options for instrumentJob: a logger for failures, and extra span attributes.',
+    details:
+      'InstrumentJobOptions { logger?: Logger; attributes?: Attributes }\n\n' +
+      'attributes go on the job span only and are deliberately not copied onto the duration metric -- a span ' +
+      'attribute is free, while a metric label multiplies the series. Per-tenant or per-run detail belongs here.',
+    seeAlso: ['instrumentJob'],
+  },
 
   // trace
   {

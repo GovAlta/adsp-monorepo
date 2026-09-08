@@ -1,6 +1,6 @@
 import { AmqpConnectionManager } from 'amqp-connection-manager';
 import { Logger } from 'winston';
-import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode } from '@opentelemetry/api';
+import { context as otelContext, propagation, trace as otelTrace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { AmqpWorkQueueService } from './work';
 
 describe('AmqpWorkQueueService<string>', () => {
@@ -114,6 +114,89 @@ describe('AmqpWorkQueueService<string>', () => {
     injectSpy.mockRestore();
   });
 
+  describe('enqueue producer span', () => {
+    const createServiceWithSpan = async (sendResult: unknown) => {
+      const span = { setStatus: jest.fn(), recordException: jest.fn(), end: jest.fn() };
+      const startActiveSpan = jest.fn((_name, _options, callback) => callback(span));
+      const getTracerSpy = jest.spyOn(otelTrace, 'getTracer').mockReturnValue({ startActiveSpan } as never);
+
+      const channel = {
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(),
+        bindQueue: jest.fn(() => Promise.resolve()),
+        sendToQueue: jest.fn(() =>
+          sendResult instanceof Error ? Promise.reject(sendResult) : Promise.resolve(sendResult),
+        ),
+      };
+      const connection = {
+        on: jest.fn(),
+        createChannel: jest.fn(({ setup }) => {
+          setup(channel);
+          return channel;
+        }),
+      };
+
+      const service = new AmqpWorkQueueService<{ value: string }>(
+        'test',
+        logger,
+        connection as unknown as AmqpConnectionManager,
+      );
+      await service.connect();
+
+      return { service, span, startActiveSpan, getTracerSpy };
+    };
+
+    it('can start a producer span named for the destination queue', async () => {
+      const { service, span, startActiveSpan, getTracerSpy } = await createServiceWithSpan(true);
+
+      await service.enqueue({ value: 'test' });
+
+      expect(startActiveSpan).toHaveBeenCalledWith(
+        'publish test',
+        expect.objectContaining({
+          kind: SpanKind.PRODUCER,
+          attributes: expect.objectContaining({
+            'messaging.system': 'rabbitmq',
+            'messaging.operation': 'publish',
+            'messaging.destination.name': 'test',
+          }),
+        }),
+        expect.any(Function),
+      );
+      expect(span.setStatus).not.toHaveBeenCalled();
+      expect(span.end).toHaveBeenCalledTimes(1);
+
+      getTracerSpy.mockRestore();
+    });
+
+    it('can record a broker rejection on the producer span', async () => {
+      const { service, span, getTracerSpy } = await createServiceWithSpan(false);
+
+      await service.enqueue({ value: 'test' });
+
+      expect(span.setStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ code: SpanStatusCode.ERROR }),
+      );
+      expect(span.end).toHaveBeenCalledTimes(1);
+
+      getTracerSpy.mockRestore();
+    });
+
+    it('can record a send failure on the producer span without throwing', async () => {
+      const { service, span, getTracerSpy } = await createServiceWithSpan(new Error('connection closed'));
+
+      await expect(service.enqueue({ value: 'test' })).resolves.toBeUndefined();
+
+      expect(span.recordException).toHaveBeenCalled();
+      expect(span.setStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ code: SpanStatusCode.ERROR, message: 'connection closed' }),
+      );
+      expect(span.end).toHaveBeenCalledTimes(1);
+
+      getTracerSpy.mockRestore();
+    });
+  });
+
   describe('Subscriber', () => {
     it('can receive item', (done) => {
       const workItem = {
@@ -127,9 +210,8 @@ describe('AmqpWorkQueueService<string>', () => {
       const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, callback) => callback());
       const extractSpy = jest.spyOn(propagation, 'extract').mockReturnValue({} as never);
       const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
-      const getTracerSpy = jest
-        .spyOn(otelTrace, 'getTracer')
-        .mockReturnValue({ startSpan: jest.fn().mockReturnValue(span) } as never);
+      const startSpan = jest.fn().mockReturnValue(span);
+      const getTracerSpy = jest.spyOn(otelTrace, 'getTracer').mockReturnValue({ startSpan } as never);
 
       const subChannel = {
         assertExchange: jest.fn(() => Promise.resolve()),
@@ -171,6 +253,14 @@ describe('AmqpWorkQueueService<string>', () => {
             traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
           });
           expect(getTracerSpy).toHaveBeenCalledWith('core-common.amqp');
+          // Named for the queue, never the routing key: domain event routing keys carry the tenant
+          // URN, so naming from them makes the span name set grow with tenants.
+          expect(startSpan).toHaveBeenCalledWith(
+            'process test',
+            expect.objectContaining({ kind: SpanKind.CONSUMER }),
+            expect.anything(),
+          );
+          expect(startSpan.mock.calls[0][0]).not.toContain('test.key');
           expect(setSpanSpy).toHaveBeenCalled();
           expect(withSpy).toHaveBeenCalled();
           workDone();

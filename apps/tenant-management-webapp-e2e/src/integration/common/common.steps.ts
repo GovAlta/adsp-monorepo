@@ -26,7 +26,7 @@ When('the user enters credentials and clicks login button', function () {
   commonObj.usernameEmailField().type(Cypress.env('email'));
   commonObj.passwordField().type(Cypress.env('password'));
   commonObj.loginButton().click();
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 When('the user enters {string} and {string}, and clicks login button', function (username: string, password: string) {
@@ -52,7 +52,7 @@ When('the user enters {string} and {string}, and clicks login button', function 
   commonObj.usernameEmailField().type(user);
   commonObj.passwordField().type(pwd);
   commonObj.loginButton().click();
-  cy.wait(8000); // Wait all the redirects to settle down
+  cy.wait(4000); // Wait all the redirects to settle down
 });
 
 Given('a tenant admin user is on tenant admin page', function () {
@@ -191,11 +191,11 @@ Then('the user views {string} API documentation', function (serviceName) {
 
 When('the user selects {string} tab for {string}', function (tab, menuItem) {
   commonObj.serviceTab(menuItem, tab).click();
-  cy.wait(3000);
+  cy.wait(2000);
 });
 
 Then('the user views a notification message of {string}', function (message) {
-  cy.wait(4000); // Wait for the message to show up
+  cy.wait(2000); // Wait for the message to show up
   commonObj.notificationMessage().invoke('text').should('contain', message);
 });
 
@@ -203,7 +203,7 @@ Then('the user views delete {string} confirmation modal for {string}', function 
   if (String(deleteItemName).includes('<$ph>')) {
     deleteItemName = commonlib.stringReplacement(deleteItemName, replacementString);
   }
-  cy.wait(4000);
+  cy.wait(2000);
   commonObj
     .deleteConfirmationModalTitle()
     .invoke('text')
@@ -224,7 +224,7 @@ When('the user clicks Cancel button in delete confirmation modal', function () {
     .scrollIntoView()
     // .should('be.visible')  // Not working with form disposition modal
     .click({ force: true });
-  cy.wait(4000); // Wait for the record to be removed from the page
+  cy.wait(2000); // Wait for the record to be removed from the page
 });
 
 When('the user waits {string} seconds', function (seconds: number) {
@@ -427,7 +427,7 @@ Given('an admin user is on event log page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Event log', 4000);
+  commonlib.tenantAdminMenuItem('Event log', 2000);
   cy.viewport(1920, 1080);
 });
 
@@ -795,7 +795,7 @@ Given('a tenant admin user is on task service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Task', 4000);
+  commonlib.tenantAdminMenuItem('Task', 2000);
 });
 
 When('the user selects {string} in Select a queue dropdown', function (dropdownItem: string) {
@@ -881,7 +881,7 @@ When('the user is logged in to see {string} application', function (formDefiniti
       commonObj.formAppLoginButton().click();
     }
   });
-  cy.wait(10000); // Wait all the redirects to settle down
+  cy.wait(6000); // Wait all the redirects to settle down
 });
 
 Then('the user views a from draft of {string}', function (formDefinition) {
@@ -898,7 +898,7 @@ When('the user enters {string} in a text field labelled {string}', function (tex
 });
 
 When('the user clicks submit button in the form', function () {
-  cy.wait(4000);
+  cy.wait(2000);
   commonObj.formAppFormSubmitButton().shadow().find('button').click({ force: true });
   cy.wait(5000);
 });
@@ -911,7 +911,7 @@ Given('a tenant admin user is on status applications page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Status', 4000);
+  commonlib.tenantAdminMenuItem('Status', 2000);
   commonObj.serviceTab('Status', 'Applications').click();
   cy.wait(2000); // Applications page is slow to load applications and healt check info
 });
@@ -989,9 +989,9 @@ Given('a tenant admin user is on notification subscriptions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonlib.tenantAdminMenuItem('Notification', 4000);
+  commonlib.tenantAdminMenuItem('Notification', 2000);
   commonObj.serviceTab('Notification', 'Subscriptions').click();
-  cy.wait(4000);
+  cy.wait(2000);
 });
 
 When('the user types {string} in Search subscriber email field', function (email: string) {

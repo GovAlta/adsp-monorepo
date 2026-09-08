@@ -10,14 +10,8 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
 import { getContextTrace } from '../trace';
-
-function getRoute(req: Request): string {
-  if (typeof req.route?.path === 'string') {
-    return `${req.baseUrl || ''}${req.route.path}`;
-  }
-
-  return req.baseUrl || req.path || req.originalUrl || 'unknown';
-}
+import { captureRouteLabel, getCapturedRouteLabel } from '../utils/route';
+import { formatTenantAttribute } from './attributes';
 
 function resolveTenantId(req: Request, defaultTenantId?: AdspId): string | undefined {
   const tenantId = defaultTenantId || req.tenant?.id || req.user?.tenantId;
@@ -31,18 +25,13 @@ function resolveTenantName(req: Request): string | undefined {
 function getMetricAttributes(req: Request, res: Response, defaultTenantId?: AdspId): Record<string, string | number> {
   const attributes: Record<string, string | number> = {
     'http.request.method': req.method,
-    'http.route': getRoute(req),
+    'http.route': getCapturedRouteLabel(req),
     'http.response.status_code': res.statusCode || 0,
   };
 
-  const tenantId = resolveTenantId(req, defaultTenantId);
-  if (tenantId) {
-    attributes['adsp.tenant.id'] = tenantId;
-  }
-
-  const tenantName = resolveTenantName(req);
-  if (tenantName) {
-    attributes['adsp.tenant.name'] = tenantName;
+  const tenant = formatTenantAttribute(resolveTenantId(req, defaultTenantId), resolveTenantName(req));
+  if (tenant) {
+    attributes['adsp.tenant'] = tenant;
   }
 
   return attributes;
@@ -133,10 +122,7 @@ export async function createMetricsHandler(
     const otelAttributes = getMetricAttributes(req, _res, defaultTenantId);
     requestCount?.add(1, otelAttributes);
     requestDuration?.record(time, otelAttributes);
-    activeRequests?.add(-1, { 'http.request.method': req.method });
-    if ((_res.statusCode || 0) >= 500) {
-      errorCount?.add(1, otelAttributes);
-    }
+    errorCount?.add((_res.statusCode || 0) >= 500 ? 1 : 0, otelAttributes);
 
     // Write if there is a tenant context to the request.
     // Check user tenant context if tenant handler is not included on route.
@@ -196,7 +182,23 @@ export async function createMetricsHandler(
   });
 
   return function (req, res, next) {
-    activeRequests?.add(1, { 'http.request.method': req.method });
+    const methodAttributes = { 'http.request.method': req.method };
+    activeRequests?.add(1, methodAttributes);
+
+    let settled = false;
+    const releaseActive = () => {
+      if (!settled) {
+        settled = true;
+        activeRequests?.add(-1, methodAttributes);
+      }
+    };
+
+    // `close` covers client aborts, which never emit `finish` -- without it the gauge only ever
+    // climbs. Both fire in the normal case, hence the guard.
+    res.on('finish', releaseActive);
+    res.on('close', releaseActive);
+
+    captureRouteLabel(req);
     req[REQ_BENCHMARK] = { timings: {}, metrics: {} } as RequestBenchmark;
     responseTimeHandler(req, res, next);
   };

@@ -21,7 +21,7 @@
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.13",
     "expr-eval-fork": "^3.0.1",
     "ionicons": "^8.0.13",
     "pluralize": "^8.0.0",
@@ -66,6 +66,7 @@
     "postcss": "8.5.23",
     "axios": "1.18.1",
     "js-yaml": "4.3.1",
-    "websocket-driver": "0.7.5"
+    "websocket-driver": "0.7.5",
+    "browserslist": "4.28.9"
   }
 }

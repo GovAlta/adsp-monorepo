@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './index';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import Ajv from 'ajv';
-import { JsonFormContext } from '../../../Context';
+import { ContextProviderFactory, JsonFormContext } from '../../../Context';
 import { getCategoryStatus, PageStatus } from '../CategoryStatus';
 
 describe('JsonFormsStepperContext', () => {
@@ -133,6 +133,139 @@ describe('JsonFormsStepperContext', () => {
     expect(screen.getByTestId('completed-categories').textContent).toBe('0');
   });
 
+  describe('external navigation', () => {
+    const navigationUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'Personal details',
+          options: { id: 'personal-details' },
+          elements: [{ type: 'Control', scope: '#/properties/firstName' }],
+        },
+        {
+          type: 'Category',
+          label: 'Contact details',
+          options: { id: 'contact-details' },
+          elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+        },
+      ],
+      options: { variant: 'pages', showNavButtons: true },
+    };
+
+    const renderExternalStepper = (contextValue: Record<string, unknown>) =>
+      render(
+        <JsonFormContext.Provider value={contextValue}>
+          <JsonFormsStepperContextProvider
+            StepperProps={
+              {
+                ...stepperBaseProps,
+                uischema: navigationUischema,
+                data: { firstName: 'Alex' },
+                customDispatch: mockDispatch,
+              } as unknown as CategorizationStepperLayoutRendererProps
+            }
+          >
+            <div />
+          </JsonFormsStepperContextProvider>
+        </JsonFormContext.Provider>,
+      );
+
+    test('navigates to the index resolved from an authored page id', () => {
+      // Arrange
+      const onNavigationChange = jest.fn();
+
+      // Act
+      renderExternalStepper({ navigationTarget: { pageId: 'contact-details' }, onNavigationChange });
+
+      // Assert
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'page/to/index',
+        payload: { id: 1, targetScope: undefined },
+      });
+    });
+
+    test('passes a field scope through the existing page navigation action', () => {
+      // Arrange
+      const scope = '#/properties/lastName';
+
+      // Act
+      renderExternalStepper({ navigationTarget: { scope } });
+
+      // Assert
+      expect(mockDispatch).toHaveBeenCalledWith({ type: 'page/to/index', payload: { id: 1, targetScope: scope } });
+    });
+
+    test('saves current form data before external navigation', () => {
+      // Arrange
+      const saveForm = jest.fn();
+      const saveFunction = new Map([['save-form', () => saveForm]]);
+
+      // Act
+      renderExternalStepper({ navigationTarget: { pageId: 'contact-details' }, saveFunction });
+
+      // Assert
+      expect(saveForm).toHaveBeenCalledWith({ firstName: 'Alex' });
+    });
+
+    // The other tests here hand the stepper a fresh context object, which is not what a host does.
+    // A host renders ContextProviderFactory's provider and changes navigationTarget on it, and the
+    // stepper sits inside JsonForms' memoised renderers — so the target only arrives if the
+    // provider hands out a different value. It used to hand out the same mutated object, and a
+    // target set on a Change click went nowhere.
+    test('applies a target the host sets after the form has mounted', () => {
+      // Arrange
+      const ContextProvider = ContextProviderFactory();
+      const MemoisedStepper = React.memo(() => (
+        <JsonFormsStepperContextProvider
+          StepperProps={
+            {
+              ...stepperBaseProps,
+              uischema: navigationUischema,
+              data: { firstName: 'Alex' },
+              customDispatch: mockDispatch,
+            } as unknown as CategorizationStepperLayoutRendererProps
+          }
+        >
+          <div />
+        </JsonFormsStepperContextProvider>
+      ));
+      MemoisedStepper.displayName = 'MemoisedStepper';
+
+      const tree = (navigationTarget?: { pageId: string }) => (
+        <ContextProvider navigationTarget={navigationTarget}>
+          <MemoisedStepper />
+        </ContextProvider>
+      );
+
+      const { rerender } = render(tree());
+      expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'page/to/index' }));
+
+      // Act
+      rerender(tree({ pageId: 'contact-details' }));
+
+      // Assert
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'page/to/index',
+        payload: { id: 1, targetScope: undefined },
+      });
+    });
+
+    test('reports an unknown page without dispatching navigation', () => {
+      // Arrange
+      const onNavigationChange = jest.fn();
+
+      // Act
+      renderExternalStepper({ navigationTarget: { pageId: 'removed-page' }, onNavigationChange });
+
+      // Assert
+      expect(onNavigationChange).toHaveBeenCalledWith({
+        status: 'unknown',
+        requested: { pageId: 'removed-page' },
+      });
+    });
+  });
+
   // CS-5233: a page whose fields are all auto-populated has no user data to derive "started" from,
   // so the recompute that runs on every data change must not discard what the user already visited.
   describe('auto-populated pages', () => {
@@ -235,6 +368,123 @@ describe('JsonFormsStepperContext', () => {
 
       // Assert
       expect(screen.getByTestId('status-0').textContent).toBe(PageStatus.Complete);
+    });
+  });
+
+  // CS-5333: a pages variant form opens on the task list, and the recompute that runs on mount and
+  // on every data change afterwards must not move the user off it.
+  describe('task list landing', () => {
+    const taskListUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'Personal details',
+          elements: [{ type: 'Control', scope: '#/properties/firstName' }],
+        },
+        {
+          type: 'Category',
+          label: 'Contact details',
+          elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+        },
+      ],
+      options: { variant: 'pages', showNavButtons: true },
+    };
+
+    const ActiveIdProbe = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
+      const { activeId, categories } = ctx.selectStepperState();
+
+      return (
+        <div>
+          <div data-testid="active-id">{activeId}</div>
+          {/* The task list is rendered for the sentinel id one past the last page. */}
+          <div data-testid="is-task-list">{(activeId === categories.length + 1).toString()}</div>
+          <button data-testid="open-page-1" onClick={() => ctx.goToPage(1)}>
+            open
+          </button>
+        </div>
+      );
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const renderTaskListStepper = (data: any, uischema: unknown = taskListUischema) => (
+      <JsonFormsStepperContextProvider
+        StepperProps={
+          {
+            ...stepperBaseProps,
+            uischema,
+            data,
+          } as unknown as CategorizationStepperLayoutRendererProps
+        }
+      >
+        <ActiveIdProbe />
+      </JsonFormsStepperContextProvider>
+    );
+
+    test('opens on the task list rather than the first page', () => {
+      // Arrange / Act
+      render(renderTaskListStepper({}));
+
+      // Assert
+      expect(screen.getByTestId('is-task-list').textContent).toBe('true');
+      expect(screen.getByTestId('active-id').textContent).toBe('3');
+    });
+
+    test('stays on the task list when saved data arrives after mount', () => {
+      // Arrange
+      const { rerender } = render(renderTaskListStepper({}));
+
+      // Act: the form loads its draft, which re-runs the recompute.
+      act(() => {
+        rerender(renderTaskListStepper({ firstName: 'Alex' }));
+      });
+
+      // Assert
+      expect(screen.getByTestId('is-task-list').textContent).toBe('true');
+    });
+
+    test('stays on the task list when a page count change shifts the sentinel', () => {
+      // Arrange
+      const { rerender } = render(renderTaskListStepper({}));
+
+      // Act: a conditional page appears, so the sentinel is no longer the id it was on mount.
+      const withExtraPage = {
+        ...taskListUischema,
+        elements: [
+          ...taskListUischema.elements,
+          {
+            type: 'Category',
+            label: 'Extra details',
+            elements: [{ type: 'Control', scope: '#/properties/lastName' }],
+          },
+        ],
+      };
+      act(() => {
+        rerender(renderTaskListStepper({ firstName: 'Alex' }, withExtraPage));
+      });
+
+      // Assert: the review page would be id 3, so the sentinel has to move to 4 with it.
+      expect(screen.getByTestId('is-task-list').textContent).toBe('true');
+      expect(screen.getByTestId('active-id').textContent).toBe('4');
+    });
+
+    test('keeps the user on the page they opened when data changes', () => {
+      // Arrange
+      const { rerender } = render(renderTaskListStepper({}));
+      act(() => {
+        fireEvent.click(screen.getByTestId('open-page-1'));
+      });
+      expect(screen.getByTestId('active-id').textContent).toBe('1');
+
+      // Act
+      act(() => {
+        rerender(renderTaskListStepper({ lastName: 'Smith' }));
+      });
+
+      // Assert
+      expect(screen.getByTestId('active-id').textContent).toBe('1');
+      expect(screen.getByTestId('is-task-list').textContent).toBe('false');
     });
   });
 

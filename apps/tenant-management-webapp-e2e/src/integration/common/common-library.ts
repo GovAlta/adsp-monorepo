@@ -6,14 +6,6 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
   const urlToTenantLogin = url + '/' + id + '/login?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
   cy.wait(4000); // Wait all the redirects to settle down
-  // cy.url().then(function (urlString) {
-  //   if (urlString.includes('openid-connect')) {
-  //     commonObj.usernameEmailField().type(user);
-  //     commonObj.passwordField().type(password);
-  //     commonObj.loginButton().click();
-  //     cy.wait(8000); // Wait all the redirects to settle down
-  //   }
-  // });
   // Change to checking if the login controls are present instead of checking URL
   commonObj
     .applicationBody()
@@ -32,8 +24,9 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
       }
     })
     .then(() => {
-      cy.wait(6000);
-      cy.url().should('include', '/admin');
+      cy.wait(2000);
+      cy.url({ timeout: 30000 }).should('include', '/admin');
+      commonObj.adminMenuItem('menu-dashboard').should('be.visible', { timeout: 30000 });
     });
 }
 
@@ -122,6 +115,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Service metrics':
       menuItemTestid = 'menu-service-metrics';
       break;
+    case 'Reports': // clean-code-ignore: RULE-19
+      menuItemTestid = 'menu-reports';
+      break;
     case 'Task':
       menuItemTestid = 'menu-task';
       break;
@@ -153,15 +149,18 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Calendar',
         'Script',
         'Service metrics',
+        'Reports',
         'Task',
         'Form',
         'Comment',
-        'feedback',
-        'value',
+        'Feedback',
+        'Value',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
   cy.wait(waitMilliSecs);
+  commonObj.applicationBody().should('exist');
+  cy.get('main', { timeout: waitMilliSecs }).should('be.visible');
 }
 
 export function nowPlusMinusMinutes(nowPlusMinusMinutesString) {

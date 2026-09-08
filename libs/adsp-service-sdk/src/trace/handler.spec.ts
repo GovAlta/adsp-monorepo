@@ -16,7 +16,7 @@ const loggerMock = {
 describe('handler', () => {
   describe('createTraceHandler', () => {
     it('can create handler', () => {
-      const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+      const handler = createTraceHandler({ logger: loggerMock });
       expect(handler).toBeTruthy();
       expect(axiosMock.interceptors.request.use).toHaveBeenCalled();
     });
@@ -28,7 +28,6 @@ describe('handler', () => {
 
       const handler = createTraceHandler({
         logger: loggerMock,
-        sampleRate: 0,
         tracerProvider: tracerProvider as never,
       });
 
@@ -45,7 +44,7 @@ describe('handler', () => {
         const res = {};
         const next = jest.fn();
 
-        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+        const handler = createTraceHandler({ logger: loggerMock });
         handler(req as unknown as Request, res as Response, next);
         expect(next).toHaveBeenCalledWith(undefined);
       });
@@ -57,7 +56,7 @@ describe('handler', () => {
         const res = {};
         const next = jest.fn();
 
-        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+        const handler = createTraceHandler({ logger: loggerMock });
         handler(req as unknown as Request, res as Response, next);
         // Without tracerProvider there is no error path; handler calls next() directly
         expect(next).toHaveBeenCalled();
@@ -113,12 +112,12 @@ describe('handler', () => {
 
       expect(setSpanSpy).toHaveBeenCalled();
       expect(tracer.startSpan).toHaveBeenCalledWith(
-        'GET /path',
+        'GET',
         expect.objectContaining({ kind: SpanKind.CLIENT }),
         expect.anything(),
       );
       expect(clientSpan.addEvent).toHaveBeenCalledWith('http.client.request', {
-        'http.method': 'get',
+        'http.method': 'GET',
         'http.url': '/path',
       });
 
@@ -137,8 +136,33 @@ describe('handler', () => {
       traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig, tracer as never);
 
       expect(tracer.startSpan).toHaveBeenCalledWith(
-        'GET http://example.com',
+        'GET example.com',
         expect.objectContaining({ kind: SpanKind.CLIENT }),
+        expect.anything(),
+      );
+    });
+
+    it('can keep resource ids out of the client span name', () => {
+      const config = {
+        headers: { has: jest.fn(), set: jest.fn() },
+        method: 'delete',
+        url: 'http://notification-service:3333/subscription/v1/types/form-status-updates/subscriptions/6a8d18979e84b4fcf8877830',
+      };
+      config.headers.has.mockReturnValueOnce(false);
+
+      const clientSpan = { addEvent: jest.fn() };
+      const tracer = { startSpan: jest.fn().mockReturnValue(clientSpan) };
+
+      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig, tracer as never);
+
+      expect(tracer.startSpan).toHaveBeenCalledWith(
+        'DELETE notification-service:3333',
+        expect.objectContaining({
+          attributes: expect.objectContaining({
+            'http.method': 'DELETE',
+            'http.target': '/subscription/v1/types/form-status-updates/subscriptions/6a8d18979e84b4fcf8877830',
+          }),
+        }),
         expect.anything(),
       );
     });
@@ -170,6 +194,7 @@ describe('handler', () => {
       const clientSpan = {
         addEvent: jest.fn(),
         setAttributes: jest.fn(),
+        updateName: jest.fn(),
         setStatus: jest.fn(),
         end: jest.fn(),
         recordException: jest.fn(),
@@ -178,7 +203,7 @@ describe('handler', () => {
         getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn().mockReturnValue(clientSpan) }),
       };
 
-      createTraceHandler({ logger: loggerMock, sampleRate: 0, tracerProvider: tracerProvider as never });
+      createTraceHandler({ logger: loggerMock, tracerProvider: tracerProvider as never });
 
       const responseUse = axiosMock.interceptors.response.use as unknown as jest.Mock;
       const onError = responseUse.mock.lastCall?.[1] as (error: unknown) => Promise<unknown>;

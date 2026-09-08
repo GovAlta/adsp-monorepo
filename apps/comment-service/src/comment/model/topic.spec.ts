@@ -114,6 +114,21 @@ describe('TopicEntity', () => {
       const result = entity.canRead({ ...user, roles: [] } as User);
       expect(result).toBe(false);
     });
+
+    it('can return true for core service that sets topics', () => {
+      const result = entity.canRead({
+        ...user,
+        tenantId: null,
+        isCore: true,
+        roles: [ServiceRoles.TopicSetter],
+      } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for core service that does not set topics', () => {
+      const result = entity.canRead({ ...user, tenantId: null, isCore: true, roles: [] } as User);
+      expect(result).toBe(false);
+    });
   });
 
   describe('canComment', () => {
@@ -278,6 +293,28 @@ describe('TopicEntity', () => {
 
     it('can fail for user without role', async () => {
       await expect(entity.getComment({ ...user, roles: [] } as User, 1)).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can return comment for core service that sets topics', async () => {
+      const comment = {
+        id: 123,
+        content: 'test',
+        createdBy: {
+          id: user.id,
+          name: user.name,
+        },
+        lastUpdatedBy: {
+          id: user.id,
+          name: user.name,
+        },
+      };
+      repositoryMock.getComment.mockResolvedValueOnce(comment);
+
+      const result = await entity.getComment(
+        { ...user, tenantId: null, isCore: true, roles: [ServiceRoles.TopicSetter] } as User,
+        1
+      );
+      expect(result).toEqual(expect.objectContaining(comment));
     });
 
     it('can return anonymized comment for commenter', async () => {

@@ -411,6 +411,147 @@ The date control supports these options to restrict date selection:
   </tr>
 </table>
 
+#### Text Input Control Options
+
+Text inputs can format values with a mask. A mask is a template: placeholder characters (`#`, `*`, or `_`) each consume one letter or digit from the input, and every other character is inserted as a literal (spaces, dashes, parentheses).
+
+There are three ways to apply a mask. Use a built-in named format when one already matches the field. Use a custom `mask` when you need a different layout. Use `formatPattern` only when you want formatting on blur and not while the user is typing.
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Location</th>
+    <th>Behavior</th>
+    <th>Default</th>
+  </tr>
+  <tr>
+    <td><code>format</code></td>
+    <td>JSON schema</td>
+    <td>Selects a built-in named format (<code>phone</code>, <code>sin</code>, <code>postalCode</code>, <code>driverId</code>, <code>mvid</code>). The control formats as the user types, restricts allowed keys, and validates against the named pattern.</td>
+    <td>Not set</td>
+  </tr>
+  <tr>
+    <td><code>mask</code></td>
+    <td>UI schema <code>options</code></td>
+    <td>A custom mask template applied while typing, e.g. <code>####-##</code>. Use this when the field is not one of the built-in formats. A named <code>schema.format</code> takes precedence over this option.</td>
+    <td>Not set</td>
+  </tr>
+  <tr>
+    <td><code>inPlace</code></td>
+    <td>UI schema <code>options</code></td>
+    <td>When <code>true</code> and a mask is present, the field shows the fill-in template (for example <code>(###) ###-####</code>) and keeps the caret in place. Extra characters are rejected once every placeholder is filled. In-place fields do not use <code>maxLength</code> because the template is already full length.</td>
+    <td><code>false</code></td>
+  </tr>
+  <tr>
+    <td><code>formatPattern</code></td>
+    <td>UI schema <code>options</code></td>
+    <td>A mask template applied only when the field loses focus (on blur), e.g. <code>(###) ###-####</code>. Formatting only; validation is still driven by the JSON schema <code>pattern</code>.</td>
+    <td>Not set</td>
+  </tr>
+</table>
+
+##### Built-in named formats
+
+Set <code>format</code> on the JSON schema property. The control then uses the matching mask, allowed keys, and validation pattern.
+
+| `schema.format` | Mask             | Allowed input      | Example value    |
+| --------------- | ---------------- | ------------------ | ---------------- |
+| `phone`         | `(###) ###-####` | Digits             | `(403) 555-1212` |
+| `sin`           | `### ### ###`    | Digits             | `123 456 789`    |
+| `postalCode`    | `### ###`        | Letters and digits | `T2P 1A1`        |
+| `driverId`      | `######-###`     | Digits             | `123456-789`     |
+| `mvid`          | `####-#####`     | Digits             | `1234-56789`     |
+
+```json
+{
+  "driverLicence": {
+    "type": "string",
+    "format": "driverId"
+  }
+}
+```
+
+```json
+{
+  "type": "Control",
+  "scope": "#/properties/driverLicence",
+  "options": {
+    "inPlace": true
+  }
+}
+```
+
+##### Custom mask (not a built-in format)
+
+Add a <code>mask</code> on the UI schema control when the value should be formatted while typing but is not one of the named formats. Keep a JSON schema <code>pattern</code> (and optional <code>errorMessage</code>) so the formatted value is still validated.
+
+```json
+{
+  "accountNumber": {
+    "type": "string",
+    "pattern": "^[0-9]{4}-[0-9]{2}$",
+    "errorMessage": "Must be in format 0000-00"
+  }
+}
+```
+
+```json
+{
+  "type": "Control",
+  "scope": "#/properties/accountNumber",
+  "options": {
+    "mask": "####-##",
+    "inPlace": true
+  }
+}
+```
+
+Mask rules:
+
+- Placeholders `#`, `*`, and `_` each take one letter or digit.
+- Any other character in the mask is a literal separator.
+- Extra content beyond the number of placeholders is discarded (in-place fields restore the previous value instead of keeping the extra character).
+- Named formats also restrict keystrokes (digits only, or letters and digits for postal code). A custom `mask` without a named format does not restrict which characters can be typed; use `schema.pattern` for validation.
+
+##### Format on blur only
+
+Use <code>formatPattern</code> when the field should stay unformatted while typing and only apply the mask when it loses focus. Validation still comes from the JSON schema <code>pattern</code>.
+
+| Mask (`formatPattern`) | User enters  | Formatted on blur |
+| ---------------------- | ------------ | ----------------- |
+| `(###) ###-####`       | `7801234567` | `(780) 123-4567`  |
+| `######-###`           | `123456789`  | `123456-789`      |
+| `### ###`              | `A1A1A1`     | `A1A 1A1`         |
+| `### ### ###`          | `123456789`  | `123 456 789`     |
+
+```json
+{
+  "type": "Control",
+  "scope": "#/properties/phone",
+  "options": {
+    "formatPattern": "(###) ###-####"
+  }
+}
+```
+
+##### Adding a new named format in code
+
+Form definitions can only use the built-in names above or a per-field <code>mask</code>. To register a new reusable named format for all forms, add it to <code>DEFAULT_PATTERNS</code> in <code>libs/jsonforms-components/src/lib/util/patternForm.ts</code>:
+
+```ts
+export const DEFAULT_PATTERNS: Record<string, MaskPattern> = {
+  // ...
+  accountNumber: {
+    mask: '####-##',
+    pattern: /^\d{4}-\d{2}$/,
+    error: 'Must be in format 0000-00',
+    allowedKeys: /[0-9]/,
+  },
+};
+```
+
+`createDefaultAjv` registers every `DEFAULT_PATTERNS` key as a JSON schema format automatically. After that, form definitions can set `"format": "accountNumber"` the same way as `phone` or `driverId`.
+
 #### Calculation Control
 
 The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically. The rendered field is read-only.

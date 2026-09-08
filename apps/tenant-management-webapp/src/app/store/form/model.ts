@@ -42,6 +42,9 @@ export interface ReviewColumn {
 
 export interface ReviewConfiguration {
   columns: ReviewColumn[];
+  // clean-code-ignore: RULE-19 — type declarations and defaults only.
+  // Address that applicant questions are forwarded to when no reviewer is part of the conversation.
+  questionsEmail?: string;
 }
 
 export interface FormResourceTagResponse {

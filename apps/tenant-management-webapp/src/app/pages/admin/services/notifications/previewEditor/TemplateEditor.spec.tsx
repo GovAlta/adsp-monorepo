@@ -36,6 +36,7 @@ jest.mock('@store/file/actions', () => ({
 const ACCORDION_SELECTOR = "goa-accordion[testid='email-template-properties']";
 const ERROR_BADGE_SELECTOR = "goa-badge[testid='email-template-properties-error']";
 const PREVIEW_BUTTON_SELECTOR = "goa-button[testid='toggle-email-preview']";
+const FULL_PAGE_BUTTON_SELECTOR = "goa-icon-button[testid='notification-body-editor-toggle']";
 
 const mockStore = configureStore([]);
 
@@ -162,5 +163,30 @@ describe('TemplateEditor properties section', () => {
     fireEvent(baseElement.querySelector(PREVIEW_BUTTON_SELECTOR), new CustomEvent('_click'));
 
     expect(onTogglePreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the body editor into full page mode', () => {
+    // Arrange
+    const { baseElement, getByTestId } = renderEditor();
+    const toggleButton = baseElement.querySelector(FULL_PAGE_BUTTON_SELECTOR);
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByTestId('notification-body-editor')).toHaveAttribute('data-full-page', 'true');
+  });
+
+  it('returns the body editor to its regular size', () => {
+    // Arrange
+    const { baseElement, getByTestId } = renderEditor();
+    const toggleButton = baseElement.querySelector(FULL_PAGE_BUTTON_SELECTOR);
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByTestId('notification-body-editor')).toHaveAttribute('data-full-page', 'false');
   });
 });

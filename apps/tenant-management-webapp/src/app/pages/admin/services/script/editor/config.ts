@@ -1,6 +1,8 @@
 export const scriptEditorConfig = {
   'data-testid': 'templateForm-body',
   options: {
+    // The editor pane changes size when it goes full page, so Monaco has to relayout itself.
+    automaticLayout: true,
     tabSize: 2,
     minimap: { enabled: false },
     overviewRulerBorder: false,

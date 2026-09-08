@@ -71,6 +71,11 @@ export class SubscriptionEntity implements Subscription {
     }
   }
 
+  // Criteria match each other in both directions only when they select the same events.
+  private isSameCriteria(criteria: SubscriptionCriteria, other: SubscriptionCriteria): boolean {
+    return this.evaluateCriteria(criteria, other) && this.evaluateCriteria(other, criteria);
+  }
+
   private isEmptyCriteria(criteria: SubscriptionCriteria): boolean {
     return !criteria?.correlationId && Object.entries(criteria?.context || {}).length < 1;
   }
@@ -98,10 +103,13 @@ export class SubscriptionEntity implements Subscription {
     } else if (this.isEmptyCriteria(criteria)) {
       // Set empty criteria.
       this.criteria = [{}];
-    } else {
+    } else if (!this.criteria.find((item) => this.isSameCriteria(item, criteria))) {
       // Add the criteria. This means the subscription will send for events that meet the new criteria as well as other
       // pre-existing criteria. e.g. this is used in forms where a subscriber can be subscribed to notifications on multiple
       // specific forms.
+      //
+      // An equivalent criteria is skipped since subscribing is repeated to keep a subscription current; e.g. a form
+      // reviewer subscribes for the form each time they send a message.
       this.criteria.push({
         description: criteria.description,
         correlationId: criteria.correlationId,

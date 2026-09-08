@@ -11,9 +11,12 @@ import {
   UnsubscribeAction,
   FindSubscribersAction,
   FindSubscribersSuccess,
+  CreateSubscriberAction,
+  CreateSubscriberSuccess,
   UpdateSubscriberAction,
   UpdateSubscriberSuccess,
   FIND_SUBSCRIBERS,
+  CREATE_SUBSCRIBER,
   UPDATE_SUBSCRIBER,
   GET_TYPE_SUBSCRIPTIONS,
   GetTypeSubscriptionsActions,
@@ -27,12 +30,17 @@ import {
   DeleteSubscriberAction,
   DELETE_SUBSCRIBER,
   GetAllTypeSubscriptionsAction,
+  GetAllTypeSubscriptions,
   GetTypeSubscriptions as getTypeSubscriptionsAction,
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
   DeleteSubscriberSuccess,
   DELETE_SUBSCRIPTION,
   DeleteSubscriptionSuccess,
+  CreateTypeSubscriptionAction,
+  CreateTypeSubscriptionSuccess,
+  CreateTypeSubscriptionFailed,
+  CREATE_TYPE_SUBSCRIPTION,
 } from './actions';
 import { Subscriber, Events } from './models';
 import { RootState } from '../index';
@@ -56,7 +64,7 @@ export function* getMySubscriber(): SagaIterator {
         `${configBaseUrl}/subscription/v1/subscribers/my-subscriber?includeSubscriptions=true`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const result = response.data;
@@ -86,7 +94,7 @@ function* subscribe(action: SubscribeAction): SagaIterator {
         { data: 'data' },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const result = response.data.subscriber;
@@ -100,7 +108,7 @@ function* subscribe(action: SubscribeAction): SagaIterator {
       yield put(
         SuccessNotification({
           message: `You are subscribed! You will receive notifications on ${email} for ${action.payload.notificationInfo.data.type}.`,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -128,7 +136,7 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
         yield put(
           SuccessNotification({
             message: `You are unsubscribed! You will no longer receive notifications for ${type}.`,
-          })
+          }),
         );
       }
     } catch (err) {
@@ -159,6 +167,40 @@ function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
   }
 }
 
+export function* createTypeSubscription(action: CreateTypeSubscriptionAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield call(getAccessToken);
+  const { typeId, subscriber } = action.payload;
+
+  if (configBaseUrl && token) {
+    try {
+      if ('id' in subscriber && subscriber.id) {
+        const existing = yield call(
+          axios.get,
+          `${configBaseUrl}/subscription/v1/types/${typeId}/subscriptions/${subscriber.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (existing.data) {
+          throw new Error('This subscriber is already subscribed to the selected notification type.');
+        }
+      }
+
+      yield call(
+        axios.post,
+        `${configBaseUrl}/subscription/v1/types/${typeId}/subscriptions`,
+        { ...subscriber, criteria: {} },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      yield put(CreateTypeSubscriptionSuccess());
+      yield put(SuccessNotification({ message: 'Subscription created successfully.' }));
+      yield put(GetAllTypeSubscriptions({}));
+    } catch (err) {
+      yield put(CreateTypeSubscriptionFailed());
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIterator {
   let notificationTypes: Record<string, NotificationItem> = yield select((state: RootState) => ({
     ...state.notification.notificationTypes,
@@ -169,14 +211,14 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
       UpdateIndicator({
         show: true,
         message: 'Loading...',
-      })
+      }),
     );
 
     yield put(
       UpdateLoadingState({
         name: Events.search,
         state: 'start',
-      })
+      }),
     );
 
     yield call(fetchCoreNotificationTypes);
@@ -193,27 +235,27 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
 
     yield put(
       UpdateLoadingState({
         name: Events.search,
         state: 'completed',
-      })
+      }),
     );
   } catch {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
 
     yield put(
       UpdateLoadingState({
         name: Events.search,
         state: 'error',
-      })
+      }),
     );
   }
 }
@@ -239,7 +281,7 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
         `${configBaseUrl}/subscription/v1/types/${type}/subscriptions?${
           subscriberCriteria ? `subscriberCriteria=${subscriberCriteria}` : ''
         }&top=10${after ? `&after=${after}` : ''}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const subscriptions = response.data.results;
@@ -270,13 +312,29 @@ function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
   }
 }
 
+function* createSubscriber(action: CreateSubscriberAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (configBaseUrl && token) {
+    try {
+      const api = new Api(configBaseUrl, token);
+      const subscriber: Subscriber = yield call([api, api.create], action.payload.subscriber);
+      yield put(CreateSubscriberSuccess(subscriber));
+      yield put(SuccessNotification({ message: 'Subscriber added successfully.' }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield call(getAccessToken);
 
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: Record<string, string | number> = { top: 10 };
+  const params: Record<string, string | number> = { top: criteria.top || 10 };
 
   if (action.payload.reset) {
     yield put(FindSubscribersSuccess(null, ''));
@@ -286,7 +344,7 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   if (criteria.email) {
@@ -319,14 +377,14 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -356,8 +414,8 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
       yield put(
         ResolveSubscriberUserSuccess(
           action.payload.subscriberId,
-          `${baseUrl}/admin/${realm}/console/#/realms/${realm}/users/${user.id}`
-        )
+          `${baseUrl}/admin/${realm}/console/#/realms/${realm}/users/${user.id}`,
+        ),
       );
     }
   } catch {
@@ -386,11 +444,13 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(SUBSCRIBE, subscribe);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
+  yield takeEvery(CREATE_TYPE_SUBSCRIPTION, createTypeSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
   yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);
   yield takeEvery(FIND_SUBSCRIBERS_SUCCESS, resolveSubscriberUsers);
   yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);
+  yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
 }

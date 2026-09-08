@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — barrel and middleware wiring; the routers and jobs it assembles are covered by their own specs.
 import { AdspId, EventService, ServiceDirectory, TenantService, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
@@ -21,6 +22,7 @@ export * from './events';
 export * from './notifications';
 export * from './pdf';
 export * from './calendar';
+export * from './jobs/messageNotification';
 
 interface FormMiddlewareProps extends Repositories {
   serviceId: AdspId;

@@ -1,4 +1,4 @@
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, instrumentJob } from '@abgov/adsp-service-sdk';
 import * as schedule from 'node-schedule';
 import { Memory } from '@mastra/memory';
 import { Logger } from 'winston';
@@ -27,7 +27,11 @@ export function scheduleAgentJobs({ logger, tenantId, memory, clearWorkspace, ev
   }
 
   const cleanupJob = createThreadCleanupJob({ logger, tenantId, memory, clearWorkspace, eventService });
-  schedule.scheduleJob(jobName, THREAD_CLEANUP_CRON, cleanupJob);
+  schedule.scheduleJob(
+    jobName,
+    THREAD_CLEANUP_CRON,
+    instrumentJob('thread-cleanup', cleanupJob, { logger, attributes: { 'adsp.tenant.id': tenantId.toString() } })
+  );
 
   logger.info(`Scheduled thread cleanup job (${THREAD_CLEANUP_CRON}).`, {
     context: 'ThreadCleanupJob',

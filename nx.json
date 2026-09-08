@@ -101,7 +101,6 @@
         "apps/push-service/**/*",
         "apps/sandbox-app/**/*",
         "apps/sandbox-app-e2e/**/*",
-        "apps/secret-service/**/*",
         "apps/sharepoint-service/**/*",
         "apps/status-app/**/*",
         "apps/status-app-e2e/**/*",

@@ -396,19 +396,19 @@ class NotificationsPage {
   }
 
   editSubscriberModalSaveBtn() {
-    return cy.get('[testid="form-save"]');
+    return cy.xpath('//goa-modal[@heading="Edit subscriber"]//*[@testid="form-save"]');
   }
 
   editSubscriberModalNameField() {
-    return cy.get('[testid="form-name"]');
+    return cy.xpath('//goa-modal[@heading="Edit subscriber"]//goa-input[@testid="form-name"]');
   }
 
   editSubscriberModalEmailField() {
-    return cy.get('[testid="form-email"]');
+    return cy.xpath('//goa-modal[@heading="Edit subscriber"]//goa-input[@testid="form-email"]');
   }
 
   editSubscriberModalPhoneNumberField() {
-    return cy.get('[testid="contact-sms-input"]');
+    return cy.xpath('//goa-modal[@heading="Edit subscriber"]//goa-input[@testid="contact-sms-input"]');
   }
 
   addNotificationTypeBtnOnNotificationType() {

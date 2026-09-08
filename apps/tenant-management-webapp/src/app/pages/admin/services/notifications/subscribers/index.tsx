@@ -2,11 +2,12 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber, SubscriberSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscriberSearchForm';
 import { useDispatch, useSelector } from 'react-redux';
-import { FindSubscribers } from '@store/subscription/actions';
+import { CreateSubscriber, FindSubscribers } from '@store/subscription/actions';
 import { SubscriberList } from './subscriberList';
+import { SubscriberModalForm } from './editSubscriber';
 import { NextLoader } from './nextLoader';
 import { PageIndicator } from '@components/Indicator';
-import { GoabCallout } from '@abgov/react-components';
+import { GoabButton, GoabCallout } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { useHasRole } from '../subscription/useHasRole';
 
@@ -38,6 +39,7 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
 
   const dispatch = useDispatch();
   const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
+  const [isAddSubscriberOpen, setIsAddSubscriberOpen] = useState(false);
 
   const searchFn = ({ searchCriteria }) => {
     dispatch(FindSubscribers(searchCriteria));
@@ -78,6 +80,9 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   return (
     <section>
       <div data-testid="subscribers-list-title">
+        <GoabButton size="compact" testId="add-subscriber" mb="m" onClick={() => setIsAddSubscriberOpen(true)}>
+          Add subscriber
+        </GoabButton>
         <SubscribersSearchForm
           onSearch={searchFn2}
           reset={resetState}
@@ -91,6 +96,17 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
         )}
         {indicator.show && <PageIndicator />}
       </div>
+      <SubscriberModalForm
+        open={isAddSubscriberOpen}
+        isNew
+        initialValue={{ addressAs: '', channels: [] }}
+        onSave={(subscriber) => {
+          const { id: _id, ...newSubscriber } = subscriber;
+          dispatch(CreateSubscriber(newSubscriber));
+          setIsAddSubscriberOpen(false);
+        }}
+        onCancel={() => setIsAddSubscriberOpen(false)}
+      />
     </section>
   );
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { ScriptEditor, ScriptEditorProps } from './scriptEditor';
 import { ScriptItem } from '@store/script/models';
 import { Provider } from 'react-redux';
@@ -141,5 +142,27 @@ describe('ScriptEditor Component', () => {
     await waitFor(() => {
       expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
     });
+  });
+
+  test('puts the lua script editor into full page mode and back', () => {
+    // Arrange
+    const { baseElement, getByTestId } = render(
+      <Provider store={store}>
+        <ScriptEditor {...mockScriptEditorProps} />
+      </Provider>
+    );
+    const toggleButton = baseElement.querySelector("goa-icon-button[testid='script-editor-toggle']");
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByTestId('script-editor')).toHaveAttribute('data-full-page', 'true');
+
+    // Act
+    fireEvent(toggleButton, new CustomEvent('_click'));
+
+    // Assert
+    expect(getByTestId('script-editor')).toHaveAttribute('data-full-page', 'false');
   });
 });

@@ -23,6 +23,7 @@ import { getStepStatus, AutoPopulatedPathValue } from './util';
 import { getAutoPopulateControls } from '../../../util/autoPopulate';
 import { JsonFormContext } from '../../../Context';
 import { StepStatus } from '../../../common/Constants';
+import { NavigationOutcome, NavigationTarget, resolveNavigationTarget } from '../util/navigationTarget';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
   StepperProps: CategorizationStepperLayoutRendererProps & {
@@ -118,7 +119,7 @@ const createStepperContextInitData = (
     };
   });
 
-  const activeId = props?.activeId || (isPage ? categories.length + 1 : 0);
+  const activeId = props?.activeId ?? (isPage ? categories.length + 1 : 0);
 
   return {
     categories: categories,
@@ -149,6 +150,8 @@ export const JsonFormsStepperContextProvider = ({
   const formCtx = useContext(JsonFormContext);
   const autoPopulatedValues = formCtx?.autoPopulatedData as AutoPopulatedPathValue[] | undefined;
   const formId = formCtx?.formId as string | undefined;
+  const navigationTarget = formCtx?.navigationTarget as NavigationTarget | undefined;
+  const onNavigationChange = formCtx?.onNavigationChange as ((outcome: NavigationOutcome) => void) | undefined;
   // Steps opened in an earlier session. Seeding these on first mount is what keeps a step the user
   // has been through from dropping back to NotStarted on resume — including the case where they
   // edited an auto-populated field and then restored the original value, which leaves nothing in
@@ -290,13 +293,22 @@ export const JsonFormsStepperContextProvider = ({
   useEffect(() => {
     if (context?.isProvided === true) {
       /* The block is used to cache the state for the tenant web app review editor  */
+      // The task list is the sentinel id past the last page, which sits above maxReachedStep until
+      // the user opens something, so clamping would drop them onto the first page on the recompute
+      // that follows mount. Real pages survive the clamp only because the goToPage pair below puts
+      // them back, and that is deliberately skipped while the task list is showing.
+      const isOnTaskList = stepperState.activeId === stepperState.categories.length + 1;
+
       stepperDispatch({
         type: 'update/uischema',
         payload: {
           state: createStepperContextInitData(
             {
               ...StepperProps,
-              activeId: Math.min(stepperState?.activeId, stepperState.maxReachedStep),
+              // Leaving activeId out lets init recompute the sentinel from the categories this
+              // recompute produced, so a conditional page appearing or disappearing still lands on
+              // the task list rather than on the review page.
+              activeId: isOnTaskList ? undefined : Math.min(stepperState?.activeId, stepperState.maxReachedStep),
             },
             {
               visitedIds: new Set([
@@ -309,13 +321,64 @@ export const JsonFormsStepperContextProvider = ({
         },
       });
 
-      if (stepperState.activeId !== stepperState.categories.length + 1) {
+      if (!isOnTaskList) {
         context.goToPage(stepperState.maxReachedStep);
         context.goToPage(stepperState.activeId);
       }
     }
     //eslint-disable-next-line
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema), JSON.stringify(StepperProps.data)]);
+
+  const contextRef = useRef(context);
+  contextRef.current = context;
+  const targetKey = navigationTarget
+    ? JSON.stringify([
+        navigationTarget.pageId ?? '',
+        'scope' in navigationTarget ? navigationTarget.scope : '',
+        'instancePath' in navigationTarget ? (navigationTarget.instancePath ?? '') : '',
+      ])
+    : '';
+  const lastAppliedTarget = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!navigationTarget || !targetKey) {
+      lastAppliedTarget.current = null;
+      return;
+    }
+
+    if (lastAppliedTarget.current === targetKey) {
+      return;
+    }
+
+    const { categories: currentCategories } = contextRef.current.selectStepperState();
+    if (!currentCategories.length) {
+      return;
+    }
+
+    lastAppliedTarget.current = targetKey;
+    const resolution = resolveNavigationTarget(currentCategories, navigationTarget);
+
+    if (resolution.outcome.status === 'navigated' && 'scope' in resolution) {
+      const saveForm = formCtx?.saveFunction?.get('save-form')?.();
+      saveForm?.(StepperProps.data);
+      stepperDispatch({
+        type: 'page/to/index',
+        payload: { id: resolution.index, targetScope: resolution.scope },
+      });
+    }
+
+    onNavigationChange?.(resolution.outcome);
+    // The value-based key intentionally controls request application. Dependency identity changes
+    // must not pull a user back to the requested page after they navigate away themselves.
+  }, [
+    formCtx?.saveFunction,
+    navigationTarget,
+    onNavigationChange,
+    StepperProps.data,
+    stepperDispatch,
+    stepperState.categories.length,
+    targetKey,
+  ]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };

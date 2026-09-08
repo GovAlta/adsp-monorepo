@@ -119,8 +119,9 @@ export const createAdspCliPublicClientConfig = (id: string): ClientRepresentatio
 };
 
 /**
- * The OIDC scope object itself — not granted by default (see optionalClientScopes above), only included in a
- * token when a login request explicitly asks for it (scope=... adsp-cli-admin), with its own consent-screen line.
+ * The OIDC scope object itself — assigned to the adsp-cli client as an OPTIONAL scope by keycloak.ts's
+ * createAdspCliAdminScope, so it is only included in a token when a login request explicitly asks for it
+ * (scope=... adsp-cli-admin), with its own consent-screen line.
  * Requesting it doesn't grant manage-clients/manage-users to a user who doesn't already have them — it only makes
  * an existing grant visible/usable through this client. ClientScopeRepresentation has no field for role scope
  * mappings; that's wired up separately in keycloak.ts's grantAdspCliAdminScopeMapping after realm creation.

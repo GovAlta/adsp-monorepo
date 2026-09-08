@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mockState: any;
 const mockDispatch = jest.fn();
+const mockDraftFormWrapper = jest.fn(() => <div />);
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -21,7 +22,9 @@ jest.mock('../state', () => ({
   setShowMessages: jest.fn((show: boolean) => ({ type: 'set-show-messages', payload: show })),
 }));
 
-jest.mock('../components/DraftFormWrapper', () => ({ DraftFormWrapper: () => <div /> }));
+jest.mock('../components/DraftFormWrapper', () => ({
+  DraftFormWrapper: (props) => mockDraftFormWrapper(props),
+}));
 jest.mock('../components/LogoutModal', () => ({ LogoutModal: () => <div /> }));
 jest.mock('../components/SubmittedForm', () => ({ SubmittedForm: () => <div /> }));
 jest.mock('../components/UserNotAuthorized', () => ({ UserNotAuthorized: () => <div /> }));
@@ -33,6 +36,7 @@ const definition = { id: 'abc111232', name: 'abc111232', dataSchema: {}, uiSchem
 
 beforeEach(() => {
   mockDispatch.mockClear();
+  mockDraftFormWrapper.mockClear();
   mockState = {
     form: {
       selected: definition.id,
@@ -47,9 +51,9 @@ beforeEach(() => {
   };
 });
 
-const renderForm = () =>
+const renderForm = (initialEntry = '/') =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Form />
     </MemoryRouter>,
   );
@@ -71,5 +75,25 @@ describe('Form', () => {
 
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'disconnect-stream' });
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'set-show-messages', payload: false });
+  });
+
+  it('passes URL page and field parameters to the draft form as a navigation target', () => {
+    // Arrange
+    mockState.form.form = {
+      id: 'form-1',
+      definition: { id: definition.id },
+      status: 'draft',
+      urn: 'urn:ads:platform:form-service:form:form-1',
+    };
+
+    // Act
+    renderForm('/platform/control-examples/form-1?page=contact-details&field=%23%2Fproperties%2Femail');
+
+    // Assert
+    expect(mockDraftFormWrapper).toHaveBeenCalledWith(
+      expect.objectContaining({
+        navigationTarget: { pageId: 'contact-details', scope: '#/properties/email' },
+      }),
+    );
   });
 });

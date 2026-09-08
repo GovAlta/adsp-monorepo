@@ -20,6 +20,8 @@ import { createRepositories } from './timescale';
 import { adspId, AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
+import { scheduleServiceMetricRollupJob } from './values/jobs/serviceMetricRollup';
+import { scheduleMetricIntervalRollupJob } from './values/jobs/metricIntervalRollup';
 
 const initializeApp = async () => {
   const app = express();
@@ -130,7 +132,31 @@ const initializeApp = async () => {
     configurationHandler,
   );
 
-  applyValuesMiddleware(app, { logger, repository: repositories.valueRepository, eventService });
+  applyValuesMiddleware(app, {
+    logger,
+    repository: repositories.valueRepository,
+    serviceMetricRollupRepository: repositories.serviceMetricRollupRepository,
+    serviceMetricRollupTrailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
+    eventService,
+  });
+
+  if (environment.SERVICE_METRIC_ROLLUP_JOB_ENABLED) {
+    await scheduleServiceMetricRollupJob({
+      logger,
+      repository: repositories.serviceMetricRollupRepository,
+      trailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
+      backfillOnStartup: environment.SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP,
+    });
+  }
+
+  if (environment.METRIC_INTERVAL_ROLLUP_JOB_ENABLED) {
+    // clean-code-ignore: RULE-19 — app bootstrap; the job it wires up is covered in its own spec.
+    scheduleMetricIntervalRollupJob({
+      logger,
+      repository: repositories.metricIntervalRollupRepository,
+      maxChunkHours: environment.METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS,
+    });
+  }
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

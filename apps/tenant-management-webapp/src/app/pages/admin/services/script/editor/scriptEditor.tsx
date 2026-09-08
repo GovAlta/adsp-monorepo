@@ -17,6 +17,7 @@ import {
 import { TombStone } from './tombstone';
 
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
+import { FullPagePane } from '@components/FullPagePane';
 import { languages } from 'monaco-editor';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
@@ -356,17 +357,19 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </div>
             <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
               <Tab label="Lua script" data-testid="script-editor-tab">
-                <MonacoDivBody data-testid="templated-editor-body">
-                  <MonacoEditor
-                    height={monacoHeight}
-                    language={'lua'}
-                    value={scriptStr}
-                    {...scriptEditorConfig}
-                    onChange={(value) => {
-                      onScriptChange(value);
-                    }}
-                  />
-                </MonacoDivBody>
+                <FullPagePane label="Lua script" testId="script-editor" height={monacoHeight}>
+                  <MonacoDivBody data-testid="templated-editor-body">
+                    <MonacoEditor
+                      height="100%"
+                      language={'lua'}
+                      value={scriptStr}
+                      {...scriptEditorConfig}
+                      onChange={(value) => {
+                        onScriptChange(value);
+                      }}
+                    />
+                  </MonacoDivBody>
+                </FullPagePane>
               </Tab>
               <Tab label="Roles" data-testid="script-roles-tab">
                 <MonacoDivTabBody data-testid="roles-editor-body">

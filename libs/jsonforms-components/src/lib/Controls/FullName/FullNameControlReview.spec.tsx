@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { FullNameControlReview } from './FullNameControlReview';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { JsonFormContext } from '../../Context';
+import { ReviewRenderProvider } from '../../Context/ReviewRenderContext';
 
 describe('FullNameControlReview', () => {
   const mockGoToPage = jest.fn();
@@ -204,5 +205,39 @@ describe('FullNameControlReview', () => {
 
     expect(baseElement.querySelector('goa-form-item[error="First name is required"]')).not.toBeInTheDocument();
     expect(baseElement.querySelector('goa-form-item[error="Last name is required"]')).not.toBeInTheDocument();
+  });
+});
+
+describe('FullNameControlReview change reporting', () => {
+  const reportingProps = {
+    data: { firstName: 'John', middleName: 'A.', lastName: 'Doe' },
+    path: 'fullName',
+    schema: {},
+    handleChange: jest.fn(),
+    label: 'Full name',
+    uischema: { type: 'Control', scope: '#/properties/fullName', options: { stepId: 1 } },
+    errors: '',
+    rootSchema: {},
+    id: 'fullname-report',
+    enabled: true,
+    visible: true,
+    required: false,
+  } as unknown as ControlProps;
+
+  it('reports the step and scope to a host with no stepper in the tree', () => {
+    const onReviewChange = jest.fn();
+    const { baseElement } = render(
+      <ReviewRenderProvider onReviewChange={onReviewChange}>
+        <table>
+          <tbody>
+            <FullNameControlReview {...reportingProps} />
+          </tbody>
+        </table>
+      </ReviewRenderProvider>,
+    );
+
+    fireEvent(baseElement.querySelector('goa-button')!, new CustomEvent('_click'));
+
+    expect(onReviewChange).toHaveBeenCalledWith(1, '#/properties/fullName');
   });
 });

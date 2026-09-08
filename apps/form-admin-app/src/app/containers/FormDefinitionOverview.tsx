@@ -82,7 +82,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
   return (
     <OverviewLayout>
       <ContentContainer>
-        <h2>Overview</h2>
+        <h2>Configuration</h2>
         <GoabContainer mt="m">
           <PropertiesContainer>
             <GoabFormItem label="ID" mr="m">
@@ -227,12 +227,11 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
         )}
         <h3>Review columns</h3>
         <p>
-          These columns come from the Form Definition Review Configuration and appear in the submissions and forms
-          lists.
+          These columns come from the Form Definition Review Configuration and appear in the responses list.
         </p>
         {reviewColumns.length === 0 ? (
           <p data-testid="review-columns-empty">
-            No review columns are configured. The lists show only system columns.
+            No review columns are configured. The list shows only system columns.
           </p>
         ) : (
           <div data-testid="review-columns-recap">

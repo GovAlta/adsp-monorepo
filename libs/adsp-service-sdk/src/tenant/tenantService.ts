@@ -4,6 +4,7 @@ import type { Logger } from 'winston';
 import type { TokenProvider } from '../access';
 import type { ServiceDirectory } from '../directory';
 import { AdspId, LimitToOne, adspId, assertAdspId, retry } from '../utils';
+import { CacheName, recordCacheResult } from '../metrics/cache';
 
 export interface Tenant {
   id: AdspId;
@@ -165,7 +166,9 @@ export class TenantServiceImpl implements TenantService {
     assertAdspId(tenantId, `Provided ID does not represent a resource: ${tenantId}.`, 'resource');
 
     const cacheKey = `${tenantId}`;
-    const tenant = this.#tenants.get<Tenant>(cacheKey) || (await this.retrieveTenant(tenantId));
+    const cachedTenant = this.#tenants.get<Tenant>(cacheKey);
+    recordCacheResult(CacheName.Tenant, !!cachedTenant);
+    const tenant = cachedTenant || (await this.retrieveTenant(tenantId));
 
     return tenant;
   };

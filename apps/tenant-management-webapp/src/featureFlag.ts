@@ -151,7 +151,9 @@ export const defaultFeaturesVisible = {
 
 export const serviceVariables = (featuresVisible = {}) => {
   const mergedFeaturesVisible = { ...defaultFeaturesVisible, ...featuresVisible };
-  return completeServiceVariables.filter((adminF) => {
-    return mergedFeaturesVisible[adminF.name];
-  });
+  return completeServiceVariables
+    .filter((adminF) => {
+      return mergedFeaturesVisible[adminF.name];
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 };

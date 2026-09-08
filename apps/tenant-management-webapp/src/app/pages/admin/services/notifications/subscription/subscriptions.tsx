@@ -10,6 +10,8 @@ import { RootState } from '@store/index';
 import { Events } from '@store/subscription/models';
 import { GoabCallout } from '@abgov/react-components';
 import { useHasRole } from '../subscription/useHasRole';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
+import { SubscribeModal } from './subscribeModal';
 
 export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
@@ -29,6 +31,7 @@ export const Subscriptions: FunctionComponent = () => {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscriber>(null);
   const [selectedType, setSelectedType] = useState<string>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
 
   const [criteriaState, setCriteriaState] = useState<SubscriptionSearchCriteria>(criteriaInit);
   useEffect(() => {
@@ -66,6 +69,11 @@ export const Subscriptions: FunctionComponent = () => {
 
   return (
     <section>
+      <GoabButtonGroup alignment="start" mb="m">
+        <GoabButton size="compact" type="primary" testId="add-subscription" onClick={() => setShowSubscribeModal(true)}>
+          Subscribe
+        </GoabButton>
+      </GoabButtonGroup>
       <SubscribersSearchForm
         onSearch={searchFn}
         reset={resetState}
@@ -100,6 +108,7 @@ export const Subscriptions: FunctionComponent = () => {
           dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
         }}
       />
+      <SubscribeModal open={showSubscribeModal} onCancel={() => setShowSubscribeModal(false)} />
     </section>
   );
 };

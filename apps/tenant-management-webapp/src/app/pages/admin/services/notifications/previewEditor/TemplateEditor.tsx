@@ -24,6 +24,7 @@ import { Attachment } from '@core-services/app-common';
 import { AnyAction } from 'redux';
 
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
+import { FullPagePane } from '@components/FullPagePane';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
 import { Template, baseTemplate } from '@store/notification/models';
@@ -310,6 +311,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         >
           {radioOptions.map((item, key) => {
             const isPropertiesOpen = propertiesOpenMap[item.name] ?? true;
+            // The body editor takes the space the properties section is not using.
+            const bodyEditorHeight = isPropertiesOpen
+              ? 'max(200px, calc(100vh - 450px))'
+              : 'max(200px, calc(100vh - 340px))';
 
             return (
               <Tab
@@ -460,17 +465,24 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       })()}
                   </GoabAccordion>
 
-                  <GoabFormItem error={errors['body'] ?? ''} mb={'s'} label="Body">
-                    <MonacoDivBody data-testid="templated-editor-body" $compact={!isPropertiesOpen}>
-                      <MonacoEditor
-                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                        value={templates[item.name]?.body}
-                        onChange={(value, event) => {
-                          onBodyChange(value, item.name);
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
+                  <GoabFormItem error={errors['body'] ?? ''} mb={'s'} label="">
+                    <FullPagePane
+                      label="Body"
+                      heading="Body"
+                      testId="notification-body-editor"
+                      height={bodyEditorHeight}
+                    >
+                      <MonacoDivBody data-testid="templated-editor-body">
+                        <MonacoEditor
+                          language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                          value={templates[item.name]?.body}
+                          onChange={(value, event) => {
+                            onBodyChange(value, item.name);
+                          }}
+                          {...bodyEditorConfig}
+                        />
+                      </MonacoDivBody>
+                    </FullPagePane>
                   </GoabFormItem>
                 </>
               </Tab>

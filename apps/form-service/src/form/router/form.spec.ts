@@ -167,6 +167,7 @@ describe('form router', () => {
     unsubscribe: jest.fn(),
     sendCode: jest.fn(),
     verifyCode: jest.fn(),
+    hasSubscribers: jest.fn(),
   };
 
   const fileServiceMock = {
@@ -175,6 +176,7 @@ describe('form router', () => {
 
   const commentServiceMock = {
     createSupportTopic: jest.fn(),
+    getComment: jest.fn(),
   };
 
   const pdfServiceMock = {
@@ -776,6 +778,131 @@ describe('form router', () => {
         expect.objectContaining({ createdByIdEquals: user.id }),
         null,
       );
+    });
+
+    it('can find forms of a definition for its assessor', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-assessor'],
+      };
+      const req = {
+        user,
+        query: { criteria: JSON.stringify({ definitionIdEquals: 'test' }), includeData: 'true' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.any(Number),
+        undefined,
+        expect.not.objectContaining({ createdByIdEquals: user.id }),
+        null,
+      );
+      // Assessors can only access submitted forms, so the search is limited to them.
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.any(Number),
+        undefined,
+        expect.objectContaining({ statusEquals: FormStatus.Submitted }),
+        null,
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ results: expect.arrayContaining([expect.objectContaining({ id: formInfo.id })]) }),
+      );
+    });
+
+    it('can find forms of any status for an admin', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: { criteria: JSON.stringify({ definitionIdEquals: 'test' }) },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page: {} });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.any(Number),
+        undefined,
+        expect.not.objectContaining({ statusEquals: expect.anything() }),
+        null,
+      );
+    });
+
+    it('can limit assessor of another definition to own forms', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['other-assessor'],
+      };
+      const req = {
+        user,
+        query: { criteria: JSON.stringify({ definitionIdEquals: 'test' }) },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const page = {};
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.any(Number),
+        undefined,
+        expect.objectContaining({ createdByIdEquals: user.id }),
+        null,
+      );
+    });
+
+    it('can prevent assessor of another definition from finding forms with data', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['other-assessor'],
+      };
+      const req = {
+        user,
+        query: { criteria: JSON.stringify({ definitionIdEquals: 'test' }), includeData: 'true' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page: {} });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
     it('can prevent non-admin user from finding forms with data', async () => {

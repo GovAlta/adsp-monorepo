@@ -92,7 +92,7 @@ To enable it: log in to the Keycloak admin console for your realm → Clients �
 ## Creating a new tenant
 
 When the no-args `login` mode prompts you to pick a tenant, it also offers a `+ Create a new tenant` choice —
-but only in `dev`/`test` (never `prod`), and only for an account that can actually create one: your core-realm
+in every environment including `prod`, but only for an account that can actually create one: your core-realm
 roles must include `beta-tester` or `tenant-service-admin` (the same roles tenant-management-api's `POST
 /tenants` requires), and — unless you're a `tenant-service-admin` — you must not already own a tenant (the
 tenant service allows only one per admin email). Picking it prompts for a name (letters, numbers, spaces, and
