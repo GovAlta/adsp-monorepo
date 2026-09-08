@@ -32,6 +32,8 @@ interface CommentsViewerProps {
   className?: string;
   heading?: string;
   addCommentLabel?: string;
+  // Label for the submit button. Defaults to addCommentLabel, which also labels the draft field.
+  addCommentButtonLabel?: string;
   anonymousName?: string;
   userId?: string;
   canComment: boolean;
@@ -71,6 +73,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   className,
   heading,
   addCommentLabel,
+  addCommentButtonLabel,
   anonymousName,
   canComment,
   canLoadMore,
@@ -89,6 +92,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
 }) => {
   heading = heading || 'Comments';
   addCommentLabel = addCommentLabel || 'Add comment';
+  addCommentButtonLabel = addCommentButtonLabel || addCommentLabel;
   anonymousName = anonymousName || 'Commenter';
   const [deleting, setDeleting] = useState<Comment>(null);
 
@@ -172,7 +176,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             disabled={!draft.content || commenting}
             onClick={() => onAddComment(draft)}
           >
-            {addCommentLabel}
+            {addCommentButtonLabel}
           </GoabButton>
         </GoabButtonGroup>
       </form>

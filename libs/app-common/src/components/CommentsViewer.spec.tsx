@@ -443,6 +443,34 @@ describe('CommentsViewer', () => {
     // Assert
     expect(props.onAddComment).toHaveBeenCalledWith(draft);
   });
+  test('labels the add comment button with addCommentButtonLabel when one is provided', () => {
+    // Arrange
+    const props = createProps({
+      draft: { content: 'Draft text' },
+      addCommentLabel: 'Add response',
+      addCommentButtonLabel: 'Send',
+    });
+
+    // Act
+    render(<CommentsViewer {...props} />);
+
+    // Assert the field keeps its own descriptive label while the button reads 'Send'.
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+    expect(screen.getByText('Add response')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add response' })).not.toBeInTheDocument();
+  });
+
+  test('falls back to addCommentLabel for the button when no button label is provided', () => {
+    // Arrange
+    const props = createProps({ draft: { content: 'Draft text' }, addCommentLabel: 'Post comment' });
+
+    // Act
+    render(<CommentsViewer {...props} />);
+
+    // Assert
+    expect(screen.getByRole('button', { name: 'Post comment' })).toBeInTheDocument();
+  });
+
   test('marks a comment from the current user so the messaging layout can position it', () => {
     const props = createProps({ comments: [createComment({ byCurrentUser: true })] });
     const { container } = render(<CommentsViewer {...props} messaging={true} />);
