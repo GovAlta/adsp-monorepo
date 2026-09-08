@@ -18,6 +18,7 @@ import {
   getMaskInputTarget,
   applyInPlaceEdit,
   isMaskFilled,
+  overflowMaskEdit,
   maskPlaceholder,
   shouldBlockKey,
 } from '../../util/patternForm';
@@ -230,6 +231,11 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
             if (inPlace && mask) {
               const target = getMaskInputTarget(detail as GoabInputOnChangeDetail & { event?: Event });
               const caretIndex = target?.selectionStart ?? cleaned.length;
+              const overflow = overflowMaskEdit(localValue, cleaned, caretIndex, mask);
+              if (overflow) {
+                applyInPlaceEdit(target, overflow);
+                return;
+              }
               const edit = computeMaskEdit(cleaned, caretIndex, mask);
               applyInPlaceEdit(target, edit);
               setLocalValue(edit.display);
@@ -268,12 +274,26 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
             });
           }}
           onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
+            const keyPressDetail = detail as GoabInputOnKeyPressDetail & { event?: Event };
             const blockDisallowed = shouldBlockKey(detail.key, allowedKeys);
-            // In-place has no length cap, so also block content keys once the template is full.
+            // In-place has no maxLength, and GoA keyPress fires on keyup after the character is inserted.
             const blockOverflow =
               inPlace && !!mask && /^[A-Za-z0-9]$/.test(detail.key) && isMaskFilled(localValue, mask);
             if (blockDisallowed || blockOverflow) {
-              (detail as GoabInputOnKeyPressDetail & { event?: Event }).event?.preventDefault();
+              keyPressDetail.event?.preventDefault();
+            }
+            if (blockOverflow && mask) {
+              const target = getMaskInputTarget(keyPressDetail);
+              const rawValue = target?.value ?? detail.value ?? localValue;
+              const overflow = overflowMaskEdit(
+                localValue,
+                rawValue,
+                target?.selectionStart ?? localValue.length,
+                mask,
+              );
+              if (overflow) {
+                applyInPlaceEdit(target, overflow);
+              }
             }
           }}
           {...uischema?.options?.componentProps}

@@ -12,6 +12,7 @@ import {
   isMaskFilled,
   maskDigitCount,
   maskPlaceholder,
+  overflowMaskEdit,
   shouldBlockKey,
   toMaskTemplate,
 } from './patternForm';
@@ -188,6 +189,24 @@ describe('getMaskInputTarget', () => {
 
   it('returns undefined when the event has no target', () => {
     expect(getMaskInputTarget({})).toBeUndefined();
+  });
+});
+
+describe('overflowMaskEdit', () => {
+  it('rejects extra content once the in-place mask is full', () => {
+    expect(overflowMaskEdit('123456-789', '123456-7890', 11, DEFAULT_PATTERNS.driverId.mask)).toEqual({
+      display: '123456-789',
+      stored: '123456-789',
+      caret: 10,
+    });
+  });
+
+  it('allows edits while the in-place mask is not full', () => {
+    expect(overflowMaskEdit('123456-##', '1234567', 7, DEFAULT_PATTERNS.driverId.mask)).toBeUndefined();
+  });
+
+  it('allows replacement that does not add extra content', () => {
+    expect(overflowMaskEdit('123456-789', '123456-789', 10, DEFAULT_PATTERNS.driverId.mask)).toBeUndefined();
   });
 });
 

@@ -96,6 +96,23 @@ describe('useMaskedInput', () => {
     expect(preventDefault).toHaveBeenCalled();
   });
 
+  it('does not keep extra characters when an in-place mask is already full', () => {
+    const onCommit = jest.fn();
+    const { result } = renderHook(() =>
+      useMaskedInput({
+        mask: DEFAULT_PATTERNS.phone.mask,
+        inPlace: true,
+        data: '(403) 555-1212',
+        onCommit,
+      }),
+    );
+
+    act(() => result.current.handleChange({ value: '(403) 555-12129' }));
+
+    expect(result.current.value).toBe('(403) 555-1212');
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
   it('does not block content keys when the in-place mask is not full', () => {
     const preventDefault = jest.fn();
     const { result } = renderHook(() =>

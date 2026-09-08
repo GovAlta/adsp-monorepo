@@ -1049,6 +1049,35 @@ describe('Input Text Control tests', () => {
       expect(input).toHaveAttribute('value', 'plain text');
     });
 
+    it('does not keep extra characters when an in-place mask is full', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '123456-789',
+        path: 'driverId',
+        id: 'driverId',
+        handleChange,
+        schema: { type: 'string', format: 'driverId' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/driverId',
+          options: { inPlace: true },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='driverId-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456-7890' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(input).toHaveAttribute('value', '123456-789');
+      expect(handleChange).not.toHaveBeenCalledWith('driverId', '123456-7890');
+    });
+
     it('blocks extra content keys when an in-place mask is full', () => {
       const props = {
         ...staticProps,

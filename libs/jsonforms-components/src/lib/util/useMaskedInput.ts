@@ -5,6 +5,7 @@ import {
   formatWithPattern,
   getMaskInputTarget,
   isMaskFilled,
+  overflowMaskEdit,
   toMaskTemplate,
 } from './patternForm';
 
@@ -60,6 +61,12 @@ export const useMaskedInput = ({ mask, inPlace, data, onCommit }: UseMaskedInput
 
     const target = getMaskInputTarget(detail);
     const caretIndex = target?.selectionStart ?? rawValue.length;
+    const overflow = overflowMaskEdit(value, rawValue, caretIndex, mask);
+    if (overflow) {
+      applyInPlaceEdit(target, overflow);
+      return;
+    }
+
     const edit = computeMaskEdit(rawValue, caretIndex, mask);
 
     applyInPlaceEdit(target, edit);
@@ -67,10 +74,18 @@ export const useMaskedInput = ({ mask, inPlace, data, onCommit }: UseMaskedInput
     onCommit(edit.stored);
   };
 
-  // In-place mode has no native length cap, so block extra content characters at the source.
+  // In-place has no maxLength (the template is already full length) and GoA keyPress is keyup, so restore on overflow.
   const handleKeyPress = (detail: MaskKeyPressDetail) => {
-    if (inPlace && /^[A-Za-z0-9]$/.test(detail.key) && isMaskFilled(value, mask)) {
-      detail.event?.preventDefault();
+    if (!inPlace || !/^[A-Za-z0-9]$/.test(detail.key) || !isMaskFilled(value, mask)) {
+      return;
+    }
+
+    detail.event?.preventDefault();
+    const target = getMaskInputTarget(detail);
+    const rawValue = target?.value ?? value;
+    const overflow = overflowMaskEdit(value, rawValue, target?.selectionStart ?? value.length, mask);
+    if (overflow) {
+      applyInPlaceEdit(target, overflow);
     }
   };
 
