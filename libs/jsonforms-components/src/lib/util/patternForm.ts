@@ -149,19 +149,59 @@ export const maskPlaceholder = (mask: string): string =>
 
 type MaskInputTarget = (HTMLInputElement & { setSelectionRange?: (start: number, end: number) => void }) | undefined;
 
-// Extracts the underlying input element from a GoA change/keypress detail, if available.
-export const getMaskInputTarget = (detail: { event?: Event }): MaskInputTarget =>
-  (detail.event?.target as MaskInputTarget) ?? undefined;
+// GoA retargets composed events to the host, so prefer the inner native input from the composed path.
+export const getMaskInputTarget = (detail: { event?: Event }): MaskInputTarget => {
+  const event = detail.event;
+  if (!event) {
+    return undefined;
+  }
 
-// Applies an in-place edit to the DOM: forces the (fixed-length) value and restores the caret after React commits.
+  const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+  const fromPath = path.find((node): node is HTMLInputElement => node instanceof HTMLInputElement);
+  if (fromPath) {
+    return fromPath;
+  }
+
+  const target = event.target as HTMLElement | undefined;
+  if (target instanceof HTMLInputElement) {
+    return target;
+  }
+
+  return (target?.shadowRoot?.querySelector('input') as MaskInputTarget) ?? undefined;
+};
+
+const applyMaskValue = (target: NonNullable<MaskInputTarget>, edit: MaskEdit): void => {
+  target.value = edit.display;
+  target.setSelectionRange?.(edit.caret, edit.caret);
+};
+
+// Applies an in-place edit to the inner input and re-applies after the web component paints.
 export const applyInPlaceEdit = (target: MaskInputTarget, edit: MaskEdit): void => {
   if (!target) {
     return;
   }
-  target.value = edit.display;
-  if (target.setSelectionRange) {
-    requestAnimationFrame(() => target.setSelectionRange?.(edit.caret, edit.caret));
+  applyMaskValue(target, edit);
+  requestAnimationFrame(() => applyMaskValue(target, edit));
+};
+
+// When the template is already filled, extra content characters must be rejected rather than shifting the value.
+export const overflowMaskEdit = (
+  previousDisplay: string,
+  rawValue: string,
+  caretIndex: number,
+  mask: string,
+): MaskEdit | undefined => {
+  if (!isMaskFilled(previousDisplay, mask)) {
+    return undefined;
   }
+  if ((rawValue ?? '').replace(NON_CONTENT, '').length <= maskDigitCount(mask)) {
+    return undefined;
+  }
+  return {
+    display: previousDisplay,
+    stored: formatWithPattern(previousDisplay, mask),
+    caret: Math.min(Math.max(caretIndex, 0), previousDisplay.length),
+  };
 };
 
 /**
