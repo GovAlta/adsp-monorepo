@@ -1,7 +1,7 @@
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
 import { EventSearchForm } from './eventSearchForm';
@@ -10,7 +10,8 @@ import { GoabButton, GoabCallout } from '@abgov/react-components';
 import { EventSearchCriteria } from '@store/event/models';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { ServiceColumnLayoutWithMargin } from '../../admin';
-import { exportEventLogEntries } from './exportEventLog';
+import { exportEventLogEntries, isExportCanceled } from './exportEventLog';
+import { EventLogExportModal } from './eventLogExportModal';
 import { SmallButton } from './styled-components';
 import { ErrorNotification } from '@store/notifications/actions';
 
@@ -22,6 +23,9 @@ export const EventLog: FunctionComponent = () => {
   const [searched, setSearched] = useState(false);
   const [searchCriteria, setSearchCriteria] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportRowCount, setExportRowCount] = useState(0);
+  const exportAbortRef = useRef<AbortController | null>(null);
   const next = useSelector((state: RootState) => state.event.nextEntries);
   const entries = useSelector((state: RootState) => state.event.entries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
@@ -37,6 +41,7 @@ export const EventLog: FunctionComponent = () => {
 
   useEffect(() => {
     return function clean() {
+      exportAbortRef.current?.abort();
       dispatch(clearEventLogEntries());
     };
   }, [dispatch]);
@@ -51,6 +56,7 @@ export const EventLog: FunctionComponent = () => {
   };
   const onSearchCancel = () => {
     setSearched(false);
+    setSearchCriteria(null);
     dispatch(getEventLogEntries());
   };
   const onNext = () => {
@@ -58,18 +64,43 @@ export const EventLog: FunctionComponent = () => {
   };
   const hasSelectedEvent = Boolean(searchCriteria?.namespace && searchCriteria?.name);
   const hasEntries = Boolean(entries?.length);
+  const closeExportModal = () => {
+    setExportOpen(false);
+    setIsExporting(false);
+    setExportRowCount(0);
+  };
+  const onCancelExport = () => {
+    exportAbortRef.current?.abort();
+    closeExportModal();
+  };
   const onExport = async () => {
     if (!hasReaderRole || !hasSelectedEvent || !hasEntries || !valueServiceApiUrl || !token) {
       return;
     }
+    const controller = new AbortController();
+    exportAbortRef.current = controller;
     setIsExporting(true);
+    setExportOpen(true);
+    setExportRowCount(0);
     try {
       const fileName = `${searchCriteria.namespace}-${searchCriteria.name}`;
-      await exportEventLogEntries(valueServiceApiUrl, token, fileName, searchCriteria || {});
+      const count = await exportEventLogEntries(
+        valueServiceApiUrl,
+        token,
+        fileName,
+        searchCriteria || {},
+        controller.signal,
+      );
+      setExportRowCount(count);
     } catch (error) {
+      if (isExportCanceled(error)) {
+        return;
+      }
+      closeExportModal();
       dispatch(ErrorNotification({ message: 'Failed to export event log. Try narrowing your time range.', error }));
     } finally {
       setIsExporting(false);
+      exportAbortRef.current = null;
     }
   };
   return (
@@ -95,10 +126,17 @@ export const EventLog: FunctionComponent = () => {
                       onClick={onExport}
                       testId="export-event-log-csv"
                     >
-                      {isExporting ? 'Exporting...' : 'Download CSV'}
+                      Download CSV
                     </GoabButton>
                   </SmallButton>
                 }
+              />
+              <EventLogExportModal
+                open={exportOpen}
+                isExporting={isExporting}
+                rowCount={exportRowCount}
+                onCancel={onCancelExport}
+                onClose={closeExportModal}
               />
               <EventLogEntries onSearch={onSearch} />
               {next && (
