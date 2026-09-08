@@ -34,11 +34,15 @@ export class TimescaleMetricIntervalRollupRepository implements MetricIntervalRo
   ) {}
 
   /**
-   * Hold the rollup lock for one run.
+   * Hold the rollup lock for one interval's advance.
    *
    * Every replica schedules this job, and the cron tick fires whether or not the last run finished,
    * so without a lock the same windows are recomputed several times over concurrently -- which is
    * what exhausted the database's connection slots in dev.
+   *
+   * Scoped to one interval rather than a whole run so that the work commits as it goes: coverage is
+   * per interval, so this is already the unit whose read-and-extend has to be atomic, and an
+   * interval that exceeds its statement timeout then rolls back only itself.
    *
    * pg_try_advisory_xact_lock is scoped to the transaction: it is taken on that transaction's own
    * connection and released when it ends, so the lock cannot be released onto a different pooled
