@@ -38,7 +38,7 @@ describe('PhoneNumberControl', () => {
       input,
       new CustomEvent('_change', {
         detail: { name: 'phoneNumber', value: '(403) 555-1212' },
-      })
+      }),
     );
 
     expect(mockHandleChange).toHaveBeenCalledWith('phoneNumber', '(403) 555-1212');
@@ -53,6 +53,67 @@ describe('PhoneNumberControl', () => {
 
     const formItem = container.querySelector('[testid="form-item-phoneNumber"]');
     expect(formItem).toHaveAttribute('error', 'Must be a valid 10-digit phone number in format (000) 000-0000');
+  });
+
+  it('uses a custom phoneMask from the UI schema', () => {
+    const props = {
+      ...defaultProps,
+      data: '',
+      uischema: {
+        ...defaultProps.uischema,
+        options: { phoneMask: '###-###-####' },
+      },
+    };
+
+    const { container } = render(<PhoneNumberControl {...props} />);
+    const input = container.querySelector('[testid="phone-input-phoneNumber"]');
+
+    fireEvent(input!, new CustomEvent('_change', { detail: { name: 'phoneNumber', value: '4035551212' } }));
+
+    expect(mockHandleChange).toHaveBeenCalledWith('phoneNumber', '403-555-1212');
+  });
+
+  it('shows the in-place phone template after mount', () => {
+    const props = {
+      ...defaultProps,
+      data: '',
+      uischema: {
+        ...defaultProps.uischema,
+        options: { inPlace: true },
+      },
+    };
+
+    const { container } = render(<PhoneNumberControl {...props} />);
+    const input = container.querySelector('[testid="phone-input-phoneNumber"]');
+
+    expect(input).toHaveAttribute('value', '(###) ###-####');
+  });
+
+  it('does not set maxLength when the phone field is in-place', () => {
+    const props = {
+      ...defaultProps,
+      data: '',
+      uischema: {
+        ...defaultProps.uischema,
+        options: { inPlace: true },
+      },
+    };
+
+    const { container } = render(<PhoneNumberControl {...props} />);
+    const input = container.querySelector('[testid="phone-input-phoneNumber"]');
+
+    expect(input?.getAttribute('maxlength')).toBeNull();
+  });
+
+  it('clears the error when the phone number becomes valid', () => {
+    const { container } = render(<PhoneNumberControl {...defaultProps} />);
+    const input = container.querySelector('[testid="phone-input-phoneNumber"]');
+
+    fireEvent(input!, new CustomEvent('_change', { detail: { name: 'phoneNumber', value: '123' } }));
+    fireEvent(input!, new CustomEvent('_change', { detail: { name: 'phoneNumber', value: '(403) 555-1212' } }));
+
+    const formItem = container.querySelector('[testid="form-item-phoneNumber"]');
+    expect(formItem).toHaveAttribute('error', '');
   });
 });
 

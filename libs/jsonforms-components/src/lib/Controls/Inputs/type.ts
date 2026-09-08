@@ -7,6 +7,18 @@ export interface WithInputProps {
 }
 
 /**
+ * UI schema options recognized by the text input control.
+ */
+export interface InputControlOptions {
+  /**
+   * Mask template applied to the value on blur, e.g. "(###) ###-####".
+   * '#' consumes one input character; every other character is inserted as a literal.
+   * Formatting only; validation is still driven by the JSON schema `pattern`.
+   */
+  formatPattern?: string;
+}
+
+/**
  * Base event control props to handle event controls
  */
 export interface EventControlProps {

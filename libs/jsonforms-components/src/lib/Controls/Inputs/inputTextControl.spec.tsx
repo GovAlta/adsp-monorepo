@@ -1,8 +1,9 @@
 import { fireEvent, render, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputTextProps, GoAInputText, formatSin } from './InputTextControl';
+import { GoAInputTextProps, GoAInputText } from './InputTextControl';
 import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
+import { DEFAULT_PATTERNS, formatWithPattern, filterAllowedKeys } from '../../util/patternForm';
 
 import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
 import { JsonFormsContext } from '@jsonforms/react';
@@ -112,7 +113,7 @@ describe('Input Text Control tests', () => {
     const { baseElement } = render(
       <JsonFormsContext.Provider value={mockContextValue}>
         <GoAInputText {...props} />
-      </JsonFormsContext.Provider>
+      </JsonFormsContext.Provider>,
     );
     const input = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -176,7 +177,6 @@ describe('Input Text Control tests', () => {
       const baseControl = render(<GoAInputBaseControl {...props} input={GoAInputText} />);
       expect(baseControl).toBeDefined();
     });
-
   });
 
   describe('text control events', () => {
@@ -261,6 +261,60 @@ describe('Input Text Control tests', () => {
       expect(blurred).toBe(true);
     });
 
+    it('formats the value on blur when formatPattern is provided', () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'phone',
+        id: 'phone',
+        handleChange,
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/phone',
+          options: { formatPattern: '(###) ###-####' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const input = baseElement.querySelector("goa-input[testId='phone-input']");
+
+      fireEvent(input!, new CustomEvent('_blur', { detail: { name: 'phone', value: '7801234567' } }));
+
+      expect(handleChange).toHaveBeenCalledWith('phone', '(780) 123-4567');
+    });
+
+    it('does not reformat on blur when formatPattern is absent', () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'phone',
+        id: 'phone',
+        required: false,
+        handleChange,
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/phone',
+        } as ControlElement,
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const input = baseElement.querySelector("goa-input[testId='phone-input']");
+
+      fireEvent(input!, new CustomEvent('_blur', { detail: { name: 'phone', value: '7801234567' } }));
+
+      expect(handleChange).not.toHaveBeenCalledWith('phone', '(780) 123-4567');
+    });
+
     it('should format sin', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
       const { baseElement } = render(
@@ -308,7 +362,7 @@ describe('Input Text Control tests', () => {
       });
 
       expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
-      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('1324567');
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('123');
     });
 
     it('prevents alphabet key presses for SIN input', async () => {
@@ -319,14 +373,13 @@ describe('Input Text Control tests', () => {
         </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
-      const keyDownEvent = new KeyboardEvent('keydown', {
+      const keyPressEvent = new CustomEvent('_keyPress', {
         cancelable: true,
-        bubbles: true,
-        key: 'a',
+        detail: { key: 'a', value: '123a' },
       });
-      const preventDefaultSpy = jest.spyOn(keyDownEvent, 'preventDefault');
+      const preventDefaultSpy = jest.spyOn(keyPressEvent, 'preventDefault');
 
-      fireEvent(firstNameInput!, keyDownEvent);
+      fireEvent(firstNameInput!, keyPressEvent);
 
       expect(preventDefaultSpy).toHaveBeenCalled();
     });
@@ -408,7 +461,7 @@ describe('Input Text Control tests', () => {
       expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 
-    it('prevents invalid pasted text for SIN input', async () => {
+    it('strips invalid characters entered into SIN input', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
@@ -416,17 +469,22 @@ describe('Input Text Control tests', () => {
         </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
-      const pasteEvent = new Event('paste', { cancelable: true, bubbles: true });
-      Object.defineProperty(pasteEvent, 'clipboardData', {
-        value: {
-          getData: () => '123a',
-        },
+      handleChangeMock.mockClear();
+      (firstNameInput as HTMLElement & { value: string }).value = '123a456';
+
+      await fireEvent(
+        firstNameInput!,
+        new CustomEvent('_change', {
+          detail: { value: '123a456' },
+        }),
+      );
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
       });
-      const preventDefaultSpy = jest.spyOn(pasteEvent, 'preventDefault');
 
-      fireEvent(firstNameInput!, pasteEvent);
-
-      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('123 456');
     });
 
     it('allows valid pasted text for SIN input', async () => {
@@ -575,45 +633,35 @@ describe('Input Text Control tests', () => {
       expect(validateSinWithLuhn('123456879')).toBe(false);
     });
     it('should return 9 digits for invalid SIN Number with more than 16 digits', () => {
-      expect(formatSin('123456879123456789999')).toBe('123-456-879');
+      expect(formatWithPattern('123456879123456789999', DEFAULT_PATTERNS.sin.mask)).toBe('123 456 879');
     });
   });
 
-  describe('formatSin', () => {
-    it('formats a valid SIN number correctly', () => {
-      const input = '123456789';
-      const expected = '123-456-789';
-      expect(formatSin(input)).toBe(expected);
+  describe('SIN masking', () => {
+    const sinMask = DEFAULT_PATTERNS.sin.mask;
+
+    it('formats a valid SIN number with spaces', () => {
+      expect(formatWithPattern('123456789', sinMask)).toBe('123 456 789');
     });
 
-    it('handles input with existing hyphens correctly', () => {
-      const input = '123-456-789';
-      const expected = '123-456-789';
-      expect(formatSin(input)).toBe(expected);
-    });
-
-    it('rejects alphabet characters', () => {
-      const input = 'abc123456def';
-      const expected = '';
-      expect(formatSin(input)).toBe(expected);
+    it('re-formats an already formatted value', () => {
+      expect(formatWithPattern('123 456 789', sinMask)).toBe('123 456 789');
     });
 
     it('truncates input longer than 9 digits', () => {
-      const input = '123456789012345';
-      const expected = '123-456-789';
-      expect(formatSin(input)).toBe(expected);
+      expect(formatWithPattern('123456789012345', sinMask)).toBe('123 456 789');
     });
 
     it('formats input with fewer than 9 digits', () => {
-      const input = '12345';
-      const expected = '123-45';
-      expect(formatSin(input)).toBe(expected);
+      expect(formatWithPattern('12345', sinMask)).toBe('123 45');
     });
 
     it('returns an empty string for empty input', () => {
-      const input = '';
-      const expected = '';
-      expect(formatSin(input)).toBe(expected);
+      expect(formatWithPattern('', sinMask)).toBe('');
+    });
+
+    it('strips non-digit characters via allowedKeys', () => {
+      expect(filterAllowedKeys('abc123456def', DEFAULT_PATTERNS.sin.allowedKeys)).toBe('123456');
     });
   });
 
@@ -831,5 +879,217 @@ describe('Input Text Control tests', () => {
     );
 
     expect(handleChangeMock).not.toHaveBeenCalled();
+  });
+
+  describe('schema format masks', () => {
+    const renderInput = (props: GoAInputTextProps & ControlProps) =>
+      render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+
+    it('formats a postal code from schema format postalCode', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'postalCode',
+        id: 'postalCode',
+        handleChange,
+        schema: { type: 'string', format: 'postalCode' },
+        uischema: { type: 'Control', scope: '#/properties/postalCode' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='postalCode-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: 'T2P1A1' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('postalCode', 'T2P 1A1');
+    });
+
+    it('formats a motor vehicle ID from schema format mvid', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'mvid',
+        id: 'mvid',
+        handleChange,
+        schema: { type: 'string', format: 'mvid' },
+        uischema: { type: 'Control', scope: '#/properties/mvid' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='mvid-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456789' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('mvid', '1234-56789');
+    });
+
+    it('formats a driver licence from schema format driverId', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'driverId',
+        id: 'driverId',
+        handleChange,
+        schema: { type: 'string', format: 'driverId' },
+        uischema: { type: 'Control', scope: '#/properties/driverId' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='driverId-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456789' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('driverId', '123456-789');
+    });
+
+    it('formats a SIN from schema format sin', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...sinProps,
+        data: '',
+        path: 'sin',
+        id: 'sin',
+        handleChange,
+        schema: { type: 'string', format: 'sin' },
+        uischema: { type: 'Control', scope: '#/properties/sin' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='sin-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456789' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('sin', '123 456 789');
+    });
+
+    it('uses a custom mask from UI schema options', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        handleChange,
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('customMask', '1234-56');
+    });
+
+    it('shows the in-place template for a driver licence', () => {
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'driverId',
+        id: 'driverId',
+        schema: { type: 'string', format: 'driverId' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/driverId',
+          options: { inPlace: true },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='driverId-input']");
+
+      expect(input).toHaveAttribute('value', DEFAULT_PATTERNS.driverId.mask);
+    });
+
+    it('does not apply a mask for an unknown schema format', () => {
+      const props = {
+        ...staticProps,
+        data: 'plain text',
+        path: 'notes',
+        id: 'notes',
+        schema: { type: 'string', format: 'unknown-format' },
+        uischema: { type: 'Control', scope: '#/properties/notes' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='notes-input']");
+
+      expect(input).toHaveAttribute('value', 'plain text');
+    });
+
+    it('blocks extra content keys when an in-place mask is full', () => {
+      const props = {
+        ...staticProps,
+        data: '123456-789',
+        path: 'driverId',
+        id: 'driverId',
+        schema: { type: 'string', format: 'driverId' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/driverId',
+          options: { inPlace: true },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='driverId-input']");
+      const keyPressEvent = new CustomEvent('_keyPress', {
+        cancelable: true,
+        detail: { key: '1', value: '123456-7891' },
+      });
+      const preventDefaultSpy = jest.spyOn(keyPressEvent, 'preventDefault');
+
+      fireEvent(input!, keyPressEvent);
+
+      expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
+    it('uses the mask placeholder when a format is detected', () => {
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'postalCode',
+        id: 'postalCode',
+        schema: { type: 'string', format: 'postalCode' },
+        uischema: { type: 'Control', scope: '#/properties/postalCode' } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='postalCode-input']");
+
+      expect(input).toHaveAttribute('placeholder', '000 000');
+    });
   });
 });

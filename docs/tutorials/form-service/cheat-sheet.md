@@ -411,6 +411,44 @@ The date control supports these options to restrict date selection:
   </tr>
 </table>
 
+#### Text Input Control Options
+
+The text input control supports a <code>formatPattern</code> option that auto-formats the entered value when the field loses focus (on blur). The <code>formatPattern</code> is a mask template: a <code>#</code> character consumes one character from the input, and every other character is inserted as a literal. Formatting is applied only; validation continues to be driven by the JSON schema <code>pattern</code>.
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Behavior</th>
+    <th>Default</th>
+  </tr>
+  <tr>
+    <td><code>formatPattern</code></td>
+    <td>A mask template applied to the value on blur, e.g. <code>(###) ###-####</code>. When set, the entered value is reformatted to match the mask. When empty or not set, no formatting is applied.</td>
+    <td>Not set</td>
+  </tr>
+</table>
+
+##### Text Input Format Examples
+
+| Mask (`formatPattern`) | User enters  | Formatted on blur |
+| ---------------------- | ------------ | ----------------- |
+| `(###) ###-####`       | `7801234567` | `(780) 123-4567`  |
+| `######-###`           | `123456789`  | `123456-789`      |
+| `### ###`              | `A1A1A1`     | `A1A 1A1`         |
+| `### ### ###`          | `123456789`  | `123 456 789`     |
+
+The user only needs to enter the raw characters; the field applies the mask automatically. The JSON schema <code>pattern</code> is used solely to validate the value for errors.
+
+```json
+{
+  "type": "Control",
+  "scope": "#/properties/phone",
+  "options": {
+    "formatPattern": "(###) ###-####"
+  }
+}
+```
+
 #### Calculation Control
 
 The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically. The rendered field is read-only.

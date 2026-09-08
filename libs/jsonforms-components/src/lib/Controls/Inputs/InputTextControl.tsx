@@ -7,7 +7,20 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/register';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
-import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
+import { applyFormatPattern, onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
+import {
+  DEFAULT_PATTERNS,
+  MaskPattern,
+  filterAllowedKeys,
+  formatWithPattern,
+  toMaskTemplate,
+  computeMaskEdit,
+  getMaskInputTarget,
+  applyInPlaceEdit,
+  isMaskFilled,
+  maskPlaceholder,
+  shouldBlockKey,
+} from '../../util/patternForm';
 import { sinTitle } from '../../common/Constants';
 import {
   GoabInputOnChangeDetail,
@@ -29,39 +42,6 @@ export function fetchRegisterConfigFromOptions(
   return config;
 }
 
-const formattedSinPattern = /^\d{3}-\d{3}-\d{3}$/;
-const allowedSinInputPattern = /^[\d-]*$/;
-const allowedSinKeyPattern = /^[\d-]$/;
-const allowedSinControlKeys = new Set([
-  'Backspace',
-  'Delete',
-  'Tab',
-  'Enter',
-  'Escape',
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowUp',
-  'ArrowDown',
-  'Home',
-  'End',
-]);
-
-const formatSinForDisplay = (value: string) => value.replace(/ /g, '-');
-const formatSinForSchema = (value: string) => value.replace(/-/g, ' ');
-
-export const formatSin = (value: string) => {
-  if (!allowedSinInputPattern.test(value)) {
-    return '';
-  }
-
-  if (formattedSinPattern.test(value)) {
-    return value;
-  }
-
-  const digits = value?.replace(/\D/g, '').slice(0, 9);
-  return digits?.match(/.{1,3}/g)?.join('-') ?? '';
-};
-
 const resetInputValue = (detail: GoabInputOnChangeDetail, value: string) => {
   const target = (detail as GoabInputOnChangeDetail & { event?: Event }).event?.target as
     | { value?: string }
@@ -70,6 +50,14 @@ const resetInputValue = (detail: GoabInputOnChangeDetail, value: string) => {
   if (target) {
     target.value = value;
   }
+};
+
+// Resolve the mask format for a field: schema.format must match a DEFAULT_PATTERNS key.
+const resolveFormatConfig = (schema: { format?: string; title?: string }): MaskPattern | undefined => {
+  if (schema.format && schema.format in DEFAULT_PATTERNS) {
+    return DEFAULT_PATTERNS[schema.format];
+  }
+  return schema.title === sinTitle ? DEFAULT_PATTERNS.sin : undefined;
 };
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
@@ -83,11 +71,31 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
 
-  const isSinField = schema.title === sinTitle;
+  // Detect the mask format from the JSON schema `format` (with the SIN title kept for backward compatibility).
+  const formatConfig = resolveFormatConfig(schema);
+  const mask = formatConfig?.mask ?? (uischema?.options?.mask as string | undefined);
+  const allowedKeys = formatConfig?.allowedKeys;
+  // In-place shows the fill-in template and keeps the caret in place while editing.
+  const inPlace = !!mask && uischema?.options?.inPlace === true;
 
-  const initialValue = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
+  const toDisplay = (value: unknown): string => {
+    if (!mask) {
+      return value as string;
+    }
+    const str = typeof value === 'string' ? value : '';
+    return inPlace ? toMaskTemplate(str, mask) : formatWithPattern(str, mask);
+  };
+
   const [manualInput, setManualInput] = useState<boolean>(false);
-  const [localValue, setLocalValue] = useState<string>(initialValue);
+  // In-place mounts empty then sets the template so the web component reflects it (a value change forces the paint).
+  const [localValue, setLocalValue] = useState<string>(inPlace ? '' : toDisplay(data));
+
+  useEffect(() => {
+    if (inPlace) {
+      setLocalValue(toDisplay(data));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const debouncedValue = useDebounce(localValue, 300);
 
@@ -98,8 +106,9 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
       return;
     }
 
-    setLocalValue(isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data);
-  }, [data, isSinField]);
+    setLocalValue(toDisplay(data));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, mask]);
 
   useEffect(() => {
     if (typeof handleChange === 'function' && hasDefault && data === undefined && !manualInput) {
@@ -111,17 +120,19 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   /* istanbul ignore next */
   useEffect(() => {
-    const dataForInput = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
+    const dataForInput = toDisplay(data);
     if (debouncedValue === dataForInput) return;
 
     // Only sync if debouncedValue differs from data and is not initial empty state
     if (debouncedValue !== dataForInput && (debouncedValue !== '' || data !== undefined)) {
       onChangeForInputControl({
         name: '',
-        value: isSinField ? formatSinForSchema(debouncedValue) : debouncedValue,
+        // Normalize to the clean value; for in-place this drops the unfilled template characters.
+        value: mask ? formatWithPattern(debouncedValue, mask) : debouncedValue,
         controlProps: props as ControlProps,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedValue]);
 
   const width = uischema?.options?.componentProps?.width ?? '100%';
@@ -179,45 +190,10 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
-
-  const preventInvalidSinKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (
-      !isSinField ||
-      allowedSinControlKeys.has(event.key) ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.altKey ||
-      allowedSinKeyPattern.test(event.key)
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-  };
-
-  const preventInvalidSinBeforeInput = (event: React.FormEvent<HTMLDivElement>) => {
-    if (!isSinField) {
-      return;
-    }
-
-    const data = (event.nativeEvent as InputEvent).data;
-    if (data && !allowedSinInputPattern.test(data)) {
-      event.preventDefault();
-    }
-  };
-
-  const preventInvalidSinPaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
-    if (isSinField && !allowedSinInputPattern.test(event.clipboardData.getData('text'))) {
-      event.preventDefault();
-    }
-  };
+  const formatPattern = uischema?.options?.formatPattern as string | undefined;
 
   return (
-    <div
-      onKeyDownCapture={preventInvalidSinKey}
-      onBeforeInputCapture={preventInvalidSinBeforeInput}
-      onPasteCapture={preventInvalidSinPaste}
-    >
+    <div>
       {mergedOptions.length > 1 ? (
         <GoabDropdown
           name={`jsonforms-${path}-dropdown`}
@@ -242,22 +218,30 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           value={localValue}
           width={width}
           readonly={readOnly}
-          maxLength={isSinField ? 11 : undefined}
-          placeholder={placeholder}
+          maxLength={inPlace ? undefined : mask ? mask.length : undefined}
+          placeholder={inPlace ? undefined : mask ? maskPlaceholder(mask) : placeholder}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           {...uischema.options?.componentProps}
           onChange={(detail: GoabInputOnChangeDetail) => {
-            let formattedValue = detail.value;
-            if (isSinField && !allowedSinInputPattern.test(detail.value)) {
-              resetInputValue(detail, localValue);
-              return;
+            const cleaned = allowedKeys ? filterAllowedKeys(detail.value, allowedKeys) : detail.value;
+
+            if (inPlace && mask) {
+              const target = getMaskInputTarget(detail as GoabInputOnChangeDetail & { event?: Event });
+              const caretIndex = target?.selectionStart ?? cleaned.length;
+              const edit = computeMaskEdit(cleaned, caretIndex, mask);
+              applyInPlaceEdit(target, edit);
+              setLocalValue(edit.display);
+            } else {
+              const formattedValue = mask && cleaned !== '' ? formatWithPattern(cleaned, mask) : cleaned;
+              // If characters were rejected, force the input to show the cleaned value.
+              if (allowedKeys && cleaned !== detail.value) {
+                resetInputValue(detail, formattedValue);
+              }
+              setLocalValue(formattedValue);
             }
-            if (isSinField && detail.value !== '') {
-              formattedValue = formatSin(detail.value);
-            }
-            setLocalValue(formattedValue);
+
             setManualInput(true);
             if (isVisited === false && setIsVisited) {
               setIsVisited();
@@ -268,14 +252,27 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
               setIsVisited();
             }
 
+            const capitalizedValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
+
+            if (formatPattern) {
+              const formattedValue = applyFormatPattern(capitalizedValue, formatPattern);
+              setLocalValue(formattedValue);
+              handleChange(path, formattedValue);
+              return;
+            }
+
             onBlurForTextControl({
               name: detail.name,
               controlProps: props as ControlProps,
-              value: autoCapitalize ? detail.value.toUpperCase() : detail.value,
+              value: capitalizedValue,
             });
           }}
           onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
-            if (isSinField && detail.key && !allowedSinKeyPattern.test(detail.key)) {
+            const blockDisallowed = shouldBlockKey(detail.key, allowedKeys);
+            // In-place has no length cap, so also block content keys once the template is full.
+            const blockOverflow =
+              inPlace && !!mask && /^[A-Za-z0-9]$/.test(detail.key) && isMaskFilled(localValue, mask);
+            if (blockDisallowed || blockOverflow) {
               (detail as GoabInputOnKeyPressDetail & { event?: Event }).event?.preventDefault();
             }
           }}

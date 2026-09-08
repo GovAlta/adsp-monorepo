@@ -2,17 +2,31 @@ import Ajv, { AnySchema } from 'ajv';
 import addErrors from 'ajv-errors';
 import addFormats from 'ajv-formats';
 import { PHONE_REGEX } from '../Controls';
+import { DEFAULT_PATTERNS } from '../util/patternForm';
 import { validateSinWithLuhn } from '../util';
 import { invalidSin } from './Constants';
 
+// Allow empty values so incomplete fields are not treated as format errors.
+const optionalFormat = (pattern: RegExp) => (input: string) => !input || pattern.test(input);
+
 export const createDefaultAjv = (...schemas: AnySchema[]) => {
-  const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true, multipleOfPrecision: 10 });
+  const ajv = new Ajv({
+    allErrors: true,
+    verbose: true,
+    strict: 'log',
+    strictRequired: false,
+    useDefaults: true,
+    multipleOfPrecision: 10,
+  });
   ajv.addSchema(schemas);
 
   addErrors(ajv);
   addFormats(ajv);
 
   ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
+  Object.entries(DEFAULT_PATTERNS).forEach(([format, config]) => {
+    ajv.addFormat(format, optionalFormat(config.pattern));
+  });
   ajv.addFormat('phone', PHONE_REGEX);
   ajv.addFormat('computed', /^[a-zA-Z0-9._-]+$/);
   ajv.addFormat('file-urn', {

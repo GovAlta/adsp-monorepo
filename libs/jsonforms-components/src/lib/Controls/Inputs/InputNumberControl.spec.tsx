@@ -3,12 +3,12 @@ import { fireEvent, render } from '@testing-library/react';
 import { act } from 'react';
 import '@testing-library/jest-dom';
 
-import { formatSin } from './InputTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
 import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
 import { GoANumberInput, GoANumberControl, GoAInputNumberProps } from './InputNumberControl';
+import { DEFAULT_PATTERNS, formatWithPattern, filterAllowedKeys } from '../../util/patternForm';
 
 const mockContextValue = {
   errors: [],
@@ -249,45 +249,35 @@ describe('Input Text Control tests', () => {
       expect(validateSinWithLuhn('123456879')).toBe(false);
     });
     it('should return 9 digits for invalid SIN Number with more than 16 digits', () => {
-      expect(formatSin('123456879123456789999')).toBe('123-456-879');
+      expect(formatWithPattern('123456879123456789999', DEFAULT_PATTERNS.sin.mask)).toBe('123 456 879');
     });
   });
 
-  describe('formatSin', () => {
-    it('formats a valid SIN number correctly', () => {
-      const input = '123456789';
-      const expected = '123-456-789';
-      expect(formatSin(input)).toBe(expected);
+  describe('SIN masking', () => {
+    const sinMask = DEFAULT_PATTERNS.sin.mask;
+
+    it('formats a valid SIN number with spaces', () => {
+      expect(formatWithPattern('123456789', sinMask)).toBe('123 456 789');
     });
 
-    it('handles input with existing hyphens correctly', () => {
-      const input = '123-456-789';
-      const expected = '123-456-789';
-      expect(formatSin(input)).toBe(expected);
-    });
-
-    it('rejects alphabet characters', () => {
-      const input = 'abc123456def';
-      const expected = '';
-      expect(formatSin(input)).toBe(expected);
+    it('re-formats an already formatted value', () => {
+      expect(formatWithPattern('123 456 789', sinMask)).toBe('123 456 789');
     });
 
     it('truncates input longer than 9 digits', () => {
-      const input = '123456789012345';
-      const expected = '123-456-789';
-      expect(formatSin(input)).toBe(expected);
+      expect(formatWithPattern('123456789012345', sinMask)).toBe('123 456 789');
     });
 
     it('formats input with fewer than 9 digits', () => {
-      const input = '12345';
-      const expected = '123-45';
-      expect(formatSin(input)).toBe(expected);
+      expect(formatWithPattern('12345', sinMask)).toBe('123 45');
+    });
+
+    it('strips non-digit characters via allowedKeys', () => {
+      expect(filterAllowedKeys('abc123456def', DEFAULT_PATTERNS.sin.allowedKeys)).toBe('123456');
     });
 
     it('returns an empty string for empty input', () => {
-      const input = '';
-      const expected = '';
-      expect(formatSin(input)).toBe(expected);
+      expect(formatWithPattern('', sinMask)).toBe('');
     });
   });
 });

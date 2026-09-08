@@ -81,6 +81,11 @@ export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
 };
 
 /**
+ * Re-exported from ./patternForm to keep existing import paths stable.
+ */
+export { applyFormatPattern } from './patternForm';
+
+/**
  * Helper function to process onBlur events for text controls.
  * @param props - EventBlurControlProps
  */
@@ -192,7 +197,6 @@ const toNumericControlValue = (value: string | number | Date | null | undefined)
 
   return +value;
 };
-
 
 /**
  * Helper function to process onChange event for Number/Integer controls.
