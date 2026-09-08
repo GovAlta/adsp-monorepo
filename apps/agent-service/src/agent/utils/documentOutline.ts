@@ -125,10 +125,12 @@ function singleSection(text: string): DocumentOutlineSection {
   };
 }
 
+// One tag-strip pass leaves unterminated markup such as a trailing '<script', so drop any residual brackets.
 function stripHtml(value: string): string {
   return (
     value
       .replace(/<[^>]+>/g, '')
+      .replace(/[<>]/g, '')
       .replace(/\s+/g, ' ')
       .trim() || 'Section'
   );
