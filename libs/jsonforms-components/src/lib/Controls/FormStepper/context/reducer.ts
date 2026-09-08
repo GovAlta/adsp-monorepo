@@ -109,16 +109,22 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     }
 
     case 'update/category': {
-      const { id, ajv, schema, data } = action.payload;
+      const { id, ajv, schema, data, errors } = action.payload;
 
-      ajv.validate(schema, data);
+      // Reuse errors JsonForms core already computed for this schema/data (passed in via
+      // payload.errors) instead of re-validating the whole schema again on every keystroke.
+      let validationErrors = errors;
+      if (!validationErrors) {
+        ajv.validate(schema, data);
+        validationErrors = ajv.errors ?? undefined;
+      }
 
       const newCategories = state.categories.map((cat) => {
         // ✅ compare against cat.id, not the index
         if (cat.id !== id) {
           return cat;
         }
-        const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
+        const filteredErrors = validationErrors && validationErrors.filter((error) => error?.data != null);
         const visited = true;
         const { status } = getStepStatus({
           scopes: cat.scopes,

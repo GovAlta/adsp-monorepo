@@ -71,20 +71,30 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-  const middleware = createAutoPopulateMiddleware(definition.uiSchema, user);
+  const middleware = useMemo(
+    () => createAutoPopulateMiddleware(definition.uiSchema, user),
+    [definition.uiSchema, user],
+  );
+  // A new schema/ajv reference on every render forces JsonForms core to recompile the whole
+  // schema (ajv.compile) on every keystroke, so both must stay stable across renders.
+  const schema = useMemo(
+    () => populateDropdown(definition.dataSchema, enumerators),
+    [definition.dataSchema, enumerators],
+  );
+  const ajv = useMemo(() => createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema), []);
 
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
         readonly={readonly}
-        schema={populateDropdown(definition.dataSchema, enumerators)}
+        schema={schema}
         uischema={definition.uiSchema}
         data={data}
         validationMode="ValidateAndShow"
         renderers={GoARenderers}
         middleware={middleware}
         onChange={onChange}
-        ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
+        ajv={ajv}
       />
     </JsonFormRegisterProvider>
   );
