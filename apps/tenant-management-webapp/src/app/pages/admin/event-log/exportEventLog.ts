@@ -71,10 +71,14 @@ const toCsvRow = (entry: EventLogEntry) => ({
   details: JSON.stringify(entry.details ?? {}),
 });
 
+export const isExportCanceled = (error: unknown): boolean =>
+  axios.isCancel(error) || (error as { code?: string })?.code === 'ERR_CANCELED';
+
 export const fetchAllEventLogEntries = async (
   baseUrl: string,
   token: string,
   criteria: EventSearchCriteria,
+  signal?: AbortSignal,
 ): Promise<EventLogEntry[]> => {
   // Pin the upper bound so offset-based pagination sees a stable window across pages.
   const pinnedCriteria: EventSearchCriteria = {
@@ -89,6 +93,7 @@ export const fetchAllEventLogEntries = async (
     const { data } = await axios.get<EventValueResponse>(url, {
       headers: { Authorization: `Bearer ${token}` },
       timeout: REQUEST_TIMEOUT_MS,
+      signal,
     });
     entries.push(...(data?.['event-service']?.event ?? []).map(toEntry));
     after = data?.page?.next ?? '';
@@ -102,8 +107,12 @@ export const exportEventLogEntries = async (
   token: string,
   fileName: string,
   criteria: EventSearchCriteria = {},
+  signal?: AbortSignal,
 ): Promise<number> => {
-  const entries = await fetchAllEventLogEntries(baseUrl, token, criteria);
+  const entries = await fetchAllEventLogEntries(baseUrl, token, criteria, signal);
+  if (signal?.aborted) {
+    return 0;
+  }
   const rows = entries.map(toCsvRow);
 
   exportFromJSON({

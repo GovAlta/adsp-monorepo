@@ -1,6 +1,6 @@
 import axios from 'axios';
 import exportFromJSON from 'export-from-json';
-import { EXPORT_PAGE_SIZE, exportEventLogEntries, fetchAllEventLogEntries } from './exportEventLog';
+import { EXPORT_PAGE_SIZE, exportEventLogEntries, fetchAllEventLogEntries, isExportCanceled } from './exportEventLog';
 
 jest.mock('axios');
 jest.mock('export-from-json');
@@ -93,6 +93,15 @@ describe('exportEventLog', () => {
       expect(firstMax).toBeTruthy();
       expect(secondMax).toBe(firstMax);
     });
+
+    it('passes the abort signal to each page request', async () => {
+      mockedAxiosGet.mockResolvedValueOnce(pageResponse([entry('a')], undefined));
+      const controller = new AbortController();
+
+      await fetchAllEventLogEntries(baseUrl, token, {}, controller.signal);
+
+      expect(mockedAxiosGet.mock.calls[0][1].signal).toBe(controller.signal);
+    });
   });
 
   describe('exportEventLogEntries', () => {
@@ -122,6 +131,24 @@ describe('exportEventLog', () => {
       expect(count).toBe(0);
       expect(mockedExport).toHaveBeenCalledTimes(1);
       expect(mockedExport.mock.calls[0][0].data).toEqual([{}]);
+    });
+
+    it('does not write a CSV when the export is aborted after fetch', async () => {
+      mockedAxiosGet.mockResolvedValueOnce(pageResponse([entry('a')], undefined));
+      const controller = new AbortController();
+      controller.abort();
+
+      const count = await exportEventLogEntries(baseUrl, token, 'tenant-event-log', {}, controller.signal);
+
+      expect(count).toBe(0);
+      expect(mockedExport).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isExportCanceled', () => {
+    it('recognizes an axios cancel error', () => {
+      (axios.isCancel as unknown as jest.Mock) = jest.fn().mockReturnValue(true);
+      expect(isExportCanceled({ message: 'canceled' })).toBe(true);
     });
   });
 });
