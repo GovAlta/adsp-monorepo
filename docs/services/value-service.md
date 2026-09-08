@@ -32,27 +32,23 @@ A value represents a particular time series stream. Each write results in a new 
 
 Metrics are numeric values that can be included in value writes. The are automatically included in time interval aggregations and can be used for basic KPIs.
 
-### Continuous aggregate backfill
+### Metric interval rollups
 
-Metric continuous aggregates are created without historical data so that service deployment does not trigger an unbounded database refresh. After deploying the migration, populate each aggregate in windows of no more than 31 days:
+Reading a metric interval aggregates the `metrics` table on every request, which gets slow as history grows. The `metric_interval_rollups` table stores each interval's buckets so those reads become a keyed lookup, and a scheduled job keeps it current.
 
-```sql
-CALL backfill_metric_continuous_aggregate(
-  'metrics_daily_continuous',
-  '2026-01-01T00:00:00Z',
-  '2026-02-01T00:00:00Z'
-);
-```
+The job runs every five minutes and moves one interval's coverage by at most a chunk in each direction: forward from where coverage ended, so recent buckets stay fresh, and backward through history, so an interval that has never been rolled up fills in over successive runs. Both windows touch the existing coverage, which keeps `metric_interval_rollup_coverage` a single contiguous span per interval.
 
-Run windows from the oldest metric timestamp forward for each of `metrics_one_minute_continuous`, `metrics_five_minutes_continuous`, `metrics_hourly_continuous`, `metrics_daily_continuous`, `metrics_weekly_continuous`, and `metrics_monthly_continuous`. Completed windows are recorded and skipped when called again:
+Reads consult that coverage. A request whose window falls entirely inside it is served from the rollups; anything reaching outside falls back to the `metrics_*` view, which aggregates on read and is always complete. Rollups can therefore be populated progressively without the API losing data in the meantime.
+
+Set `METRIC_INTERVAL_ROLLUP_JOB_ENABLED=false` to stop the job. Reads keep working — they fall back to the views — but the rollups stop advancing and stale coverage will gradually stop matching incoming requests.
 
 ```sql
-SELECT *
-FROM metric_continuous_aggregate_backfills
-ORDER BY aggregate_name, window_start;
+SELECT "interval", covered_from, covered_to, updated_at
+FROM metric_interval_rollup_coverage
+ORDER BY "interval";
 ```
 
-Before continuing with the next window, monitor the database load and compare aggregate values against the equivalent `time_bucket` query over `metrics`. Automatic refresh policies keep recent completed buckets current; they do not replace the historical backfill.
+Rollups store `sum` and `count` rather than an average, because an average of averages is not the average; the read path divides the two.
 
 ## Code examples
 

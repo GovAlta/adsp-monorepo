@@ -1,7 +1,16 @@
 import { Knex } from 'knex';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Logger } from 'winston';
-import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria, Page } from '../values';
+import {
+  Value,
+  ValueCriteria,
+  ValuesRepository,
+  MetricValue,
+  Metric,
+  MetricCriteria,
+  MetricInterval,
+  Page,
+} from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { stripNul } from './sanitize';
 
@@ -10,7 +19,7 @@ type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 export class TimescaleValuesRepository implements ValuesRepository {
   constructor(
     private knex: Knex,
-    private logger?: Logger
+    private logger?: Logger,
   ) {}
 
   /**
@@ -26,7 +35,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       this.logger?.warn(
         `Removed null characters from value ${namespace}:${name} before write; ` +
           'the stored value differs from what was submitted.',
-        { context: 'TimescaleValuesRepository' }
+        { context: 'TimescaleValuesRepository' },
       );
     }
 
@@ -37,7 +46,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     namespace: string,
     name: string,
     tenantId: AdspId,
-    values: Omit<Value, 'tenantId'>[]
+    values: Omit<Value, 'tenantId'>[],
   ): Promise<Value[]> {
     const records = await this.knex.transaction(async (ts) => {
       const rows = await ts<ValueRecord>('values')
@@ -50,7 +59,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
             correlationId: this.sanitize(namespace, name, correlationId),
             context: this.sanitize(namespace, name, context || {}),
             value: this.sanitize(namespace, name, value),
-          }))
+          })),
         )
         .returning('*');
 
@@ -194,13 +203,45 @@ export class TimescaleValuesRepository implements ValuesRepository {
     return typeof count === 'string' ? parseInt(count) : count;
   }
 
+  /**
+   * Pick where interval data is read from.
+   *
+   * The rollup table only answers a request whose whole window it has rolled up; coverage is a
+   * single contiguous span per interval, so a request reaching outside it falls back to the
+   * metrics_* view. The view aggregates on read -- slower, but always complete -- which is what
+   * lets the rollups be populated progressively without the API losing data in the meantime.
+   */
+  private async resolveMetricSource(
+    interval: MetricInterval,
+    criteria: MetricCriteria,
+  ): Promise<{ table: string; rollup: boolean }> {
+    const coverage = await this.knex('metric_interval_rollup_coverage').where({ interval }).first();
+
+    const covered =
+      !!coverage &&
+      (!criteria.intervalMin || new Date(coverage.covered_from) <= criteria.intervalMin) &&
+      (!criteria.intervalMax || new Date(coverage.covered_to) >= criteria.intervalMax);
+
+    return covered
+      ? { table: 'metric_interval_rollups', rollup: true }
+      : { table: `metrics_${interval}`, rollup: false };
+  }
+
+  /**
+   * The rollups deliberately store sum and count rather than avg, since an average of averages is
+   * not the average. Divide on read so both sources return the same shape.
+   */
+  private selectAverage(rollup: boolean) {
+    return rollup ? this.knex.raw('CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg') : 'avg';
+  }
+
   async readMetrics(
     tenantId: AdspId,
     namespace: string,
     name: string,
     top = 100,
     after?: string,
-    criteria?: MetricCriteria
+    criteria?: MetricCriteria,
   ): Promise<Record<string, Metric> & { page: Page }> {
     const skip = decodeAfter(after);
 
@@ -213,7 +254,6 @@ export class TimescaleValuesRepository implements ValuesRepository {
       criteria.intervalMin = oneMonthAgo;
     }
 
-    let view = null;
     switch (criteria.interval) {
       case 'one_minute':
       case 'five_minutes':
@@ -221,11 +261,12 @@ export class TimescaleValuesRepository implements ValuesRepository {
       case 'daily':
       case 'weekly':
       case 'monthly':
-        view = `metrics_${criteria.interval}`;
         break;
       default:
         throw new InvalidOperationError('Interval value is not recognized.');
     }
+
+    const { table, rollup } = await this.resolveMetricSource(criteria.interval, criteria);
 
     const queryCriteria = {
       namespace,
@@ -236,11 +277,15 @@ export class TimescaleValuesRepository implements ValuesRepository {
       queryCriteria['tenant'] = tenantId.toString();
     }
 
-    let query = this.knex(view)
+    let query = this.knex(table)
       .offset(skip)
       .limit(top)
-      .select('metric', 'bucket', 'sum', 'avg', 'min', 'max', 'count')
+      .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(rollup))
       .where(queryCriteria);
+
+    if (rollup) {
+      query = query.where({ interval: criteria.interval });
+    }
 
     if (criteria.intervalMax) {
       query = query.where('bucket', '<=', criteria.intervalMax);
@@ -278,7 +323,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           next: encodeNext(rows.length, top, skip),
           size: rows.length,
         },
-      }
+      },
     );
   }
 
@@ -289,7 +334,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     metric: string,
     top = 100,
     after?: string,
-    criteria?: MetricCriteria
+    criteria?: MetricCriteria,
   ): Promise<Metric & { page: Page }> {
     const skip = decodeAfter(after);
 
@@ -302,17 +347,17 @@ export class TimescaleValuesRepository implements ValuesRepository {
       criteria.intervalMin = oneMonthAgo;
     }
 
-    let view = null;
     switch (criteria.interval) {
       case 'hourly':
       case 'daily':
       case 'weekly':
       case 'monthly':
-        view = `metrics_${criteria.interval}`;
         break;
       default:
         throw new InvalidOperationError('Interval value is not recognized.');
     }
+
+    const { table, rollup } = await this.resolveMetricSource(criteria.interval, criteria);
 
     const queryCriteria = {
       namespace,
@@ -324,11 +369,15 @@ export class TimescaleValuesRepository implements ValuesRepository {
       queryCriteria['tenant'] = tenantId.toString();
     }
 
-    let query = this.knex(view)
+    let query = this.knex(table)
       .offset(skip)
       .limit(top)
-      .select('bucket', 'sum', 'avg', 'min', 'max', 'count')
+      .select('bucket', 'sum', 'min', 'max', 'count', this.selectAverage(rollup))
       .where(queryCriteria);
+
+    if (rollup) {
+      query = query.where({ interval: criteria.interval });
+    }
 
     if (criteria.intervalMax) {
       query = query.where('bucket', '<=', criteria.intervalMax);
@@ -363,7 +412,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     name: string,
     metric: string,
     timestamp: Date,
-    value: number
+    value: number,
   ): Promise<MetricValue> {
     return await this.knex.transaction(async (ts) => {
       const [result] = await this.writeMetricRecords(ts, tenantId, [{ namespace, name, timestamp, metric, value }]);
@@ -374,7 +423,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
   private async writeMetricRecords(
     transaction: Knex.Transaction,
     tenantId: AdspId,
-    metrics: MetricValue[]
+    metrics: MetricValue[],
   ): Promise<MetricValue[]> {
     const rows = await transaction<MetricValue & { tenant: string }>('metrics')
       .insert(
@@ -385,7 +434,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           metric: this.sanitize(namespace, name, metric),
           timestamp,
           value,
-        }))
+        })),
       )
       .returning('*');
 

@@ -24,6 +24,7 @@ export const environment = envalid.cleanEnv(
     SERVICE_METRIC_ROLLUP_JOB_ENABLED: envalid.bool({ default: false }),
     SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP: envalid.bool({ default: false }),
     SERVICE_METRIC_ROLLUP_TRAILING_DAYS: envalid.num({ default: 3 }),
+    METRIC_INTERVAL_ROLLUP_JOB_ENABLED: envalid.bool({ default: true }),
   },
   {
     reporter: ({ errors }) => {
