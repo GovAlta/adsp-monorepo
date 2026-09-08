@@ -319,6 +319,50 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
+    // Services check whether anyone is subscribed before sending an event, and they hold
+    // subscription-app rather than the admin role.
+    it('can get subscriptions for service account with subscription app role', async () => {
+      const req = {
+        user: {
+          id: 'form-service',
+          tenantId,
+          name: 'Form service',
+          roles: [ServiceUserRoles.SubscriptionApp],
+        },
+        tenant: {
+          id: tenantId,
+        },
+        query: {},
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
+      );
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [], page: {} });
+
+      const handler = getTypeSubscriptions(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('can call next for unauthorized user', async () => {
       const req = {
         user: {

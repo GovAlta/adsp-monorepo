@@ -177,7 +177,9 @@ class NotificationServiceImpl implements NotificationService {
       return data?.results?.length > 0;
     } catch (err) {
       // Treated as nobody being subscribed, so the question still reaches the configured address.
-      this.logger.warn(`Error encountered checking subscribers of ${typeId} for ${correlationId}. ${err}`, {
+      // Logged as an error because that fallback silently misroutes every message to the configured
+      // address, which looks like working software until someone compares inboxes.
+      this.logger.error(`Error encountered checking subscribers of ${typeId} for ${correlationId}. ${err}`, {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });

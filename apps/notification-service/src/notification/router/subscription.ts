@@ -93,7 +93,12 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
-      if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
+      // Service accounts hold subscription-app, which already permits creating and updating
+      // subscriptions. Reading back which of them exist for a type is less than that, and services
+      // like form service need it to know whether anyone is subscribed before sending an event.
+      if (
+        !isAllowedUser(user, tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true)
+      ) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
 
