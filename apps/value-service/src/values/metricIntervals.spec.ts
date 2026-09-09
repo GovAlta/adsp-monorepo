@@ -28,41 +28,66 @@ describe('metricIntervalDefinitions', () => {
     });
   });
 
-  // What a refresh costs follows the span it reads out of metrics, not the bucket it fills, so a
-  // coarse interval must not be given a wider window just because its buckets are wider.
-  it('keeps every window within a couple of months of raw metrics', () => {
-    metricIntervalDefinitions.forEach(({ seedHours, chunkHours }) => {
-      expect(chunkHours).toBeLessThanOrEqual(62 * 24);
-      expect(seedHours).toBeLessThanOrEqual(62 * 24);
+  // Only the finest interval pays for a raw scan; every other reads a bounded number of rollup rows
+  // per bucket, which is what stops a coarse bucket costing a month of metrics to fill.
+  it('reads raw metrics for the finest interval only', () => {
+    const raw = metricIntervalDefinitions.filter(({ source }) => !source);
+
+    expect(raw.map(({ interval }) => interval)).toEqual(['one_minute']);
+    expect(raw[0].chunkHours).toBeLessThanOrEqual(24);
+  });
+
+  // A source has to be advanced before anything built on it, and the job walks the list in order.
+  it('lists every interval after the one it composes from', () => {
+    const seen: MetricInterval[] = [];
+
+    metricIntervalDefinitions.forEach(({ interval, source }) => {
+      if (source) {
+        expect(seen).toContain(source);
+      }
+      seen.push(interval);
     });
+  });
+
+  // A week can straddle a month boundary, so weeks do not nest inside months; a month built from
+  // weeks would pull in days either side of it.
+  it('composes both weekly and monthly from daily rather than chaining them', () => {
+    expect(getMetricIntervalDefinition('weekly').source).toBe('daily');
+    expect(getMetricIntervalDefinition('monthly').source).toBe('daily');
   });
 });
 
 describe('boundMetricIntervalDefinition', () => {
-  const hourly = getMetricIntervalDefinition('hourly');
+  const oneMinute = getMetricIntervalDefinition('one_minute');
   const monthly = getMetricIntervalDefinition('monthly');
 
-  it('caps both windows at the configured maximum', () => {
-    expect(boundMetricIntervalDefinition(hourly, 48)).toEqual({ ...hourly, seedHours: 48, chunkHours: 48 });
+  it('caps both windows of a raw-reading interval at the configured maximum', () => {
+    expect(boundMetricIntervalDefinition(oneMinute, 6)).toEqual({ ...oneMinute, seedHours: 6, chunkHours: 6 });
   });
 
-  it('leaves a definition already inside the cap alone', () => {
-    expect(boundMetricIntervalDefinition(hourly, 10000)).toEqual(hourly);
+  it('leaves a raw-reading definition already inside the cap alone', () => {
+    expect(boundMetricIntervalDefinition(oneMinute, 10000)).toEqual(oneMinute);
   });
 
-  // Cutting below a bucket would leave the refresh recomputing the same bucket forever, so the
-  // interval would never finish walking back through history.
-  it('will not cut a window below one bucket', () => {
-    const bounded = boundMetricIntervalDefinition(monthly, 1);
+  // Cutting below a bucket would leave the refresh recomputing the same bucket forever.
+  it('will not cut a raw-reading window below one bucket', () => {
+    const bounded = boundMetricIntervalDefinition(oneMinute, 0);
 
-    expect(bounded.chunkHours).toBe(monthly.bucketHours);
-    expect(bounded.seedHours).toBe(monthly.bucketHours);
+    expect(bounded.chunkHours).toBe(oneMinute.bucketHours);
+    expect(bounded.seedHours).toBe(oneMinute.bucketHours);
+  });
+
+  // A composed interval reads rollup rows, not a span of raw metrics, so the cap has nothing to
+  // bound and applying it would only slow the backfill down.
+  it('leaves a composed interval uncapped', () => {
+    expect(boundMetricIntervalDefinition(monthly, 1)).toEqual(monthly);
   });
 
   it('bounds every definition', () => {
-    boundMetricIntervalDefinitions(48).forEach(({ bucketHours, chunkHours }) => {
-      expect(chunkHours).toBe(Math.max(bucketHours, Math.min(chunkHours, 48)));
-    });
+    const bounded = boundMetricIntervalDefinitions(6);
+
+    expect(bounded.find(({ interval }) => interval === 'one_minute').chunkHours).toBe(6);
+    expect(bounded.find(({ interval }) => interval === 'daily')).toEqual(getMetricIntervalDefinition('daily'));
   });
 });
 
@@ -71,6 +96,7 @@ describe('getMetricIntervalDefinition', () => {
     expect(getMetricIntervalDefinition('hourly')).toEqual({
       interval: 'hourly',
       bucket: '1 hour',
+      source: 'five_minutes',
       bucketHours: 1,
       seedHours: 720,
       chunkHours: 720,

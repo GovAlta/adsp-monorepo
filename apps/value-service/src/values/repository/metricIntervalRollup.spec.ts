@@ -129,7 +129,12 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
     it('returns the number of rows the upsert touched', async () => {
       const { knex } = createKnex(undefined, 7);
 
-      const refreshed = await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', window);
+      const refreshed = await new TimescaleMetricIntervalRollupRepository(knex).refresh(
+        'hourly',
+        '1 hour',
+        null,
+        window,
+      );
 
       expect(refreshed).toBe(7);
     });
@@ -139,7 +144,7 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
     it('upserts on the coalesced tenant key', async () => {
       const { knex, raws } = createKnex();
 
-      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', window);
+      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
       expect(raws[0].sql).toContain(
         `ON CONFLICT ("interval", namespace, name, metric, bucket, (COALESCE(tenant, '')))`,
@@ -152,7 +157,7 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
     it('groups by select-list ordinals rather than repeating time_bucket', async () => {
       const { knex, raws } = createKnex();
 
-      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', window);
+      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
       expect(raws[0].sql).toContain('GROUP BY 2, 3, 4, 5, 6');
       expect(raws[0].sql.match(/time_bucket/g)).toHaveLength(2);
@@ -161,7 +166,7 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
     it('snaps the window start down to a bucket boundary', async () => {
       const { knex, raws } = createKnex();
 
-      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', window);
+      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
       expect(raws[0].sql).toContain('WHERE timestamp >= time_bucket(?::interval, ?::timestamptz) AND timestamp < ?');
       expect(raws[0].bindings).toEqual(['hourly', '1 hour', '1 hour', window.start, window.end]);
@@ -170,12 +175,49 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
     it('merges coverage outwards so neither edge is lost', async () => {
       const { knex, raws } = createKnex();
 
-      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', window);
+      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
       expect(raws).toHaveLength(2);
       expect(raws[1].sql).toContain('LEAST(metric_interval_rollup_coverage.covered_from, EXCLUDED.covered_from)');
       expect(raws[1].sql).toContain('GREATEST(metric_interval_rollup_coverage.covered_to, EXCLUDED.covered_to)');
-      expect(raws[1].bindings).toEqual(['hourly', '1 hour', window.start, window.end]);
+    });
+
+    // The window end is mid-bucket and the refresh cuts that bucket off there, so recording it
+    // verbatim advertised a partially totalled bucket as rolled up.
+    it('snaps both coverage edges down to a bucket boundary', async () => {
+      const { knex, raws } = createKnex();
+
+      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
+
+      expect(raws[1].sql).toContain(
+        'VALUES (?, time_bucket(?::interval, ?::timestamptz), time_bucket(?::interval, ?::timestamptz), NOW())',
+      );
+      expect(raws[1].bindings).toEqual(['hourly', '1 hour', window.start, '1 hour', window.end]);
+    });
+
+    describe('from a finer interval', () => {
+      // sum, count, min and max all compose, which is why the rollups store those four rather than
+      // an average -- an average of averages would not.
+      it('aggregates the source interval rather than raw metrics', async () => {
+        const { knex, raws } = createKnex();
+
+        await new TimescaleMetricIntervalRollupRepository(knex).refresh('daily', '1 day', 'hourly', window);
+
+        expect(raws[0].sql).toContain('FROM metric_interval_rollups');
+        expect(raws[0].sql).not.toContain('FROM metrics');
+        expect(raws[0].sql).toContain('SUM(sum), SUM(count), MIN(min), MAX(max)');
+      });
+
+      // The rows read carry the source interval and the rows written the target, so a refresh
+      // cannot consume its own output even though one statement reads and writes the same table.
+      it('reads only the source interval and buckets by the target', async () => {
+        const { knex, raws } = createKnex();
+
+        await new TimescaleMetricIntervalRollupRepository(knex).refresh('daily', '1 day', 'hourly', window);
+
+        expect(raws[0].sql).toContain('WHERE "interval" = ?');
+        expect(raws[0].bindings).toEqual(['daily', '1 day', 'hourly', '1 day', window.start, window.end]);
+      });
     });
   });
 });
