@@ -85,7 +85,8 @@ objects:
             }
           ]
     spec:
-      replicas: 3
+      # Single replica while the namespace CPU quota is tight; a run pins to one pod anyway.
+      replicas: 1
       revisionHistoryLimit: 3
       selector:
         matchLabels:
