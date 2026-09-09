@@ -17,40 +17,63 @@ const shiftHours = (date: Date, hours: number): Date => new Date(date.getTime() 
 const earlierOf = (left: Date, right: Date): Date => (left < right ? left : right);
 const laterOf = (left: Date, right: Date): Date => (left > right ? left : right);
 
-// Each run moves one interval's coverage by at most a chunk in either direction. Going forward keeps
-// recent buckets current, and going backward walks through history a chunk at a time. Both windows
-// touch the existing coverage, which is what keeps it a single contiguous span.
+// Each run moves one interval's coverage by at most a chunk in either direction, within what its
+// source can supply: raw metrics for the finest interval, and the finer interval's own coverage for
+// every other. Going forward keeps recent buckets current, and going backward walks through history
+// a chunk at a time. Both windows touch the existing coverage, which is what keeps it a single
+// contiguous span.
 export const advanceMetricInterval = async (
   repository: MetricIntervalRollupRepository,
   definition: MetricIntervalDefinition,
-  metricsWindow: MetricIntervalWindow,
-  now: Date,
+  available: MetricIntervalWindow,
 ): Promise<number> => {
-  const { interval, bucket, seedHours, chunkHours } = definition;
+  const { interval, bucket, source, seedHours, chunkHours } = definition;
   const coverage = await repository.getCoverage(interval);
 
   if (!coverage) {
-    const start = laterOf(metricsWindow.start, shiftHours(now, -seedHours));
-    return repository.refresh(interval, bucket, { start, end: earlierOf(now, shiftHours(start, chunkHours)) });
+    const start = laterOf(available.start, shiftHours(available.end, -seedHours));
+    return repository.refresh(interval, bucket, source, {
+      start,
+      end: earlierOf(available.end, shiftHours(start, chunkHours)),
+    });
   }
 
   let refreshed = 0;
 
-  if (coverage.coveredTo < now) {
-    refreshed += await repository.refresh(interval, bucket, {
+  if (coverage.coveredTo < available.end) {
+    refreshed += await repository.refresh(interval, bucket, source, {
       start: coverage.coveredTo,
-      end: earlierOf(now, shiftHours(coverage.coveredTo, chunkHours)),
+      end: earlierOf(available.end, shiftHours(coverage.coveredTo, chunkHours)),
     });
   }
 
-  if (coverage.coveredFrom > metricsWindow.start) {
-    refreshed += await repository.refresh(interval, bucket, {
-      start: laterOf(metricsWindow.start, shiftHours(coverage.coveredFrom, -chunkHours)),
+  if (coverage.coveredFrom > available.start) {
+    refreshed += await repository.refresh(interval, bucket, source, {
+      start: laterOf(available.start, shiftHours(coverage.coveredFrom, -chunkHours)),
       end: coverage.coveredFrom,
     });
   }
 
   return refreshed;
+};
+
+// What an interval is allowed to roll up. The finest reads raw metrics, so it can advance to now;
+// every other is bounded by its source's coverage, and cannot start at all until the source has
+// some. Definitions run finest first, so a source advanced earlier in the same run is already
+// visible here.
+export const resolveAvailableWindow = async (
+  repository: MetricIntervalRollupRepository,
+  definition: MetricIntervalDefinition,
+  metricsWindow: MetricIntervalWindow,
+  now: Date,
+): Promise<MetricIntervalWindow | null> => {
+  if (!definition.source) {
+    return { start: metricsWindow.start, end: now };
+  }
+
+  const coverage = await repository.getCoverage(definition.source);
+
+  return coverage ? { start: coverage.coveredFrom, end: coverage.coveredTo } : null;
 };
 
 export const createMetricIntervalRollupJob =
@@ -75,9 +98,17 @@ export const createMetricIntervalRollupJob =
     // already succeeded, and the job committed nothing at all.
     for (const definition of definitions) {
       try {
-        const advanced = await repository.withRollupLock((locked) =>
-          advanceMetricInterval(locked, definition, metricsWindow, now),
-        );
+        const advanced = await repository.withRollupLock(async (locked) => {
+          const available = await resolveAvailableWindow(locked, definition, metricsWindow, now);
+          if (!available) {
+            logger.debug(`No ${definition.source} coverage yet; ${definition.interval} has nothing to build from.`, {
+              context: 'MetricIntervalRollup',
+            });
+            return 0;
+          }
+
+          return advanceMetricInterval(locked, definition, available);
+        });
 
         if (advanced === null) {
           logger.debug(`Another instance holds the ${definition.interval} rollup lock; skipping it this run.`, {

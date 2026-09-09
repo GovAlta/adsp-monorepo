@@ -3,6 +3,7 @@ import * as schedule from 'node-schedule';
 import {
   advanceMetricInterval,
   createMetricIntervalRollupJob,
+  resolveAvailableWindow,
   scheduleMetricIntervalRollupJob,
 } from './metricIntervalRollup';
 import { MetricIntervalDefinition } from '../metricIntervals';
@@ -25,6 +26,7 @@ const logger = {
 const definition: MetricIntervalDefinition = {
   interval: 'hourly',
   bucket: '1 hour',
+  source: null,
   bucketHours: 1,
   seedHours: 24,
   chunkHours: 24,
@@ -52,10 +54,10 @@ describe('advanceMetricInterval', () => {
   it('seeds coverage a chunk wide when the interval has never been rolled up', async () => {
     const repository = createRepository();
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledTimes(1);
-    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', {
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-09T12:00:00Z'),
       end: now,
     });
@@ -65,9 +67,9 @@ describe('advanceMetricInterval', () => {
     const repository = createRepository();
     const recentMetrics = { start: at('2026-03-10T06:00:00Z'), end: now };
 
-    await advanceMetricInterval(repository, definition, recentMetrics, now);
+    await advanceMetricInterval(repository, definition, { start: recentMetrics.start, end: now });
 
-    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', {
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-10T06:00:00Z'),
       end: now,
     });
@@ -80,9 +82,9 @@ describe('advanceMetricInterval', () => {
       coveredTo: at('2026-03-10T11:00:00Z'),
     });
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
-    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', {
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-10T11:00:00Z'),
       end: now,
     });
@@ -95,9 +97,9 @@ describe('advanceMetricInterval', () => {
       coveredTo: at('2026-03-01T00:00:00Z'),
     });
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
-    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', {
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-01T00:00:00Z'),
       end: at('2026-03-02T00:00:00Z'),
     });
@@ -110,10 +112,10 @@ describe('advanceMetricInterval', () => {
       coveredTo: now,
     });
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledTimes(1);
-    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', {
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-01-31T00:00:00Z'),
       end: at('2026-02-01T00:00:00Z'),
     });
@@ -126,7 +128,7 @@ describe('advanceMetricInterval', () => {
       coveredTo: now,
     });
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).not.toHaveBeenCalled();
   });
@@ -138,9 +140,9 @@ describe('advanceMetricInterval', () => {
       coveredTo: now,
     });
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
-    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', {
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-01-01T00:00:00Z'),
       end: at('2026-01-01T06:00:00Z'),
     });
@@ -153,9 +155,58 @@ describe('advanceMetricInterval', () => {
       coveredTo: at('2026-03-10T11:00:00Z'),
     });
 
-    await advanceMetricInterval(repository, definition, metricsWindow, now);
+    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('resolveAvailableWindow', () => {
+  const metricsWindow = { start: at('2026-01-01T00:00:00Z'), end: at('2026-03-10T12:00:00Z') };
+  const now = at('2026-03-10T12:00:00Z');
+
+  // The finest interval reads the raw table, so it can advance right up to now.
+  it('lets a raw-reading interval run to now', async () => {
+    const repository = createRepository();
+
+    expect(await resolveAvailableWindow(repository, definition, metricsWindow, now)).toEqual({
+      start: metricsWindow.start,
+      end: now,
+    });
+    expect(repository.getCoverage).not.toHaveBeenCalled();
+  });
+
+  // A composed interval cannot roll up buckets its source has not built yet, so its window is the
+  // source's coverage rather than the raw metrics span.
+  it('bounds a composed interval by its source coverage', async () => {
+    const repository = createRepository({
+      interval: 'hourly',
+      coveredFrom: at('2026-02-01T00:00:00Z'),
+      coveredTo: at('2026-03-01T00:00:00Z'),
+    });
+
+    const available = await resolveAvailableWindow(
+      repository,
+      { ...definition, interval: 'daily', bucket: '1 day', source: 'hourly' },
+      metricsWindow,
+      now,
+    );
+
+    expect(repository.getCoverage).toHaveBeenCalledWith('hourly');
+    expect(available).toEqual({ start: at('2026-02-01T00:00:00Z'), end: at('2026-03-01T00:00:00Z') });
+  });
+
+  it('returns null when the source has never been rolled up', async () => {
+    const repository = createRepository();
+
+    const available = await resolveAvailableWindow(
+      repository,
+      { ...definition, interval: 'daily', bucket: '1 day', source: 'hourly' },
+      metricsWindow,
+      now,
+    );
+
+    expect(available).toBeNull();
   });
 });
 
@@ -197,6 +248,19 @@ describe('createMetricIntervalRollupJob', () => {
     ])(at('2026-03-10T12:00:00Z'));
 
     expect(repository.withRollupLock).toHaveBeenCalledTimes(2);
+  });
+
+  // An interval whose source is empty has nothing to aggregate; it waits rather than failing.
+  it('skips an interval whose source has no coverage yet', async () => {
+    const repository = createRepository();
+    repository.getMetricsWindow.mockResolvedValue(metricsWindow);
+
+    const refreshed = await createMetricIntervalRollupJob(repository, logger, [
+      { ...definition, interval: 'daily', bucket: '1 day', source: 'hourly' },
+    ])(at('2026-03-10T12:00:00Z'));
+
+    expect(refreshed).toBe(0);
+    expect(repository.refresh).not.toHaveBeenCalled();
   });
 
   // The coarse intervals read the most history and run last, so letting one failure end the run

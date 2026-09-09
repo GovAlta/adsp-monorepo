@@ -4,6 +4,8 @@ export interface MetricIntervalDefinition {
   interval: MetricInterval;
   // Postgres interval literal handed to time_bucket.
   bucket: string;
+  // Interval whose buckets this one is aggregated from, or null to read the raw metrics table.
+  source: MetricInterval | null;
   // Span of a single bucket. A chunk narrower than this re-reads the same bucket on every run
   // without ever advancing past it, so it is the floor the configured cap cannot cut below.
   bucketHours: number;
@@ -17,14 +19,27 @@ export interface MetricIntervalDefinition {
 const HOURS_PER_DAY = 24;
 const MINUTE_HOURS = 1 / 60;
 
-// A refresh aggregates the raw metrics table over its window, so what a run costs follows the span
-// of that window rather than the width of the bucket being filled: a month of raw metrics is the
-// same read whether it lands in daily buckets or one monthly bucket. Chunks are therefore whole
-// numbers of buckets sized to a bounded span, and history fills in over successive runs.
+/**
+ * Each interval is aggregated from the next finer one, and only the finest reads raw metrics.
+ *
+ * sum, count, min and max all compose -- a month's sum is the sum of its days' sums, its min the
+ * least of their mins -- which is why the rollups store those four and derive the average on read
+ * rather than storing it. An average of averages would not compose, and this is what the schema
+ * was shaped for.
+ *
+ * So a monthly bucket reads about thirty daily rows instead of a month of raw metrics, and what a
+ * refresh costs stops following the width of the bucket it fills. Only one_minute pays for a raw
+ * scan, which is why it alone keeps a tight window.
+ *
+ * Both weekly and monthly compose from daily rather than chaining monthly off weekly: a week can
+ * straddle a month boundary, so weeks do not nest inside months and a month built from weeks would
+ * draw in days either side of it.
+ */
 export const metricIntervalDefinitions: MetricIntervalDefinition[] = [
   {
     interval: 'one_minute',
     bucket: '1 minute',
+    source: null,
     bucketHours: MINUTE_HOURS,
     seedHours: HOURS_PER_DAY,
     chunkHours: HOURS_PER_DAY,
@@ -32,6 +47,7 @@ export const metricIntervalDefinitions: MetricIntervalDefinition[] = [
   {
     interval: 'five_minutes',
     bucket: '5 minutes',
+    source: 'one_minute',
     bucketHours: 5 * MINUTE_HOURS,
     seedHours: 7 * HOURS_PER_DAY,
     chunkHours: 7 * HOURS_PER_DAY,
@@ -39,6 +55,7 @@ export const metricIntervalDefinitions: MetricIntervalDefinition[] = [
   {
     interval: 'hourly',
     bucket: '1 hour',
+    source: 'five_minutes',
     bucketHours: 1,
     seedHours: 30 * HOURS_PER_DAY,
     chunkHours: 30 * HOURS_PER_DAY,
@@ -46,38 +63,47 @@ export const metricIntervalDefinitions: MetricIntervalDefinition[] = [
   {
     interval: 'daily',
     bucket: '1 day',
+    source: 'hourly',
     bucketHours: HOURS_PER_DAY,
-    seedHours: 30 * HOURS_PER_DAY,
-    chunkHours: 30 * HOURS_PER_DAY,
+    seedHours: 90 * HOURS_PER_DAY,
+    chunkHours: 90 * HOURS_PER_DAY,
   },
   {
     interval: 'weekly',
     bucket: '1 week',
+    source: 'daily',
     bucketHours: 7 * HOURS_PER_DAY,
-    seedHours: 28 * HOURS_PER_DAY,
-    chunkHours: 28 * HOURS_PER_DAY,
+    seedHours: 365 * HOURS_PER_DAY,
+    chunkHours: 365 * HOURS_PER_DAY,
   },
   {
     interval: 'monthly',
     bucket: '1 month',
+    source: 'daily',
     bucketHours: 31 * HOURS_PER_DAY,
-    seedHours: 31 * HOURS_PER_DAY,
-    chunkHours: 31 * HOURS_PER_DAY,
+    seedHours: 730 * HOURS_PER_DAY,
+    chunkHours: 730 * HOURS_PER_DAY,
   },
 ];
 
 /**
  * Bound a definition's windows to what one statement is allowed to read.
  *
- * The cap is deployment configuration rather than a constant because how much raw history the
- * database can absorb in a single statement depends on how much of it there is. It cannot cut
- * below one bucket: a window narrower than the bucket it fills leaves coverage where it was, and
- * the interval would never finish backfilling.
+ * The cap applies only to an interval that reads raw metrics, where the cost follows the span of
+ * the window. An interval composed from a finer one reads a bounded number of rollup rows per
+ * bucket however wide its window is, so capping it would only slow the backfill down for nothing.
+ *
+ * It cannot cut below one bucket either: a window narrower than the bucket it fills leaves coverage
+ * where it was, and the interval would never finish backfilling.
  */
 export const boundMetricIntervalDefinition = (
   definition: MetricIntervalDefinition,
   maxChunkHours: number,
 ): MetricIntervalDefinition => {
+  if (definition.source) {
+    return definition;
+  }
+
   const bound = (hours: number) => Math.max(definition.bucketHours, Math.min(hours, maxChunkHours));
 
   return { ...definition, seedHours: bound(definition.seedHours), chunkHours: bound(definition.chunkHours) };
