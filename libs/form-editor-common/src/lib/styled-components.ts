@@ -259,7 +259,7 @@ export const FormTemplateEditorContainer = styled.div`
   box-sizing: border-box;
 `;
 
-export const NameDescriptionDataSchema = styled.div<{ $previewHidden?: boolean }>`
+export const NameDescriptionDataSchema = styled.div<{ $previewHidden: boolean }>`
   flex: 6;
   min-width: 0; /* Allow flex item to shrink below content width */
   /* The gap toward the divider. With the preview hidden there is no divider, and this would stack on

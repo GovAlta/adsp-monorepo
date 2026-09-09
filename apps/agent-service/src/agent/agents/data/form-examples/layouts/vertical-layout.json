@@ -4,9 +4,9 @@
   "category": "layout",
   "summary": "VerticalLayout for simple single-page forms with a few fields",
   "whenToUse": [
-    "Simple forms with 1-5 fields and a single purpose",
-    "Quick feedback or contact forms",
-    "When a multi-page layout would add unnecessary complexity"
+    "SIMPLE forms: no named sections, no conditional branches, fewer than 12 inputs",
+    "A one-page document of a handful of fields even if a file was attached",
+    "Quick feedback or contact forms that do not name categories"
   ],
   "dataSchema": {
     "type": "object",

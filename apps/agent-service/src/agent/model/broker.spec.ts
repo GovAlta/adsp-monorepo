@@ -51,11 +51,49 @@ describe('AgentBroker', () => {
       content: [{ type: 'text', text: 'Hello' }],
     });
 
-    const options = generate.mock.calls[0][1] as { requestContext: RequestContext<Record<string, unknown>> };
+    const options = generate.mock.calls[0][1] as {
+      requestContext: RequestContext<Record<string, unknown>>;
+      abortSignal?: AbortSignal;
+      maxSteps?: number;
+    };
 
     expect(options.requestContext.get('tenantId')).toBe(tenantId);
     expect(options.requestContext.get('user')).toBe(user);
     expect(options.requestContext.get(MASTRA_THREAD_ID_KEY)).toBe('thread-456');
+    expect(options.abortSignal).toBeDefined();
+    expect(options.maxSteps).toBeUndefined();
+  });
+
+  it('sets form generation maxSteps and abort controller on request context', async () => {
+    const generate = jest.fn().mockResolvedValue({ text: 'ok', object: null });
+    const agent = {
+      name: 'Form Generation Agent',
+      generate,
+      stream: jest.fn(),
+    };
+    const broker = new AgentBroker(
+      logger as never,
+      tenantId as never,
+      [],
+      agent as never,
+      {},
+      undefined,
+      undefined,
+      'formGenerationAgent',
+    );
+
+    await broker.generate(user as never, 'thread-456', {
+      role: 'user',
+      content: [{ type: 'text', text: 'Hello' }],
+    });
+
+    const options = generate.mock.calls[0][1] as {
+      maxSteps?: number;
+      requestContext: RequestContext<Record<string, unknown>>;
+    };
+    expect(options.maxSteps).toBeDefined();
+    expect(options.requestContext.get('abortController')).toBeInstanceOf(AbortController);
+    expect(options.requestContext.get('agentId')).toBe('formGenerationAgent');
   });
 
   it('creates thread metadata with expiresAt when updating expiry for a new thread', async () => {

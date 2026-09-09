@@ -13,6 +13,8 @@ import { createNxAdspTemplateTools } from './nxAdspTemplates';
 import { createAdspSdkReferenceTools } from './adspSdkReference';
 import { createSchemaIndexTools } from './schemaIndex';
 import { createSchemaPatchTools } from './schemaPatch';
+import { createSchemaValidateTools } from './schemaValidate';
+import { createFormGenerationTools } from '../agents/forms/generation';
 
 interface ToolsProps {
   logger: Logger;
@@ -58,6 +60,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
 
   const { formSchemaIndex } = await createSchemaIndexTools({ logger, directory, tokenProvider });
   const { formSchemaPatch } = await createSchemaPatchTools({ logger, directory, tokenProvider });
+  const { formSchemaValidate } = await createSchemaValidateTools({ logger, directory, tokenProvider });
+  const { formGenerationRun } = await createFormGenerationTools({ logger, directory, tokenProvider });
 
   return {
     fileDownloadTool,
@@ -83,6 +87,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     searchAdspSdkReferenceTool,
     formSchemaIndex,
     formSchemaPatch,
+    formSchemaValidate,
+    formGenerationRun,
   };
 }
 

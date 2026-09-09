@@ -8,6 +8,7 @@ import * as integerInput from '../data/form-examples/controls/integer-input.json
 import * as booleanRadio from '../data/form-examples/controls/boolean-radio.json';
 import * as dropdownSelect from '../data/form-examples/controls/dropdown-select.json';
 import * as radioButtons from '../data/form-examples/controls/radio-buttons.json';
+import * as multiSelectCheckboxes from '../data/form-examples/controls/multi-select-checkboxes.json';
 import * as checkboxRequired from '../data/form-examples/controls/checkbox-required.json';
 import * as requiredTextWorkaround from '../data/form-examples/controls/required-text-workaround.json';
 import * as fileUploadDragdrop from '../data/form-examples/controls/file-upload-dragdrop.json';
@@ -140,6 +141,16 @@ interface BestPracticesData {
     description: string;
     steps: string[];
   };
+  documentUseCases?: {
+    description: string;
+    conventions: Array<{ signal: string; meaning: string }>;
+    formTypes: Array<{
+      name: string;
+      documentSignals: string[];
+      layout: string;
+      useExamples: string[];
+    }>;
+  };
 }
 
 const controlExamples: FormExample[] = [
@@ -151,6 +162,7 @@ const controlExamples: FormExample[] = [
   booleanRadio,
   dropdownSelect,
   radioButtons,
+  multiSelectCheckboxes,
   checkboxRequired,
   requiredTextWorkaround,
   fileUploadDragdrop,
@@ -214,6 +226,14 @@ function formatExample(example: FormExample): string {
   lines.push(`## ${example.name}`);
   lines.push(example.summary);
   lines.push('');
+
+  if (example.whenToUse?.length) {
+    lines.push('### When to use');
+    for (const use of example.whenToUse) {
+      lines.push(`- ${use}`);
+    }
+    lines.push('');
+  }
 
   if (example.dataSchema) {
     lines.push('### Data schema');
@@ -342,6 +362,24 @@ function formatBestPractices(data: BestPracticesData): string {
   }
   lines.push('');
 
+  if (data.documentUseCases) {
+    lines.push('## Document use cases');
+    lines.push(data.documentUseCases.description);
+    lines.push('');
+    lines.push('### Requirements document conventions');
+    for (const convention of data.documentUseCases.conventions) {
+      lines.push(`- **${convention.signal}**: ${convention.meaning}`);
+    }
+    lines.push('');
+    lines.push('### Form types in a document');
+    for (const formType of data.documentUseCases.formTypes) {
+      lines.push(`- **${formType.name}** (${formType.layout})`);
+      lines.push(`  - Signals: ${formType.documentSignals.join('; ')}`);
+      lines.push(`  - Use examples: ${formType.useExamples.join('; ')}`);
+    }
+    lines.push('');
+  }
+
   lines.push('## Validation Checklist');
   lines.push(data.validation.description);
   for (const check of data.validation.checks) {
@@ -372,36 +410,41 @@ function formatBestPractices(data: BestPracticesData): string {
   return lines.join('\n');
 }
 
+const exampleGroups = {
+  controls: { examples: controlExamples, heading: 'UI Control Examples' },
+  layouts: { examples: layoutExamples, heading: 'Layout Examples' },
+  commonFields: { examples: commonFieldExamples, heading: 'Common Field Examples' },
+  content: { examples: contentExamples, heading: 'Content Element Examples' },
+  repeating: { examples: repeatingExamples, heading: 'Repeating Items Examples' },
+  rules: { examples: ruleExamples, heading: 'Rule Examples' },
+  validation: { examples: validationExamples, heading: 'Validation Examples' },
+  dataRegisters: { examples: dataRegisterExamples, heading: 'Data Register Examples' },
+  complex: { examples: complexExamples, heading: 'Complex Scenario Examples' },
+  computed: { examples: computedExamples, heading: 'Computed Field Examples' },
+} as const;
+
+export type FormExampleGroup = keyof typeof exampleGroups;
+
 /**
- * Loads all form example JSON files and formats them into instruction text
- * for the form generation agent. This follows the pattern used in the
- * GoA Design System MCP server: rich data in JSON, simple rendering in code.
+ * Loads form example JSON files and formats them into instruction text.
+ * This follows the pattern used in the GoA Design System MCP server: rich data
+ * in JSON, simple rendering in code.
  *
  * JSON files are imported directly and bundled by webpack at build time.
  * To add a new example, create a JSON file in the appropriate data/ subfolder
  * and add the import + array entry above.
+ *
+ * Pass `groups` to load only the examples relevant to one increment; every step of a
+ * generation run re-sends its prompt, so the full catalogue is too expensive per step.
  */
-export function loadFormExamples(): string {
+export function loadFormExamples(groups?: readonly FormExampleGroup[]): string {
   const sections: string[] = [];
+  const selected = groups ?? (Object.keys(exampleGroups) as FormExampleGroup[]);
 
-  // Load best practices
   sections.push(formatBestPractices(bestPractices as unknown as BestPracticesData));
 
-  // Load examples by category
-  const exampleCategories = [
-    { examples: controlExamples, heading: 'UI Control Examples' },
-    { examples: layoutExamples, heading: 'Layout Examples' },
-    { examples: commonFieldExamples, heading: 'Common Field Examples' },
-    { examples: contentExamples, heading: 'Content Element Examples' },
-    { examples: repeatingExamples, heading: 'Repeating Items Examples' },
-    { examples: ruleExamples, heading: 'Rule Examples' },
-    { examples: validationExamples, heading: 'Validation Examples' },
-    { examples: dataRegisterExamples, heading: 'Data Register Examples' },
-    { examples: complexExamples, heading: 'Complex Scenario Examples' },
-    { examples: computedExamples, heading: 'Computed Field Examples' },
-  ];
-
-  for (const { examples, heading } of exampleCategories) {
+  for (const group of selected) {
+    const { examples, heading } = exampleGroups[group];
     if (examples.length > 0) {
       sections.push(`# ${heading}\n`);
       for (const example of examples) {
@@ -410,7 +453,6 @@ export function loadFormExamples(): string {
     }
   }
 
-  // Load anti-patterns
   sections.push(formatAntiPatterns(antiPatterns as unknown as AntiPatternsData));
 
   return sections.join('\n');

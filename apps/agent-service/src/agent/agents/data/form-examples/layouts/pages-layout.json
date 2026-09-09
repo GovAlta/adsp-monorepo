@@ -4,9 +4,10 @@
   "category": "layout",
   "summary": "Categorization with `variant: pages` implements the Design System's basic layout pattern — the preferred method for complex government forms. Creates a Task List (table of contents) with progress tracking, section groupings, and a summary review page.",
   "whenToUse": [
-    "Complex forms with 6+ fields or multiple logical sections",
+    "COMPLEX forms: two or more named sections, a conditional branch, 12+ inputs, or a large source document",
     "When the form benefits from breaking content into digestible steps",
     "Government service applications that collect personal info, contact info, and supporting details",
+    "Surveys or questionnaires whose requirements document lists Category headings",
     "When you want the Design System's recommended Task List pattern with progress tracking",
     "When users need to see application status at a glance and enter at any step"
   ],

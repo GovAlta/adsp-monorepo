@@ -83,11 +83,10 @@ IMPORTANT — choosing the right op:
 - Using "replace" on a non-existent path will throw an error — if unsure, use "add"
 
 DO NOT use this tool for:
-- Adding a brand new Category to the form
-- Restructuring the top-level layout
-- Moving a field from one category to another
+- Building a new form, or adding pages/sections (use formGenerationRun instead)
+- Replacing the entire schema
 - Any change where you need to see the full schema context first
-Use formConfigurationRetrievalTool + formConfigurationUpdateTool for those cases.`,
+formGenerationRun builds pages and conditional branches. formConfigurationUpdateTool is not for form construction.`,
     inputSchema: z.object({
       dataSchemaOps: z
         .array(jsonPatchOpSchema)
@@ -111,10 +110,7 @@ Use formConfigurationRetrievalTool + formConfigurationUpdateTool for those cases
       const token = await tokenProvider.getAccessToken();
 
       // Fetch current schemas
-      const latestUrl = new URL(
-        `v2/configuration/form-service/${formDefinitionId}/latest`,
-        configurationServiceUrl,
-      );
+      const latestUrl = new URL(`v2/configuration/form-service/${formDefinitionId}/latest`, configurationServiceUrl);
 
       const { data: current } = await axios.get(latestUrl.href, {
         params: { tenantId: tenantId?.toString() },
@@ -146,10 +142,7 @@ Use formConfigurationRetrievalTool + formConfigurationUpdateTool for those cases
 
       // Write patched schemas back via Configuration Service
       try {
-        const updateUrl = new URL(
-          `v2/configuration/form-service/${formDefinitionId}`,
-          configurationServiceUrl,
-        );
+        const updateUrl = new URL(`v2/configuration/form-service/${formDefinitionId}`, configurationServiceUrl);
 
         const { data } = await axios.patch(
           updateUrl.href,

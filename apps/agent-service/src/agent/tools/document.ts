@@ -5,7 +5,9 @@ import type { Logger } from 'winston';
 import z from 'zod';
 import { createFileServiceClient } from '../clients';
 import { AdspRequestContext } from '../types';
+import { documentCacheKey, getCachedDocumentExtract } from '../utils/documentCache';
 import { extractDocumentText, isExtractableDocument } from '../utils/documentParser';
+import { DOCUMENT_EXTRACT_CHAR_CAP, truncateText } from '../utils/documentSize';
 
 interface DocumentToolsProps {
   directory: ServiceDirectory;
@@ -36,6 +38,7 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
       filename: z.string().describe('Original filename of the document.'),
       mimeType: z.string().describe('MIME type of the document.'),
       pageCount: z.number().optional().describe('Number of pages (PDF only).'),
+      truncated: z.boolean().optional().describe('True when extracted text was capped.'),
     }),
     execute: async (inputData, context: ToolExecutionContext) => {
       const requestContext = context.requestContext as AdspRequestContext;
@@ -65,21 +68,28 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
       }
 
       if (isExtractableDocument(metadata.mimeType, metadata.filename)) {
-        const result = await extractDocumentText(data, metadata.mimeType, metadata.filename, logger);
+        const result = await getCachedDocumentExtract(documentCacheKey(tenantId?.toString(), fileId), async () => {
+          const extracted = await extractDocumentText(data, metadata.mimeType, metadata.filename, logger);
+          return extracted ?? { text: '' };
+        });
+        const capped = truncateText(result.text ?? '', DOCUMENT_EXTRACT_CHAR_CAP);
         return {
-          text: result.text,
+          text: capped.text,
           filename: metadata.filename,
           mimeType: metadata.mimeType,
           pageCount: result.pageCount,
+          truncated: capped.truncated,
         };
       }
 
       // Fallback: treat as UTF-8 text
       const decoder = new TextDecoder('utf-8');
+      const capped = truncateText(decoder.decode(data), DOCUMENT_EXTRACT_CHAR_CAP);
       return {
-        text: decoder.decode(data),
+        text: capped.text,
         filename: metadata.filename,
         mimeType: metadata.mimeType,
+        truncated: capped.truncated,
       };
     },
   });

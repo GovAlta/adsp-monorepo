@@ -92,9 +92,10 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { getTaskQueues } from '@store/task/action';
 import { FetchFileTypeService } from '@store/file/actions';
 import { fetchCalendars } from '@store/calendar/actions';
-import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_RESULT } from '../agent/actions';
+import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_RESULT, TOOL_OUTPUT } from '../agent/actions';
 import { getConfigurationDefinitions } from '../configuration/action';
-import { markFormPreviewStale, clearFormPreviewStale } from './action';
+import { AgentMessage } from '@core-services/app-common';
+import { isFormGenerationTool, isGenerationSavePoint } from '@form-editor-common';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -601,6 +602,10 @@ export function* refreshDefinition(): SagaIterator {
 
     if (editorSelectedId && baseUrl && token) {
       const definition = yield call(fetchFormDefinitionApi, token, baseUrl, editorSelectedId);
+      if (!definition?.id) {
+        throw new Error(`Form definition ${editorSelectedId} could not be reloaded.`);
+      }
+
       yield put(updateFormDefinitionSuccess(definition));
       yield put(openEditorForDefinitionSuccess(definition, false));
     }
@@ -611,31 +616,66 @@ export function* refreshDefinition(): SagaIterator {
 
 const MUTATION_TOOLS = new Set([
   'formConfigurationUpdateTool',
+  'update-form-configuration',
   'formDataUpdateTool',
   'dataRegisterCreateTool',
   'dataRegisterUpdateTool',
   'formSchemaPatch',
+  'patch-form-schema',
 ]);
 
-function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
-  return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
-export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponseAction): SagaIterator {
-  // Mark preview stale on any mutation tool result
-  if (isMutationToolResult(chunk)) {
-    yield put(markFormPreviewStale());
+// Mastra omits optional fields from the tool-result payload, so toolName may only exist on the tool-call chunk.
+export function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
+  if (chunk?.type !== TOOL_CALL_RESULT) {
+    return false;
   }
 
-  // Full refresh when stream completes and preview was marked stale
-  if (done) {
-    const isPreviewMarkedStale: boolean = yield select((state: RootState) => state.form.previewStale);
-    if (isPreviewMarkedStale) {
-      yield call(refreshDefinition);
-      yield put(getConfigurationDefinitions());
-      yield put(clearFormPreviewStale());
-    }
+  const result = chunk.payload?.result;
+  if (isRecord(result) && result.success === false) {
+    return false;
   }
+
+  return !chunk.payload?.toolName || MUTATION_TOOLS.has(chunk.payload.toolName);
+}
+
+// The generation tool saves each page as it goes and reports it before the tool returns.
+// This runs against every dispatched action, so it must not throw on an unexpected chunk shape.
+export function isDefinitionRefreshChunk(chunk: AgentResponseAction['chunk']): boolean {
+  if (chunk?.type === TOOL_OUTPUT) {
+    return isGenerationSavePoint(chunk.payload?.output);
+  }
+
+  return isMutationToolResult(chunk);
+}
+
+export function* refreshDefinitionOnAgentResponse(action: AgentResponseAction): SagaIterator {
+  const chunk = action.chunk;
+  if (chunk?.type === TOOL_CALL_RESULT) {
+    const toolName =
+      chunk.payload.toolName ||
+      (yield select(
+        (state: RootState) =>
+          (state.agent.messages[action.messageId] as AgentMessage)?.toolCalls?.find(
+            (toolCall) => toolCall.toolCallId === chunk.payload.toolCallId,
+          )?.toolName,
+      ));
+
+    // The generation result arrives within the debounce window and cancels the pending refresh,
+    // so it has to perform that refresh rather than bail out.
+    if (!MUTATION_TOOLS.has(toolName) && !isFormGenerationTool(toolName)) {
+      return;
+    }
+  } else if (chunk?.type !== TOOL_OUTPUT) {
+    return;
+  }
+
+  yield delay(300);
+  yield call(refreshDefinition);
+  yield put(getConfigurationDefinitions());
 }
 
 function* initializeFormEditorSaga() {
@@ -680,5 +720,9 @@ export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_TAG_BY_TAG_NAME_ACTION, fetchFormTagByTagName);
   yield takeEvery(FETCH_ALL_TAGS_ACTION, fetchAllTags);
   yield takeLatest(FETCH_RESOURCES_BY_TAG_ACTION, fetchResourcesByTag);
-  yield takeEvery(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
+  yield takeLatest(
+    (action: { type: string; chunk?: AgentResponseAction['chunk'] }) =>
+      action.type === AGENT_RESPONSE_ACTION && isDefinitionRefreshChunk(action.chunk),
+    refreshDefinitionOnAgentResponse,
+  );
 }

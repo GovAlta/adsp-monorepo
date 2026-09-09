@@ -1,3 +1,4 @@
+import { clearDocumentParseCache } from '../utils/documentCache';
 import { createDocumentTools } from './document';
 
 jest.mock('../utils/documentParser', () => ({
@@ -51,6 +52,7 @@ describe('createDocumentTools', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    clearDocumentParseCache();
   });
 
   it('creates documentExtractTool', () => {
@@ -76,6 +78,27 @@ describe('createDocumentTools', () => {
       expect(result.filename).toBe('requirements.pdf');
       expect(result.mimeType).toBe('application/pdf');
       expect(result.pageCount).toBe(3);
+      expect(result.truncated).toBe(false);
+    });
+
+    it('caps extracted text at 16000 characters', async () => {
+      const { extractDocumentText } = jest.requireMock('../utils/documentParser');
+      extractDocumentText.mockResolvedValueOnce({ text: 'a'.repeat(20000), pageCount: 8 });
+      mockGetFileAndMetadata.mockResolvedValueOnce({
+        data: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+        metadata: {
+          filename: 'large.pdf',
+          mimeType: 'application/pdf',
+          urn: 'urn:ads:platform:file-service:v1:/files/large-uuid',
+        },
+      });
+
+      const result = await tools.documentExtractTool.execute({ fileId: 'large-uuid' }, {
+        requestContext: mockRequestContext,
+      } as never);
+
+      expect(result.text).toHaveLength(16000);
+      expect(result.truncated).toBe(true);
     });
 
     it('falls back to UTF-8 for non-document files', async () => {

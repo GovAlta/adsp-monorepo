@@ -1,6 +1,6 @@
 import { GoabDetails, GoabFormItem, GoabSkeleton, GoabTextArea, GoabIconButton } from '@abgov/react-components';
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
-import { FunctionComponent, memo, useMemo, useRef, useState } from 'react';
+import { FunctionComponent, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import styled from 'styled-components';
 import { useAutoScroll } from '../hooks';
@@ -30,6 +30,12 @@ interface AgentChatProps {
   onDraftChange?: (value: string) => void;
   onSend: (threadId: string, context: Record<string, unknown>, content: UserContent) => void;
   onAttachmentUpload?: (file: File) => Promise<Attachment>;
+  renderToolCall?: (toolCall: ToolCall) => ReactNode;
+  maxJsonChars?: number;
+  idleHintMs?: number;
+  idleHint?: string;
+  deadlineMs?: number;
+  deadlineMessage?: string;
 }
 
 interface UserMessageItemProps {
@@ -40,11 +46,32 @@ interface UserMessageItemProps {
 interface AgentMessageItemProps {
   className?: string;
   message: AgentMessage;
+  renderToolCall?: (toolCall: ToolCall) => ReactNode;
+  maxJsonChars?: number;
 }
 
 interface AgentToolCallProps {
   className?: string;
   toolCall: ToolCall;
+  maxJsonChars?: number;
+}
+
+const DEFAULT_MAX_JSON_CHARS = 4096;
+
+function stringifyTruncated(value: unknown, maxChars: number): string {
+  const json = JSON.stringify(value, null, 2);
+  if (json.length <= maxChars) {
+    return json;
+  }
+  return `${json.slice(0, maxChars)}\n… truncated`;
+}
+
+function isFailedToolResult(toolCall: ToolCall): boolean {
+  if (toolCall.error) {
+    return true;
+  }
+  const result = toolCall.result as { success?: boolean } | undefined;
+  return result?.success === false;
 }
 
 interface AgentReasoningProps {
@@ -225,7 +252,7 @@ const AgentReasoning = styled(({ className, reasoning }: AgentReasoningProps) =>
 `;
 
 const AgentErrorBase: FunctionComponent<AgentErrorProps> = ({ className, error }) => {
-  const label = error.type === 'tripwire' ? 'Validation Failed' : 'Error';
+  const label = error.type === 'tripwire' ? 'Request Blocked' : 'Error';
   return (
     <div className={className}>
       <strong>{label}:</strong> {error.message}
@@ -271,14 +298,16 @@ const AgentError = memo(styled(AgentErrorBase)`
  * - Complete: Tool returned a result (green border, shows result)
  * - Error: Tool execution failed (red border, shows error)
  */
-const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, toolCall }) => {
+const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, toolCall, maxJsonChars }) => {
   const isPending = !toolCall.result && !toolCall.error;
+  const failed = isFailedToolResult(toolCall);
   const hasArgs = toolCall.args && Object.keys(toolCall.args).length > 0;
+  const jsonLimit = maxJsonChars ?? DEFAULT_MAX_JSON_CHARS;
 
   const getHeading = () => {
     if (isPending) {
       return `Calling ${toolCall.toolName} tool...`;
-    } else if (toolCall.error) {
+    } else if (failed) {
       return `${toolCall.toolName} tool failed`;
     } else {
       return `Called ${toolCall.toolName} tool`;
@@ -286,7 +315,7 @@ const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, t
   };
 
   return (
-    <div className={className} data-status={isPending ? 'pending' : toolCall.error ? 'error' : 'complete'}>
+    <div className={className} data-status={isPending ? 'pending' : failed ? 'error' : 'complete'}>
       <GoabDetails heading={getHeading()}>
         <div>
           {isPending && (
@@ -298,19 +327,19 @@ const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, t
           {hasArgs && (
             <>
               <span>Input</span>
-              <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+              <pre>{stringifyTruncated(toolCall.args, jsonLimit)}</pre>
             </>
           )}
           {toolCall.result && (
             <>
               <span>Result</span>
-              <pre>{JSON.stringify(toolCall.result, null, 2)}</pre>
+              <pre>{stringifyTruncated(toolCall.result, jsonLimit)}</pre>
             </>
           )}
           {toolCall.error && (
             <>
               <span>Error</span>
-              <pre className="error-output">{JSON.stringify(toolCall.error, null, 2)}</pre>
+              <pre className="error-output">{stringifyTruncated(toolCall.error, jsonLimit)}</pre>
             </>
           )}
         </div>
@@ -366,7 +395,7 @@ const AgentToolCall = memo(styled(AgentToolCallBase)`
   }
 `);
 
-const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemProps) => {
+const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJsonChars }: AgentMessageItemProps) => {
   const hasText = message.content?.trim().length > 0;
   const hasReasoning = Boolean(message.reasoning?.content?.trim());
   const hasToolCalls = message.toolCalls.length > 0;
@@ -388,12 +417,18 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
         </div>
       )}
       {message.reasoning && <AgentReasoning reasoning={message.reasoning} />}
-      <Markdown className="content" data-from={message.from}>
-        {message.content}
-      </Markdown>
-      {message.toolCalls.map((toolCall) => (
-        <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} />
-      ))}
+      {message.toolCalls.map((toolCall) => {
+        const custom = renderToolCall?.(toolCall);
+        if (custom != null) {
+          return <div key={toolCall.toolCallId}>{custom}</div>;
+        }
+        return <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} maxJsonChars={maxJsonChars} />;
+      })}
+      {hasText && (
+        <Markdown className="content" data-from={message.from}>
+          {message.content}
+        </Markdown>
+      )}
       {showStreamingContinuation && (
         <div className="activity-indicator" data-kind="continuing">
           <span>Generating response...</span>
@@ -436,6 +471,12 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   onDraftChange,
   onSend,
   onAttachmentUpload,
+  renderToolCall,
+  maxJsonChars,
+  idleHintMs,
+  idleHint,
+  deadlineMs,
+  deadlineMessage,
 }) => {
   // State — use internal state when no controlled draft is provided
   const [draftInternal, setDraftInternal] = useState('');
@@ -459,6 +500,38 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   // Computed values
   const welcomeMessage = useMemo(() => createWelcomeMessage(threadId), [threadId]);
   const isWaitingForResponse = useMemo(() => messages[messages.length - 1]?.from === 'user', [messages]);
+  const lastAgentMessage = [...messages].reverse().find((message): message is AgentMessage => message.from === 'agent');
+  const isStreaming = Boolean(lastAgentMessage?.streaming) || isWaitingForResponse;
+  const [showIdleHint, setShowIdleHint] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const lastUpdateRef = useRef(Date.now());
+  const streamStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    lastUpdateRef.current = Date.now();
+    setShowIdleHint(false);
+  }, [messages]);
+
+  useEffect(() => {
+    if (!isStreaming) {
+      streamStartRef.current = null;
+      setTimedOut(false);
+      setShowIdleHint(false);
+      return;
+    }
+    if (streamStartRef.current == null) {
+      streamStartRef.current = Date.now();
+    }
+    const interval = setInterval(() => {
+      if (idleHintMs && Date.now() - lastUpdateRef.current >= idleHintMs) {
+        setShowIdleHint(true);
+      }
+      if (deadlineMs && streamStartRef.current && Date.now() - streamStartRef.current >= deadlineMs) {
+        setTimedOut(true);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isStreaming, idleHintMs, deadlineMs]);
 
   // Event handlers
   const uploadAttachment = async (file: File) => {
@@ -559,14 +632,32 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
             message.from === 'user' ? (
               <UserMessageItem key={message.id} message={message} />
             ) : (
-              <AgentMessageItem key={message.id} message={message} />
+              <AgentMessageItem
+                key={message.id}
+                message={timedOut && message.from === 'agent' ? { ...message, streaming: false } : message}
+                renderToolCall={renderToolCall}
+                maxJsonChars={maxJsonChars}
+              />
             ),
           )}
-          {isWaitingForResponse && (
+          {isWaitingForResponse && !timedOut && (
             <div className="activity-indicator" data-kind="thinking">
               <span>Thinking...</span>
               <GoabSkeleton type="text" mb="l" mr="4xl" />
             </div>
+          )}
+          {isStreaming && showIdleHint && !timedOut && (
+            <div className="activity-indicator" data-kind="continuing">
+              <span>{idleHint || 'Still working…'}</span>
+            </div>
+          )}
+          {timedOut && (
+            <AgentError
+              error={{
+                type: 'error',
+                message: deadlineMessage || 'Anything already saved is in the editor.',
+              }}
+            />
           )}
           <div ref={targetElementRef} />
         </div>

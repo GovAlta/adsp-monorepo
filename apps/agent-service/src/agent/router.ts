@@ -9,6 +9,12 @@ import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
 import { environment } from '../environments/environment';
+import {
+  describeStreamError,
+  mapAgentStreamError,
+  toStreamErrorPayload,
+  toStreamTripwirePayload,
+} from './model/streamAbort';
 
 const TOKEN_EXPIRY_THRESHOLD_MS = environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS;
 
@@ -25,6 +31,7 @@ const FORWARDABLE_CHUNK_TYPES = new Set([
   'tool-call',
   'tool-result',
   'tool-error',
+  'tool-output',
   'reasoning-start',
   'reasoning-delta',
   'reasoning-end',
@@ -36,6 +43,24 @@ const PROJECTABLE_TOOL_CHUNK_TYPES = new Set(['tool-call', 'tool-result', 'tool-
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function emitMappedStreamError(
+  socket: Socket,
+  meta: { agent: string; threadId: string; messageId: string; replyTo: string },
+  err: unknown,
+): boolean {
+  const mapped = mapAgentStreamError(err);
+  if (!mapped) {
+    return false;
+  }
+
+  socket.emit('stream', {
+    ...meta,
+    chunk: { type: 'error', payload: { code: mapped.code, message: mapped.message } },
+    done: true,
+  });
+  return true;
 }
 
 interface ToolChunk {
@@ -274,13 +299,11 @@ export function onIoConnection(logger: Logger) {
             // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
             // during long LLM thinking or tool execution gaps.
             const streamStartTime = Date.now();
+            const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
             const heartbeatInterval = setInterval(() => {
               if (socket.connected) {
                 socket.emit('stream', {
-                  agent,
-                  threadId,
-                  messageId: replyId,
-                  replyTo: messageId,
+                  ...streamMeta,
                   chunk: { type: 'heartbeat', payload: { timestamp: Date.now() } },
                 });
               }
@@ -321,7 +344,15 @@ export function onIoConnection(logger: Logger) {
                     threadId,
                     messageId: replyId,
                     replyTo: messageId,
-                    chunk: { type, payload },
+                    chunk: {
+                      type,
+                      payload:
+                        type === 'error'
+                          ? toStreamErrorPayload(payload)
+                          : type === 'tripwire'
+                            ? toStreamTripwirePayload(payload)
+                            : payload,
+                    },
                   });
 
                   await projectWorkspaceChange(type, payload);
@@ -379,6 +410,10 @@ export function onIoConnection(logger: Logger) {
                 output,
                 done: true,
               });
+            } catch (err) {
+              if (!emitMappedStreamError(socket, streamMeta, err)) {
+                throw err;
+              }
             } finally {
               clearInterval(heartbeatInterval);
               streaming = false;
@@ -392,7 +427,7 @@ export function onIoConnection(logger: Logger) {
             }
           }
         } catch (err) {
-          socket.emit('error', err.message);
+          socket.emit('error', describeStreamError(err));
         }
       });
       socket.on('workspace-init', async (payload) => {

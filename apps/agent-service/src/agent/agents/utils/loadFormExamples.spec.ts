@@ -83,10 +83,30 @@ describe('loadFormExamples', () => {
   describe('best practices section', () => {
     it('renders layout selection rules as bold-condition bullet list', () => {
       expect(output).toContain('## Layout Selection');
-      expect(output).toContain('- **Simple forms (1-5 fields, single purpose)**: Use VerticalLayout as root');
-      expect(output).toContain(
-        '- **Complex forms (6+ fields, multiple sections)**: Use Categorization with variant="pages"',
-      );
+      expect(output).toContain('SIMPLE — none of the COMPLEX signals');
+      expect(output).toContain('Use VerticalLayout as root. Do not promote it to Categorization.');
+      expect(output).toContain('COMPLEX — any of: ≥2 named sections');
+      expect(output).toContain('Use Categorization with variant="pages"');
+      expect(output).toContain('The user explicitly asked for a stepper');
+      expect(output).toContain('Exception — single-purpose contact/feedback');
+    });
+
+    it('renders document use cases so other form types are matched, not only surveys', () => {
+      expect(output).toContain('## Document use cases');
+      expect(output).toContain('### Requirements document conventions');
+      expect(output).toContain('**Category:**');
+      expect(output).toContain('**Branch / Trigger question / Trigger values**');
+      expect(output).toContain('**Control: Multi-select / Maximum selections**');
+      expect(output).toContain('### Form types in a document');
+      expect(output).toContain('**Survey / questionnaire**');
+      expect(output).toContain('**Government application (permits, licenses, benefits)**');
+      expect(output).toContain('**Vendor or program registration**');
+      expect(output).toContain('**Contact, feedback, or complaint**');
+      expect(output).toContain('**Eligibility calculator or computed totals**');
+      expect(output).toContain('**Simple single-purpose intake**');
+      expect(output).toContain('**Household, dependents, or other repeating people**');
+      expect(output).toContain('**Shared lookup lists (ministries, provinces, programs)**');
+      expect(output).toContain('Do not force every document into the survey pattern');
     });
 
     it('renders validation checklist as bullet list', () => {
@@ -120,12 +140,12 @@ describe('loadFormExamples', () => {
 
     it('renders iterative workflow as a numbered list', () => {
       expect(output).toContain('## Iterative Workflow');
-      expect(output).toContain('1. Load existing form configuration with formConfigurationRetrievalTool');
-      expect(output).toContain('2. Ask for the purpose of the form if unclear');
-      expect(output).toContain('3. Start with 1-3 fields and apply via formConfigurationUpdateTool');
-      expect(output).toContain('4. Ask for user feedback after each update');
-      expect(output).toContain('5. Add more fields, refine layouts, and add help text incrementally');
-      expect(output).toContain("6. Don't dump JSON — describe changes and use the update tool");
+      expect(output).toContain('1. Call formSchemaIndex at session start');
+      expect(output).toContain(
+        '2. To build a form from a description or a requirements document, call formGenerationRun',
+      );
+      expect(output).toContain('4. Use formSchemaPatch only for a targeted change');
+      expect(output).toContain('5. Never send a multi-category schema to formConfigurationUpdateTool');
     });
   });
 
@@ -274,6 +294,22 @@ describe('loadFormExamples', () => {
 
     it('renders radio buttons example', () => {
       expect(output).toContain('## Radio Buttons');
+    });
+
+    it('renders multi-select checkboxes example for Control: Multi-select documents', () => {
+      expect(output).toContain('## Multi-Select Checkboxes');
+      expect(output).toContain('"uniqueItems": true');
+      expect(output).toContain('"maxItems": 3');
+      expect(output).toContain('"format": "checkbox"');
+    });
+
+    it('renders whenToUse so the model can match a document to an example', () => {
+      const radioBlock = output.substring(
+        output.indexOf('## Radio Buttons'),
+        output.indexOf('## Multi-Select Checkboxes'),
+      );
+      expect(radioBlock).toContain('### When to use');
+      expect(radioBlock).toContain('Likert or rating questions');
     });
 
     it('renders checkbox required example', () => {
@@ -451,6 +487,15 @@ describe('loadFormExamples', () => {
       expect(output).toContain('"variant": "pages"');
     });
 
+    it('renders whenToUse on complex scenarios so applications are not built as surveys', () => {
+      const govBlock = output.substring(
+        output.indexOf('## Full Government Application Form'),
+        output.indexOf('## Contact/Feedback Form with Conditional Routing'),
+      );
+      expect(govBlock).toContain('### When to use');
+      expect(govBlock).toContain('Complex government service applications (permits, licenses, benefits)');
+    });
+
     it('renders contact form with rules', () => {
       expect(output).toContain('## Contact/Feedback Form with Conditional Routing');
     });
@@ -618,8 +663,11 @@ describe('loadFormExamples', () => {
     describe('design anti-patterns', () => {
       it('renders "Too Many Fields" with solution', () => {
         expect(output).toContain('### ❌ Too Many Fields on a Single Page (medium)');
-        expect(output).toContain('Putting 6+ fields in a VerticalLayout without pagination');
+        expect(output).toContain(
+          'Putting 12+ inputs, or two or more named sections, in a VerticalLayout without pagination',
+        );
         expect(output).toContain('**Fix:** Use Categorization with `variant: "pages"`');
+        expect(output).toContain('SIMPLE forms must stay VerticalLayout');
       });
 
       it('renders "No Help Text" with solution', () => {
