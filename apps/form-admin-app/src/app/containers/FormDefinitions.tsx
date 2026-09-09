@@ -34,6 +34,10 @@ import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 import { ResultsSummary } from '../components/ResultsSummary';
 
+// Enough rows for the loading state to read as a list rather than a stray row, without pushing the
+// results that replace them far down the page.
+const SEARCH_SKELETON_ROWS = [0, 1, 2, 3, 4];
+
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
   return hasFeature && <GoabBadge type="information" content={feature} mr="xs" mb="xs" emphasis="subtle" />;
 };
@@ -117,7 +121,11 @@ export const FormsDefinitions = () => {
                 onChangeFrom={(value) => updateCriteria({ ...criteria, createDateAfter: value })}
                 onChangeTo={(value) => updateCriteria({ ...criteria, createDateBefore: value })}
               />
-              <TagSearchFilter value={criteria.tag} onChange={(value) => updateCriteria({ ...criteria, tag: value })} />
+              <TagSearchFilter
+                value={criteria.tag}
+                disabled={busy.searching}
+                onChange={(value) => updateCriteria({ ...criteria, tag: value })}
+              />
               <SearchFormActionItem>
                 <GoabIconButton
                   icon="search"
@@ -158,16 +166,26 @@ export const FormsDefinitions = () => {
             </tr>
           </thead>
           <tbody>
-            {definitions.map((definition) => (
-              <FormDefinitionRow
-                key={definition.id}
-                navigate={navigate}
-                definition={definition}
-                onTag={() => setShowTagDefinition(definition)}
-              />
-            ))}
-            <RowSkeleton columns={4} show={busy.loading} />
-            <RowLoadMore columns={4} next={next} loading={busy.loading} onLoadMore={handleLoadDefinitions} />
+            {/*
+              A search replaces the whole listing, so the results it is replacing are cleared while
+              it runs. Leaving them up with a single skeleton row appended below meant the only
+              feedback was at the bottom of the list, out of sight on anything but a short one.
+            */}
+            {busy.searching
+              ? SEARCH_SKELETON_ROWS.map((row) => <RowSkeleton key={row} columns={4} show />)
+              : definitions.map((definition) => (
+                  <FormDefinitionRow
+                    key={definition.id}
+                    navigate={navigate}
+                    definition={definition}
+                    onTag={() => setShowTagDefinition(definition)}
+                  />
+                ))}
+            {/* Paging further into the results keeps them on screen, so that skeleton still trails them. */}
+            <RowSkeleton columns={4} show={busy.loading && !busy.searching} />
+            {!busy.searching && (
+              <RowLoadMore columns={4} next={next} loading={busy.loading} onLoadMore={handleLoadDefinitions} />
+            )}
           </tbody>
         </GoabTable>
       </ContentContainer>
