@@ -32,6 +32,11 @@ interface CommentsViewerProps {
   className?: string;
   heading?: string;
   addCommentLabel?: string;
+  // Drops the label above the draft field, for a pane where the placeholder and the surrounding
+  // heading already say what the field is for. The space it occupied goes to the conversation.
+  hideAddCommentLabel?: boolean;
+  // Placeholder for the draft field, which carries the sense of the field once the label is hidden.
+  draftPlaceholder?: string;
   // Label for the submit button. Defaults to addCommentLabel, which also labels the draft field.
   addCommentButtonLabel?: string;
   anonymousName?: string;
@@ -73,6 +78,8 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   className,
   heading,
   addCommentLabel,
+  hideAddCommentLabel,
+  draftPlaceholder,
   addCommentButtonLabel,
   anonymousName,
   canComment,
@@ -94,7 +101,19 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   addCommentLabel = addCommentLabel || 'Add comment';
   addCommentButtonLabel = addCommentButtonLabel || addCommentLabel;
   anonymousName = anonymousName || 'Commenter';
+  draftPlaceholder = draftPlaceholder || 'Write your comment...';
   const [deleting, setDeleting] = useState<Comment>(null);
+
+  const draftField = (
+    <GoabTextArea
+      name="comment"
+      value={draft.content || ''}
+      disabled={!canComment}
+      onChange={(detail: GoabTextAreaOnChangeDetail) => onUpdateDraft({ title: draft.title, content: detail.value })}
+      placeholder={draftPlaceholder}
+      width="100%"
+    />
+  );
 
   return (
     <div className={className}>
@@ -149,18 +168,11 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
         )}
       </div>
       <form>
-        <GoabFormItem label={addCommentLabel}>
-          <GoabTextArea
-            name="comment"
-            value={draft.content || ''}
-            disabled={!canComment}
-            onChange={(detail: GoabTextAreaOnChangeDetail) =>
-              onUpdateDraft({ title: draft.title, content: detail.value })
-            }
-            placeholder={'Write your comment...'}
-            width="100%"
-          />
-        </GoabFormItem>
+        {/*
+          The label is dropped rather than emptied, so no blank row is left behind where it was;
+          the styled wrapper hands that height to the conversation instead.
+        */}
+        {hideAddCommentLabel ? draftField : <GoabFormItem label={addCommentLabel}>{draftField}</GoabFormItem>}
         <GoabButtonGroup alignment="start" mt="l">
           <GoabButton
             size="compact"
@@ -350,7 +362,37 @@ const messagingLayout = css`
   }
 `;
 
-export const CommentsViewer = styled(CommentsViewerComponent)<{ $commentsHeight?: string; messaging?: boolean }>`
+// With no label to separate the draft field from the conversation above it, the field needs a bit
+// more room over it than the label left behind.
+const HIDDEN_LABEL_SPACE = 'var(--goa-space-m)';
+
+// Dropping the label shortens the form by the label line and the padding under it. What is left
+// after the space above the field goes to the conversation, so the pane is the size it was.
+function commentsHeight({
+  $commentsHeight,
+  hideAddCommentLabel,
+}: {
+  $commentsHeight?: string;
+  hideAddCommentLabel?: boolean;
+}) {
+  if (!$commentsHeight) {
+    return 'auto';
+  }
+
+  return hideAddCommentLabel
+    ? `calc(${$commentsHeight} + var(--goa-line-height-4) + var(--goa-form-item-label-padding-bottom) - ${HIDDEN_LABEL_SPACE})`
+    : $commentsHeight;
+}
+
+function draftPaddingTop({ hideAddCommentLabel }: { hideAddCommentLabel?: boolean }) {
+  return hideAddCommentLabel ? `calc(var(--goa-space-s) + ${HIDDEN_LABEL_SPACE})` : 'var(--goa-space-s)';
+}
+
+export const CommentsViewer = styled(CommentsViewerComponent)<{
+  $commentsHeight?: string;
+  messaging?: boolean;
+  hideAddCommentLabel?: boolean;
+}>`
   display: flex;
   flex-direction: column;
 
@@ -366,10 +408,10 @@ export const CommentsViewer = styled(CommentsViewerComponent)<{ $commentsHeight?
     flex-grow: 0;
     max-height: 40vh;
     padding: var(--goa-space-l);
-    padding-top: var(--goa-space-s);
+    padding-top: ${draftPaddingTop};
   }
   & > .comments {
-    height: ${({ $commentsHeight }) => ($commentsHeight ? `${$commentsHeight}` : 'auto')};
+    height: ${commentsHeight};
     overflow-y: scroll;
     flex-direction: column-reverse;
     padding-left: var(--goa-space-l);

@@ -34,7 +34,7 @@ export const CommentsViewer: FunctionComponent = () => {
       heading=" "
       $commentsHeight={'30vh'}
       messaging={true}
-      addCommentLabel="Add response"
+      hideAddCommentLabel={true}
       addCommentButtonLabel="Send"
       comments={results}
       canComment={canComment}
