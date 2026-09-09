@@ -223,6 +223,53 @@ describe('stringUtils string tests', () => {
     expect(checkFieldValidity(props, {})).toBe('My First name is required');
   });
 
+  it('uses a configured SIN error instead of the AJV pattern message', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: '123 45',
+      schema: {
+        title: 'Social insurance number',
+        errorMessage: { pattern: 'Must be a valid social insurance number in format 000 000 000' },
+      },
+      errors: 'must match pattern "^\\d{3} \\d{3} \\d{3}$"',
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('Must be a valid social insurance number in format 000 000 000');
+  });
+
+  it('uses the format config SIN error when no schema errorMessage is provided', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: '123 45',
+      schema: { title: 'Social insurance number' },
+      errors: 'must match pattern "^\\d{3} \\d{3} \\d{3}$"',
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('Must be a valid social insurance number in format 000 000 000');
+  });
+
+  it('keeps the AJV Luhn error for an invalid SIN checksum', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: '123 111 111',
+      schema: { title: 'Social insurance number' },
+      errors: 'Social insurance number is invalid',
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('Social insurance number is invalid');
+  });
+
+  it('uses the AJV error when no configured format error exists', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: 'abc',
+      schema: { type: 'string' },
+      errors: 'must match pattern "^[0-9]+$"',
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('must match pattern "^[0-9]+$"');
+  });
+
   it('When allOf should have at least one If condition', () => {
     const schema = schemaAllOfIfThenProps.rootSchema as JsonSchema7;
     const ifConditions = schema.allOf?.filter((y) => y.if !== undefined);

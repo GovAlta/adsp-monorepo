@@ -1,3 +1,5 @@
+import { sinTitle } from '../common/Constants';
+
 // A named format: the display mask, the validation pattern, the error shown when invalid,
 // and the characters this format allows to be typed (beyond the base control keys).
 export interface MaskPattern {
@@ -18,7 +20,7 @@ export const DEFAULT_PATTERNS: Record<string, MaskPattern> = {
   sin: {
     mask: '### ### ###',
     pattern: /^\d{3} \d{3} \d{3}$/,
-    error: 'Must be three groups of three digits.',
+    error: 'Must be a valid social insurance number in format 000 000 000',
     allowedKeys: /[0-9]/,
   },
   postalCode: {
@@ -42,6 +44,42 @@ export const DEFAULT_PATTERNS: Record<string, MaskPattern> = {
     allowedKeys: /[0-9]/,
   },
 };
+
+// Resolve the mask format for a field: schema.format must match a DEFAULT_PATTERNS key.
+export const resolveFormatConfig = (schema?: { format?: string; title?: string }): MaskPattern | undefined => {
+  if (!schema) {
+    return undefined;
+  }
+  if (schema.format && schema.format in DEFAULT_PATTERNS) {
+    return DEFAULT_PATTERNS[schema.format];
+  }
+  return schema.title === sinTitle ? DEFAULT_PATTERNS.sin : undefined;
+};
+
+type SchemaErrorMessage = string | { pattern?: string; format?: string };
+
+type FormatSchema = {
+  format?: string;
+  title?: string;
+  errorMessage?: SchemaErrorMessage;
+};
+
+const getSchemaErrorMessage = (errorMessage?: SchemaErrorMessage): string | undefined => {
+  if (typeof errorMessage === 'string' && errorMessage.trim() !== '') {
+    return errorMessage;
+  }
+  if (errorMessage && typeof errorMessage === 'object') {
+    const configured = errorMessage.pattern || errorMessage.format;
+    if (typeof configured === 'string' && configured.trim() !== '') {
+      return configured;
+    }
+  }
+  return undefined;
+};
+
+// Prefer a schema or format-config error; callers fall back to AJV when this is empty.
+export const getConfiguredFormatError = (schema?: FormatSchema): string | undefined =>
+  getSchemaErrorMessage(schema?.errorMessage) || resolveFormatConfig(schema)?.error;
 
 // Mask placeholder characters; each consumes one input character. Any other mask character is treated as a literal.
 export const MASK_PLACEHOLDERS = new Set(['#', '*', '_']);

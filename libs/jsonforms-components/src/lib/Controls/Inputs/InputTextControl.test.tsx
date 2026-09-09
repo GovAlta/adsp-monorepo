@@ -63,7 +63,7 @@ describe('Input Text Control tests', () => {
     uischema: textBoxUiSchema,
     schema: {
       title: 'Social insurance number',
-      errorMessage: 'Must be three groups of three digits.',
+      errorMessage: 'Must be a valid social insurance number in format 000 000 000',
       default: '123456789',
     },
     rootSchema: {},
