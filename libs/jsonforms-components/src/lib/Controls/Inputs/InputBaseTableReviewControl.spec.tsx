@@ -712,7 +712,7 @@ describe('InputBaseTableReviewControl', () => {
       pattern: '^\\d{3} \\d{3} \\d{3}$',
       validSin: true,
       errorMessage: {
-        pattern: 'Must be three groups of three digits.',
+        pattern: 'Must be a valid social insurance number in format 000 000 000',
       },
     };
 
