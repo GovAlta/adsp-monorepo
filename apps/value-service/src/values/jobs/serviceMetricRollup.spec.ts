@@ -90,6 +90,31 @@ describe('service metric rollup job', () => {
     expect(repository.upsertRollups).toHaveBeenCalledWith([rollup, rollup]);
   });
 
+  it('stores zero-activity rollups for known tenant services', async () => {
+    const zeroActivityRollup: ServiceMetricRollup = {
+      ...rollup,
+      initiated: 0,
+      succeeded: 0,
+      failure_events: null,
+      unreconciled: 0,
+      duration_sum: null,
+      duration_count: null,
+      duration_max: null,
+      distinct_resources: null,
+    };
+    repository.readRollup.mockResolvedValue(zeroActivityRollup);
+    const job = createServiceMetricRollupJob(repository, logger, [mapping]);
+
+    const count = await job({
+      start: new Date('2026-08-23T00:00:00.000Z'),
+      end: new Date('2026-08-23T00:00:00.000Z'),
+    });
+
+    expect(count).toBe(1);
+    expect(repository.readRollup).toHaveBeenCalledWith(new Date('2026-08-23T00:00:00.000Z'), 'autotest', mapping);
+    expect(repository.upsertRollups).toHaveBeenCalledWith([zeroActivityRollup]);
+  });
+
   it('can pass criteria to known tenant service lookup', async () => {
     const job = createServiceMetricRollupJob(repository, logger, [mapping]);
 
