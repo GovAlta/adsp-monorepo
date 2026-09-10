@@ -150,6 +150,19 @@ describe('TimescaleValuesRepository metric source routing', () => {
       expect(tables).toContain('metric_interval_rollups');
     });
 
+    it('supports monthly interval reads from the rollups', async () => {
+      const { knex, tables, wheres } = createKnex({ coverage: spanning });
+
+      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+        ...criteria,
+        interval: 'monthly',
+      });
+
+      expect(tables).toContain('metric_interval_rollups');
+      expect(tables).not.toContain('metrics_monthly');
+      expect(wheres).toContainEqual([{ interval: 'monthly' }]);
+    });
+
     it('rejects an unrecognized interval before touching the database', async () => {
       const { knex, tables } = createKnex();
 
