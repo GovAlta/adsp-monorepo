@@ -24,6 +24,16 @@ export interface ExtractedImage {
   mimeType: string;
 }
 
+export interface DocumentPageText {
+  num: number;
+  text: string;
+}
+
+export interface ExtractDocumentOptions {
+  maxPageImages?: number;
+  skipPageImagesIf?: (charCount: number, pageCount: number) => boolean;
+}
+
 export interface DocumentExtractResult {
   text: string;
   format?: 'html' | 'text';
@@ -31,6 +41,7 @@ export interface DocumentExtractResult {
   // Full-page visual renders (PDF only) so the LLM can see layout, colors, fonts, and
   // field placement that plain text extraction strips out. Capped at MAX_RENDERED_PAGES.
   pageImages?: ExtractedImage[];
+  pages?: DocumentPageText[];
   pageCount?: number;
   xfaForm?: boolean;
 }
@@ -98,10 +109,15 @@ async function renderPdfPageImages(
   totalPages: number,
   filename?: string,
   logger?: Logger,
+  maxPages: number = MAX_RENDERED_PAGES,
 ): Promise<ExtractedImage[] | undefined> {
+  if (maxPages <= 0) {
+    return undefined;
+  }
+
   try {
     const screenshots = await parser.getScreenshot({
-      first: Math.min(totalPages, MAX_RENDERED_PAGES),
+      first: Math.min(totalPages, maxPages),
       desiredWidth: PAGE_RENDER_WIDTH,
       imageDataUrl: false,
     });
@@ -130,6 +146,7 @@ export async function extractDocumentText(
   mimeType: string,
   filename?: string,
   logger?: Logger,
+  options?: ExtractDocumentOptions,
 ): Promise<DocumentExtractResult | null> {
   const effectiveMime = resolveDocxMime(mimeType, filename);
 
@@ -146,13 +163,28 @@ export async function extractDocumentText(
           logger?.info('XFA placeholder detected, attempting XFA extraction...', { filename });
           const xfaResult = await extractXfaFields(data, logger);
           if (xfaResult) {
-            return { text: xfaResult.htmlDescription, pageCount: result.total, xfaForm: true };
+            return {
+              text: xfaResult.htmlDescription,
+              format: 'html',
+              pageCount: result.total,
+              xfaForm: true,
+              pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
+            };
           }
           return { text: '', pageCount: result.total, xfaForm: true };
         }
 
-        const pageImages = await renderPdfPageImages(parser, result.total, filename, logger);
-        return { text: result.text, pageCount: result.total, pageImages };
+        const maxPageImages = options?.maxPageImages ?? MAX_RENDERED_PAGES;
+        const skipPageImages = options?.skipPageImagesIf?.(result.text.length, result.total) === true;
+        const pageImages = skipPageImages
+          ? undefined
+          : await renderPdfPageImages(parser, result.total, filename, logger, maxPageImages);
+        return {
+          text: result.text,
+          pageCount: result.total,
+          pageImages,
+          pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
+        };
       } finally {
         await parser.destroy();
       }

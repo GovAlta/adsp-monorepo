@@ -36,7 +36,7 @@ describe('NameDescriptionDataSchema', () => {
   it('pads the divider side while the preview is showing', () => {
     // Arrange
     const { getByTestId } = render(
-      React.createElement(NameDescriptionDataSchema, { 'data-testid': 'editor-pane' }),
+      React.createElement(NameDescriptionDataSchema, { 'data-testid': 'editor-pane', $previewHidden: false }),
     );
 
     // Act

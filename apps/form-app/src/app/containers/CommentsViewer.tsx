@@ -28,7 +28,8 @@ export const CommentsViewer: FunctionComponent = () => {
     <CommentsViewerComponent
       heading="Questions"
       messaging={true}
-      addCommentLabel="Add question"
+      hideAddCommentLabel={true}
+      draftPlaceholder="Write your question..."
       addCommentButtonLabel="Send"
       anonymousName="Support"
       comments={results}

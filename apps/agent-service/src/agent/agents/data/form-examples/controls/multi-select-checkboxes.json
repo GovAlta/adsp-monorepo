@@ -1,0 +1,43 @@
+{
+  "id": "multi-select-checkboxes",
+  "name": "Multi-Select Checkboxes",
+  "category": "control",
+  "summary": "Select several values from a list using an array of unique strings and `format: checkbox`",
+  "whenToUse": [
+    "Requirements that say Control: Multi-select, checkboxes, or choose all that apply",
+    "Selecting several ADSP services, factors, or capabilities from a fixed list",
+    "When Maximum selections is specified (use maxItems)"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "servicesUsed": {
+        "type": "array",
+        "uniqueItems": true,
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "enum": ["Forms", "Notifications", "File", "PDF", "Events", "Other"]
+        }
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/servicesUsed",
+    "label": "Which services does your team currently use?",
+    "options": {
+      "format": "checkbox",
+      "componentProps": {
+        "orientation": "vertical"
+      }
+    }
+  },
+  "notes": [
+    "Data type is `array` with `uniqueItems: true` — a string enum with format checkbox is single-select styling, not multi-select",
+    "Set `options.format` to `\"checkbox\"` so the array of enum values renders as checkboxes",
+    "Use `maxItems` when the document specifies Maximum selections; omit maxItems when any number of choices is allowed",
+    "Use `minItems: 1` when the multi-select itself is required",
+    "If an option is Other and a follow-up specify field is needed, SHOW that field with a rule condition `contains: { const: \"Other\" }`"
+  ]
+}

@@ -8,11 +8,13 @@ import {
   computeMaskEdit,
   filterAllowedKeys,
   formatWithPattern,
+  getConfiguredFormatError,
   getMaskInputTarget,
   isMaskFilled,
   maskDigitCount,
   maskPlaceholder,
   overflowMaskEdit,
+  resolveFormatConfig,
   shouldBlockKey,
   toMaskTemplate,
 } from './patternForm';
@@ -32,6 +34,31 @@ describe('DEFAULT_PATTERNS', () => {
 
   it('rejects a SIN without spaces', () => {
     expect(DEFAULT_PATTERNS.sin.pattern.test('123456789')).toBe(false);
+  });
+
+  it('tells the user the correct SIN example format', () => {
+    expect(DEFAULT_PATTERNS.sin.error).toBe('Must be a valid social insurance number in format 000 000 000');
+  });
+
+  it('resolves SIN format config from the social insurance number title', () => {
+    expect(resolveFormatConfig({ title: 'Social insurance number' })).toBe(DEFAULT_PATTERNS.sin);
+  });
+
+  it('uses a schema errorMessage when one is provided', () => {
+    expect(
+      getConfiguredFormatError({
+        title: 'Social insurance number',
+        errorMessage: { pattern: 'Please enter valid SIN' },
+      }),
+    ).toBe('Please enter valid SIN');
+  });
+
+  it('uses the format config error when no schema errorMessage is provided', () => {
+    expect(getConfiguredFormatError({ title: 'Social insurance number' })).toBe(DEFAULT_PATTERNS.sin.error);
+  });
+
+  it('returns undefined when no format config or schema error is provided', () => {
+    expect(getConfiguredFormatError({ type: 'string' } as { format?: string; title?: string })).toBeUndefined();
   });
 
   it('accepts a Canadian postal code', () => {

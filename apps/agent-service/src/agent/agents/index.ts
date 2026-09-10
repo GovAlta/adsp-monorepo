@@ -1,5 +1,5 @@
 import { AgentConfigurations } from '../configuration';
-import { formGenerationAgent, formUpdateAgent, pdfFormAnalysisAgent } from './form';
+import { formGenerationAgent, formUpdateAgent, pdfFormAnalysisAgent } from './forms';
 import {
   builderAgent,
   builderPreviewReliabilityAgent,

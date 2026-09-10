@@ -9,8 +9,7 @@ import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/regist
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { applyFormatPattern, onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import {
-  DEFAULT_PATTERNS,
-  MaskPattern,
+  resolveFormatConfig,
   filterAllowedKeys,
   formatWithPattern,
   toMaskTemplate,
@@ -22,7 +21,6 @@ import {
   maskPlaceholder,
   shouldBlockKey,
 } from '../../util/patternForm';
-import { sinTitle } from '../../common/Constants';
 import {
   GoabInputOnChangeDetail,
   GoabInputOnBlurDetail,
@@ -51,14 +49,6 @@ const resetInputValue = (detail: GoabInputOnChangeDetail, value: string) => {
   if (target) {
     target.value = value;
   }
-};
-
-// Resolve the mask format for a field: schema.format must match a DEFAULT_PATTERNS key.
-const resolveFormatConfig = (schema: { format?: string; title?: string }): MaskPattern | undefined => {
-  if (schema.format && schema.format in DEFAULT_PATTERNS) {
-    return DEFAULT_PATTERNS[schema.format];
-  }
-  return schema.title === sinTitle ? DEFAULT_PATTERNS.sin : undefined;
 };
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {

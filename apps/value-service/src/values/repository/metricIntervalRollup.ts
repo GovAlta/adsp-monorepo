@@ -5,8 +5,14 @@ export interface MetricIntervalRollupRepository {
   getMetricsWindow(): Promise<MetricIntervalWindow | null>;
   getCoverage(interval: MetricInterval): Promise<MetricIntervalCoverage | null>;
   // Callers must pass a window that touches or overlaps existing coverage; coverage is stored as a
-  // single span, so a detached window would report the gap between them as rolled up.
-  refresh(interval: MetricInterval, bucket: string, window: MetricIntervalWindow): Promise<number>;
+  // single span, so a detached window would report the gap between them as rolled up. A null source
+  // aggregates the raw metrics table; otherwise the named interval's own buckets are aggregated.
+  refresh(
+    interval: MetricInterval,
+    bucket: string,
+    source: MetricInterval | null,
+    window: MetricIntervalWindow,
+  ): Promise<number>;
   // Runs work while holding the rollup lock, resolving to null without running it when another
   // instance holds the lock. The repository handed to the callback is bound to the locked
   // connection, so callers must use it rather than the one they called this on.
@@ -34,11 +40,15 @@ export class TimescaleMetricIntervalRollupRepository implements MetricIntervalRo
   ) {}
 
   /**
-   * Hold the rollup lock for one run.
+   * Hold the rollup lock for one interval's advance.
    *
    * Every replica schedules this job, and the cron tick fires whether or not the last run finished,
    * so without a lock the same windows are recomputed several times over concurrently -- which is
    * what exhausted the database's connection slots in dev.
+   *
+   * Scoped to one interval rather than a whole run so that the work commits as it goes: coverage is
+   * per interval, so this is already the unit whose read-and-extend has to be atomic, and an
+   * interval that exceeds its statement timeout then rolls back only itself.
    *
    * pg_try_advisory_xact_lock is scoped to the transaction: it is taken on that transaction's own
    * connection and released when it ends, so the lock cannot be released onto a different pooled
@@ -81,12 +91,27 @@ export class TimescaleMetricIntervalRollupRepository implements MetricIntervalRo
     return row ? { interval, coveredFrom: new Date(row.covered_from), coveredTo: new Date(row.covered_to) } : null;
   }
 
-  async refresh(interval: MetricInterval, bucket: string, window: MetricIntervalWindow): Promise<number> {
-    // The window start is snapped down to a bucket boundary so a bucket straddling it is recomputed
-    // from all of its rows rather than being overwritten with a partial total. The GROUP BY uses
-    // select-list ordinals because repeating the time_bucket expression would bind a second
-    // placeholder that Postgres cannot match against the one in the select list.
-    const result = await this.knex.raw(
+  async refresh(
+    interval: MetricInterval,
+    bucket: string,
+    source: MetricInterval | null,
+    window: MetricIntervalWindow,
+  ): Promise<number> {
+    const result = source
+      ? await this.refreshFromRollups(interval, bucket, source, window)
+      : await this.refreshFromMetrics(interval, bucket, window);
+
+    await this.extendCoverage(interval, bucket, window);
+
+    return result?.rowCount ?? 0;
+  }
+
+  // The window start is snapped down to a bucket boundary so a bucket straddling it is recomputed
+  // from all of its rows rather than being overwritten with a partial total. The GROUP BY uses
+  // select-list ordinals because repeating the time_bucket expression would bind a second
+  // placeholder that Postgres cannot match against the one in the select list.
+  private async refreshFromMetrics(interval: MetricInterval, bucket: string, window: MetricIntervalWindow) {
+    return this.knex.raw(
       `INSERT INTO metric_interval_rollups
          ("interval", namespace, name, tenant, metric, bucket, sum, count, min, max, updated_at)
        SELECT ?, namespace, name, tenant, metric, time_bucket(?::interval, timestamp),
@@ -99,21 +124,54 @@ export class TimescaleMetricIntervalRollupRepository implements MetricIntervalRo
                      max = EXCLUDED.max, updated_at = NOW()`,
       [interval, bucket, bucket, window.start, window.end],
     );
-
-    await this.extendCoverage(interval, bucket, window);
-
-    return result?.rowCount ?? 0;
   }
 
+  /**
+   * Aggregate a coarser interval from a finer one already in the table.
+   *
+   * SUM of sums and SUM of counts give the coarse bucket's totals, and MIN/MAX of the finer
+   * extremes give its extremes, so the result is identical to aggregating the raw rows -- provided
+   * the finer buckets nest inside the coarse one, which the definitions guarantee.
+   *
+   * Reading and writing metric_interval_rollups in one statement is safe: the SELECT sees the
+   * snapshot from before the INSERT, and the rows it reads carry the source interval while the rows
+   * written carry the target, so a refresh can never consume its own output.
+   */
+  private async refreshFromRollups(
+    interval: MetricInterval,
+    bucket: string,
+    source: MetricInterval,
+    window: MetricIntervalWindow,
+  ) {
+    return this.knex.raw(
+      `INSERT INTO metric_interval_rollups
+         ("interval", namespace, name, tenant, metric, bucket, sum, count, min, max, updated_at)
+       SELECT ?, namespace, name, tenant, metric, time_bucket(?::interval, bucket),
+              SUM(sum), SUM(count), MIN(min), MAX(max), NOW()
+       FROM metric_interval_rollups
+       WHERE "interval" = ? AND bucket >= time_bucket(?::interval, ?::timestamptz) AND bucket < ?
+       GROUP BY 2, 3, 4, 5, 6
+       ON CONFLICT ("interval", namespace, name, metric, bucket, (COALESCE(tenant, '')))
+       DO UPDATE SET sum = EXCLUDED.sum, count = EXCLUDED.count, min = EXCLUDED.min,
+                     max = EXCLUDED.max, updated_at = NOW()`,
+      [interval, bucket, source, bucket, window.start, window.end],
+    );
+  }
+
+  // Both edges are snapped to a bucket boundary so coverage describes whole buckets only. The
+  // window end is almost always mid-bucket and the refresh cuts that bucket off there, so recording
+  // it verbatim advertised a bucket holding a partial total as rolled up, and a read ending inside
+  // that bucket was served a short total. Coverage is therefore an exclusive end: every bucket
+  // starting before covered_to is complete, and the open one falls back to the metrics_* views.
   private async extendCoverage(interval: MetricInterval, bucket: string, window: MetricIntervalWindow): Promise<void> {
     await this.knex.raw(
       `INSERT INTO metric_interval_rollup_coverage ("interval", covered_from, covered_to, updated_at)
-       VALUES (?, time_bucket(?::interval, ?::timestamptz), ?, NOW())
+       VALUES (?, time_bucket(?::interval, ?::timestamptz), time_bucket(?::interval, ?::timestamptz), NOW())
        ON CONFLICT ("interval") DO UPDATE SET
          covered_from = LEAST(metric_interval_rollup_coverage.covered_from, EXCLUDED.covered_from),
          covered_to = GREATEST(metric_interval_rollup_coverage.covered_to, EXCLUDED.covered_to),
          updated_at = NOW()`,
-      [interval, bucket, window.start, window.end],
+      [interval, bucket, window.start, bucket, window.end],
     );
   }
 }

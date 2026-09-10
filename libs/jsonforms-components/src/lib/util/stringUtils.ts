@@ -1,6 +1,7 @@
-import { ControlProps, JsonSchema, JsonSchema7, extractSchema } from '@jsonforms/core';
-import { invalidSin, sinTitle } from '../common/Constants';
+import { ControlProps, JsonSchema, JsonSchema7 } from '@jsonforms/core';
+import { invalidSin } from '../common/Constants';
 import { isRequiredBySchema } from './requiredUtil';
+import { getConfiguredFormatError } from './patternForm';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -144,10 +145,6 @@ export const validateSinWithLuhn = (input: string): boolean => {
   return sum % 10 === 0;
 };
 
-interface extractSchema {
-  errorMessage?: string;
-}
-
 /**
  * Gets the required fields in the If/Then/Else json schema condition.
  * @param props - ControlProps
@@ -229,7 +226,11 @@ export const checkFieldValidity = (props: ControlProps, rootData?: unknown): str
     return '';
   }
 
-  return ajvErrors;
+  if (!ajvErrors || ajvErrors === invalidSin) {
+    return ajvErrors;
+  }
+
+  return getConfiguredFormatError(schema) || ajvErrors;
 };
 
 /**

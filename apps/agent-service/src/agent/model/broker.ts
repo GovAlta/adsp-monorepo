@@ -18,6 +18,9 @@ import {
   WorkspaceUpdateRequest,
   WorkspaceUpdateResult,
 } from '../workspace';
+import { FORM_GENERATION_AGENT_ID, getAgentExecutionLimits } from './executionLimits';
+import { getFormGenerationProviderOptions } from './modelConfiguration';
+import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
 
 type ThreadMetadataRecord = {
   id: string;
@@ -71,15 +74,44 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   }
 
   private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string) {
+    const limits = getAgentExecutionLimits(this.agentId);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      abortExecution(
+        controller,
+        STREAM_ERROR_CODES.GENERATION_DEADLINE,
+        'Generation exceeded the time limit. Anything already saved is in the editor.',
+      );
+    }, limits.timeoutMs);
+    timeout.unref?.();
+    const clearAbortTimeout = () => clearTimeout(timeout);
+
+    requestContext.set('agentId', this.agentId);
+    requestContext.set('abortController', controller);
+
+    let stepCount = 0;
     const options: AgentExecutionOptions = {
       requestContext,
       memory: { thread: threadId, resource: user.id },
+      abortSignal: controller.signal,
+      ...(limits.maxSteps !== undefined ? { maxSteps: limits.maxSteps } : {}),
+      ...(this.agentId === FORM_GENERATION_AGENT_ID ? { providerOptions: getFormGenerationProviderOptions() } : {}),
       onStepFinish: ({ finishReason, usage }) => {
+        stepCount += 1;
         this.logger.debug(
           `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
           { context: 'AgentBroker', tenant: this.tenantId?.toString() },
         );
+        if (limits.maxSteps !== undefined && stepCount >= limits.maxSteps) {
+          abortExecution(
+            controller,
+            STREAM_ERROR_CODES.MAX_STEPS,
+            `Reached the ${limits.maxSteps}-step limit. Anything already saved is in the editor.`,
+          );
+        }
       },
+      onFinish: clearAbortTimeout,
+      onAbort: clearAbortTimeout,
       structuredOutput: undefined,
     };
 
@@ -103,6 +135,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     // the LLM-authored memory.thread/resource values that Mastra otherwise derives).
     requestContext.set('tenantId', this.tenantId);
     requestContext.set('user', user);
+    requestContext.set('agentId', this.agentId);
     requestContext.set(MASTRA_THREAD_ID_KEY, threadId);
     requestContext.set(MASTRA_RESOURCE_ID_KEY, user.id);
 

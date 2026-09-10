@@ -57,7 +57,10 @@ describe('Input Text Control tests', () => {
   };
   const sinProps: GoAInputNumberProps & ControlProps = {
     uischema: textBoxUiSchema,
-    schema: { title: 'Social insurance number', errorMessage: 'Must be three groups of three digits.' },
+    schema: {
+      title: 'Social insurance number',
+      errorMessage: 'Must be a valid social insurance number in format 000 000 000',
+    },
     rootSchema: {},
     handleChange: (path, value) => {},
     enabled: true,

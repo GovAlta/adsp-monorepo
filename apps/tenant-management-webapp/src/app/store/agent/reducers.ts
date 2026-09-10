@@ -24,6 +24,7 @@ import {
   TOOL_CALL,
   TOOL_CALL_ERROR,
   TOOL_CALL_RESULT,
+  TOOL_OUTPUT,
   TRIPWIRE,
   UPDATE_AGENT_ACTION,
   UPDATE_AGENT_SUCCESS_ACTION,
@@ -94,6 +95,18 @@ const defaultState: AgentState = {
   },
 };
 
+function streamErrorDetails(payload: { code?: string; message: string; details?: unknown }): unknown {
+  if (payload.details !== undefined) {
+    return payload.details;
+  }
+  if (payload.code) {
+    return { code: payload.code };
+  }
+  return undefined;
+}
+
+const DEFAULT_STREAM_ERROR_MESSAGE = 'The agent stopped unexpectedly. Anything already saved is in the editor.';
+
 function processResponseChunk(message: AgentMessage, action: AgentResponseAction): AgentMessage {
   if (action.done) {
     message = { ...message, streaming: false };
@@ -128,7 +141,7 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
         const updatedToolCalls = [...message.toolCalls];
         updatedToolCalls[existingResultIndex] = {
           ...updatedToolCalls[existingResultIndex],
-          args,
+          args: args ?? updatedToolCalls[existingResultIndex].args,
           result,
         };
         return { ...message, toolCalls: updatedToolCalls };
@@ -157,7 +170,7 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
         const updatedToolCalls = [...message.toolCalls];
         updatedToolCalls[existingErrorIndex] = {
           ...updatedToolCalls[existingErrorIndex],
-          args,
+          args: args ?? updatedToolCalls[existingErrorIndex].args,
           error,
         };
         return { ...message, toolCalls: updatedToolCalls };
@@ -175,6 +188,25 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
           ],
         };
       }
+    }
+    case TOOL_OUTPUT: {
+      if (!action.chunk || action.chunk.type !== TOOL_OUTPUT) return message;
+
+      const { toolCallId, toolName, output } = action.chunk.payload;
+      const index = message.toolCalls.findIndex((tc: ToolCall) => tc.toolCallId === toolCallId);
+      if (index < 0) {
+        return {
+          ...message,
+          toolCalls: [...message.toolCalls, { toolCallId, toolName, args: {}, progress: [output] }],
+        };
+      }
+
+      const updatedToolCalls = [...message.toolCalls];
+      updatedToolCalls[index] = {
+        ...updatedToolCalls[index],
+        progress: [...(updatedToolCalls[index].progress ?? []), output],
+      };
+      return { ...message, toolCalls: updatedToolCalls };
     }
     case REASONING_START:
       return {
@@ -218,8 +250,8 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
           ...(message.errors || []),
           {
             type: action.chunk.type,
-            message: action.chunk.payload.message,
-            details: action.chunk.payload.details,
+            message: action.chunk.payload.message || DEFAULT_STREAM_ERROR_MESSAGE,
+            details: streamErrorDetails(action.chunk.payload),
           },
         ],
       };

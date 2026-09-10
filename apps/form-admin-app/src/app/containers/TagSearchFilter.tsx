@@ -6,10 +6,11 @@ import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 interface TagSearchFilterProps {
   value: string;
+  disabled?: boolean;
   onChange: (value: string) => void;
 }
 
-export const TagSearchFilter: FunctionComponent<TagSearchFilterProps> = ({ value, onChange }) => {
+export const TagSearchFilter: FunctionComponent<TagSearchFilterProps> = ({ value, disabled, onChange }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const tags = useSelector(tagsSelector);
@@ -27,6 +28,7 @@ export const TagSearchFilter: FunctionComponent<TagSearchFilterProps> = ({ value
         size="compact"
         name="tag"
         value={value || ''}
+        disabled={disabled}
         onChange={(detail: GoabDropdownOnChangeDetail) => onChange(detail.value)}
       >
         <GoabDropdownItem value="" label="<No tag filter>" />

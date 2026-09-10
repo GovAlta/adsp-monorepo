@@ -80,10 +80,7 @@ export const countActiveFilters = (criteria: { dataCriteria?: Record<string, unk
 // Tag based searches resolve results via the directory service, which doesn't include a total in the page.
 // Carry the total across pages of the same search, but clear it when a new search comes back without one,
 // so the total of a previous search isn't reported against the current results.
-export const resolveResultTotal = (
-  current: number | null,
-  page: { after?: string; total?: number },
-): number | null => {
+export const resolveResultTotal = (current: number | null, page: { after?: string; total?: number }): number | null => {
   if (page.total !== undefined) {
     return page.total;
   }
@@ -110,6 +107,10 @@ export interface FormState {
   busy: {
     initializing: boolean;
     loading: boolean;
+    // A definition search starting from the first page, as opposed to paging further into the
+    // results of one. The stale results are still on screen while it runs, so this is what tells
+    // the listing to show a loading state in their place rather than a row appended below them.
+    searching: boolean;
     findPdf: boolean;
     executing: boolean;
     exporting: boolean;
@@ -146,6 +147,7 @@ export const initialFormState: FormState = {
   busy: {
     initializing: false,
     loading: false,
+    searching: false,
     findPdf: false,
     executing: false,
     exporting: false,
@@ -782,11 +784,13 @@ const formSlice = createSlice({
         state.selectedSubmission = meta.arg;
         state.dispositionDraft = initialFormState.dispositionDraft;
       })
-      .addCase(loadDefinitions.pending, (state) => {
+      .addCase(loadDefinitions.pending, (state, { meta }) => {
         state.busy.loading = true;
+        state.busy.searching = !meta.arg?.after;
       })
       .addCase(loadDefinitions.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
+        state.busy.searching = false;
         state.definitions = payload.results.reduce(
           (definitions, definition) => ({ ...definitions, [definition.id]: definition }),
           state.definitions as Record<string, FormDefinition>,
@@ -801,6 +805,7 @@ const formSlice = createSlice({
       })
       .addCase(loadDefinitions.rejected, (state) => {
         state.busy.loading = false;
+        state.busy.searching = false;
       })
       .addCase(loadDefinition.pending, (state) => {
         state.busy.initializing = true;

@@ -70,6 +70,27 @@ describe('createFormConfigurationTools', () => {
       const getUrl = mockedAxios.get.mock.calls[0][0] as string;
       expect(getUrl).toContain('form-service/intake-form/latest');
     });
+
+    it('still returns the full dataSchema and uiSchema', async () => {
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          name: 'Intake Form',
+          description: 'An intake form',
+          dataSchema: { type: 'object', properties: { firstName: { type: 'string' } } },
+          uiSchema: { type: 'VerticalLayout', elements: [] },
+          anonymousApply: false,
+          applicantRoles: [],
+          assessorRoles: [],
+        },
+      });
+
+      const result = await tools.formConfigurationRetrievalTool.execute({}, {
+        requestContext: mockRequestContext,
+      } as never);
+
+      expect(result.dataSchema).toBeDefined();
+      expect(result.uiSchema).toBeDefined();
+    });
   });
 
   describe('formConfigurationUpdateTool', () => {
@@ -148,7 +169,7 @@ describe('createFormConfigurationTools', () => {
       expect(patchUrl).toContain('form-service/intake-form');
     });
 
-    it('returns the latest configuration from the response', async () => {
+    it('returns a compact ack instead of the full configuration', async () => {
       mockedAxios.patch.mockResolvedValueOnce(successResponse);
 
       const result = await tools.formConfigurationUpdateTool.execute(
@@ -156,7 +177,14 @@ describe('createFormConfigurationTools', () => {
         { requestContext: mockRequestContext } as never,
       );
 
-      expect(result.name).toBe('Intake Form');
+      expect(result).toEqual({
+        name: 'Intake Form',
+        updatedFields: ['dataSchema'],
+        propertyCount: 1,
+        categoryCount: 0,
+      });
+      expect(result).not.toHaveProperty('dataSchema');
+      expect(result).not.toHaveProperty('uiSchema');
     });
   });
 });
