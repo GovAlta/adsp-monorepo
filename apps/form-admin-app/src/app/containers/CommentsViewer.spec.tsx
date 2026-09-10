@@ -35,11 +35,14 @@ jest.mock('../state', () => ({
 const { CommentsViewer } = require('./CommentsViewer');
 
 describe('form-admin-app CommentsViewer', () => {
-  it('labels the send button "Send" while the draft field keeps its own label', () => {
+  // The heading and the field placeholder already say what the field is for, so the label above it
+  // was only taking height from the conversation.
+  it('labels the send button "Send" and drops the label above the draft field', () => {
     render(<CommentsViewer />);
 
     expect(capturedProps.addCommentButtonLabel).toBe('Send');
-    expect(capturedProps.addCommentLabel).toBe('Add response');
+    expect(capturedProps.hideAddCommentLabel).toBe(true);
+    expect(capturedProps.addCommentLabel).toBeUndefined();
   });
 
   it('renders the review conversation with the messaging layout', () => {

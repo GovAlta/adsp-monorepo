@@ -42,16 +42,19 @@ jest.mock('@abgov/react-components', () => ({
   GoabTextArea: ({
     value,
     disabled,
+    placeholder,
     onChange,
   }: {
     value: string;
     disabled?: boolean;
+    placeholder?: string;
     onChange: (detail: { value: string }) => void;
   }) => (
     <textarea
       data-testid="comment-textarea"
       value={value}
       disabled={disabled}
+      placeholder={placeholder}
       onChange={(event) => onChange({ value: event.target.value })}
     />
   ),
@@ -458,6 +461,41 @@ describe('CommentsViewer', () => {
     expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
     expect(screen.getByText('Add response')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add response' })).not.toBeInTheDocument();
+  });
+
+  test('renders no label above the draft field when the label is hidden', () => {
+    // Arrange
+    const props = createProps({
+      draft: { content: 'Draft text' },
+      hideAddCommentLabel: true,
+      addCommentButtonLabel: 'Send',
+    });
+
+    // Act
+    const { baseElement } = render(<CommentsViewer {...props} />);
+
+    // Assert no label is left behind, including the 'Add comment' default, and no empty one in the
+    // space it occupied.
+    expect(screen.queryByText('Add comment')).not.toBeInTheDocument();
+    expect(baseElement.querySelector('form label')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+  });
+
+  test('uses the draft placeholder given by the caller, and a comment one otherwise', () => {
+    // Arrange
+    const props = createProps({ draft: { content: '' }, draftPlaceholder: 'Write your question...' });
+
+    // Act
+    const { rerender } = render(<CommentsViewer {...props} />);
+
+    // Assert
+    expect(screen.getByTestId('comment-textarea')).toHaveAttribute('placeholder', 'Write your question...');
+
+    // Act
+    rerender(<CommentsViewer {...createProps({ draft: { content: '' } })} />);
+
+    // Assert
+    expect(screen.getByTestId('comment-textarea')).toHaveAttribute('placeholder', 'Write your comment...');
   });
 
   test('falls back to addCommentLabel for the button when no button label is provided', () => {
