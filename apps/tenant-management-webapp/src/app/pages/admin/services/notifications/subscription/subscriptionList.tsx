@@ -55,10 +55,14 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
   return (
     <>
       <tr>
-        <td headers={`userName_${groupIndex}`} data-testid={`userName_${groupIndex}_${index}`}>
+        <td
+          className="address-as"
+          headers={`userName_${groupIndex}`}
+          data-testid={`userName_${groupIndex}_${index}`}
+        >
           {characterLimit(subscriber?.addressAs, 30)}
         </td>
-        <td headers={`channels_${groupIndex}`} data-testid={`channels_${groupIndex}_${index}`}>
+        <td className="channels" headers={`channels_${groupIndex}`} data-testid={`channels_${groupIndex}_${index}`}>
           {sortedChannels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
@@ -82,7 +86,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
             </div>
           ))}
         </td>
-        <td headers={`actions_${groupIndex}`} data-testid={`actions_${groupIndex}_${index}`}>
+        <td className="actions" headers={`actions_${groupIndex}`} data-testid={`actions_${groupIndex}_${index}`}>
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
             <GoAContextMenuIcon
               testId={`delete-subscription-${subscriber.id}`}
@@ -197,11 +201,16 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
   };
 
   return (
-    <div className={className}>
+    <div className={className} data-testid="subscription-list">
       {groups.map((type, groupIndex) => (
-        <div key={type.id}>
+        <div key={type.id} className="subscription-group">
           <div className="group-name">{type.name}</div>
           <DataTable id={`subscription-table-${groupIndex}`} data-testid={`subscription-table-${groupIndex}`}>
+            <colgroup>
+              <col className="col-address" />
+              <col className="col-channels" />
+              <col className="col-actions" />
+            </colgroup>
             <thead>
               <tr>
                 <th
@@ -211,8 +220,20 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                 >
                   Address as
                 </th>
-                <th id={`channels_${groupIndex}`}>Channels</th>
-                <th id={`actions_${groupIndex}`}>Actions</th>
+                <th
+                  className="channels"
+                  id={`channels_${groupIndex}`}
+                  data-testid={`subscription-header-channels-${groupIndex}`}
+                >
+                  Channels
+                </th>
+                <th
+                  className="actions"
+                  id={`actions_${groupIndex}`}
+                  data-testid={`subscription-header-actions-${groupIndex}`}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -251,45 +272,51 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
 };
 
 export const SubscriptionList = styled(SubscriptionsListComponent)`
-  display: table;
+  display: block;
+  width: 100%;
+
+  & .subscription-group {
+    width: 100%;
+  }
+
   & .group-name {
     text-transform: capitalize;
     font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);
   }
 
-  & .address-as {
-    min-width: 180px;
-  }
-
-  & td:first-child {
-    width: 100px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-  }
-
-  & td:last-child {
-    width: 40px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-  }
-
-  // & .payload-details {
-  //   div {
-  //     background: #f3f3f3;
-  //     white-space: pre-wrap;
-  //     font-family: monospace;
-  //     font-size: 12px;
-  //     line-height: 16px;
-  //     padding: 16px;
-  //   }
-  //   padding: 0;
-  // }
-
   table {
+    width: 100%;
+    table-layout: fixed;
     margin-bottom: 2rem;
+  }
+
+  & .col-address,
+  & .address-as {
+    width: 38%;
+  }
+
+  & .col-channels,
+  & .channels {
+    width: 46%;
+  }
+
+  & .col-actions,
+  & .actions {
+    width: 16%;
+    text-align: right;
+  }
+
+  & td.address-as {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & td.actions {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
