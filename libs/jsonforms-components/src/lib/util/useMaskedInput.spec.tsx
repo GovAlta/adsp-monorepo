@@ -128,4 +128,39 @@ describe('useMaskedInput', () => {
 
     expect(preventDefault).not.toHaveBeenCalled();
   });
+
+  it('strips letters when allowedKeys is digits only', () => {
+    const onCommit = jest.fn();
+    const { result } = renderHook(() =>
+      useMaskedInput({
+        mask: DEFAULT_PATTERNS.phone.mask,
+        inPlace: false,
+        data: '',
+        allowedKeys: DEFAULT_PATTERNS.phone.allowedKeys,
+        onCommit,
+      }),
+    );
+
+    act(() => result.current.handleChange({ value: '403a5551212' }));
+
+    expect(result.current.value).toBe('(403) 555-1212');
+    expect(onCommit).toHaveBeenCalledWith('(403) 555-1212');
+  });
+
+  it('blocks letter key presses when allowedKeys is digits only', () => {
+    const preventDefault = jest.fn();
+    const { result } = renderHook(() =>
+      useMaskedInput({
+        mask: DEFAULT_PATTERNS.phone.mask,
+        inPlace: false,
+        data: '',
+        allowedKeys: DEFAULT_PATTERNS.phone.allowedKeys,
+        onCommit: jest.fn(),
+      }),
+    );
+
+    act(() => result.current.handleKeyPress({ key: 'a', event: { preventDefault } as unknown as Event }));
+
+    expect(preventDefault).toHaveBeenCalled();
+  });
 });

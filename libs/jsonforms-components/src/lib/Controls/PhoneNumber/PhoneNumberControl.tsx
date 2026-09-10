@@ -25,6 +25,7 @@ export const PhoneNumberControl = (props: PhoneNumberControlProps): JSX.Element 
     mask: phoneMask,
     inPlace,
     data,
+    allowedKeys: DEFAULT_PATTERNS.phone.allowedKeys,
     onCommit: (stored) => {
       setError(stored && !DEFAULT_PATTERNS.phone.pattern.test(stored) ? DEFAULT_PATTERNS.phone.error : '');
       handleChange(path, stored);
@@ -49,7 +50,7 @@ export const PhoneNumberControl = (props: PhoneNumberControlProps): JSX.Element 
           maxLength={inPlace ? undefined : phoneMask.length}
           placeholder={inPlace ? undefined : maskPlaceholder(phoneMask)}
           onChange={(detail: GoabInputOnChangeDetail) => handleMaskChange(detail)}
-          onKeyPress={inPlace ? (detail: GoabInputOnKeyPressDetail) => handleKeyPress(detail) : undefined}
+          onKeyPress={(detail: GoabInputOnKeyPressDetail) => handleKeyPress(detail)}
           width="100%"
         />
       </GoabFormItem>
