@@ -115,6 +115,34 @@ describe('PhoneNumberControl', () => {
     const formItem = container.querySelector('[testid="form-item-phoneNumber"]');
     expect(formItem).toHaveAttribute('error', '');
   });
+
+  it('strips letters from phone input', () => {
+    const { container } = render(<PhoneNumberControl {...defaultProps} data="" />);
+    const input = container.querySelector('[testid="phone-input-phoneNumber"]')!;
+
+    fireEvent(
+      input,
+      new CustomEvent('_change', {
+        detail: { name: 'phoneNumber', value: '403a5551212' },
+      }),
+    );
+
+    expect(mockHandleChange).toHaveBeenCalledWith('phoneNumber', '(403) 555-1212');
+  });
+
+  it('prevents alphabet key presses on phone input', () => {
+    const { container } = render(<PhoneNumberControl {...defaultProps} data="" />);
+    const input = container.querySelector('[testid="phone-input-phoneNumber"]')!;
+    const keyPressEvent = new CustomEvent('_keyPress', {
+      cancelable: true,
+      detail: { key: 'a', value: '403a' },
+    });
+    const preventDefaultSpy = jest.spyOn(keyPressEvent, 'preventDefault');
+
+    fireEvent(input, keyPressEvent);
+
+    expect(preventDefaultSpy).toHaveBeenCalled();
+  });
 });
 
 describe('PhoneNumberReviewControl', () => {

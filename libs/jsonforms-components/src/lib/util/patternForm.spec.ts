@@ -279,3 +279,86 @@ describe('mask constants', () => {
     expect(MASK_CONTROL_KEYS.has('Backspace')).toBe(true);
   });
 });
+
+describe('custom patternForm masks', () => {
+  const hashMask = '####-##';
+  const starMask = '**/**';
+  const underscoreMask = '__-__';
+  const prefixedMask = 'ID-####';
+
+  it('formats a custom hash mask as digits are entered', () => {
+    expect(formatWithPattern('123456', hashMask)).toBe('1234-56');
+  });
+
+  it('stops a custom hash mask at the last entered character', () => {
+    expect(formatWithPattern('123', hashMask)).toBe('123');
+  });
+
+  it('truncates a custom hash mask at the placeholder count', () => {
+    expect(formatWithPattern('123456789', hashMask)).toBe('1234-56');
+  });
+
+  it('formats a custom star mask', () => {
+    expect(formatWithPattern('AB12', starMask)).toBe('AB/12');
+  });
+
+  it('formats a custom underscore mask', () => {
+    expect(formatWithPattern('1234', underscoreMask)).toBe('12-34');
+  });
+
+  it('inserts leading literals from a custom mask', () => {
+    expect(formatWithPattern('1234', prefixedMask)).toBe('ID-1234');
+  });
+
+  it('keeps letters in a custom mask because they are content characters', () => {
+    expect(formatWithPattern('1234ab', hashMask)).toBe('1234-ab');
+  });
+
+  it('counts placeholders in a custom mask', () => {
+    expect(maskDigitCount(hashMask)).toBe(6);
+  });
+
+  it('builds a zero placeholder for a custom mask', () => {
+    expect(maskPlaceholder(hashMask)).toBe('0000-00');
+  });
+
+  it('fills a custom in-place template and leaves remaining placeholders', () => {
+    expect(toMaskTemplate('123', hashMask)).toBe('123#-##');
+  });
+
+  it('returns the full custom template when the value is empty', () => {
+    expect(toMaskTemplate('', hashMask)).toBe('####-##');
+  });
+
+  it('builds the in-place display, stored value, and caret for a custom mask', () => {
+    expect(computeMaskEdit('1234', 4, hashMask)).toEqual({
+      display: '1234-##',
+      stored: '1234',
+      caret: 4,
+    });
+  });
+
+  it('is false until every custom placeholder is filled', () => {
+    expect(isMaskFilled('1234-5', hashMask)).toBe(false);
+  });
+
+  it('is true once every custom placeholder is filled', () => {
+    expect(isMaskFilled('1234-56', hashMask)).toBe(true);
+  });
+
+  it('rejects extra content once a custom in-place mask is full', () => {
+    expect(overflowMaskEdit('1234-56', '1234-567', 8, hashMask)).toEqual({
+      display: '1234-56',
+      stored: '1234-56',
+      caret: 7,
+    });
+  });
+
+  it('allows custom in-place edits while the mask is not full', () => {
+    expect(overflowMaskEdit('1234-##', '12345', 5, hashMask)).toBeUndefined();
+  });
+
+  it('appends leftover content that does not fit a custom applyFormatPattern mask', () => {
+    expect(applyFormatPattern('123456789', hashMask)).toBe('1234-56789');
+  });
+});

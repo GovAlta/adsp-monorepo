@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import {
   applyInPlaceEdit,
   computeMaskEdit,
+  filterAllowedKeys,
   formatWithPattern,
   getMaskInputTarget,
   isMaskFilled,
   overflowMaskEdit,
+  shouldBlockKey,
   toMaskTemplate,
 } from './patternForm';
 
@@ -24,6 +26,7 @@ interface UseMaskedInputOptions {
   // When true the field shows the fill-in template and edits keep the caret in place.
   inPlace: boolean;
   data: unknown;
+  allowedKeys?: RegExp;
   // Receives the clean formatted value whenever it changes.
   onCommit: (stored: string) => void;
 }
@@ -35,7 +38,20 @@ interface UseMaskedInputResult {
 }
 
 // Encapsulates masked-input state for a GoA input: display value, mount reflection, and change/keypress handling.
-export const useMaskedInput = ({ mask, inPlace, data, onCommit }: UseMaskedInputOptions): UseMaskedInputResult => {
+const resetMaskedValue = (detail: MaskChangeDetail, nextValue: string) => {
+  const target = getMaskInputTarget(detail);
+  if (target) {
+    target.value = nextValue;
+  }
+};
+
+export const useMaskedInput = ({
+  mask,
+  inPlace,
+  data,
+  allowedKeys,
+  onCommit,
+}: UseMaskedInputOptions): UseMaskedInputResult => {
   const format = (value: string): string => (inPlace ? toMaskTemplate(value, mask) : formatWithPattern(value, mask));
 
   const initialDisplay = format(typeof data === 'string' ? data : '');
@@ -51,23 +67,27 @@ export const useMaskedInput = ({ mask, inPlace, data, onCommit }: UseMaskedInput
 
   const handleChange = (detail: MaskChangeDetail) => {
     const rawValue = detail.value;
+    const cleaned = allowedKeys ? filterAllowedKeys(rawValue, allowedKeys) : rawValue;
 
     if (!inPlace) {
-      const stored = formatWithPattern(rawValue, mask);
+      const stored = cleaned === '' ? '' : formatWithPattern(cleaned, mask);
+      if (allowedKeys && cleaned !== rawValue) {
+        resetMaskedValue(detail, stored);
+      }
       setValue(stored);
       onCommit(stored);
       return;
     }
 
     const target = getMaskInputTarget(detail);
-    const caretIndex = target?.selectionStart ?? rawValue.length;
-    const overflow = overflowMaskEdit(value, rawValue, caretIndex, mask);
+    const caretIndex = target?.selectionStart ?? cleaned.length;
+    const overflow = overflowMaskEdit(value, cleaned, caretIndex, mask);
     if (overflow) {
       applyInPlaceEdit(target, overflow);
       return;
     }
 
-    const edit = computeMaskEdit(rawValue, caretIndex, mask);
+    const edit = computeMaskEdit(cleaned, caretIndex, mask);
 
     applyInPlaceEdit(target, edit);
     setValue(edit.display);
@@ -76,11 +96,17 @@ export const useMaskedInput = ({ mask, inPlace, data, onCommit }: UseMaskedInput
 
   // In-place has no maxLength (the template is already full length) and GoA keyPress is keyup, so restore on overflow.
   const handleKeyPress = (detail: MaskKeyPressDetail) => {
-    if (!inPlace || !/^[A-Za-z0-9]$/.test(detail.key) || !isMaskFilled(value, mask)) {
+    const blockDisallowed = shouldBlockKey(detail.key, allowedKeys);
+    const blockOverflow = inPlace && /^[A-Za-z0-9]$/.test(detail.key) && isMaskFilled(value, mask);
+    if (!blockDisallowed && !blockOverflow) {
       return;
     }
 
     detail.event?.preventDefault();
+    if (!blockOverflow) {
+      return;
+    }
+
     const target = getMaskInputTarget(detail);
     const rawValue = target?.value ?? value;
     const overflow = overflowMaskEdit(value, rawValue, target?.selectionStart ?? value.length, mask);
