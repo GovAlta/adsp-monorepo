@@ -10,6 +10,7 @@ import {
   MetricCriteria,
   MetricInterval,
   Page,
+  PlatformMetric,
 } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { stripNul } from './sanitize';
@@ -404,6 +405,75 @@ export class TimescaleValuesRepository implements ValuesRepository {
         size: rows.length,
       },
     };
+  }
+
+  /**
+   * Platform-scoped metrics always read the materialised rollups, never the per-tenant metrics_*
+   * views: those views require a tenant filter, and re-aggregating them across every tenant on read
+   * would be prohibitively expensive at platform scale. Coverage catches up on its own schedule, so
+   * a window outside it simply returns fewer rows rather than falling back like the tenant-scoped
+   * reads do.
+   */
+  async readPlatformMetrics(
+    namespace: string,
+    name: string,
+    criteria?: MetricCriteria,
+  ): Promise<Record<string, PlatformMetric>> {
+    // Default interval: last 1 month if not provided - prevents infinitely long search
+    if (!criteria.intervalMin && !criteria.intervalMax) {
+      const now = new Date();
+      criteria.intervalMax = now;
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+      criteria.intervalMin = oneMonthAgo;
+    }
+
+    switch (criteria.interval) {
+      case 'one_minute':
+      case 'five_minutes':
+      case 'hourly':
+      case 'daily':
+      case 'weekly':
+      case 'monthly':
+        break;
+      default:
+        throw new InvalidOperationError('Interval value is not recognized.');
+    }
+
+    let query = this.knex('metric_interval_rollups')
+      .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(true), 'tenant')
+      .where({ namespace, name, interval: criteria.interval });
+
+    if (criteria.intervalMax) {
+      query = query.where('bucket', '<=', criteria.intervalMax);
+    }
+
+    if (criteria.intervalMin) {
+      query = query.where('bucket', '>=', criteria.intervalMin);
+    }
+
+    if (criteria.metricLike) {
+      query = query.where('metric', 'like', `%${criteria.metricLike}%`);
+    }
+
+    const rows = await query.orderBy('bucket', 'desc');
+    return rows.reduce((metrics, row) => {
+      const metric = metrics[row.metric] || { name: row.metric, values: [] };
+      metric.values.push({
+        interval: new Date(row.bucket),
+        sum: row.sum,
+        avg: row.avg,
+        min: row.min,
+        max: row.max,
+        count: row.count,
+        tenantId: row.tenant,
+      });
+
+      return {
+        ...metrics,
+        [row.metric]: metric,
+      };
+    }, {} as Record<string, PlatformMetric>);
   }
 
   async writeMetric(

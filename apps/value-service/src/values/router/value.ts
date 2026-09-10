@@ -1,4 +1,12 @@
-import { AdspId, DomainEvent, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  DomainEvent,
+  EventService,
+  hasRequiredRole,
+  isAllowedUser,
+  UnauthorizedUserError,
+  User,
+} from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
@@ -223,6 +231,36 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
       }
 
       const result = await repository.readMetric(tenant.id, namespace, name, metric, top, after as string, criteria);
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function readPlatformMetrics(repository: ValuesRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user as User;
+      const { namespace, name } = req.params;
+      const { interval: intervalValue, criteria: criteriaValue } = req.query;
+      const interval = (intervalValue as string) || 'daily';
+      const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+
+      const criteria: MetricCriteria = {
+        interval: interval as MetricInterval,
+        intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
+        intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
+        metricLike: criteriaParam.metricLike,
+      };
+
+      // Platform metrics reveal data across every tenant, so this is restricted to core users with
+      // the dedicated role; the tenant-scoped value-reader role does not carry this permission.
+      if (!user?.isCore || !hasRequiredRole(user, ServiceUserRoles.PlatformMetricsReader)) {
+        throw new UnauthorizedUserError('read platform metrics', user);
+      }
+
+      const result = await repository.readPlatformMetrics(namespace, name, criteria);
       res.send(result);
     } catch (err) {
       next(err);
@@ -496,6 +534,16 @@ export const createValueRouter = ({
         })
     ),
     readMetrics(repository)
+  );
+
+  valueRouter.get(
+    '/:namespace/values/:name/platform-metrics',
+    validateNamespaceNameHandler,
+    createValidationHandler(
+      query('interval').optional().isString(),
+      query('criteria').optional().isString()
+    ),
+    readPlatformMetrics(repository)
   );
 
   valueRouter.get(
