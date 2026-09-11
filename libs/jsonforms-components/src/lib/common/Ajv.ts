@@ -9,6 +9,26 @@ import { invalidSin } from './Constants';
 // Allow empty values so incomplete fields are not treated as format errors.
 const optionalFormat = (pattern: RegExp) => (input: string) => !input || pattern.test(input);
 
+const optionalSinFormat = (input: string) => {
+  if (!input) {
+    return true;
+  }
+  if (!DEFAULT_PATTERNS.sin.pattern.test(input)) {
+    return false;
+  }
+  return validateSinWithLuhn(input);
+};
+
+const isValidSinWhenComplete = (data: unknown): boolean => {
+  if (typeof data !== 'string' || data.length === 0) {
+    return true;
+  }
+  if (!DEFAULT_PATTERNS.sin.pattern.test(data)) {
+    return true;
+  }
+  return validateSinWithLuhn(data);
+};
+
 export const createDefaultAjv = (...schemas: AnySchema[]) => {
   const ajv = new Ajv({
     allErrors: true,
@@ -25,7 +45,7 @@ export const createDefaultAjv = (...schemas: AnySchema[]) => {
 
   ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
   Object.entries(DEFAULT_PATTERNS).forEach(([format, config]) => {
-    ajv.addFormat(format, optionalFormat(config.pattern));
+    ajv.addFormat(format, format === 'sin' ? optionalSinFormat : optionalFormat(config.pattern));
   });
   ajv.addFormat('phone', PHONE_REGEX);
   ajv.addFormat('computed', /^[a-zA-Z0-9._-]+$/);
@@ -48,17 +68,11 @@ export const createDefaultAjv = (...schemas: AnySchema[]) => {
     type: 'string',
     schemaType: 'boolean',
     validate: (shouldValidate: boolean, data: unknown) => {
-      if (!shouldValidate) return true;
-
-      if (typeof data !== 'string' || data.length === 0) {
+      if (shouldValidate === false) {
         return true;
       }
 
-      if (!/^\d{3} \d{3} \d{3}$/.test(data)) {
-        return true;
-      }
-
-      return validateSinWithLuhn(data);
+      return isValidSinWhenComplete(data);
     },
     error: {
       message: invalidSin,

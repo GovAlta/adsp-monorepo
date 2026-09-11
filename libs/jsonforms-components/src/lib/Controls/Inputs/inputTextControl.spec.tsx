@@ -1013,6 +1013,215 @@ describe('Input Text Control tests', () => {
       expect(handleChange).toHaveBeenCalledWith('customMask', '1234-56');
     });
 
+    it('formats a partial custom mask as characters are entered', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        handleChange,
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('customMask', '123');
+    });
+
+    it('truncates extra characters that do not fit a custom mask', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        handleChange,
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456789' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('customMask', '1234-56');
+    });
+
+    it('formats a custom star mask from UI schema options', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        handleChange,
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '**/**' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: 'AB12' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('customMask', 'AB/12');
+    });
+
+    it('formats a custom underscore mask from UI schema options', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        handleChange,
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '__-__' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '1234' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('customMask', '12-34');
+    });
+
+    it('shows the placeholder for a custom mask', () => {
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      expect(input).toHaveAttribute('placeholder', '0000-00');
+    });
+
+    it('shows the in-place template for a custom mask', () => {
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'customMask',
+        id: 'customMask',
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##', inPlace: true },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      expect(input).toHaveAttribute('value', '####-##');
+    });
+
+    it('does not keep extra characters when a custom in-place mask is full', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '1234-56',
+        path: 'customMask',
+        id: 'customMask',
+        handleChange,
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##', inPlace: true },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='customMask-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '1234-567' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(input).toHaveAttribute('value', '1234-56');
+      expect(handleChange).not.toHaveBeenCalledWith('customMask', '1234-567');
+    });
+
+    it('uses the named schema format instead of a custom UI mask', async () => {
+      const handleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        data: '',
+        path: 'sin',
+        id: 'sin',
+        handleChange,
+        schema: { type: 'string', format: 'sin' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/sin',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement } = renderInput(props);
+      const input = baseElement.querySelector("goa-input[testId='sin-input']");
+
+      fireEvent(input!, new CustomEvent('_change', { detail: { value: '123456789' } }));
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChange).toHaveBeenCalledWith('sin', '123 456 789');
+    });
+
     it('shows the in-place template for a driver licence', () => {
       const props = {
         ...staticProps,

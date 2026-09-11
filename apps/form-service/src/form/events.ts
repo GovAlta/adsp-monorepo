@@ -588,6 +588,10 @@ const messageFormSchema = {
         name: { type: 'string', examples: ['Business licence application'] },
       },
     },
+    // Links back to the response the message is about: the form app for the applicant, and the
+    // form admin app for reviewers. Either can be absent, and the templates guard for that.
+    formDraftUrl: { type: 'string' },
+    formAdminUrl: { type: 'string' },
   },
 };
 
@@ -629,7 +633,7 @@ export const FormMessageForwardedDefinition: DomainEventDefinition = {
   },
 };
 
-function mapMessageForm(apiId: AdspId, form: FormEntity) {
+function mapMessageForm(apiId: AdspId, form: FormEntity, formAdminUrl?: string) {
   return {
     id: form.id,
     urn: `${apiId}:/forms/${form.id}`,
@@ -637,6 +641,8 @@ function mapMessageForm(apiId: AdspId, form: FormEntity) {
       id: form.definition?.id,
       name: form.definition?.name,
     },
+    formDraftUrl: form.formDraftUrl,
+    formAdminUrl,
   };
 }
 
@@ -664,14 +670,19 @@ export function formMessageToApplicant(
   };
 }
 
-export function formMessageToReviewer(apiId: AdspId, form: FormEntity, timestamp: Date): DomainEvent {
+export function formMessageToReviewer(
+  apiId: AdspId,
+  form: FormEntity,
+  timestamp: Date,
+  formAdminUrl?: string,
+): DomainEvent {
   return {
     name: FORM_MESSAGE_TO_REVIEWER,
     timestamp,
     tenantId: form.tenantId,
     correlationId: messageCorrelationId(apiId, form),
     context: messageContext(form),
-    payload: { form: mapMessageForm(apiId, form) },
+    payload: { form: mapMessageForm(apiId, form, formAdminUrl) },
   };
 }
 
@@ -681,6 +692,7 @@ export function formMessageForwarded(
   recipientEmail: string,
   message: string,
   timestamp: Date,
+  formAdminUrl?: string,
 ): DomainEvent {
   return {
     name: FORM_MESSAGE_FORWARDED,
@@ -688,6 +700,6 @@ export function formMessageForwarded(
     tenantId: form.tenantId,
     correlationId: messageCorrelationId(apiId, form),
     context: messageContext(form),
-    payload: { form: mapMessageForm(apiId, form), recipientEmail, message },
+    payload: { form: mapMessageForm(apiId, form, formAdminUrl), recipientEmail, message },
   };
 }

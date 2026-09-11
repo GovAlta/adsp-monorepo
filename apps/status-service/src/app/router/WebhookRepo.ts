@@ -1,35 +1,17 @@
-import { AdspId, ServiceDirectory, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { AdspId, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
 
-import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
-import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { Webhooks } from '../model';
 
 /**
- * Applications are stored in both the status-repository (for
- * dynamic, status data) and the configuration-service f(or
- * static information).
+ * Webhooks are stored in the push-service configuration; this repo is a
+ * read-only accessor for them and holds no status-service concerns.
  */
 
 export class WebhookRepo {
-  #repository: ServiceStatusRepository;
-  #endpointStatusEntryRepository: EndpointStatusEntryRepository;
-  #serviceId: AdspId;
-  #directoryService: ServiceDirectory;
   #tokenProvider: TokenProvider;
   #configurationService: ConfigurationService;
-  constructor(
-    repository: ServiceStatusRepository,
-    endpointStatusEntryRepository: EndpointStatusEntryRepository,
-    serviceId: AdspId,
-    directoryService: ServiceDirectory,
-    tokenProvider: TokenProvider,
-    configurationService: ConfigurationService
-  ) {
-    this.#repository = repository;
-    this.#serviceId = serviceId;
-    this.#directoryService = directoryService;
+  constructor(tokenProvider: TokenProvider, configurationService: ConfigurationService) {
     this.#tokenProvider = tokenProvider;
-    this.#endpointStatusEntryRepository = endpointStatusEntryRepository;
     this.#configurationService = configurationService;
   }
 

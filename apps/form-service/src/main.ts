@@ -303,6 +303,8 @@ const initializeApp = async (): Promise<express.Application> => {
   const messageNotificationJob = createMessageNotificationJob({
     apiId: adspId`${serviceId}:v1`,
     logger,
+    directory,
+    tenantService,
     repository: repositories.formRepository,
     commentService,
     notificationService,

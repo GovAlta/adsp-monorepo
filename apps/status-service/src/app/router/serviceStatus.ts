@@ -388,14 +388,7 @@ export function createServiceStatusRouter({
     configurationService,
   );
 
-  const webhookRepo = new WebhookRepo(
-    serviceStatusRepository,
-    endpointStatusEntryRepository,
-    serviceId,
-    directory,
-    tokenProvider,
-    configurationService,
-  );
+  const webhookRepo = new WebhookRepo(tokenProvider, configurationService);
 
   // Get the service for the tenant
   router.get('/applications', assertAuthenticatedHandler, getApplications(logger, applicationRepo));
