@@ -25,10 +25,18 @@ describe('messageNotification', () => {
     verifyCode: jest.fn(),
   };
   const eventService = { send: jest.fn() };
+  const directory = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
+  const tenantService = {
+    getTenants: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
 
   const form = {
     id: 'form-1',
     tenantId,
+    formDraftUrl: 'https://form.adsp.alberta.ca/test/licence/form-1',
     createdBy: { id: 'applicant-1', name: 'Applicant' },
     applicant: { urn: subscriberUrn },
     definition: {
@@ -54,6 +62,10 @@ describe('messageNotification', () => {
       apiId,
       logger,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      directory: directory as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tenantService: tenantService as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repository: repository as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       commentService: commentService as any,
@@ -71,6 +83,12 @@ describe('messageNotification', () => {
     });
     notificationService.hasSubscribers.mockResolvedValue(false);
     commentService.getComment.mockResolvedValue({ content: 'Where do I upload my licence?' });
+    directory.getServiceUrl.mockResolvedValue(new URL('https://form-admin.adsp.alberta.ca'));
+    tenantService.getTenant.mockResolvedValue({
+      id: tenantId,
+      name: 'Test Tenant',
+      realm: 'b6aff762-20f8-4c5d-88d3-c38ae16d1937',
+    });
   });
 
   it('notifies the applicant when a reviewer sends a message', async () => {
@@ -170,5 +188,82 @@ describe('messageNotification', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await expect(createJob()(commentCreated('reviewer-1') as any)).resolves.toBeUndefined();
     expect(eventService.send).not.toHaveBeenCalled();
+  });
+
+  describe('links back to the response', () => {
+    const adminUrl =
+      'https://form-admin.adsp.alberta.ca/b6aff762-20f8-4c5d-88d3-c38ae16d1937/definitions/licence/responses/form-1';
+
+    it('gives the applicant the form app link for their response', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await createJob()(commentCreated('reviewer-1') as any);
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: FORM_MESSAGE_TO_APPLICANT,
+          payload: expect.objectContaining({
+            form: expect.objectContaining({ formDraftUrl: 'https://form.adsp.alberta.ca/test/licence/form-1' }),
+          }),
+        }),
+      );
+    });
+
+    it('gives a subscribed reviewer the admin app link for the response', async () => {
+      notificationService.hasSubscribers.mockResolvedValueOnce(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await createJob()(commentCreated('applicant-1') as any);
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: FORM_MESSAGE_TO_REVIEWER,
+          payload: expect.objectContaining({ form: expect.objectContaining({ formAdminUrl: adminUrl }) }),
+        }),
+      );
+    });
+
+    it('gives the forwarded question the admin app link for the response', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await createJob()(commentCreated('applicant-1') as any);
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: FORM_MESSAGE_FORWARDED,
+          payload: expect.objectContaining({ form: expect.objectContaining({ formAdminUrl: adminUrl }) }),
+        }),
+      );
+    });
+
+    it('addresses the link by realm, which needs no escaping unlike the tenant name', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await createJob()(commentCreated('applicant-1') as any);
+
+      const { formAdminUrl } = eventService.send.mock.calls[0][0].payload.form;
+      expect(formAdminUrl).toContain('/b6aff762-20f8-4c5d-88d3-c38ae16d1937/');
+      expect(formAdminUrl).not.toContain('Test Tenant');
+    });
+
+    it('still notifies without a link when the admin app is not in the directory', async () => {
+      directory.getServiceUrl.mockResolvedValueOnce(undefined);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await createJob()(commentCreated('applicant-1') as any);
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: FORM_MESSAGE_FORWARDED,
+          payload: expect.objectContaining({ form: expect.objectContaining({ formAdminUrl: undefined }) }),
+        }),
+      );
+    });
+
+    it('still notifies without a link when the tenant cannot be read', async () => {
+      tenantService.getTenant.mockRejectedValueOnce(new Error('no tenant'));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await createJob()(commentCreated('applicant-1') as any);
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ name: FORM_MESSAGE_FORWARDED }),
+      );
+      expect(eventService.send.mock.calls[0][0].payload.form.formAdminUrl).toBeUndefined();
+    });
   });
 });

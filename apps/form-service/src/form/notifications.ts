@@ -169,6 +169,7 @@ export const FormMessageNotificationType: NotificationType = {
           body: `
 <section>
   <p>You have received a message regarding your <b>{{ event.payload.form.definition.name }}</b> response. Please log in to the form application to read your message and respond.</p>
+  {{#if event.payload.form.formDraftUrl}}<p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your response.</p>{{/if}}
 </section>`,
         },
       },
@@ -186,6 +187,7 @@ export const FormMessageNotificationType: NotificationType = {
   <p>The following message from a <b>{{ event.payload.form.definition.name }}</b> applicant has been received.</p>
   <blockquote>{{ event.payload.message }}</blockquote>
   <p>Please log in to the form admin application to read the message and respond.</p>
+  {{#if event.payload.form.formAdminUrl}}<p>Click <a href="{{ event.payload.form.formAdminUrl }}">here</a> to go to the response.</p>{{/if}}
 </section>`,
         },
       },
@@ -220,6 +222,7 @@ export const FormMessageReviewerNotificationType: NotificationType = {
           body: `
 <section>
   <p>You have received a message from a <b>{{ event.payload.form.definition.name }}</b> applicant. Please log in to the form admin application to read your message and respond.</p>
+  {{#if event.payload.form.formAdminUrl}}<p>Click <a href="{{ event.payload.form.formAdminUrl }}">here</a> to go to the response.</p>{{/if}}
 </section>`,
         },
       },

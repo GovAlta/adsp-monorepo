@@ -1,4 +1,4 @@
-import { AdspId, Channel, EventService } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, Channel, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { DomainEvent } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { CommentService, SUPPORT_COMMENT_TOPIC_TYPE_ID } from '../comment';
@@ -16,10 +16,44 @@ export const REVIEWER_NOTIFICATION_TYPE_ID = 'form-message-reviewer-notification
 export interface MessageNotificationJobProps {
   apiId: AdspId;
   logger: Logger;
+  directory: ServiceDirectory;
+  tenantService: TenantService;
   repository: FormRepository;
   commentService: CommentService;
   notificationService: NotificationService;
   eventService: EventService;
+}
+
+/**
+ * Link to the response record in the form admin app, which reviewers read the message in.
+ *
+ * The admin app route is tenant scoped and resolves its tenant segment by realm id as well as by
+ * name (see form-admin-app user.slice.ts), so the realm is used: it is a uuid and needs no
+ * escaping, unlike a name with spaces in it.
+ *
+ * Returns undefined when the app is not in the directory or the tenant cannot be read, which
+ * leaves the notification without a link rather than failing to send it.
+ */
+async function getFormAdminUrl(
+  { logger, directory, tenantService }: Pick<MessageNotificationJobProps, 'logger' | 'directory' | 'tenantService'>,
+  form: Form,
+): Promise<string> {
+  try {
+    const adminAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-admin-app`);
+    if (!adminAppUrl) {
+      return undefined;
+    }
+
+    const tenant = await tenantService.getTenant(form.tenantId);
+    if (!tenant?.realm) {
+      return undefined;
+    }
+
+    return new URL(`/${tenant.realm}/definitions/${form.definition?.id}/responses/${form.id}`, adminAppUrl).href;
+  } catch (err) {
+    logger.warn(`Unable to resolve form admin app link for form ${form.id}; notifying without it. ${err}`);
+    return undefined;
+  }
 }
 
 function getFormId(resourceId: string): string {
@@ -35,6 +69,8 @@ function getFormId(resourceId: string): string {
 export function createMessageNotificationJob({
   apiId,
   logger,
+  directory,
+  tenantService,
   repository,
   commentService,
   notificationService,
@@ -65,7 +101,11 @@ export function createMessageNotificationJob({
       if (!fromApplicant) {
         await notifyApplicant({ apiId, logger, notificationService, eventService }, form, event);
       } else {
-        await notifyReviewer({ apiId, logger, commentService, notificationService, eventService }, form, event);
+        await notifyReviewer(
+          { apiId, logger, directory, tenantService, commentService, notificationService, eventService },
+          form,
+          event,
+        );
       }
     } catch (err) {
       // The message is already saved; a notification failure must not take the consumer down.
@@ -85,7 +125,7 @@ async function notifyApplicant(
     eventService,
   }: Pick<MessageNotificationJobProps, 'apiId' | 'logger' | 'notificationService' | 'eventService'>,
   form: Form,
-  event: DomainEvent
+  event: DomainEvent,
 ): Promise<void> {
   const subscriber = form.applicant ? await notificationService.getSubscriber(form.tenantId, form.applicant.urn) : null;
   const address = subscriber?.channels?.find(({ channel }) => channel === Channel.email)?.address;
@@ -103,20 +143,27 @@ async function notifyReviewer(
   {
     apiId,
     logger,
+    directory,
+    tenantService,
     commentService,
     notificationService,
     eventService,
   }: Pick<
     MessageNotificationJobProps,
-    'apiId' | 'logger' | 'commentService' | 'notificationService' | 'eventService'
+    'apiId' | 'logger' | 'directory' | 'tenantService' | 'commentService' | 'notificationService' | 'eventService'
   >,
   form: Form,
-  event: DomainEvent
+  event: DomainEvent,
 ): Promise<void> {
   const correlationId = `${apiId}:/forms/${form.id}`;
-  const hasReviewer = await notificationService.hasSubscribers(form.tenantId, REVIEWER_NOTIFICATION_TYPE_ID, correlationId);
+  const hasReviewer = await notificationService.hasSubscribers(
+    form.tenantId,
+    REVIEWER_NOTIFICATION_TYPE_ID,
+    correlationId,
+  );
   if (hasReviewer) {
-    eventService.send(formMessageToReviewer(apiId, form, event.timestamp));
+    const formAdminUrl = await getFormAdminUrl({ logger, directory, tenantService }, form);
+    eventService.send(formMessageToReviewer(apiId, form, event.timestamp, formAdminUrl));
     return;
   }
 
@@ -131,7 +178,7 @@ async function notifyReviewer(
   const comment = await commentService.getComment(
     form.tenantId,
     event.context?.topicId as number,
-    event.context?.commentId as number
+    event.context?.commentId as number,
   );
 
   if (!comment?.content) {
@@ -139,5 +186,6 @@ async function notifyReviewer(
     return;
   }
 
-  eventService.send(formMessageForwarded(apiId, form, address, comment.content, event.timestamp));
+  const formAdminUrl = await getFormAdminUrl({ logger, directory, tenantService }, form);
+  eventService.send(formMessageForwarded(apiId, form, address, comment.content, event.timestamp, formAdminUrl));
 }
