@@ -76,14 +76,17 @@ Feature: Value
 
   @TEST_CS-4226 @regression
   Scenario: As a developer, I can use value service to get events with different intervals
-    When a developer sends a value service get events request with "<Request endpoint>", "<Request Type>" and "<Interval>" for the last "<Hours>" hours
-    Then "<Status Code>" is returned with top 5 events in the response
+    When a developer sends a value service get events request with "<Request endpoint>", "<Request Type>", "<Top Records>" and "<Interval>" for the last "<Last Hours>" hours
+    Then "<Status Code>" is returned with top "<Top Records>" events in the response
 
     Examples:
-      | Request endpoint                                                       | Request Type | Interval     | Hours | Status Code |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | one_minute   | 5     | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | five_minutes | 10    | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | hourly       | 24    | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | daily        | 96    | 200         |
+      | Request endpoint                                                                   | Request Type | Top Records | Interval     | Last Hours | Status Code |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | one_minute   | 5          | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | five_minutes | 10         | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | hourly       | 24         | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | five_minutes | 96         | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | daily        | 720        | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | weekly       | 720        | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=<Top Records> | GET          | 1000        | monthly      | 720        | 200         |
 # Ignore weekly interval test for now as there is an issue of missing data points for weekly interval, which causes the test failure.
 # | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | weekly       | 96    | 200         |

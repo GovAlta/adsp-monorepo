@@ -248,9 +248,11 @@ Then('the user views {string} namespace under Core definitions heading', functio
 });
 
 When(
-  'a developer sends a value service get events request with {string}, {string} and {string} for the last {string} hours',
-  function (requestEndpoint: string, requestType: string, interval, hours: string) {
-    const valueServiceGetEventEndPoint = requestEndpoint.replace('<interval>', interval as string);
+  'a developer sends a value service get events request with {string}, {string}, {string} and {string} for the last {string} hours',
+  function (requestEndpoint: string, requestType: string, topRecords: string, interval, hours: string) {
+    const valueServiceGetEventEndPoint = requestEndpoint
+      .replace('<interval>', interval as string)
+      .replace('<Top Records>', topRecords);
     const currentTime = new Date();
     const intervalMax = currentTime.toISOString();
     const intervalMin = new Date(currentTime.getTime() - parseInt(hours) * 60 * 60 * 1000).toISOString(); // n hours ago
@@ -262,6 +264,7 @@ When(
       '","intervalMax":"' +
       intervalMax +
       '"}';
+    const requestStartTime = Date.now();
     cy.request({
       method: requestType,
       url: valueServiceGetEventURL,
@@ -271,13 +274,17 @@ When(
         bearer: Cypress.env('autotest-admin-token'),
       },
     }).then(function (response) {
+      cy.log(`Request response time: ${Date.now() - requestStartTime} ms for ${valueServiceGetEventURL}`);
       responseObj = response;
     });
   }
 );
 
-Then('{string} is returned with top 5 events in the response', function (statusCode: string) {
-  expect(responseObj.status).to.equal(parseInt(statusCode));
-  expect(responseObj.body.page.size).to.be.lte(5);
-  expect(responseObj.body.page.size).to.be.gte(1);
-});
+Then(
+  '{string} is returned with top {string} events in the response',
+  function (statusCode: string, topRecords: string) {
+    expect(responseObj.status).to.equal(parseInt(statusCode));
+    expect(responseObj.body.page.size).to.be.lte(parseInt(topRecords));
+    expect(responseObj.body.page.size).to.be.gte(1);
+  }
+);
