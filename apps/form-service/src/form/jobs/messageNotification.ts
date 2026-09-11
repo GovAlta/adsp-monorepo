@@ -41,11 +41,13 @@ async function getFormAdminUrl(
   try {
     const adminAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-admin-app`);
     if (!adminAppUrl) {
+      logger.info(`Form admin app not found in directory; notifying without a link for form ${form.id}.`);
       return undefined;
     }
 
     const tenant = await tenantService.getTenant(form.tenantId);
     if (!tenant?.realm) {
+      logger.info(`No realm found for tenant ${form.tenantId}; notifying without a link for form ${form.id}.`);
       return undefined;
     }
 
