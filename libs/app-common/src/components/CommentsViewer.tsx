@@ -122,9 +122,15 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
       <div className="comments">
         {comments.map((result, index) => {
           // In a message thread a run of messages from the same person carries one byline,
-          // the way a phone's messaging app groups them.
+          // the way a phone's messaging app groups them. A run breaks across a day boundary too,
+          // so an old message doesn't read as having been sent today just because the next
+          // message from the same person was.
           const previous = comments[index - 1];
-          const continuesRun = !!messaging && !!previous && previous.createdBy.id === result.createdBy.id;
+          const continuesRun =
+            !!messaging &&
+            !!previous &&
+            previous.createdBy.id === result.createdBy.id &&
+            moment(previous.createdOn).isSame(result.createdOn, 'day');
 
           return (
             <div

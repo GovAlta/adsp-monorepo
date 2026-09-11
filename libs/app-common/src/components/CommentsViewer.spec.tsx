@@ -581,6 +581,19 @@ describe('CommentsViewer', () => {
     expect(container.querySelectorAll('.comment')[1]).toHaveAttribute('data-continues', 'true');
   });
 
+  test('breaks a run across a day boundary so the earlier message keeps its own byline', () => {
+    const props = createProps({
+      comments: [
+        createComment({ id: 1, createdBy: { id: 'a', name: 'Abhishek' }, createdOn: new Date(2026, 7, 20, 9, 0, 0) }),
+        createComment({ id: 2, createdBy: { id: 'a', name: 'Abhishek' }, createdOn: new Date(2026, 7, 21, 9, 0, 0) }),
+      ],
+    });
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    expect(container.querySelectorAll('.byline')).toHaveLength(2);
+    expect(container.querySelectorAll('.comment')[1]).toHaveAttribute('data-continues', 'false');
+  });
+
   test('gives every comment its own byline without the messaging layout', () => {
     const props = createProps({
       comments: [
