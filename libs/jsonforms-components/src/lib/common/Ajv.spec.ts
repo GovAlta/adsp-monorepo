@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { createDefaultAjv } from './Ajv';
+import { invalidSin } from './Constants';
 
 const testDefaultSchema = {
   type: 'object',
@@ -109,16 +110,50 @@ describe('Ajv tests', () => {
     expect(ajv.validate(schema, { sinByFormat: '', postalCode: '', driverId: '', mvid: '' })).toBe(true);
     expect(
       ajv.validate(schema, {
-        sinByFormat: '123 456 789',
+        sinByFormat: '046 454 286',
         postalCode: 'T2P 1A1',
         driverId: '123456-789',
         mvid: '1234-56789',
       }),
     ).toBe(true);
+    expect(ajv.validate(schema, { sinByFormat: '123 456 789' })).toBe(false);
     expect(ajv.validate(schema, { sinByFormat: '123456789' })).toBe(false);
     expect(ajv.validate(schema, { postalCode: 'T2P1A1' })).toBe(false);
     expect(ajv.validate(schema, { driverId: '123456789' })).toBe(false);
     expect(ajv.validate(schema, { mvid: '123456789' })).toBe(false);
+  });
+
+  it('runs Luhn validation as part of format sin', () => {
+    const ajv = createDefaultAjv();
+    const schema = { type: 'string', format: 'sin' };
+
+    expect(ajv.validate(schema, '046 454 286')).toBe(true);
+    expect(ajv.validate(schema, '123 111 111')).toBe(false);
+    expect(ajv.errors?.[0]?.message).toBe('must match format "sin"');
+  });
+
+  it('uses the validSin keyword for Luhn when format sin is not set', () => {
+    const ajv = createDefaultAjv();
+    const schema = {
+      type: 'string',
+      pattern: '^\\d{3} \\d{3} \\d{3}$',
+      validSin: true,
+    };
+
+    expect(ajv.validate(schema, '046 454 286')).toBe(true);
+    expect(ajv.validate(schema, '123 111 111')).toBe(false);
+    expect(ajv.errors?.[0]?.message).toBe(invalidSin);
+  });
+
+  it('skips the validSin keyword when it is false', () => {
+    const ajv = createDefaultAjv();
+    const schema = {
+      type: 'string',
+      pattern: '^\\d{3} \\d{3} \\d{3}$',
+      validSin: false,
+    };
+
+    expect(ajv.validate(schema, '123 111 111')).toBe(true);
   });
 
   describe('can generate inital data ', () => {
