@@ -41,6 +41,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MetricIntervalValue'
+    PlatformMetricIntervalValue:
+      allOf:
+        - $ref: '#/components/schemas/MetricIntervalValue'
+        - type: object
+          properties:
+            tenantId:
+              type: string
+    PlatformMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMetricIntervalValue'
 
 /value/v1/service-metric-rollups/run:
   post:
@@ -381,6 +397,68 @@ components:
                       type: number
               additionalProperties:
                 $ref: '#/components/schemas/Metric'
+/value/v1/{namespace}/values/{name}/platform-metrics:
+  get:
+    tags:
+      - Value
+    description: >
+      Retrieves value metrics across all tenants, labelled by tenant. Requires the
+      value-platform-metrics-reader role and is only accessible to core users. Always reads the
+      materialised metric rollups and is not paginated.
+    parameters:
+      - name: namespace
+        description: Namespace to read value metric from.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the value.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: interval
+        description: Interval to get metric aggregates for.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+            - one_minute
+            - five_minutes
+            - hourly
+            - daily
+            - weekly
+            - monthly
+      - name: criteria
+        description: Criteria for the read.
+        in: query
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metricLike:
+                  type: string
+                intervalMax:
+                  type: string
+                  format: date-time
+                intervalMin:
+                  type: string
+                  format: date-time
+    responses:
+      200:
+        description: Platform metrics successfully read.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/PlatformMetric'
+      403:
+        description: User does not have the platform metrics reader role.
 /value/v1/{namespace}/values/{name}/metrics/{metric}:
   get:
     tags:

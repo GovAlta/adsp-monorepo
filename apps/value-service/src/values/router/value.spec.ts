@@ -10,6 +10,7 @@ import {
   createValueRouter,
   readMetric,
   readMetrics,
+  readPlatformMetrics,
   readValue,
   readValues,
   runServiceMetricRollup,
@@ -36,6 +37,7 @@ describe('event router', () => {
     writeValues: jest.fn(),
     readMetrics: jest.fn(),
     readMetric: jest.fn(),
+    readPlatformMetrics: jest.fn(),
     writeMetric: jest.fn(),
   };
 
@@ -56,6 +58,7 @@ describe('event router', () => {
     repositoryMock.countValues.mockReset();
     repositoryMock.readMetrics.mockReset();
     repositoryMock.readMetric.mockReset();
+    repositoryMock.readPlatformMetrics.mockReset();
     repositoryMock.writeValues.mockReset();
     serviceMetricRollupRepositoryMock.hasRollups.mockReset();
     serviceMetricRollupRepositoryMock.getHistoricalRollupRange.mockReset();
@@ -1275,6 +1278,121 @@ describe('event router', () => {
       const next = jest.fn();
 
       const handler = readMetric(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('readPlatformMetrics', () => {
+    it('can create handler', () => {
+      const handler = readPlatformMetrics(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can read platform metrics for a core user with the platform metrics reader role', async () => {
+      const req = {
+        user: {
+          isCore: true,
+          id: 'test-platform-reader',
+          roles: [ServiceUserRoles.PlatformMetricsReader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const metrics = { count: { name: 'count', values: [] } };
+      repositoryMock.readPlatformMetrics.mockResolvedValueOnce(metrics);
+      const handler = readPlatformMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.readPlatformMetrics).toHaveBeenCalledWith(
+        'test-service',
+        'test-value',
+        expect.objectContaining({ interval: 'daily' })
+      );
+      expect(res.send).toHaveBeenCalledWith(metrics);
+    });
+
+    it('can read platform metrics with criteria', async () => {
+      const req = {
+        user: {
+          isCore: true,
+          id: 'test-platform-reader',
+          roles: [ServiceUserRoles.PlatformMetricsReader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {
+          interval: 'monthly',
+          criteria: JSON.stringify({
+            metricLike: 'count',
+            intervalMin: new Date().toISOString(),
+            intervalMax: new Date().toISOString(),
+          }),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const metrics = { count: { name: 'count', values: [] } };
+      repositoryMock.readPlatformMetrics.mockResolvedValueOnce(metrics);
+      const handler = readPlatformMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.readPlatformMetrics).toHaveBeenCalledWith(
+        'test-service',
+        'test-value',
+        expect.objectContaining({
+          interval: 'monthly',
+          metricLike: 'count',
+          intervalMin: expect.any(Date),
+          intervalMax: expect.any(Date),
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(metrics);
+    });
+
+    it('can call next for unauthorized tenant user with the tenant-scoped reader role', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readPlatformMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can call next for core user without the platform metrics reader role', async () => {
+      const req = {
+        user: {
+          isCore: true,
+          id: 'test-core-user',
+          roles: [],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readPlatformMetrics(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

@@ -58,6 +58,11 @@ const initializeApp = async () => {
             role: ServiceUserRoles.Writer,
             description: 'Writer role for writing new values.',
           },
+          {
+            // clean-code-ignore: RULE-19 — app bootstrap; role usage is covered in router/value.spec.ts.
+            role: ServiceUserRoles.PlatformMetricsReader,
+            description: 'Reader role for accessing platform-scoped, cross-tenant metric data.',
+          },
         ],
         configuration: {
           description: 'Definitions for values including write schema and option to enable write events.',

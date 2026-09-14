@@ -28,3 +28,13 @@ export interface Metric {
   name: string;
   values: MetricIntervalValue[];
 }
+
+// clean-code-ignore: RULE-19 — type declarations only, no logic; usage is covered in timescale/value.spec.ts.
+export interface PlatformMetricIntervalValue extends MetricIntervalValue {
+  tenantId: string;
+}
+
+export interface PlatformMetric {
+  name: string;
+  values: PlatformMetricIntervalValue[];
+}

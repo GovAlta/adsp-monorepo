@@ -16,6 +16,7 @@ describe('ValueDefinitionEntity', () => {
     writeValues: jest.fn(),
     readMetrics: jest.fn(),
     readMetric: jest.fn(),
+    readPlatformMetrics: jest.fn(),
     writeMetric: jest.fn(),
   };
 
