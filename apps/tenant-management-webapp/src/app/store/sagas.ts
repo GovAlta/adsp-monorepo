@@ -58,6 +58,7 @@ import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
 import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplication';
 import { watchServiceMetricsSagas } from './metrics/sagas';
+import { watchServiceReportsSagas } from './serviceReports/sagas';
 import { watchScriptSagas } from './script/sagas';
 import { watchValueSagas } from './value/sagas';
 import { watchDirectorySagas } from './directory/sagas';
@@ -117,6 +118,8 @@ export function* watchSagas() {
     watchFeedbackSagas(),
     // service metrics
     watchServiceMetricsSagas(),
+    // service reports
+    watchServiceReportsSagas(),
     //Calendar
     watchCalendarSagas(),
     //Script

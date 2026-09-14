@@ -20,6 +20,7 @@ import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
 import { serviceRolesReduce as ServiceRoles } from './access/reducers';
 import ServiceMetrics from './metrics/reducers';
+import ServiceReports from './serviceReports/reducers';
 import Form from './form/reducers';
 import Task from './task/reducers';
 import Feedback from './feedback/reducers';
@@ -52,6 +53,7 @@ export const rootReducer = combineReducers({
   stream: Stream,
   serviceRoles: ServiceRoles,
   serviceMetrics: ServiceMetrics,
+  serviceReports: ServiceReports,
   scriptService: Script,
   valueService: Value,
   agent: Agent,

@@ -67,7 +67,7 @@ describe('Sidebar', () => {
   it('links the reports menu item to the reports page', () => {
     const { getByTestId } = renderSidebar();
 
-    expect(getByTestId('menu-reports')).toHaveAttribute('href', '/reports');
+    expect(getByTestId('menu-reports')).toHaveAttribute('href', '/admin/reports');
   });
 
   it('does not throw when the scroll container is absent', () => {
