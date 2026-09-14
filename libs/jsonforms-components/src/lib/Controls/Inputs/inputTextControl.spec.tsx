@@ -1329,5 +1329,79 @@ describe('Input Text Control tests', () => {
 
       expect(input).toHaveAttribute('placeholder', '000 000');
     });
+
+    it('refreshes the display when options.mask changes', () => {
+      const initialProps = {
+        ...staticProps,
+        data: '123456',
+        path: 'customMask',
+        id: 'customMask',
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement, rerender } = renderInput(initialProps);
+      let input = baseElement.querySelector("goa-input[testId='customMask-input']");
+      expect(input).toHaveAttribute('value', '1234-56');
+      expect(input).toHaveAttribute('placeholder', '0000-00');
+
+      rerender(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText
+            {...initialProps}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/customMask',
+              options: { mask: '###-###' },
+            }}
+          />
+        </JsonFormsContext.Provider>,
+      );
+
+      input = baseElement.querySelector("goa-input[testId='customMask-input']");
+      expect(input).toHaveAttribute('value', '123-456');
+      expect(input).toHaveAttribute('placeholder', '000-000');
+    });
+
+    it('refreshes the display when options.inPlace changes', () => {
+      const initialProps = {
+        ...staticProps,
+        data: '12',
+        path: 'customMask',
+        id: 'customMask',
+        schema: { type: 'string' },
+        uischema: {
+          type: 'Control',
+          scope: '#/properties/customMask',
+          options: { mask: '####-##' },
+        } as ControlElement,
+      };
+
+      const { baseElement, rerender } = renderInput(initialProps);
+      let input = baseElement.querySelector("goa-input[testId='customMask-input']");
+      expect(input).toHaveAttribute('value', '12');
+      expect(input).toHaveAttribute('placeholder', '0000-00');
+
+      rerender(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText
+            {...initialProps}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/customMask',
+              options: { mask: '####-##', inPlace: true },
+            }}
+          />
+        </JsonFormsContext.Provider>,
+      );
+
+      input = baseElement.querySelector("goa-input[testId='customMask-input']");
+      expect(input).toHaveAttribute('value', '12##-##');
+      expect(input?.getAttribute('placeholder')).toBeNull();
+    });
   });
 });

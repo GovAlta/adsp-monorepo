@@ -1,7 +1,7 @@
 import { ControlProps, JsonSchema, JsonSchema7 } from '@jsonforms/core';
 import { invalidSin } from '../common/Constants';
 import { isRequiredBySchema } from './requiredUtil';
-import { getConfiguredFormatError } from './patternForm';
+import { DEFAULT_PATTERNS, getConfiguredFormatError, resolveFormatConfig } from './patternForm';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -224,6 +224,12 @@ export const checkFieldValidity = (props: ControlProps, rootData?: unknown): str
 
   if (isRegisterBackedEnum) {
     return '';
+  }
+
+  const isSinField = resolveFormatConfig(schema) === DEFAULT_PATTERNS.sin;
+  const hasSinFormat = isSinField && typeof data === 'string' && DEFAULT_PATTERNS.sin.pattern.test(data);
+  if (hasSinFormat && !validateSinWithLuhn(data)) {
+    return invalidSin;
   }
 
   if (!ajvErrors || ajvErrors === invalidSin) {

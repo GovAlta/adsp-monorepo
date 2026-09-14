@@ -9,6 +9,8 @@ import { invalidSin } from './Constants';
 // Allow empty values so incomplete fields are not treated as format errors.
 const optionalFormat = (pattern: RegExp) => (input: string) => !input || pattern.test(input);
 
+// format: sin still rejects a bad checksum so the field is invalid; the UI maps this
+// to "Social insurance number is invalid" once the pattern already matches.
 const optionalSinFormat = (input: string) => {
   if (!input) {
     return true;
