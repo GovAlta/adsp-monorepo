@@ -184,6 +184,7 @@ export interface FindSubscribersSuccessAction {
     subscribers: Subscriber[];
     after: string;
     next: string;
+    total?: number;
   };
 }
 
@@ -354,12 +355,14 @@ export const FindSubscribersSuccess = (
   subscribers: Subscriber[],
   next: string,
   after?: string,
+  total?: number,
 ): FindSubscribersSuccessAction => ({
   type: FIND_SUBSCRIBERS_SUCCESS,
   payload: {
     subscribers,
     after,
     next,
+    total,
   },
 });
 

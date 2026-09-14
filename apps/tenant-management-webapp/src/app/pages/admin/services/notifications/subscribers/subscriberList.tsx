@@ -1,137 +1,131 @@
-import React, { useState, useEffect } from 'react';
-import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
-import DataTable from '@components/DataTable';
-import { DataTableStyle } from './styled-components';
-import { SubscriberModalForm } from './editSubscriber';
-import { DeleteSubscriber, UpdateSubscriber } from '@store/subscription/actions';
-import { renderNoItem } from '@components/NoItem';
-import { DeleteModal } from '@components/DeleteModal';
-import type { SubscriberSearchCriteria } from '@store/subscription/models';
-import { SubscriberListItem } from './subscriberListItem';
+import React, { FunctionComponent } from 'react';
+import type { Subscriber, SubscriberSort, SubscriberSortColumn } from '@store/subscription/models';
+import { SUBSCRIBER_COLUMN_LABELS, SUBSCRIBER_SORT_COLUMNS } from '@store/subscription/models';
+import { GoabBadge, GoabTable, GoabTableSortHeader } from '@abgov/react-components';
+import { GoabTableOnSortDetail, GoabTableSortDirection } from '@abgov/ui-components-common';
+import { phoneWrapper } from '@lib/wrappers';
+import styled from 'styled-components';
+import { getChannelAddress, isVerified } from './recipient';
 
 interface SubscriberListProps {
-  searchCriteria: SubscriberSearchCriteria;
+  subscribers: Subscriber[];
+  selectedId: string;
+  sort: SubscriberSort;
+  onSelect: (subscriber: Subscriber) => void;
+  onSort: (sort: SubscriberSort) => void;
 }
-export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
-  const dispatch = useDispatch();
-  const [editSubscription, setEditSubscription] = useState(false);
-  const [selectedSubscriber, setSelectedSubscriber] = useState(null);
-  const [selectedDeleteSubscriberId, setSelectedDeleteSubscriberId] = useState(null);
 
-  const search = useSelector((state: RootState) => state.subscription.subscriberSearch);
+// Shown where a recipient holds no address for a channel.
+const EMPTY = '—';
 
-  const subscribers = useSelector((state: RootState) => {
-    if (state.subscription.subscriberSearch.results) {
-      return state.subscription.subscriberSearch.results
-        .map((id) => state.subscription.subscribers[id])
-        .filter((subs) => !!subs);
-    } else {
-      return null;
+const isSortColumn = (value: string): value is SubscriberSortColumn =>
+  (SUBSCRIBER_SORT_COLUMNS as readonly string[]).includes(value);
+
+export const SubscriberList: FunctionComponent<SubscriberListProps> = ({
+  subscribers,
+  selectedId,
+  sort,
+  onSelect,
+  onSort,
+}) => {
+  const directionFor = (column: SubscriberSortColumn): GoabTableSortDirection =>
+    sort.column === column ? sort.direction : 'none';
+
+  const handleSort = ({ sortBy, sortDir }: GoabTableOnSortDetail) => {
+    if (isSortColumn(sortBy)) {
+      onSort({ column: sortBy, direction: sortDir < 0 ? 'desc' : 'asc' });
     }
-  });
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
-  useEffect(() => {
-    reset();
-  }, [search]);
-
-  const openModalFunction = (subscription) => {
-    setSelectedSubscriber(subscription);
-    setEditSubscription(true);
   };
-
-  const openDeleteModalFunction = (subscriber) => {
-    setSelectedDeleteSubscriberId(subscriber.id);
-    setSelectedSubscriber(subscriber);
-  };
-
-  function reset() {
-    setEditSubscription(false);
-    setSelectedSubscriber(null);
-  }
 
   return (
-    <div>
-      {indicator.show === false && subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
-      {(subscribers === null || subscribers.length > 0) && (
-        <DataTableStyle>
-          <DataTable>
-            <thead>
-              <tr>
-                <th className="spread">Address as</th>
-                <th className="spread">Email</th>
-                <th className="spread">Phone</th>
-                <th className="action">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscribers &&
-                subscribers?.length > 0 &&
-                subscribers?.map((subscriber) => (
-                  <SubscriberListItem
-                    openModalFunction={openModalFunction}
-                    subscriber={subscriber}
-                    openDeleteModalFunction={openDeleteModalFunction}
-                    key={subscriber.id}
-                    hideUserActions={false}
-                  />
-                ))}
-            </tbody>
-          </DataTable>
-        </DataTableStyle>
-      )}
-
-      <SubscriberModalForm
-        open={editSubscription}
-        initialValue={selectedSubscriber}
-        onSave={(subscriber) => {
-          dispatch(UpdateSubscriber(subscriber));
-          setEditSubscription(false);
-        }}
-        onCancel={() => {
-          reset();
-        }}
-      />
-      <DeleteModal
-        title="Delete subscriber"
-        isOpen={selectedDeleteSubscriberId !== null}
-        onCancel={() => {
-          setSelectedDeleteSubscriberId(null);
-        }}
-        content={
-          <div>
-            <div>Deletion of the following subscriber will remove all of its related subscriptions.</div>
-            <div>Do you still want to continue?</div>
-            {selectedSubscriber ? (
-              <DataTable>
-                <thead>
-                  <tr>
-                    <th>Address as</th>
-                    <th>Email</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <SubscriberListItem
-                    subscriber={selectedSubscriber}
-                    key={selectedSubscriber.id}
-                    hideUserActions={true}
-                  />
-                </tbody>
-              </DataTable>
-            ) : (
-              ''
-            )}
-          </div>
-        }
-        onDelete={() => {
-          dispatch(DeleteSubscriber(selectedDeleteSubscriberId));
-          setSelectedDeleteSubscriberId(null);
-        }}
-      />
-    </div>
+    <RegistryTable>
+      <GoabTable width="100%" onSort={handleSort} testId="recipient-registry-table">
+        <thead>
+          <tr>
+            {SUBSCRIBER_SORT_COLUMNS.map((column) => (
+              <th key={column}>
+                <GoabTableSortHeader name={column} direction={directionFor(column)}>
+                  {SUBSCRIBER_COLUMN_LABELS[column]}
+                </GoabTableSortHeader>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {subscribers?.map((subscriber) => {
+            const sms = getChannelAddress(subscriber, 'sms');
+            return (
+              <SelectableRow
+                key={subscriber.id}
+                className={subscriber.id === selectedId ? 'selected' : ''}
+                data-testid={`recipient-row-${subscriber.id}`}
+                // Clicking anywhere on the row selects it, as a convenience for a pointer. The
+                // button in the name cell is what carries that to the keyboard and to assistive
+                // technology, so that the row stays a row rather than being announced as a control.
+                onClick={() => onSelect(subscriber)}
+              >
+                <td>
+                  <SelectButton
+                    type="button"
+                    aria-pressed={subscriber.id === selectedId}
+                    data-testid={`recipient-select-${subscriber.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(subscriber);
+                    }}
+                  >
+                    {subscriber.addressAs}
+                  </SelectButton>
+                </td>
+                <td>{getChannelAddress(subscriber, 'email') || EMPTY}</td>
+                <td className="no-wrap">{sms ? phoneWrapper(sms) : EMPTY}</td>
+                <td>
+                  {isVerified(subscriber) ? (
+                    <GoabBadge type="success" content="Verified" icon={false} />
+                  ) : (
+                    <GoabBadge type="important" content="Not verified" icon={false} />
+                  )}
+                </td>
+              </SelectableRow>
+            );
+          })}
+        </tbody>
+      </GoabTable>
+    </RegistryTable>
   );
 };
+
+const RegistryTable = styled.div`
+  overflow-x: auto;
+
+  td {
+    word-break: break-word;
+  }
+
+  .no-wrap {
+    white-space: nowrap;
+  }
+`;
+
+const SelectableRow = styled.tr`
+  cursor: pointer;
+
+  &.selected {
+    background-color: var(--goa-color-interactive-hover-background, #f1f1f1);
+  }
+`;
+
+// Carries the row's selection to the keyboard while reading as the name that fills the cell.
+const SelectButton = styled.button`
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;

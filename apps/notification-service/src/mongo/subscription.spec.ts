@@ -161,6 +161,129 @@ describe('MongoSubscriptionRepository', () => {
       const page2 = await repo.findSubscribers(2, page1.page.next, { tenantIdEquals: tenantId });
       expect(page2.results).toHaveLength(1);
     });
+
+    it('should report the total matching the criteria alongside the page', async () => {
+      const page = await repo.findSubscribers(2, null, { tenantIdEquals: tenantId });
+      expect(page.results).toHaveLength(2);
+      expect(page.page.total).toBe(3);
+    });
+
+    it('should report the total of a filtered search', async () => {
+      const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: 'example.com' });
+      expect(results.page.total).toBe(2);
+    });
+
+    it('should sort by name ascending by default', async () => {
+      const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId });
+      expect(results.results.map((r) => r.addressAs)).toEqual(['Bob Wilson', 'Jane Smith', 'John Doe']);
+    });
+
+    it('should page over a default sort without repeating or dropping a subscriber', async () => {
+      const page1 = await repo.findSubscribers(2, null, { tenantIdEquals: tenantId });
+      const page2 = await repo.findSubscribers(2, page1.page.next, { tenantIdEquals: tenantId });
+      expect([...page1.results, ...page2.results].map((r) => r.addressAs)).toEqual([
+        'Bob Wilson',
+        'Jane Smith',
+        'John Doe',
+      ]);
+    });
+
+    describe('search', () => {
+      it('should match a subscriber on name', async () => {
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: 'jane' });
+        expect(results.results.map((r) => r.addressAs)).toEqual(['Jane Smith']);
+      });
+
+      it('should match a subscriber on email address', async () => {
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: 'john@example' });
+        expect(results.results.map((r) => r.addressAs)).toEqual(['John Doe']);
+      });
+
+      it('should match a subscriber on phone number', async () => {
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: '5552222' });
+        expect(results.results.map((r) => r.addressAs)).toEqual(['Bob Wilson']);
+      });
+
+      it('should match on any of the fields rather than all of them', async () => {
+        // 'example.com' is an email address for two of the subscribers and the name of none, so an
+        // OR across the fields returns both while an AND would return neither.
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: 'example.com' });
+        expect(results.results.map((r) => r.addressAs)).toEqual(['Jane Smith', 'John Doe']);
+      });
+
+      it('should treat a regular expression character as part of the value searched for', async () => {
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: 'j(o' });
+        expect(results.results).toHaveLength(0);
+      });
+    });
+
+    describe('sort', () => {
+      it('should sort by name descending', async () => {
+        const results = await repo.findSubscribers(
+          10,
+          null,
+          { tenantIdEquals: tenantId },
+          {
+            field: 'name',
+            direction: 'desc',
+          },
+        );
+        expect(results.results.map((r) => r.addressAs)).toEqual(['John Doe', 'Jane Smith', 'Bob Wilson']);
+      });
+
+      it('should sort by email address', async () => {
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId }, { field: 'email' });
+        // Bob Wilson has no email address, so sorts ahead of the subscribers that have one.
+        expect(results.results.map((r) => r.addressAs)).toEqual(['Bob Wilson', 'Jane Smith', 'John Doe']);
+      });
+
+      it('should sort by phone number', async () => {
+        const results = await repo.findSubscribers(
+          10,
+          null,
+          { tenantIdEquals: tenantId },
+          {
+            field: 'sms',
+            direction: 'desc',
+          },
+        );
+        expect(results.results.map((r) => r.addressAs)).toEqual(['Bob Wilson', 'John Doe', 'Jane Smith']);
+      });
+
+      it('should sort by verification status', async () => {
+        await repo.saveSubscriber({
+          tenantId,
+          addressAs: 'Unverified Uma',
+          channels: [{ channel: Channel.email, address: 'uma@example.com', verified: false }],
+        } as never);
+
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId }, { field: 'verified' });
+        expect(results.results[0].addressAs).toBe('Unverified Uma');
+      });
+
+      it('should sort by created date', async () => {
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId }, { field: 'created' });
+        expect(results.results.map((r) => r.addressAs)).toEqual(['John Doe', 'Jane Smith', 'Bob Wilson']);
+      });
+
+      it('should fall back to the default column when asked for one that cannot be sorted on', async () => {
+        const results = await repo.findSubscribers(
+          10,
+          null,
+          { tenantIdEquals: tenantId },
+          {
+            field: 'nonsense' as never,
+          },
+        );
+        expect(results.results.map((r) => r.addressAs)).toEqual(['Bob Wilson', 'Jane Smith', 'John Doe']);
+      });
+    });
+
+    it('should record the dates a subscriber was created and updated', async () => {
+      const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId, search: 'jane' });
+      expect(results.results[0].created).toBeInstanceOf(Date);
+      expect(results.results[0].updated).toBeInstanceOf(Date);
+    });
   });
 
   describe('saveSubscription and getSubscription', () => {

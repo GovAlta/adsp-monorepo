@@ -155,7 +155,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       <GoabModal
         testId="notification-types-form"
         open={open}
-        heading={isNew ? 'Add subscriber' : 'Edit subscriber'}
+        heading={isNew ? 'Register recipient' : 'Edit subscriber'}
         actions={
           <GoabButtonGroup alignment="end">
             <GoabButton size="compact" testId="form-cancel" type="secondary" onClick={tryCancel}>
@@ -169,7 +169,8 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       >
         <ErrorWrapper>
           <GoabFormItem error={formErrors?.['name']} label={isNew ? 'User name' : 'Address as'} mb="s">
-            <GoabInput size="compact"
+            <GoabInput
+              size="compact"
               type="text"
               name="name"
               width="100%"
@@ -180,7 +181,8 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
             />
           </GoabFormItem>
           <GoabFormItem error={formErrors?.['email'] || updateError} label="Email" mb="s">
-            <GoabInput size="compact"
+            <GoabInput
+              size="compact"
               type="email"
               name="email"
               width="100%"
@@ -195,7 +197,8 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
           {!isNew && (
             <GoabFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
               <div className="phoneInputStyle">
-                <GoabInput size="compact"
+                <GoabInput
+                  size="compact"
                   type="tel"
                   aria-label="sms"
                   name="sms"

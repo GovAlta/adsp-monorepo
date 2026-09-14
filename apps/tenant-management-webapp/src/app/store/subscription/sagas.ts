@@ -328,7 +328,7 @@ function* createSubscriber(action: CreateSubscriberAction): SagaIterator {
   }
 }
 
-function* findSubscribers(action: FindSubscribersAction): SagaIterator {
+export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield call(getAccessToken);
 
@@ -337,7 +337,7 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const params: Record<string, string | number> = { top: criteria.top || 10 };
 
   if (action.payload.reset) {
-    yield put(FindSubscribersSuccess(null, ''));
+    yield put(FindSubscribersSuccess(null, '', undefined, 0));
   }
 
   yield put(
@@ -359,6 +359,15 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     params.sms = criteria.sms;
   }
 
+  if (criteria.search) {
+    params.search = criteria.search;
+  }
+
+  if (criteria.sort) {
+    params.sortBy = criteria.sort.column;
+    params.sortDirection = criteria.sort.direction;
+  }
+
   if (criteria.next) {
     if (action.payload.paginationReset) {
       params.after = null;
@@ -373,7 +382,14 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
         params,
       });
       const subscribers = response.data.results;
-      yield put(FindSubscribersSuccess(subscribers, response.data.page?.next, response.data.page?.after));
+      yield put(
+        FindSubscribersSuccess(
+          subscribers,
+          response.data.page?.next,
+          response.data.page?.after,
+          response.data.page?.total,
+        ),
+      );
       yield put(
         UpdateIndicator({
           show: false,

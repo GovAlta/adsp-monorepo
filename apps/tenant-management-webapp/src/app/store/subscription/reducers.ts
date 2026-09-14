@@ -113,7 +113,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
-      const { subscribers, after, next } = action.payload;
+      const { subscribers, after, next, total } = action.payload;
       let newSubscriber = {};
       let results = null;
 
@@ -135,6 +135,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           ...state.subscriberSearch,
           results: results,
           next,
+          total: total ?? 0,
         },
       };
     }

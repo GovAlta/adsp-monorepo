@@ -47,6 +47,8 @@ export interface Subscriber {
   channels?: Channels[];
   userId?: string;
   accountLink?: string;
+  created?: string;
+  updated?: string;
 }
 
 export type TypeSubscriptionSubscriber = Pick<Subscriber, 'id'> | Omit<Subscriber, 'id'>;
@@ -63,6 +65,7 @@ export interface SubscriberService {
   subscriberSearch: {
     results: string[];
     next: string;
+    total: number;
   };
   typeSubscriptionSearch: Record<
     string,
@@ -84,6 +87,7 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   subscriberSearch: {
     results: null,
     next: null,
+    total: 0,
   },
   typeSubscriptionSearch: {},
   successMessage: null,
@@ -93,11 +97,44 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   },
 };
 
+export const SUBSCRIBER_SORT_COLUMNS = ['name', 'email', 'sms', 'verified'] as const;
+
+export type SubscriberSortColumn = (typeof SUBSCRIBER_SORT_COLUMNS)[number];
+
+export type SubscriberSortDirection = 'asc' | 'desc';
+
+export interface SubscriberSort {
+  column: SubscriberSortColumn;
+  direction: SubscriberSortDirection;
+}
+
+// The heading each column carries in the table.
+export const SUBSCRIBER_COLUMN_LABELS: Record<SubscriberSortColumn, string> = {
+  name: 'Name / Address as',
+  email: 'Email',
+  sms: 'Phone',
+  verified: 'Verification status',
+};
+
+// The shorter name each column goes by in the sort dropdown, where it is read with a direction
+// after it rather than as a heading over a column of values.
+export const SUBSCRIBER_SORT_LABELS: Record<SubscriberSortColumn, string> = {
+  name: 'Name',
+  email: 'Email',
+  sms: 'Phone',
+  verified: 'Verification status',
+};
+
+export const DEFAULT_SUBSCRIBER_SORT: SubscriberSort = { column: 'name', direction: 'asc' };
+
 export interface SubscriberSearchCriteria {
   email?: string;
   name?: string;
   next?: string;
   sms?: string;
+  // A single value matched against the name, email address, and phone number of a subscriber.
+  search?: string;
+  sort?: SubscriberSort;
   reset?: boolean;
   paginationReset?: boolean;
   top?: number;
