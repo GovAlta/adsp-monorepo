@@ -72,6 +72,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Subscription"
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
     SubscriptionCriteria:
       type: object
       properties:
@@ -465,6 +471,26 @@ components:
         required: false
         schema:
           type: string
+      - name: search
+        description: Value matched against the name, email address, or SMS number of the subscriber; a subscriber matching any of them is included.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sortBy
+        description: Column to sort results on. Defaults to name.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [name, email, sms, verified, created, updated]
+      - name: sortDirection
+        description: Direction to sort results in. Defaults to asc.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [asc, desc]
     responses:
       200:
         description: Subscribers successfully retrieved.
@@ -486,6 +512,9 @@ components:
                       type: number
                     next:
                       type: string
+                    total:
+                      type: number
+                      description: Number of subscribers matching the criteria, across all pages.
   post:
     tags:
       - Subscription

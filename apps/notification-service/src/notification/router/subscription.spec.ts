@@ -1201,9 +1201,90 @@ describe('subscription router', () => {
       expect(repositoryMock.findSubscribers).toHaveBeenCalledWith(
         11,
         '123',
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
+        undefined
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+    });
+
+    it('can get subscribers matching a search value', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: { search: 'smith' },
+        params: { subscriber: 'subscriber' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [], page: {} });
+
+      const handler = getSubscribers(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.findSubscribers).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ search: 'smith' }),
+        undefined
+      );
+    });
+
+    it('can get subscribers sorted on a column', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: { sortBy: 'email', sortDirection: 'desc' },
+        params: { subscriber: 'subscriber' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [], page: {} });
+
+      const handler = getSubscribers(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.findSubscribers).toHaveBeenCalledWith(10, undefined, expect.any(Object), {
+        field: 'email',
+        direction: 'desc',
+      });
+    });
+
+    it('sorts ascending when no direction is given', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: { sortBy: 'name' },
+        params: { subscriber: 'subscriber' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [], page: {} });
+
+      const handler = getSubscribers(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.findSubscribers).toHaveBeenCalledWith(10, undefined, expect.any(Object), {
+        field: 'name',
+        direction: 'asc',
+      });
     });
 
     it('can call next with error for non-admin', async () => {

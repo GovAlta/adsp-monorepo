@@ -10,6 +10,8 @@ export class SubscriberEntity implements Subscriber {
   tenantId: AdspId;
   id: string;
   addressAs: string;
+  created?: Date;
+  updated?: Date;
 
   static canCreate(user: User, subscriber: New<Subscriber>): boolean {
     // User is an subscription admin, or user is creating a subscriber for self.
@@ -45,6 +47,8 @@ export class SubscriberEntity implements Subscriber {
 
     this.tenantId = subscriber.tenantId;
     this.userId = subscriber.userId;
+    this.created = record.created;
+    this.updated = record.updated;
     this.addressAs = subscriber.addressAs ? subscriber.addressAs : '';
     this.channels = subscriber.channels || [];
   }

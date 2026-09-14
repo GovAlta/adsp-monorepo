@@ -45,7 +45,7 @@ export const Notifications: FunctionComponent = () => {
           <Tab label="Subscriptions" data-testid="notification-subscriptions-tab">
             <Subscriptions />
           </Tab>
-          <Tab label="Subscribers" data-testid="notification-subscribers">
+          <Tab label="Recipient registry" data-testid="notification-subscribers">
             <Subscribers />
           </Tab>
         </Tabs>
