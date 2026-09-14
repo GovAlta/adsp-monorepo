@@ -259,6 +259,26 @@ describe('stringUtils string tests', () => {
     expect(checkFieldValidity(props, {})).toBe('Social insurance number is invalid');
   });
 
+  it('shows the format error for an incomplete SIN and the invalid SIN error after the format matches', () => {
+    const incompleteProps = {
+      ...schemaIfThenProps,
+      data: '123 45',
+      schema: { type: 'string', format: 'sin' },
+      errors: 'must match format "sin"',
+    } as ControlProps;
+    const invalidChecksumProps = {
+      ...schemaIfThenProps,
+      data: '123 111 111',
+      schema: { type: 'string', format: 'sin' },
+      errors: 'must match format "sin"',
+    } as ControlProps;
+
+    expect(checkFieldValidity(incompleteProps, {})).toBe(
+      'Must be a valid social insurance number in format 000 000 000',
+    );
+    expect(checkFieldValidity(invalidChecksumProps, {})).toBe('Social insurance number is invalid');
+  });
+
   it('uses the AJV error when no configured format error exists', () => {
     const props = {
       ...schemaIfThenProps,

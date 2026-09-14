@@ -41,6 +41,7 @@ export const PhoneNumberControl = (props: PhoneNumberControlProps): JSX.Element 
         testId={`form-item-${path}`}
       >
         <GoabInput
+          key={`${phoneMask}:${inPlace}`}
           type="tel"
           name={path}
           disabled={!enabled}

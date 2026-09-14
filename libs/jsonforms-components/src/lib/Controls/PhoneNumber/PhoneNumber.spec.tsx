@@ -89,6 +89,36 @@ describe('PhoneNumberControl', () => {
     expect(input).toHaveAttribute('value', '(###) ###-####');
   });
 
+  it('refreshes the display when phoneMask or inPlace changes', () => {
+    const { container, rerender } = render(
+      <PhoneNumberControl
+        {...defaultProps}
+        data="4035551212"
+        uischema={{
+          ...defaultProps.uischema,
+          options: { phoneMask: '(###) ###-####' },
+        }}
+      />,
+    );
+    let input = container.querySelector('[testid="phone-input-phoneNumber"]');
+    expect(input).toHaveAttribute('value', '(403) 555-1212');
+
+    rerender(
+      <PhoneNumberControl
+        {...defaultProps}
+        data="4035551212"
+        uischema={{
+          ...defaultProps.uischema,
+          options: { phoneMask: '###-###-####', inPlace: true },
+        }}
+      />,
+    );
+
+    input = container.querySelector('[testid="phone-input-phoneNumber"]');
+    expect(input).toHaveAttribute('value', '403-555-1212');
+    expect(input?.getAttribute('maxlength')).toBeNull();
+  });
+
   it('does not set maxLength when the phone field is in-place', () => {
     const props = {
       ...defaultProps,

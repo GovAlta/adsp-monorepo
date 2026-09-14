@@ -59,11 +59,9 @@ export const useMaskedInput = ({
   const [value, setValue] = useState<string>(inPlace ? '' : initialDisplay);
 
   useEffect(() => {
-    if (inPlace) {
-      setValue(initialDisplay);
-    }
+    setValue(format(typeof data === 'string' ? data : ''));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mask, inPlace]);
 
   const handleChange = (detail: MaskChangeDetail) => {
     const rawValue = detail.value;
