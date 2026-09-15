@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';
@@ -154,22 +155,62 @@ describe('NotificationTypes Page', () => {
     },
   });
 
-  it('renders', () => {
-    const { baseElement } = render(
+  const renderNotificationTypes = (route = '/') =>
+    render(
       <Provider store={store}>
-        <NotificationTypes />
+        <MemoryRouter initialEntries={[route]}>
+          <Routes>
+            <Route path="/" element={<NotificationTypes />} />
+            <Route path="/types/:typeId" element={<NotificationTypes />} />
+          </Routes>
+        </MemoryRouter>
       </Provider>,
     );
+
+  it('renders', () => {
+    const { baseElement } = renderNotificationTypes();
     const addDefButton = baseElement.querySelector("goa-button[testId='add-notification']");
+    const notificationTypeTable = baseElement.querySelector("goa-table[testId='notification-types-table']");
     expect(addDefButton).not.toBeNull();
+    expect(notificationTypeTable).not.toBeNull();
+  });
+
+  it('filters notification types by name, type id, and description', () => {
+    const { baseElement, queryByText } = renderNotificationTypes();
+
+    const search = baseElement.querySelector("goa-input[testId='notification-type-search']");
+    fireEvent(
+      search,
+      new CustomEvent('_change', {
+        detail: { value: 'anotherNotificationId' },
+      }),
+    );
+
+    expect(queryByText('Some other subsidy application')).toBeTruthy();
+    expect(queryByText('Child care subsidy application')).toBeFalsy();
+  });
+
+  it('opens notification type detail when a notification type is selected', () => {
+    const { baseElement, getByText } = renderNotificationTypes();
+
+    fireEvent.click(getByText('Child care subsidy application'));
+
+    expect(baseElement.querySelector("goa-button[testId='back-to-notification-types']")).not.toBeNull();
+    expect(getByText('Events:')).toBeTruthy();
+  });
+
+  it('returns to the notification types list from detail', () => {
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
+
+    const backButton = baseElement.querySelector("goa-button[testId='back-to-notification-types']");
+    fireEvent(backButton, new CustomEvent('_click'));
+
+    expect(baseElement.querySelector("goa-table[testId='notification-types-table']")).not.toBeNull();
+    expect(baseElement.querySelector("goa-button[testId='back-to-notification-types']")).toBeNull();
   });
 
   it('allows for the NotificationTypes to be added', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes();
     const addDefButton = baseElement.querySelector("goa-button[testId='add-notification']");
     fireEvent.click(addDefButton);
     const dialog = baseElement.querySelector("goa-modal[testId='notification-types-form']");
@@ -179,11 +220,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('deletes a notification type', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
 
     const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
     fireEvent(deleteBtn, new CustomEvent('_click'));
@@ -200,11 +237,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels deleting a notification type', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
 
     const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
     fireEvent(deleteBtn, new CustomEvent('_click'));
@@ -216,11 +249,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('edits the notification types', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
     const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
     await waitFor(() => {
       fireEvent.click(editBtn);
@@ -259,11 +288,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels editing the notification type', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
 
     await waitFor(() => {
       const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
@@ -280,11 +305,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('creates a new notification type', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes();
     const addBtn = baseElement.querySelector("goa-button[testId='add-notification']");
     fireEvent.click(addBtn);
 
@@ -317,12 +338,8 @@ describe('NotificationTypes Page', () => {
   });
 
   it('add an event', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
-    const addBtn = baseElement.querySelectorAll("goa-button[testId='add-event']")[1];
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
+    const addBtn = baseElement.querySelector("goa-button[testId='add-event']");
     await waitFor(() => {
       fireEvent.click(addBtn);
     });
@@ -355,11 +372,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('edit an event', async () => {
-    const { getAllByTestId, baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { getAllByTestId, baseElement } = renderNotificationTypes('/types/notificationId');
     const editBtn = getAllByTestId('edit-event')[0];
     await waitFor(() => {
       fireEvent.click(editBtn);
@@ -382,12 +395,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('shows preview on open and lets the editor toggle it', async () => {
-    const { getAllByTestId, getByTestId } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
-
+    const { getAllByTestId, getByTestId } = renderNotificationTypes('/types/notificationId');
     fireEvent.click(getAllByTestId('edit-event')[0]);
     await waitFor(() => expect(getByTestId('preview-visible-state')).toHaveTextContent('true'));
 
@@ -396,12 +404,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('edit notification type should have title and subtitle field', async () => {
-    const { getAllByTestId, queryByTestId } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
-
+    const { getAllByTestId, queryByTestId } = renderNotificationTypes('/types/notificationId');
     const editBtn = getAllByTestId('edit-event')[0];
     await waitFor(() => {
       fireEvent.click(editBtn);
@@ -414,11 +417,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('deletes an event', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>,
-    );
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
     const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-event']")[0];
 
     fireEvent(deleteBtn, new CustomEvent('_click'));

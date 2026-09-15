@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
 import { GoabButton, GoabContainer, GoabGrid } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
@@ -47,6 +48,9 @@ import {
   Anchor,
 } from '../styled-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import { environment } from '../../../../../../environments/environment';
+import { NotificationTypeDetail } from './notificationTypeDetail';
+import { NotificationTypesList } from './notificationTypesList';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -86,6 +90,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(true);
   const [splitResetKey, setSplitResetKey] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const { typeId } = useParams<{ typeId: string }>();
+  const navigate = useNavigate();
   const templateDefaultError = {
     subject: '',
     title: '',
@@ -327,6 +334,39 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   delete nonCoreCopiedNotifications.contact;
   delete nonCoreCopiedNotifications.manageSubscribe;
 
+  const sortNotificationTypes = (items: NotificationItem[]) => [...items].sort((a, b) => (a.name < b.name ? -1 : 1));
+  const matchesNotificationTypeSearch = (notificationType: NotificationItem) => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    return [notificationType.name, notificationType.id, notificationType.description]
+      .filter((value) => !!value)
+      .some((value) => `${value}`.toLowerCase().includes(normalizedSearch));
+  };
+  const allTenantNotificationTypes = sortNotificationTypes(Object.values(nonCoreCopiedNotifications || {}));
+  const allCoreNotificationTypes = sortNotificationTypes(Object.values(coreNotification || {}));
+  const tenantNotificationTypes = allTenantNotificationTypes.filter(matchesNotificationTypeSearch);
+  const coreNotificationTypes = allCoreNotificationTypes.filter(matchesNotificationTypeSearch);
+  const selectedConfigurationTypeId = typeId ? decodeURIComponent(typeId) : null;
+  const selectedTenantNotificationTypes = allTenantNotificationTypes.filter(
+    (notificationType) => notificationType.id === selectedConfigurationTypeId,
+  );
+  const selectedCoreNotificationTypes = allCoreNotificationTypes.filter(
+    (notificationType) => notificationType.id === selectedConfigurationTypeId,
+  );
+  const showNotificationTypesRedesign = !environment.production;
+  const detailNotificationTypes = [...selectedTenantNotificationTypes, ...selectedCoreNotificationTypes];
+  const tenantNotificationTypesToDisplay = showNotificationTypesRedesign
+    ? selectedTenantNotificationTypes
+    : allTenantNotificationTypes;
+  const coreNotificationTypesToDisplay = showNotificationTypesRedesign
+    ? selectedCoreNotificationTypes
+    : allCoreNotificationTypes;
+  const showNotificationTypeList = showNotificationTypesRedesign && !selectedConfigurationTypeId;
+  const showNotificationTypeDetail = showNotificationTypesRedesign && selectedConfigurationTypeId;
+
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
       (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`,
@@ -397,279 +437,288 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           Add notification type
         </GoabButton>
       </Buttons>
-      {nonCoreCopiedNotifications &&
-        Object.values(nonCoreCopiedNotifications)
-          .sort((a, b) => (a.name < b.name ? -1 : 1))
-          .map((notificationType) => (
-            <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-              <GoabContainer accent="thin" type="interactive">
-                <div>
-                  <div className="rowFlex">
-                    <h2 className="flex1">{notificationType.name}</h2>
-                    <MaxHeight height={30} className="rowFlex">
-                      <NotificationBorder className=" flex">
-                        <GoAContextMenuIcon
-                          type="create"
-                          title="Edit"
-                          onClick={() => {
-                            setSelectedType(notificationType);
-                            setEditType(true);
-                            setIsNew(false);
-                          }}
-                          testId="edit-notification-type"
-                        />
-                      </NotificationBorder>
-
-                      <NotificationBorder className=" flex">
-                        <GoAContextMenuIcon
-                          type="trash"
-                          title="Delete"
-                          onClick={() => {
-                            setSelectedType(notificationType);
-                            setShowDeleteConfirmation(true);
-                          }}
-                          testId="delete-notification-type"
-                        />
-                      </NotificationBorder>
-                    </MaxHeight>
-                  </div>
-                  <div className="rowFlex smallFont">
-                    <div className="flex1">
-                      <div data-testid="type-id" className="minimumLineHeight">
-                        Type ID: {notificationType.id}
-                      </div>
-                      {notificationType?.subscriberRoles && (
-                        <div data-testid="tenant-subscriber-roles">
-                          Subscriber roles:{' '}
-                          <b>
-                            {!notificationType.publicSubscribe &&
-                              notificationType?.subscriberRoles
-                                .filter((value) => value !== 'anonymousRead')
-                                .map(
-                                  (roles, ix) =>
-                                    roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', '),
-                                )}{' '}
-                          </b>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <div data-testid="tenant-public-subscription" className="minimumLineHeight">
-                        Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
-                      </div>
-                      <div data-testid="tenant-self-service">
-                        Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
-                <h2>Events:</h2>
-
-                <GoabGrid minChildWidth="25ch" gap="s">
-                  {notificationType.events
-                    .sort((a, b) => (a.name < b.name ? -1 : 1))
-                    .map((event, key) => (
-                      <EventBorder>
-                        <div className="flex columnFlex gridBoxHeight">
-                          <div className="rowFlex">
-                            <div className="flex1">
-                              {event.namespace}:{event.name}
-                            </div>
-                            <div className="rowFlex">
-                              <MaxHeight height={34}>
-                                <NotificationBorder className="smallPadding">
-                                  <GoAContextMenuIcon
-                                    type="trash"
-                                    title="Delete"
-                                    onClick={() => {
-                                      setSelectedEvent(event);
-                                      setSelectedType(notificationType);
-                                      setShowEventDeleteConfirmation(true);
-                                      setCoreEvent(false);
-                                    }}
-                                    testId="delete-event"
-                                  />
-                                </NotificationBorder>
-                              </MaxHeight>
-                            </div>
-                          </div>
-                          <div className="marginTopAuto">
-                            <div className="flex1 flex endAlign">
-                              <div className="flex3 endAlign">
-                                <div className="flex rowFlex">
-                                  {notificationType.sortedChannels.map((channel) => (
-                                    <div
-                                      key={channel}
-                                      className="nonCoreIconPadding flex1"
-                                      data-testid={`tenant-${channel}-channel`}
-                                    >
-                                      {channelIcons[channel]}
-                                      {(event.templates[channel]?.subject?.length === 0 ||
-                                        event.templates[channel]?.body?.length === 0) && (
-                                        <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
-                                          !
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                              <div className="flex3 textAlignLastRight">
-                                <Anchor
-                                  data-testid="edit-event"
-                                  onClick={() => {
-                                    setSelectedEvent(event);
-                                    setSelectedType(notificationType);
-                                    setEventTemplateFormState(editEventTemplateContent);
-                                    setShowTemplateForm(true);
-                                    setCoreEvent(false);
-                                    setCurrentChannel(notificationType.sortedChannels[0]);
-                                  }}
-                                >
-                                  Edit
-                                </Anchor>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </EventBorder>
-                    ))}
-
-                  <NotificationBorder className="padding">
-                    <EventButtonWrapper>
-                      <GoabButton
-                        size="compact"
-                        type="secondary"
-                        testId="add-event"
-                        onClick={() => {
-                          setSelectedEvent(emptyEvent);
-                          manageEvents(notificationType);
-                          setEditEventOpen(true);
-                        }}
-                      >
-                        + Select an event
-                      </GoabButton>
-                    </EventButtonWrapper>
-                    <div>Domain events represent key changes at a domain model level.</div>
+      {showNotificationTypeList && (
+        <NotificationTypesList
+          searchTerm={searchTerm}
+          tenantNotificationTypes={tenantNotificationTypes}
+          coreNotificationTypes={coreNotificationTypes}
+          onSearchChange={setSearchTerm}
+          onSelect={(notificationType) => navigate(`types/${encodeURIComponent(notificationType.id)}`)}
+        />
+      )}
+      {showNotificationTypeDetail && (
+        <NotificationTypeDetail onBack={() => navigate('..')}>
+          {detailNotificationTypes.length === 0 && <p>Notification type not found.</p>}
+        </NotificationTypeDetail>
+      )}
+      {tenantNotificationTypesToDisplay.map((notificationType) => (
+        <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
+          <GoabContainer accent="thin" type="interactive">
+            <div>
+              <div className="rowFlex">
+                <h2 className="flex1">{notificationType.name}</h2>
+                <MaxHeight height={30} className="rowFlex">
+                  <NotificationBorder className=" flex">
+                    <GoAContextMenuIcon
+                      type="create"
+                      title="Edit"
+                      onClick={() => {
+                        setSelectedType(notificationType);
+                        setEditType(true);
+                        setIsNew(false);
+                      }}
+                      testId="edit-notification-type"
+                    />
                   </NotificationBorder>
-                  <div></div>
-                </GoabGrid>
-              </GoabContainer>
-            </div>
-          ))}
-      <h2>Core notifications:</h2>
-      {coreNotification &&
-        Object.values(coreNotification).map((notificationType) => (
-          <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-            <GoabContainer accent="thin" type="interactive">
-              <div>
-                <div className="rowFlex">
-                  <h2 className="flex1">{notificationType.name}</h2>
-                </div>
-                <div className="rowFlex smallFont">
-                  <div className="flex1">
-                    <div data-testid="type-id" className="minimumLineHeight">
-                      Type ID: {notificationType.id}
-                    </div>
-                    {notificationType?.subscriberRoles && (
-                      <div data-testid="core-subscriber-roles">
-                        Subscriber roles:{' '}
-                        <b>
-                          {notificationType?.subscriberRoles
+
+                  <NotificationBorder className=" flex">
+                    <GoAContextMenuIcon
+                      type="trash"
+                      title="Delete"
+                      onClick={() => {
+                        setSelectedType(notificationType);
+                        setShowDeleteConfirmation(true);
+                      }}
+                      testId="delete-notification-type"
+                    />
+                  </NotificationBorder>
+                </MaxHeight>
+              </div>
+              <div className="rowFlex smallFont">
+                <div className="flex1">
+                  <div data-testid="type-id" className="minimumLineHeight">
+                    Type ID: {notificationType.id}
+                  </div>
+                  {notificationType?.subscriberRoles && (
+                    <div data-testid="tenant-subscriber-roles">
+                      Subscriber roles:{' '}
+                      <b>
+                        {!notificationType.publicSubscribe &&
+                          notificationType?.subscriberRoles
                             .filter((value) => value !== 'anonymousRead')
                             .map(
                               (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', '),
                             )}{' '}
-                        </b>
-                      </div>
-                    )}
+                      </b>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div data-testid="tenant-public-subscription" className="minimumLineHeight">
+                    Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
                   </div>
-                  <div>
-                    <div data-testid="core-public-subscription" className="minimumLineHeight">
-                      Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
-                    </div>
-                    <div data-testid="core-self-service">
-                      Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                    </div>
+                  <div data-testid="tenant-self-service">
+                    Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                   </div>
                 </div>
               </div>
-              <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
-              <h2>Events:</h2>
+            </div>
+            <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
+            <h2>Events:</h2>
 
-              <GoabGrid minChildWidth="25ch" gap={'s'}>
-                {notificationType?.events?.map((event, key) => (
-                  <EventBorder>
-                    <MaxHeight height={168} style={{ width: '250px' }}>
-                      <div className="flex columnFlex gridBoxHeight">
-                        <div className="rowFlex">
-                          <div className="flex1">
-                            {event.namespace}:{event.name}
-                          </div>
+            <GoabGrid minChildWidth="25ch" gap="s">
+              {[...notificationType.events]
+                .sort((a, b) => (a.name < b.name ? -1 : 1))
+                .map((event, key) => (
+                  <EventBorder key={`${notificationType.id}-${event.namespace}:${event.name}-${key}`}>
+                    <div className="flex columnFlex gridBoxHeight">
+                      <div className="rowFlex">
+                        <div className="flex1">
+                          {event.namespace}:{event.name}
                         </div>
-                        <div className="marginTopAuto">
-                          <div className="flex1 flex endAlign">
-                            <div className="flex5 endAlign">
-                              <div className="flex rowFlex">
-                                {notificationType.sortedChannels.map((channel) => (
-                                  <div
-                                    key={channel}
-                                    className="flex1 coreIconPadding"
-                                    data-testid={`core-${channel}-channel`}
-                                  >
-                                    {channelIcons[channel]}
-                                    {(event.templates[channel]?.subject?.length === 0 ||
-                                      event.templates[channel]?.body?.length === 0) && (
-                                      <div className="icon-badge" data-testid={`core-${channel}-channel-badge`}>
-                                        !
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="flex4 textAlignLastRight">
-                              {event.customized && (
-                                <Anchor
-                                  className="resetButton"
-                                  onClick={() => {
-                                    setSelectedEvent(event);
-                                    setSelectedType(notificationType);
-                                    setCoreEvent(true);
-                                    setShowEventDeleteConfirmation(true);
-                                  }}
-                                  data-testid="reset-button"
-                                >
-                                  Reset
-                                </Anchor>
-                              )}
-                              <Anchor
-                                data-testid="edit-event"
-                                className="coreEditButton"
+                        <div className="rowFlex">
+                          <MaxHeight height={34}>
+                            <NotificationBorder className="smallPadding">
+                              <GoAContextMenuIcon
+                                type="trash"
+                                title="Delete"
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
-                                  setEventTemplateFormState(editEventTemplateContent);
-                                  setShowTemplateForm(true);
+                                  setShowEventDeleteConfirmation(true);
                                   setCoreEvent(false);
-                                  setCurrentChannel(notificationType.sortedChannels[0]);
                                 }}
-                              >
-                                Edit
-                              </Anchor>
+                                testId="delete-event"
+                              />
+                            </NotificationBorder>
+                          </MaxHeight>
+                        </div>
+                      </div>
+                      <div className="marginTopAuto">
+                        <div className="flex1 flex endAlign">
+                          <div className="flex3 endAlign">
+                            <div className="flex rowFlex">
+                              {notificationType.sortedChannels.map((channel) => (
+                                <div
+                                  key={channel}
+                                  className="nonCoreIconPadding flex1"
+                                  data-testid={`tenant-${channel}-channel`}
+                                >
+                                  {channelIcons[channel]}
+                                  {(event.templates[channel]?.subject?.length === 0 ||
+                                    event.templates[channel]?.body?.length === 0) && (
+                                    <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
+                                      !
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
+                          </div>
+                          <div className="flex3 textAlignLastRight">
+                            <Anchor
+                              data-testid="edit-event"
+                              onClick={() => {
+                                setSelectedEvent(event);
+                                setSelectedType(notificationType);
+                                setEventTemplateFormState(editEventTemplateContent);
+                                setShowTemplateForm(true);
+                                setCoreEvent(false);
+                                setCurrentChannel(notificationType.sortedChannels[0]);
+                              }}
+                            >
+                              Edit
+                            </Anchor>
                           </div>
                         </div>
                       </div>
-                    </MaxHeight>
+                    </div>
                   </EventBorder>
                 ))}
-                <div></div>
-              </GoabGrid>
-            </GoabContainer>
-          </div>
-        ))}
+
+              <NotificationBorder className="padding">
+                <EventButtonWrapper>
+                  <GoabButton
+                    size="compact"
+                    type="secondary"
+                    testId="add-event"
+                    onClick={() => {
+                      setSelectedEvent(emptyEvent);
+                      manageEvents(notificationType);
+                      setEditEventOpen(true);
+                    }}
+                  >
+                    + Select an event
+                  </GoabButton>
+                </EventButtonWrapper>
+                <div>Domain events represent key changes at a domain model level.</div>
+              </NotificationBorder>
+              <div></div>
+            </GoabGrid>
+          </GoabContainer>
+        </div>
+      ))}
+      {!showNotificationTypesRedesign && <h2>Core notifications:</h2>}
+      {coreNotificationTypesToDisplay.map((notificationType) => (
+        <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
+          <GoabContainer accent="thin" type="interactive">
+            <div>
+              <div className="rowFlex">
+                <h2 className="flex1">{notificationType.name}</h2>
+              </div>
+              <div className="rowFlex smallFont">
+                <div className="flex1">
+                  <div data-testid="type-id" className="minimumLineHeight">
+                    Type ID: {notificationType.id}
+                  </div>
+                  {notificationType?.subscriberRoles && (
+                    <div data-testid="core-subscriber-roles">
+                      Subscriber roles:{' '}
+                      <b>
+                        {notificationType?.subscriberRoles
+                          .filter((value) => value !== 'anonymousRead')
+                          .map(
+                            (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', '),
+                          )}{' '}
+                      </b>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div data-testid="core-public-subscription" className="minimumLineHeight">
+                    Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                  </div>
+                  <div data-testid="core-self-service">
+                    Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
+            <h2>Events:</h2>
+
+            <GoabGrid minChildWidth="25ch" gap={'s'}>
+              {notificationType?.events?.map((event, key) => (
+                <EventBorder key={`${notificationType.id}-${event.namespace}:${event.name}-${key}`}>
+                  <MaxHeight height={168} style={{ width: '250px' }}>
+                    <div className="flex columnFlex gridBoxHeight">
+                      <div className="rowFlex">
+                        <div className="flex1">
+                          {event.namespace}:{event.name}
+                        </div>
+                      </div>
+                      <div className="marginTopAuto">
+                        <div className="flex1 flex endAlign">
+                          <div className="flex5 endAlign">
+                            <div className="flex rowFlex">
+                              {notificationType.sortedChannels.map((channel) => (
+                                <div
+                                  key={channel}
+                                  className="flex1 coreIconPadding"
+                                  data-testid={`core-${channel}-channel`}
+                                >
+                                  {channelIcons[channel]}
+                                  {(event.templates[channel]?.subject?.length === 0 ||
+                                    event.templates[channel]?.body?.length === 0) && (
+                                    <div className="icon-badge" data-testid={`core-${channel}-channel-badge`}>
+                                      !
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex4 textAlignLastRight">
+                            {event.customized && (
+                              <Anchor
+                                className="resetButton"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setCoreEvent(true);
+                                  setShowEventDeleteConfirmation(true);
+                                }}
+                                data-testid="reset-button"
+                              >
+                                Reset
+                              </Anchor>
+                            )}
+                            <Anchor
+                              data-testid="edit-event"
+                              className="coreEditButton"
+                              onClick={() => {
+                                setSelectedEvent(event);
+                                setSelectedType(notificationType);
+                                setEventTemplateFormState(editEventTemplateContent);
+                                setShowTemplateForm(true);
+                                setCoreEvent(false);
+                                setCurrentChannel(notificationType.sortedChannels[0]);
+                              }}
+                            >
+                              Edit
+                            </Anchor>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </MaxHeight>
+                </EventBorder>
+              ))}
+              <div></div>
+            </GoabGrid>
+          </GoabContainer>
+        </div>
+      ))}
       {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
 
