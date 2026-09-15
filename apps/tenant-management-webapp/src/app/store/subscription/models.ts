@@ -44,6 +44,7 @@ export interface Subscriber {
   id: string;
   urn?: string;
   addressAs?: string;
+  description?: string;
   channels?: Channels[];
   userId?: string;
   accountLink?: string;
