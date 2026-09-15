@@ -163,4 +163,42 @@ describe('useMaskedInput', () => {
 
     expect(preventDefault).toHaveBeenCalled();
   });
+
+  it('refreshes the display when the mask changes', () => {
+    const { result, rerender } = renderHook(
+      ({ mask, inPlace }) =>
+        useMaskedInput({
+          mask,
+          inPlace,
+          data: '4035551212',
+          onCommit: jest.fn(),
+        }),
+      { initialProps: { mask: DEFAULT_PATTERNS.phone.mask, inPlace: false } },
+    );
+
+    expect(result.current.value).toBe('(403) 555-1212');
+
+    rerender({ mask: '###-###-####', inPlace: false });
+
+    expect(result.current.value).toBe('403-555-1212');
+  });
+
+  it('refreshes the display when inPlace changes', () => {
+    const { result, rerender } = renderHook(
+      ({ mask, inPlace }) =>
+        useMaskedInput({
+          mask,
+          inPlace,
+          data: '40355',
+          onCommit: jest.fn(),
+        }),
+      { initialProps: { mask: DEFAULT_PATTERNS.phone.mask, inPlace: false } },
+    );
+
+    expect(result.current.value).toBe('(403) 55');
+
+    rerender({ mask: DEFAULT_PATTERNS.phone.mask, inPlace: true });
+
+    expect(result.current.value).toBe('(403) 55#-####');
+  });
 });

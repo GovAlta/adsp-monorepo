@@ -15,7 +15,15 @@ import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
-import { Channel, ServiceUserRoles, Subscriber, SubscriptionCriteria } from '../types';
+import {
+  Channel,
+  ServiceUserRoles,
+  Subscriber,
+  SubscriberSort,
+  SubscriberSortField,
+  SUBSCRIBER_SORT_FIELDS,
+  SubscriptionCriteria,
+} from '../types';
 import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
@@ -324,7 +332,7 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
     try {
       const tenantId = req.tenant.id;
       const user = req.user;
-      const { top: topValue, after, email, sms, name } = req.query;
+      const { top: topValue, after, email, sms, name, search, sortBy, sortDirection } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
@@ -335,9 +343,14 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
         name: name as string | undefined,
         email: email as string | undefined,
         sms: sms as string | undefined,
+        search: search as string | undefined,
       };
 
-      const result = await repository.findSubscribers(top, after as string, criteria);
+      const sort: SubscriberSort = sortBy
+        ? { field: sortBy as SubscriberSortField, direction: sortDirection === 'desc' ? 'desc' : 'asc' }
+        : undefined;
+
+      const result = await repository.findSubscribers(top, after as string, criteria, sort);
       res.send({
         results: result.results.map((r) => mapSubscriber(apiId, r)),
         page: result.page,
@@ -744,7 +757,10 @@ export const createSubscriptionRouter = ({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
+      query('search').optional().isString(),
+      query('sortBy').optional().isIn(SUBSCRIBER_SORT_FIELDS),
+      query('sortDirection').optional().isIn(['asc', 'desc'])
     ),
     getSubscribers(apiId, subscriptionRepository)
   );

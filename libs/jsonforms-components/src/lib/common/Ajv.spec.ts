@@ -123,7 +123,15 @@ describe('Ajv tests', () => {
     expect(ajv.validate(schema, { mvid: '123456789' })).toBe(false);
   });
 
-  it('runs Luhn validation as part of format sin', () => {
+  it('shows the format error before Luhn for an incomplete SIN', () => {
+    const ajv = createDefaultAjv();
+    const schema = { type: 'string', format: 'sin' };
+
+    expect(ajv.validate(schema, '123 45')).toBe(false);
+    expect(ajv.errors?.[0]?.message).toBe('must match format "sin"');
+  });
+
+  it('rejects a formatted SIN with an invalid checksum', () => {
     const ajv = createDefaultAjv();
     const schema = { type: 'string', format: 'sin' };
 

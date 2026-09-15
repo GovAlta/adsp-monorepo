@@ -51,10 +51,21 @@ const resetInputValue = (detail: GoabInputOnChangeDetail, value: string) => {
   }
 };
 
+const resolveTextMaskOptions = (
+  schema?: { format?: string; title?: string },
+  uischema?: { options?: Record<string, unknown> },
+) => {
+  const formatConfig = resolveFormatConfig(schema);
+  const mask = formatConfig?.mask ?? (uischema?.options?.mask as string | undefined);
+  // In-place shows the fill-in template and keeps the caret in place while editing.
+  const inPlace = !!mask && uischema?.options?.inPlace === true;
+  return { formatConfig, mask, inPlace };
+};
+
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
-      <InnerGoAInputText {...props} />{' '}
+      <InnerGoAInputText {...props} />
     </JsonFormRegisterProvider>
   );
 };
@@ -63,11 +74,8 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     props;
 
   // Detect the mask format from the JSON schema `format` (with the SIN title kept for backward compatibility).
-  const formatConfig = resolveFormatConfig(schema);
-  const mask = formatConfig?.mask ?? (uischema?.options?.mask as string | undefined);
+  const { formatConfig, mask, inPlace } = resolveTextMaskOptions(schema, uischema);
   const allowedKeys = formatConfig?.allowedKeys;
-  // In-place shows the fill-in template and keeps the caret in place while editing.
-  const inPlace = !!mask && uischema?.options?.inPlace === true;
 
   const toDisplay = (value: unknown): string => {
     if (!mask) {
@@ -94,12 +102,16 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   useEffect(() => {
     if (data === undefined || data === null) {
+      if (!mask) {
+        return;
+      }
+      setLocalValue(toDisplay(''));
       return;
     }
 
     setLocalValue(toDisplay(data));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, mask]);
+  }, [data, mask, inPlace]);
 
   useEffect(() => {
     if (typeof handleChange === 'function' && hasDefault && data === undefined && !manualInput) {
@@ -203,6 +215,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
         </GoabDropdown>
       ) : (
         <GoabInput
+          key={`${mask ?? ''}:${inPlace}`}
           error={isVisited && errors.length > 0}
           type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
           disabled={!enabled}

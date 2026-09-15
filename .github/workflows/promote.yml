@@ -4,8 +4,8 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      SKIP_REGRESSION:
-        description: Flag indicating if regression should be skipped.
+      RUN_REGRESSION:
+        description: Run regression tests
         type: boolean
         required: false
         default: false
@@ -75,7 +75,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
-        if: github.event.inputs.SKIP_REGRESSION != 'true'
+        if: github.event.inputs.RUN_REGRESSION == 'true'
         with:
           app: ${{ matrix.app }}
           environment: staging

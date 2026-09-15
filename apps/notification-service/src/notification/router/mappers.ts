@@ -14,6 +14,8 @@ export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): Reco
     timeCodeSent: c.timeCodeSent,
   })),
   userId: subscriber.userId,
+  created: subscriber.created,
+  updated: subscriber.updated,
 });
 
 export const mapSubscription = (

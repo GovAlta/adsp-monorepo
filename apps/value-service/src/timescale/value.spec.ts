@@ -213,6 +213,54 @@ describe('TimescaleValuesRepository metric source routing', () => {
 
 const tenantUrn = 'urn:ads:platform:tenant-service:v2:/tenants/aaa';
 
+describe('TimescaleValuesRepository readPlatformMetrics', () => {
+  it('reads directly from the rollups without checking coverage', async () => {
+    const { knex, tables, wheres } = createKnex({
+      tableRows: {
+        metric_interval_rollups: [
+          { metric: 'count', bucket: '2026-03-01T00:00:00Z', sum: 10, min: 1, max: 5, count: 2, tenant: 'tenant-a' },
+          { metric: 'count', bucket: '2026-03-01T00:00:00Z', sum: 20, min: 2, max: 8, count: 4, tenant: 'tenant-b' },
+        ],
+      },
+    });
+
+    const result = await new TimescaleValuesRepository(knex).readPlatformMetrics('test', 'metrics', { ...criteria });
+
+    expect(tables).toContain('metric_interval_rollups');
+    expect(tables).not.toContain('metric_interval_rollup_coverage');
+    expect(wheres).toContainEqual([{ namespace: 'test', name: 'metrics', interval: 'hourly' }]);
+    expect(result.count.values).toHaveLength(2);
+    expect(result.count.values).toContainEqual(
+      expect.objectContaining({ tenantId: 'tenant-a', sum: 10, min: 1, max: 5, count: 2 }),
+    );
+    expect(result.count.values).toContainEqual(
+      expect.objectContaining({ tenantId: 'tenant-b', sum: 20, min: 2, max: 8, count: 4 }),
+    );
+  });
+
+  it('filters by metricLike', async () => {
+    const { knex, wheres } = createKnex({ tableRows: { metric_interval_rollups: [] } });
+    const repository = new TimescaleValuesRepository(knex);
+
+    const result = await repository.readPlatformMetrics('test', 'metrics', { ...criteria, metricLike: 'count' });
+
+    expect(wheres).toContainEqual(['metric', 'like', '%count%']);
+    expect(result).toEqual({});
+  });
+
+  it('rejects an unrecognized interval before touching the database', async () => {
+    const { knex, tables } = createKnex();
+
+    await expect(
+      new TimescaleValuesRepository(knex).readPlatformMetrics('test', 'metrics', {
+        ...criteria,
+        interval: 'yearly' as never,
+      }),
+    ).rejects.toThrow(InvalidOperationError);
+    expect(tables).toHaveLength(0);
+  });
+});
+
 describe('TimescaleValuesRepository writeValues', () => {
   const written = [
     {

@@ -7,12 +7,87 @@ import {
   NotificationTypeEntity,
   SubscriberCriteria,
   SubscriberEntity,
+  SubscriberSort,
   SubscriptionEntity,
   SubscriptionRepository,
   SubscriptionSearchCriteria,
 } from '../notification';
 import { subscriberSchema, subscriptionSchema } from './schema';
 import { SubscriberDoc, SubscriptionDoc } from './types';
+
+function toIdTimestamp(id: SubscriberDoc['_id']): Date {
+  return id && Types.ObjectId.isValid(id) ? new Types.ObjectId(id).getTimestamp() : null;
+}
+
+// Search values are matched as a substring of the field. They come from the user, so escape the
+// characters a regular expression would otherwise read as syntax; without this a value like "(" is
+// not a fruitless search but a malformed expression that the database rejects.
+function toContains(value: string): { $regex: string; $options: string } {
+  return { $regex: value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+}
+
+// Picks the address of the first channel of a kind, as the sort key for the column showing it.
+function toChannelAddressKey(channel: string): PipelineStage.AddFields['$addFields'] {
+  return {
+    _sortKey: {
+      $arrayElemAt: [
+        {
+          $map: {
+            input: { $filter: { input: '$channels', as: 'c', cond: { $eq: ['$$c.channel', channel] } } },
+            as: 'c',
+            in: '$$c.address',
+          },
+        },
+        0,
+      ],
+    },
+  };
+}
+
+// The address and verification columns read out of the channels array rather than a field of the
+// subscriber, so sorting on them needs a key computed first. The remaining columns sort on their
+// own field, and are left without one so that the sort can be served from an index.
+const COMPUTED_SORT_FIELDS: Record<string, PipelineStage.AddFields['$addFields']> = {
+  email: toChannelAddressKey('email'),
+  sms: toChannelAddressKey('sms'),
+  // A subscriber counts as verified only when every address it can be reached at is verified, which
+  // is the status the registry shows in the column.
+  verified: {
+    _sortKey: {
+      $cond: [
+        { $gt: [{ $size: { $ifNull: ['$channels', []] } }, 0] },
+        { $allElementsTrue: [{ $map: { input: '$channels', as: 'c', in: { $eq: ['$$c.verified', true] } } }] },
+        false,
+      ],
+    },
+  },
+};
+
+const STORED_SORT_FIELDS: Record<string, string> = {
+  name: 'addressAs',
+  created: 'createdAt',
+  updated: 'updatedAt',
+};
+
+const DEFAULT_SORT_FIELD = 'name';
+
+// Results are sorted on a single column, with the id as tie breaker so that paging over a column
+// with repeated values returns each subscriber exactly once.
+function toSubscriberSort(sort?: SubscriberSort): {
+  addFields?: PipelineStage.AddFields['$addFields'];
+  sortQuery: Record<string, 1 | -1>;
+} {
+  const field = sort?.field || DEFAULT_SORT_FIELD;
+  const direction = sort?.direction === 'desc' ? -1 : 1;
+
+  const addFields = COMPUTED_SORT_FIELDS[field];
+  if (addFields) {
+    return { addFields, sortQuery: { _sortKey: direction, _id: direction } };
+  }
+
+  const stored = STORED_SORT_FIELDS[field] || STORED_SORT_FIELDS[DEFAULT_SORT_FIELD];
+  return { sortQuery: { [stored]: direction, _id: direction } };
+}
 
 export class MongoSubscriptionRepository implements SubscriptionRepository {
   private subscriberModel: Model<Document & SubscriberDoc>;
@@ -185,7 +260,12 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     };
   }
 
-  async findSubscribers(top: number, after: string, criteria: SubscriberCriteria): Promise<Results<SubscriberEntity>> {
+  async findSubscribers(
+    top: number,
+    after: string,
+    criteria: SubscriberCriteria,
+    sort?: SubscriberSort
+  ): Promise<Results<SubscriberEntity>> {
     const skip = decodeAfter(after);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -195,31 +275,58 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     }
 
     if (criteria.name) {
-      query.addressAs = { $regex: criteria.name, $options: 'i' };
+      query.addressAs = toContains(criteria.name);
     }
 
     if (criteria.sms) {
       if (criteria.email) {
         query.channels = {
           $all: [
-            { $elemMatch: { channel: 'sms', address: { $regex: criteria.sms } } },
-            { $elemMatch: { channel: 'email', address: { $regex: criteria.email.toLocaleLowerCase() } } },
+            { $elemMatch: { channel: 'sms', address: toContains(criteria.sms) } },
+            { $elemMatch: { channel: 'email', address: toContains(criteria.email.toLocaleLowerCase()) } },
           ],
         };
       } else {
-        query.channels = { $elemMatch: { channel: 'sms', address: { $regex: criteria.sms } } };
+        query.channels = { $elemMatch: { channel: 'sms', address: toContains(criteria.sms) } };
       }
     } else if (criteria.email) {
-      query.channels = { $elemMatch: { channel: 'email', address: { $regex: criteria.email.toLocaleLowerCase() } } };
+      query.channels = { $elemMatch: { channel: 'email', address: toContains(criteria.email.toLocaleLowerCase()) } };
     }
 
-    const docs = await this.subscriberModel.find(query, null, { lean: true }).skip(skip).limit(top).exec();
+    // A single search value matches any of the fields the registry shows an address in, since the
+    // user searching is not expected to know which of them holds what they remember.
+    if (criteria.search) {
+      const contains = toContains(criteria.search);
+      query.$and = [
+        {
+          $or: [{ addressAs: contains }, { channels: { $elemMatch: { address: contains } } }],
+        },
+      ];
+    }
+
+    const { addFields, sortQuery } = toSubscriberSort(sort);
+
+    const pipeline: PipelineStage[] = [{ $match: query }];
+    if (addFields) {
+      pipeline.push({ $addFields: addFields });
+    }
+    pipeline.push({ $sort: sortQuery }, { $skip: skip });
+    if (top > 0) {
+      pipeline.push({ $limit: top });
+    }
+
+    const [docs, total] = await Promise.all([
+      this.subscriberModel.aggregate<SubscriberDoc>(pipeline).exec(),
+      this.subscriberModel.countDocuments(query).exec(),
+    ]);
+
     return {
       results: docs.map((doc) => this.fromDoc(doc)),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
         size: docs.length,
+        total,
       },
     };
   }
@@ -289,6 +396,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
               pendingVerification: c.pendingVerification,
               timeCodeSent: c.timeCodeSent,
             })) || [],
+          // Subscribers recorded before the dates were kept have no stored create date; the id is
+          // generated from the time of the insert, so fall back to reading it from there.
+          created: doc.createdAt || toIdTimestamp(doc._id),
+          updated: doc.updatedAt,
         })
       : null;
   }

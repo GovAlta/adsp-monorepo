@@ -1,6 +1,7 @@
+// clean-code-ignore: RULE-19 — interface only, no logic; implementation is covered in timescale/value.spec.ts.
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
-import { Metric, MetricValue, Value, ValueCriteria, MetricCriteria } from '../types';
+import { Metric, MetricValue, PlatformMetric, Value, ValueCriteria, MetricCriteria } from '../types';
 
 export interface Page {
   after?: string;
@@ -29,6 +30,9 @@ export interface ValuesRepository {
     after?: string,
     readMetric?: MetricCriteria
   ): Promise<Metric & { page: Page }>;
+  // Cross-tenant read of the materialised rollups; unlike readMetrics, this never falls back to the
+  // live view, since platform-scoped reporting only needs to see what has already been rolled up.
+  readPlatformMetrics(namespace: string, name: string, criteria: MetricCriteria): Promise<Record<string, PlatformMetric>>;
   countValues(criteria: ValueCriteria): Promise<number>;
   writeMetric(
     tenantId: AdspId,
