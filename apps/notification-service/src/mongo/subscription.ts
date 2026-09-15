@@ -19,6 +19,12 @@ function toIdTimestamp(id: SubscriberDoc['_id']): Date {
   return id && Types.ObjectId.isValid(id) ? new Types.ObjectId(id).getTimestamp() : null;
 }
 
+// Azure Cosmos DB's Mongo API refuses an ORDER BY it has no matching composite index for, with this
+// message, instead of degrading to an in-memory sort the way a self-hosted MongoDB would.
+function isUnservedSortError(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('does not have a corresponding composite index');
+}
+
 // Search values are matched as a substring of the field. They come from the user, so escape the
 // characters a regular expression would otherwise read as syntax; without this a value like "(" is
 // not a fruitless search but a malformed expression that the database rejects.
@@ -71,8 +77,12 @@ const STORED_SORT_FIELDS: Record<string, string> = {
 
 const DEFAULT_SORT_FIELD = 'name';
 
-// Results are sorted on a single column, with the id as tie breaker so that paging over a column
-// with repeated values returns each subscriber exactly once.
+// Results are sorted on a single column only, and not also on the id as a tie breaker. Cosmos DB's
+// Mongo API only serves an ORDER BY from a composite index whose fields exactly match the sort, so
+// a two-key sort here would depend on a composite index being built (and can otherwise 500 while
+// Cosmos is still transforming it, or indefinitely if it never resolves). A single-key sort instead
+// is served from an ordinary single-field index, which Cosmos maintains eagerly. The trade-off is
+// that paging is not perfectly stable when many subscribers share the exact same sort value.
 function toSubscriberSort(sort?: SubscriberSort): {
   addFields?: PipelineStage.AddFields['$addFields'];
   sortQuery: Record<string, 1 | -1>;
@@ -82,11 +92,11 @@ function toSubscriberSort(sort?: SubscriberSort): {
 
   const addFields = COMPUTED_SORT_FIELDS[field];
   if (addFields) {
-    return { addFields, sortQuery: { _sortKey: direction, _id: direction } };
+    return { addFields, sortQuery: { _sortKey: direction } };
   }
 
   const stored = STORED_SORT_FIELDS[field] || STORED_SORT_FIELDS[DEFAULT_SORT_FIELD];
-  return { sortQuery: { [stored]: direction, _id: direction } };
+  return { sortQuery: { [stored]: direction } };
 }
 
 export class MongoSubscriptionRepository implements SubscriptionRepository {
@@ -306,19 +316,38 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
 
     const { addFields, sortQuery } = toSubscriberSort(sort);
 
-    const pipeline: PipelineStage[] = [{ $match: query }];
-    if (addFields) {
-      pipeline.push({ $addFields: addFields });
-    }
-    pipeline.push({ $sort: sortQuery }, { $skip: skip });
-    if (top > 0) {
-      pipeline.push({ $limit: top });
-    }
+    const toPipeline = (sortStage?: Record<string, 1 | -1>): PipelineStage[] => {
+      const stages: PipelineStage[] = [{ $match: query }];
+      if (addFields) {
+        stages.push({ $addFields: addFields });
+      }
+      if (sortStage) {
+        stages.push({ $sort: sortStage });
+      }
+      stages.push({ $skip: skip });
+      if (top > 0) {
+        stages.push({ $limit: top });
+      }
+      return stages;
+    };
 
-    const [docs, total] = await Promise.all([
-      this.subscriberModel.aggregate<SubscriberDoc>(pipeline).exec(),
-      this.subscriberModel.countDocuments(query).exec(),
-    ]);
+    const findDocs = async (): Promise<SubscriberDoc[]> => {
+      try {
+        return await this.subscriberModel.aggregate<SubscriberDoc>(toPipeline(sortQuery)).exec();
+      } catch (err) {
+        // Cosmos DB's Mongo API rejects an ORDER BY it has no matching composite index for yet
+        // (e.g. one still being built) rather than falling back to an in-memory sort itself. Rather
+        // than fail the request, serve the page unsorted so the registry stays usable in the
+        // meantime; the sort resumes on its own once the index is available.
+        if (isUnservedSortError(err)) {
+          this.logger.warn(`Sort could not be served by an available index, returning results unsorted: ${err}`);
+          return await this.subscriberModel.aggregate<SubscriberDoc>(toPipeline()).exec();
+        }
+        throw err;
+      }
+    };
+
+    const [docs, total] = await Promise.all([findDocs(), this.subscriberModel.countDocuments(query).exec()]);
 
     return {
       results: docs.map((doc) => this.fromDoc(doc)),
