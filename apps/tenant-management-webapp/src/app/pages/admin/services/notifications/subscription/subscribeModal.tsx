@@ -24,6 +24,8 @@ import { emailError, smsError } from '@lib/inputValidation';
 interface SubscribeModalProps {
   open: boolean;
   onCancel: () => void;
+  initialTypeId?: string;
+  hideNotificationType?: boolean;
 }
 
 type SubscriberMode = 'existing' | 'new';
@@ -37,7 +39,12 @@ interface FormErrors {
   channels?: string;
 }
 
-export const SubscribeModal: FunctionComponent<SubscribeModalProps> = ({ open, onCancel }) => {
+export const SubscribeModal: FunctionComponent<SubscribeModalProps> = ({
+  open,
+  onCancel,
+  initialTypeId,
+  hideNotificationType,
+}) => {
   const dispatch = useDispatch();
   const notificationTypes = useSelector((state: RootState) => ({
     ...state.notification.core,
@@ -64,7 +71,7 @@ export const SubscribeModal: FunctionComponent<SubscribeModalProps> = ({ open, o
     if (open) {
       dispatch(ResetTypeSubscriptionCreation());
       dispatch(FindSubscribers({ reset: true, top: 5000 }));
-      setTypeId('');
+      setTypeId(initialTypeId || '');
       setMode('existing');
       setSubscriberId('');
       setName('');
@@ -72,7 +79,7 @@ export const SubscribeModal: FunctionComponent<SubscribeModalProps> = ({ open, o
       setPhone('');
       setErrors({});
     }
-  }, [dispatch, open]);
+  }, [dispatch, initialTypeId, open]);
 
   useEffect(() => {
     if (creationState === 'succeeded') {
@@ -136,22 +143,24 @@ export const SubscribeModal: FunctionComponent<SubscribeModalProps> = ({ open, o
         </GoabButtonGroup>
       }
     >
-      <GoabFormItem label="Notification type" error={errors.typeId} mb="m">
-        <GoabDropdown
-          size="compact"
-          name="notificationType"
-          value={typeId}
-          width="100%"
-          testId="subscription-type"
-          onChange={(detail: GoabDropdownOnChangeDetail) => setTypeId(detail.value)}
-        >
-          {Object.values(notificationTypes)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((type) => (
-              <GoabDropdownItem key={type.id} value={type.id} label={type.name} />
-            ))}
-        </GoabDropdown>
-      </GoabFormItem>
+      {!hideNotificationType && (
+        <GoabFormItem label="Notification type" error={errors.typeId} mb="m">
+          <GoabDropdown
+            size="compact"
+            name="notificationType"
+            value={typeId}
+            width="100%"
+            testId="subscription-type"
+            onChange={(detail: GoabDropdownOnChangeDetail) => setTypeId(detail.value)}
+          >
+            {Object.values(notificationTypes)
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((type) => (
+                <GoabDropdownItem key={type.id} value={type.id} label={type.name} />
+              ))}
+          </GoabDropdown>
+        </GoabFormItem>
+      )}
 
       <GoabFormItem label="Subscriber" mb="m">
         <GoabRadioGroup
