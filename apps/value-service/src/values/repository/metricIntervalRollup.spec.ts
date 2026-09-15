@@ -17,7 +17,17 @@ const createKnex = (result: unknown = undefined, rowCount = 2, locked = true) =>
   knex.raw = jest.fn((sql: string, bindings: unknown[] = []) => {
     raws.push({ sql, bindings });
 
-    return Promise.resolve(sql.includes('pg_try_advisory_xact_lock') ? { rows: [{ locked }] } : { rowCount });
+    if (sql.includes('pg_try_advisory_xact_lock')) {
+      return Promise.resolve({ rows: [{ locked }] });
+    }
+
+    // The snap resolves both edges through Postgres; the stub hands back what it was given so the
+    // assertions can follow those values into the statements that use them.
+    if (sql.startsWith('SELECT time_bucket')) {
+      return Promise.resolve({ rows: [{ start: bindings[1], covered_to: bindings[3] }] });
+    }
+
+    return Promise.resolve({ rowCount });
   });
   // The transaction is the lock's scope, so the stub hands the callback the same query surface
   // rather than a separate one; the repository is expected to work through what it is given.
@@ -30,11 +40,15 @@ const window = { start: new Date('2026-03-01T00:30:00Z'), end: new Date('2026-03
 
 describe('TimescaleMetricIntervalRollupRepository', () => {
   describe('getMetricsWindow', () => {
-    it('returns the first and last metric timestamps', async () => {
-      const { knex } = createKnex({ start: '2026-01-01T00:00:00Z', end: '2026-03-01T00:00:00Z' });
+    // A min/max over the hypertable cannot be chunk-excluded and locks every chunk, which overruns
+    // max_locks_per_transaction once metrics has grown past a couple of hundred of them.
+    it('reads the span from chunk metadata rather than the metrics table', async () => {
+      const { knex, query } = createKnex({ start: '2026-01-01T00:00:00Z', end: '2026-03-01T00:00:00Z' });
 
       const result = await new TimescaleMetricIntervalRollupRepository(knex).getMetricsWindow();
 
+      expect(knex).toHaveBeenCalledWith('timescaledb_information.chunks');
+      expect(query.where).toHaveBeenCalledWith({ hypertable_name: 'metrics' });
       expect(result.start).toEqual(new Date('2026-01-01T00:00:00Z'));
       expect(result.end).toEqual(new Date('2026-03-01T00:00:00Z'));
     });
@@ -146,10 +160,10 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
 
       await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
-      expect(raws[0].sql).toContain(
+      expect(raws[1].sql).toContain(
         `ON CONFLICT ("interval", namespace, name, metric, bucket, (COALESCE(tenant, '')))`,
       );
-      expect(raws[0].sql).toContain('DO UPDATE SET');
+      expect(raws[1].sql).toContain('DO UPDATE SET');
     });
 
     // Repeating the time_bucket expression in the GROUP BY binds a second placeholder, which
@@ -159,17 +173,30 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
 
       await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
-      expect(raws[0].sql).toContain('GROUP BY 2, 3, 4, 5, 6');
-      expect(raws[0].sql.match(/time_bucket/g)).toHaveLength(2);
+      expect(raws[1].sql).toContain('GROUP BY 2, 3, 4, 5, 6');
     });
 
-    it('snaps the window start down to a bucket boundary', async () => {
+    it('resolves both window edges to bucket boundaries before reading', async () => {
       const { knex, raws } = createKnex();
 
       await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
-      expect(raws[0].sql).toContain('WHERE timestamp >= time_bucket(?::interval, ?::timestamptz) AND timestamp < ?');
-      expect(raws[0].bindings).toEqual(['hourly', '1 hour', '1 hour', window.start, window.end]);
+      expect(raws[0].sql).toBe(
+        'SELECT time_bucket(?::interval, ?::timestamptz) AS start, time_bucket(?::interval, ?::timestamptz) AS covered_to',
+      );
+      expect(raws[0].bindings).toEqual(['1 hour', window.start, '1 hour', window.end]);
+    });
+
+    // A time_bucket call in the predicate leaves the planner a function where it wants a constant:
+    // chunk exclusion on the hypertable is deferred to run time, which locks every chunk first.
+    it('filters on plain timestamps so the planner can exclude chunks', async () => {
+      const { knex, raws } = createKnex();
+
+      await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
+
+      expect(raws[1].sql).toContain('WHERE timestamp >= ? AND timestamp < ?');
+      expect(raws[1].sql.match(/time_bucket/g)).toHaveLength(1);
+      expect(raws[1].bindings).toEqual(['hourly', '1 hour', window.start, window.end]);
     });
 
     it('merges coverage outwards so neither edge is lost', async () => {
@@ -177,22 +204,20 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
 
       await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
-      expect(raws).toHaveLength(2);
-      expect(raws[1].sql).toContain('LEAST(metric_interval_rollup_coverage.covered_from, EXCLUDED.covered_from)');
-      expect(raws[1].sql).toContain('GREATEST(metric_interval_rollup_coverage.covered_to, EXCLUDED.covered_to)');
+      expect(raws).toHaveLength(3);
+      expect(raws[2].sql).toContain('LEAST(metric_interval_rollup_coverage.covered_from, EXCLUDED.covered_from)');
+      expect(raws[2].sql).toContain('GREATEST(metric_interval_rollup_coverage.covered_to, EXCLUDED.covered_to)');
     });
 
     // The window end is mid-bucket and the refresh cuts that bucket off there, so recording it
     // verbatim advertised a partially totalled bucket as rolled up.
-    it('snaps both coverage edges down to a bucket boundary', async () => {
+    it('records coverage from the snapped edges rather than the raw window', async () => {
       const { knex, raws } = createKnex();
 
       await new TimescaleMetricIntervalRollupRepository(knex).refresh('hourly', '1 hour', null, window);
 
-      expect(raws[1].sql).toContain(
-        'VALUES (?, time_bucket(?::interval, ?::timestamptz), time_bucket(?::interval, ?::timestamptz), NOW())',
-      );
-      expect(raws[1].bindings).toEqual(['hourly', '1 hour', window.start, '1 hour', window.end]);
+      expect(raws[2].sql).toContain('VALUES (?, ?, ?, NOW())');
+      expect(raws[2].bindings).toEqual(['hourly', window.start, window.end]);
     });
 
     describe('from a finer interval', () => {
@@ -203,20 +228,21 @@ describe('TimescaleMetricIntervalRollupRepository', () => {
 
         await new TimescaleMetricIntervalRollupRepository(knex).refresh('daily', '1 day', 'hourly', window);
 
-        expect(raws[0].sql).toContain('FROM metric_interval_rollups');
-        expect(raws[0].sql).not.toContain('FROM metrics');
-        expect(raws[0].sql).toContain('SUM(sum), SUM(count), MIN(min), MAX(max)');
+        expect(raws[1].sql).toContain('FROM metric_interval_rollups');
+        expect(raws[1].sql).not.toContain('FROM metrics');
+        expect(raws[1].sql).toContain('SUM(sum), SUM(count), MIN(min), MAX(max)');
       });
 
       // The rows read carry the source interval and the rows written the target, so a refresh
       // cannot consume its own output even though one statement reads and writes the same table.
+      // The bucket bounds are plain timestamps so the pair can seek on (interval, bucket).
       it('reads only the source interval and buckets by the target', async () => {
         const { knex, raws } = createKnex();
 
         await new TimescaleMetricIntervalRollupRepository(knex).refresh('daily', '1 day', 'hourly', window);
 
-        expect(raws[0].sql).toContain('WHERE "interval" = ?');
-        expect(raws[0].bindings).toEqual(['daily', '1 day', 'hourly', '1 day', window.start, window.end]);
+        expect(raws[1].sql).toContain('WHERE "interval" = ? AND bucket >= ? AND bucket < ?');
+        expect(raws[1].bindings).toEqual(['daily', '1 day', 'hourly', window.start, window.end]);
       });
     });
   });
