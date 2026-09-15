@@ -85,7 +85,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                     <span>Service metrics</span>
                   </NavLink>
                   <NavLink
-                    to="reports"
+                    to="/admin/reports"
                     onClick={scrollAppToTop}
                     className={({ isActive }) => (isActive ? 'current' : '')}
                     title="Reports"

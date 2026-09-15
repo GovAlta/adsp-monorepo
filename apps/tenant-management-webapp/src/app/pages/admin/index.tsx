@@ -111,6 +111,7 @@ const TenantManagement = (): JSX.Element => {
           <Route path="/event-log" element={<EventLog />} />
           <Route path="/service-metrics" element={<ServiceMetrics />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/reports/:serviceId" element={<Reports />} />
 
           {serviceVariables(config.featureFlags).map((service) => {
             return (
