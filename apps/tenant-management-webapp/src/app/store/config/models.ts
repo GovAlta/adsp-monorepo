@@ -58,6 +58,7 @@ export interface FeatureFlags {
   File: boolean;
   Notification: boolean;
   NotificationEmailAI: boolean;
+  NotificationTypeListView: boolean;
   PDF: boolean;
   Script: boolean;
   SharePoint: boolean;
