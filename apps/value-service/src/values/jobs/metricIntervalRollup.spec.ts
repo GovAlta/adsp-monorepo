@@ -1,7 +1,8 @@
 import { Logger } from 'winston';
 import * as schedule from 'node-schedule';
 import {
-  advanceMetricInterval,
+  advanceMetricIntervalBackward,
+  advanceMetricIntervalForward,
   createMetricIntervalRollupJob,
   resolveAvailableWindow,
   scheduleMetricIntervalRollupJob,
@@ -47,14 +48,14 @@ const createRepository = (coverage = null, locked = true) => {
 
 const at = (iso: string) => new Date(iso);
 
-describe('advanceMetricInterval', () => {
+describe('advanceMetricIntervalForward', () => {
   const now = at('2026-03-10T12:00:00Z');
   const metricsWindow = { start: at('2026-01-01T00:00:00Z'), end: now };
 
   it('seeds coverage a chunk wide when the interval has never been rolled up', async () => {
     const repository = createRepository();
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalForward(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledTimes(1);
     expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
@@ -67,7 +68,7 @@ describe('advanceMetricInterval', () => {
     const repository = createRepository();
     const recentMetrics = { start: at('2026-03-10T06:00:00Z'), end: now };
 
-    await advanceMetricInterval(repository, definition, { start: recentMetrics.start, end: now });
+    await advanceMetricIntervalForward(repository, definition, { start: recentMetrics.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-10T06:00:00Z'),
@@ -82,7 +83,7 @@ describe('advanceMetricInterval', () => {
       coveredTo: at('2026-03-10T11:00:00Z'),
     });
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalForward(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-10T11:00:00Z'),
@@ -97,13 +98,48 @@ describe('advanceMetricInterval', () => {
       coveredTo: at('2026-03-01T00:00:00Z'),
     });
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalForward(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-03-01T00:00:00Z'),
       end: at('2026-03-02T00:00:00Z'),
     });
   });
+
+  it('does nothing once the leading edge has reached what the source can supply', async () => {
+    const repository = createRepository({
+      interval: 'hourly',
+      coveredFrom: at('2026-01-01T00:00:00Z'),
+      coveredTo: now,
+    });
+
+    await advanceMetricIntervalForward(repository, definition, { start: metricsWindow.start, end: now });
+
+    expect(repository.refresh).not.toHaveBeenCalled();
+  });
+
+  // The backfill is the pass that grows slower as it goes, so it must not be able to hold the
+  // leading edge back with it.
+  it('moves the leading edge whether or not history is still being walked back', async () => {
+    const repository = createRepository({
+      interval: 'hourly',
+      coveredFrom: at('2026-02-01T00:00:00Z'),
+      coveredTo: at('2026-03-10T11:00:00Z'),
+    });
+
+    await advanceMetricIntervalForward(repository, definition, { start: metricsWindow.start, end: now });
+
+    expect(repository.refresh).toHaveBeenCalledTimes(1);
+    expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
+      start: at('2026-03-10T11:00:00Z'),
+      end: now,
+    });
+  });
+});
+
+describe('advanceMetricIntervalBackward', () => {
+  const now = at('2026-03-10T12:00:00Z');
+  const metricsWindow = { start: at('2026-01-01T00:00:00Z'), end: now };
 
   it('walks history backwards a chunk at a time, ending where coverage begins', async () => {
     const repository = createRepository({
@@ -112,7 +148,7 @@ describe('advanceMetricInterval', () => {
       coveredTo: now,
     });
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalBackward(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledTimes(1);
     expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
@@ -128,7 +164,7 @@ describe('advanceMetricInterval', () => {
       coveredTo: now,
     });
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalBackward(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).not.toHaveBeenCalled();
   });
@@ -140,7 +176,7 @@ describe('advanceMetricInterval', () => {
       coveredTo: now,
     });
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalBackward(repository, definition, { start: metricsWindow.start, end: now });
 
     expect(repository.refresh).toHaveBeenCalledWith('hourly', '1 hour', null, {
       start: at('2026-01-01T00:00:00Z'),
@@ -148,16 +184,13 @@ describe('advanceMetricInterval', () => {
     });
   });
 
-  it('moves both edges in one pass when coverage is short at each end', async () => {
-    const repository = createRepository({
-      interval: 'hourly',
-      coveredFrom: at('2026-02-01T00:00:00Z'),
-      coveredTo: at('2026-03-10T11:00:00Z'),
-    });
+  // Seeding is the forward pass's job, so there is no edge to walk back from until it has run.
+  it('leaves an interval that has never been rolled up to the forward pass', async () => {
+    const repository = createRepository();
 
-    await advanceMetricInterval(repository, definition, { start: metricsWindow.start, end: now });
+    await advanceMetricIntervalBackward(repository, definition, { start: metricsWindow.start, end: now });
 
-    expect(repository.refresh).toHaveBeenCalledTimes(2);
+    expect(repository.refresh).not.toHaveBeenCalled();
   });
 });
 
@@ -235,10 +268,10 @@ describe('createMetricIntervalRollupJob', () => {
     expect(repository.refresh).not.toHaveBeenCalled();
   });
 
-  // Coverage is per interval, so that is the unit the lock has to cover. Taking it once for the
-  // whole run meant one interval's statement timeout rolled back every interval before it, and the
-  // job committed nothing at all.
-  it('takes the lock once per interval so the work commits as it goes', async () => {
+  // Coverage is per interval and each direction extends a different edge of it, so that is the unit
+  // the lock has to cover. Taking it once for the whole run meant one interval's statement timeout
+  // rolled back every interval before it, and the job committed nothing at all.
+  it('takes the lock once per interval per direction so the work commits as it goes', async () => {
     const repository = createRepository();
     repository.getMetricsWindow.mockResolvedValue(metricsWindow);
 
@@ -247,7 +280,29 @@ describe('createMetricIntervalRollupJob', () => {
       { ...definition, interval: 'daily', bucket: '1 day' },
     ])(at('2026-03-10T12:00:00Z'));
 
-    expect(repository.withRollupLock).toHaveBeenCalledTimes(2);
+    expect(repository.withRollupLock).toHaveBeenCalledTimes(4);
+  });
+
+  // The backfill reads further back every run and is the pass that eventually exceeds the statement
+  // timeout. Sharing a transaction with the forward pass meant it took the leading edge down with
+  // it, and reads asking for recent data fell back to aggregating raw metrics for good.
+  it('keeps the leading edge when the backfill pass fails', async () => {
+    const repository = createRepository();
+    repository.getMetricsWindow.mockResolvedValue(metricsWindow);
+    repository.refresh.mockResolvedValue(5);
+    repository.withRollupLock
+      .mockImplementationOnce((work: (repository: unknown) => Promise<unknown>) => work(repository))
+      .mockImplementationOnce(() => Promise.reject(new Error('canceling statement due to statement timeout')));
+
+    const refreshed = await createMetricIntervalRollupJob(repository, logger, [definition])(
+      at('2026-03-10T12:00:00Z'),
+    );
+
+    expect(refreshed).toBe(5);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to advance the hourly metric interval rollup backward'),
+      expect.anything(),
+    );
   });
 
   // An interval whose source is empty has nothing to aggregate; it waits rather than failing.

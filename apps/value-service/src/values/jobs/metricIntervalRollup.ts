@@ -17,12 +17,17 @@ const shiftHours = (date: Date, hours: number): Date => new Date(date.getTime() 
 const earlierOf = (left: Date, right: Date): Date => (left < right ? left : right);
 const laterOf = (left: Date, right: Date): Date => (left > right ? left : right);
 
-// Each run moves one interval's coverage by at most a chunk in either direction, within what its
-// source can supply: raw metrics for the finest interval, and the finer interval's own coverage for
-// every other. Going forward keeps recent buckets current, and going backward walks through history
-// a chunk at a time. Both windows touch the existing coverage, which is what keeps it a single
-// contiguous span.
-export const advanceMetricInterval = async (
+// Each pass moves one interval's coverage by at most a chunk, within what its source can supply:
+// raw metrics for the finest interval, and the finer interval's own coverage for every other. Both
+// windows touch the existing coverage, which is what keeps it a single contiguous span.
+//
+// Forward and backward are separate because they run under separate locks, and so commit
+// separately. Sharing a transaction meant an interval still walking through history rolled its own
+// leading edge back whenever a backfill chunk exceeded the statement timeout -- and since the
+// backfill only gets slower as it goes, the edge stopped moving for good.
+
+// Keeps the recent buckets current, and seeds the interval if it has never been rolled up.
+export const advanceMetricIntervalForward = async (
   repository: MetricIntervalRollupRepository,
   definition: MetricIntervalDefinition,
   available: MetricIntervalWindow,
@@ -38,23 +43,34 @@ export const advanceMetricInterval = async (
     });
   }
 
-  let refreshed = 0;
-
-  if (coverage.coveredTo < available.end) {
-    refreshed += await repository.refresh(interval, bucket, source, {
-      start: coverage.coveredTo,
-      end: earlierOf(available.end, shiftHours(coverage.coveredTo, chunkHours)),
-    });
+  if (coverage.coveredTo >= available.end) {
+    return 0;
   }
 
-  if (coverage.coveredFrom > available.start) {
-    refreshed += await repository.refresh(interval, bucket, source, {
-      start: laterOf(available.start, shiftHours(coverage.coveredFrom, -chunkHours)),
-      end: coverage.coveredFrom,
-    });
+  return repository.refresh(interval, bucket, source, {
+    start: coverage.coveredTo,
+    end: earlierOf(available.end, shiftHours(coverage.coveredTo, chunkHours)),
+  });
+};
+
+// Walks through history a chunk at a time. Seeding belongs to the forward pass, so there is nothing
+// to walk back from until that has run.
+export const advanceMetricIntervalBackward = async (
+  repository: MetricIntervalRollupRepository,
+  definition: MetricIntervalDefinition,
+  available: MetricIntervalWindow,
+): Promise<number> => {
+  const { interval, bucket, source, chunkHours } = definition;
+  const coverage = await repository.getCoverage(interval);
+
+  if (!coverage || coverage.coveredFrom <= available.start) {
+    return 0;
   }
 
-  return refreshed;
+  return repository.refresh(interval, bucket, source, {
+    start: laterOf(available.start, shiftHours(coverage.coveredFrom, -chunkHours)),
+    end: coverage.coveredFrom,
+  });
 };
 
 // What an interval is allowed to roll up. The finest reads raw metrics, so it can advance to now;
@@ -76,6 +92,14 @@ export const resolveAvailableWindow = async (
   return coverage ? { start: coverage.coveredFrom, end: coverage.coveredTo } : null;
 };
 
+// Forward first: keeping recent buckets current matters more than reaching further back, and a read
+// only benefits from the rollups once they cover the whole window it asks for -- which for anything
+// ending at "now" means the leading edge.
+const passes: [string, typeof advanceMetricIntervalForward][] = [
+  ['forward', advanceMetricIntervalForward],
+  ['backward', advanceMetricIntervalBackward],
+];
+
 export const createMetricIntervalRollupJob =
   (
     repository: MetricIntervalRollupRepository,
@@ -92,44 +116,47 @@ export const createMetricIntervalRollupJob =
     let refreshed = 0;
     let failed = 0;
 
-    // One transaction per interval, not one for the whole run. Coverage is per interval, so the
-    // read-and-extend that has to be atomic is already contained here; taking the lock once for the
-    // run instead meant a statement timeout on any one interval rolled back every interval that had
-    // already succeeded, and the job committed nothing at all.
+    // One transaction per interval per direction, not one for the whole run. Coverage is per
+    // interval, so the read-and-extend that has to be atomic is already contained in a single pass;
+    // taking the lock once for the run instead meant a statement timeout on any one interval rolled
+    // back every interval that had already succeeded, and the job committed nothing at all.
     for (const definition of definitions) {
-      try {
-        const advanced = await repository.withRollupLock(async (locked) => {
-          const available = await resolveAvailableWindow(locked, definition, metricsWindow, now);
-          if (!available) {
-            logger.debug(`No ${definition.source} coverage yet; ${definition.interval} has nothing to build from.`, {
-              context: 'MetricIntervalRollup',
-            });
-            return 0;
+      for (const [direction, advance] of passes) {
+        try {
+          const advanced = await repository.withRollupLock(async (locked) => {
+            const available = await resolveAvailableWindow(locked, definition, metricsWindow, now);
+            if (!available) {
+              logger.debug(`No ${definition.source} coverage yet; ${definition.interval} has nothing to build from.`, {
+                context: 'MetricIntervalRollup',
+              });
+              return 0;
+            }
+
+            return advance(locked, definition, available);
+          });
+
+          if (advanced === null) {
+            logger.debug(
+              `Another instance holds the ${definition.interval} rollup lock; skipping its ${direction} pass this run.`,
+              { context: 'MetricIntervalRollup' },
+            );
+          } else {
+            refreshed += advanced;
           }
-
-          return advanceMetricInterval(locked, definition, available);
-        });
-
-        if (advanced === null) {
-          logger.debug(`Another instance holds the ${definition.interval} rollup lock; skipping it this run.`, {
+        } catch (err) {
+          // A pass that cannot finish inside its statement timeout must not stop the rest. The
+          // coarse intervals read the most history and so are the ones that time out, and they run
+          // last, which would otherwise be indistinguishable from the whole job being broken.
+          failed++;
+          logger.warn(`Failed to advance the ${definition.interval} metric interval rollup ${direction}. ${err}`, {
             context: 'MetricIntervalRollup',
           });
-        } else {
-          refreshed += advanced;
         }
-      } catch (err) {
-        // An interval that cannot finish inside its statement timeout must not stop the rest. The
-        // coarse intervals read the most history and so are the ones that time out, and they run
-        // last, which would otherwise be indistinguishable from the whole job being broken.
-        failed++;
-        logger.warn(`Failed to advance the ${definition.interval} metric interval rollup. ${err}`, {
-          context: 'MetricIntervalRollup',
-        });
       }
     }
 
     logger.info(
-      `Refreshed ${refreshed} metric interval rollup record(s)${failed > 0 ? `; ${failed} interval(s) failed` : ''}.`,
+      `Refreshed ${refreshed} metric interval rollup record(s)${failed > 0 ? `; ${failed} pass(es) failed` : ''}.`,
       { context: 'MetricIntervalRollup' },
     );
 
