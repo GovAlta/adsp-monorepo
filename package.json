@@ -377,7 +377,7 @@
     "postcss": "8.5.25",
     "immutable": "4.3.9",
     "undici": "7.29.0",
-    "svgo": "4.0.2",
+    "svgo": "4.1.0",
     "engine.io": "6.6.9",
     "websocket-driver": "0.7.5",
     "http-proxy-middleware": "3.0.7",
