@@ -14,6 +14,7 @@ import {
 } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { stripNul } from './sanitize';
+import { getMetricIntervalDefinition } from '../values/metricIntervals';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 
@@ -208,14 +209,18 @@ export class TimescaleValuesRepository implements ValuesRepository {
    * Pick where interval data is read from.
    *
    * The rollup table only answers a request whose whole window it has rolled up; coverage is a
-   * single contiguous span per interval, so a request reaching outside it falls back to the
-   * metrics_* view. The view aggregates on read -- slower, but always complete -- which is what
-   * lets the rollups be populated progressively without the API losing data in the meantime.
+   * single contiguous span per interval, so a request reaching outside it falls back to a live
+   * aggregate of the raw metrics table. That is slower, but always complete, which is what lets the
+   * rollups be populated progressively without the API losing data in the meantime.
    */
   private async resolveMetricSource(
     interval: MetricInterval,
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
     criteria: MetricCriteria,
-  ): Promise<{ table: string; rollup: boolean }> {
+    metric?: string,
+  ): Promise<{ table: string | Knex.QueryBuilder; rollup: boolean }> {
     const coverage = await this.knex('metric_interval_rollup_coverage').where({ interval }).first();
 
     const covered =
@@ -225,7 +230,70 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
     return covered
       ? { table: 'metric_interval_rollups', rollup: true }
-      : { table: `metrics_${interval}`, rollup: false };
+      : { table: this.rawMetricsQuery(interval, namespace, name, tenantId, criteria, metric), rollup: false };
+  }
+
+  /**
+   * Aggregate the raw metrics table live, for a window the rollups have not covered yet.
+   *
+   * The metrics_* views this replaced filtered on their derived `bucket` column instead of on
+   * `timestamp`, which relies on Postgres inferring a `timestamp` range back out of a `time_bucket`
+   * predicate to exclude chunks. That works for a fixed-width bucket (a minute, an hour, a day, a
+   * week), but not for a calendar-width one -- a month is not a fixed number of seconds -- so a
+   * `monthly` request without full coverage had no time bound applied at the database at all, and
+   * aggregated every row ever recorded for the metric before the rest of the query could trim it
+   * back down, hanging on any window reaching into the still-in-progress month. Filtering on
+   * `timestamp` directly, before grouping, does not depend on that inference either way.
+   */
+  private rawMetricsQuery(
+    interval: MetricInterval,
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
+    criteria: Pick<MetricCriteria, 'intervalMin' | 'intervalMax'>,
+    metric?: string,
+  ): Knex.QueryBuilder {
+    const { bucket } = getMetricIntervalDefinition(interval);
+
+    let query = this.knex('metrics').where({ namespace, name });
+    if (tenantId) {
+      query = query.where({ tenant: tenantId.toString() });
+    }
+
+    if (metric) {
+      query = query.where({ metric });
+    }
+
+    if (criteria.intervalMin) {
+      query = query.where('timestamp', '>=', criteria.intervalMin);
+    }
+
+    if (criteria.intervalMax) {
+      // A bucket starting at or before intervalMax can still hold rows up to one bucket width past
+      // it, so the scan has to reach that far or it drops the tail of that bucket. The caller trims
+      // back to the exact window afterward by filtering on the bucket this computes.
+      query = query.where(
+        'timestamp',
+        '<',
+        this.knex.raw('?::timestamptz + ?::interval', [criteria.intervalMax, bucket]),
+      );
+    }
+
+    return query
+      .select(
+        'namespace',
+        'name',
+        'tenant',
+        'metric',
+        this.knex.raw('time_bucket(?::interval, timestamp) AS bucket', [bucket]),
+        this.knex.raw('AVG(value) AS avg'),
+        this.knex.raw('SUM(value) AS sum'),
+        this.knex.raw('MAX(value) AS max'),
+        this.knex.raw('MIN(value) AS min'),
+        this.knex.raw('COUNT(value) AS count'),
+      )
+      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket')
+      .as('raw_metrics_agg');
   }
 
   /**
@@ -267,7 +335,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup } = await this.resolveMetricSource(criteria.interval, criteria);
+    const { table, rollup } = await this.resolveMetricSource(criteria.interval, namespace, name, tenantId, criteria);
 
     const queryCriteria = {
       namespace,
@@ -358,7 +426,14 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup } = await this.resolveMetricSource(criteria.interval, criteria);
+    const { table, rollup } = await this.resolveMetricSource(
+      criteria.interval,
+      namespace,
+      name,
+      tenantId,
+      criteria,
+      metric,
+    );
 
     const queryCriteria = {
       namespace,

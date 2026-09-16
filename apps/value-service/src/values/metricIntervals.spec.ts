@@ -77,17 +77,33 @@ describe('boundMetricIntervalDefinition', () => {
     expect(bounded.seedHours).toBe(oneMinute.bucketHours);
   });
 
-  // A composed interval reads rollup rows, not a span of raw metrics, so the cap has nothing to
-  // bound and applying it would only slow the backfill down.
-  it('leaves a composed interval uncapped', () => {
-    expect(boundMetricIntervalDefinition(monthly, 1)).toEqual(monthly);
+  // A composed interval's upsert still writes one row per bucket per distinct series, so a wide
+  // window can exhaust the database's shared lock table even though the SELECT behind it is cheap;
+  // the cap applies to it too, down to no less than one of its own (much wider) buckets.
+  it('caps a composed interval at the configured maximum', () => {
+    expect(boundMetricIntervalDefinition(monthly, 24 * 60)).toEqual({
+      ...monthly,
+      seedHours: 24 * 60,
+      chunkHours: 24 * 60,
+    });
+  });
+
+  it('will not cut a composed interval below one of its own buckets', () => {
+    const bounded = boundMetricIntervalDefinition(monthly, 1);
+
+    expect(bounded.chunkHours).toBe(monthly.bucketHours);
+    expect(bounded.seedHours).toBe(monthly.bucketHours);
   });
 
   it('bounds every definition', () => {
     const bounded = boundMetricIntervalDefinitions(6);
 
     expect(bounded.find(({ interval }) => interval === 'one_minute').chunkHours).toBe(6);
-    expect(bounded.find(({ interval }) => interval === 'daily')).toEqual(getMetricIntervalDefinition('daily'));
+    // one_minute's own bucket is under an hour, so it takes the 6-hour cap as given; daily's bucket
+    // is 24 hours, wider than the cap, so it floors at its own bucket instead.
+    expect(bounded.find(({ interval }) => interval === 'daily').chunkHours).toBe(
+      getMetricIntervalDefinition('daily').bucketHours,
+    );
   });
 });
 
