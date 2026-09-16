@@ -14,12 +14,14 @@ describe('subscriberSchema', () => {
   });
 
   // The registry sorts on a column and the database serves a sort only from an index, so each
-  // column sorted on a stored field needs one. Losing an index here turns into a failed sort at
-  // run time rather than anything visible in the code that sorts.
+  // column sorted on a stored field needs one. Cosmos DB only reliably serves a sort from a plain
+  // single-field index, not a composite one, so these stay single-field. Losing an index here turns
+  // into a failed sort at run time rather than anything visible in the code that sorts.
   it.each([
-    ['name', { tenantId: 1, addressAs: 1, _id: 1 }],
-    ['created', { tenantId: 1, createdAt: 1, _id: 1 }],
-    ['updated', { tenantId: 1, updatedAt: 1, _id: 1 }],
+    ['tenant', { tenantId: 1 }],
+    ['name', { addressAs: 1 }],
+    ['created', { createdAt: 1 }],
+    ['updated', { updatedAt: 1 }],
   ])('has an index serving the %s column', (_column, expected) => {
     expect(indexFields()).toContainEqual(expected);
   });
