@@ -5,6 +5,10 @@ import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EventLog } from './eventLog';
 
+jest.mock('@lib/dynamicPlaceHolder', () => ({
+  dynamicGeneratePayload: jest.fn(),
+}));
+
 jest.mock('./eventSearchForm', () => ({
   EventSearchForm: ({
     onSearch,
