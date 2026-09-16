@@ -388,6 +388,7 @@
     "@xmldom/xmldom": "0.8.15",
     "@grpc/grpc-js": "1.14.4",
     "browserslist": "4.28.9",
+    "csv-parse": "7.0.2",
     "swagger-jsdoc": {
       "js-yaml": "3.15.2"
     },
