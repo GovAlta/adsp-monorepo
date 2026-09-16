@@ -1,6 +1,7 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
+import { checkSchema, validationResult } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
 import { mocked } from 'jest-mock';
@@ -9,6 +10,8 @@ import { CalendarEntity, CalendarEventEntity } from '../model';
 import { Calendar, CalendarEvent } from '../types';
 import {
   addEventAttendee,
+  calendarEventBodySchema,
+  calendarEventUpdateBodySchema,
   createCalendarEvent,
   createCalendarRouter,
   deleteCalendarEvent,
@@ -24,6 +27,12 @@ import {
   setEventAttendee,
   updateCalendarEvent,
 } from './calendar';
+
+async function validateBody(schema: Record<string, unknown>, body: Record<string, unknown>) {
+  const req = { body, params: {}, query: {}, headers: {}, cookies: {} } as unknown as Request;
+  await Promise.all(checkSchema(schema, ['body']).map((chain) => chain.run(req)));
+  return validationResult(req);
+}
 
 jest.mock('ical-generator', () => {
   return {
@@ -585,6 +594,37 @@ describe('calendar router', () => {
     });
   });
 
+  describe('calendar event body validation', () => {
+    it('create schema requires name and start', async () => {
+      const result = await validateBody(calendarEventBodySchema, { description: 'test' });
+      expect(result.isEmpty()).toBe(false);
+    });
+
+    it('create schema passes with required fields', async () => {
+      const result = await validateBody(calendarEventBodySchema, {
+        name: 'test',
+        start: '2021-03-03T13:30:00-07:00',
+        end: '2021-03-03T15:30:00-07:00',
+      });
+      expect(result.isEmpty()).toBe(true);
+    });
+
+    it('update schema allows a partial body with only end supplied', async () => {
+      const result = await validateBody(calendarEventUpdateBodySchema, { end: '2021-03-03T16:30:00-07:00' });
+      expect(result.isEmpty()).toBe(true);
+    });
+
+    it('update schema allows an empty body', async () => {
+      const result = await validateBody(calendarEventUpdateBodySchema, {});
+      expect(result.isEmpty()).toBe(true);
+    });
+
+    it('update schema still validates supplied fields', async () => {
+      const result = await validateBody(calendarEventUpdateBodySchema, { isPublic: 'not-a-boolean' });
+      expect(result.isEmpty()).toBe(false);
+    });
+  });
+
   describe('createCalendarEvent', () => {
     it('can create handler', () => {
       const handler = createCalendarEvent(apiId, eventServiceMock);
@@ -765,6 +805,38 @@ describe('calendar router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can partially update event and leave other properties unchanged', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const entity = new CalendarEventEntity(repositoryMock, calendarEntity, calendarEvent);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        event: entity,
+        body: { end: '2021-03-03T16:30:00-07:00' },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ name: calendarEvent.name, description: calendarEvent.description })
+      );
+      expect(res.send.mock.calls[0][0].start.valueOf()).toBe(calendarEvent.start.valueOf());
+      expect(res.send.mock.calls[0][0].end.valueOf()).toBe(
+        DateTime.fromISO('2021-03-03T16:30:00-07:00').valueOf()
+      );
     });
   });
 

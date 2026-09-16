@@ -1,7 +1,7 @@
 import { adspId, AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { checkSchema, param, query } from 'express-validator';
+import { checkSchema, param, query, Schema } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
@@ -374,6 +374,29 @@ export const deleteEventAttendee =
     }
   };
 
+export const calendarEventBodySchema: Schema = {
+  start: { isISO8601: true },
+  end: { isISO8601: true },
+  name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+  description: { optional: true, isString: true },
+  isPublic: { optional: true, isBoolean: true },
+  isAllDay: { optional: true, isBoolean: true },
+  recordId: { optional: { options: { nullable: true } }, isString: true },
+  context: { optional: { options: { nullable: true } }, isObject: true },
+};
+
+// Partial update: every mutable event property is optional, but supplied values are still validated.
+export const calendarEventUpdateBodySchema: Schema = {
+  start: { optional: true, isISO8601: true },
+  end: { optional: true, isISO8601: true },
+  name: { optional: true, isString: true, isLength: { options: { min: 1, max: 50 } } },
+  description: { optional: true, isString: true },
+  isPublic: { optional: true, isBoolean: true },
+  isAllDay: { optional: true, isBoolean: true },
+  recordId: { optional: { options: { nullable: true } }, isString: true },
+  context: { optional: { options: { nullable: true } }, isObject: true },
+};
+
 export const createCalendarRouter = ({
   logger: _logger,
   serviceId,
@@ -396,20 +419,10 @@ export const createCalendarRouter = ({
     param('attendeeId').isInt()
   );
 
-  const validateCalendarEventHandler = createValidationHandler(
-    ...checkSchema(
-      {
-        start: { isISO8601: true },
-        end: { isISO8601: true },
-        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-        description: { optional: true, isString: true },
-        isPublic: { optional: true, isBoolean: true },
-        isAllDay: { optional: true, isBoolean: true },
-        recordId: { optional: { options: { nullable: true } }, isString: true },
-        context: { optional: { options: { nullable: true } }, isObject: true },
-      },
-      ['body']
-    )
+  const validateCalendarEventHandler = createValidationHandler(...checkSchema(calendarEventBodySchema, ['body']));
+
+  const validateCalendarEventUpdateHandler = createValidationHandler(
+    ...checkSchema(calendarEventUpdateBodySchema, ['body'])
   );
 
   const validateAttendeeHandler = createValidationHandler(
@@ -460,7 +473,7 @@ export const createCalendarRouter = ({
   router.patch(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
-    validateCalendarEventHandler,
+    validateCalendarEventUpdateHandler,
     getCalendar(tenantService),
     getCalendarEvent,
     updateCalendarEvent(apiId, eventService)
