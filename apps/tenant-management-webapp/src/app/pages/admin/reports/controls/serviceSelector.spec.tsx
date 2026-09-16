@@ -29,6 +29,19 @@ const renderSelector = (entry: string) =>
   );
 
 describe('ServiceSelector', () => {
+  it('does not opt the service dropdown into measured percentage sizing', () => {
+    // Arrange
+    const entry = '/admin/reports/pdf';
+
+    // Act
+    const { container } = renderSelector(entry);
+    const dropdown = container.querySelector('goa-dropdown[testid="reports-service-selector"]');
+
+    // Assert
+    expect(dropdown).not.toHaveAttribute('width');
+    expect(dropdown).not.toHaveAttribute('maxwidth');
+  });
+
   it('renders options from the service report registry', () => {
     const { container } = renderSelector('/admin/reports/pdf');
 

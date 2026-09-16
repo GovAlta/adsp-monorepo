@@ -20,6 +20,19 @@ const renderSelector = (entry: string) =>
   );
 
 describe('ReportingPeriodSelector', () => {
+  it('does not opt the reporting period dropdown into measured percentage sizing', () => {
+    // Arrange
+    const entry = '/admin/reports/pdf';
+
+    // Act
+    const { container } = renderSelector(entry);
+    const dropdown = container.querySelector('goa-dropdown[testid="reports-period-selector"]');
+
+    // Assert
+    expect(dropdown).not.toHaveAttribute('width');
+    expect(dropdown).not.toHaveAttribute('maxwidth');
+  });
+
   it('writes the selected preset as a query param', () => {
     const { container } = renderSelector('/admin/reports/pdf');
 

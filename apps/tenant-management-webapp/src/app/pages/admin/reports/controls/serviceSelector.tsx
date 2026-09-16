@@ -25,12 +25,11 @@ export const ServiceSelector: FunctionComponent = () => {
   };
 
   return (
-    <GoabFormItem label="Service">
+    <GoabFormItem label="Service" maxWidth="100%">
       <GoabDropdown
         name="Service"
         size="compact"
         value={serviceId || ''}
-        width="100%"
         testId="reports-service-selector"
         onChange={onChange}
       >
