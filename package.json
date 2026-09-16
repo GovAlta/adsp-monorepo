@@ -42,7 +42,7 @@
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
-    "@faker-js/faker": "7.0.1",
+    "@faker-js/faker": "^10.5.0",
     "@keycloak/keycloak-admin-client": "^23.0.7",
     "@mastra/agentfs": "^0.1.0",
     "@mastra/core": "^1.12.0",
