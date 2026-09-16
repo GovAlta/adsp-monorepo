@@ -113,19 +113,18 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
-      const { subscribers, after, next, total } = action.payload;
+      const { subscribers, next, total } = action.payload;
       let newSubscriber = {};
       let results = null;
 
+      // The registry pages with Previous/Next buttons rather than loading more into an existing
+      // list, so each page's results replace what was held rather than being appended to it.
       if (subscribers) {
         newSubscriber = subscribers.reduce(
           (subs, sub) => ({ ...subs, [sub.id]: { ...subs[sub.id], ...sub } }),
           state.subscribers,
         );
-        results = [
-          ...(after && state.subscriberSearch.results ? state.subscriberSearch.results : []),
-          ...subscribers.map((subscriber) => subscriber.id),
-        ];
+        results = subscribers.map((subscriber) => subscriber.id);
       }
 
       return {

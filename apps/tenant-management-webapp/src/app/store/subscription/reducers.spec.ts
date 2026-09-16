@@ -35,12 +35,13 @@ describe('subscription reducer', () => {
       expect(second.subscriberSearch.results).toEqual(['b']);
     });
 
-    // Paging forward carries the cursor it came from, and the results are added to what is held.
-    it('adds to the previous results when a further page is loaded', () => {
+    // The registry pages with Previous/Next buttons, so a further page replaces what is shown
+    // rather than being appended to it.
+    it('replaces the previous results when a further page is loaded', () => {
       const first = subscriptionReducer(SUBSCRIBER_INIT, FindSubscribersSuccess([subscriberA], 'next-cursor'));
       const second = subscriptionReducer(first, FindSubscribersSuccess([subscriberB], null, 'next-cursor'));
 
-      expect(second.subscriberSearch.results).toEqual(['a', 'b']);
+      expect(second.subscriberSearch.results).toEqual(['b']);
     });
 
     it('clears the results when the search is reset', () => {
