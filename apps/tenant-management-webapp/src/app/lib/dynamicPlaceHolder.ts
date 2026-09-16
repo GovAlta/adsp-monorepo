@@ -17,7 +17,7 @@ export const dynamicGeneratePayload = (
     useDefaultValue: true,
     useExamplesValue: true,
   });
-  let payload = {};
+  let payload = null;
   const payloadSchema = eventDef?.payloadSchema;
   if (payloadSchema) {
     payload = JSONSchemaFaker.generate(payloadSchema);
