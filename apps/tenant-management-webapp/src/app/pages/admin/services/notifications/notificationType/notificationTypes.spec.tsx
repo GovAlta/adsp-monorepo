@@ -8,6 +8,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';
 
+jest.mock('@lib/dynamicPlaceHolder', () => ({
+  dynamicGeneratePayload: jest.fn(),
+}));
 jest.mock('../previewEditor/TemplateEditor', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TemplateEditor: ({ saveAndReset, resetToSavedAction, previewVisible, onTogglePreview }: any) => (

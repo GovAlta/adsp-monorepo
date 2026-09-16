@@ -8,6 +8,9 @@ import { Reports } from './reports';
 
 const mockStore = configureStore([]);
 
+jest.mock('@lib/dynamicPlaceHolder', () => ({
+  dynamicGeneratePayload: jest.fn(),
+}));
 const renderReports = () => {
   const store = mockStore({
     config: { featureFlags: {}, serviceUrls: {} },
@@ -26,7 +29,7 @@ const renderReports = () => {
           <Route path="/admin/reports/:serviceId" element={<Reports />} />
         </Routes>
       </MemoryRouter>
-    </Provider>
+    </Provider>,
   );
 };
 

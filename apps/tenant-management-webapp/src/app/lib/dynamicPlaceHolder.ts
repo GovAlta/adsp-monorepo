@@ -1,5 +1,5 @@
 import { EventDefinition } from '@store/event/models';
-import jsf from 'json-schema-faker';
+import { JSONSchemaFaker } from 'json-schema-faker';
 import { faker } from '@faker-js/faker/locale/en_CA';
 
 export const dynamicGeneratePayload = (
@@ -7,20 +7,20 @@ export const dynamicGeneratePayload = (
   eventDef: EventDefinition,
   managementUrl: string,
   title: string,
-  subtitle: string
+  subtitle: string,
 ): Record<string, unknown> => {
-  jsf.extend('faker', () => faker);
-  jsf.option({
+  JSONSchemaFaker.extend('faker', () => faker);
+  JSONSchemaFaker.option({
     optionalsProbability: 1,
     maxItems: 3,
     fixedProbabilities: true,
     useDefaultValue: true,
     useExamplesValue: true,
   });
-  let payload = {};
+  let payload = null;
   const payloadSchema = eventDef?.payloadSchema;
   if (payloadSchema) {
-    payload = jsf.generate(payloadSchema);
+    payload = JSONSchemaFaker.generate(payloadSchema);
   }
 
   return {
