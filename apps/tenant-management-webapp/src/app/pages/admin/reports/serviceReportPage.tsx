@@ -1,4 +1,4 @@
-import { GoabCallout, GoabGrid } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { loadReportSection, setReportCriteria } from '@store/serviceReports/actions';
 import { REPORT_PERIOD_PRESETS, ReportPeriodPreset, ReportingPeriod } from '@store/serviceReports/models';
@@ -20,7 +20,7 @@ import { SummaryMetricsSection } from './sections/summaryMetricsSection';
 import { TopResourcesSection } from './sections/topResourcesSection';
 import { TrendsSection } from './sections/trendsSection';
 import { reportsPath } from './paths';
-import { ControlsRow, SectionsStack } from './styled-components';
+import { ControlField, ControlsRow, RightRail, SectionsStack, TrendsRow } from './styled-components';
 
 const sectionComponents: Record<ReportSectionId, FunctionComponent<ReportSectionProps>> = {
   summary: SummaryMetricsSection,
@@ -29,6 +29,9 @@ const sectionComponents: Record<ReportSectionId, FunctionComponent<ReportSection
   insights: InsightsSection,
   apiDrilldown: ApiDrilldownSection,
 };
+
+const RIGHT_RAIL_SECTIONS: ReportSectionId[] = ['topResources', 'insights'];
+const LAID_OUT_SECTIONS: ReportSectionId[] = ['summary', 'trends', ...RIGHT_RAIL_SECTIONS, 'apiDrilldown'];
 
 const isPreset = (value: string): value is ReportPeriodPreset =>
   (REPORT_PERIOD_PRESETS as string[]).includes(value);
@@ -102,20 +105,42 @@ export const ServiceReportPage: FunctionComponent = () => {
     );
   }
 
+  const hasSection = (sectionId: ReportSectionId) => descriptor.sections.includes(sectionId);
+  const renderSection = (sectionId: ReportSectionId) => {
+    if (!hasSection(sectionId)) {
+      return null;
+    }
+    const Section = sectionComponents[sectionId];
+    return <Section key={sectionId} descriptor={descriptor} />;
+  };
+  const hasRail = RIGHT_RAIL_SECTIONS.some(hasSection);
+  const extras = descriptor.sections.filter((sectionId) => !LAID_OUT_SECTIONS.includes(sectionId));
+
   return (
     <>
-      <ControlsRow>
-        <GoabGrid gap="s" minChildWidth="30ch" testId="reports-controls">
+      <ControlsRow data-testid="reports-controls">
+        <ControlField>
           <ServiceSelector />
+        </ControlField>
+        <ControlField $grow>
           <ReportingPeriodSelector />
-        </GoabGrid>
+        </ControlField>
       </ControlsRow>
       {hasRequiredRole(descriptor, resourceAccess) ? (
         <SectionsStack>
-          {descriptor.sections.map((sectionId) => {
-            const Section = sectionComponents[sectionId];
-            return <Section key={sectionId} descriptor={descriptor} />;
-          })}
+          {renderSection('summary')}
+          {(hasSection('trends') || hasRail) && (
+            <TrendsRow $hasRail={hasRail} data-testid="reports-trends-row">
+              {renderSection('trends')}
+              {hasRail && (
+                <RightRail data-testid="reports-side-rail">
+                  {RIGHT_RAIL_SECTIONS.map(renderSection)}
+                </RightRail>
+              )}
+            </TrendsRow>
+          )}
+          {renderSection('apiDrilldown')}
+          {extras.map(renderSection)}
         </SectionsStack>
       ) : (
         <GoabCallout heading="Role required" type="information" testId="reports-role-need-callout">

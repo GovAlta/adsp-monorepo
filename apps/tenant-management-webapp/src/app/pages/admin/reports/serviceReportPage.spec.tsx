@@ -63,6 +63,14 @@ describe('ServiceReportPage', () => {
     ]);
   });
 
+  it('places top resources and insights beside trends', () => {
+    const { container } = renderPage('/admin/reports/pdf');
+    const rail = container.querySelector('[data-testid="reports-side-rail"]');
+
+    expect(rail?.querySelector('[testid="reports-section-top-resources"]')).toBeInTheDocument();
+    expect(rail?.querySelector('[testid="reports-section-insights"]')).toBeInTheDocument();
+  });
+
   it('shows the not-available callout for an unknown service id', () => {
     renderPage('/admin/reports/not-a-service');
 

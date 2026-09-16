@@ -1,11 +1,11 @@
-import { GoabDatePicker, GoabDropdown, GoabDropdownItem, GoabFormItem, GoabGrid } from '@abgov/react-components';
+import { GoabDatePicker, GoabDropdown, GoabDropdownItem, GoabFormItem } from '@abgov/react-components';
 import { GoabDatePickerOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { DateTime } from 'luxon';
 import React, { FunctionComponent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { REPORT_PERIOD_PRESETS, ReportPeriodPreset } from '@store/serviceReports/models';
 import { getPeriodValidationError, MAX_CUSTOM_PERIOD_MONTHS, resolvePeriodRange } from '@store/serviceReports/selectors';
-import { CustomRangeRow } from '../styled-components';
+import { ReportingPeriodFields } from '../styled-components';
 
 const PRESET_LABELS: Record<ReportPeriodPreset, string> = {
   last7Days: 'Last 7 days',
@@ -64,13 +64,12 @@ export const ReportingPeriodSelector: FunctionComponent = () => {
   };
 
   return (
-    <div>
-      <GoabFormItem label="Reporting period">
+    <ReportingPeriodFields>
+      <GoabFormItem label="Reporting period" maxWidth="100%">
         <GoabDropdown
           name="Reporting period"
           size="compact"
           value={preset}
-          width="100%"
           testId="reports-period-selector"
           onChange={onPresetChange}
         >
@@ -80,37 +79,35 @@ export const ReportingPeriodSelector: FunctionComponent = () => {
         </GoabDropdown>
       </GoabFormItem>
       {preset === 'custom' && (
-        <CustomRangeRow>
-          <GoabGrid gap="s" minChildWidth="16ch">
-            <GoabFormItem label="From" error={validationError}>
-              <GoabDatePicker
-                name="from"
-                type="calendar"
-                value={from}
-                min={fromMin}
-                max={to < today ? to : today}
-                error={Boolean(validationError)}
-                width="100%"
-                testId="reports-period-from"
-                onChange={onFromChange}
-              />
-            </GoabFormItem>
-            <GoabFormItem label="To" error={from > to ? validationError : undefined}>
-              <GoabDatePicker
-                name="to"
-                type="calendar"
-                value={to}
-                min={from}
-                max={today}
-                error={from > to}
-                width="100%"
-                testId="reports-period-to"
-                onChange={onToChange}
-              />
-            </GoabFormItem>
-          </GoabGrid>
-        </CustomRangeRow>
+        <>
+          <GoabFormItem label="From" error={validationError} maxWidth="100%">
+            <GoabDatePicker
+              name="from"
+              type="calendar"
+              value={from}
+              min={fromMin}
+              max={to < today ? to : today}
+              error={Boolean(validationError)}
+              width="100%"
+              testId="reports-period-from"
+              onChange={onFromChange}
+            />
+          </GoabFormItem>
+          <GoabFormItem label="To" error={from > to ? validationError : undefined} maxWidth="100%">
+            <GoabDatePicker
+              name="to"
+              type="calendar"
+              value={to}
+              min={from}
+              max={today}
+              error={from > to}
+              width="100%"
+              testId="reports-period-to"
+              onChange={onToChange}
+            />
+          </GoabFormItem>
+        </>
       )}
-    </div>
+    </ReportingPeriodFields>
   );
 };

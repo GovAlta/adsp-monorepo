@@ -15,7 +15,7 @@ export const TopResourcesSection: FunctionComponent<ReportSectionProps> = ({ des
       title={title}
       testId="reports-section-top-resources"
       state={state}
-      placeholder={<PlaceholderBlock $minHeight="12rem" data-testid="reports-top-resources-placeholder" />}
+      placeholder={<PlaceholderBlock $minHeight="8rem" data-testid="reports-top-resources-placeholder" />}
     />
   );
 };
