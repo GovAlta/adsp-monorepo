@@ -28,7 +28,7 @@ const createKnex = ({ coverage = undefined, rows = [], tableRows = {}, countRows
     if (!builders[table]) {
       const resolved = tableRows[table] ?? rows;
       const builder: any = {};
-      ['offset', 'limit'].forEach((method) => {
+      ['offset', 'limit', 'groupBy'].forEach((method) => {
         builder[method] = jest.fn(() => builder);
       });
       builder.select = jest.fn((...args: unknown[]) => {
@@ -50,12 +50,22 @@ const createKnex = ({ coverage = undefined, rows = [], tableRows = {}, countRows
       builder.returning = jest.fn(() => Promise.resolve(resolved));
       builder.count = jest.fn(() => Promise.resolve(countRows ?? [{ count: '0' }]));
       builder.orderBy = jest.fn(() => Promise.resolve(resolved));
+      // A subquery-as-table carries its own alias rather than being re-wrapped by whatever knex()
+      // call it is later handed to; recording it here keeps its calls traceable the same way.
+      builder.as = jest.fn(() => builder);
       builders[table] = builder;
     }
     return builders[table];
   };
 
-  const knex: any = jest.fn((table: string) => {
+  // knex(subqueryBuilder) wraps a query builder rather than a table name in real knex, but the
+  // subquery here already carries every where/select call the test cares about, so the stub just
+  // keeps handing it back rather than creating a second, empty layer around it.
+  const knex: any = jest.fn((table: string | Record<string, unknown>) => {
+    if (typeof table !== 'string') {
+      return table;
+    }
+
     tables.push(table);
     return table === 'metric_interval_rollup_coverage' ? coverageQuery : builderFor(table);
   });
@@ -78,17 +88,30 @@ const spanning = {
 
 describe('TimescaleValuesRepository metric source routing', () => {
   describe('readMetrics', () => {
-    it('falls back to the interval view when the interval has never been rolled up', async () => {
+    it('falls back to a live aggregate of raw metrics when the interval has never been rolled up', async () => {
       const { knex, tables, selects } = createKnex();
 
       await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
         ...criteria,
       });
 
-      expect(tables).toContain('metrics_hourly');
+      expect(tables).toContain('metrics');
       expect(tables).not.toContain('metric_interval_rollups');
-      // The view carries its own avg column.
-      expect(selects[0]).toContain('avg');
+      // The final select still reads the plain avg column the live aggregate computed.
+      expect(selects[selects.length - 1]).toContain('avg');
+    });
+
+    it('bounds the live aggregate by timestamp rather than by the bucket it computes', async () => {
+      const { knex, wheres } = createKnex();
+
+      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+        ...criteria,
+      });
+
+      expect(wheres).toContainEqual(['timestamp', '>=', criteria.intervalMin]);
+      // The upper bound has to clear the whole bucket the window's end falls into, not stop exactly
+      // at intervalMax, or the tail of that bucket would be dropped instead of just trimmed later.
+      expect(wheres).toContainEqual(['timestamp', '<', { raw: '?::timestamptz + ?::interval' }]);
     });
 
     it('reads the rollups when coverage spans the requested window', async () => {
@@ -99,7 +122,7 @@ describe('TimescaleValuesRepository metric source routing', () => {
       });
 
       expect(tables).toContain('metric_interval_rollups');
-      expect(tables).not.toContain('metrics_hourly');
+      expect(tables).not.toContain('metrics');
       // Rollups hold every interval, so the interval itself has to be part of the filter.
       expect(wheres).toContainEqual([{ interval: 'hourly' }]);
     });
@@ -114,7 +137,7 @@ describe('TimescaleValuesRepository metric source routing', () => {
       expect(selects[0]).toContainEqual({ raw: 'CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg' });
     });
 
-    it('falls back to the view when the window starts before coverage', async () => {
+    it('falls back to a live aggregate when the window starts before coverage', async () => {
       const { knex, tables } = createKnex({
         coverage: { covered_from: '2026-03-01T12:00:00Z', covered_to: '2026-04-01T00:00:00Z' },
       });
@@ -123,10 +146,10 @@ describe('TimescaleValuesRepository metric source routing', () => {
         ...criteria,
       });
 
-      expect(tables).toContain('metrics_hourly');
+      expect(tables).toContain('metrics');
     });
 
-    it('falls back to the view when the window ends after coverage', async () => {
+    it('falls back to a live aggregate when the window ends after coverage', async () => {
       const { knex, tables } = createKnex({
         coverage: { covered_from: '2026-02-01T00:00:00Z', covered_to: '2026-03-01T12:00:00Z' },
       });
@@ -135,7 +158,7 @@ describe('TimescaleValuesRepository metric source routing', () => {
         ...criteria,
       });
 
-      expect(tables).toContain('metrics_hourly');
+      expect(tables).toContain('metrics');
     });
 
     it('uses the rollups when the window exactly matches coverage', async () => {
@@ -159,8 +182,26 @@ describe('TimescaleValuesRepository metric source routing', () => {
       });
 
       expect(tables).toContain('metric_interval_rollups');
-      expect(tables).not.toContain('metrics_monthly');
+      expect(tables).not.toContain('metrics');
       expect(wheres).toContainEqual([{ interval: 'monthly' }]);
+    });
+
+    // A calendar month is not a fixed span, so Postgres cannot infer a timestamp range back out of
+    // a `bucket <= x` filter on it the way it can for a fixed-width interval; a monthly request that
+    // isn't fully covered has to bound the live aggregate by timestamp itself or it aggregates every
+    // row ever recorded for the metric. This is the CS-5322 hang: any window reaching into the
+    // still-in-progress month fell back with no bound at all.
+    it('bounds a live monthly aggregate by timestamp rather than depending on bucket pushdown', async () => {
+      const { knex, tables, wheres } = createKnex();
+
+      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+        ...criteria,
+        interval: 'monthly',
+      });
+
+      expect(tables).toContain('metrics');
+      expect(wheres).toContainEqual(['timestamp', '>=', criteria.intervalMin]);
+      expect(wheres).toContainEqual(['timestamp', '<', { raw: '?::timestamptz + ?::interval' }]);
     });
 
     it('rejects an unrecognized interval before touching the database', async () => {
@@ -188,14 +229,16 @@ describe('TimescaleValuesRepository metric source routing', () => {
       expect(wheres).toContainEqual([{ interval: 'hourly' }]);
     });
 
-    it('falls back to the view for a single metric with no coverage', async () => {
-      const { knex, tables } = createKnex();
+    it('falls back to a live aggregate for a single metric with no coverage', async () => {
+      const { knex, tables, wheres } = createKnex();
 
       await new TimescaleValuesRepository(knex).readMetric(tenantId, 'test', 'metrics', 'requests', 100, undefined, {
         ...criteria,
       });
 
-      expect(tables).toContain('metrics_hourly');
+      expect(tables).toContain('metrics');
+      // Pushed down alongside timestamp so the live aggregate scans one series, not the whole table.
+      expect(wheres).toContainEqual([{ metric: 'requests' }]);
     });
 
     it('still rejects the sub-hourly intervals it never supported', async () => {
