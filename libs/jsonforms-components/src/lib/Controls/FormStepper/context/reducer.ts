@@ -145,18 +145,34 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
           visited,
         });
 
+        const isCompleted = status === StepStatus.COMPLETED;
+        if (cat.status === status && cat.isCompleted === isCompleted && cat.isValid === isCompleted) {
+          return cat;
+        }
+
         return {
           ...cat,
-          isCompleted: status === StepStatus.COMPLETED,
-          isValid: status === StepStatus.COMPLETED,
+          isCompleted,
+          isValid: isCompleted,
           status: status,
         };
       });
 
-      return { ...state, categories: newCategories };
+      // This fires on entering a page and on every keystroke, and the verdict usually doesn't move.
+      // Handing back the same state lets useReducer bail out, which is the difference between one
+      // render pass per navigation and two.
+      const isUnchanged = newCategories.every((cat, idx) => cat === state.categories[idx]);
+      return isUnchanged ? state : { ...state, categories: newCategories };
     }
     case 'set/visited': {
       const { id } = action.payload;
+
+      // Navigating back to a page that is already marked contributes nothing, and returning new
+      // state anyway re-renders every control on the page for it.
+      const target = state.categories.find((cat) => cat.id === id);
+      if (target?.isVisited === true && target?.isNavigatedAway === true) {
+        return state;
+      }
 
       const newCategories = state.categories.map((cat) =>
         cat.id === id

@@ -59,7 +59,22 @@ export function isScopeRequired(normalizedScopes: string[], required: string[]):
 // Aggregates the required property names applicable to a step's scopes: the
 // schema's top-level required array plus the required array of each scope's
 // immediate parent (sub)schema (for nested objects).
+//
+// Resolving a scope against a schema built from long `allOf`/`if` chains is not cheap, and this
+// runs for every step on every data change. Both arguments are immutable for the life of a form —
+// the scopes array comes back memoized from pickPropertyValues — so the answer is cacheable by
+// identity.
+const requiredForScopesCache = new WeakMap<object, WeakMap<object, string[]>>();
+
 function getRequiredForScopes(scopes: string[], schema: JsonSchema): string[] {
+  const isCacheable = typeof schema === 'object' && schema !== null && Array.isArray(scopes);
+  if (isCacheable) {
+    const cached = requiredForScopesCache.get(scopes)?.get(schema);
+    if (cached !== undefined) {
+      return cached;
+    }
+  }
+
   const topLevelRequired: string[] = schema.required || [];
 
   const scopeSets = scopes.reduce((acc: string[], scope) => {
@@ -67,7 +82,18 @@ function getRequiredForScopes(scopes: string[], schema: JsonSchema): string[] {
     return acc.concat(subSchema?.required || []);
   }, topLevelRequired);
 
-  return Array.from(new Set(scopeSets));
+  const required = Array.from(new Set(scopeSets));
+
+  if (isCacheable) {
+    let bySchema = requiredForScopesCache.get(scopes);
+    if (bySchema === undefined) {
+      bySchema = new WeakMap();
+      requiredForScopesCache.set(scopes, bySchema);
+    }
+    bySchema.set(schema, required);
+  }
+
+  return required;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

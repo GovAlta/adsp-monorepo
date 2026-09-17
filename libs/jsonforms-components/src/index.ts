@@ -91,6 +91,9 @@ export * from './lib/Context/register';
 export * from './lib/Controls';
 export * from './lib/util/registerOptions';
 export * from './lib/util/autoPopulate';
+export * from './lib/util/memoizeTester';
+
+import { memoizeRendererTesters } from './lib/util/memoizeTester';
 
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
@@ -246,7 +249,7 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: HelpContentTester, renderer: GoAInputBaseTableReviewControl },
 ];
 
-export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
+const goaReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseReviewRenderers,
   { tester: CategorizationStepperRendererTester, renderer: FormStepperReviewControl },
   { tester: CategorizationPagesRendererTester, renderer: FormStepperReviewControl },
@@ -258,7 +261,9 @@ export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: PhoneNumberWithTypeTester, renderer: withJsonFormsControlProps(PhoneNumberWithTypeReviewControl) },
 ];
 
-export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
+export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = memoizeRendererTesters(goaReviewRenderers);
+
+const goaRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseRenderers,
   { tester: CategorizationStepperRendererTester, renderer: FormStepperControl },
   { tester: CategorizationPagesRendererTester, renderer: FormStepperPagesControl },
@@ -271,5 +276,10 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoACalculationControlTester, renderer: GoACalculationControl },
   { tester: ContactInformationTester, renderer: withJsonFormsControlProps(ContractInfoControl) },
 ];
+
+// Renderer selection re-runs every tester for every control on every mount, and a step change
+// remounts the whole page. Caching each tester's rank is what keeps a large page from re-walking
+// the root schema once per renderer per control on every navigation.
+export const GoARenderers: JsonFormsRendererRegistryEntry[] = memoizeRendererTesters(goaRenderers);
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];

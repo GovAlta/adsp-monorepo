@@ -188,6 +188,22 @@ describe('stepperReducer', () => {
       expect(result.categories[0].status).toBe(StepStatus.COMPLETED);
       expect(result.categories[0].isCompleted).toBe(true);
     });
+
+    test('returns the same state when the status verdict has not moved', () => {
+      // This action fires on entering a page and on every keystroke. Returning new state when
+      // nothing moved re-renders every control on the page for no reason.
+      // Arrange
+      const schema = { type: 'object', required: ['field0'], properties: { field0: { type: 'string' } } };
+      const ajv = new Ajv({ allErrors: true });
+      const payload = { id: 0, ajv, schema, data: { field0: 'value' }, errors: [] };
+      const settled = stepperReducer(buildState(), { type: 'update/category', payload });
+
+      // Act
+      const result = stepperReducer(settled, { type: 'update/category', payload });
+
+      // Assert
+      expect(result).toBe(settled);
+    });
   });
 
   describe('set/visited', () => {
@@ -215,6 +231,18 @@ describe('stepperReducer', () => {
       // Assert
       expect(result.categories[1].isNavigatedAway).toBe(true);
       expect(result.categories[0].isNavigatedAway).toBeFalsy();
+    });
+
+    test('returns the same state when the category is already marked', () => {
+      // Arrange
+      const state = buildState();
+      const marked = stepperReducer(state, { type: 'set/visited', payload: { id: 1 } });
+
+      // Act
+      const result = stepperReducer(marked, { type: 'set/visited', payload: { id: 1 } });
+
+      // Assert
+      expect(result).toBe(marked);
     });
   });
 
