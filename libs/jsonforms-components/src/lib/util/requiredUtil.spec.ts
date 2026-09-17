@@ -551,3 +551,62 @@ describe(' isRequiredBySchema test single and nest required cases', () => {
     expect(typeof result).toBe('boolean');
   });
 });
+
+describe('isRequiredBySchema caching', () => {
+  const conditionalSchema: JsonSchema7 = {
+    type: 'object',
+    properties: {
+      hasCondition: { type: 'string', enum: ['yes', 'no'] },
+      details: { type: 'string' },
+      always: { type: 'string' },
+    },
+    required: ['always'],
+    if: { properties: { hasCondition: { const: 'yes' } } },
+    then: { required: ['details'] },
+  };
+
+  it('returns the same answer for repeated calls with the same schema and data', () => {
+    const data = { hasCondition: 'yes' };
+
+    expect(isRequiredBySchema(conditionalSchema, data, 'details')).toBe(true);
+    expect(isRequiredBySchema(conditionalSchema, data, 'details')).toBe(true);
+  });
+
+  it('answers for every field of a page without the first answer leaking into the rest', () => {
+    const data = { hasCondition: 'yes' };
+
+    expect(isRequiredBySchema(conditionalSchema, data, 'always')).toBe(true);
+    expect(isRequiredBySchema(conditionalSchema, data, 'details')).toBe(true);
+    expect(isRequiredBySchema(conditionalSchema, data, 'hasCondition')).toBe(false);
+  });
+
+  it('recomputes when the data changes the branch that applies', () => {
+    expect(isRequiredBySchema(conditionalSchema, { hasCondition: 'yes' }, 'details')).toBe(true);
+    expect(isRequiredBySchema(conditionalSchema, { hasCondition: 'no' }, 'details')).toBe(false);
+    expect(isRequiredBySchema(conditionalSchema, { hasCondition: 'yes' }, 'details')).toBe(true);
+  });
+
+  it('recomputes when the schema changes but the data object is reused', () => {
+    const data = { hasCondition: 'yes' };
+    const withoutCondition: JsonSchema7 = {
+      type: 'object',
+      properties: { hasCondition: { type: 'string' }, details: { type: 'string' } },
+    };
+
+    expect(isRequiredBySchema(conditionalSchema, data, 'details')).toBe(true);
+    expect(isRequiredBySchema(withoutCondition, data, 'details')).toBe(false);
+  });
+
+  it('keeps strategies separate for the same schema and data', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: { a: { type: 'string' }, b: { type: 'string' } },
+      anyOf: [{ required: ['a'] }, { required: ['b'] }],
+    };
+    const data = {};
+
+    expect(isRequiredBySchema(schema, data, 'a', { strategy: 'union' })).toBe(true);
+    expect(isRequiredBySchema(schema, data, 'a', { strategy: 'intersection' })).toBe(false);
+    expect(isRequiredBySchema(schema, data, 'a', { strategy: 'union' })).toBe(true);
+  });
+});

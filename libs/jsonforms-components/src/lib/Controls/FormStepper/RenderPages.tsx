@@ -36,6 +36,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
   const [isOpen, setIsOpen] = useState(false);
   const topElementRef = useRef<HTMLDivElement>(null);
+  const lastSavedDataRef = useRef<unknown>(undefined);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -46,9 +47,11 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   };
 
   const handleSave = () => {
-    if (saveForm) {
-      saveForm(data);
+    if (!saveForm || lastSavedDataRef.current === data) {
+      return;
     }
+    lastSavedDataRef.current = data;
+    saveForm(data);
   };
 
   const onCloseModal = () => {

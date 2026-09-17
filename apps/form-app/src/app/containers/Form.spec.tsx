@@ -77,6 +77,33 @@ describe('Form', () => {
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'set-show-messages', payload: false });
   });
 
+  it('keeps onChange identity across a rerender when files are unchanged', () => {
+    // Arrange
+    mockState.form.form = {
+      id: 'form-1',
+      definition: { id: definition.id },
+      status: 'draft',
+      urn: 'urn:ads:platform:form-service:form:form-1',
+    };
+
+    const tree = (
+      <MemoryRouter initialEntries={['/platform/control-examples/form-1']}>
+        <Form />
+      </MemoryRouter>
+    );
+
+    // Act
+    const { rerender } = render(tree);
+    const firstOnChange = mockDraftFormWrapper.mock.calls[0][0].onChange;
+    const firstOnSave = mockDraftFormWrapper.mock.calls[0][0].onSave;
+    rerender(tree);
+
+    // Assert
+    const lastProps = mockDraftFormWrapper.mock.calls[mockDraftFormWrapper.mock.calls.length - 1][0];
+    expect(lastProps.onChange).toBe(firstOnChange);
+    expect(lastProps.onSave).toBe(firstOnSave);
+  });
+
   it('passes URL page and field parameters to the draft form as a navigation target', () => {
     // Arrange
     mockState.form.form = {
