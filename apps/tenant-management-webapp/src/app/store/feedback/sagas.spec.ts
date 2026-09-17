@@ -11,8 +11,8 @@ const storeState = {
 // One registered site, one view — the shape that exposed the defect. Ratings are recorded
 // 0-based, so these five entries are the 5, 5, 1, 2, 1 shown in the feedback list.
 const singleSiteResponse = {
-  'adsp-dev:/admin/services/feedback:count': { values: [{ sum: '5', avg: '1', min: '1' }] },
-  'adsp-dev:/admin/services/feedback:rating': { values: [{ sum: '9', avg: '1.8', min: '0' }] },
+  'adsp-dev:/admin/services/feedback:count': { values: [{ sum: '5', avg: '1', min: '1', count: '5' }] },
+  'adsp-dev:/admin/services/feedback:rating': { values: [{ sum: '9', avg: '1.8', min: '0', count: '5' }] },
 };
 
 const metricsFrom = (data: Record<string, unknown>) =>
@@ -50,12 +50,37 @@ describe('fetchFeedbackMetrics', () => {
 
   it('takes the lowest rating across every site', async () => {
     const metrics = await metricsFrom({
-      'site-a:/one:count': { values: [{ sum: '4', avg: '1', min: '1' }] },
-      'site-a:/one:rating': { values: [{ sum: '12', avg: '3', min: '2' }] },
-      'site-b:/two:count': { values: [{ sum: '2', avg: '1', min: '1' }] },
-      'site-b:/two:rating': { values: [{ sum: '2', avg: '1', min: '0' }] },
+      'site-a:/one:count': { values: [{ sum: '4', avg: '1', min: '1', count: '4' }] },
+      'site-a:/one:rating': { values: [{ sum: '12', avg: '3', min: '2', count: '4' }] },
+      'site-b:/two:count': { values: [{ sum: '2', avg: '1', min: '1', count: '2' }] },
+      'site-b:/two:rating': { values: [{ sum: '2', avg: '1', min: '0', count: '2' }] },
     });
 
+    expect(metrics.lowestRating).toBe(0);
+  });
+
+  // The API serves whole intervals only, so a seven-day window comes back as a bucket per day and
+  // never as one weekly total. Reading `values[0]` took a single day and called it the week.
+  it('folds every daily bucket in the window into one figure', async () => {
+    const metrics = await metricsFrom({
+      'site-a:/one:count': {
+        values: [
+          { sum: '3', avg: '1', min: '1', count: '3' },
+          { sum: '2', avg: '1', min: '1', count: '2' },
+        ],
+      },
+      'site-a:/one:rating': {
+        values: [
+          { sum: '12', avg: '4', min: '3', count: '3' },
+          { sum: '2', avg: '1', min: '0', count: '2' },
+        ],
+      },
+    });
+
+    expect(metrics.feedbackCount).toBe(5);
+    // 14 across 5 submissions, not the 2.5 an average of the two days' averages would give: the
+    // busier day has to carry more weight.
+    expect(metrics.averageRating).toBe(2.8);
     expect(metrics.lowestRating).toBe(0);
   });
 

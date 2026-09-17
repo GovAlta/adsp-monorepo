@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { adspId } from '@abgov/adsp-service-sdk';
+import { knex as createKnexClient } from 'knex';
 import { InvalidOperationError } from '@core-services/core-common';
 import { TimescaleValuesRepository } from './value';
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/aaa`;
 
 interface KnexStubOptions {
-  coverage?: unknown;
-  coverageByInterval?: Record<string, unknown>;
+  coverage?: { covered_from: string | Date; covered_to: string | Date };
+  snappedMax?: Date;
   rows?: unknown[];
   tableRows?: Record<string, unknown[]>;
   countRows?: unknown[];
@@ -15,7 +16,7 @@ interface KnexStubOptions {
 
 const createKnex = ({
   coverage = undefined,
-  coverageByInterval,
+  snappedMax,
   rows = [],
   tableRows = {},
   countRows,
@@ -26,26 +27,12 @@ const createKnex = ({
   const selects: unknown[][] = [];
   const inserted: Record<string, unknown> = {};
 
-  // Real coverage is one row per interval; a flat `coverage` answers every lookup the same way,
-  // which is enough for tests where only one interval's coverage matters. Composing across two
-  // intervals' coverage (a request's own interval and the one it borrows from) needs them to differ,
-  // which is what `coverageByInterval` is for.
-  let requestedInterval: string | undefined;
-  const coverageQuery: any = {};
-  coverageQuery.where = jest.fn((clause: { interval?: string }) => {
-    requestedInterval = clause?.interval;
-    return coverageQuery;
-  });
-  coverageQuery.first = jest.fn(() =>
-    Promise.resolve(coverageByInterval ? coverageByInterval[requestedInterval] : coverage),
-  );
-
   const builders: Record<string, any> = {};
   const builderFor = (table: string) => {
     if (!builders[table]) {
       const resolved = tableRows[table] ?? rows;
       const builder: any = {};
-      ['offset', 'limit', 'groupBy', 'unionAll'].forEach((method) => {
+      ['offset', 'limit', 'groupBy'].forEach((method) => {
         builder[method] = jest.fn(() => builder);
       });
       builder.select = jest.fn((...args: unknown[]) => {
@@ -84,9 +71,27 @@ const createKnex = ({
     }
 
     tables.push(table);
-    return table === 'metric_interval_rollup_coverage' ? coverageQuery : builderFor(table);
+    return builderFor(table);
   });
-  knex.raw = jest.fn((sql: string) => ({ raw: sql }));
+  // resolveMetricWindow asks for the snapped bound and the coverage span in one statement and
+  // awaits the result; every other raw is a select fragment that is embedded, never run.
+  knex.raw = jest.fn((sql: string, bindings?: unknown[]) => {
+    if (!sql.includes('metric_interval_rollup_coverage')) {
+      return { raw: sql };
+    }
+
+    const [, requestedMax] = bindings ?? [];
+    return Promise.resolve({
+      // time_bucket is the database's to compute, so a test that cares about the snap states it.
+      rows: [
+        {
+          interval_max: snappedMax ?? requestedMax,
+          covered_from: coverage?.covered_from ?? null,
+          covered_to: coverage?.covered_to ?? null,
+        },
+      ],
+    });
+  });
   knex.transaction = jest.fn((work: (ts: unknown) => unknown) => Promise.resolve(work(knex)));
 
   return { knex, tables, wheres, whereRaws, selects, inserted, builderFor };
@@ -126,9 +131,9 @@ describe('TimescaleValuesRepository metric source routing', () => {
       });
 
       expect(wheres).toContainEqual(['timestamp', '>=', criteria.intervalMin]);
-      // The upper bound has to clear the whole bucket the window's end falls into, not stop exactly
-      // at intervalMax, or the tail of that bucket would be dropped instead of just trimmed later.
-      expect(wheres).toContainEqual(['timestamp', '<', { raw: '?::timestamptz + ?::interval' }]);
+      // The bound is the snapped end itself, with no allowance past it: only buckets starting before
+      // it are served, and every row belonging to one of those falls before it too.
+      expect(wheres).toContainEqual(['timestamp', '<', criteria.intervalMax]);
     });
 
     it('reads the rollups when coverage spans the requested window', async () => {
@@ -218,7 +223,7 @@ describe('TimescaleValuesRepository metric source routing', () => {
 
       expect(tables).toContain('metrics');
       expect(wheres).toContainEqual(['timestamp', '>=', criteria.intervalMin]);
-      expect(wheres).toContainEqual(['timestamp', '<', { raw: '?::timestamptz + ?::interval' }]);
+      expect(wheres).toContainEqual(['timestamp', '<', criteria.intervalMax]);
     });
 
     it('rejects an unrecognized interval before touching the database', async () => {
@@ -231,94 +236,6 @@ describe('TimescaleValuesRepository metric source routing', () => {
         }),
       ).rejects.toThrow(InvalidOperationError);
       expect(tables).toHaveLength(0);
-    });
-  });
-
-  describe('readMetrics composed trailing gap', () => {
-    const monthlyCriteria = {
-      interval: 'monthly' as const,
-      intervalMin: new Date('2026-03-16T18:04:18.185Z'),
-      intervalMax: new Date('2026-09-16T18:04:18.185Z'),
-    };
-
-    // The reported CS-5322-c case: monthly's own rollup stops at the start of the still-open month,
-    // but daily -- monthly's source -- has already rolled up nearly all of it. Composing should read
-    // both rollups and reach raw metrics only for the sliver daily hasn't caught up to yet, instead
-    // of re-aggregating the whole six-month window live.
-    it('borrows the source rollup for most of the trailing gap and bounds raw metrics to what is left', async () => {
-      const { knex, tables, wheres } = createKnex({
-        coverageByInterval: {
-          monthly: { covered_from: '2026-01-01T00:00:00Z', covered_to: '2026-09-01T00:00:00Z' },
-          daily: { covered_from: '2025-01-01T00:00:00Z', covered_to: '2026-09-15T00:00:00Z' },
-        },
-      });
-
-      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
-        ...monthlyCriteria,
-      });
-
-      expect(tables).toContain('metric_interval_rollups');
-      expect(tables).toContain('metrics');
-      // The historical part reads monthly's own rows up to where its coverage stops.
-      expect(wheres).toContainEqual(['bucket', '<', new Date('2026-09-01T00:00:00Z')]);
-      // The borrowed part reads daily's rows for the rest of daily's coverage, re-bucketed to monthly.
-      expect(wheres).toContainEqual(['bucket', '>=', new Date('2026-09-01T00:00:00Z')]);
-      expect(wheres).toContainEqual(['bucket', '<', new Date('2026-09-15T00:00:00Z')]);
-      // Raw metrics is only reached for the sliver past daily's own coverage, not the whole window.
-      expect(wheres).toContainEqual(['timestamp', '>=', new Date('2026-09-15T00:00:00Z')]);
-      expect(wheres).not.toContainEqual(['timestamp', '>=', monthlyCriteria.intervalMin]);
-    });
-
-    it('computes the average from the merged sum and count for a composed read', async () => {
-      const { knex, selects } = createKnex({
-        coverageByInterval: {
-          monthly: { covered_from: '2026-01-01T00:00:00Z', covered_to: '2026-09-01T00:00:00Z' },
-          daily: { covered_from: '2025-01-01T00:00:00Z', covered_to: '2026-09-15T00:00:00Z' },
-        },
-      });
-
-      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
-        ...monthlyCriteria,
-      });
-
-      expect(selects[selects.length - 1]).toContainEqual({
-        raw: 'CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg',
-      });
-    });
-
-    it('falls back to raw metrics for the whole trailing gap when the source has no coverage either', async () => {
-      const { knex, tables, wheres } = createKnex({
-        coverageByInterval: {
-          monthly: { covered_from: '2026-01-01T00:00:00Z', covered_to: '2026-09-01T00:00:00Z' },
-        },
-      });
-
-      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
-        ...monthlyCriteria,
-      });
-
-      expect(tables).toContain('metric_interval_rollups');
-      expect(tables).toContain('metrics');
-      // With nothing to borrow, raw metrics has to cover the entire gap, not just a sliver of it.
-      expect(wheres).toContainEqual(['timestamp', '>=', new Date('2026-09-01T00:00:00Z')]);
-    });
-
-    it('does not compose, and falls back entirely to raw metrics, when the window also starts before coverage', async () => {
-      const { knex, tables } = createKnex({
-        coverageByInterval: {
-          monthly: { covered_from: '2026-04-01T00:00:00Z', covered_to: '2026-09-01T00:00:00Z' },
-          daily: { covered_from: '2025-01-01T00:00:00Z', covered_to: '2026-09-15T00:00:00Z' },
-        },
-      });
-
-      await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
-        ...monthlyCriteria,
-      });
-
-      // A gap on the leading edge too isn't composed -- see composeTrailingGap's own comment on why
-      // that is left for the plain, whole-window raw fallback rather than added here.
-      expect(tables).not.toContain('metric_interval_rollups');
-      expect(tables).toContain('metrics');
     });
   });
 
@@ -346,28 +263,6 @@ describe('TimescaleValuesRepository metric source routing', () => {
       expect(wheres).toContainEqual([{ metric: 'requests' }]);
     });
 
-    it('threads the metric filter through every part of a composed trailing-gap read', async () => {
-      const { knex, wheres } = createKnex({
-        coverageByInterval: {
-          monthly: { covered_from: '2026-01-01T00:00:00Z', covered_to: '2026-09-01T00:00:00Z' },
-          daily: { covered_from: '2025-01-01T00:00:00Z', covered_to: '2026-09-15T00:00:00Z' },
-        },
-      });
-
-      await new TimescaleValuesRepository(knex).readMetric(tenantId, 'test', 'metrics', 'requests', 100, undefined, {
-        interval: 'monthly',
-        intervalMin: new Date('2026-03-16T18:04:18.185Z'),
-        intervalMax: new Date('2026-09-16T18:04:18.185Z'),
-      });
-
-      // Every part -- the historical rollup, the borrowed daily rollup, and the raw metrics sliver --
-      // has to scope to the one named metric, or the merge would sum in every other series too. Each
-      // pushes its own single-key `{ metric }` filter, separate from the outer query's combined one.
-      expect(
-        wheres.filter((where) => Object.keys(where[0] ?? {}).length === 1 && where[0]['metric'] === 'requests'),
-      ).toHaveLength(3);
-    });
-
     it('still rejects the sub-hourly intervals it never supported', async () => {
       const { knex } = createKnex({ coverage: spanning });
 
@@ -382,6 +277,151 @@ describe('TimescaleValuesRepository metric source routing', () => {
 });
 
 const tenantUrn = 'urn:ads:platform:tenant-service:v2:/tenants/aaa';
+
+describe('TimescaleValuesRepository complete intervals only', () => {
+  const monthly = {
+    interval: 'monthly' as const,
+    intervalMin: new Date('2026-01-01T00:00:00Z'),
+    intervalMax: new Date('2026-09-17T18:04:18.185Z'),
+  };
+  // What time_bucket('1 month', 2026-09-17) resolves to: the start of the month in progress.
+  const septemberStart = new Date('2026-09-01T00:00:00Z');
+
+  it('bounds the read at the snapped start of the period in progress, not at the requested end', async () => {
+    const { knex, wheres } = createKnex({ coverage: spanning, snappedMax: septemberStart });
+
+    await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+      ...monthly,
+    });
+
+    // Exclusive, so September -- 17 days of it at the time of the request -- is left out entirely
+    // rather than returned as a short month alongside eight whole ones.
+    expect(wheres).toContainEqual(['bucket', '<', septemberStart]);
+    expect(wheres).not.toContainEqual(['bucket', '<=', monthly.intervalMax]);
+  });
+
+  it('reads the rollups when coverage reaches the snapped bound, though not the requested one', async () => {
+    const { knex, tables } = createKnex({
+      // Exactly the steady state: the job has rolled monthly up through August and stopped there,
+      // because September is not over. Before the snap this window could never be covered, and every
+      // read of it fell back to a live aggregate of the whole range.
+      coverage: { covered_from: '2025-01-01T00:00:00Z', covered_to: septemberStart },
+      snappedMax: septemberStart,
+    });
+
+    await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+      ...monthly,
+    });
+
+    expect(tables).toContain('metric_interval_rollups');
+    expect(tables).not.toContain('metrics');
+  });
+
+  it('reports the bound it actually served so a short window is distinguishable from an empty one', async () => {
+    const { knex } = createKnex({ coverage: spanning, snappedMax: septemberStart });
+
+    const result = await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+      ...monthly,
+    });
+
+    expect(result.page.intervalMax).toEqual(septemberStart);
+  });
+
+  it('snaps a single-metric read the same way', async () => {
+    const { knex, wheres } = createKnex({ coverage: spanning, snappedMax: septemberStart });
+
+    const result = await new TimescaleValuesRepository(knex).readMetric(
+      tenantId,
+      'test',
+      'metrics',
+      'requests',
+      100,
+      undefined,
+      { ...monthly },
+    );
+
+    expect(wheres).toContainEqual(['bucket', '<', septemberStart]);
+    expect(result.page.intervalMax).toEqual(septemberStart);
+  });
+
+  it('snaps a platform-scoped read the same way', async () => {
+    const { knex, wheres } = createKnex({ coverage: spanning, snappedMax: septemberStart });
+
+    await new TimescaleValuesRepository(knex).readPlatformMetrics('test', 'metrics', { ...monthly });
+
+    expect(wheres).toContainEqual(['bucket', '<', septemberStart]);
+  });
+
+  it('falls back to a live aggregate while coverage is still behind the snapped bound', async () => {
+    const { knex, tables } = createKnex({
+      coverage: { covered_from: '2025-01-01T00:00:00Z', covered_to: '2026-08-01T00:00:00Z' },
+      snappedMax: septemberStart,
+    });
+
+    await new TimescaleValuesRepository(knex).readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+      ...monthly,
+    });
+
+    expect(tables).toContain('metrics');
+    expect(tables).not.toContain('metric_interval_rollups');
+  });
+});
+
+/**
+ * The stub above hands back plain objects, and plain objects are not thenable -- which is exactly
+ * what hid the CS-5322-c regression. `composeTrailingGap` was `async` and returned a knex builder;
+ * a real builder IS thenable, so awaiting the async function handed it to the promise machinery,
+ * which ran the query and resolved to its rows. `.as()` was then called on an array and every
+ * metrics read 500ed with `u.as is not a function`, while the whole suite stayed green.
+ *
+ * These run the read against real knex, with only the connection stubbed, so a helper that starts
+ * returning a builder from an async function fails here instead of in production.
+ */
+describe('TimescaleValuesRepository against a real knex builder', () => {
+  const septemberStart = new Date('2026-09-01T00:00:00Z');
+
+  const createRealKnex = (coverage: { covered_from: Date; covered_to: Date } | null) => {
+    const client = createKnexClient({ client: 'pg' });
+    const stub = client.client as any;
+    stub.acquireConnection = async () => ({ __knexUid: 1 });
+    stub.releaseConnection = async () => undefined;
+    stub._query = async (_connection: unknown, obj: any) => {
+      obj.response = String(obj.sql).includes('metric_interval_rollup_coverage')
+        ? {
+            rows: [
+              {
+                interval_max: septemberStart,
+                covered_from: coverage?.covered_from ?? null,
+                covered_to: coverage?.covered_to ?? null,
+              },
+            ],
+          }
+        : { rows: [] };
+      return obj;
+    };
+    // Mirrors knex's own pg handling: a raw yields the whole result, a `first` the single row.
+    stub.processResponse = (obj: any) => {
+      if (obj.method === 'raw') return obj.response;
+      return obj.method === 'first' ? obj.response.rows[0] : obj.response.rows;
+    };
+    return client;
+  };
+
+  it.each([
+    ['the rollups', { covered_from: new Date('2025-01-01T00:00:00Z'), covered_to: septemberStart }],
+    ['a live aggregate', null],
+  ])('serves a read from %s without executing the subquery on the way', async (_label, coverage) => {
+    const repository = new TimescaleValuesRepository(createRealKnex(coverage) as never);
+
+    await expect(
+      repository.readMetrics(tenantId, 'test', 'metrics', 100, undefined, {
+        interval: 'monthly',
+        intervalMin: new Date('2026-01-01T00:00:00Z'),
+        intervalMax: new Date('2026-09-17T18:04:18.185Z'),
+      }),
+    ).resolves.toEqual(expect.objectContaining({ page: expect.objectContaining({ intervalMax: septemberStart }) }));
+  });
+});
 
 describe('TimescaleValuesRepository readPlatformMetrics', () => {
   it('reads directly from the rollups without checking coverage', async () => {
