@@ -24,6 +24,7 @@ import { getAutoPopulateControls } from '../../../util/autoPopulate';
 import { JsonFormContext } from '../../../Context';
 import { StepStatus } from '../../../common/Constants';
 import { NavigationOutcome, NavigationTarget, resolveNavigationTarget } from '../util/navigationTarget';
+import { isSameStepperState } from './stateEquality';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
   StepperProps: CategorizationStepperLayoutRendererProps & {
@@ -55,6 +56,9 @@ interface StepperInitOptions {
   visitedIds?: ReadonlySet<number>;
   // What auto-populate would write, so an edited pre-filled field counts as user activity.
   autoPopulatedValues?: AutoPopulatedPathValue[];
+  // Errors JsonForms core already computed for this schema/data. When present, skip a second
+  // full-schema ajv.validate which would also overwrite ajv.errors on the shared instance.
+  errors?: ErrorObject[] | null;
 }
 
 const createStepperContextInitData = (
@@ -63,9 +67,11 @@ const createStepperContextInitData = (
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
-  const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
-  // run validation once, capture errors
-  const valid = ajv.validate(schema, data || {});
+  const coreErrors = options?.errors;
+  const valid =
+    coreErrors != null ? coreErrors.length === 0 : ajv.validate(schema, data || {}) === true;
+  const sourceErrors = coreErrors != null ? coreErrors : ajv.errors;
+  const filteredErrors = sourceErrors && sourceErrors.filter((error) => error?.data != null);
 
   const isPage = uischema?.options?.variant === 'pages';
 
@@ -159,71 +165,94 @@ export const JsonFormsStepperContextProvider = ({
   const persistedVisitedIds = useMemo(() => new Set(getVisitedSteps(formId) ?? []), [formId]);
   const [stepperState, dispatch] = useReducer(
     stepperReducer,
-    createStepperContextInitData(StepperProps, { visitedIds: persistedVisitedIds, autoPopulatedValues }),
+    createStepperContextInitData(StepperProps, {
+      visitedIds: persistedVisitedIds,
+      autoPopulatedValues,
+      errors: ctx?.core?.errors,
+    }),
   );
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
   const isCacheStatus = uischema.options?.cacheStatus;
+  const stepperStateRef = useRef(stepperState);
+  stepperStateRef.current = stepperState;
 
   //prevents infinite loop refresh
+  // Reading the current values through a ref keeps this callback stable. It used to change identity
+  // on every keystroke, which rebuilt the context object and re-rendered every control on the page.
+  const validateInputsRef = useRef({ ajv, schema, data, errors: ctx?.core?.errors });
+  validateInputsRef.current = { ajv, schema, data, errors: ctx?.core?.errors };
+
   const doValidatePage = useCallback(
     (id: number) => {
+      const { errors, ajv: currentAjv, schema: currentSchema, data: currentData } = validateInputsRef.current;
       stepperDispatch({
         type: 'update/category',
-        payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
+        payload: { errors: errors ?? undefined, id, ajv: currentAjv, schema: currentSchema, data: currentData },
       });
     },
-    [stepperDispatch, ctx?.core?.errors, ajv, schema, data],
+    [stepperDispatch],
   );
+
+  // The snapshot is recomputed whenever data changes, but the result is usually identical. Holding
+  // the previous object when the content matches is what keeps the context — and therefore every
+  // control subscribed to it — from re-rendering on a keystroke that changed nothing it exposes.
+  const snapshotRef = useRef<StepperContextDataType | undefined>(undefined);
+  const snapshot = useMemo(() => {
+    const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, schema);
+    const categories = stepperState.categories?.map((c) => ({
+      ...c,
+      visible: c?.uischema ? isVisible(c.uischema, data, '', ajv, undefined) : c.visible,
+      isEnabled: c?.uischema ? isEnabled(c.uischema, data, '', ajv, undefined) : c.isEnabled,
+    }));
+    const computed: StepperContextDataType = {
+      ...stepperState,
+      isValid: isFormValid(stepperState.isValid, emptyRequiredStringErrors),
+      categories,
+    };
+
+    const previous = snapshotRef.current;
+    if (previous && isSameStepperState(previous, computed)) {
+      return previous;
+    }
+
+    snapshotRef.current = computed;
+    return computed;
+  }, [stepperState, data, schema, ajv]);
 
   const context = useMemo(() => {
     return {
       isProvided: true,
       stepperDispatch,
-      selectStepperState: () => {
-        const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, schema);
-        stepperState.isValid = isFormValid(stepperState.isValid, emptyRequiredStringErrors);
-        return {
-          ...stepperState,
-          categories: stepperState.categories?.map((c) => {
-            return {
-              ...c,
-              visible: c?.uischema && isVisible(c.uischema, data, '', ajv, undefined),
-              isEnabled: c?.uischema && isEnabled(c.uischema, data, '', ajv, undefined),
-            };
-          }),
-        };
-      },
+      selectStepperState: () => snapshot,
       selectIsDisabled: () => {
-        const category = stepperState.categories?.[stepperState.activeId];
+        const category = snapshot.categories?.[snapshot.activeId];
         return category === undefined ? false : !category?.isEnabled;
       },
       selectNumberOfCompletedCategories: (): number => {
-        return stepperState?.categories.reduce(
+        return snapshot.categories.reduce(
           (acc, cat) =>
             acc +
             (cat.isValid &&
             cat.isCompleted &&
             cat.isVisited &&
-            cat?.uischema &&
             (cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined) &&
-            cat?.uischema &&
-            isVisible(cat.uischema, data, '', ajv, undefined)
+            cat.visible
               ? 1
               : 0),
           0,
         );
       },
       selectIsActive: (id: number) => {
-        return id === stepperState.activeId;
+        return id === snapshot.activeId;
       },
       selectPath: (): string => {
-        return stepperState.path;
+        return snapshot.path;
       },
       selectCategory: (id: number) => {
-        return stepperState.categories[id];
+        return snapshot.categories[id];
       },
       goToTableOfContext: () => {
-        stepperDispatch({ type: 'page/to/index', payload: { id: stepperState.categories.length + 1 } });
+        stepperDispatch({ type: 'page/to/index', payload: { id: snapshot.categories.length + 1 } });
       },
 
       validatePage: doValidatePage,
@@ -240,8 +269,7 @@ export const JsonFormsStepperContextProvider = ({
         });
       },
     };
-    //eslint-disable-next-line
-  }, [stepperDispatch, stepperState, ctx.core?.errors, ajv, schema, data]);
+  }, [stepperDispatch, snapshot, doValidatePage]);
 
   /* istanbul ignore next */
   useEffect(() => {
@@ -290,44 +318,48 @@ export const JsonFormsStepperContextProvider = ({
     //eslint-disable-next-line
   }, [stepperState]);
 
+  const hasSyncedSchema = useRef(false);
+
   useEffect(() => {
-    if (context?.isProvided === true) {
-      /* The block is used to cache the state for the tenant web app review editor  */
-      // The task list is the sentinel id past the last page, which sits above maxReachedStep until
-      // the user opens something, so clamping would drop them onto the first page on the recompute
-      // that follows mount. Real pages survive the clamp only because the goToPage pair below puts
-      // them back, and that is deliberately skipped while the task list is showing.
-      const isOnTaskList = stepperState.activeId === stepperState.categories.length + 1;
-
-      stepperDispatch({
-        type: 'update/uischema',
-        payload: {
-          state: createStepperContextInitData(
-            {
-              ...StepperProps,
-              // Leaving activeId out lets init recompute the sentinel from the categories this
-              // recompute produced, so a conditional page appearing or disappearing still lands on
-              // the task list rather than on the review page.
-              activeId: isOnTaskList ? undefined : Math.min(stepperState?.activeId, stepperState.maxReachedStep),
-            },
-            {
-              visitedIds: new Set([
-                ...persistedVisitedIds,
-                ...(stepperState?.categories?.filter((c) => c.isVisited).map((c) => c.id) ?? []),
-              ]),
-              autoPopulatedValues,
-            },
-          ),
-        },
-      });
-
-      if (!isOnTaskList) {
-        context.goToPage(stepperState.maxReachedStep);
-        context.goToPage(stepperState.activeId);
-      }
+    if (context?.isProvided !== true) {
+      return;
     }
+
+    // Init already computed this snapshot. Re-running on mount would stringify-equivalent work
+    // and used to dispatch goToPage twice, which incremented validationTrigger for no user action.
+    if (!hasSyncedSchema.current) {
+      hasSyncedSchema.current = true;
+      return;
+    }
+
+    const current = stepperStateRef.current;
+    const isOnTaskList = current.activeId === current.categories.length + 1;
+
+    stepperDispatch({
+      type: 'update/uischema',
+      payload: {
+        state: createStepperContextInitData(
+          {
+            ...StepperProps,
+            // Leaving activeId out lets init recompute the sentinel from the categories this
+            // recompute produced, so a conditional page appearing or disappearing still lands on
+            // the task list rather than on the review page.
+            activeId: isOnTaskList ? undefined : current.activeId,
+          },
+          {
+            visitedIds: new Set([
+              ...persistedVisitedIds,
+              ...(current.categories?.filter((c) => c.isVisited).map((c) => c.id) ?? []),
+            ]),
+            autoPopulatedValues,
+            errors: ctx?.core?.errors,
+          },
+        ),
+      },
+    });
+    // Identity, not JSON.stringify: serializing a 10k-line schema on every keystroke is the stall.
     //eslint-disable-next-line
-  }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema), JSON.stringify(StepperProps.data)]);
+  }, [StepperProps.uischema, StepperProps.schema, StepperProps.data]);
 
   const contextRef = useRef(context);
   contextRef.current = context;
@@ -462,8 +494,23 @@ const collectEmptyRequiredStringErrors = (
   }
 };
 
+let lastRequiredStringErrors: { data: unknown; schema: JsonSchema; errors: ErrorObject[] } | undefined;
+
+/**
+ * Walks the schema for required strings that are present but empty.
+ *
+ * The walk is O(schema) and both the stepper context and the host form ask for the same
+ * data/schema pair on every change, so the most recent result is retained. Data and schema are
+ * replaced rather than mutated on a change, which makes identity a safe key.
+ */
 export const getEmptyRequiredStringErrors = (data: unknown, schema: JsonSchema): ErrorObject[] => {
+  if (lastRequiredStringErrors && lastRequiredStringErrors.data === data && lastRequiredStringErrors.schema === schema) {
+    return lastRequiredStringErrors.errors;
+  }
+
   const errors: ErrorObject[] = [];
   collectEmptyRequiredStringErrors(data, schema, '', '#', errors);
+  lastRequiredStringErrors = { data, schema, errors };
+
   return errors;
 };

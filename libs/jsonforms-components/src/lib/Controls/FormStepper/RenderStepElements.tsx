@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { JsonFormsCellRendererRegistryEntry, JsonFormsRendererRegistryEntry, JsonSchema } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
@@ -18,7 +18,11 @@ export interface StepProps {
   validationTrigger?: number;
 }
 export const RenderStepElements = (props: StepProps): JSX.Element => {
-  const memoizedSchema = useMemo(() => ({ ...props.schema }), [props.schema]);
+  // Passing the schema straight through matters for performance. This used to hand down a shallow
+  // copy, and because the copy is made in a hook it is a brand new object every time the step
+  // changes — which invalidates every identity-keyed cache downstream, including the renderer
+  // lookup JsonForms memoizes on the schema it is given.
+  const memoizedSchema = props.schema;
 
   return (
     <Visible

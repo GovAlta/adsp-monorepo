@@ -399,6 +399,10 @@ export const updateForm = createAsyncThunk(
     const nextData = data ?? form.data;
     const nextFiles = files ?? form.files;
 
+    if (nextData === form.data && nextFiles === form.files) {
+      return { data: nextData, files: nextFiles, errors };
+    }
+
     // Dispatch saving the draft if there is a logged in user with a draft form.
     if (user.user && form.form?.id) {
       const digest = await hashData({ id: form.form.id, data: nextData, files: nextFiles });

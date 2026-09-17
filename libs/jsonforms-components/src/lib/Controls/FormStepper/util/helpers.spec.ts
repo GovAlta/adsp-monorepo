@@ -67,3 +67,38 @@ describe('pickPropertyValues', () => {
     expect(pickPropertyValues(testObj, 'nonExistent')).toEqual([]);
   });
 });
+
+describe('pickPropertyValues caching', () => {
+  const uischema = {
+    type: 'Category',
+    elements: [
+      { type: 'Control', scope: '#/properties/a' },
+      { type: 'VerticalLayout', elements: [{ type: 'Control', scope: '#/properties/b' }] },
+    ],
+  };
+
+  it('returns the same array for repeated calls so downstream identity caches can hold', () => {
+    expect(pickPropertyValues(uischema, 'scope')).toBe(pickPropertyValues(uischema, 'scope'));
+  });
+
+  it('keeps results for different properties apart', () => {
+    expect(pickPropertyValues(uischema, 'scope')).toEqual(['#/properties/a', '#/properties/b']);
+    expect(pickPropertyValues(uischema, 'type')).toContain('Category');
+  });
+
+  it('keeps results for different end types apart', () => {
+    const withDetail = {
+      type: 'Category',
+      elements: [
+        {
+          type: 'ListWithDetail',
+          scope: '#/properties/list',
+          options: { detail: { type: 'Control', scope: '#/properties/inner' } },
+        },
+      ],
+    };
+
+    expect(pickPropertyValues(withDetail, 'scope', 'ListWithDetail')).toEqual(['#/properties/list']);
+    expect(pickPropertyValues(withDetail, 'scope')).toEqual(['#/properties/list', '#/properties/inner']);
+  });
+});

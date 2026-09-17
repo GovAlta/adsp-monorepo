@@ -78,8 +78,42 @@ const hasAnyConditionPropertyValue = (schema: any, rootData: any, basePath: stri
   return paths.length === 0 || paths.some((path) => getDataAt(rootData, splitPath(path)) !== undefined);
 };
 
+// Compiling a subschema is far more expensive than running it, and the `if`/`oneOf` branches of a
+// form definition are stable objects that get revisited on every pass over the schema. Caching per
+// Ajv instance keeps a caller's custom formats and keywords from leaking into another's results.
+const compiledValidators = new WeakMap<Ajv, WeakMap<object, ReturnType<Ajv['compile']>>>();
+
+const getValidator = (ajv: Ajv, schema: any): ReturnType<Ajv['compile']> => {
+  if (schema === null || typeof schema !== 'object') {
+    return ajv.compile(schema);
+  }
+
+  let perInstance = compiledValidators.get(ajv);
+  if (!perInstance) {
+    perInstance = new WeakMap();
+    compiledValidators.set(ajv, perInstance);
+  }
+
+  const cached = perInstance.get(schema);
+  if (cached) {
+    return cached;
+  }
+
+  // A reused instance already holds every $id it has seen, so a definition that repeats one would
+  // now throw where a throwaway instance did not. Fall back rather than change what callers see.
+  let validate: ReturnType<Ajv['compile']>;
+  try {
+    validate = ajv.compile(schema);
+  } catch {
+    validate = new Ajv({ allErrors: true, strict: false }).compile(schema);
+  }
+
+  perInstance.set(schema, validate);
+  return validate;
+};
+
 const compileAndTest = (ajv: Ajv, schema: any, data: any): { valid: boolean; errors?: ErrorObject[] } => {
-  const validate = ajv.compile(schema);
+  const validate = getValidator(ajv, schema);
   const ok = validate(data) as boolean;
   return { valid: ok, errors: validate.errors ?? undefined };
 };
@@ -192,6 +226,55 @@ const collectRequired = (
   return requiredPaths;
 };
 
+type RequiredPathsCache = {
+  rootSchema: unknown;
+  rootData: unknown;
+  strategy: RequiredStrategy;
+  ajv?: Ajv;
+  paths: Set<string>;
+};
+
+let requiredPathsCache: RequiredPathsCache | undefined;
+
+/**
+ * The required-path set depends only on the root schema and the root data, so every control on a
+ * page asks for the very same set. Recomputing it per control meant walking the whole schema — and
+ * compiling every `if`/`oneOf` branch it contains — once for each field on screen, which is the
+ * single most expensive thing a large conditional form does on a keystroke.
+ *
+ * Schema and data are replaced rather than mutated on a change, so identity is a safe key.
+ */
+// A single instance so the compiled-validator cache above survives between renders; a throwaway
+// instance per call would recompile every branch of the schema each time.
+const defaultRequiredAjv = new Ajv({
+  allErrors: true,
+  strict: false,
+});
+
+const getRequiredPaths = (
+  rootSchema: JsonSchema7,
+  rootData: any,
+  strategy: RequiredStrategy,
+  suppliedAjv?: Ajv,
+): Set<string> => {
+  if (
+    requiredPathsCache &&
+    requiredPathsCache.rootSchema === rootSchema &&
+    requiredPathsCache.rootData === rootData &&
+    requiredPathsCache.strategy === strategy &&
+    requiredPathsCache.ajv === suppliedAjv
+  ) {
+    return requiredPathsCache.paths;
+  }
+
+  const ajv = suppliedAjv ?? defaultRequiredAjv;
+
+  const paths = collectRequired(ajv, rootSchema, rootSchema, rootData, '', strategy);
+  requiredPathsCache = { rootSchema, rootData, strategy, ajv: suppliedAjv, paths };
+
+  return paths;
+};
+
 export const isRequiredBySchema = (
   rootSchema: JsonSchema7,
   rootData: any,
@@ -200,16 +283,8 @@ export const isRequiredBySchema = (
 ): boolean => {
   if (!path) return false;
 
-  const ajv =
-    options.ajv ??
-    new Ajv({
-      allErrors: true,
-      strict: false,
-    });
-
   const strategy = options.strategy ?? 'bestMatch';
-
-  const reqSet = collectRequired(ajv, rootSchema, rootSchema, rootData, '', strategy);
+  const reqSet = getRequiredPaths(rootSchema, rootData, strategy, options.ajv);
 
   const dotPath = splitPath(path).join('.');
   return reqSet.has(dotPath);

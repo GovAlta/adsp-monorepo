@@ -22,9 +22,15 @@ const AutoPopulatedProbe = (): JSX.Element => {
   return <div data-testid="auto-populated">{JSON.stringify(ctx?.autoPopulatedData)}</div>;
 };
 
+const capturedJsonForms: { schema?: unknown; ajv?: unknown } = {};
+
 jest.mock('@jsonforms/react', () => ({
   ...jest.requireActual('@jsonforms/react'),
-  JsonForms: () => <AutoPopulatedProbe />,
+  JsonForms: (props: { schema?: unknown; ajv?: unknown }) => {
+    capturedJsonForms.schema = props.schema;
+    capturedJsonForms.ajv = props.ajv;
+    return <AutoPopulatedProbe />;
+  },
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -51,12 +57,12 @@ describe('DraftForm', () => {
     },
   };
 
-  const renderDraftForm = () =>
+  const renderDraftForm = (data: Record<string, unknown> = {}) =>
     render(
       <DraftForm
         definition={definition}
         form={{ id: 'form-1', urn: 'urn:form-1', status: 'Draft' }}
-        data={{}}
+        data={data}
         canSubmit={false}
         showSubmit={false}
         saving={false}
@@ -97,5 +103,32 @@ describe('DraftForm', () => {
 
     // Assert
     expect(JSON.parse(screen.getByTestId('auto-populated').textContent as string)).toEqual([]);
+  });
+
+  it('keeps schema and ajv identity when only form data changes', () => {
+    // Arrange
+    const { rerender } = renderDraftForm({});
+    const schema = capturedJsonForms.schema;
+    const ajv = capturedJsonForms.ajv;
+
+    // Act
+    rerender(
+      <DraftForm
+        definition={definition}
+        form={{ id: 'form-1', urn: 'urn:form-1', status: 'Draft' }}
+        data={{ notes: 'updated' }}
+        canSubmit={false}
+        showSubmit={false}
+        saving={false}
+        submitting={false}
+        onChange={jest.fn()}
+        onSubmit={jest.fn()}
+        onSave={jest.fn()}
+      />,
+    );
+
+    // Assert
+    expect(capturedJsonForms.schema).toBe(schema);
+    expect(capturedJsonForms.ajv).toBe(ajv);
   });
 });
