@@ -205,6 +205,11 @@ export class TimescaleValuesRepository implements ValuesRepository {
     return typeof count === 'string' ? parseInt(count) : count;
   }
 
+  private async getRollupCoverage(interval: MetricInterval): Promise<{ from: Date; to: Date } | null> {
+    const row = await this.knex('metric_interval_rollup_coverage').where({ interval }).first();
+    return row ? { from: new Date(row.covered_from), to: new Date(row.covered_to) } : null;
+  }
+
   /**
    * Pick where interval data is read from.
    *
@@ -212,6 +217,16 @@ export class TimescaleValuesRepository implements ValuesRepository {
    * single contiguous span per interval, so a request reaching outside it falls back to a live
    * aggregate of the raw metrics table. That is slower, but always complete, which is what lets the
    * rollups be populated progressively without the API losing data in the meantime.
+   *
+   * A composed interval's own rollup can never cover its current, still-open period -- a month is
+   * not rolled up until it is over -- so a window ending at "now" always misses on the trailing edge.
+   * Falling all the way back to raw metrics for the whole window then re-pays the cost of however
+   * much of it the rollup already had ready. `composeTrailingGap` borrows the source interval's own
+   * rollup for that gap instead, and only falling back further when that has nothing to offer either.
+   *
+   * `computeAverage` tells the caller whether the table's average has to be derived from sum/count
+   * (a rollup-shaped table never stores one) or can be read directly (the plain live aggregate
+   * computes a true average of the raw rows, which is numerically the same thing).
    */
   private async resolveMetricSource(
     interval: MetricInterval,
@@ -220,17 +235,27 @@ export class TimescaleValuesRepository implements ValuesRepository {
     tenantId: AdspId,
     criteria: MetricCriteria,
     metric?: string,
-  ): Promise<{ table: string | Knex.QueryBuilder; rollup: boolean }> {
-    const coverage = await this.knex('metric_interval_rollup_coverage').where({ interval }).first();
+  ): Promise<{ table: string | Knex.QueryBuilder; rollup: boolean; computeAverage: boolean }> {
+    const coverage = await this.getRollupCoverage(interval);
+    const { intervalMin, intervalMax } = criteria;
 
     const covered =
-      !!coverage &&
-      (!criteria.intervalMin || new Date(coverage.covered_from) <= criteria.intervalMin) &&
-      (!criteria.intervalMax || new Date(coverage.covered_to) >= criteria.intervalMax);
+      !!coverage && (!intervalMin || coverage.from <= intervalMin) && (!intervalMax || coverage.to >= intervalMax);
 
-    return covered
-      ? { table: 'metric_interval_rollups', rollup: true }
-      : { table: this.rawMetricsQuery(interval, namespace, name, tenantId, criteria, metric), rollup: false };
+    if (covered) {
+      return { table: 'metric_interval_rollups', rollup: true, computeAverage: true };
+    }
+
+    const composed = await this.composeTrailingGap(interval, namespace, name, tenantId, criteria, metric, coverage);
+    if (composed) {
+      return { table: composed.as('composed_metric_source'), rollup: false, computeAverage: true };
+    }
+
+    return {
+      table: this.rawMetricsQuery(interval, namespace, name, tenantId, criteria, metric).as('raw_metrics_agg'),
+      rollup: false,
+      computeAverage: false,
+    };
   }
 
   /**
@@ -244,6 +269,11 @@ export class TimescaleValuesRepository implements ValuesRepository {
    * aggregated every row ever recorded for the metric before the rest of the query could trim it
    * back down, hanging on any window reaching into the still-in-progress month. Filtering on
    * `timestamp` directly, before grouping, does not depend on that inference either way.
+   *
+   * `omitAverage` drops the AVG column so the result matches the shape a rollup-sourced part
+   * produces (sum/count, no stored average). Every arm of a UNION has to return the same columns,
+   * and `mergeMetricSourceParts` recomputes the average from the merged sum/count anyway -- an
+   * average of averages across parts that share a bucket would be wrong regardless.
    */
   private rawMetricsQuery(
     interval: MetricInterval,
@@ -252,6 +282,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     tenantId: AdspId,
     criteria: Pick<MetricCriteria, 'intervalMin' | 'intervalMax'>,
     metric?: string,
+    omitAverage = false,
   ): Knex.QueryBuilder {
     const { bucket } = getMetricIntervalDefinition(interval);
 
@@ -286,22 +317,172 @@ export class TimescaleValuesRepository implements ValuesRepository {
         'tenant',
         'metric',
         this.knex.raw('time_bucket(?::interval, timestamp) AS bucket', [bucket]),
-        this.knex.raw('AVG(value) AS avg'),
+        ...(omitAverage ? [] : [this.knex.raw('AVG(value) AS avg')]),
         this.knex.raw('SUM(value) AS sum'),
-        this.knex.raw('MAX(value) AS max'),
-        this.knex.raw('MIN(value) AS min'),
         this.knex.raw('COUNT(value) AS count'),
+        this.knex.raw('MIN(value) AS min'),
+        this.knex.raw('MAX(value) AS max'),
       )
-      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket')
-      .as('raw_metrics_agg');
+      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket');
+  }
+
+  /**
+   * Read a range of one interval's own rollup rows, optionally re-bucketed to a coarser interval's
+   * width.
+   *
+   * Re-bucketing runs the same sum-of-sums, min/max-of-extremes aggregation the rollup job itself
+   * uses to compose one interval from a finer one (`refreshFromRollups` in
+   * `TimescaleMetricIntervalRollupRepository`); the difference is this reads it live instead of
+   * writing the result back, for a tail the coarser interval's own rollup has not reached yet.
+   */
+  private rollupRangeQuery(
+    interval: MetricInterval,
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
+    metric: string | undefined,
+    from: Date,
+    to: Date,
+    asBucket?: string,
+  ): Knex.QueryBuilder {
+    let query = this.knex('metric_interval_rollups').where({ namespace, name, interval });
+
+    if (tenantId) {
+      query = query.where({ tenant: tenantId.toString() });
+    }
+
+    if (metric) {
+      query = query.where({ metric });
+    }
+
+    query = query.where('bucket', '>=', from).where('bucket', '<', to);
+
+    return asBucket
+      ? query
+          .select(
+            'namespace',
+            'name',
+            'tenant',
+            'metric',
+            this.knex.raw('time_bucket(?::interval, bucket) AS bucket', [asBucket]),
+            this.knex.raw('SUM(sum) AS sum'),
+            this.knex.raw('SUM(count) AS count'),
+            this.knex.raw('MIN(min) AS min'),
+            this.knex.raw('MAX(max) AS max'),
+          )
+          .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket')
+      : query.select('namespace', 'name', 'tenant', 'metric', 'bucket', 'sum', 'count', 'min', 'max');
+  }
+
+  /**
+   * Combine time-disjoint parts of one composed read into a single result.
+   *
+   * The parts partition the requested window by source, but the interval's current, still-open
+   * bucket can carry a partial contribution from more than one part -- the borrowed source rollup up
+   * to where it is covered, and raw metrics for whatever sliver isn't -- so the merge re-aggregates
+   * by bucket instead of concatenating.
+   */
+  private mergeMetricSourceParts(parts: Knex.QueryBuilder[]): Knex.QueryBuilder {
+    const [first, ...rest] = parts;
+    const union = rest.length > 0 ? first.unionAll(rest, true) : first;
+
+    return this.knex(union.as('metric_source_parts'))
+      .select(
+        'namespace',
+        'name',
+        'tenant',
+        'metric',
+        'bucket',
+        this.knex.raw('SUM(sum) AS sum'),
+        this.knex.raw('SUM(count) AS count'),
+        this.knex.raw('MIN(min) AS min'),
+        this.knex.raw('MAX(max) AS max'),
+      )
+      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket');
+  }
+
+  /**
+   * Borrow the source interval's rollup for the tail past this interval's own coverage.
+   *
+   * Rollups run finest-first every five minutes, so by the time a composed interval's own coverage
+   * stalls at its current, still-open period, its source has usually already caught up to "now" (or
+   * close to it) on its own coverage. Reading that source's already-aggregated rows for the gap --
+   * re-bucketed up to this interval's width -- costs a handful of rollup rows instead of a live scan
+   * of the raw metrics table. Only whatever the source itself has not reached yet needs a live raw
+   * aggregate, and that is bounded to a slice of one bucket rather than the whole requested window.
+   *
+   * Returns null when there is nothing to borrow from: no source (this is already the finest
+   * interval), no coverage at all yet, or the window also reaches further back than what is covered.
+   * That last case would need the same treatment on the leading edge, which does not arise from a
+   * request reaching into "now" and is not worth the added complexity here -- it is transient (it
+   * closes for good once the initial backfill finishes) where the trailing gap is permanent.
+   */
+  private async composeTrailingGap(
+    interval: MetricInterval,
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
+    criteria: MetricCriteria,
+    metric: string | undefined,
+    coverage: { from: Date; to: Date } | null,
+  ): Promise<Knex.QueryBuilder | null> {
+    const definition = getMetricIntervalDefinition(interval);
+    const { intervalMin, intervalMax } = criteria;
+
+    if (!definition.source || !intervalMax || !coverage || coverage.to >= intervalMax) {
+      return null;
+    }
+
+    if (intervalMin && coverage.from > intervalMin) {
+      return null;
+    }
+
+    const parts = [
+      this.rollupRangeQuery(interval, namespace, name, tenantId, metric, intervalMin ?? coverage.from, coverage.to),
+    ];
+
+    const sourceCoverage = await this.getRollupCoverage(definition.source);
+    const sourceCoveredTo = sourceCoverage && sourceCoverage.to > coverage.to ? sourceCoverage.to : coverage.to;
+    const composedTo = sourceCoveredTo < intervalMax ? sourceCoveredTo : intervalMax;
+
+    if (composedTo > coverage.to) {
+      parts.push(
+        this.rollupRangeQuery(
+          definition.source,
+          namespace,
+          name,
+          tenantId,
+          metric,
+          coverage.to,
+          composedTo,
+          definition.bucket,
+        ),
+      );
+    }
+
+    if (composedTo < intervalMax) {
+      parts.push(
+        this.rawMetricsQuery(
+          interval,
+          namespace,
+          name,
+          tenantId,
+          { intervalMin: composedTo, intervalMax },
+          metric,
+          true,
+        ),
+      );
+    }
+
+    return this.mergeMetricSourceParts(parts);
   }
 
   /**
    * The rollups deliberately store sum and count rather than avg, since an average of averages is
    * not the average. Divide on read so both sources return the same shape.
    */
-  private selectAverage(rollup: boolean) {
-    return rollup ? this.knex.raw('CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg') : 'avg';
+  private selectAverage(computeAverage: boolean) {
+    return computeAverage ? this.knex.raw('CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg') : 'avg';
   }
 
   async readMetrics(
@@ -335,7 +516,13 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup } = await this.resolveMetricSource(criteria.interval, namespace, name, tenantId, criteria);
+    const { table, rollup, computeAverage } = await this.resolveMetricSource(
+      criteria.interval,
+      namespace,
+      name,
+      tenantId,
+      criteria,
+    );
 
     const queryCriteria = {
       namespace,
@@ -349,7 +536,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     let query = this.knex(table)
       .offset(skip)
       .limit(top)
-      .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(rollup))
+      .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(computeAverage))
       .where(queryCriteria);
 
     if (rollup) {
@@ -426,7 +613,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup } = await this.resolveMetricSource(
+    const { table, rollup, computeAverage } = await this.resolveMetricSource(
       criteria.interval,
       namespace,
       name,
@@ -448,7 +635,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     let query = this.knex(table)
       .offset(skip)
       .limit(top)
-      .select('bucket', 'sum', 'min', 'max', 'count', this.selectAverage(rollup))
+      .select('bucket', 'sum', 'min', 'max', 'count', this.selectAverage(computeAverage))
       .where(queryCriteria);
 
     if (rollup) {
@@ -532,23 +719,26 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }
 
     const rows = await query.orderBy('bucket', 'desc');
-    return rows.reduce((metrics, row) => {
-      const metric = metrics[row.metric] || { name: row.metric, values: [] };
-      metric.values.push({
-        interval: new Date(row.bucket),
-        sum: row.sum,
-        avg: row.avg,
-        min: row.min,
-        max: row.max,
-        count: row.count,
-        tenantId: row.tenant,
-      });
+    return rows.reduce(
+      (metrics, row) => {
+        const metric = metrics[row.metric] || { name: row.metric, values: [] };
+        metric.values.push({
+          interval: new Date(row.bucket),
+          sum: row.sum,
+          avg: row.avg,
+          min: row.min,
+          max: row.max,
+          count: row.count,
+          tenantId: row.tenant,
+        });
 
-      return {
-        ...metrics,
-        [row.metric]: metric,
-      };
-    }, {} as Record<string, PlatformMetric>);
+        return {
+          ...metrics,
+          [row.metric]: metric,
+        };
+      },
+      {} as Record<string, PlatformMetric>,
+    );
   }
 
   async writeMetric(
