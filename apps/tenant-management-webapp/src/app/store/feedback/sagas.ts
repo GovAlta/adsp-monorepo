@@ -231,8 +231,33 @@ function* deleteFeedbackSite(action: DeleteFeedbackSiteAction) {
 }
 
 interface MetricResponse {
-  values: { sum: string; avg: string; min: string }[];
+  values: { sum: string; avg: string; min: string; count: string }[];
 }
+
+/**
+ * Fold every bucket the metrics API returned into one figure.
+ *
+ * The API serves whole intervals only and never the one still in progress, so a rolling seven-day
+ * number has to be folded back up from the days it spans rather than read off a single bucket --
+ * this used to ask for one weekly bucket and take `values[0]`, which the current, part-finished week
+ * no longer answers.
+ *
+ * Sum and count fold by addition and min by comparison. The average is taken as sum/count for the
+ * same reason the rollups store those rather than an average: averaging the buckets' own averages
+ * would weight a quiet day the same as a busy one.
+ */
+const foldBuckets = (metric?: MetricResponse) =>
+  (metric?.values ?? []).reduce(
+    (folded, value) => {
+      const min = parseFloat(value?.min);
+      return {
+        sum: folded.sum + (parseFloat(value?.sum) || 0),
+        count: folded.count + (parseInt(value?.count) || 0),
+        min: isNaN(min) ? folded.min : folded.min === null ? min : Math.min(folded.min, min),
+      };
+    },
+    { sum: 0, count: 0, min: null as number | null }
+  );
 
 export function* fetchFeedbackMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
@@ -247,25 +272,27 @@ export function* fetchFeedbackMetrics(): SagaIterator {
 
       const { data }: { data: Record<string, MetricResponse> } = yield call(
         axios.get,
-        `${baseUrl}/value/v1/feedback-service/values/feedback/metrics?interval=weekly&criteria=${criteria}`,
+        `${baseUrl}/value/v1/feedback-service/values/feedback/metrics?interval=daily&criteria=${criteria}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      const isSiteMetric = (name: string, suffix: string) => name.split(':').length === 3 && name.endsWith(suffix);
+
       const siteCounts = Object.entries(data)
-        .filter(([name]) => name.split(':').length === 3 && name.endsWith(':count'))
+        .filter(([name]) => isSiteMetric(name, ':count'))
         .reduce(
           (counts, [name, value]) => ({
             ...counts,
-            [`${name.replace(':count', '')}`]: parseInt(value?.values[0]?.sum || '0'),
+            [`${name.replace(':count', '')}`]: foldBuckets(value).sum,
           }),
           {} as Record<string, number>
         );
       const siteRatings = Object.entries(data)
-        .filter(([name]) => name.split(':').length === 3 && name.endsWith(':rating'))
+        .filter(([name]) => isSiteMetric(name, ':rating'))
         .reduce((ratings, [name, value]) => {
-          const rating = value?.values[0]?.avg;
-          if (rating) {
-            ratings.push([name.replace(':rating', ''), parseFloat(rating)]);
+          const { sum, count } = foldBuckets(value);
+          if (count > 0) {
+            ratings.push([name.replace(':rating', ''), sum / count]);
           }
           return ratings;
         }, [] as [string, number][]);
@@ -273,15 +300,14 @@ export function* fetchFeedbackMetrics(): SagaIterator {
       // `min`. Taking Math.min over the site averages instead returns the overall average whenever
       // a tenant has a single site, which is why this card used to mirror the average card.
       const siteRatingMins = Object.entries(data)
-        .filter(([name]) => name.split(':').length === 3 && name.endsWith(':rating'))
+        .filter(([name]) => isSiteMetric(name, ':rating'))
         .reduce((mins, [, value]) => {
-          const min = value?.values[0]?.min;
-          if (min !== undefined && min !== null) {
-            mins.push(parseFloat(min));
+          const { min } = foldBuckets(value);
+          if (min !== null) {
+            mins.push(min);
           }
           return mins;
-        }, [] as number[])
-        .filter((min) => !isNaN(min));
+        }, [] as number[]);
       yield put(
         fetchFeedbackMetricsSuccess({
           feedbackCount: Object.values(siteCounts).reduce((count, value) => count + value, 0),

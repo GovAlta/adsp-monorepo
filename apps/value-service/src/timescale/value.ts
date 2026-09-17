@@ -205,9 +205,44 @@ export class TimescaleValuesRepository implements ValuesRepository {
     return typeof count === 'string' ? parseInt(count) : count;
   }
 
-  private async getRollupCoverage(interval: MetricInterval): Promise<{ from: Date; to: Date } | null> {
-    const row = await this.knex('metric_interval_rollup_coverage').where({ interval }).first();
-    return row ? { from: new Date(row.covered_from), to: new Date(row.covered_to) } : null;
+  /**
+   * Resolve the rollup coverage span and the effective end of the window in one round trip.
+   *
+   * `intervalMax` is snapped back to the start of the bucket it lands in, so the period still in
+   * progress is left out and only whole ones are served. That is what lets coverage satisfy a read
+   * reaching up to "now": a composed interval's rollup can never contain its own open bucket, so a
+   * window asking for one could never be fully covered, and every such read fell back to a live
+   * aggregate of the entire range.
+   *
+   * The snap goes through `time_bucket` rather than being computed here because `extendCoverage`
+   * snaps `covered_to` with the same function. Both sides then describe a boundary the database
+   * agrees on, which a calendar month (not a fixed width) and a week (whose origin is not midnight
+   * Sunday) would otherwise make easy to get subtly wrong.
+   */
+  private async resolveMetricWindow(
+    interval: MetricInterval,
+    intervalMax: Date,
+  ): Promise<{ coverage: { from: Date; to: Date } | null; intervalMax: Date }> {
+    const { bucket } = getMetricIntervalDefinition(interval);
+
+    const result = await this.knex.raw<{
+      rows: { interval_max: Date; covered_from: Date | null; covered_to: Date | null }[];
+    }>(
+      `SELECT time_bucket(?::interval, ?::timestamptz) AS interval_max, c.covered_from, c.covered_to
+       FROM (SELECT 1) AS anchor
+       LEFT JOIN metric_interval_rollup_coverage c ON c."interval" = ?`,
+      [bucket, intervalMax, interval],
+    );
+
+    const [row] = result.rows;
+
+    return {
+      intervalMax: new Date(row.interval_max),
+      coverage:
+        row.covered_from && row.covered_to
+          ? { from: new Date(row.covered_from), to: new Date(row.covered_to) }
+          : null,
+    };
   }
 
   /**
@@ -218,15 +253,9 @@ export class TimescaleValuesRepository implements ValuesRepository {
    * aggregate of the raw metrics table. That is slower, but always complete, which is what lets the
    * rollups be populated progressively without the API losing data in the meantime.
    *
-   * A composed interval's own rollup can never cover its current, still-open period -- a month is
-   * not rolled up until it is over -- so a window ending at "now" always misses on the trailing edge.
-   * Falling all the way back to raw metrics for the whole window then re-pays the cost of however
-   * much of it the rollup already had ready. `composeTrailingGap` borrows the source interval's own
-   * rollup for that gap instead, and only falling back further when that has nothing to offer either.
-   *
-   * `computeAverage` tells the caller whether the table's average has to be derived from sum/count
-   * (a rollup-shaped table never stores one) or can be read directly (the plain live aggregate
-   * computes a true average of the raw rows, which is numerically the same thing).
+   * With the window snapped to whole buckets that fallback is no longer the common case. It stays
+   * reachable while the backfill is still walking history back, and for the few minutes after a
+   * period closes before the job composes it, rather than on every read that ends at "now".
    */
   private async resolveMetricSource(
     interval: MetricInterval,
@@ -235,27 +264,19 @@ export class TimescaleValuesRepository implements ValuesRepository {
     tenantId: AdspId,
     criteria: MetricCriteria,
     metric?: string,
-  ): Promise<{ table: string | Knex.QueryBuilder; rollup: boolean; computeAverage: boolean }> {
-    const coverage = await this.getRollupCoverage(interval);
-    const { intervalMin, intervalMax } = criteria;
+  ): Promise<{ table: string | Knex.QueryBuilder; rollup: boolean; intervalMax: Date }> {
+    const { coverage, intervalMax } = await this.resolveMetricWindow(interval, criteria.intervalMax ?? new Date());
+    const { intervalMin } = criteria;
 
-    const covered =
-      !!coverage && (!intervalMin || coverage.from <= intervalMin) && (!intervalMax || coverage.to >= intervalMax);
+    const covered = !!coverage && (!intervalMin || coverage.from <= intervalMin) && coverage.to >= intervalMax;
 
-    if (covered) {
-      return { table: 'metric_interval_rollups', rollup: true, computeAverage: true };
-    }
-
-    const composed = await this.composeTrailingGap(interval, namespace, name, tenantId, criteria, metric, coverage);
-    if (composed) {
-      return { table: composed.as('composed_metric_source'), rollup: false, computeAverage: true };
-    }
-
-    return {
-      table: this.rawMetricsQuery(interval, namespace, name, tenantId, criteria, metric).as('raw_metrics_agg'),
-      rollup: false,
-      computeAverage: false,
-    };
+    return covered
+      ? { table: 'metric_interval_rollups', rollup: true, intervalMax }
+      : {
+          table: this.rawMetricsQuery(interval, namespace, name, tenantId, { ...criteria, intervalMax }, metric),
+          rollup: false,
+          intervalMax,
+        };
   }
 
   /**
@@ -270,10 +291,14 @@ export class TimescaleValuesRepository implements ValuesRepository {
    * back down, hanging on any window reaching into the still-in-progress month. Filtering on
    * `timestamp` directly, before grouping, does not depend on that inference either way.
    *
-   * `omitAverage` drops the AVG column so the result matches the shape a rollup-sourced part
-   * produces (sum/count, no stored average). Every arm of a UNION has to return the same columns,
-   * and `mergeMetricSourceParts` recomputes the average from the merged sum/count anyway -- an
-   * average of averages across parts that share a bucket would be wrong regardless.
+   * `criteria.intervalMax` arrives snapped to a bucket boundary and only buckets starting before it
+   * are served, so every row belonging to one of them falls before it too and the scan needs no
+   * allowance past the bound.
+   *
+   * Deliberately synchronous. A knex builder is thenable, so returning one from an `async` function
+   * hands it to the promise machinery, which executes the query and resolves to its rows instead --
+   * the builder has to reach its caller by a plain return or wrapped in an object, never as a bare
+   * awaited value.
    */
   private rawMetricsQuery(
     interval: MetricInterval,
@@ -282,7 +307,6 @@ export class TimescaleValuesRepository implements ValuesRepository {
     tenantId: AdspId,
     criteria: Pick<MetricCriteria, 'intervalMin' | 'intervalMax'>,
     metric?: string,
-    omitAverage = false,
   ): Knex.QueryBuilder {
     const { bucket } = getMetricIntervalDefinition(interval);
 
@@ -300,14 +324,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }
 
     if (criteria.intervalMax) {
-      // A bucket starting at or before intervalMax can still hold rows up to one bucket width past
-      // it, so the scan has to reach that far or it drops the tail of that bucket. The caller trims
-      // back to the exact window afterward by filtering on the bucket this computes.
-      query = query.where(
-        'timestamp',
-        '<',
-        this.knex.raw('?::timestamptz + ?::interval', [criteria.intervalMax, bucket]),
-      );
+      query = query.where('timestamp', '<', criteria.intervalMax);
     }
 
     return query
@@ -317,172 +334,22 @@ export class TimescaleValuesRepository implements ValuesRepository {
         'tenant',
         'metric',
         this.knex.raw('time_bucket(?::interval, timestamp) AS bucket', [bucket]),
-        ...(omitAverage ? [] : [this.knex.raw('AVG(value) AS avg')]),
+        this.knex.raw('AVG(value) AS avg'),
         this.knex.raw('SUM(value) AS sum'),
         this.knex.raw('COUNT(value) AS count'),
         this.knex.raw('MIN(value) AS min'),
         this.knex.raw('MAX(value) AS max'),
       )
-      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket');
-  }
-
-  /**
-   * Read a range of one interval's own rollup rows, optionally re-bucketed to a coarser interval's
-   * width.
-   *
-   * Re-bucketing runs the same sum-of-sums, min/max-of-extremes aggregation the rollup job itself
-   * uses to compose one interval from a finer one (`refreshFromRollups` in
-   * `TimescaleMetricIntervalRollupRepository`); the difference is this reads it live instead of
-   * writing the result back, for a tail the coarser interval's own rollup has not reached yet.
-   */
-  private rollupRangeQuery(
-    interval: MetricInterval,
-    namespace: string,
-    name: string,
-    tenantId: AdspId,
-    metric: string | undefined,
-    from: Date,
-    to: Date,
-    asBucket?: string,
-  ): Knex.QueryBuilder {
-    let query = this.knex('metric_interval_rollups').where({ namespace, name, interval });
-
-    if (tenantId) {
-      query = query.where({ tenant: tenantId.toString() });
-    }
-
-    if (metric) {
-      query = query.where({ metric });
-    }
-
-    query = query.where('bucket', '>=', from).where('bucket', '<', to);
-
-    return asBucket
-      ? query
-          .select(
-            'namespace',
-            'name',
-            'tenant',
-            'metric',
-            this.knex.raw('time_bucket(?::interval, bucket) AS bucket', [asBucket]),
-            this.knex.raw('SUM(sum) AS sum'),
-            this.knex.raw('SUM(count) AS count'),
-            this.knex.raw('MIN(min) AS min'),
-            this.knex.raw('MAX(max) AS max'),
-          )
-          .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket')
-      : query.select('namespace', 'name', 'tenant', 'metric', 'bucket', 'sum', 'count', 'min', 'max');
-  }
-
-  /**
-   * Combine time-disjoint parts of one composed read into a single result.
-   *
-   * The parts partition the requested window by source, but the interval's current, still-open
-   * bucket can carry a partial contribution from more than one part -- the borrowed source rollup up
-   * to where it is covered, and raw metrics for whatever sliver isn't -- so the merge re-aggregates
-   * by bucket instead of concatenating.
-   */
-  private mergeMetricSourceParts(parts: Knex.QueryBuilder[]): Knex.QueryBuilder {
-    const [first, ...rest] = parts;
-    const union = rest.length > 0 ? first.unionAll(rest, true) : first;
-
-    return this.knex(union.as('metric_source_parts'))
-      .select(
-        'namespace',
-        'name',
-        'tenant',
-        'metric',
-        'bucket',
-        this.knex.raw('SUM(sum) AS sum'),
-        this.knex.raw('SUM(count) AS count'),
-        this.knex.raw('MIN(min) AS min'),
-        this.knex.raw('MAX(max) AS max'),
-      )
-      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket');
-  }
-
-  /**
-   * Borrow the source interval's rollup for the tail past this interval's own coverage.
-   *
-   * Rollups run finest-first every five minutes, so by the time a composed interval's own coverage
-   * stalls at its current, still-open period, its source has usually already caught up to "now" (or
-   * close to it) on its own coverage. Reading that source's already-aggregated rows for the gap --
-   * re-bucketed up to this interval's width -- costs a handful of rollup rows instead of a live scan
-   * of the raw metrics table. Only whatever the source itself has not reached yet needs a live raw
-   * aggregate, and that is bounded to a slice of one bucket rather than the whole requested window.
-   *
-   * Returns null when there is nothing to borrow from: no source (this is already the finest
-   * interval), no coverage at all yet, or the window also reaches further back than what is covered.
-   * That last case would need the same treatment on the leading edge, which does not arise from a
-   * request reaching into "now" and is not worth the added complexity here -- it is transient (it
-   * closes for good once the initial backfill finishes) where the trailing gap is permanent.
-   */
-  private async composeTrailingGap(
-    interval: MetricInterval,
-    namespace: string,
-    name: string,
-    tenantId: AdspId,
-    criteria: MetricCriteria,
-    metric: string | undefined,
-    coverage: { from: Date; to: Date } | null,
-  ): Promise<Knex.QueryBuilder | null> {
-    const definition = getMetricIntervalDefinition(interval);
-    const { intervalMin, intervalMax } = criteria;
-
-    if (!definition.source || !intervalMax || !coverage || coverage.to >= intervalMax) {
-      return null;
-    }
-
-    if (intervalMin && coverage.from > intervalMin) {
-      return null;
-    }
-
-    const parts = [
-      this.rollupRangeQuery(interval, namespace, name, tenantId, metric, intervalMin ?? coverage.from, coverage.to),
-    ];
-
-    const sourceCoverage = await this.getRollupCoverage(definition.source);
-    const sourceCoveredTo = sourceCoverage && sourceCoverage.to > coverage.to ? sourceCoverage.to : coverage.to;
-    const composedTo = sourceCoveredTo < intervalMax ? sourceCoveredTo : intervalMax;
-
-    if (composedTo > coverage.to) {
-      parts.push(
-        this.rollupRangeQuery(
-          definition.source,
-          namespace,
-          name,
-          tenantId,
-          metric,
-          coverage.to,
-          composedTo,
-          definition.bucket,
-        ),
-      );
-    }
-
-    if (composedTo < intervalMax) {
-      parts.push(
-        this.rawMetricsQuery(
-          interval,
-          namespace,
-          name,
-          tenantId,
-          { intervalMin: composedTo, intervalMax },
-          metric,
-          true,
-        ),
-      );
-    }
-
-    return this.mergeMetricSourceParts(parts);
+      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket')
+      .as('raw_metrics_agg');
   }
 
   /**
    * The rollups deliberately store sum and count rather than avg, since an average of averages is
    * not the average. Divide on read so both sources return the same shape.
    */
-  private selectAverage(computeAverage: boolean) {
-    return computeAverage ? this.knex.raw('CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg') : 'avg';
+  private selectAverage(rollup: boolean) {
+    return rollup ? this.knex.raw('CASE WHEN count > 0 THEN sum / count ELSE NULL END as avg') : 'avg';
   }
 
   async readMetrics(
@@ -516,7 +383,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup, computeAverage } = await this.resolveMetricSource(
+    const { table, rollup, intervalMax } = await this.resolveMetricSource(
       criteria.interval,
       namespace,
       name,
@@ -536,16 +403,17 @@ export class TimescaleValuesRepository implements ValuesRepository {
     let query = this.knex(table)
       .offset(skip)
       .limit(top)
-      .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(computeAverage))
+      .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(rollup))
       .where(queryCriteria);
 
     if (rollup) {
       query = query.where({ interval: criteria.interval });
     }
 
-    if (criteria.intervalMax) {
-      query = query.where('bucket', '<=', criteria.intervalMax);
-    }
+    // Snapped to a bucket boundary and exclusive, so the period still in progress is left out: a
+    // partial total is not comparable with the whole ones beside it, and asking only for whole ones
+    // is what keeps the window inside what coverage can satisfy.
+    query = query.where('bucket', '<', intervalMax);
 
     if (criteria.intervalMin) {
       query = query.where('bucket', '>=', criteria.intervalMin);
@@ -578,6 +446,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           after,
           next: encodeNext(rows.length, top, skip),
           size: rows.length,
+          intervalMax,
         },
       },
     );
@@ -613,7 +482,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup, computeAverage } = await this.resolveMetricSource(
+    const { table, rollup, intervalMax } = await this.resolveMetricSource(
       criteria.interval,
       namespace,
       name,
@@ -635,16 +504,17 @@ export class TimescaleValuesRepository implements ValuesRepository {
     let query = this.knex(table)
       .offset(skip)
       .limit(top)
-      .select('bucket', 'sum', 'min', 'max', 'count', this.selectAverage(computeAverage))
+      .select('bucket', 'sum', 'min', 'max', 'count', this.selectAverage(rollup))
       .where(queryCriteria);
 
     if (rollup) {
       query = query.where({ interval: criteria.interval });
     }
 
-    if (criteria.intervalMax) {
-      query = query.where('bucket', '<=', criteria.intervalMax);
-    }
+    // Snapped to a bucket boundary and exclusive, so the period still in progress is left out: a
+    // partial total is not comparable with the whole ones beside it, and asking only for whole ones
+    // is what keeps the window inside what coverage can satisfy.
+    query = query.where('bucket', '<', intervalMax);
 
     if (criteria.intervalMin) {
       query = query.where('bucket', '>=', criteria.intervalMin);
@@ -665,6 +535,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         after,
         next: encodeNext(rows.length, top, skip),
         size: rows.length,
+        intervalMax,
       },
     };
   }
@@ -702,13 +573,16 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
+    const { intervalMax } = await this.resolveMetricWindow(criteria.interval, criteria.intervalMax ?? new Date());
+
     let query = this.knex('metric_interval_rollups')
       .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(true), 'tenant')
       .where({ namespace, name, interval: criteria.interval });
 
-    if (criteria.intervalMax) {
-      query = query.where('bucket', '<=', criteria.intervalMax);
-    }
+    // Snapped to a bucket boundary and exclusive, so the period still in progress is left out: a
+    // partial total is not comparable with the whole ones beside it, and asking only for whole ones
+    // is what keeps the window inside what coverage can satisfy.
+    query = query.where('bucket', '<', intervalMax);
 
     if (criteria.intervalMin) {
       query = query.where('bucket', '>=', criteria.intervalMin);
