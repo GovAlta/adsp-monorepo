@@ -40,13 +40,15 @@ const uischema = {
 // targeted. Standing in for one control lets a test reach that call the same way.
 let goToPage: (id: number, scope?: string) => void;
 
+const CaptureNavigationRenderer = () => {
+  goToPage = (React.useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps).goToPage;
+  return null;
+};
+
 const captureNavigation: JsonFormsRendererRegistryEntry = {
   tester: (element: UISchemaElement) =>
     (element as UISchemaElement & { scope?: string })?.scope === '#/properties/lastName' ? 100 : -1,
-  renderer: () => {
-    goToPage = (React.useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps).goToPage;
-    return null;
-  },
+  renderer: CaptureNavigationRenderer,
 };
 
 const renderForm = () =>

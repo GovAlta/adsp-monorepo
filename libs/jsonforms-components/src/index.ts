@@ -84,6 +84,7 @@ import GoACalloutControl, { GoACalloutControlTester, CalloutReviewControl } from
 import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
 import { PhoneNumberWithTypeReviewControl } from './lib/Controls/PhoneNumber/PhoneNumberWithTypeReviewControl';
 import { GoAPrimitiveArrayRenderer } from './lib/Controls';
+import { memoizeRendererTesters } from './lib/util/memoizeTester';
 
 export * from './lib/Context';
 export * from './lib/common';
@@ -92,8 +93,6 @@ export * from './lib/Controls';
 export * from './lib/util/registerOptions';
 export * from './lib/util/autoPopulate';
 export * from './lib/util/memoizeTester';
-
-import { memoizeRendererTesters } from './lib/util/memoizeTester';
 
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
