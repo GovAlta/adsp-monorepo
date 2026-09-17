@@ -374,7 +374,7 @@
     "vite": "8.0.16",
     "launch-editor": "2.14.1",
     "shell-quote": "1.10.0",
-    "react-router": "6.30.4",
+    "react-router": "6.30.6",
     "esbuild": "0.28.1",
     "postcss": "8.5.25",
     "immutable": "4.3.9",
