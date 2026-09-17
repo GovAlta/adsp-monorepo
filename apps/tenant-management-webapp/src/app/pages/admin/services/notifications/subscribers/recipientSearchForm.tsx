@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 // Long enough that a search is not run on every keystroke, short enough that the results feel like
 // they follow the typing.
-export const SEARCH_DEBOUNCE_MS = 400;
+export const SEARCH_DEBOUNCE_MS = 800;
 
 interface RecipientSearchFormProps {
   searchValue: string;
