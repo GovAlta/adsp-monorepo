@@ -37,16 +37,16 @@ describe('Notifications page', () => {
         <MemoryRouter>
           <Notifications />
         </MemoryRouter>
-      </Provider>
+      </Provider>,
     );
 
-  it('renders a tab for each notification section, labelling the recipient tab as Registered recipients', () => {
+  it('renders a tab for each notification section, labelling the recipient tab as Recipient registry', () => {
     const { getByTestId } = renderNotifications();
 
     expect(getByTestId('tab-btn-0')).toHaveTextContent('Overview');
     expect(getByTestId('tab-btn-1')).toHaveTextContent('Notification types');
     expect(getByTestId('tab-btn-2')).toHaveTextContent('Subscriptions');
-    expect(getByTestId('tab-btn-3')).toHaveTextContent('Registered recipients');
+    expect(getByTestId('tab-btn-3')).toHaveTextContent('Recipient registry');
   });
 
   it('shows the recipient registry when its tab is selected', () => {
