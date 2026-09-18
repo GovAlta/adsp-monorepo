@@ -1,9 +1,10 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import type { Subscriber, SubscriberSort, SubscriberSortColumn } from '@store/subscription/models';
 import { SUBSCRIBER_COLUMN_LABELS, SUBSCRIBER_SORT_COLUMNS } from '@store/subscription/models';
 import { GoabBadge, GoabTable, GoabTableSortHeader } from '@abgov/react-components';
 import { GoabTableOnSortDetail, GoabTableSortDirection } from '@abgov/ui-components-common';
 import { phoneWrapper } from '@lib/wrappers';
+import { hideDecorativeIcons } from '@lib/hideDecorativeIcons';
 import styled from 'styled-components';
 import { getChannelAddress, isVerified } from './recipient';
 
@@ -37,6 +38,9 @@ export const SubscriberList: FunctionComponent<SubscriberListProps> = ({
     }
   };
 
+  // Each header's own text already names the column, so its sort-direction arrow is decorative.
+  useEffect(() => hideDecorativeIcons('goa-table-sort-header'), []);
+
   return (
     <RegistryTable>
       <GoabTable width="100%" onSort={handleSort} testId="recipient-registry-table">
@@ -68,6 +72,7 @@ export const SubscriberList: FunctionComponent<SubscriberListProps> = ({
                   <SelectButton
                     type="button"
                     aria-pressed={subscriber.id === selectedId}
+                    aria-label={subscriber.addressAs || getChannelAddress(subscriber, 'email') || 'Unnamed recipient'}
                     data-testid={`recipient-select-${subscriber.id}`}
                     onClick={(e) => {
                       e.stopPropagation();

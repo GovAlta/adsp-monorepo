@@ -1,5 +1,6 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { GoabIconButton } from '@abgov/react-components';
+import { hideDecorativeIcons } from '@lib/hideDecorativeIcons';
 import styled from 'styled-components';
 
 interface RecipientPaginationProps {
@@ -22,6 +23,9 @@ export const RecipientPagination: FunctionComponent<RecipientPaginationProps> = 
 }) => {
   const first = shownCount > 0 ? pageIndex * pageSize + 1 : 0;
   const last = pageIndex * pageSize + shownCount;
+
+  // Each button already carries its own aria-label, so the chevron glyph inside it is decorative.
+  useEffect(() => hideDecorativeIcons('[testid="recipient-page-previous"], [testid="recipient-page-next"]'), []);
 
   return (
     <PaginationRow>

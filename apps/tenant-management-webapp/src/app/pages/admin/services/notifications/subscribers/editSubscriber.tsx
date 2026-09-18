@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { emailError, smsError } from '@lib/inputValidation';
+import { hideDecorativeIcons } from '@lib/hideDecorativeIcons';
 import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface NotificationTypeFormProps {
@@ -61,6 +62,9 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
     setAddress(subscriber?.addressAs || '');
   }, [subscriber]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The field's trailingIconAriaLabel already names the clear control, so its icon is decorative.
+  useEffect(() => hideDecorativeIcons('[testid="contact-sms-input"]'), []);
 
   function getChannelIndex(subscriber, type) {
     const channels = subscriber?.channels;
@@ -209,6 +213,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                     if (detail.value) setPhone(detail.value);
                   }}
                   trailingIcon="close"
+                  trailingIconAriaLabel="Clear phone number"
                   onTrailingIconClick={() => {
                     setPhone('');
                   }}

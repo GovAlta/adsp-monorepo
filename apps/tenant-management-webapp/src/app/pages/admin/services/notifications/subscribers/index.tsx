@@ -15,6 +15,7 @@ import { SubscriberModalForm } from './editSubscriber';
 import { RecipientDetails } from './recipientDetails';
 import { RecipientPagination } from './recipientPagination';
 import { useHasRole } from '../subscription/useHasRole';
+import { hideDecorativeIcons } from '@lib/hideDecorativeIcons';
 
 export const Subscribers: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -52,6 +53,9 @@ export const Subscribers: FunctionComponent = () => {
       pageCursors.current[pageIndex + 1] = next;
     }
   }, [next, pageIndex]);
+
+  // The button's own text already names the action, so its leading icon is purely decorative.
+  useEffect(() => hideDecorativeIcons('[testid="add-subscriber"]'), []);
 
   // The selected recipient is read back out of the results so that the details pane shows the
   // edited values as soon as the list holds them.

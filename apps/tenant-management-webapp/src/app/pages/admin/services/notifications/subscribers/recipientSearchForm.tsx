@@ -2,6 +2,7 @@ import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
 import { GoabButton, GoabInput } from '@abgov/react-components';
 import { GoabInputOnChangeDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 import { useDebounce } from '@lib/useDebounce';
+import { hideDecorativeIcons } from '@lib/hideDecorativeIcons';
 import styled from 'styled-components';
 
 // Long enough that a search is not run on every keystroke, short enough that the results feel like
@@ -43,6 +44,10 @@ export const RecipientSearchForm: FunctionComponent<RecipientSearchFormProps> = 
   }, [searchValue]);
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS) as string;
+
+  // The field's own aria-label and the clear icon's trailingIconAriaLabel already name these
+  // controls, so the search/close icons rendered beside them are purely decorative.
+  useEffect(() => hideDecorativeIcons('[testid="recipient-search-input"]'), []);
 
   useEffect(() => {
     if (debouncedSearch !== committed.current) {
