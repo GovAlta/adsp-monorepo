@@ -60,7 +60,7 @@ describe('NotificationTypes Page', () => {
               },
             },
           ],
-          subscriberRoles: [],
+          subscriberRoles: ['application-reviewer', 'anonymousRead'],
           id: 'notificationId',
           publicSubscribe: false,
         },
@@ -103,6 +103,9 @@ describe('NotificationTypes Page', () => {
           publicSubscribe: false,
           manageSubscribe: false,
           addressPath: '/payload/email',
+          bccPath: '/payload/bcc',
+          ccPath: '/payload/cc',
+          attachmentPath: '/payload/attachments',
         },
         configuredAddressNotificationId: {
           name: 'Configured address notification',
@@ -235,8 +238,8 @@ describe('NotificationTypes Page', () => {
     const search = baseElement.querySelector("goa-input[testId='notification-type-search']");
     fireEvent(
       search,
-      new CustomEvent('_change', {
-        detail: { value: 'anotherNotificationId' },
+      new CustomEvent('_keyPress', {
+        detail: { value: 'anotherNotificationId', key: 'Enter' },
       }),
     );
 
@@ -254,10 +257,13 @@ describe('NotificationTypes Page', () => {
   });
 
   it('shows subscribed recipients section for subscriber notification types', () => {
-    const { getByText } = renderNotificationTypes('/types/notificationId');
+    const { getByText, queryByText } = renderNotificationTypes('/types/notificationId');
 
     expect(getByText('Recipient Strategy:')).toBeTruthy();
     expect(getByText('Subscribers')).toBeTruthy();
+    expect(getByText('Subscriber roles:')).toBeTruthy();
+    expect(getByText('application-reviewer')).toBeTruthy();
+    expect(queryByText('anonymousRead')).toBeFalsy();
     expect(getByText('Subscribed recipients')).toBeTruthy();
     expect(getByText('Description')).toBeTruthy();
     expect(getByText('Test user')).toBeTruthy();
@@ -276,7 +282,14 @@ describe('NotificationTypes Page', () => {
     const { getByText, queryByText } = renderNotificationTypes('/types/eventAddressNotificationId');
 
     expect(getByText('Strategy: From triggering event')).toBeTruthy();
+    expect(getByText('Contact:')).toBeTruthy();
     expect(getByText('/payload/email')).toBeTruthy();
+    expect(getByText('Bcc:')).toBeTruthy();
+    expect(getByText('/payload/bcc')).toBeTruthy();
+    expect(getByText('Cc:')).toBeTruthy();
+    expect(getByText('/payload/cc')).toBeTruthy();
+    expect(getByText('Attachment:')).toBeTruthy();
+    expect(getByText('/payload/attachments')).toBeTruthy();
     expect(queryByText('Subscribed recipients')).toBeFalsy();
   });
 
@@ -315,6 +328,8 @@ describe('NotificationTypes Page', () => {
 
     const deleteAction = actions.find((action) => action.type === DELETE_NOTIFICATION_TYPE);
     expect(deleteAction).toBeTruthy();
+    expect(baseElement.querySelector("goa-table[testId='notification-types-table']")).not.toBeNull();
+    expect(baseElement.querySelector("goa-button[testId='back-to-notification-types']")).toBeNull();
   });
 
   it('cancels deleting a notification type', async () => {

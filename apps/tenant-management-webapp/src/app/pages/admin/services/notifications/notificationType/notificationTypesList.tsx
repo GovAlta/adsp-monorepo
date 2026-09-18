@@ -1,8 +1,8 @@
 import React, { FunctionComponent } from 'react';
-import { GoabFormItem, GoabInput, GoabTable } from '@abgov/react-components';
-import type { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabTable } from '@abgov/react-components';
 import { NotificationItem } from '@store/notification/models';
 import styled from 'styled-components';
+import { NotificationSearchForm } from '../notificationSearchForm';
 
 interface NotificationTypesListProps {
   searchTerm: string;
@@ -38,16 +38,17 @@ export const NotificationTypesList: FunctionComponent<NotificationTypesListProps
 }) => {
   return (
     <NotificationTypesListLayout>
-      <GoabFormItem label="Search notification types">
-        <GoabInput
-          size="compact"
-          name="notification-type-search"
-          testId="notification-type-search"
-          width="100%"
-          value={searchTerm}
-          onChange={(detail: GoabInputOnChangeDetail) => onSearchChange(detail.value)}
-        />
-      </GoabFormItem>
+      <NotificationSearchForm
+        searchValue={searchTerm}
+        onSearch={onSearchChange}
+        onReset={() => onSearchChange('')}
+        label="Search notification types"
+        name="notification-type-search"
+        inputTestId="notification-type-search"
+        resetButtonTestId="notification-type-search-reset-button"
+        ariaLabel="Search notification types by name, type ID or description"
+        placeholder="Search by name, type ID or description..."
+      />
       <GoabTable testId="notification-types-table" width="100%">
         <thead>
           <tr>

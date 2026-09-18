@@ -248,25 +248,17 @@ export const NotificationTypeDetailLayout = styled.div`
 export const NotificationTypeSummarySection = styled.section`
   border: 1px solid #dcdcdc;
   border-radius: 4px;
-  padding: var(--goa-space-xl) var(--goa-space-2xl);
+  padding: var(--goa-space-xl, 2rem) var(--goa-space-2xl, 2.5rem);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--goa-space-xl);
 `;
 
 export const NotificationTypeSummaryContent = styled.div`
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--goa-space-m);
-
   h2 {
     margin-top: 0;
   }
-`;
-
-export const NotificationTypeAccent = styled.div`
-  width: 2px;
-  background: var(--color-primary);
+  padding-left: var(--goa-space-l);
 `;
 
 export const NotificationTypeSummaryActions = styled.div`
@@ -299,14 +291,20 @@ export const NotificationTypeStatusPill = styled.span`
   font-weight: var(--fw-bold);
 `;
 
-export const NotificationTypeStrategyDetail = styled.p`
+export const NotificationTypeStrategyDetail = styled.div`
   display: grid;
-  gap: var(--goa-space-xs);
+  gap: var(--goa-space-xs, 0.25rem);
 
   code {
     font-family: var(--goa-font-family-monospace);
     overflow-wrap: anywhere;
   }
+`;
+
+export const NotificationTypePathGrid = styled.div`
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--goa-space-xs, 0.25rem) var(--goa-space-m, 1rem);
 `;
 
 export const NotificationTypeSection = styled.section`
