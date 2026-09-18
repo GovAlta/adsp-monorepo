@@ -16,6 +16,8 @@ import Header from './Header';
 import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { FormServiceMain } from './services/FormServiceMain';
 import { AgentServiceMain } from './services/AgentServiceMain';
+import { AdspComponentsMain } from './services/AdspComponentsMain';
+import { AdspThemeExampleOne } from './services/adsp-components/AdspThemeExampleOne';
 import { FeedbackServiceMain } from './services/FeedbackServiceMain';
 import { NotificationServiceMain } from './services/NotificationServiceMain';
 import { PDFServiceMain } from './services/PDFServiceMain';
@@ -87,6 +89,9 @@ export const SandBoxTenant = () => {
                 </GoabButtonGroup>
               )}
               <Routes>
+                <Route path="/services/adsp-components" element={<AdspComponentsMain tenantName={tenantName} />} />
+                <Route path="/services/adsp-components/theme" element={<AdspThemeExampleOne />} />
+
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/cache" element={<CacheServiceMain tenantName={tenantName} />} />
                 <Route path="/services/calendar" element={<CalendarServiceMain tenantName={tenantName} />} />

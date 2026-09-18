@@ -53,3 +53,17 @@ export const addDesignSystemPages = (tenantName: string) => {
 
   return jsonformsPages;
 };
+
+export const addAdspComponentsPages = (tenantName: string) => {
+  const prefix = `/${tenantName}/services/adsp-components`;
+  const adspComponentsPages: ServicePage[] = [
+    {
+      id: 'adspThemeExample1',
+      name: 'ADSP theme provider',
+      url: `${prefix}/theme`,
+      testId: 'adspThemeExample1',
+    },
+  ];
+
+  return adspComponentsPages;
+};
