@@ -29,6 +29,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
           {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="text"
+              size="compact"
               onClick={() => reportChange(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
             >

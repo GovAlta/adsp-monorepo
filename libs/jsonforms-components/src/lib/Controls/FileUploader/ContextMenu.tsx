@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { GoabButton, GoabIconButton } from '@abgov/react-components-ds1';
+import { GoabIconButton } from '@abgov/react-components-ds1';
 import { GoabIconType } from '@abgov/ui-components-common';
 import styled from 'styled-components';
 
@@ -9,12 +9,6 @@ interface ContextMenuIconProps {
   title?: string;
   onClick?: () => void;
   disabled?: boolean;
-}
-
-interface ContextMenuTextProps {
-  type?: GoabIconType;
-  testId?: string;
-  onClick?: () => void;
 }
 
 export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
@@ -28,10 +22,6 @@ export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
       disabled={props.disabled}
     />
   );
-};
-
-export const GoAContextMenuText: FC<ContextMenuTextProps> = (props) => {
-  return <GoabButton type="text" onClick={props.onClick} testId={props.testId} />;
 };
 
 export const GoAContextMenu = styled.div`
