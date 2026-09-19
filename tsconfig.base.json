@@ -23,6 +23,8 @@
       "@abgov/data-exchange-standard": ["libs/data-exchange-standard/src/index.ts"],
       "@abgov/jsonforms-components": ["libs/jsonforms-components/src/index.ts"],
       "@components/*": ["apps/tenant-management-webapp/src/app/components/*"],
+      "@core-services/adsp-components-core": ["libs/adsp-components-core/src/index.ts"],
+      "@core-services/adsp-components-react": ["libs/adsp-components-react/src/index.ts"],
       "@core-services/app-common": ["libs/app-common/src/index.ts"],
       "@core-services/core-common": ["libs/core-common/src/index.ts"],
       "@core-services/core-common/mongo": ["libs/core-common/src/mongo/index.ts"],
