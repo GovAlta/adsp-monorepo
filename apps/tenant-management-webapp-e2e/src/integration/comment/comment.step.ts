@@ -700,8 +700,8 @@ function findTopic(name, id) {
 }
 
 When('the user clicks {string} icon for the topic of {string}, {string}', function (iconName, name, resourceId) {
-  // Click Load More button 3 times if it's there
-  for (let i = 0; i < 3; i++) {
+  // Click Load More button 5 times if it's there
+  for (let i = 0; i < 5; i++) {
     commentObj.commentsTab().then((parentElement) => {
       if (parentElement.find('goa-button:contains("Load more")').length > 0) {
         commentObj.topicLoadMoreButton().shadow().find('button').click({ force: true });
