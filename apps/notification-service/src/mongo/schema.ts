@@ -39,14 +39,16 @@ export const subscriberSchema = new Schema(
   { timestamps: true }
 );
 subscriberSchema.index({ tenantId: 1, userId: 1 });
-// The registry is listed a page at a time and sorted on a column, and the database serves a sort
-// only from an index. Each sortable column that is stored as a field of its own therefore gets a
-// composite index of the tenant (always matched on), the column, and the id that breaks ties, so
-// that paging over a column with repeated values returns each subscriber exactly once. Columns
-// derived from the channels array are sorted on a computed key and cannot be served this way.
-subscriberSchema.index({ tenantId: 1, addressAs: 1, _id: 1 });
-subscriberSchema.index({ tenantId: 1, createdAt: 1, _id: 1 });
-subscriberSchema.index({ tenantId: 1, updatedAt: 1, _id: 1 });
+// The registry is listed a page at a time, filtered to the tenant and sorted on one column at a
+// time. Cosmos DB's Mongo API only serves a sort on more than one field from a composite index
+// matching it exactly, which its background index build does not reliably deliver in practice, so
+// each sortable column that is stored as a field of its own gets a plain single-field index instead
+// -- Cosmos treats those as always available, and combines the tenant filter with them for free.
+// Columns derived from the channels array are sorted on a computed key and cannot be served this way.
+subscriberSchema.index({ tenantId: 1 });
+subscriberSchema.index({ addressAs: 1 });
+subscriberSchema.index({ createdAt: 1 });
+subscriberSchema.index({ updatedAt: 1 });
 
 export const subscriptionSchema = new Schema(
   {

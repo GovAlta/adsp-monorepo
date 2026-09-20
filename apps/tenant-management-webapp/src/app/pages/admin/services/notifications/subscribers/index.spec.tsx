@@ -126,24 +126,6 @@ describe('Notification - Recipient registry tab', () => {
     );
   });
 
-  it('sorts on a column chosen from the dropdown', async () => {
-    const store = createStore();
-    const { baseElement } = render(
-      <Provider store={store}>
-        <Subscribers />
-      </Provider>,
-    );
-
-    const dropdown = baseElement.querySelector("goa-dropdown[testId='recipient-sort-dropdown']");
-    fireEvent(dropdown, new CustomEvent('_change', { detail: { name: 'sort', value: 'email:desc' } }));
-
-    await waitFor(() =>
-      expect(lastFindSubscribers(store).payload).toEqual(
-        expect.objectContaining({ sort: { column: 'email', direction: 'desc' } }),
-      ),
-    );
-  });
-
   it('sorts on a column chosen from the table header', async () => {
     const store = createStore();
     const { baseElement } = render(

@@ -469,6 +469,47 @@ describe('JsonFormsStepperContext', () => {
       expect(screen.getByTestId('active-id').textContent).toBe('4');
     });
 
+    test('does not dispatch page/to/index when only data changes', () => {
+      // Arrange
+      const { rerender } = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={
+            {
+              ...stepperBaseProps,
+              uischema: taskListUischema,
+              data: {},
+              customDispatch: mockDispatch,
+            } as unknown as CategorizationStepperLayoutRendererProps
+          }
+        >
+          <ActiveIdProbe />
+        </JsonFormsStepperContextProvider>,
+      );
+      mockDispatch.mockClear();
+
+      // Act
+      act(() => {
+        rerender(
+          <JsonFormsStepperContextProvider
+            StepperProps={
+              {
+                ...stepperBaseProps,
+                uischema: taskListUischema,
+                data: { firstName: 'Alex' },
+                customDispatch: mockDispatch,
+              } as unknown as CategorizationStepperLayoutRendererProps
+            }
+          >
+            <ActiveIdProbe />
+          </JsonFormsStepperContextProvider>,
+        );
+      });
+
+      // Assert
+      expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'page/to/index' }));
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'update/uischema' }));
+    });
+
     test('keeps the user on the page they opened when data changes', () => {
       // Arrange
       const { rerender } = render(renderTaskListStepper({}));

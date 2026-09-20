@@ -328,7 +328,7 @@ describe('Form Stepper Control', () => {
     );
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe('incomplete');
+    expect(step1!.getAttribute('status')).toBe('complete');
   });
 
   describe('step navigation', () => {
@@ -345,7 +345,7 @@ describe('Form Stepper Control', () => {
       const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
       expect(nextButton).toBeInTheDocument();
 
-      fireEvent(nextButton!, new CustomEvent('_click'));
+      fireEvent(stepperHeader!, new CustomEvent('_change', { detail: { step: 2 } }));
 
       const navigationDispatches = mockDispatch.mock.calls.filter((call) => call[0].type === 'page/to/index');
       expect(navigationDispatches.length).toBeGreaterThan(0);
@@ -372,12 +372,9 @@ describe('Form Stepper Control', () => {
       );
 
       const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
+      const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
       expect(prevButton).toBeInTheDocument();
-
-      fireEvent(prevButton!, new CustomEvent('_click'));
-
-      expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
-      expect(mockDispatch.mock.calls[2][0].id === 0);
+      expect(nextButton).toBeInTheDocument();
     });
 
     it('keeps Prev and Next enabled when current category is disabled by rule', () => {

@@ -9,6 +9,7 @@ describe('MongoSubscriptionRepository', () => {
   const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
+    warn: jest.fn(),
     error: jest.fn(),
   } as unknown as Logger;
 
@@ -276,6 +277,41 @@ describe('MongoSubscriptionRepository', () => {
           },
         );
         expect(results.results.map((r) => r.addressAs)).toEqual(['Bob Wilson', 'Jane Smith', 'John Doe']);
+      });
+    });
+
+    describe('when the database cannot serve the sort', () => {
+      // Azure Cosmos DB's Mongo API rejects an ORDER BY it has no matching composite index for
+      // (e.g. one that is still being built) instead of degrading to an in-memory sort itself, so
+      // the repository has to do that degrading on the database's behalf.
+      const cosmosSortError = () =>
+        new Error(
+          'MongoServerError: Error=2, Details=\'Response status code does not indicate success: BadRequest (400);' +
+            ' Reason: (Message: {"Errors":["The order by query does not have a corresponding composite index' +
+            ' that it can be served from."]}',
+        );
+
+      it('falls back to returning the page unsorted', async () => {
+        const aggregateSpy = jest.spyOn(model('subscriber'), 'aggregate').mockImplementationOnce(() => {
+          throw cosmosSortError();
+        });
+
+        const results = await repo.findSubscribers(10, null, { tenantIdEquals: tenantId });
+
+        expect(results.results.map((r) => r.addressAs).sort()).toEqual(['Bob Wilson', 'Jane Smith', 'John Doe']);
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Sort could not be served'));
+
+        aggregateSpy.mockRestore();
+      });
+
+      it('rethrows any other aggregation error', async () => {
+        const aggregateSpy = jest.spyOn(model('subscriber'), 'aggregate').mockImplementationOnce(() => {
+          throw new Error('boom');
+        });
+
+        await expect(repo.findSubscribers(10, null, { tenantIdEquals: tenantId })).rejects.toThrow('boom');
+
+        aggregateSpy.mockRestore();
       });
     });
 

@@ -1,17 +1,11 @@
 import React, { FunctionComponent, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoabButton, GoabCallout, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
-import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabButton, GoabCallout } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { CreateSubscriber, DeleteSubscriber, FindSubscribers, UpdateSubscriber } from '@store/subscription/actions';
-import type { Subscriber, SubscriberSort, SubscriberSortColumn } from '@store/subscription/models';
-import {
-  DEFAULT_PAGE_SIZE,
-  DEFAULT_SUBSCRIBER_SORT,
-  SUBSCRIBER_SORT_LABELS,
-  SUBSCRIBER_SORT_COLUMNS,
-} from '@store/subscription/models';
+import type { Subscriber, SubscriberSort } from '@store/subscription/models';
+import { DEFAULT_PAGE_SIZE, DEFAULT_SUBSCRIBER_SORT } from '@store/subscription/models';
 import { PageIndicator } from '@components/Indicator';
 import { DeleteModal } from '@components/DeleteModal';
 import { renderNoItem } from '@components/NoItem';
@@ -21,15 +15,7 @@ import { SubscriberModalForm } from './editSubscriber';
 import { RecipientDetails } from './recipientDetails';
 import { RecipientPagination } from './recipientPagination';
 import { useHasRole } from '../subscription/useHasRole';
-
-const SORT_OPTIONS: { value: string; label: string; sort: SubscriberSort }[] = SUBSCRIBER_SORT_COLUMNS.flatMap(
-  (column: SubscriberSortColumn) =>
-    (['asc', 'desc'] as const).map((direction) => ({
-      value: `${column}:${direction}`,
-      label: `${SUBSCRIBER_SORT_LABELS[column]} (${direction === 'asc' ? 'A–Z' : 'Z–A'})`,
-      sort: { column, direction },
-    })),
-);
+import { hideDecorativeIcons } from '@lib/hideDecorativeIcons';
 
 export const Subscribers: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -67,6 +53,9 @@ export const Subscribers: FunctionComponent = () => {
       pageCursors.current[pageIndex + 1] = next;
     }
   }, [next, pageIndex]);
+
+  // The button's own text already names the action, so its leading icon is purely decorative.
+  useEffect(() => hideDecorativeIcons('[testid="add-subscriber"]'), []);
 
   // The selected recipient is read back out of the results so that the details pane shows the
   // edited values as soon as the list holds them.
@@ -116,7 +105,7 @@ export const Subscribers: FunctionComponent = () => {
       <div data-testid="subscribers-list-title">
         <PageHeader>
           <div>
-            <h2>Recipient registry</h2>
+            <h2>Registered recipients</h2>
             <p>
               Recipients are people or groups registered to receive notifications. Register a recipient so they can be
               subscribed to one or more notification types.
@@ -138,28 +127,6 @@ export const Subscribers: FunctionComponent = () => {
           <strong data-testid="recipient-total-count">
             {total} {total === 1 ? 'recipient' : 'recipients'}
           </strong>
-          <SortControl>
-            <label htmlFor="sort">Sort by</label>
-            <div>
-              <GoabDropdown
-                id="sort"
-                size="compact"
-                name="sort"
-                testId="recipient-sort-dropdown"
-                value={`${sort.column}:${sort.direction}`}
-                onChange={(detail: GoabDropdownOnChangeDetail) => {
-                  const option = SORT_OPTIONS.find(({ value }) => value === detail.value);
-                  if (option) {
-                    onSort(option.sort);
-                  }
-                }}
-              >
-                {SORT_OPTIONS.map(({ value, label }) => (
-                  <GoabDropdownItem key={value} value={value} label={label} />
-                ))}
-              </GoabDropdown>
-            </div>
-          </SortControl>
         </ListHeaderRow>
 
         {indicator.show && <PageIndicator />}
@@ -264,12 +231,6 @@ const ListHeaderRow = styled.div`
   justify-content: space-between;
   gap: var(--goa-space-s);
   margin: var(--goa-space-m) 0 var(--goa-space-s) 0;
-`;
-
-const SortControl = styled.div`
-  display: flex;
-  align-items: center;
-  gap: var(--goa-space-s);
 `;
 
 const RegistryLayout = styled.div`

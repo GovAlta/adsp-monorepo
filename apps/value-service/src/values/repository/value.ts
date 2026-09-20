@@ -7,6 +7,11 @@ export interface Page {
   after?: string;
   next?: string;
   size: number;
+  // clean-code-ignore: RULE-19 — interface only, no logic; behaviour is covered in timescale/value.spec.ts.
+  // End of the window actually served, snapped back to the last whole interval. A caller whose range
+  // reached into the period in progress gets less than it asked for, and this is how it tells that
+  // apart from the range simply holding no data.
+  intervalMax?: Date;
 }
 
 export interface ValuesRepository {

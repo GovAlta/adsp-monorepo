@@ -27,9 +27,11 @@ const MINUTE_HOURS = 1 / 60;
  * rather than storing it. An average of averages would not compose, and this is what the schema
  * was shaped for.
  *
- * So a monthly bucket reads about thirty daily rows instead of a month of raw metrics, and what a
- * refresh costs stops following the width of the bucket it fills. Only one_minute pays for a raw
- * scan, which is why it alone keeps a tight window.
+ * So a monthly bucket reads about thirty daily rows instead of a month of raw metrics, which is why
+ * a composed interval's natural chunk below is wide -- its read cost does not scale with it. The
+ * values here are the full width the interval could recompute in one go; boundMetricIntervalDefinitions
+ * still clips every one of them to what a single statement is allowed to write, since the row count
+ * an upsert writes does scale with the window regardless of what it read to produce them.
  *
  * Both weekly and monthly compose from daily rather than chaining monthly off weekly: a week can
  * straddle a month boundary, so weeks do not nest inside months and a month built from weeks would
@@ -89,9 +91,13 @@ export const metricIntervalDefinitions: MetricIntervalDefinition[] = [
 /**
  * Bound a definition's windows to what one statement is allowed to read.
  *
- * The cap applies only to an interval that reads raw metrics, where the cost follows the span of
- * the window. An interval composed from a finer one reads a bounded number of rollup rows per
- * bucket however wide its window is, so capping it would only slow the backfill down for nothing.
+ * A composed interval's SELECT reads a bounded number of rollup rows per bucket, but what it writes
+ * does not shrink the same way: the upsert groups by namespace, name, tenant and metric as well as
+ * the bucket, so a wide, uncapped window (up to 730 days for monthly) can still write one row per
+ * bucket per distinct series in a single statement. On a tenant-heavy deployment that is enough
+ * conflicting rows for one INSERT ... ON CONFLICT DO UPDATE to run the database out of shared memory
+ * (see the max_locks_per_transaction budget) even though no single relation it touches is large. The
+ * cap therefore applies to every definition, not only the one reading raw metrics.
  *
  * It cannot cut below one bucket either: a window narrower than the bucket it fills leaves coverage
  * where it was, and the interval would never finish backfilling.
@@ -100,10 +106,6 @@ export const boundMetricIntervalDefinition = (
   definition: MetricIntervalDefinition,
   maxChunkHours: number,
 ): MetricIntervalDefinition => {
-  if (definition.source) {
-    return definition;
-  }
-
   const bound = (hours: number) => Math.max(definition.bucketHours, Math.min(hours, maxChunkHours));
 
   return { ...definition, seedHours: bound(definition.seedHours), chunkHours: bound(definition.chunkHours) };

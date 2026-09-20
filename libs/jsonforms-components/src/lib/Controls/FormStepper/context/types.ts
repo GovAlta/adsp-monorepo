@@ -14,6 +14,8 @@ export interface CategoryInternalState {
   // step the user has not worked through yet stays quiet.
   isNavigatedAway?: boolean;
   isValid?: boolean;
+  // The task list badge's verdict for the step. Written by init and by update/category.
+  status?: StepStatusType;
   showReviewPageLink?: boolean;
   id: number;
   uischema?: CategorizationElement;

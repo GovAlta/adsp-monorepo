@@ -5,6 +5,7 @@ import Ajv from 'ajv';
 import { getStepStatus } from './util';
 import { StepStatus } from '../../../common/Constants';
 import { JsonSchema } from '@jsonforms/core';
+import { isSameCategory, isSameStepperState } from './stateEquality';
 
 export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 
@@ -42,14 +43,26 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       // data presence mark a step navigated, which is the whole thing it exists to avoid.
       const mergedCategories = newState.categories.map((newCategory) => {
         const previousCategory = categories.find((c) => c.id === newCategory.id);
-        return {
+        const merged = {
           ...newCategory,
           isVisited: previousCategory?.isVisited || newCategory.isVisited,
           isNavigatedAway: previousCategory?.isNavigatedAway === true,
         };
+
+        return previousCategory && isSameCategory(previousCategory, merged) ? previousCategory : merged;
       });
 
-      return { ...newState, categories: mergedCategories };
+      const nextState = {
+        ...newState,
+        categories: mergedCategories,
+        maxReachedStep: Math.max(state.maxReachedStep, newState.maxReachedStep ?? 0),
+        validationTrigger: state.validationTrigger,
+      };
+
+      // This runs on every data change. Returning the previous state when the recompute produced an
+      // equivalent one lets useReducer bail out, which keeps a keystroke from re-rendering every
+      // control on the page through the stepper context.
+      return isSameStepperState(state, nextState) ? state : nextState;
     }
 
     case 'page/next': {
@@ -109,16 +122,20 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     }
 
     case 'update/category': {
-      const { id, ajv, schema, data } = action.payload;
+      const { id, ajv, schema, data, errors } = action.payload;
 
-      ajv.validate(schema, data);
+      let validationErrors = errors;
+      if (!validationErrors) {
+        ajv.validate(schema, data);
+        validationErrors = ajv.errors ?? undefined;
+      }
 
       const newCategories = state.categories.map((cat) => {
         // ✅ compare against cat.id, not the index
         if (cat.id !== id) {
           return cat;
         }
-        const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
+        const filteredErrors = validationErrors && validationErrors.filter((error) => error?.data != null);
         const visited = true;
         const { status } = getStepStatus({
           scopes: cat.scopes,
@@ -128,18 +145,34 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
           visited,
         });
 
+        const isCompleted = status === StepStatus.COMPLETED;
+        if (cat.status === status && cat.isCompleted === isCompleted && cat.isValid === isCompleted) {
+          return cat;
+        }
+
         return {
           ...cat,
-          isCompleted: status === StepStatus.COMPLETED,
-          isValid: status === StepStatus.COMPLETED,
+          isCompleted,
+          isValid: isCompleted,
           status: status,
         };
       });
 
-      return { ...state, categories: newCategories };
+      // This fires on entering a page and on every keystroke, and the verdict usually doesn't move.
+      // Handing back the same state lets useReducer bail out, which is the difference between one
+      // render pass per navigation and two.
+      const isUnchanged = newCategories.every((cat, idx) => cat === state.categories[idx]);
+      return isUnchanged ? state : { ...state, categories: newCategories };
     }
     case 'set/visited': {
       const { id } = action.payload;
+
+      // Navigating back to a page that is already marked contributes nothing, and returning new
+      // state anyway re-renders every control on the page for it.
+      const target = state.categories.find((cat) => cat.id === id);
+      if (target?.isVisited === true && target?.isNavigatedAway === true) {
+        return state;
+      }
 
       const newCategories = state.categories.map((cat) =>
         cat.id === id
@@ -159,10 +192,11 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
     case 'validate/form': {
       const { errors = [] } = action.payload;
-      return {
-        ...state,
-        isValid: errors.length === 0,
-      };
+      const isValid = errors.length === 0;
+
+      // JsonForms hands back a new errors array on every keystroke even when the errors are
+      // identical, so this action fires constantly. Only produce new state when the verdict moved.
+      return state.isValid === isValid ? state : { ...state, isValid };
     }
 
     case 'toggle/category/review-link': {

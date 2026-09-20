@@ -238,3 +238,157 @@ export const Anchor = styled.div`
   outline: none;
   cursor: pointer;
 `;
+
+export const NotificationTypeDetailLayout = styled.div`
+  display: grid;
+  gap: var(--goa-space-l);
+  padding: 0 var(--goa-space-m) var(--goa-space-l);
+`;
+
+export const NotificationTypeSummarySection = styled.section`
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  padding: var(--goa-space-xl, 2rem) var(--goa-space-2xl, 2.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--goa-space-xl);
+`;
+
+export const NotificationTypeSummaryContent = styled.div`
+  h2 {
+    margin-top: 0;
+  }
+  padding-left: var(--goa-space-l);
+`;
+
+export const NotificationTypeSummaryActions = styled.div`
+  border-left: 1px solid #dcdcdc;
+  padding-left: var(--goa-space-xl);
+  display: grid;
+  align-content: start;
+  gap: var(--goa-space-l);
+`;
+
+export const NotificationTypeActionRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--goa-space-m);
+  padding-right: var(--goa-space-s);
+`;
+
+export const NotificationTypeStatusGrid = styled.div`
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: var(--goa-space-s) var(--goa-space-m);
+  padding-right: var(--goa-space-s);
+`;
+
+export const NotificationTypeStatusPill = styled.span`
+  background: #eee;
+  border-radius: 1rem;
+  padding: 0.25rem 0.75rem;
+  font-weight: var(--fw-bold);
+`;
+
+export const NotificationTypeStrategyDetail = styled.div`
+  display: grid;
+  gap: var(--goa-space-xs, 0.25rem);
+
+  code {
+    font-family: var(--goa-font-family-monospace);
+    overflow-wrap: anywhere;
+  }
+`;
+
+export const NotificationTypePathGrid = styled.div`
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--goa-space-xs, 0.25rem) var(--goa-space-m, 1rem);
+`;
+
+export const NotificationTypeSection = styled.section`
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  padding: var(--goa-space-l) 0 var(--goa-space-2xl);
+`;
+
+export const NotificationTypeSectionContent = styled.div`
+  padding: 0 var(--goa-space-l);
+`;
+
+export const NotificationTypeSectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--goa-space-m);
+  margin-bottom: var(--goa-space-m);
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: var(--goa-space-xs);
+  }
+`;
+
+export const NotificationTypeSectionAction = styled.div`
+  flex-shrink: 0;
+  padding-top: var(--goa-space-s);
+`;
+
+export const EventCardGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--goa-space-m);
+`;
+
+export const EventCard = styled.div`
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  padding: var(--goa-space-m) var(--goa-space-l);
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+export const EventCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--goa-space-m);
+  font-weight: var(--fw-bold);
+
+  > goa-icon-button {
+    margin-right: calc(var(--goa-space-xs) * -1);
+  }
+`;
+
+export const ChannelStatus = styled.div`
+  display: grid;
+  gap: var(--goa-space-xs);
+  color: #555;
+`;
+
+export const ChannelStatusRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-s);
+`;
+
+export const EventCardActions = styled.div`
+  text-align: right;
+`;
+
+export const EmptyRecipients = styled.p`
+  margin: var(--goa-space-m) 0 0;
+  color: #555;
+`;
+
+export const RecipientsTableFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--goa-space-m);
+  padding-top: var(--goa-space-l);
+  color: #555;
+`;

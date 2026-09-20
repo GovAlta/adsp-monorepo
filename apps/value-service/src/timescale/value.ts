@@ -14,6 +14,7 @@ import {
 } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { stripNul } from './sanitize';
+import { getMetricIntervalDefinition } from '../values/metricIntervals';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 
@@ -205,27 +206,142 @@ export class TimescaleValuesRepository implements ValuesRepository {
   }
 
   /**
+   * Resolve the rollup coverage span and the effective end of the window in one round trip.
+   *
+   * `intervalMax` is snapped back to the start of the bucket it lands in, so the period still in
+   * progress is left out and only whole ones are served. That is what lets coverage satisfy a read
+   * reaching up to "now": a composed interval's rollup can never contain its own open bucket, so a
+   * window asking for one could never be fully covered, and every such read fell back to a live
+   * aggregate of the entire range.
+   *
+   * The snap goes through `time_bucket` rather than being computed here because `extendCoverage`
+   * snaps `covered_to` with the same function. Both sides then describe a boundary the database
+   * agrees on, which a calendar month (not a fixed width) and a week (whose origin is not midnight
+   * Sunday) would otherwise make easy to get subtly wrong.
+   */
+  private async resolveMetricWindow(
+    interval: MetricInterval,
+    intervalMax: Date,
+  ): Promise<{ coverage: { from: Date; to: Date } | null; intervalMax: Date }> {
+    const { bucket } = getMetricIntervalDefinition(interval);
+
+    const result = await this.knex.raw<{
+      rows: { interval_max: Date; covered_from: Date | null; covered_to: Date | null }[];
+    }>(
+      `SELECT time_bucket(?::interval, ?::timestamptz) AS interval_max, c.covered_from, c.covered_to
+       FROM (SELECT 1) AS anchor
+       LEFT JOIN metric_interval_rollup_coverage c ON c."interval" = ?`,
+      [bucket, intervalMax, interval],
+    );
+
+    const [row] = result.rows;
+
+    return {
+      intervalMax: new Date(row.interval_max),
+      coverage:
+        row.covered_from && row.covered_to
+          ? { from: new Date(row.covered_from), to: new Date(row.covered_to) }
+          : null,
+    };
+  }
+
+  /**
    * Pick where interval data is read from.
    *
    * The rollup table only answers a request whose whole window it has rolled up; coverage is a
-   * single contiguous span per interval, so a request reaching outside it falls back to the
-   * metrics_* view. The view aggregates on read -- slower, but always complete -- which is what
-   * lets the rollups be populated progressively without the API losing data in the meantime.
+   * single contiguous span per interval, so a request reaching outside it falls back to a live
+   * aggregate of the raw metrics table. That is slower, but always complete, which is what lets the
+   * rollups be populated progressively without the API losing data in the meantime.
+   *
+   * With the window snapped to whole buckets that fallback is no longer the common case. It stays
+   * reachable while the backfill is still walking history back, and for the few minutes after a
+   * period closes before the job composes it, rather than on every read that ends at "now".
    */
   private async resolveMetricSource(
     interval: MetricInterval,
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
     criteria: MetricCriteria,
-  ): Promise<{ table: string; rollup: boolean }> {
-    const coverage = await this.knex('metric_interval_rollup_coverage').where({ interval }).first();
+    metric?: string,
+  ): Promise<{ table: string | Knex.QueryBuilder; rollup: boolean; intervalMax: Date }> {
+    const { coverage, intervalMax } = await this.resolveMetricWindow(interval, criteria.intervalMax ?? new Date());
+    const { intervalMin } = criteria;
 
-    const covered =
-      !!coverage &&
-      (!criteria.intervalMin || new Date(coverage.covered_from) <= criteria.intervalMin) &&
-      (!criteria.intervalMax || new Date(coverage.covered_to) >= criteria.intervalMax);
+    const covered = !!coverage && (!intervalMin || coverage.from <= intervalMin) && coverage.to >= intervalMax;
 
     return covered
-      ? { table: 'metric_interval_rollups', rollup: true }
-      : { table: `metrics_${interval}`, rollup: false };
+      ? { table: 'metric_interval_rollups', rollup: true, intervalMax }
+      : {
+          table: this.rawMetricsQuery(interval, namespace, name, tenantId, { ...criteria, intervalMax }, metric),
+          rollup: false,
+          intervalMax,
+        };
+  }
+
+  /**
+   * Aggregate the raw metrics table live, for a window the rollups have not covered yet.
+   *
+   * The metrics_* views this replaced filtered on their derived `bucket` column instead of on
+   * `timestamp`, which relies on Postgres inferring a `timestamp` range back out of a `time_bucket`
+   * predicate to exclude chunks. That works for a fixed-width bucket (a minute, an hour, a day, a
+   * week), but not for a calendar-width one -- a month is not a fixed number of seconds -- so a
+   * `monthly` request without full coverage had no time bound applied at the database at all, and
+   * aggregated every row ever recorded for the metric before the rest of the query could trim it
+   * back down, hanging on any window reaching into the still-in-progress month. Filtering on
+   * `timestamp` directly, before grouping, does not depend on that inference either way.
+   *
+   * `criteria.intervalMax` arrives snapped to a bucket boundary and only buckets starting before it
+   * are served, so every row belonging to one of them falls before it too and the scan needs no
+   * allowance past the bound.
+   *
+   * Deliberately synchronous. A knex builder is thenable, so returning one from an `async` function
+   * hands it to the promise machinery, which executes the query and resolves to its rows instead --
+   * the builder has to reach its caller by a plain return or wrapped in an object, never as a bare
+   * awaited value.
+   */
+  private rawMetricsQuery(
+    interval: MetricInterval,
+    namespace: string,
+    name: string,
+    tenantId: AdspId,
+    criteria: Pick<MetricCriteria, 'intervalMin' | 'intervalMax'>,
+    metric?: string,
+  ): Knex.QueryBuilder {
+    const { bucket } = getMetricIntervalDefinition(interval);
+
+    let query = this.knex('metrics').where({ namespace, name });
+    if (tenantId) {
+      query = query.where({ tenant: tenantId.toString() });
+    }
+
+    if (metric) {
+      query = query.where({ metric });
+    }
+
+    if (criteria.intervalMin) {
+      query = query.where('timestamp', '>=', criteria.intervalMin);
+    }
+
+    if (criteria.intervalMax) {
+      query = query.where('timestamp', '<', criteria.intervalMax);
+    }
+
+    return query
+      .select(
+        'namespace',
+        'name',
+        'tenant',
+        'metric',
+        this.knex.raw('time_bucket(?::interval, timestamp) AS bucket', [bucket]),
+        this.knex.raw('AVG(value) AS avg'),
+        this.knex.raw('SUM(value) AS sum'),
+        this.knex.raw('COUNT(value) AS count'),
+        this.knex.raw('MIN(value) AS min'),
+        this.knex.raw('MAX(value) AS max'),
+      )
+      .groupBy('namespace', 'name', 'tenant', 'metric', 'bucket')
+      .as('raw_metrics_agg');
   }
 
   /**
@@ -267,7 +383,13 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup } = await this.resolveMetricSource(criteria.interval, criteria);
+    const { table, rollup, intervalMax } = await this.resolveMetricSource(
+      criteria.interval,
+      namespace,
+      name,
+      tenantId,
+      criteria,
+    );
 
     const queryCriteria = {
       namespace,
@@ -288,9 +410,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
       query = query.where({ interval: criteria.interval });
     }
 
-    if (criteria.intervalMax) {
-      query = query.where('bucket', '<=', criteria.intervalMax);
-    }
+    // Snapped to a bucket boundary and exclusive, so the period still in progress is left out: a
+    // partial total is not comparable with the whole ones beside it, and asking only for whole ones
+    // is what keeps the window inside what coverage can satisfy.
+    query = query.where('bucket', '<', intervalMax);
 
     if (criteria.intervalMin) {
       query = query.where('bucket', '>=', criteria.intervalMin);
@@ -323,6 +446,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           after,
           next: encodeNext(rows.length, top, skip),
           size: rows.length,
+          intervalMax,
         },
       },
     );
@@ -358,7 +482,14 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
-    const { table, rollup } = await this.resolveMetricSource(criteria.interval, criteria);
+    const { table, rollup, intervalMax } = await this.resolveMetricSource(
+      criteria.interval,
+      namespace,
+      name,
+      tenantId,
+      criteria,
+      metric,
+    );
 
     const queryCriteria = {
       namespace,
@@ -380,9 +511,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
       query = query.where({ interval: criteria.interval });
     }
 
-    if (criteria.intervalMax) {
-      query = query.where('bucket', '<=', criteria.intervalMax);
-    }
+    // Snapped to a bucket boundary and exclusive, so the period still in progress is left out: a
+    // partial total is not comparable with the whole ones beside it, and asking only for whole ones
+    // is what keeps the window inside what coverage can satisfy.
+    query = query.where('bucket', '<', intervalMax);
 
     if (criteria.intervalMin) {
       query = query.where('bucket', '>=', criteria.intervalMin);
@@ -403,6 +535,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         after,
         next: encodeNext(rows.length, top, skip),
         size: rows.length,
+        intervalMax,
       },
     };
   }
@@ -440,13 +573,16 @@ export class TimescaleValuesRepository implements ValuesRepository {
         throw new InvalidOperationError('Interval value is not recognized.');
     }
 
+    const { intervalMax } = await this.resolveMetricWindow(criteria.interval, criteria.intervalMax ?? new Date());
+
     let query = this.knex('metric_interval_rollups')
       .select('metric', 'bucket', 'sum', 'min', 'max', 'count', this.selectAverage(true), 'tenant')
       .where({ namespace, name, interval: criteria.interval });
 
-    if (criteria.intervalMax) {
-      query = query.where('bucket', '<=', criteria.intervalMax);
-    }
+    // Snapped to a bucket boundary and exclusive, so the period still in progress is left out: a
+    // partial total is not comparable with the whole ones beside it, and asking only for whole ones
+    // is what keeps the window inside what coverage can satisfy.
+    query = query.where('bucket', '<', intervalMax);
 
     if (criteria.intervalMin) {
       query = query.where('bucket', '>=', criteria.intervalMin);
@@ -457,23 +593,26 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }
 
     const rows = await query.orderBy('bucket', 'desc');
-    return rows.reduce((metrics, row) => {
-      const metric = metrics[row.metric] || { name: row.metric, values: [] };
-      metric.values.push({
-        interval: new Date(row.bucket),
-        sum: row.sum,
-        avg: row.avg,
-        min: row.min,
-        max: row.max,
-        count: row.count,
-        tenantId: row.tenant,
-      });
+    return rows.reduce(
+      (metrics, row) => {
+        const metric = metrics[row.metric] || { name: row.metric, values: [] };
+        metric.values.push({
+          interval: new Date(row.bucket),
+          sum: row.sum,
+          avg: row.avg,
+          min: row.min,
+          max: row.max,
+          count: row.count,
+          tenantId: row.tenant,
+        });
 
-      return {
-        ...metrics,
-        [row.metric]: metric,
-      };
-    }, {} as Record<string, PlatformMetric>);
+        return {
+          ...metrics,
+          [row.metric]: metric,
+        };
+      },
+      {} as Record<string, PlatformMetric>,
+    );
   }
 
   async writeMetric(

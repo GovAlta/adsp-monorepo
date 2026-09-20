@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { GoabButton, GoabContainer, GoabGrid } from '@abgov/react-components';
+import { GoabButton, GoabContainer, GoabGrid, GoabIcon, GoabPagination, GoabTable } from '@abgov/react-components';
+import type { GoabPaginationOnChangeDetail } from '@abgov/ui-components-common';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
@@ -46,11 +47,26 @@ import {
   BodyGlobalStyles,
   ModalContent,
   Anchor,
+  ChannelStatus,
+  ChannelStatusRow,
+  EmptyRecipients,
+  EventCard,
+  EventCardActions,
+  EventCardGrid,
+  EventCardHeader,
+  RecipientsTableFooter,
 } from '../styled-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import { environment } from '../../../../../../environments/environment';
-import { NotificationTypeDetail } from './notificationTypeDetail';
+import {
+  NotificationTypeDetail,
+  NotificationTypeEventsSection,
+  NotificationTypeRecipientsSection,
+  NotificationTypeSummary,
+} from './notificationTypeDetail';
 import { NotificationTypesList } from './notificationTypesList';
+import { DeleteSubscription, GetTypeSubscriptions } from '@store/subscription/actions';
+import type { Subscriber } from '@store/subscription/models';
+import { SubscribeModal } from '../subscription/subscribeModal';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -91,6 +107,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [previewVisible, setPreviewVisible] = useState(true);
   const [splitResetKey, setSplitResetKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<Subscriber>(null);
+  const [showSubscriptionDeleteConfirmation, setShowSubscriptionDeleteConfirmation] = useState(false);
+  const [recipientsPage, setRecipientsPage] = useState(1);
   const { typeId } = useParams<{ typeId: string }>();
   const navigate = useNavigate();
   const templateDefaultError = {
@@ -134,6 +154,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
   const contact = useSelector((state: RootState) => state.notification.supportContact);
   const tenantClientsRoles = useSelector(tenantRolesAndClients);
+  const subscribers = useSelector((state: RootState) => state.subscription.subscribers);
+  const typeSubscriptionSearch = useSelector((state: RootState) => state.subscription.typeSubscriptionSearch);
+  const notificationTypeListViewEnabled = useSelector(
+    (state: RootState) => state.config.featureFlags?.NotificationTypeListView === true,
+  );
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -216,6 +241,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     dispatch(FetchCoreNotificationTypesService());
   }, [notification?.notificationTypes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const selectedTypeId = typeId ? decodeURIComponent(typeId) : null;
+    if (notificationTypeListViewEnabled && selectedTypeId) {
+      setRecipientsPage(1);
+      dispatch(GetTypeSubscriptions(selectedTypeId, {}, null));
+    }
+  }, [dispatch, notificationTypeListViewEnabled, typeId]);
 
   function reset(closeEventModal?: boolean) {
     setShowTemplateForm(false);
@@ -356,16 +389,200 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const selectedCoreNotificationTypes = allCoreNotificationTypes.filter(
     (notificationType) => notificationType.id === selectedConfigurationTypeId,
   );
-  const showNotificationTypesRedesign = !environment.production;
+  const showNotificationTypesRedesign = notificationTypeListViewEnabled;
   const detailNotificationTypes = [...selectedTenantNotificationTypes, ...selectedCoreNotificationTypes];
-  const tenantNotificationTypesToDisplay = showNotificationTypesRedesign
-    ? selectedTenantNotificationTypes
-    : allTenantNotificationTypes;
-  const coreNotificationTypesToDisplay = showNotificationTypesRedesign
-    ? selectedCoreNotificationTypes
-    : allCoreNotificationTypes;
+  const tenantNotificationTypesToDisplay = showNotificationTypesRedesign ? [] : allTenantNotificationTypes;
+  const coreNotificationTypesToDisplay = showNotificationTypesRedesign ? [] : allCoreNotificationTypes;
   const showNotificationTypeList = showNotificationTypesRedesign && !selectedConfigurationTypeId;
-  const showNotificationTypeDetail = showNotificationTypesRedesign && selectedConfigurationTypeId;
+  const showNotificationTypeDetail = showNotificationTypesRedesign && !!selectedConfigurationTypeId;
+  const showNotificationTypeHeader = !showNotificationTypesRedesign || showNotificationTypeList;
+  const detailNotificationType = detailNotificationTypes[0];
+  const selectedTypeSubscribers =
+    detailNotificationType && typeSubscriptionSearch[detailNotificationType.id]
+      ? typeSubscriptionSearch[detailNotificationType.id].results
+          .map((subscriberId) => subscribers[subscriberId])
+          .filter((subscriber): subscriber is Subscriber => !!subscriber)
+      : [];
+  const recipientsPerPage = 5;
+  const recipientsPageCount = Math.max(1, Math.ceil(selectedTypeSubscribers.length / recipientsPerPage));
+  const currentRecipientsPage = Math.min(recipientsPage, recipientsPageCount);
+  const visibleSubscribers = selectedTypeSubscribers.slice(
+    (currentRecipientsPage - 1) * recipientsPerPage,
+    currentRecipientsPage * recipientsPerPage,
+  );
+  const firstVisibleRecipient = selectedTypeSubscribers.length
+    ? (currentRecipientsPage - 1) * recipientsPerPage + 1
+    : 0;
+  const lastVisibleRecipient = Math.min(currentRecipientsPage * recipientsPerPage, selectedTypeSubscribers.length);
+
+  const renderTemplateStatus = (event: EventItem, channel: string) => {
+    const template = event.templates?.[channel];
+    const configured = !!template?.subject && !!template?.body;
+    return configured
+      ? `${channelNames[channel]} template configured`
+      : `No ${channelNames[channel]?.toLowerCase()} template configured`;
+  };
+
+  const renderNotificationTypeEvents = (notificationType: NotificationItem, isCore = false) => (
+    <NotificationTypeEventsSection
+      action={
+        !isCore && (
+          <GoabButton
+            size="compact"
+            type="primary"
+            leadingIcon="add"
+            testId="add-event"
+            onClick={() => {
+              setSelectedEvent(emptyEvent);
+              manageEvents(notificationType);
+              setEditEventOpen(true);
+            }}
+          >
+            Add event
+          </GoabButton>
+        )
+      }
+    >
+      <EventCardGrid>
+        {[...notificationType.events]
+          .sort((a, b) => (a.name < b.name ? -1 : 1))
+          .map((event, key) => (
+            <EventCard key={`${notificationType.id}-${event.namespace}:${event.name}-${key}`}>
+              <EventCardHeader>
+                <span>
+                  {event.namespace}:{event.name}
+                </span>
+                {!isCore && (
+                  <GoAContextMenuIcon
+                    type="trash"
+                    title="Delete event"
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      setSelectedType(notificationType);
+                      setShowEventDeleteConfirmation(true);
+                      setCoreEvent(false);
+                    }}
+                    testId="delete-event"
+                  />
+                )}
+              </EventCardHeader>
+              <ChannelStatus>
+                {notificationType.sortedChannels.map((channel) => (
+                  <ChannelStatusRow key={`${notificationType.id}-${event.namespace}:${event.name}-${channel}`}>
+                    {channelIcons[channel]}
+                    <span>{renderTemplateStatus(event, channel)}</span>
+                    {(!event.templates?.[channel]?.subject || !event.templates?.[channel]?.body) && (
+                      <GoabIcon type="warning" size="small" theme="filled" ariaLabel="Template not configured" />
+                    )}
+                  </ChannelStatusRow>
+                ))}
+              </ChannelStatus>
+              <EventCardActions>
+                {isCore && event.customized && (
+                  <Anchor
+                    className="resetButton"
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      setSelectedType(notificationType);
+                      setCoreEvent(true);
+                      setShowEventDeleteConfirmation(true);
+                    }}
+                    data-testid="reset-button"
+                  >
+                    Reset
+                  </Anchor>
+                )}
+                <Anchor
+                  data-testid="edit-event"
+                  className={isCore ? 'coreEditButton' : undefined}
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setSelectedType(notificationType);
+                    setEventTemplateFormState(editEventTemplateContent);
+                    setShowTemplateForm(true);
+                    setCoreEvent(false);
+                    setCurrentChannel(notificationType.sortedChannels[0]);
+                  }}
+                >
+                  Edit templates
+                </Anchor>
+              </EventCardActions>
+            </EventCard>
+          ))}
+      </EventCardGrid>
+    </NotificationTypeEventsSection>
+  );
+
+  const renderSubscribedRecipients = () => (
+    <NotificationTypeRecipientsSection
+      action={
+        <GoabButton
+          size="compact"
+          type="primary"
+          leadingIcon="add"
+          testId="add-subscription"
+          onClick={() => setShowSubscribeModal(true)}
+        >
+          Subscribe recipient
+        </GoabButton>
+      }
+    >
+      {selectedTypeSubscribers.length === 0 ? (
+        <EmptyRecipients>No subscribed recipients found.</EmptyRecipients>
+      ) : (
+        <>
+          <GoabTable testId="subscribed-recipients-table" width="100%">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email / Group</th>
+                <th>Delivery method</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleSubscribers.map((subscriber) => {
+                const emailChannel = subscriber.channels?.find((channel) => channel.channel === 'email');
+                const displayChannel = emailChannel || subscriber.channels?.[0];
+                return (
+                  <tr key={subscriber.id}>
+                    <td>{subscriber.addressAs || 'Unnamed'}</td>
+                    <td>{displayChannel?.address}</td>
+                    <td>{displayChannel?.channel || 'Email'}</td>
+                    <td>{subscriber.description || ''}</td>
+                    <td>
+                      <GoAContextMenuIcon
+                        type="trash"
+                        title="Remove subscription"
+                        testId={`delete-subscription-${subscriber.id}`}
+                        onClick={() => {
+                          setSelectedSubscription(subscriber);
+                          setShowSubscriptionDeleteConfirmation(true);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </GoabTable>
+          <RecipientsTableFooter>
+            <span>
+              Showing {firstVisibleRecipient}-{lastVisibleRecipient} of {selectedTypeSubscribers.length} recipients
+            </span>
+            <GoabPagination
+              itemCount={selectedTypeSubscribers.length}
+              perPageCount={recipientsPerPage}
+              pageNumber={currentRecipientsPage}
+              testId="subscribed-recipients-pagination"
+              onChange={(detail: GoabPaginationOnChangeDetail) => setRecipientsPage(detail.page)}
+            />
+          </RecipientsTableFooter>
+        </>
+      )}
+    </NotificationTypeRecipientsSection>
+  );
 
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
@@ -413,30 +630,35 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   return (
     <NotificationStyles>
-      <div>
-        <p>
-          Notification types represent a bundled set of notifications that can be subscribed to. For example, an
-          ‘Application Progress’ type could include notifications for submission of the application, processing started,
-          and application processed.
-        </p>
-        <p>
-          A subscriber has a subscription to the whole set and cannot subscribe to individual notifications in the set.
-        </p>
-      </div>
-      <Buttons>
-        <GoabButton
-          size="compact"
-          testId="add-notification"
-          onClick={() => {
-            setSelectedType(emptyNotificationType);
-            setEditType(true);
-            setIsNew(true);
-            setSelectedEvent(emptyEvent);
-          }}
-        >
-          Add notification type
-        </GoabButton>
-      </Buttons>
+      {showNotificationTypeHeader && (
+        <>
+          <div>
+            <p>
+              Notification types represent a bundled set of notifications that can be subscribed to. For example, an
+              ‘Application Progress’ type could include notifications for submission of the application, processing
+              started, and application processed.
+            </p>
+            <p>
+              A subscriber has a subscription to the whole set and cannot subscribe to individual notifications in the
+              set.
+            </p>
+          </div>
+          <Buttons>
+            <GoabButton
+              size="compact"
+              testId="add-notification"
+              onClick={() => {
+                setSelectedType(emptyNotificationType);
+                setEditType(true);
+                setIsNew(true);
+                setSelectedEvent(emptyEvent);
+              }}
+            >
+              Add notification type
+            </GoabButton>
+          </Buttons>
+        </>
+      )}
       {showNotificationTypeList && (
         <NotificationTypesList
           searchTerm={searchTerm}
@@ -448,7 +670,26 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       )}
       {showNotificationTypeDetail && (
         <NotificationTypeDetail onBack={() => navigate('..')}>
-          {detailNotificationTypes.length === 0 && <p>Notification type not found.</p>}
+          {!detailNotificationType && <p>Notification type not found.</p>}
+          {detailNotificationType && (
+            <>
+              <NotificationTypeSummary
+                notificationType={detailNotificationType}
+                isCore={!!selectedCoreNotificationTypes.length}
+                onEdit={() => {
+                  setSelectedType(detailNotificationType);
+                  setEditType(true);
+                  setIsNew(false);
+                }}
+                onDelete={() => {
+                  setSelectedType(detailNotificationType);
+                  setShowDeleteConfirmation(true);
+                }}
+              />
+              {renderNotificationTypeEvents(detailNotificationType, !!selectedCoreNotificationTypes.length)}
+              {!detailNotificationType.address && !detailNotificationType.addressPath && renderSubscribedRecipients()}
+            </>
+          )}
         </NotificationTypeDetail>
       )}
       {tenantNotificationTypesToDisplay.map((notificationType) => (
@@ -737,6 +978,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onDelete={() => {
           setShowDeleteConfirmation(false);
           dispatch(DeleteNotificationTypeService(selectedType));
+          if (showNotificationTypeDetail) {
+            navigate('..');
+          }
           setSelectedType(emptyNotificationType);
         }}
       />
@@ -785,6 +1029,27 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
       />
 
+      <DeleteModal
+        isOpen={showSubscriptionDeleteConfirmation}
+        title="Remove subscription"
+        content={
+          <div>
+            Are you sure you wish to remove the subscription for <b>{selectedSubscription?.addressAs}</b>?
+          </div>
+        }
+        onCancel={() => {
+          setShowSubscriptionDeleteConfirmation(false);
+          setSelectedSubscription(null);
+        }}
+        onDelete={() => {
+          setShowSubscriptionDeleteConfirmation(false);
+          dispatch(
+            DeleteSubscription({ data: { type: selectedConfigurationTypeId || '', data: selectedSubscription } }),
+          );
+          setSelectedSubscription(null);
+        }}
+      />
+
       {/* Form */}
       <NotificationTypeModalForm
         open={editType}
@@ -820,6 +1085,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onClickedOutside={() => {
           reset(true);
+        }}
+      />
+      <SubscribeModal
+        open={showSubscribeModal}
+        initialTypeId={selectedConfigurationTypeId || undefined}
+        hideNotificationType
+        onCancel={() => {
+          setShowSubscribeModal(false);
+          if (selectedConfigurationTypeId) {
+            dispatch(GetTypeSubscriptions(selectedConfigurationTypeId, {}, null));
+          }
         }}
       />
 

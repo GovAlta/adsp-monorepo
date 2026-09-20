@@ -7,6 +7,11 @@ import '@testing-library/jest-dom';
 import TenantManagement from './index';
 import { HeaderCtx } from '@lib/headerContext';
 
+// Avoid pulling in the ESM-only @faker-js/faker package via the notifications route.
+jest.mock('@lib/dynamicPlaceHolder', () => ({
+  dynamicGeneratePayload: jest.fn(),
+}));
+
 const mockStore = configureStore([]);
 
 const storeWith = (featureFlags: Record<string, boolean>) =>

@@ -430,7 +430,7 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
       yield put(
         ResolveSubscriberUserSuccess(
           action.payload.subscriberId,
-          `${baseUrl}/admin/${realm}/console/#/realms/${realm}/users/${user.id}`,
+          `${baseUrl}/admin/${realm}/console/#/${realm}/users/${user.id}`,
         ),
       );
     }

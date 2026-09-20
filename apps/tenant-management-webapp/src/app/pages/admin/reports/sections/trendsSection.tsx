@@ -14,7 +14,7 @@ export const TrendsSection: FunctionComponent<ReportSectionProps> = ({ descripto
       title="Trends"
       testId="reports-section-trends"
       state={state}
-      placeholder={<PlaceholderBlock $minHeight="16rem" data-testid="reports-trends-placeholder" />}
+      placeholder={<PlaceholderBlock $minHeight="20rem" data-testid="reports-trends-placeholder" />}
     />
   );
 };

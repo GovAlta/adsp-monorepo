@@ -195,6 +195,52 @@ describe('CalendarEventEntity', () => {
         )
       ).toThrow(InvalidOperationError);
     });
+
+    it('can throw for end before start on a partial update of only end', () => {
+      const start = DateTime.now();
+      const event = new CalendarEventEntity(repositoryMock, calendar, {
+        name: 'test',
+        description: 'testing 1 2 3',
+        isPublic: false,
+        isAllDay: false,
+        start,
+        end: start.plus(500),
+      });
+
+      expect(() =>
+        event.update(
+          {
+            tenantId,
+            id: 'test',
+            roles: ['test-updater'],
+          } as User,
+          { end: start.minus(500) }
+        )
+      ).toThrow(InvalidOperationError);
+    });
+
+    it('can throw for end before start on a partial update of only start', () => {
+      const end = DateTime.now();
+      const event = new CalendarEventEntity(repositoryMock, calendar, {
+        name: 'test',
+        description: 'testing 1 2 3',
+        isPublic: false,
+        isAllDay: false,
+        start: end.minus(500),
+        end,
+      });
+
+      expect(() =>
+        event.update(
+          {
+            tenantId,
+            id: 'test',
+            roles: ['test-updater'],
+          } as User,
+          { start: end.plus(500) }
+        )
+      ).toThrow(InvalidOperationError);
+    });
   });
 
   describe('delete', () => {

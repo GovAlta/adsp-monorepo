@@ -16,6 +16,7 @@ import {
   fileBusySelector,
   filesSelector,
   formSelector,
+  Form as FormRecord,
   loadForm,
   setShowMessages,
   showSubmitSelector,
@@ -63,7 +64,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const fileBusy = useSelector(fileBusySelector);
   const showSubmit = useSelector(showSubmitSelector);
   const ajvValid = useSelector(canSubmitSelector);
-  const emptyRequiredStringErrors = getEmptyRequiredStringErrors(data || {}, definition.dataSchema);
+  const emptyRequiredStringErrors = useMemo(
+    () => getEmptyRequiredStringErrors(data || {}, definition?.dataSchema),
+    [data, definition?.dataSchema],
+  );
   const canSubmit = ajvValid && emptyRequiredStringErrors.length === 0;
 
   useEffect(() => {
@@ -85,8 +89,22 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   }, [dispatch, formId]);
 
   // Shared by onChange and onSave; they differ only in how their errors are resolved beforehand.
-  const saveDraft = ({ data, errors }: { data: unknown; errors?: ValidationError[] | null }) =>
-    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
+  const saveDraft = useCallback(
+    ({ data, errors }: { data: unknown; errors?: ValidationError[] | null }) =>
+      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors })),
+    [dispatch, files],
+  );
+
+  const handleChange = useCallback(
+    ({ data, errors }: { data: unknown; errors?: ValidationError[] }) =>
+      saveDraft({ data, errors: resolveFormChangeErrors(errors) }),
+    [saveDraft],
+  );
+
+  const handleSubmit = useCallback(
+    (submitted: NonNullable<FormRecord>) => dispatch(submitForm(submitted.id)),
+    [dispatch],
+  );
 
   return (
     <div key={formId}>
@@ -105,9 +123,9 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   showSubmit={showSubmit}
                   saving={busy.saving}
                   submitting={busy.submitting}
-                  onChange={({ data, errors }) => saveDraft({ data, errors: resolveFormChangeErrors(errors) })}
+                  onChange={handleChange}
                   onSave={saveDraft}
-                  onSubmit={(form) => dispatch(submitForm(form.id))}
+                  onSubmit={handleSubmit}
                   navigationTarget={navigationTarget}
                   onNavigationChange={handleNavigationChange}
                 />

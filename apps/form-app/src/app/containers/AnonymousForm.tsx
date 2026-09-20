@@ -1,5 +1,5 @@
 import { Container, Grid, GridItem, Recaptcha } from '@core-services/app-common';
-import { FunctionComponent, useEffect, useState } from 'react';
+import { FunctionComponent, useCallback, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
@@ -43,6 +43,24 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
 
+  const handleChange = useCallback(
+    ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => {
+      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+    },
+    [dispatch, files],
+  );
+
+  const handleSave = useCallback(
+    ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => {
+      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+    },
+    [dispatch, files],
+  );
+
+  const handleSubmit = useCallback(() => {
+    dispatch(submitAnonymousForm());
+  }, [dispatch]);
+
   useEffect(() => {
     if (emptyData) {
       ajv.validate(definition.dataSchema, data);
@@ -71,15 +89,9 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                   saving={busy.saving}
                   anonymousApply={definition.anonymousApply}
                   submitting={busy.submitting}
-                  onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
-                  }}
-                  onSave={({ data, errors }) => {
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
-                  }}
-                  onSubmit={function () {
-                    dispatch(submitAnonymousForm());
-                  }}
+                  onChange={handleChange}
+                  onSave={handleSave}
+                  onSubmit={handleSubmit}
                 />
               )}
             </>

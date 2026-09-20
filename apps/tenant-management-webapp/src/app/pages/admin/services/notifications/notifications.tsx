@@ -4,7 +4,7 @@ import { Tab, Tabs } from '@components/Tabs';
 
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationType/notificationTypes';
 import { Subscriptions } from './subscription/subscriptions';
@@ -14,11 +14,15 @@ import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 import AsideLinks from '@components/AsideLinks';
 import { AsidePadding } from '../../../../components/Html';
-import { environment } from '../../../../../environments/environment';
+import { RootState } from '@store/index';
 
 export const Notifications: FunctionComponent = () => {
   const loginUrl = useSelector(subscriberAppUrlSelector);
+  const notificationTypeListViewEnabled = useSelector(
+    (state: RootState) => state.config.featureFlags?.NotificationTypeListView === true,
+  );
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState<number>(location.pathname.includes('/types/') ? 1 : 0);
@@ -26,6 +30,13 @@ export const Notifications: FunctionComponent = () => {
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
+  };
+
+  const handleTabChange = (index: number) => {
+    if (notificationTypeListViewEnabled && location.pathname.includes('/types/')) {
+      navigate(location.pathname.replace(/\/types\/[^/]+$/, ''));
+    }
+    setActiveIndex(index);
   };
 
   useEffect(() => {
@@ -38,14 +49,12 @@ export const Notifications: FunctionComponent = () => {
     <Page>
       <Main>
         <h1 data-testid="notification-title">Notification service</h1>
-        <Tabs activeIndex={activeIndex} data-testid="notification-tabs">
+        <Tabs activeIndex={activeIndex} data-testid="notification-tabs" changeTabCallback={handleTabChange}>
           <Tab label="Overview" data-testid="notification-overview-tab">
             <NotificationsOverview setActiveEdit={activateEdit} />
           </Tab>
           <Tab label="Notification types" data-testid="notification-types-tab">
-            {environment.production ? (
-              <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
-            ) : (
+            {notificationTypeListViewEnabled ? (
               <Routes>
                 <Route
                   path="/"
@@ -56,6 +65,8 @@ export const Notifications: FunctionComponent = () => {
                   element={<NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />}
                 />
               </Routes>
+            ) : (
+              <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
             )}
           </Tab>
           <Tab label="Subscriptions" data-testid="notification-subscriptions-tab">

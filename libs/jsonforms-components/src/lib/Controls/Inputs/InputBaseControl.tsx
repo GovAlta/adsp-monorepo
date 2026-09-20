@@ -8,6 +8,7 @@ import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 import { isRequiredBySchema } from '../../util/requiredUtil';
+import { focusWhenReady, scrollIntoView } from '../../util/focusControl';
 import { useJsonForms } from '@jsonforms/react';
 
 export type GoabInputType =
@@ -26,7 +27,6 @@ export type GoabInputType =
   | 'week';
 
 export interface WithInput {
-  //eslint-disable-next-line
   input: any;
   noLabel?: boolean;
   isStepperReview?: boolean;
@@ -68,35 +68,26 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     return value !== undefined && value !== null && value !== '';
   })();
 
-  /* istanbul ignore next */
   useEffect(() => {
-    if (stepperState?.targetScope && stepperState.targetScope === uischema.scope && controlRef.current) {
-      const inputElement = controlRef.current.querySelector(
-        'input, textarea, select, goa-input, goa-textarea, goa-dropdown, goa-checkbox, goa-radio-group',
-      );
-
-      if (inputElement) {
-        controlRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        setTimeout(() => {
-          if (inputElement.tagName?.toLowerCase().startsWith('goa-')) {
-            (inputElement as any).focused = true;
-            if (typeof (inputElement as any).focus === 'function') {
-              (inputElement as any).focus();
-            }
-            const shadowRoot = (inputElement as any).shadowRoot;
-            if (shadowRoot) {
-              const actualInput = shadowRoot.querySelector('input, textarea, select');
-              if (actualInput instanceof HTMLElement) {
-                actualInput.focus();
-              }
-            }
-          } else if (inputElement instanceof HTMLElement) {
-            inputElement.focus();
-          }
-        }, 300);
-      }
+    if (!stepperState?.targetScope || stepperState.targetScope !== uischema.scope || !controlRef.current) {
+      return;
     }
+
+    const inputElement = controlRef.current.querySelector(
+      'input, textarea, select, goa-input, goa-textarea, goa-dropdown, goa-checkbox, goa-radio-group',
+    );
+
+    if (!inputElement) {
+      return;
+    }
+
+    // An instant scroll, not a smooth one. This runs on the Change button's deep link into a long
+    // form, where a smooth scroll animates for hundreds of milliseconds before the field is usable
+    // — and the focus below has to wait out the animation, because focusing mid-scroll makes the
+    // browser jump straight to the element and abandon it.
+    scrollIntoView(controlRef.current, { behavior: 'auto', block: 'center' });
+
+    return focusWhenReady(inputElement);
   }, [stepperState?.targetScope, uischema.scope]);
 
   const requiredNow =

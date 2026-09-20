@@ -8,6 +8,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';
 
+jest.mock('@lib/dynamicPlaceHolder', () => ({
+  dynamicGeneratePayload: jest.fn(),
+}));
 jest.mock('../previewEditor/TemplateEditor', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TemplateEditor: ({ saveAndReset, resetToSavedAction, previewVisible, onTogglePreview }: any) => (
@@ -57,7 +60,7 @@ describe('NotificationTypes Page', () => {
               },
             },
           ],
-          subscriberRoles: [],
+          subscriberRoles: ['application-reviewer', 'anonymousRead'],
           id: 'notificationId',
           publicSubscribe: false,
         },
@@ -88,6 +91,33 @@ describe('NotificationTypes Page', () => {
           id: 'anotherNotificationId',
           publicSubscribe: false,
           manageSubscribe: true,
+        },
+        eventAddressNotificationId: {
+          name: 'Event address notification',
+          description: 'Uses recipient from event payload',
+          channels: ['email'],
+          sortedChannels: ['email'],
+          events: [],
+          subscriberRoles: [],
+          id: 'eventAddressNotificationId',
+          publicSubscribe: false,
+          manageSubscribe: false,
+          addressPath: '/payload/email',
+          bccPath: '/payload/bcc',
+          ccPath: '/payload/cc',
+          attachmentPath: '/payload/attachments',
+        },
+        configuredAddressNotificationId: {
+          name: 'Configured address notification',
+          description: 'Uses a configured recipient',
+          channels: ['email'],
+          sortedChannels: ['email'],
+          events: [],
+          subscriberRoles: [],
+          id: 'configuredAddressNotificationId',
+          publicSubscribe: false,
+          manageSubscribe: false,
+          address: 'alerts@gov.ab.ca',
         },
       },
       core: {
@@ -149,8 +179,35 @@ describe('NotificationTypes Page', () => {
       ],
     },
     config: {
+      featureFlags: {
+        NotificationTypeListView: true,
+      },
       serviceUrls: {
         subscriberWebApp: 'https://subscription',
+      },
+    },
+    subscription: {
+      subscribers: {
+        subscriberId: {
+          id: 'subscriberId',
+          addressAs: 'Lana Test',
+          description: 'Test user',
+          channels: [{ channel: 'email', address: 'lana.test@gov.ab.ca' }],
+        },
+      },
+      subscriptions: {},
+      typeSubscriptionSearch: {
+        notificationId: {
+          results: ['subscriberId'],
+          next: null,
+        },
+      },
+      subscriberSearch: {
+        results: [],
+        next: null,
+      },
+      subscriptionCreation: {
+        state: 'idle',
       },
     },
   });
@@ -181,8 +238,8 @@ describe('NotificationTypes Page', () => {
     const search = baseElement.querySelector("goa-input[testId='notification-type-search']");
     fireEvent(
       search,
-      new CustomEvent('_change', {
-        detail: { value: 'anotherNotificationId' },
+      new CustomEvent('_keyPress', {
+        detail: { value: 'anotherNotificationId', key: 'Enter' },
       }),
     );
 
@@ -196,7 +253,44 @@ describe('NotificationTypes Page', () => {
     fireEvent.click(getByText('Child care subsidy application'));
 
     expect(baseElement.querySelector("goa-button[testId='back-to-notification-types']")).not.toBeNull();
-    expect(getByText('Events:')).toBeTruthy();
+    expect(getByText('Events')).toBeTruthy();
+  });
+
+  it('shows subscribed recipients section for subscriber notification types', () => {
+    const { getByText, queryByText } = renderNotificationTypes('/types/notificationId');
+
+    expect(getByText('Recipient Strategy:')).toBeTruthy();
+    expect(getByText('Subscribers')).toBeTruthy();
+    expect(getByText('Subscriber roles:')).toBeTruthy();
+    expect(getByText('application-reviewer')).toBeTruthy();
+    expect(queryByText('anonymousRead')).toBeFalsy();
+    expect(getByText('Subscribed recipients')).toBeTruthy();
+    expect(getByText('Description')).toBeTruthy();
+    expect(getByText('Test user')).toBeTruthy();
+    expect(getByText('Showing 1-1 of 1 recipients')).toBeTruthy();
+  });
+
+  it('shows configured recipient details without subscribed recipients section', () => {
+    const { getByText, queryByText } = renderNotificationTypes('/types/configuredAddressNotificationId');
+
+    expect(getByText('Strategy: Configured')).toBeTruthy();
+    expect(getByText('alerts@gov.ab.ca')).toBeTruthy();
+    expect(queryByText('Subscribed recipients')).toBeFalsy();
+  });
+
+  it('shows triggering event path without subscribed recipients section', () => {
+    const { getByText, queryByText } = renderNotificationTypes('/types/eventAddressNotificationId');
+
+    expect(getByText('Strategy: From triggering event')).toBeTruthy();
+    expect(getByText('Contact:')).toBeTruthy();
+    expect(getByText('/payload/email')).toBeTruthy();
+    expect(getByText('Bcc:')).toBeTruthy();
+    expect(getByText('/payload/bcc')).toBeTruthy();
+    expect(getByText('Cc:')).toBeTruthy();
+    expect(getByText('/payload/cc')).toBeTruthy();
+    expect(getByText('Attachment:')).toBeTruthy();
+    expect(getByText('/payload/attachments')).toBeTruthy();
+    expect(queryByText('Subscribed recipients')).toBeFalsy();
   });
 
   it('returns to the notification types list from detail', () => {
@@ -222,7 +316,7 @@ describe('NotificationTypes Page', () => {
   it('deletes a notification type', async () => {
     const { baseElement } = renderNotificationTypes('/types/notificationId');
 
-    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
+    const deleteBtn = baseElement.querySelector("goa-button[testId='delete-notification-type']");
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
@@ -234,12 +328,14 @@ describe('NotificationTypes Page', () => {
 
     const deleteAction = actions.find((action) => action.type === DELETE_NOTIFICATION_TYPE);
     expect(deleteAction).toBeTruthy();
+    expect(baseElement.querySelector("goa-table[testId='notification-types-table']")).not.toBeNull();
+    expect(baseElement.querySelector("goa-button[testId='back-to-notification-types']")).toBeNull();
   });
 
   it('cancels deleting a notification type', async () => {
     const { baseElement } = renderNotificationTypes('/types/notificationId');
 
-    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
+    const deleteBtn = baseElement.querySelector("goa-button[testId='delete-notification-type']");
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
@@ -250,7 +346,7 @@ describe('NotificationTypes Page', () => {
 
   it('edits the notification types', async () => {
     const { baseElement } = renderNotificationTypes('/types/notificationId');
-    const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
+    const editBtn = baseElement.querySelector("goa-button[testId='edit-notification-type']");
     await waitFor(() => {
       fireEvent.click(editBtn);
     });
@@ -291,7 +387,7 @@ describe('NotificationTypes Page', () => {
     const { baseElement } = renderNotificationTypes('/types/notificationId');
 
     await waitFor(() => {
-      const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
+      const editBtn = baseElement.querySelector("goa-button[testId='edit-notification-type']");
       fireEvent.click(editBtn);
     });
 

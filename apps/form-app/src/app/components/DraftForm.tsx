@@ -38,6 +38,9 @@ import {
 
 export const ContextProvider = ContextProviderFactory();
 
+// JsonForms recompiles the whole schema when `ajv` identity changes.
+const formAjv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
+
 export type JsonSchema = JsonSchema4 | JsonSchema7;
 
 interface DraftFormProps {
@@ -71,20 +74,28 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
-  const middleware = createAutoPopulateMiddleware(definition.uiSchema, user);
+  const middleware = useMemo(
+    () => createAutoPopulateMiddleware(definition.uiSchema, user),
+    [definition.uiSchema, user],
+  );
+  // JsonForms recompiles when `schema` identity changes, so the clone must stay stable.
+  const schema = useMemo(
+    () => populateDropdown(definition.dataSchema, enumerators),
+    [definition.dataSchema, enumerators],
+  );
 
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
         readonly={readonly}
-        schema={populateDropdown(definition.dataSchema, enumerators)}
+        schema={schema}
         uischema={definition.uiSchema}
         data={data}
         validationMode="ValidateAndShow"
         renderers={GoARenderers}
         middleware={middleware}
         onChange={onChange}
-        ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
+        ajv={formAjv}
       />
     </JsonFormRegisterProvider>
   );
