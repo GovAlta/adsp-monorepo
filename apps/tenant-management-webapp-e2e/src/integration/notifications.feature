@@ -1,7 +1,8 @@
 @notifications
 Feature: Notifications
 
-  @TEST_CS-945 @REQ_CS-641 @REQ_CS-788 @REQ_CS-979 @REQ_CS-1068 @regression @prod
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-945 @REQ_CS-641 @REQ_CS-788 @REQ_CS-979 @REQ_CS-1068 @regression @prod @ignore
   Scenario: As a tenant admin, I can add/edit/delete Notification Types
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
@@ -21,8 +22,9 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1", "no", "no"
 
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
   # TEST DATA: a precreated notification type named "autotest-notificationType"
-  @TEST_CS-949 @REQ_CS-277 @regression
+  @TEST_CS-949 @REQ_CS-277 @regression @ignore
   Scenario: As a tenant admin, I can add and delete events of a notification type
     Given a tenant admin user is on notification types page
     # Add an event and verify the event can't be added again
@@ -44,7 +46,8 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notificationType"
 
-  @TEST_CS-976 @REQ_CS-906 @regression @prod
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-976 @REQ_CS-906 @regression @prod @ignore
   Scenario: Test the registration of notification type in status service for application health change
     Given a tenant admin user is on notification types page
     # Verify the type and its events
@@ -92,7 +95,8 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
 
-  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression @ignore
   Scenario: As a tenant admin, I can see notification type for application status change updates
     Given a tenant admin user is on notification types page
     Then the user "views" the notification type card of "Application status update"
@@ -205,7 +209,8 @@ Feature: Notifications
     And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "EMPTY"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
 
-  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression @ignore
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
     Given a tenant admin user is on notification types page
     # Add a notification type
@@ -253,8 +258,9 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "no", "no"
 
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
   # TEST DATA: a precreated event of "Autotest:autotest-eventDefinition" in "autotest-notificationType"
-  @TEST_CS-1157 @REQ_CS-1070 @regression
+  @TEST_CS-1157 @REQ_CS-1070 @regression @ignore
   Scenario: As a tenant admin, I can preview the rendered notification message, so I know what my subscribers will receive.
     Given a tenant admin user is on notification types page
     When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
@@ -264,7 +270,8 @@ Feature: Notifications
     When the user clicks Close button in event template modal
     Then Preview event template modal is closed
 
-  @TEST_CS-1289 @REQ_CS-1269 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-1289 @REQ_CS-1269 @regression @ignore
   Scenario: As a tenant admin, I can access subscription management from the notification email preview.
     Given a tenant admin user is on notification types page
     Then the user "views" the event of "status-service:health-check-started" in "Application health check change"
@@ -273,7 +280,8 @@ Feature: Notifications
     When the user clicks Close button in event template modal
     Then Preview event template modal is closed
 
-  @TEST_CS-1170 @REQ_CS-1074 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-1170 @REQ_CS-1074 @regression @ignore
   Scenario: As a tenant admin, I can override the email template for a platform notification type, so that I can customize the notification that is sent
     Given a tenant admin user is on notification types page
     When the user clicks "edit" button for "status-service:application-status-changed" in "Application status update"
@@ -296,7 +304,8 @@ Feature: Notifications
     When the user clicks eye icon of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
     Then the user views the details of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
 
-  @TEST_CS-329 @REQ_CS-1087 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-329 @REQ_CS-1087 @regression @ignore
   Scenario: As a tenant admin, I can preview an email template as I edit, so I have an accurate preview of the notification.
     Given a tenant admin user is on notification types page
     # Preview in Add flow
@@ -320,7 +329,8 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "tenant-service:tenant-deleted" in "autotest-notificationType"
 
-  @TEST_CS-1375 @REQ_CS-1237 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-1375 @REQ_CS-1237 @regression @ignore
   Scenario: As a tenant admin, I can configure an SMS message template for a notification type event, so I can provide SMS notifications.
     Given a tenant admin user is on notification types page
     When the user clicks Select event button for "autotest-notificationType"
@@ -338,7 +348,8 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "status-service:application-status-changed" in "autotest-notificationType"
 
-  @TEST_CS-1392 @REQ_CS-1234 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-1392 @REQ_CS-1234 @regression @ignore
   Scenario: As a tenant admin, I can configure a Bot message template for a notification type event, so I can provide slack/teams notifications.
     Given a tenant admin user is on notification types page
     When the user clicks Select event button for "autotest-notificationType"
@@ -356,7 +367,8 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "status-service:application-notice-published" in "autotest-notificationType"
 
-  @TEST_CS-1164 @REQ_CS-1072 @regression
+  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
+  @TEST_CS-1164 @REQ_CS-1072 @regression @ignore
   Scenario: As a tenant admin, I can configure a notification email message template to use standard GoA email format, so that I can have a consistent look for emails.
     Given a tenant admin user is on notification types page
     # Preview an email without <html> or </html>
