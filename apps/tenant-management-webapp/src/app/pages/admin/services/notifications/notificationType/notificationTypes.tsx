@@ -504,7 +504,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     setCurrentChannel(notificationType.sortedChannels[0]);
                   }}
                 >
-                  Edit email template
+                  Edit templates
                 </Anchor>
               </EventCardActions>
             </EventCard>
@@ -978,6 +978,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onDelete={() => {
           setShowDeleteConfirmation(false);
           dispatch(DeleteNotificationTypeService(selectedType));
+          if (showNotificationTypeDetail) {
+            navigate('..');
+          }
           setSelectedType(emptyNotificationType);
         }}
       />

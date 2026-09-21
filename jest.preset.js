@@ -10,5 +10,6 @@ module.exports = {
       statements: 80,
     },
   },
+  transformIgnorePatterns: ['node_modules/(?!(uuid)/)'],
 };
 process.env.TZ = 'UTC';

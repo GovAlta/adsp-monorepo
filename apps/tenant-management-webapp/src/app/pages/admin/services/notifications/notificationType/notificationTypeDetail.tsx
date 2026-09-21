@@ -2,13 +2,13 @@ import React, { FunctionComponent, ReactNode } from 'react';
 import { GoabButton, GoabIconButton } from '@abgov/react-components';
 import { NotificationItem } from '@store/notification/models';
 import {
-  NotificationTypeAccent,
   NotificationTypeActionRow,
   NotificationTypeDetailLayout,
   NotificationTypeSection,
   NotificationTypeSectionAction,
   NotificationTypeSectionContent,
   NotificationTypeSectionHeader,
+  NotificationTypePathGrid,
   NotificationTypeStatusGrid,
   NotificationTypeStatusPill,
   NotificationTypeStrategyDetail,
@@ -55,7 +55,6 @@ export const NotificationTypeSummary: FunctionComponent<NotificationTypeSummaryP
   return (
     <NotificationTypeSummarySection>
       <NotificationTypeSummaryContent>
-        <NotificationTypeAccent />
         <div>
           <h2>{notificationType.name}</h2>
 
@@ -72,13 +71,40 @@ export const NotificationTypeSummary: FunctionComponent<NotificationTypeSummaryP
           {notificationType.addressPath && (
             <NotificationTypeStrategyDetail>
               <span>Strategy: From triggering event</span>
-              <code>{notificationType.addressPath}</code>
+              <NotificationTypePathGrid>
+                <span>Contact:</span>
+                <code>{notificationType.addressPath}</code>
+                {notificationType.bccPath && (
+                  <>
+                    <span>Bcc:</span>
+                    <code>{notificationType.bccPath}</code>
+                  </>
+                )}
+                {notificationType.ccPath && (
+                  <>
+                    <span>Cc:</span>
+                    <code>{notificationType.ccPath}</code>
+                  </>
+                )}
+                {notificationType.attachmentPath && (
+                  <>
+                    <span>Attachment:</span>
+                    <code>{notificationType.attachmentPath}</code>
+                  </>
+                )}
+              </NotificationTypePathGrid>
             </NotificationTypeStrategyDetail>
           )}
           {notificationType.address && (
             <NotificationTypeStrategyDetail>
               <span>Strategy: Configured</span>
               <code>{notificationType.address}</code>
+            </NotificationTypeStrategyDetail>
+          )}
+          {!notificationType.address && !notificationType.addressPath && (
+            <NotificationTypeStrategyDetail data-testid="subscriber-roles">
+              <span>Subscriber roles:</span>
+              <code>{getSubscriberRoles(notificationType)}</code>
             </NotificationTypeStrategyDetail>
           )}
         </div>
@@ -165,4 +191,9 @@ const getRecipientStrategy = (notificationType: NotificationItem) => {
   }
 
   return 'Subscribers';
+};
+
+const getSubscriberRoles = (notificationType: NotificationItem) => {
+  const subscriberRoles = notificationType.subscriberRoles?.filter((value) => value !== 'anonymousRead') || [];
+  return subscriberRoles.length > 0 ? subscriberRoles.join(', ') : 'None';
 };
