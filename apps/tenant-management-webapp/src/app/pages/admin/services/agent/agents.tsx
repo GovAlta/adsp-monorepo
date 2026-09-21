@@ -63,14 +63,6 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
         </>
       )}
 
-      {/* {!busy && coreAgents.length === 0 ? (
-        renderNoItem('core agents')
-      ) : (
-        <>
-          <h2>Core agents</h2>
-          <AgentsTable agents={coreAgents} />
-        </>
-      )} */}
       <AddEditAgentModal
         open={openAddAgent}
         onCancel={() => {
