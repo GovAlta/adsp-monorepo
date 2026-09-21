@@ -7,6 +7,16 @@ This library must not depend on React, Angular, Vue or any other UI framework. F
 theme infrastructure (context, providers, hooks) belongs in the corresponding adapter package - for
 React, `adsp-components-react`.
 
+## Structure
+
+Each concern gets its own folder under `src/lib`, so components added later sit beside the theme
+rather than flattening into one directory:
+
+```
+src/lib/
+  theme/        AdspTheme, AdspThemes and their tests
+```
+
 ## Design token requirement
 
 `AdspThemes.standard` does not hold literal colour and size values. Every value is a reference to a
