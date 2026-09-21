@@ -1,97 +1,131 @@
-# ADSP Application Components
+# adsp-components-core
 
-Reusable UI components that ADSP provides to Alberta government product teams, styled so they
-match the GoA Design System and stay consistent across every application that embeds them.
+The framework-independent foundation for the ADSP application components. This library holds the
+contracts and values that are the same no matter what renders them, so a React, Angular or Vue
+adapter can share one definition instead of each maintaining its own.
 
-The framework is two libraries:
+**Nothing here may import React, Angular, Vue, or any other UI framework.** Framework-specific
+infrastructure — context, providers, hooks — belongs in the corresponding adapter. For React that is
+[`adsp-components-react`](../adsp-components-react/README.md), which is also where you should look
+for how an application actually uses any of this.
 
-| Library                                | What lives there                                                                                                                                |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@core-services/adsp-components-core`  | Framework-independent contracts and values — the `AdspTheme` contract and the `AdspThemes` an application picks from. No React, Angular or Vue. |
-| `@core-services/adsp-components-react` | The React adapter — `AdspThemeProvider`, `useAdspTheme()`, and the React components themselves.                                                 |
+Today the library contains the theme contract. Component cores are added beside it as components are
+built.
 
-Anything that does not need a UI framework goes in core, so a future Angular or Vue adapter can
-reuse it. Anything that touches React goes in the React library.
+## What a theme is
 
-## Consuming it in an application
+An `AdspTheme` is the presentation policy for the whole ADSP component family — the semantic
+decisions that keep components visually consistent and inside GoA Design System guidelines. It is
+deliberately not a free-form style object: applications **select** a theme from `AdspThemes` rather
+than assembling their own.
 
-```tsx
-import '@abgov/web-components/index.css';
-import '@abgov/design-tokens/dist/tokens.css'; // required — see below
-import { AdspThemes } from '@core-services/adsp-components-core';
-import { AdspThemeProvider } from '@core-services/adsp-components-react';
+A theme controls colour, typography, spacing, surfaces and component-specific rendering. It must
+never control behaviour — ordering, scrolling, permissions, data loading, or service calls are not
+presentation decisions and do not belong in a theme.
 
-export const App = () => (
-  <AdspThemeProvider theme={AdspThemes.standard}>
-    <YourApplication />
-  </AdspThemeProvider>
-);
+## The `AdspTheme` contract
+
+```ts
+interface AdspTheme {
+  name: string;
+  color: AdspThemeColor;
+  typography: AdspThemeTypography;
+  spacing: AdspThemeSpacing;
+  borderRadius: AdspThemeBorderRadius;
+  components: Record<string, unknown>;
+}
 ```
 
-That is the whole integration. Every ADSP component rendered below the provider picks up the theme
-on its own — you never pass a theme to an individual component.
+| Section        | Shape                                          | Purpose                                         |
+| -------------- | ---------------------------------------------- | ----------------------------------------------- |
+| `color`        | `text` / `surface` / `interactive` / `status`  | Semantic colour roles, not a palette.           |
+| `typography`   | `fontFamily`, plus `heading` and `body` scales | Each scale entry is `{ fontSize, lineHeight }`. |
+| `spacing`      | `3xs` `2xs` `xs` `s` `m` `l` `xl` `2xl` `3xl`  | The GoA spacing scale.                          |
+| `borderRadius` | `none` `s` `m` `l` `round`                     | Corner treatments.                              |
+| `components`   | `Record<string, unknown>`                      | Extension point — see below.                    |
 
-Two things to know:
+The colour roles in full:
 
-- **The provider is optional.** A component with no `AdspThemeProvider` above it uses
-  `AdspThemes.standard`, so an application that does not care about theming can skip it entirely.
-- **Both stylesheets are required.** Theme values are references to GoA custom properties
-  (`var(--goa-color-surface-card)`), not literal colours. Miss the `@abgov/design-tokens` import and
-  there is **no error** — the properties are undefined and components render unstyled.
-  `@abgov/web-components/index.css` alone is not enough; it does not define the surface colours,
-  `--goa-color-important-default` or `--goa-border-radius-round`. If components look unthemed, check
-  these two imports first.
+```ts
+color.text; // default, secondary, light, disabled
+color.surface; // page, card, input, default
+color.interactive; // default, hover, focus, disabled
+color.status; // success, info, important, emergency
+```
+
+Typography scales run `xs → xl` for headings and `xs → l` for body, each entry being an
+`AdspThemeTypeStyle` of `{ fontSize, lineHeight }`.
+
+## `AdspThemes.standard`
+
+The default theme, and currently the only one. Its values are **references to GoA design token
+custom properties**, not literal colours or sizes:
+
+```ts
+AdspThemes.standard.color.surface.card; // 'var(--goa-color-surface-card)'
+AdspThemes.standard.spacing.m; // 'var(--goa-space-m)'
+```
+
+Referencing tokens means the theme tracks the design system rather than forking it. It also means
+the consuming application must load the token stylesheets — see below.
+
+One detail worth knowing if you extend the theme: type sizes reference the **font size scale**
+(`--goa-font-size-4`), not the `--goa-typography-*` tokens. Those are CSS `font` _shorthands_
+(`weight size/line-height family`), so using one as a `font-size` produces a declaration the browser
+discards and the text silently falls back to its inherited size.
+
+## Design token requirement
+
+The consuming application must load both stylesheets:
+
+```ts
+import '@abgov/web-components/index.css';
+import '@abgov/design-tokens/dist/tokens.css';
+```
+
+Both are required. `@abgov/web-components/index.css` defines most `--goa-*` properties at `:root`,
+but not all — the surface colours (`--goa-color-surface-page`, `-card`, `-input`, `-default`),
+`--goa-color-important-default` and `--goa-border-radius-round` come from `@abgov/design-tokens`.
+
+**Omitting the tokens stylesheet produces no error.** The custom properties are undefined, the
+declarations built from them are dropped, and components render unstyled. If something looks
+unthemed, check these two imports first.
+
+## Component-specific theme sections
+
+`components` is the extension point for presentation that the common semantic tokens cannot express
+— a conversation component's message renderer, for example. It is intentionally untyped and empty
+until a real component needs it.
+
+When a component does need one, it adds its own typed section under `components` rather than
+widening the common contract, and only for a demonstrated requirement. Do not add speculative
+properties, and do not give a component a parallel styling prop as an alternative route — if
+presentation is governed by the theme, the theme is the supported extension point.
 
 ## Layout
 
-One folder per concern, in both libraries:
+One folder per concern under `src/lib`, so component cores added later sit beside the theme rather
+than flattening into one directory:
 
 ```
-libs/adsp-components-core/src/
-  index.ts                     public API barrel
-  lib/theme/                   AdspTheme, AdspThemes
-
-libs/adsp-components-react/src/
-  index.ts                     public API barrel
-  lib/theme/                   AdspThemeProvider, useAdspTheme
+src/
+  index.ts        public API barrel
+  lib/theme/      AdspTheme, AdspThemes
 ```
 
-A new component adds `lib/<component>/` beside `lib/theme/` rather than flattening files into
-`lib/`.
+## Adding to the core
 
-## Adding a component
+Put anything in this library that a second UI framework would otherwise have to reimplement —
+domain types, service calls, pagination, normalization, permission resolution. Keep rendering and
+framework lifecycle out.
 
-1. **Split it.** Types, validation and any logic that does not need React go in
-   `adsp-components-core/src/lib/<component>/`. The React component goes in
-   `adsp-components-react/src/lib/<component>/`.
-2. **Read the theme from context**, never from a prop:
-
-   ```tsx
-   import { useAdspTheme } from '@core-services/adsp-components-react';
-
-   export const YourComponent = () => {
-     const theme = useAdspTheme();
-     return <div style={{ background: theme.color.surface.card, padding: theme.spacing.m }}>...</div>;
-   };
-   ```
-
-3. **Prefer the shared tokens** — `color`, `typography`, `spacing`, `borderRadius` — so components
-   stay visually consistent. Only when a component needs presentation those cannot express does it
-   add a typed section under `AdspTheme.components`, which exists for exactly that purpose and is
-   empty until something needs it. Do not add speculative properties.
-4. **Export it** from the library's `src/index.ts`.
-5. **Test it** in a colocated `.spec.ts(x)` file.
-6. **Show it** by adding a sample page to `sandbox-app` — see
-   `apps/sandbox-app/docs/HOW-TO-CREATE-SANDBOX-EXAMPLES_README.md`.
-
-## Working example
-
-`sandbox-app` renders the same component under three theme selections at
-**Services → ADSP components → ADSP theme provider**
-(`apps/sandbox-app/src/app/components/services/adsp-components/AdspThemeExampleOne.tsx`).
+1. Add `src/lib/<component>/` beside `lib/theme/`.
+2. Export the public surface from `src/index.ts`.
+3. Colocate tests in `.spec.ts`.
+4. If the component needs theme values the common tokens cannot express, add a typed section under
+   `AdspTheme.components`.
 
 ```bash
 npx nx test adsp-components-core
-npx nx test adsp-components-react
-npx nx serve sandbox-app
+npx nx lint adsp-components-core
 ```
