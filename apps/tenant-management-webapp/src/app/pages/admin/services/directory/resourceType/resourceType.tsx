@@ -25,6 +25,10 @@ export const ResourceTypePage = (): JSX.Element => {
   const othersGroup: Record<string, ResourceType[]> = {};
 
   const dispatch = useDispatch();
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   useEffect(() => {
     dispatch(fetchResourceTypeAction());
   }, [dispatch]);
@@ -92,6 +96,7 @@ export const ResourceTypePage = (): JSX.Element => {
     reset();
   };
 
+  console.log('indicator.show', indicator.show);
   return (
     <section>
       <GoabButton
@@ -129,7 +134,7 @@ export const ResourceTypePage = (): JSX.Element => {
         }}
         onDelete={handleDelete}
       />
-      {Object.keys(othersGroup)?.length === 0 && renderNoItem('tenant resource type')}
+      {!indicator.show && Object.keys(othersGroup)?.length === 0 && renderNoItem('tenant resource type')}
       {othersGroup && Object.keys(othersGroup)?.length > 0 && (
         <div>
           <GroupedResourceTypesTable
@@ -140,7 +145,7 @@ export const ResourceTypePage = (): JSX.Element => {
           />
         </div>
       )}
-      {Object.keys(resourceTypesInCore)?.length === 0 && renderNoItem('Core resource types')}
+      {!indicator.show && Object.keys(resourceTypesInCore)?.length === 0 && renderNoItem('Core resource types')}
       {resourceTypesInCore && Object.keys(resourceTypesInCore)?.length > 0 && (
         <div>
           <h2>Core resource types</h2>
