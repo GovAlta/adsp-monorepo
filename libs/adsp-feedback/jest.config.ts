@@ -8,7 +8,7 @@ export default {
   },
     // Added this line to ensure lit-html is transformed
   transformIgnorePatterns: [
-    '/node_modules/(?!lit-html|lit-html/directives)'
+    '/node_modules/(?!lit-html|lit-html/directives|uuid)'
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/adsp-feedback',
