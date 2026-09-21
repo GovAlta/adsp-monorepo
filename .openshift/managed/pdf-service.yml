@@ -419,7 +419,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 500m
+                  cpu: 800m
                   memory: 1Gi
                 requests:
                   cpu: 250m
