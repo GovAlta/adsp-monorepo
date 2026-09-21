@@ -1,3 +1,3 @@
-// clean-code-ignore: RULE-19 — barrel re-export, covered by ./lib/AdspThemeProvider.spec.tsx. The
-// rule only looks for a colocated index.test.ts; adding one would duplicate that suite.
+// clean-code-ignore: RULE-19 — barrel re-export with no logic of its own; the exported values are
+// covered by ./lib/AdspThemeProvider.spec.tsx.
 export * from './lib/AdspThemeProvider';

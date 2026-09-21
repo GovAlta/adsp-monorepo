@@ -70,6 +70,8 @@ jest.mock('./services/feedback/FeedbackCSSLeak', () => ({ FeedbackCSSLeak: () =>
 jest.mock('./services/jsonforms/JsonformsExampleOne', () => ({ JsonformsExampleOne: () => null }));
 jest.mock('./services/DesignSystemsMain', () => ({ DesignSystemsMain: () => null }));
 jest.mock('./services/design-systems/DesignSystemsExampleOne', () => ({ DesignSystemsExampleOne: () => null }));
+jest.mock('./services/AdspComponentsMain', () => ({ AdspComponentsMain: () => null }));
+jest.mock('./services/adsp-components/AdspThemeExampleOne', () => ({ AdspThemeExampleOne: () => null }));
 jest.mock('@core-services/app-common', () => ({
   ...jest.requireActual('@core-services/app-common'),
   Band: () => null,
