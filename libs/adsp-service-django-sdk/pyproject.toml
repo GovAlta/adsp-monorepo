@@ -38,7 +38,7 @@ pytest = "^9.0.3"
 pytest-coverage = "^0.0"
 pytest-html = "^4.2.0"
 black = "^26.3.1"
-tox = "^4.27.0"
+tox = "^4.30.3"
 
 [build-system]
 requires = ["poetry-core==1.1.0"]
