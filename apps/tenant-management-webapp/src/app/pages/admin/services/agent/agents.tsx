@@ -11,6 +11,7 @@ import { AgentsTable } from './agentsTable';
 import { AddEditAgentModal } from './addEditAgentModal';
 import { AgentConfiguration } from '@store/agent/model';
 import { useNavigate } from 'react-router-dom';
+import { agentBusySelector } from '../../../../store/agent/selectors';
 
 interface AgentsProps {
   openAddAgent: boolean;
@@ -20,20 +21,23 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
   const navigate = useNavigate();
 
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
     dispatch(getAgents());
     navigate('../agents', { replace: true });
-  }, [dispatch,navigate]);
+  }, [dispatch, navigate]);
 
   const tenantAgents = useSelector((state: RootState) => agentsSelector(state, false));
   const coreAgents = useSelector((state: RootState) => agentsSelector(state, true));
+  const busy = useSelector(agentBusySelector);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<AgentConfiguration>(null);
 
   return (
     <div>
       <Padding>Agents are configurations of LLMs for specific purposes.</Padding>
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-agent"
         onClick={() => {
           setOpenAddAgent(true);
@@ -42,24 +46,31 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
       >
         Add agent
       </GoabButton>
-      {tenantAgents.length === 0 ? (
-        renderNoItem('tenant agents')
+      {!busy && tenantAgents.length === 0 && coreAgents.length === 0 ? (
+        <>
+          {renderNoItem('tenant agents')}
+          {renderNoItem('core agents')}
+        </>
       ) : (
-        <AgentsTable
-          agents={tenantAgents}
-          onDeleteAgent={(agent) => setShowDeleteConfirmation(agent)}
-          onEditAgent={(agent) => navigate(`../edit/${agent.id}`)}
-        />
+        <>
+          <AgentsTable
+            isCore={false}
+            agents={tenantAgents}
+            onDeleteAgent={(agent) => setShowDeleteConfirmation(agent)}
+            onEditAgent={(agent) => navigate(`../edit/${agent.id}`)}
+          />
+          <AgentsTable agents={coreAgents} isCore={true} />
+        </>
       )}
 
-      {coreAgents.length === 0 ? (
+      {/* {!busy && coreAgents.length === 0 ? (
         renderNoItem('core agents')
       ) : (
         <>
           <h2>Core agents</h2>
           <AgentsTable agents={coreAgents} />
         </>
-      )}
+      )} */}
       <AddEditAgentModal
         open={openAddAgent}
         onCancel={() => {
