@@ -15,21 +15,37 @@ const pdfLimiter = new Semaphore(MAX_PDF_CONCURRENCY);
 
 class PuppeteerPdfService implements PdfService {
   private maxJobsBeforeRestart: number;
+  private restarting: Promise<void> | null = null;
+  private readonly onDisconnected: () => void;
   jobCount = 0;
   currentUserDataDir: string;
 
   constructor(private logger: Logger, private browser: puppeteer.Browser, options?: { maxJobsBeforeRestart?: number }) {
     // Listen for crashes/disconnects
-    this.browser.on('disconnected', async () => {
+    this.onDisconnected = () => {
       this.logger.warn('Browser disconnected — restarting...');
-      await this.restartBrowser();
-    });
+      this.restartBrowser().catch((e) => this.logger.error(`Failed to restart browser after disconnect: ${e}`));
+    };
+    this.browser.on('disconnected', this.onDisconnected);
     this.maxJobsBeforeRestart = options?.maxJobsBeforeRestart ?? 25;
   }
 
-  private async restartBrowser() {
+  // Closing the browser emits 'disconnected', which restarts again. Without this guard the two
+  // calls each launch a Chromium and only one is kept, leaking the other for the life of the pod.
+  private async restartBrowser(): Promise<void> {
+    if (!this.restarting) {
+      this.restarting = this.replaceBrowser().finally(() => {
+        this.restarting = null;
+      });
+    }
+
+    return this.restarting;
+  }
+
+  private async replaceBrowser(): Promise<void> {
     try {
       this.logger.info('Closing Browser...');
+      this.browser.off('disconnected', this.onDisconnected);
       await this.browser.close();
     } catch (e) {
       this.logger.warn(`Failed to close browser: ${e}`);
@@ -58,6 +74,7 @@ class PuppeteerPdfService implements PdfService {
       throw e;
     }
 
+    this.browser.on('disconnected', this.onDisconnected);
     this.jobCount = 0;
     this.logger.info('✅ Chromium relaunched');
   }
