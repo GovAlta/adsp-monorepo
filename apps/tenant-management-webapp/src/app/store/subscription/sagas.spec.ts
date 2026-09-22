@@ -1,5 +1,5 @@
-import { findSubscribers } from './sagas';
-import { FindSubscribers } from './actions';
+import { findSubscribers, getSubscriberSubscriptions } from './sagas';
+import { FindSubscribers, GetSubscriberSubscriptions } from './actions';
 
 // Drives the saga as far as the request it makes, and hands back the params it asked for. The saga
 // selects the service url and the token before building the request, so both are supplied here.
@@ -62,5 +62,17 @@ describe('findSubscribers saga', () => {
     expect(paramsForCriteria({ name: 'user-a', email: 'a@test.co', sms: '780' })).toEqual(
       expect.objectContaining({ name: 'user-a', email: 'a@test.co', sms: '780' }),
     );
+  });
+});
+
+describe('getSubscriberSubscriptions saga', () => {
+  it('asks for the selected subscriber\'s subscriptions', () => {
+    const iterator = getSubscriberSubscriptions(GetSubscriberSubscriptions({ id: 'subscriber-1' }, null));
+
+    iterator.next(); // select the service url
+    iterator.next('https://notification.example.co'); // the url, then get the token
+    const effect = iterator.next('token'); // the token, then the request
+
+    expect(effect.value.payload.args[0]).toBe('https://notification.example.co/subscription/v1/subscribers/subscriber-1/subscriptions');
   });
 });
