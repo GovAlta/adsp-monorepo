@@ -62,17 +62,20 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         [appId: string]: { url: string; entries: EndpointStatusEntry[] };
       }
 
-      const endpointHealth = entries.reduce<EndpointHealthMap>((acc, entry) => {
-        const key = entry.applicationId; // or entry.appKey if you prefer
+      const endpointHealth = entries.reduce<EndpointHealthMap>(
+        (acc, entry) => {
+          const key = entry.applicationId; // or entry.appKey if you prefer
 
-        if (!acc[key]) {
-          acc[key] = { url: entry.url, entries: [] };
-        }
+          if (!acc[key]) {
+            acc[key] = { url: entry.url, entries: [] };
+          }
 
-        acc[key].entries.push(entry);
+          acc[key].entries.push(entry);
 
-        return acc;
-      }, {} as Record<string, { url: string; entries: EndpointStatusEntry[] }>);
+          return acc;
+        },
+        {} as Record<string, { url: string; entries: EndpointStatusEntry[] }>,
+      );
 
       return {
         ...state,
@@ -108,7 +111,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       Object.keys(webhooks).forEach((key) => {
         if (webhooks[key]) {
           webhooks[key].intervalMinutes = hookIntervalList.find(
-            (i) => i.appId === webhooks[key]?.targetId
+            (i) => i.appId === webhooks[key]?.targetId,
           )?.waitTimeInterval;
         }
       });
@@ -121,7 +124,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           .map((app) =>
             app.appKey !== action.payload.appKey
               ? { ...app }
-              : { ...app, enabled: action.payload.enabled, internalStatus: action.payload.internalStatus }
+              : { ...app, enabled: action.payload.enabled, internalStatus: action.payload.internalStatus },
           )
           .sort(compareIds),
       };
@@ -136,7 +139,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         Object.keys(webhooks).forEach((key) => {
           if (webhooks[key]) {
             webhooks[key].intervalMinutes = hookIntervalList.find(
-              (i) => i.appId === webhooks[key].targetId
+              (i) => i.appId === webhooks[key].targetId,
             )?.waitTimeInterval;
           }
         });

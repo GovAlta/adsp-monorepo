@@ -51,7 +51,8 @@ export const ConnectionsView = ({ activeEdit }: AddEditConnectionProps): JSX.Ele
   return (
     <section>
       <ButtonPadding>
-        <GoabButton size="compact"
+        <GoabButton
+          size="compact"
           testId="add-connection-btn"
           onClick={() => {
             setSelectedConnectionId(undefined);
@@ -63,7 +64,7 @@ export const ConnectionsView = ({ activeEdit }: AddEditConnectionProps): JSX.Ele
       </ButtonPadding>
 
       {indicator && <PageIndicator />}
-      {Object.keys(connections).length === 0 && renderNoItem('sharepoint connection')}
+      {!indicator.show && Object.keys(connections).length === 0 && renderNoItem('sharepoint connection')}
       {Object.keys(connections).length > 0 && (
         <div>
           <ConnectionTableComponent connections={connections} onEdit={onEdit} onDelete={onDelete} tenantMode={true} />

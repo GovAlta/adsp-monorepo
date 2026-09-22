@@ -143,24 +143,22 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
   );
 };
 
-export const WebhookListTable = () => {
-  const dispatch = useDispatch();
+interface WebhookListTableProps {
+  webhooks: Record<string, WebhookEntity>;
+}
 
-  const webhooks = useSelector(selectStatusWebhooks);
-  useEffect(() => {
-    dispatch(fetchWebhooks());
-  }, [dispatch]);
+export const WebhookListTable = ({ webhooks }: WebhookListTableProps) => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
   return (
     <>
-      {indicator.show && Object.keys(webhooks).length === 0 && (
+      {indicator.show && webhooks && Object.keys(webhooks).length === 0 && (
         <GoabCircularProgress visible={indicator.show} size="small" />
       )}
-      {!indicator.show && Object.keys(webhooks)?.length === 0 && renderNoItem('webhooks')}
-      {!indicator.show && Object.keys(webhooks).length > 0 && (
+      {!indicator.show && webhooks && Object.keys(webhooks)?.length === 0 && renderNoItem('webhooks')}
+      {!indicator.show && webhooks && Object.keys(webhooks).length > 0 && (
         <TableLayout>
           <DataTable data-testid="file-types-table">
             <thead data-testid="file-types-table-header">
