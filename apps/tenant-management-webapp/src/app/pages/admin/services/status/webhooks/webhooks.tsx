@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
@@ -17,8 +17,6 @@ import {
   TestStatusWebhookType,
   Webhooks as WebhookEntity,
 } from '@store/status/models';
-import { selectStatusWebhooks } from '@store/status/selectors';
-import { fetchWebhooks } from '@store/status/actions';
 import { renderNoItem } from '@components/NoItem';
 import { EntryDetail } from '../../styled-components';
 

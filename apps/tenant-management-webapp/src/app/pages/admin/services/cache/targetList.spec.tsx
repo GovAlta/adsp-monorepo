@@ -28,6 +28,11 @@ describe('target Component', () => {
         },
       },
     },
+    session: {
+      indicator: {
+        show: false,
+      },
+    },
     cache: {
       targets: {
         tenant: {
@@ -67,7 +72,7 @@ describe('target Component', () => {
     const { getByText } = render(
       <Provider store={store}>
         <Cache />
-      </Provider>
+      </Provider>,
     );
 
     expect(getByText('Overview')).toBeInTheDocument();
@@ -84,7 +89,7 @@ describe('target Component', () => {
     const { getByText, baseElement } = render(
       <Provider store={store}>
         <Cache />
-      </Provider>
+      </Provider>,
     );
 
     await fireEvent.click(getByText('Targets'));
