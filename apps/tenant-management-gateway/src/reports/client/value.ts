@@ -1,10 +1,7 @@
 import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
-import * as https from 'https';
 import { EventMetrics } from '../types';
-
-const insecureHttpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const VALUE_SERVICE_ID = adspId`urn:ads:platform:value-service:v1`;
 const EVENT_LOG_NAMESPACE = 'event-service';
@@ -110,7 +107,6 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
           {
             headers: headers(token),
             params,
-            httpsAgent: insecureHttpsAgent,
           }
         );
         data = response.data;
@@ -151,7 +147,6 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
               intervalMax: intervalMax(to),
             }),
           },
-          httpsAgent: insecureHttpsAgent,
         });
         data = response.data;
       } catch (err) {
