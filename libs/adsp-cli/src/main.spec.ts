@@ -32,6 +32,18 @@ describe('parseLoginArgs', () => {
     });
   });
 
+  it('parses --local flag', () => {
+    expect(parseLoginArgs(['--local'])).toEqual({ local: true });
+  });
+
+  it('combines --local with --realm and --env', () => {
+    expect(parseLoginArgs(['--realm', 'my-realm', '--env', 'dev', '--local'])).toEqual({
+      realm: 'my-realm',
+      env: 'dev',
+      local: true,
+    });
+  });
+
   it('combines --ci with --tenant, --client-id, --client-secret, and --env', () => {
     expect(
       parseLoginArgs(['--ci', '--tenant', 'my-tenant', '--client-id', 'my-client', '--client-secret', 'my-secret', '--env', 'test']),

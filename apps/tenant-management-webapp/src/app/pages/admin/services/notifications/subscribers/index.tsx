@@ -3,7 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoabButton, GoabCallout } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
-import { CreateSubscriber, DeleteSubscriber, FindSubscribers, UpdateSubscriber } from '@store/subscription/actions';
+import {
+  CreateSubscriber,
+  DeleteSubscriber,
+  FindSubscribers,
+  GetSubscriberSubscriptions,
+  UpdateSubscriber,
+} from '@store/subscription/actions';
 import type { Subscriber, SubscriberSort } from '@store/subscription/models';
 import { DEFAULT_PAGE_SIZE, DEFAULT_SUBSCRIBER_SORT } from '@store/subscription/models';
 import { PageIndicator } from '@components/Indicator';
@@ -39,6 +45,9 @@ export const Subscribers: FunctionComponent = () => {
   const next = useSelector((state: RootState) => state.subscription.subscriberSearch.next);
   const total = useSelector((state: RootState) => state.subscription.subscriberSearch.total);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const selectedSubscriptions = useSelector((state: RootState) =>
+    selectedId ? state.subscription.subscriberSubscriptions[selectedId] : undefined,
+  );
 
   const hasSubscriptionAdmin = useHasRole('subscription-admin');
 
@@ -63,6 +72,14 @@ export const Subscribers: FunctionComponent = () => {
     () => subscribers?.find((subscriber) => subscriber.id === selectedId) || null,
     [subscribers, selectedId],
   );
+
+  // Keyed on the id alone (not `selected`, which is a fresh object every time the search results
+  // change) so that re-fetching a subscriber's own subscriptions elsewhere doesn't loop back here.
+  useEffect(() => {
+    if (selectedId) {
+      dispatch(GetSubscriberSubscriptions({ id: selectedId } as Subscriber, null));
+    }
+  }, [dispatch, selectedId]);
 
   const restart = () => {
     pageCursors.current = [null];
@@ -156,6 +173,7 @@ export const Subscribers: FunctionComponent = () => {
             </div>
             <RecipientDetails
               subscriber={selected}
+              subscriptions={selectedSubscriptions}
               onEdit={setEditing}
               onDelete={setDeleting}
               onClose={() => setSelectedId(null)}

@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import type { Subscriber } from '@store/subscription/models';
+import type { Subscriber, SubscriberSubscriptions } from '@store/subscription/models';
 import { GoabBadge, GoabIcon } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { phoneWrapper } from '@lib/wrappers';
@@ -11,6 +11,8 @@ const EMPTY = '—';
 
 interface RecipientDetailsProps {
   subscriber: Subscriber;
+  // undefined while loading; an empty array once loaded with none held.
+  subscriptions?: SubscriberSubscriptions[];
   onEdit: (subscriber: Subscriber) => void;
   onDelete: (subscriber: Subscriber) => void;
   onClose: () => void;
@@ -18,6 +20,7 @@ interface RecipientDetailsProps {
 
 export const RecipientDetails: FunctionComponent<RecipientDetailsProps> = ({
   subscriber,
+  subscriptions,
   onEdit,
   onDelete,
   onClose,
@@ -88,6 +91,23 @@ export const RecipientDetails: FunctionComponent<RecipientDetailsProps> = ({
           <div data-testid="recipient-details-address-as">{subscriber.addressAs}</div>
         </div>
       </ContactRow>
+
+      <Divider />
+
+      <h4>Subscriptions ({subscriptions?.length ?? 0})</h4>
+      {subscriptions?.length ? (
+        <SubscriptionList data-testid="recipient-details-subscriptions">
+          {subscriptions.map((subscription) => (
+            <li key={subscription.typeId} data-testid={`recipient-details-subscription-${subscription.typeId}`}>
+              {subscription.type?.name || subscription.typeId}
+            </li>
+          ))}
+        </SubscriptionList>
+      ) : (
+        <EmptyMessage data-testid="recipient-details-subscriptions-empty">
+          {subscriptions ? 'No subscriptions' : 'Loading subscriptions...'}
+        </EmptyMessage>
+      )}
 
       <Divider />
 
@@ -166,6 +186,15 @@ const ContactRow = styled.div`
 
 const FieldLabel = styled.div`
   color: var(--goa-color-text-secondary);
+`;
+
+const SubscriptionList = styled.ul`
+  margin: 0;
+  padding-left: var(--goa-space-l);
+
+  li {
+    margin-bottom: var(--goa-space-xs);
+  }
 `;
 
 const DatesSection = styled.div`

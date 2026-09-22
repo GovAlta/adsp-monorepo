@@ -6,7 +6,7 @@ import { getServiceRoles } from './serviceRoles';
 import { deleteTenantById, findTenantByName, listTenants, Tenant } from './tenants';
 
 const USAGE =
-  'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] | ' +
+  'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] [--local] | ' +
   'login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>] | ' +
   'status | logout | token | tenants [name] | service-roles | delete-tenant <name> | ' +
   'directory register --service <name> --url <url>>';
@@ -16,8 +16,11 @@ const HELP_TEXT = `adsp-cli — CLI and client library for authenticating agains
 ${USAGE}
 
 Commands:
-  login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>]
-                          Log in interactively (opens a browser). Resolves a tenant realm via
+  login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] [--local]
+                          Log in interactively. By default uses the OOB flow: prints an
+                          authorization URL, opens a browser if possible, then prompts you
+                          to paste the code Keycloak displays — works in Dev Spaces,
+                          containers, and headless environments. Resolves a tenant realm via
                           --realm (direct), --tenant (anonymous name lookup), or neither (logs
                           into core, then prompts you to pick a tenant — in dev/test, this
                           prompt also offers to create a new tenant). Persists the resolved
@@ -57,6 +60,10 @@ Flags (login only):
   --ci                    Use client credentials grant instead of the browser flow.
   --client-id <id>        Client ID for --ci login (or set ADSP_CLIENT_ID).
   --client-secret <secret>  Client secret for --ci login (or set ADSP_CLIENT_SECRET).
+  --local                 Use a local redirect server on port 3000 instead of the default OOB
+                          flow. Gives a seamless desktop experience (the browser redirects
+                          automatically) but requires localhost to be reachable from the
+                          browser and a working browser binary — not suitable for Dev Spaces.
 
 Environment variables (all optional overrides — see README for details):
   ADSP_TENANT_REALM, ADSP_ENV, ADSP_ACCESS_SERVICE_URL, ADSP_DIRECTORY_SERVICE_URL,
@@ -70,6 +77,7 @@ export function parseLoginArgs(argv: string[]): {
   ci?: boolean;
   clientId?: string;
   clientSecret?: string;
+  local?: boolean;
 } {
   const options: {
     realm?: string;
@@ -79,6 +87,7 @@ export function parseLoginArgs(argv: string[]): {
     ci?: boolean;
     clientId?: string;
     clientSecret?: string;
+    local?: boolean;
   } = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--realm' && argv[i + 1]) {
@@ -99,6 +108,8 @@ export function parseLoginArgs(argv: string[]): {
       options.clientId = argv[++i];
     } else if (argv[i] === '--client-secret' && argv[i + 1]) {
       options.clientSecret = argv[++i];
+    } else if (argv[i] === '--local') {
+      options.local = true;
     }
   }
   return options;

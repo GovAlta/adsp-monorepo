@@ -21,7 +21,7 @@ added directly in the Keycloak console.
 | Standard flow (authorization code) | On |
 | Direct access grants / implicit flow / service accounts | Off |
 | Consent required | On |
-| Valid redirect URIs | `http://localhost:3000/callback` (exact, no wildcard) |
+| Valid redirect URIs | `http://localhost:3000/callback` and `urn:ietf:wg:oauth:2.0:oob` (exact, no wildcard) |
 | Web origins | `http://localhost:3000` |
 | PKCE code challenge method | S256 |
 | Full scope allowed | Off, with no roles added |

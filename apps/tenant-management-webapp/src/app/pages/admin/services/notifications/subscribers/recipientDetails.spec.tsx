@@ -133,6 +133,57 @@ describe('RecipientDetails', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('shows a count and the names of the subscriptions the recipient holds', () => {
+    const { getByTestId, getByText } = render(
+      <RecipientDetails
+        subscriber={subscriber}
+        subscriptions={[
+          { typeId: 'status-updates', type: { id: 'status-updates', name: 'Application Status Update' } },
+          { typeId: 'health-check', type: { id: 'health-check', name: 'Application Health Check Change' } },
+        ]}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onClose={onClose}
+      />,
+    );
+
+    expect(getByText('Subscriptions (2)')).toBeTruthy();
+    expect(getByText('Application Status Update')).toBeTruthy();
+    expect(getByText('Application Health Check Change')).toBeTruthy();
+    expect(getByTestId('recipient-details-subscriptions')).toBeTruthy();
+  });
+
+  it('falls back to the type id when a subscription type has no name', () => {
+    const { getByText } = render(
+      <RecipientDetails
+        subscriber={subscriber}
+        subscriptions={[{ typeId: 'form-status-updates' }]}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onClose={onClose}
+      />,
+    );
+
+    expect(getByText('form-status-updates')).toBeTruthy();
+  });
+
+  it('shows loading text before the subscriptions have been fetched', () => {
+    const { getByTestId } = render(
+      <RecipientDetails subscriber={subscriber} subscriptions={undefined} onEdit={onEdit} onDelete={onDelete} onClose={onClose} />,
+    );
+
+    expect(getByTestId('recipient-details-subscriptions-empty')).toHaveTextContent('Loading subscriptions...');
+  });
+
+  it('shows a count of zero once loaded with no subscriptions held', () => {
+    const { getByText, getByTestId } = render(
+      <RecipientDetails subscriber={subscriber} subscriptions={[]} onEdit={onEdit} onDelete={onDelete} onClose={onClose} />,
+    );
+
+    expect(getByText('Subscriptions (0)')).toBeTruthy();
+    expect(getByTestId('recipient-details-subscriptions-empty')).toHaveTextContent('No subscriptions');
+  });
+
   it('only offers the account link for a recipient that has one', () => {
     const { baseElement, rerender } = render(
       <RecipientDetails subscriber={subscriber} onEdit={onEdit} onDelete={onDelete} onClose={onClose} />,
