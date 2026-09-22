@@ -593,26 +593,25 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }
 
     const rows = await query.orderBy('bucket', 'desc');
-    return rows.reduce(
-      (metrics, row) => {
-        const metric = metrics[row.metric] || { name: row.metric, values: [] };
-        metric.values.push({
-          interval: new Date(row.bucket),
-          sum: row.sum,
-          avg: row.avg,
-          min: row.min,
-          max: row.max,
-          count: row.count,
-          tenantId: row.tenant,
-        });
 
-        return {
-          ...metrics,
-          [row.metric]: metric,
-        };
-      },
-      {} as Record<string, PlatformMetric>,
-    );
+    // Grouped in place rather than spreading into a new object per row: this read is unpaginated and
+    // can span thousands of distinct metrics, where copying the accumulator on every row goes
+    // quadratic and costs seconds for a result the database returned in milliseconds.
+    const metrics: Record<string, PlatformMetric> = {};
+    for (const row of rows) {
+      metrics[row.metric] ??= { name: row.metric, values: [] };
+      metrics[row.metric].values.push({
+        interval: new Date(row.bucket),
+        sum: row.sum,
+        avg: row.avg,
+        min: row.min,
+        max: row.max,
+        count: row.count,
+        tenantId: row.tenant,
+      });
+    }
+
+    return metrics;
   }
 
   async writeMetric(
