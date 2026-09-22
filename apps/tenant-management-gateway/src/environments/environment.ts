@@ -7,8 +7,10 @@ dotenv.config();
 export const environment = envalid.cleanEnv(
   process.env,
   {
+    VALUE_SERVICE_URL: envalid.str({ default: 'https://value-service.adsp-dev.gov.ab.ca/value/v1' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3351 }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {
