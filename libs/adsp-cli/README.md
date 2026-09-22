@@ -11,10 +11,16 @@ This package is used two different ways by two different processes, coupled only
 invoke each other directly:
 
 - **The `adsp` binary** (from this package — `npx @abgov/adsp-cli login`, run once by a human in a terminal) does
-  exactly one job as far as login goes: resolve a tenant realm (see below), run an interactive browser OAuth2 flow
-  against Keycloak for it, cache the resulting token in `~/.adsp-cli/token-cache.json`, and persist the realm itself
-  as the current context in `~/.adsp-cli/config.json`. This is the only place an interactive, potentially slow (up
-  to 120s) wait happens; its other commands (see below) never block on user interaction.
+  exactly one job as far as login goes: resolve a tenant realm (see below), run an interactive OAuth2 flow against
+  Keycloak for it, cache the resulting token in `~/.adsp-cli/token-cache.json`, and persist the realm itself as the
+  current context in `~/.adsp-cli/config.json`. This is the only place an interactive wait happens; its other
+  commands (see below) never block on user interaction.
+  - By default `login` uses the **OOB flow**: it prints an authorization URL (and tries to open it in a browser),
+    then prompts you to paste back the code that Keycloak displays — no local HTTP server needed, works everywhere
+    including Dev Spaces, containers, and any headless environment.
+  - Pass `--local` to use the original **local-server flow** instead: a temporary Express server on port 3000
+    captures the redirect automatically, giving a fully seamless experience on a standard desktop where localhost is
+    reachable from the browser. Not suitable for Dev Spaces.
   - For CI pipelines there is a non-interactive variant: `adsp login --ci` uses the client credentials grant instead
     of a browser flow (see [CI / non-interactive login](#ci--non-interactive-login)).
 - **Library consumers** (e.g. an MCP server tool handler, which must never block on user interaction) call
@@ -33,6 +39,15 @@ npx @abgov/adsp-cli login --realm my-tenant-realm   # you already know your real
 npx @abgov/adsp-cli login --tenant "My Tenant"      # you know your tenant's display name, not its realm
 npx @abgov/adsp-cli login                           # you know neither — logs into `core`, lists every
                                                      # tenant, and prompts you to pick one interactively
+```
+
+All three modes use the **OOB flow** by default: the CLI prints (and tries to open) an authorization URL, then
+prompts you to paste the code that Keycloak shows after you authorize. This works in Dev Spaces, containers, and
+any environment where `localhost` is not reachable from the browser. On a full desktop where you prefer the
+seamless redirect experience, add `--local`:
+
+```bash
+npx @abgov/adsp-cli login --local                   # local-server flow: browser redirects back automatically
 ```
 
 (`npx @abgov/adsp-cli ...` works without any install step; if you `npm i -g @abgov/adsp-cli` instead, the installed
@@ -151,7 +166,7 @@ for the one-time manual setup steps. `--realm`/`--tenant` logins are unaffected 
 
 | Command | Auth required | Description |
 |---|---|---|
-| `login [--realm <realm> \| --tenant <name>] [--scope <name>]... [--env <dev\|test\|prod>]` | Interactive (opens a browser) | See above. |
+| `login [--realm <realm> \| --tenant <name>] [--scope <name>]... [--env <dev\|test\|prod>] [--local]` | Interactive (OOB by default; `--local` for the redirect flow) | See above. |
 | `login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev\|test\|prod>]` | Client credentials (no browser) | Non-interactive CI login. `--client-id`/`--client-secret` can also be set via `ADSP_CLIENT_ID`/`ADSP_CLIENT_SECRET` env vars. See [CI / non-interactive login](#ci--non-interactive-login). |
 | `status` | No | Prints the current environment and realm (and where each came from — `ADSP_ENV`/`ADSP_TENANT_REALM`, persisted login, or default), the tenant's display name when known, and the cached token's state (`valid` / `expired` / `missing`). Read-only — no network calls. |
 | `logout` | No | Clears `~/.adsp-cli/config.json` and `~/.adsp-cli/token-cache.json`. Safe to run when already logged out. |

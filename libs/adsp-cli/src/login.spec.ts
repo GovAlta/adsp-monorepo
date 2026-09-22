@@ -237,7 +237,7 @@ describe('login', () => {
     it('logs in directly without any tenant lookup, and persists the realm on success', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
 
@@ -254,7 +254,7 @@ describe('login', () => {
       mockFindTenantByRealm.mockResolvedValue({ name: 'my-tenant', realm: REALM });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -266,7 +266,7 @@ describe('login', () => {
       mockFindTenantByRealm.mockRejectedValue(new Error('network error'));
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
 
@@ -279,7 +279,7 @@ describe('login', () => {
     it('persists a newly-given --env, and preserves a previously-persisted env on a later plain login', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const firstLogin = loginInteractive({ realm: REALM, env: 'dev' });
+      const firstLogin = loginInteractive({ realm: REALM, env: 'dev', local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await firstLogin;
@@ -287,7 +287,7 @@ describe('login', () => {
       expect(readConfig()).toEqual({ tenantRealm: REALM, env: 'dev' });
 
       setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
-      await loginInteractive({ realm: REALM });
+      await loginInteractive({ realm: REALM, local: true });
 
       expect(readConfig()).toEqual({ tenantRealm: REALM, env: 'dev' });
     });
@@ -295,7 +295,7 @@ describe('login', () => {
     it('uses PKCE: the code_challenge sent to authorizeURL matches the code_verifier sent to getToken', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -314,7 +314,7 @@ describe('login', () => {
     it('reuses a valid cached token covering the requested scopes without opening a browser', async () => {
       setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
 
-      const result = await loginInteractive({ realm: REALM });
+      const result = await loginInteractive({ realm: REALM, local: true });
 
       expect(result).toEqual({ realm: REALM, token: 'cached-token', reused: true });
       expect(mockOpen).not.toHaveBeenCalled();
@@ -324,7 +324,7 @@ describe('login', () => {
     it('requests only the email scope by default', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -336,7 +336,7 @@ describe('login', () => {
     it('requests additional scopes on top of email when options.scopes is given', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'], local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -349,7 +349,7 @@ describe('login', () => {
       setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'], local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
 
@@ -366,7 +366,7 @@ describe('login', () => {
       // e.g. the scope isn't registered as an optional client scope on this realm's adsp-cli client.
       mockAuthClient.getToken.mockResolvedValue(tokenPayload({ scope: 'email' }));
 
-      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'], local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
 
@@ -377,7 +377,7 @@ describe('login', () => {
     it('caches the scope actually granted by the identity provider rather than just what was requested', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload({ scope: 'email adsp-cli-admin offline_access' }));
 
-      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      const loginPromise = loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'], local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -388,7 +388,7 @@ describe('login', () => {
     it('reuses a cached token that already covers the newly requested scope, without a fresh browser login', async () => {
       setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email', 'adsp-cli-admin']);
 
-      const result = await loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'] });
+      const result = await loginInteractive({ realm: REALM, scopes: ['adsp-cli-admin'], local: true });
 
       expect(result).toEqual({ realm: REALM, token: 'cached-token', reused: true });
       expect(mockOpen).not.toHaveBeenCalled();
@@ -398,7 +398,7 @@ describe('login', () => {
       delete process.env.ADSP_ACCESS_SERVICE_URL;
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM, env: 'dev' });
+      const loginPromise = loginInteractive({ realm: REALM, env: 'dev', local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -413,7 +413,7 @@ describe('login', () => {
       mockFindTenantByName.mockResolvedValue({ name: 'my-tenant', realm: REALM });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ tenant: 'my-tenant' });
+      const loginPromise = loginInteractive({ tenant: 'my-tenant', local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
 
@@ -437,7 +437,7 @@ describe('login', () => {
     it('--realm wins if both --realm and --tenant are given', async () => {
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ realm: REALM, tenant: 'my-tenant' });
+      const loginPromise = loginInteractive({ realm: REALM, tenant: 'my-tenant', local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'auth-code' } }, { send: jest.fn() });
       await loginPromise;
@@ -455,7 +455,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
 
       // First browser round-trip: core realm login.
       await flushAsync();
@@ -486,7 +486,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
       await flushAsync();
@@ -517,7 +517,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
       await flushAsync();
@@ -539,7 +539,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
       await flushAsync();
@@ -564,7 +564,7 @@ describe('login', () => {
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -580,7 +580,7 @@ describe('login', () => {
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'prod' });
+        const loginPromise = loginInteractive({ env: 'prod', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -596,7 +596,7 @@ describe('login', () => {
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -614,7 +614,7 @@ describe('login', () => {
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -632,7 +632,7 @@ describe('login', () => {
         mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -662,7 +662,7 @@ describe('login', () => {
         mockWaitForTenantActive.mockResolvedValue({ name: 'new-tenant', realm: 'new-tenant-realm', status: 'active' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -694,7 +694,7 @@ describe('login', () => {
         mockWaitForTenantActive.mockResolvedValue({ name: 'new-tenant', realm: 'new-tenant-realm', status: 'active' });
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
         await flushAsync();
@@ -720,7 +720,7 @@ describe('login', () => {
         mockCreateTenant.mockImplementation(() => Promise.reject(new HttpRequestError(401, "missing the 'beta-tester' role")));
         mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-        const loginPromise = loginInteractive({ env: 'dev' });
+        const loginPromise = loginInteractive({ env: 'dev', local: true });
         await flushAsync();
         lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
 
@@ -735,7 +735,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ scopes: ['adsp-cli-admin'] });
+      const loginPromise = loginInteractive({ scopes: ['adsp-cli-admin'], local: true });
 
       // First browser round-trip: core realm login — must stay scoped to 'email' only, since
       // core's adsp-cli client has no adsp-cli-admin scope registered.
@@ -781,7 +781,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ scopes: ['adsp-cli-admin'] });
+      const loginPromise = loginInteractive({ scopes: ['adsp-cli-admin'], local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
 
@@ -799,7 +799,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive({ env: 'prod' });
+      const loginPromise = loginInteractive({ env: 'prod', local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
 
@@ -826,7 +826,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
       await flushAsync();
@@ -842,7 +842,7 @@ describe('login', () => {
       mockListTenants.mockResolvedValue([]);
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
       await flushAsync();
       lastCallbackHandler()({ query: { code: 'core-auth-code' } }, { send: jest.fn() });
 
@@ -855,7 +855,7 @@ describe('login', () => {
       mockPrompt.mockResolvedValue({ tenant: 'tenant-a' });
       mockAuthClient.getToken.mockResolvedValue(tokenPayload());
 
-      const loginPromise = loginInteractive();
+      const loginPromise = loginInteractive({ local: true });
       await flushAsync();
       // Only one browser round-trip needed now — for the tenant realm.
       lastCallbackHandler()({ query: { code: 'tenant-auth-code' } }, { send: jest.fn() });
@@ -866,9 +866,9 @@ describe('login', () => {
     });
   });
 
-  describe('browser flow error handling', () => {
+  describe('local server flow error handling (--local)', () => {
     it('rejects when the callback receives an error query param', async () => {
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       await flushAsync();
       const res = { send: jest.fn() };
       lastCallbackHandler()({ query: { error: 'access_denied' } }, res);
@@ -877,12 +877,12 @@ describe('login', () => {
       expect(res.send).toHaveBeenCalledWith('Login failed.');
     });
 
-    it('surfaces the authorization URL for manual copy-paste when open() fails', async () => {
+    it('throws with the authorization URL when open() fails', async () => {
       mockOpen.mockRejectedValue(new Error('no display'));
 
       let caughtError: Error | undefined;
       try {
-        await loginInteractive({ realm: REALM });
+        await loginInteractive({ realm: REALM, local: true });
       } catch (err) {
         caughtError = err as Error;
       }
@@ -894,11 +894,79 @@ describe('login', () => {
     it('times out if the browser flow never completes', async () => {
       jest.useFakeTimers();
 
-      const loginPromise = loginInteractive({ realm: REALM });
+      const loginPromise = loginInteractive({ realm: REALM, local: true });
       const assertion = expect(loginPromise).rejects.toThrow('Timed out waiting for login.');
 
       await jest.advanceTimersByTimeAsync(120_000);
       await assertion;
+    });
+  });
+
+  describe('OOB flow (default)', () => {
+    it('prompts for a code via stdin and uses the OOB redirect URI, without starting a local server', async () => {
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+      mockPrompt.mockResolvedValue({ code: 'oob-auth-code' });
+
+      const result = await loginInteractive({ realm: REALM });
+
+      expect(result).toEqual({ realm: REALM, token: 'fresh-access-token', reused: false });
+      expect(mockApp.listen).not.toHaveBeenCalled();
+      expect(mockAuthClient.getToken).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'oob-auth-code', redirect_uri: 'urn:ietf:wg:oauth:2.0:oob' })
+      );
+    });
+
+    it('uses PKCE: the code_challenge sent to authorizeURL matches the code_verifier sent to getToken', async () => {
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+      mockPrompt.mockResolvedValue({ code: 'oob-auth-code' });
+
+      await loginInteractive({ realm: REALM });
+
+      const [authorizeArgs] = mockAuthClient.authorizeURL.mock.calls.at(-1);
+      const [tokenArgs] = mockAuthClient.getToken.mock.calls.at(-1);
+
+      expect(authorizeArgs.code_challenge_method).toBe('S256');
+      expect(createHash('sha256').update(tokenArgs.code_verifier).digest('base64url')).toBe(authorizeArgs.code_challenge);
+    });
+
+    it('proceeds normally when open() fails — URL is printed, code prompt still appears', async () => {
+      mockOpen.mockRejectedValue(new Error('no display'));
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+      mockPrompt.mockResolvedValue({ code: 'oob-auth-code' });
+
+      const result = await loginInteractive({ realm: REALM });
+
+      expect(result).toEqual({ realm: REALM, token: 'fresh-access-token', reused: false });
+      expect(mockApp.listen).not.toHaveBeenCalled();
+    });
+
+    it('reuses a cached token without prompting for a code', async () => {
+      setCachedToken(ACCESS_SERVICE_URL, REALM, 'cached-token', undefined, 3600, ['email']);
+
+      const result = await loginInteractive({ realm: REALM });
+
+      expect(result).toEqual({ realm: REALM, token: 'cached-token', reused: true });
+      expect(mockPrompt).not.toHaveBeenCalled();
+      expect(mockOpen).not.toHaveBeenCalled();
+    });
+
+    it('no-args flow: prompts for OOB codes for both the core login and the tenant-realm login', async () => {
+      mockListTenants.mockResolvedValue([{ name: 'tenant-a', realm: 'realm-a' }]);
+      mockAuthClient.getToken.mockResolvedValue(tokenPayload());
+      let codeCall = 0;
+      mockPrompt.mockImplementation(async (args: { name?: string; type?: string }) => {
+        if (args.name === 'code') {
+          codeCall += 1;
+          return { code: codeCall === 1 ? 'core-oob-code' : 'tenant-oob-code' };
+        }
+        return { tenant: 'tenant-a' };
+      });
+
+      const result = await loginInteractive();
+
+      expect(result).toEqual({ realm: 'realm-a', token: 'fresh-access-token', reused: false });
+      expect(codeCall).toBe(2);
+      expect(mockApp.listen).not.toHaveBeenCalled();
     });
   });
 
