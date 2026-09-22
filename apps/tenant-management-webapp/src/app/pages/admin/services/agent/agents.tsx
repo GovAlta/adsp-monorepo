@@ -1,4 +1,4 @@
-import { GoabButton } from '@abgov/react-components';
+import { GoabButton, GoabCircularProgress } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Padding } from '@components/styled-components';
@@ -46,6 +46,12 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
       >
         Add agent
       </GoabButton>
+
+      {busy && (tenantAgents.length === 0 || coreAgents.length === 0) && (
+        <div>
+          <GoabCircularProgress visible={busy} size="small" />
+        </div>
+      )}
       {!busy && tenantAgents.length === 0 && coreAgents.length === 0 ? (
         <>
           {renderNoItem('tenant agents')}
