@@ -28,7 +28,7 @@ invoke each other directly:
   client credentials when `ADSP_CLIENT_ID`/`ADSP_CLIENT_SECRET` env vars are set — to get a token, then call
   `getServiceUrls()`/`getConfiguration()` themselves to actually talk to ADSP.
 
-`loginInteractive` (the browser-opening function) is intentionally **not** part of the public API — only the CLI
+`loginInteractive` (the interactive login function) is intentionally **not** part of the public API — only the CLI
 entry (`src/main.ts`) calls it. A library consumer that needs a token should always call `getAccessToken()` and
 handle its `'not-authenticated'` result by telling the user to run `adsp login`, not by trying to log in itself.
 
