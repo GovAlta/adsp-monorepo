@@ -84,11 +84,11 @@ export const TasksList = (): JSX.Element => {
   return (
     <section>
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
-
       <GoabFormItem label="Select a queue">
         {indicator.show && Object.keys(taskQueues).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
         {Object.keys(taskQueues).length > 0 && (
-          <GoabDropdown size="compact"
+          <GoabDropdown
+            size="compact"
             name="Queues"
             value={selectedTask}
             onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -111,7 +111,11 @@ export const TasksList = (): JSX.Element => {
           </GoabDropdown>
         )}
       </GoabFormItem>
-
+      {indicator.show && Object.keys(taskQueues).length === 0 && (
+        <ProgressWrapper>
+          <GoabCircularProgress visible={indicator.show} size="large" />
+        </ProgressWrapper>
+      )}
       {selectedTask !== '' && (
         <div>
           <ButtonPadding>

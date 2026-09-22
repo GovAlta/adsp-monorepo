@@ -76,6 +76,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
           Add calendar
         </GoabButton>
       </div>
+      <br />
       {fetchCalendarState === ActionState.inProcess && <PageIndicator />}
       {fetchCalendarState === ActionState.completed &&
         Object.keys(calendars).length === 0 &&
