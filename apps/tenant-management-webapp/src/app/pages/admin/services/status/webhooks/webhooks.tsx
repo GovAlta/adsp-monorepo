@@ -9,7 +9,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateModalState } from '@store/session/actions';
-import { GoabCircularProgress } from '@abgov/react-components';
+import { PageIndicator } from '@components/Indicator';
 import {
   AddEditStatusWebhookType,
   StatusWebhookHistoryType,
@@ -152,9 +152,7 @@ export const WebhookListTable = ({ webhooks }: WebhookListTableProps) => {
 
   return (
     <>
-      {indicator.show && webhooks && Object.keys(webhooks).length === 0 && (
-        <GoabCircularProgress visible={indicator.show} size="small" />
-      )}
+      <PageIndicator />
       {!indicator.show && webhooks && Object.keys(webhooks)?.length === 0 && renderNoItem('webhooks')}
       {!indicator.show && webhooks && Object.keys(webhooks).length > 0 && (
         <TableLayout>

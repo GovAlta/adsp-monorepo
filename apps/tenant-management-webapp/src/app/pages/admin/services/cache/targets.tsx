@@ -10,6 +10,7 @@ import { GoabButton } from '@abgov/react-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { CacheTarget } from '@store/cache/model';
 import { renderNoItem } from '@components/NoItem';
+import { PageIndicator } from '@components/Indicator';
 
 interface CacheTargetProps {
   openAddDefinition: boolean;
@@ -69,6 +70,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
           tenantMode={true}
         />
       )}
+      <PageIndicator />
 
       {!indicator.show && Object.keys(cacheTargets.core).length === 0 && renderNoItem('core cache')}
       {cacheTargets?.core && Object.keys(cacheTargets.core).length > 0 && (

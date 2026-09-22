@@ -12,7 +12,7 @@ import { AddEditAgentModal } from './addEditAgentModal';
 import { AgentConfiguration } from '@store/agent/model';
 import { useNavigate } from 'react-router-dom';
 import { agentBusySelector } from '../../../../store/agent/selectors';
-
+import { Center } from '@components/Indicator';
 interface AgentsProps {
   openAddAgent: boolean;
   setOpenAddAgent: (val: boolean) => void;
@@ -48,9 +48,9 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
       </GoabButton>
 
       {busy && (tenantAgents.length === 0 || coreAgents.length === 0) && (
-        <div>
-          <GoabCircularProgress visible={busy} size="small" />
-        </div>
+        <Center>
+          <GoabCircularProgress visible={busy} size="large" />
+        </Center>
       )}
       {!busy && tenantAgents.length === 0 && coreAgents.length === 0 ? (
         <>

@@ -2,7 +2,6 @@ import { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { PageIndicator } from '@components/Indicator';
-import { RootState } from '@store/index';
 import { AgentConfiguration } from '@store/agent/model';
 import { AgentTableItem } from './agentsTableItem';
 import { agentBusySelector } from '../../../../store/agent/selectors';
@@ -14,7 +13,7 @@ export interface AgentsTableProps {
   onDeleteAgent?: (agent: AgentConfiguration) => void;
 }
 
-export const AgentsTable: FunctionComponent<AgentsTableProps> = ({isCore, agents, onEditAgent, onDeleteAgent }) => {
+export const AgentsTable: FunctionComponent<AgentsTableProps> = ({ isCore, agents, onEditAgent, onDeleteAgent }) => {
   const busy = useSelector(agentBusySelector);
 
   return busy ? (

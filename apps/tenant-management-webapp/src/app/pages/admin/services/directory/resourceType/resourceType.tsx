@@ -38,16 +38,18 @@ export const ResourceTypePage = (): JSX.Element => {
     setSelectedType(defaultResourceType);
   }, []);
 
-  //eslint-disable-next-line
-  const groupResources = (data: Record<string, ResourceType[]>) => {
-    Object.entries(data).forEach(([key, value]) => {
-      if (key.includes(':platform:')) {
-        platformGroup[key] = value;
-      } else {
-        othersGroup[key] = value;
-      }
-    });
-  };
+  const groupResources = useCallback(
+    (data: Record<string, ResourceType[]>) => {
+      Object.entries(data).forEach(([key, value]) => {
+        if (key.includes(':platform:')) {
+          platformGroup[key] = value;
+        } else {
+          othersGroup[key] = value;
+        }
+      });
+    },
+    [othersGroup, platformGroup],
+  );
 
   //eslint-disable-next-line
   const groupedResourceTypes = useMemo(
@@ -96,7 +98,6 @@ export const ResourceTypePage = (): JSX.Element => {
     reset();
   };
 
-  console.log('indicator.show', indicator.show);
   return (
     <section>
       <GoabButton
@@ -109,9 +110,7 @@ export const ResourceTypePage = (): JSX.Element => {
       >
         Add type
       </GoabButton>
-      <br />
-      <br />
-      <PageIndicator />
+
       <AddEditResourceTypeModal
         open={openAddResourceType}
         isEdit={isEdit}
@@ -134,7 +133,8 @@ export const ResourceTypePage = (): JSX.Element => {
         }}
         onDelete={handleDelete}
       />
-      {!indicator.show && Object.keys(othersGroup)?.length === 0 && renderNoItem('tenant resource type')}
+
+      {!indicator.show && othersGroup && Object.keys(othersGroup)?.length === 0 && renderNoItem('tenant resource type')}
       {othersGroup && Object.keys(othersGroup)?.length > 0 && (
         <div>
           <GroupedResourceTypesTable

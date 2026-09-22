@@ -20,6 +20,7 @@ import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { TopicItem, defaultTopic } from '@store/comment/model';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { PageIndicator } from '@components/Indicator';
 interface VisibleProps {
   visible: boolean;
 }
@@ -101,6 +102,7 @@ export const TopicsList = (): JSX.Element => {
 
   return (
     <section>
+      <PageIndicator />
       {!indicator.show &&
         Object.keys(topicTypes).length === 0 &&
         Object.keys(coreTopicTypes).length === 0 &&
@@ -108,7 +110,8 @@ export const TopicsList = (): JSX.Element => {
       {(Object.keys(topicTypes).length > 0 || Object.keys(coreTopicTypes).length > 0) && (
         <GoabFormItem label="Select a topic type">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
-          <GoabDropdown size="compact"
+          <GoabDropdown
+            size="compact"
             name="TopicTypes"
             value={selectedType}
             onChange={(detail: GoabDropdownOnChangeDetail) => {
