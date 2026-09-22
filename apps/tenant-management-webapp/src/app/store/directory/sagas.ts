@@ -47,7 +47,7 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
   if (directoryBaseUrl && token) {
     try {
@@ -56,7 +56,7 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
         `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(core)}/entries`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       // if its our core Platform tenant then don't make this call
@@ -66,7 +66,7 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
           `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(tenantName)}/entries`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         tenantDirectoryData = tenantDirectory;
       }
@@ -76,14 +76,14 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ message: 'Failed to fetch directory service', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -113,7 +113,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
       { ...sendEntry },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     if (data) {
@@ -123,7 +123,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
     yield put(
       ErrorNotification({
         message: `Failed to create a directory service entry,  ${action.data.service} already exists.`,
-      })
+      }),
     );
   }
 }
@@ -152,7 +152,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
       { ...sendEntry },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     if (data === 'Created') {
       yield put(updateEntrySuccess(action.data));
@@ -193,7 +193,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     UpdateElementIndicator({
       show: true,
       id: action.data.urn,
-    })
+    }),
   );
 
   try {
@@ -204,7 +204,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
       }`,
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     if (data) {
       const service = action.data;
@@ -226,7 +226,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   yield put(
     UpdateElementIndicator({
       show: false,
-    })
+    }),
   );
 }
 
@@ -257,7 +257,7 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
               }`,
               {
                 headers: { Authorization: `Bearer ${token}` },
-              }
+              },
             );
 
             _service.metadata = result?.metadata ? { ...result?.metadata } : null;
@@ -274,8 +274,13 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
 }
 
 export function* fetchResourceTypes(): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+    }),
+  );
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -286,25 +291,20 @@ export function* fetchResourceTypes(): SagaIterator {
 
       const { resourceType } = yield call(fetchResourceTypeApi, token, url);
       const resourceTypesInCore = yield call(fetchResourceTypeApi, token, urlInCore);
-      yield put(
-        UpdateIndicator({
-          show: true,
-        })
-      );
 
+      yield put(fetchResourceTypeSuccessAction(resourceType));
+      yield put(fetchResourceTypeInCoreSuccessAction(resourceTypesInCore));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
-      yield put(fetchResourceTypeSuccessAction(resourceType));
-      yield put(fetchResourceTypeInCoreSuccessAction(resourceTypesInCore));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -327,13 +327,13 @@ export function* updateResourceType(payload): SagaIterator {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(
         updateResourceTypeSuccessAction({
           ...latest.configuration?.resourceType,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -361,13 +361,13 @@ export function* deleteResourceType(payload): SagaIterator {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(
         deleteResourceTypeSuccessAction({
           ...latest.configuration?.resourceType,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));

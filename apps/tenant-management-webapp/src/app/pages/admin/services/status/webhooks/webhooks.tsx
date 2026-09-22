@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
@@ -9,7 +9,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateModalState } from '@store/session/actions';
-import { GoabCircularProgress } from '@abgov/react-components';
+import { PageIndicator } from '@components/Indicator';
 import {
   AddEditStatusWebhookType,
   StatusWebhookHistoryType,
@@ -17,8 +17,6 @@ import {
   TestStatusWebhookType,
   Webhooks as WebhookEntity,
 } from '@store/status/models';
-import { selectStatusWebhooks } from '@store/status/selectors';
-import { fetchWebhooks } from '@store/status/actions';
 import { renderNoItem } from '@components/NoItem';
 import { EntryDetail } from '../../styled-components';
 
@@ -143,24 +141,20 @@ const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
   );
 };
 
-export const WebhookListTable = () => {
-  const dispatch = useDispatch();
+interface WebhookListTableProps {
+  webhooks: Record<string, WebhookEntity>;
+}
 
-  const webhooks = useSelector(selectStatusWebhooks);
-  useEffect(() => {
-    dispatch(fetchWebhooks());
-  }, [dispatch]);
+export const WebhookListTable = ({ webhooks }: WebhookListTableProps) => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
   return (
     <>
-      {indicator.show && Object.keys(webhooks).length === 0 && (
-        <GoabCircularProgress visible={indicator.show} size="small" />
-      )}
-      {!indicator.show && Object.keys(webhooks)?.length === 0 && renderNoItem('webhooks')}
-      {!indicator.show && Object.keys(webhooks).length > 0 && (
+      <PageIndicator />
+      {!indicator.show && webhooks && Object.keys(webhooks)?.length === 0 && renderNoItem('webhooks')}
+      {!indicator.show && webhooks && Object.keys(webhooks).length > 0 && (
         <TableLayout>
           <DataTable data-testid="file-types-table">
             <thead data-testid="file-types-table-header">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -25,6 +25,19 @@ export const ResourceTypePage = (): JSX.Element => {
   const othersGroup: Record<string, ResourceType[]> = {};
 
   const dispatch = useDispatch();
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
+  // resourceType(s) default to {} in the store, so the "no item" checks can only be
+  // trusted once a fetch has actually completed (indicator.show has been true at least once).
+  const hasFetchedRef = useRef(false);
+  if (indicator.show) {
+    hasFetchedRef.current = true;
+  }
+  const fetchComplete = useMemo(() => hasFetchedRef.current && !indicator.show, [indicator.show]);
+
   useEffect(() => {
     dispatch(fetchResourceTypeAction());
   }, [dispatch]);
@@ -104,9 +117,7 @@ export const ResourceTypePage = (): JSX.Element => {
       >
         Add type
       </GoabButton>
-      <br />
-      <br />
-      <PageIndicator />
+
       <AddEditResourceTypeModal
         open={openAddResourceType}
         isEdit={isEdit}
@@ -129,7 +140,13 @@ export const ResourceTypePage = (): JSX.Element => {
         }}
         onDelete={handleDelete}
       />
-      {Object.keys(othersGroup)?.length === 0 && renderNoItem('tenant resource type')}
+
+      {indicator.show && <PageIndicator />}
+      {!indicator.show &&
+        othersGroup &&
+        Object.keys(othersGroup)?.length === 0 &&
+        fetchComplete &&
+        renderNoItem('tenant resource type')}
       {othersGroup && Object.keys(othersGroup)?.length > 0 && (
         <div>
           <GroupedResourceTypesTable
@@ -140,7 +157,10 @@ export const ResourceTypePage = (): JSX.Element => {
           />
         </div>
       )}
-      {Object.keys(resourceTypesInCore)?.length === 0 && renderNoItem('Core resource types')}
+      {!indicator.show &&
+        Object.keys(resourceTypesInCore)?.length === 0 &&
+        fetchComplete &&
+        renderNoItem('Core resource types')}
       {resourceTypesInCore && Object.keys(resourceTypesInCore)?.length > 0 && (
         <div>
           <h2>Core resource types</h2>

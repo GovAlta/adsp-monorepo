@@ -10,6 +10,7 @@ import { GoabButton } from '@abgov/react-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { CacheTarget } from '@store/cache/model';
 import { renderNoItem } from '@components/NoItem';
+import { PageIndicator } from '@components/Indicator';
 
 interface CacheTargetProps {
   openAddDefinition: boolean;
@@ -31,6 +32,10 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
   const [isEdit, setIsEdit] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(null);
 
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   return (
     <div>
       <Padding>
@@ -39,7 +44,8 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         Targets are configured as service or API URNs and must be registered in directory service, and an associated TTL
         can be set.
       </Padding>
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-cache-target"
         onClick={() => {
           setOpenAddDefinition(true);
@@ -49,7 +55,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
       >
         Add cache target
       </GoabButton>
-      {Object.keys(cacheTargets.tenant).length === 0 && renderNoItem('tenant cache')}
+      {!indicator.show && Object.keys(cacheTargets.tenant).length === 0 && renderNoItem('tenant cache')}
       {cacheTargets?.tenant && Object.keys(cacheTargets.tenant).length > 0 && (
         <CacheTargetTable
           targets={cacheTargets.tenant}
@@ -64,8 +70,9 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
           tenantMode={true}
         />
       )}
+      <PageIndicator />
 
-      {Object.keys(cacheTargets.core).length === 0 && renderNoItem('core cache')}
+      {!indicator.show && Object.keys(cacheTargets.core).length === 0 && renderNoItem('core cache')}
       {cacheTargets?.core && Object.keys(cacheTargets.core).length > 0 && (
         <>
           <h2>Core cache targets</h2>

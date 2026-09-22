@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
-import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_ACTION } from '@store/status/actions';
+import {
+  fetchServiceStatusApps,
+  fetchStatusMetrics,
+  FETCH_SERVICE_STATUS_APPS_ACTION,
+  fetchWebhooks,
+} from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoabCheckbox, GoabButton } from '@abgov/react-components';
@@ -47,10 +52,11 @@ const userHealthSubscriptionSelector = createSelector(
 function Status(): JSX.Element {
   const dispatch = useDispatch();
 
-  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
+  const { applications, serviceStatusAppUrl, tenantName, webhooks } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
     serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
     tenantName: state.tenant.name,
+    webhooks: state.serviceStatus.webhooks,
   }));
 
   const subscription = useSelector(userHealthSubscriptionSelector);
@@ -65,6 +71,9 @@ function Status(): JSX.Element {
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
     dispatch(fetchStatusMetrics());
+    dispatch(getNotices());
+    dispatch(GetMySubscriber());
+    dispatch(fetchWebhooks());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -80,11 +89,6 @@ function Status(): JSX.Element {
   }, [applications]);
 
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
-
-  useEffect(() => {
-    dispatch(getNotices());
-    dispatch(GetMySubscriber());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const subscribeToggle = () => {
     if (subscription) {
@@ -117,7 +121,8 @@ function Status(): JSX.Element {
               <p>
                 <b>Do you want to subscribe and receive notifications for application health changes?</b>
               </p>
-              <GoabCheckbox size="compact"
+              <GoabCheckbox
+                size="compact"
                 name="subscribe"
                 checked={!!subscription}
                 onChange={() => {
@@ -139,9 +144,9 @@ function Status(): JSX.Element {
           </Tab>
           <Tab label="Webhook" data-testid="status-webhook">
             <section>
-              <p>The webhooks are listed here</p>
               <p>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   testId="add-application"
                   onClick={() => {
                     dispatch(
@@ -158,7 +163,7 @@ function Status(): JSX.Element {
                 </GoabButton>
               </p>
 
-              <WebhookListTable />
+              <WebhookListTable webhooks={webhooks} />
             </section>
           </Tab>
           <Tab label="Notices" data-testid="status-notices">
@@ -178,7 +183,8 @@ function Status(): JSX.Element {
                 This service allows for posting of application notices. This allows you to communicate with your
                 customers about upcoming maintenance windows or other events
               </p>
-              <GoabButton size="compact"
+              <GoabButton
+                size="compact"
                 testId="add-notice"
                 onClick={() => {
                   setShowAddNoticeModal(true);

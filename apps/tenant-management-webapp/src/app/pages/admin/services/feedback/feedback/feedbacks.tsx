@@ -52,15 +52,15 @@ export const FeedbacksList = (): JSX.Element => {
     if (selectedSite) {
       const selectedSiteData = sites.find((s) => s.url === selectedSite);
       dispatch(getFeedbacks(selectedSiteData, searchCriteria));
-    } //eslint-disable-next-line
-  }, [selectedSite]);
+    }
+  }, [dispatch, searchCriteria, selectedSite, sites]);
 
   useEffect(() => {
     if (selectedSite && searchCriteria.startDate && searchCriteria.endDate) {
       const selectedSiteData = sites.find((s) => s.url === selectedSite);
       dispatch(getFeedbacks(selectedSiteData, searchCriteria));
-    } //eslint-disable-next-line
-  }, [searchCriteria]);
+    }
+  }, [dispatch, searchCriteria, selectedSite, sites]);
 
   const isSearchCriteriaValid = (criteria: FeedbackSearchCriteria) =>
     new Date(criteria.startDate) <= new Date(criteria.endDate);
@@ -69,6 +69,16 @@ export const FeedbacksList = (): JSX.Element => {
     const selectedSiteData = sites.find((s) => s.url === selectedSite);
     dispatch(getFeedbacks(selectedSiteData, searchCriteria, next));
   };
+
+  useEffect(() => {
+    if (isExport) {
+      const transformData = transformedData(exportData);
+      const data = transformData && typeof transformData === 'object' ? flattenJSON(transformData) : {};
+      const fileName = `${tenantName}-feedbacks`;
+      exportFromJSON({ data, fileName, exportType: exportFromJSON.types.csv });
+      setIsExport(false);
+    }
+  }, [exportData, isExport, tenantName]);
 
   const exportToCsv = () => {
     setIsExport(true);
@@ -98,16 +108,6 @@ export const FeedbacksList = (): JSX.Element => {
       )
     );
   };
-
-  useEffect(() => {
-    if (isExport) {
-      const transformData = transformedData(exportData);
-      const data = transformData && typeof transformData === 'object' ? flattenJSON(transformData) : {};
-      const fileName = `${tenantName}-feedbacks`;
-      exportFromJSON({ data, fileName, exportType: exportFromJSON.types.csv });
-      setIsExport(false);
-    } //eslint-disable-next-line
-  }, [exportData]);
 
   const sharedFilterForm = (
     <div>
@@ -239,7 +239,7 @@ export const FeedbacksList = (): JSX.Element => {
 
       {!next && indicator.show && (
         <ProgressWrapper>
-          <GoabCircularProgress visible={indicator.show} size="small" />
+          <GoabCircularProgress visible={indicator.show} size="large" />
         </ProgressWrapper>
       )}
 

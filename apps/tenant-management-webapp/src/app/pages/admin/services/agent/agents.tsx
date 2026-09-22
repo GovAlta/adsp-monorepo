@@ -1,4 +1,4 @@
-import { GoabButton } from '@abgov/react-components';
+import { GoabButton, GoabCircularProgress } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Padding } from '@components/styled-components';
@@ -11,7 +11,8 @@ import { AgentsTable } from './agentsTable';
 import { AddEditAgentModal } from './addEditAgentModal';
 import { AgentConfiguration } from '@store/agent/model';
 import { useNavigate } from 'react-router-dom';
-
+import { agentBusySelector } from '../../../../store/agent/selectors';
+import { Center } from '@components/Indicator';
 interface AgentsProps {
   openAddAgent: boolean;
   setOpenAddAgent: (val: boolean) => void;
@@ -20,20 +21,23 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
   const navigate = useNavigate();
 
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
     dispatch(getAgents());
     navigate('../agents', { replace: true });
-  }, [dispatch,navigate]);
+  }, [dispatch, navigate]);
 
   const tenantAgents = useSelector((state: RootState) => agentsSelector(state, false));
   const coreAgents = useSelector((state: RootState) => agentsSelector(state, true));
+  const busy = useSelector(agentBusySelector);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<AgentConfiguration>(null);
 
   return (
     <div>
       <Padding>Agents are configurations of LLMs for specific purposes.</Padding>
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-agent"
         onClick={() => {
           setOpenAddAgent(true);
@@ -42,24 +46,29 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
       >
         Add agent
       </GoabButton>
-      {tenantAgents.length === 0 ? (
-        renderNoItem('tenant agents')
-      ) : (
-        <AgentsTable
-          agents={tenantAgents}
-          onDeleteAgent={(agent) => setShowDeleteConfirmation(agent)}
-          onEditAgent={(agent) => navigate(`../edit/${agent.id}`)}
-        />
-      )}
 
-      {coreAgents.length === 0 ? (
-        renderNoItem('core agents')
+      {busy && (tenantAgents.length === 0 || coreAgents.length === 0) && (
+        <Center>
+          <GoabCircularProgress visible={busy} size="large" />
+        </Center>
+      )}
+      {!busy && tenantAgents.length === 0 && coreAgents.length === 0 ? (
+        <>
+          {renderNoItem('tenant agents')}
+          {renderNoItem('core agents')}
+        </>
       ) : (
         <>
-          <h2>Core agents</h2>
-          <AgentsTable agents={coreAgents} />
+          <AgentsTable
+            isCore={false}
+            agents={tenantAgents}
+            onDeleteAgent={(agent) => setShowDeleteConfirmation(agent)}
+            onEditAgent={(agent) => navigate(`../edit/${agent.id}`)}
+          />
+          <AgentsTable agents={coreAgents} isCore={true} />
         </>
       )}
+
       <AddEditAgentModal
         open={openAddAgent}
         onCancel={() => {

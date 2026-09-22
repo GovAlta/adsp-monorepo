@@ -16,7 +16,7 @@ const extractFileIdFromUrn = (urn: string): string | null => {
 const resolveUserMessage = (
   message: UserMessage,
   downloadedFiles: Record<string, string>,
-  fileMetadata: Record<string, { filename?: string; mimeType?: string }>
+  fileMetadata: Record<string, { filename?: string; mimeType?: string }>,
 ) => {
   const resolvedContent = message.content.map((part) => {
     if (part.type === 'image') {
@@ -60,19 +60,22 @@ export const busySelector = (state: RootState) => state.agent.busy;
 const fileMetadataSelector = createSelector(
   (state: RootState) => state.fileService?.fileList || [],
   (fileList) => {
-    return fileList.reduce((acc, file) => {
-      if (file.id) {
-        acc[file.id] = { filename: file.filename, mimeType: file.mimeType };
-      }
-      return acc;
-    }, {} as Record<string, { filename?: string; mimeType?: string }>);
-  }
+    return fileList.reduce(
+      (acc, file) => {
+        if (file.id) {
+          acc[file.id] = { filename: file.filename, mimeType: file.mimeType };
+        }
+        return acc;
+      },
+      {} as Record<string, { filename?: string; mimeType?: string }>,
+    );
+  },
 );
 
 export const threadSelector = createSelector(
   (state: RootState) => state.agent.threads,
   (_: RootState, threadId: string) => threadId,
-  (threads, threadId) => threads[threadId]
+  (threads, threadId) => threads[threadId],
 );
 
 export const messagesSelector = createSelector(
@@ -91,18 +94,18 @@ export const messagesSelector = createSelector(
       }
       return message;
     });
-  }
+  },
 );
 
 export const agentsSelector = createSelector(
   (state: RootState) => state.agent.agents,
   (_: RootState, core: boolean) => core,
-  (agents, core) => Object.values(agents).filter((agent) => !!agent.core === core)
+  (agents, core) => Object.values(agents).filter((agent) => !!agent.core === core),
 );
 
 export const agentNamesSelector = createSelector(
   (state: RootState) => state.agent.agents,
-  (agents) => Object.values(agents).map(({ name }) => name)
+  (agents) => Object.values(agents).map(({ name }) => name),
 );
 
 export const editorSelector = (state: RootState) => state.agent.editor;
@@ -113,12 +116,14 @@ export const availableAgentsSelector = createSelector(
   editorSelector,
   (state: RootState) => state.agent.agents,
   ({ agent }, availableAgents) =>
-    Object.values(availableAgents).filter((candidate) => candidate.id !== agent?.id && !candidate.agents?.length)
+    Object.values(availableAgents).filter((candidate) => candidate.id !== agent?.id && !candidate.agents?.length),
 );
 
 export const agentAgentsSelector = createSelector(
   editorSelector,
   availableAgentsSelector,
   ({ agent }, availableAgents) =>
-    agent?.agents?.map((agent) => availableAgents.find(({ id }) => id === agent)).filter((agent) => !!agent) || []
+    agent?.agents?.map((agent) => availableAgents.find(({ id }) => id === agent)).filter((agent) => !!agent) || [],
 );
+
+export const agentBusySelector = (state: RootState) => state.agent.busy.loading;
