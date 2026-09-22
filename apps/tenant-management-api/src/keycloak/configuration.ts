@@ -105,7 +105,7 @@ export const createAdspCliPublicClientConfig = (id: string): ClientRepresentatio
     attributes: {
       'pkce.code.challenge.method': 'S256',
     },
-    redirectUris: ['http://localhost:3000/callback'],
+    redirectUris: ['http://localhost:3000/callback', 'urn:ietf:wg:oauth:2.0:oob'],
     webOrigins: ['http://localhost:3000'],
     // Keycloak's client `description` column is capped at 255 chars — keep this short; the full rationale
     // lives in ADSP_CLI_CLIENT_SCOPE_MAPPINGS's doc comment and libs/adsp-cli/README.md, not here.

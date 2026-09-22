@@ -14,6 +14,7 @@ export type AccessTokenResult = { status: 'ok'; token: string } | { status: 'not
 
 const CALLBACK_PORT = 3000;
 const LOGIN_TIMEOUT_MS = 120_000;
+const OOB_REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob';
 export const CORE_REALM = 'core';
 
 function createClient(accessServiceUrl: string, realm: string): AuthorizationCode {
@@ -162,14 +163,19 @@ export async function getAccessToken(options: { scopes?: string[] } = {}): Promi
 }
 
 /**
- * The actual OAuth2 authorization-code browser flow for one realm: opens the browser, waits for
- * the redirect on a temporary local server, exchanges the code for a token, and caches it. Does
- * NOT check the cache first — callers that want a cache-check-first behavior should go through
+ * The actual OAuth2 authorization-code flow for one realm. Defaults to the OOB path (prints the
+ * authorization URL, prompts the user to paste the code Keycloak displays) which works in any
+ * environment including Dev Spaces and headless containers. Pass useLocal=true (via `adsp login
+ * --local`) to use the original local-server redirect path instead — spins up a temporary Express
+ * server on CALLBACK_PORT and captures the redirect automatically, which gives a smoother
+ * experience on a full desktop but requires a reachable localhost and a working browser binary.
+ *
+ * Does NOT check the cache first — callers that want a cache-check-first behavior should go through
  * getOrLogin() instead.
  */
-async function browserLogin(accessServiceUrl: string, realm: string, scopes: string[]): Promise<string> {
+async function browserLogin(accessServiceUrl: string, realm: string, scopes: string[], useLocal: boolean): Promise<string> {
   const client = createClient(accessServiceUrl, realm);
-  const redirect_uri = `http://localhost:${CALLBACK_PORT}/callback`;
+  const redirect_uri = useLocal ? `http://localhost:${CALLBACK_PORT}/callback` : OOB_REDIRECT_URI;
   const { codeVerifier, codeChallenge } = generatePkcePair();
   // @types/simple-oauth2's params interfaces don't declare PKCE fields, but the library itself passes
   // any extra key straight through (confirmed by reading its source) — going through a variable rather
@@ -182,42 +188,63 @@ async function browserLogin(accessServiceUrl: string, realm: string, scopes: str
   };
   const authorizationUri = client.authorizeURL(authorizeParams);
 
-  const app = express();
-  const tokenPromise = new Promise<AccessToken>((resolve, reject) => {
-    app.get('/callback', (req, res) => {
-      const { code, error } = req.query;
-      if (error) {
-        res.send('Login failed.');
-        reject(new Error(`Error encountered during login. ${error}`));
-      } else {
-        res.send('Successfully signed in. You can close this browser tab or window.');
-        const tokenParams = { code: code as string, redirect_uri, code_verifier: codeVerifier };
-        resolve(client.getToken(tokenParams));
-      }
+  let token: Record<string, unknown>;
+
+  if (useLocal) {
+    const app = express();
+    const tokenPromise = new Promise<AccessToken>((resolve, reject) => {
+      app.get('/callback', (req, res) => {
+        const { code, error } = req.query;
+        if (error) {
+          res.send('Login failed.');
+          reject(new Error(`Error encountered during login. ${error}`));
+        } else {
+          res.send('Successfully signed in. You can close this browser tab or window.');
+          const tokenParams = { code: code as string, redirect_uri, code_verifier: codeVerifier };
+          resolve(client.getToken(tokenParams));
+        }
+      });
     });
-  });
 
-  const server = app.listen(CALLBACK_PORT);
+    const server = app.listen(CALLBACK_PORT);
 
-  try {
-    await open(authorizationUri);
-  } catch (err) {
-    server.close();
-    throw new Error(
-      `Could not open a browser automatically. Open this URL manually to sign in: ${authorizationUri}\n` +
-        `(${(err as Error)?.message ?? err})`
-    );
+    try {
+      await open(authorizationUri);
+    } catch (err) {
+      server.close();
+      throw new Error(
+        `Could not open a browser automatically. Open this URL manually to sign in: ${authorizationUri}\n` +
+          `(${(err as Error)?.message ?? err})`
+      );
+    }
+
+    let timeoutHandle: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<AccessToken>((_, reject) => {
+      timeoutHandle = setTimeout(() => reject(new Error('Timed out waiting for login.')), LOGIN_TIMEOUT_MS);
+    });
+
+    ({ token } = await Promise.race([tokenPromise, timeoutPromise]).finally(() => {
+      clearTimeout(timeoutHandle);
+      server.close();
+    }));
+  } else {
+    // OOB path: try to open browser (failure is non-fatal — the URL is always printed), then wait
+    // for the user to paste back the code Keycloak displays on its own page.
+    try {
+      await open(authorizationUri);
+    } catch {
+      // Intentional: in Dev Spaces or any headless environment open() will fail; that is fine.
+    }
+    process.stderr.write(`\nOpen this URL to sign in:\n${authorizationUri}\n\n`);
+    const { prompt } = await import('enquirer');
+    const { code } = await prompt<{ code: string }>({
+      type: 'input',
+      name: 'code',
+      message: 'Paste the code shown by Keycloak:',
+    });
+    const oobTokenParams = { code, redirect_uri, code_verifier: codeVerifier };
+    ({ token } = await client.getToken(oobTokenParams));
   }
-
-  let timeoutHandle: ReturnType<typeof setTimeout>;
-  const timeoutPromise = new Promise<AccessToken>((_, reject) => {
-    timeoutHandle = setTimeout(() => reject(new Error('Timed out waiting for login.')), LOGIN_TIMEOUT_MS);
-  });
-
-  const { token } = await Promise.race([tokenPromise, timeoutPromise]).finally(() => {
-    clearTimeout(timeoutHandle);
-    server.close();
-  });
 
   // The token endpoint echoes back the scope it actually granted (RFC 6749 §5.1) — trust that over
   // what was merely requested, since Keycloak silently drops any scope not registered/grantable on
@@ -254,12 +281,12 @@ export interface GetOrLoginResult {
 }
 
 /** Cache-check first (scope-aware — see getCachedOrRefreshedToken), browser login on a miss — used for both the core-realm and final-realm steps. */
-async function getOrLogin(accessServiceUrl: string, realm: string, scopes: string[]): Promise<GetOrLoginResult> {
+async function getOrLogin(accessServiceUrl: string, realm: string, scopes: string[], useLocal: boolean): Promise<GetOrLoginResult> {
   const cached = await getCachedOrRefreshedToken(accessServiceUrl, realm, scopes);
   if (cached) {
     return { token: cached, reused: true };
   }
-  return { token: await browserLogin(accessServiceUrl, realm, scopes), reused: false };
+  return { token: await browserLogin(accessServiceUrl, realm, scopes, useLocal), reused: false };
 }
 
 /** Best-effort decode of the caller's own email from their access token — never throws. */
@@ -422,9 +449,10 @@ export interface LoginResult {
  * since it can block for up to LOGIN_TIMEOUT_MS waiting on the browser.
  */
 export async function loginInteractive(
-  options: { realm?: string; tenant?: string; scopes?: string[]; env?: EnvironmentName } = {}
+  options: { realm?: string; tenant?: string; scopes?: string[]; env?: EnvironmentName; local?: boolean } = {}
 ): Promise<LoginResult> {
   const { accessServiceUrl, directoryServiceUrl } = resolveEnvironmentUrls(options.env);
+  const useLocal = options.local ?? false;
   const scopes = ['email', ...(options.scopes ?? [])];
   let realm = options.realm;
   let tenantName: string | undefined;
@@ -452,7 +480,7 @@ export async function loginInteractive(
     // Only ever 'email' here, never the caller's extra requested scopes — core's adsp-cli client
     // doesn't have (and doesn't need) scopes like adsp-cli-admin registered; that scope is only
     // meaningful on the tenant-realm login below, once a realm is actually known.
-    const core = await getOrLogin(accessServiceUrl, CORE_REALM, ['email']);
+    const core = await getOrLogin(accessServiceUrl, CORE_REALM, ['email'], useLocal);
     const picked = await promptForTenantRealm(directoryServiceUrl, core.token);
     realm = picked.realm;
     tenantName = picked.name;
@@ -464,7 +492,7 @@ export async function loginInteractive(
     tenantName = await resolveTenantName(directoryServiceUrl, realm);
   }
 
-  const final = await getOrLogin(accessServiceUrl, realm, scopes);
+  const final = await getOrLogin(accessServiceUrl, realm, scopes, useLocal);
   writeConfig({ tenantRealm: realm, tenantName, env: options.env ?? readConfig()?.env });
 
   return { realm, token: final.token, reused: final.reused };
