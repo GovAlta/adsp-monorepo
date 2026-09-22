@@ -19,13 +19,14 @@ export interface SubscriberSubscriptions {
   subscriberId?: string;
   typeId?: string;
   criteria?: string;
-  type: {
-    channels: Channels[];
-    description: string;
-    id: string;
-    manageSubscribe: boolean;
-    name: string;
-    publicSubscriber: boolean;
+  // Absent if the notification type behind the subscription has since been removed.
+  type?: {
+    channels?: Channels[];
+    description?: string;
+    id?: string;
+    manageSubscribe?: boolean;
+    name?: string;
+    publicSubscriber?: boolean;
   };
 }
 
@@ -63,6 +64,8 @@ export interface HasNext {
 export interface SubscriberService {
   subscribers: Record<string, Subscriber>;
   subscriptions: Record<string, SubscriptionWrapper>;
+  // Keyed by subscriber id; undefined means the subscriber's subscriptions have not been loaded.
+  subscriberSubscriptions: Record<string, SubscriberSubscriptions[]>;
   subscriberSearch: {
     results: string[];
     next: string;
@@ -85,6 +88,7 @@ export interface SubscriberService {
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscribers: {},
   subscriptions: {},
+  subscriberSubscriptions: {},
   subscriberSearch: {
     results: null,
     next: null,

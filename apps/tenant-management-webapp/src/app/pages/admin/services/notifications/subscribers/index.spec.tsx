@@ -5,7 +5,13 @@ import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SUBSCRIBER_INIT } from '@store/subscription/models';
 import { Subscribers } from '.';
-import { CREATE_SUBSCRIBER, DELETE_SUBSCRIBER, FIND_SUBSCRIBERS, UPDATE_SUBSCRIBER } from '@store/subscription/actions';
+import {
+  CREATE_SUBSCRIBER,
+  DELETE_SUBSCRIBER,
+  FIND_SUBSCRIBERS,
+  GET_SUBSCRIBER_SUBSCRIPTIONS,
+  UPDATE_SUBSCRIBER,
+} from '@store/subscription/actions';
 
 describe('Notification - Recipient registry tab', () => {
   const mockStore = configureStore([]);
@@ -188,6 +194,56 @@ describe('Notification - Recipient registry tab', () => {
     expect(getByTestId('recipient-details-phone')).toHaveTextContent('123 456 1234');
     expect(getByTestId('recipient-details-created')).not.toHaveTextContent('-');
     expect(getByTestId('recipient-details-updated')).not.toHaveTextContent('-');
+  });
+
+  it('asks for the selected recipient\'s subscriptions', async () => {
+    const store = createStore();
+    const { getByTestId } = render(
+      <Provider store={store}>
+        <Subscribers />
+      </Provider>,
+    );
+
+    fireEvent.click(getByTestId('recipient-row-61bd151b6d95d24f4cf632cf'));
+
+    await waitFor(() =>
+      expect(store.getActions().find((action) => action.type === GET_SUBSCRIBER_SUBSCRIPTIONS)).toEqual(
+        expect.objectContaining({ payload: expect.objectContaining({ subscriber: { id: '61bd151b6d95d24f4cf632cf' } }) }),
+      ),
+    );
+  });
+
+  it('shows the subscriptions held by the selected recipient', async () => {
+    const store = mockStore({
+      subscription: {
+        ...SUBSCRIBER_INIT,
+        subscribers,
+        subscriberSearch: {
+          results: ['61bd151b6d95d24f4cf632cf', '61bd151b6d95d24f4cf632cc', '61bd151b6d95d24f4cf632c1'],
+          next: null,
+          total: 3,
+        },
+        subscriberSubscriptions: {
+          '61bd151b6d95d24f4cf632cf': [{ typeId: 'status-updates', type: { name: 'Application Status Update' } }],
+        },
+      },
+      tenant: { adminEmail: 'agent.smith@matrix.com' },
+      notifications: { notifications: [] },
+      session: {
+        resourceAccess: { 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } },
+        indicator: { show: false },
+      },
+    });
+    const { getByTestId, getByText } = render(
+      <Provider store={store}>
+        <Subscribers />
+      </Provider>,
+    );
+
+    fireEvent.click(getByTestId('recipient-row-61bd151b6d95d24f4cf632cf'));
+
+    await waitFor(() => expect(getByText('Subscriptions (1)')).toBeTruthy());
+    expect(getByText('Application Status Update')).toBeTruthy();
   });
 
   it('selects a recipient from the keyboard', async () => {

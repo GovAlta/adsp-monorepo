@@ -14,6 +14,7 @@ import {
   CREATE_TYPE_SUBSCRIPTION_SUCCESS,
   CREATE_TYPE_SUBSCRIPTION_FAILED,
   RESET_TYPE_SUBSCRIPTION_CREATION,
+  GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
@@ -175,6 +176,16 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           results: state.subscriberSearch.results
             ? [subscriber.id, ...state.subscriberSearch.results]
             : [subscriber.id],
+        },
+      };
+    }
+    case GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS: {
+      const { subscriberId, subscriptions } = action.payload;
+      return {
+        ...state,
+        subscriberSubscriptions: {
+          ...state.subscriberSubscriptions,
+          [subscriberId]: subscriptions,
         },
       };
     }
