@@ -656,6 +656,22 @@ describe('CommentsViewer', () => {
     expect(messages).toEqual(['Oldest message', 'Newest message']);
   });
 
+  test('places Load more at the top of a messaging conversation', () => {
+    const props = createProps({
+      canLoadMore: true,
+      comments: [
+        createComment({ id: 1, content: 'Older message' }),
+        createComment({ id: 2, content: 'Latest message' }),
+      ],
+    });
+
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+    const commentPane = container.querySelector('.comments');
+
+    expect(commentPane?.firstElementChild).toHaveTextContent('Load more');
+    expect(screen.getByText('Load more')).toBeInTheDocument();
+  });
+
   test('scrolls to the latest message when a messaging conversation opens', () => {
     mockScrollMetrics();
     const props = createProps({
@@ -668,6 +684,31 @@ describe('CommentsViewer', () => {
     const { container } = render(<CommentsViewer {...props} messaging={true} />);
 
     expect(container.querySelector<HTMLElement>('.comments')?.scrollTop).toBe(1000);
+  });
+
+  test('preserves the visible anchor when older messages are loaded above it', () => {
+    mockScrollMetrics(1000, 200);
+    const middle = createComment({ id: 2, content: 'Message being read' });
+    const latest = createComment({
+      id: 3,
+      content: 'Latest message',
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const older = createComment({
+      id: 1,
+      content: 'Loaded older message',
+      createdOn: new Date(2026, 7, 19, 9, 0, 0),
+    });
+    const { container, rerender } = render(<CommentsViewer {...createProps({ comments: [middle, latest] })} messaging />);
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 300;
+    fireEvent.scroll(comments);
+
+    mockScrollMetrics(1400, 200);
+    rerender(<CommentsViewer {...createProps({ comments: [older, middle, latest] })} messaging />);
+
+    expect(comments.scrollTop).toBe(700);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
 
   test('keeps a newly sent message visible even when the user was reading history', () => {
