@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { getSectionLoader } from '@pages/admin/reports/registry/serviceReportRegistry';
 import type { ReportSectionId } from '@pages/admin/reports/registry/types';
 import type { RootState } from '@store/index';
 import { ReportPeriodPreset, ReportingPeriod, SectionState, ServiceReportsState } from './models';
@@ -38,11 +39,26 @@ export const resolvePeriodRange = (preset: ReportPeriodPreset): { from: string; 
 };
 
 const emptySection: SectionState = { status: 'idle', data: null };
+const pendingLoadSection: SectionState = { status: 'loading', data: null };
 
 export const selectSectionState =
   (serviceId: string, sectionId: ReportSectionId) =>
   (state: RootState): SectionState =>
     state.serviceReports.sections[serviceId]?.[sectionId] ?? emptySection;
+
+/**
+ * Idle + a registered loader means a fetch is about to start. Treat that as loading
+ * so the first paint is a skeleton instead of a placeholder flash.
+ */
+export const selectSectionDisplayState =
+  (serviceId: string, sectionId: ReportSectionId) =>
+  (state: RootState): SectionState => {
+    const section = selectSectionState(serviceId, sectionId)(state);
+    if (section.status === 'idle' && getSectionLoader(serviceId, sectionId)) {
+      return section.data == null ? pendingLoadSection : { ...section, status: 'loading' };
+    }
+    return section;
+  };
 
 /** True when data exists but was loaded for different criteria. */
 export const selectIsSectionStale =
@@ -51,8 +67,6 @@ export const selectIsSectionStale =
     const section = selectSectionState(serviceId, sectionId)(state);
     return section.status === 'loaded' && section.loadedForKey !== criteriaKey(state.serviceReports.criteria);
   };
-
-export const MAX_CUSTOM_PERIOD_MONTHS = 13;
 
 export const getPeriodValidationError = (period: Pick<ReportingPeriod, 'from' | 'to'>): string | undefined => {
   if (!period.from || !period.to) {
@@ -65,9 +79,6 @@ export const getPeriodValidationError = (period: Pick<ReportingPeriod, 'from' | 
   }
   if (from > to) {
     return 'Start date must not be after end date.';
-  }
-  if (to.diff(from, 'months').months > MAX_CUSTOM_PERIOD_MONTHS) {
-    return 'The reporting period cannot exceed 13 months.';
   }
   return undefined;
 };

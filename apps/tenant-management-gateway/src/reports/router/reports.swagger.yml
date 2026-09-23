@@ -169,7 +169,7 @@ components:
                     generationDurationMax: 4
                     templatesUsed: 6
       400:
-        description: Invalid dates, from after to, or period longer than 13 months.
+        description: Invalid dates, or from after to.
         content:
           application/json:
             schema:

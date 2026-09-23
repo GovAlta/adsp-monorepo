@@ -65,12 +65,14 @@ export const useTokenWillExpiryCount = () => {
     };
 
     if (isWillExpired === true) {
-      // Extend the refresh token expiry if pre-defined event is detected
+      // Reports is mostly clicks (dropdowns); other pages also type. Either should extend the session.
       window.addEventListener('keypress', tokenWillExpireHandler);
+      window.addEventListener('click', tokenWillExpireHandler);
     }
 
     return function cleanupListener() {
       window.removeEventListener('keypress', tokenWillExpireHandler);
+      window.removeEventListener('click', tokenWillExpireHandler);
     };
   }, [dispatch, isWillExpired]);
 

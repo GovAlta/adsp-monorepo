@@ -51,6 +51,18 @@ describe('serviceReports reducer', () => {
     );
   });
 
+  it('clears a previous error when a section starts loading', () => {
+    const failed = reducer(
+      undefined,
+      loadReportSectionFailure('pdf', 'summary', 'pdf-key', 'gateway unavailable')
+    );
+
+    const next = reducer(failed, loadReportSection('pdf', 'summary'));
+
+    expect(next.sections.pdf.summary.error).toBeUndefined();
+    expect(next.sections.pdf.summary.status).toBe('loading');
+  });
+
   it('stores data and the criteria key on success', () => {
     const state = reducer(undefined, loadReportSectionSuccess('pdf', 'summary', 'pdf|last30Days|a|b', { pdfGenerated: 9 }));
 

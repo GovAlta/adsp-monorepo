@@ -14,6 +14,18 @@ interface ReportSectionResponse<T> {
   data: T | null;
 }
 
+const isGatewaySectionNotFound = (err: unknown): boolean => {
+  if (!axios.isAxiosError(err) || err.response?.status !== 404) {
+    return false;
+  }
+  const data = err.response.data as { error?: unknown; errorMessage?: unknown } | string | undefined;
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    (typeof data.error === 'string' || typeof data.errorMessage === 'string')
+  );
+};
+
 /** Builds a loader for one section. Section tickets call this instead of writing axios code. */
 export const createReportSectionLoader =
   <T>(sectionId: ReportSectionId): SectionLoader<T | null> =>
@@ -28,8 +40,9 @@ export const createReportSectionLoader =
       );
       return data?.data ?? null;
     } catch (err) {
-      // A section with no data source yet is an empty state, not a failure.
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
+      // Gateway JSON 404 = this service does not offer the section (empty, not an error).
+      // HTML/proxy 404s are real failures and must not look like "no data".
+      if (axios.isAxiosError(err) && isGatewaySectionNotFound(err)) {
         return null;
       }
       throw err;

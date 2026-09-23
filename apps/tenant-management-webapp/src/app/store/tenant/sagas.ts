@@ -52,6 +52,7 @@ import {
 } from './api';
 import { TENANT_INIT } from './models';
 import { getOrCreateKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
+import { reauthenticateToCurrentLocation, rememberAdminLocation, ssoFailureLocation } from '@lib/ssoRedirect';
 import { SagaIterator } from '@redux-saga/core';
 import { Credentials, Session } from '@store/session/models';
 import { getIdpHint } from '@lib/keycloak';
@@ -172,13 +173,15 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
     const realm = action.payload;
     if (!realm) {
       window.location.replace('/');
+      return;
     }
 
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
     const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
     if (!session) {
-      window.location.replace('/');
+      rememberAdminLocation(`${window.location.pathname}${window.location.search}`);
+      window.location.replace(ssoFailureLocation(realm));
     } else {
       yield put(SessionLoginSuccess(session));
     }
@@ -227,19 +230,17 @@ export function* getAccessToken(isForce = false): SagaIterator {
       if (isExpired === true) {
         yield put(SetSessionExpired(false));
       }
-      if (session) {
-        const { credentials } = session;
-        yield put(CredentialRefresh(credentials));
-
-        return credentials.token;
+      if (session?.credentials?.token) {
+        yield put(CredentialRefresh(session.credentials));
+        return session.credentials.token;
       }
-    } else {
-      return credentials.token;
     }
+    return credentials.token;
   } catch {
     // Failure to get the access token results in a logout.
     if (realmInSession) {
       yield put(SetSessionExpired(true));
+      reauthenticateToCurrentLocation(realmInSession);
     } else {
       yield put(TenantLogout());
     }

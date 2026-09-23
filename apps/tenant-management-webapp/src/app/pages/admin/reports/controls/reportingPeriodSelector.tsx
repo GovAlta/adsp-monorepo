@@ -4,7 +4,7 @@ import { DateTime } from 'luxon';
 import React, { FunctionComponent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { REPORT_PERIOD_PRESETS, ReportPeriodPreset } from '@store/serviceReports/models';
-import { getPeriodValidationError, MAX_CUSTOM_PERIOD_MONTHS, resolvePeriodRange } from '@store/serviceReports/selectors';
+import { getPeriodValidationError, resolvePeriodRange } from '@store/serviceReports/selectors';
 import { ReportingPeriodFields } from '../styled-components';
 
 const PRESET_LABELS: Record<ReportPeriodPreset, string> = {
@@ -26,7 +26,6 @@ export const ReportingPeriodSelector: FunctionComponent = () => {
   const from = searchParams.get('from') || derived.from;
   const to = searchParams.get('to') || derived.to;
   const today = DateTime.now().toISODate();
-  const fromMin = DateTime.fromISO(to).minus({ months: MAX_CUSTOM_PERIOD_MONTHS }).toISODate();
   const validationError = preset === 'custom' ? getPeriodValidationError({ from, to }) : undefined;
 
   const writeParams = (nextPreset: ReportPeriodPreset, nextFrom?: string, nextTo?: string) => {
@@ -85,7 +84,6 @@ export const ReportingPeriodSelector: FunctionComponent = () => {
               name="from"
               type="calendar"
               value={from}
-              min={fromMin}
               max={to < today ? to : today}
               error={Boolean(validationError)}
               width="100%"

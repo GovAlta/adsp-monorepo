@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ReportingPeriodSelector } from './controls/reportingPeriodSelector';
 import { ServiceSelector } from './controls/serviceSelector';
+import { registerPdfReportLoaders } from './registry/registerPdfLoaders';
 import {
   getAvailableServiceReports,
   getDefaultServiceReport,
@@ -29,6 +30,8 @@ const sectionComponents: Record<ReportSectionId, FunctionComponent<ReportSection
   insights: InsightsSection,
   apiDrilldown: ApiDrilldownSection,
 };
+
+registerPdfReportLoaders();
 
 const RIGHT_RAIL_SECTIONS: ReportSectionId[] = ['topResources', 'insights'];
 const LAID_OUT_SECTIONS: ReportSectionId[] = ['summary', 'trends', ...RIGHT_RAIL_SECTIONS, 'apiDrilldown'];
@@ -78,11 +81,11 @@ export const ServiceReportPage: FunctionComponent = () => {
       return;
     }
     dispatch(setReportCriteria(descriptor.id, period));
-    descriptor.sections.forEach((sectionId) => {
-      if (getSectionLoader(descriptor.id, sectionId)) {
+    descriptor.sections
+      .filter((sectionId) => getSectionLoader(descriptor.id, sectionId))
+      .forEach((sectionId) => {
         dispatch(loadReportSection(descriptor.id, sectionId));
-      }
-    });
+      });
   }, [descriptor, dispatch, period]);
 
   if (!serviceId) {

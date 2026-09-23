@@ -4,6 +4,7 @@ import { RootState } from '../index';
 import { Credentials, Session } from '@store/session/models';
 import { getOrCreateKeycloakAuth, KeycloakAuth } from '@lib/keycloak';
 import { CredentialRefresh, SetSessionExpired } from '@store/session/actions';
+import { reauthenticateToCurrentLocation } from '@lib/ssoRedirect';
 
 export const FETCH_TENANT = 'FETCH_TENANT';
 export const SELECT_TENANT = 'SELECT_TENANT';
@@ -295,19 +296,17 @@ export function getAccessToken(isForce = false) {
         if (isExpired === true) {
           dispatch(SetSessionExpired(false));
         }
-        if (session) {
-          const { credentials } = session;
-          dispatch(CredentialRefresh(credentials));
-
-          return credentials.token;
+        if (session?.credentials?.token) {
+          dispatch(CredentialRefresh(session.credentials));
+          return session.credentials.token;
         }
-      } else {
-        return credentials.token;
       }
+      return credentials.token;
     } catch {
       // Failure to get the access token results in a logout.
       if (realmInSession) {
         dispatch(SetSessionExpired(true));
+        reauthenticateToCurrentLocation(realmInSession);
       } else {
         dispatch(TenantLogout());
       }

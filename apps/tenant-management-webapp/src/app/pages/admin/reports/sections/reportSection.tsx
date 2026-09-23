@@ -9,7 +9,9 @@ export interface ReportSectionFrameProps {
   state: SectionState;
   /** Rendered when no loader is registered yet. */
   placeholder: ReactNode;
-  /** Rendered when status is 'loaded' and data is non-empty. */
+  /** Rendered while the section is fetching. Defaults to a card skeleton. */
+  loading?: ReactNode;
+  /** Rendered when status is 'loaded' and data is non-empty, and under an error callout. */
   children?: ReactNode;
 }
 
@@ -25,18 +27,27 @@ export const ReportSection: FunctionComponent<ReportSectionFrameProps> = ({
   testId,
   state,
   placeholder,
+  loading,
   children,
 }) => {
+  const skeleton = loading ?? <GoabSkeleton type="card" testId={`${testId}-skeleton`} />;
+  const errorCallout = (
+    <GoabCallout type="emergency" heading="Something went wrong" testId={`${testId}-error`}>
+      {state.error || 'This section could not be loaded. Try again.'}
+    </GoabCallout>
+  );
+
   let body: ReactNode;
 
-  if (state.status === 'error') {
+  if (state.status === 'loading') {
+    body = skeleton;
+  } else if (state.status === 'error') {
     body = (
-      <GoabCallout type="emergency" heading="Unable to load this section" testId={`${testId}-error`}>
-        {state.error}
-      </GoabCallout>
+      <>
+        {errorCallout}
+        {children}
+      </>
     );
-  } else if (state.status === 'loading' && state.data == null) {
-    body = <GoabSkeleton type="card" testId={`${testId}-skeleton`} />;
   } else if (state.status === 'idle') {
     body = placeholder;
   } else if (state.status === 'loaded' && isEmptyData(state.data)) {

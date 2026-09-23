@@ -15,22 +15,24 @@ describe('ReportSection', () => {
     expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
   });
 
-  it('renders an emergency callout when status is error', () => {
-    render(
+  it('renders an emergency callout and the cards when status is error', () => {
+    const { container } = render(
       <ReportSection
         title="Summary"
         testId="reports-section-summary"
-        state={{ status: 'error', data: null, error: 'gateway unavailable' }}
+        state={{ status: 'error', data: null, error: 'Something went wrong. Try again.' }}
         placeholder={<p>placeholder</p>}
       >
         <p>content</p>
       </ReportSection>
     );
 
-    expect(screen.getByText('gateway unavailable')).toBeInTheDocument();
+    expect(container.querySelector('goa-callout[heading="Something went wrong"]')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong. Try again.')).toBeInTheDocument();
+    expect(screen.getByText('content')).toBeInTheDocument();
   });
 
-  it('renders a skeleton when status is loading and there is no data', () => {
+  it('renders a skeleton when status is loading', () => {
     const { container } = render(
       <ReportSection
         title="Summary"
@@ -43,6 +45,22 @@ describe('ReportSection', () => {
     );
 
     expect(container.querySelector('goa-skeleton')).toBeInTheDocument();
+  });
+
+  it('renders a skeleton when status is loading even if prior data exists', () => {
+    const { container } = render(
+      <ReportSection
+        title="Summary"
+        testId="reports-section-summary"
+        state={{ status: 'loading', data: { pdfGenerated: 4 } }}
+        placeholder={<p>placeholder</p>}
+      >
+        <p>content</p>
+      </ReportSection>
+    );
+
+    expect(container.querySelector('goa-skeleton')).toBeInTheDocument();
+    expect(screen.queryByText('content')).not.toBeInTheDocument();
   });
 
   it('renders the placeholder when status is idle', () => {

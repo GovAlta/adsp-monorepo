@@ -1,12 +1,13 @@
 import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
-import { EventMetrics } from '../types';
+import { EventMetrics, MetricResult } from '../types';
 
 const VALUE_SERVICE_ID = adspId`urn:ads:platform:value-service:v1`;
 const EVENT_LOG_NAMESPACE = 'event-service';
 const EVENT_LOG_NAME = 'event';
-const MAX_EVENT_PAGES = 20;
+const EVENT_PAGE_SIZE = 100;
+const METRICS_PAGE_SIZE = 400;
 const USER_AGENT =
   'Mozilla/5.0 (compatible; ADSP-tenant-management-gateway/1.0; +https://adsp.alberta.ca)';
 
@@ -25,9 +26,19 @@ interface EventLogRecord {
   context?: Record<string, unknown>;
 }
 
+interface PageInfo {
+  next?: string;
+  size?: number;
+}
+
 interface EventLogResponse {
-  page?: { next?: string; size?: number };
+  page?: PageInfo;
   'event-service'?: { event?: EventLogRecord[] };
+}
+
+interface MetricsResponse {
+  page?: PageInfo;
+  [metricName: string]: MetricResult | PageInfo | undefined;
 }
 
 export interface ValueClientProps {
@@ -48,6 +59,32 @@ function timestampMaxExclusive(to: string): string {
   const end = new Date(`${to}T00:00:00.000Z`);
   end.setUTCDate(end.getUTCDate() + 1);
   return end.toISOString();
+}
+
+/** Return the next cursor, or stop when value-service repeats one it already sent. */
+function followCursor(next: string | undefined, seen: Set<string>): string | undefined {
+  if (!next || seen.has(next)) {
+    return undefined;
+  }
+  seen.add(next);
+  return next;
+}
+
+function appendMetrics(target: EventMetrics, page: Omit<MetricsResponse, 'page'>): boolean {
+  let appended = false;
+  Object.entries(page).forEach(([name, metric]) => {
+    if (!metric || !('values' in metric) || !Array.isArray(metric.values) || metric.values.length === 0) {
+      return;
+    }
+    appended = true;
+    const existing = target[name];
+    if (!existing) {
+      target[name] = { name: metric.name || name, values: metric.values.slice() };
+      return;
+    }
+    existing.values.push(...metric.values);
+  });
+  return appended;
 }
 
 function rethrowValueServiceError(err: unknown): never {
@@ -89,9 +126,10 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
   ): Promise<string[]> => {
     const values: string[] = [];
     let after: string | undefined;
-    for (let page = 0; page < MAX_EVENT_PAGES; page++) {
+    const seen = new Set<string>();
+    for (;;) {
       const params: Record<string, string | number> = {
-        top: 100,
+        top: EVENT_PAGE_SIZE,
         timestampMin: `${from}T00:00:00.000Z`,
         timestampMax: timestampMaxExclusive(to),
         context: JSON.stringify({ namespace, name }),
@@ -122,7 +160,10 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
         }
       });
 
-      after = data?.page?.next;
+      if (events.length === 0) {
+        break;
+      }
+      after = followCursor(data?.page?.next, seen);
       if (!after) {
         break;
       }
@@ -134,26 +175,44 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
   return {
     async readEventMetrics(token, metricLike, from, to) {
       const base = await resolveBase();
-      let data: EventMetrics;
-      try {
-        const response = await axios.get<EventMetrics>(new URL('event-service/values/event/metrics', base).href, {
-          headers: headers(token),
-          params: {
-            interval: 'daily',
-            top: 400,
-            criteria: JSON.stringify({
-              metricLike,
-              intervalMin: `${from}T00:00:00.000Z`,
-              intervalMax: intervalMax(to),
-            }),
-          },
-        });
-        data = response.data;
-      } catch (err) {
-        rethrowValueServiceError(err);
-      }
+      const metrics: EventMetrics = {};
+      let after: string | undefined;
+      const seen = new Set<string>();
+      for (;;) {
+        const params: Record<string, string | number> = {
+          interval: 'daily',
+          top: METRICS_PAGE_SIZE,
+          criteria: JSON.stringify({
+            metricLike,
+            intervalMin: `${from}T00:00:00.000Z`,
+            intervalMax: intervalMax(to),
+          }),
+        };
+        if (after) {
+          params.after = after;
+        }
 
-      const { page: _page, ...metrics } = data || {};
+        let data: MetricsResponse;
+        try {
+          const response = await axios.get<MetricsResponse>(new URL('event-service/values/event/metrics', base).href, {
+            headers: headers(token),
+            params,
+          });
+          data = response.data;
+        } catch (err) {
+          rethrowValueServiceError(err);
+        }
+
+        const { page, ...pageMetrics } = data || {};
+        const appended = appendMetrics(metrics, pageMetrics);
+        if (!appended) {
+          break;
+        }
+        after = followCursor(page?.next, seen);
+        if (!after) {
+          break;
+        }
+      }
       return metrics;
     },
 

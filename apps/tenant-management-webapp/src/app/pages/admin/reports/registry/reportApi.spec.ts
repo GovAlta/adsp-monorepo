@@ -62,13 +62,24 @@ describe('createReportSectionLoader', () => {
     expect(result).toEqual({ pdfGenerated: 12 });
   });
 
-  it('maps a 404 response to null so the section is empty rather than failed', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(404);
+  it('maps a gateway JSON 404 to null so an unsupported section is empty', async () => {
+    mock
+      .onGet(`${REPORTS_API_BASE}/pdf/summary`)
+      .reply(404, { errorMessage: "report section with ID 'pdf/summary' could not be found." });
     const loader = createReportSectionLoader('summary');
 
     const result = await loader(context);
 
     expect(result).toBeNull();
+  });
+
+  it('throws on a proxy or HTML 404 so the UI can show an error', async () => {
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(404, '<pre>Cannot GET /api/tenant/v1/reports/pdf/summary</pre>', {
+      'content-type': 'text/html',
+    });
+    const loader = createReportSectionLoader('summary');
+
+    await expect(loader(context)).rejects.toThrow();
   });
 
   it('rethrows a non-404 error', async () => {
