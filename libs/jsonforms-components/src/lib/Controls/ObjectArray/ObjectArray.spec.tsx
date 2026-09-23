@@ -1,3 +1,4 @@
+import { ComponentProps } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ObjectArrayControl, NonEmptyCellComponent } from './ObjectListControl';
@@ -241,6 +242,43 @@ describe('Object List component', () => {
     render(<NonEmptyCellComponent openDeleteDialog={() => {}} handleChange={() => {}} {...props} />);
 
     expect(JsonFormsDispatch).toHaveBeenCalledTimes(2);
+  });
+
+  it('omits properties without a detail control from the review', () => {
+    const { queryByTestId } = render(
+      <NonEmptyCellComponent
+        openDeleteDialog={() => {}}
+        handleChange={() => {}}
+        schema={{
+          type: 'object',
+          properties: { firstName: { type: 'string' }, confirmPrimaryContact: { type: 'boolean' } },
+        }}
+        rowPath="applicants"
+        enabled={true}
+        isInReview={true}
+        isValid={true}
+        count={1}
+        data={
+          [{ firstName: 'Bob', confirmPrimaryContact: true }] as unknown as ComponentProps<
+            typeof NonEmptyCellComponent
+          >['data']
+        }
+        errors={[]}
+        uischema={{
+          type: 'Control',
+          scope: '#/properties/applicants',
+          options: {
+            detail: {
+              type: 'VerticalLayout',
+              elements: [{ type: 'Control', scope: '#/properties/firstName' }],
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(queryByTestId('#/properties/firstName-input-0-row')).toBeTruthy();
+    expect(queryByTestId('#/properties/confirmPrimaryContact-input-0-row')).toBeNull();
   });
 });
 

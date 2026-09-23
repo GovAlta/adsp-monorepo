@@ -50,7 +50,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { createHumanizeError, extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { createHumanizeError, extractNames, extractScopedProperties, renderCellColumn } from './ObjectListControlUtils';
 import {
   FixTableHeaderAlignment,
   ListWithDetailWarningIconDiv,
@@ -207,6 +207,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     tableKeys = tempTableKeys;
   }
 
+  // Review only shows properties that have a control in the detail UI schema.
+  const detailProperties = extractScopedProperties(uischema?.options?.detail);
+  const reviewKeys =
+    detailProperties.size > 0
+      ? Object.fromEntries(Object.entries(tableKeys).filter(([key]) => detailProperties.has(key)))
+      : tableKeys;
+
   const hasAnyErrors = Array.isArray(errors as ErrorObject[])
     ? (errors as ErrorObject[])?.filter((err) => {
         return err.instancePath.includes(rowPath);
@@ -237,7 +244,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               {range(count || 0).map((i, key) => {
                 const rowData = data && data[i];
                 if (!rowData) return null;
-                const hasAnyValue = Object.keys(tableKeys).some((key) => {
+                const hasAnyValue = Object.keys(reviewKeys).some((key) => {
                   const value = rowData[key];
                   return value !== undefined && value !== null && (value as unknown) !== '';
                 });
@@ -247,7 +254,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 if (!hasAnyValue && !hasRowErrors) return null;
                 return (
                   <ReviewItemFrame key={i} data-testid={`${rowPath}.objectList-${key}`}>
-                    {Object.entries(tableKeys).map(([key, label]) => {
+                    {Object.entries(reviewKeys).map(([key, label]) => {
                       const value = rowData[key];
                       const isRequiredField = required?.includes(key) ?? false;
                       const fieldPath = `/${props.rowPath.replace(/\./g, '/')}/${i}/${key}`;
