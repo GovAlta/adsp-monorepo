@@ -59,6 +59,18 @@ interface CommentsViewerProps {
 
 const SCROLL_TO_LATEST_THRESHOLD = 80;
 
+function isElementNearBottom(container: HTMLElement): boolean {
+  return container.scrollHeight - container.scrollTop - container.clientHeight <= SCROLL_TO_LATEST_THRESHOLD;
+}
+
+function getScrollState(container: HTMLElement) {
+  return {
+    scrollTop: container.scrollTop,
+    scrollHeight: container.scrollHeight,
+    nearBottom: isElementNearBottom(container),
+  };
+}
+
 function formatTimestamp(timestamp: Date): string {
   const now = moment();
   const value = moment(timestamp);
@@ -108,6 +120,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   const [hasNewerMessages, setHasNewerMessages] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
   const wasNearBottomRef = useRef(true);
+  const previousScrollRef = useRef({ scrollTop: 0, scrollHeight: 0, nearBottom: true });
   const previousMessagesRef = useRef<{ topicId?: number | null; lastCommentId?: number; signature?: string }>({});
 
   const displayedComments = useMemo(() => {
@@ -129,17 +142,19 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
     if (container) {
       container.scrollTop = container.scrollHeight;
       wasNearBottomRef.current = true;
+      previousScrollRef.current = getScrollState(container);
       setHasNewerMessages(false);
     }
   };
 
-  const isNearBottom = () => {
+  const captureScrollState = () => {
     const container = commentsRef.current;
     if (!container) {
-      return true;
+      return;
     }
 
-    return container.scrollHeight - container.scrollTop - container.clientHeight <= SCROLL_TO_LATEST_THRESHOLD;
+    previousScrollRef.current = getScrollState(container);
+    wasNearBottomRef.current = previousScrollRef.current.nearBottom;
   };
 
   const handleMessagesScroll = () => {
@@ -147,9 +162,8 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
       return;
     }
 
-    const nearBottom = isNearBottom();
-    wasNearBottomRef.current = nearBottom;
-    if (nearBottom) {
+    captureScrollState();
+    if (previousScrollRef.current.nearBottom) {
       setHasNewerMessages(false);
     }
   };
@@ -159,13 +173,20 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
       return;
     }
 
+    const container = commentsRef.current;
     const previous = previousMessagesRef.current;
+    const previousScroll = previousScrollRef.current;
     const topicChanged = previous.topicId !== topicId;
     const isInitialLoad = !previous.signature || topicChanged;
     const latestMessageChanged = previous.lastCommentId !== latestComment?.id;
     const latestMessageFromCurrentUser = !!latestComment?.byCurrentUser;
+    const loadedOlderMessages =
+      !isInitialLoad && !latestMessageChanged && previous.signature && previous.signature !== commentsSignature;
 
-    if (isInitialLoad || latestMessageFromCurrentUser || wasNearBottomRef.current) {
+    if (loadedOlderMessages && container) {
+      container.scrollTop = previousScroll.scrollTop + (container.scrollHeight - previousScroll.scrollHeight);
+      captureScrollState();
+    } else if (isInitialLoad || latestMessageFromCurrentUser || previousScroll.nearBottom || wasNearBottomRef.current) {
       scrollToLatest();
     } else if (latestMessageChanged) {
       setHasNewerMessages(true);
@@ -177,6 +198,12 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
       signature: commentsSignature,
     };
   }, [commentsSignature, latestComment?.byCurrentUser, latestComment?.id, messaging, topicId]);
+
+  const loadMoreButton = !loading && canLoadMore && (
+    <GoabButton size="compact" type="text" onClick={onLoadMore}>
+      Load more
+    </GoabButton>
+  );
 
   const draftField = (
     <GoabTextArea
@@ -194,6 +221,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
       {/* A caller that wants no heading passes a blank one; don't reserve space for it. */}
       {heading.trim() && <h3>{heading}</h3>}
       <div className="comments" ref={commentsRef} onScroll={handleMessagesScroll}>
+        {messaging && loadMoreButton}
         {displayedComments.map((result, index) => {
           // In a message thread a run of messages from the same person carries one byline,
           // the way a phone's messaging app groups them. A run breaks across a day boundary too,
@@ -241,11 +269,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
           );
         })}
         <GoabCircularProgress variant="inline" size="small" visible={loading} />
-        {!loading && canLoadMore && (
-          <GoabButton size="compact" type="text" onClick={onLoadMore}>
-            Load more
-          </GoabButton>
-        )}
+        {!messaging && loadMoreButton}
       </div>
       {messaging && hasNewerMessages && (
         <div className="newMessagesIndicator">
@@ -306,6 +330,9 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
 // Bubble layout for the two-participant messaging conversations in the form apps. Opt-in, since
 // the task app uses this same viewer for multi-party comments where bubbles don't apply.
 const messagingLayout = css`
+  min-height: 0;
+  flex: 1 1 auto;
+
   /* The heading sits on the same tint as the messages, so the thread reads as one panel. */
   & > h3 {
     background: var(--goa-color-info-light);
@@ -315,6 +342,9 @@ const messagingLayout = css`
 
   & > .comments {
     background: var(--goa-color-info-light);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     padding-top: var(--goa-space-m);
     padding-bottom: var(--goa-space-m);
     /* The tinted area runs right down to the compose box, with no white band between. */

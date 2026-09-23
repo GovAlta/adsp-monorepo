@@ -453,4 +453,66 @@ describe('puppeteer', () => {
     jest.advanceTimersByTime(1001);
     await expect(call).rejects.toThrow('boom');
   });
+
+  describe('browser restart is not re-entrant', () => {
+    // Each case needs its own emitter so listener counts are not shared between tests.
+    const makeBrowser = () => {
+      const emitter = new EventEmitter();
+      const browser = {
+        createBrowserContext: jest.fn().mockResolvedValue(contextMock),
+        close: jest.fn().mockResolvedValue(undefined),
+        on: emitter.on.bind(emitter),
+        once: emitter.once.bind(emitter),
+        off: emitter.off.bind(emitter),
+        removeListener: emitter.removeListener.bind(emitter),
+      } as unknown as puppeteer.Browser;
+
+      return { browser, emitter };
+    };
+
+    beforeEach(() => {
+      jest.useRealTimers();
+      (fs.rm as jest.Mock).mockResolvedValue(undefined);
+    });
+
+    it('launches one Chromium when the close emits disconnected', async () => {
+      const current = makeBrowser();
+      const replacement = makeBrowser();
+      (current.browser.close as jest.Mock).mockImplementation(async () => current.emitter.emit('disconnected'));
+      puppeteerMock.launch.mockResolvedValue(replacement.browser);
+      // eslint-disable-next-line
+      const service: any = await createPdfService(loggerMock, current.browser);
+      puppeteerMock.launch.mockClear();
+
+      await service.restartBrowser();
+
+      expect(puppeteerMock.launch).toHaveBeenCalledTimes(1);
+    });
+
+    it('launches one Chromium when restarts overlap', async () => {
+      const current = makeBrowser();
+      const replacement = makeBrowser();
+      puppeteerMock.launch.mockResolvedValue(replacement.browser);
+      // eslint-disable-next-line
+      const service: any = await createPdfService(loggerMock, current.browser);
+      puppeteerMock.launch.mockClear();
+
+      await Promise.all([service.restartBrowser(), service.restartBrowser()]);
+
+      expect(puppeteerMock.launch).toHaveBeenCalledTimes(1);
+    });
+
+    it('watches the replacement browser for disconnects', async () => {
+      const current = makeBrowser();
+      const replacement = makeBrowser();
+      puppeteerMock.launch.mockResolvedValue(replacement.browser);
+      // eslint-disable-next-line
+      const service: any = await createPdfService(loggerMock, current.browser);
+
+      await service.restartBrowser();
+
+      expect(current.emitter.listenerCount('disconnected')).toBe(0);
+      expect(replacement.emitter.listenerCount('disconnected')).toBe(1);
+    });
+  });
 });
