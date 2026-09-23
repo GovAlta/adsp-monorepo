@@ -1,9 +1,8 @@
 import { createSelector } from 'reselect';
 import { RootState } from '../index';
-import { CalendarObjectType, CalendarEventDefault, EventAddEditModalType, EventDeleteModalType } from './models';
-import { selectModalStateByType } from '@store/session/selectors';
-import { ModalState } from '@store/session/models';
-import { defaultCalendar } from '@store/calendar/models';
+import { CalendarItem, CalendarObjectType, CalendarEventDefault, EventAddEditModalType, EventDeleteModalType, defaultCalendar } from './models';
+import { selectModalStateByType } from '../session/selectors';
+import { ModalState } from '../session/models';
 
 export const selectCalendars = createSelector(
   (state: RootState) => ({
@@ -19,6 +18,13 @@ export const selectCoreCalendars = createSelector(
     return calendars;
   }
 );
+
+export const selectCalendarForAdministration = (
+  state: Pick<RootState, 'calendarService'>,
+  name: string | undefined,
+  tenantMode: boolean
+): CalendarItem | undefined =>
+  name ? state.calendarService[tenantMode ? 'calendars' : 'coreCalendars'][name] : defaultCalendar;
 
 export const selectCalendarsByName = createSelector(
   selectCalendars,

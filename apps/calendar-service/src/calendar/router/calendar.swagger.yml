@@ -19,6 +19,40 @@ components:
           type: array
           items:
             type: string
+    CalendarDefinition:
+      allOf:
+        - $ref: "#/components/schemas/Calendar"
+        - type: object
+          required: [source]
+          properties:
+            source:
+              type: string
+              enum: [tenant, core]
+    CalendarDefinitionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+          description: Must not be the reserved __proto__ property.
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '\S'
+        description:
+          type: string
+          maxLength: 250
+        readRoles:
+          type: array
+          items:
+            type: string
+        updateRoles:
+          type: array
+          items:
+            type: string
+      required: [name, displayName, readRoles, updateRoles]
     CalendarEvent:
       type: object
       properties:
@@ -91,7 +125,17 @@ components:
   get:
     tags:
       - Calendar
-    description: Retrieves calendars.
+    description: Retrieves separate tenant and core calendar definitions, including definitions with the same name. Anonymous requests receive only core definitions; authenticated tenant requests receive both.
+    security:
+      - {}
+      - accessToken: []
+    parameters:
+      - name: tenantId
+        in: query
+        required: false
+        description: Tenant ID when requesting definitions as a core user.
+        schema:
+          type: string
     responses:
       200:
         description: Request completed successfully.
@@ -100,7 +144,43 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Calendar"
+                $ref: "#/components/schemas/CalendarDefinition"
+      502:
+        description: Configuration service is unavailable or returned invalid calendar definitions.
+  post:
+    tags:
+      - Calendar
+    description: Creates a tenant calendar definition. Requires the calendar-admin role; core administrators must specify tenantId.
+    security:
+      - accessToken: []
+    parameters:
+      - name: tenantId
+        in: query
+        required: false
+        description: Tenant ID when acting as a core administrator.
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CalendarDefinitionInput"
+    responses:
+      201:
+        description: Tenant calendar definition created.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarDefinition"
+      400:
+        description: Invalid definition or missing tenant context.
+      401:
+        description: Authentication required.
+      403:
+        description: The caller does not have the calendar-admin role for this tenant.
+      409:
+        description: A tenant or core calendar with this name already exists.
 
 /calendar/v1/calendars/{name}:
   get:
@@ -127,6 +207,78 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Calendar"
+  put:
+    tags:
+      - Calendar
+    description: Updates an existing tenant calendar definition. Core definitions are read-only. Requires the calendar-admin role.
+    security:
+      - accessToken: []
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      - name: tenantId
+        in: query
+        required: false
+        description: Tenant ID when acting as a core administrator.
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CalendarDefinitionInput"
+    responses:
+      200:
+        description: Tenant calendar definition updated.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarDefinition"
+      400:
+        description: Invalid definition, name mismatch, or missing tenant context.
+      401:
+        description: Authentication required.
+      403:
+        description: The caller does not have the calendar-admin role for this tenant.
+      404:
+        description: No tenant calendar with this name exists.
+  delete:
+    tags:
+      - Calendar
+    description: Deletes an existing tenant calendar definition only if it has no events. Core definitions are read-only. Requires the calendar-admin role.
+    security:
+      - accessToken: []
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      - name: tenantId
+        in: query
+        required: false
+        description: Tenant ID when acting as a core administrator.
+        schema:
+          type: string
+    responses:
+      204:
+        description: Tenant calendar definition deleted.
+      400:
+        description: Invalid name or missing tenant context.
+      401:
+        description: Authentication required.
+      403:
+        description: The caller does not have the calendar-admin role for this tenant.
+      404:
+        description: No tenant calendar with this name exists.
+      409:
+        description: The calendar contains events and cannot be deleted.
 
 /calendar/v1/calendars/{name}/export:
   get:

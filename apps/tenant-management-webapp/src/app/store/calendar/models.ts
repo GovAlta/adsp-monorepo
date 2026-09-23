@@ -1,5 +1,5 @@
-import { ActionState } from '@store/session/models';
-import { getLocalISOString } from '@lib/timeUtil';
+import { ActionState } from '../session/models';
+import { getLocalISOString } from '../../lib/timeUtil';
 export const EventDeleteModalType = 'calendar-event-delete-model';
 export const EventAddEditModalType = 'calendar-event-add-edit-modal';
 export interface CalendarItem {
@@ -11,6 +11,19 @@ export interface CalendarItem {
   selectedCalendarEvents?: CalendarEvent[];
   calendarEvents?: Record<string, CalendarEvent[]>;
   nextEvents?: string;
+}
+
+export interface CalendarDefinition extends CalendarItem {
+  urn: string;
+  source: 'tenant' | 'core';
+}
+
+export interface CalendarDefinitionInput {
+  name: string;
+  displayName: string;
+  description?: string;
+  readRoles: string[];
+  updateRoles: string[];
 }
 
 export const getDefaultSearchCriteria = (): CalendarEventSearchCriteria => {

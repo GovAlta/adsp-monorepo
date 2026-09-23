@@ -15,16 +15,30 @@ client `urn:ads:platform:calendar-service`
 
 | name | description |
 |:-|:-|
-| calendar-admin | Administrator role for calendar service. This role allows a user to read and updated calendar events. |
+| calendar-admin | Administrator role for calendar service. This role allows a user to manage tenant calendar definitions and read or update calendar events. |
 
-User access is primary controlled via configuration on each calendar with `updaterRoles` and `readerRoles` representing: the roles that grant update permission; and roles that grand read permission respectively.
+Event access is primarily controlled by each calendar's `updateRoles` and `readRoles`: the roles that grant update and read permission, respectively.
 
 ## Concepts
 ### Dates
 Calendar service provides informational endpoints for Dates that includes information like which days are business days and which are holidays.
 
 ### Calendar
-Calender is a container for *events*. Each calender has basic name and description information which is publicly accessible. Calendars are configured in the [configuration service](configuration-service.md) under the `platform:calendar-service` namespace and name.
+A calendar is a container for *events*. Each calendar has basic name and description information which is publicly accessible. Calendar definitions are managed through the calendar-service API; calendar-service stores them in the [configuration service](configuration-service.md) under `platform:calendar-service`.
+
+`GET /calendar/v1/calendars` lists definitions with a `source` of `tenant` or `core`. Tenant users see both; anonymous requests see core definitions. Core definitions are view-only in the tenant admin app. `GET /calendar/v1/calendars/{name}` retrieves an individual definition.
+
+Users with `calendar-admin` for the tenant can manage **tenant** definitions without `configuration-admin`:
+
+| Method | Path | Action |
+|:-|:-|:-|
+| `POST` | `/calendar/v1/calendars` | Create a definition (201). |
+| `PUT` | `/calendar/v1/calendars/{name}` | Replace a tenant definition (200). |
+| `DELETE` | `/calendar/v1/calendars/{name}` | Remove an unused tenant definition (204). |
+
+Create and update bodies require a valid `name`, a nonblank `displayName` of at most 32 characters, and `readRoles` and `updateRoles` arrays of strings (which may be empty). `description` is optional and may contain at most 250 characters. On update, the body name must match `{name}`. Invalid input returns 400; unauthenticated requests return 401, and requests without `calendar-admin` return 403. Updates and deletes of absent tenant definitions return 404, and duplicate creates or deletion of a calendar containing events return 409. Core definitions cannot be changed through these endpoints.
+
+Successful definition writes signal `calendar-definition-created`, `calendar-definition-updated`, and `calendar-definition-deleted` events for the tenant.
 
 ### Calendar event
 Calender events represent a scheduled activity. Each event has some basic name and description information as well as start and end time. Events can be made public so that anonymous users can read their fields; their attendees remain accessible only to authorized users.

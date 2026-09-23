@@ -20,6 +20,9 @@ import {
   CalendarEventCreatedDefinition,
   CalendarEventDeletedDefinition,
   CalendarEventUpdatedDefinition,
+  CalendarDefinitionCreatedDefinition,
+  CalendarDefinitionUpdatedDefinition,
+  CalendarDefinitionDeletedDefinition,
 } from './calendar';
 
 const logger = createLogger('calendar-service', environment.LOG_LEVEL);
@@ -52,6 +55,8 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     eventService,
     directory,
+    tokenProvider,
+    configurationService,
     healthCheck,
     traceHandler,
   } = await initializePlatform(
@@ -66,7 +71,14 @@ const initializeApp = async (): Promise<express.Application> => {
           inTenantAdmin: true,
         },
       ],
-      events: [CalendarEventCreatedDefinition, CalendarEventUpdatedDefinition, CalendarEventDeletedDefinition],
+      events: [
+        CalendarEventCreatedDefinition,
+        CalendarEventUpdatedDefinition,
+        CalendarEventDeletedDefinition,
+        CalendarDefinitionCreatedDefinition,
+        CalendarDefinitionUpdatedDefinition,
+        CalendarDefinitionDeletedDefinition,
+      ],
       clientSecret: environment.CLIENT_SECRET,
       configuration: {
         description: 'Calendars including configuration of the roles allowed to read or modify events in the calendar',
@@ -118,7 +130,16 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler,
   );
 
-  applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, tenantService, ...repositories });
+  applyCalendarMiddleware(app, {
+    serviceId,
+    logger,
+    eventService,
+    directory,
+    tenantService,
+    tokenProvider,
+    configurationService,
+    ...repositories,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

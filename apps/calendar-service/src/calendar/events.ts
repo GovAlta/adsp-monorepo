@@ -1,7 +1,7 @@
-import { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { Update } from '@core-services/core-common';
 import { CalendarEntity, CalendarEventEntity } from './model';
-import { Attendee, CalendarEvent } from './types';
+import { Attendee, CalendarDefinition, CalendarEvent } from './types';
 
 const userSchema = {
   type: 'object',
@@ -27,6 +27,43 @@ const calendarSchema = {
     description: {
       type: 'string',
     },
+  },
+};
+
+const calendarDefinitionSchema = {
+  type: 'object',
+  properties: {
+    ...calendarSchema.properties,
+    readRoles: { type: 'array', items: { type: 'string' } },
+    updateRoles: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['name', 'readRoles', 'updateRoles'],
+};
+
+export const CalendarDefinitionCreatedDefinition: DomainEventDefinition = {
+  name: 'calendar-definition-created',
+  description: 'Signalled when a tenant calendar definition is created.',
+  payloadSchema: {
+    type: 'object',
+    properties: { calendar: calendarDefinitionSchema, createdBy: userSchema },
+  },
+};
+
+export const CalendarDefinitionUpdatedDefinition: DomainEventDefinition = {
+  name: 'calendar-definition-updated',
+  description: 'Signalled when a tenant calendar definition is updated.',
+  payloadSchema: {
+    type: 'object',
+    properties: { calendar: calendarDefinitionSchema, updatedBy: userSchema },
+  },
+};
+
+export const CalendarDefinitionDeletedDefinition: DomainEventDefinition = {
+  name: 'calendar-definition-deleted',
+  description: 'Signalled when a tenant calendar definition is deleted.',
+  payloadSchema: {
+    type: 'object',
+    properties: { calendar: calendarDefinitionSchema, deletedBy: userSchema },
   },
 };
 
@@ -154,6 +191,39 @@ function mapCalendarEvent(entity: CalendarEventEntity) {
     isAllDay: entity.isAllDay,
   };
 }
+
+function calendarDefinitionChanged(
+  name: string,
+  actor: 'createdBy' | 'updatedBy' | 'deletedBy',
+  user: User,
+  tenantId: AdspId,
+  calendar: CalendarDefinition
+): DomainEvent {
+  return {
+    tenantId,
+    name,
+    timestamp: new Date(),
+    context: { calendar: calendar.name },
+    correlationId: `calendar-${calendar.name}`,
+    payload: {
+      calendar: {
+        ...calendar,
+        readRoles: calendar.readRoles || [],
+        updateRoles: calendar.updateRoles || [],
+      },
+      [actor]: { id: user.id, name: user.name },
+    },
+  };
+}
+
+export const calendarDefinitionCreated = (user: User, tenantId: AdspId, calendar: CalendarDefinition): DomainEvent =>
+  calendarDefinitionChanged(CalendarDefinitionCreatedDefinition.name, 'createdBy', user, tenantId, calendar);
+
+export const calendarDefinitionUpdated = (user: User, tenantId: AdspId, calendar: CalendarDefinition): DomainEvent =>
+  calendarDefinitionChanged(CalendarDefinitionUpdatedDefinition.name, 'updatedBy', user, tenantId, calendar);
+
+export const calendarDefinitionDeleted = (user: User, tenantId: AdspId, calendar: CalendarDefinition): DomainEvent =>
+  calendarDefinitionChanged(CalendarDefinitionDeletedDefinition.name, 'deletedBy', user, tenantId, calendar);
 
 export const calendarEventCreated = (user: User, entity: CalendarEventEntity): DomainEvent => ({
   tenantId: entity.calendar.tenantId,

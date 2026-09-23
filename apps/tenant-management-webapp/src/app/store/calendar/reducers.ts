@@ -19,16 +19,19 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       return { ...state, calendars: action.payload.tenant, coreCalendars: action.payload.core };
     }
     case DELETE_CALENDAR_SUCCESS_ACTION: {
-      const deletedCalendar = Object.keys(state.calendars).find((calendarName) => calendarName === action.calendarId);
-
-      delete state.calendars[deletedCalendar];
-      return { ...state, calendars: { ...state.calendars } };
+      const calendars = { ...state.calendars };
+      delete calendars[action.calendarId];
+      return { ...state, calendars };
     }
     case UPDATE_CALENDAR_SUCCESS_ACTION: {
       return {
         ...state,
         calendars: {
-          ...action.payload,
+          ...state.calendars,
+          [action.payload.name]: {
+            ...state.calendars[action.payload.name],
+            ...action.payload,
+          },
         },
       };
     }
