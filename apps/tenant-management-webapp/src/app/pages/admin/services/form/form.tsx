@@ -6,8 +6,8 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import AsideLinks from '@components/AsideLinks';
 import BetaBadge from '@icons/beta-badge.svg';
-import LinkCopyComponent from '@components/CopyLink/CopyLink';
-import { selectFormAppHost } from '@store/form/selectors';
+import CopyLinkIcon from '@components/CopyLink/CopyLinkIcon';
+import { selectFormAdminAppLink, selectFormAppHost } from '@store/form/selectors';
 import { FormExport } from './export/formExport';
 import FormOverview from './formOverview';
 import { FormDefinitions } from '@form-editor-common';
@@ -16,15 +16,18 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { HeadingDiv } from '../styled-components';
 import { AsidePadding } from '../../../../components/Html';
 
-const HelpLink = (): JSX.Element => {
+export const HelpLink = (): JSX.Element => {
   const defaultFormUrl = useSelector((state: RootState) => selectFormAppHost(state));
+  const formAdminUrl = useSelector((state: RootState) => selectFormAdminAppLink(state));
   return (
     <>
       <AsideLinks serviceName="form" />
       <h3>Submit applications</h3>
       <span>Users can access forms and submit applications here:</span>
-      <h3>Form app link</h3>
-      <LinkCopyComponent text={'Copy link'} link={defaultFormUrl} />
+      <CopyLinkIcon label="Form app link" link={defaultFormUrl} testId="copy-form-app-link" />
+      {formAdminUrl && (
+        <CopyLinkIcon label="Form admin app link" link={formAdminUrl} testId="copy-form-admin-app-link" />
+      )}
     </>
   );
 };

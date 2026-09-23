@@ -4,11 +4,17 @@ import { replaceSpaceWithDash } from '@lib/kebabName';
 import { createSelector } from 'reselect';
 
 const PUBLIC_FORM_APP = 'form-app';
+const FORM_ADMIN_APP = 'form-admin-app';
 export const selectFormAppHost = createSelector(
   (state: RootState) => state,
   (state) => {
     return selectDirectoryByServiceName(state, PUBLIC_FORM_APP)?.url;
   }
+);
+export const selectFormAdminAppLink = createSelector(
+  (state: RootState) => state.tenant,
+  (state: RootState) => selectDirectoryByServiceName(state, FORM_ADMIN_APP)?.url,
+  (tenant, adminAppHost) => (adminAppHost ? `${adminAppHost}/${replaceSpaceWithDash(tenant.name)}` : undefined)
 );
 export const selectFormAppLink = createSelector(
   (state: RootState) => state.tenant,
