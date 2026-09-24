@@ -1,8 +1,35 @@
+components:
+  schemas:
+    EventError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+
 /event/v1/events:
   post:
     tags:
       - Event
-    description: Send an event.
+    description: >
+      Send an event. Requires the event-sender role. The event is sent in the tenant of the user; core (platform)
+      users can send an event for a specific tenant with the tenantId query parameter or body property.
+
+
+      If the tenant has an event definition for the namespace and name, the payload is validated against the
+      definition's payload schema. If there is no matching definition, the event is treated as an ad hoc event:
+      it is still sent and logged, but the payload is not validated.
+
+
+      Event definitions, the event log, and event streams are provided by the configuration, value, and push
+      services; see the [event service guide](https://govalta.github.io/adsp-monorepo/services/event-service.html).
+    parameters:
+      - name: tenantId
+        description: ID of the tenant to send the event for. Only used for core (platform) users.
+        in: query
+        required: false
+        schema:
+          type: string
+        example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
     requestBody:
       required: true
       content:
@@ -13,32 +40,72 @@
               namespace:
                 type: string
                 description: The namespace of the event definition.
+                minLength: 1
+                maxLength: 50
                 example: application-events
               name:
                 type: string
                 description: The name of the event definition.
+                minLength: 1
+                maxLength: 50
                 example: user-registration
               correlationId:
                 type: string
+                nullable: true
                 description: An optional reference to an object that can be used by the event receiver for matching purposes.
                 example: Bobs-user-id
               context:
                 type: object
+                nullable: true
+                additionalProperties: true
                 description: An optional object that can be used by the event receiver for matching purposes.
               timestamp:
                 type: string
-                description: the time the event was triggered.
-                format: datetime
+                description: The time the event was triggered, in ISO 8601 format.
+                format: date-time
               payload:
                 type: object
                 description: An object with values matching the schema specified in the Event Definition that can be used by the event receiver.
+              tenantId:
+                type: string
+                description: >
+                  ID of the tenant to send the event for. Only core (platform) users can specify a tenant other than
+                  their own.
             required:
               - namespace
               - name
               - timestamp
               - payload
+          example:
+            namespace: application-events
+            name: user-registration
+            correlationId: Bobs-user-id
+            context:
+              applicationId: application-1234
+            timestamp: '2026-09-24T17:00:00.000Z'
+            payload:
+              userId: Bobs-user-id
+              registeredOn: '2026-09-24'
     responses:
       200:
         description: Event successfully sent.
+      400:
+        description: >
+          Event is invalid, for example namespace or name is missing or too long, the timestamp is not in ISO 8601
+          format, the payload does not match the event definition schema, or there is no tenant context.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'Validation failed with error(s): timestamp (body) - Invalid value'
       401:
-        description: User not authorized to send event.
+        description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-sender role, or is sending an event for another tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'User Test User (ID: 1234) not permitted to send event.'
