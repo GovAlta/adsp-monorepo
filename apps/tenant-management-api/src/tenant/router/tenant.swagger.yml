@@ -1,105 +1,361 @@
 components:
+  responses:
+    TenantUnauthorized:
+      description: >
+        Request does not include a valid bearer token, or the user does not have the role required for the
+        operation. Role checks in this API respond with 401 rather than 403.
+    TenantV1BadRequest:
+      description: A required parameter is missing.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              errors:
+                type: array
+                items:
+                  type: object
+          example:
+            success: false
+            errors:
+              - property: email
+                constraints:
+                  isDefined: email should not be null or undefined
+    TenantBadRequest:
+      description: Request is invalid, for example a parameter failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantError'
+          example:
+            errorMessage: 'Validation failed with error(s): name (body) - Invalid value'
+    TenantNotFound:
+      description: Tenant not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantError'
+          example:
+            errorMessage: Tenant with ID 'Test Tenant' could not be found.
+    TenantTooManyRequests:
+      description: Too many requests; limited to 200 requests per 5 minutes.
   schemas:
+    TenantError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     Tenant:
       type: object
       properties:
         id:
           type: string
+          example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
         name:
           type: string
+          example: Test Tenant
         realm:
           type: string
+          example: 2f6c8f1e-3b7a-4d5c-9e8f-1a2b3c4d5e6f
+        status:
+          type: string
+          enum: [provisioning, active]
+          description: Status of the tenant; a new tenant is provisioning until its realm has been created.
         adminEmail:
           type: string
+          description: Email of the tenant administrator. Not included for anonymous requests.
+          example: test.admin@gov.ab.ca
+    TenantResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tenant:
+          $ref: '#/components/schemas/Tenant'
+    TenantDeleteResult:
+      type: object
+      properties:
+        deletedRealm:
+          type: boolean
+        deletedTenant:
+          type: boolean
+        success:
+          type: boolean
+      example:
+        deletedRealm: true
+        deletedTenant: true
+        success: true
 
 /api/tenant/v1:
   post:
     deprecated: true
     tags:
       - Tenant service
-    description: Create a new tenant.
+    description: >
+      Create a new tenant. Deprecated; use POST /api/tenant/v2/tenants, which this endpoint shares its
+      implementation with. Requires the core realm beta-tester or tenant-service-admin role.
     requestBody:
+      required: true
       content:
         application/json:
           schema:
             type: object
+            required: [name]
             properties:
               name:
                 type: string
-                description: When name is provided, new tenant will be created
-              tenantName:
-                type: string
-                description: When [tenantName, email, realm] are provided, only database will be update.
+                description: Name of the tenant.
               realm:
                 type: string
-                description: When [tenantName, email, realm] are provided, only database will be update.
-              email:
+                description: Existing realm to associate with the tenant. Requires the tenant-service-admin role.
+              adminEmail:
                 type: string
-                description: When [tenantName, email, realm] are provided, only database will be update.
+                description: Email of the tenant administrator. Requires the tenant-service-admin role.
     responses:
       200:
-        description: Tenant is created
-      401:
-        description: Unauthorized
+        description: Tenant is created with an existing realm.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+      202:
+        description: Tenant is created and its realm is being provisioned.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
       400:
-        description: Bad Request
-      409:
-        description: The tenant name is used.
+        $ref: '#/components/responses/TenantV1BadRequest'
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
   delete:
     deprecated: true
     tags:
       - Tenant service
-    description: Delete a tenant.
+    description: >
+      Delete a tenant and its realm. Deprecated; use DELETE /api/tenant/v2/tenants/{id}. Requires the core realm
+      tenant-service-admin role.
     parameters:
       - in: query
         name: realm
+        required: true
+        description: Realm of the tenant to delete.
         schema:
           type: string
-          description: Tenant Name
     responses:
       200:
-        description: Tenant is deleted
+        description: Tenant deletion completed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantDeleteResult'
+      400:
+        $ref: '#/components/responses/TenantV1BadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
+
+/api/tenant/v1/{id}:
+  get:
+    deprecated: true
+    tags:
+      - Tenant service
+    description: >
+      Retrieves a tenant by ID. Deprecated; use GET /api/tenant/v2/tenants/{id}. Available to any authenticated
+      user, and not limited to the user's own tenant.
+    parameters:
+      - in: path
+        name: id
+        required: true
+        description: ID of the tenant, without the URN prefix.
+        schema:
+          type: string
+    responses:
+      200:
+        description: Tenant information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantResult'
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
 
 /api/tenant/v1/realm/roles:
   get:
     deprecated: true
     tags:
       - Tenant service
-    description: Return the realm roles of the tenant
+    description: Return the realm roles of the tenant of the current user. Requires the tenant-admin role.
     responses:
       200:
         description: Return tenant realm roles
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      description:
+                        type: string
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+
+/api/tenant/v1/realm/{realm}:
+  get:
+    deprecated: true
+    tags:
+      - Tenant service
+    description: >
+      Retrieves a tenant by realm. Deprecated; use GET /api/tenant/v2/tenants?realm={realm}. Available to any
+      authenticated user.
+    parameters:
+      - in: path
+        name: realm
+        required: true
+        description: Realm of the tenant.
+        schema:
+          type: string
+    responses:
+      200:
+        description: Tenant information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantResult'
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
+
 /api/tenant/v1/email:
   post:
     deprecated: true
     tags:
       - Tenant service
-    description: Fetch the tenant admin information by email.
+    description: >
+      Fetch the tenant by administrator email. Deprecated; use GET /api/tenant/v2/tenants?adminEmail={email}.
+      Available to any authenticated user.
     requestBody:
+      required: true
       content:
         application/json:
           schema:
             type: object
+            required: [email]
             properties:
               email:
                 type: string
+          example:
+            email: test.admin@gov.ab.ca
     responses:
       200:
         description: Return tenant information by email
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+      400:
+        $ref: '#/components/responses/TenantV1BadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
+
+/api/tenant/v1/name:
+  post:
+    deprecated: true
+    tags:
+      - Tenant service
+    description: >
+      Fetch the tenant by name. Deprecated; use GET /api/tenant/v2/tenants?name={name}. Available to any
+      authenticated user.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+          example:
+            name: Test Tenant
+    responses:
+      200:
+        description: Return tenant information by name
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+      400:
+        $ref: '#/components/responses/TenantV1BadRequest'
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
+
+/api/tenant/v1/user/id:
+  get:
+    tags:
+      - Tenant service
+    description: >
+      Internal endpoint used by the tenant admin webapp. Looks up the ID of the user with the given email in a
+      realm, which defaults to the core realm. Requires the tenant-admin role and is rate limited.
+    parameters:
+      - in: query
+        name: email
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: realm
+        required: false
+        description: Realm to look up the user in. Defaults to core.
+        schema:
+          type: string
+    responses:
+      200:
+        description: ID of the user, or null if there is no user with the email.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIdInCore:
+                  type: string
+                  nullable: true
+      400:
+        $ref: '#/components/responses/TenantV1BadRequest'
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      429:
+        $ref: '#/components/responses/TenantTooManyRequests'
+
 /api/tenant/v1/user/default-idp:
   get:
     tags:
       - Tenant service
-    description: Check the ADSP IdP for the given user in the core realm.
+    description: >
+      Internal endpoint used by the tenant admin webapp. Checks if the given user in the core realm is linked to
+      the default ADSP identity provider. Requires the tenant-admin role and is rate limited.
     parameters:
       - in: query
         name: userId
+        required: true
         schema:
           type: string
     responses:
@@ -112,30 +368,82 @@ components:
               properties:
                 hasDefaultIdpInCore:
                   type: boolean
+      400:
+        $ref: '#/components/responses/TenantV1BadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+      429:
+        $ref: '#/components/responses/TenantTooManyRequests'
+
+/api/tenant/v1/user/idp:
+  delete:
+    tags:
+      - Tenant service
+    description: >
+      Internal endpoint used by the tenant admin webapp. Removes the link between a user and an identity provider
+      in a realm. Requires the tenant-admin role and is rate limited.
+    parameters:
+      - in: query
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: realm
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: idpName
+        required: false
+        description: Alias of the identity provider. Defaults to goa-ad.
+        schema:
+          type: string
+    responses:
+      200:
+        description: Identity provider link removed.
+      400:
+        description: A required parameter is missing, or the identity provider link could not be removed.
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      429:
+        $ref: '#/components/responses/TenantTooManyRequests'
 
 /api/tenant/v2/tenants:
   get:
     tags:
       - Tenant service
-    description: Search for tenants
+    description: >
+      Search for active tenants. Authenticated tenant users only find their own tenant; core users can find any
+      tenant.
+
+
+      Anonymous requests (without a bearer token) are allowed if they include the name or realm criteria, and the
+      results do not include the administrator email.
+    security:
+      - {}
+      - accessToken: []
     parameters:
       - in: query
         name: name
         schema:
           type: string
-        description: Search criteria
+          minLength: 1
+          maxLength: 50
+        description: Name of the tenant.
       - in: query
         name: realm
         schema:
           type: string
-        description: Search criteria
+          minLength: 1
+          maxLength: 50
+        description: Realm of the tenant.
       - in: query
         name: adminEmail
         schema:
           type: string
-        description: Search criteria
+          format: email
+        description: Email of the tenant administrator.
     responses:
       200:
         description: Return tenant information
@@ -151,55 +459,112 @@ components:
                 page:
                   type: object
                   properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
                     size:
                       type: number
+            example:
+              results:
+                - id: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+                  name: Test Tenant
+                  realm: 2f6c8f1e-3b7a-4d5c-9e8f-1a2b3c4d5e6f
+                  status: active
+              page:
+                size: 1
+      400:
+        $ref: '#/components/responses/TenantBadRequest'
       401:
-        description: Unauthorized
+        description: Anonymous request does not include name or realm criteria.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
   post:
     tags:
       - Tenant service
-    description: Create a tenant.
+    description: >
+      Create a tenant. Requires the core realm beta-tester or tenant-service-admin role.
+
+
+      By default a new realm is created for the tenant, with the current user as the administrator; the response
+      is sent with status 202 while the realm is provisioned. Users with the tenant-service-admin role can instead
+      set realm to associate the tenant with an existing realm, in which case adminEmail is required and the
+      response is sent with status 200. Only tenant-service-admin users can set adminEmail.
     requestBody:
+      required: true
       content:
         application/json:
           schema:
             type: object
+            required: [name]
             properties:
               name:
                 type: string
+                pattern: '^[0-9a-zA-Z _]{1,50}$'
               realm:
                 type: string
+                nullable: true
+                maxLength: 50
+                description: Existing realm to associate with the tenant. Requires the tenant-service-admin role.
               adminEmail:
                 type: string
+                nullable: true
+                format: email
+                description: Email of the tenant administrator. Requires the tenant-service-admin role.
+          example:
+            name: Test Tenant
     responses:
       200:
-        description: Return tenant information
+        description: Tenant created with an existing realm.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Tenant'
+      202:
+        description: Tenant created and its realm is being provisioned.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+            example:
+              id: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+              name: Test Tenant
+              realm: 2f6c8f1e-3b7a-4d5c-9e8f-1a2b3c4d5e6f
+              status: provisioning
+              adminEmail: test.admin@gov.ab.ca
+      400:
+        description: >
+          Request is invalid, for example the name is invalid or already used, the administrator already has a
+          tenant, or the realm is already associated with a tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
 /api/tenant/v2/tenants/{id}/name:
   parameters:
     - in: path
       name: id
+      required: true
+      description: ID of the tenant, without the URN prefix.
+      schema:
+        type: string
   patch:
     tags:
       - Tenant service
-    description: Update the tenant name.
+    description: Update the tenant name. Requires the core realm tenant-service-admin role, and is rate limited.
     requestBody:
+      required: true
       content:
         application/json:
           schema:
             type: object
+            required: [name]
             properties:
               name:
                 type: string
+                pattern: '^[0-9a-zA-Z _]{1,50}$'
+          example:
+            name: Renamed Tenant
     responses:
       200:
         description: Return updated tenant information
@@ -207,8 +572,14 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Tenant'
+      400:
+        $ref: '#/components/responses/TenantBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
+      429:
+        $ref: '#/components/responses/TenantTooManyRequests'
 
 /api/tenant/v2/tenants/{id}:
   parameters:
@@ -217,11 +588,11 @@ components:
       schema:
         type: string
       required: true
-      description: tenant id
+      description: ID of the tenant, without the URN prefix.
   get:
     tags:
       - Tenant service
-    description: Retrieves a tenant.
+    description: Retrieves a tenant. Tenant users can only retrieve their own tenant; core users can retrieve any tenant.
     responses:
       200:
         description: Return tenant information
@@ -230,20 +601,27 @@ components:
             schema:
               $ref: '#/components/schemas/Tenant'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+      403:
+        description: User is not permitted to retrieve another tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
   delete:
     tags:
       - Tenant service
-    description: Deletes a tenant.
+    description: Deletes a tenant and its realm. Requires the core realm tenant-service-admin role.
     responses:
       200:
         description: Tenant deletion completed.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
+              $ref: '#/components/schemas/TenantDeleteResult'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/TenantUnauthorized'
+      404:
+        $ref: '#/components/responses/TenantNotFound'

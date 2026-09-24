@@ -1,5 +1,37 @@
 components:
+  responses:
+    ValueBadRequest:
+      description: Request is invalid, for example a path or query parameter failed validation or tenant context is missing.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValueError'
+          example:
+            errorMessage: Tenant context is required for operation.
+    ValueUnauthorized:
+      description: Request does not include a valid bearer token.
+    ValueForbidden:
+      description: User does not have the role required for the operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValueError'
+          example:
+            errorMessage: 'User Test User (ID: 1234) not permitted to read values.'
+    ValueNotFound:
+      description: Namespace or value definition not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValueError'
+          example:
+            errorMessage: namespace with ID 'test-service' could not be found.
   schemas:
+    ValueError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     Value:
       type: object
       properties:
@@ -62,11 +94,18 @@ components:
   post:
     tags:
       - Value
-    description: Manually triggers service metric rollup processing for completed days. Requires the value-writer role.
+    description: >
+      Manually triggers service metric rollup processing for completed days. Requires the value-writer role.
+      Core users can roll up a specific tenant or all tenants; tenant users are always restricted to their own tenant.
+      The current partial day and future days cannot be rolled up.
     requestBody:
       required: false
       content:
         application/json:
+          example:
+            start: '2026-09-01'
+            end: '2026-09-07'
+            tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
           schema:
             type: object
             properties:
@@ -86,6 +125,11 @@ components:
         description: Service metric rollup completed.
         content:
           application/json:
+            example:
+              start: '2026-09-01'
+              end: '2026-09-07'
+              tenant: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+              rollups: 42
             schema:
               type: object
               properties:
@@ -96,17 +140,25 @@ components:
                   type: string
                   format: date
                 tenant:
-                  type:
-                    - string
-                    - 'null'
+                  type: string
+                  nullable: true
+                  description: Tenant ID that was rolled up, or null when all tenants were rolled up.
                 rollups:
                   type: integer
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
 
 /value/v1/{namespace}/values:
   get:
     tags:
       - Value
-    description: Reads namespace values.
+    description: >
+      Reads the latest value of each value definition in a namespace. Requires the value-reader role.
+      Only values with a configured definition are returned.
     parameters:
       - name: namespace
         description: Namespace to read values from.
@@ -126,17 +178,31 @@ components:
             type: string
     responses:
       '200':
-        description: Values successfully read.
+        description: Values successfully read, keyed by namespace and then value name.
         content:
           application/json:
+            example:
+              test-service:
+                response-time:
+                  correlationId: request-1
+                  context:
+                    endpoint: /api/v1/items
+                  timestamp: '2026-09-24T17:00:00.000Z'
+                  value: 120
             schema:
               type: object
               additionalProperties:
                 type: object
                 additionalProperties:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Value'
+                  $ref: '#/components/schemas/Value'
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+      404:
+        $ref: '#/components/responses/ValueNotFound'
 /value/v1/{namespace}/values/{name}:
   parameters:
     - name: namespace
@@ -154,14 +220,18 @@ components:
   get:
     tags:
       - Value
-    description: Reads a namespace value.
+    description: >
+      Reads records of a namespace value, newest first. Requires the value-reader role, or the export-service
+      export-job role. Core users can read without a tenant context.
     parameters:
       - name: top
-        description: Number of results to read.
+        description: Number of results to read. Defaults to 10.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 5000
       - name: after
         description: Cursor for next set of results.
         in: query
@@ -201,11 +271,35 @@ components:
         schema:
           type: string
           format: date-time
+      - name: value
+        description: Filter to records with a payload targetId equal to this value (used for event log records).
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: url
+        description: Filter to records with a payload URL equal to this value (used for event log records).
+        in: query
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Value successfully read.
         content:
           application/json:
+            example:
+              test-service:
+                response-time:
+                  - correlationId: request-1
+                    context:
+                      endpoint: /api/v1/items
+                    timestamp: '2026-09-24T17:00:00.000Z'
+                    value: 120
+              page:
+                after: null
+                next: MTA=
+                size: 1
             schema:
               type: object
               properties:
@@ -224,14 +318,43 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Value'
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
   post:
     tags:
       - Value
-    description: Writes namespace value.
+    description: >
+      Writes one or more records of a namespace value. Requires the value-writer role. Core users can write to a
+      specific tenant by including tenantId in the body. The body can be a value envelope (with value, context,
+      correlationId and timestamp), a bare JSON object which is written as the value, or an array of either. If
+      the value has a definition with a schema, records that fail validation are skipped. Responds with an array
+      when the request body is an array.
     requestBody:
       required: true
       content:
         application/json:
+          examples:
+            envelope:
+              summary: Value with envelope
+              value:
+                correlationId: request-1
+                context:
+                  endpoint: /api/v1/items
+                timestamp: '2026-09-24T17:00:00.000Z'
+                value: 120
+            bare:
+              summary: Bare value object
+              value:
+                responseTime: 120
+            batch:
+              summary: Batch of values
+              value:
+                - value: 120
+                - value: 95
           schema:
             oneOf:
               - $ref: '#/components/schemas/Value'
@@ -246,12 +369,24 @@ components:
         description: Value successfully written.
         content:
           application/json:
+            example:
+              correlationId: request-1
+              context:
+                endpoint: /api/v1/items
+              timestamp: '2026-09-24T17:00:00.000Z'
+              value: 120
             schema:
               oneOf:
                 - $ref: '#/components/schemas/Value'
                 - type: array
                   items:
                     $ref: '#/components/schemas/Value'
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
 /value/v1/{namespace}/values/{name}/count:
   parameters:
     - name: namespace
@@ -269,7 +404,7 @@ components:
   get:
     tags:
       - Value
-    description: Count records of a namespace value.
+    description: Count records of a namespace value. Requires the value-reader role and a tenant context.
     parameters:
       - name: correlationId
         description: Correlation ID associated with the values.
@@ -318,11 +453,23 @@ components:
                   type: string
                 count:
                   type: integer
+            example:
+              namespace: test-service
+              name: response-time
+              count: 1024
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
 /value/v1/{namespace}/values/{name}/metrics:
   get:
     tags:
       - Value
-    description: Retrieves value metrics in a namespace
+    description: >
+      Retrieves metric aggregates of a value in a namespace, keyed by metric name. Requires the value-reader role
+      and a tenant context.
     parameters:
       - name: namespace
         description: Namespace to read value metric from.
@@ -337,7 +484,7 @@ components:
         schema:
           type: string
       - name: interval
-        description: Interval to get metric aggregates for.
+        description: Interval to get metric aggregates for. Defaults to daily.
         in: query
         required: false
         schema:
@@ -350,11 +497,13 @@ components:
             - weekly
             - monthly
       - name: top
-        description: Number of results to read.
+        description: Number of intervals to read. Defaults to 100.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 5000
       - name: after
         description: Cursor for next set of results.
         in: query
@@ -397,6 +546,26 @@ components:
                       type: number
               additionalProperties:
                 $ref: '#/components/schemas/Metric'
+            example:
+              response-time:avg:
+                name: response-time:avg
+                values:
+                  - interval: '2026-09-23T00:00:00.000Z'
+                    avg: 118.5
+                    sum: 1185
+                    min: 80
+                    max: 240
+                    count: 10
+              page:
+                after: null
+                next: MQ==
+                size: 1
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
 /value/v1/{namespace}/values/{name}/platform-metrics:
   get:
     tags:
@@ -419,7 +588,7 @@ components:
         schema:
           type: string
       - name: interval
-        description: Interval to get metric aggregates for.
+        description: Interval to get metric aggregates for. Defaults to daily.
         in: query
         required: false
         schema:
@@ -457,13 +626,35 @@ components:
               type: object
               additionalProperties:
                 $ref: '#/components/schemas/PlatformMetric'
+            example:
+              response-time:avg:
+                name: response-time:avg
+                values:
+                  - interval: '2026-09-23T00:00:00.000Z'
+                    tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+                    avg: 118.5
+                    sum: 1185
+                    min: 80
+                    max: 240
+                    count: 10
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
       403:
-        description: User does not have the platform metrics reader role.
+        description: User is not a core user with the value-platform-metrics-reader role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueError'
+
 /value/v1/{namespace}/values/{name}/metrics/{metric}:
   get:
     tags:
       - Value
-    description: Retrieves value metric in a namespace
+    description: >
+      Retrieves aggregates of a single metric of a value in a namespace. Requires the value-reader role and a
+      tenant context.
     parameters:
       - name: namespace
         description: Namespace to read value metric from.
@@ -484,7 +675,7 @@ components:
         schema:
           type: string
       - name: interval
-        description: Interval to get metric aggregates for.
+        description: Interval to get metric aggregates for. Defaults to daily.
         in: query
         required: false
         schema:
@@ -497,11 +688,13 @@ components:
             - weekly
             - monthly
       - name: top
-        description: Number of results to read.
+        description: Number of intervals to read. Defaults to 100.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 5000
       - name: after
         description: Cursor for next set of results.
         in: query
@@ -542,3 +735,22 @@ components:
                           type: string
                         size:
                           type: number
+            example:
+              name: response-time:avg
+              values:
+                - interval: '2026-09-23T00:00:00.000Z'
+                  avg: 118.5
+                  sum: 1185
+                  min: 80
+                  max: 240
+                  count: 10
+              page:
+                after: null
+                next: MQ==
+                size: 1
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'

@@ -1,7 +1,58 @@
 components:
+  responses:
+    FileBadRequest:
+      description: Request is invalid, for example a parameter failed validation or the operation is not allowed for the file.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileError'
+          example:
+            errorMessage: 'Validation failed with error(s): fileId (params) - Invalid value'
+    FileUnauthorized:
+      description: >
+        Request does not include a valid bearer token, or the user does not have a role on the file type that
+        permits the operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileError'
+          example:
+            errorMessage: User not authorized to delete file.
+    FileForbidden:
+      description: User is not permitted to access the file or file type.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileError'
+          example:
+            errorMessage: 'User Test User (ID: 1234) not permitted to read file.'
+    FileNotFound:
+      description: File or file type not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileError'
+          example:
+            errorMessage: File with ID '53fca659-362d-407f-9c4d-c2c8c6427bdb' could not be found.
   schemas:
+    FileError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     FileType:
       type: object
+      description: >
+        A File Type collection, configured in the configuration service under platform:file-service. Users with the
+        file-service-admin role can read and update files of every type.
+
+
+        readRoles and updateRoles are matched against the roles in the caller's token for the tenant. When the
+        caller is another platform service using its service account (for example notification-service reading a
+        file for an email attachment, or pdf-service writing a generated PDF), the service account's token comes
+        from the core realm, so the role must be granted to that service account in the core realm. Roles
+        registered by services, and roles configured on tenant file types, are only created in tenant realms and
+        do not apply to core service accounts.
       properties:
         id:
           description: A unique id for a File Type collection.
@@ -12,21 +63,29 @@ components:
           example: My File Type Collection
           type: string
         anonymousRead:
-          description: True if public read access has been granted to files within the collection.
+          description: >
+            True if public read access has been granted to files within the collection. Files of the type can then be
+            read and downloaded without a bearer token.
           example: true
           type: boolean
         readRoles:
+          description: Roles that can read files within the collection.
           type: array
           items:
             description: A keycloak role that has read access to files within the collection.
             example: urn:ads:platform:pdf-service:pdf-generator
             type: string
         updateRoles:
+          description: Roles that can upload files to, and delete their own files from, the collection.
           type: array
           items:
             description: A keycloak role that can update files within the collection.
             example: urn:ads:platform:tenant-service:platform-service
             type: string
+        rules:
+          description: Rules applied to files of the type, such as retention.
+          type: object
+          additionalProperties: true
     File:
       type: object
       properties:
@@ -53,6 +112,10 @@ components:
         recordId:
           description: An optional, application supplied ID, for use in cross-referencing the file.
           example: 864f975b-8d57-450b-b581-72ff42299bdf
+          type: string
+        mimeType:
+          description: MIME type of the file, detected from the content when possible.
+          example: application/pdf
           type: string
         created:
           description: Date the file was uploaded.
@@ -104,16 +167,22 @@ components:
           enum: [copy]
         type:
           type: string
+          description: ID of the file type of the copy. Defaults to the type of the source file.
         filename:
           type: string
+          description: Name of the copy. Defaults to the name of the source file.
         recordId:
           type: string
+          description: Record ID of the copy. Defaults to the record ID of the source file.
+      required: [operation]
 
 /file/v1/types:
   get:
     tags:
       - File Type
-    description: Retrieves file types.
+    description: >
+      Retrieves the file types the user can access: types with anonymousRead, types where the user has one of the
+      readRoles or updateRoles, or every type for users with the file-service-admin role.
     responses:
       200:
         description: Request successful.
@@ -123,14 +192,22 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/FileType'
+            example:
+              - id: generated-pdf
+                name: Generated PDF
+                anonymousRead: false
+                readRoles: [urn:ads:platform:pdf-service:pdf-generator]
+                updateRoles: [urn:ads:platform:pdf-service:pdf-generator]
       401:
-        description: User not authorized.
+        $ref: '#/components/responses/FileUnauthorized'
 
 /file/v1/types/{typeId}:
   get:
     tags:
       - File Type
-    description: Retrieves a file type.
+    description: >
+      Retrieves a file type. The type must allow anonymous read, or the user must have one of its readRoles or
+      updateRoles, or the file-service-admin role.
     parameters:
       - name: typeId
         description: ID of the file type.
@@ -147,21 +224,34 @@ components:
             schema:
               $ref: '#/components/schemas/FileType'
       401:
-        description: User not authorized.
+        $ref: '#/components/responses/FileUnauthorized'
+      403:
+        $ref: '#/components/responses/FileForbidden'
+      404:
+        $ref: '#/components/responses/FileNotFound'
 
 /file/v1/files:
   post:
     tags:
       - File
-    description: Upload a file.
+    description: >
+      Upload a file. Requires one of the file type's updateRoles, or the file-service-admin role.
+
+
+      The metadata fields (type, recordId, filename, mimeType) must come before the file part in the multipart
+      body, since the file is streamed to storage as it is received. They can also be provided as query parameters.
+
+
+      Example: `curl -H "Authorization: Bearer $TOKEN" -F type=generated-pdf -F filename=report.pdf -F file=@report.pdf https://file-service.adsp.alberta.ca/file/v1/files`
     requestBody:
+      required: true
       content:
         multipart/form-data:
           schema:
             type: object
             properties:
               type:
-                description: ID of the File Type collection the file is associated with, if any.
+                description: ID of the File Type collection the file is associated with.
                 example: generated-pdf
                 type: string
               recordId:
@@ -169,7 +259,7 @@ components:
                 example: 864f975b-8d57-450b-b581-72ff42299bdf
                 type: string
               filename:
-                description: The application-supplied name of the file.
+                description: The application-supplied name of the file. Defaults to the name of the uploaded file.
                 example: TestFile23
                 type: string
               mimeType:
@@ -180,29 +270,57 @@ components:
                 description: File contents.
                 type: string
                 format: binary
-            required: [file]
+            required: [type, file]
+          encoding:
+            file:
+              contentType: application/octet-stream
     responses:
       200:
-        description: File successfully uploaded.
+        description: File successfully uploaded. The file is scanned for malware after upload.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/File'
+            example:
+              urn: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+              id: ced3fbdd-7597-455e-84c6-1d0b3d03a274
+              filename: report.pdf
+              size: 112845
+              typeName: Generated PDF
+              recordId: 864f975b-8d57-450b-b581-72ff42299bdf
+              mimeType: application/pdf
+              created: '2026-09-24T17:00:00.000Z'
+              createdBy:
+                id: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
+                name: Test User
+              scanned: false
+              infected: false
+              securityClassification: protected a
       400:
-        description: Invalid parameters.
+        description: Invalid parameters, for example no file uploaded, no file type specified, or an invalid filename.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileError'
+            example:
+              errorMessage: Type of file not specified.
       401:
-        description: User not authorized.
+        $ref: '#/components/responses/FileUnauthorized'
       404:
-        description: Type not found.
+        $ref: '#/components/responses/FileNotFound'
   get:
     tags:
       - File
     description: |
-      Retrieves files using a simple paging algorithm, which works as follows:
+      Retrieves files of the tenant. Only files the user can access are included: files the user uploaded, files of types with anonymousRead or where the user has one of the readRoles, or every file for users with the file-service-admin role. Files marked for deletion are excluded.
+
+      Uses a simple paging algorithm, which works as follows:
       - You begin by asking for the top (first) N files, e.g. ```top=N&criteria={"filenameContains": "Bob"}```.  If unspecified, top defaults to 50.
       - The API responds by returning the files and the starting point for the **next** set of results, if any more are available.
       - In subsequent calls, pass the returned **next** value as the *after* parameter, e.g. ```top=N&after=next&criteria={"filenameContains": "Bob"}```
       - Continue iterating until **next** is undefined.
+
+      Since inaccessible files are filtered from each page, a page can have fewer than top results even when more are available.
 
     parameters:
       - name: top
@@ -246,8 +364,12 @@ components:
                   type: string
                 lastAccessedBefore:
                   description: Returns all files with lastAccessed before (exclusive) the ISO 8061 timestamp provided.
+                  type: string
+                  format: date-time
                 lastAccessedAfter:
                   description: Returns all files with lastAccessed after (exclusive) the ISO 8061 timestamp provided.
+                  type: string
+                  format: date-time
 
     responses:
       200:
@@ -278,12 +400,18 @@ components:
                         as it will just repeat the set just returned.
                       example: Mw==
                       type: string
+      400:
+        $ref: '#/components/responses/FileBadRequest'
       401:
-        description: User not authorized.
+        $ref: '#/components/responses/FileUnauthorized'
   delete:
     tags:
       - File
-    description: Marks multiple files for deletion. File deletion is not immediate, but files will eventually disappear.
+    description: >
+      Marks multiple files for deletion. File deletion is not immediate, but files will eventually disappear.
+      Users with the file-service-admin role can delete any file; other users can only delete files they uploaded
+      and still have one of the file type's updateRoles for. Stops at the first file that is not found or cannot be
+      deleted.
     parameters:
       - name: files
         description: File IDs to delete, provided as a comma-separated query string.
@@ -311,12 +439,19 @@ components:
                         type: string
                       deleted:
                         type: boolean
+            example:
+              deleted: true
+              results:
+                - id: 53fca659-362d-407f-9c4d-c2c8c6427bdb
+                  deleted: true
+                - id: ced3fbdd-7597-455e-84c6-1d0b3d03a274
+                  deleted: true
       400:
-        description: Invalid parameters.
-      404:
-        description: File not found.
+        $ref: '#/components/responses/FileBadRequest'
       401:
-        description: User not authorized.
+        $ref: '#/components/responses/FileUnauthorized'
+      404:
+        $ref: '#/components/responses/FileNotFound'
 
 /file/v1/files/{fileId}:
   parameters:
@@ -327,10 +462,14 @@ components:
       required: true
       schema:
         type: string
+        format: uuid
   delete:
     tags:
       - File
-    description: Marks a file for deletion.  File deletion is not immediate, but it will eventually disappear.
+    description: >
+      Marks a file for deletion.  File deletion is not immediate, but it will eventually disappear. Users with the
+      file-service-admin role can delete any file; other users can only delete files they uploaded and still have
+      one of the file type's updateRoles for.
     responses:
       200:
         description: Delete result
@@ -341,14 +480,31 @@ components:
               properties:
                 deleted:
                   type: boolean
-      404:
-        description: File not found
+            example:
+              deleted: true
+      400:
+        $ref: '#/components/responses/FileBadRequest'
       401:
-        description: User not authorized
+        $ref: '#/components/responses/FileUnauthorized'
+      403:
+        $ref: '#/components/responses/FileForbidden'
+      404:
+        $ref: '#/components/responses/FileNotFound'
   get:
     tags:
       - File
-    description: Retrieves a file's metadata.
+    description: >
+      Retrieves a file's metadata. The user must have uploaded the file, have one of the file type's readRoles or
+      the file-service-admin role, or the file type must allow anonymous read. A bearer token is not required for
+      files of types with anonymousRead.
+
+
+      Platform services with the directory-service resource-resolver role (urn:ads:platform:directory-service:resource-resolver)
+      can also retrieve the metadata of any file. This is used to resolve file URNs to their details and is not
+      intended for tenant applications.
+    security:
+      - {}
+      - accessToken: []
     responses:
       200:
         description: File metadata
@@ -356,15 +512,21 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/File'
+      400:
+        $ref: '#/components/responses/FileBadRequest'
+      403:
+        $ref: '#/components/responses/FileForbidden'
       404:
-        description: File not found
-      401:
-        description: User not authorized
+        $ref: '#/components/responses/FileNotFound'
   post:
     tags:
       - File
-    description: Executes a form operation.
+    description: >
+      Executes a file operation. The copy operation copies the file to a new file, optionally of a different type.
+      The user must be able to read the source file (see GET), and must have one of the destination file type's
+      updateRoles or the file-service-admin role.
     requestBody:
+      required: true
       content:
         application/json:
           schema:
@@ -374,6 +536,11 @@ components:
               propertyName: operation
               mapping:
                 copy: '#/components/schemas/CopyFileOperation'
+          example:
+            operation: copy
+            type: generated-pdf
+            filename: report-copy.pdf
+            recordId: 864f975b-8d57-450b-b581-72ff42299bdf
     responses:
       200:
         description: Result of the operation
@@ -382,12 +549,18 @@ components:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/File'
-      404:
-        description: File not found
-      401:
-        description: User not authorized
       400:
-        description: Operation not recognized
+        description: Operation not recognized, or a parameter failed validation.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileError'
+      401:
+        $ref: '#/components/responses/FileUnauthorized'
+      403:
+        $ref: '#/components/responses/FileForbidden'
+      404:
+        $ref: '#/components/responses/FileNotFound'
 
 /file/v1/files/{fileId}/download:
   get:
@@ -402,7 +575,14 @@ components:
 
       ```<img src="https://adsp.alberta.ca/file/v1/files/{fileId}/download?embed=true"/>```
 
-      A file that was not scanned when it was uploaded is considered unsafe, and will not download by default.  You can override this behaviour by setting unsafe=true.
+      Access follows the same rules as retrieving the file's metadata (except for the resource-resolver role). Links like the ones above only work without a bearer token when the file type has anonymousRead set; otherwise the request must include a bearer token.
+
+      A file that was not scanned when it was uploaded is considered unsafe, and will not download by default.  You can override this behaviour by setting unsafe=true. Infected files and files marked for deletion cannot be downloaded.
+
+      Single byte ranges are supported with the Range header, in which case the response is 206 Partial Content.
+    security:
+      - {}
+      - accessToken: []
     parameters:
       - name: fileId
         description: ID of the file to download.
@@ -411,6 +591,7 @@ components:
         required: true
         schema:
           type: string
+          format: uuid
       - name: embed
         description: Flag indicating whether to inline the file.  Defaults to false.
         example: true
@@ -425,6 +606,13 @@ components:
         required: false
         schema:
           type: boolean
+      - name: Range
+        description: Single byte range of the file to download.
+        example: bytes=0-1023
+        in: header
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Request successful.
@@ -433,7 +621,24 @@ components:
             schema:
               type: string
               format: binary
-      404:
-        description: File not found
+      206:
+        description: Requested range of the file.
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      400:
+        description: File scan pending, file is infected or marked for deletion, or the range is not supported.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileError'
+            example:
+              errorMessage: File scan pending.
       401:
-        description: User not authorized
+        $ref: '#/components/responses/FileUnauthorized'
+      403:
+        $ref: '#/components/responses/FileForbidden'
+      404:
+        $ref: '#/components/responses/FileNotFound'

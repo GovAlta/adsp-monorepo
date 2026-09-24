@@ -1,5 +1,94 @@
 components:
+  parameters:
+    ConfigurationNamespace:
+      name: namespace
+      description: Namespace of the configuration. Letters, numbers, dashes, underscores, and spaces only.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: platform
+    ConfigurationName:
+      name: name
+      description: Name of the configuration. Letters, numbers, dashes, underscores, and spaces only.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: event-service
+    ConfigurationCore:
+      name: core
+      description: >
+        Flag indicating if the core (platform) instead of tenant configuration should be retrieved. The flag is set
+        when the parameter is present, regardless of its value.
+      in: query
+      required: false
+      allowEmptyValue: true
+      schema:
+        type: boolean
+    ConfigurationTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. For authenticated requests, only used for core (platform) users; tenant users
+        always act on the tenant of their token.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    ConfigurationAnonymousTenant:
+      name: tenant
+      description: >
+        ID of the tenant to read configuration for. Required for anonymous requests, since there is no token to
+        determine the tenant from; ignored for authenticated requests.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+  responses:
+    ConfigurationBadRequest:
+      description: >
+        Request is invalid, for example a path or query parameter failed validation, the operation is not
+        recognized, or the configuration does not match the configuration definition schema.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfigurationError"
+          examples:
+            validation:
+              summary: Request validation failed
+              value:
+                errorMessage: "Validation failed with error(s): operation (body) - Invalid value"
+            schema:
+              summary: Configuration does not match the definition schema
+              value:
+                errorMessage: "Value not valid for configuration 'platform:event-service': /definitions must be object"
+    ConfigurationUnauthorized:
+      description: >
+        Request does not include a valid bearer token, or the configuration does not allow anonymous access.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfigurationError"
+          example:
+            errorMessage: Anonymous access to configuration not allowed.
+    ConfigurationForbidden:
+      description: User does not have the role required for the operation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfigurationError"
+          example:
+            errorMessage: "User Test User (ID: 1234) not permitted to modify configuration."
   schemas:
+    ConfigurationError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     ConfigurationRevision:
       type: object
       properties:
@@ -13,8 +102,30 @@ components:
         lastUpdated:
           type: string
           format: date-time
+      example:
+        revision: 2
+        configuration:
+          application-events:
+            name: application-events
+            definitions: {}
+        created: "2026-09-01T17:00:00.000Z"
+        lastUpdated: "2026-09-24T17:00:00.000Z"
+    Configuration:
+      type: object
+      properties:
+        urn:
+          type: string
+        namespace:
+          type: string
+        name:
+          type: string
+        latest:
+          $ref: "#/components/schemas/ConfigurationRevision"
     UpdateOperation:
       type: object
+      description: >
+        Merges the update into the latest revision. Top level object properties are merged one level deep; other
+        values are replaced.
       properties:
         operation:
           type: string
@@ -24,6 +135,7 @@ components:
       required: [operation, update]
     ReplaceOperation:
       type: object
+      description: Replaces the configuration of the latest revision.
       properties:
         operation:
           type: string
@@ -33,6 +145,7 @@ components:
       required: [operation, configuration]
     DeleteOperation:
       type: object
+      description: Removes a property, specified as a path such as a.b, from the latest revision.
       properties:
         operation:
           type: string
@@ -42,6 +155,7 @@ components:
       required: [operation, property]
     CreateRevisionOperation:
       type: object
+      description: Creates a new latest revision with a copy of the configuration of the current latest revision.
       properties:
         operation:
           type: string
@@ -49,36 +163,39 @@ components:
       required: [operation]
     SetActiveRevisionOperation:
       type: object
+      description: Sets the active revision.
       properties:
         operation:
           type: string
           enum: [SET-ACTIVE-REVISION]
-        setActiveRevision:
-          type: number
         revision:
           type: number
+          description: Revision number to set as active.
+        setActiveRevision:
+          type: number
+          deprecated: true
+          description: Deprecated; use revision instead.
       required: [operation]
 
 /configuration/v2/configuration/{namespace}:
   parameters:
-    - name: namespace
-      description: Namespace of the configuration.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: "#/components/parameters/ConfigurationNamespace"
   get:
     tags:
       - Configuration
-    description: Find configuration in a namespace.
+    description: >
+      Find configuration in a namespace. Requires the configuration-admin, configured-service, or export-service
+      export-job role. Unlike the other read operations, the configuration-reader role is not sufficient.
     parameters:
       - name: top
-        description: Number of results to return in the page, e.g. the top N results.
+        description: Number of results to return in the page, e.g. the top N results. Defaults to 10.
         example: 10
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 1000
       - name: after
         description: Cursor for retrieving additional pages.  Use the **next** value returned by the previous call.
         example: Mw==
@@ -92,12 +209,19 @@ components:
         required: false
         schema:
           type: boolean
+      - name: registeredId
+        description: Filter to configuration registered by the service with this ID.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: criteria
         description: JSON string of criteria to filter configuration. Use 'useOr' property to switch to OR logic.
         in: query
         required: false
         schema:
           type: string
+      - $ref: "#/components/parameters/ConfigurationTenantId"
     responses:
       200:
         description: Request completed successfully.
@@ -109,16 +233,12 @@ components:
                 results:
                   type: array
                   items:
-                    type: object
-                    properties:
-                      namespace:
-                        type: string
-                      name:
-                        type: string
-                      active:
-                        $ref: "#/components/schemas/ConfigurationRevision"
-                      latest:
-                        $ref: "#/components/schemas/ConfigurationRevision"
+                    allOf:
+                      - $ref: "#/components/schemas/Configuration"
+                      - type: object
+                        properties:
+                          active:
+                            $ref: "#/components/schemas/ConfigurationRevision"
                 page:
                   type: object
                   properties:
@@ -136,54 +256,52 @@ components:
                         as it will just repeat the set just returned.
                       example: Mw==
                       type: string
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to retrieve configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
 
 /configuration/v2/configuration/{namespace}/{name}:
   parameters:
-    - name: namespace
-      description: Namespace of the configuration.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: name
-      description: Name of the configuration.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: "#/components/parameters/ConfigurationNamespace"
+    - $ref: "#/components/parameters/ConfigurationName"
+    - $ref: "#/components/parameters/ConfigurationTenantId"
   get:
     tags:
       - Configuration
-    description: Retrieves configuration.
+    description: >
+      Retrieves configuration, with its latest and active revisions. Requires the configuration-reader,
+      configuration-admin, configured-service, directory-service resource-resolver, or export-service export-job
+      role.
     parameters:
-      - name: core
-        description: Flag indicating if the core instead of tenant configuration should be retrieved.
-        in: query
-        required: false
-        schema: {}
+      - $ref: "#/components/parameters/ConfigurationCore"
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                namespace:
-                  type: string
-                name:
-                  type: string
-                latest:
-                  $ref: "#/components/schemas/ConfigurationRevision"
+              allOf:
+                - $ref: "#/components/schemas/Configuration"
+                - type: object
+                  properties:
+                    active:
+                      $ref: "#/components/schemas/ConfigurationRevision"
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to retrieve configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
   patch:
     tags:
       - Configuration
-    description: |
-      Updates the configuration revision.
+    description: >
+      Updates the latest configuration revision. Requires the configuration-admin or configured-service role.
+      The resulting configuration is validated against the configuration definition schema, if there is one.
+      Updates do not create a new revision; use the CREATE-REVISION operation to snapshot the latest revision.
     requestBody:
       required: true
       content:
@@ -199,26 +317,39 @@ components:
                 REPLACE: "#/components/schemas/ReplaceOperation"
                 UPDATE: "#/components/schemas/UpdateOperation"
                 DELETE: "#/components/schemas/DeleteOperation"
+          examples:
+            update:
+              summary: Merge an update
+              value:
+                operation: UPDATE
+                update:
+                  application-events:
+                    name: application-events
+                    definitions: {}
+            delete:
+              summary: Remove a property
+              value:
+                operation: DELETE
+                property: application-events
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                namespace:
-                  type: string
-                name:
-                  type: string
-                latest:
-                  $ref: "#/components/schemas/ConfigurationRevision"
+              $ref: "#/components/schemas/Configuration"
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to update configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
   post:
     tags:
       - Configuration
-    description: Creates a new revision of configuration or sets the active revision if the setActiveRevision property is set.
+    description: >
+      Creates a new revision of configuration, or sets the active revision. Requires the configuration-admin role;
+      the configured-service role is not sufficient.
     requestBody:
       required: true
       content:
@@ -232,29 +363,53 @@ components:
               mapping:
                 CREATE-REVISION: "#/components/schemas/CreateRevisionOperation"
                 SET-ACTIVE-REVISION: "#/components/schemas/SetActiveRevisionOperation"
+          examples:
+            create-revision:
+              summary: Create a revision
+              value:
+                operation: CREATE-REVISION
+            set-active-revision:
+              summary: Set the active revision
+              value:
+                operation: SET-ACTIVE-REVISION
+                revision: 2
 
     responses:
       200:
-        description: Request completed successfully.
+        description: >
+          Request completed successfully. CREATE-REVISION responds with the configuration and its new latest revision;
+          SET-ACTIVE-REVISION responds with the active revision number.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                namespace:
-                  type: string
-                name:
-                  type: string
-                latest:
-                  $ref: "#/components/schemas/ConfigurationRevision"
-      401:
-        description: User not authorized to update configuration.
+              oneOf:
+                - $ref: "#/components/schemas/Configuration"
+                - type: object
+                  properties:
+                    namespace:
+                      type: string
+                    name:
+                      type: string
+                    active:
+                      type: number
+            example:
+              namespace: platform
+              name: event-service
+              active: 2
       400:
-        description: The selected revision does not exist
+        description: Request is invalid, or the selected revision does not exist.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigurationError"
+      401:
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
   delete:
     tags:
       - Configuration
-    description: Deletes configuration and all its revisions.
+    description: Deletes configuration and all its revisions. Requires the configuration-admin role.
 
     responses:
       200:
@@ -266,51 +421,39 @@ components:
               properties:
                 deleted:
                   type: boolean
+            example:
+              deleted: true
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to delete configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
 
 /configuration/v2/configuration/{namespace}/{name}/active:
   parameters:
-    - name: namespace
-      description: Namespace of the configuration.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: name
-      description: Name of the configuration.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: tenant
-      description: tenant id for the tenant
-      in: query
-      required: false
-      schema:
-        type: string
+    - $ref: "#/components/parameters/ConfigurationNamespace"
+    - $ref: "#/components/parameters/ConfigurationName"
+    - $ref: "#/components/parameters/ConfigurationAnonymousTenant"
+    - $ref: "#/components/parameters/ConfigurationTenantId"
   get:
     tags:
       - Configuration
-    description: Retrieves active configuration.
+    description: >
+      Retrieves the active revision of configuration. Requires the same roles as retrieving configuration.
+      Anonymous requests (without a bearer token) are allowed if the configuration definition has anonymousRead
+      set, in which case the tenant query parameter identifies the tenant and requests are rate limited.
+      Responds with an empty body if there is no active revision and orLatest is not set.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: core
-        description: Flag indicating if the core instead of tenant configuration should be retrieved.
-        in: query
-        required: false
-        schema: {}
       - name: orLatest
         description: Flag indicating if latest configuration should be returned if no there is no active revision.
         in: query
         required: false
         schema:
           type: boolean
-      - name: tenant
-        description: tenant id for the tenant
-        in: query
-        required: false
-        schema:
-          type: string
     responses:
       200:
         description: Request completed successfully.
@@ -318,40 +461,33 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/ConfigurationRevision"
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to retrieve configuration.
-      404:
-        description: No active revision found.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
+      429:
+        description: Too many anonymous requests.
 
 /configuration/v2/configuration/{namespace}/{name}/latest:
   get:
     tags:
       - Configuration
-    description: Retrieves the latest revision of configuration.
+    description: >
+      Retrieves the configuration of the latest revision. Requires the same roles as retrieving configuration.
+      Anonymous requests (without a bearer token) are allowed if the configuration definition has anonymousRead
+      set, in which case the tenant query parameter identifies the tenant and requests are rate limited.
+      Responds with an empty object if there is no configuration.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: namespace
-        description: Namespace of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: core
-        description: Flag indicating if core instead of tenant configuration should be retrieved.
-        in: query
-        required: false
-        schema: {}
-      - name: tenant
-        description: tenant id for the tenant
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: "#/components/parameters/ConfigurationNamespace"
+      - $ref: "#/components/parameters/ConfigurationName"
+      - $ref: "#/components/parameters/ConfigurationCore"
+      - $ref: "#/components/parameters/ConfigurationAnonymousTenant"
+      - $ref: "#/components/parameters/ConfigurationTenantId"
     responses:
       200:
         description: Request completed successfully.
@@ -359,33 +495,35 @@ components:
           application/json:
             schema:
               type: object
+            example:
+              application-events:
+                name: application-events
+                definitions: {}
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to retrieve configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
+      429:
+        description: Too many anonymous requests.
 
 /configuration/v2/configuration/{namespace}/{name}/revisions:
   get:
     tags:
       - Configuration
-    description: Retrieves the revisions of configuration.
+    description: Retrieves the revisions of configuration, newest first. Requires the same roles as retrieving configuration.
     parameters:
-      - name: namespace
-        description: Namespace of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/ConfigurationNamespace"
+      - $ref: "#/components/parameters/ConfigurationName"
       - name: top
-        description: Number of revisions to return in a page.
+        description: Number of revisions to return in a page. Defaults to 10.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 5000
       - name: after
         description: Cursor for retrieving additional pages.
         in: query
@@ -398,6 +536,7 @@ components:
         required: false
         schema:
           type: string
+      - $ref: "#/components/parameters/ConfigurationTenantId"
     responses:
       200:
         description: Request completed successfully.
@@ -419,33 +558,30 @@ components:
                       type: string
                     size:
                       type: number
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to retrieve configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
 
 /configuration/v2/configuration/{namespace}/{name}/revisions/{revision}:
   get:
     tags:
       - Configuration
-    description: Retrieves a specific revision of configuration.
+    description: >
+      Retrieves the configuration of a specific revision. Requires the same roles as retrieving configuration.
     parameters:
-      - name: namespace
-        description: Namespace of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/ConfigurationNamespace"
+      - $ref: "#/components/parameters/ConfigurationName"
       - name: revision
         description: Revision number to retrieve.
         in: path
         required: true
         schema:
-          type: number
+          type: integer
+          minimum: 0
+      - $ref: "#/components/parameters/ConfigurationTenantId"
     responses:
       200:
         description: Request completed successfully.
@@ -453,7 +589,19 @@ components:
           application/json:
             schema:
               type: object
+            example:
+              application-events:
+                name: application-events
+                definitions: {}
+      400:
+        $ref: "#/components/responses/ConfigurationBadRequest"
       401:
-        description: User not authorized to retrieve configuration.
+        $ref: "#/components/responses/ConfigurationUnauthorized"
+      403:
+        $ref: "#/components/responses/ConfigurationForbidden"
       404:
         description: Revision cannot be found.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigurationError"
