@@ -52,6 +52,21 @@ export function prettify(prop: string): string {
  * @param names
  * @returns A key value of the data attribute name and the uiSchema label value
  */
+// Top-level property names referenced by any control scope (e.g. "#/properties/address/properties/street" -> "address").
+export const extractScopedProperties = (obj: unknown, names: Set<string> = new Set()): Set<string> => {
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractScopedProperties(item, names));
+  } else if (typeof obj === 'object' && obj !== null) {
+    const typedObj = obj as Record<string, unknown>;
+    const match = typeof typedObj.scope === 'string' ? typedObj.scope.match(/^#\/properties\/([^/]+)/) : null;
+    if (match) {
+      names.add(match[1]);
+    }
+    Object.values(typedObj).forEach((value) => extractScopedProperties(value, names));
+  }
+  return names;
+};
+
 export const extractNames = (obj: unknown, names: Record<string, string> = {}): Record<string, string> => {
   if (Array.isArray(obj)) {
     obj.forEach((item) => extractNames(item, names));

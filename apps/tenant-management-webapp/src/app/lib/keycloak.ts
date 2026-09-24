@@ -116,10 +116,13 @@ class KeycloakAuthImpl implements KeycloakAuth {
       const refreshed = await this.keycloak.updateToken(60 * MAX_ALLOWED_IDLE_IN_MINUTE);
       if (refreshed) {
         console.debug('Keycloak token was refreshed');
-        return this.convertToSession(this.keycloak);
-      } else {
+      }
+      // updateToken returns false when the current access token is still valid.
+      // Callers still need that token; returning null made API sagas send no bearer.
+      if (!this.keycloak.token) {
         return null;
       }
+      return this.convertToSession(this.keycloak);
     } catch (e) {
       console.error(`Failed to refresh the keycloak token: ${e.message}`);
       throw e;

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import * as HttpStatusCodes from 'http-status-codes';
 import { pdfReport } from './services/pdfReport';
 import { createReportSectionLoader, REPORTS_API_BASE } from './reportApi';
 
@@ -23,7 +24,7 @@ describe('createReportSectionLoader', () => {
   });
 
   it('requests the URL built from the descriptor id and section id', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(200, { data: { pdfGenerated: 4 } });
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(HttpStatusCodes.OK, { data: { pdfGenerated: 4 } });
     const loader = createReportSectionLoader('summary');
 
     await loader(context);
@@ -32,7 +33,7 @@ describe('createReportSectionLoader', () => {
   });
 
   it('sends the reporting period as query params', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(200, { data: null });
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(HttpStatusCodes.OK, { data: null });
     const loader = createReportSectionLoader('summary');
 
     await loader(context);
@@ -45,7 +46,7 @@ describe('createReportSectionLoader', () => {
   });
 
   it('sends the access token as a bearer header', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(200, { data: null });
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(HttpStatusCodes.OK, { data: null });
     const loader = createReportSectionLoader('summary');
 
     await loader(context);
@@ -54,7 +55,7 @@ describe('createReportSectionLoader', () => {
   });
 
   it('unwraps the nested data payload from the response', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(200, { data: { pdfGenerated: 12 } });
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(HttpStatusCodes.OK, { data: { pdfGenerated: 12 } });
     const loader = createReportSectionLoader('summary');
 
     const result = await loader(context);
@@ -62,8 +63,10 @@ describe('createReportSectionLoader', () => {
     expect(result).toEqual({ pdfGenerated: 12 });
   });
 
-  it('maps a 404 response to null so the section is empty rather than failed', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(404);
+  it('maps a gateway JSON 404 to null so an unsupported section is empty', async () => {
+    mock
+      .onGet(`${REPORTS_API_BASE}/pdf/summary`)
+      .reply(HttpStatusCodes.NOT_FOUND, { errorMessage: "report section with ID 'pdf/summary' could not be found." });
     const loader = createReportSectionLoader('summary');
 
     const result = await loader(context);
@@ -71,8 +74,21 @@ describe('createReportSectionLoader', () => {
     expect(result).toBeNull();
   });
 
+  it('throws on a proxy or HTML 404 so the UI can show an error', async () => {
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(
+      HttpStatusCodes.NOT_FOUND,
+      '<pre>Cannot GET /api/tenant/v1/reports/pdf/summary</pre>',
+      {
+        'content-type': 'text/html',
+      }
+    );
+    const loader = createReportSectionLoader('summary');
+
+    await expect(loader(context)).rejects.toThrow();
+  });
+
   it('rethrows a non-404 error', async () => {
-    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(500);
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(HttpStatusCodes.INTERNAL_SERVER_ERROR);
     const loader = createReportSectionLoader('summary');
 
     await expect(loader(context)).rejects.toThrow();

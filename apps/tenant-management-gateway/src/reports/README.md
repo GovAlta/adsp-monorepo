@@ -60,14 +60,14 @@ One success shape, always:
 | `200` + data      | Here's the payload                        | Renders it                    |
 | `200` + all zeros | No activity that period                   | Shows`0`s, not an error     |
 | `404`             | Unknown service, or section not built yet | Falls back to the placeholder |
-| `400`             | Bad dates / range, or span > 13 months    | Error callout                 |
+| `400`             | Bad dates, or from after to              | Error callout                 |
 | `401`             | No token, or value-service rejected it    | Error callout                 |
 
 **Three rules that never change:**
 
 - 🚫 **No per-service routes.** Ever. A new section or a new service is a new catalog entry, not a new URL.
 - 🔑 **Auth is pass-through.** The caller's JWT goes straight to value-service. Value-service checks the signature, the tenant, and `value-reader`. The gateway does not use a client secret or the tenant strategy.
-- 📅 **Period is always clipped.** `period/` trims `to` back to the last **completed** UTC day (today doesn't count yet) and caps the span at 13 months.
+- 📅 **Period end is always clipped.** `period/` trims `to` back to the last **completed** UTC day (today doesn't count yet). The span itself has no maximum.
 
 ---
 
