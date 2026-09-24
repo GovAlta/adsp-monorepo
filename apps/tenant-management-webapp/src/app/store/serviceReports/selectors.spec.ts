@@ -1,7 +1,15 @@
 import { Settings } from 'luxon';
 import type { RootState } from '@store/index';
 import { ServiceReportsState } from './models';
-import { criteriaKey, getPeriodValidationError, resolvePeriodRange, selectIsSectionStale, selectSectionState } from './selectors';
+import { registerSectionLoader, resetSectionLoaders } from '@pages/admin/reports/registry/serviceReportRegistry';
+import {
+  criteriaKey,
+  getPeriodValidationError,
+  resolvePeriodRange,
+  selectIsSectionStale,
+  selectSectionDisplayState,
+  selectSectionState,
+} from './selectors';
 
 const rootWith = (serviceReports: ServiceReportsState): RootState => ({ serviceReports } as RootState);
 
@@ -68,6 +76,10 @@ describe('getPeriodValidationError', () => {
   it('returns nothing when a date is not a valid ISO date', () => {
     expect(getPeriodValidationError({ from: 'not-a-date', to: 'also-not' })).toBeUndefined();
   });
+
+  it('accepts a span longer than 13 months', () => {
+    expect(getPeriodValidationError({ from: '2020-01-01', to: '2026-09-10' })).toBeUndefined();
+  });
 });
 
 describe('selectSectionState', () => {
@@ -78,6 +90,31 @@ describe('selectSectionState', () => {
     });
 
     expect(selectSectionState('pdf', 'summary')(state)).toBe(selectSectionState('pdf', 'summary')(state));
+  });
+});
+
+describe('selectSectionDisplayState', () => {
+  afterEach(() => {
+    resetSectionLoaders();
+  });
+
+  it('treats idle as loading when a loader is registered', () => {
+    registerSectionLoader('pdf', 'summary', async () => null);
+    const state = rootWith({
+      criteria: { serviceId: 'pdf', period: { preset: 'last30Days', from: '2026-08-12', to: '2026-09-10' } },
+      sections: {},
+    });
+
+    expect(selectSectionDisplayState('pdf', 'summary')(state)).toEqual({ status: 'loading', data: null });
+  });
+
+  it('leaves idle unchanged when no loader is registered', () => {
+    const state = rootWith({
+      criteria: { serviceId: 'pdf', period: { preset: 'last30Days', from: '2026-08-12', to: '2026-09-10' } },
+      sections: {},
+    });
+
+    expect(selectSectionDisplayState('pdf', 'summary')(state).status).toBe('idle');
   });
 });
 

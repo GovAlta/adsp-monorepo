@@ -54,7 +54,7 @@ export default function (
         },
       };
     case LOAD_REPORT_SECTION_ACTION:
-      return updateSection(state, action.serviceId, action.sectionId, { status: 'loading' });
+      return updateSection(state, action.serviceId, action.sectionId, { status: 'loading', error: undefined });
     case LOAD_REPORT_SECTION_SUCCESS_ACTION:
       return updateSection(state, action.serviceId, action.sectionId, {
         status: 'loaded',

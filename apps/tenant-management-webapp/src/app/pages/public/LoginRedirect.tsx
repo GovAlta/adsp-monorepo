@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { KeycloakCheckSSO } from '@store/tenant/actions';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_TYPES } from '@lib/keycloak';
+import { takeAdminReturnLocation } from '@lib/ssoRedirect';
 
 interface LoginProps {
   location?: string;
@@ -55,7 +56,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
     if (type === LOGIN_TYPES.tenant) {
       if (isAuthenticated) {
         localStorage.setItem('realm', `${tenantRealm}`);
-        navigate(`/admin?realm=${realm}`);
+        navigate(takeAdminReturnLocation(realm));
       }
     }
 

@@ -1,5 +1,5 @@
 import { InvalidOperationError } from '@core-services/core-common';
-import { addUtcMonths, lastCompletedUtcDay, resolveReportPeriod } from './period';
+import { lastCompletedUtcDay, resolveReportPeriod } from './period';
 
 describe('resolveReportPeriod', () => {
   const now = new Date('2026-09-17T23:15:00.000Z');
@@ -22,8 +22,11 @@ describe('resolveReportPeriod', () => {
     expect(() => resolveReportPeriod('2026-09-16', '2026-08-18', now)).toThrow(InvalidOperationError);
   });
 
-  it('rejects a span longer than 13 months', () => {
-    expect(() => resolveReportPeriod('2025-05-01', '2026-09-16', now)).toThrow(InvalidOperationError);
+  it('accepts a span longer than 13 months', () => {
+    expect(resolveReportPeriod('2020-01-01', '2026-09-16', now)).toEqual({
+      from: '2020-01-01',
+      to: '2026-09-16',
+    });
   });
 
   it('rejects a non-iso date', () => {
@@ -37,8 +40,3 @@ describe('lastCompletedUtcDay', () => {
   });
 });
 
-describe('addUtcMonths', () => {
-  it('adds 13 months from the start of a period', () => {
-    expect(addUtcMonths(new Date('2025-08-16T00:00:00.000Z'), 13).toISOString().slice(0, 10)).toBe('2026-09-16');
-  });
-});

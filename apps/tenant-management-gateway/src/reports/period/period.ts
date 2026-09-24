@@ -1,7 +1,6 @@
 import { InvalidOperationError } from '@core-services/core-common';
 import { ReportPeriod } from '../types';
 
-export const MAX_PERIOD_MONTHS = 13;
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -35,15 +34,6 @@ export function lastCompletedUtcDay(now = new Date()): Date {
   return new Date(today.getTime() - MS_PER_DAY);
 }
 
-export function addUtcMonths(date: Date, months: number): Date {
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth() + months;
-  const day = date.getUTCDate();
-  const startOfMonth = new Date(Date.UTC(year, month, 1));
-  const lastDay = new Date(Date.UTC(startOfMonth.getUTCFullYear(), startOfMonth.getUTCMonth() + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(startOfMonth.getUTCFullYear(), startOfMonth.getUTCMonth(), Math.min(day, lastDay)));
-}
-
 /**
  * Validate from/to and clip `to` to the last completed UTC day (value-service rollups
  * do not include today). Returns the effective inclusive period used for reads.
@@ -54,10 +44,6 @@ export function resolveReportPeriod(fromValue: string, toValue: string, now = ne
 
   if (from > to) {
     throw new InvalidOperationError('from must be on or before to.');
-  }
-
-  if (to > addUtcMonths(from, MAX_PERIOD_MONTHS)) {
-    throw new InvalidOperationError(`The reporting period cannot exceed ${MAX_PERIOD_MONTHS} months.`);
   }
 
   const lastCompleted = lastCompletedUtcDay(now);

@@ -52,4 +52,16 @@ describe('serviceReportRegistry', () => {
 
     expect(getSectionLoader('test-service', 'insights')).toBe(loader);
   });
+
+  it('lists the PDF summary metric ids the gateway payload must use', () => {
+    expect(pdfReport.summaryMetrics?.map((metric) => metric.id)).toEqual([
+      'pdfRequested',
+      'pdfGenerated',
+      'pdfFailed',
+      'unreconciled',
+      'generationDuration',
+      'generationDurationMax',
+      'templatesUsed',
+    ]);
+  });
 });

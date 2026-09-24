@@ -7,9 +7,13 @@ export const pdfReport: ServiceReportDescriptor = {
   featureName: 'PDF',
   sections: ['summary', 'trends', 'topResources', 'insights', 'apiDrilldown'],
   summaryMetrics: [
+    { id: 'pdfRequested', label: 'PDFs requested', format: 'count' },
     { id: 'pdfGenerated', label: 'PDFs generated', format: 'count' },
-    { id: 'pdfFailed', label: 'PDFs failed', format: 'count' },
-    { id: 'generationDuration', label: 'Average time to generate', format: 'duration' },
+    { id: 'pdfFailed', label: 'Failure attempts', format: 'count' },
+    { id: 'unreconciled', label: 'Unreconciled work', format: 'count' },
+    { id: 'generationDuration', label: 'Average generation time', format: 'duration' },
+    { id: 'generationDurationMax', label: 'Maximum generation time', format: 'duration' },
+    { id: 'templatesUsed', label: 'Templates used', format: 'count' },
   ],
   topResourcesLabel: 'Templates',
 };
