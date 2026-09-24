@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { getReportSection } from './reports';
 import { ReportCatalog } from '../types';
@@ -59,7 +60,7 @@ describe('getReportSection', () => {
       }
     );
 
-    expect(next.mock.calls[0][0].extra.statusCode).toBe(404);
+    expect(next.mock.calls[0][0].extra.statusCode).toBe(HttpStatusCodes.NOT_FOUND);
   });
 
   it('404s for an unknown service', async () => {
@@ -72,7 +73,7 @@ describe('getReportSection', () => {
       }
     );
 
-    expect(next.mock.calls[0][0].extra.statusCode).toBe(404);
+    expect(next.mock.calls[0][0].extra.statusCode).toBe(HttpStatusCodes.NOT_FOUND);
   });
 
   it('rejects a missing bearer token', async () => {
@@ -85,6 +86,6 @@ describe('getReportSection', () => {
       }
     );
 
-    expect(next.mock.calls[0][0].extra.statusCode).toBe(401);
+    expect(next.mock.calls[0][0].extra.statusCode).toBe(HttpStatusCodes.UNAUTHORIZED);
   });
 });

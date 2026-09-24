@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { ReportSectionId, SectionLoader } from './types';
 
 /**
@@ -15,7 +16,7 @@ interface ReportSectionResponse<T> {
 }
 
 const isGatewaySectionNotFound = (err: unknown): boolean => {
-  if (!axios.isAxiosError(err) || err.response?.status !== 404) {
+  if (!axios.isAxiosError(err) || err.response?.status !== HttpStatusCodes.NOT_FOUND) {
     return false;
   }
   const data = err.response.data as { error?: unknown; errorMessage?: unknown } | string | undefined;

@@ -1,6 +1,7 @@
 import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { EventMetrics, MetricResult } from '../types';
 
 const VALUE_SERVICE_ID = adspId`urn:ads:platform:value-service:v1`;
@@ -90,7 +91,7 @@ function appendMetrics(target: EventMetrics, page: Omit<MetricsResponse, 'page'>
 function rethrowValueServiceError(err: unknown): never {
   if (axios.isAxiosError(err)) {
     const status = err.response?.status;
-    if (status === 401 || status === 403) {
+    if (status === HttpStatusCodes.UNAUTHORIZED || status === HttpStatusCodes.FORBIDDEN) {
       throw new UnauthorizedError('Not authorized to read report data.');
     }
   }

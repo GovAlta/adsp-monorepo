@@ -1,6 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { getSectionLoader, getServiceReport } from '@pages/admin/reports/registry/serviceReportRegistry';
 import { RootState } from '@store/index';
 import { getAccessToken } from '@store/tenant/sagas';
@@ -14,7 +15,8 @@ import { criteriaKey } from './selectors';
 
 export const REPORT_SECTION_LOAD_ERROR = 'Something went wrong. Try again.';
 
-const isUnauthorized = (err: unknown): boolean => axios.isAxiosError(err) && err.response?.status === 401;
+const isUnauthorized = (err: unknown): boolean =>
+  axios.isAxiosError(err) && err.response?.status === HttpStatusCodes.UNAUTHORIZED;
 
 export function* loadReportSection(action: LoadReportSectionAction): SagaIterator {
   const { serviceId, sectionId } = action;

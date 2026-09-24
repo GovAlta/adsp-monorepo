@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { expectSaga } from 'redux-saga-test-plan';
 import { getAccessToken } from '@store/tenant/sagas';
 import { registerSectionLoader, resetSectionLoaders } from '@pages/admin/reports/registry/serviceReportRegistry';
@@ -6,8 +7,14 @@ import { loadReportSectionFailure, loadReportSectionSuccess } from './actions';
 import { loadReportSection, REPORT_SECTION_LOAD_ERROR } from './sagas';
 
 const unauthorized = (): AxiosError => {
-  const err = new AxiosError('Request failed with status code 401');
-  err.response = { status: 401, data: {}, headers: {}, statusText: 'Unauthorized', config: {} } as AxiosError['response'];
+  const err = new AxiosError(`Request failed with status code ${HttpStatusCodes.UNAUTHORIZED}`);
+  err.response = {
+    status: HttpStatusCodes.UNAUTHORIZED,
+    data: {},
+    headers: {},
+    statusText: 'Unauthorized',
+    config: {},
+  } as AxiosError['response'];
   return err;
 };
 
