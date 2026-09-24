@@ -64,7 +64,7 @@ import {
 } from './styled-components';
 import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
-import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const GenerateRows = (
@@ -274,10 +274,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       if (fieldError) {
                         const raw = (fieldError as ErrorObject).message || '';
                         reviewError = raw.includes('required')
-                          ? `${capitalizeFirstLetter(key.replace(/[_-]/g, ' '))} is required`
+                          ? `${capitalizeFirstLetter(label.replace(/[_-]/g, ' '))} is required`
                           : raw;
                       } else if (isRequiredField && isEmptyValue) {
-                        reviewError = `${capitalizeFirstLetter(key.replace(/[_-]/g, ' '))} is required`;
+                        reviewError = `${capitalizeFirstLetter(label.replace(/[_-]/g, ' '))} is required`;
                       }
 
                       return (
@@ -361,13 +361,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           ).find((y) => {
                             return y?.message?.includes(element) || y.instancePath.includes(element);
                           }) as { message: string };
-
-                          function prettify(prop: string) {
-                            return prop
-                              .replace(/([A-Z])/g, ' $1')
-                              .replace(/[_-]/g, ' ')
-                              .replace(/^./, (c) => c.toUpperCase());
-                          }
 
                           // Create a human-friendly error message for rendering
                           let humanMessage: string | undefined = createHumanizeError(
