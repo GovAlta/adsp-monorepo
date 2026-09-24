@@ -9,7 +9,7 @@ import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { DefinitionConfigurationClient, ValueConfiguration } from '../definitionClient';
-import { ConfigurationServiceRoles, ServiceUserRoles } from '../types';
+import { ServiceUserRoles } from '../types';
 import type { Namespace } from '../types';
 
 const NAME_PATTERN = /^[a-zA-Z0-9-_ ]{1,50}$/;
@@ -64,13 +64,13 @@ const getRequiredTenantId = (req: Parameters<RequestHandler>[0]): AdspId => {
 };
 
 const assertUserCanRead = (user: User, tenantId: AdspId, operation: string) => {
-  if (!isAllowedUser(user, tenantId, [ConfigurationServiceRoles.ConfigurationAdmin, ServiceUserRoles.Reader], true)) {
+  if (!isAllowedUser(user, tenantId, [ServiceUserRoles.Writer, ServiceUserRoles.Reader], true)) {
     throw new UnauthorizedUserError(operation, user);
   }
 };
 
 const assertUserCanAdminister = (user: User, tenantId: AdspId, operation: string) => {
-  if (!isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin, true)) {
+  if (!isAllowedUser(user, tenantId, ServiceUserRoles.Writer, true)) {
     throw new UnauthorizedUserError(operation, user);
   }
 };

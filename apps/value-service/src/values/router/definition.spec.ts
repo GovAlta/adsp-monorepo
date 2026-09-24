@@ -2,7 +2,7 @@ import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { DefinitionConfigurationClient, ValueConfiguration } from '../definitionClient';
-import { ConfigurationServiceRoles, ServiceUserRoles } from '../types';
+import { ServiceUserRoles } from '../types';
 import {
   assertValidJsonSchema,
   createDefinition,
@@ -17,7 +17,7 @@ import {
 
 describe('definition router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const admin = { id: 'admin', tenantId, roles: [ConfigurationServiceRoles.ConfigurationAdmin], isCore: false };
+  const admin = { id: 'admin', tenantId, roles: [ServiceUserRoles.Writer], isCore: false };
   const reader = { id: 'reader', tenantId, roles: [ServiceUserRoles.Reader], isCore: false };
   const noRoles = { id: 'none', tenantId, roles: [], isCore: false };
 
