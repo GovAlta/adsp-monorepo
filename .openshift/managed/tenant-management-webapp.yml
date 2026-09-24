@@ -163,6 +163,9 @@ objects:
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
+      annotations:
+        # /api/tenant/v1/reports is proxied through this route and can run past the 30s default.
+        haproxy.router.openshift.io/timeout: 120s
     spec:
       host: ${ROUTE_HOST}
       port:
