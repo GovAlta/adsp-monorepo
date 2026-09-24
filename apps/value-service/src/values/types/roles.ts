@@ -5,6 +5,10 @@ export enum ServiceUserRoles {
   PlatformMetricsReader = 'value-platform-metrics-reader',
 }
 
+export enum ConfigurationServiceRoles {
+  ConfigurationAdmin = 'urn:ads:platform:configuration-service:configuration-admin', // clean-code-ignore: RULE-19 — enum value only; usage is covered in router/definition.spec.ts.
+}
+
 export enum ExportServiceRoles {
   ExportJob = 'urn:ads:platform:export-service:export-job',
 }
