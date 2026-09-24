@@ -108,10 +108,17 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       const newActive = id;
       const isOnReview = newActive === lastId + 1;
 
+      // A scope means the user came from a review Change button or a host's deep link, i.e. back to
+      // fix an answer. The form may have just mounted — a summary on a separate page — so nothing
+      // else has marked the step, and without this an emptied required field would stay quiet.
+      const newCategories = targetScope
+        ? categories.map((c) => (c.id === id && c.isNavigatedAway !== true ? { ...c, isNavigatedAway: true } : c))
+        : categories;
+
       return {
         ...state,
         activeId: newActive,
-        categories: categories,
+        categories: newCategories,
         isOnReview,
         hasNextButton: !isOnReview,
         hasPrevButton: newActive !== 0,
