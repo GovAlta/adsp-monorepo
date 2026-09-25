@@ -55,6 +55,48 @@ describe('AmqpDomainEventService', () => {
     expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Sent domain event with routing key'));
   });
 
+  it('can assign event id on send', async () => {
+    const channel = {
+      assertExchange: jest.fn(),
+      assertQueue: jest.fn(),
+      bindQueue: jest.fn(),
+      publish: jest.fn(() => true),
+    };
+
+    const connection = {
+      on: jest.fn(),
+      createChannel: jest.fn(() => channel),
+    };
+
+    const service = new AmqpDomainEventService(logger, connection as unknown as AmqpConnectionManager);
+    await service.connect();
+    await service.send(event);
+
+    const options = (channel.publish.mock.calls[0] as unknown[])[3] as { messageId: string; headers: { id: string } };
+    expect(options.messageId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(options.headers.id).toBe(options.messageId);
+  });
+
+  it('can keep existing event id on send', async () => {
+    const channel = {
+      assertExchange: jest.fn(),
+      assertQueue: jest.fn(),
+      bindQueue: jest.fn(),
+      publish: jest.fn(() => true),
+    };
+
+    const connection = {
+      on: jest.fn(),
+      createChannel: jest.fn(() => channel),
+    };
+
+    const service = new AmqpDomainEventService(logger, connection as unknown as AmqpConnectionManager);
+    await service.connect();
+    await service.send({ ...event, id: 'existing' });
+
+    expect(((channel.publish.mock.calls[0] as unknown[])[3] as { headers: { id: string } }).headers.id).toBe('existing');
+  });
+
   it('can log error when publish returns false (server reject or connection close)', async () => {
     const channel = {
       assertExchange: jest.fn(),

@@ -6,6 +6,7 @@ import { AmqpEventSubscriberService, InvalidOperationError } from '@core-service
 import { AmqpConnectionManager } from 'amqp-connection-manager';
 import { Options } from 'amqplib';
 import * as dashify from 'dashify';
+import { v7 as uuidv7 } from 'uuid';
 import type { Logger } from 'winston';
 import type { DomainEventService } from '../event';
 
@@ -20,7 +21,9 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
     }
 
     const routingKey = this.getRoutingKey(event);
-    const { namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
+    const { namespace, name } = event;
+    // Time-ordered id so consumers (e.g. push-service replay buffer) can dedupe redeliveries.
+    const identified = { ...event, id: event.id || uuidv7() };
 
     // This is the platform's domain event publish path and it overrides the base class enqueue, so
     // it needs its own producer span. Named for the exchange rather than the routing key, since the
@@ -40,12 +43,12 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
             'adsp.event.name': name,
           },
         },
-        (span) => this.publishWithin(span, event, routingKey)
+        (span) => this.publishWithin(span, identified, routingKey)
       );
   }
 
   private async publishWithin(span: Span, event: DomainEvent, routingKey: string): Promise<void> {
-    const { namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
+    const { id, namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
     // Read inside the producer span so the propagated traceparent points at the publish, making the
     // consumer a child of the send rather than of whatever span was active upstream.
     const trace = getContextTrace();
@@ -53,7 +56,9 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
     try {
       const sent = await this.channel.publish('domain-events', routingKey, Buffer.from(JSON.stringify(payload)), {
         contentType: 'application/json',
+        messageId: id,
         headers: {
+          id,
           namespace,
           name,
           tenantId: `${tenantId}`,

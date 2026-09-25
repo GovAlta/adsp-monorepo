@@ -18,6 +18,7 @@ import { createClient as createRedisClient } from 'redis';
 import { Server as IoServer, Socket } from 'socket.io';
 import { promisify } from 'util';
 import { createAmqpEventService } from './amqp';
+import { BufferTailer, createStreamInterest, RedisEventBuffer, startBufferWriter, wrapRedisClient } from './buffer';
 import { createAmqpEventService as createAmqpEventServiceWebhooks } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
@@ -182,7 +183,32 @@ const initializeApp = async (): Promise<Server> => {
     logger,
   });
 
+  let buffer: RedisEventBuffer;
+  let tailer: BufferTailer;
+  if (environment.PUSH_BUFFER_ENABLED) {
+    buffer = new RedisEventBuffer(logger, wrapRedisClient(redisClient.duplicate()), {
+      retentionMs: environment.PUSH_BUFFER_RETENTION_HOURS * 60 * 60 * 1000,
+      maxLength: environment.PUSH_BUFFER_MAX_LENGTH,
+    });
+    tailer = new BufferTailer(logger, buffer);
+
+    // Durable queue shared by all instances, so events are buffered even while an instance restarts.
+    const bufferQueue = await createAmqpEventServiceWebhooks({
+      ...environment,
+      queue: environment.PUSH_BUFFER_QUEUE,
+      logger,
+    });
+    startBufferWriter(logger, bufferQueue, buffer, createStreamInterest(configurationService, tokenProvider, serviceId));
+    logger.info('Push buffer is enabled; tenant streams are delivered from the replay buffer.');
+  }
+
   applyPushMiddleware(app, [defaultIo, io], {
+    buffer,
+    tailer,
+    resumable: {
+      keepAliveMs: environment.SSE_KEEPALIVE_SECONDS * 1000,
+      replayPageSize: 200,
+    },
     logger,
     eventServiceAmp,
     eventServiceAmpWebhooks,

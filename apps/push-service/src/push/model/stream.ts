@@ -31,16 +31,7 @@ export class StreamEntity implements Stream {
   connect(events: Observable<DomainEvent>): StreamEntity {
     if (!this.stream) {
       this.stream = events.pipe(
-        map((event) => [
-          event,
-          this.events.find(
-            (se) =>
-              (!this.tenantId || event.tenantId.toString() === this.tenantId.toString()) &&
-              event.namespace === se.namespace &&
-              event.name === se.name &&
-              this.isMatch(event, se.criteria)
-          ),
-        ]),
+        map((event) => [event, this.matchEvent(event)]),
         filter(([_, streamEvent]) => {
           const hasMatch = !!streamEvent;
           if (hasMatch) {
@@ -55,6 +46,28 @@ export class StreamEntity implements Stream {
       );
     }
     return this;
+  }
+
+  /**
+   * Finds the stream event definition (tenant, namespace, name and stream criteria) that includes the event.
+   */
+  matchEvent(event: DomainEvent): StreamEvent | undefined {
+    return this.events.find(
+      (se) =>
+        (!this.tenantId || event.tenantId?.toString() === this.tenantId.toString()) &&
+        event.namespace === se.namespace &&
+        event.name === se.name &&
+        this.isMatch(event, se.criteria)
+    );
+  }
+
+  /**
+   * Maps an event to a stream item if it is included in the stream and matches the subscriber criteria.
+   */
+  processEvent(event: DomainEvent, criteria?: EventCriteria): StreamItem | null {
+    const streamEvent = this.matchEvent(event);
+    const item = streamEvent && this.mapEvent(event, streamEvent);
+    return item && this.isMatch(item, criteria) ? item : null;
   }
 
   public isMatch(event: StreamItem, criteria?: EventCriteria) {

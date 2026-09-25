@@ -1,6 +1,10 @@
 import { AdspId } from '../utils';
 
 export interface DomainEvent {
+  /**
+   * Unique event id assigned by event service on publish; used for de-duplication by consumers.
+   */
+  id?: string;
   name: string;
   timestamp: Date;
   correlationId?: string;

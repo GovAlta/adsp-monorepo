@@ -1,7 +1,8 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { DomainEventSubscriberService } from '@core-services/core-common';
-import { createStreamRouter } from './router';
+import { createStreamRouter, ResumableStreamOptions } from './router';
+import type { BufferTailer, RedisEventBuffer } from '../buffer';
 import { Namespace as IoNamespace } from 'socket.io';
 import {
   TenantService,
@@ -28,6 +29,9 @@ interface PushMiddlewareProps {
   tokenProvider: TokenProvider;
   eventService: EventService;
   serviceId: AdspId;
+  buffer?: RedisEventBuffer;
+  tailer?: BufferTailer;
+  resumable?: ResumableStreamOptions;
 }
 
 export const applyPushMiddleware = (app: Application, ios: IoNamespace[], props: PushMiddlewareProps): Application => {

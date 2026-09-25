@@ -22,6 +22,11 @@ export const environment = envalid.cleanEnv(
     PORT: envalid.num({ default: 3334 }),
     TLS_ENABLED: envalid.bool({ default: true }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    PUSH_BUFFER_ENABLED: envalid.bool({ default: false }),
+    PUSH_BUFFER_QUEUE: envalid.str({ default: 'push-service-buffer' }),
+    PUSH_BUFFER_RETENTION_HOURS: envalid.num({ default: 24 }),
+    PUSH_BUFFER_MAX_LENGTH: envalid.num({ default: 100000 }),
+    SSE_KEEPALIVE_SECONDS: envalid.num({ default: 25 }),
   },
   {
     reporter: ({ errors }) => {

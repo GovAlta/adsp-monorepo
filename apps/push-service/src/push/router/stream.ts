@@ -22,8 +22,13 @@ import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
 import { Logger } from 'winston';
 import { EventCriteria, Stream } from '../types';
-import { StreamEntity, StreamItem, WebhookEntity } from '../model';
+import { StreamEntity, WebhookEntity } from '../model';
 import { webhookTriggered } from '../events';
+import { BufferTailer, RedisEventBuffer } from '../../buffer';
+import { mapStreamItem, STREAM_KEY } from './item';
+import { getStreamEvents, ResumableStreamOptions, subscribeBySseResumable } from './resumable';
+
+export { mapStreamItem } from './item';
 
 interface StreamRouterProps {
   logger: Logger;
@@ -34,6 +39,18 @@ interface StreamRouterProps {
   eventService: EventService;
   configurationService: ConfigurationService;
   serviceId: AdspId;
+  buffer?: RedisEventBuffer;
+  tailer?: BufferTailer;
+  resumable?: ResumableStreamOptions;
+}
+
+/**
+ * Selects the event source for a stream; tenant streams read from the replay buffer tail when it's enabled.
+ */
+export type StreamEventSource = Observable<DomainEvent> | ((entity: StreamEntity) => Observable<DomainEvent>);
+
+function resolveSource(source: StreamEventSource, entity: StreamEntity): Observable<DomainEvent> {
+  return typeof source === 'function' ? source(entity) : source;
 }
 
 export enum ServiceUserRoles {
@@ -51,19 +68,6 @@ function mapStream(entity: StreamEntity): Stream {
   };
 }
 
-export function mapStreamItem(item: StreamItem): Record<string, unknown> {
-  const result: Record<string, unknown> = {
-    ...item,
-  };
-
-  if (result.tenantId) {
-    result.tenantId = result.tenantId.toString();
-  }
-
-  return result;
-}
-
-const STREAM_KEY = 'stream';
 export const getStream = async (
   logger: Logger,
   tenantService: TenantService,
@@ -119,7 +123,7 @@ export const getStreams: RequestHandler = async (req, res, next) => {
   );
 };
 
-export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>): RequestHandler {
+export function subscribeBySse(logger: Logger, events: StreamEventSource): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -127,7 +131,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
       const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
       const entity: StreamEntity = req[STREAM_KEY];
 
-      entity.connect(events);
+      entity.connect(resolveSource(events, entity));
       res.set({
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -173,7 +177,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
   };
 }
 
-export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) {
+export function onIoConnection(logger: Logger, events: StreamEventSource) {
   return async (socket: Socket): Promise<void> => {
     try {
       const req = socket.request as Request;
@@ -182,7 +186,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
       const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
       const entity: StreamEntity = req[STREAM_KEY];
 
-      entity.connect(events);
+      entity.connect(resolveSource(events, entity));
       const sub = entity
         .getEvents(user, criteria)
         .subscribe((next) => socket.emit(`${next.namespace}:${next.name}`, mapStreamItem(next)));
@@ -225,6 +229,9 @@ export const createStreamRouter = (
     eventService,
     configurationService,
     serviceId,
+    buffer,
+    tailer,
+    resumable = { keepAliveMs: 25000, replayPageSize: 200 },
   }: StreamRouterProps
 ): Router => {
   const events = eventServiceAmp.getItems().pipe(
@@ -286,13 +293,25 @@ export const createStreamRouter = (
     }
   });
 
+  // With the buffer enabled, tenant streams are fed from the buffer tail instead of this instance's exclusive queue,
+  // so events published while the instance was down are still delivered. Cross-tenant streams remain live only.
+  const source: StreamEventSource = tailer
+    ? (entity) => (entity.tenantId ? tailer.observe(entity.tenantId).pipe(map(({ event }) => event)) : events)
+    : events;
+
+  const legacySse = subscribeBySse(logger, source);
+  const resumableSse = buffer && tailer && subscribeBySseResumable(logger, buffer, tailer, resumable);
+  const resolveStream: RequestHandler = (req, _res, next) =>
+    getStream(logger, tenantService, req, req.query.tenant as string, req.params.stream, next);
+
   const streamRouter = Router();
   streamRouter.get('/streams', getStreams);
-  streamRouter.get(
-    '/streams/:stream',
-    (req, _res, next) => getStream(logger, tenantService, req, req.query.tenant as string, req.params.stream, next),
-    subscribeBySse(logger, events)
+  streamRouter.get('/streams/:stream', resolveStream, (req, res, next) =>
+    resumableSse && (req[STREAM_KEY] as StreamEntity).tenantId ? resumableSse(req, res, next) : legacySse(req, res, next)
   );
+  if (buffer) {
+    streamRouter.get('/streams/:stream/events', resolveStream, getStreamEvents(buffer, resumable.replayPageSize));
+  }
 
   for (const io of ios) {
     io.use((socket, next) => {
@@ -310,7 +329,7 @@ export const createStreamRouter = (
       });
     });
 
-    io.on('connection', onIoConnection(logger, events));
+    io.on('connection', onIoConnection(logger, source));
   }
 
   return streamRouter;

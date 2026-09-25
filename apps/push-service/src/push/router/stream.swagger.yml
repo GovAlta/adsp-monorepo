@@ -72,7 +72,12 @@ components:
   get:
     tags:
       - Stream
-    description: Retrieve server side events for stream.
+    description: >-
+      Retrieve server side events for stream.
+      When the replay buffer is enabled, tenant stream events carry an `id` cursor. A client that reconnects with that
+      cursor (`Last-Event-ID` header or `after` query parameter) receives the events it missed, then live events.
+      Control events: `adsp:ready` (live, with the current cursor as `id`), `adsp:reset` (missed events can't be recovered;
+      resync) and `adsp:reconnect` (the server is closing the connection, e.g. on token expiry).
     parameters:
       - in: query
         name: tenant
@@ -85,6 +90,21 @@ components:
         description: ID of the stream to retrieve.
         schema:
           type: string
+      - in: header
+        name: Last-Event-ID
+        description: Cursor of the last event processed; missed events after it are replayed.
+        schema:
+          type: string
+      - in: query
+        name: after
+        description: Alternative to the Last-Event-ID header.
+        schema:
+          type: string
+      - in: query
+        name: criteria
+        description: JSON criteria (correlationId, context) that events must match.
+        schema:
+          type: string
     responses:
       200:
         description: Event successfully sent.
@@ -92,5 +112,69 @@ components:
           text/event-stream:
             schema:
               type: object
+      401:
+        description: User not authorized to get stream.
+/stream/v1/streams/{stream}/events:
+  get:
+    tags:
+      - Stream
+    description: >-
+      Retrieve buffered stream events after a cursor. Used for polling and diagnostics. Only available when the replay
+      buffer is enabled, and only for tenant streams.
+    parameters:
+      - in: query
+        name: tenant
+        description: Name of the tenant associated with the stream for in kebab case.
+        schema:
+          type: string
+      - in: path
+        required: true
+        name: stream
+        description: ID of the stream.
+        schema:
+          type: string
+      - in: query
+        name: after
+        description: Cursor to read after. If not specified, no items are returned and next is the current cursor.
+        schema:
+          type: string
+      - in: query
+        name: top
+        description: Maximum number of buffered events to read.
+        schema:
+          type: integer
+      - in: query
+        name: criteria
+        description: JSON criteria (correlationId, context) that events must match.
+        schema:
+          type: string
+    responses:
+      200:
+        description: Buffered events successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reset:
+                  type: string
+                  nullable: true
+                  description: Reason the cursor can't be honoured (invalid-cursor, epoch-changed, cursor-expired).
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      cursor:
+                        type: string
+                      eventId:
+                        type: string
+                      namespace:
+                        type: string
+                      name:
+                        type: string
+                next:
+                  type: string
+                  description: Cursor to use for the next read.
       401:
         description: User not authorized to get stream.
