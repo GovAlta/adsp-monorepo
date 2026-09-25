@@ -1,0 +1,228 @@
+components:
+  responses:
+    ValueDefinitionConflict:
+      description: Value definition already exists.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValueError'
+          example:
+            errorMessage: Value definition 'test-service:response-time' already exists.
+  schemas:
+    ValueDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+        displayName:
+          type: string
+        description:
+          type: string
+        jsonSchema:
+          type: object
+          description: JSON schema that written values are validated against.
+        sendWriteEvent:
+          type: boolean
+          description: Whether a value-written event is sent when a value is written.
+    ValueDefinitionUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+        description:
+          type: string
+        jsonSchema:
+          type: object
+        sendWriteEvent:
+          type: boolean
+    ValueDefinitionResponse:
+      allOf:
+        - $ref: '#/components/schemas/ValueDefinition'
+        - type: object
+          properties:
+            namespace:
+              type: string
+            isCore:
+              type: boolean
+              description: Whether the definition is a core (platform) definition rather than a tenant definition.
+    ValueNamespace:
+      type: object
+      properties:
+        name:
+          type: string
+        definitions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ValueDefinition'
+
+/value/v1/definitions:
+  get:
+    tags:
+      - Value definition
+    description: >
+      Retrieves the tenant and core value definitions, grouped by namespace. Requires the value-reader or
+      configuration-admin role. Core users without a tenant context receive only core definitions.
+    responses:
+      200:
+        description: Value definitions successfully retrieved.
+        content:
+          application/json:
+            example:
+              tenant:
+                test-service:
+                  name: test-service
+                  definitions:
+                    response-time:
+                      name: response-time
+                      description: Response time of the test service.
+                      jsonSchema:
+                        type: number
+              core: {}
+            schema:
+              type: object
+              properties:
+                tenant:
+                  type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/ValueNamespace'
+                core:
+                  type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/ValueNamespace'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+  post:
+    tags:
+      - Value definition
+    description: >
+      Creates a value definition in the tenant configuration, adding the namespace if it does not exist. Requires the
+      configuration-admin role. The JSON schema must be a valid JSON schema.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          example:
+            namespace: test-service
+            name: response-time
+            description: Response time of the test service.
+            jsonSchema:
+              type: number
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ValueDefinition'
+              - type: object
+                properties:
+                  namespace:
+                    type: string
+                    pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+                required:
+                  - namespace
+                  - name
+                  - jsonSchema
+    responses:
+      201:
+        description: Value definition successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueDefinitionResponse'
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+      409:
+        $ref: '#/components/responses/ValueDefinitionConflict'
+
+/value/v1/definitions/{namespace}/{name}:
+  parameters:
+    - name: namespace
+      description: Namespace of the value definition.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: name
+      description: Name of the value definition.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Value definition
+    description: >
+      Retrieves a value definition. The tenant definition is returned if it exists, otherwise the core definition.
+      Requires the value-reader or configuration-admin role.
+    responses:
+      200:
+        description: Value definition successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueDefinitionResponse'
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+      404:
+        $ref: '#/components/responses/ValueNotFound'
+  patch:
+    tags:
+      - Value definition
+    description: >
+      Updates a tenant value definition. Properties not included in the request are left unchanged. Requires the
+      configuration-admin role. The JSON schema must be a valid JSON schema.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          example:
+            description: Response time of the test service in milliseconds.
+          schema:
+            $ref: '#/components/schemas/ValueDefinitionUpdate'
+    responses:
+      200:
+        description: Value definition successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueDefinitionResponse'
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+      404:
+        $ref: '#/components/responses/ValueNotFound'
+  delete:
+    tags:
+      - Value definition
+    description: >
+      Deletes a tenant value definition. The namespace is removed when its last definition is deleted. Requires the
+      configuration-admin role.
+    responses:
+      200:
+        description: Value definition successfully deleted.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+      400:
+        $ref: '#/components/responses/ValueBadRequest'
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+      404:
+        $ref: '#/components/responses/ValueNotFound'

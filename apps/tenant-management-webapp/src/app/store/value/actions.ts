@@ -5,6 +5,7 @@ export const FETCH_VALUE_DEFINITIONS_SUCCESS_ACTION = 'value/FETCH_VALUE_DEFINIT
 export const DELETE_VALUE_DEFINITION_ACTION = 'value/DELETE_VALUE_DEFINITION_ACTION';
 export const DELETE_VALUE_DEFINITION_SUCCESS_ACTION = 'value/DELETE_VALUE_DEFINITION_SUCCESS_ACTION';
 
+export const CREATE_VALUE_DEFINITION_ACTION = 'value/CREATE_VALUE_DEFINITION_ACTION'; // clean-code-ignore: RULE-19 — covered by store/value/actions.spec.ts.
 export const UPDATE_VALUE_DEFINITION_ACTION = 'value/UPDATE_VALUE_DEFINITION_ACTION';
 export const UPDATE_VALUE_DEFINITION_SUCCESS_ACTION = 'value/UPDATE_VALUE_DEFINITION_SUCCESS_ACTION';
 
@@ -32,6 +33,11 @@ export interface DeleteValueDefinitionAction {
 
 export interface DeleteValueDefinitionSuccessAction {
   type: typeof DELETE_VALUE_DEFINITION_SUCCESS_ACTION;
+  definition: ValueDefinition;
+}
+
+export interface CreateValueDefinitionAction {
+  type: typeof CREATE_VALUE_DEFINITION_ACTION;
   definition: ValueDefinition;
 }
 
@@ -76,6 +82,7 @@ export type ValueActionTypes =
   | FetchValueDefinitionsSuccessAction
   | DeleteValueDefinitionAction
   | DeleteValueDefinitionSuccessAction
+  | CreateValueDefinitionAction
   | UpdateValueDefinitionAction
   | UpdateValueDefinitionSuccessAction
   | FetchValueLogEntriesAction
@@ -100,6 +107,11 @@ export const deleteValueDefinition = (definition: ValueDefinition): DeleteValueD
 
 export const deleteValueDefinitionSuccess = (definition: ValueDefinition): DeleteValueDefinitionSuccessAction => ({
   type: DELETE_VALUE_DEFINITION_SUCCESS_ACTION,
+  definition,
+});
+
+export const createValueDefinition = (definition: ValueDefinition): CreateValueDefinitionAction => ({
+  type: CREATE_VALUE_DEFINITION_ACTION,
   definition,
 });
 
