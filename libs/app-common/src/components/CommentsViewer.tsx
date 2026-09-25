@@ -119,7 +119,6 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   const [deleting, setDeleting] = useState<Comment>(null);
   const [hasNewerMessages, setHasNewerMessages] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
-  const wasNearBottomRef = useRef(true);
   const previousScrollRef = useRef({ scrollTop: 0, scrollHeight: 0, nearBottom: true });
   const previousMessagesRef = useRef<{ topicId?: number | null; lastCommentId?: number; signature?: string }>({});
 
@@ -141,7 +140,6 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
     const container = commentsRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
-      wasNearBottomRef.current = true;
       previousScrollRef.current = getScrollState(container);
       setHasNewerMessages(false);
     }
@@ -154,7 +152,6 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
     }
 
     previousScrollRef.current = getScrollState(container);
-    wasNearBottomRef.current = previousScrollRef.current.nearBottom;
   };
 
   const handleMessagesScroll = () => {
@@ -186,7 +183,9 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
     if (loadedOlderMessages && container) {
       container.scrollTop = previousScroll.scrollTop + (container.scrollHeight - previousScroll.scrollHeight);
       captureScrollState();
-    } else if (isInitialLoad || latestMessageFromCurrentUser || previousScroll.nearBottom || wasNearBottomRef.current) {
+    } else if (isInitialLoad || latestMessageFromCurrentUser) {
+      // An incoming message no longer pulls the view down, even at the bottom; the scroll position
+      // is left where the reader put it and the "New messages" button offers the jump instead.
       scrollToLatest();
     } else if (latestMessageChanged) {
       setHasNewerMessages(true);

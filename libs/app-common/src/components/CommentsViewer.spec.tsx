@@ -699,7 +699,9 @@ describe('CommentsViewer', () => {
       content: 'Loaded older message',
       createdOn: new Date(2026, 7, 19, 9, 0, 0),
     });
-    const { container, rerender } = render(<CommentsViewer {...createProps({ comments: [middle, latest] })} messaging />);
+    const { container, rerender } = render(
+      <CommentsViewer {...createProps({ comments: [middle, latest] })} messaging />,
+    );
     const comments = container.querySelector<HTMLElement>('.comments');
     comments.scrollTop = 300;
     fireEvent.scroll(comments);
@@ -732,7 +734,7 @@ describe('CommentsViewer', () => {
     expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
 
-  test('auto-scrolls incoming messages when the user is already near the latest messages', () => {
+  test('leaves the user in place when an incoming message arrives while near the latest messages', () => {
     mockScrollMetrics();
     const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
     const incoming = createComment({
@@ -750,8 +752,8 @@ describe('CommentsViewer', () => {
 
     rerender(<CommentsViewer {...createProps({ comments: [earlier, incoming] })} messaging={true} />);
 
-    expect(comments.scrollTop).toBe(1000);
-    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
+    expect(comments.scrollTop).toBe(750);
+    expect(screen.getByText('New messages')).toBeInTheDocument();
   });
 
   test('does not move the user when an incoming message arrives while reading history', () => {
