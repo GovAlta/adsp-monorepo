@@ -6,6 +6,7 @@ import {
   commentReducer,
   connectStream,
   loadComments,
+  loadTopic,
   loadUnreadMessages,
   selectTopic,
   setShowMessages,
@@ -234,7 +235,13 @@ describe('comment slice messages', () => {
 
     const refreshed = commentReducer(loaded, {
       type: loadComments.fulfilled.type,
-      payload: { results: [{ id: 9, content: 'second' }, { id: 8, content: 'first' }], page: {} },
+      payload: {
+        results: [
+          { id: 9, content: 'second' },
+          { id: 8, content: 'first' },
+        ],
+        page: {},
+      },
       meta: { arg: { topic: TOPIC } },
     });
 
@@ -255,6 +262,115 @@ describe('comment slice messages', () => {
     });
 
     expect(paged.comments.results.map((r) => r.id)).toEqual([9, 8]);
+  });
+
+  it('does not hold a comment twice when a page shifted by new messages repeats it', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 10 }, { id: 9 }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const paged = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9 }, { id: 8 }], page: {} },
+      meta: { arg: { topic: TOPIC, next: 'page-2' } },
+    });
+
+    expect(paged.comments.results.map((r) => r.id)).toEqual([10, 9, 8]);
+  });
+
+  // Clearing the conversation while a pushed update loads put a reader scrolled back through
+  // history at the latest message again.
+  it('leaves the conversation in place while a refresh loads', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9 }, { id: 8 }], page: { next: 'page-2' } },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const refreshing = commentReducer(loaded, {
+      type: loadComments.pending.type,
+      meta: { arg: { topic: TOPIC, refresh: true } },
+    });
+
+    expect(refreshing.comments.results.map((r) => r.id)).toEqual([9, 8]);
+    expect(refreshing.comments.next).toBe('page-2');
+    expect(refreshing.busy.loading).toBe(false);
+  });
+
+  it('keeps older pages already loaded when a refresh brings in a new message', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9 }, { id: 8 }, { id: 7 }], page: { next: 'page-3' } },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const refreshed = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 10 }, { id: 8 }], page: { next: 'page-2' } },
+      meta: { arg: { topic: TOPIC, refresh: true } },
+    });
+
+    // 9 was deleted, and 7 is older than the refreshed page so it stays.
+    expect(refreshed.comments.results.map((r) => r.id)).toEqual([10, 8, 7]);
+    expect(refreshed.comments.next).toBe('page-3');
+  });
+
+  it('takes the refreshed cursor when the refresh covers everything held', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8 }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const refreshed = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 9 }, { id: 8 }], page: { next: 'page-2' } },
+      meta: { arg: { topic: TOPIC, refresh: true } },
+    });
+
+    expect(refreshed.comments.results.map((r) => r.id)).toEqual([9, 8]);
+    expect(refreshed.comments.next).toBe('page-2');
+  });
+
+  it('clears the conversation when a refresh finds every message deleted', () => {
+    const loaded = commentReducer(stateWithTopic, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [{ id: 8 }], page: {} },
+      meta: { arg: { topic: TOPIC } },
+    });
+
+    const refreshed = commentReducer(loaded, {
+      type: loadComments.fulfilled.type,
+      payload: { results: [], page: {} },
+      meta: { arg: { topic: TOPIC, refresh: true } },
+    });
+
+    expect(refreshed.comments.results).toEqual([]);
+  });
+
+  it('does not show the conversation as loading while a pushed topic update loads', () => {
+    const refreshing = commentReducer(stateWithTopic, {
+      type: loadTopic.pending.type,
+      meta: { arg: { resourceId: TOPIC.resourceId, typeId: 'form-questions', refresh: true } },
+    });
+
+    expect(refreshing.busy.loading).toBe(false);
+  });
+
+  it('leaves the loading state alone when a refresh fails', () => {
+    const loading = commentReducer(stateWithTopic, {
+      type: loadComments.pending.type,
+      meta: { arg: { topic: TOPIC, next: 'page-2' } },
+    });
+
+    const failed = commentReducer(loading, {
+      type: loadComments.rejected.type,
+      meta: { arg: { topic: TOPIC, refresh: true } },
+    });
+
+    expect(failed.busy.loading).toBe(true);
   });
 
   // The refresh the comment-created event triggers can land before the post resolves, and the

@@ -2,6 +2,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
 import { Knex } from 'knex';
 import { TopicCriteria, Comment, CommentCriteria, TopicEntity, TopicRepository, TopicTypeEntity } from '../comment';
+import { toPage } from './page';
 import { CommentRecord, TopicRecord } from './types';
 
 type TopicCriteriaMapper = {
@@ -139,7 +140,8 @@ export class PostgresTopicRepository implements TopicRepository {
     const skip = decodeAfter(after);
 
     let query = this.knex<CommentRecord>('comments');
-    query = query.offset(skip).limit(top);
+    // One row past the page, which tells toPage whether another page follows.
+    query = query.offset(skip).limit(top + 1);
 
     if (criteria) {
       const queryCriteria: Record<string, unknown> = {};
@@ -182,14 +184,7 @@ export class PostgresTopicRepository implements TopicRepository {
 
     const rows = await query.orderBy('createdOn', 'desc');
 
-    return {
-      results: rows.map((r) => this.mapCommentRecord(r)),
-      page: {
-        after,
-        next: encodeNext(rows.length, top, skip),
-        size: rows.length,
-      },
-    };
+    return toPage(rows, top, skip, after, (r) => this.mapCommentRecord(r));
   }
 
   async save(entity: TopicEntity): Promise<TopicEntity> {

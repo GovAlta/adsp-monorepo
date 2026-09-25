@@ -1,5 +1,13 @@
 import axios from 'axios';
-import { addComment, commentReducer, commentsSelector, deleteComment, loadComments, selectTopic } from './comment.slice';
+import {
+  addComment,
+  commentReducer,
+  commentsSelector,
+  deleteComment,
+  loadComments,
+  loadTopic,
+  selectTopic,
+} from './comment.slice';
 
 // babel-jest hoists these above the import; the slice creates an axios client and a socket at
 // module load, and neither is exercised by reducer and selector tests.
@@ -64,14 +72,97 @@ describe('commentReducer', () => {
       let state = loadedState(topicA, [comment(10, 'from form A')]);
       state = commentReducer(
         state,
-        loadComments.fulfilled(
-          { results: [comment(11, 'the new one'), comment(10, 'from form A')], page: {} },
-          'req',
-          { topic: topicA },
-        ),
+        loadComments.fulfilled({ results: [comment(11, 'the new one'), comment(10, 'from form A')], page: {} }, 'req', {
+          topic: topicA,
+        }),
       );
 
       expect(state.comments.results.map((r) => r.id)).toEqual([11, 10]);
+    });
+
+    it('should not hold a comment twice when a page shifted by new messages repeats it', () => {
+      let state = loadedState(topicA, [comment(11, 'newer'), comment(10, 'older')]);
+      state = commentReducer(
+        state,
+        loadComments.fulfilled({ results: [comment(10, 'older'), comment(9, 'oldest')], page: {} }, 'req', {
+          topic: topicA,
+          after: 'page-2',
+        }),
+      );
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([11, 10, 9]);
+    });
+
+    it('should leave the conversation in place while a refresh loads', () => {
+      // Clearing it while a pushed update loads put a reader scrolled back through history at the
+      // latest message again.
+      let state = loadedState(topicA, [comment(10, 'from form A')]);
+      state = { ...state, comments: { ...state.comments, next: 'page-2' } };
+      state = commentReducer(state, loadComments.pending('req', { topic: topicA, refresh: true }));
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([10]);
+      expect(state.comments.next).toBe('page-2');
+      expect(state.busy.loading).toBe(false);
+    });
+
+    it('should keep older pages already loaded when a refresh brings in a new message', () => {
+      let state = loadedState(topicA, [comment(9, 'deleted'), comment(8, 'kept'), comment(7, 'older page')]);
+      state = { ...state, comments: { ...state.comments, next: 'page-3' } };
+      state = commentReducer(
+        state,
+        loadComments.fulfilled({ results: [comment(10, 'new'), comment(8, 'kept')], page: { next: 'page-2' } }, 'req', {
+          topic: topicA,
+          refresh: true,
+        }),
+      );
+
+      // 9 was deleted, and 7 is older than the refreshed page so it stays.
+      expect(state.comments.results.map((r) => r.id)).toEqual([10, 8, 7]);
+      expect(state.comments.next).toBe('page-3');
+    });
+
+    it('should take the refreshed cursor when the refresh covers everything held', () => {
+      let state = loadedState(topicA, [comment(8, 'held')]);
+      state = commentReducer(
+        state,
+        loadComments.fulfilled({ results: [comment(9, 'new'), comment(8, 'held')], page: { next: 'page-2' } }, 'req', {
+          topic: topicA,
+          refresh: true,
+        }),
+      );
+
+      expect(state.comments.results.map((r) => r.id)).toEqual([9, 8]);
+      expect(state.comments.next).toBe('page-2');
+    });
+
+    it('should leave the loading state alone when a refresh settles', () => {
+      let state = commentReducer(
+        loadedState(topicA, []),
+        loadComments.pending('req-page', { topic: topicA, after: 'page-2' }),
+      );
+      state = commentReducer(
+        state,
+        loadComments.rejected(new Error('failed'), 'req', { topic: topicA, refresh: true }),
+      );
+      state = commentReducer(
+        state,
+        loadComments.fulfilled({ results: [], page: {} }, 'req', { topic: topicA, refresh: true }),
+      );
+
+      expect(state.busy.loading).toBe(true);
+    });
+
+    it('should not show the conversation as loading while a pushed topic update loads', () => {
+      let state = loadedState(topicA, [comment(10, 'from form A')]);
+      const arg = { resourceId: topicA.resourceId, typeId: topicA.typeId, refresh: true };
+      state = commentReducer(state, loadTopic.pending('req', arg));
+      expect(state.busy.loading).toBe(false);
+
+      state = commentReducer(
+        { ...state, busy: { ...state.busy, loading: true } },
+        loadTopic.fulfilled(null, 'req', arg),
+      );
+      expect(state.busy.loading).toBe(true);
     });
 
     it('should ignore a response for a topic that is no longer loaded', () => {
@@ -191,8 +282,9 @@ describe('addComment', () => {
     },
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const run = () => addComment({ topic: topicA, comment: { content: 'A reply' } })(jest.fn(), () => directoryState as any, undefined);
+  const run = () =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    addComment({ topic: topicA, comment: { content: 'A reply' } })(jest.fn(), () => directoryState as any, undefined);
 
   beforeEach(() => {
     jest.clearAllMocks();

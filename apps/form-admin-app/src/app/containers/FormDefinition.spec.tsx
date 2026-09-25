@@ -9,6 +9,7 @@ jest.mock('../state', () => {
   return {
     ...actual,
     selectDefinition: jest.fn((payload) => ({ type: 'form/select-definition', payload })),
+    connectStream: jest.fn((payload) => ({ type: 'comment/connect-stream', payload })),
   };
 });
 
@@ -29,9 +30,9 @@ const state = {
   },
 };
 
-const renderDefinition = (path: string) =>
+const renderDefinition = (path: string, store = mockStore(state)) =>
   render(
-    <Provider store={mockStore(state)}>
+    <Provider store={store}>
       <MemoryRouter initialEntries={[`/definitions/${definitionId}${path}`]}>
         <Routes>
           <Route path="/definitions/:definitionId/*" element={<FormDefinition />} />
@@ -40,7 +41,31 @@ const renderDefinition = (path: string) =>
     </Provider>,
   );
 
+const supportTopicState = {
+  form: {
+    ...state.form,
+    definitions: { [definitionId]: { ...state.form.definitions[definitionId], supportTopic: true } },
+  },
+};
+
 describe('FormDefinition', () => {
+  it('should connect to live messages on a response opened directly', () => {
+    const store = mockStore(supportTopicState);
+    renderDefinition('/responses/form-1', store);
+
+    expect(store.getActions()).toContainEqual({
+      type: 'comment/connect-stream',
+      payload: { stream: 'form-questions-updates', typeId: 'form-questions' },
+    });
+  });
+
+  it('should not connect to live messages for a definition without a support topic', () => {
+    const store = mockStore(state);
+    renderDefinition('/responses/form-1', store);
+
+    expect(store.getActions().map(({ type }) => type)).not.toContain('comment/connect-stream');
+  });
+
   it('should show the name of the selected definition in the page header', () => {
     const { getByTestId } = renderDefinition('/responses');
 

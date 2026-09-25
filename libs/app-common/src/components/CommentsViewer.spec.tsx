@@ -686,7 +686,7 @@ describe('CommentsViewer', () => {
     expect(container.querySelector<HTMLElement>('.comments')?.scrollTop).toBe(1000);
   });
 
-  test('preserves the visible anchor when older messages are loaded above it', () => {
+  test('stays at the top when older messages are loaded above it', () => {
     mockScrollMetrics(1000, 200);
     const middle = createComment({ id: 2, content: 'Message being read' });
     const latest = createComment({
@@ -703,13 +703,13 @@ describe('CommentsViewer', () => {
       <CommentsViewer {...createProps({ comments: [middle, latest] })} messaging />,
     );
     const comments = container.querySelector<HTMLElement>('.comments');
-    comments.scrollTop = 300;
+    comments.scrollTop = 20;
     fireEvent.scroll(comments);
 
     mockScrollMetrics(1400, 200);
     rerender(<CommentsViewer {...createProps({ comments: [older, middle, latest] })} messaging />);
 
-    expect(comments.scrollTop).toBe(700);
+    expect(comments.scrollTop).toBe(0);
     expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
 
@@ -734,7 +734,7 @@ describe('CommentsViewer', () => {
     expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
 
-  test('leaves the user in place when an incoming message arrives while near the latest messages', () => {
+  test('follows an incoming message when the user is already near the latest messages', () => {
     mockScrollMetrics();
     const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
     const incoming = createComment({
@@ -752,8 +752,8 @@ describe('CommentsViewer', () => {
 
     rerender(<CommentsViewer {...createProps({ comments: [earlier, incoming] })} messaging={true} />);
 
-    expect(comments.scrollTop).toBe(750);
-    expect(screen.getByText('New messages')).toBeInTheDocument();
+    expect(comments.scrollTop).toBe(1000);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
 
   test('does not move the user when an incoming message arrives while reading history', () => {
@@ -782,6 +782,79 @@ describe('CommentsViewer', () => {
     expect(comments.scrollTop).toBe(1000);
     expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
+  test('does not move the reader when a message above the latest is deleted', () => {
+    mockScrollMetrics();
+    const oldest = createComment({ id: 1, content: 'Oldest message', createdOn: new Date(2026, 7, 19, 9, 0, 0) });
+    const deleted = createComment({ id: 2, content: 'Deleted message', createdOn: new Date(2026, 7, 20, 9, 0, 0) });
+    const latest = createComment({ id: 3, content: 'Latest message', createdOn: new Date(2026, 7, 21, 9, 0, 0) });
+    const { container, rerender } = render(
+      <CommentsViewer {...createProps({ comments: [oldest, deleted, latest] })} messaging={true} />,
+    );
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 300;
+    fireEvent.scroll(comments);
+
+    rerender(<CommentsViewer {...createProps({ comments: [oldest, latest] })} messaging={true} />);
+
+    expect(comments.scrollTop).toBe(300);
+  });
+
+  test('shows the loading spinner at the top of a messaging conversation', () => {
+    const props = createProps({ loading: true, comments: [createComment({ id: 1, content: 'A message' })] });
+
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    expect(container.querySelector('.comments')?.firstElementChild).toBe(screen.getByTestId('circular-progress'));
+  });
+
+  test('does not offer new messages when the latest message is deleted', () => {
+    mockScrollMetrics();
+    const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
+    const deleted = createComment({
+      id: 2,
+      content: 'Deleted message',
+      byCurrentUser: false,
+      createdBy: { id: 'support', name: 'Support' },
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const { container, rerender } = render(
+      <CommentsViewer {...createProps({ comments: [earlier, deleted] })} messaging={true} />,
+    );
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 100;
+    fireEvent.scroll(comments);
+
+    rerender(<CommentsViewer {...createProps({ comments: [earlier] })} messaging={true} />);
+
+    expect(comments.scrollTop).toBe(100);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
+  });
+
+  test('hides the new messages prompt once the user scrolls down to the latest message', () => {
+    mockScrollMetrics();
+    const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
+    const incoming = createComment({
+      id: 2,
+      content: 'Incoming message',
+      byCurrentUser: false,
+      createdBy: { id: 'support', name: 'Support' },
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const { container, rerender } = render(
+      <CommentsViewer {...createProps({ comments: [earlier] })} messaging={true} />,
+    );
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 100;
+    fireEvent.scroll(comments);
+    rerender(<CommentsViewer {...createProps({ comments: [earlier, incoming] })} messaging={true} />);
+    expect(screen.getByText('New messages')).toBeInTheDocument();
+
+    comments.scrollTop = 800;
+    fireEvent.scroll(comments);
+
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
+  });
+
   test('reserves no heading space when the caller passes a blank heading', () => {
     const props = createProps();
     const { container } = render(<CommentsViewer {...props} heading=" " messaging={true} />);

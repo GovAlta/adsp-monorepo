@@ -40,6 +40,23 @@ interface NewComment {
 
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
+// Comments are held newest first. A refresh of the first page replaces the messages it covers and
+// keeps the older pages already loaded, so a reader scrolled back through history keeps their place.
+function mergeRefreshedPage(held: Comment[], fresh: Comment[]): Comment[] {
+  if (!fresh.length) {
+    return fresh;
+  }
+  const oldestFreshId = Math.min(...fresh.map(({ id }) => id));
+  return [...fresh, ...held.filter(({ id }) => id < oldestFreshId)];
+}
+
+// Pages are offset based, so messages that arrived since the last page shift the next one onto
+// comments already held.
+function appendPage(held: Comment[], page: Comment[]): Comment[] {
+  const heldIds = new Set(held.map(({ id }) => id));
+  return [...held, ...page.filter(({ id }) => !heldIds.has(id))];
+}
+
 // The comment service has no server side read tracking, so 'read' is recorded per browser as the id
 // of the newest comment that was in the drawer the last time the user opened it.
 const LAST_READ_STORAGE_PREFIX = 'form-app.messages.last-read.';
@@ -127,14 +144,14 @@ export const connectStream = createAsyncThunk(
     });
 
     const onTopicUpdate = ({ topic }: { topic: Topic }) => {
-      dispatch(loadTopic({ resourceId: topic.resourceId, typeId }));
+      dispatch(loadTopic({ resourceId: topic.resourceId, typeId, refresh: true }));
     };
     const onCommentUpdate = ({ topic }: { topic: Topic }) => {
       onTopicUpdate({ topic });
 
       const { comment } = getState() as AppState;
       if (comment.selected.resourceId === topic.resourceId) {
-        dispatch(loadComments({ topic: comment.topics[topic.resourceId] }));
+        dispatch(loadComments({ topic: comment.topics[topic.resourceId], refresh: true }));
         // Loading the comments doesn't recount them, and the update event doesn't say who wrote the
         // comment, so the count is refreshed from the service rather than incremented here.
         dispatch(loadUnreadMessages({ topicId: topic.id }));
@@ -150,7 +167,8 @@ export const connectStream = createAsyncThunk(
 
 export const loadTopic = createAsyncThunk(
   'comment/load-topic',
-  async ({ resourceId, typeId }: { resourceId: string; typeId: string }, { getState }) => {
+  // A refresh reloads the topic in the background, for a change pushed while it is open.
+  async ({ resourceId, typeId }: { resourceId: string; typeId: string; refresh?: boolean }, { getState }) => {
     if (!resourceId) {
       throw new Error('resourceId not specified');
     }
@@ -181,7 +199,11 @@ export const loadTopic = createAsyncThunk(
 
 export const loadComments = createAsyncThunk(
   'comment/load-comments',
-  async ({ next, topic }: { next?: string; topic: Topic }, { getState, rejectWithValue }) => {
+  async (
+    // A refresh reloads the first page in place, for a change pushed while the conversation is open.
+    { next, topic }: { next?: string; topic: Topic; refresh?: boolean },
+    { getState, rejectWithValue },
+  ) => {
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
 
@@ -391,11 +413,17 @@ const commentSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loadTopic.pending, (state) => {
-        state.busy.loading = true;
+      .addCase(loadTopic.pending, (state, { meta }) => {
+        // A refresh runs alongside the conversation it belongs to; showing it as loading swaps the
+        // conversation's Load more for a spinner and back, which jolts a reader scrolled up in it.
+        if (!meta.arg.refresh) {
+          state.busy.loading = true;
+        }
       })
       .addCase(loadTopic.fulfilled, (state, { payload, meta }) => {
-        state.busy.loading = false;
+        if (!meta.arg.refresh) {
+          state.busy.loading = false;
+        }
         if (payload) {
           const { type, ...topic } = payload;
           state.topics[meta.arg.resourceId] = { ...topic, typeId: type?.id };
@@ -404,8 +432,10 @@ const commentSlice = createSlice({
           }
         }
       })
-      .addCase(loadTopic.rejected, (state) => {
-        state.busy.loading = false;
+      .addCase(loadTopic.rejected, (state, { meta }) => {
+        if (!meta.arg.refresh) {
+          state.busy.loading = false;
+        }
       })
       .addCase(selectTopic.fulfilled, (state, { meta, payload }) => {
         // Message ids are per topic, so what was tracked for a previously opened form has to go.
@@ -420,6 +450,11 @@ const commentSlice = createSlice({
         state.selected.canRead = payload.canRead;
       })
       .addCase(loadComments.pending, (state, { meta }) => {
+        // A refresh leaves the conversation as it is until the new page lands; clearing it, or
+        // showing it as loading, moves a reader who has scrolled up back to the latest message.
+        if (meta.arg.refresh) {
+          return;
+        }
         state.busy.loading = true;
         if (!meta.arg.next) {
           state.comments.results = [];
@@ -427,19 +462,28 @@ const commentSlice = createSlice({
         }
       })
       .addCase(loadComments.fulfilled, (state, { payload, meta }) => {
-        state.busy.loading = false;
-
-        // A load without a cursor is a refresh of the first page, not a further page to add to
-        // what is already held. Appending it duplicates every message already on screen, which is
-        // what the socket refresh after a new comment was doing.
-        state.comments.results = meta?.arg?.next
-          ? [...state.comments.results, ...payload.results]
-          : payload.results;
-        state.comments.next = payload.page.next;
+        if (meta?.arg?.refresh) {
+          const results = mergeRefreshedPage(state.comments.results, payload.results);
+          // The cursor already held still leads on from the older pages that were kept.
+          if (results.length === payload.results.length) {
+            state.comments.next = payload.page.next;
+          }
+          state.comments.results = results;
+        } else {
+          state.busy.loading = false;
+          // A load without a cursor is the first page, not a further page to add to what is
+          // already held.
+          state.comments.results = meta?.arg?.next
+            ? appendPage(state.comments.results, payload.results)
+            : payload.results;
+          state.comments.next = payload.page.next;
+        }
         state.messages.latestCommentId = latestOf(state.messages.latestCommentId, payload.results);
       })
-      .addCase(loadComments.rejected, (state) => {
-        state.busy.loading = false;
+      .addCase(loadComments.rejected, (state, { meta }) => {
+        if (!meta.arg.refresh) {
+          state.busy.loading = false;
+        }
       })
       .addCase(addComment.pending, (state) => {
         state.busy.executing = true;

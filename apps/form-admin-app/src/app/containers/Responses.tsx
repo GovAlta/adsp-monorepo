@@ -27,7 +27,6 @@ import {
   definitionSelector,
   topicSelector,
   AppState,
-  connectStream,
   Resource,
   directoryBusySelector,
   tagResource,
@@ -153,12 +152,6 @@ export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) =
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
-
-  useEffect(() => {
-    if (definition?.supportTopic) {
-      dispatch(connectStream({ stream: 'form-questions-updates', typeId: 'form-questions' }));
-    }
-  }, [dispatch, definition]);
 
   // The table wires up its sort headers when it mounts, so it is remounted when the data value
   // columns of the definition are loaded and the set of sortable columns changes.

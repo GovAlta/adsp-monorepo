@@ -19,7 +19,6 @@ jest.mock('../state', () => {
     findForms: jest.fn((payload) => ({ type: 'form/find-forms', payload })),
     exportForms: jest.fn((payload) => ({ type: 'form/export-forms', payload })),
     loadTopic: jest.fn((payload) => ({ type: 'comment/load-topic', payload })),
-    connectStream: jest.fn((payload) => ({ type: 'comment/connect-stream', payload })),
     getTags: jest.fn((payload) => ({ type: 'directory/get-tags', payload })),
     tagResource: jest.fn((payload) => ({ type: 'directory/tag-resource', payload })),
   };
