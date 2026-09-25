@@ -1,17 +1,16 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk'; // clean-code-ignore: RULE-19 — wiring only; routes are covered in router/definition.spec.ts.
-import { ValidationService } from '@core-services/core-common';
-import { DefinitionConfigurationClient } from './definitionClient';
+import { ConfigurationClient, ValidationService } from '@core-services/core-common';
 import { ServiceMetricRollupRepository, ValuesRepository } from './repository';
 import { createDefinitionRouter, createValueRouter } from './router';
+import { ValueConfiguration } from './types';
 
 export * from './types';
 export * from './model';
 export * from './repository';
 export * from './events';
 export * from './configuration';
-export * from './definitionClient';
 
 interface ValuesMiddlewareProps {
   logger: Logger;
@@ -26,7 +25,12 @@ interface ValuesMiddlewareProps {
 
 export const applyValuesMiddleware = (app: Application, props: ValuesMiddlewareProps): Application => {
   const definitionRouter = createDefinitionRouter({
-    client: new DefinitionConfigurationClient(props.directory, props.tokenProvider),
+    client: new ConfigurationClient<ValueConfiguration>(
+      props.directory,
+      props.tokenProvider,
+      'platform',
+      'value-service',
+    ),
     validationService: props.validationService,
   });
   const valueRouter = createValueRouter(props);

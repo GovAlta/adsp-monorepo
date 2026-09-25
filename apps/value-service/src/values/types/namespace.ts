@@ -7,3 +7,5 @@ export interface Namespace {
     [name: string]: ValueDefinition;
   };
 }
+
+export type ValueConfiguration = Record<string, Namespace>;

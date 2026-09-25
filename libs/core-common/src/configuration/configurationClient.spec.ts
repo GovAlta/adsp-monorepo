@@ -1,35 +1,40 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
-import { DefinitionConfigurationClient } from './definitionClient';
+import { ConfigurationClient } from './configurationClient';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
-describe('DefinitionConfigurationClient', () => {
+interface TestEntry {
+  name: string;
+  description: string;
+}
+
+describe('ConfigurationClient', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://configuration/configuration/'))),
     getResourceUrl: jest.fn(),
   };
   const tokenProviderMock = { getAccessToken: jest.fn(() => Promise.resolve('token')) };
-  const configurationUrl = 'https://configuration/configuration/v2/configuration/platform/value-service';
+  const configurationUrl = 'https://configuration/configuration/v2/configuration/platform/test-service';
   const headers = { Authorization: 'Bearer token' };
-  const namespace = { name: 'test', description: null, definitions: {} };
+  const entry: TestEntry = { name: 'test', description: 'Test entry' };
 
-  let client: DefinitionConfigurationClient;
+  let client: ConfigurationClient<Record<string, TestEntry>>;
 
   beforeEach(() => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
-    client = new DefinitionConfigurationClient(directoryMock, tokenProviderMock);
+    client = new ConfigurationClient(directoryMock, tokenProviderMock, 'platform', 'test-service');
   });
 
   it('can get tenant configuration', async () => {
-    axiosMock.get.mockResolvedValueOnce({ data: { test: namespace } });
+    axiosMock.get.mockResolvedValueOnce({ data: { test: entry } });
 
     const result = await client.getTenantConfiguration(tenantId);
 
-    expect(result).toEqual({ test: namespace });
+    expect(result).toEqual({ test: entry });
     expect(axiosMock.get).toHaveBeenCalledWith(`${configurationUrl}/latest`, {
       headers,
       params: { tenantId: tenantId.toString() },
@@ -45,23 +50,35 @@ describe('DefinitionConfigurationClient', () => {
     expect(axiosMock.get).toHaveBeenCalledWith(`${configurationUrl}/latest`, { headers, params: { core: '' } });
   });
 
-  it('can update namespace', async () => {
-    axiosMock.patch.mockResolvedValueOnce({ data: { latest: { configuration: { test: namespace } } } });
+  it('can get configuration for a different namespace and name', async () => {
+    axiosMock.get.mockResolvedValueOnce({ data: { test: entry } });
+    const other = new ConfigurationClient(directoryMock, tokenProviderMock, 'form-service', 'test-form');
 
-    const result = await client.updateNamespace(tenantId, namespace);
+    await other.getCoreConfiguration();
 
-    expect(result).toEqual({ test: namespace });
+    expect(axiosMock.get).toHaveBeenCalledWith(
+      'https://configuration/configuration/v2/configuration/form-service/test-form/latest',
+      { headers, params: { core: '' } },
+    );
+  });
+
+  it('can update entry', async () => {
+    axiosMock.patch.mockResolvedValueOnce({ data: { latest: { configuration: { test: entry } } } });
+
+    const result = await client.updateEntry(tenantId, 'test', entry);
+
+    expect(result).toEqual({ test: entry });
     expect(axiosMock.patch).toHaveBeenCalledWith(
       configurationUrl,
-      { operation: 'UPDATE', update: { test: namespace } },
+      { operation: 'UPDATE', update: { test: entry } },
       { headers, params: { tenantId: tenantId.toString() } },
     );
   });
 
-  it('can delete namespace', async () => {
+  it('can delete entry', async () => {
     axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-    const result = await client.deleteNamespace(tenantId, 'test');
+    const result = await client.deleteEntry(tenantId, 'test');
 
     expect(result).toEqual({});
     expect(axiosMock.patch).toHaveBeenCalledWith(
