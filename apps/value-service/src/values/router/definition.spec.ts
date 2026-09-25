@@ -1,8 +1,7 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { ConfigurationClient, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
-import { DefinitionConfigurationClient, ValueConfiguration } from '../definitionClient';
-import { ServiceUserRoles } from '../types';
+import { ServiceUserRoles, ValueConfiguration } from '../types';
 import {
   assertValidJsonSchema,
   createDefinition,
@@ -32,10 +31,10 @@ describe('definition router', () => {
   const clientMock = {
     getTenantConfiguration: jest.fn(),
     getCoreConfiguration: jest.fn(),
-    updateNamespace: jest.fn(),
-    deleteNamespace: jest.fn(),
+    updateEntry: jest.fn(),
+    deleteEntry: jest.fn(),
   };
-  const client = clientMock as unknown as DefinitionConfigurationClient;
+  const client = clientMock as unknown as ConfigurationClient<ValueConfiguration>;
   const validationServiceMock = { setSchema: jest.fn(), validate: jest.fn() };
 
   const res = {
@@ -172,7 +171,7 @@ describe('definition router', () => {
 
     it('creates definition in namespace', async () => {
       const created = { ...definition, name: 'new-value' };
-      clientMock.updateNamespace.mockImplementationOnce((_tenantId, namespace) =>
+      clientMock.updateEntry.mockImplementationOnce((_tenantId, _key, namespace) =>
         Promise.resolve({ [namespace.name]: namespace }),
       );
 
@@ -182,7 +181,7 @@ describe('definition router', () => {
         next,
       );
 
-      expect(clientMock.updateNamespace).toHaveBeenCalledWith(tenantId, {
+      expect(clientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'test', {
         name: 'test',
         definitions: { 'test-value': definition, 'new-value': created },
       });
@@ -199,7 +198,7 @@ describe('definition router', () => {
       expect(next).toHaveBeenCalledWith(
         expect.objectContaining({ extra: expect.objectContaining({ statusCode: 409 }) }),
       );
-      expect(clientMock.updateNamespace).not.toHaveBeenCalled();
+      expect(clientMock.updateEntry).not.toHaveBeenCalled();
     });
 
     it('rejects existing core definition with conflict', async () => {
@@ -209,7 +208,7 @@ describe('definition router', () => {
         next,
       );
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
-      expect(clientMock.updateNamespace).not.toHaveBeenCalled();
+      expect(clientMock.updateEntry).not.toHaveBeenCalled();
     });
 
     it('rejects invalid json schema', async () => {
@@ -222,7 +221,7 @@ describe('definition router', () => {
         next,
       );
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
-      expect(clientMock.updateNamespace).not.toHaveBeenCalled();
+      expect(clientMock.updateEntry).not.toHaveBeenCalled();
     });
 
     it('rejects reader', async () => {
@@ -252,7 +251,7 @@ describe('definition router', () => {
     const handler = updateDefinition(client, validationServiceMock);
 
     it('updates definition', async () => {
-      clientMock.updateNamespace.mockImplementationOnce((_tenantId, namespace) =>
+      clientMock.updateEntry.mockImplementationOnce((_tenantId, _key, namespace) =>
         Promise.resolve({ [namespace.name]: namespace }),
       );
 
@@ -266,7 +265,7 @@ describe('definition router', () => {
         next,
       );
 
-      expect(clientMock.updateNamespace).toHaveBeenCalledWith(tenantId, {
+      expect(clientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'test', {
         name: 'test',
         definitions: { 'test-value': { ...definition, description: 'Updated' } },
       });
@@ -306,8 +305,8 @@ describe('definition router', () => {
         res as unknown as Response,
         next,
       );
-      expect(clientMock.deleteNamespace).toHaveBeenCalledWith(tenantId, 'test');
-      expect(clientMock.updateNamespace).not.toHaveBeenCalled();
+      expect(clientMock.deleteEntry).toHaveBeenCalledWith(tenantId, 'test');
+      expect(clientMock.updateEntry).not.toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith({ deleted: true });
     });
 
@@ -320,11 +319,11 @@ describe('definition router', () => {
         res as unknown as Response,
         next,
       );
-      expect(clientMock.updateNamespace).toHaveBeenCalledWith(tenantId, {
+      expect(clientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'test', {
         name: 'test',
         definitions: { other: { ...definition, name: 'other' } },
       });
-      expect(clientMock.deleteNamespace).not.toHaveBeenCalled();
+      expect(clientMock.deleteEntry).not.toHaveBeenCalled();
     });
 
     it('returns not found', async () => {

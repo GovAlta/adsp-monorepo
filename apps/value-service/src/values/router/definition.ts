@@ -1,5 +1,6 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
+  ConfigurationClient,
   createValidationHandler,
   InvalidOperationError,
   NotFoundError,
@@ -8,9 +9,8 @@ import {
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
-import { DefinitionConfigurationClient, ValueConfiguration } from '../definitionClient';
 import { ServiceUserRoles } from '../types';
-import type { Namespace } from '../types';
+import type { Namespace, ValueConfiguration } from '../types';
 
 const NAME_PATTERN = /^[a-zA-Z0-9-_ ]{1,50}$/;
 // A single key is reused because the schema is only checked for validity, not kept for validating values.
@@ -108,7 +108,7 @@ export const removeDefinition = (configuration: ValueConfiguration, namespace: s
   return { ...configuration[namespace], name: namespace, definitions };
 };
 
-export function findDefinitions(client: DefinitionConfigurationClient): RequestHandler {
+export function findDefinitions(client: ConfigurationClient<ValueConfiguration>): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant?.id;
@@ -126,7 +126,7 @@ export function findDefinitions(client: DefinitionConfigurationClient): RequestH
   };
 }
 
-export function getDefinition(client: DefinitionConfigurationClient): RequestHandler {
+export function getDefinition(client: ConfigurationClient<ValueConfiguration>): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant?.id;
@@ -152,7 +152,7 @@ export function getDefinition(client: DefinitionConfigurationClient): RequestHan
 }
 
 export function createDefinition(
-  client: DefinitionConfigurationClient,
+  client: ConfigurationClient<ValueConfiguration>,
   validationService: ValidationService,
 ): RequestHandler {
   return async (req, res, next) => {
@@ -173,7 +173,7 @@ export function createDefinition(
         });
       }
 
-      const updated = await client.updateNamespace(tenantId, mergeDefinition(tenant, namespace, definition));
+      const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
       res
         .status(HttpStatusCodes.CREATED)
         .send(toDefinitionResponse(namespace, findDefinition(updated, namespace, definition.name), false));
@@ -184,7 +184,7 @@ export function createDefinition(
 }
 
 export function updateDefinition(
-  client: DefinitionConfigurationClient,
+  client: ConfigurationClient<ValueConfiguration>,
   validationService: ValidationService,
 ): RequestHandler {
   return async (req, res, next) => {
@@ -202,7 +202,7 @@ export function updateDefinition(
       const definition: StoredDefinition = { ...existing, ...(req.body as DefinitionUpdate), name };
       assertValidJsonSchema(validationService, namespace, definition);
 
-      const updated = await client.updateNamespace(tenantId, mergeDefinition(tenant, namespace, definition));
+      const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
       res.send(toDefinitionResponse(namespace, findDefinition(updated, namespace, name), false));
     } catch (err) {
       next(err);
@@ -210,7 +210,7 @@ export function updateDefinition(
   };
 }
 
-export function deleteDefinition(client: DefinitionConfigurationClient): RequestHandler {
+export function deleteDefinition(client: ConfigurationClient<ValueConfiguration>): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = getRequiredTenantId(req);
@@ -224,9 +224,9 @@ export function deleteDefinition(client: DefinitionConfigurationClient): Request
 
       const remaining = removeDefinition(tenant, namespace, name);
       if (Object.keys(remaining.definitions).length === 0) {
-        await client.deleteNamespace(tenantId, namespace);
+        await client.deleteEntry(tenantId, namespace);
       } else {
-        await client.updateNamespace(tenantId, remaining);
+        await client.updateEntry(tenantId, namespace, remaining);
       }
 
       res.send({ deleted: true });
@@ -237,7 +237,7 @@ export function deleteDefinition(client: DefinitionConfigurationClient): Request
 }
 
 interface DefinitionRouterProps {
-  client: DefinitionConfigurationClient;
+  client: ConfigurationClient<ValueConfiguration>;
   validationService: ValidationService;
 }
 
