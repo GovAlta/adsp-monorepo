@@ -1,0 +1,192 @@
+components:
+  schemas:
+    ReportPeriod:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date
+          description: Inclusive start date (yyyy-mm-dd).
+          example: '2026-08-20'
+        to:
+          type: string
+          format: date
+          description: Inclusive end date after clipping today (incomplete UTC day is excluded).
+          example: '2026-09-17'
+    ReportError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+    PdfSummaryData:
+      type: object
+      description: Keys match TMW pdfReport.summaryMetrics ids. Missing activity is 0, not null.
+      properties:
+        pdfRequested:
+          type: number
+          description: Count of pdf-generation-queued events in the period.
+          example: 15
+        pdfGenerated:
+          type: number
+          description: Count of pdf-generated events in the period.
+          example: 11
+        pdfFailed:
+          type: number
+          description: Count of pdf-generation-failed events in the period.
+          example: 4
+        unreconciled:
+          type: number
+          description: max(pdfRequested - pdfGenerated, 0). Failed jobs count as unreconciled.
+          example: 4
+        generationDuration:
+          type: number
+          description: Average successful generation time in seconds (one decimal).
+          example: 2.9
+        generationDurationMax:
+          type: number
+          description: Maximum successful generation time in seconds.
+          example: 4
+        templatesUsed:
+          type: number
+          description: Distinct templateId values on queued, generated, and failed events.
+          example: 6
+    ReportSectionResponse:
+      type: object
+      required:
+        - serviceId
+        - sectionId
+        - period
+        - data
+      properties:
+        serviceId:
+          type: string
+          example: pdf
+        sectionId:
+          type: string
+          enum:
+            - summary
+            - trends
+            - topResources
+            - insights
+            - apiDrilldown
+          example: summary
+        period:
+          $ref: '#/components/schemas/ReportPeriod'
+        data:
+          description: Section payload, or zeros for an empty PDF summary period. Shape depends on serviceId and sectionId.
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/PdfSummaryData'
+            - type: object
+              additionalProperties: true
+
+/api/tenant/v1/reports/{serviceId}/{sectionId}:
+  get:
+    tags:
+      - Reports
+    summary: Get one report section for a service and period
+    description: |
+      Generic reports read API. The caller's JWT is forwarded to value-service, which checks the token and the tenant.
+
+      Implemented now:
+      - `pdf` / `summary`
+
+      Unknown `serviceId`/`sectionId` pairs return 404 so later sections (trends, topResources, insights, apiDrilldown) can be added without a new URL shape.
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        description: TMW report registry id (kebab-case, not the service URN). `pdf` is first.
+        schema:
+          type: string
+          example: pdf
+      - name: sectionId
+        in: path
+        required: true
+        description: Report section. Only `summary` is implemented for PDF in this ticket.
+        schema:
+          type: string
+          enum:
+            - summary
+            - trends
+            - topResources
+            - insights
+            - apiDrilldown
+      - name: from
+        in: query
+        required: true
+        description: Inclusive period start (yyyy-mm-dd).
+        schema:
+          type: string
+          format: date
+          example: '2026-08-20'
+      - name: to
+        in: query
+        required: true
+        description: Inclusive period end (yyyy-mm-dd). Clipped to the last completed UTC day.
+        schema:
+          type: string
+          format: date
+          example: '2026-09-18'
+      - name: preset
+        in: query
+        required: false
+        description: UI preset name. Logged only; from/to are the source of truth.
+        schema:
+          type: string
+          enum:
+            - last7Days
+            - last30Days
+            - last90Days
+            - last12Months
+            - custom
+          example: last30Days
+    responses:
+      200:
+        description: Section payload for the current tenant and period.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSectionResponse'
+            examples:
+              pdfSummary:
+                summary: PDF summary cards
+                value:
+                  serviceId: pdf
+                  sectionId: summary
+                  period:
+                    from: '2026-08-20'
+                    to: '2026-09-17'
+                  data:
+                    pdfRequested: 15
+                    pdfGenerated: 11
+                    pdfFailed: 4
+                    unreconciled: 4
+                    generationDuration: 2.9
+                    generationDurationMax: 4
+                    templatesUsed: 6
+      400:
+        description: Invalid dates, or from after to.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportError'
+      401:
+        description: Missing bearer token, or value-service rejected the token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportError'
+      404:
+        description: Unknown serviceId, or this service does not offer that section yet.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportError'
+            example:
+              errorMessage: report section with ID 'pdf/trends' could not be found.
+      500:
+        description: Unexpected gateway or upstream failure.

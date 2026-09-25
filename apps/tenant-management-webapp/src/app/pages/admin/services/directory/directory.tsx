@@ -12,7 +12,6 @@ export const Directory: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        {/* TODO: Add loading indicator after redux actions were added. */}
         <>
           <h1 data-testid="directory-title">Directory service</h1>
           <Tabs activeIndex={0} data-testid="directory-tabs">

@@ -46,7 +46,7 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
     if (deleteAction) {
       setShowDeleteConfirmation(true);
     }
-  }, [selectedQueue]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [deleteAction, dispatch, next, selectedQueue]);
 
   useEffect(() => {
     if (openAddTask) {
@@ -65,7 +65,8 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   return (
     <section>
       <div>
-        <GoabButton size="compact"
+        <GoabButton
+          size="compact"
           testId="add-queue-btn"
           onClick={() => {
             setSelectedQueue(defaultTaskQueue);
@@ -78,7 +79,7 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
       </div>
       {indicator.show && Object.keys(taskQueues).length === 0 && !showDeleteConfirmation && (
         <ProgressWrapper>
-          <GoabCircularProgress visible={indicator.show} size="small" />
+          <GoabCircularProgress visible={indicator.show} size="large" />
         </ProgressWrapper>
       )}
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('queues')}

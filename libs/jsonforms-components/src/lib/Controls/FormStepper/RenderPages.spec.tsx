@@ -6,6 +6,8 @@ import { JsonForms } from '@jsonforms/react';
 import { JsonFormsRendererRegistryEntry, UISchemaElement } from '@jsonforms/core';
 import { GoARenderers, GoACells } from '../../../index';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
+import { ContextProviderFactory } from '../../Context';
+import { NavigationTarget } from './util/navigationTarget';
 
 const dataSchema = {
   type: 'object',
@@ -169,5 +171,50 @@ describe('RenderPages scroll behaviour', () => {
 
       expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'auto' });
     });
+  });
+});
+
+// CS-5474: a host whose summary is on a separate page mounts the form fresh with the target in hand.
+// Nothing has touched the target step yet, so its errors have to be revealed by the arrival itself.
+describe('RenderPages arriving from a navigation target', () => {
+  const requiredSchema = { ...dataSchema, required: ['city'] };
+  const ContextProvider = ContextProviderFactory();
+
+  beforeEach(() => {
+    (Element.prototype as unknown as { scrollIntoView: unknown }).scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
+  });
+
+  const renderWithTarget = (navigationTarget: NavigationTarget) =>
+    render(
+      <ContextProvider navigationTarget={navigationTarget}>
+        <JsonForms
+          schema={requiredSchema}
+          uischema={uischema}
+          data={{ firstName: 'Alex' }}
+          renderers={GoARenderers}
+          cells={GoACells}
+          ajv={new Ajv({ allErrors: true, verbose: true, strict: false })}
+          onChange={() => undefined}
+        />
+      </ContextProvider>,
+    );
+
+  const cityError = (): string | null => document.querySelector('goa-form-item[testid="city"]')?.getAttribute('error');
+
+  it('shows the error on the empty required field it was sent to fix', () => {
+    renderWithTarget({ scope: '#/properties/city' });
+
+    expect(cityError()).toBe('City is required');
+  });
+
+  it('leaves the step quiet when sent to the page rather than a field', () => {
+    renderWithTarget({ pageId: 'page-2' });
+
+    expect(document.querySelector('goa-form-item[testid="city"]')).not.toBeNull();
+    expect(cityError()).toBeFalsy();
   });
 });

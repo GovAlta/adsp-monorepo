@@ -41,6 +41,9 @@ import {
   CreateTypeSubscriptionSuccess,
   CreateTypeSubscriptionFailed,
   CREATE_TYPE_SUBSCRIPTION,
+  GetSubscriberSubscriptionsAction,
+  GetSubscriberSubscriptionsSuccess,
+  GET_SUBSCRIBER_SUBSCRIPTIONS,
 } from './actions';
 import { Subscriber, Events } from './models';
 import { RootState } from '../index';
@@ -293,6 +296,30 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
   }
 }
 
+export function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAction): SagaIterator {
+  const { subscriber, after } = action.payload;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(
+        axios.get,
+        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}/subscriptions`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { top: 100, after: after || undefined },
+        },
+      );
+
+      yield put(GetSubscriberSubscriptionsSuccess(subscriber.id, response.data.results));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield call(getAccessToken);
@@ -469,4 +496,5 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
+  yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
 }

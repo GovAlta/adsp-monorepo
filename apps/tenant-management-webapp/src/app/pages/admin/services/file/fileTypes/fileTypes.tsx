@@ -53,7 +53,7 @@ const FileTypesTableContainer = ({ roles, activeEdit }: FileTypesTableContainerP
       {!indicator.show && fileTypes && fileTypes.length === 0 && (
         <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
       )}
-      {indicator.show && <PageIndicator />}
+      <PageIndicator />
       {!indicator.show && fileTypes && (
         <div>
           <AddFileType roles={roles} activeEdit={activeEdit} />

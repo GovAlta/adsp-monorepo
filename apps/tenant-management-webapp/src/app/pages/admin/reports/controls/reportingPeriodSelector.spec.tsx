@@ -92,11 +92,12 @@ describe('ReportingPeriodSelector', () => {
     expect(container.querySelector('goa-form-item[error="Start date must not be after end date."]')).toBeInTheDocument();
   });
 
-  it('shows a validation error when the span is longer than 13 months', () => {
-    const { container } = renderSelector('/admin/reports/pdf?preset=custom&from=2025-01-01&to=2026-09-10');
+  it('accepts a custom span longer than 13 months', () => {
+    const { container } = renderSelector('/admin/reports/pdf?preset=custom&from=2020-01-01&to=2026-09-10');
 
     expect(
       container.querySelector('goa-form-item[error="The reporting period cannot exceed 13 months."]')
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
+    expect(container.querySelector('goa-date-picker[testid="reports-period-from"]')).not.toHaveAttribute('min');
   });
 });

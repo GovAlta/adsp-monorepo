@@ -65,7 +65,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
     UpdateLoadingState({
       name: FETCH_SERVICE_STATUS_APPS_ACTION,
       state: 'start',
-    })
+    }),
   );
 
   const statusServiceUrl = getServiceStatusUrl(currentState.config);
@@ -82,7 +82,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
       UpdateLoadingState({
         name: FETCH_SERVICE_STATUS_APPS_ACTION,
         state: 'completed',
-      })
+      }),
     );
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
@@ -90,7 +90,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
       UpdateLoadingState({
         name: FETCH_SERVICE_STATUS_APPS_ACTION,
         state: 'error',
-      })
+      }),
     );
   }
 }
@@ -122,7 +122,7 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Saving webhook changes...',
-    })
+    }),
   );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
 
@@ -166,7 +166,7 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
     yield put(refreshServiceStatusApps());
   } catch (err) {
@@ -175,8 +175,14 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
 }
 
 export function* fetchWebhook(_action: saveWebhookAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    }),
+  );
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
 
   const token = yield call(getAccessToken);
@@ -187,13 +193,25 @@ export function* fetchWebhook(_action: saveWebhookAction): SagaIterator {
 
     const statusData = yield call([api, api.fetchWebhookStatus]);
 
-    const configuration = data?.latest?.configuration?.webhooks;
+    const configuration = data?.latest?.configuration?.webhooks || null;
     const hookIntervals = statusData?.latest?.configuration.applicationWebhookIntervals;
 
     yield put(fetchWebhooksSuccess(configuration, hookIntervals));
+
+    yield put(
+      UpdateIndicator({
+        show: false,
+      }),
+    );
+
     yield put(refreshServiceStatusApps());
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      }),
+    );
   }
 }
 
@@ -215,7 +233,7 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
 
 export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token = yield call(getAccessToken);
 
@@ -240,7 +258,7 @@ export function* testWebhook(action: TestWebhookAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Running test...',
-    })
+    }),
   );
 
   try {
@@ -251,7 +269,7 @@ export function* testWebhook(action: TestWebhookAction): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
 
     yield put(TestWebhooksSuccess(response));
@@ -259,7 +277,7 @@ export function* testWebhook(action: TestWebhookAction): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
     yield put(ErrorNotification({ error: err }));
   }
@@ -291,7 +309,7 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
     const data: ApplicationStatus = yield call(
       [api, api.toggleApplication],
       action.payload.appKey,
-      action.payload.enabled
+      action.payload.enabled,
     );
 
     data.enabled = action.payload.enabled;
@@ -312,7 +330,7 @@ interface MetricValue {
 export function* fetchStatusMetrics(): SagaIterator {
   const apps = (yield select((state: RootState) => state.serviceStatus.applications)).reduce(
     (apps, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }),
-    {} as Record<string, ApplicationStatus>
+    {} as Record<string, ApplicationStatus>,
   );
 
   yield* fetchServiceMetrics('status-service', function* (metrics) {
@@ -351,7 +369,7 @@ export function* fetchStatusMetrics(): SagaIterator {
 
 export function* updateStatusContactInformation({ payload }: UpdateStatusContactInformationAction): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -370,7 +388,7 @@ export function* updateStatusContactInformation({ payload }: UpdateStatusContact
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(FetchStatusConfigurationService());
@@ -382,7 +400,7 @@ export function* updateStatusContactInformation({ payload }: UpdateStatusContact
 
 export function* fetchStatusConfiguration(): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -392,14 +410,14 @@ export function* fetchStatusConfiguration(): SagaIterator {
         UpdateLoadingState({
           name: FETCH_STATUS_CONFIGURATION,
           state: 'start',
-        })
+        }),
       );
       const { data: configuration } = yield call(
         axios.get,
         `${configBaseUrl}/configuration/v2/configuration/platform/status-service`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const statusInfo = configuration.latest && configuration.latest.configuration;
 
@@ -409,7 +427,7 @@ export function* fetchStatusConfiguration(): SagaIterator {
         UpdateLoadingState({
           name: FETCH_STATUS_CONFIGURATION,
           state: 'completed',
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -417,7 +435,7 @@ export function* fetchStatusConfiguration(): SagaIterator {
         UpdateLoadingState({
           name: FETCH_STATUS_CONFIGURATION,
           state: 'error',
-        })
+        }),
       );
     }
   }

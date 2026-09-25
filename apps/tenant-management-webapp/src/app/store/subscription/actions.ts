@@ -1,6 +1,7 @@
 import {
   Subscriber,
   SubscriberSearchCriteria,
+  SubscriberSubscriptions,
   SubscriptionSearchCriteria,
   SubscriptionWrapper,
   TypeSubscriptionSubscriber,
@@ -29,6 +30,7 @@ export const GET_ALL_TYPE_SUBSCRIPTIONS = 'tenant/subscriber-service/get-all-typ
 export const GET_TYPE_SUBSCRIPTIONS = 'tenant/subscriber-service/get-type-subscription';
 export const GET_TYPE_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-type-subscription-success';
 export const GET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subscription-subscriber';
+export const GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscription-subscriber-success';
 
 export const FIND_SUBSCRIBERS = 'tenant/subscriber-service/find-subscribers';
 export const FIND_SUBSCRIBERS_SUCCESS = 'tenant/subscriber-service/find-subscribers/success';
@@ -61,7 +63,8 @@ export type ActionTypes =
   | CreateTypeSubscriptionAction
   | CreateTypeSubscriptionSuccessAction
   | CreateTypeSubscriptionFailedAction
-  | ResetTypeSubscriptionCreationAction;
+  | ResetTypeSubscriptionCreationAction
+  | GetSubscriberSubscriptionsSuccessAction;
 
 export interface CreateTypeSubscriptionAction {
   type: typeof CREATE_TYPE_SUBSCRIPTION;
@@ -155,6 +158,14 @@ export interface GetSubscriberSubscriptionsAction {
   payload: {
     subscriber: Subscriber;
     after: string;
+  };
+}
+
+export interface GetSubscriberSubscriptionsSuccessAction {
+  type: typeof GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS;
+  payload: {
+    subscriberId: string;
+    subscriptions: SubscriberSubscriptions[];
   };
 }
 export interface ResolveSubscriberUserAction {
@@ -344,6 +355,14 @@ export const GetSubscriberSubscriptions = (
 ): GetSubscriberSubscriptionsAction => ({
   type: GET_SUBSCRIBER_SUBSCRIPTIONS,
   payload: { subscriber, after },
+});
+
+export const GetSubscriberSubscriptionsSuccess = (
+  subscriberId: string,
+  subscriptions: SubscriberSubscriptions[],
+): GetSubscriberSubscriptionsSuccessAction => ({
+  type: GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
+  payload: { subscriberId, subscriptions },
 });
 
 export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscribersAction => ({

@@ -400,6 +400,98 @@ describe('NotificationTypes Page', () => {
     });
   });
 
+  it('switches from a configured recipient strategy to subscribers without reverting', async () => {
+    const { baseElement, queryByText } = renderNotificationTypes('/types/configuredAddressNotificationId');
+
+    expect(queryByText('Strategy: Configured')).toBeTruthy();
+
+    fireEvent(
+      baseElement.querySelector("goa-button[testId='edit-notification-type']"),
+      new CustomEvent('_click'),
+    );
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-input[testId='address-notification-modal-input']")).not.toBeNull();
+    });
+    expect(baseElement.querySelector("goa-form-item[label='Select Notification Channels']")).toBeNull();
+
+    fireEvent(
+      baseElement.querySelector("goa-radio-group[testId='select-type-notification-radio-group']"),
+      new CustomEvent('_change', { detail: { value: 'SUBSCRIBERS' } }),
+    );
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-input[testId='address-notification-modal-input']")).toBeNull();
+    });
+    expect(baseElement.querySelector("goa-form-item[label='Select Notification Channels']")).not.toBeNull();
+
+    // Editing an unrelated field used to re-derive the strategy from the stale
+    // address value and silently revert the radio selection back to Configured.
+    fireEvent(
+      baseElement.querySelector("goa-textarea[testId='form-description']"),
+      new CustomEvent('_change', { detail: { value: 'updated description' } }),
+    );
+
+    expect(baseElement.querySelector("goa-input[testId='address-notification-modal-input']")).toBeNull();
+    expect(baseElement.querySelector("goa-form-item[label='Select Notification Channels']")).not.toBeNull();
+
+    fireEvent(baseElement.querySelector("goa-button[testId='form-save']"), new CustomEvent('_click'));
+
+    await waitFor(() => {
+      const saveAction = store.getActions().find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+      expect(saveAction).toBeTruthy();
+    });
+
+    const saveAction = store.getActions().find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+    expect(saveAction.payload.address).toBeNull();
+    expect(saveAction.payload.addressPath).toBeNull();
+  });
+
+  it('disables save for the configured recipient strategy until a contact address is entered', async () => {
+    const { baseElement } = renderNotificationTypes('/types/notificationId');
+
+    fireEvent(
+      baseElement.querySelector("goa-button[testId='edit-notification-type']"),
+      new CustomEvent('_click'),
+    );
+
+    await waitFor(() => {
+      expect(
+        baseElement.querySelector("goa-radio-group[testId='select-type-notification-radio-group']"),
+      ).not.toBeNull();
+    });
+
+    fireEvent(
+      baseElement.querySelector("goa-radio-group[testId='select-type-notification-radio-group']"),
+      new CustomEvent('_change', { detail: { value: 'CONTACT' } }),
+    );
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-input[testId='address-notification-modal-input']")).not.toBeNull();
+    });
+
+    // No contact address has been entered, so saving should remain blocked.
+    expect(baseElement.querySelector("goa-button[testId='form-save']").getAttribute('disabled')).toBe('true');
+
+    fireEvent(
+      baseElement.querySelector("goa-input[testId='address-notification-modal-input']"),
+      new CustomEvent('_change', { detail: { value: 'alerts@gov.ab.ca' } }),
+    );
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-button[testId='form-save']").getAttribute('disabled')).toBeNull();
+    });
+
+    fireEvent(
+      baseElement.querySelector("goa-input[testId='address-notification-modal-input']"),
+      new CustomEvent('_change', { detail: { value: '' } }),
+    );
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-button[testId='form-save']").getAttribute('disabled')).toBe('true');
+    });
+  });
+
   it('creates a new notification type', async () => {
     const { baseElement } = renderNotificationTypes();
     const addBtn = baseElement.querySelector("goa-button[testId='add-notification']");

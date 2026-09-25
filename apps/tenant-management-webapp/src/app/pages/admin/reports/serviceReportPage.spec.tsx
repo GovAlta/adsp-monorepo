@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import { pdfReport } from './registry/services/pdfReport';
+import { registerPdfReportLoaders } from './registry/registerPdfLoaders';
 import * as registry from './registry/serviceReportRegistry';
 import { ServiceReportPage } from './serviceReportPage';
 import { LOAD_REPORT_SECTION_ACTION, SET_REPORT_CRITERIA_ACTION } from '@store/serviceReports/actions';
@@ -106,6 +107,16 @@ describe('ServiceReportPage', () => {
 
   it('dispatches a section load only when a loader is registered', () => {
     registerSectionLoader('pdf', 'summary', async () => ({ pdfGenerated: 1 }));
+    const { store } = renderPage('/admin/reports/pdf');
+    const loadActions = store.getActions().filter((action) => action.type === LOAD_REPORT_SECTION_ACTION);
+
+    expect(loadActions).toEqual([
+      { type: LOAD_REPORT_SECTION_ACTION, serviceId: 'pdf', sectionId: 'summary' },
+    ]);
+  });
+
+  it('dispatches a load for PDF summary only', () => {
+    registerPdfReportLoaders();
     const { store } = renderPage('/admin/reports/pdf');
     const loadActions = store.getActions().filter((action) => action.type === LOAD_REPORT_SECTION_ACTION);
 

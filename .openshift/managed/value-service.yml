@@ -221,6 +221,9 @@ objects:
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
+      annotations:
+        # Multi-year event log / metrics reads exceed the 30s router default.
+        haproxy.router.openshift.io/timeout: 120s
     spec:
       host: ${ROUTE_HOST}
       port:

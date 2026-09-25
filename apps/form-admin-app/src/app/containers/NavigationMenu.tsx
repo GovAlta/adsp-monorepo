@@ -1,4 +1,4 @@
-import { GoabButton, GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
+import { GoabButton, GoabSideMenu } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -73,7 +73,6 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           definition scoped links come and go.
         */}
         <GoabSideMenu key={definition?.id ?? 'no-definition'} data-side-nav={true}>
-          <GoabSideMenuHeading icon="documents">Form definitions</GoabSideMenuHeading>
           <a
             href={`/${tenantName}/definitions`}
             onClick={(e) => {

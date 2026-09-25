@@ -83,6 +83,21 @@ const createProps = (overrides = {}) => ({
   ...overrides,
 });
 
+function mockScrollMetrics(scrollHeight = 1000, clientHeight = 200) {
+  Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+    configurable: true,
+    get() {
+      return scrollHeight;
+    },
+  });
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() {
+      return clientHeight;
+    },
+  });
+}
+
 describe('CommentsViewer', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -92,6 +107,8 @@ describe('CommentsViewer', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.resetAllMocks();
+    delete (HTMLElement.prototype as { scrollHeight?: number }).scrollHeight;
+    delete (HTMLElement.prototype as { clientHeight?: number }).clientHeight;
   });
 
   test('renders the default heading when heading is not provided', () => {
@@ -618,6 +635,150 @@ describe('CommentsViewer', () => {
 
     // The control sits outside the byline, so grouping must not take it away.
     expect(getAllByTitle('delete message')).toHaveLength(2);
+  });
+
+  test('orders messaging comments oldest to newest from top to bottom', () => {
+    const newest = createComment({
+      id: 2,
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+      content: 'Newest message',
+    });
+    const oldest = createComment({
+      id: 1,
+      createdOn: new Date(2026, 7, 20, 9, 0, 0),
+      content: 'Oldest message',
+    });
+    const props = createProps({ comments: [newest, oldest] });
+
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+    const messages = Array.from(container.querySelectorAll('.message p')).map((message) => message.textContent);
+
+    expect(messages).toEqual(['Oldest message', 'Newest message']);
+  });
+
+  test('places Load more at the top of a messaging conversation', () => {
+    const props = createProps({
+      canLoadMore: true,
+      comments: [
+        createComment({ id: 1, content: 'Older message' }),
+        createComment({ id: 2, content: 'Latest message' }),
+      ],
+    });
+
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+    const commentPane = container.querySelector('.comments');
+
+    expect(commentPane?.firstElementChild).toHaveTextContent('Load more');
+    expect(screen.getByText('Load more')).toBeInTheDocument();
+  });
+
+  test('scrolls to the latest message when a messaging conversation opens', () => {
+    mockScrollMetrics();
+    const props = createProps({
+      comments: [
+        createComment({ id: 1, content: 'Earlier message' }),
+        createComment({ id: 2, content: 'Latest message' }),
+      ],
+    });
+
+    const { container } = render(<CommentsViewer {...props} messaging={true} />);
+
+    expect(container.querySelector<HTMLElement>('.comments')?.scrollTop).toBe(1000);
+  });
+
+  test('preserves the visible anchor when older messages are loaded above it', () => {
+    mockScrollMetrics(1000, 200);
+    const middle = createComment({ id: 2, content: 'Message being read' });
+    const latest = createComment({
+      id: 3,
+      content: 'Latest message',
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const older = createComment({
+      id: 1,
+      content: 'Loaded older message',
+      createdOn: new Date(2026, 7, 19, 9, 0, 0),
+    });
+    const { container, rerender } = render(<CommentsViewer {...createProps({ comments: [middle, latest] })} messaging />);
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 300;
+    fireEvent.scroll(comments);
+
+    mockScrollMetrics(1400, 200);
+    rerender(<CommentsViewer {...createProps({ comments: [older, middle, latest] })} messaging />);
+
+    expect(comments.scrollTop).toBe(700);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
+  });
+
+  test('keeps a newly sent message visible even when the user was reading history', () => {
+    mockScrollMetrics();
+    const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
+    const sent = createComment({
+      id: 2,
+      content: 'Sent message',
+      byCurrentUser: true,
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const props = createProps({ comments: [earlier] });
+    const { container, rerender } = render(<CommentsViewer {...props} messaging={true} />);
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 100;
+    fireEvent.scroll(comments);
+
+    rerender(<CommentsViewer {...createProps({ comments: [earlier, sent] })} messaging={true} />);
+
+    expect(comments.scrollTop).toBe(1000);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
+  });
+
+  test('auto-scrolls incoming messages when the user is already near the latest messages', () => {
+    mockScrollMetrics();
+    const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
+    const incoming = createComment({
+      id: 2,
+      content: 'Incoming message',
+      byCurrentUser: false,
+      createdBy: { id: 'support', name: 'Support' },
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const props = createProps({ comments: [earlier] });
+    const { container, rerender } = render(<CommentsViewer {...props} messaging={true} />);
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 750;
+    fireEvent.scroll(comments);
+
+    rerender(<CommentsViewer {...createProps({ comments: [earlier, incoming] })} messaging={true} />);
+
+    expect(comments.scrollTop).toBe(1000);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
+  });
+
+  test('does not move the user when an incoming message arrives while reading history', () => {
+    mockScrollMetrics();
+    const earlier = createComment({ id: 1, content: 'Earlier message', byCurrentUser: false });
+    const incoming = createComment({
+      id: 2,
+      content: 'Incoming message',
+      byCurrentUser: false,
+      createdBy: { id: 'support', name: 'Support' },
+      createdOn: new Date(2026, 7, 21, 9, 0, 0),
+    });
+    const props = createProps({ comments: [earlier] });
+    const { container, rerender } = render(<CommentsViewer {...props} messaging={true} />);
+    const comments = container.querySelector<HTMLElement>('.comments');
+    comments.scrollTop = 100;
+    fireEvent.scroll(comments);
+
+    rerender(<CommentsViewer {...createProps({ comments: [earlier, incoming] })} messaging={true} />);
+
+    expect(comments.scrollTop).toBe(100);
+    expect(screen.getByText('New messages')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('New messages'));
+
+    expect(comments.scrollTop).toBe(1000);
+    expect(screen.queryByText('New messages')).not.toBeInTheDocument();
   });
   test('reserves no heading space when the caller passes a blank heading', () => {
     const props = createProps();

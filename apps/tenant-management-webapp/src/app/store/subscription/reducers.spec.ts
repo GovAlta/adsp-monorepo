@@ -1,5 +1,5 @@
 import subscriptionReducer from './reducers';
-import { FindSubscribersSuccess } from './actions';
+import { FindSubscribersSuccess, GetSubscriberSubscriptionsSuccess } from './actions';
 import { SUBSCRIBER_INIT } from './models';
 
 describe('subscription reducer', () => {
@@ -56,6 +56,26 @@ describe('subscription reducer', () => {
       const state = subscriptionReducer(SUBSCRIBER_INIT, FindSubscribersSuccess([subscriberA], 'next-cursor'));
 
       expect(state.subscriberSearch.next).toBe('next-cursor');
+    });
+  });
+
+  describe('on finding a subscriber\'s subscriptions', () => {
+    it('holds the subscriptions keyed by the subscriber id', () => {
+      const subscriptions = [{ typeId: 'status-updates', type: { name: 'Application Status Update' } }];
+      const state = subscriptionReducer(SUBSCRIBER_INIT, GetSubscriberSubscriptionsSuccess('subscriber-1', subscriptions));
+
+      expect(state.subscriberSubscriptions['subscriber-1']).toEqual(subscriptions);
+    });
+
+    it('keeps another subscriber\'s subscriptions already held', () => {
+      const first = subscriptionReducer(
+        SUBSCRIBER_INIT,
+        GetSubscriberSubscriptionsSuccess('subscriber-1', [{ typeId: 'a' }]),
+      );
+      const second = subscriptionReducer(first, GetSubscriberSubscriptionsSuccess('subscriber-2', [{ typeId: 'b' }]));
+
+      expect(second.subscriberSubscriptions['subscriber-1']).toEqual([{ typeId: 'a' }]);
+      expect(second.subscriberSubscriptions['subscriber-2']).toEqual([{ typeId: 'b' }]);
     });
   });
 });

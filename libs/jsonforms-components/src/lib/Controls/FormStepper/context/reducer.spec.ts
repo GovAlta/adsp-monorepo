@@ -120,6 +120,32 @@ describe('stepperReducer', () => {
       expect(result.hasPrevButton).toBe(true);
     });
 
+    test('reveals errors on the target step when navigating to a field', () => {
+      // Arrange
+      const state = buildState({ activeId: 0 });
+
+      // Act
+      const result = stepperReducer(state, {
+        type: 'page/to/index',
+        payload: { id: 1, targetScope: '#/properties/field1' },
+      });
+
+      // Assert
+      expect(result.categories[1].isNavigatedAway).toBe(true);
+      expect(result.categories[0]).toBe(state.categories[0]);
+    });
+
+    test('leaves the target step quiet when navigating without a field', () => {
+      // Arrange
+      const state = buildState({ activeId: 0 });
+
+      // Act
+      const result = stepperReducer(state, { type: 'page/to/index', payload: { id: 1 } });
+
+      // Assert
+      expect(result.categories).toBe(state.categories);
+    });
+
     test('marks the state as on review when navigating to the review page', () => {
       // Arrange
       const state = buildState({ activeId: 0 });

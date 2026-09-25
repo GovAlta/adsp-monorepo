@@ -50,7 +50,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { createHumanizeError, extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { createHumanizeError, extractNames, extractScopedProperties, renderCellColumn } from './ObjectListControlUtils';
 import {
   FixTableHeaderAlignment,
   ListWithDetailWarningIconDiv,
@@ -64,7 +64,7 @@ import {
 } from './styled-components';
 import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
-import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const GenerateRows = (
@@ -207,6 +207,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     tableKeys = tempTableKeys;
   }
 
+  // Review only shows properties that have a control in the detail UI schema.
+  const detailProperties = extractScopedProperties(uischema?.options?.detail);
+  const reviewKeys =
+    detailProperties.size > 0
+      ? Object.fromEntries(Object.entries(tableKeys).filter(([key]) => detailProperties.has(key)))
+      : tableKeys;
+
   const hasAnyErrors = Array.isArray(errors as ErrorObject[])
     ? (errors as ErrorObject[])?.filter((err) => {
         return err.instancePath.includes(rowPath);
@@ -237,7 +244,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               {range(count || 0).map((i, key) => {
                 const rowData = data && data[i];
                 if (!rowData) return null;
-                const hasAnyValue = Object.keys(tableKeys).some((key) => {
+                const hasAnyValue = Object.keys(reviewKeys).some((key) => {
                   const value = rowData[key];
                   return value !== undefined && value !== null && (value as unknown) !== '';
                 });
@@ -247,7 +254,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 if (!hasAnyValue && !hasRowErrors) return null;
                 return (
                   <ReviewItemFrame key={i} data-testid={`${rowPath}.objectList-${key}`}>
-                    {Object.entries(tableKeys).map(([key, label]) => {
+                    {Object.entries(reviewKeys).map(([key, label]) => {
                       const value = rowData[key];
                       const isRequiredField = required?.includes(key) ?? false;
                       const fieldPath = `/${props.rowPath.replace(/\./g, '/')}/${i}/${key}`;
@@ -267,10 +274,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       if (fieldError) {
                         const raw = (fieldError as ErrorObject).message || '';
                         reviewError = raw.includes('required')
-                          ? `${capitalizeFirstLetter(key.replace(/[_-]/g, ' '))} is required`
+                          ? `${capitalizeFirstLetter(label.replace(/[_-]/g, ' '))} is required`
                           : raw;
                       } else if (isRequiredField && isEmptyValue) {
-                        reviewError = `${capitalizeFirstLetter(key.replace(/[_-]/g, ' '))} is required`;
+                        reviewError = `${capitalizeFirstLetter(label.replace(/[_-]/g, ' '))} is required`;
                       }
 
                       return (
@@ -354,13 +361,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           ).find((y) => {
                             return y?.message?.includes(element) || y.instancePath.includes(element);
                           }) as { message: string };
-
-                          function prettify(prop: string) {
-                            return prop
-                              .replace(/([A-Z])/g, ' $1')
-                              .replace(/[_-]/g, ' ')
-                              .replace(/^./, (c) => c.toUpperCase());
-                          }
 
                           // Create a human-friendly error message for rendering
                           let humanMessage: string | undefined = createHumanizeError(

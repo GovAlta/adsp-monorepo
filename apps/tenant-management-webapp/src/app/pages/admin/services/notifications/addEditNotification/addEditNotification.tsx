@@ -1,4 +1,3 @@
-// clean-code-ignore: RULE-19
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
@@ -66,6 +65,19 @@ const NotificationTypeValue = {
   CONTACT_EVENT_PAYLOAD: 'Notify contact in event payload at Json schema path',
 };
 
+// clean-code-ignore: RULE-19 — covered by ../notificationType/notificationTypes.spec.tsx, which
+// mounts NotificationTypeModalForm through NotificationTypes and exercises deriveNotifyStrategy
+// and the save-disabled logic below. The rule only looks for a same-directory test file.
+const deriveNotifyStrategy = (item?: NotificationItem) => {
+  if (item?.addressPath && item.addressPath.length > 0) {
+    return NotificationType.CONTACT_EVENT_PAYLOAD;
+  }
+  if (item?.address && item.address.length > 0) {
+    return NotificationType.CONTACT;
+  }
+  return NotificationType.SUBSCRIBERS;
+};
+
 export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
   onCancel,
@@ -86,17 +98,13 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const [addressPathChanged, setAddressPathChanged] = useState(false);
   const descErrMessage = 'Notification type description can not be over 180 characters';
   useEffect(() => {
-    setType(JSON.parse(JSON.stringify(initialValue)));
+    const initial = JSON.parse(JSON.stringify(initialValue));
+    setType(initial);
     setAddressPathChanged(false);
+    setIsNotifyAddressSetting(deriveNotifyStrategy(initial));
   }, [initialValue]);
-
-  useEffect(() => {
-    if (type?.addressPath && type.addressPath.length > 0) {
-      setIsNotifyAddressSetting(NotificationType.CONTACT_EVENT_PAYLOAD);
-    } else if (type?.address && type.address.length > 0) {
-      setIsNotifyAddressSetting(NotificationType.CONTACT);
-    }
-  }, [type]);
+  const initialNotifyAddressSetting = deriveNotifyStrategy(initialValue);
+  const strategyChanged = isNotifyAddressSetting !== initialNotifyAddressSetting;
 
   const roleNames = realmRoles
     ? realmRoles.map((role) => {
@@ -157,9 +165,20 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
       return;
     }
 
-    if (isNotifyAddressSetting === NotificationType.SUBSCRIBERS) {
+    if (isNotifyAddressSetting === NotificationType.CONTACT && validators['address'].check(type.address || '')) {
+      return;
+    }
+
+    // Only the fields for the chosen strategy are sent; the others are kept in
+    // local state while editing so switching strategies doesn't lose their values.
+    if (isNotifyAddressSetting !== NotificationType.CONTACT) {
       type.address = null;
+    }
+    if (isNotifyAddressSetting !== NotificationType.CONTACT_EVENT_PAYLOAD) {
       type.addressPath = null;
+      type.bccPath = null;
+      type.ccPath = null;
+      type.attachmentPath = null;
     }
 
     try {
@@ -179,8 +198,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   )
     .add('duplicated', 'name', duplicateNameCheck(typeNames, 'Notification type'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
-    .add('address', 'address', checkForContact)
+    .add('address', 'address', isNotEmptyCheck('Contact address'), checkForContact)
     .build();
+
+  const contactAddressMissing = isNotifyAddressSetting === NotificationType.CONTACT && !type.address?.trim();
   return (
     <EditStyles>
       <GoabModal
@@ -196,7 +217,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               onClick={() => {
                 setType(initialValue);
                 validators.clear();
-                setIsNotifyAddressSetting(NotificationType.SUBSCRIBERS);
+                setIsNotifyAddressSetting(deriveNotifyStrategy(initialValue));
                 setAddressPathChanged(false);
                 onCancel();
               }}
@@ -205,7 +226,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             </GoabButton>
             <GoabButton
               size="compact"
-              disabled={!addressPathChanged && (validators.haveErrors() || areObjectsEqual(type, initialValue))}
+              disabled={
+                contactAddressMissing ||
+                (!addressPathChanged &&
+                  !strategyChanged &&
+                  (validators.haveErrors() || areObjectsEqual(type, initialValue)))
+              }
               type="primary"
               testId="form-save"
               onClick={handleSave}
@@ -357,7 +383,14 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               ariaLabel="select-type-notification-radio-group"
               value={Object.keys(NotificationType).find((key) => NotificationType[key] === isNotifyAddressSetting)} //
               onChange={(detail: GoabRadioGroupOnChangeDetail) => {
-                setIsNotifyAddressSetting(NotificationType[detail.value]);
+                const newSetting = NotificationType[detail.value];
+                setIsNotifyAddressSetting(newSetting);
+                if (newSetting !== NotificationType.CONTACT) {
+                  validators.remove('address');
+                }
+                // Keep the fields for the other strategies around in local state so
+                // switching back and forth doesn't lose what was already typed;
+                // handleSave strips whichever ones don't apply to the chosen strategy.
               }}
             >
               {Object.keys(NotificationType).map((label, key) => (
@@ -376,12 +409,8 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               aria-label="input-address"
               width="60%"
               onChange={(detail: GoabInputOnChangeDetail) => {
-                const validations = {
-                  address: detail.value,
-                };
-                validators.remove('address');
-                validators.checkAll(validations);
                 type.address = detail.value;
+                validators['address'].check(detail.value);
               }}
             />
           </GoabFormItem>
