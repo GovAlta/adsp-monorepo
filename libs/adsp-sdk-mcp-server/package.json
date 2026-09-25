@@ -10,6 +10,7 @@
   "dependencies": {
     "@abgov/adsp-cli": "^1.7.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^4.21.0",
     "tslib": "^2.3.0",
     "zod": "^3.25.76"
   }
