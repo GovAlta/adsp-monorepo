@@ -62,7 +62,7 @@ components:
       - Value definition
     description: >
       Retrieves the tenant and core value definitions, grouped by namespace. Requires the value-reader or
-      configuration-admin role. Core users without a tenant context receive only core definitions.
+      value-writer role. Core users without a tenant context receive only core definitions.
     responses:
       200:
         description: Value definitions successfully retrieved.
@@ -99,7 +99,7 @@ components:
       - Value definition
     description: >
       Creates a value definition in the tenant configuration, adding the namespace if it does not exist. Requires the
-      configuration-admin role. The JSON schema must be a valid JSON schema.
+      value-writer role. The JSON schema must be a valid JSON schema.
     requestBody:
       required: true
       content:
@@ -157,7 +157,7 @@ components:
       - Value definition
     description: >
       Retrieves a value definition. The tenant definition is returned if it exists, otherwise the core definition.
-      Requires the value-reader or configuration-admin role.
+      Requires the value-reader or value-writer role.
     responses:
       200:
         description: Value definition successfully retrieved.
@@ -178,7 +178,7 @@ components:
       - Value definition
     description: >
       Updates a tenant value definition. Properties not included in the request are left unchanged. Requires the
-      configuration-admin role. The JSON schema must be a valid JSON schema.
+      value-writer role. The JSON schema must be a valid JSON schema.
     requestBody:
       required: true
       content:
@@ -207,7 +207,7 @@ components:
       - Value definition
     description: >
       Deletes a tenant value definition. The namespace is removed when its last definition is deleted. Requires the
-      configuration-admin role.
+      value-writer role.
     responses:
       200:
         description: Value definition successfully deleted.
