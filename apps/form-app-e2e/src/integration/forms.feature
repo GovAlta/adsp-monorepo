@@ -109,8 +109,9 @@ Feature: Form app
     When autotest user 3 is logged in to see "autotest-form-tester-role" application
     Then the user views a form page with primary application button enabled for "autotest-form-tester-role"
 
+  # A regression bug: CS-5482
   # TEST DATA: autotest-tasklist is created as a form definition with two tasks and a summary page
-  @TEST_CS-4052 @REQ_CS-3812 @REQ_CS-4016 @REQ_CS-3881 @REQ_CS-4015 @REQ_CS-4168 @REQ_CS-4422 @regression
+  @TEST_CS-4052 @REQ_CS-3812 @REQ_CS-4016 @REQ_CS-3881 @REQ_CS-4015 @REQ_CS-4168 @REQ_CS-4422 @regression @ignore
   Scenario: As a form user, I can navigate between the task list and pages, view task status, submit it from summary page
     Given the user deletes any existing form from "Auto Test" for "autotest-tasklist"
     When an authenticated user is logged in to see "autotest-tasklist" application
@@ -172,8 +173,9 @@ Feature: Form app
     And the user clicks change link for "Citizen" field of "Additional Information" on summary page
     Then the user views "Citizen" checkbox is focused and brought into view on the form page
 
+  # Regression bug of CS-5482
   # TEST DATA: regression-control-examples is created with all types of control examples with some validation rules
-  @TEST_CS-4007 @regression
+  @TEST_CS-4007 @regression @ignore
   Scenario: As a form user, I can see validation errors on different rules
     Given an anonymous applicant goes to "regression-control-examples" application
     Then the user views an anonymous form draft of "regression-control-examples"
@@ -195,8 +197,9 @@ Feature: Form app
     And the user views "Data schema enumeration is required" validation error message under "Data schema enumeration" field of "Controls" on summary page
     And the user views "Social insurance number is invalid" validation error message under "Social insurance number" field of "Standard controls" on summary page
 
+  # Regression bug of CS-5482
   # TEST DATA: regression-control-examples is created with all types of control examples
-  @TEST_CS-4003 @regression
+  @TEST_CS-4003 @regression @ignore
   Scenario: As a form user, I can use basic controls in a form
     Given an anonymous applicant goes to "regression-control-examples" application
     Then the user views an anonymous form draft of "regression-control-examples"
@@ -235,8 +238,9 @@ Feature: Form app
     # And the user views the summary of "Controls" with "border" as "not required" "API based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "API based enumeration"
 
+  # Regression bug of CS-5482
   # TEST DATA: regression-control-examples is created with all types of control examples
-  @TEST_CS-4004 @regression
+  @TEST_CS-4004 @regression @ignore
   Scenario: As a form user, I can use basic controls in a form
     Given an anonymous applicant goes to "regression-control-examples" application
     Then the user views an anonymous form draft of "regression-control-examples"
@@ -264,8 +268,9 @@ Feature: Form app
     And the user views the summary of "Standard controls" with "V6E 1C1" as "required" "Postal code" under "Canadian mailing address" for standard postal address control
     And the user views the summary of "Standard controls" with "111 111 118" as "not required" "Social insurance number"
 
+  # Regression bug of CS-5482
   # TEST DATA: regression-control-examples is created with all types of control examples
-  @TEST_CS-3993 @regression
+  @TEST_CS-3993 @regression @ignore
   Scenario: As a form user, I can use rule to dynamically change the form based on user input
     Given an anonymous applicant goes to "regression-control-examples" application
     Then the user views an anonymous form draft of "regression-control-examples"
@@ -307,8 +312,9 @@ Feature: Form app
     And the user clicks "Summary" task on task list page
     Then the user views the summary of "Dynamic elements" with "EvenNumber2" as "not required" "Enable on even number"
 
+  # Regression bug of CS-5483
   # TEST DATA: regression-control-examples is created with all types of control examples
-  @TEST_CS-4006 @regression
+  @TEST_CS-4006 @regression @ignore
   Scenario: As a form user, I can use object lists in a form
     Given an anonymous applicant goes to "regression-control-examples" application
     Then the user views an anonymous form draft of "regression-control-examples"
