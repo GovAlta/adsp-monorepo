@@ -36,6 +36,11 @@ describe('CopyLinkIcon', () => {
     expect(button()).toHaveAttribute('icon', 'copy');
   });
 
+  it('titles the button so its inner icon has an accessible name', () => {
+    const { button } = renderIcon();
+    expect(button()).toHaveAttribute('title', 'Copy Form admin app link');
+  });
+
   it('copies the link and shows a checkmark for about 5 seconds', async () => {
     writeText.mockResolvedValue(undefined);
     const { button } = renderIcon();
