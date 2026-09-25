@@ -2,7 +2,7 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import express from 'express';
+import * as express from 'express';
 import { randomUUID } from 'crypto';
 import { createAdspMcpServer } from './server';
 
