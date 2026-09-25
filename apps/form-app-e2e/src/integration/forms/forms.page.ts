@@ -88,7 +88,7 @@ class FormsPage {
   }
 
   formPageSubmitButton() {
-    return cy.xpath('//goa-button[@type="submit" and text()="Submit"]');
+    return cy.xpath('//goa-button[@type="primary" and text()="Submit"]');
   }
 
   formListWithDetailButton(label) {
