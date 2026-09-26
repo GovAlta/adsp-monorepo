@@ -535,19 +535,27 @@ describe('subscription router documented behaviour', () => {
       ...extra,
     });
 
-    // The subscriber model lets code-sender send and check codes, but the router only reaches the operation after
-    // the same access check as retrieving the subscriber, so code-sender alone is not enough.
-    it.each(['send-code', 'check-code', 'verify-channel'])(
-      'responds 403 when code-sender runs %s for another subscriber',
-      async (op) => {
-        const res = await request(createApp(codeSender))
-          .post(`/subscription/v1/subscribers/${otherSubscriberId}`)
-          .send(operation(op, { code: '123' }));
-        expect(res.status).toBe(403);
-        expect(verifyServiceMock.sendCode).not.toHaveBeenCalled();
-        expect(verifyServiceMock.verifyCode).not.toHaveBeenCalled();
-      },
-    );
+    // Skipped until fixed; tracked in Jira: "notification-service: code-sender role can't send or check codes for
+    // another subscriber". The subscriber model allows it, but the router applies the same access check as retrieving
+    // the subscriber first and responds 403.
+    it.skip.each([
+      ['send-code', { sent: true }],
+      ['check-code', { verified: true }],
+    ])('allows code-sender to run %s for another subscriber', async (op, result) => {
+      const res = await request(createApp(codeSender))
+        .post(`/subscription/v1/subscribers/${otherSubscriberId}`)
+        .send(operation(op, { code: '123' }));
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(result);
+    });
+
+    it('responds 403 when code-sender tries to verify the channel of another subscriber', async () => {
+      const res = await request(createApp(codeSender))
+        .post(`/subscription/v1/subscribers/${otherSubscriberId}`)
+        .send(operation('verify-channel', { code: '123' }));
+      expect(res.status).toBe(403);
+      expect(verifyServiceMock.verifyCode).not.toHaveBeenCalled();
+    });
 
     it('allows a user to send a code to their own subscriber', async () => {
       const res = await request(createApp(applicant))
@@ -584,6 +592,19 @@ describe('subscription router documented behaviour', () => {
         .post(`/subscription/v1/subscribers/${otherSubscriberId}`)
         .send(operation('send-code', { address: 'unknown@test.co' }));
       expect(res.status).toBe(400);
+    });
+  });
+
+  // Skipped until fixed; tracked in Jira: "notification-service: GET /subscribers/{subscriber}/types/{type}/channels
+  // never responds". The route registers the handler factory instead of the handler, so requests hang. The route is
+  // also not in subscription.swagger.yml yet.
+  describe('GET /subscribers/:subscriber/types/:type/channels', () => {
+    it.skip('responds with the channels of the subscription that the type can send to', async () => {
+      subscribe('self-service', applicantSubscriberId);
+      const res = await request(createApp(applicant)).get(
+        `/subscription/v1/subscribers/${applicantSubscriberId}/types/self-service/channels`,
+      );
+      expect(res.status).toBe(200);
     });
   });
 

@@ -891,7 +891,8 @@ components:
       - Subscription
     description: >
       Executes a subscriber operation to send or check a verification code for a channel. Same permissions as
-      retrieving the subscriber.
+      retrieving the subscriber. Users with the code-sender role can also send and check codes (but not verify
+      the channel) for any subscriber of the tenant.
     requestBody:
       required: true
       content:

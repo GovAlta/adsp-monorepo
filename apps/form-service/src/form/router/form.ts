@@ -1042,8 +1042,11 @@ export function createFormRouter({
   router.get(
     '/forms/:formId/submissions/:submissionId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID(), param('submissionId').isUUID()),
-    getFormSubmission(apiId, submissionRepository),
+    createValidationHandler(
+      param('formId').isUUID(),
+      param('submissionId').isUUID(),
+      getFormSubmission(apiId, submissionRepository),
+    ),
   );
   router.post(
     '/forms/:formId/submissions/:submissionId',

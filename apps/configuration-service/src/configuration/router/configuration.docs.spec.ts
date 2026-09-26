@@ -299,6 +299,20 @@ describe('configuration router documented behaviour', () => {
       );
       expect(res.status).toBe(401);
     });
+
+    // Skipped until fixed; tracked in Jira: "configuration-service: anonymous configuration reads are never rate
+    // limited". getConfigurationEntity only rate limits when req.isAuthenticated is not set, but passport always sets it.
+    it.skip('rate limits anonymous requests', async () => {
+      const app = createApp(null);
+      const url = `/configuration/v2/configuration/app/public-settings/${path}?tenant=${encodeURIComponent(
+        tenantId.toString(),
+      )}`;
+      for (let i = 0; i < 200; i++) {
+        await request(app).get(url);
+      }
+      const res = await request(app).get(url);
+      expect(res.status).toBe(429);
+    });
   });
 
   describe('GET /configuration/:namespace/:name/active', () => {

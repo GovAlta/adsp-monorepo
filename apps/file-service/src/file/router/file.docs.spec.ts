@@ -9,7 +9,7 @@ import * as request from 'supertest';
 import { Logger } from 'winston';
 import { FileEntity, FileTypeEntity } from '../model';
 import { ServiceUserRoles } from '../types';
-import { createFileRouter } from './file';
+import { createFileRouter, getTypes } from './file';
 
 // Verifies the request validation, roles, and error responses documented in file.swagger.yml by sending requests
 // through the router with the real error handler.
@@ -128,6 +128,19 @@ describe('file router documented behaviour', () => {
   });
 
   describe('GET /types', () => {
+    // Skipped until fixed; tracked in Jira: "file-service: GET /file/v1/types loses the original error on failure".
+    // The handler passes the response object to next instead of the error.
+    it.skip('passes a configuration error to the error handler', async () => {
+      const error = new Error('Configuration unavailable.');
+      const next = jest.fn();
+      await getTypes(
+        { user: admin, getConfiguration: jest.fn().mockRejectedValue(error) } as never,
+        { send: jest.fn() } as never,
+        next,
+      );
+      expect(next).toHaveBeenCalledWith(error);
+    });
+
     it('lists types with anonymousRead or a matching read or update role', async () => {
       const res = await request(createApp(user('other-uploader', ['other-uploader']))).get('/file/v1/types');
       expect(res.status).toBe(200);
