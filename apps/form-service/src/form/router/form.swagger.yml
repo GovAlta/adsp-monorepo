@@ -1197,7 +1197,7 @@ components:
       - Form Submission
     description: >
       Update the form disposition for the form submission. Requires the form-service admin role or one of the
-      definition's assessor roles. The status must match the ID or name of one of the definition's disposition states.
+      definition's assessor roles. The status must match the name of one of the definition's disposition states.
     responses:
       200:
         description: Successfully updated the form submission.
@@ -1205,6 +1205,20 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormSubmission'
+      400:
+        description: >
+          Request is invalid, for example dispositionStatus or dispositionReason is missing, or the status does not
+          match a disposition state of the definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
     requestBody:
       required: true
       content:
