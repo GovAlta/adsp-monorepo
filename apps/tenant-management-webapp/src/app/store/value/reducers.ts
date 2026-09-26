@@ -8,6 +8,10 @@ import {
   UPDATE_VALUE_DEFINITION_SUCCESS_ACTION,
   CLEAR_VALUE_LOG_ENTRIES_SUCCESS_ACTION,
   FETCH_VALUE_METRICS_SUCCESS_ACTION,
+  CREATE_VALUE_DEFINITION_ACTION,
+  UPDATE_VALUE_DEFINITION_ACTION,
+  SAVE_VALUE_DEFINITION_FAILED_ACTION,
+  CLEAR_VALUE_DEFINITION_SAVE_ACTION,
 } from './actions';
 import { ValueState } from './models';
 
@@ -18,6 +22,7 @@ const defaultState: ValueState = {
   nextEntries: null,
   metrics: {},
   isLoading: { definitions: false, log: false },
+  definitionSave: { status: 'idle' },
 };
 
 export default function (state: ValueState = defaultState, action: ValueActionTypes): ValueState {
@@ -43,6 +48,13 @@ export default function (state: ValueState = defaultState, action: ValueActionTy
           definitions: false,
         },
       };
+    case CREATE_VALUE_DEFINITION_ACTION:
+    case UPDATE_VALUE_DEFINITION_ACTION:
+      return { ...state, definitionSave: { status: 'saving' } };
+    case SAVE_VALUE_DEFINITION_FAILED_ACTION:
+      return { ...state, definitionSave: { status: 'failed', error: action.error } };
+    case CLEAR_VALUE_DEFINITION_SAVE_ACTION:
+      return { ...state, definitionSave: { status: 'idle' } };
     case UPDATE_VALUE_DEFINITION_SUCCESS_ACTION: {
       const key = `${action.definition.namespace}:${action.definition.name}`;
       const newState = {
@@ -51,6 +63,7 @@ export default function (state: ValueState = defaultState, action: ValueActionTy
           ...state.definitions,
           [key]: action.definition,
         },
+        definitionSave: { status: 'saved' as const },
       };
 
       if (!newState.results.includes(key)) {

@@ -2,7 +2,11 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ValueDefinitionsList } from './definitionsList';
-import type { ValueDefinition } from '@store/value/models';
+import type { ValueDefinition, ValueDefinitionSave } from '@store/value/models';
+import { Provider } from 'react-redux';
+import configureStore from 'redux-mock-store';
+import { ValueDefinitions } from './definitions';
+import { CLEAR_VALUE_DEFINITION_SAVE_ACTION } from '@store/value/actions';
 
 import { ValueComponent } from './definitionsList';
 
@@ -178,5 +182,42 @@ describe('Value Component', () => {
     const editBtn = baseElement.querySelector("goa-icon-button[testId='edit-details']");
     fireEvent.click(editBtn);
     expect(mockDelete).not.toHaveBeenCalled();
+  });
+});
+
+describe('ValueDefinitions save handling', () => {
+  const mockStore = configureStore([]);
+  const storeWith = (definitionSave: ValueDefinitionSave) =>
+    mockStore({
+      session: { indicator: { show: false } },
+      valueService: { results: [], definitions: {}, definitionSave },
+    });
+
+  it('clears the save state once the service accepts the definition', () => {
+    const store = storeWith({ status: 'saved' });
+    render(
+      <Provider store={store}>
+        <ValueDefinitions activeEdit={false} />
+      </Provider>
+    );
+
+    expect(store.getActions()).toContainEqual({ type: CLEAR_VALUE_DEFINITION_SAVE_ACTION });
+  });
+
+  it('shows a rejected save in the open modal', async () => {
+    const store = storeWith({ status: 'failed', error: 'Value definition has an invalid JSON schema.' });
+    const { baseElement } = render(
+      <Provider store={store}>
+        <ValueDefinitions activeEdit={false} />
+      </Provider>
+    );
+
+    fireEvent(baseElement.querySelector("goa-button[testId='value-add-definition']"), new CustomEvent('_click'));
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-callout[testId='value-save-error']")).toHaveTextContent(
+        'Value definition has an invalid JSON schema.'
+      );
+    });
   });
 });

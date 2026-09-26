@@ -8,6 +8,8 @@ export const DELETE_VALUE_DEFINITION_SUCCESS_ACTION = 'value/DELETE_VALUE_DEFINI
 export const CREATE_VALUE_DEFINITION_ACTION = 'value/CREATE_VALUE_DEFINITION_ACTION'; // clean-code-ignore: RULE-19 — covered by store/value/actions.spec.ts.
 export const UPDATE_VALUE_DEFINITION_ACTION = 'value/UPDATE_VALUE_DEFINITION_ACTION';
 export const UPDATE_VALUE_DEFINITION_SUCCESS_ACTION = 'value/UPDATE_VALUE_DEFINITION_SUCCESS_ACTION';
+export const SAVE_VALUE_DEFINITION_FAILED_ACTION = 'value/SAVE_VALUE_DEFINITION_FAILED_ACTION';
+export const CLEAR_VALUE_DEFINITION_SAVE_ACTION = 'value/CLEAR_VALUE_DEFINITION_SAVE_ACTION';
 
 export const FETCH_VALUE_LOG_ENTRIES_ACTION = 'valueLog/FETCH_VALUE_LOG_ENTRIES_ACTION';
 export const FETCH_VALUE_LOG_ENTRIES_SUCCESS_ACTION = 'valueLog/FETCH_VALUE_LOG_ENTRIES_SUCCESS_ACTION';
@@ -51,6 +53,15 @@ export interface UpdateValueDefinitionSuccessAction {
   definition: ValueDefinition;
 }
 
+export interface SaveValueDefinitionFailedAction {
+  type: typeof SAVE_VALUE_DEFINITION_FAILED_ACTION;
+  error: string;
+}
+
+export interface ClearValueDefinitionSaveAction {
+  type: typeof CLEAR_VALUE_DEFINITION_SAVE_ACTION;
+}
+
 export interface FetchValueLogEntriesAction {
   type: typeof FETCH_VALUE_LOG_ENTRIES_ACTION;
   after: string;
@@ -85,6 +96,8 @@ export type ValueActionTypes =
   | CreateValueDefinitionAction
   | UpdateValueDefinitionAction
   | UpdateValueDefinitionSuccessAction
+  | SaveValueDefinitionFailedAction
+  | ClearValueDefinitionSaveAction
   | FetchValueLogEntriesAction
   | FetchValueLogEntriesSuccessAction
   | ClearValueLogEntriesSuccessAction
@@ -123,6 +136,15 @@ export const updateValueDefinition = (definition: ValueDefinition): UpdateValueD
 export const updateValueDefinitionSuccess = (definition: ValueDefinition): UpdateValueDefinitionSuccessAction => ({
   type: UPDATE_VALUE_DEFINITION_SUCCESS_ACTION,
   definition,
+});
+
+export const saveValueDefinitionFailed = (error: string): SaveValueDefinitionFailedAction => ({
+  type: SAVE_VALUE_DEFINITION_FAILED_ACTION,
+  error,
+});
+
+export const clearValueDefinitionSave = (): ClearValueDefinitionSaveAction => ({
+  type: CLEAR_VALUE_DEFINITION_SAVE_ACTION,
 });
 
 export const getValueLogEntries = (

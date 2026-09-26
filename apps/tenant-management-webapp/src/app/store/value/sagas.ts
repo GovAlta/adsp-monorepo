@@ -16,6 +16,7 @@ import {
   FETCH_VALUE_METRICS_ACTION,
   getValueDefinitionsSuccess,
   getValueLogEntriesSucceeded,
+  saveValueDefinitionFailed,
   UpdateValueDefinitionAction,
   updateValueDefinitionSuccess,
   UPDATE_VALUE_DEFINITION_ACTION,
@@ -40,6 +41,9 @@ const toDefinitionRequest = ({ name, description, jsonSchema }: ValueDefinition)
   description,
   jsonSchema,
 });
+
+const toSaveErrorMessage = (err): string =>
+  err?.response?.data?.errorMessage || err?.message || 'Failed to save the value definition.';
 
 const getDefinitionUrl = (baseUrl: string, { namespace, name }: ValueDefinition) =>
   `${baseUrl}/value/v1/definitions/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
@@ -90,7 +94,7 @@ export function* createValueDefinition({ definition }: CreateValueDefinitionActi
 
       yield put(updateValueDefinitionSuccess(data));
     } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+      yield put(saveValueDefinitionFailed(toSaveErrorMessage(err)));
     }
   }
 }
@@ -107,7 +111,7 @@ export function* updateValueDefinition({ definition }: UpdateValueDefinitionActi
 
       yield put(updateValueDefinitionSuccess(data));
     } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+      yield put(saveValueDefinitionFailed(toSaveErrorMessage(err)));
     }
   }
 }

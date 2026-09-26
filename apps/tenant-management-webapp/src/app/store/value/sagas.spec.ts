@@ -8,6 +8,7 @@ import {
   DELETE_VALUE_DEFINITION_SUCCESS_ACTION,
   FETCH_VALUE_DEFINITIONS_ACTION,
   FETCH_VALUE_DEFINITIONS_SUCCESS_ACTION,
+  SAVE_VALUE_DEFINITION_FAILED_ACTION,
   UPDATE_VALUE_DEFINITION_ACTION,
   UPDATE_VALUE_DEFINITION_SUCCESS_ACTION,
 } from './actions';
@@ -115,7 +116,7 @@ describe('value definition sagas', () => {
     expect(actions).toContainEqual({ type: DELETE_VALUE_DEFINITION_SUCCESS_ACTION, definition });
   });
 
-  it('reports write errors', async () => {
+  it('reports a failed create with the error message', async () => {
     const { actions } = await runWithResponse(
       createValueDefinition,
       { type: CREATE_VALUE_DEFINITION_ACTION, definition },
@@ -123,6 +124,21 @@ describe('value definition sagas', () => {
     );
 
     expect(actions.find((a) => a.type === UPDATE_VALUE_DEFINITION_SUCCESS_ACTION)).toBeUndefined();
-    expect(actions).toHaveLength(1);
+    expect(actions).toEqual([{ type: SAVE_VALUE_DEFINITION_FAILED_ACTION, error: 'conflict' }]);
+  });
+
+  it('reports a rejected update with the service error message', async () => {
+    const rejected = Object.assign(new Error('Request failed with status code 400'), {
+      response: { data: { errorMessage: 'Value definition has an invalid JSON schema.' } },
+    });
+    const { actions } = await runWithResponse(
+      updateValueDefinition,
+      { type: UPDATE_VALUE_DEFINITION_ACTION, definition },
+      rejected
+    );
+
+    expect(actions).toEqual([
+      { type: SAVE_VALUE_DEFINITION_FAILED_ACTION, error: 'Value definition has an invalid JSON schema.' },
+    ]);
   });
 });

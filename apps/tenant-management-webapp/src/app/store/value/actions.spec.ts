@@ -1,8 +1,12 @@
 import {
+  clearValueDefinitionSave,
+  CLEAR_VALUE_DEFINITION_SAVE_ACTION,
   createValueDefinition,
   CREATE_VALUE_DEFINITION_ACTION,
   deleteValueDefinition,
   DELETE_VALUE_DEFINITION_ACTION,
+  saveValueDefinitionFailed,
+  SAVE_VALUE_DEFINITION_FAILED_ACTION,
   updateValueDefinition,
   updateValueDefinitionSuccess,
   UPDATE_VALUE_DEFINITION_ACTION,
@@ -27,5 +31,13 @@ describe('value definition actions', () => {
 
   it('creates the delete definition action', () => {
     expect(deleteValueDefinition(definition)).toEqual({ type: DELETE_VALUE_DEFINITION_ACTION, definition });
+  });
+
+  it('creates the save failed and clear save actions', () => {
+    expect(saveValueDefinitionFailed('invalid schema')).toEqual({
+      type: SAVE_VALUE_DEFINITION_FAILED_ACTION,
+      error: 'invalid schema',
+    });
+    expect(clearValueDefinitionSave()).toEqual({ type: CLEAR_VALUE_DEFINITION_SAVE_ACTION });
   });
 });

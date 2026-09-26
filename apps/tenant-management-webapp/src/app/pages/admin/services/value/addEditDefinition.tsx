@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react';
 import {
   GoabButton,
   GoabButtonGroup,
+  GoabCallout,
   GoabInput,
   GoabModal,
   GoabFormItem,
@@ -35,6 +36,8 @@ interface AddEditValueDefinitionProps {
   isEdit: boolean;
   onClose: () => void;
   values: ValueDefinition[];
+  saving?: boolean;
+  saveError?: string;
 }
 
 export const AddEditValueDefinition = ({
@@ -44,6 +47,8 @@ export const AddEditValueDefinition = ({
   isEdit,
   onClose,
   values,
+  saving,
+  saveError,
 }: AddEditValueDefinitionProps): JSX.Element => {
   const [definition, setDefinition] = useState<ValueDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.jsonSchema, null, 2));
@@ -116,8 +121,6 @@ export const AddEditValueDefinition = ({
       jsonSchema: payloadSchemaObj,
       description: definition.description,
     });
-    setDefinition(initialValue);
-    onClose();
   };
 
   return (
@@ -144,7 +147,7 @@ export const AddEditValueDefinition = ({
               size="compact"
               type="primary"
               testId="value-save"
-              disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
+              disabled={saving || !definition.name || !definition.namespace || Object.entries(errors).length > 0}
               onClick={() => {
                 if (!loadingIndicator.show) {
                   validationCheck();
@@ -156,6 +159,11 @@ export const AddEditValueDefinition = ({
           </GoabButtonGroup>
         }
       >
+        {saveError && (
+          <GoabCallout type="emergency" size="medium" mb="m" testId="value-save-error">
+            {saveError}
+          </GoabCallout>
+        )}
         <GoabFormItem error={errors?.['namespace']} label="Namespace" mb="s">
           <NamespaceDropdown
             value={definition.namespace}

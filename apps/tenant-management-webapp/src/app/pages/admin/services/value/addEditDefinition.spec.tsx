@@ -172,3 +172,56 @@ test('keeps description text that arrives without a keystroke, as a mouse paste 
     );
   });
 });
+
+test('stays open after save so the page can close it once the service accepts the definition', async () => {
+  const store = mockStore(initialState);
+  const onSave = jest.fn();
+  const onClose = jest.fn();
+
+  const { baseElement } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition
+        onSave={onSave}
+        initialValue={{ ...initialValue, namespace: 'ns', name: 'thing' }}
+        open={true}
+        isEdit={true}
+        onClose={onClose}
+        values={[]}
+      />
+    </Provider>
+  );
+
+  fireEvent(baseElement.querySelector("goa-button[testId='value-save']"), new CustomEvent('_click'));
+
+  await waitFor(() => expect(onSave).toHaveBeenCalled());
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test('shows the save error and disables save while saving', () => {
+  const store = mockStore(initialState);
+  const props = {
+    onSave: () => {},
+    initialValue: { ...initialValue, namespace: 'ns', name: 'thing' },
+    open: true,
+    isEdit: true,
+    onClose: () => {},
+    values: [],
+  };
+
+  const { baseElement, rerender } = render(
+    <Provider store={store}>
+      <AddEditValueDefinition {...props} saveError="Value definition has an invalid JSON schema." />
+    </Provider>
+  );
+  expect(baseElement.querySelector("goa-callout[testId='value-save-error']")).toHaveTextContent(
+    'Value definition has an invalid JSON schema.'
+  );
+
+  rerender(
+    <Provider store={store}>
+      <AddEditValueDefinition {...props} saving={true} />
+    </Provider>
+  );
+  expect(baseElement.querySelector("goa-callout[testId='value-save-error']")).not.toBeInTheDocument();
+  expect(baseElement.querySelector("goa-button[testId='value-save']")).toBeDisabled();
+});

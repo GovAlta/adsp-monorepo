@@ -31,6 +31,12 @@ export interface ValueState {
     log: boolean;
   };
   metrics: ValueMetrics;
+  definitionSave: ValueDefinitionSave; // clean-code-ignore: RULE-19 — type declarations only; covered by store/value/reducers.spec.ts.
+}
+
+export interface ValueDefinitionSave {
+  status: 'idle' | 'saving' | 'saved' | 'failed';
+  error?: string;
 }
 
 export interface ValueSearchCriteria {

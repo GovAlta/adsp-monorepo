@@ -7,6 +7,7 @@ import { renderNoItem } from '@components/NoItem';
 import { ValueDefinitionsList } from './definitionsList';
 import { AddEditValueDefinition } from './addEditDefinition';
 import {
+  clearValueDefinitionSave,
   createValueDefinition,
   deleteValueDefinition,
   getValueDefinitions,
@@ -33,20 +34,30 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
     state.valueService.results.map((r) => state.valueService.definitions[r])
   );
 
+  const definitionSave = useSelector((state: RootState) => state.valueService.definitionSave);
+
+  const dispatch = useDispatch();
   const reset = () => {
     document.body.style.overflow = 'unset';
     setIsEdit(false);
     setOpenAddDefinition(false);
     setSelectedDefinition(defaultValueDefinition);
+    dispatch(clearValueDefinitionSave());
   };
 
-  const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getValueDefinitions());
   }, [dispatch]);
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, [definitions]);
+
+  // The modal stays open until the service accepts the definition, so a rejected save keeps the user's edits.
+  useEffect(() => {
+    if (definitionSave?.status === 'saved') {
+      reset();
+    }
+  }, [definitionSave?.status]);
 
   useEffect(() => {
     if (activeEdit) {
@@ -114,6 +125,8 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           isEdit={isEdit}
           initialValue={selectedDefinition}
           values={[...tenantDefinitions, ...coreDefinitions]}
+          saving={definitionSave?.status === 'saving'}
+          saveError={definitionSave?.status === 'failed' ? definitionSave.error : undefined}
           onSave={(definition) => {
             dispatch(isEdit ? updateValueDefinition(definition) : createValueDefinition(definition));
           }}
