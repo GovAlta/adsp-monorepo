@@ -1,4 +1,9 @@
-import { addJsonformsPages, addFeedbackServicePages, addDesignSystemPages } from './servicePageUtils';
+import {
+  addJsonformsPages,
+  addFeedbackServicePages,
+  addDesignSystemPages,
+  addAdspComponentsPages,
+} from './servicePageUtils';
 import { ServicePage } from '../components/services/ServiceListTemplate';
 
 describe('servicePageUtils', () => {
@@ -138,6 +143,45 @@ describe('servicePageUtils', () => {
           name: 'Design systems Example 1',
           url: '//services/design-systems/example1',
           testId: 'designSystemsExample1',
+        },
+      ]);
+    });
+  });
+
+  describe('addAdspComponentsPages', () => {
+    test('returns the correct ADSP components pages for a given tenant', () => {
+      // Arrange
+      const tenantName = 'testTenant';
+
+      // Act
+      const result = addAdspComponentsPages(tenantName);
+
+      // Assert
+      expect(result).toEqual<ServicePage[]>([
+        {
+          id: 'adspThemeExample1',
+          name: 'ADSP theme provider',
+          url: '/testTenant/services/adsp-components/theme',
+          testId: 'adspThemeExample1',
+        },
+      ]);
+    });
+
+    test('returns an empty array when tenantName is an empty string', () => {
+      // Arrange
+      // clean-code-ignore: 2.14
+      const tenantName = '';
+
+      // Act
+      const result = addAdspComponentsPages(tenantName);
+
+      // Assert
+      expect(result).toEqual<ServicePage[]>([
+        {
+          id: 'adspThemeExample1',
+          name: 'ADSP theme provider',
+          url: '//services/adsp-components/theme',
+          testId: 'adspThemeExample1',
         },
       ]);
     });

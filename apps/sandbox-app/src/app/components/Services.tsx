@@ -38,6 +38,13 @@ interface ServiceInfo {
 // This contains the list of services/libraries that we can create exammples for.
 const SERVICES: ServiceInfo[] = [
   {
+    id: 'AdspComponents',
+    name: 'ADSP components',
+    show: true,
+    description: 'ADSP application components and theming',
+    url: '/adsp-components',
+  },
+  {
     id: 'AgentService',
     name: 'Agent service',
     show: true,
