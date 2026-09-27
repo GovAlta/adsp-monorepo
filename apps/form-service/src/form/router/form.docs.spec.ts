@@ -397,8 +397,7 @@ describe('form routers documented behaviour', () => {
     });
   });
 
-  // Skipped cases are known gaps between form.swagger.yml and the implementation, tracked in Jira:
-  // "form-service: /forms/{formId}/submissions/{submissionId} doesn't match its API docs".
+  // Skipped cases are known gaps between form.swagger.yml and the implementation, tracked in CS-5489.
   describe.each([
     ['/submissions/:submissionId', (id: string) => `/form/v1/submissions/${id}`, it],
     [
@@ -467,7 +466,8 @@ describe('form routers documented behaviour', () => {
       expect(res.body.disposition).toMatchObject({ status: 'approved', reason: 'Meets criteria.' });
     });
 
-    // The docs say the status can match the ID or name of a disposition state, but only the name is matched.
+    // Skipped until CS-5489 is fixed: the docs say the status can match the ID or name of a disposition state, but
+    // only the name is matched.
     it.skip('accepts the ID of a disposition state', async () => {
       const res = await request(createApp(admin))
         .post(url)
@@ -475,7 +475,8 @@ describe('form routers documented behaviour', () => {
       expect(res.status).toBe(200);
     });
 
-    // The error cases below are implemented, but the operation only documents a 200 response.
+    // Skipped until CS-5489 is fixed: the error cases below are implemented, but the operation only documents a 200
+    // response.
     it.skip.each([
       ['dispositionStatus', { dispositionReason: 'Meets criteria.' }],
       ['dispositionReason', { dispositionStatus: 'approved' }],

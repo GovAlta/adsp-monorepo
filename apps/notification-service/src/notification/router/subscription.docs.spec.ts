@@ -535,9 +535,8 @@ describe('subscription router documented behaviour', () => {
       ...extra,
     });
 
-    // Skipped until fixed; tracked in Jira: "notification-service: code-sender role can't send or check codes for
-    // another subscriber". The subscriber model allows it, but the router applies the same access check as retrieving
-    // the subscriber first and responds 403.
+    // Skipped until CS-5490 is decided and fixed: the subscriber model allows it, but the router applies the same
+    // access check as retrieving the subscriber first and responds 403.
     it.skip.each([
       ['send-code', { sent: true }],
       ['check-code', { verified: true }],
@@ -595,9 +594,8 @@ describe('subscription router documented behaviour', () => {
     });
   });
 
-  // Skipped until fixed; tracked in Jira: "notification-service: GET /subscribers/{subscriber}/types/{type}/channels
-  // never responds". The route registers the handler factory instead of the handler, so requests hang. The route is
-  // also not in subscription.swagger.yml yet.
+  // Skipped until CS-5492 is fixed: the route registers the handler factory instead of the handler, so requests
+  // hang. The route is also not in subscription.swagger.yml yet.
   describe('GET /subscribers/:subscriber/types/:type/channels', () => {
     it.skip('responds with the channels of the subscription that the type can send to', async () => {
       subscribe('self-service', applicantSubscriberId);

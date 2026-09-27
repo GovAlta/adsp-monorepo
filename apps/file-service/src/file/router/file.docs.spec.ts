@@ -128,8 +128,7 @@ describe('file router documented behaviour', () => {
   });
 
   describe('GET /types', () => {
-    // Skipped until fixed; tracked in Jira: "file-service: GET /file/v1/types loses the original error on failure".
-    // The handler passes the response object to next instead of the error.
+    // Skipped until CS-5493 is fixed: the handler passes the response object to next instead of the error.
     it.skip('passes a configuration error to the error handler', async () => {
       const error = new Error('Configuration unavailable.');
       const next = jest.fn();
