@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { TopicTypeEntity } from '../model/type';
 
 export interface TopicType {
   tenantId: AdspId;
@@ -30,3 +31,5 @@ export interface TopicCriteria {
   // nameLike?: string;
   // descriptionLike?: string;
 }
+
+export type TopicTypeConfiguration = Record<TopicType['id'], TopicTypeEntity>;

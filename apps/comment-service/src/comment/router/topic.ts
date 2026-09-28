@@ -2,13 +2,16 @@ import axios from 'axios';
 import {
   AdspId,
   EventService,
+  SecurityClassifications,
   ServiceDirectory,
   TokenProvider,
   UnauthorizedUserError,
+  User,
   adspId,
   isAllowedUser,
 } from '@abgov/adsp-service-sdk';
 import {
+  ConfigurationClient,
   InvalidOperationError,
   NotFoundError,
   UnauthorizedError,
@@ -23,7 +26,7 @@ import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDele
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { DirectoryServiceRoles, ExportServiceRoles, ServiceRoles } from '../roles';
-import { Topic, TopicType } from '../types';
+import { Topic, TopicType, TopicTypeConfiguration } from '../types';
 
 interface TopicRouterProps {
   apiId: AdspId;
@@ -32,6 +35,7 @@ interface TopicRouterProps {
   repository: TopicRepository;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  client: ConfigurationClient<TopicTypeConfiguration>;
 }
 
 type TopicTypeResponse = Omit<TopicType, 'tenantId'>;
@@ -47,6 +51,11 @@ function mapTopicType(type: TopicType): TopicTypeResponse | null {
       }
     : null;
 }
+const assertUserCanPerform = (user: User, tenantId: AdspId, operation: string) => {
+  if (!isAllowedUser(user, tenantId, [ServiceRoles.TopicSetter, ServiceRoles.Admin], true)) {
+    throw new UnauthorizedUserError(operation, user);
+  }
+};
 
 type TopicResponse = Omit<Topic, 'tenantId' | 'type'> & { type: TopicTypeResponse; urn: string };
 function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
@@ -63,7 +72,7 @@ function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
   };
 }
 
-export function getTopicTypes(): RequestHandler {
+export function getTopicTypes(client): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -72,22 +81,33 @@ export function getTopicTypes(): RequestHandler {
         throw new UnauthorizedError('User must be authenticated to get topic types.');
       }
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
-        throw new UnauthorizedUserError('get topic types', user);
-      }
+      assertUserCanPerform(user, tenantId, 'get topic types');
 
-      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
+      const [tenant, core] = await Promise.all([
+        tenantId ? client.getTenantConfiguration(tenantId) : Promise.resolve({}),
+        client.getCoreConfiguration(),
+      ]);
+      const mappedTenants = Object.fromEntries(
+        Object.values(tenant || {}).map((type) => {
+          const topicType = type as TopicType;
+          return [topicType.id, mapTopicType(topicType)];
+        }),
+      );
+      const mappedCore = Object.fromEntries(
+        Object.values(core || {}).map((type) => {
+          const topicType = type as TopicType;
+          return [topicType.id, mapTopicType(topicType)];
+        }),
       );
 
-      res.send(Object.values(types || {}).map(mapTopicType));
+      res.send({ tenant: mappedTenants, core: mappedCore });
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function getTopicType(): RequestHandler {
+export function getTopicType(client: ConfigurationClient<TopicTypeConfiguration>): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -96,14 +116,12 @@ export function getTopicType(): RequestHandler {
         throw new UnauthorizedError('User must be authenticated to get a topic type.');
       }
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
-        throw new UnauthorizedUserError('get topic type', user);
-      }
+      assertUserCanPerform(user, tenantId, 'get topic types');
 
       const topicTypeId = req.params.topicTypeId;
-      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
-      );
+
+      const types = await client.getTenantConfiguration(tenantId);
+
       const type = types?.[topicTypeId];
       if (!type) {
         throw new NotFoundError('topic type', topicTypeId);
@@ -120,7 +138,8 @@ export function createTopicType(
   apiId: AdspId,
   logger: Logger,
   directory: ServiceDirectory,
-  tokenProvider: TokenProvider
+  client: ConfigurationClient<TopicTypeConfiguration>,
+  tokenProvider: TokenProvider,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -129,17 +148,13 @@ export function createTopicType(
       if (!user) {
         throw new UnauthorizedError('User must be authenticated to create a topic type.');
       }
-
-      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
-        throw new UnauthorizedUserError('create topic type', user);
-      }
+      assertUserCanPerform(user, tenantId, 'create topic type');
 
       const { id, name, readRoles, readerRoles, writeRoles = [] } = req.body;
       const resolvedReaderRoles = readerRoles || readRoles || [];
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
+        tenantId,
       );
-
       const existingTypeWithName = Object.values(types || {}).find((type) => type.name === name && type.id !== id);
       if (types?.[id] || existingTypeWithName) {
         throw new InvalidOperationError(`Topic type '${name}' already exists.`, {
@@ -169,10 +184,17 @@ export function createTopicType(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
-        }
+        },
       );
 
-      res.send({ id });
+      const newTypes = await client.getTenantConfiguration(tenantId);
+
+      const newtype = newTypes?.[topicType.id];
+      if (!newtype) {
+        throw new NotFoundError('topic type', topicType.id);
+      }
+
+      res.send(mapTopicType(newtype));
 
       logger.info(`Topic type ${name} (ID: ${id}) created by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
@@ -189,7 +211,8 @@ export function updateTopicType(
   apiId: AdspId,
   logger: Logger,
   directory: ServiceDirectory,
-  tokenProvider: TokenProvider
+  client: ConfigurationClient<TopicTypeConfiguration>,
+  tokenProvider: TokenProvider,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -198,28 +221,23 @@ export function updateTopicType(
       if (!user) {
         throw new UnauthorizedError('User must be authenticated to update a topic type.');
       }
-
-      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
-        throw new UnauthorizedUserError('update topic type', user);
-      }
+      assertUserCanPerform(user, tenantId, 'update topic type');
 
       const topicTypeId = req.params.topicTypeId;
-      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
-      );
+      const types = await client.getTenantConfiguration(tenantId);
       const type = types?.[topicTypeId];
       if (!type) {
         throw new NotFoundError('topic type', topicTypeId);
       }
 
-      const { name, readRoles, readerRoles, writeRoles } = req.body;
+      const { name, readRoles, readerRoles, writeRoles, securityClassification } = req.body;
       const topicType = {
         id: type.id,
         name: name ?? type.name,
         adminRoles: type.adminRoles,
         readerRoles: readerRoles ?? readRoles ?? type.readerRoles,
         commenterRoles: writeRoles ?? type.commenterRoles,
-        securityClassification: type.securityClassification,
+        securityClassification: securityClassification ?? type.securityClassification,
       };
 
       const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
@@ -237,7 +255,7 @@ export function updateTopicType(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
-        }
+        },
       );
 
       res.send(mapTopicType({ ...topicType, tenantId }));
@@ -258,24 +276,23 @@ export function deleteTopicType(
   logger: Logger,
   repository: TopicRepository,
   directory: ServiceDirectory,
-  tokenProvider: TokenProvider
+  client: ConfigurationClient,
+  tokenProvider: TokenProvider,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant?.id || user?.tenantId;
+
       if (!user) {
         throw new UnauthorizedError('User must be authenticated to delete a topic type.');
       }
 
-      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
-        throw new UnauthorizedUserError('delete topic type', user);
-      }
+      assertUserCanPerform(user, tenantId, 'delete topic type');
 
       const topicTypeId = req.params.topicTypeId;
-      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
-      );
+
+      const types = await client.getTenantConfiguration(tenantId);
 
       if (!types?.[topicTypeId]) {
         throw new NotFoundError('topic type', topicTypeId);
@@ -304,7 +321,7 @@ export function deleteTopicType(
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
-        }
+        },
       );
 
       res.send({ deleted: true, id: topicTypeId });
@@ -330,7 +347,7 @@ export function getTopics(apiId: AdspId, repository: TopicRepository): RequestHa
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
 
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
+        tenantId,
       );
       const { page, results: entities } = await repository.getTopics(types, top, after as string, {
         ...criteria,
@@ -355,7 +372,7 @@ export function createTopic(
   apiId: AdspId,
   logger: Logger,
   repository: TopicRepository,
-  eventService: EventService
+  eventService: EventService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -364,7 +381,7 @@ export function createTopic(
       const { typeId, resourceId: resourceIdValue, ...topic } = req.body;
 
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
+        tenantId,
       );
       const type = types[typeId];
       if (!type) {
@@ -385,7 +402,7 @@ export function createTopic(
           context: 'comment-router',
           tenantId: tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -403,7 +420,7 @@ export function getTopic(repository: TopicRepository, ...roles: string[]): Reque
       const topicId = parseInt(topicIdValue);
 
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId
+        tenantId,
       );
       const entity = await repository.getTopic(types, topicId, tenantId);
       if (!entity) {
@@ -506,7 +523,7 @@ export function createTopicComment(apiId: AdspId, logger: Logger, eventService: 
           context: 'comment-router',
           tenantId: topic.tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -557,7 +574,7 @@ export function updateTopicComment(apiId: AdspId, logger: Logger, eventService: 
           context: 'comment-router',
           tenantId: topic.tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -588,7 +605,7 @@ export function deleteTopicComment(apiId: AdspId, logger: Logger, eventService: 
             context: 'comment-router',
             tenantId: topic.tenantId?.toString(),
             user: `${user.name} (ID: ${user.id})`,
-          }
+          },
         );
       }
     } catch (err) {
@@ -604,47 +621,65 @@ export function createTopicRouter({
   repository,
   directory,
   tokenProvider,
+  client,
 }: TopicRouterProps): Router {
   const router = Router();
 
-  router.get('/topic-types', getTopicTypes());
+  router.get('/topic-types', getTopicTypes(client));
   router.post(
     '/topic-types',
     createValidationHandler(
-      body('id').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+      body('id')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       body('name').isString().isLength({ min: 1, max: 50 }),
       body('readRoles').optional().isArray(),
       body('readRoles.*').optional().isString(),
       body('readerRoles').optional().isArray(),
       body('readerRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
-      body('writeRoles.*').optional().isString()
+      body('writeRoles.*').optional().isString(),
     ),
-    createTopicType(apiId, logger, directory, tokenProvider)
+    createTopicType(apiId, logger, directory, client, tokenProvider),
   );
   router.get(
     '/topic-types/:topicTypeId',
-    createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
-    getTopicType()
+    createValidationHandler(
+      param('topicTypeId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+    ),
+    getTopicType(client),
   );
   router.patch(
     '/topic-types/:topicTypeId',
     createValidationHandler(
-      param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+      param('topicTypeId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       body('name').optional().isString().isLength({ min: 1, max: 50 }),
       body('readRoles').optional().isArray(),
       body('readRoles.*').optional().isString(),
       body('readerRoles').optional().isArray(),
       body('readerRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
-      body('writeRoles.*').optional().isString()
+      body('writeRoles.*').optional().isString(),
+      body('securityClassification').optional().isString().isIn(Object.values(SecurityClassifications)),
     ),
-    updateTopicType(apiId, logger, directory, tokenProvider)
+    updateTopicType(apiId, logger, directory, client, tokenProvider),
   );
   router.delete(
     '/topic-types/:topicTypeId',
-    createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
-    deleteTopicType(apiId, logger, repository, directory, tokenProvider)
+    createValidationHandler(
+      param('topicTypeId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
+    ),
+    deleteTopicType(apiId, logger, repository, directory, client, tokenProvider),
   );
 
   router.get(
@@ -656,9 +691,9 @@ export function createTopicRouter({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
-    getTopics(apiId, repository)
+    getTopics(apiId, repository),
   );
   router.post(
     '/topics',
@@ -667,16 +702,16 @@ export function createTopicRouter({
       body('name').isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
       body('securityClassification').optional().isString(),
-      body('resourceId').optional().isString().isLength({ min: 1, max: 1200 })
+      body('resourceId').optional().isString().isLength({ min: 1, max: 1200 }),
     ),
-    createTopic(apiId, logger, repository, eventService)
+    createTopic(apiId, logger, repository, eventService),
   );
 
   router.get(
     '/topics/:topicId',
     createValidationHandler(param('topicId').isInt()),
     getTopic(repository, DirectoryServiceRoles.ResourceResolver),
-    (req: Request, res: Response) => res.send(mapTopic(apiId, req[TopicKey]))
+    (req: Request, res: Response) => res.send(mapTopic(apiId, req[TopicKey])),
   );
   router.patch(
     '/topics/:topicId',
@@ -684,16 +719,16 @@ export function createTopicRouter({
       param('topicId').isInt(),
       body('name').optional().isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
-      body('commenters').optional().isArray()
+      body('commenters').optional().isArray(),
     ),
     getTopic(repository),
-    updateTopic(apiId, logger, eventService)
+    updateTopic(apiId, logger, eventService),
   );
   router.delete(
     '/topics/:topicId',
     createValidationHandler(param('topicId').isInt()),
     getTopic(repository),
-    deleteTopic(apiId, logger, eventService)
+    deleteTopic(apiId, logger, eventService),
   );
 
   router.get(
@@ -706,10 +741,10 @@ export function createTopicRouter({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
     getTopic(repository),
-    getTopicComments()
+    getTopicComments(),
   );
   router.post(
     '/topics/:topicId/comments',
@@ -718,17 +753,17 @@ export function createTopicRouter({
       body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
       body('content').isString().isLength({ min: 1 }),
       body('context').optional().isObject(),
-      body('requiresAttention').optional({ nullable: true }).isBoolean()
+      body('requiresAttention').optional({ nullable: true }).isBoolean(),
     ),
     getTopic(repository),
-    createTopicComment(apiId, logger, eventService)
+    createTopicComment(apiId, logger, eventService),
   );
 
   router.get(
     '/topics/:topicId/comments/:commentId',
     createValidationHandler(param('topicId').isInt(), param('commentId').isInt()),
     getTopic(repository),
-    getTopicComment()
+    getTopicComment(),
   );
   router.patch(
     '/topics/:topicId/comments/:commentId',
@@ -737,16 +772,16 @@ export function createTopicRouter({
       param('commentId').isInt(),
       body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
       body('content').optional().isString().isLength({ min: 1 }),
-      body('context').optional().isObject()
+      body('context').optional().isObject(),
     ),
     getTopic(repository),
-    updateTopicComment(apiId, logger, eventService)
+    updateTopicComment(apiId, logger, eventService),
   );
   router.delete(
     '/topics/:topicId/comments/:commentId',
     createValidationHandler(param('topicId').isInt(), param('commentId').isInt()),
     getTopic(repository),
-    deleteTopicComment(apiId, logger, eventService)
+    deleteTopicComment(apiId, logger, eventService),
   );
 
   return router;

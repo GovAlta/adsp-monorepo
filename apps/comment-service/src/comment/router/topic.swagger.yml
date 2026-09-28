@@ -25,7 +25,7 @@ components:
       type: object
       properties:
         type:
-          $ref: "#/components/schemas/TopicType"
+          $ref: '#/components/schemas/TopicType'
         id:
           type: integer
         urn:
@@ -97,7 +97,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/TopicType"
+                $ref: '#/components/schemas/TopicType'
       401:
         description: Not authenticated.
       403:
@@ -167,7 +167,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TopicType"
+              $ref: '#/components/schemas/TopicType'
       401:
         description: Not authenticated.
       403:
@@ -206,13 +206,22 @@ components:
                 description: Optional roles allowed to write comments on topics of this type.
                 items:
                   type: string
+              securityClassification:
+                type: string
+                description: Security classification for the topic type.
+                enum:
+                  - public
+                  - protected a
+                  - protected b
+                  - protected c
+
     responses:
       200:
         description: Topic type updated successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TopicType"
+              $ref: '#/components/schemas/TopicType'
       401:
         description: Not authenticated.
       403:
@@ -304,7 +313,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Topic"
+                    $ref: '#/components/schemas/Topic'
                 page:
                   type: object
                   properties:
@@ -372,7 +381,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Topic"
+              $ref: '#/components/schemas/Topic'
       401:
         description: Not authorized.
       403:
@@ -398,7 +407,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Topic"
+              $ref: '#/components/schemas/Topic'
       401:
         description: Not authorized.
       403:
@@ -442,7 +451,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Topic"
+              $ref: '#/components/schemas/Topic'
       401:
         description: Not authorized.
       403:
@@ -527,7 +536,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Comment"
+                    $ref: '#/components/schemas/Comment'
                 page:
                   type: object
                   properties:
@@ -583,7 +592,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Comment"
+              $ref: '#/components/schemas/Comment'
       401:
         description: Not authorized.
       403:
@@ -615,7 +624,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Comment"
+              $ref: '#/components/schemas/Comment'
       401:
         description: Not authorized.
       403:
@@ -662,7 +671,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Comment"
+              $ref: '#/components/schemas/Comment'
       401:
         description: Not authorized.
       403:
