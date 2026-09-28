@@ -2,6 +2,7 @@ import axios from 'axios';
 import {
   AdspId,
   EventService,
+  SecurityClassifications,
   ServiceDirectory,
   TokenProvider,
   UnauthorizedUserError,
@@ -666,7 +667,7 @@ export function createTopicRouter({
       body('readerRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
       body('writeRoles.*').optional().isString(),
-      body('securityClassification').optional().isString(),
+      body('securityClassification').optional().isString().isIn(Object.values(SecurityClassifications)),
     ),
     updateTopicType(apiId, logger, directory, client, tokenProvider),
   );
