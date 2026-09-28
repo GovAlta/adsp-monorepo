@@ -235,7 +235,7 @@ describe('FullNameDobReviewControl change reporting', () => {
 
   it('reports the step and scope to a host with no stepper in the tree', () => {
     const onReviewChange = jest.fn();
-    const { baseElement } = render(
+    render(
       <ReviewRenderProvider onReviewChange={onReviewChange}>
         <table>
           <tbody>
@@ -245,7 +245,7 @@ describe('FullNameDobReviewControl change reporting', () => {
       </ReviewRenderProvider>,
     );
 
-    fireEvent(baseElement.querySelector('goa-button')!, new CustomEvent('_click'));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change' })[0]);
 
     expect(onReviewChange).toHaveBeenCalledWith(2, '#/properties/fullNameDob');
   });

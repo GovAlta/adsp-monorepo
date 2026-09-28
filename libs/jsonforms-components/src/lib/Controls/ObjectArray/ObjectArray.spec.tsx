@@ -291,7 +291,7 @@ describe('Object List change reporting', () => {
     });
 
     const onReviewChange = jest.fn();
-    const { baseElement } = render(
+    render(
       <ReviewRenderProvider onReviewChange={onReviewChange}>
         <table>
           <tbody>
@@ -306,7 +306,7 @@ describe('Object List change reporting', () => {
       </ReviewRenderProvider>,
     );
 
-    fireEvent(baseElement.querySelector('goa-button')!, new CustomEvent('_click'));
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
 
     expect(onReviewChange).toHaveBeenCalledWith(5, '#/properties/comments');
   });

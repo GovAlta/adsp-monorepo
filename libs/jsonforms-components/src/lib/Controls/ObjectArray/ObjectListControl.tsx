@@ -1,7 +1,6 @@
 // clean-code-ignore: RULE-19 — covered by ./ObjectArray.spec.tsx, colocated. The rule only looks
 // for a .test.tsx sibling; adding one would duplicate the existing suite.
 import {
-  GoabButton,
   GoabCallout,
   GoabContainer,
   GoabDropdown,
@@ -26,6 +25,7 @@ import merge from 'lodash/merge';
 import range from 'lodash/range';
 import React, { useCallback, useEffect, useReducer, useState } from 'react'; // clean-code-ignore: RULE-19 — see the note at the top of this file.
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
+import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {
@@ -799,13 +799,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                 {showChangeButtons &&
                   uischema.options?.stepId !== undefined &&
                   !uischema.options?.componentProps?.readOnly && (
-                    <GoabButton
-                      type="text"
-                      size="compact"
-                      onClick={() => reportChange(uischema.options?.stepId as number, uischema.scope)}
-                    >
-                      Change
-                    </GoabButton>
+                    <BackButton
+                      text="Change"
+                      link={() => reportChange(uischema.options?.stepId as number, uischema.scope)}
+                      showBackIcon={false}
+                    />
                   )}
               </ReviewHeader>
             )

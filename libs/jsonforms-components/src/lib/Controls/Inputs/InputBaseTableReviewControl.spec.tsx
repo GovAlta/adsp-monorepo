@@ -891,7 +891,7 @@ describe('InputBaseTableReviewControl', () => {
     const contextValue = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
     const scope = '#/properties/firstName';
 
-    const { baseElement } = render(
+    render(
       <ReviewRenderProvider onReviewChange={onReviewChange}>
         <JsonFormsStepperContext.Provider value={contextValue}>
           <table>
@@ -919,8 +919,7 @@ describe('InputBaseTableReviewControl', () => {
       </ReviewRenderProvider>,
     );
 
-    const changeButton = baseElement.querySelector('goa-button');
-    fireEvent(changeButton!, new CustomEvent('_click'));
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
 
     expect(mockGoToPage).toHaveBeenCalledWith(2, scope);
     expect(onReviewChange).toHaveBeenCalledWith(2, scope);
