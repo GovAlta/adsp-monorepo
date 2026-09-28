@@ -136,10 +136,17 @@ describe('topic', () => {
       tokenProviderMock.getAccessToken.mockReset();
       axiosMock.patch.mockReset();
       loggerMock.info.mockReset();
+      clientMock.getTenantConfiguration.mockReset();
     });
 
     it('can create handler', () => {
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -166,11 +173,26 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({});
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({
+        case: new TopicTypeEntity(tenantId, {
+          id: 'case',
+          name: 'Case',
+          adminRoles: [],
+          readerRoles: ['case-reader'],
+          commenterRoles: ['case-writer'],
+        }),
+      });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -192,7 +214,14 @@ describe('topic', () => {
           params: { tenantId: tenantId.toString() },
         },
       );
-      expect(res.send).toHaveBeenCalledWith({ id: 'case' });
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'case',
+          name: 'Case',
+          readerRoles: ['case-reader'],
+          commenterRoles: ['case-writer'],
+        }),
+      );
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -217,11 +246,26 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({});
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({
+        case: new TopicTypeEntity(tenantId, {
+          id: 'case',
+          name: 'Case',
+          adminRoles: [],
+          readerRoles: [],
+          commenterRoles: [],
+        }),
+      });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -236,7 +280,14 @@ describe('topic', () => {
         }),
         expect.any(Object),
       );
-      expect(res.send).toHaveBeenCalledWith({ id: 'case' });
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'case',
+          name: 'Case',
+          readerRoles: [],
+          commenterRoles: [],
+        }),
+      );
     });
 
     it('calls next with conflict when topic type name already exists', async () => {
@@ -260,8 +311,15 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -287,7 +345,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -311,7 +375,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -541,7 +611,13 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -567,11 +643,18 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -625,11 +708,18 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -675,7 +765,13 @@ describe('topic', () => {
 
       req.getConfiguration.mockResolvedValueOnce({});
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -702,7 +798,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -729,7 +831,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -757,6 +865,7 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
+        configurationClientMock,
         tokenProviderMock,
       );
       expect(handler).toBeTruthy();
@@ -779,6 +888,7 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       repositoryMock.countTopicsByType.mockResolvedValueOnce(0);
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
@@ -789,6 +899,7 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
+        configurationClientMock,
         tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -829,6 +940,7 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       repositoryMock.countTopicsByType.mockResolvedValueOnce(3);
 
       const handler = deleteTopicType(
@@ -836,6 +948,7 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
+        configurationClientMock,
         tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -872,6 +985,7 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
+        configurationClientMock,
         tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -903,6 +1017,7 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
+        configurationClientMock,
         tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -934,6 +1049,7 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
+        configurationClientMock,
         tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);

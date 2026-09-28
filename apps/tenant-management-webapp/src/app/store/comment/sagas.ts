@@ -36,7 +36,8 @@ import {
   fetchCommentMetricsSucceeded,
 } from './action';
 import {
-  updateCommentTopicTypesApi,
+  createCommentTopicTypeApi,
+  updateCommentTopicTypeApi,
   deleteCommentTopicTypesApi,
   addTopicApi,
   fetchTopicsApi,
@@ -46,7 +47,7 @@ import {
   fetchCommentsApi,
   updateCommentApi,
 } from './api';
-import { UpdateCommentConfig, DeleteCommentConfig } from './model';
+import { DeleteCommentConfig } from './model';
 
 export function* fetchCommentTopicTypes(): SagaIterator {
   yield put(
@@ -81,25 +82,23 @@ export function* fetchCommentTopicTypes(): SagaIterator {
   }
 }
 
-export function* updateCommentTopicTypes({ topicType }: UpdateCommentTopicTypesAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+export function* updateCommentTopicTypes({ topicType, isCreate }: UpdateCommentTopicTypesAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
-      const CommentTopicTypes = {
-        [topicType.id]: {
-          ...topicType,
-        },
-      };
-
-      const body: UpdateCommentConfig = { operation: 'UPDATE', update: { ...CommentTopicTypes } };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/comment-service`;
-      const { latest } = yield call(updateCommentTopicTypesApi, token, url, body);
+      const url = isCreate ? `${baseUrl}/comment/v1/topic-types` : `${baseUrl}/comment/v1/topic-types/${topicType.id}`;
+      const latest = yield call(
+        isCreate ? createCommentTopicTypeApi : updateCommentTopicTypeApi,
+        token,
+        url,
+        topicType,
+      );
 
       yield put(
         updateCommentTopicTypesSuccess({
-          ...latest.configuration,
+          [latest.id]: latest,
         }),
       );
     } catch (err) {

@@ -288,7 +288,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                       }
                       setCustomIndicator(true);
                       setInitialTopicType({ ...topicType });
-                      dispatch(updateCommentTopicType({ ...topicType }));
+                      dispatch(updateCommentTopicType({ ...topicType }, !isEdit));
                     }
                   }}
                 >
@@ -348,7 +348,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             }
           }
           setSpinner(true);
-          dispatch(updateCommentTopicType(topicType));
+          dispatch(updateCommentTopicType(topicType, !isEdit));
           setSaveModal({ visible: false, closeEditor: true });
         }}
         saveDisable={!isCommentUpdated(initialTopicType, topicType)}

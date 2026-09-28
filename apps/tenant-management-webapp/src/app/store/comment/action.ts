@@ -45,7 +45,7 @@ export interface FetchCommentTopicTypesSuccessAction {
 export interface UpdateCommentTopicTypesAction {
   type: typeof UPDATE_COMMENT_TOPIC_TYPE_ACTION;
   topicType: CommentTopicTypes;
-  options?: string;
+  isCreate: boolean;
 }
 
 export interface UpdateCommentTopicTypesSuccessAction {
@@ -190,15 +190,15 @@ export type CommentActionTypes =
 
 export const updateCommentTopicType = (
   topicType: CommentTopicTypes,
-  options?: string
+  isCreate: boolean,
 ): UpdateCommentTopicTypesAction => ({
   type: UPDATE_COMMENT_TOPIC_TYPE_ACTION,
   topicType,
-  options,
+  isCreate,
 });
 
 export const updateCommentTopicTypesSuccess = (
-  topicType: Record<string, CommentTopicTypes>
+  topicType: Record<string, CommentTopicTypes>,
 ): UpdateCommentTopicTypesSuccessAction => ({
   type: UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
   payload: topicType,
@@ -210,7 +210,7 @@ export const deleteCommentTopicType = (topicTypeId: string): DeleteCommentTopicT
 });
 
 export const deleteCommentTopicTypeSuccess = (
-  topicTypes: Record<string, CommentTopicTypes>
+  topicTypes: Record<string, CommentTopicTypes>,
 ): DeleteCommentTopicTypeSuccessAction => ({
   type: DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
   payload: topicTypes,

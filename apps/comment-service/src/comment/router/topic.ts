@@ -137,6 +137,7 @@ export function createTopicType(
   apiId: AdspId,
   logger: Logger,
   directory: ServiceDirectory,
+  client: ConfigurationClient<TopicTypeConfiguration>,
   tokenProvider: TokenProvider,
 ): RequestHandler {
   return async (req, res, next) => {
@@ -185,7 +186,14 @@ export function createTopicType(
         },
       );
 
-      res.send({ id });
+      const newTypes = await client.getTenantConfiguration(tenantId);
+
+      const newtype = newTypes?.[topicType.id];
+      if (!newtype) {
+        throw new NotFoundError('topic type', topicType.id);
+      }
+
+      res.send(mapTopicType(newtype));
 
       logger.info(`Topic type ${name} (ID: ${id}) created by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
@@ -202,6 +210,7 @@ export function updateTopicType(
   apiId: AdspId,
   logger: Logger,
   directory: ServiceDirectory,
+  client: ConfigurationClient<TopicTypeConfiguration>,
   tokenProvider: TokenProvider,
 ): RequestHandler {
   return async (req, res, next) => {
@@ -214,22 +223,20 @@ export function updateTopicType(
       assertUserCanPerform(user, tenantId, 'update topic type');
 
       const topicTypeId = req.params.topicTypeId;
-      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-        tenantId,
-      );
+      const types = await client.getTenantConfiguration(tenantId);
       const type = types?.[topicTypeId];
       if (!type) {
         throw new NotFoundError('topic type', topicTypeId);
       }
 
-      const { name, readRoles, readerRoles, writeRoles } = req.body;
+      const { name, readRoles, readerRoles, writeRoles, securityClassification } = req.body;
       const topicType = {
         id: type.id,
         name: name ?? type.name,
         adminRoles: type.adminRoles,
         readerRoles: readerRoles ?? readRoles ?? type.readerRoles,
         commenterRoles: writeRoles ?? type.commenterRoles,
-        securityClassification: type.securityClassification,
+        securityClassification: securityClassification ?? type.securityClassification,
       };
 
       const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
@@ -633,7 +640,7 @@ export function createTopicRouter({
       body('writeRoles').optional().isArray(),
       body('writeRoles.*').optional().isString(),
     ),
-    createTopicType(apiId, logger, directory, tokenProvider),
+    createTopicType(apiId, logger, directory, client, tokenProvider),
   );
   router.get(
     '/topic-types/:topicTypeId',
@@ -660,7 +667,7 @@ export function createTopicRouter({
       body('writeRoles').optional().isArray(),
       body('writeRoles.*').optional().isString(),
     ),
-    updateTopicType(apiId, logger, directory, tokenProvider),
+    updateTopicType(apiId, logger, directory, client, tokenProvider),
   );
   router.delete(
     '/topic-types/:topicTypeId',

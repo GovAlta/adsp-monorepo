@@ -72,7 +72,8 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   return (
     <section>
-      <GoabButton size="compact"
+      <GoabButton
+        size="compact"
         testId="add-topic-type"
         onClick={() => {
           setOpenAddCommentTopicType(true);
@@ -90,7 +91,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
         onClose={reset}
         initialValue={defaultCommentTopicType}
         onSave={(definition) => {
-          dispatch(updateCommentTopicType(definition));
+          dispatch(updateCommentTopicType(definition, true));
         }}
       />
 
