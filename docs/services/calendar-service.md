@@ -15,36 +15,58 @@ client `urn:ads:platform:calendar-service`
 
 | name | description |
 |:-|:-|
-| calendar-admin | Administrator role for calendar service. This role allows a user to manage tenant calendar definitions and read or update calendar events. |
+| calendar-admin | Administrator role for calendar service. This role allows a user to create, update, and delete the tenant's calendar definitions, and to read and update events in any calendar. It is part of the tenant-admin composite role. |
 
-Event access is primarily controlled by each calendar's `updateRoles` and `readRoles`: the roles that grant update and read permission, respectively.
+`calendar-admin` is a Keycloak client role. It is created under the `urn:ads:platform:calendar-service` client when a tenant realm is created, and tenant administrators have it through the `tenant-admin` composite role. If your realm does not include it (for example, the realm was created before calendar service was available), add it from the *Service roles* tab of Access service in tenant administration. See [Access management](../important-notes.md#access-management).
+
+Access to events is primarily controlled by each calendar's `readRoles` and `updateRoles`. Read roles grant access to private events and their attendees; update roles also grant permission to create, update, and delete events and attendees. `calendar-admin` grants both for all calendars.
 
 ## Concepts
 ### Dates
 Calendar service provides informational endpoints for Dates that includes information like which days are business days and which are holidays.
 
 ### Calendar
-A calendar is a container for *events*. Each calendar has basic name and description information which is publicly accessible. Calendar definitions are managed through the calendar-service API; calendar-service stores them in the [configuration service](configuration-service.md) under `platform:calendar-service`.
+A calendar is a container for *events*. Each calendar has a name, display name, and description, which are publicly accessible, and the `readRoles` and `updateRoles` that control access to its events.
 
-`GET /calendar/v1/calendars` lists definitions with a `source` of `tenant` or `core`. Tenant users see both; anonymous requests see core definitions. Core definitions are view-only in the tenant admin app. `GET /calendar/v1/calendars/{name}` retrieves an individual definition.
+Calendar definitions are stored in the [configuration service](configuration-service.md) under the `platform:calendar-service` namespace and name. Each definition has a `source`:
+- `tenant` calendars are created and managed by the tenant using the calendar service API or the calendar service page in tenant administration.
+- `core` calendars are registered by platform services, such as the `form-intake` calendar of form service. Tenants can use core calendars but cannot change them; they are view-only in tenant administration.
 
-Users with `calendar-admin` for the tenant can manage **tenant** definitions without `configuration-admin`:
+| Method | Path | Description | Required role |
+|:-|:-|:-|:-|
+| `GET` | `/calendar/v1/calendars` | Lists calendar definitions with their `source`. Anonymous requests only receive core calendars. | None |
+| `GET` | `/calendar/v1/calendars/{name}` | Retrieves a calendar. | None |
+| `POST` | `/calendar/v1/calendars` | Creates a tenant calendar. Returns 201 with the calendar. | `calendar-admin` |
+| `PUT` | `/calendar/v1/calendars/{name}` | Replaces a tenant calendar. Returns 200 with the calendar. | `calendar-admin` |
+| `DELETE` | `/calendar/v1/calendars/{name}` | Deletes a tenant calendar that has no events. Returns 204. | `calendar-admin` |
 
-| Method | Path | Action |
+`calendar-admin` is sufficient to manage tenant calendars; `configuration-admin` is not required. Anonymous requests for a specific calendar, including its public events, must identify the tenant by name using the `tenant` query parameter. Platform (core) users specify the tenant using the `tenantId` query parameter.
+
+Create and update requests take a body with the following properties; other properties are not allowed.
+
+| property | required | description |
 |:-|:-|:-|
-| `POST` | `/calendar/v1/calendars` | Create a definition (201). |
-| `PUT` | `/calendar/v1/calendars/{name}` | Replace a tenant definition (200). |
-| `DELETE` | `/calendar/v1/calendars/{name}` | Remove an unused tenant definition (204). |
+| `name` | yes | Up to 50 letters, numbers, spaces, hyphens, or underscores. On update, this must match `{name}` in the path. |
+| `displayName` | yes | Display name of up to 32 characters; cannot be blank. |
+| `description` | no | Description of up to 250 characters. |
+| `readRoles` | yes | Roles that can read private events and attendees. Can be an empty array. |
+| `updateRoles` | yes | Roles that can read and change events and attendees. Can be an empty array. |
 
-Create and update bodies require a valid `name`, a nonblank `displayName` of at most 32 characters, and `readRoles` and `updateRoles` arrays of strings (which may be empty). `description` is optional and may contain at most 250 characters. On update, the body name must match `{name}`. Invalid input returns 400; unauthenticated requests return 401, and requests without `calendar-admin` return 403. Updates and deletes of absent tenant definitions return 404, and duplicate creates or deletion of a calendar containing events return 409. Core definitions cannot be changed through these endpoints.
+Create, update, and delete requests return:
+- 400 if the request body or calendar name is invalid.
+- 401 if the request is not authenticated.
+- 403 if the user does not have the `calendar-admin` role in the tenant.
+- 404 on update or delete if the tenant has no calendar with that name. Core calendars cannot be updated or deleted.
+- 409 on create if a tenant or core calendar with the name already exists, or on delete if the calendar has events.
+- 502 if the configuration service is unavailable.
 
-Successful definition writes signal `calendar-definition-created`, `calendar-definition-updated`, and `calendar-definition-deleted` events for the tenant.
+Successful changes signal `calendar-definition-created`, `calendar-definition-updated`, and `calendar-definition-deleted` [domain events](event-service.md). Each event includes the calendar definition and the user who made the change.
 
 ### Calendar event
-Calender events represent a scheduled activity. Each event has some basic name and description information as well as start and end time. Events can be made public so that anonymous users can read their fields; their attendees remain accessible only to authorized users.
+Calendar events represent a scheduled activity. Each event has some basic name and description information as well as start and end time. Events can be made public so that anonymous users can read their fields; their attendees remain accessible only to authorized users.
 
 ### Attendee
-Attendees represent people attending a particular *event*. Blanks attendees (no name or email) can be created to represent available appointment slots.
+Attendees represent people attending a particular *event*. Blank attendees (no name or email) can be created to represent available appointment slots.
 
 ## Code examples
 ### Getting business days
@@ -64,6 +86,37 @@ Calendar service API provides information endpoints for dates, including which d
   const {
     results,
     page,
+  } = await response.json();
+```
+
+### Creating a calendar
+Requires the `calendar-admin` role.
+```typescript
+  const calendar = {
+    name: 'site-inspections',
+    displayName: 'Site inspections',
+    description: 'Calendar of scheduled site inspections.',
+    readRoles: ['inspection-viewer'],
+    updateRoles: ['inspection-scheduler'],
+  }
+
+  const response = await fetch(
+    'https://calendar-service.adsp.alberta.ca/calendar/v1/calendars',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(calendar),
+    }
+  );
+
+  const {
+    urn,
+    name,
+    displayName,
+    source,
   } = await response.json();
 ```
 
