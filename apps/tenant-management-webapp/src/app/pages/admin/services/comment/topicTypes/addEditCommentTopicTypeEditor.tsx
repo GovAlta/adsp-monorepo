@@ -235,7 +235,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <EditorPadding>
               <div style={heightCover}>
                 <GoabFormItem error={errors?.['securityClassification']} label="Select a security classification">
-                  <GoabDropdown size="compact"
+                  <GoabDropdown
+                    size="compact"
                     name="securityClassifications"
                     value={topicType?.securityClassification}
                     onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -259,7 +260,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoabButtonGroup alignment="start">
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   type="primary"
                   testId="comment-save"
                   disabled={
@@ -292,7 +294,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                 >
                   Save
                 </GoabButton>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   testId="comment-cancel"
                   type="secondary"
                   onClick={() => {

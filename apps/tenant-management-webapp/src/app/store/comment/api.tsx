@@ -3,7 +3,7 @@ import { CommentTopicTypes, UpdateCommentConfig, DeleteCommentConfig } from './m
 
 export const fetchCommentTopicTypesApi = async (
   token: string,
-  url: string
+  url: string,
 ): Promise<Record<string, CommentTopicTypes>> => {
   const res = await axios.get(url, {
     headers: { Authorization: `Bearer ${token}` },
@@ -17,7 +17,7 @@ export const updateCommentTopicTypesApi = async (token: string, url: string, bod
 };
 
 export const deleteCommentTopicTypesApi = async (token: string, url: string, body: DeleteCommentConfig) => {
-  const res = await axios.patch(url, body, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };
 export const fetchTopicTypesApi = async (url, token) => {
