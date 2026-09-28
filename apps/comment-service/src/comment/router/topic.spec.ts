@@ -57,6 +57,8 @@ describe('topic', () => {
     getTenantConfiguration: jest.fn(),
     getCoreConfiguration: jest.fn(),
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const configurationClientMock = clientMock as unknown as ConfigurationClient<any>;
 
   const repositoryMock = {
