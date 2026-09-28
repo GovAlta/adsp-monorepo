@@ -181,7 +181,7 @@ describe('AddressLoopUpControlTableReview', () => {
     );
   };
   it('should render the component with input fields', async () => {
-    const { baseElement } = renderComponent();
+    renderComponent();
     expect(screen.getByText('Alberta')).toBeInTheDocument();
     expect(screen.getByText('Canada')).toBeInTheDocument();
     expect(screen.getByText('Edmonton')).toBeInTheDocument();
@@ -348,7 +348,7 @@ describe('AddressLoopUpControlTableReview', () => {
 describe('AddressLoopUpControlTableReview change reporting', () => {
   it('reports the step and scope to a host with no stepper in the tree', () => {
     const onReviewChange = jest.fn();
-    const { baseElement } = render(
+    render(
       <ReviewRenderProvider onReviewChange={onReviewChange}>
         <JsonFormContext.Provider value={mockFormContext}>
           <table>
@@ -374,7 +374,7 @@ describe('AddressLoopUpControlTableReview change reporting', () => {
       </ReviewRenderProvider>,
     );
 
-    fireEvent(baseElement.querySelector('goa-button')!, new CustomEvent('_click'));
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
 
     expect(onReviewChange).toHaveBeenCalledWith(4, '#/properties/lastName');
   });
