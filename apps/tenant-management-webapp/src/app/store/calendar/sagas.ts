@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { SagaIterator } from '@redux-saga/core';
 import { RootState } from '..';
-import { select, call, put, takeEvery, all } from 'redux-saga/effects';
-import { ErrorNotification } from '@store/notifications/actions';
+import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { ErrorNotification } from '../notifications/actions';
 
-import { getAccessToken } from '@store/tenant/sagas';
+import { getAccessToken } from '../tenant/sagas';
 import {
   FetchCalendarsAction,
   UpdateCalendarAction,
@@ -36,111 +36,101 @@ import {
   EXPORT_EVENT_CALENDAR_ACTION,
   ExportCalendarEventsSuccess,
 } from './actions';
-import { UpdateElementIndicator } from '@store/session/actions';
+import { UpdateElementIndicator } from '../session/actions';
 
-import { ActionState } from '@store/session/models';
-import { fetchCalendarApi } from './api';
+import { ActionState } from '../session/models';
+import { fetchCalendarApi, partitionCalendars } from './api';
+import { CalendarDefinition, CalendarDefinitionInput } from './models';
 
 export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
-  const details = {};
-  details[action.type] = ActionState.inProcess;
+  const details: Record<string, ActionState> = { [action.type]: ActionState.inProcess };
   yield put(
     UpdateIndicator({
       details,
     })
   );
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  const calendarBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
-  if (configBaseUrl && token) {
-    const url = `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service/latest`;
-    const coreUrl = `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service?core`;
-    try {
-      const { tenant, core } = yield all({
-        tenant: call(fetchCalendarApi, token, url),
-        core: call(fetchCalendarApi, token, coreUrl),
-      });
-      const coreConfiguration = core.latest?.configuration;
-      yield put(fetchCalendarSuccess({ tenant, core: coreConfiguration }));
-
-      details[action.type] = ActionState.completed;
-      yield put(
-        UpdateIndicator({
-          details,
-        })
-      );
-    } catch (err) {
-      yield put(
-        ErrorNotification({
-          error: err,
-        })
-      );
-      details[action.type] = ActionState.error;
-      yield put(
-        UpdateIndicator({
-          details,
-        })
-      );
+  try {
+    if (!calendarBaseUrl || !token) {
+      throw new Error('Calendar service URL or access token is unavailable.');
     }
+
+    const definitions: CalendarDefinition[] = yield call(
+      fetchCalendarApi,
+      token,
+      `${calendarBaseUrl}/calendar/v1/calendars`
+    );
+    yield put(fetchCalendarSuccess(partitionCalendars(definitions)));
+
+    details[action.type] = ActionState.completed;
+    yield put(
+      UpdateIndicator({
+        details,
+      })
+    );
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+    details[action.type] = ActionState.error;
+    yield put(
+      UpdateIndicator({
+        details,
+      })
+    );
   }
 }
 
-export function* updateCalendar({ payload }: UpdateCalendarAction): SagaIterator {
-  const calendar = { [payload.name]: { ...payload } };
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+export function* updateCalendar({ payload, isNew }: UpdateCalendarAction): SagaIterator {
+  const calendarBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
 
-  if (configBaseUrl && token) {
-    try {
-      const {
-        data: { latest },
-      } = yield call(
-        axios.patch,
-        `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service`,
-        {
-          operation: 'UPDATE',
-          update: { ...calendar },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      yield put(
-        UpdateCalendarSuccess({
-          ...latest.configuration,
-        })
-      );
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+  try {
+    if (!calendarBaseUrl || !token) {
+      throw new Error('Calendar service URL or access token is unavailable.');
     }
+    if (!payload.displayName?.trim()) {
+      throw new Error('Calendar display name is required.');
+    }
+
+    const calendar: CalendarDefinitionInput = {
+      name: payload.name,
+      displayName: payload.displayName,
+      description: payload.description,
+      readRoles: payload.readRoles,
+      updateRoles: payload.updateRoles,
+    };
+    const url = `${calendarBaseUrl}/calendar/v1/calendars${isNew ? '' : `/${encodeURIComponent(payload.name)}`}`;
+    const { data }: { data: CalendarDefinition } = yield call(isNew ? axios.post : axios.put, url, calendar, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    yield put(UpdateCalendarSuccess(data));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
-function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+export function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
+  const calendarBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
   const calendarId = action.calendarId;
 
-  if (configBaseUrl && token) {
-    try {
-      yield call(
-        axios.patch,
-        `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service`,
-        { operation: 'DELETE', property: calendarId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      yield put(DeleteCalendarSuccess(calendarId));
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+  try {
+    if (!calendarBaseUrl || !token) {
+      throw new Error('Calendar service URL or access token is unavailable.');
     }
+    yield call(axios.delete, `${calendarBaseUrl}/calendar/v1/calendars/${encodeURIComponent(calendarId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    yield put(DeleteCalendarSuccess(calendarId));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 

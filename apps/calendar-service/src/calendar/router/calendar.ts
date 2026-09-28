@@ -1,4 +1,12 @@
-import { adspId, AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  ConfigurationService,
+  EventService,
+  ServiceDirectory,
+  TenantService,
+  TokenProvider,
+} from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query, Schema } from 'express-validator';
@@ -10,6 +18,10 @@ import { calendarEventCreated, calendarEventDeleted, calendarEventUpdated } from
 import { CalendarEntity, CalendarEventEntity } from '../model';
 import { CalendarRepository } from '../repository';
 import { Attendee, CalendarServiceConfiguration } from '../types';
+import { registerCalendarDefinitionRoutes } from './definition';
+import { mapCalendar } from './mapper';
+
+export { getCalendars } from './definition';
 
 interface DateRouterProps {
   serviceId: AdspId;
@@ -18,17 +30,8 @@ interface DateRouterProps {
   eventService: EventService;
   directory: ServiceDirectory;
   tenantService: TenantService;
-}
-
-function mapCalendar(apiId: AdspId, entity: CalendarEntity) {
-  return {
-    urn: `${apiId}:/calendars/${entity.name}`,
-    name: entity.name,
-    displayName: entity.displayName,
-    description: entity.description,
-    readRoles: entity.readRoles,
-    updateRoles: entity.updateRoles,
-  };
+  tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
 }
 
 function mapCalendarEvent(apiId: AdspId, entity: CalendarEventEntity) {
@@ -57,19 +60,6 @@ function mapEventAttendee(attendee: Attendee) {
     id: attendee.id,
     name: attendee.name,
     email: attendee.email,
-  };
-}
-
-export function getCalendars(apiId: AdspId): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>();
-
-      const results = Object.entries(calendars || {}).map(([_k, calender]) => mapCalendar(apiId, calender));
-      res.send(results);
-    } catch (err) {
-      next(err);
-    }
   };
 }
 
@@ -403,6 +393,9 @@ export const createCalendarRouter = ({
   eventService,
   directory,
   tenantService,
+  tokenProvider,
+  configurationService,
+  repository,
 }: DateRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
 
@@ -435,7 +428,15 @@ export const createCalendarRouter = ({
     )
   );
 
-  router.get('/calendars', getCalendars(apiId));
+  registerCalendarDefinitionRoutes(router, {
+    apiId,
+    serviceId,
+    repository,
+    eventService,
+    directory,
+    tokenProvider,
+    configurationService,
+  });
   router.get('/calendars/:name', validateNameHandler, getCalendar(tenantService), (req, res) =>
     res.send(mapCalendar(apiId, req[CALENDAR_KEY]))
   );

@@ -10,7 +10,7 @@ import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck 
 import { IdField } from '../styled-components';
 import { RootState } from '@store/index';
 import { selectRoleList } from '@store/sharedSelectors/roles';
-import { selectCalendarsByName } from '@store/calendar/selectors';
+import { selectCalendarForAdministration } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { TextLoadingIndicator } from '@components/Indicator';
@@ -30,6 +30,8 @@ interface CalendarModalProps {
   tenantMode: boolean;
 }
 
+const requiredName = isNotEmptyCheck('name');
+
 export const CalendarModal = ({
   tenantMode,
   calendarName,
@@ -38,7 +40,9 @@ export const CalendarModal = ({
   open,
 }: CalendarModalProps): JSX.Element => {
   const isNew = !((calendarName?.length ?? 0) > 0);
-  const initialValue = useSelector((state: RootState) => selectCalendarsByName(state, calendarName));
+  const initialValue = useSelector((state: RootState) =>
+    selectCalendarForAdministration(state, calendarName, tenantMode)
+  );
 
   const [calendar, setCalendar] = useState<CalendarItem>(
     () =>
@@ -56,7 +60,7 @@ export const CalendarModal = ({
     (state: RootState) => state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   );
   const rolesLoading = fetchKeycloakRolesState === ActionState.inProcess || fetchKeycloakRolesState === '';
-  const descErrMessage = 'Calendar description can not be over 180 characters';
+  const descErrMessage = 'Calendar description can not be over 250 characters';
 
   useEffect(() => {
     if (initialValue) {
@@ -80,7 +84,7 @@ export const CalendarModal = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name'),
+    (value: string) => requiredName(value?.trim() ?? ''),
   )
     .add('duplicated', 'name', duplicateNameCheck(calendarNames, 'Calendar'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
@@ -96,16 +100,20 @@ export const CalendarModal = ({
   };
 
   const validationCheck = () => {
-    const validations = {
-      name: calendar.name,
-    };
+    if (!calendar.displayName?.trim()) {
+      validators['name'].check(calendar.displayName || '');
+      return;
+    }
 
+    const validations: Record<string, string> = { name: calendar.displayName };
     if (isNew) {
-      validations['duplicated'] = calendar.name;
-
-      if (!validators.checkAll(validations)) {
-        return;
-      }
+      validations['duplicated'] = calendar.displayName;
+    }
+    if (calendar.description) {
+      validations['description'] = calendar.description;
+    }
+    if (!validators.checkAll(validations)) {
+      return;
     }
     onSave(calendar);
     if (onCancel) {
@@ -220,7 +228,7 @@ export const CalendarModal = ({
             />
             <HelpTextComponent
               length={calendar?.description?.length || 0}
-              maxLength={180}
+              maxLength={250}
               descErrMessage={descErrMessage}
               errorMsg={errors?.['description']}
             />
