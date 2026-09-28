@@ -666,6 +666,7 @@ export function createTopicRouter({
       body('readerRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
       body('writeRoles.*').optional().isString(),
+      body('securityClassification').optional().isString(),
     ),
     updateTopicType(apiId, logger, directory, client, tokenProvider),
   );
