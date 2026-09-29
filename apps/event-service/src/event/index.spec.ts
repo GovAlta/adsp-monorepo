@@ -25,6 +25,7 @@ jest.mock('node-cache', () => {
 
 jest.mock('./router', () => ({
   createEventRouter: jest.fn(() => jest.fn()),
+  createDefinitionRouter: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('./job', () => ({

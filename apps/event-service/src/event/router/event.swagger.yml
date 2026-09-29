@@ -5,6 +5,32 @@ components:
       properties:
         errorMessage:
           type: string
+    EventDefinition:
+      type: object
+      properties:
+        namespace:
+          type: string
+          description: The namespace of the event definition.
+        name:
+          type: string
+          description: The name of the event definition.
+        description:
+          type: string
+          nullable: true
+        payloadSchema:
+          type: object
+          description: JSON schema used to validate the payload of events sent with this namespace and name.
+        interval:
+          type: object
+          nullable: true
+          description: Optional configuration for deriving an interval metric from this event.
+        log:
+          type: object
+          nullable: true
+          description: Optional configuration for the event log, e.g. to skip logging of this event.
+        isCore:
+          type: boolean
+          description: True if the definition is a core (platform) definition rather than tenant specific.
 
 /event/v1/events:
   post:
@@ -109,3 +135,248 @@ components:
               $ref: '#/components/schemas/EventError'
             example:
               errorMessage: 'User Test User (ID: 1234) not permitted to send event.'
+
+/event/v1/definitions:
+  get:
+    tags:
+      - Event
+    description: >
+      Retrieves event definitions for the tenant of the user as well as core (platform) definitions, as a flat
+      array. Requires only an authenticated user; no specific role is needed.
+    responses:
+      200:
+        description: Event definitions successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventDefinition'
+      401:
+        description: Request does not include a valid bearer token.
+  post:
+    tags:
+      - Event
+    description: >
+      Creates an event definition in the tenant of the user, merging it into its namespace. Requires the
+      event-admin role. Core (platform) definitions are not writable via this endpoint.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              namespace:
+                type: string
+                description: Namespace of the event definition.
+              name:
+                type: string
+                description: Name of the event definition.
+              description:
+                type: string
+                nullable: true
+              payloadSchema:
+                type: object
+              interval:
+                type: object
+                nullable: true
+              log:
+                type: object
+                nullable: true
+            required:
+              - namespace
+              - name
+              - payloadSchema
+          example:
+            namespace: application-events
+            name: user-registration
+            description: A new user registered.
+            payloadSchema:
+              type: object
+              properties:
+                userId:
+                  type: string
+              required:
+                - userId
+    responses:
+      200:
+        description: Event definition successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventDefinition'
+      400:
+        description: Request is invalid, for example the payload schema is not a valid JSON schema, or there is no tenant context.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+      401:
+        description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-admin role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+      409:
+        description: An event definition with the same namespace and name already exists.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+
+/event/v1/definitions/{namespace}/{name}:
+  get:
+    tags:
+      - Event
+    description: >
+      Retrieves a single tenant or core event definition. Requires only an authenticated user; no specific role
+      is needed.
+    parameters:
+      - name: namespace
+        description: Namespace of the event definition.
+        in: path
+        required: true
+        schema:
+          type: string
+        example: application-events
+      - name: name
+        description: Name of the event definition.
+        in: path
+        required: true
+        schema:
+          type: string
+        example: user-registration
+    responses:
+      200:
+        description: Event definition successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventDefinition'
+      401:
+        description: Request does not include a valid bearer token.
+      404:
+        description: Event definition not found.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+  patch:
+    tags:
+      - Event
+    description: >
+      Updates an event definition in the tenant of the user, merging it into its namespace. Requires the
+      event-admin role. Core (platform) definitions are not writable via this endpoint.
+    parameters:
+      - name: namespace
+        description: Namespace of the event definition.
+        in: path
+        required: true
+        schema:
+          type: string
+        example: application-events
+      - name: name
+        description: Name of the event definition.
+        in: path
+        required: true
+        schema:
+          type: string
+        example: user-registration
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+                nullable: true
+              payloadSchema:
+                type: object
+              interval:
+                type: object
+                nullable: true
+              log:
+                type: object
+                nullable: true
+            required:
+              - payloadSchema
+          example:
+            description: A new user registered.
+            payloadSchema:
+              type: object
+              properties:
+                userId:
+                  type: string
+              required:
+                - userId
+    responses:
+      200:
+        description: Event definition successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventDefinition'
+      400:
+        description: Request is invalid, for example the payload schema is not a valid JSON schema, or there is no tenant context.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+      401:
+        description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-admin role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+      404:
+        description: Event definition not found in the tenant configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+  delete:
+    tags:
+      - Event
+    description: >
+      Deletes an event definition from the tenant of the user. Requires the event-admin role. Core (platform)
+      definitions are not deletable via this endpoint. The namespace itself is removed when its last definition
+      is deleted.
+    parameters:
+      - name: namespace
+        description: Namespace of the event definition.
+        in: path
+        required: true
+        schema:
+          type: string
+        example: application-events
+      - name: name
+        description: Name of the event definition.
+        in: path
+        required: true
+        schema:
+          type: string
+        example: user-registration
+    responses:
+      200:
+        description: Event definition successfully deleted.
+      401:
+        description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-admin role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+      404:
+        description: Event definition not found in the tenant configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'

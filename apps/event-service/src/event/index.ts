@@ -1,5 +1,7 @@
+import { AjvValidationService, ConfigurationClient } from '@core-services/core-common';
 import type { Application } from 'express';
-import { createEventRouter } from './router';
+import { createDefinitionRouter, createEventRouter } from './router';
+import type { EventConfiguration } from './router';
 import type { DomainEventService } from './service';
 import { createJobs, JobProps } from './job';
 
@@ -15,11 +17,16 @@ interface EventMiddlewareProps extends Omit<JobProps, 'events'> {
 
 export const applyEventMiddleware = (
   app: Application,
-  { serviceId, logger, eventService, directory, tokenProvider, configurationService }: EventMiddlewareProps
+  { serviceId, logger, eventService, directory, tokenProvider, configurationService }: EventMiddlewareProps,
 ): Application => {
   const eventRouter = createEventRouter({ eventService, logger });
+  const definitionRouter = createDefinitionRouter({
+    client: new ConfigurationClient<EventConfiguration>(directory, tokenProvider, 'platform', 'event-service'),
+    validationService: new AjvValidationService(logger),
+  });
 
   app.use('/event/v1', eventRouter);
+  app.use('/event/v1', definitionRouter);
 
   createJobs({
     serviceId,

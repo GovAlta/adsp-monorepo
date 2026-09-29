@@ -1,3 +1,4 @@
 export enum EventServiceRoles {
-  sender = 'event-sender'
+  sender = 'event-sender',
+  admin = 'event-admin',
 }
