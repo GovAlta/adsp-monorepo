@@ -7,6 +7,7 @@ import { JsonFormContext } from '@abgov/jsonforms-components';
 // and avoids standing up the real store.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mockState: any;
+let capturedSaveForm: ((data?: unknown) => void) | undefined;
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -19,6 +20,7 @@ jest.mock('react-redux', () => ({
 // JsonForms itself.
 const AutoPopulatedProbe = (): JSX.Element => {
   const ctx = useContext(JsonFormContext);
+  capturedSaveForm = ctx?.saveFunction.get('save-form')?.();
   return <div data-testid="auto-populated">{JSON.stringify(ctx?.autoPopulatedData)}</div>;
 };
 
@@ -33,7 +35,6 @@ jest.mock('@jsonforms/react', () => ({
   },
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { DraftForm } = require('./DraftForm');
 
 describe('DraftForm', () => {
@@ -74,6 +75,7 @@ describe('DraftForm', () => {
     );
 
   beforeEach(() => {
+    capturedSaveForm = undefined;
     mockState = {
       user: { user: { name: 'Bob Bobson', email: 'bob@example.com' } },
       form: { files: {} },
@@ -130,5 +132,27 @@ describe('DraftForm', () => {
     // Assert
     expect(capturedJsonForms.schema).toBe(schema);
     expect(capturedJsonForms.ajv).toBe(ajv);
+  });
+
+  it('saves the latest JsonForms data passed by page navigation', () => {
+    const onSave = jest.fn();
+    render(
+      <DraftForm
+        definition={definition}
+        form={{ id: 'form-1', urn: 'urn:form-1', status: 'Draft' }}
+        data={{ firstName: 'stale' }}
+        canSubmit={false}
+        showSubmit={false}
+        saving={false}
+        submitting={false}
+        onChange={jest.fn()}
+        onSubmit={jest.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    capturedSaveForm?.({ firstName: 'fresh' });
+
+    expect(onSave).toHaveBeenCalledWith({ data: { firstName: 'fresh' } });
   });
 });
