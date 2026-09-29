@@ -20,14 +20,6 @@ components:
         payloadSchema:
           type: object
           description: JSON schema used to validate the payload of events sent with this namespace and name.
-        interval:
-          type: object
-          nullable: true
-          description: Optional configuration for deriving an interval metric from this event.
-        log:
-          type: object
-          nullable: true
-          description: Optional configuration for the event log, e.g. to skip logging of this event.
         isCore:
           type: boolean
           description: True if the definition is a core (platform) definition rather than tenant specific.
@@ -139,10 +131,10 @@ components:
 /event/v1/definitions:
   get:
     tags:
-      - Event
+      - Event Definition
     description: >
       Retrieves event definitions for the tenant of the user as well as core (platform) definitions, as a flat
-      array. Requires only an authenticated user; no specific role is needed.
+      array. Requires configuration-reader or event-admin roles
     responses:
       200:
         description: Event definitions successfully retrieved.
@@ -154,9 +146,11 @@ components:
                 $ref: '#/components/schemas/EventDefinition'
       401:
         description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-admin or configuration-reader role.
   post:
     tags:
-      - Event
+      - Event Definition
     description: >
       Creates an event definition in the tenant of the user, merging it into its namespace. Requires the
       event-admin role. Core (platform) definitions are not writable via this endpoint.
@@ -178,12 +172,6 @@ components:
                 nullable: true
               payloadSchema:
                 type: object
-              interval:
-                type: object
-                nullable: true
-              log:
-                type: object
-                nullable: true
             required:
               - namespace
               - name
@@ -230,10 +218,10 @@ components:
 /event/v1/definitions/{namespace}/{name}:
   get:
     tags:
-      - Event
+      - Event Definition
     description: >
-      Retrieves a single tenant or core event definition. Requires only an authenticated user; no specific role
-      is needed.
+      Retrieves a single tenant or core event definition.
+      Requires configuration-reader and event-reader roles.
     parameters:
       - name: namespace
         description: Namespace of the event definition.
@@ -258,6 +246,8 @@ components:
               $ref: '#/components/schemas/EventDefinition'
       401:
         description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-admin or configuration-reader role.
       404:
         description: Event definition not found.
         content:
@@ -266,7 +256,7 @@ components:
               $ref: '#/components/schemas/EventError'
   patch:
     tags:
-      - Event
+      - Event Definition
     description: >
       Updates an event definition in the tenant of the user, merging it into its namespace. Requires the
       event-admin role. Core (platform) definitions are not writable via this endpoint.
@@ -297,12 +287,6 @@ components:
                 nullable: true
               payloadSchema:
                 type: object
-              interval:
-                type: object
-                nullable: true
-              log:
-                type: object
-                nullable: true
             required:
               - payloadSchema
           example:
@@ -343,7 +327,7 @@ components:
               $ref: '#/components/schemas/EventError'
   delete:
     tags:
-      - Event
+      - Event Definition
     description: >
       Deletes an event definition from the tenant of the user. Requires the event-admin role. Core (platform)
       definitions are not deletable via this endpoint. The namespace itself is removed when its last definition

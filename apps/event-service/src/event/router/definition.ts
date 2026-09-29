@@ -10,7 +10,7 @@ import {
 import { RequestHandler, Router } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import { body, param } from 'express-validator';
-import { EventServiceRoles } from '../role';
+import { EventServiceConfigurationRoles, EventServiceRoles } from '../role';
 import type { EventDefinition, Namespace } from '../types';
 
 const NAME_PATTERN = /^[a-zA-Z0-9-_ ]{1,50}$/;
@@ -47,6 +47,11 @@ const getRequiredTenantId = (req: Parameters<RequestHandler>[0]): AdspId => {
 
 const assertUserCanAdminister = (user: User, tenantId: AdspId, operation: string) => {
   if (!isAllowedUser(user, tenantId, EventServiceRoles.admin, true)) {
+    throw new UnauthorizedUserError(operation, user);
+  }
+};
+const assertUserCanRead = (user: User, tenantId: AdspId, operation: string) => {
+  if (!isAllowedUser(user, tenantId, [EventServiceConfigurationRoles.Reader, EventServiceRoles.admin], true)) {
     throw new UnauthorizedUserError(operation, user);
   }
 };
@@ -90,6 +95,7 @@ export function findDefinitions(client: ConfigurationClient<EventConfiguration>)
     try {
       const tenantId = req.tenant?.id;
 
+      assertUserCanRead(req.user, tenantId, 'find event definitions');
       const [tenant, core] = await Promise.all([
         tenantId ? client.getTenantConfiguration(tenantId) : Promise.resolve({} as EventConfiguration),
         client.getCoreConfiguration(),
@@ -107,8 +113,10 @@ export function findDefinition(client: ConfigurationClient<EventConfiguration>):
   return async (req, res, next) => {
     try {
       const { namespace, name } = req.params;
+
       const tenantId = req.tenant?.id;
 
+      assertUserCanRead(req.user, tenantId, 'find event definition');
       const tenant = tenantId ? await client.getTenantConfiguration(tenantId) : ({} as EventConfiguration);
       const tenantDefinition = getDefinition(tenant, namespace, name);
       if (tenantDefinition) {
@@ -198,13 +206,12 @@ export function deleteDefinition(client: ConfigurationClient<EventConfiguration>
       }
 
       const remaining = removeDefinition(tenant, namespace, name);
+      let removed: EventConfiguration = null;
       if (Object.keys(remaining.definitions).length === 0) {
-        await client.deleteEntry(tenantId, namespace);
-      } else {
-        await client.updateEntry(tenantId, namespace, remaining);
+        removed = (await client.deleteEntry(tenantId, namespace)) as EventConfiguration;
       }
 
-      res.send({ deleted: true });
+      res.send({ deleted: !!removed });
     } catch (err) {
       next(err);
     }
@@ -219,8 +226,9 @@ interface DefinitionRouterProps {
 const validateDefinitionBody = () => [
   body('description').optional({ nullable: true }).isString(),
   body('payloadSchema').isObject(),
-  body('interval').optional({ nullable: true }).isObject(),
-  body('log').optional({ nullable: true }).isObject(),
+
+  //log and interval objects should not be allowed to be part of tenant event definition
+  //it is only used by value or file service
 ];
 
 const validateCreateDefinitionBody = () => [
