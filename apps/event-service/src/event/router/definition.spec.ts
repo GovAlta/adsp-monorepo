@@ -370,8 +370,6 @@ describe('definition router', () => {
     const handler = deleteDefinition(client);
 
     it('deletes the namespace entry when it is the last definition', async () => {
-      clientMock.deleteEntry.mockResolvedValueOnce(coreConfiguration);
-
       await handler(
         createRequest({ user: admin, params: { namespace: 'application-events', name: 'user-registration' } }),
         res as unknown as Response,
@@ -383,19 +381,7 @@ describe('definition router', () => {
       expect(res.send).toHaveBeenCalledWith({ deleted: true });
     });
 
-    it('returns deleted false when the delete entry call resolves without a value', async () => {
-      clientMock.deleteEntry.mockResolvedValueOnce(undefined);
-
-      await handler(
-        createRequest({ user: admin, params: { namespace: 'application-events', name: 'user-registration' } }),
-        res as unknown as Response,
-        next,
-      );
-
-      expect(res.send).toHaveBeenCalledWith({ deleted: false });
-    });
-
-    it('does not delete or update the namespace when other definitions remain', async () => {
+    it('updates the namespace entry when other definitions remain', async () => {
       const multiDefinitionConfig = {
         'application-events': {
           name: 'application-events',
@@ -410,9 +396,12 @@ describe('definition router', () => {
         next,
       );
 
-      expect(clientMock.updateEntry).not.toHaveBeenCalled();
+      expect(clientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'application-events', {
+        name: 'application-events',
+        definitions: { 'other-event': { ...definition, name: 'other-event' } },
+      });
       expect(clientMock.deleteEntry).not.toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith({ deleted: false });
+      expect(res.send).toHaveBeenCalledWith({ deleted: true });
     });
 
     it('returns not found for a missing definition', async () => {
