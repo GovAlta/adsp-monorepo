@@ -401,6 +401,11 @@ export class AdspFeedback implements AdspFeedbackApi {
       }
 
       if (this.apiUrl) {
+        const submitButton = this.sendButtonRef.value;
+        if (submitButton) {
+          submitButton.setAttribute('disabled', '');
+          submitButton.textContent = 'Submitting...';
+        }
         try {
           const response = await fetch(this.apiUrl.href, {
             headers,
@@ -411,8 +416,11 @@ export class AdspFeedback implements AdspFeedbackApi {
           if (!response.ok) {
             console.log(`Response received for sending feedback to API not 200: ${response.status}`);
             this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
-
             this.lastFocusableElement = this.feedbackCloseErrorButton;
+            if (submitButton) {
+              submitButton.removeAttribute('disabled');
+              submitButton.textContent = 'Submit';
+            }
           } else {
             this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
             this.lastFocusableElement = this.feedbackCloseSuccessButton;
@@ -422,6 +430,10 @@ export class AdspFeedback implements AdspFeedbackApi {
 
           this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
           this.lastFocusableElement = this.feedbackCloseErrorButton;
+          if (submitButton) {
+            submitButton.removeAttribute('disabled');
+            submitButton.textContent = 'Submit';
+          }
         }
         this.feedbackContentFormRef.value?.scrollTo(0, 0);
         this.feedbackFormClassRef?.value?.setAttribute('style', 'max-height:560px');
