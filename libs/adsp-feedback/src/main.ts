@@ -407,8 +407,6 @@ export class AdspFeedback implements AdspFeedbackApi {
           submitButton.textContent = 'Submitting...';
         }
         try {
-          // TODO: remove - temporary delay for preview only
-          await new Promise((resolve) => setTimeout(resolve, 3000));
           const response = await fetch(this.apiUrl.href, {
             headers,
             method: 'POST',
