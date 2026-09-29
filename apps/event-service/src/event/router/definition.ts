@@ -206,12 +206,13 @@ export function deleteDefinition(client: ConfigurationClient<EventConfiguration>
       }
 
       const remaining = removeDefinition(tenant, namespace, name);
-      let removed: EventConfiguration = null;
       if (Object.keys(remaining.definitions).length === 0) {
-        removed = (await client.deleteEntry(tenantId, namespace)) as EventConfiguration;
+        await client.deleteEntry(tenantId, namespace);
+      } else {
+        await client.updateEntry(tenantId, namespace, remaining);
       }
 
-      res.send({ deleted: !!removed });
+      res.send({ deleted: true });
     } catch (err) {
       next(err);
     }

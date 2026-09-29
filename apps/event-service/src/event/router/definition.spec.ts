@@ -1,7 +1,7 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { ConfigurationClient, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
-import { EventServiceRoles } from '../role';
+import { EventServiceConfigurationRoles, EventServiceRoles } from '../role';
 import {
   assertValidJsonSchema,
   createDefinition,
@@ -18,6 +18,7 @@ import {
 describe('definition router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const admin = { id: 'admin', tenantId, roles: [EventServiceRoles.admin], isCore: false };
+  const reader = { id: 'reader', tenantId, roles: [EventServiceConfigurationRoles.Reader], isCore: false };
   const noRoles = { id: 'none', tenantId, roles: [], isCore: false };
 
   const definition = { name: 'user-registration', description: 'A user registered', payloadSchema: { type: 'object' } };
@@ -108,7 +109,7 @@ describe('definition router', () => {
 
   describe('findDefinitions', () => {
     it('returns tenant and core definitions as a flat array', async () => {
-      await findDefinitions(client)(createRequest({}), res as unknown as Response, next);
+      await findDefinitions(client)(createRequest({ user: reader }), res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith([
         { ...definition, namespace: 'application-events', isCore: false },
         { ...definition, name: 'core-event', namespace: 'core', isCore: true },
@@ -116,9 +117,18 @@ describe('definition router', () => {
     });
 
     it('returns only core definitions without tenant context', async () => {
-      await findDefinitions(client)(createRequest({ tenant: undefined }), res as unknown as Response, next);
+      await findDefinitions(client)(
+        createRequest({ user: reader, tenant: undefined }),
+        res as unknown as Response,
+        next,
+      );
       expect(clientMock.getTenantConfiguration).not.toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith([{ ...definition, name: 'core-event', namespace: 'core', isCore: true }]);
+    });
+
+    it('rejects user without reader or admin role', async () => {
+      await findDefinitions(client)(createRequest({ user: noRoles }), res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -127,7 +137,7 @@ describe('definition router', () => {
 
     it('returns a tenant definition', async () => {
       await handler(
-        createRequest({ params: { namespace: 'application-events', name: 'user-registration' } }),
+        createRequest({ user: reader, params: { namespace: 'application-events', name: 'user-registration' } }),
         res as unknown as Response,
         next,
       );
@@ -137,7 +147,7 @@ describe('definition router', () => {
 
     it('returns a core definition when not found in tenant', async () => {
       await handler(
-        createRequest({ params: { namespace: 'core', name: 'core-event' } }),
+        createRequest({ user: reader, params: { namespace: 'core', name: 'core-event' } }),
         res as unknown as Response,
         next,
       );
@@ -152,12 +162,22 @@ describe('definition router', () => {
 
     it('returns not found for a missing definition', async () => {
       await handler(
-        createRequest({ params: { namespace: 'application-events', name: 'missing' } }),
+        createRequest({ user: reader, params: { namespace: 'application-events', name: 'missing' } }),
         res as unknown as Response,
         next,
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('rejects user without reader or admin role', async () => {
+      await handler(
+        createRequest({ user: noRoles, params: { namespace: 'application-events', name: 'user-registration' } }),
+        res as unknown as Response,
+        next,
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -350,6 +370,8 @@ describe('definition router', () => {
     const handler = deleteDefinition(client);
 
     it('deletes the namespace entry when it is the last definition', async () => {
+      clientMock.deleteEntry.mockResolvedValueOnce(coreConfiguration);
+
       await handler(
         createRequest({ user: admin, params: { namespace: 'application-events', name: 'user-registration' } }),
         res as unknown as Response,
@@ -361,7 +383,19 @@ describe('definition router', () => {
       expect(res.send).toHaveBeenCalledWith({ deleted: true });
     });
 
-    it('updates the namespace entry when other definitions remain', async () => {
+    it('returns deleted false when the delete entry call resolves without a value', async () => {
+      clientMock.deleteEntry.mockResolvedValueOnce(undefined);
+
+      await handler(
+        createRequest({ user: admin, params: { namespace: 'application-events', name: 'user-registration' } }),
+        res as unknown as Response,
+        next,
+      );
+
+      expect(res.send).toHaveBeenCalledWith({ deleted: false });
+    });
+
+    it('does not delete or update the namespace when other definitions remain', async () => {
       const multiDefinitionConfig = {
         'application-events': {
           name: 'application-events',
@@ -376,12 +410,9 @@ describe('definition router', () => {
         next,
       );
 
-      expect(clientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'application-events', {
-        name: 'application-events',
-        definitions: { 'other-event': { ...definition, name: 'other-event' } },
-      });
+      expect(clientMock.updateEntry).not.toHaveBeenCalled();
       expect(clientMock.deleteEntry).not.toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith({ deleted: true });
+      expect(res.send).toHaveBeenCalledWith({ deleted: false });
     });
 
     it('returns not found for a missing definition', async () => {
