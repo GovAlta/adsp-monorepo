@@ -359,6 +359,7 @@ export const feedbackStyles = `          .adsp-fb-root {
             margin-left: var(--adsp-fb-space-s);
             background: var(--adsp-fb-color-primary);
             color: #ffffff;
+            min-width: 7.5rem;
           }
 
           .adsp-fb button.adsp-fb-form-primary:focus-visible {

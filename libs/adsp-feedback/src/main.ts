@@ -407,6 +407,8 @@ export class AdspFeedback implements AdspFeedbackApi {
           submitButton.textContent = 'Submitting...';
         }
         try {
+          // TODO: remove - temporary delay for preview only
+          await new Promise((resolve) => setTimeout(resolve, 3000));
           const response = await fetch(this.apiUrl.href, {
             headers,
             method: 'POST',
@@ -442,6 +444,10 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.feedbackContentFormRef?.value?.setAttribute('style', 'padding-top:0px');
       if (!this.validateRating()) {
         this.feedbackContentFormRef.value?.scrollTo(0, 0);
+      } else if (!this.validateRadioSelection()) {
+        this.issueSelectionErrorText.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else if (!this.validateTechnicalComment()) {
+        this.technicalCommentErrorText.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }
   }
