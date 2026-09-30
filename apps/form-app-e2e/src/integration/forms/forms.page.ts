@@ -215,7 +215,7 @@ class FormsPage {
   }
 
   formBackToOverviewLink(label) {
-    return cy.xpath(`//div[@class="back-link" and text()="${label}"]`);
+    return cy.xpath(`//button[@data-testid="back-to-tasks" and text()="${label}"]`);
   }
 
   formTaskListStepPageNextButton() {
@@ -332,7 +332,7 @@ class FormsPage {
 
   formSummaryFieldChangeLink(pageName, label) {
     return cy.xpath(
-      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//goa-button[text()="Change"]`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//button[text()="Change"]`
     );
   }
 }
