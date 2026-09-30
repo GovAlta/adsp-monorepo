@@ -37,6 +37,14 @@ components:
             $ref: "#/components/schemas/SubscriptionError"
           example:
             errorMessage: "User Test User (ID: 1234) not permitted to get subscribers."
+    SubscriptionConflict:
+      description: A notification type with the ID already exists.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SubscriptionError"
+          example:
+            errorMessage: Notification type with ID 'application-status' already exists.
     SubscriptionNotFound:
       description: Notification type or subscriber not found.
       content:
@@ -92,14 +100,17 @@ components:
                 type: string
               name:
                 type: string
-              template:
+              templates:
                 type: object
+                description: Templates by channel; a channel's template can be null when the event does not use it.
                 properties:
                   email:
                     $ref: "#/components/schemas/Template"
                   bot:
                     $ref: "#/components/schemas/Template"
                   sms:
+                    $ref: "#/components/schemas/Template"
+                  mail:
                     $ref: "#/components/schemas/Template"
       example:
         id: application-status
@@ -112,10 +123,57 @@ components:
         events:
           - namespace: application-service
             name: application-status-changed
-            template:
+            templates:
               email:
                 subject: Your application status changed
                 body: "<p>Your application is now {{ event.payload.status }}.</p>"
+    NotificationTypeDefinition:
+      description: >
+        Notification type as configured, including the settings for types that send to an address instead of to
+        subscribers.
+      allOf:
+        - $ref: "#/components/schemas/NotificationType"
+        - type: object
+          required: [id, name, publicSubscribe, subscriberRoles, channels, events]
+          properties:
+            address:
+              type: string
+              description: Address to send to instead of to subscribers.
+            addressPath:
+              type: string
+              description: Path in the event payload of the address to send to instead of to subscribers.
+            ccPath:
+              type: string
+            bccPath:
+              type: string
+            attachmentPath:
+              type: string
+            subjectPath:
+              type: string
+            titlePath:
+              type: string
+            subTitlePath:
+              type: string
+    NotificationContact:
+      type: object
+      properties:
+        contactEmail:
+          type: string
+          description: Support email shown to subscribers.
+        phoneNumber:
+          type: string
+          description: Support phone number shown to subscribers.
+        supportInstructions:
+          type: string
+          description: Support instructions shown to subscribers.
+        fromEmail:
+          type: string
+          description: Address that email notifications of the tenant are sent from.
+      example:
+        contactEmail: support@example.com
+        phoneNumber: "7805550100"
+        supportInstructions: Contact us during business hours.
+        fromEmail: noreply@example.com
     SubscriberChannel:
       type: object
       properties:
@@ -331,8 +389,19 @@ components:
       Retrieves notification types available to subscribe to. Available to any authenticated user. Includes the
       platform notification types and the types configured by the tenant; a tenant type with the same ID as a
       platform type replaces it.
+      With the source parameter, retrieves the type definitions as configured instead, which requires the
+      subscription-admin role.
     parameters:
       - $ref: "#/components/parameters/SubscriptionTenantId"
+      - name: source
+        description: >
+          Retrieve the definitions configured by the tenant (tenant) or the platform (core) instead of the combined
+          types. Tenant definitions with the ID of a platform type are customizations of that type's templates.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [tenant, core]
     responses:
       200:
         description: Notification types successfully retrieved.
@@ -341,9 +410,42 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/NotificationType"
+                $ref: "#/components/schemas/NotificationTypeDefinition"
+      400:
+        $ref: "#/components/responses/SubscriptionBadRequest"
       401:
         $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
+  post:
+    tags:
+      - Subscription
+    description: >
+      Creates a notification type for the tenant. Requires the subscription-admin role. The definition is validated,
+      including its channels, trigger events, and templates.
+    parameters:
+      - $ref: "#/components/parameters/SubscriptionTenantId"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NotificationTypeDefinition"
+    responses:
+      201:
+        description: Notification type successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationTypeDefinition"
+      400:
+        $ref: "#/components/responses/SubscriptionBadRequest"
+      401:
+        $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
+      409:
+        $ref: "#/components/responses/SubscriptionConflict"
 /subscription/v1/types/{type}:
   get:
     tags:
@@ -372,6 +474,125 @@ components:
         $ref: "#/components/responses/SubscriptionUnauthorized"
       404:
         $ref: "#/components/responses/SubscriptionNotFound"
+  patch:
+    tags:
+      - Subscription
+    description: >
+      Updates a notification type of the tenant with the properties in the request. Requires the subscription-admin
+      role. Updating a platform type saves a tenant customization of it, where only the event templates apply. The
+      updated definition is validated, including its channels, trigger events, and templates.
+    parameters:
+      - name: type
+        description: ID of the notification type.
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+      - $ref: "#/components/parameters/SubscriptionTenantId"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NotificationTypeDefinition"
+    responses:
+      200:
+        description: Notification type successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationTypeDefinition"
+      400:
+        $ref: "#/components/responses/SubscriptionBadRequest"
+      401:
+        $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
+      404:
+        $ref: "#/components/responses/SubscriptionNotFound"
+  delete:
+    tags:
+      - Subscription
+    description: >
+      Deletes a notification type of the tenant. Requires the subscription-admin role. Platform types can't be
+      deleted; deleting the tenant customization of a platform type reverts it to the platform templates. Existing
+      subscriptions to the type are not removed.
+    parameters:
+      - name: type
+        description: ID of the notification type.
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+      - $ref: "#/components/parameters/SubscriptionTenantId"
+    responses:
+      200:
+        description: Notification type successfully deleted.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+            example:
+              deleted: true
+      400:
+        $ref: "#/components/responses/SubscriptionBadRequest"
+      401:
+        $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
+      404:
+        $ref: "#/components/responses/SubscriptionNotFound"
+/subscription/v1/contact:
+  parameters:
+    - $ref: "#/components/parameters/SubscriptionTenantId"
+  get:
+    tags:
+      - Subscription
+    description: >
+      Retrieves the tenant's support contact and from email for notifications. Requires the subscription-admin role.
+    responses:
+      200:
+        description: Contact successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationContact"
+      401:
+        $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
+  patch:
+    tags:
+      - Subscription
+    description: >
+      Updates the tenant's support contact and from email for notifications with the properties in the request.
+      Requires the subscription-admin role. An email property can be set to an empty string to clear it.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NotificationContact"
+    responses:
+      200:
+        description: Contact successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationContact"
+      400:
+        $ref: "#/components/responses/SubscriptionBadRequest"
+      401:
+        $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
 /subscription/v1/types/{type}/subscriptions:
   parameters:
     - name: type

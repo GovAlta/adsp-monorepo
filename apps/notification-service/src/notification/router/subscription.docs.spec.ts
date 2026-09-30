@@ -1,5 +1,6 @@
 import { adspId, Channel, User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/core-common';
+import axios from 'axios';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
 import { Express } from 'express';
@@ -9,6 +10,9 @@ import { Logger } from 'winston';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 import { ServiceUserRoles } from '../types';
 import { createSubscriptionRouter } from './subscription';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 // Verifies the request validation, roles, and error responses documented in subscription.swagger.yml by sending
 // requests through the router as mounted in the service (authenticated, then the router, then the error handler).
@@ -72,10 +76,23 @@ describe('subscription router documented behaviour', () => {
     'self-service': type('self-service', { manageSubscribe: true, subscriberRoles: ['applicant'] }),
     'public-type': type('public-type', { manageSubscribe: true, publicSubscribe: true }),
   };
+  const coreTypes = { 'platform-type': type('platform-type', {}) };
   const configuration = {
+    contact: { contactEmail: 'support@test.co', phoneNumber: '7801234567', supportInstructions: 'Call us.' },
+    email: { fromEmail: 'noreply@test.co' },
     getNotificationTypes: () => Object.values(types),
-    getNotificationType: (id: string) => types[id],
+    getNotificationType: (id: string) => types[id] || coreTypes[id],
+    getTenantDefinitions: () => Object.values(types),
+    getTenantDefinition: (id: string) => types[id],
+    getCoreDefinitions: () => Object.values(coreTypes),
+    getCoreDefinition: (id: string) => coreTypes[id],
   };
+  const directoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://configuration-service/configuration/v2'))),
+    getResourceUrl: jest.fn(),
+  };
+  const tokenProviderMock = { getAccessToken: jest.fn(() => Promise.resolve('token')) };
+  const configurationServiceMock = { clearCached: jest.fn() };
 
   let subscribers: Record<string, SubscriberEntity>;
   let subscriptions: SubscriptionEntity[];
@@ -101,6 +118,9 @@ describe('subscription router documented behaviour', () => {
         eventService: eventServiceMock,
         verifyService: verifyServiceMock as never,
         tenantService: null,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock as never,
       }),
     );
     server.use(createErrorHandler(loggerMock));
@@ -146,6 +166,7 @@ describe('subscription router documented behaviour', () => {
     repositoryMock.deleteSubscriber.mockResolvedValue(true);
     verifyServiceMock.sendCode.mockResolvedValue('key');
     verifyServiceMock.verifyCode.mockResolvedValue(true);
+    axiosMock.patch.mockResolvedValue({ data: {} });
   });
 
   const subscribe = (typeId: string, subscriberId: string, criteria = {}) =>
@@ -616,6 +637,141 @@ describe('subscription router documented behaviour', () => {
     it('responds 404 when the user has no subscriber', async () => {
       const res = await request(createApp(plain)).get('/subscription/v1/subscribers/my-subscriber');
       expect(res.status).toBe(404);
+    });
+  });
+  describe('GET /types with source', () => {
+    it.each(['tenant', 'core'])('gets the %s definitions for subscription-admin', async (source) => {
+      const res = await request(createApp(admin)).get(`/subscription/v1/types?source=${source}`);
+      expect(res.status).toBe(200);
+      expect(res.body.map(({ id }) => id)).toEqual(
+        source === 'core' ? ['platform-type'] : ['admin-only', 'self-service', 'public-type'],
+      );
+    });
+
+    it('responds 403 without subscription-admin', async () => {
+      const res = await request(createApp(plain)).get('/subscription/v1/types?source=tenant');
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 400 for an unknown source', async () => {
+      const res = await request(createApp(admin)).get('/subscription/v1/types?source=other');
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /types', () => {
+    const newType = {
+      id: 'new-type',
+      name: 'New type',
+      publicSubscribe: false,
+      subscriberRoles: [],
+      channels: [Channel.email],
+      events: [{ namespace: 'test', name: 'run', templates: { email: { subject: 'Ran', body: 'It ran.' } } }],
+    };
+
+    it('creates a type', async () => {
+      const res = await request(createApp(admin)).post('/subscription/v1/types').send(newType);
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual(newType);
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        'https://configuration-service/configuration/v2/configuration/platform/notification-service',
+        { operation: 'UPDATE', update: { 'new-type': newType } },
+        expect.any(Object),
+      );
+    });
+
+    it('responds 400 for an invalid type', async () => {
+      const res = await request(createApp(admin))
+        .post('/subscription/v1/types')
+        .send({ ...newType, channels: ['fax'] });
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 401 when there is no authenticated user', async () => {
+      const res = await request(createApp(null)).post('/subscription/v1/types').send(newType);
+      expect(res.status).toBe(401);
+    });
+
+    it('responds 403 without subscription-admin', async () => {
+      const res = await request(createApp(plain)).post('/subscription/v1/types').send(newType);
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 409 when the type exists', async () => {
+      const res = await request(createApp(admin))
+        .post('/subscription/v1/types')
+        .send({ ...newType, id: 'platform-type' });
+      expect(res.status).toBe(409);
+    });
+  });
+
+  describe('PATCH /types/:type', () => {
+    it('updates a type', async () => {
+      const res = await request(createApp(admin)).patch('/subscription/v1/types/admin-only').send({ name: 'Renamed' });
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ id: 'admin-only', name: 'Renamed' });
+    });
+
+    it('responds 400 for an invalid update', async () => {
+      const res = await request(createApp(admin)).patch('/subscription/v1/types/admin-only').send({ channels: [] });
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 403 without subscription-admin', async () => {
+      const res = await request(createApp(plain)).patch('/subscription/v1/types/admin-only').send({ name: 'Renamed' });
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 404 for an unknown type', async () => {
+      const res = await request(createApp(admin)).patch('/subscription/v1/types/unknown').send({ name: 'Renamed' });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('DELETE /types/:type', () => {
+    it('deletes a type', async () => {
+      const res = await request(createApp(admin)).delete('/subscription/v1/types/admin-only');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ deleted: true });
+    });
+
+    it('responds 403 without subscription-admin', async () => {
+      const res = await request(createApp(plain)).delete('/subscription/v1/types/admin-only');
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 404 for a platform type without a customization', async () => {
+      const res = await request(createApp(admin)).delete('/subscription/v1/types/platform-type');
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET and PATCH /contact', () => {
+    it('gets the contact', async () => {
+      const res = await request(createApp(admin)).get('/subscription/v1/contact');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ...configuration.contact, fromEmail: 'noreply@test.co' });
+    });
+
+    it('responds 403 to get without subscription-admin', async () => {
+      const res = await request(createApp(plain)).get('/subscription/v1/contact');
+      expect(res.status).toBe(403);
+    });
+
+    it('updates the contact', async () => {
+      const res = await request(createApp(admin)).patch('/subscription/v1/contact').send({ fromEmail: '' });
+      expect(res.status).toBe(200);
+      expect(res.body.fromEmail).toBe('');
+    });
+
+    it('responds 400 for an invalid email', async () => {
+      const res = await request(createApp(admin)).patch('/subscription/v1/contact').send({ contactEmail: 'nope' });
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 403 to update without subscription-admin', async () => {
+      const res = await request(createApp(plain)).patch('/subscription/v1/contact').send({ phoneNumber: '1' });
+      expect(res.status).toBe(403);
     });
   });
 });
