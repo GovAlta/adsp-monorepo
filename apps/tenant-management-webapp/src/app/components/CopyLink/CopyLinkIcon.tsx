@@ -38,14 +38,18 @@ const CopyLinkIcon = ({ label, link, testId }: CopyLinkIconProps): JSX.Element =
     }
   };
 
+  const buttonLabel = isCopied ? `${label} copied` : `Copy ${label}`;
+
   return (
     <CopyLinkIconWrapper title={link}>
       <h3>{label}</h3>
+      {/* title is the only prop goa-icon-button forwards to its inner role="img" icon; without it axe reports the icon as unnamed */}
       <GoabIconButton
         icon={isCopied ? 'checkmark' : 'copy'}
         size="small"
         testId={testId}
-        ariaLabel={isCopied ? `${label} copied` : `Copy ${label}`}
+        title={buttonLabel}
+        ariaLabel={buttonLabel}
         onClick={copyLink}
       />
     </CopyLinkIconWrapper>

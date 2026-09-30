@@ -144,8 +144,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     onSubmit(form);
   };
 
-  const onSaveFunction = () => {
-    onSave({ data: populatedData });
+  const onSaveFunction = (latestData?: unknown) => {
+    onSave({ data: latestData === undefined ? populatedData : latestData });
   };
 
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';

@@ -1,5 +1,6 @@
-import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, ConfigurationService, TokenProvider, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import axios from 'axios';
 import { Request, Response } from 'express';
 import { checkSchema, validationResult } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
@@ -34,6 +35,7 @@ async function validateBody(schema: Record<string, unknown>, body: Record<string
   return validationResult(req);
 }
 
+jest.mock('axios');
 jest.mock('ical-generator', () => {
   return {
     ICalCalendar: jest.fn().mockImplementation((data) => {
@@ -43,6 +45,7 @@ jest.mock('ical-generator', () => {
 });
 
 describe('calendar router', () => {
+  const axiosMock = axios as jest.Mocked<typeof axios>;
   const mockedICalCalendar = mocked(ICalCalendar, { shallow: true });
   const serviceId = adspId`urn:ads:platform:calendar-service`;
   const apiId = adspId`urn:ads:platform:calendar-service:v1`;
@@ -101,7 +104,11 @@ describe('calendar router', () => {
   };
 
   beforeEach(() => {
-    mockedICalCalendar.mockClear();
+    (mockedICalCalendar as unknown as jest.Mock).mockImplementation((data) => ({
+      data,
+      serve: jest.fn((res) => res.send(data)),
+    }));
+    directoryMock.getServiceUrl.mockResolvedValue(new URL('https://calendar-service'));
     repositoryMock.getCalendarEvents.mockReset();
     repositoryMock.getCalendarEvent.mockReset();
     repositoryMock.getEventAttendees.mockReset();
@@ -111,7 +118,14 @@ describe('calendar router', () => {
     repositoryMock.deleteAttendee.mockReset();
   });
 
+  afterEach(() => jest.resetAllMocks());
+
   it('can create router', () => {
+    // Arrange
+    const tokenProviderMock = { getAccessToken: jest.fn() };
+    const configurationServiceMock = { clearCached: jest.fn() };
+
+    // Act
     const router = createCalendarRouter({
       logger: loggerMock,
       serviceId: adspId`urn:ads:platform:calendar-service`,
@@ -119,48 +133,65 @@ describe('calendar router', () => {
       eventService: eventServiceMock,
       directory: directoryMock,
       tenantService: tenantServiceMock,
+      tokenProvider: tokenProviderMock as unknown as TokenProvider,
+      configurationService: configurationServiceMock as unknown as ConfigurationService,
     });
 
+    // Assert
     expect(router).toBeTruthy();
   });
 
   describe('getCalendars', () => {
+    const configurationDirectory = { getServiceUrl: jest.fn() };
+    const tokenProvider = { getAccessToken: jest.fn() };
+
+    beforeEach(() => {
+      configurationDirectory.getServiceUrl.mockResolvedValue(new URL('https://configuration.service.test'));
+      tokenProvider.getAccessToken.mockResolvedValue('service-account-access-token');
+      axiosMock.get.mockResolvedValue({ data: {} });
+    });
+
     it('can create handler', () => {
-      const handler = getCalendars(apiId);
+      // Arrange
+      const directory = configurationDirectory as never;
+      const provider = tokenProvider as unknown as TokenProvider;
+
+      // Act
+      const handler = getCalendars(apiId, directory, provider);
+
+      // Assert
       expect(handler).toBeTruthy();
     });
 
     it('can get calendars', async () => {
-      const req = {
-        getConfiguration: jest.fn(),
-      };
-      const res = {
-        send: jest.fn(),
-      };
+      // Arrange
+      axiosMock.get.mockResolvedValueOnce({ data: { test: calendar } });
+      const req = {};
+      const res = { send: jest.fn() };
       const next = jest.fn();
+      const handler = getCalendars(apiId, configurationDirectory as never, tokenProvider as unknown as TokenProvider);
 
-      req.getConfiguration.mockResolvedValueOnce({
-        test: calendar,
-      });
-      const handler = getCalendars(apiId);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(calendar)]));
-      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      // Act
+      await handler(req as Request, res as unknown as Response, next);
+
+      // Assert
+      const [{ source, ...legacyCalendar }] = res.send.mock.calls[0][0];
+      expect(source).toBe('core');
+      expect([legacyCalendar]).toMatchSnapshot();
     });
 
     it('can handle no configuration', async () => {
-      const req = {
-        getConfiguration: jest.fn(),
-      };
-      const res = {
-        send: jest.fn(),
-      };
+      // Arrange
+      const req = {};
+      const res = { send: jest.fn() };
       const next = jest.fn();
+      const handler = getCalendars(apiId, configurationDirectory as never, tokenProvider as unknown as TokenProvider);
 
-      req.getConfiguration.mockResolvedValueOnce(null);
-      const handler = getCalendars(apiId);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
+      // Act
+      await handler(req as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(res.send).toHaveBeenCalledWith([]);
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });

@@ -6,7 +6,12 @@ import { renderNoItem } from '@components/NoItem';
 
 import { ValueDefinitionsList } from './definitionsList';
 import { AddEditValueDefinition } from './addEditDefinition';
-import { deleteValueDefinition, getValueDefinitions, updateValueDefinition } from '@store/value/actions';
+import {
+  createValueDefinition,
+  deleteValueDefinition,
+  getValueDefinitions,
+  updateValueDefinition,
+} from '@store/value/actions';
 import { PageIndicator } from '@components/Indicator';
 import { GoabButton } from '@abgov/react-components';
 import { Buttons } from '../styled-components';
@@ -110,7 +115,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           initialValue={selectedDefinition}
           values={[...tenantDefinitions, ...coreDefinitions]}
           onSave={(definition) => {
-            dispatch(updateValueDefinition(definition));
+            dispatch(isEdit ? updateValueDefinition(definition) : createValueDefinition(definition));
           }}
         />
       )}

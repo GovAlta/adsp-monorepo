@@ -4,6 +4,7 @@ import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
+import { BackButton } from '../FormStepper/BackButton';
 import {
   PageReviewContainer,
   ReviewHeader,
@@ -12,7 +13,7 @@ import {
   RequiredTextLabel,
   NoneGivenText,
 } from '../Inputs/style-component';
-import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
+import { GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
 import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
@@ -28,7 +29,7 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 };
 
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
-  const { data, schema, uischema, path, label, required } = props;
+  const { data, schema, uischema, path } = props;
   const jsonForms = useJsonForms();
 
   const stepId = uischema.options?.stepId;
@@ -120,6 +121,10 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
   // Build the target scope for the address control
   const targetScope = uischema?.scope || (path ? `#/properties/${path}` : undefined);
 
+  const handleChangeClick = (changeStepId: number | undefined, scope: string | undefined): void => {
+    reportChange(changeStepId, scope);
+  };
+
   const renderRow = (label: string, value: string | undefined, propName: string, showButton = false) => {
     let error = getError(propName);
     const required = isRequired(propName);
@@ -142,14 +147,12 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
               {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
             </ReviewLabel>
             {showButton && showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-              <GoabButton
-                type="text"
-                size="compact"
-                onClick={() => reportChange(stepId, targetScope)}
+              <BackButton
+                text="Change"
+                link={() => handleChangeClick(stepId, targetScope)}
                 testId="address-change-btn"
-              >
-                Change
-              </GoabButton>
+                showBackIcon={false}
+              />
             )}
           </ReviewHeader>
           <ReviewValue>
@@ -168,14 +171,12 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
           <ReviewHeader>
             <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
             {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-              <GoabButton
-                type="text"
-                size="compact"
-                onClick={() => reportChange(stepId, targetScope)}
+              <BackButton
+                text="Change"
+                link={() => handleChangeClick(stepId, targetScope)}
                 testId="address-change-btn"
-              >
-                Change
-              </GoabButton>
+                showBackIcon={false}
+              />
             )}
           </ReviewHeader>
         </PageReviewContainer>

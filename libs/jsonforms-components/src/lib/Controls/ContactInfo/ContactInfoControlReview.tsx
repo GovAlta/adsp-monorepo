@@ -1,9 +1,10 @@
 import React from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { GoabButton, GoabFormItem } from '@abgov/react-components-ds1';
+import { GoabFormItem } from '@abgov/react-components-ds1';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
+import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 
 type ContractInfoControlReviewProps = ControlProps;
@@ -26,14 +27,12 @@ export const ContractInfoControlReview = (props: ContractInfoControlReviewProps)
         <ReviewHeader>
           <ReviewLabel>{fieldLabel}</ReviewLabel>
           {showChangeButtons && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
-            <GoabButton
-              type="text"
-              size="compact"
-              onClick={() => reportChange(stepId, uischema.scope)}
+            <BackButton
+              text="Change"
+              link={() => reportChange(stepId, uischema.scope)}
               testId={`${fieldName}-change-btn`}
-            >
-              Change
-            </GoabButton>
+              showBackIcon={false}
+            />
           )}
         </ReviewHeader>
 

@@ -22,7 +22,12 @@ import {
   updateTopic,
   updateTopicComment,
 } from './topic';
-import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import {
+  ConfigurationClient,
+  InvalidOperationError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@core-services/core-common';
 
 jest.mock('axios');
 
@@ -47,6 +52,14 @@ describe('topic', () => {
   const tokenProviderMock = {
     getAccessToken: jest.fn(),
   };
+
+  const clientMock = {
+    getTenantConfiguration: jest.fn(),
+    getCoreConfiguration: jest.fn(),
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const configurationClientMock = clientMock as unknown as ConfigurationClient<any>;
 
   const repositoryMock = {
     getTopic: jest.fn(),
@@ -111,6 +124,7 @@ describe('topic', () => {
         repository: repositoryMock,
         directory: directoryMock,
         tokenProvider: tokenProviderMock,
+        client: configurationClientMock,
       });
       expect(router).toBeTruthy();
     });
@@ -124,10 +138,17 @@ describe('topic', () => {
       tokenProviderMock.getAccessToken.mockReset();
       axiosMock.patch.mockReset();
       loggerMock.info.mockReset();
+      clientMock.getTenantConfiguration.mockReset();
     });
 
     it('can create handler', () => {
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -154,11 +175,26 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({});
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({
+        case: new TopicTypeEntity(tenantId, {
+          id: 'case',
+          name: 'Case',
+          adminRoles: [],
+          readerRoles: ['case-reader'],
+          commenterRoles: ['case-writer'],
+        }),
+      });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -178,9 +214,16 @@ describe('topic', () => {
         {
           headers: { Authorization: 'Bearer service-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
-      expect(res.send).toHaveBeenCalledWith({ id: 'case' });
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'case',
+          name: 'Case',
+          readerRoles: ['case-reader'],
+          commenterRoles: ['case-writer'],
+        }),
+      );
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -205,11 +248,26 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({});
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({
+        case: new TopicTypeEntity(tenantId, {
+          id: 'case',
+          name: 'Case',
+          adminRoles: [],
+          readerRoles: [],
+          commenterRoles: [],
+        }),
+      });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -222,9 +280,16 @@ describe('topic', () => {
             }),
           },
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
-      expect(res.send).toHaveBeenCalledWith({ id: 'case' });
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'case',
+          name: 'Case',
+          readerRoles: [],
+          commenterRoles: [],
+        }),
+      );
     });
 
     it('calls next with conflict when topic type name already exists', async () => {
@@ -248,8 +313,15 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -275,7 +347,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -299,7 +377,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = createTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = createTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -309,8 +393,13 @@ describe('topic', () => {
   });
 
   describe('getTopicTypes', () => {
+    beforeEach(() => {
+      clientMock.getTenantConfiguration.mockReset();
+      clientMock.getCoreConfiguration.mockReset();
+    });
+
     it('can create handler', () => {
-      const handler = getTopicTypes();
+      const handler = getTopicTypes(configurationClientMock);
       expect(handler).toBeTruthy();
     });
 
@@ -320,28 +409,30 @@ describe('topic', () => {
         tenant: {
           id: tenantId,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getCoreConfiguration.mockResolvedValueOnce({});
 
-      const handler = getTopicTypes();
+      const handler = getTopicTypes(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getConfiguration).toHaveBeenCalledWith(tenantId);
-      expect(res.send).toHaveBeenCalledWith([
-        expect.objectContaining({
-          id: type.id,
-          name: type.name,
-          adminRoles: type.adminRoles,
-          readerRoles: type.readerRoles,
-          commenterRoles: type.commenterRoles,
-        }),
-      ]);
+      expect(res.send).toHaveBeenCalledWith({
+        tenant: {
+          [type.id]: expect.objectContaining({
+            id: type.id,
+            name: type.name,
+            adminRoles: type.adminRoles,
+            readerRoles: type.readerRoles,
+            commenterRoles: type.commenterRoles,
+          }),
+        },
+        core: {},
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -351,19 +442,19 @@ describe('topic', () => {
         tenant: {
           id: tenantId,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce(null);
+      clientMock.getTenantConfiguration.mockResolvedValueOnce(null);
+      clientMock.getCoreConfiguration.mockResolvedValueOnce(null);
 
-      const handler = getTopicTypes();
+      const handler = getTopicTypes(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(res.send).toHaveBeenCalledWith([]);
+      expect(res.send).toHaveBeenCalledWith({ tenant: {}, core: {} });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -373,18 +464,16 @@ describe('topic', () => {
         tenant: {
           id: tenantId,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      const handler = getTopicTypes();
+      const handler = getTopicTypes(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
-      expect(req.getConfiguration).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
@@ -393,25 +482,23 @@ describe('topic', () => {
         tenant: {
           id: tenantId,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      const handler = getTopicTypes();
+      const handler = getTopicTypes(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
-      expect(req.getConfiguration).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     });
   });
 
   describe('getTopicType', () => {
     it('can create handler', () => {
-      const handler = getTopicType();
+      const handler = getTopicType(configurationClientMock);
       expect(handler).toBeTruthy();
     });
 
@@ -424,19 +511,17 @@ describe('topic', () => {
         params: {
           topicTypeId: type.id,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
 
-      const handler = getTopicType();
+      const handler = getTopicType(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(req.getConfiguration).toHaveBeenCalledWith(tenantId);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           id: type.id,
@@ -444,7 +529,7 @@ describe('topic', () => {
           adminRoles: type.adminRoles,
           readerRoles: type.readerRoles,
           commenterRoles: type.commenterRoles,
-        })
+        }),
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -458,16 +543,15 @@ describe('topic', () => {
         params: {
           topicTypeId: type.id,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce({});
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({});
 
-      const handler = getTopicType();
+      const handler = getTopicType(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -483,18 +567,16 @@ describe('topic', () => {
         params: {
           topicTypeId: type.id,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      const handler = getTopicType();
+      const handler = getTopicType(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
-      expect(req.getConfiguration).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
@@ -506,18 +588,16 @@ describe('topic', () => {
         params: {
           topicTypeId: type.id,
         },
-        getConfiguration: jest.fn(),
       };
       const res = {
         send: jest.fn(),
       };
       const next = jest.fn();
 
-      const handler = getTopicType();
+      const handler = getTopicType(configurationClientMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
-      expect(req.getConfiguration).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     });
   });
@@ -533,7 +613,13 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -559,11 +645,18 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -584,7 +677,7 @@ describe('topic', () => {
         {
           headers: { Authorization: 'Bearer service-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -592,7 +685,7 @@ describe('topic', () => {
           name: 'Updated test',
           readerRoles: ['updated-reader'],
           commenterRoles: ['updated-writer'],
-        })
+        }),
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -617,11 +710,18 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(axiosMock.patch).toHaveBeenCalledWith(
@@ -635,14 +735,14 @@ describe('topic', () => {
             }),
           },
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Updated test',
           readerRoles: type.readerRoles,
           commenterRoles: type.commenterRoles,
-        })
+        }),
       );
     });
 
@@ -667,7 +767,13 @@ describe('topic', () => {
 
       req.getConfiguration.mockResolvedValueOnce({});
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -694,7 +800,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -721,7 +833,13 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = updateTopicType(apiId, loggerMock as unknown as Logger, directoryMock, tokenProviderMock);
+      const handler = updateTopicType(
+        apiId,
+        loggerMock as unknown as Logger,
+        directoryMock,
+        configurationClientMock,
+        tokenProviderMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -749,7 +867,8 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
-        tokenProviderMock
+        configurationClientMock,
+        tokenProviderMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -771,6 +890,7 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       repositoryMock.countTopicsByType.mockResolvedValueOnce(0);
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://configuration-service/'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('service-token');
@@ -781,7 +901,8 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
-        tokenProviderMock
+        configurationClientMock,
+        tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -795,7 +916,7 @@ describe('topic', () => {
         {
           headers: { Authorization: 'Bearer service-token' },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
       expect(res.send).toHaveBeenCalledWith({ deleted: true, id: type.id });
       expect(next).not.toHaveBeenCalled();
@@ -821,6 +942,7 @@ describe('topic', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ [type.id]: type });
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ [type.id]: type });
       repositoryMock.countTopicsByType.mockResolvedValueOnce(3);
 
       const handler = deleteTopicType(
@@ -828,7 +950,8 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
-        tokenProviderMock
+        configurationClientMock,
+        tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -864,7 +987,8 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
-        tokenProviderMock
+        configurationClientMock,
+        tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -895,7 +1019,8 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
-        tokenProviderMock
+        configurationClientMock,
+        tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -926,7 +1051,8 @@ describe('topic', () => {
         loggerMock as unknown as Logger,
         repositoryMock,
         directoryMock,
-        tokenProviderMock
+        configurationClientMock,
+        tokenProviderMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -975,7 +1101,7 @@ describe('topic', () => {
           results: expect.arrayContaining([
             expect.objectContaining({ id: topic.id, name: topic.name, description: topic.description }),
           ]),
-        })
+        }),
       );
     });
 
@@ -1028,7 +1154,7 @@ describe('topic', () => {
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           results: expect.arrayContaining([expect.objectContaining({ id: topic.id })]),
-        })
+        }),
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -1100,7 +1226,7 @@ describe('topic', () => {
           id: topic.id,
           name: topic.name,
           description: topic.description,
-        })
+        }),
       );
     });
 
@@ -1380,7 +1506,7 @@ describe('topic', () => {
           name: 'New',
           description: '',
           commenters: ['user-123'],
-        })
+        }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1388,7 +1514,7 @@ describe('topic', () => {
           name: 'New',
           description: '',
           commenters: ['user-123'],
-        })
+        }),
       );
     });
 
@@ -1588,7 +1714,7 @@ describe('topic', () => {
               lastUpdatedBy: expect.objectContaining({ name: 'External' }),
             }),
           ],
-        })
+        }),
       );
     });
 
@@ -1668,7 +1794,7 @@ describe('topic', () => {
               applicationId: 'test-app',
             },
           },
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalled();
     });
@@ -1875,7 +2001,7 @@ describe('topic', () => {
               reason: 'application pin',
             },
           },
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalled();
     });
@@ -1912,7 +2038,7 @@ describe('topic', () => {
         expect.objectContaining({
           title: 'updated title',
           content: '',
-        })
+        }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ title: 'updated title', content: '' }));
     });

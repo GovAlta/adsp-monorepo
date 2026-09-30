@@ -235,7 +235,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <EditorPadding>
               <div style={heightCover}>
                 <GoabFormItem error={errors?.['securityClassification']} label="Select a security classification">
-                  <GoabDropdown size="compact"
+                  <GoabDropdown
+                    size="compact"
                     name="securityClassifications"
                     value={topicType?.securityClassification}
                     onChange={(detail: GoabDropdownOnChangeDetail) => {
@@ -259,7 +260,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoabButtonGroup alignment="start">
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   type="primary"
                   testId="comment-save"
                   disabled={
@@ -286,13 +288,14 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                       }
                       setCustomIndicator(true);
                       setInitialTopicType({ ...topicType });
-                      dispatch(updateCommentTopicType({ ...topicType }));
+                      dispatch(updateCommentTopicType({ ...topicType }, !isEdit));
                     }
                   }}
                 >
                   Save
                 </GoabButton>
-                <GoabButton size="compact"
+                <GoabButton
+                  size="compact"
                   testId="comment-cancel"
                   type="secondary"
                   onClick={() => {
@@ -345,7 +348,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             }
           }
           setSpinner(true);
-          dispatch(updateCommentTopicType(topicType));
+          dispatch(updateCommentTopicType(topicType, !isEdit));
           setSaveModal({ visible: false, closeEditor: true });
         }}
         saveDisable={!isCommentUpdated(initialTopicType, topicType)}

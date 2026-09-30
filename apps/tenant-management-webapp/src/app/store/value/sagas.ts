@@ -3,6 +3,9 @@ import { select, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { RootState } from '..';
 import {
+  CreateValueDefinitionAction,
+  CREATE_VALUE_DEFINITION_ACTION,
+  DeleteValueDefinitionAction,
   deleteValueDefinitionSuccess,
   DELETE_VALUE_DEFINITION_ACTION,
   FetchValueDefinitionsAction,
@@ -21,6 +24,25 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import moment from 'moment';
 import { getAccessToken } from '@store/tenant/sagas';
+import type { ValueDefinition } from './models';
+
+interface ValueNamespaceResponse {
+  definitions: Record<string, Omit<ValueDefinition, 'namespace' | 'isCore'>>;
+}
+
+const toValueDefinitions = (namespaces: Record<string, ValueNamespaceResponse>, isCore: boolean): ValueDefinition[] =>
+  Object.entries(namespaces || {}).flatMap(([namespace, { definitions }]) =>
+    Object.values(definitions || {}).map((definition) => ({ ...definition, namespace, isCore }))
+  );
+
+const toDefinitionRequest = ({ name, description, jsonSchema }: ValueDefinition) => ({
+  name,
+  description,
+  jsonSchema,
+});
+
+const getDefinitionUrl = (baseUrl: string, { namespace, name }: ValueDefinition) =>
+  `${baseUrl}/value/v1/definitions/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
 
 export function* fetchValueDefinitions(_action: FetchValueDefinitionsAction): SagaIterator {
   yield put(
@@ -30,148 +52,75 @@ export function* fetchValueDefinitions(_action: FetchValueDefinitionsAction): Sa
     })
   );
 
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-  );
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
-  if (configBaseUrl && token) {
+  if (baseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/value-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const tenantDefinitions = Object.getOwnPropertyNames(configuration || {}).reduce((defs, namespace) => {
-        Object.getOwnPropertyNames(configuration[namespace].definitions).forEach((name) => {
-          defs.push({ ...configuration[namespace].definitions[name], namespace, isCore: false });
-        });
-        return defs;
-      }, []);
+      const { data } = yield call(axios.get, `${baseUrl}/value/v1/definitions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const { data: serviceData = {} } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/value-service/latest?core`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const serviceDefinitions = Object.getOwnPropertyNames(serviceData).reduce((defs, namespace) => {
-        Object.getOwnPropertyNames(serviceData[namespace].definitions).forEach((name) => {
-          defs.push({ ...serviceData[namespace].definitions[name], namespace, isCore: true });
-        });
-        return defs;
-      }, []);
-
-      yield put(getValueDefinitionsSuccess([...tenantDefinitions, ...serviceDefinitions]));
       yield put(
-        UpdateIndicator({
-          show: false,
-        })
+        getValueDefinitionsSuccess([...toValueDefinitions(data.tenant, false), ...toValueDefinitions(data.core, true)])
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
+    }
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+  }
+}
+
+export function* createValueDefinition({ definition }: CreateValueDefinitionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (baseUrl && token) {
+    try {
+      const { data } = yield call(
+        axios.post,
+        `${baseUrl}/value/v1/definitions`,
+        { namespace: definition.namespace, ...toDefinitionRequest(definition) },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      yield put(updateValueDefinitionSuccess(data));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
 
 export function* updateValueDefinition({ definition }: UpdateValueDefinitionAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${baseUrl}/configuration/v2/configuration/platform/value-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const { data } = yield call(axios.patch, getDefinitionUrl(baseUrl, definition), toDefinitionRequest(definition), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const namespaceUpdate = {
-        name: definition.namespace,
-        definitions: {
-          ...(configuration[definition.namespace]?.definitions || {}),
-          [definition.name]: {
-            name: definition.name,
-            description: definition.description,
-            jsonSchema: definition.jsonSchema,
-          },
-        },
-      };
-
-      const {
-        data: { latest },
-      } = yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/platform/value-service`,
-        { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      yield put(
-        updateValueDefinitionSuccess({
-          ...latest.configuration[definition.namespace].definitions[definition.name],
-          namespace: definition.namespace,
-          isCore: false,
-        })
-      );
+      yield put(updateValueDefinitionSuccess(data));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
   }
 }
 
-export function* deleteValueDefinition({ definition }: UpdateValueDefinitionAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+export function* deleteValueDefinition({ definition }: DeleteValueDefinitionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${baseUrl}/configuration/v2/configuration/platform/value-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const headers = { Authorization: `Bearer ${token}` };
-      const configPatchUrl = `${baseUrl}/configuration/v2/configuration/platform/value-service`;
-
-      const namespaceUpdate = configuration[definition.namespace];
-      delete namespaceUpdate['definitions'][definition.name];
-
-      if (Object.keys(namespaceUpdate['definitions']).length === 0) {
-        yield call(
-          axios.patch,
-          configPatchUrl,
-          { operation: 'DELETE', property: definition.namespace },
-          {
-            headers,
-          }
-        );
-      } else {
-        yield call(
-          axios.patch,
-          configPatchUrl,
-          { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
-          {
-            headers,
-          }
-        );
-      }
+      yield call(axios.delete, getDefinitionUrl(baseUrl, definition), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       yield put(deleteValueDefinitionSuccess(definition));
     } catch (err) {
@@ -291,6 +240,7 @@ export function* fetchValueMetrics(): SagaIterator {
 export function* watchValueSagas(): Generator {
   yield takeEvery(FETCH_VALUE_DEFINITIONS_ACTION, fetchValueDefinitions);
   yield takeEvery(FETCH_VALUE_LOG_ENTRIES_ACTION, fetchValueLogEntries);
+  yield takeEvery(CREATE_VALUE_DEFINITION_ACTION, createValueDefinition);
   yield takeEvery(UPDATE_VALUE_DEFINITION_ACTION, updateValueDefinition);
   yield takeEvery(DELETE_VALUE_DEFINITION_ACTION, deleteValueDefinition);
   yield takeLatest(FETCH_VALUE_METRICS_ACTION, fetchValueMetrics);

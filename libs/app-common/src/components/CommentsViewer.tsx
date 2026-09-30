@@ -119,9 +119,13 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   const [deleting, setDeleting] = useState<Comment>(null);
   const [hasNewerMessages, setHasNewerMessages] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
-  const wasNearBottomRef = useRef(true);
   const previousScrollRef = useRef({ scrollTop: 0, scrollHeight: 0, nearBottom: true });
-  const previousMessagesRef = useRef<{ topicId?: number | null; lastCommentId?: number; signature?: string }>({});
+  const previousMessagesRef = useRef<{
+    topicId?: number | null;
+    oldestCommentId?: number;
+    lastCommentId?: number;
+    signature?: string;
+  }>({});
 
   const displayedComments = useMemo(() => {
     if (!messaging) {
@@ -135,13 +139,13 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
   }, [comments, messaging]);
 
   const commentsSignature = displayedComments.map((comment) => comment.id).join('|');
+  const oldestComment = displayedComments[0];
   const latestComment = displayedComments[displayedComments.length - 1];
 
   const scrollToLatest = () => {
     const container = commentsRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
-      wasNearBottomRef.current = true;
       previousScrollRef.current = getScrollState(container);
       setHasNewerMessages(false);
     }
@@ -154,7 +158,6 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
     }
 
     previousScrollRef.current = getScrollState(container);
-    wasNearBottomRef.current = previousScrollRef.current.nearBottom;
   };
 
   const handleMessagesScroll = () => {
@@ -179,31 +182,41 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
     const topicChanged = previous.topicId !== topicId;
     const isInitialLoad = !previous.signature || topicChanged;
     const latestMessageChanged = previous.lastCommentId !== latestComment?.id;
+    // Deleting the latest message also changes it, but there is nothing new to read.
+    const receivedNewMessage = latestMessageChanged && (latestComment?.id ?? 0) > (previous.lastCommentId ?? 0);
     const latestMessageFromCurrentUser = !!latestComment?.byCurrentUser;
-    const loadedOlderMessages =
-      !isInitialLoad && !latestMessageChanged && previous.signature && previous.signature !== commentsSignature;
+    // Compared by the oldest message rather than the whole list, so a message deleted further down
+    // isn't taken for a page of history.
+    const loadedOlderMessages = !isInitialLoad && (oldestComment?.id ?? 0) < (previous.oldestCommentId ?? 0);
 
     if (loadedOlderMessages && container) {
-      container.scrollTop = previousScroll.scrollTop + (container.scrollHeight - previousScroll.scrollHeight);
+      // Load more sits at the top of the thread, so the reader stays there with the page it brought in
+      // laid out below them, rather than being carried down to the message they were on.
+      container.scrollTop = 0;
       captureScrollState();
-    } else if (isInitialLoad || latestMessageFromCurrentUser || previousScroll.nearBottom || wasNearBottomRef.current) {
+    } else if (isInitialLoad || latestMessageFromCurrentUser || (receivedNewMessage && previousScroll.nearBottom)) {
+      // A reader already at the latest message follows the conversation down.
       scrollToLatest();
-    } else if (latestMessageChanged) {
+    } else if (receivedNewMessage) {
+      // A reader scrolled back through history stays where they are, and is offered the jump instead.
       setHasNewerMessages(true);
     }
 
     previousMessagesRef.current = {
       topicId,
+      oldestCommentId: oldestComment?.id,
       lastCommentId: latestComment?.id,
       signature: commentsSignature,
     };
-  }, [commentsSignature, latestComment?.byCurrentUser, latestComment?.id, messaging, topicId]);
+  }, [commentsSignature, latestComment?.byCurrentUser, latestComment?.id, messaging, oldestComment?.id, topicId]);
 
   const loadMoreButton = !loading && canLoadMore && (
     <GoabButton size="compact" type="text" onClick={onLoadMore}>
       Load more
     </GoabButton>
   );
+  // Shown where Load more is, so the thread's spinner appears at the top where the older page arrives.
+  const loadingIndicator = <GoabCircularProgress variant="inline" size="small" visible={loading} />;
 
   const draftField = (
     <GoabTextArea
@@ -222,6 +235,7 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
       {heading.trim() && <h3>{heading}</h3>}
       <div className="comments" ref={commentsRef} onScroll={handleMessagesScroll}>
         {messaging && loadMoreButton}
+        {messaging && loadingIndicator}
         {displayedComments.map((result, index) => {
           // In a message thread a run of messages from the same person carries one byline,
           // the way a phone's messaging app groups them. A run breaks across a day boundary too,
@@ -268,16 +282,18 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             </div>
           );
         })}
-        <GoabCircularProgress variant="inline" size="small" visible={loading} />
+        {!messaging && loadingIndicator}
         {!messaging && loadMoreButton}
+        {/* Floats over the bottom of the conversation rather than taking space in it, so it
+            appearing doesn't shift the messages being read. */}
+        {messaging && hasNewerMessages && (
+          <div className="newMessagesIndicator" role="status">
+            <GoabButton size="compact" type="primary" leadingIcon="arrow-down" onClick={scrollToLatest}>
+              New messages
+            </GoabButton>
+          </div>
+        )}
       </div>
-      {messaging && hasNewerMessages && (
-        <div className="newMessagesIndicator">
-          <GoabButton size="compact" type="text" onClick={scrollToLatest}>
-            New messages
-          </GoabButton>
-        </div>
-      )}
       <form>
         {/*
           The label is dropped rather than emptied, so no blank row is left behind where it was;
@@ -345,6 +361,9 @@ const messagingLayout = css`
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    /* The viewer places the reader itself when messages come in or a page of history loads; the
+       browser's own anchoring would move them first, and the smooth scroll then animated them back. */
+    overflow-anchor: none;
     padding-top: var(--goa-space-m);
     padding-bottom: var(--goa-space-m);
     /* The tinted area runs right down to the compose box, with no white band between. */
@@ -428,6 +447,23 @@ const messagingLayout = css`
         line-height: 0;
         /* Half the icon button's own inset; keeps the control on a 24px target. */
         --goa-icon-button-small-padding: var(--goa-space-3xs);
+      }
+    }
+
+    /* Pinned to the bottom of the visible thread while the reader is scrolled up. It has no height
+       of its own, and the button hangs above it, so it covers messages without moving them. */
+    > .newMessagesIndicator {
+      position: sticky;
+      bottom: var(--goa-space-s);
+      height: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      /* Only the button takes clicks; the rest of the row leaves the messages under it usable. */
+      pointer-events: none;
+
+      > * {
+        pointer-events: auto;
       }
     }
 
@@ -587,13 +623,6 @@ export const CommentsViewer = styled(CommentsViewerComponent)<{
       margin-left: auto;
       margin-right: auto;
     }
-  }
-
-  & > .newMessagesIndicator {
-    background: var(--goa-color-info-light);
-    display: flex;
-    justify-content: center;
-    padding: var(--goa-space-xs) var(--goa-space-l);
   }
 
   ${({ messaging }) => messaging && messagingLayout}

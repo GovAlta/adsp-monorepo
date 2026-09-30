@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
-import { AppDispatch, definitionSelector, formBusySelector, selectDefinition } from '../state';
+import { AppDispatch, connectStream, definitionSelector, formBusySelector, selectDefinition } from '../state';
 import { Responses } from './Responses';
 import { ResponseDetails } from './ResponseDetails';
 import { FormDefinitionOverview } from './FormDefinitionOverview';
@@ -54,6 +54,15 @@ export const FormDefinition: FunctionComponent = () => {
   useEffect(() => {
     dispatch(selectDefinition(definitionId));
   }, [dispatch, definitionId]);
+
+  // Messages arrive live on both the responses list and a response's details. Connecting from the
+  // list alone left a response opened directly, or reloaded, without them until the next reload.
+  const supportTopic = !!definition?.supportTopic;
+  useEffect(() => {
+    if (supportTopic) {
+      dispatch(connectStream({ stream: 'form-questions-updates', typeId: 'form-questions' }));
+    }
+  }, [dispatch, supportTopic]);
 
   return definition ? (
     <DefinitionLayout>

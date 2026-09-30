@@ -1,12 +1,14 @@
+export const calendarNamePattern = /^[a-zA-Z0-9-_ ]{1,50}$/;
+
 export const configurationSchema = {
   type: 'object',
   patternProperties: {
-    '^[a-zA-Z0-9-_ ]{1,50}$': {
+    [calendarNamePattern.source]: {
       type: 'object',
       properties: {
         name: {
           type: 'string',
-          pattern: '^[a-zA-Z0-9-_ ]{1,50}$',
+          pattern: calendarNamePattern.source,
         },
         displayName: {
           type: 'string',

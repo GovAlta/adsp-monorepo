@@ -10,6 +10,10 @@ module.exports = {
       name: 'Value',
       description: 'API to store and retrieve values.',
     },
+    {
+      name: 'Value definition', // clean-code-ignore: RULE-19 — swagger metadata; no runtime code to test.
+      description: 'API to manage value definitions.',
+    },
   ],
   components: {
     securitySchemes: {

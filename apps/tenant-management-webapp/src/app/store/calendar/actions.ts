@@ -39,10 +39,11 @@ export interface FetchCalendarsSuccessAction {
 export interface UpdateCalendarAction {
   type: typeof UPDATE_CALENDAR_ACTION;
   payload: CalendarItem;
+  isNew: boolean;
 }
 export interface UpdateCalendarSuccessAction {
   type: typeof UPDATE_CALENDAR_SUCCESS_ACTION;
-  payload: Record<string, CalendarItem>;
+  payload: CalendarItem;
 }
 
 export interface DeleteCalendarAction {
@@ -165,12 +166,13 @@ export const fetchCalendarSuccess = (calendars: {
   payload: calendars,
 });
 
-export const UpdateCalendar = (payload: CalendarItem): UpdateCalendarAction => ({
+export const UpdateCalendar = (payload: CalendarItem, isNew: boolean): UpdateCalendarAction => ({
   type: UPDATE_CALENDAR_ACTION,
   payload,
+  isNew,
 });
 
-export const UpdateCalendarSuccess = (calendar: Record<string, CalendarItem>): UpdateCalendarSuccessAction => ({
+export const UpdateCalendarSuccess = (calendar: CalendarItem): UpdateCalendarSuccessAction => ({
   type: UPDATE_CALENDAR_SUCCESS_ACTION,
   payload: calendar,
 });

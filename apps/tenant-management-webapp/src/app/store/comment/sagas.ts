@@ -36,7 +36,8 @@ import {
   fetchCommentMetricsSucceeded,
 } from './action';
 import {
-  updateCommentTopicTypesApi,
+  createCommentTopicTypeApi,
+  updateCommentTopicTypeApi,
   deleteCommentTopicTypesApi,
   addTopicApi,
   fetchTopicsApi,
@@ -46,7 +47,7 @@ import {
   fetchCommentsApi,
   updateCommentApi,
 } from './api';
-import { UpdateCommentConfig, DeleteCommentConfig } from './model';
+import { DeleteCommentConfig } from './model';
 
 export function* fetchCommentTopicTypes(): SagaIterator {
   yield put(
@@ -56,21 +57,15 @@ export function* fetchCommentTopicTypes(): SagaIterator {
     }),
   );
 
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
-  );
+  const commentBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  if (configBaseUrl && token) {
+  if (commentBaseUrl && token) {
     try {
-      const { TopicTypes, core } = yield all({
-        TopicTypes: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        core: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/comment-service/latest?core`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const { data } = yield call(axios.get, `${commentBaseUrl}/comment/v1/topic-types`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      yield put(getCommentTopicTypesSuccess({ TopicTypes: TopicTypes.data, core: core.data }));
+
+      yield put(getCommentTopicTypesSuccess({ TopicTypes: data.tenant, core: data.core }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -87,25 +82,23 @@ export function* fetchCommentTopicTypes(): SagaIterator {
   }
 }
 
-export function* updateCommentTopicTypes({ topicType }: UpdateCommentTopicTypesAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+export function* updateCommentTopicTypes({ topicType, isCreate }: UpdateCommentTopicTypesAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
-      const CommentTopicTypes = {
-        [topicType.id]: {
-          ...topicType,
-        },
-      };
-
-      const body: UpdateCommentConfig = { operation: 'UPDATE', update: { ...CommentTopicTypes } };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/comment-service`;
-      const { latest } = yield call(updateCommentTopicTypesApi, token, url, body);
+      const url = isCreate ? `${baseUrl}/comment/v1/topic-types` : `${baseUrl}/comment/v1/topic-types/${topicType.id}`;
+      const latest = yield call(
+        isCreate ? createCommentTopicTypeApi : updateCommentTopicTypeApi,
+        token,
+        url,
+        topicType,
+      );
 
       yield put(
         updateCommentTopicTypesSuccess({
-          ...latest.configuration,
+          [latest.id]: latest,
         }),
       );
     } catch (err) {
@@ -121,12 +114,13 @@ export function* deleteCommentTopicTypes({ topicTypeId }: DeleteCommentTopicType
   if (baseUrl && token) {
     try {
       const payload: DeleteCommentConfig = { operation: 'DELETE', property: topicTypeId };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/comment-service`;
-      const { latest } = yield call(deleteCommentTopicTypesApi, token, url, payload);
+      const commentBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
+      const url = `${commentBaseUrl}/comment/v1/topic-types/${topicTypeId}`;
+      const response = yield call(deleteCommentTopicTypesApi, token, url, payload);
 
       yield put(
         deleteCommentTopicTypeSuccess({
-          ...latest.configuration,
+          ...response,
         }),
       );
       yield put(getCommentTopicTypes());

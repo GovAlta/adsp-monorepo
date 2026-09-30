@@ -39,6 +39,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   useEffect(() => {
     if (activeEdit) {
       reset();
+      setModalTenantMode(true);
       setOpenEditCalendar(true);
     }
   }, [activeEdit]);
@@ -69,6 +70,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
           testId="add-calendar-btn"
           onClick={() => {
             setSelectedCalendarName(undefined);
+            setModalTenantMode(true);
             setOpenEditCalendar(true);
           }}
           mt="s"
@@ -106,7 +108,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
             reset();
           }}
           tenantMode={modalTenantMode}
-          onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
+          onSave={(calendar) => dispatch(UpdateCalendar(calendar, !selectedCalendarName))}
         />
       )}
       {showDeleteConfirmation && (

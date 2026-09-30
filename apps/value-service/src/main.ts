@@ -42,79 +42,88 @@ const initializeApp = async () => {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, eventService, healthCheck, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Value service',
-        description: 'Service for time-series values.',
-        roles: [
-          {
-            role: ServiceUserRoles.Reader,
-            description: 'Reader role for accessing values.',
-            inTenantAdmin: true,
-          },
-          {
-            role: ServiceUserRoles.Writer,
-            description: 'Writer role for writing new values.',
-          },
-          {
-            // clean-code-ignore: RULE-19 — app bootstrap; role usage is covered in router/value.spec.ts.
-            role: ServiceUserRoles.PlatformMetricsReader,
-            description: 'Reader role for accessing platform-scoped, cross-tenant metric data.',
-          },
-        ],
-        configuration: {
-          description: 'Definitions for values including write schema and option to enable write events.',
-          schema: configurationSchema,
+  const { // clean-code-ignore: RULE-19 — app bootstrap; routes are covered in router/definition.spec.ts.
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    configurationHandler,
+    eventService,
+    healthCheck,
+    traceHandler,
+    directory,
+    tokenProvider,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Value service',
+      description: 'Service for time-series values.',
+      roles: [
+        {
+          role: ServiceUserRoles.Reader,
+          description: 'Reader role for accessing values.',
+          inTenantAdmin: true,
         },
-        events: [ValueWrittenDefinition],
-        clientSecret: environment.CLIENT_SECRET,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-        configurationConverter: (config: Record<string, Namespace>, tenantId) => {
-          return config
-            ? Object.getOwnPropertyNames(config).reduce(
-                (namespaces, namespace) => ({
-                  ...namespaces,
-                  [namespace]: new NamespaceEntity(
-                    new AjvValueValidationService(logger),
-                    repositories.valueRepository,
-                    config[namespace],
-                    tenantId,
-                  ),
-                }),
-                {},
-              )
-            : null;
+        {
+          role: ServiceUserRoles.Writer,
+          description: 'Writer role for writing new values.',
         },
-        combineConfiguration: (
-          tenantConfig: Record<string, NamespaceEntity>,
-          coreConfig: Record<string, NamespaceEntity>,
-        ) => [
-          {
-            ...tenantConfig,
-            ...coreConfig,
-          },
-        ],
-        useLongConfigurationCacheTTL: true,
-        enableConfigurationInvalidation: true,
-        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-        serviceConfigurations: [
-          {
-            serviceId: adspId`urn:ads:platform:cache-service`,
-            configuration: {
-              targets: {
-                [`${serviceId}`]: {},
-                [`${serviceId}:v1`]: {},
-              },
+        {
+          // clean-code-ignore: RULE-19 — app bootstrap; role usage is covered in router/value.spec.ts.
+          role: ServiceUserRoles.PlatformMetricsReader,
+          description: 'Reader role for accessing platform-scoped, cross-tenant metric data.',
+        },
+      ],
+      configuration: {
+        description: 'Definitions for values including write schema and option to enable write events.',
+        schema: configurationSchema,
+      },
+      events: [ValueWrittenDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      configurationConverter: (config: Record<string, Namespace>, tenantId) => {
+        return config
+          ? Object.getOwnPropertyNames(config).reduce(
+              (namespaces, namespace) => ({
+                ...namespaces,
+                [namespace]: new NamespaceEntity(
+                  new AjvValueValidationService(logger),
+                  repositories.valueRepository,
+                  config[namespace],
+                  tenantId,
+                ),
+              }),
+              {},
+            )
+          : null;
+      },
+      combineConfiguration: (
+        tenantConfig: Record<string, NamespaceEntity>,
+        coreConfig: Record<string, NamespaceEntity>,
+      ) => [
+        {
+          ...tenantConfig,
+          ...coreConfig,
+        },
+      ],
+      useLongConfigurationCacheTTL: true,
+      enableConfigurationInvalidation: true,
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:cache-service`,
+          configuration: {
+            targets: {
+              [`${serviceId}`]: {},
+              [`${serviceId}:v1`]: {},
             },
           },
-        ],
-      },
-      { logger },
-    );
+        },
+      ],
+    },
+    { logger },
+  );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -143,6 +152,9 @@ const initializeApp = async () => {
     serviceMetricRollupRepository: repositories.serviceMetricRollupRepository,
     serviceMetricRollupTrailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
     eventService,
+    directory,
+    tokenProvider,
+    validationService: new AjvValueValidationService(logger),
   });
 
   if (environment.SERVICE_METRIC_ROLLUP_JOB_ENABLED) {

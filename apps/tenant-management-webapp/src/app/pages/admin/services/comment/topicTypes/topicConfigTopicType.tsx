@@ -70,7 +70,7 @@ export const TopicConfigTopicType = ({ topicType }: CommentConfigCommentProps) =
           onClose={() => setOpenEditCommentTemplate(false)}
           initialValue={topicType}
           onSave={(topicType) => {
-            dispatch(updateCommentTopicType(topicType));
+            dispatch(updateCommentTopicType(topicType, false));
           }}
         />
       )}

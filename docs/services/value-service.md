@@ -13,16 +13,24 @@ Value service provides an append only time series data store. It serves as the u
 
 client `urn:ads:platform:value-service`
 
-| name         | description                                                                                                                                                                                                      |
-| :----------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| value-reader | Reader role for value service. This role is used to allow users to read values from the values. It is part of the tenant-admin composite role and allows tenant administrators to read and search the event log. |
-| value-writer | Writer role for value service. This role is used to allow service accounts to write values to the value service.                                                                                                 |
+| name         | description                                                                                                                                                                                                                                              |
+| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| value-reader | Reader role for value service. This role is used to allow users to read values and value definitions. It is part of the tenant-admin composite role and allows tenant administrators to read and search the event log.                                   |
+| value-writer | Writer role for value service. This role is used to allow service accounts to write values to the value service. It also allows users to create, update and delete value definitions, and to read them, since a user with the writer role can also read. |
 
 ## Concepts
 
 ### Value definition
 
-Value definition is an optional metadata description for a particular _value_ (identified by a specific namespace and name). The definition provides write-time validation via json schema. Value definitions are configured in the [configuration service](configuration-service.md) under the `platform:value-service` namespace and name.
+Value definition is an optional metadata description for a particular _value_ (identified by a specific namespace and name). The definition provides write-time validation via json schema, and can enable a `value-written` event on each write with `sendWriteEvent`.
+
+Value definitions are managed through the value service definitions API (`/value/v1/definitions`). The value service checks the user's roles and then stores the definitions in the [configuration service](configuration-service.md) under the `platform:value-service` namespace and name, using its own service account. Clients do not need configuration service roles to manage value definitions.
+
+- Reading definitions requires `value-reader` or `value-writer`. Listing returns tenant and core definitions separately; getting a single definition returns the tenant definition if one exists, otherwise the core definition, with `isCore` indicating which.
+- Creating, updating and deleting definitions requires `value-writer` and applies to tenant definitions only. Core definitions are read-only through this API.
+- The `jsonSchema` of a created or updated definition must be a valid JSON schema, otherwise the request is rejected with a 400.
+- Creating a definition adds its namespace if it does not exist, and fails with a 409 if a tenant or core definition with the same namespace and name already exists.
+- Deleting the last definition in a namespace removes the namespace.
 
 ### Value
 
@@ -101,4 +109,70 @@ const response = await fetch(`https://value-service.adsp.alberta.ca/value/v1/${n
 });
 
 const { results, page } = await response.json();
+```
+
+### Create a value definition
+
+```typescript
+const response = await fetch('https://value-service.adsp.alberta.ca/value/v1/definitions', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    namespace: 'support',
+    name: 'application-stats',
+    description: 'Statistics for support applications.',
+    jsonSchema: {
+      type: 'object',
+      properties: { property: { type: 'number' } },
+    },
+    sendWriteEvent: false,
+  }),
+});
+
+const { namespace, name, jsonSchema, isCore } = await response.json();
+```
+
+### Read value definitions
+
+```typescript
+const response = await fetch('https://value-service.adsp.alberta.ca/value/v1/definitions', {
+  method: 'GET',
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+
+// Each is a map of namespace name to { name, definitions }.
+const { tenant, core } = await response.json();
+```
+
+### Update a value definition
+
+Properties not included in the request are left unchanged.
+
+```typescript
+const namespace = 'support';
+const name = 'application-stats';
+const response = await fetch(`https://value-service.adsp.alberta.ca/value/v1/definitions/${namespace}/${name}`, {
+  method: 'PATCH',
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ description: 'Updated statistics for support applications.' }),
+});
+```
+
+### Delete a value definition
+
+```typescript
+const namespace = 'support';
+const name = 'application-stats';
+const response = await fetch(`https://value-service.adsp.alberta.ca/value/v1/definitions/${namespace}/${name}`, {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+
+const { deleted } = await response.json();
 ```
