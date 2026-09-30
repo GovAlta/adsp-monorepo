@@ -755,7 +755,7 @@ Then('the user views the submit button is {string} on the form page', function (
 When(
   'the user clicks change link for {string} field of {string} on summary page',
   function (fieldLabel: string, sectionLabel: string) {
-    formsObj.formSummaryFieldChangeLink(sectionLabel, fieldLabel).shadow().find('button').click({ force: true });
+    formsObj.formSummaryFieldChangeLink(sectionLabel, fieldLabel).click();
   }
 );
 
