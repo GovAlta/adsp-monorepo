@@ -634,8 +634,8 @@ describe('topic', () => {
         },
         body: {
           name: 'Updated test',
-          readRoles: ['updated-reader'],
-          writeRoles: ['updated-writer'],
+          readerRoles: ['updated-reader'],
+          commenterRoles: ['updated-writer'],
         },
         getConfiguration: jest.fn(),
       };
