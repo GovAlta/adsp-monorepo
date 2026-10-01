@@ -2,29 +2,63 @@ import type { AgentExecutionOptions } from '@mastra/core/agent';
 import { environment } from '../../environments/environment';
 import { FORM_GENERATION_AGENT_ID } from './executionLimits';
 
-export function getAgentModelId(agentId?: string): string {
+export interface AgentModelConfiguration {
+  id?: string;
+  reasoningEffort?: string;
+  headers?: Record<string, string>;
+}
+
+export function getAgentModelId(agentId?: string, modelConfig?: AgentModelConfiguration): string {
+  if (modelConfig?.id) {
+    return modelConfig.id;
+  }
   return agentId === FORM_GENERATION_AGENT_ID && environment.AGENT_FORM_GENERATION_MODEL
     ? environment.AGENT_FORM_GENERATION_MODEL
     : environment.MODEL;
 }
 
-export function getAgentModelConfiguration(modelId = environment.MODEL) {
+export function getAgentModelConfiguration(modelId = environment.MODEL, modelConfig?: AgentModelConfiguration) {
   return environment.MODEL_URL
     ? {
         providerId: 'openai',
         modelId,
         url: environment.MODEL_URL,
         apiKey: environment.MODEL_API_KEY,
+        ...(modelConfig?.headers ? { defaultHeaders: modelConfig.headers } : {}),
       }
     : modelId;
 }
 
-export function getFormGenerationProviderOptions(): AgentExecutionOptions['providerOptions'] {
-  const reasoningOptions = reasoningEffortOptions();
+export function getAgentProviderOptions(
+  agentId?: string,
+  modelConfig?: AgentModelConfiguration,
+): AgentExecutionOptions['providerOptions'] | undefined {
+  const isFormGen = agentId === FORM_GENERATION_AGENT_ID;
+  if (!isFormGen && !modelConfig?.reasoningEffort) {
+    return undefined;
+  }
 
-  return environment.MODEL_URL
-    ? { openai: { parallel_tool_calls: false, ...reasoningOptions } }
-    : { openai: { parallelToolCalls: false, ...reasoningOptions } };
+  const providerOpts: Record<string, string | boolean> = {};
+
+  if (isFormGen) {
+    if (environment.MODEL_URL) {
+      providerOpts.parallel_tool_calls = false;
+    } else {
+      providerOpts.parallelToolCalls = false;
+    }
+  }
+
+  const effort = modelConfig?.reasoningEffort || (isFormGen ? (environment.AGENT_FORM_GENERATION_REASONING_EFFORT || '') : '');
+  if (effort) {
+    providerOpts.reasoningEffort = effort;
+  }
+
+  return Object.keys(providerOpts).length > 0 ? { openai: providerOpts } : undefined;
+}
+
+/** @deprecated Use getAgentProviderOptions(FORM_GENERATION_AGENT_ID) instead. */
+export function getFormGenerationProviderOptions(): AgentExecutionOptions['providerOptions'] {
+  return getAgentProviderOptions(FORM_GENERATION_AGENT_ID) ?? { openai: {} };
 }
 
 export type GenerationRole = 'planner' | 'step';

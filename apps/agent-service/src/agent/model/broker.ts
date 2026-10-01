@@ -18,8 +18,8 @@ import {
   WorkspaceUpdateRequest,
   WorkspaceUpdateResult,
 } from '../workspace';
-import { FORM_GENERATION_AGENT_ID, getAgentExecutionLimits } from './executionLimits';
-import { getFormGenerationProviderOptions } from './modelConfiguration';
+import { getAgentExecutionLimits } from './executionLimits';
+import { AgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
 import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
 
 type ThreadMetadataRecord = {
@@ -69,6 +69,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     private fileServiceClient?: IFileServiceClient,
     private eventService?: EventService,
     private agentId?: string,
+    private modelConfig?: AgentModelConfiguration,
   ) {
     this.userRoles = userRoles || [];
   }
@@ -89,13 +90,14 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     requestContext.set('agentId', this.agentId);
     requestContext.set('abortController', controller);
 
+    const providerOptions = getAgentProviderOptions(this.agentId, this.modelConfig);
     let stepCount = 0;
     const options: AgentExecutionOptions = {
       requestContext,
       memory: { thread: threadId, resource: user.id },
       abortSignal: controller.signal,
       ...(limits.maxSteps !== undefined ? { maxSteps: limits.maxSteps } : {}),
-      ...(this.agentId === FORM_GENERATION_AGENT_ID ? { providerOptions: getFormGenerationProviderOptions() } : {}),
+      ...(providerOptions != null ? { providerOptions } : {}),
       onStepFinish: ({ finishReason, usage }) => {
         stepCount += 1;
         this.logger.debug(
