@@ -74,7 +74,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     this.userRoles = userRoles || [];
   }
 
-  private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string) {
+  private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string, streaming = false) {
     const limits = getAgentExecutionLimits(this.agentId);
     const controller = new AbortController();
     const timeout = setTimeout(() => {
@@ -92,13 +92,13 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
 
     const providerOptions = getAgentProviderOptions(this.agentId, this.modelConfig);
     let stepCount = 0;
-    const options: AgentExecutionOptions = {
+    const baseOptions = {
       requestContext,
       memory: { thread: threadId, resource: user.id },
       abortSignal: controller.signal,
       ...(limits.maxSteps !== undefined ? { maxSteps: limits.maxSteps } : {}),
       ...(providerOptions != null ? { providerOptions } : {}),
-      onStepFinish: ({ finishReason, usage }) => {
+      onStepFinish: ({ finishReason, usage }: Parameters<NonNullable<AgentExecutionOptions['onStepFinish']>>[0]) => {
         stepCount += 1;
         this.logger.debug(
           `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
@@ -114,10 +114,11 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       },
       onFinish: clearAbortTimeout,
       onAbort: clearAbortTimeout,
-      structuredOutput: undefined,
     };
 
-    return options;
+    // Streaming suppresses structuredOutput so defaultOptions on the Agent don't apply;
+    // generate() leaves it unset so a configured outputSchema takes effect via defaultOptions.
+    return (streaming ? { ...baseOptions, structuredOutput: undefined } : baseOptions) as AgentExecutionOptions;
   }
 
   private buildRequestContext(
@@ -349,7 +350,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
-    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId));
+    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId, true));
   }
 
   public async generate(
