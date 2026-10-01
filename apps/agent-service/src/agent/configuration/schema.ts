@@ -70,6 +70,24 @@ export const configurationSchema = {
           type: 'array',
           items: { type: 'string' },
         },
+        model: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+            },
+            reasoningEffort: {
+              type: 'string',
+            },
+            headers: {
+              type: 'object',
+              additionalProperties: {
+                type: 'string',
+              },
+            },
+          },
+          additionalProperties: false,
+        },
         tools: {
           type: 'array',
           items: {

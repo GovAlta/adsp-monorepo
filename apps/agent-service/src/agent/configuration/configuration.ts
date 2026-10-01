@@ -15,7 +15,7 @@ import { createBrokerInputProcessors, createInputProcessors } from '../processor
 import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
-import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
+import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
 function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
@@ -115,6 +115,7 @@ export interface AgentConfiguration {
   agents?: string[];
   tools?: ToolConfiguration[];
   mcp?: McpConfiguration;
+  model?: AgentModelConfiguration;
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
@@ -187,7 +188,7 @@ export class AgentServiceConfiguration {
             (agents, [key, configuration]) => {
               const externalTools = mcpToolsByAgent[key] || {};
               const availableToolMap = availableTools as Record<string, unknown>;
-              const modelId = getAgentModelId(key);
+              const modelId = getAgentModelId(key, configuration.model);
 
               return {
                 ...agents,
@@ -196,7 +197,7 @@ export class AgentServiceConfiguration {
                   name: configuration.name,
                   description: configuration.description,
                   instructions: withContextualInstructions(configuration.instructions),
-                  model: getAgentModelConfiguration(modelId),
+                  model: getAgentModelConfiguration(modelId, configuration.model),
                   defaultOptions: (configuration.outputSchema
                     ? {
                         structuredOutput: {
@@ -285,6 +286,7 @@ export class AgentServiceConfiguration {
           fileServiceClient,
           this.eventService,
           key,
+          agentConfiguration.model,
         );
         return {
           ...brokers,
