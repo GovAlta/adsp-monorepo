@@ -262,7 +262,7 @@ export function commentDeleted(apiId: AdspId, topic: Topic, comment: Comment, de
   const topicResponse = mapTopic(apiId, topic);
   return {
     tenantId: topic.tenantId,
-    name: CommentUpdatedEventDefinition.name,
+    name: CommentDeletedEventDefinition.name,
     timestamp: new Date(),
     correlationId: getCorrelationId(topicResponse),
     context: {
@@ -274,7 +274,7 @@ export function commentDeleted(apiId: AdspId, topic: Topic, comment: Comment, de
     payload: {
       topic: topicResponse,
       comment: mapComment(comment),
-      updatedBy: {
+      deletedBy: {
         id: deletedBy.id,
         name: deletedBy.name,
       },
