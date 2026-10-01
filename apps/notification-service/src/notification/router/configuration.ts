@@ -9,13 +9,13 @@ import {
   toNotificationTypeDefinition,
   validateNotificationType,
 } from '../configuration';
-import { NotificationType, ServiceUserRoles } from '../types';
+import { ConfigurationAdminRole, NotificationType, ServiceUserRoles } from '../types';
 
 export const TYPE_DEFINITION_SOURCES = ['tenant', 'core'];
 export const CONTACT_FIELDS = ['contactEmail', 'phoneNumber', 'supportInstructions'];
 
-function assertSubscriptionAdmin(user: User, tenantId: AdspId, operation: string): void {
-  if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
+function assertNotificationAdmin(user: User, tenantId: AdspId, operation: string): void {
+  if (!isAllowedUser(user, tenantId, [ServiceUserRoles.SubscriptionAdmin, ConfigurationAdminRole], true)) {
     throw new UnauthorizedUserError(operation, user);
   }
 }
@@ -43,7 +43,7 @@ export const getNotificationTypeDefinitions: RequestHandler = async (req, res, n
       return;
     }
 
-    assertSubscriptionAdmin(req.user, req.tenant?.id, 'get notification type definitions');
+    assertNotificationAdmin(req.user, req.tenant?.id, 'get notification type definitions');
     const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
     res.json(source === 'core' ? configuration.getCoreDefinitions() : configuration.getTenantDefinitions());
   } catch (err) {
@@ -55,7 +55,7 @@ export function createNotificationType(writer: NotificationConfigurationWriter):
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
-      assertSubscriptionAdmin(req.user, tenantId, 'create notification type');
+      assertNotificationAdmin(req.user, tenantId, 'create notification type');
 
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
       if (configuration.getNotificationType(req.body.id)) {
@@ -77,7 +77,7 @@ export function updateNotificationType(writer: NotificationConfigurationWriter):
     try {
       const tenantId = req.tenant.id;
       const { type } = req.params;
-      assertSubscriptionAdmin(req.user, tenantId, 'update notification type');
+      assertNotificationAdmin(req.user, tenantId, 'update notification type');
 
       // A platform type without a tenant customization is updated by saving a customization of it.
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
@@ -99,7 +99,7 @@ export function deleteNotificationType(writer: NotificationConfigurationWriter):
     try {
       const tenantId = req.tenant.id;
       const { type } = req.params;
-      assertSubscriptionAdmin(req.user, tenantId, 'delete notification type');
+      assertNotificationAdmin(req.user, tenantId, 'delete notification type');
 
       // Platform types can't be deleted; deleting the tenant customization of one reverts it to the platform type.
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
@@ -121,7 +121,7 @@ function mapContact(contact: Record<string, string>, fromEmail: string): Record<
 
 export const getContact: RequestHandler = async (req, res, next) => {
   try {
-    assertSubscriptionAdmin(req.user, req.tenant.id, 'get notification contact');
+    assertNotificationAdmin(req.user, req.tenant.id, 'get notification contact');
 
     const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
     res.json(mapContact({ ...configuration.contact }, configuration.email?.fromEmail));
@@ -134,7 +134,7 @@ export function updateContact(writer: NotificationConfigurationWriter): RequestH
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
-      assertSubscriptionAdmin(req.user, tenantId, 'update notification contact');
+      assertNotificationAdmin(req.user, tenantId, 'update notification contact');
 
       // The contact and from email are separate keys of the configuration, so only the keys with changes are saved.
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();

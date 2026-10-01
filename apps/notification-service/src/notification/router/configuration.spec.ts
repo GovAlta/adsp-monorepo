@@ -1,7 +1,7 @@
 import { adspId, Channel, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
-import { ServiceUserRoles } from '../types';
+import { ConfigurationAdminRole, ServiceUserRoles } from '../types';
 import {
   createNotificationType,
   deleteNotificationType,
@@ -14,6 +14,7 @@ import {
 describe('configuration router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const admin = { id: 'admin', tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User;
+  const configurationAdmin = { id: 'configuration-admin', tenantId, roles: [ConfigurationAdminRole] } as User;
   const plain = { id: 'plain', tenantId, roles: [] } as User;
 
   const writerMock = { update: jest.fn(), delete: jest.fn() };
@@ -79,7 +80,17 @@ describe('configuration router', () => {
       expect(res.json).toHaveBeenCalledWith([coreType]);
     });
 
-    it('rejects a user without subscription-admin', async () => {
+    it('allows a user with configuration-admin', async () => {
+      const res = createResponse();
+      await getNotificationTypeDefinitions(
+        createRequest(configurationAdmin, { query: { source: 'tenant' } }),
+        res,
+        jest.fn(),
+      );
+      expect(res.json).toHaveBeenCalledWith([tenantType]);
+    });
+
+    it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
       await getNotificationTypeDefinitions(
         createRequest(plain, { query: { source: 'tenant' } }),
@@ -128,7 +139,7 @@ describe('configuration router', () => {
       expect(writerMock.update).not.toHaveBeenCalled();
     });
 
-    it('rejects a user without subscription-admin', async () => {
+    it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
       await createNotificationType(writerMock as never)(
         createRequest(plain, { body: newType }),
@@ -174,7 +185,7 @@ describe('configuration router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
-    it('rejects a user without subscription-admin', async () => {
+    it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
       await updateNotificationType(writerMock as never)(
         createRequest(plain, { params: { type: tenantType.id } }),
@@ -208,7 +219,7 @@ describe('configuration router', () => {
       expect(writerMock.delete).not.toHaveBeenCalled();
     });
 
-    it('rejects a user without subscription-admin', async () => {
+    it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
       await deleteNotificationType(writerMock as never)(
         createRequest(plain, { params: { type: tenantType.id } }),
@@ -226,7 +237,15 @@ describe('configuration router', () => {
       expect(res.json).toHaveBeenCalledWith({ ...configurationMock.contact, fromEmail: 'noreply@test.co' });
     });
 
-    it('rejects a user without subscription-admin', async () => {
+    it('allows a user with configuration-admin', async () => {
+      const res = createResponse();
+      const next = jest.fn();
+      await getContact(createRequest(configurationAdmin), res, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
       await getContact(createRequest(plain), createResponse(), next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -257,6 +276,17 @@ describe('configuration router', () => {
       expect(res.json).toHaveBeenCalledWith({ ...configurationMock.contact, fromEmail: 'new@test.co' });
     });
 
+    it('allows a user with configuration-admin', async () => {
+      const next = jest.fn();
+      await updateContact(writerMock as never)(
+        createRequest(configurationAdmin, { body: { phoneNumber: '7807654321' } }),
+        createResponse(),
+        next,
+      );
+      expect(next).not.toHaveBeenCalled();
+      expect(writerMock.update).toHaveBeenCalled();
+    });
+
     it('saves nothing when there are no changes', async () => {
       const res = createResponse();
       await updateContact(writerMock as never)(createRequest(admin), res, jest.fn());
@@ -264,7 +294,7 @@ describe('configuration router', () => {
       expect(res.json).toHaveBeenCalled();
     });
 
-    it('rejects a user without subscription-admin', async () => {
+    it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
       await updateContact(writerMock as never)(createRequest(plain), createResponse(), next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

@@ -83,14 +83,10 @@ describe('NotificationTypes Page', () => {
     },
   };
 
-  const invalidScore = JSON.parse(JSON.stringify(validStore));
-  invalidScore.session.resourceAccess = {
-    'urn:ads:platform:configuration-service': { roles: ['configuration-reader'] },
-  };
+  const storeWithRoles = (resourceAccess: Record<string, { roles: string[] }>) =>
+    mockStore({ ...validStore, session: { ...validStore.session, resourceAccess } });
 
   const store = mockStore(validStore);
-
-  const invalidStore = mockStore(invalidScore);
 
   it('renders contact info', () => {
     const { queryByTestId } = render(
@@ -106,23 +102,35 @@ describe('NotificationTypes Page', () => {
     expect(phone.textContent).toContain('Phone number780 123 4567');
   });
 
-  it('has a functioning edit button', () => {
+  it('shows the edit button for configuration-admin', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <ContactInformation />
       </Provider>
     );
-    const editContactInfo = queryByTestId('edit-contact-info');
-    expect(editContactInfo).not.toBeNull();
+    expect(queryByTestId('edit-contact-info')).not.toBeNull();
   });
 
-  it('does not have functioning edit button', () => {
-    const { baseElement } = render(
-      <Provider store={invalidStore}>
+  it('shows the edit button for subscription-admin', () => {
+    const { queryByTestId } = render(
+      <Provider store={storeWithRoles({ 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } })}>
         <ContactInformation />
       </Provider>
     );
-    const editContactInfo = baseElement.querySelector("goa-icon-button[testId='edit-contact-info']");
-    expect(editContactInfo).toBeNull();
+    expect(queryByTestId('edit-contact-info')).not.toBeNull();
+  });
+
+  it('disables the edit button without subscription-admin or configuration-admin', () => {
+    const { queryByTestId } = render(
+      <Provider
+        store={storeWithRoles({
+          'urn:ads:platform:configuration-service': { roles: ['configuration-reader'] },
+          'urn:ads:platform:notification-service': { roles: ['subscription-app'] },
+        })}
+      >
+        <ContactInformation />
+      </Provider>
+    );
+    expect(queryByTestId('edit-contact-info')).toBeNull();
   });
 });

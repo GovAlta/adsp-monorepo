@@ -390,7 +390,7 @@ components:
       platform notification types and the types configured by the tenant; a tenant type with the same ID as a
       platform type replaces it.
       With the source parameter, retrieves the type definitions as configured instead, which requires the
-      subscription-admin role.
+      subscription-admin or configuration-admin role.
     parameters:
       - $ref: "#/components/parameters/SubscriptionTenantId"
       - name: source
@@ -421,7 +421,7 @@ components:
     tags:
       - Subscription
     description: >
-      Creates a notification type for the tenant. Requires the subscription-admin role. The definition is validated,
+      Creates a notification type for the tenant. Requires the subscription-admin or configuration-admin role. The definition is validated,
       including its channels, trigger events, and templates.
     parameters:
       - $ref: "#/components/parameters/SubscriptionTenantId"
@@ -478,8 +478,8 @@ components:
     tags:
       - Subscription
     description: >
-      Updates a notification type of the tenant with the properties in the request. Requires the subscription-admin
-      role. Updating a platform type saves a tenant customization of it, where only the event templates apply. The
+      Updates a notification type of the tenant with the properties in the request. Requires the subscription-admin or
+      configuration-admin role. Updating a platform type saves a tenant customization of it, where only the event templates apply. The
       updated definition is validated, including its channels, trigger events, and templates.
     parameters:
       - name: type
@@ -516,7 +516,7 @@ components:
     tags:
       - Subscription
     description: >
-      Deletes a notification type of the tenant. Requires the subscription-admin role. Platform types can't be
+      Deletes a notification type of the tenant. Requires the subscription-admin or configuration-admin role. Platform types can't be
       deleted; deleting the tenant customization of a platform type reverts it to the platform templates. Existing
       subscriptions to the type are not removed.
     parameters:
@@ -556,7 +556,7 @@ components:
     tags:
       - Subscription
     description: >
-      Retrieves the tenant's support contact and from email for notifications. Requires the subscription-admin role.
+      Retrieves the tenant's support contact and from email for notifications. Requires the subscription-admin or configuration-admin role.
     responses:
       200:
         description: Contact successfully retrieved.
@@ -573,7 +573,7 @@ components:
       - Subscription
     description: >
       Updates the tenant's support contact and from email for notifications with the properties in the request.
-      Requires the subscription-admin role. An email property can be set to an empty string to clear it.
+      Requires the subscription-admin or configuration-admin role. An email property can be set to an empty string to clear it.
     requestBody:
       required: true
       content:
