@@ -60,8 +60,21 @@ describe('tenant routers documented behaviour', () => {
   function createApp(currentUser: User | null): Express {
     const app = express();
     app.use(documented.middleware);
-    app.use(express.json());
-    app.use((req, _res, next) => {
+    app.use(createRouters(currentUser));
+    return app;
+  }
+
+  // The deprecated v1 operations are left out of the swagger, so their responses aren't checked against it.
+  function createUndocumentedApp(currentUser: User | null): Express {
+    const app = express();
+    app.use(createRouters(currentUser));
+    return app;
+  }
+
+  function createRouters(currentUser: User | null): express.Router {
+    const router = express.Router();
+    router.use(express.json());
+    router.use((req, _res, next) => {
       req.user = currentUser;
       req.isAuthenticated = (() => !!currentUser) as typeof req.isAuthenticated;
       req.getConfiguration = jest.fn().mockResolvedValue([null, []]);
@@ -69,7 +82,7 @@ describe('tenant routers documented behaviour', () => {
     });
     // v1 is mounted behind the jwt strategies only, which reject requests without a valid token.
     const requireToken: RequestHandler = (req, res, next) => (req.user ? next() : res.sendStatus(401));
-    app.use(
+    router.use(
       '/api/tenant/v1',
       requireToken,
       createTenantRouter({
@@ -78,7 +91,7 @@ describe('tenant routers documented behaviour', () => {
         eventService: eventServiceMock,
       }),
     );
-    app.use(
+    router.use(
       '/api/tenant/v2',
       createTenantV2Router({
         logger: loggerMock,
@@ -87,8 +100,8 @@ describe('tenant routers documented behaviour', () => {
         eventService: eventServiceMock,
       }),
     );
-    app.use(createErrorHandler(loggerMock));
-    return app;
+    router.use(createErrorHandler(loggerMock));
+    return router;
   }
 
   const matches = (tenant: TenantEntity, criteria: Record<string, string>) =>
@@ -141,63 +154,65 @@ describe('tenant routers documented behaviour', () => {
 
   describe('v1', () => {
     it('responds 401 without a bearer token', async () => {
-      const res = await request(createApp(null)).get('/api/tenant/v1/test');
+      const res = await request(createUndocumentedApp(null)).get('/api/tenant/v1/test');
       expect(res.status).toBe(401);
     });
 
     describe('POST /api/tenant/v1', () => {
       it('allows a core beta-tester to create a tenant, which is provisioned asynchronously', async () => {
-        const res = await request(createApp(betaTester)).post('/api/tenant/v1').send({ name: 'New Tenant' });
+        const res = await request(createUndocumentedApp(betaTester))
+          .post('/api/tenant/v1')
+          .send({ name: 'New Tenant' });
         expect(res.status).toBe(202);
         expect(res.body).toMatchObject({ name: 'New Tenant', status: 'provisioning' });
       });
 
       it('rejects a tenant user', async () => {
-        const res = await request(createApp(user('tester', [TenantServiceRoles.BetaTester])))
+        const res = await request(createUndocumentedApp(user('tester', [TenantServiceRoles.BetaTester])))
           .post('/api/tenant/v1')
           .send({ name: 'New Tenant' });
         expect(res.status).toBe(401);
       });
 
       it('responds 400 when name is missing', async () => {
-        const res = await request(createApp(betaTester)).post('/api/tenant/v1').send({});
+        const res = await request(createUndocumentedApp(betaTester)).post('/api/tenant/v1').send({});
         expect(res.status).toBe(400);
       });
     });
 
     describe('DELETE /api/tenant/v1', () => {
       it('allows a core tenant-service-admin to delete a tenant by realm', async () => {
-        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1?realm=other-realm');
+        const res = await request(createUndocumentedApp(serviceAdmin)).delete('/api/tenant/v1?realm=other-realm');
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ deletedRealm: true, deletedTenant: true, success: true });
       });
 
       it('rejects a user without the tenant-service-admin role', async () => {
-        const res = await request(createApp(betaTester)).delete('/api/tenant/v1?realm=other-realm');
+        const res = await request(createUndocumentedApp(betaTester)).delete('/api/tenant/v1?realm=other-realm');
         expect(res.status).toBe(401);
         expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
       });
 
       it('responds 400 when realm is missing', async () => {
-        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1');
+        const res = await request(createUndocumentedApp(serviceAdmin)).delete('/api/tenant/v1');
         expect(res.status).toBe(400);
       });
 
       it('responds 404 for an unknown realm', async () => {
-        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1?realm=unknown');
+        const res = await request(createUndocumentedApp(serviceAdmin)).delete('/api/tenant/v1?realm=unknown');
         expect(res.status).toBe(404);
       });
     });
 
     describe('GET /api/tenant/v1/:id', () => {
       it("lets any authenticated user retrieve a tenant, including one that isn't theirs", async () => {
-        const res = await request(createApp(plain)).get('/api/tenant/v1/other');
+        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/other');
         expect(res.status).toBe(200);
         expect(res.body).toMatchObject({ success: true, tenant: { name: 'Other' } });
       });
 
       it('responds 404 for an unknown tenant', async () => {
-        const res = await request(createApp(plain)).get('/api/tenant/v1/unknown');
+        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/unknown');
         expect(res.status).toBe(404);
       });
     });
@@ -206,26 +221,26 @@ describe('tenant routers documented behaviour', () => {
       it('returns the realm roles of the tenant of a tenant-admin', async () => {
         const find = jest.fn().mockResolvedValue([{ name: 'tenant-admin' }]);
         createkcAdminClientMock.mockResolvedValue({ roles: { find } } as never);
-        const res = await request(createApp(tenantAdmin)).get('/api/tenant/v1/realm/roles');
+        const res = await request(createUndocumentedApp(tenantAdmin)).get('/api/tenant/v1/realm/roles');
         expect(res.status).toBe(200);
         expect(find).toHaveBeenCalledWith({ realm: 'test-realm' });
       });
 
       it('rejects a user without the tenant-admin role', async () => {
-        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/roles');
+        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/realm/roles');
         expect(res.status).toBe(401);
       });
     });
 
     describe('GET /api/tenant/v1/realm/:realm', () => {
       it('lets any authenticated user retrieve a tenant by realm', async () => {
-        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/other-realm');
+        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/realm/other-realm');
         expect(res.status).toBe(200);
         expect(res.body.tenant.name).toBe('Other');
       });
 
       it('responds 404 for an unknown realm', async () => {
-        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/unknown');
+        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/realm/unknown');
         expect(res.status).toBe(404);
       });
     });
@@ -235,18 +250,18 @@ describe('tenant routers documented behaviour', () => {
       ['name', { name: 'Other' }, { name: 'Unknown' }],
     ])('POST /api/tenant/v1/%s', (path, found, notFound) => {
       it('lets any authenticated user find a tenant', async () => {
-        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
+        const res = await request(createUndocumentedApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
         expect(res.status).toBe(200);
         expect(res.body.name).toBe('Other');
       });
 
       it(`responds 400 when ${path} is missing`, async () => {
-        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send({});
+        const res = await request(createUndocumentedApp(plain)).post(`/api/tenant/v1/${path}`).send({});
         expect(res.status).toBe(400);
       });
 
       it('responds 404 when there is no matching tenant', async () => {
-        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(notFound);
+        const res = await request(createUndocumentedApp(plain)).post(`/api/tenant/v1/${path}`).send(notFound);
         expect(res.status).toBe(404);
       });
     });
