@@ -230,13 +230,13 @@ export function updateTopicType(
         throw new NotFoundError('topic type', topicTypeId);
       }
 
-      const { name, readRoles, readerRoles, writeRoles, securityClassification } = req.body;
+      const { name, adminRoles, readerRoles, commenterRoles, securityClassification } = req.body;
       const topicType = {
         id: type.id,
         name: name ?? type.name,
-        adminRoles: type.adminRoles,
-        readerRoles: readerRoles ?? readRoles ?? type.readerRoles,
-        commenterRoles: writeRoles ?? type.commenterRoles,
+        adminRoles: adminRoles ? adminRoles : type.adminRoles,
+        readerRoles: readerRoles ?? readerRoles ?? type.readerRoles,
+        commenterRoles: commenterRoles ?? type.commenterRoles,
         securityClassification: securityClassification ?? type.securityClassification,
       };
 
@@ -639,7 +639,7 @@ export function createTopicRouter({
       body('readerRoles').optional().isArray(),
       body('readerRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
-      body('writeRoles.*').optional().isString(),
+      body('writerRoles.*').optional().isString(),
     ),
     createTopicType(apiId, logger, directory, client, tokenProvider),
   );
@@ -661,12 +661,12 @@ export function createTopicRouter({
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       body('name').optional().isString().isLength({ min: 1, max: 50 }),
-      body('readRoles').optional().isArray(),
-      body('readRoles.*').optional().isString(),
+      body('adminRoles').optional().isArray(),
+      body('adminRoles.*').optional().isString(),
       body('readerRoles').optional().isArray(),
       body('readerRoles.*').optional().isString(),
-      body('writeRoles').optional().isArray(),
-      body('writeRoles.*').optional().isString(),
+      body('commenterRoles').optional().isArray(),
+      body('commenterRoles.*').optional().isString(),
       body('securityClassification').optional().isString().isIn(Object.values(SecurityClassifications)),
     ),
     updateTopicType(apiId, logger, directory, client, tokenProvider),
