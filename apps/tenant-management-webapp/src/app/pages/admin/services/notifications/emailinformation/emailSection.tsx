@@ -8,6 +8,7 @@ import { FetchNotificationConfigurationService, UpdateEmailInformationService } 
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { EditEmailInformationTypeModalForm } from './editEmail';
 import { GoabGrid } from '@abgov/react-components';
+import { useCanEditContact } from '../subscription/useHasRole';
 export const EmailInformation: FunctionComponent = () => {
   const [editEmailInformation, setEditEmailInformation] = useState<boolean>(false);
   const dispatch = useDispatch();
@@ -25,16 +26,14 @@ export const EmailInformation: FunctionComponent = () => {
     dispatch(FetchNotificationConfigurationService());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const hasConfigurationAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin'),
-  );
+  const canEditContact = useCanEditContact();
 
   return (
     <section>
       <ContactInfoCss>
         <NoPaddingH2>
           <div className="left-float">Email information</div>
-          {hasConfigurationAdminRole ? (
+          {canEditContact ? (
             <div data-testid="edit-email-info">
               <GoAContextMenuIcon
                 type="create"
@@ -48,7 +47,7 @@ export const EmailInformation: FunctionComponent = () => {
           ) : (
             <Edit
               className="disabled"
-              title="You require a configuration-admin role to edit this contact information"
+              title="You require the subscription-admin or configuration-admin role to edit this email information"
               width={'18px'}
             />
           )}

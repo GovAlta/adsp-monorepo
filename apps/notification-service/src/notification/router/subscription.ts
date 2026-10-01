@@ -4,9 +4,12 @@ import {
   adspId,
   AdspId,
   DomainEvent,
+  ConfigurationService,
   EventService,
   isAllowedUser,
+  ServiceDirectory,
   TenantService,
+  TokenProvider,
   UnauthorizedUserError,
   User,
 } from '@abgov/adsp-service-sdk';
@@ -14,7 +17,7 @@ import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAf
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
-import { NotificationConfiguration } from '../configuration';
+import { NotificationConfiguration, NotificationConfigurationWriter } from '../configuration';
 import {
   Channel,
   ServiceUserRoles,
@@ -40,6 +43,16 @@ import {
   subscriptionDeleted,
   subscriptionSet,
 } from '../events';
+import {
+  CONTACT_FIELDS,
+  createNotificationType,
+  deleteNotificationType,
+  getContact,
+  getNotificationTypeDefinitions,
+  TYPE_DEFINITION_SOURCES,
+  updateContact,
+  updateNotificationType,
+} from './configuration';
 
 interface SubscriptionRouterProps {
   serviceId: AdspId;
@@ -48,6 +61,9 @@ interface SubscriptionRouterProps {
   eventService: EventService;
   verifyService: VerifyService;
   tenantService: TenantService;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
 }
 
 export const assertHasTenant: RequestHandler = (req, _res, next) => {
@@ -648,9 +664,18 @@ export const createSubscriptionRouter = ({
   subscriptionRepository,
   eventService,
   verifyService,
+  directory,
+  tokenProvider,
+  configurationService,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
+  const configurationWriter = new NotificationConfigurationWriter(
+    serviceId,
+    directory,
+    tokenProvider,
+    configurationService,
+  );
 
   const validateTypeHandler = createValidationHandler(param('type').isString().isLength({ min: 1, max: 50 }));
   const validateSubscriberHandler = createValidationHandler(param('subscriber').isMongoId());
@@ -659,12 +684,48 @@ export const createSubscriptionRouter = ({
     param('subscriber').isMongoId()
   );
 
-  subscriptionRouter.get('/types', getNotificationTypes);
+  subscriptionRouter.get(
+    '/types',
+    createValidationHandler(query('source').optional().isIn(TYPE_DEFINITION_SOURCES)),
+    getNotificationTypeDefinitions,
+    getNotificationTypes
+  );
+  subscriptionRouter.post(
+    '/types',
+    assertHasTenant,
+    createValidationHandler(body('id').isString()),
+    createNotificationType(configurationWriter)
+  );
   subscriptionRouter.get(
     '/types/:type',
     validateTypeHandler,
     getNotificationType,
     async (req: Request, res: Response) => res.send(mapType(req[TYPE_KEY]))
+  );
+  subscriptionRouter.patch(
+    '/types/:type',
+    assertHasTenant,
+    validateTypeHandler,
+    updateNotificationType(configurationWriter)
+  );
+  subscriptionRouter.delete(
+    '/types/:type',
+    assertHasTenant,
+    validateTypeHandler,
+    deleteNotificationType(configurationWriter)
+  );
+
+  subscriptionRouter.get('/contact', assertHasTenant, getContact);
+  subscriptionRouter.patch(
+    '/contact',
+    assertHasTenant,
+    createValidationHandler(
+      ...CONTACT_FIELDS.map((field) => body(field).optional().isString()),
+      body('contactEmail').optional({ checkFalsy: true }).isEmail(),
+      body('fromEmail').optional().isString(),
+      body('fromEmail').optional({ checkFalsy: true }).isEmail()
+    ),
+    updateContact(configurationWriter)
   );
 
   subscriptionRouter.get(

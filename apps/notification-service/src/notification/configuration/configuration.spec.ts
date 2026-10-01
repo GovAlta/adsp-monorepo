@@ -231,4 +231,39 @@ describe('NotificationConfiguration', () => {
       expect(types.length).toBe(0);
     });
   });
+  describe('definitions', () => {
+    const configuration = new NotificationConfiguration(
+      logger,
+      templateServiceMock,
+      attachmentServiceMock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { contact: {} as any, email: {} as any, base: baseOverride, test: type },
+      { base: baseType },
+      tenantId
+    );
+
+    it('can return tenant definitions as configured', () => {
+      expect(configuration.getTenantDefinitions()).toEqual([baseOverride, type]);
+      expect(configuration.getTenantDefinition('base')).toBe(baseOverride);
+      expect(configuration.getTenantDefinition('contact')).toBeUndefined();
+    });
+
+    it('can return core definitions', () => {
+      expect(configuration.getCoreDefinitions()).toEqual([baseType]);
+      expect(configuration.getCoreDefinition('base')).toBe(baseType);
+      expect(configuration.getCoreDefinition('test')).toBeUndefined();
+    });
+
+    it('returns no tenant definitions without tenant configuration', () => {
+      const coreOnly = new NotificationConfiguration(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        null,
+        { base: baseType },
+        tenantId
+      );
+      expect(coreOnly.getTenantDefinitions()).toEqual([]);
+    });
+  });
 });

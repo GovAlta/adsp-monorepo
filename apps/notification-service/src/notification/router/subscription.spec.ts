@@ -107,6 +107,9 @@ describe('subscription router', () => {
         eventService: eventServiceMock,
         verifyService: verifyServiceMock,
         tenantService: tenantServiceMock,
+        directory: null,
+        tokenProvider: null,
+        configurationService: null,
       });
       expect(router).toBeTruthy();
     });
