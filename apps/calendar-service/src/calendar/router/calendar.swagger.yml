@@ -339,7 +339,7 @@ components:
   get:
     tags:
       - Calendar
-    description: Retrieves calendar events.
+    description: Retrieves calendar events. Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on the date). When both from and to are specified, returns the complete set of events that overlap the requested range in a single response; top and after are ignored for range retrieval, but criteria can still be used to filter the results. An event overlaps the range when it occurs at least partially within it, including events that start before from or end after to. Range retrieval supports a maximum range of 366 days.
     parameters:
       - name: tenant
         description: Name of the tenant.
@@ -365,6 +365,22 @@ components:
         required: false
         schema:
           type: boolean
+      - name: from
+        description: ISO 8601 date/time for the start of a calendar display range. Must be specified with to. Events overlapping this range are returned without pagination.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+          example: "2026-10-01T00:00:00-06:00"
+      - name: to
+        description: ISO 8601 date/time for the end of a calendar display range. Must be specified with from. Requests spanning more than 366 days fail with a client error.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+          example: "2026-10-31T23:59:59-06:00"
       - name: criteria
         description: Criteria for events to retrieve.
         in: query
