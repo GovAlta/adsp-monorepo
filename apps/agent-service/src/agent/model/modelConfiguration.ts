@@ -41,11 +41,7 @@ export function getAgentProviderOptions(
   const providerOpts: Record<string, string | boolean> = {};
 
   if (isFormGen) {
-    if (environment.MODEL_URL) {
-      providerOpts.parallel_tool_calls = false;
-    } else {
-      providerOpts.parallelToolCalls = false;
-    }
+    providerOpts.parallelToolCalls = false;
   }
 
   const effort = modelConfig?.reasoningEffort || (isFormGen ? (environment.AGENT_FORM_GENERATION_REASONING_EFFORT || '') : '');
