@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef, JSX } from 'react';
+import React, { useCallback, useEffect, useState, useRef, JSX } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { clearInterval, setInterval } from 'worker-timers';
 import { getKeycloakExpiry } from '../state';
-import { logoutUser, tenantSelector, AppDispatch, getAccessToken } from '../state';
+import { logoutUser, tenantSelector, AppDispatch, getAccessToken, formSelector, saveFormNow } from '../state';
 import { useLocation } from 'react-router-dom';
 
 export const LogoutModal = (): JSX.Element => {
@@ -16,6 +16,19 @@ export const LogoutModal = (): JSX.Element => {
   const countDownRef = useRef(null);
   const openRef = useRef(open);
   const tenant = useSelector(tenantSelector);
+  const form = useSelector(formSelector);
+
+  const logoutAfterSavingDraft = useCallback(async () => {
+    try {
+      if (form?.id && form.status === 'Draft') {
+        await dispatch(saveFormNow(form.id)).unwrap();
+      }
+
+      dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+    } catch {
+      // Keep the applicant on the form if the final save fails.
+    }
+  }, [dispatch, form?.id, form?.status, location.pathname, tenant]);
 
   // Keep ref synced with state so interval callbacks can read the latest value
   useEffect(() => {
@@ -29,7 +42,7 @@ export const LogoutModal = (): JSX.Element => {
         const expiry = getKeycloakExpiry();
         const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
         if (expiryInSecs <= 0) {
-          dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+          logoutAfterSavingDraft();
         }
 
         // Use ref to avoid stale closure - state value would be captured at interval creation time
@@ -44,16 +57,14 @@ export const LogoutModal = (): JSX.Element => {
         clearInterval(ref.current);
       }
     };
-  }, [dispatch, tenant, location.pathname]);
+  }, [logoutAfterSavingDraft]);
 
   useEffect(() => {
     if (open) {
-      const expiry = getKeycloakExpiry();
-      const expiryInSecs = Math.ceil(expiry - Date.now() / 1000);
       countDownRef.current = setInterval(() => {
         setCountdownTime((time) => {
           if (time === 0) {
-            dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+            logoutAfterSavingDraft();
             return 0;
           }
 
@@ -68,7 +79,7 @@ export const LogoutModal = (): JSX.Element => {
         countDownRef.current = null;
       }
     }
-  }, [tenant, open, dispatch]);
+  }, [open, logoutAfterSavingDraft]);
 
   return (
     <GoabModal
@@ -93,7 +104,7 @@ export const LogoutModal = (): JSX.Element => {
             type="secondary"
             size="compact"
             onClick={() => {
-              dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+              logoutAfterSavingDraft();
             }}
           >
             Logout

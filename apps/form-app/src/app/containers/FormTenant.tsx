@@ -10,6 +10,7 @@ import {
   formSelector,
   initializeTenant,
   logoutUser,
+  saveFormNow,
   selectedDefinition,
   selectedTopicSelector,
   setShowMessages,
@@ -61,6 +62,18 @@ export const FormTenant = () => {
   const headerTitle =
     definition?.uiSchema?.options?.mainTitle || definition?.name || 'Alberta Digital Service Platform - Form';
 
+  const logoutAfterSavingDraft = async (from: string) => {
+    try {
+      if (userForm?.id && userForm.status === 'Draft') {
+        await dispatch(saveFormNow(userForm.id)).unwrap();
+      }
+
+      dispatch(logoutUser({ tenant, from }));
+    } catch {
+      // Keep the applicant on the form if the final save fails.
+    }
+  };
+
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
@@ -84,9 +97,9 @@ export const FormTenant = () => {
                   data-testid="form-sign-out"
                   onClick={() => {
                     if (userForm?.definition) {
-                      dispatch(logoutUser({ tenant, from: `/${tenant.name}/${userForm.definition.id}` }));
+                      logoutAfterSavingDraft(`/${tenant.name}/${userForm.definition.id}`);
                     } else {
-                      dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+                      logoutAfterSavingDraft(`${location.pathname}`);
                     }
                   }}
                 >
