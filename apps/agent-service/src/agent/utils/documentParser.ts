@@ -44,6 +44,9 @@ export interface DocumentExtractResult {
   pages?: DocumentPageText[];
   pageCount?: number;
   xfaForm?: boolean;
+  // true when pdf-parse found no text layer (scanned/image-only PDF).
+  // Callers should send the raw bytes as a file part rather than extracted content.
+  scanned?: boolean;
 }
 
 export function isExtractableDocument(mimeType: string, filename?: string): boolean {
@@ -172,6 +175,12 @@ export async function extractDocumentText(
             };
           }
           return { text: '', pageCount: result.total, xfaForm: true };
+        }
+
+        // No text layer: scanned/image-only PDF. Skip page rendering — the caller will
+        // send the raw bytes as a file part for native provider handling instead.
+        if (!result.text.trim()) {
+          return { text: '', pageCount: result.total, scanned: true };
         }
 
         const maxPageImages = options?.maxPageImages ?? MAX_RENDERED_PAGES;
