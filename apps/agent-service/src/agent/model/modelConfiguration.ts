@@ -41,7 +41,14 @@ export function getAgentProviderOptions(
   const providerOpts: Record<string, string | boolean> = {};
 
   if (isFormGen) {
-    providerOpts.parallelToolCalls = false;
+    // Use the key convention that matches the active provider path:
+    // OpenAI-compatible (MODEL_URL) passes options closer to the wire format (snake_case);
+    // native Anthropic path uses Mastra's camelCase SDK convention.
+    if (environment.MODEL_URL) {
+      providerOpts.parallel_tool_calls = false;
+    } else {
+      providerOpts.parallelToolCalls = false;
+    }
   }
 
   const effort = modelConfig?.reasoningEffort || (isFormGen ? (environment.AGENT_FORM_GENERATION_REASONING_EFFORT || '') : '');
