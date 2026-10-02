@@ -158,6 +158,7 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger): Promise<XfaF
       }
     }
 
+    lines.push(`\n**Total: ${fields.length} fields extracted**`);
     const htmlDescription = lines.join('\n');
     // lines.length is not a reliable emptiness check: the entire walkXfaHtml result
     // is one string, so header + walk = 2 lines even for a 56KB allXfaHtml tree.
@@ -166,8 +167,7 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger): Promise<XfaF
       return null;
     }
 
-    lines.push(`\n**Total: ${fields.length} fields extracted**`);
-    return { fields, htmlDescription: lines.join('\n') };
+    return { fields, htmlDescription };
   } finally {
     await doc.destroy();
   }

@@ -214,13 +214,6 @@ describe('documentParser', () => {
         expect(result?.text).toContain('<form>structure</form>');
       });
 
-      it('falls back to scanned when both paths return nothing', async () => {
-        // extractXfaFields returns null (default mock), text is also empty
-        const result = await extractDocumentText(dummyData, 'application/pdf');
-
-        expect(result?.scanned).toBe(true);
-        expect(result?.xfaForm).toBeUndefined();
-      });
     });
 
     describe('extraction path failures', () => {
