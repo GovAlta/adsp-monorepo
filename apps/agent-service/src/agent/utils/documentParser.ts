@@ -86,34 +86,6 @@ function normalizeLigatures(text: string): string {
   return text.replace(/[ﬀ-ﬆ]/g, (ch) => LIGATURE_MAP[ch] ?? ch);
 }
 
-// XFA/dynamic PDF forms embed content as XML, not standard PDF text.
-// pdf-parse returns only the Adobe Reader placeholder for these forms.
-const XFA_PLACEHOLDER_PATTERNS = [
-  'please wait',
-  'if this message is not eventually replaced',
-  'adobe reader',
-  'pdf viewer may not be able to display',
-];
-
-// NeedsRendering true is set in the PDF Document Catalog by Adobe LiveCycle Designer
-// for all XFA forms. It tells compliant viewers to render from the embedded XFA stream
-// rather than from the static page content. Scanning raw bytes avoids dependence on
-// the placeholder text language or whether a placeholder exists at all.
-function isXfaPdf(data: Uint8Array): boolean {
-  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data.buffer, data.byteOffset, data.byteLength);
-  return buf.includes('NeedsRendering true');
-}
-
-function isXfaPlaceholder(text: string): boolean {
-  // Normalize: lowercase and collapse all whitespace (newlines, tabs, etc.) into single spaces
-  const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
-  // Empty string is not a placeholder — it means no text layer (scanned or XFA without static content).
-  // The length < 20 shortcut is intentionally removed: structural detection via isXfaPdf handles
-  // those cases, and treating any short text as XFA would misclassify normal PDFs with minimal text.
-  if (!normalized) return false;
-  return XFA_PLACEHOLDER_PATTERNS.every((pattern) => normalized.includes(pattern));
-}
-
 // Render pages as images so the LLM can see the visual design (orientation, margins,
 // columns, colors, fonts, field placement) that text extraction cannot convey.
 // Returns undefined on failure: text extraction already succeeded by this point, so
@@ -167,63 +139,44 @@ export async function extractDocumentText(
 
   switch (effectiveMime) {
     case PDF_MIME: {
-      // pdf-parse detaches the ArrayBuffer it receives, so pass it a copy
-      // and keep the original intact for XFA extraction.
+      // pdf-parse detaches the ArrayBuffer it receives, so pass it a copy.
       const pdfParseCopy = new Uint8Array(data);
       const parser = new PDFParse({ data: pdfParseCopy });
       try {
-        const result = await parser.getText();
+        // Always run text extraction and XFA extraction in parallel.
+        // This handles all XFA variants (dynamic, static, partially filled) without
+        // up-front detection: if pdfjs finds form content it wins; if not, the PDF is
+        // treated as scanned (no text layer) or plain text.
+        const [textResult, xfaResult] = await Promise.all([
+          parser.getText(),
+          extractXfaFields(data, logger),
+        ]);
 
-        // 1. Structural XFA detection: NeedsRendering true covers all XFA forms regardless
-        //    of placeholder text language or absence. Must come before the empty-text check
-        //    so XFA forms with no static content aren't misclassified as scanned PDFs.
-        if (isXfaPdf(data)) {
-          logger?.info('XFA form detected (NeedsRendering), attempting XFA extraction...', { filename });
-          const xfaResult = await extractXfaFields(data, logger);
-          if (xfaResult) {
-            return {
-              text: xfaResult.htmlDescription,
-              format: 'html',
-              pageCount: result.total,
-              xfaForm: true,
-              pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
-            };
-          }
-          return { text: '', pageCount: result.total, xfaForm: true };
+        const pageCount = textResult.total;
+        const pages = textResult.pages?.map((page) => ({ num: page.num, text: page.text }));
+
+        // XFA content found: prefer it as the primary result.
+        // For filled forms the real PDF text is prepended so the agent sees both
+        // the extracted values and the form structure.
+        if (xfaResult) {
+          const text = textResult.text?.trim()
+            ? `${textResult.text}\n\n${xfaResult.htmlDescription}`
+            : xfaResult.htmlDescription;
+          return { text, format: 'html', pageCount, xfaForm: true, pages };
         }
 
-        // 2. Scanned PDF: no text layer and not XFA.
-        if (!result.text.trim()) {
-          return { text: '', pageCount: result.total, scanned: true };
+        // No XFA content and no text layer: scanned/image-only PDF.
+        if (!textResult.text?.trim()) {
+          return { text: '', pageCount, scanned: true };
         }
 
-        // 3. Text-pattern fallback for XFA forms that lack the NeedsRendering flag.
-        if (isXfaPlaceholder(result.text)) {
-          logger?.info('XFA placeholder text detected, attempting XFA extraction...', { filename });
-          const xfaResult = await extractXfaFields(data, logger);
-          if (xfaResult) {
-            return {
-              text: xfaResult.htmlDescription,
-              format: 'html',
-              pageCount: result.total,
-              xfaForm: true,
-              pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
-            };
-          }
-          return { text: '', pageCount: result.total, xfaForm: true };
-        }
-
+        // Normal text extraction: render page images for visual layout context.
         const maxPageImages = options?.maxPageImages ?? MAX_RENDERED_PAGES;
-        const skipPageImages = options?.skipPageImagesIf?.(result.text.length, result.total) === true;
+        const skipPageImages = options?.skipPageImagesIf?.(textResult.text.length, pageCount) === true;
         const pageImages = skipPageImages
           ? undefined
-          : await renderPdfPageImages(parser, result.total, filename, logger, maxPageImages);
-        return {
-          text: result.text,
-          pageCount: result.total,
-          pageImages,
-          pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
-        };
+          : await renderPdfPageImages(parser, pageCount, filename, logger, maxPageImages);
+        return { text: textResult.text, pageCount, pageImages, pages };
       } finally {
         await parser.destroy();
       }
