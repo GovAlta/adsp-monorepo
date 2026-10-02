@@ -41,6 +41,7 @@ describe('xfaExtractor', () => {
             fieldObjects: {
               'applicantName': [{ type: 'Tx', value: 'Jane', readOnly: false }],
             },
+            numPages: 3,
           }),
         ),
       });
@@ -50,6 +51,7 @@ describe('xfaExtractor', () => {
       expect(result).not.toBeNull();
       expect(result?.fields).toHaveLength(1);
       expect(result?.htmlDescription).toContain('applicantName');
+      expect(result?.pageCount).toBe(3);
     });
 
     describe('allXfaHtml deduplication', () => {

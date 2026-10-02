@@ -199,7 +199,8 @@ describe('documentParser', () => {
         expect(result?.format).toBe('html');
       });
 
-      it('includes placeholder PDF text alongside XFA content when both are present', async () => {
+      it('includes non-placeholder PDF text alongside XFA content (custom message)', async () => {
+        // Non-standard placeholder text (no 'please wait' / 'if this message' patterns) is kept.
         mockGetText.mockResolvedValue({
           text: 'This Government of Alberta form cannot be opened using your web browser.',
           total: 1,
@@ -214,17 +215,33 @@ describe('documentParser', () => {
         expect(result?.text).toContain('<form>structure</form>');
       });
 
+      it('filters standard Adobe Reader placeholder text when XFA content is available', async () => {
+        const adobePlaceholder =
+          'Please wait... If this message is not eventually replaced by the proper contents of the document, ' +
+          'your PDF viewer may not be able to display this type of document. ' +
+          'You can upgrade to the latest version of Adobe Reader.';
+        mockGetText.mockResolvedValue({ text: adobePlaceholder, total: 1, pages: [] });
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form>fields</form>', fields: [] });
+
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result?.xfaForm).toBe(true);
+        expect(result?.text).toBe('<form>fields</form>');
+        expect(result?.text).not.toContain('Please wait');
+      });
+
     });
 
     describe('extraction path failures', () => {
       it('still returns XFA content when pdf-parse getText throws', async () => {
         mockGetText.mockRejectedValue(new Error('pdf-parse error'));
-        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form/>', fields: [] });
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form/>', fields: [], pageCount: 4 });
 
         const result = await extractDocumentText(dummyData, 'application/pdf');
 
         expect(result?.xfaForm).toBe(true);
         expect(result?.text).toBe('<form/>');
+        expect(result?.pageCount).toBe(4);
       });
 
       it('still returns text content when XFA extraction throws', async () => {

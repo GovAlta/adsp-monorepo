@@ -86,6 +86,21 @@ function normalizeLigatures(text: string): string {
   return text.replace(/[ﬀ-ﬆ]/g, (ch) => LIGATURE_MAP[ch] ?? ch);
 }
 
+// XFA/dynamic PDF forms embed content as XML, not standard PDF text.
+// pdf-parse returns only the Adobe Reader placeholder for these forms.
+const XFA_PLACEHOLDER_PATTERNS = [
+  'please wait',
+  'if this message is not eventually replaced',
+  'adobe reader',
+  'pdf viewer may not be able to display',
+];
+
+function isXfaPlaceholder(text: string): boolean {
+  const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!normalized) return false;
+  return XFA_PLACEHOLDER_PATTERNS.every((pattern) => normalized.includes(pattern));
+}
+
 // Render pages as images so the LLM can see the visual design (orientation, margins,
 // columns, colors, fonts, field placement) that text extraction cannot convey.
 // Returns undefined on failure: text extraction already succeeded by this point, so
@@ -161,16 +176,18 @@ export async function extractDocumentText(
         const textResult = textOutcome.status === 'fulfilled' ? textOutcome.value : null;
         const xfaResult = xfaOutcome.status === 'fulfilled' ? xfaOutcome.value : null;
 
-        const pageCount = textResult?.total ?? 0;
+        // Prefer pdf-parse page count; fall back to pdfjs when pdf-parse failed.
+        const pageCount = textResult?.total ?? xfaResult?.pageCount ?? 0;
         const pages = textResult?.pages?.map((page) => ({ num: page.num, text: page.text }));
 
         // XFA content found: prefer it as the primary result.
-        // For filled forms the real PDF text is prepended so the agent sees both
-        // the extracted values and the form structure.
+        // Prepend real PDF text for filled forms, but suppress Adobe Reader placeholder
+        // strings that would add noise without useful content.
         if (xfaResult) {
-          const text = textResult?.text?.trim()
-            ? `${textResult.text}\n\n${xfaResult.htmlDescription}`
-            : xfaResult.htmlDescription;
+          const realText = textResult?.text?.trim() && !isXfaPlaceholder(textResult.text)
+            ? textResult.text
+            : '';
+          const text = realText ? `${realText}\n\n${xfaResult.htmlDescription}` : xfaResult.htmlDescription;
           return { text, format: 'html', pageCount, xfaForm: true, pages };
         }
 

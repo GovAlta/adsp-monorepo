@@ -31,6 +31,7 @@ interface XfaHtmlNode {
 export interface XfaFormResult {
   fields: XfaFieldInfo[];
   htmlDescription: string;
+  pageCount?: number;
 }
 
 /**
@@ -167,7 +168,7 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger): Promise<XfaF
       return null;
     }
 
-    return { fields, htmlDescription };
+    return { fields, htmlDescription, pageCount: doc.numPages };
   } finally {
     await doc.destroy();
   }
