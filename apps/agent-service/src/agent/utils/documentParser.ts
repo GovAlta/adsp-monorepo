@@ -96,9 +96,8 @@ const XFA_PLACEHOLDER_PATTERNS = [
 ];
 
 function isXfaPlaceholder(text: string): boolean {
-  // Normalize: lowercase and collapse all whitespace (newlines, tabs, etc.) into single spaces
   const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (!normalized || normalized.length < 20) return true;
+  if (!normalized) return false;
   return XFA_PLACEHOLDER_PATTERNS.every((pattern) => normalized.includes(pattern));
 }
 
@@ -155,45 +154,55 @@ export async function extractDocumentText(
 
   switch (effectiveMime) {
     case PDF_MIME: {
-      // pdf-parse detaches the ArrayBuffer it receives, so pass it a copy
-      // and keep the original intact for XFA extraction.
+      // pdf-parse detaches the ArrayBuffer it receives, so pass it a copy.
       const pdfParseCopy = new Uint8Array(data);
       const parser = new PDFParse({ data: pdfParseCopy });
       try {
-        const result = await parser.getText();
-        if (isXfaPlaceholder(result.text)) {
-          // XFA form detected — extract form structure using pdfjs-dist + pdf2json
-          logger?.info('XFA placeholder detected, attempting XFA extraction...', { filename });
-          const xfaResult = await extractXfaFields(data, logger);
-          if (xfaResult) {
-            return {
-              text: xfaResult.htmlDescription,
-              format: 'html',
-              pageCount: result.total,
-              xfaForm: true,
-              pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
-            };
-          }
-          return { text: '', pageCount: result.total, xfaForm: true };
+        // Always run text extraction and XFA extraction in parallel.
+        // allSettled lets each path fail independently: if pdf-parse throws on a
+        // malformed PDF, pdfjs may still return XFA content, and vice versa.
+        const [textOutcome, xfaOutcome] = await Promise.allSettled([
+          parser.getText(),
+          extractXfaFields(data, logger),
+        ]);
+
+        if (textOutcome.status === 'rejected') {
+          logger?.warn(`pdf-parse getText failed for '${filename}': ${textOutcome.reason}`);
+        }
+        if (xfaOutcome.status === 'rejected') {
+          logger?.warn(`XFA extraction failed for '${filename}': ${xfaOutcome.reason}`);
         }
 
-        // No text layer: scanned/image-only PDF. Skip page rendering — the caller will
-        // send the raw bytes as a file part for native provider handling instead.
-        if (!result.text.trim()) {
-          return { text: '', pageCount: result.total, scanned: true };
+        const textResult = textOutcome.status === 'fulfilled' ? textOutcome.value : null;
+        const xfaResult = xfaOutcome.status === 'fulfilled' ? xfaOutcome.value : null;
+
+        // Prefer pdf-parse page count; fall back to pdfjs when pdf-parse failed.
+        const pageCount = textResult?.total ?? xfaResult?.pageCount ?? 0;
+        const pages = textResult?.pages?.map((page) => ({ num: page.num, text: page.text }));
+
+        // XFA content found: prefer it as the primary result.
+        // Prepend real PDF text for filled forms, but suppress Adobe Reader placeholder
+        // strings that would add noise without useful content.
+        if (xfaResult) {
+          const realText = textResult?.text?.trim() && !isXfaPlaceholder(textResult.text)
+            ? textResult.text
+            : '';
+          const text = realText ? `${realText}\n\n${xfaResult.htmlDescription}` : xfaResult.htmlDescription;
+          return { text, format: 'html', pageCount, xfaForm: true, pages };
         }
 
+        // No XFA content and no text layer: scanned/image-only PDF.
+        if (!textResult?.text?.trim()) {
+          return { text: '', pageCount, scanned: true };
+        }
+
+        // Normal text extraction: render page images for visual layout context.
         const maxPageImages = options?.maxPageImages ?? MAX_RENDERED_PAGES;
-        const skipPageImages = options?.skipPageImagesIf?.(result.text.length, result.total) === true;
+        const skipPageImages = options?.skipPageImagesIf?.(textResult.text.length, pageCount) === true;
         const pageImages = skipPageImages
           ? undefined
-          : await renderPdfPageImages(parser, result.total, filename, logger, maxPageImages);
-        return {
-          text: result.text,
-          pageCount: result.total,
-          pageImages,
-          pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
-        };
+          : await renderPdfPageImages(parser, pageCount, filename, logger, maxPageImages);
+        return { text: textResult.text, pageCount, pageImages, pages };
       } finally {
         await parser.destroy();
       }
