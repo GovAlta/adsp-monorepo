@@ -158,7 +158,11 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger): Promise<XfaF
       }
     }
 
-    if (fields.length === 0 && lines.length <= 2) {
+    const htmlDescription = lines.join('\n');
+    // lines.length is not a reliable emptiness check: the entire walkXfaHtml result
+    // is one string, so header + walk = 2 lines even for a 56KB allXfaHtml tree.
+    // Use content length instead: < 50 chars means only empty header lines were emitted.
+    if (fields.length === 0 && htmlDescription.length < 50) {
       return null;
     }
 
@@ -223,7 +227,15 @@ function walkXfaHtml(node: XfaHtmlNode, depth: number): string {
   }
 
   if (node.children && Array.isArray(node.children)) {
+    // pdfjs sometimes emits both the master-page template and the rendered page content
+    // as same-named siblings. Skip the duplicate so the form is described only once.
+    const seenNames = new Set<string>();
     for (const child of node.children) {
+      const childName = child.attributes?.['xfaName'];
+      if (childName) {
+        if (seenNames.has(childName)) continue;
+        seenNames.add(childName);
+      }
       const childText = walkXfaHtml(child, depth + 1);
       if (childText) lines.push(childText);
     }
