@@ -1,4 +1,9 @@
 import { extractDocumentText, isExtractableDocument } from './documentParser';
+import * as xfaExtractor from './xfaExtractor';
+
+jest.mock('./xfaExtractor', () => ({
+  extractXfaFields: jest.fn().mockResolvedValue(null),
+}));
 
 // Mock pdfjs-dist (used by xfaExtractor; .mjs uses import.meta which Jest cannot handle)
 jest.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({
@@ -145,6 +150,109 @@ describe('documentParser', () => {
     it('returns null for text/plain', async () => {
       const result = await extractDocumentText(dummyData, 'text/plain');
       expect(result).toBeNull();
+    });
+
+    describe('scanned PDF (no text layer)', () => {
+      beforeEach(() => {
+        mockGetText.mockResolvedValue({ text: '', total: 3, pages: [] });
+        mockGetScreenshot.mockClear();
+      });
+
+      it('returns scanned: true without attempting page rendering', async () => {
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result).toEqual({ text: '', pageCount: 3, scanned: true });
+        expect(mockGetScreenshot).not.toHaveBeenCalled();
+      });
+
+      it('does not attempt XFA extraction for a scanned PDF', async () => {
+        const mockExtractXfaFields = jest.spyOn(xfaExtractor, 'extractXfaFields');
+
+        await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(mockExtractXfaFields).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('XFA PDF — structural detection (NeedsRendering)', () => {
+      // Raw bytes that include the NeedsRendering marker, as LiveCycle Designer produces.
+      const xfaData = new Uint8Array(Buffer.from('%PDF\nNeedsRendering true\n'));
+
+      beforeEach(() => {
+        mockGetText.mockResolvedValue({ text: '', total: 2, pages: [] });
+        mockGetScreenshot.mockClear();
+      });
+
+      it('detects XFA with empty text and does not classify it as scanned', async () => {
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form/>', fields: [] });
+
+        const result = await extractDocumentText(xfaData, 'application/pdf');
+
+        expect(result?.xfaForm).toBe(true);
+        expect(result?.scanned).toBeUndefined();
+      });
+
+      it('detects XFA with custom placeholder text (no standard Adobe patterns)', async () => {
+        mockGetText.mockResolvedValue({
+          text: 'This Government of Alberta form cannot be opened using your web browser. Open using Adobe Reader.',
+          total: 1,
+          pages: [],
+        });
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form/>', fields: [] });
+
+        const result = await extractDocumentText(xfaData, 'application/pdf');
+
+        expect(result?.xfaForm).toBe(true);
+      });
+
+      it('does not render page screenshots for XFA PDFs', async () => {
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form/>', fields: [] });
+
+        await extractDocumentText(xfaData, 'application/pdf');
+
+        expect(mockGetScreenshot).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('XFA PDF — text-pattern fallback (no NeedsRendering)', () => {
+      const xfaPlaceholderText =
+        'Please wait... If this message is not eventually replaced by the proper contents of the document, ' +
+        'your PDF viewer may not be able to display this type of document. You can upgrade to the latest version ' +
+        'of Adobe Reader for Windows®, Mac, or Linux® by visiting http://www.adobe.com/go/reader_download. ' +
+        'For more assistance with Adobe Reader visit http://www.adobe.com/go/acrreader.';
+
+      beforeEach(() => {
+        mockGetText.mockResolvedValue({ text: xfaPlaceholderText, total: 1, pages: [] });
+      });
+
+      it('returns xfaForm: true when XFA extraction fails', async () => {
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result).toEqual({ text: '', pageCount: 1, xfaForm: true });
+      });
+
+      it('returns extracted HTML when XFA extraction succeeds', async () => {
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form>fields</form>', fields: [] });
+
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result?.text).toBe('<form>fields</form>');
+        expect(result?.xfaForm).toBe(true);
+        expect(result?.format).toBe('html');
+      });
+    });
+
+    it('treats a normal PDF with short text as regular text, not XFA', async () => {
+      mockGetText.mockResolvedValue({ text: 'Page 1', total: 1, pages: [] });
+      mockGetScreenshot.mockResolvedValue({ total: 1, pages: [] });
+      const mockExtractXfaFields = jest.spyOn(xfaExtractor, 'extractXfaFields');
+      mockExtractXfaFields.mockClear();
+
+      const result = await extractDocumentText(dummyData, 'application/pdf');
+
+      expect(result?.text).toBe('Page 1');
+      expect(result?.xfaForm).toBeUndefined();
+      expect(mockExtractXfaFields).not.toHaveBeenCalled();
     });
   });
 });

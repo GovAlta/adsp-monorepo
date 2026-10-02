@@ -95,10 +95,22 @@ const XFA_PLACEHOLDER_PATTERNS = [
   'pdf viewer may not be able to display',
 ];
 
+// NeedsRendering true is set in the PDF Document Catalog by Adobe LiveCycle Designer
+// for all XFA forms. It tells compliant viewers to render from the embedded XFA stream
+// rather than from the static page content. Scanning raw bytes avoids dependence on
+// the placeholder text language or whether a placeholder exists at all.
+function isXfaPdf(data: Uint8Array): boolean {
+  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+  return buf.includes('NeedsRendering true');
+}
+
 function isXfaPlaceholder(text: string): boolean {
   // Normalize: lowercase and collapse all whitespace (newlines, tabs, etc.) into single spaces
   const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (!normalized || normalized.length < 20) return true;
+  // Empty string is not a placeholder — it means no text layer (scanned or XFA without static content).
+  // The length < 20 shortcut is intentionally removed: structural detection via isXfaPdf handles
+  // those cases, and treating any short text as XFA would misclassify normal PDFs with minimal text.
+  if (!normalized) return false;
   return XFA_PLACEHOLDER_PATTERNS.every((pattern) => normalized.includes(pattern));
 }
 
@@ -161,9 +173,12 @@ export async function extractDocumentText(
       const parser = new PDFParse({ data: pdfParseCopy });
       try {
         const result = await parser.getText();
-        if (isXfaPlaceholder(result.text)) {
-          // XFA form detected — extract form structure using pdfjs-dist + pdf2json
-          logger?.info('XFA placeholder detected, attempting XFA extraction...', { filename });
+
+        // 1. Structural XFA detection: NeedsRendering true covers all XFA forms regardless
+        //    of placeholder text language or absence. Must come before the empty-text check
+        //    so XFA forms with no static content aren't misclassified as scanned PDFs.
+        if (isXfaPdf(data)) {
+          logger?.info('XFA form detected (NeedsRendering), attempting XFA extraction...', { filename });
           const xfaResult = await extractXfaFields(data, logger);
           if (xfaResult) {
             return {
@@ -177,10 +192,25 @@ export async function extractDocumentText(
           return { text: '', pageCount: result.total, xfaForm: true };
         }
 
-        // No text layer: scanned/image-only PDF. Skip page rendering — the caller will
-        // send the raw bytes as a file part for native provider handling instead.
+        // 2. Scanned PDF: no text layer and not XFA.
         if (!result.text.trim()) {
           return { text: '', pageCount: result.total, scanned: true };
+        }
+
+        // 3. Text-pattern fallback for XFA forms that lack the NeedsRendering flag.
+        if (isXfaPlaceholder(result.text)) {
+          logger?.info('XFA placeholder text detected, attempting XFA extraction...', { filename });
+          const xfaResult = await extractXfaFields(data, logger);
+          if (xfaResult) {
+            return {
+              text: xfaResult.htmlDescription,
+              format: 'html',
+              pageCount: result.total,
+              xfaForm: true,
+              pages: result.pages?.map((page) => ({ num: page.num, text: page.text })),
+            };
+          }
+          return { text: '', pageCount: result.total, xfaForm: true };
         }
 
         const maxPageImages = options?.maxPageImages ?? MAX_RENDERED_PAGES;
