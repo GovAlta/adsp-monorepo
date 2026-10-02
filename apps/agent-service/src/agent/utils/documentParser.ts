@@ -144,29 +144,38 @@ export async function extractDocumentText(
       const parser = new PDFParse({ data: pdfParseCopy });
       try {
         // Always run text extraction and XFA extraction in parallel.
-        // This handles all XFA variants (dynamic, static, partially filled) without
-        // up-front detection: if pdfjs finds form content it wins; if not, the PDF is
-        // treated as scanned (no text layer) or plain text.
-        const [textResult, xfaResult] = await Promise.all([
+        // allSettled lets each path fail independently: if pdf-parse throws on a
+        // malformed PDF, pdfjs may still return XFA content, and vice versa.
+        const [textOutcome, xfaOutcome] = await Promise.allSettled([
           parser.getText(),
           extractXfaFields(data, logger),
         ]);
 
-        const pageCount = textResult.total;
-        const pages = textResult.pages?.map((page) => ({ num: page.num, text: page.text }));
+        if (textOutcome.status === 'rejected') {
+          logger?.warn(`pdf-parse getText failed for '${filename}': ${textOutcome.reason}`);
+        }
+        if (xfaOutcome.status === 'rejected') {
+          logger?.warn(`XFA extraction failed for '${filename}': ${xfaOutcome.reason}`);
+        }
+
+        const textResult = textOutcome.status === 'fulfilled' ? textOutcome.value : null;
+        const xfaResult = xfaOutcome.status === 'fulfilled' ? xfaOutcome.value : null;
+
+        const pageCount = textResult?.total ?? 0;
+        const pages = textResult?.pages?.map((page) => ({ num: page.num, text: page.text }));
 
         // XFA content found: prefer it as the primary result.
         // For filled forms the real PDF text is prepended so the agent sees both
         // the extracted values and the form structure.
         if (xfaResult) {
-          const text = textResult.text?.trim()
+          const text = textResult?.text?.trim()
             ? `${textResult.text}\n\n${xfaResult.htmlDescription}`
             : xfaResult.htmlDescription;
           return { text, format: 'html', pageCount, xfaForm: true, pages };
         }
 
         // No XFA content and no text layer: scanned/image-only PDF.
-        if (!textResult.text?.trim()) {
+        if (!textResult?.text?.trim()) {
           return { text: '', pageCount, scanned: true };
         }
 

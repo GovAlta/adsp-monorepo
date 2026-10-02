@@ -214,13 +214,44 @@ describe('documentParser', () => {
         expect(result?.text).toContain('<form>structure</form>');
       });
 
-      it('returns xfaForm: true with empty text when XFA extraction fails', async () => {
+      it('falls back to scanned when both paths return nothing', async () => {
         // extractXfaFields returns null (default mock), text is also empty
         const result = await extractDocumentText(dummyData, 'application/pdf');
 
-        // Both empty → scanned (not xfaForm), since we can no longer distinguish without detection
         expect(result?.scanned).toBe(true);
         expect(result?.xfaForm).toBeUndefined();
+      });
+    });
+
+    describe('extraction path failures', () => {
+      it('still returns XFA content when pdf-parse getText throws', async () => {
+        mockGetText.mockRejectedValue(new Error('pdf-parse error'));
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockResolvedValueOnce({ htmlDescription: '<form/>', fields: [] });
+
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result?.xfaForm).toBe(true);
+        expect(result?.text).toBe('<form/>');
+      });
+
+      it('still returns text content when XFA extraction throws', async () => {
+        mockGetText.mockResolvedValue({ text: 'Normal text content', total: 1, pages: [] });
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockRejectedValueOnce(new Error('pdfjs error'));
+        mockGetScreenshot.mockResolvedValue({ total: 1, pages: [] });
+
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result?.text).toBe('Normal text content');
+        expect(result?.xfaForm).toBeUndefined();
+      });
+
+      it('returns scanned when both paths throw', async () => {
+        mockGetText.mockRejectedValue(new Error('pdf-parse error'));
+        jest.spyOn(xfaExtractor, 'extractXfaFields').mockRejectedValueOnce(new Error('pdfjs error'));
+
+        const result = await extractDocumentText(dummyData, 'application/pdf');
+
+        expect(result?.scanned).toBe(true);
       });
     });
 
