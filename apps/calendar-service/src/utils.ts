@@ -3,6 +3,20 @@ import { DateTime } from 'luxon';
 import { environment } from './environments/environment';
 
 const { TIME_ZONE } = environment;
+
+export function parseCalendarDateTime(value: unknown, parameter = 'datetime', zone = TIME_ZONE): DateTime {
+  if (typeof value !== 'string') {
+    throw new InvalidOperationError(`${parameter} must be an ISO 8601 date/time value.`);
+  }
+
+  const result = DateTime.fromISO(value, { zone });
+  if (!result.isValid) {
+    throw new InvalidOperationError(`${parameter} must be an ISO 8601 date/time value.`);
+  }
+
+  return result;
+}
+
 export function toDateId(value?: DateTime, zone = TIME_ZONE): number {
   if (value && !value.isValid) {
     throw new InvalidOperationError(`Provided datetime value is invalid: ${value.invalidExplanation}`);

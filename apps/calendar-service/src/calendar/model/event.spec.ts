@@ -12,6 +12,7 @@ describe('CalendarEventEntity', () => {
     getDate: jest.fn(),
     getCalendarEvent: jest.fn(),
     getCalendarEvents: jest.fn(),
+    getCalendarEventsInRange: jest.fn(),
     getEventAttendees: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
     delete: jest.fn(),
