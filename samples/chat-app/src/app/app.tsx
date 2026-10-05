@@ -1,15 +1,11 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useSelector } from 'react-redux';
 import { UserManager } from 'oidc-client';
 import { UserState } from 'redux-oidc';
-import {
-  GoabButton,
-  GoabAppHeader,
-  GoabMicrositeHeader,
-} from '@abgov/react-components';
+import { GoabButton, GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 
 import styles from './app.module.scss';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import { Landing } from './landing';
 import { Chat } from './chat';
 

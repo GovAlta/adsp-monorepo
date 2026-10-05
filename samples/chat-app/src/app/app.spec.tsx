@@ -2,7 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { getDefaultMiddleware } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import configureStore from 'redux-mock-store';
 
 import App from './app';
@@ -31,7 +31,7 @@ describe('App', () => {
         <Provider store={store}>
           <App userManager={userManager} />
         </Provider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(baseElement).toBeTruthy();
@@ -43,7 +43,7 @@ describe('App', () => {
         <Provider store={store}>
           <App userManager={userManager} />
         </Provider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(getByText('Welcome to ADSP chat example!')).toBeTruthy();
