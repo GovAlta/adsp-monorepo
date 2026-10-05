@@ -15,8 +15,10 @@ client `urn:ads:platform:form-service`
 
 | name | description |
 |:-|:-|
-| form-admin | Administrator role for form service. This role allows a user to query and unlock forms.  |
+| form-admin | Administrator role for form service. This role allows a user to query and unlock forms, and to manage data registers.  |
 | intake-application | Intake application role for form service. This role is used to grant a service account the ability to retrieve draft forms and submit forms on behalf of an anonymous applicant.  |
+
+The data register API also accepts the configuration service role `urn:ads:platform:configuration-service:configuration-admin`, which tenant administrators have by default.
 
 
 ## Concepts
@@ -28,6 +30,43 @@ Form represents a particular instance of an application including the informatio
 
 ### Draft expiry
 Draft forms include an expiry process so that information entered into draft forms are purged if the draft is abandoned. If a draft form is not accessed for some expiry period, the form is locked and the applicant is notified. In this state, the form cannot be accessed by the applicant but can be unlocked by an administrator. If the form remains in a locked state for some additional expiry period, the form is deleted so that applicant information is not unnecessarily retained.
+
+### Data register
+Data register is a named list of values used to populate drop downs and other choice controls in forms. Each value is either a string or an object, such as a `label` and `value` pair. Forms reference a register by its URN in the UI schema. See the [data registers tutorial](../tutorials/form-service/data-registers.md) for how to use registers in a form.
+
+## Data registers
+Form service provides an API to manage the data registers of a tenant. Tenant administrators can also manage them in the tenant management webapp under Form service &rarr; Register data.
+
+Form service stores each register in the [configuration service](configuration-service.md) in two parts:
+- **Definition**: the `data-register:<name>` entry in the tenant's `platform:configuration-service` configuration. It holds the register's schema and description.
+- **Entries**: the configuration with namespace `data-register` and the register's name. It holds the array of values.
+
+### Endpoints
+All endpoints require a user with the `urn:ads:platform:form-service:form-admin` role or the `urn:ads:platform:configuration-service:configuration-admin` role, in the context of a tenant. A core user must specify the tenant with the `tenantId` query parameter. Every endpoint returns 401 if the user is not authenticated, 403 if the user has neither role, and 502 if configuration service fails.
+
+| Method | Path | Description | Responses |
+|:-|:-|:-|:-|
+| GET | `/form/v1/registers` | Lists the tenant's data registers. | 200 |
+| GET | `/form/v1/registers/{name}` | Gets a data register. | 200, 404 |
+| POST | `/form/v1/registers` | Creates a data register from `name`, `description` and `entries`. `entries` defaults to an empty array. | 201, 400, 409 |
+| PATCH | `/form/v1/registers/{name}` | Updates `description` and/or `entries`. A field that is not sent is left unchanged. | 200, 400, 404 |
+| DELETE | `/form/v1/registers/{name}` | Deletes the data register's entries and definition. | 204, 404 |
+
+Registers are returned as `{ namespace: 'data-register', name, description, entries }`.
+
+### Rules
+- **Existence**: a register exists only when both its definition (with an array schema) and its entries exist. A register missing either part is not listed. It returns 404 and does not block a create with the same name. This means a create or delete can be retried after a partial failure.
+- **Active revision**: `entries` come from the active revision of the configuration, or from the latest revision if none is active. The form app uses the same revision at runtime.
+- **Writing entries publishes them**: configuration service only writes to the latest revision. When a create or update writes `entries` and an older revision is pinned as active, the pin moves to the revision just written, so the change is live straight away. The older revision stays in the revision history and can be pinned again in configuration service. Updating only `description` leaves the pin alone.
+- **Names**: 1 to 50 letters, numbers, spaces, hyphens and underscores. Names can't start or end with a space. Names are case sensitive.
+- **Entries**: an array whose items are all strings or objects.
+- **URN**: forms reference a register as `urn:ads:platform:configuration:v2:/configuration/data-register/<name>`. The name is not URL encoded in the URN.
+- **Deleting removes data**: a delete removes the register's entries, including their revision history, and its definition. Forms that reference the register lose its options.
+- **Anonymous access**: registers are not readable by anonymous applicants unless `anonymousRead` is set on the definition in configuration service. An update keeps this setting, but the API does not set it.
+- **Errors**: when configuration service rejects a request, form service returns 400. When configuration service fails or denies access, form service returns 502.
+- **Service account role**: form service calls configuration service with its own service account. Deleting a register and moving the active revision need that account to have the configuration service `configuration-admin` role.
+
+Form service does not emit its own events for data registers. Configuration service emits `configuration-updated` and `configuration-deleted` for the underlying configuration.
 
 ## Code examples
 ### Create a draft form for an anonymous applicant

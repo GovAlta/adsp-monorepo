@@ -1,336 +1,45 @@
-import { isAllowedUser, ServiceDirectory, TokenProvider, UnauthorizedUserError, adspId } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
-import axios from 'axios';
-import * as HttpStatusCodes from 'http-status-codes';
+import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler, createValidationHandler, InvalidOperationError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
-import { FormServiceRoles } from '../roles';
-import {
-  DataRegisterDefinition,
-  DataRegisterEntry,
-  DataRegisterCreateRequest,
-  DataRegisterUpdateRequest,
-  ConfigurationPatchResponse,
-  DataRegisterResponse,
-  ConfigurationUpdateOperation,
-  ConfigurationReplaceOperation,
-} from './types';
+import * as HttpStatusCodes from 'http-status-codes';
+import { Logger } from 'winston';
+import { DataRegisterClient } from '../dataRegisterClient';
+import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
+import { DataRegisterCreateRequest, DataRegisterUpdateRequest } from '../types/register';
 
-const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
-const DATA_REGISTER_NAMESPACE = 'data-register';
+// 1 to 50 letters, digits, hyphens, underscores and spaces, not starting or ending with a space, so a name can't be
+// blank and ' weekdays' can't exist alongside 'weekdays'.
+export const REGISTER_NAME_PATTERN = /^[a-zA-Z0-9-_](?:[a-zA-Z0-9-_ ]{0,48}[a-zA-Z0-9-_])?$/;
 
-const getDataRegisterResourcePath = (name: string, namespace = DATA_REGISTER_NAMESPACE): string =>
-  `v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+const getRequiredTenantId = (req: Parameters<RequestHandler>[0]): AdspId => {
+  if (!req.tenant?.id) {
+    throw new InvalidOperationError('Tenant context is required for operation.');
+  }
+  return req.tenant.id;
+};
 
-// clean-code-ignore: 2.18 — intentionally throws NotFoundError as its sole purpose; the 'assert' prefix is a well-known convention for guard functions that throw on failure
-const assertRegisterExists = (status: number, name: string): void => {
-  if (status === HttpStatusCodes.NOT_FOUND) {
-    throw new NotFoundError('data register', name);
+const assertCanManageRegisters = (user: User, tenantId: AdspId, operation: string): void => {
+  if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ConfigurationServiceRoles.ConfigurationAdmin], true)) {
+    throw new UnauthorizedUserError(operation, user);
   }
 };
 
-export function getRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const user = req.user;
-      const tenantId = req.tenant?.id;
-      const { name } = req.params;
-      const namespace = DATA_REGISTER_NAMESPACE;
-
-      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin)) {
-        throw new UnauthorizedUserError('get register', user);
-      }
-
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-
-      // Fetch the actual entries — this is the source of truth for existence
-      const dataResponse = await axios.get(
-        new URL(getDataRegisterResourcePath(name, namespace), configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-        },
-      );
-
-      assertRegisterExists(dataResponse.status, name);
-
-      if (!dataResponse.data?.latest) {
-        throw new NotFoundError('data register', name);
-      }
-
-      const entries = (dataResponse.data?.latest?.configuration ?? []) as DataRegisterEntry[];
-
-      const { data: platformData } = await axios.get(
-        new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
-
-      const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
-      const registerKey = `${namespace}:${name}`;
-      const registerDefinition = platformConfig[registerKey] as Record<string, unknown> | undefined;
-      const description = (registerDefinition?.description as string) || '';
-
-      res.send({ namespace, name, description, entries });
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-const dataRegisterConfigurationSchema = {
-  type: 'array',
-  items: {
-    anyOf: [{ type: 'string' }, { type: 'object' }],
-  },
+const logRegisterAction = (logger: Logger, action: string, name: string, tenantId: AdspId, user: User): void => {
+  logger.info(`Data register '${name}' ${action} by ${user.name} (ID: ${user.id}).`, {
+    context: 'register-router',
+    tenant: tenantId.toString(),
+    user: `${user.name} (ID: ${user.id})`,
+  });
 };
 
-const getDataRegisterDefinitionKey = (name: string, namespace = defaultDataRegisterNamespace): string =>
-  `${namespace}:${name}`;
-
-const createDataRegisterDefinitionPatch = (
-  name: string,
-  description: string,
-  namespace = defaultDataRegisterNamespace,
-): ConfigurationUpdateOperation<DataRegisterDefinition> => ({
-  operation: 'UPDATE',
-  update: {
-    [getDataRegisterDefinitionKey(name, namespace)]: {
-      configurationSchema: dataRegisterConfigurationSchema,
-      description,
-    },
-  },
-});
-
-const createDataRegisterConfigurationPatch = (
-  entries: DataRegisterEntry[],
-): ConfigurationReplaceOperation<DataRegisterEntry[]> => ({
-  operation: 'REPLACE',
-  configuration: entries,
-});
-
-const mapDataRegisterResponse = (
-  name: string,
-  description: string,
-  entries: DataRegisterEntry[],
-  namespace = defaultDataRegisterNamespace,
-): DataRegisterResponse => ({
-  namespace,
-  name,
-  description,
-  entries,
-});
-
-const patchConfigurationResource = async <T>(
-  configurationApiUrl: URL,
-  token: string,
-  tenantId: string,
-  resourcePath: string,
-  sendData: ConfigurationUpdateOperation<DataRegisterDefinition> | ConfigurationReplaceOperation<DataRegisterEntry[]>,
-): Promise<ConfigurationPatchResponse<T>> => {
-  const { data } = await axios.patch<ConfigurationPatchResponse<T>>(
-    new URL(resourcePath, configurationApiUrl).href,
-
-    sendData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId },
-    },
-  );
-
-  return data;
-};
-
-const defaultDataRegisterNamespace = 'data-register';
-
-export function createDataRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+export function findRegisters(client: DataRegisterClient): RequestHandler {
   return async (req, res, next) => {
     try {
-      const user = req.user;
-      const tenantId = req.tenant.id;
+      const tenantId = getRequiredTenantId(req);
+      assertCanManageRegisters(req.user, tenantId, 'find data registers');
 
-      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
-        throw new UnauthorizedUserError('create data register', user);
-      }
-
-      const {
-        namespace = defaultDataRegisterNamespace,
-        name,
-        description = '',
-        entries = [],
-      } = req.body as DataRegisterCreateRequest;
-      const tenantIdValue = tenantId?.toString();
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-      const definitionPatch = createDataRegisterDefinitionPatch(name, description, namespace);
-
-      await patchConfigurationResource<string[]>(
-        configurationApiUrl,
-        token,
-        tenantIdValue,
-        `v2/configuration/platform/configuration-service`,
-        definitionPatch,
-      );
-
-      const configurationPatch = createDataRegisterConfigurationPatch(entries);
-
-      const registerConfigurationResponse = await patchConfigurationResource<DataRegisterEntry[]>(
-        configurationApiUrl,
-        token,
-        tenantIdValue,
-        getDataRegisterResourcePath(name, namespace),
-        configurationPatch,
-      );
-
-      const response = mapDataRegisterResponse(
-        name,
-        description,
-        registerConfigurationResponse.latest.configuration,
-        namespace,
-      );
-
-      res.status(HttpStatusCodes.CREATED).send(response);
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-export function updateRegister(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const user = req.user;
-      const tenantId = req.tenant?.id;
-      const { name } = req.params;
-      const namespace = DATA_REGISTER_NAMESPACE;
-
-      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
-        throw new UnauthorizedUserError('update register', user);
-      }
-
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-
-      // Verify the register exists before updating
-      const existsCheck = await axios.get(
-        new URL(`v2/configuration/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`, configurationApiUrl)
-          .href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-        },
-      );
-
-      // clean-code-ignore: 2.18 — throws NotFoundError intentionally; null latest means the register was never created in the configuration service
-      if (existsCheck.status === HttpStatusCodes.NOT_FOUND || !existsCheck.data?.latest) {
-        throw new NotFoundError('data register', name);
-      }
-
-      // Fetch platform config for current description
-      const { data: platformData } = await axios.get(
-        new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
-
-      const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
-      const registerKey = `${namespace}:${name}`;
-      const existingDefinition = (platformConfig[registerKey] as Record<string, unknown>) ?? {};
-
-      const { description, entries } = req.body as DataRegisterUpdateRequest;
-
-      // Update description in the platform/configuration-service definition if provided
-      if (description !== undefined) {
-        await axios.patch(
-          new URL('v2/configuration/platform/configuration-service', configurationApiUrl).href,
-          {
-            operation: 'UPDATE',
-            update: {
-              [registerKey]: { ...existingDefinition, description },
-            },
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { tenantId: tenantId?.toString() },
-          },
-        );
-      }
-
-      // Replace the entries data
-      const { data: entriesData } = await axios.patch(
-        new URL(getDataRegisterResourcePath(name, namespace), configurationApiUrl).href,
-        { operation: 'REPLACE', configuration: entries ?? [] },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
-
-      const updatedEntries = (entriesData?.latest?.configuration ?? entries ?? []) as DataRegisterEntry[];
-      const updatedDescription =
-        description !== undefined ? description : (existingDefinition.description as string) || '';
-
-      res.send({ namespace, name, description: updatedDescription, entries: updatedEntries });
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-export function findDataRegisters(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const tenantId = req.tenant?.id;
-
-      const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
-      const token = await tokenProvider.getAccessToken();
-
-      // Fetch register definitions (descriptions) from platform/configuration-service
-      const { data: platformData } = await axios.get(
-        new URL('v2/configuration/platform/configuration-service/latest', configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
-
-      const platformConfig = (platformData?.configuration ?? platformData ?? {}) as Record<string, unknown>;
-
-      // Fetch all entries across the data-register namespace
-      const { data: registersData } = await axios.get(
-        new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}`, configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-        },
-      );
-
-      const results = (registersData?.results ?? []) as {
-        name: string;
-        namespace: string;
-        latest?: { configuration?: DataRegisterEntry[] };
-      }[];
-
-      const registers = results.map((result) => {
-        const definitionKey = `${result.namespace}:${result.name}`;
-        const definition = platformConfig[definitionKey] as Record<string, unknown> | undefined;
-
-        return {
-          name: result.name,
-          namespace: result.namespace,
-          description: (definition?.description as string) ?? '',
-          entries: result.latest?.configuration ?? [],
-        };
-      });
-
+      const registers = await client.find(tenantId);
       res.send(registers);
     } catch (err) {
       next(err);
@@ -338,63 +47,123 @@ export function findDataRegisters(directory: ServiceDirectory, tokenProvider: To
   };
 }
 
-interface RegisterRouterProps {
-  directory: ServiceDirectory;
-  tokenProvider: TokenProvider;
+export function getRegister(client: DataRegisterClient): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      assertCanManageRegisters(req.user, tenantId, 'get data register');
+
+      const register = await client.get(tenantId, req.params.name);
+      res.send(register);
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
-export function createRegisterRouter({ directory, tokenProvider }: RegisterRouterProps): Router {
+export function createRegister(client: DataRegisterClient, logger: Logger): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertCanManageRegisters(user, tenantId, 'create data register');
+
+      const register = await client.create(tenantId, req.body as DataRegisterCreateRequest);
+      res.status(HttpStatusCodes.CREATED).send(register);
+      logRegisterAction(logger, 'created', register.name, tenantId, user);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function updateRegister(client: DataRegisterClient, logger: Logger): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertCanManageRegisters(user, tenantId, 'update data register');
+
+      const { name } = req.params;
+      const register = await client.update(tenantId, name, req.body as DataRegisterUpdateRequest);
+      res.send(register);
+      logRegisterAction(logger, 'updated', name, tenantId, user);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteRegister(client: DataRegisterClient, logger: Logger): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertCanManageRegisters(user, tenantId, 'delete data register');
+
+      const { name } = req.params;
+      await client.delete(tenantId, name);
+      res.sendStatus(HttpStatusCodes.NO_CONTENT);
+      logRegisterAction(logger, 'deleted', name, tenantId, user);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+const isEntry = (entry: unknown): boolean =>
+  typeof entry === 'string' || (typeof entry === 'object' && entry !== null && !Array.isArray(entry));
+
+const validateEntries = body('entries')
+  .optional()
+  .isArray()
+  .withMessage('entries must be an array')
+  .bail()
+  .custom((entries: unknown[]) => entries.every(isEntry))
+  .withMessage('entries must be strings or objects');
+
+interface RegisterRouterProps {
+  client: DataRegisterClient;
+  logger: Logger;
+}
+
+export function createRegisterRouter({ client, logger }: RegisterRouterProps): Router {
   const router = Router();
 
-  router.get('/registers', assertAuthenticatedHandler, findDataRegisters(directory, tokenProvider));
+  const validateNameParam = param('name').isString().matches(REGISTER_NAME_PATTERN);
+
+  router.get('/registers', assertAuthenticatedHandler, findRegisters(client));
 
   router.get(
     '/registers/:name',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('name')
-        .isString()
-        .isLength({ min: 1, max: 100 })
-        .matches(/^[a-zA-Z0-9-_]+$/),
-    ),
-    getRegister(directory, tokenProvider),
+    createValidationHandler(validateNameParam),
+    getRegister(client),
   );
 
   router.post(
     '/registers',
     assertAuthenticatedHandler,
     createValidationHandler(
-      body().isObject(),
-      body('name')
-        .exists()
-        .withMessage('name is required')
-        .bail()
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
-      body('namespace')
-        .optional()
-        .isString()
-        .isLength({ min: 1, max: 50 })
-        .matches(/^[a-zA-Z0-9-]+$/),
+      body('name').exists().withMessage('name is required').bail().isString().matches(REGISTER_NAME_PATTERN),
       body('description').optional().isString(),
-      body('entries').optional().isArray(),
+      validateEntries,
     ),
-    createDataRegister(directory, tokenProvider),
+    createRegister(client, logger),
   );
 
   router.patch(
     '/registers/:name',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('name')
-        .isString()
-        .isLength({ min: 1, max: 100 })
-        .matches(/^[a-zA-Z0-9-_]+$/),
-      body('description').optional().isString(),
-      body('entries').optional().isArray(),
-    ),
-    updateRegister(directory, tokenProvider),
+    createValidationHandler(validateNameParam, body('description').optional().isString(), validateEntries),
+    updateRegister(client, logger),
+  );
+
+  router.delete(
+    '/registers/:name',
+    assertAuthenticatedHandler,
+    createValidationHandler(validateNameParam),
+    deleteRegister(client, logger),
   );
 
   return router;

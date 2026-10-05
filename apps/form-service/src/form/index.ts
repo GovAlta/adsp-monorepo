@@ -4,6 +4,7 @@ import { Application } from 'express';
 import { Logger } from 'winston';
 import { FileService } from '../file';
 import { NotificationService } from '../notification';
+import { DataRegisterClient } from './dataRegisterClient';
 import { scheduleFormJobs } from './jobs';
 import { FormSubmissionRepository, Repositories } from './repository';
 import { createFormRouter, createFormDefinitionRouter, createRegisterRouter } from './router';
@@ -87,7 +88,7 @@ export const applyFormMiddleware = (
   });
   app.use('/form/v1', router);
 
-  const registerRouter = createRegisterRouter({ directory, tokenProvider });
+  const registerRouter = createRegisterRouter({ client: new DataRegisterClient(directory, tokenProvider), logger });
   app.use('/form/v1', registerRouter);
 
   return app;
