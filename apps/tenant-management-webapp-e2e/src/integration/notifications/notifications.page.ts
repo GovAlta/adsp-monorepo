@@ -279,16 +279,8 @@ class NotificationsPage {
     );
   }
 
-  subscribersAddressAsSearchField() {
-    return cy.xpath('//goa-input[@id="name"]');
-  }
-
-  subscribersEmailSearchField() {
-    return cy.xpath('//goa-input[@id="email"]');
-  }
-
-  subscribersSearchBtn() {
-    return cy.xpath('//goa-button[text()="Search"]');
+  subscribersSearchField() {
+    return cy.xpath('//goa-input[@id="search"]');
   }
 
   subscribersResetBtn() {
@@ -309,27 +301,41 @@ class NotificationsPage {
     );
   }
 
-  subscriberDeleteIcon(addressAs, email) {
+  subscriberDetailsDeleteIcon() {
+    return cy.xpath('//goa-icon-button[contains(@testid, "recipient-details-delete")]');
+  }
+
+  subscriberDetailsSubscriptions() {
+    return cy.xpath(`//ul[@data-testid="recipient-details-subscriptions"]/li`);
+  }
+
+  subscriberDetailsContactInformationEmail() {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr//*[@testid="delete-icon"]`
+      '//div[@data-testid="recipient-details"]//h4[text()="Contact information"]/following-sibling::div[1]'
     );
   }
 
-  subscriberSubscriptions(addressAs, email) {
+  subscriberDetailsContactInformationPhone() {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr/following-sibling::tr[1]`
+      '//div[@data-testid="recipient-details"]//h4[text()="Contact information"]/following-sibling::div[2]'
+    );
+  }
+
+  subscriberDetailsContactInformationAdressAs() {
+    return cy.xpath(
+      '//div[@data-testid="recipient-details"]//h4[text()="Contact information"]/following-sibling::div[3]'
     );
   }
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//table//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr`
+      `//*[@data-testid="subscribers-list-title"]//table//tbody//td/button[contains(text(), "${addressAs}")]/parent::td/following-sibling::td[contains(text(), "${email}")]/ancestor::tr`
     );
   }
 
   subscriberWithPhoneNumber(addressAs, email, phoneNumber) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//table//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::td/following-sibling::td//*[contains(text(), "${phoneNumber}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]//table//tbody//td/button[contains(text(), "${addressAs}")]/parent::td/following-sibling::td[contains(text(), "${email}")]/following-sibling::td[contains(text(), "${phoneNumber}")]/ancestor::tr`
     );
   }
 
@@ -339,6 +345,10 @@ class NotificationsPage {
 
   subscriberDeleteConfirmationModalTitle() {
     return cy.xpath('//*[@testid="delete-confirmation"]').shadow().find('[data-testid="modal-title"]');
+  }
+
+  subscriberDeleteConfirmationModalMessage() {
+    return cy.xpath('//*[@testid="delete-confirmation"]/div[2]');
   }
 
   subscriberDeleteConfirmationModalDeleteBtn() {
@@ -385,10 +395,8 @@ class NotificationsPage {
     return cy.get('[data-testid="support-instructions"]');
   }
 
-  subscriberEditIcon(addressAs, email) {
-    return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr//*[contains(@testid, "edit-subscription-item")]`
-    );
+  subscriberDetailsEditIcon() {
+    return cy.xpath('//goa-icon-button[contains(@testid, "recipient-details-edit")]');
   }
 
   editSubscriberModal() {
