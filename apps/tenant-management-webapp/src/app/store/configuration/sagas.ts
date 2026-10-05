@@ -49,7 +49,8 @@ import {
   deleteDataRegisterSuccessAction,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
+import { LoadingStateType } from '@store/session/models';
 import { RootState } from '..';
 import { select, call, put, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -270,21 +271,32 @@ export function* createDataRegister(action: CreateDataRegisterAction): SagaItera
   }
 }
 
+// The register editor stays open until this reports 'completed', so a failed save keeps the user's edits.
+const updateRegisterLoadingState = (name: string, state: LoadingStateType) =>
+  UpdateLoadingState({ name: UPDATE_DATA_REGISTER_ACTION, id: name, state });
+
 export function* updateDataRegister(action: UpdateDataRegisterAction): SagaIterator {
+  yield put(updateRegisterLoadingState(action.name, 'start'));
+
   const formApiUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
   const token: string = yield call(getAccessToken);
 
-  if (formApiUrl && token) {
-    try {
-      const register = yield call(updateRegisterApi, token, formApiUrl, action.name, {
-        description: action.description,
-        entries: action.entries,
-      });
-      yield put(updateDataRegisterSuccessAction(register));
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-      yield put(getRegisterDataAction());
-    }
+  if (!formApiUrl || !token) {
+    yield put(updateRegisterLoadingState(action.name, 'error'));
+    return;
+  }
+
+  try {
+    const register = yield call(updateRegisterApi, token, formApiUrl, action.name, {
+      description: action.description,
+      entries: action.entries,
+    });
+    yield put(updateDataRegisterSuccessAction(register));
+    yield put(updateRegisterLoadingState(action.name, 'completed'));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+    yield put(updateRegisterLoadingState(action.name, 'error'));
+    yield put(getRegisterDataAction());
   }
 }
 

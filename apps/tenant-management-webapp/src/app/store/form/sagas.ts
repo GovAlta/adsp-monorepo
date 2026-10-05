@@ -683,7 +683,6 @@ export function* initializeFormEditorSaga(): SagaIterator {
   const keycloakRoles = yield select((state) => state.serviceRoles.keycloak);
   const queueTasks = yield select((state: RootState) => state.task?.queues);
   const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
-  const registers = yield select((state: RootState) => state.configuration?.registers);
   const tenantConfigDefinitions = yield select((state: RootState) => state.configuration?.tenantConfigDefinitions);
   try {
     yield all([
@@ -691,7 +690,9 @@ export function* initializeFormEditorSaga(): SagaIterator {
       ...(keycloakRoles == null ? [put(fetchKeycloakServiceRoles())] : []),
       ...(queueTasks == null ? [put(getTaskQueues())] : []),
       ...(fileTypes == null ? [put(FetchFileTypeService())] : []),
-      ...(!registers || registers.length === 0 ? [put(getRegisterDataAction())] : []),
+      // Always refetched: register entries can change outside this app (Configuration service revisions, another
+      // admin, the agent), and the preview's register options would otherwise stay stale.
+      put(getRegisterDataAction()),
       // Also needed for the preview's dataList, independently of whether registers have loaded.
       ...(tenantConfigDefinitions == null ? [put(getConfigurationDefinitions())] : []),
       put(fetchCalendars()),

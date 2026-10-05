@@ -30,7 +30,10 @@ components:
       properties:
         name:
           type: string
-          description: Name of the data register. Unique within the tenant.
+          description: >
+            Name of the data register. Unique within the tenant. 1 to 50 letters, numbers, spaces, hyphens and
+            underscores, not starting or ending with a space.
+          pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
         description:
           type: string
           description: Human-readable description of what the register contains.
@@ -159,7 +162,7 @@ components:
         in: path
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9\-_ ]{1,50}$'
+          pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
     responses:
       200:
         description: Successfully retrieved the data register.
@@ -194,8 +197,9 @@ components:
       - Form
     description: >
       Updates the description and/or entries of an existing data register. Only provided fields are changed:
-      sending description alone leaves the entries unchanged, and vice versa. Requires the form-service admin role
-      or the configuration-service configuration-admin role.
+      sending description alone leaves the entries unchanged, and vice versa. Entries are written to the latest
+      revision; if an older revision is pinned as active, the pin moves to that revision so the new entries are
+      live. Requires the form-service admin role or the configuration-service configuration-admin role.
     parameters:
       - name: name
         description: Name of the data register.
@@ -203,7 +207,7 @@ components:
         in: path
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9\-_ ]{1,50}$'
+          pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
     requestBody:
       required: true
       content:
@@ -250,7 +254,7 @@ components:
         in: path
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9\-_ ]{1,50}$'
+          pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
     responses:
       204:
         description: Successfully deleted the data register.

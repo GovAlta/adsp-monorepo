@@ -8,7 +8,9 @@ import { DataRegisterClient } from '../dataRegisterClient';
 import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
 import { DataRegisterCreateRequest, DataRegisterUpdateRequest } from '../types/register';
 
-export const REGISTER_NAME_PATTERN = /^[a-zA-Z0-9-_ ]{1,50}$/;
+// 1 to 50 letters, digits, hyphens, underscores and spaces, not starting or ending with a space, so a name can't be
+// blank and ' weekdays' can't exist alongside 'weekdays'.
+export const REGISTER_NAME_PATTERN = /^[a-zA-Z0-9-_](?:[a-zA-Z0-9-_ ]{0,48}[a-zA-Z0-9-_])?$/;
 
 const getRequiredTenantId = (req: Parameters<RequestHandler>[0]): AdspId => {
   if (!req.tenant?.id) {

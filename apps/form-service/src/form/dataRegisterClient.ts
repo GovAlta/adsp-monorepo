@@ -33,11 +33,14 @@ interface DataRevision {
   configuration: DataRegisterEntry[];
 }
 
-interface DataListResult {
-  name: string;
-  namespace: string;
+interface DataDocument {
   latest?: DataRevision;
   active?: DataRevision;
+}
+
+interface DataListResult extends DataDocument {
+  name: string;
+  namespace: string;
 }
 
 interface DataListResponse {
@@ -45,10 +48,11 @@ interface DataListResponse {
   page: { next?: string };
 }
 
-// Active revision wins, falling back to latest so a register with no active revision set is still usable.
-const resolveEntries = (result: { latest?: DataRevision; active?: DataRevision }): DataRegisterEntry[] | undefined => {
-  const revision = result.active ?? result.latest;
-  return revision ? (revision.configuration ?? []) : undefined;
+// Active revision wins, falling back to latest so a register with no active revision set is still usable. Anything
+// but an entries array (no revision at all, or a revision created before any entries were written) is not a register.
+const resolveEntries = (document: DataDocument): DataRegisterEntry[] | undefined => {
+  const configuration = (document.active ?? document.latest)?.configuration;
+  return Array.isArray(configuration) ? configuration : undefined;
 };
 
 // A configuration-service 4xx (other than 401/403, which mean form-service's own service account is missing a
@@ -138,12 +142,12 @@ export class DataRegisterClient {
     try {
       const { name, description = '', entries = [] } = request;
 
-      const [definitions, existingEntries] = await Promise.all([
+      const [definitions, document] = await Promise.all([
         this.definitions.getTenantConfiguration(tenantId),
-        this.getData(tenantId, name),
+        this.getDataDocument(tenantId, name),
       ]);
 
-      if (isRegisterDefinition(definitions[getDefinitionKey(name)]) && existingEntries !== undefined) {
+      if (isRegisterDefinition(definitions[getDefinitionKey(name)]) && resolveEntries(document) !== undefined) {
         throw new InvalidOperationError(`Data register '${name}' already exists.`, {
           statusCode: HttpStatusCodes.CONFLICT,
         });
@@ -154,7 +158,7 @@ export class DataRegisterClient {
         configurationSchema: REGISTER_SCHEMA,
         description,
       });
-      const savedEntries = await this.replaceData(tenantId, name, entries);
+      const savedEntries = await this.replaceData(tenantId, name, entries, document.active);
 
       return { namespace: DATA_REGISTER_NAMESPACE, name, description, entries: savedEntries };
     } catch (err) {
@@ -170,23 +174,27 @@ export class DataRegisterClient {
     try {
       const { description, entries } = request;
 
-      const [definitions, existingEntries] = await Promise.all([
+      const [definitions, document] = await Promise.all([
         this.definitions.getTenantConfiguration(tenantId),
-        this.getData(tenantId, name),
+        this.getDataDocument(tenantId, name),
       ]);
 
+      const existingEntries = resolveEntries(document);
       const existingDefinition = definitions[getDefinitionKey(name)];
       if (!isRegisterDefinition(existingDefinition) || existingEntries === undefined) {
         throw new NotFoundError('data register', name);
       }
+
+      // Entries are written first: they are what configuration-service validates against the register's schema, so
+      // a rejected update fails before the description is touched and the register is left unchanged.
+      const updatedEntries =
+        entries !== undefined ? await this.replaceData(tenantId, name, entries, document.active) : existingEntries;
 
       let definition = existingDefinition;
       if (description !== undefined) {
         definition = { ...existingDefinition, description };
         await this.definitions.updateEntry(tenantId, getDefinitionKey(name), definition);
       }
-
-      const updatedEntries = entries !== undefined ? await this.replaceData(tenantId, name, entries) : existingEntries;
 
       return this.toResponse(name, definition, updatedEntries);
     } catch (err) {
@@ -251,36 +259,52 @@ export class DataRegisterClient {
     return dataByName;
   }
 
-  // An empty 200 body (document never patched) comes back as an empty string, so Array.isArray on the
-  // configuration field is what tells a missing document apart from one with no entries yet.
-  private async getData(tenantId: AdspId, name: string): Promise<DataRegisterEntry[] | undefined> {
+  // The latest revision and, only when one is pinned, the active revision. A document never written has neither.
+  private async getDataDocument(tenantId: AdspId, name: string): Promise<DataDocument> {
     const configurationApiUrl = await this.directory.getServiceUrl(configurationApiId);
     const headers = await this.getAuthHeaders();
 
-    const { data } = await axios.get<DataRevision>(
-      new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}/active`, configurationApiUrl)
-        .href,
-      { headers, params: { tenantId: tenantId.toString(), orLatest: true } },
+    const { data } = await axios.get<DataDocument>(
+      new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}`, configurationApiUrl).href,
+      { headers, params: { tenantId: tenantId.toString() } },
     );
 
-    return Array.isArray(data?.configuration) ? data.configuration : undefined;
+    return data || {};
   }
 
+  private async getData(tenantId: AdspId, name: string): Promise<DataRegisterEntry[] | undefined> {
+    return resolveEntries(await this.getDataDocument(tenantId, name));
+  }
+
+  // configuration-service only ever writes the latest revision, but forms read the active one. When an older
+  // revision is pinned as active, the pin is moved to the revision just written so the change actually goes live.
+  // REPLACE overwrites the whole document, so nothing besides these entries is published with it.
   private async replaceData(
     tenantId: AdspId,
     name: string,
     entries: DataRegisterEntry[],
+    active?: DataRevision,
   ): Promise<DataRegisterEntry[]> {
     const configurationApiUrl = await this.directory.getServiceUrl(configurationApiId);
     const headers = await this.getAuthHeaders();
+    const dataUrl = new URL(
+      `v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}`,
+      configurationApiUrl,
+    ).href;
+    const params = { tenantId: tenantId.toString() };
 
     const { data } = await axios.patch<{ latest?: DataRevision }>(
-      new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}`, configurationApiUrl).href,
+      dataUrl,
       { operation: 'REPLACE', configuration: entries },
-      { headers, params: { tenantId: tenantId.toString() } },
+      { headers, params },
     );
 
-    return data?.latest?.configuration ?? entries;
+    const latest = data?.latest;
+    if (active && latest && active.revision !== latest.revision) {
+      await axios.post(dataUrl, { operation: 'SET-ACTIVE-REVISION', revision: latest.revision }, { headers, params });
+    }
+
+    return latest?.configuration ?? entries;
   }
 
   private async deleteData(tenantId: AdspId, name: string): Promise<void> {

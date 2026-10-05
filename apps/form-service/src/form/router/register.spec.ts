@@ -73,6 +73,18 @@ describe('register router', () => {
     it('rejects a name with characters outside the allowed set', () => {
       expect(REGISTER_NAME_PATTERN.test('weekdays!')).toBe(false);
     });
+
+    it.each(['   ', ' weekdays', 'weekdays ', ''])('rejects the blank or space-padded name %p', (name) => {
+      expect(REGISTER_NAME_PATTERN.test(name)).toBe(false);
+    });
+
+    it.each(['a', 'a b', 'x'.repeat(50)])('accepts the name %p', (name) => {
+      expect(REGISTER_NAME_PATTERN.test(name)).toBe(true);
+    });
+
+    it('rejects a name longer than 50 characters', () => {
+      expect(REGISTER_NAME_PATTERN.test('x'.repeat(51))).toBe(false);
+    });
   });
 
   describe('findRegisters', () => {
@@ -327,11 +339,11 @@ describe('register router', () => {
   });
 
   describe('request validation', () => {
-    const buildApp = (): express.Express => {
+    const buildApp = (roles: string[] = [FormServiceRoles.Admin]): express.Express => {
       const app = express();
       app.use(express.json());
       app.use((req, _res, next) => {
-        req.user = { id: 'admin', name: 'Admin', tenantId, roles: [FormServiceRoles.Admin], isCore: false } as never;
+        req.user = { id: 'admin', name: 'Admin', tenantId, roles, isCore: false } as never;
         req.isAuthenticated = (() => true) as never;
         req.tenant = { id: tenantId } as never;
         next();
@@ -356,6 +368,27 @@ describe('register router', () => {
       expect(clientMock.create).not.toHaveBeenCalled();
     });
 
+    it.each(['   ', ' weekdays', 'weekdays '])('rejects the blank or space-padded name %p', async (name) => {
+      const res = await request(buildApp()).post('/registers').send({ name });
+
+      expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
+      expect(clientMock.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects an update of a register name outside the allowed pattern', async () => {
+      const res = await request(buildApp()).patch('/registers/weekdays!').send({ entries: ['Monday'] });
+
+      expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
+      expect(clientMock.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects a delete of a register name outside the allowed pattern', async () => {
+      const res = await request(buildApp()).delete('/registers/weekdays!');
+
+      expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
+      expect(clientMock.delete).not.toHaveBeenCalled();
+    });
+
     it('rejects an entry that is neither a string nor an object', async () => {
       const res = await request(buildApp())
         .post('/registers')
@@ -373,6 +406,58 @@ describe('register router', () => {
         .send({ name: 'weekdays', entries: ['Monday', { label: 'Tuesday', value: 2 }] });
 
       expect(res.status).toBe(HttpStatusCodes.CREATED);
+    });
+
+    describe('role rule shared by every route: form-admin or configuration-admin', () => {
+      const routes: [string, (app: express.Express) => request.Test, keyof typeof clientMock, number][] = [
+        ['GET /registers', (app) => request(app).get('/registers'), 'find', HttpStatusCodes.OK],
+        ['GET /registers/:name', (app) => request(app).get('/registers/weekdays'), 'get', HttpStatusCodes.OK],
+        [
+          'POST /registers',
+          (app) => request(app).post('/registers').send({ name: 'weekdays' }),
+          'create',
+          HttpStatusCodes.CREATED,
+        ],
+        [
+          'PATCH /registers/:name',
+          (app) => request(app).patch('/registers/weekdays').send({ entries: ['Monday'] }),
+          'update',
+          HttpStatusCodes.OK,
+        ],
+        [
+          'DELETE /registers/:name',
+          (app) => request(app).delete('/registers/weekdays'),
+          'delete',
+          HttpStatusCodes.NO_CONTENT,
+        ],
+      ];
+
+      beforeEach(() => {
+        clientMock.find.mockResolvedValue([register]);
+        clientMock.get.mockResolvedValue(register);
+        clientMock.create.mockResolvedValue(register);
+        clientMock.update.mockResolvedValue(register);
+        clientMock.delete.mockResolvedValue(undefined);
+      });
+
+      it.each(routes)('%s allows form-admin', async (_route, send, _method, status) => {
+        const res = await send(buildApp([FormServiceRoles.Admin]));
+
+        expect(res.status).toBe(status);
+      });
+
+      it.each(routes)('%s allows configuration-admin', async (_route, send, _method, status) => {
+        const res = await send(buildApp([ConfigurationServiceRoles.ConfigurationAdmin]));
+
+        expect(res.status).toBe(status);
+      });
+
+      it.each(routes)('%s rejects a user with neither role', async (_route, send, method) => {
+        const res = await send(buildApp([FormServiceRoles.Applicant]));
+
+        expect(res.status).toBe(HttpStatusCodes.FORBIDDEN);
+        expect(clientMock[method]).not.toHaveBeenCalled();
+      });
     });
   });
 });

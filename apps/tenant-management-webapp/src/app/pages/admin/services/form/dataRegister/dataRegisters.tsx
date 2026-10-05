@@ -5,6 +5,7 @@ import { AppDispatch } from '@store/index';
 import { RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
 import { selectRegisterData } from '@store/configuration/selectors';
 import { RootState } from '@store/index';
+import { LoadingState } from '@store/session/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { DeleteModal } from '@components/DeleteModal';
 import MonacoEditor from '@monaco-editor/react';
@@ -32,6 +33,7 @@ import {
   createDataRegisterAction,
   deleteDataRegisterAction,
   getRegisterDataAction,
+  UPDATE_DATA_REGISTER_ACTION,
   updateDataRegisterAction,
 } from '@store/configuration/action';
 import { parseUrn, urnCompare, validateRegisterJson } from './utils';
@@ -51,6 +53,31 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
   const [editValue, setEditValue] = useState('');
   const [jsonError, setJsonError] = useState('');
   const { name } = parseUrn(entry.urn ?? '');
+  // A new object each time the update saga reports progress for this register.
+  const updateState = useSelector((state: RootState) =>
+    state.session.loadingStates?.find((s) => s.name === UPDATE_DATA_REGISTER_ACTION && s.id === name),
+  );
+  // Set while a save is in flight. It holds updateState as it was when Save was clicked, so a 'completed' left
+  // over from an earlier save is not mistaken for this one.
+  const [pendingSave, setPendingSave] = useState<{ from?: LoadingState } | null>(null);
+
+  // The editor closes only once the update succeeds; on failure it stays open with the user's edits.
+  useEffect(() => {
+    if (!pendingSave || updateState === pendingSave.from) {
+      return;
+    }
+    if (updateState?.state === 'completed') {
+      setPendingSave(null);
+      setIsEditing(false);
+    } else if (updateState?.state === 'error') {
+      setPendingSave(null);
+    }
+  }, [pendingSave, updateState]);
+
+  const closeEditor = () => {
+    setIsEditing(false);
+    setPendingSave(null);
+  };
 
   const validate = (value: string): string => {
     return validateRegisterJson(value);
@@ -58,7 +85,7 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
 
   const handleEditOpen = () => {
     if (isEditing) {
-      setIsEditing(false);
+      closeEditor();
       return;
     }
     const value = JSON.stringify(entry.data ?? {}, null, 2);
@@ -79,9 +106,9 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
       return;
     }
     const parsed = JSON.parse(editValue) as RegisterDataType;
+    setPendingSave({ from: updateState });
     // Entries only: leaving description out of the request keeps it unchanged.
     dispatch(updateDataRegisterAction(name, undefined, parsed));
-    setIsEditing(false);
   };
 
   return (
@@ -148,7 +175,7 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
                   size="compact"
                   type="primary"
                   testId={`data-register-save-${name}`}
-                  disabled={!!jsonError}
+                  disabled={!!jsonError || !!pendingSave}
                   onClick={handleSave}
                 >
                   Save
@@ -157,7 +184,7 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
                   size="compact"
                   type="secondary"
                   testId={`data-register-cancel-${name}`}
-                  onClick={() => setIsEditing(false)}
+                  onClick={closeEditor}
                 >
                   Cancel
                 </GoabButton>
@@ -263,7 +290,8 @@ export const DataRegisters = (): JSX.Element => {
           Add register data
         </GoabButton>
       </GoabButtonGroup>
-      {isFetching ? (
+      {/* Spinner only on first load: a refetch (e.g. after a failed save) must not unmount an open editor. */}
+      {isFetching && registerData.length === 0 ? (
         <DataRegisterLoadingDiv>
           <GoabCircularProgress visible={true} size="large" />
         </DataRegisterLoadingDiv>

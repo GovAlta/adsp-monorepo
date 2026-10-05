@@ -2,6 +2,7 @@ import { expectSaga } from 'redux-saga-test-plan';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 import { getAccessToken } from '@store/tenant/sagas';
 import { ERROR_NOTIFICATION } from '@store/notifications/actions';
+import { UpdateLoadingState } from '@store/session/actions';
 import { createDataRegister, deleteDataRegister, fetchRegisterData, updateDataRegister } from './sagas';
 import {
   createDataRegisterAction,
@@ -12,6 +13,7 @@ import {
   FETCH_REGISTER_DATA_FAILED_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
   updateDataRegisterAction,
+  UPDATE_DATA_REGISTER_ACTION,
   UPDATE_DATA_REGISTER_SUCCESS_ACTION,
 } from './action';
 import { createRegisterApi, deleteRegisterApi, fetchRegistersApi, updateRegisterApi } from './dataRegisterApi';
@@ -51,6 +53,9 @@ const runSaga = (saga, action, apiFn, response: unknown, state: unknown = storeS
 };
 
 const actionTypes = (actions: { type: string }[]) => actions.map((action) => action.type);
+
+const updateLoadingState = (state: 'start' | 'completed' | 'error') =>
+  UpdateLoadingState({ name: UPDATE_DATA_REGISTER_ACTION, id: 'weekdays', state });
 
 describe('configuration data register sagas', () => {
   describe('fetchRegisterData', () => {
@@ -145,7 +150,7 @@ describe('configuration data register sagas', () => {
       ]);
     });
 
-    it('replaces the register in state with the updated one', async () => {
+    it('replaces the register in state with the updated one and reports the update as completed', async () => {
       const { actions } = await runSaga(
         updateDataRegister,
         updateDataRegisterAction('weekdays', undefined, ['Monday']),
@@ -153,10 +158,14 @@ describe('configuration data register sagas', () => {
         weekdays,
       );
 
-      expect(actions).toEqual([{ type: UPDATE_DATA_REGISTER_SUCCESS_ACTION, payload: weekdays }]);
+      expect(actions).toEqual([
+        updateLoadingState('start'),
+        { type: UPDATE_DATA_REGISTER_SUCCESS_ACTION, payload: weekdays },
+        updateLoadingState('completed'),
+      ]);
     });
 
-    it('notifies the error and refetches when the update fails', async () => {
+    it('notifies the error, reports the update as failed and refetches when the update fails', async () => {
       const { actions } = await runSaga(
         updateDataRegister,
         updateDataRegisterAction('weekdays', undefined, ['Monday']),
@@ -164,7 +173,25 @@ describe('configuration data register sagas', () => {
         httpError(400),
       );
 
-      expect(actionTypes(actions)).toEqual([ERROR_NOTIFICATION, FETCH_REGISTER_DATA_ACTION]);
+      expect(actions).toEqual([
+        updateLoadingState('start'),
+        expect.objectContaining({ type: ERROR_NOTIFICATION }),
+        updateLoadingState('error'),
+        expect.objectContaining({ type: FETCH_REGISTER_DATA_ACTION }),
+      ]);
+    });
+
+    it('reports the update as failed without calling the form service when its URL is not known yet', async () => {
+      const { calls, actions } = await runSaga(
+        updateDataRegister,
+        updateDataRegisterAction('weekdays', undefined, ['Monday']),
+        updateRegisterApi,
+        weekdays,
+        { config: { serviceUrls: {} } },
+      );
+
+      expect(calls).toEqual([]);
+      expect(actions).toEqual([updateLoadingState('start'), updateLoadingState('error')]);
     });
   });
 

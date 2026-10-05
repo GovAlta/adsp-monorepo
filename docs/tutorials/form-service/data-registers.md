@@ -33,7 +33,7 @@ A data register is a named list of values. Each value is either a string or an o
 
 Go to Form service &rarr; Register data tab.
 
-- Click **Add register data** and enter a name, an optional description and the values. Names can contain letters, numbers, spaces, hyphens and underscores, can be up to 50 characters long, and must be unique within your tenant. Enter the values separated by commas, new lines or semicolons, or select **Use JSON format** and enter a JSON array.
+- Click **Add register data** and enter a name, an optional description and the values. Names can contain letters, numbers, spaces, hyphens and underscores, can't start or end with a space, can be up to 50 characters long, and must be unique within your tenant. Enter the values separated by commas, new lines or semicolons, or select **Use JSON format** and enter a JSON array.
 - Click the eye icon on a register to view its values and copy its URN.
 - Click the edit icon on a register to change its values as a JSON array.
 - Click the delete icon on a register to delete it. Forms that reference a deleted register lose its options.

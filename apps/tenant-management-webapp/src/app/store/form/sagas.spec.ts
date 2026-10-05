@@ -74,10 +74,10 @@ describe('form sagas data register refresh', () => {
       expect(putActionTypes(effects)).toContain(FETCH_REGISTER_DATA_ACTION);
     });
 
-    it('does not refetch registers that are already loaded', async () => {
+    it('refetches registers that are already loaded so the preview does not show stale entries', async () => {
       const { effects } = await expectSaga(initializeFormEditorSaga).withState(loadedState).run();
 
-      expect(putActionTypes(effects)).not.toContain(FETCH_REGISTER_DATA_ACTION);
+      expect(putActionTypes(effects)).toContain(FETCH_REGISTER_DATA_ACTION);
     });
 
     it('fetches the configuration definitions the preview data list needs when they are not loaded', async () => {

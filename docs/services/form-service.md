@@ -57,12 +57,14 @@ Registers are returned as `{ namespace: 'data-register', name, description, entr
 ### Rules
 - **Existence**: a register exists only when both its definition (with an array schema) and its entries exist. A register missing either part is not listed. It returns 404 and does not block a create with the same name. This means a create or delete can be retried after a partial failure.
 - **Active revision**: `entries` come from the active revision of the configuration, or from the latest revision if none is active. The form app uses the same revision at runtime.
-- **Names**: 1 to 50 letters, numbers, spaces, hyphens and underscores. Names are case sensitive.
+- **Writing entries publishes them**: configuration service only writes to the latest revision. When a create or update writes `entries` and an older revision is pinned as active, the pin moves to the revision just written, so the change is live straight away. The older revision stays in the revision history and can be pinned again in configuration service. Updating only `description` leaves the pin alone.
+- **Names**: 1 to 50 letters, numbers, spaces, hyphens and underscores. Names can't start or end with a space. Names are case sensitive.
 - **Entries**: an array whose items are all strings or objects.
 - **URN**: forms reference a register as `urn:ads:platform:configuration:v2:/configuration/data-register/<name>`. The name is not URL encoded in the URN.
 - **Deleting removes data**: a delete removes the register's entries, including their revision history, and its definition. Forms that reference the register lose its options.
 - **Anonymous access**: registers are not readable by anonymous applicants unless `anonymousRead` is set on the definition in configuration service. An update keeps this setting, but the API does not set it.
 - **Errors**: when configuration service rejects a request, form service returns 400. When configuration service fails or denies access, form service returns 502.
+- **Service account role**: form service calls configuration service with its own service account. Deleting a register and moving the active revision need that account to have the configuration service `configuration-admin` role.
 
 Form service does not emit its own events for data registers. Configuration service emits `configuration-updated` and `configuration-deleted` for the underlying configuration.
 
