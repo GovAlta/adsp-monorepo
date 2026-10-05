@@ -1,5 +1,6 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { New, Results } from '@core-services/core-common';
+import { DateTime } from 'luxon';
 import { CalendarRepository } from '../repository';
 import { CalendarServiceRoles } from '../roles';
 import { Calendar, CalendarEvent, CalendarEventCriteria } from '../types';
@@ -38,6 +39,22 @@ export class CalendarEntity implements Calendar {
     }
 
     return this.repository.getCalendarEvents(this, top, after, criteria);
+  }
+
+  getEventsInRange(
+    user: User,
+    from: DateTime,
+    to: DateTime,
+    criteria: CalendarEventCriteria = {}
+  ): Promise<CalendarEventEntity[]> {
+    if (!this.canAccessPrivateEvent(user)) {
+      criteria = {
+        ...criteria,
+        isPublic: true,
+      };
+    }
+
+    return this.repository.getCalendarEventsInRange(this, from, to, criteria);
   }
 
   async getEvent(user: User, id: number): Promise<CalendarEventEntity> {

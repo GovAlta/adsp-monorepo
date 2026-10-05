@@ -248,6 +248,10 @@ const initializeApp = async (): Promise<express.Application> => {
       },
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
+      // Register data management (router/register.ts) accepts the configuration-service configuration-admin role,
+      // which tenant admins hold via the tenant-admin composite. Their tokens have no form-service audience unless
+      // they separately hold a form-service role, so audience is not checked here, same as configuration-service.
+      ignoreServiceAud: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

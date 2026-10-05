@@ -5,6 +5,7 @@ export * from './feedback.slice';
 export * from './file.slice';
 export * from './form.slice';
 export * from './pdf.slice';
+export * from './poker.slice';
 export * from './user.slice';
 export * from './types';
 

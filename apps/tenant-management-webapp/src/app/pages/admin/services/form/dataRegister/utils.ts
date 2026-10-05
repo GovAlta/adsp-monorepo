@@ -16,6 +16,9 @@ const SEPARATOR_LABEL: Record<RegisterDataSeparator, string> = {
   json: 'JSON',
 };
 
+// Mirrors form-service's REGISTER_NAME_PATTERN (apps/form-service/src/form/router/register.ts).
+export const REGISTER_NAME_PATTERN = /^[a-zA-Z0-9-_](?:[a-zA-Z0-9-_ ]{0,48}[a-zA-Z0-9-_])?$/;
+
 export const REGISTER_DATA_SCHEMA: Record<string, unknown> = {
   type: 'array',
   items: {

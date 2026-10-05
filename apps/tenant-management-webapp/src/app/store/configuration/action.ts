@@ -1,4 +1,4 @@
-import { RegisterData } from '@abgov/jsonforms-components';
+import { RegisterConfigData, RegisterData, RegisterDataType } from '@abgov/jsonforms-components';
 import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { io, Socket } from 'socket.io-client';
@@ -56,7 +56,17 @@ export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
 
 export const FETCH_REGISTER_DATA_ACTION = 'configuration/FETCH_REGISTER_DATA';
 export const FETCH_REGISTER_DATA_SUCCESS_ACTION = 'configuration/FETCH_REGISTER_DATA_SUCCESS_ACTION';
-export const UPDATE_REGISTERS_LOCAL_ACTION = 'configuration/UPDATE_REGISTERS_LOCAL';
+export const FETCH_REGISTER_DATA_FAILED_ACTION = 'configuration/FETCH_REGISTER_DATA_FAILED_ACTION';
+
+export const CREATE_DATA_REGISTER_ACTION = 'configuration/CREATE_DATA_REGISTER_ACTION';
+export const CREATE_DATA_REGISTER_SUCCESS_ACTION = 'configuration/CREATE_DATA_REGISTER_SUCCESS_ACTION';
+
+export const UPDATE_DATA_REGISTER_ACTION = 'configuration/UPDATE_DATA_REGISTER_ACTION';
+export const UPDATE_DATA_REGISTER_SUCCESS_ACTION = 'configuration/UPDATE_DATA_REGISTER_SUCCESS_ACTION';
+
+export const DELETE_DATA_REGISTER_ACTION = 'configuration/DELETE_DATA_REGISTER_ACTION';
+export const DELETE_DATA_REGISTER_SUCCESS_ACTION = 'configuration/DELETE_DATA_REGISTER_SUCCESS_ACTION';
+
 export const CLOSE_TEMPLATE_ACTION = 'configuration/CLOSE_TEMPLATE_ACTION';
 
 export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
@@ -151,7 +161,6 @@ export interface ReplaceConfigurationDataAction {
   type: typeof REPLACE_CONFIGURATION_DATA_ACTION;
   configuration: ReplaceConfiguration;
   isImportConfiguration: boolean;
-  skipJSONValidation?: boolean;
 }
 
 export interface ReplaceConfigurationDataSuccessAction {
@@ -189,19 +198,46 @@ export interface FetchRegisterDataAction {
 export interface FetchRegisterDataSuccessAction {
   type: typeof FETCH_REGISTER_DATA_SUCCESS_ACTION;
   payload: RegisterData;
-  dataList: string[];
-  anonymousRead: string[];
 }
 
-export interface UpdateRegistersLocalAction {
-  type: typeof UPDATE_REGISTERS_LOCAL_ACTION;
-  payload: RegisterData;
+export interface FetchRegisterDataFailedAction {
+  type: typeof FETCH_REGISTER_DATA_FAILED_ACTION;
 }
 
-export const updateRegistersLocalAction = (registers: RegisterData): UpdateRegistersLocalAction => ({
-  type: UPDATE_REGISTERS_LOCAL_ACTION,
-  payload: registers,
-});
+export interface CreateDataRegisterAction {
+  type: typeof CREATE_DATA_REGISTER_ACTION;
+  name: string;
+  description?: string;
+  entries?: RegisterDataType;
+}
+
+export interface CreateDataRegisterSuccessAction {
+  type: typeof CREATE_DATA_REGISTER_SUCCESS_ACTION;
+  payload: RegisterConfigData;
+}
+
+export interface UpdateDataRegisterAction {
+  type: typeof UPDATE_DATA_REGISTER_ACTION;
+  name: string;
+  description?: string;
+  entries?: RegisterDataType;
+}
+
+export interface UpdateDataRegisterSuccessAction {
+  type: typeof UPDATE_DATA_REGISTER_SUCCESS_ACTION;
+  payload: RegisterConfigData;
+}
+
+export interface DeleteDataRegisterAction {
+  type: typeof DELETE_DATA_REGISTER_ACTION;
+  name: string;
+  urn: string;
+}
+
+export interface DeleteDataRegisterSuccessAction {
+  type: typeof DELETE_DATA_REGISTER_SUCCESS_ACTION;
+  urn: string;
+}
 
 export interface ConnectConfigurationUpdatesAction {
   type: typeof CONNECT_CONFIGURATION_UPDATES_ACTION;
@@ -250,7 +286,13 @@ export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationActionRevisionAction
   | FetchRegisterDataAction
   | FetchRegisterDataSuccessAction
-  | UpdateRegistersLocalAction
+  | FetchRegisterDataFailedAction
+  | CreateDataRegisterAction
+  | CreateDataRegisterSuccessAction
+  | UpdateDataRegisterAction
+  | UpdateDataRegisterSuccessAction
+  | DeleteDataRegisterAction
+  | DeleteDataRegisterSuccessAction
   | FetchConfigurationActiveRevisionSuccessAction
   | CloseTemplateAction
   | ConnectConfigurationUpdatesAction
@@ -382,12 +424,10 @@ export const setConfigurationRevisionActiveSuccessAction = (
 export const replaceConfigurationDataAction = (
   configuration: ReplaceConfiguration,
   isImportConfiguration,
-  skipJSONValidation = false,
 ): ReplaceConfigurationDataAction => ({
   type: REPLACE_CONFIGURATION_DATA_ACTION,
   configuration,
   isImportConfiguration,
-  skipJSONValidation,
 });
 export const resetReplaceConfigurationListAction = (): ResetReplaceConfigurationListAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_ACTION,
@@ -437,19 +477,60 @@ export const getReplaceConfigurationErrorSuccessAction = (
   payload: replacedConfiguration,
 });
 
-export const getRegisterDataSuccessAction = (
-  registerData: RegisterData,
-  dataList: string[],
-  anonymousRead: string[],
-): FetchRegisterDataSuccessAction => ({
+export const getRegisterDataSuccessAction = (registerData: RegisterData): FetchRegisterDataSuccessAction => ({
   type: FETCH_REGISTER_DATA_SUCCESS_ACTION,
   payload: registerData,
-  dataList: dataList,
-  anonymousRead: anonymousRead,
+});
+
+export const getRegisterDataFailedAction = (): FetchRegisterDataFailedAction => ({
+  type: FETCH_REGISTER_DATA_FAILED_ACTION,
 });
 
 export const getRegisterDataAction = (): FetchRegisterDataAction => ({
   type: FETCH_REGISTER_DATA_ACTION,
+});
+
+export const createDataRegisterAction = (
+  name: string,
+  description?: string,
+  entries?: RegisterDataType,
+): CreateDataRegisterAction => ({
+  type: CREATE_DATA_REGISTER_ACTION,
+  name,
+  description,
+  entries,
+});
+
+export const createDataRegisterSuccessAction = (payload: RegisterConfigData): CreateDataRegisterSuccessAction => ({
+  type: CREATE_DATA_REGISTER_SUCCESS_ACTION,
+  payload,
+});
+
+export const updateDataRegisterAction = (
+  name: string,
+  description?: string,
+  entries?: RegisterDataType,
+): UpdateDataRegisterAction => ({
+  type: UPDATE_DATA_REGISTER_ACTION,
+  name,
+  description,
+  entries,
+});
+
+export const updateDataRegisterSuccessAction = (payload: RegisterConfigData): UpdateDataRegisterSuccessAction => ({
+  type: UPDATE_DATA_REGISTER_SUCCESS_ACTION,
+  payload,
+});
+
+export const deleteDataRegisterAction = (name: string, urn: string): DeleteDataRegisterAction => ({
+  type: DELETE_DATA_REGISTER_ACTION,
+  name,
+  urn,
+});
+
+export const deleteDataRegisterSuccessAction = (urn: string): DeleteDataRegisterSuccessAction => ({
+  type: DELETE_DATA_REGISTER_SUCCESS_ACTION,
+  urn,
 });
 
 export const configurationUpdateEvent = (

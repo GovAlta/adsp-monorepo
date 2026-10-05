@@ -10,7 +10,7 @@ import { GoabCallout } from '@abgov/react-components';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { RootState } from '@store/index';
-import { selectRegisterData } from '@store/configuration/selectors';
+import { selectNonAnonymousDataList, selectRegisterData, selectRegisterDataList } from '@store/configuration/selectors';
 import { schemaErrorSelector } from '@store/form/selectors';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useSelector } from 'react-redux';
@@ -35,8 +35,8 @@ export const JSONFormPreviewer = ({
   const error = useSelector(schemaErrorSelector);
 
   const registerData = useSelector(selectRegisterData) as RegisterConfigData[];
-  const nonAnonymous = useSelector((state: RootState) => state.configuration?.nonAnonymous);
-  const dataList = useSelector((state: RootState) => state.configuration?.dataList);
+  const nonAnonymous = useSelector(selectNonAnonymousDataList);
+  const dataList = useSelector(selectRegisterDataList);
   const user = useSelector((state: RootState) => state.session.userInfo);
 
   const newUser = user ? ({ ...user, roles: [], id: '' } as User) : undefined; // Create a new user object with the same properties as the original user, but with an empty roles array
