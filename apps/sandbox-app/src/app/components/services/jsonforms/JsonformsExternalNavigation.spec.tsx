@@ -21,7 +21,7 @@ jest.mock('react-redux', () => ({
     }),
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router-v7', () => ({
   useParams: () => ({ tenant: 'autotest' }),
 }));
 
@@ -41,7 +41,9 @@ const reviewChange: { current?: (stepId: number | undefined, scope: string) => v
 
 jest.mock('@abgov/jsonforms-components', () => ({
   ...jest.requireActual('@abgov/jsonforms-components'),
-  ContextProviderFactory: () => ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ContextProviderFactory:
+    () =>
+    ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   ReviewRenderProvider: ({
     children,
     onReviewChange,

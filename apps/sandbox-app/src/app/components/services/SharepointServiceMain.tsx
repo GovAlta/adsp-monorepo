@@ -2,7 +2,7 @@ import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
-import { Routes } from 'react-router-dom';
+import { Routes } from 'react-router-v7';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
 export const SharepointServiceMain = ({ tenantName }: ServiceMainProps) => {

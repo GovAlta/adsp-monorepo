@@ -319,6 +319,7 @@
     "react-redux": "8.0.5",
     "react-refresh": "^0.10.0",
     "react-router-dom": "^6.30.6",
+    "react-router-v7": "npm:react-router-dom@^7.18.4",
     "react-time-picker": "^4.5.0",
     "react-tooltip": "^4.2.21",
     "redux": "^4.2.0",
@@ -375,6 +376,9 @@
     "launch-editor": "2.14.1",
     "shell-quote": "1.10.0",
     "react-router": "6.30.6",
+    "react-router-v7": {
+      "react-router": "^7.18.4"
+    },
     "esbuild": "0.28.1",
     "postcss": "8.5.25",
     "immutable": "4.3.9",

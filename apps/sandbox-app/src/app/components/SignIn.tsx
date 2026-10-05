@@ -2,7 +2,7 @@ import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 
 import { GoabButton, GoabButtonGroup, GoabCallout, GoabCircularProgress } from '@abgov/react-components';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-v7';
 import { AppDispatch, authenticatedUserSelector, environmentSelector, loginUser, tenantSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
