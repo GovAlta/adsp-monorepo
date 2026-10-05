@@ -7,7 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
-      "dependsOn": ["build-react-template-vendors"],
+      "dependsOn": ["build-react-template-vendors", "generate-react-template-seed"],
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
@@ -23,6 +23,11 @@
             "glob": "**/*",
             "input": "apps/builder-app/.generated/template-bundles",
             "output": "assets/template-bundles"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/builder-app/.generated/template-seed",
+            "output": "assets/template-seed"
           },
           {
             "glob": "silent-check-sso.html",
@@ -115,6 +120,14 @@
           "npm ci --prefix apps/builder-app/templates/react",
           "node apps/builder-app/scripts/build-template-react-vendors.js"
         ],
+        "parallel": false
+      }
+    },
+    "generate-react-template-seed": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/.generated/template-seed/react.json"],
+      "options": {
+        "commands": ["node apps/builder-app/scripts/generate-template-seed.js"],
         "parallel": false
       }
     }
