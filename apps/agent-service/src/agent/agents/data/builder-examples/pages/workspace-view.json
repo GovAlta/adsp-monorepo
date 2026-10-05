@@ -1,0 +1,46 @@
+{
+  "id": "workspace-view",
+  "name": "Internal Workspace View (Staff Tool)",
+  "category": "pages",
+  "summary": "Staff-facing tool layout using GoabWorkSideMenu with a persistent side navigation and a paginated data table. Use this shell for any internal, worker, or case-management application. NEVER use GoabOneColumnLayout, GoabAppHeader, GoabAppFooter, or GoabHeroBanner for internal tools.",
+  "whenToUse": [
+    "Target audience is government staff, not citizens",
+    "User describes a 'workspace', 'case management', 'admin', 'review queue', 'staff tool', or 'internal dashboard'",
+    "The app needs persistent side navigation rather than a top header",
+    "Multiple list/detail views need to coexist under a shared nav"
+  ],
+  "structure": {
+    "shell": "GoabWorkSideMenu (replaces GoabOneColumnLayout + GoabAppHeader + GoabAppFooter entirely)",
+    "nav": "GoabWorkSideMenuItem entries in primaryContent — one per route",
+    "content": "GoabPageBlock width='1200px' inside a scrollable main element",
+    "list": "GoabTable version='2' with GoabTableSortHeader and GoabPagination for tabular data",
+    "loading": "goa-skeleton type='text' size='4' inside aria-label='Loading' wrapper",
+    "error": "GoabCallout type='emergency' with a Retry button",
+    "badge": "GoabBadge for status colours on coded fields"
+  },
+  "requiredElements": [
+    "GoabWorkSideMenu with heading and userName props",
+    "GoabWorkSideMenuItem for each primary route — current prop drives active highlight",
+    "onClick on each item calls e.preventDefault() then navigate()",
+    "main element with id='main-content' and overflow-y auto for scroll containment",
+    "GoabPageBlock width='1200px' for data-heavy views (640px for forms, 1000px for general)",
+    "version='2' on GoabTable and GoabPagination — omitting it renders V1 styling inside a V2 app"
+  ],
+  "codeExample": {
+    "file": "src/pages/ApplicationsView.tsx",
+    "imports": [
+      "import { useState, useEffect, useRef } from 'react';",
+      "import { useNavigate, useLocation } from 'react-router-dom';",
+      "import { GoabWorkSideMenu, GoabWorkSideMenuItem, GoabPageBlock, GoabTable, GoabBadge, GoabCallout, GoabButton, GoabPagination } from '@abgov/react-components';"
+    ],
+    "jsx": "// Shell — wrap all routes in App.tsx, not per-page\nfunction AppShell({ children }: { children: React.ReactNode }) {\n  const navigate = useNavigate();\n  const { pathname } = useLocation();\n  return (\n    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden' }}>\n      <GoabWorkSideMenu\n        heading=\"Service name\"\n        url=\"/\"\n        userName=\"Staff user\"\n        primaryContent={\n          <>\n            <GoabWorkSideMenuItem\n              label=\"Applications\"\n              url=\"/applications\"\n              icon=\"list\"\n              current={pathname.startsWith('/applications')}\n              onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate('/applications'); }}\n            />\n            <GoabWorkSideMenuItem\n              label=\"Reviews\"\n              url=\"/reviews\"\n              icon=\"checkmark-circle\"\n              current={pathname.startsWith('/reviews')}\n              onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate('/reviews'); }}\n            />\n          </>\n        }\n      />\n      <main id=\"main-content\" style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>\n        <GoabPageBlock width=\"1200px\">\n          <div style={{ paddingBlock: '2.5rem' }}>{children}</div>\n        </GoabPageBlock>\n      </main>\n    </div>\n  );\n}\n\n// List view page — sequence counter guards against out-of-order responses\nconst PAGE_SIZE = 10;\n\nexport default function ApplicationsView() {\n  const [rows, setRows] = useState<Record<string, unknown>[]>([]);\n  const [total, setTotal] = useState(0);\n  const [page, setPage] = useState(1);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState<string | null>(null);\n  const loadSeq = useRef(0);\n\n  async function load(p = page) {\n    const seq = ++loadSeq.current;\n    setLoading(true); setError(null);\n    try {\n      // Replace with real API call\n      const res = await fetch(`/api/v1/applications?page=${p}&limit=${PAGE_SIZE}`);\n      if (!res.ok) throw new Error(`Failed to load (${res.status})`);\n      const data = await res.json();\n      if (seq !== loadSeq.current) return;\n      setRows(data.results ?? []);\n      setTotal(data.total ?? 0);\n    } catch (e) {\n      if (seq !== loadSeq.current) return;\n      setError(e instanceof Error ? e.message : 'Failed to load.');\n    } finally {\n      if (seq === loadSeq.current) setLoading(false);\n    }\n  }\n\n  useEffect(() => { void load(); }, []);\n\n  const STATUS_BADGE: Record<string, 'success' | 'emergency' | 'information' | 'important'> = {\n    approved: 'success', declined: 'emergency', 'in-review': 'information', 'action-required': 'important',\n  };\n\n  return (\n    <div>\n      <h1>Applications</h1>\n      <goa-spacer vspacing=\"m\" />\n\n      {loading && <div aria-label=\"Loading\"><goa-skeleton type=\"text\" size=\"4\" /></div>}\n\n      {!loading && error && (\n        <GoabCallout type=\"emergency\" heading=\"Unable to load\">\n          <p>{error}</p>\n          <goa-spacer vspacing=\"s\" />\n          <GoabButton type=\"tertiary\" onClick={() => load()}>Retry</GoabButton>\n        </GoabCallout>\n      )}\n\n      {!loading && !error && (\n        <>\n          <GoabTable version=\"2\" width=\"100%\">\n            <thead><tr>\n              <th>Reference</th><th>Applicant</th><th>Submitted</th><th>Status</th><th />\n            </tr></thead>\n            <tbody>\n              {rows.map((row) => (\n                <tr key={String(row.id)}>\n                  <td>{String(row.referenceNumber ?? row.id)}</td>\n                  <td>{String(row.applicantName ?? '—')}</td>\n                  <td>{row.submittedAt ? new Date(String(row.submittedAt)).toLocaleDateString() : '—'}</td>\n                  <td>\n                    <GoabBadge\n                      type={STATUS_BADGE[String(row.status)] ?? 'information'}\n                      content={String(row.status ?? '—')}\n                    />\n                  </td>\n                  <td><GoabButton type=\"tertiary\" size=\"compact\">View</GoabButton></td>\n                </tr>\n              ))}\n            </tbody>\n          </GoabTable>\n\n          <goa-spacer vspacing=\"l\" />\n\n          {total > PAGE_SIZE && (\n            <GoabPagination\n              version=\"2\"\n              pageNumber={page}\n              itemCount={total}\n              perPageCount={PAGE_SIZE}\n              onChange={(e: CustomEvent<{ page: number }>) => {\n                const next = e.detail?.page ?? 1;\n                setPage(next);\n                void load(next);\n              }}\n            />\n          )}\n        </>\n      )}\n    </div>\n  );\n}"
+  },
+  "notes": [
+    "GoabWorkSideMenu REPLACES GoabOneColumnLayout + GoabAppHeader + GoabAppFooter — never use both in the same app",
+    "GoabHeroBanner is citizen-facing only — never appears in a staff tool",
+    "version='2' is required on GoabTable, GoabTableSortHeader, and GoabPagination — omitting it renders V1 styling in a V2 design system app",
+    "The loadSeq ref pattern prevents stale responses from overwriting newer data when page/sort changes fire overlapping requests",
+    "GoabPageBlock width: 640px for forms, 1000px for general content, 1200px for data tables",
+    "Skip-to-main-content link and id='main-content' on main are required for keyboard accessibility"
+  ]
+}

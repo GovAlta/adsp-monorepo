@@ -5,6 +5,7 @@ import * as eligibilityChecker from '../data/builder-examples/pages/eligibility-
 import * as statusTracker from '../data/builder-examples/pages/status-tracker.json';
 import * as confirmationPage from '../data/builder-examples/pages/confirmation-page.json';
 import * as formPage from '../data/builder-examples/pages/form-page.json';
+import * as workspaceView from '../data/builder-examples/pages/workspace-view.json';
 // ADSP integrations
 import * as formServiceIntegration from '../data/builder-examples/integrations/form-service.json';
 import * as statusServiceIntegration from '../data/builder-examples/integrations/status-service.json';
@@ -93,6 +94,7 @@ const pagePatterns: PagePattern[] = [
   statusTracker,
   confirmationPage,
   formPage,
+  workspaceView,
 ] as PagePattern[];
 
 const integrationPatterns: IntegrationPattern[] = [
