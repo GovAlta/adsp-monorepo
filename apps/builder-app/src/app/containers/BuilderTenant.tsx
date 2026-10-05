@@ -378,7 +378,9 @@ export const BuilderTenant = () => {
   const [isWorkspaceEmpty, setIsWorkspaceEmpty] = useState(false);
   const isWorkspaceSaving = useSelector(projectIsSavingSelector);
 
+  const [hasPendingPreviewError, setHasPendingPreviewError] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const pendingPreviewErrorRef = useRef<{ message: string; stack: string } | null>(null);
   const seededWorkspaceRef = useRef(false);
   const autoLoadAttemptedRef = useRef(false);
   const selectedPathRef = useRef(DEFAULT_SELECTED_FILE);
@@ -431,6 +433,18 @@ export const BuilderTenant = () => {
   useEffect(() => {
     selectedPathRef.current = selectedPath;
   }, [selectedPath]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'preview-error' && typeof event.data.message === 'string') {
+        pendingPreviewErrorRef.current = { message: event.data.message, stack: event.data.stack || '' };
+        setHasPendingPreviewError(true);
+        dispatch(agentActions.setWorkspaceStatus('Preview error captured — will be sent with your next message'));
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [dispatch]);
 
   useEffect(() => {
     if (isImagePath(selectedPath) && files[selectedPath]) {
@@ -664,19 +678,16 @@ export const BuilderTenant = () => {
                   dispatch(agentActions.setWorkspaceStatus('Restoring workspace from last saved snapshot'));
                 } else {
                   clearWorkspaceReadRetry();
-                  setIsWorkspaceEmpty(true);
-                  dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+                  seedWorkspaceFromTemplate();
                 }
               })
               .catch(() => {
                 clearWorkspaceReadRetry();
-                setIsWorkspaceEmpty(true);
-                dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+                seedWorkspaceFromTemplate();
               });
           } else {
             clearWorkspaceReadRetry();
-            setIsWorkspaceEmpty(true);
-            dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+            seedWorkspaceFromTemplate();
           }
           return;
         }
@@ -785,6 +796,35 @@ export const BuilderTenant = () => {
     [dispatch, threadId],
   );
 
+  const seedWorkspaceFromTemplate = useCallback(() => {
+    if (!socketRef.current || !threadId) {
+      setIsWorkspaceEmpty(true);
+      dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+      return;
+    }
+
+    dispatch(agentActions.setWorkspaceStatus('Seeding workspace from template'));
+
+    fetch('assets/template-seed/react.json')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch template seed: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((writes) => {
+        socketRef.current?.emit('workspace-update', {
+          agent: BUILDER_AGENT_ID,
+          threadId,
+          writes,
+        });
+      })
+      .catch(() => {
+        setIsWorkspaceEmpty(true);
+        dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+      });
+  }, [dispatch, threadId]);
+
   const handleSignOut = useCallback(() => {
     if (!tenant) {
       return;
@@ -824,7 +864,22 @@ export const BuilderTenant = () => {
 
     const snapshot = capturePreviewSnapshot(previewFrameRef.current);
     const snapshotPart = toSnapshotTextPart(snapshot);
-    const outboundContent = snapshotPart ? [...content, snapshotPart] : content;
+
+    const pendingError = pendingPreviewErrorRef.current;
+    pendingPreviewErrorRef.current = null;
+    setHasPendingPreviewError(false);
+    const errorPart = pendingError
+      ? ({
+          type: 'text' as const,
+          text: `[BUILDER_PREVIEW_ERROR]\n${pendingError.message}${pendingError.stack ? '\n' + pendingError.stack.split('\n').slice(0, 8).join('\n') : ''}\n[/BUILDER_PREVIEW_ERROR]`,
+        })
+      : null;
+
+    const outboundContent = [
+      ...(errorPart ? [errorPart] : []),
+      ...content,
+      ...(snapshotPart ? [snapshotPart] : []),
+    ];
 
     socketRef.current.emit('message', {
       agent: BUILDER_AGENT_ID,
@@ -951,6 +1006,7 @@ export const BuilderTenant = () => {
         isSocketConnected={isSocketConnected}
         connectionStatus={connectionStatus}
         workspaceStatus={workspaceStatus}
+        hasPendingPreviewError={hasPendingPreviewError}
         tenantLabel={tenant?.name ?? tenantName ?? 'Unknown'}
         userEmail={user?.email}
         canSignOut={Boolean(user && tenant)}

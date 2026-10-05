@@ -24,6 +24,7 @@ import {
   BreadcrumbDivider,
   BreadcrumbLink,
   ChatPane,
+  PreviewErrorNotice,
   Composer,
   EmptyWorkspaceState,
   FileButton,
@@ -154,6 +155,7 @@ interface BuilderEditPaneProps {
   isSocketConnected: boolean;
   connectionStatus: string;
   workspaceStatus: string;
+  hasPendingPreviewError?: boolean;
   tenantLabel: string;
   userEmail?: string;
   canSignOut: boolean;
@@ -181,6 +183,7 @@ export const BuilderEditPane = ({
   isSocketConnected,
   connectionStatus,
   workspaceStatus,
+  hasPendingPreviewError = false,
   tenantLabel,
   userEmail,
   canSignOut,
@@ -302,6 +305,12 @@ export const BuilderEditPane = ({
         <TabContentArea>
           {activePanelTab === 'chat' ? (
             <ChatPane>
+              {hasPendingPreviewError && (
+                <PreviewErrorNotice role="status">
+                  <span>⚠</span>
+                  <span>Preview error captured — will be sent with your next message.</span>
+                </PreviewErrorNotice>
+              )}
               <AgentChat
                 disabled={!threadId || !isSocketConnected}
                 threadId={threadId}
