@@ -318,28 +318,6 @@ function toSnapshotTextPart(
   };
 }
 
-function readPreviewRouteState(frame: HTMLIFrameElement | null): PreviewRouteState | undefined {
-  try {
-    const location = frame?.contentWindow?.location;
-    if (!location) {
-      return undefined;
-    }
-
-    const hash = location.hash || '';
-    const hashPath = hash.startsWith('#/') ? hash.slice(1) : '';
-    const fallbackPath = '/';
-
-    return {
-      // srcDoc iframes expose internal paths (e.g. /srcdoc) that are not app routes.
-      // Persist only hash-based app routes; otherwise default to root.
-      path: hashPath || fallbackPath,
-      hash,
-      query: hashPath ? location.search || '' : '',
-    };
-  } catch {
-    return undefined;
-  }
-}
 
 function downloadBlob(blob: Blob, fileName: string): void {
   const objectUrl = URL.createObjectURL(blob);
@@ -390,7 +368,10 @@ export const BuilderTenant = () => {
   const workspaceReadRetryTimerRef = useRef<number | null>(null);
   const workspaceReadRetryAttemptsRef = useRef(0);
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
-  const previewRouteStateRef = useRef<PreviewRouteState | undefined>(undefined);
+  const initialPreviewRoute = new URLSearchParams(location.search).get('previewRoute');
+  const previewRouteStateRef = useRef<PreviewRouteState | undefined>(
+    initialPreviewRoute ? { path: initialPreviewRoute, hash: '', query: '' } : undefined,
+  );
 
   const agentServiceUrl = config.environment.agentServiceUrl || config.directory['urn:ads:platform:agent-service'];
   const previewDocument = useMemo(() => createFallbackPreviewDocument(files, previewRouteStateRef.current), [files]);
@@ -439,12 +420,79 @@ export const BuilderTenant = () => {
       if (event.data?.type === 'preview-error' && typeof event.data.message === 'string') {
         pendingPreviewErrorRef.current = { message: event.data.message, stack: event.data.stack || '' };
         setHasPendingPreviewError(true);
-        dispatch(agentActions.setWorkspaceStatus('Preview error captured — will be sent with your next message'));
+        dispatch(agentActions.setWorkspaceStatus('Preview error detected — sending to agent'));
+      }
+      if (event.data?.type === 'preview:route-changed' && typeof event.data.path === 'string') {
+        const routePath = event.data.path as string;
+        previewRouteStateRef.current = { path: routePath, hash: '', query: '' };
+        // Reflect the current preview route in the parent URL so it survives reload
+        // and can be shared or manually edited.
+        try {
+          const sp = new URLSearchParams(window.location.search);
+          if (routePath && routePath !== '/') {
+            sp.set('previewRoute', routePath);
+          } else {
+            sp.delete('previewRoute');
+          }
+          const next = sp.toString();
+          window.history.replaceState(window.history.state, '', `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`);
+        } catch {
+          // non-critical; ignore if history API is unavailable
+        }
       }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!hasPendingPreviewError || !isSocketConnected || !threadId) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const error = pendingPreviewErrorRef.current;
+      if (!error || !socketRef.current?.connected) {
+        return;
+      }
+
+      pendingPreviewErrorRef.current = null;
+      setHasPendingPreviewError(false);
+
+      const messageId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      const errorText = `[BUILDER_PREVIEW_ERROR]\n${error.message}${error.stack ? '\n' + error.stack.split('\n').slice(0, 8).join('\n') : ''}\n[/BUILDER_PREVIEW_ERROR]`;
+      const snapshot = capturePreviewSnapshot(previewFrameRef.current);
+      const snapshotPart = toSnapshotTextPart(snapshot);
+
+      dispatch(
+        agentActions.initializeMessage({
+          id: messageId,
+          threadId,
+          from: 'user',
+          content: [{ type: 'text', text: 'Preview error detected — asking agent to fix it.' }],
+        }),
+      );
+
+      socketRef.current.emit('message', {
+        agent: BUILDER_AGENT_ID,
+        threadId,
+        messageId,
+        content: [
+          { type: 'text', text: errorText },
+          { type: 'text', text: 'A render error occurred in the preview. Fix the issue shown above.' },
+          ...(snapshotPart ? [snapshotPart] : []),
+        ],
+        context: {},
+        rawChunks: true,
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [hasPendingPreviewError, isSocketConnected, threadId, dispatch]);
 
   useEffect(() => {
     if (isImagePath(selectedPath) && files[selectedPath]) {
@@ -696,7 +744,6 @@ export const BuilderTenant = () => {
         workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         setIsWorkspaceEmpty(false);
-        previewRouteStateRef.current = readPreviewRouteState(previewFrameRef.current);
         const snapshot = applyWorkspaceSnapshot(nextFiles);
         startTransition(() => {
           setFiles(snapshot);
@@ -734,7 +781,6 @@ export const BuilderTenant = () => {
           return;
         }
 
-        previewRouteStateRef.current = readPreviewRouteState(previewFrameRef.current);
         startTransition(() => {
           setFiles((current) => {
             const next = applyWorkspaceChange(current, change);
