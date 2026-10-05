@@ -16,6 +16,7 @@ import {
 } from '@abgov/ui-components-common';
 import {
   getSeparatorHelpText,
+  REGISTER_NAME_PATTERN,
   RegisterDataSeparator,
   SEPARATOR_MAPPER,
   validateRegisterJson,
@@ -27,14 +28,20 @@ interface AddRegisterDataModalProps {
   open: boolean;
   onCancel: () => void;
   onSave: (data: RegisterDataType | null, name: string, description: string) => void;
+  existingNames?: string[];
 }
 
-export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterDataModalProps): JSX.Element => {
+export const AddRegisterDataModal = ({
+  open,
+  onCancel,
+  onSave,
+  existingNames = [],
+}: AddRegisterDataModalProps): JSX.Element => {
   const [dataError, setDataError] = React.useState('');
   const [parsedData, setParsedData] = React.useState<RegisterDataType | null>(null);
   const [separator, setSeparator] = React.useState<RegisterDataSeparator>('comma');
   const [configValue, setConfigValue] = React.useState<string>('');
-  const [newName, onNameChange] = React.useState('');
+  const [newName, setNewName] = React.useState('');
   const [newDescription, onDescriptionChange] = React.useState('');
 
   const resetState = () => {
@@ -42,9 +49,18 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
     setParsedData(null);
     setSeparator('comma');
     setConfigValue('');
-    onNameChange('');
+    setNewName('');
     onDescriptionChange('');
   };
+
+  const trimmedName = newName.trim();
+  const nameError = !trimmedName
+    ? ''
+    : !REGISTER_NAME_PATTERN.test(trimmedName)
+      ? 'Name may only contain letters, numbers, spaces, hyphens and underscores.'
+      : existingNames.includes(trimmedName)
+        ? `A register named "${trimmedName}" already exists.`
+        : '';
 
   const parseDataBySeparator = (
     value: string,
@@ -123,10 +139,10 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           <GoabButton size="compact"
             type="primary"
             onClick={() => {
-              onSave(parsedData, newName, newDescription);
+              onSave(parsedData, trimmedName, newDescription);
               resetState();
             }}
-            disabled={!newName.trim() || !!dataError}
+            disabled={!trimmedName || !!nameError || !!dataError}
             testId="data-register-add-save"
           >
             Save
@@ -134,12 +150,12 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
         </GoabButtonGroup>
       }
     >
-      <GoabFormItem label="Name">
+      <GoabFormItem label="Name" error={nameError}>
         <GoabInput size="compact"
           width="100%"
           name="register-name"
           value={newName}
-          onChange={(detail: GoabInputOnChangeDetail) => onNameChange(detail.value)}
+          onChange={(detail: GoabInputOnChangeDetail) => setNewName(detail.value)}
           testId="data-register-add-name-input"
           mb="l"
         />

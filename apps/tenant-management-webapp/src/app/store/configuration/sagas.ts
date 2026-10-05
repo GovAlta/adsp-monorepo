@@ -37,18 +37,27 @@ import {
   FETCH_REGISTER_DATA_ACTION,
   getRegisterDataAction,
   getRegisterDataSuccessAction,
+  getRegisterDataFailedAction,
+  CREATE_DATA_REGISTER_ACTION,
+  CreateDataRegisterAction,
+  createDataRegisterSuccessAction,
+  UPDATE_DATA_REGISTER_ACTION,
+  UpdateDataRegisterAction,
+  updateDataRegisterSuccessAction,
+  DELETE_DATA_REGISTER_ACTION,
+  DeleteDataRegisterAction,
+  deleteDataRegisterSuccessAction,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
-import { select, call, put, takeEvery, all } from 'redux-saga/effects';
+import { select, call, put, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
-import { RegisterConfigData } from '@abgov/jsonforms-components';
-import { AdspId } from '@lib/adspId';
+import * as HttpStatusCodes from 'http-status-codes';
 import { toServiceKey } from '@pages/admin/services/configuration/export/ServiceConfiguration';
-import { DATA_REGISTER_NAMESPACE } from './model';
+import { fetchRegistersApi, createRegisterApi, updateRegisterApi, deleteRegisterApi } from './dataRegisterApi';
 
 export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
@@ -91,8 +100,6 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
           show: false,
         }),
       );
-
-      yield put(getRegisterDataAction());
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
@@ -226,80 +233,78 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
 }
 
 export function* fetchRegisterData(): SagaIterator {
+  const formApiUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  // FETCH_REGISTER_DATA_ACTION turns the spinner on, so every exit path has to turn it off again.
+  if (!formApiUrl || !token) {
+    yield put(getRegisterDataFailedAction());
+    return;
+  }
+
   try {
-    const configBaseUrl: string = yield select(
-      (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
-    );
+    const registers = yield call(fetchRegistersApi, token, formApiUrl);
+    yield put(getRegisterDataSuccessAction(registers));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+    yield put(getRegisterDataFailedAction());
+  }
+}
 
-    const tenantId: AdspId = yield select((state: RootState) => state.tenant.id);
+export function* createDataRegister(action: CreateDataRegisterAction): SagaIterator {
+  const formApiUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
+  const token: string = yield call(getAccessToken);
 
-    const tenantConfigDefinition = yield select(
-      (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {},
-    );
-
-    const token: string = yield call(getAccessToken);
-
-    const tenantConfigs = Object.entries(tenantConfigDefinition);
-
-    const registerConfigs =
-      tenantConfigs
-        .filter(([name, config]) => {
-          // eslint-disable-next-line
-          const _c = config as any;
-          return name.split(':')[0] === DATA_REGISTER_NAMESPACE && _c?.configurationSchema?.type === 'array';
-        })
-        // eslint-disable-next-line
-        .map(([name, config]) => ({ name, description: (config as any)?.description ?? '' })) || [];
-
-    const dataListObject = tenantConfigs
-      .filter(([name, config]) => {
-        // eslint-disable-next-line
-        const _c = config as any;
-        return (
-          _c?.configurationSchema?.type === 'array' &&
-          (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
-        );
+  if (formApiUrl && token) {
+    try {
+      const register = yield call(createRegisterApi, token, formApiUrl, {
+        name: action.name,
+        description: action.description,
+        entries: action.entries,
       });
+      yield put(createDataRegisterSuccessAction(register));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+      yield put(getRegisterDataAction());
+    }
+  }
+}
 
-    const registerData: RegisterConfigData[] = [];
+export function* updateDataRegister(action: UpdateDataRegisterAction): SagaIterator {
+  const formApiUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
+  const token: string = yield call(getAccessToken);
 
-    const dataList = dataListObject.map(([name]) => name.replace(':', '/')) || [];
+  if (formApiUrl && token) {
+    try {
+      const register = yield call(updateRegisterApi, token, formApiUrl, action.name, {
+        description: action.description,
+        entries: action.entries,
+      });
+      yield put(updateDataRegisterSuccessAction(register));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+      yield put(getRegisterDataAction());
+    }
+  }
+}
 
-    const anonymousRead =
-      dataListObject
-        .filter(([_, config]) => {
-          // eslint-disable-next-line
-          const _c = config as any;
+export function* deleteDataRegister(action: DeleteDataRegisterAction): SagaIterator {
+  const formApiUrl: string = yield select((state: RootState) => state.config.serviceUrls?.formAppApiUrl);
+  const token: string = yield call(getAccessToken);
 
-          return _c.anonymousRead !== true;
-        })
-        .map(([name]) => name.replace(':', '/')) || [];
-
-    for (const registerConfig of registerConfigs) {
-      try {
-        const [namespace, service] = registerConfig.name.split(':');
-        const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}/active`;
-        const { data } = yield call(axios.get, url, {
-          params: { orLatest: true, tenant: tenantId },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (data?.configuration) {
-          registerData.push({
-            urn: `urn:ads:platform:configuration:v2:/configuration/${namespace}/${service}`,
-            description: registerConfig.description,
-            data: data?.configuration,
-          });
-        }
-      } catch {
-        console.warn(`Error in fetching the register data from service: ${registerConfig.name}`);
+  if (formApiUrl && token) {
+    try {
+      yield call(deleteRegisterApi, token, formApiUrl, action.name);
+      yield put(deleteDataRegisterSuccessAction(action.urn));
+    } catch (err) {
+      // A register already gone (e.g. deleted from another tab) is removed from state same as a successful delete.
+      if (err.response?.status === HttpStatusCodes.NOT_FOUND) {
+        yield put(deleteDataRegisterSuccessAction(action.urn));
+      } else {
+        yield put(ErrorNotification({ error: err }));
+        yield put(getRegisterDataAction());
       }
     }
-
-    // Dispatch once with a new array so Redux detects the state change.
-    yield put(getRegisterDataSuccessAction([...registerData], dataList, anonymousRead));
-  } catch (error) {
-    console.warn(`Error in fetching the register data from service: ${error}`);
   }
 }
 
@@ -439,7 +444,6 @@ let replaceErrorConfiguration = [];
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const isSkipJSONValidation = action.skipJSONValidation === true;
   const coreConfig: Record<string, unknown> = yield select(
     (state: RootState) => state.configuration.coreConfigDefinitions.configuration,
   );
@@ -473,19 +477,17 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         }
 
         // Check if configuration item following definition
-        if (!isSkipJSONValidation) {
-          const jsonSchemaValidation = jsonSchemaCheck(
-            definition.configurationSchema,
-            action.configuration.configuration,
-          );
-          if (!jsonSchemaValidation) {
-            replaceErrorConfiguration.push({
-              name: service,
-              error: 'JSON schema could not be validated',
-            });
+        const jsonSchemaValidation = jsonSchemaCheck(
+          definition.configurationSchema,
+          action.configuration.configuration,
+        );
+        if (!jsonSchemaValidation) {
+          replaceErrorConfiguration.push({
+            name: service,
+            error: 'JSON schema could not be validated',
+          });
 
-            return;
-          }
+          return;
         }
 
         let revision = null;
@@ -563,5 +565,8 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(RESET_REPLACE_CONFIGURATION_LIST_ACTION, resetReplaceList);
   yield takeEvery(FETCH_CONFIGURATION_REVISIONS_ACTION, fetchConfigurationRevisions);
   yield takeEvery(FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION, fetchConfigurationActiveRevision);
-  yield takeEvery(FETCH_REGISTER_DATA_ACTION, fetchRegisterData);
+  yield takeLatest(FETCH_REGISTER_DATA_ACTION, fetchRegisterData);
+  yield takeEvery(CREATE_DATA_REGISTER_ACTION, createDataRegister);
+  yield takeEvery(UPDATE_DATA_REGISTER_ACTION, updateDataRegister);
+  yield takeEvery(DELETE_DATA_REGISTER_ACTION, deleteDataRegister);
 }

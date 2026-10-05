@@ -93,7 +93,7 @@ import { getTaskQueues } from '@store/task/action';
 import { FetchFileTypeService } from '@store/file/actions';
 import { fetchCalendars } from '@store/calendar/actions';
 import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_RESULT, TOOL_OUTPUT } from '../agent/actions';
-import { getConfigurationDefinitions } from '../configuration/action';
+import { getConfigurationDefinitions, getRegisterDataAction } from '../configuration/action';
 import { AgentMessage } from '@core-services/app-common';
 import { isFormGenerationTool, isGenerationSavePoint } from '@form-editor-common';
 
@@ -675,22 +675,25 @@ export function* refreshDefinitionOnAgentResponse(action: AgentResponseAction): 
 
   yield delay(300);
   yield call(refreshDefinition);
-  yield put(getConfigurationDefinitions());
+  yield put(getRegisterDataAction());
 }
 
-function* initializeFormEditorSaga() {
+export function* initializeFormEditorSaga(): SagaIterator {
   const realmRoles = yield select((state) => state.tenant.realmRoles);
   const keycloakRoles = yield select((state) => state.serviceRoles.keycloak);
   const queueTasks = yield select((state: RootState) => state.task?.queues);
   const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
   const registers = yield select((state: RootState) => state.configuration?.registers);
+  const tenantConfigDefinitions = yield select((state: RootState) => state.configuration?.tenantConfigDefinitions);
   try {
     yield all([
       ...(realmRoles == null ? [put(FetchRealmRoles())] : []),
       ...(keycloakRoles == null ? [put(fetchKeycloakServiceRoles())] : []),
       ...(queueTasks == null ? [put(getTaskQueues())] : []),
       ...(fileTypes == null ? [put(FetchFileTypeService())] : []),
-      ...(!registers || registers.length === 0 ? [put(getConfigurationDefinitions())] : []),
+      ...(!registers || registers.length === 0 ? [put(getRegisterDataAction())] : []),
+      // Also needed for the preview's dataList, independently of whether registers have loaded.
+      ...(tenantConfigDefinitions == null ? [put(getConfigurationDefinitions())] : []),
       put(fetchCalendars()),
     ]);
   } catch (e) {

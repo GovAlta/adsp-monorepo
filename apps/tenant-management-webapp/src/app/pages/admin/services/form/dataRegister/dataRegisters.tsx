@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@store/index';
 import { RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
@@ -29,31 +29,28 @@ import {
   DataRegisterUrn,
 } from './styled-components';
 import {
-  updateConfigurationDefinition,
-  replaceConfigurationDataAction,
-  deleteConfigurationDefinition,
-  updateRegistersLocalAction,
+  createDataRegisterAction,
+  deleteDataRegisterAction,
+  getRegisterDataAction,
+  updateDataRegisterAction,
 } from '@store/configuration/action';
-import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
-import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
+import { parseUrn, urnCompare, validateRegisterJson } from './utils';
 import { AddRegisterDataModal } from './addRegisterDataModal';
 
 interface RegisterItemProps {
   entry: RegisterConfigData;
   isSelected: boolean;
   onToggle: (entry: RegisterConfigData | null) => void;
-  onDelete: (urn: string) => void;
-  onUpdate: (urn: string, data: RegisterConfigData['data']) => void;
   detail?: React.ReactNode;
 }
 
-const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail }: RegisterItemProps): JSX.Element => {
+const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [jsonError, setJsonError] = useState('');
-  const { name, namespace } = parseUrn(entry.urn ?? '');
+  const { name } = parseUrn(entry.urn ?? '');
 
   const validate = (value: string): string => {
     return validateRegisterJson(value);
@@ -81,18 +78,9 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail 
       setJsonError(error);
       return;
     }
-    const parsed = JSON.parse(editValue);
-    dispatch(
-      replaceConfigurationDataAction(
-        {
-          namespace: namespace || DATA_REGISTER_NAMESPACE,
-          name,
-          configuration: parsed || [],
-        },
-        false,
-      ),
-    );
-    onUpdate(entry.urn, parsed);
+    const parsed = JSON.parse(editValue) as RegisterDataType;
+    // Entries only: leaving description out of the request keeps it unchanged.
+    dispatch(updateDataRegisterAction(name, undefined, parsed));
     setIsEditing(false);
   };
 
@@ -184,13 +172,12 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail 
           title="Delete register data"
           content={
             <div>
-              Are you sure you wish to delete <b>{name}</b>?
+              Are you sure you wish to delete <b>{name}</b>? Forms that reference this register will lose its options.
             </div>
           }
           onCancel={() => setShowDeleteConfirm(false)}
           onDelete={() => {
-            dispatch(deleteConfigurationDefinition(`${namespace || DATA_REGISTER_NAMESPACE}:${name}`));
-            onDelete(entry.urn);
+            dispatch(deleteDataRegisterAction(name, entry.urn));
             setShowDeleteConfirm(false);
           }}
         />
@@ -201,62 +188,38 @@ const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate, detail 
 
 export const DataRegisters = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
-  const registerData = useSelector(selectRegisterData) as RegisterConfigData[];
+  const selectedRegisterData = useSelector(selectRegisterData) as RegisterConfigData[] | undefined;
+  const registerData = useMemo(() => selectedRegisterData ?? [], [selectedRegisterData]);
   const isFetching = useSelector((state: RootState) => state.configuration.isFetchingRegisterData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<RegisterConfigData | null>(null);
+  const [selectedUrn, setSelectedUrn] = useState<string | null>(null);
   const [urnCopied, setUrnCopied] = useState(false);
 
+  // Tabs mount only the active tab, so this fetches fresh data each time the Register data tab is opened.
+  useEffect(() => {
+    dispatch(getRegisterDataAction());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The selected register may have just been deleted (from here or another tab); drop a selection that no
+  // longer resolves to an entry rather than showing stale detail.
+  useEffect(() => {
+    if (selectedUrn && !registerData.some((entry) => entry.urn === selectedUrn)) {
+      setSelectedUrn(null);
+    }
+  }, [registerData, selectedUrn]);
+
+  const selectedEntry = selectedUrn ? (registerData.find((entry) => entry.urn === selectedUrn) ?? null) : null;
+
   const handleToggle = (entry: RegisterConfigData | null) => {
-    setSelectedEntry(entry);
+    setSelectedUrn(entry?.urn ?? null);
     setUrnCopied(false);
   };
 
   const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
-    dispatch(
-      updateConfigurationDefinition(
-        {
-          name,
-          namespace: DATA_REGISTER_NAMESPACE,
-          description,
-          configurationSchema: REGISTER_DATA_SCHEMA as never,
-        },
-        false,
-      ),
-    );
-    dispatch(
-      replaceConfigurationDataAction(
-        {
-          namespace: DATA_REGISTER_NAMESPACE,
-          name,
-          configuration: data as never,
-        },
-        false,
-        true,
-      ),
-    );
-    const newEntry: RegisterConfigData = {
-      urn: `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${name}`,
-      description,
-      data,
-    };
-    dispatch(updateRegistersLocalAction([...(registerData ?? []), newEntry]));
+    // form-service rejects `entries: null`; omitting it creates the register with no entries.
+    dispatch(createDataRegisterAction(name, description, data ?? undefined));
     setIsAddModalOpen(false);
-  };
-
-  const handleDelete = (urn: string) => {
-    if (selectedEntry?.urn === urn) {
-      setSelectedEntry(null);
-    }
-    dispatch(updateRegistersLocalAction((registerData ?? []).filter((e) => e.urn !== urn)));
-  };
-
-  const handleUpdate = (urn: string, data: RegisterConfigData['data']) => {
-    const updated = (registerData ?? []).map((e) => (e.urn === urn ? { ...e, data } : e));
-    dispatch(updateRegistersLocalAction(updated));
-    if (selectedEntry?.urn === urn) {
-      setSelectedEntry((prev) => (prev ? { ...prev, data } : null));
-    }
   };
 
   const selectedName = selectedEntry ? parseUrn(selectedEntry.urn ?? '').name : null;
@@ -265,12 +228,12 @@ export const DataRegisters = (): JSX.Element => {
       return null;
     }
 
-    const selectedUrn = `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`;
+    const selectedUrnValue = `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`;
 
     return (
       <>
         <DataRegisterUrn>
-          <GoabBadge type="information" content={selectedUrn} icon={false} />
+          <GoabBadge type="information" content={selectedUrnValue} icon={false} />
           {!urnCopied ? (
             <GoabIconButton
               icon="copy"
@@ -278,7 +241,7 @@ export const DataRegisters = (): JSX.Element => {
               variant="color"
               title="Copy URN"
               onClick={() => {
-                navigator.clipboard.writeText(selectedUrn);
+                navigator.clipboard.writeText(selectedUrnValue);
                 setUrnCopied(true);
               }}
             />
@@ -304,7 +267,7 @@ export const DataRegisters = (): JSX.Element => {
         <DataRegisterLoadingDiv>
           <GoabCircularProgress visible={true} size="large" />
         </DataRegisterLoadingDiv>
-      ) : !registerData || registerData.length === 0 ? (
+      ) : registerData.length === 0 ? (
         <p>No data registers</p>
       ) : (
         <DataRegisterTableWrapper>
@@ -327,49 +290,21 @@ export const DataRegisters = (): JSX.Element => {
                 <RegisterItem
                   key={entry.urn}
                   entry={entry}
-                  isSelected={selectedEntry?.urn === entry.urn}
+                  isSelected={selectedUrn === entry.urn}
                   onToggle={handleToggle}
-                  onDelete={handleDelete}
-                  onUpdate={handleUpdate}
-                  detail={selectedEntry?.urn === entry.urn ? renderSelectedDetail() : null}
+                  detail={selectedUrn === entry.urn ? renderSelectedDetail() : null}
                 />
               ))}
             </tbody>
           </GoabTable>
         </DataRegisterTableWrapper>
       )}
-      {selectedEntry && selectedName && (
-        <>
-          <DataRegisterUrn>
-            <GoabBadge
-              type="information"
-              content={`urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`}
-              icon={false}
-              emphasis="subtle"
-            />
-            {!urnCopied ? (
-              <GoabIconButton
-                icon="copy"
-                size="small"
-                variant="color"
-                title="Copy URN"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`,
-                  );
-                  setUrnCopied(true);
-                }}
-              />
-            ) : (
-              <CheckmarkCircle size="medium" />
-            )}
-          </DataRegisterUrn>
-          <DataRegisterEntryDetail data-testid={`data-register-detail-${selectedName}`}>
-            {JSON.stringify(selectedEntry.data, null, 2)}
-          </DataRegisterEntryDetail>
-        </>
-      )}
-      <AddRegisterDataModal open={isAddModalOpen} onCancel={() => setIsAddModalOpen(false)} onSave={handleAddSave} />
+      <AddRegisterDataModal
+        open={isAddModalOpen}
+        onCancel={() => setIsAddModalOpen(false)}
+        onSave={handleAddSave}
+        existingNames={registerData.map((entry) => parseUrn(entry.urn ?? '').name)}
+      />
     </>
   );
 };

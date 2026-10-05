@@ -7,7 +7,7 @@ components:
       properties:
         namespace:
           type: string
-          description: Namespace of the data register (e.g. data-register).
+          description: Namespace of the data register. Always data-register.
         name:
           type: string
           description: Name of the data register.
@@ -16,41 +16,48 @@ components:
           description: Human-readable description of what the register contains.
         entries:
           type: array
-          description: List of string values stored in the register.
+          description: >
+            List of values stored in the register, from its active revision, or its latest revision if none is
+            active.
           items:
-            type: string
+            oneOf:
+              - type: string
+              - type: object
     DataRegisterCreate:
       type: object
       required:
         - name
       properties:
-        namespace:
-          type: string
-          description: Namespace of the data register. Defaults to data-register.
         name:
           type: string
-          description: Name of the data register.
+          description: Name of the data register. Unique within the tenant.
         description:
           type: string
           description: Human-readable description of what the register contains.
         entries:
           type: array
-          description: Initial list of string values stored in the register.
+          description: Initial list of values stored in the register. Defaults to an empty array.
           items:
-            type: string
+            oneOf:
+              - type: string
+              - type: object
       additionalProperties: false
     DataRegisterUpdate:
       type: object
-      description: Partial update payload for a data register. Only provided fields will be updated.
+      description: >
+        Partial update payload for a data register. Only provided fields are changed; omitting entries leaves the
+        existing entries unchanged.
       properties:
         description:
           type: string
           description: Updated description for the register.
         entries:
           type: array
-          description: Replacement list of string values for the register.
+          description: Replacement list of values for the register.
           items:
-            type: string
+            oneOf:
+              - type: string
+              - type: object
       additionalProperties: false
 
 /form/v1/registers:
@@ -58,9 +65,8 @@ components:
     tags:
       - Form
     description: >
-      Retrieves all data registers in the data-register namespace,
-      including their descriptions and entries.
-      Requires an authenticated user.
+      Retrieves the data registers that have both a definition and a data document, i.e. the registers manageable
+      through this API. Requires the form-service admin role or the configuration-service configuration-admin role.
     responses:
       200:
         description: Successfully retrieved the list of data registers.
@@ -80,15 +86,21 @@ components:
                   - Wednesday
                   - Thursday
                   - Friday
+      400:
+        description: Request has no tenant context. A core user must specify the tenantId query parameter.
       401:
         description: User is not authenticated.
+      403:
+        description: User is not authorized. Requires the form-service admin or configuration-admin role.
+      502:
+        description: configuration-service returned an unexpected error.
   post:
     tags:
       - Form
     description: >
-      Creates a new data register by adding its definition to the configuration-service
-      platform configuration and creating the register entries in the data-register namespace.
-      Requires the form-service admin role.
+      Creates a new data register: its definition in the shared platform/configuration-service document, followed
+      by its entries in a data-register/<name> configuration document. Requires the form-service admin role or the
+      configuration-service configuration-admin role.
     requestBody:
       required: true
       content:
@@ -96,7 +108,6 @@ components:
           schema:
             $ref: '#/components/schemas/DataRegisterCreate'
           example:
-            namespace: data-register
             name: weekdays
             description: Days of the week
             entries:
@@ -123,20 +134,24 @@ components:
                 - Thursday
                 - Friday
       400:
-        description: Request body does not match the expected format.
+        description: >
+          Request is not valid or has no tenant context, or configuration-service rejected the request.
       401:
         description: User is not authenticated.
       403:
-        description: User is not authorized. Requires form-service admin role.
+        description: User is not authorized. Requires the form-service admin or configuration-admin role.
+      409:
+        description: A data register with this name already exists.
+      502:
+        description: configuration-service returned an unexpected error.
 
 /form/v1/registers/{name}:
   get:
     tags:
       - Form
     description: >
-      Retrieves a data register by name from the data-register namespace,
-      including its description and entries.
-      Requires the form-service admin role.
+      Retrieves a data register by name. Requires the form-service admin role or the configuration-service
+      configuration-admin role.
     parameters:
       - name: name
         description: Name of the data register.
@@ -144,7 +159,7 @@ components:
         in: path
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9\-_]+$'
+          pattern: '^[a-zA-Z0-9\-_ ]{1,50}$'
     responses:
       200:
         description: Successfully retrieved the data register.
@@ -162,19 +177,25 @@ components:
                 - Wednesday
                 - Thursday
                 - Friday
+      400:
+        description: Name is not valid, or the request has no tenant context.
       401:
         description: User is not authenticated.
       403:
-        description: User is not authorized. Requires form-service admin role.
+        description: User is not authorized. Requires the form-service admin or configuration-admin role.
       404:
-        description: Data register with the specified namespace and name was not found.
+        description: >
+          No data register with this name was found; it must have both a definition and a data document to be
+          considered to exist.
+      502:
+        description: configuration-service returned an unexpected error.
   patch:
     tags:
       - Form
     description: >
-      Updates the description and/or entries of an existing data register in the data-register namespace.
-      Requires the form-service admin role.
-      Only provided fields are changed; omitted fields are left unchanged.
+      Updates the description and/or entries of an existing data register. Only provided fields are changed:
+      sending description alone leaves the entries unchanged, and vice versa. Requires the form-service admin role
+      or the configuration-service configuration-admin role.
     parameters:
       - name: name
         description: Name of the data register.
@@ -182,7 +203,7 @@ components:
         in: path
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9\-_]+$'
+          pattern: '^[a-zA-Z0-9\-_ ]{1,50}$'
     requestBody:
       required: true
       content:
@@ -205,10 +226,41 @@ components:
             schema:
               $ref: '#/components/schemas/DataRegister'
       400:
-        description: Request body does not match the expected format.
+        description: >
+          Request is not valid or has no tenant context, or configuration-service rejected the request.
       401:
         description: User is not authenticated.
       403:
-        description: User is not authorized. Requires form-service admin role.
+        description: User is not authorized. Requires the form-service admin or configuration-admin role.
       404:
-        description: Data register with the specified namespace and name was not found.
+        description: No data register with this name was found.
+      502:
+        description: configuration-service returned an unexpected error.
+  delete:
+    tags:
+      - Form
+    description: >
+      Deletes a data register: its entries and its definition. Removes whichever of the two parts still exists, so
+      a retry after a partial failure succeeds. Forms that reference the register in a dropdown or list will lose
+      its options. Requires the form-service admin role or the configuration-service configuration-admin role.
+    parameters:
+      - name: name
+        description: Name of the data register to delete.
+        required: true
+        in: path
+        schema:
+          type: string
+          pattern: '^[a-zA-Z0-9\-_ ]{1,50}$'
+    responses:
+      204:
+        description: Successfully deleted the data register.
+      400:
+        description: Name is not valid, or the request has no tenant context.
+      401:
+        description: User is not authenticated.
+      403:
+        description: User is not authorized. Requires the form-service admin or configuration-admin role.
+      404:
+        description: No data register with this name was found; neither a definition nor a data document exists.
+      502:
+        description: configuration-service returned an unexpected error.

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppDispatch, RootState } from '@store/index';
+import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import AsideLinks from '@components/AsideLinks';
@@ -12,7 +12,6 @@ import { FormExport } from './export/formExport';
 import FormOverview from './formOverview';
 import { FormDefinitions } from '@form-editor-common';
 import { DataRegisters } from './dataRegister/dataRegisters';
-import { getConfigurationDefinitions } from '@store/configuration/action';
 import { HeadingDiv } from '../styled-components';
 import { AsidePadding } from '../../../../components/Html';
 
@@ -39,15 +38,13 @@ export const Form: FunctionComponent = () => {
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
   const [isNavigatedFromEditor] = useState(isNavigatedFromEdit);
-  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (isNavigatedFromEditor) {
       setActiveIndex(1);
       setActivateEditState(true);
     }
-    dispatch(getConfigurationDefinitions());
-  }, [isNavigatedFromEditor, dispatch]);
+  }, [isNavigatedFromEditor]);
 
   return (
     <Page>

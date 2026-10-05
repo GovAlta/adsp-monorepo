@@ -1,666 +1,378 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { createErrorHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import * as HttpStatusCodes from 'http-status-codes';
-import axios from 'axios';
+import * as express from 'express';
 import { Request, Response } from 'express';
-import { FormServiceRoles } from '..';
-import { createRegisterRouter, findDataRegisters, getRegister, updateRegister, createDataRegister } from './register';
-
-jest.mock('axios');
-const axiosMock = axios as jest.Mocked<typeof axios>;
+import * as request from 'supertest';
+import { DataRegisterClient } from '../dataRegisterClient';
+import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
+import {
+  createRegister,
+  createRegisterRouter,
+  deleteRegister,
+  findRegisters,
+  getRegister,
+  REGISTER_NAME_PATTERN,
+  updateRegister,
+} from './register';
 
 describe('register router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const configurationServiceUrl = new URL('http://configuration-service');
 
-  const directoryMock = {
-    getServiceUrl: jest.fn(),
-    getResourceUrl: jest.fn(),
+  const clientMock = {
+    find: jest.fn(),
+    get: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   };
+  const client = clientMock as unknown as DataRegisterClient;
 
-  const tokenProviderMock = {
-    getAccessToken: jest.fn(() => Promise.resolve('token')),
-  };
+  const loggerMock = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
-  const weekdaysDefinition = {
-    configurationSchema: { type: 'array', items: { type: 'string' } },
+  const register = {
+    namespace: 'data-register',
+    name: 'weekdays',
     description: 'Days of the week',
+    entries: ['Monday'],
   };
 
-  beforeEach(() => {
-    axiosMock.get.mockReset();
-    axiosMock.patch.mockReset();
-    directoryMock.getServiceUrl.mockReset();
-    directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
-    tokenProviderMock.getAccessToken.mockReturnValue(Promise.resolve('token'));
-  });
-
-  // Mocks both config-service GET calls for getRegister: entries data first, then platform config.
-  function mockGetResponses(dataResponse: object) {
-    axiosMock.get
-      .mockResolvedValueOnce(dataResponse)
-      .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
-  }
-
-  type MockResponse = Response & {
-    status: jest.Mock;
-    send: jest.Mock;
-  };
-
-  const createRegisterRequest = (body: Record<string, unknown>, roles = [FormServiceRoles.Admin]) =>
+  const createReq = (props: Record<string, unknown>) =>
     ({
-      user: {
-        tenantId,
-        id: 'tester',
-        roles,
-      },
+      user: { id: 'admin', name: 'Admin', tenantId, roles: [FormServiceRoles.Admin], isCore: false },
       tenant: { id: tenantId },
-      body,
+      body: {},
+      params: {},
+      ...props,
     }) as unknown as Request;
 
-  const createMockResponse = (): MockResponse =>
+  const createRes = (): Response & { status: jest.Mock; send: jest.Mock; sendStatus: jest.Mock } =>
     ({
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
-    }) as unknown as MockResponse;
+      sendStatus: jest.fn(),
+    }) as unknown as Response & { status: jest.Mock; send: jest.Mock; sendStatus: jest.Mock };
 
-  const mockCreateDataRegisterPatchResponses = (entries: string[]) => {
-    directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://configuration-service/configuration/v2'));
-    axiosMock.patch
-      .mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: {} } } })
-      .mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: entries } } });
-  };
-
-  const expectDefinitionPatch = (name: string, description: string) => {
-    expect(axiosMock.patch.mock.calls[0][0]).toContain('/configuration/platform/configuration-service');
-    expect(axiosMock.patch.mock.calls[0][1]).toEqual({
-      operation: 'UPDATE',
-      update: {
-        [`data-register:${name}`]: {
-          configurationSchema: {
-            type: 'array',
-            items: {
-              anyOf: [{ type: 'string' }, { type: 'object' }],
-            },
-          },
-          description,
-        },
-      },
-    });
-    expect(axiosMock.patch.mock.calls[0][2]).toEqual({
-      headers: { Authorization: 'Bearer token' },
-      params: { tenantId: tenantId.toString() },
-    });
-  };
-
-  const expectEntriesPatch = (name: string, entries: string[]) => {
-    expect(axiosMock.patch.mock.calls[1][0]).toContain(`/configuration/data-register/${name}`);
-    expect(axiosMock.patch.mock.calls[1][1]).toEqual({
-      operation: 'REPLACE',
-      configuration: entries,
-    });
-    expect(axiosMock.patch.mock.calls[1][2]).toEqual({
-      headers: { Authorization: 'Bearer token' },
-      params: { tenantId: tenantId.toString() },
-    });
-  };
-
-  const expectCreateRegisterResponse = (res: MockResponse, name: string, description: string, entries: string[]) => {
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.send).toHaveBeenCalledWith({
-      namespace: 'data-register',
-      name,
-      description,
-      entries,
-    });
-  };
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('can create router', () => {
-    const router = createRegisterRouter({ directory: directoryMock, tokenProvider: tokenProviderMock });
-    expect(router).toBeTruthy();
+    expect(createRegisterRouter({ client, logger: loggerMock as never })).toBeTruthy();
+  });
+
+  describe('REGISTER_NAME_PATTERN', () => {
+    it('accepts a name containing an underscore', () => {
+      expect(REGISTER_NAME_PATTERN.test('week_days')).toBe(true);
+    });
+
+    it('accepts a name containing a space', () => {
+      expect(REGISTER_NAME_PATTERN.test('week days')).toBe(true);
+    });
+
+    it('rejects a name with characters outside the allowed set', () => {
+      expect(REGISTER_NAME_PATTERN.test('weekdays!')).toBe(false);
+    });
+  });
+
+  describe('findRegisters', () => {
+    it('calls next with unauthorized for a user with no matching role', async () => {
+      const req = createReq({ user: { id: 'none', name: 'None', tenantId, roles: [], isCore: false } });
+      const res = createRes();
+      const next = jest.fn();
+
+      await findRegisters(client)(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(clientMock.find).not.toHaveBeenCalled();
+    });
+
+    it('calls next with invalid operation when there is no tenant context', async () => {
+      const req = createReq({ tenant: undefined });
+      const res = createRes();
+      const next = jest.fn();
+
+      await findRegisters(client)(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('sends the registers for a form-admin user', async () => {
+      clientMock.find.mockResolvedValue([register]);
+      const req = createReq({});
+      const res = createRes();
+      const next = jest.fn();
+
+      await findRegisters(client)(req, res, next);
+
+      expect(res.send).toHaveBeenCalledWith([register]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('allows a user holding only the configuration-admin role', async () => {
+      clientMock.find.mockResolvedValue([register]);
+      const req = createReq({
+        user: {
+          id: 'config-admin',
+          name: 'Config Admin',
+          tenantId,
+          roles: [ConfigurationServiceRoles.ConfigurationAdmin],
+          isCore: false,
+        },
+      });
+      const res = createRes();
+      const next = jest.fn();
+
+      await findRegisters(client)(req, res, next);
+
+      expect(res.send).toHaveBeenCalledWith([register]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('allows a core user holding the admin role', async () => {
+      clientMock.find.mockResolvedValue([register]);
+      const req = createReq({
+        user: {
+          id: 'core-admin',
+          name: 'Core Admin',
+          tenantId: undefined,
+          roles: [FormServiceRoles.Admin],
+          isCore: true,
+        },
+      });
+      const res = createRes();
+      const next = jest.fn();
+
+      await findRegisters(client)(req, res, next);
+
+      expect(res.send).toHaveBeenCalledWith([register]);
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   describe('getRegister', () => {
-    it('can create handler', () => {
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      expect(handler).toBeTruthy();
-    });
-
-    it('can call next with unauthorized for non-admin', async () => {
-      const req = {
-        user: { tenantId, id: 'tester', roles: ['test-applicant'] },
+    it('calls next with unauthorized for a user with no matching role', async () => {
+      const req = createReq({
+        user: { id: 'none', name: 'None', tenantId, roles: [], isCore: false },
         params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+      });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await getRegister(client)(req, res, next);
 
-      expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
-    it('can return 404 when entries data endpoint returns 404', async () => {
-      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: null });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'missing' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+    it('calls next with the client error when the register is not found', async () => {
+      clientMock.get.mockRejectedValue(new NotFoundError('data register', 'missing'));
+      const req = createReq({ params: { name: 'missing' } });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await getRegister(client)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(res.send).not.toHaveBeenCalled();
     });
 
-    it('can return 404 when data endpoint returns 404', async () => {
-      mockGetResponses({ status: HttpStatusCodes.NOT_FOUND, data: null });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+    it('sends the register on success', async () => {
+      clientMock.get.mockResolvedValue(register);
+      const req = createReq({ params: { name: 'weekdays' } });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await getRegister(client)(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(res.send).not.toHaveBeenCalled();
+      expect(clientMock.get).toHaveBeenCalledWith(tenantId, 'weekdays');
+      expect(res.send).toHaveBeenCalledWith(register);
     });
+  });
 
-    it('can return empty entries when configuration service returns null latest configuration (register exists, no entries)', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { latest: { configuration: null } } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can return register on success', async () => {
-      mockGetResponses({
-        status: HttpStatusCodes.OK,
-        data: { latest: { configuration: ['Monday', 'Tuesday', 'Wednesday'] } },
+  describe('createRegister', () => {
+    it('calls next with unauthorized for a user with no matching role', async () => {
+      const req = createReq({
+        user: { id: 'none', name: 'None', tenantId, roles: [], isCore: false },
+        body: { name: 'weekdays' },
       });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await createRegister(client, loggerMock as never)(req, res, next);
 
-      expect(res.send).toHaveBeenCalledWith({
-        namespace: 'data-register',
-        name: 'weekdays',
-        description: 'Days of the week',
-        entries: ['Monday', 'Tuesday', 'Wednesday'],
-      });
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(clientMock.create).not.toHaveBeenCalled();
+    });
+
+    it('sends 201 with the created register', async () => {
+      clientMock.create.mockResolvedValue(register);
+      const req = createReq({ body: { name: 'weekdays', description: 'Days of the week', entries: ['Monday'] } });
+      const res = createRes();
+      const next = jest.fn();
+
+      await createRegister(client, loggerMock as never)(req, res, next);
+
+      expect(clientMock.create).toHaveBeenCalledWith(tenantId, req.body);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(res.send).toHaveBeenCalledWith(register);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can return empty description when definition has no description', async () => {
-      axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { latest: { configuration: ['A', 'B'] } } })
-        .mockResolvedValueOnce({
-          data: {
-            configuration: {
-              'data-register:simple': { configurationSchema: { type: 'array', items: { type: 'string' } } },
-            },
-          },
-        });
+    it('logs the acting user on success', async () => {
+      clientMock.create.mockResolvedValue(register);
+      const req = createReq({ body: { name: 'weekdays' } });
+      const res = createRes();
 
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'simple' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
+      await createRegister(client, loggerMock as never)(req, res, jest.fn());
 
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ description: '', entries: ['A', 'B'] }));
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can return empty entries when configuration field is absent from data response (register exists, no entries)', async () => {
-      axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { latest: {} } }) // no configuration in latest
-        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can call config service with tenant id', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { latest: { configuration: [] } } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(axiosMock.get).toHaveBeenCalledWith(
-        expect.stringContaining('platform/configuration-service/latest'),
-        expect.objectContaining({ params: expect.objectContaining({ tenantId: tenantId.toString() }) }),
+      expect(loggerMock.info).toHaveBeenCalledWith(
+        expect.stringContaining('created by Admin'),
+        expect.objectContaining({ context: 'register-router', tenant: tenantId.toString() }),
       );
     });
 
-    it('accepts OK and NOT_FOUND on entries endpoint validateStatus', async () => {
-      mockGetResponses({ status: HttpStatusCodes.OK, data: { latest: { configuration: [] } } });
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
-        params: { name: 'weekdays' },
-        tenant: { id: tenantId },
-      };
-      const handler = getRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, { send: jest.fn() } as unknown as Response, jest.fn());
-      const { validateStatus } = axiosMock.get.mock.calls[0][1] as { validateStatus: (s: number) => boolean };
-      expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
-      expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
-      expect(validateStatus(500)).toBe(false);
-    });
-  });
-
-  describe('createDataRegister create', () => {
-    // clean-code-ignore: 2.3
-    it('can create handler', () => expect(createDataRegister(directoryMock, tokenProviderMock)).toBeTruthy());
-
-    it('creates data register definition and configuration', async () => {
-      const req = createRegisterRequest({
-        name: 'test-register',
-        description: 'Test register',
-        entries: ['one', 'two'],
-      });
-      const res = createMockResponse();
-      const next = jest.fn();
-      mockCreateDataRegisterPatchResponses(['one', 'two']);
-
-      await createDataRegister(directoryMock, tokenProviderMock)(req, res, next);
-
-      expect(directoryMock.getServiceUrl.mock.calls[0][0].toString()).toBe('urn:ads:platform:configuration-service:v2');
-      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
-      expect(axiosMock.patch).toHaveBeenCalledTimes(2);
-      expectDefinitionPatch('test-register', 'Test register');
-      expectEntriesPatch('test-register', ['one', 'two']);
-      expectCreateRegisterResponse(res, 'test-register', 'Test register', ['one', 'two']);
-      expect(next).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('createDataRegister defaults and authorization', () => {
-    it('defaults optional description and entries when creating a data register', async () => {
-      const req = createRegisterRequest({ name: 'empty-register' });
-      const res = createMockResponse();
-      const next = jest.fn();
-      mockCreateDataRegisterPatchResponses([]);
-
-      await createDataRegister(directoryMock, tokenProviderMock)(req, res, next);
-
-      expectDefinitionPatch('empty-register', '');
-      expectEntriesPatch('empty-register', []);
-      expectCreateRegisterResponse(res, 'empty-register', '', []);
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('calls next with unauthorized error for non-admin users', async () => {
-      const req = createRegisterRequest({ name: 'test-register' });
-      req.user.roles = ['test-applicant'];
-      const res = createMockResponse();
+    it('calls next with the client error on conflict', async () => {
+      clientMock.create.mockRejectedValue(
+        new InvalidOperationError(`Data register 'weekdays' already exists.`, { statusCode: HttpStatusCodes.CONFLICT }),
+      );
+      const req = createReq({ body: { name: 'weekdays' } });
+      const res = createRes();
       const next = jest.fn();
 
-      await createDataRegister(directoryMock, tokenProviderMock)(req, res, next);
+      await createRegister(client, loggerMock as never)(req, res, next);
 
-      expect(directoryMock.getServiceUrl).not.toHaveBeenCalled();
-      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.send).not.toHaveBeenCalled();
-      expect(next.mock.calls[0][0]).toBeInstanceOf(UnauthorizedUserError);
     });
   });
 
   describe('updateRegister', () => {
-    beforeEach(() => {
-      // First GET: existence check (returns OK with latest), Second GET: platform config with descriptions
-      axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: { latest: { configuration: [] } } })
-        .mockResolvedValueOnce({ data: { configuration: { 'data-register:weekdays': weekdaysDefinition } } });
-    });
-
-    it('can create handler', () => {
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      expect(handler).toBeTruthy();
-    });
-
-    it('can call next with unauthorized for non-admin', async () => {
-      const req = {
-        user: { tenantId, id: 'tester', roles: ['test-applicant'] },
+    it('calls next with unauthorized for a user with no matching role', async () => {
+      const req = createReq({
+        user: { id: 'none', name: 'None', tenantId, roles: [], isCore: false },
         params: { name: 'weekdays' },
         body: { entries: ['Monday'] },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+      });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await updateRegister(client, loggerMock as never)(req, res, next);
 
-      expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(clientMock.update).not.toHaveBeenCalled();
     });
 
-    it('can return 404 when register does not exist', async () => {
-      axiosMock.get.mockReset();
-      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: null });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { name: 'missing' },
-        body: { entries: ['Monday'] },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+    it('sends the updated register', async () => {
+      const updated = { ...register, description: 'Updated' };
+      clientMock.update.mockResolvedValue(updated);
+      const req = createReq({ params: { name: 'weekdays' }, body: { description: 'Updated' } });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await updateRegister(client, loggerMock as never)(req, res, next);
+
+      expect(clientMock.update).toHaveBeenCalledWith(tenantId, 'weekdays', req.body);
+      expect(res.send).toHaveBeenCalledWith(updated);
+    });
+
+    it('calls next with the client error when the register is not found', async () => {
+      clientMock.update.mockRejectedValue(new NotFoundError('data register', 'missing'));
+      const req = createReq({ params: { name: 'missing' }, body: { entries: ['Monday'] } });
+      const res = createRes();
+      const next = jest.fn();
+
+      await updateRegister(client, loggerMock as never)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-      expect(axiosMock.patch).not.toHaveBeenCalled();
-    });
-
-    it('can update entries without changing description', async () => {
-      axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: ['Monday', 'Tuesday'] } } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { name: 'weekdays' },
-        body: { entries: ['Monday', 'Tuesday'] },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      // Only one patch call — entries only, no description update
-      expect(axiosMock.patch).toHaveBeenCalledTimes(1);
-      expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.stringContaining('data-register/weekdays'),
-        expect.objectContaining({ operation: 'REPLACE', configuration: ['Monday', 'Tuesday'] }),
-        expect.any(Object),
-      );
-      expect(res.send).toHaveBeenCalledWith({
-        namespace: 'data-register',
-        name: 'weekdays',
-        description: 'Days of the week',
-        entries: ['Monday', 'Tuesday'],
-      });
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can update both description and entries', async () => {
-      axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: ['Mon', 'Tue'] } } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { name: 'weekdays' },
-        body: { description: 'Updated description', entries: ['Mon', 'Tue'] },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      // Two patch calls — one for description, one for entries
-      expect(axiosMock.patch).toHaveBeenCalledTimes(2);
-      expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.stringContaining('platform/configuration-service'),
-        expect.objectContaining({
-          operation: 'UPDATE',
-          update: expect.objectContaining({
-            'data-register:weekdays': expect.objectContaining({ description: 'Updated description' }),
-          }),
-        }),
-        expect.any(Object),
-      );
-      expect(res.send).toHaveBeenCalledWith({
-        namespace: 'data-register',
-        name: 'weekdays',
-        description: 'Updated description',
-        entries: ['Mon', 'Tue'],
-      });
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can update with empty entries array', async () => {
-      axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: [] } } });
-
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { name: 'weekdays' },
-        body: { entries: [] },
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ entries: [] }));
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('accepts OK and NOT_FOUND on existence check validateStatus', async () => {
-      axiosMock.patch.mockResolvedValue({ data: { latest: { configuration: [] } } });
-      const req = {
-        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
-        params: { name: 'weekdays' },
-        body: { entries: [] },
-        tenant: { id: tenantId },
-      };
-      const handler = updateRegister(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, { send: jest.fn() } as unknown as Response, jest.fn());
-      const { validateStatus } = axiosMock.get.mock.calls[0][1] as { validateStatus: (s: number) => boolean };
-      expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
-      expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
-      expect(validateStatus(500)).toBe(false);
     });
   });
 
-  describe('findDataRegisters', () => {
-    it('can create handler', () => {
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      expect(handler).toBeTruthy();
-    });
-
-    it('can get all registers', async () => {
-      axiosMock.get
-        .mockResolvedValueOnce({
-          data: {
-            configuration: { 'data-register:weekdays': weekdaysDefinition },
-          },
-        })
-        .mockResolvedValueOnce({
-          data: {
-            results: [
-              {
-                name: 'weekdays',
-                namespace: 'data-register',
-                latest: { configuration: ['Monday', 'Tuesday'] },
-              },
-            ],
-          },
-        });
-
-      const req = {
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith([
-        {
-          name: 'weekdays',
-          namespace: 'data-register',
-          description: 'Days of the week',
-          entries: ['Monday', 'Tuesday'],
-        },
-      ]);
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can return empty array when no registers exist', async () => {
-      axiosMock.get
-        .mockResolvedValueOnce({ data: { configuration: {} } })
-        .mockResolvedValueOnce({ data: { results: [] } });
-
-      const req = {
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith([]);
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can return empty array when results field is absent from response', async () => {
-      axiosMock.get.mockResolvedValueOnce({ data: { configuration: {} } }).mockResolvedValueOnce({ data: {} }); // no results key — exercises ?. ?? [] fallback
-
-      const req = { tenant: { id: tenantId } };
-      const res = { send: jest.fn() };
-      const next = jest.fn();
-
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-
-      expect(res.send).toHaveBeenCalledWith([]);
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it('can default description to empty string when no platform config definition exists', async () => {
-      axiosMock.get.mockResolvedValueOnce({ data: { configuration: {} } }).mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              name: 'weekdays',
-              namespace: 'data-register',
-              latest: { configuration: ['Monday'] },
-            },
-          ],
-        },
+  describe('deleteRegister', () => {
+    it('calls next with unauthorized for a user with no matching role', async () => {
+      const req = createReq({
+        user: { id: 'none', name: 'None', tenantId, roles: [], isCore: false },
+        params: { name: 'weekdays' },
       });
-
-      const req = { tenant: { id: tenantId } };
-      const res = { send: jest.fn() };
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await deleteRegister(client, loggerMock as never)(req, res, next);
 
-      expect(res.send).toHaveBeenCalledWith([expect.objectContaining({ description: '', name: 'weekdays' })]);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(clientMock.delete).not.toHaveBeenCalled();
     });
 
-    it('can default entries to empty array when latest configuration is absent', async () => {
-      axiosMock.get
-        .mockResolvedValueOnce({
-          data: { configuration: { 'data-register:weekdays': weekdaysDefinition } },
-        })
-        .mockResolvedValueOnce({
-          data: {
-            results: [{ name: 'weekdays', namespace: 'data-register', latest: {} }],
-          },
-        });
-
-      const req = { tenant: { id: tenantId } };
-      const res = { send: jest.fn() };
+    it('sends 204 on success', async () => {
+      clientMock.delete.mockResolvedValue(undefined);
+      const req = createReq({ params: { name: 'weekdays' } });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await deleteRegister(client, loggerMock as never)(req, res, next);
 
-      expect(res.send).toHaveBeenCalledWith([expect.objectContaining({ entries: [] })]);
+      expect(clientMock.delete).toHaveBeenCalledWith(tenantId, 'weekdays');
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
+      expect(next).not.toHaveBeenCalled();
     });
 
-    it('can call next with error on failure', async () => {
-      axiosMock.get.mockRejectedValueOnce(new Error('network error'));
-
-      const req = {
-        tenant: { id: tenantId },
-      };
-      const res = { send: jest.fn() };
+    it('calls next with the client error when neither part of the register exists', async () => {
+      clientMock.delete.mockRejectedValue(new NotFoundError('data register', 'missing'));
+      const req = createReq({ params: { name: 'missing' } });
+      const res = createRes();
       const next = jest.fn();
 
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await deleteRegister(client, loggerMock as never)(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+  });
+
+  describe('request validation', () => {
+    const buildApp = (): express.Express => {
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => {
+        req.user = { id: 'admin', name: 'Admin', tenantId, roles: [FormServiceRoles.Admin], isCore: false } as never;
+        req.isAuthenticated = (() => true) as never;
+        req.tenant = { id: tenantId } as never;
+        next();
+      });
+      app.use(createRegisterRouter({ client, logger: loggerMock as never }));
+      app.use(createErrorHandler(loggerMock as never));
+      return app;
+    };
+
+    it('accepts a name containing an underscore and a space', async () => {
+      clientMock.create.mockResolvedValue(register);
+
+      const res = await request(buildApp()).post('/registers').send({ name: 'week_days one' });
+
+      expect(res.status).toBe(HttpStatusCodes.CREATED);
     });
 
-    it('accepts OK and NOT_FOUND on data-register endpoint validateStatus', async () => {
-      axiosMock.get
-        .mockResolvedValueOnce({ data: { configuration: {} } })
-        .mockResolvedValueOnce({ data: { results: [] } });
-      const req = { tenant: { id: tenantId } };
-      const handler = findDataRegisters(directoryMock, tokenProviderMock);
-      await handler(req as unknown as Request, { send: jest.fn() } as unknown as Response, jest.fn());
-      // validateStatus is on the second GET call (the data-register namespace listing)
-      const { validateStatus } = axiosMock.get.mock.calls[1][1] as { validateStatus: (s: number) => boolean };
-      expect(validateStatus(HttpStatusCodes.OK)).toBe(true);
-      expect(validateStatus(HttpStatusCodes.NOT_FOUND)).toBe(true);
-      expect(validateStatus(500)).toBe(false);
+    it('rejects a name with characters outside the allowed pattern', async () => {
+      const res = await request(buildApp()).post('/registers').send({ name: 'weekdays!' });
+
+      expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
+      expect(clientMock.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects an entry that is neither a string nor an object', async () => {
+      const res = await request(buildApp())
+        .post('/registers')
+        .send({ name: 'weekdays', entries: [42] });
+
+      expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
+      expect(clientMock.create).not.toHaveBeenCalled();
+    });
+
+    it('accepts entries that are strings or objects', async () => {
+      clientMock.create.mockResolvedValue(register);
+
+      const res = await request(buildApp())
+        .post('/registers')
+        .send({ name: 'weekdays', entries: ['Monday', { label: 'Tuesday', value: 2 }] });
+
+      expect(res.status).toBe(HttpStatusCodes.CREATED);
     });
   });
 });
