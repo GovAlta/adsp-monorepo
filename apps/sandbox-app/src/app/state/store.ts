@@ -7,6 +7,7 @@ import { USER_FEATURE_KEY, userReducer } from './user.slice';
 import { FORM_FEATURE_KEY, formReducer } from './form.slice';
 import { COMMENT_FEATURE_KEY, commentReducer } from './comment.slice';
 import { PDF_FEATURE_KEY, pdfReducer } from './pdf.slice';
+import { POKER_FEATURE_KEY, pokerReducer } from './poker.slice';
 
 // Use a log only configuration for Redux DevTools in production.
 const reduxDevToolsLogOnly: DevToolsEnhancerOptions = {
@@ -34,6 +35,7 @@ export const store = configureStore({
     [FORM_FEATURE_KEY]: formReducer,
     [USER_FEATURE_KEY]: userReducer,
     [PDF_FEATURE_KEY]: pdfReducer,
+    [POKER_FEATURE_KEY]: pokerReducer,
   },
   devTools: process.env.NODE_ENV !== 'production' || reduxDevToolsLogOnly,
   // Optional Redux store enhancers
