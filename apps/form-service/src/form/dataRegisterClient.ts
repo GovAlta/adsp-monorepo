@@ -1,5 +1,11 @@
 import { AdspId, ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
-import { ConfigurationClient, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import {
+  ConfigurationClient,
+  ConfigurationDocument,
+  ConfigurationRevision,
+  InvalidOperationError,
+  NotFoundError,
+} from '@core-services/core-common';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import {
@@ -28,15 +34,8 @@ const getDefinitionKey = (name: string): string => `${DATA_REGISTER_NAMESPACE}:$
 const isRegisterDefinition = (definition: DataRegisterDefinition): boolean =>
   !!definition && (definition.configurationSchema as { type?: string })?.type === 'array';
 
-interface DataRevision {
-  revision: number;
-  configuration: DataRegisterEntry[];
-}
-
-interface DataDocument {
-  latest?: DataRevision;
-  active?: DataRevision;
-}
+type DataRevision = ConfigurationRevision<DataRegisterEntry[]>;
+type DataDocument = ConfigurationDocument<DataRegisterEntry[]>;
 
 interface DataListResult extends DataDocument {
   name: string;
@@ -216,7 +215,7 @@ export class DataRegisterClient {
       }
 
       if (hasData) {
-        await this.deleteData(tenantId, name);
+        await this.getDataClient(name).deleteConfiguration(tenantId);
       }
       if (hasDefinition) {
         await this.definitions.deleteEntry(tenantId, getDefinitionKey(name));
@@ -259,17 +258,18 @@ export class DataRegisterClient {
     return dataByName;
   }
 
-  // The latest revision and, only when one is pinned, the active revision. A document never written has neither.
-  private async getDataDocument(tenantId: AdspId, name: string): Promise<DataDocument> {
-    const configurationApiUrl = await this.directory.getServiceUrl(configurationApiId);
-    const headers = await this.getAuthHeaders();
-
-    const { data } = await axios.get<DataDocument>(
-      new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}`, configurationApiUrl).href,
-      { headers, params: { tenantId: tenantId.toString() } },
+  // Each register's entries are their own configuration document, so a client is made per register name.
+  private getDataClient(name: string): ConfigurationClient<DataRegisterEntry[]> {
+    return new ConfigurationClient<DataRegisterEntry[]>(
+      this.directory,
+      this.tokenProvider,
+      DATA_REGISTER_NAMESPACE,
+      name,
     );
+  }
 
-    return data || {};
+  private async getDataDocument(tenantId: AdspId, name: string): Promise<DataDocument> {
+    return this.getDataClient(name).getDocument(tenantId);
   }
 
   private async getData(tenantId: AdspId, name: string): Promise<DataRegisterEntry[] | undefined> {
@@ -285,36 +285,14 @@ export class DataRegisterClient {
     entries: DataRegisterEntry[],
     active?: DataRevision,
   ): Promise<DataRegisterEntry[]> {
-    const configurationApiUrl = await this.directory.getServiceUrl(configurationApiId);
-    const headers = await this.getAuthHeaders();
-    const dataUrl = new URL(
-      `v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}`,
-      configurationApiUrl,
-    ).href;
-    const params = { tenantId: tenantId.toString() };
+    const dataClient = this.getDataClient(name);
+    const latest = await dataClient.replaceConfiguration(tenantId, entries);
 
-    const { data } = await axios.patch<{ latest?: DataRevision }>(
-      dataUrl,
-      { operation: 'REPLACE', configuration: entries },
-      { headers, params },
-    );
-
-    const latest = data?.latest;
     if (active && latest && active.revision !== latest.revision) {
-      await axios.post(dataUrl, { operation: 'SET-ACTIVE-REVISION', revision: latest.revision }, { headers, params });
+      await dataClient.setActiveRevision(tenantId, latest.revision);
     }
 
     return latest?.configuration ?? entries;
-  }
-
-  private async deleteData(tenantId: AdspId, name: string): Promise<void> {
-    const configurationApiUrl = await this.directory.getServiceUrl(configurationApiId);
-    const headers = await this.getAuthHeaders();
-
-    await axios.delete(
-      new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${encodeURIComponent(name)}`, configurationApiUrl).href,
-      { headers, params: { tenantId: tenantId.toString() } },
-    );
   }
 
   private async getAuthHeaders(): Promise<Record<string, string>> {

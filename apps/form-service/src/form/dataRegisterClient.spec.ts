@@ -27,16 +27,26 @@ describe('DataRegisterClient', () => {
     deleteEntry: jest.fn(),
   };
 
+  const dataClientMock = {
+    getDocument: jest.fn(),
+    replaceConfiguration: jest.fn(),
+    setActiveRevision: jest.fn(),
+    deleteConfiguration: jest.fn(),
+  };
+
   const weekdaysDefinition = { configurationSchema: REGISTER_SCHEMA, description: 'Days of the week' };
 
   let client: DataRegisterClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     directoryMock.getServiceUrl.mockResolvedValue(configurationServiceUrl);
     tokenProviderMock.getAccessToken.mockResolvedValue('token');
-    ConfigurationClientMock.mockImplementation(() => definitionsClientMock);
+    ConfigurationClientMock.mockImplementation((_directory, _tokenProvider, namespace: string) =>
+      namespace === 'platform' ? definitionsClientMock : dataClientMock,
+    );
     definitionsClientMock.getTenantConfiguration.mockResolvedValue({});
+    dataClientMock.getDocument.mockResolvedValue({});
 
     client = new DataRegisterClient(directoryMock as never, tokenProviderMock as never);
   });
@@ -165,12 +175,16 @@ describe('DataRegisterClient', () => {
   });
 
   describe('get', () => {
-    it('returns the entries of the pinned active revision rather than the latest', async () => {
+    beforeEach(() => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': weekdaysDefinition,
       });
-      axiosMock.get.mockResolvedValueOnce({
-        data: { latest: { revision: 3, configuration: ['Draft'] }, active: { revision: 1, configuration: ['Monday'] } },
+    });
+
+    it('returns the entries of the pinned active revision rather than the latest', async () => {
+      dataClientMock.getDocument.mockResolvedValue({
+        latest: { revision: 3, configuration: ['Draft'] },
+        active: { revision: 1, configuration: ['Monday'] },
       });
 
       const register = await client.get(tenantId, 'weekdays');
@@ -179,10 +193,7 @@ describe('DataRegisterClient', () => {
     });
 
     it('returns the register when both the definition and the data document exist', async () => {
-      definitionsClientMock.getTenantConfiguration.mockResolvedValue({
-        'data-register:weekdays': weekdaysDefinition,
-      });
-      axiosMock.get.mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: ['Monday', 'Tuesday'] } } });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: ['Monday', 'Tuesday'] } });
 
       const register = await client.get(tenantId, 'weekdays');
 
@@ -194,83 +205,84 @@ describe('DataRegisterClient', () => {
       });
     });
 
-    it('throws not found when the data document comes back with an empty body', async () => {
-      definitionsClientMock.getTenantConfiguration.mockResolvedValue({
-        'data-register:weekdays': weekdaysDefinition,
-      });
-      axiosMock.get.mockResolvedValueOnce({ data: '' });
+    it('throws not found when the data document has never been written', async () => {
+      dataClientMock.getDocument.mockResolvedValue({});
 
       await expect(client.get(tenantId, 'weekdays')).rejects.toThrow(NotFoundError);
     });
 
     it('throws not found when the definition does not exist', async () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({});
-      axiosMock.get.mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: [] } } });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: [] } });
 
       await expect(client.get(tenantId, 'weekdays')).rejects.toThrow(NotFoundError);
     });
 
-    it('calls configuration-service with the tenant id', async () => {
-      definitionsClientMock.getTenantConfiguration.mockResolvedValue({
-        'data-register:weekdays': weekdaysDefinition,
-      });
-      axiosMock.get.mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: [] } } });
+    it('reads the data document of the named register for the tenant', async () => {
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: [] } });
 
       await client.get(tenantId, 'weekdays');
 
-      expect(axiosMock.get).toHaveBeenCalledWith(
-        expect.stringMatching(/\/data-register\/weekdays$/),
-        expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
+      expect(ConfigurationClientMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
+        'data-register',
+        'weekdays',
       );
+      expect(dataClientMock.getDocument).toHaveBeenCalledWith(tenantId);
     });
   });
 
   describe('create', () => {
     beforeEach(() => {
-      axiosMock.get.mockResolvedValue({ data: '' });
-      axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 1, configuration: ['one', 'two'] } } });
+      dataClientMock.replaceConfiguration.mockResolvedValue({ revision: 1, configuration: ['one', 'two'] });
     });
 
     it('writes the definition before the data', async () => {
       await client.create(tenantId, { name: 'test-register', description: 'Test register', entries: ['one', 'two'] });
 
       expect(definitionsClientMock.updateEntry.mock.invocationCallOrder[0]).toBeLessThan(
-        axiosMock.patch.mock.invocationCallOrder[0],
+        dataClientMock.replaceConfiguration.mock.invocationCallOrder[0],
       );
+    });
+
+    it('writes the definition with the register schema and description', async () => {
+      await client.create(tenantId, { name: 'test-register', description: 'Test register', entries: ['one', 'two'] });
+
       expect(definitionsClientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'data-register:test-register', {
         configurationSchema: REGISTER_SCHEMA,
         description: 'Test register',
       });
-      expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.stringContaining('/data-register/test-register'),
-        { operation: 'REPLACE', configuration: ['one', 'two'] },
-        expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
+    });
+
+    it('replaces the data document of the named register with the entries', async () => {
+      await client.create(tenantId, { name: 'test-register', entries: ['one', 'two'] });
+
+      expect(ConfigurationClientMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
+        'data-register',
+        'test-register',
       );
+      expect(dataClientMock.replaceConfiguration).toHaveBeenCalledWith(tenantId, ['one', 'two']);
     });
 
     it('moves the pin of a leftover data document to the entries just written', async () => {
-      axiosMock.get.mockResolvedValue({
-        data: { latest: { revision: 2, configuration: ['old'] }, active: { revision: 0, configuration: ['older'] } },
+      dataClientMock.getDocument.mockResolvedValue({
+        latest: { revision: 2, configuration: ['old'] },
+        active: { revision: 0, configuration: ['older'] },
       });
-      axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 2, configuration: ['one', 'two'] } } });
+      dataClientMock.replaceConfiguration.mockResolvedValue({ revision: 2, configuration: ['one', 'two'] });
 
       await client.create(tenantId, { name: 'test-register', entries: ['one', 'two'] });
 
-      expect(axiosMock.post).toHaveBeenCalledWith(
-        expect.stringMatching(/\/data-register\/test-register$/),
-        { operation: 'SET-ACTIVE-REVISION', revision: 2 },
-        expect.any(Object),
-      );
+      expect(dataClientMock.setActiveRevision).toHaveBeenCalledWith(tenantId, 2);
     });
 
     it('defaults entries to an empty array', async () => {
       await client.create(tenantId, { name: 'empty-register' });
 
-      expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.any(String),
-        { operation: 'REPLACE', configuration: [] },
-        expect.any(Object),
-      );
+      expect(dataClientMock.replaceConfiguration).toHaveBeenCalledWith(tenantId, []);
     });
 
     it('returns the created register', async () => {
@@ -292,7 +304,7 @@ describe('DataRegisterClient', () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': weekdaysDefinition,
       });
-      axiosMock.get.mockResolvedValue({ data: { latest: { revision: 1, configuration: ['Monday'] } } });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: ['Monday'] } });
 
       await expect(client.create(tenantId, { name: 'weekdays' })).rejects.toThrow(InvalidOperationError);
       expect(definitionsClientMock.updateEntry).not.toHaveBeenCalled();
@@ -302,11 +314,10 @@ describe('DataRegisterClient', () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': weekdaysDefinition,
       });
-      axiosMock.get.mockResolvedValue({ data: '' });
 
       await client.create(tenantId, { name: 'weekdays', entries: ['Monday'] });
 
-      expect(axiosMock.patch).toHaveBeenCalled();
+      expect(dataClientMock.replaceConfiguration).toHaveBeenCalledWith(tenantId, ['Monday']);
     });
   });
 
@@ -315,12 +326,13 @@ describe('DataRegisterClient', () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': { ...weekdaysDefinition, anonymousRead: true },
       });
-      axiosMock.get.mockResolvedValue({ data: { latest: { revision: 1, configuration: ['Monday'] } } });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: ['Monday'] } });
+      dataClientMock.replaceConfiguration.mockResolvedValue({ revision: 2, configuration: ['Monday', 'Tuesday'] });
     });
 
     it('throws not found when the register does not exist', async () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({});
-      axiosMock.get.mockResolvedValue({ data: '' });
+      dataClientMock.getDocument.mockResolvedValue({});
 
       await expect(client.update(tenantId, 'missing', { entries: ['Monday'] })).rejects.toThrow(NotFoundError);
     });
@@ -328,7 +340,12 @@ describe('DataRegisterClient', () => {
     it('does not touch the data document when only the description is sent', async () => {
       await client.update(tenantId, 'weekdays', { description: 'Updated description' });
 
-      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(dataClientMock.replaceConfiguration).not.toHaveBeenCalled();
+    });
+
+    it('updates the description when only the description is sent', async () => {
+      await client.update(tenantId, 'weekdays', { description: 'Updated description' });
+
       expect(definitionsClientMock.updateEntry).toHaveBeenCalledWith(
         tenantId,
         'data-register:weekdays',
@@ -337,16 +354,15 @@ describe('DataRegisterClient', () => {
     });
 
     it('does not touch the definition when only entries are sent', async () => {
-      axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 2, configuration: ['Monday', 'Tuesday'] } } });
-
       await client.update(tenantId, 'weekdays', { entries: ['Monday', 'Tuesday'] });
 
       expect(definitionsClientMock.updateEntry).not.toHaveBeenCalled();
-      expect(axiosMock.patch).toHaveBeenCalledWith(
-        expect.stringContaining('/data-register/weekdays'),
-        { operation: 'REPLACE', configuration: ['Monday', 'Tuesday'] },
-        expect.any(Object),
-      );
+    });
+
+    it('replaces the entries when only entries are sent', async () => {
+      await client.update(tenantId, 'weekdays', { entries: ['Monday', 'Tuesday'] });
+
+      expect(dataClientMock.replaceConfiguration).toHaveBeenCalledWith(tenantId, ['Monday', 'Tuesday']);
     });
 
     it('preserves anonymousRead when only the description changes', async () => {
@@ -367,9 +383,9 @@ describe('DataRegisterClient', () => {
 
     it('writes the entries before the description', async () => {
       const writes: string[] = [];
-      axiosMock.patch.mockImplementationOnce(async () => {
+      dataClientMock.replaceConfiguration.mockImplementationOnce(async () => {
         writes.push('entries');
-        return { data: { latest: { revision: 2, configuration: ['Tuesday'] } } };
+        return { revision: 2, configuration: ['Tuesday'] };
       });
       definitionsClientMock.updateEntry.mockImplementationOnce(async () => {
         writes.push('description');
@@ -383,35 +399,31 @@ describe('DataRegisterClient', () => {
 
     describe('when an older revision is pinned as active', () => {
       beforeEach(() => {
-        axiosMock.get.mockResolvedValue({
-          data: {
-            latest: { revision: 3, configuration: ['Draft'] },
-            active: { revision: 1, configuration: ['Monday'] },
-          },
+        dataClientMock.getDocument.mockResolvedValue({
+          latest: { revision: 3, configuration: ['Draft'] },
+          active: { revision: 1, configuration: ['Monday'] },
         });
-        axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 3, configuration: ['Tuesday'] } } });
+        dataClientMock.replaceConfiguration.mockResolvedValue({ revision: 3, configuration: ['Tuesday'] });
       });
 
       it('moves the pin to the revision the entries were written to', async () => {
         await client.update(tenantId, 'weekdays', { entries: ['Tuesday'] });
 
-        expect(axiosMock.post).toHaveBeenCalledWith(
-          expect.stringMatching(/\/data-register\/weekdays$/),
-          { operation: 'SET-ACTIVE-REVISION', revision: 3 },
-          expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
-        );
+        expect(dataClientMock.setActiveRevision).toHaveBeenCalledWith(tenantId, 3);
       });
 
       it('moves the pin only after the entries are written', async () => {
         await client.update(tenantId, 'weekdays', { entries: ['Tuesday'] });
 
-        expect(axiosMock.patch.mock.invocationCallOrder[0]).toBeLessThan(axiosMock.post.mock.invocationCallOrder[0]);
+        expect(dataClientMock.replaceConfiguration.mock.invocationCallOrder[0]).toBeLessThan(
+          dataClientMock.setActiveRevision.mock.invocationCallOrder[0],
+        );
       });
 
       it('leaves the pin alone when only the description is sent', async () => {
         await client.update(tenantId, 'weekdays', { description: 'Updated' });
 
-        expect(axiosMock.post).not.toHaveBeenCalled();
+        expect(dataClientMock.setActiveRevision).not.toHaveBeenCalled();
       });
 
       it('returns the entries of the pinned revision when entries are not sent', async () => {
@@ -421,7 +433,9 @@ describe('DataRegisterClient', () => {
       });
 
       it('maps a refused pin move (service account without configuration-admin) to 502', async () => {
-        axiosMock.post.mockRejectedValueOnce({ response: { status: HttpStatusCodes.FORBIDDEN, data: {} } });
+        dataClientMock.setActiveRevision.mockRejectedValueOnce({
+          response: { status: HttpStatusCodes.FORBIDDEN, data: {} },
+        });
         axiosMock.isAxiosError.mockReturnValueOnce(true);
 
         await expect(client.update(tenantId, 'weekdays', { entries: ['Tuesday'] })).rejects.toThrow(
@@ -431,26 +445,26 @@ describe('DataRegisterClient', () => {
     });
 
     it('does not set an active revision when none is pinned', async () => {
-      axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 1, configuration: ['Tuesday'] } } });
-
       await client.update(tenantId, 'weekdays', { entries: ['Tuesday'] });
 
-      expect(axiosMock.post).not.toHaveBeenCalled();
+      expect(dataClientMock.setActiveRevision).not.toHaveBeenCalled();
     });
 
     it('does not move a pin that is already on the latest revision', async () => {
-      axiosMock.get.mockResolvedValue({
-        data: { latest: { revision: 2, configuration: ['Monday'] }, active: { revision: 2, configuration: ['Monday'] } },
+      dataClientMock.getDocument.mockResolvedValue({
+        latest: { revision: 2, configuration: ['Monday'] },
+        active: { revision: 2, configuration: ['Monday'] },
       });
-      axiosMock.patch.mockResolvedValue({ data: { latest: { revision: 2, configuration: ['Tuesday'] } } });
 
       await client.update(tenantId, 'weekdays', { entries: ['Tuesday'] });
 
-      expect(axiosMock.post).not.toHaveBeenCalled();
+      expect(dataClientMock.setActiveRevision).not.toHaveBeenCalled();
     });
 
     it('leaves the description unchanged when configuration-service rejects the entries', async () => {
-      axiosMock.patch.mockRejectedValueOnce({ response: { status: HttpStatusCodes.BAD_REQUEST, data: {} } });
+      dataClientMock.replaceConfiguration.mockRejectedValueOnce({
+        response: { status: HttpStatusCodes.BAD_REQUEST, data: {} },
+      });
       axiosMock.isAxiosError.mockReturnValueOnce(true);
 
       await expect(
@@ -461,28 +475,34 @@ describe('DataRegisterClient', () => {
   });
 
   describe('delete', () => {
-    it('deletes both the data document and the definition when both exist', async () => {
+    it('deletes the data document when it exists', async () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': weekdaysDefinition,
       });
-      axiosMock.get.mockResolvedValue({ data: { latest: { revision: 1, configuration: ['Monday'] } } });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: ['Monday'] } });
 
       await client.delete(tenantId, 'weekdays');
 
-      expect(axiosMock.delete).toHaveBeenCalledWith(
-        expect.stringContaining('/data-register/weekdays'),
-        expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
-      );
+      expect(dataClientMock.deleteConfiguration).toHaveBeenCalledWith(tenantId);
+    });
+
+    it('deletes the definition when it exists', async () => {
+      definitionsClientMock.getTenantConfiguration.mockResolvedValue({
+        'data-register:weekdays': weekdaysDefinition,
+      });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: ['Monday'] } });
+
+      await client.delete(tenantId, 'weekdays');
+
       expect(definitionsClientMock.deleteEntry).toHaveBeenCalledWith(tenantId, 'data-register:weekdays');
     });
 
     it('deletes only the data document when the definition is already gone', async () => {
-      definitionsClientMock.getTenantConfiguration.mockResolvedValue({});
-      axiosMock.get.mockResolvedValue({ data: { latest: { revision: 1, configuration: ['Monday'] } } });
+      dataClientMock.getDocument.mockResolvedValue({ latest: { revision: 1, configuration: ['Monday'] } });
 
       await client.delete(tenantId, 'weekdays');
 
-      expect(axiosMock.delete).toHaveBeenCalled();
+      expect(dataClientMock.deleteConfiguration).toHaveBeenCalled();
       expect(definitionsClientMock.deleteEntry).not.toHaveBeenCalled();
     });
 
@@ -490,20 +510,16 @@ describe('DataRegisterClient', () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': weekdaysDefinition,
       });
-      axiosMock.get.mockResolvedValue({ data: '' });
 
       await client.delete(tenantId, 'weekdays');
 
-      expect(axiosMock.delete).not.toHaveBeenCalled();
+      expect(dataClientMock.deleteConfiguration).not.toHaveBeenCalled();
       expect(definitionsClientMock.deleteEntry).toHaveBeenCalledWith(tenantId, 'data-register:weekdays');
     });
 
     it('throws not found only when neither the definition nor the data exist', async () => {
-      definitionsClientMock.getTenantConfiguration.mockResolvedValue({});
-      axiosMock.get.mockResolvedValue({ data: '' });
-
       await expect(client.delete(tenantId, 'missing')).rejects.toThrow(NotFoundError);
-      expect(axiosMock.delete).not.toHaveBeenCalled();
+      expect(dataClientMock.deleteConfiguration).not.toHaveBeenCalled();
       expect(definitionsClientMock.deleteEntry).not.toHaveBeenCalled();
     });
   });
@@ -513,12 +529,14 @@ describe('DataRegisterClient', () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({
         'data-register:weekdays': weekdaysDefinition,
       });
+      axiosMock.isAxiosError.mockReturnValue(true);
     });
 
     it('maps a configuration-service 403 to a 502 bad gateway error', async () => {
-      const responseError = { response: { status: HttpStatusCodes.FORBIDDEN, data: {} }, message: 'Forbidden' };
-      axiosMock.get.mockRejectedValue(responseError);
-      axiosMock.isAxiosError.mockReturnValue(true);
+      dataClientMock.getDocument.mockRejectedValue({
+        response: { status: HttpStatusCodes.FORBIDDEN, data: {} },
+        message: 'Forbidden',
+      });
 
       await expect(client.get(tenantId, 'weekdays')).rejects.toThrow(
         expect.objectContaining({ extra: expect.objectContaining({ statusCode: HttpStatusCodes.BAD_GATEWAY }) }),
@@ -526,12 +544,10 @@ describe('DataRegisterClient', () => {
     });
 
     it('maps a configuration-service 400 to a 400 invalid operation error', async () => {
-      const responseError = {
+      dataClientMock.getDocument.mockRejectedValue({
         response: { status: HttpStatusCodes.BAD_REQUEST, data: { errorMessage: 'Invalid request' } },
         message: 'Bad Request',
-      };
-      axiosMock.get.mockRejectedValue(responseError);
-      axiosMock.isAxiosError.mockReturnValue(true);
+      });
 
       await expect(client.get(tenantId, 'weekdays')).rejects.toThrow(
         expect.objectContaining({
@@ -542,12 +558,10 @@ describe('DataRegisterClient', () => {
     });
 
     it('maps a configuration-service 500 to a 502 bad gateway error', async () => {
-      const responseError = {
+      dataClientMock.getDocument.mockRejectedValue({
         response: { status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: {} },
         message: 'Server error',
-      };
-      axiosMock.get.mockRejectedValue(responseError);
-      axiosMock.isAxiosError.mockReturnValue(true);
+      });
 
       await expect(client.get(tenantId, 'weekdays')).rejects.toThrow(
         expect.objectContaining({ extra: expect.objectContaining({ statusCode: HttpStatusCodes.BAD_GATEWAY }) }),
@@ -556,7 +570,6 @@ describe('DataRegisterClient', () => {
 
     it('propagates a NotFoundError thrown by the client unchanged', async () => {
       definitionsClientMock.getTenantConfiguration.mockResolvedValue({});
-      axiosMock.get.mockResolvedValue({ data: '' });
 
       await expect(client.get(tenantId, 'missing')).rejects.toThrow(NotFoundError);
     });
