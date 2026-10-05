@@ -1,4 +1,5 @@
 import { Results } from '@core-services/core-common';
+import { DateTime } from 'luxon';
 import { CalendarEntity, CalendarEventEntity } from '../model';
 import { Attendee, CalendarDate, CalendarDateCriteria, CalendarEventCriteria } from '../types';
 
@@ -11,6 +12,12 @@ export interface CalendarRepository {
     after?: string,
     criteria?: CalendarEventCriteria
   ): Promise<Results<CalendarEventEntity>>;
+  getCalendarEventsInRange(
+    calendar: CalendarEntity,
+    from: DateTime,
+    to: DateTime,
+    criteria?: CalendarEventCriteria
+  ): Promise<CalendarEventEntity[]>;
   getCalendarEvent(calendar: CalendarEntity, id: number): Promise<CalendarEventEntity>;
 
   getEventAttendees(event: CalendarEventEntity): Promise<Attendee[]>;
