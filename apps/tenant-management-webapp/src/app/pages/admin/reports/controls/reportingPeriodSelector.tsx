@@ -2,7 +2,7 @@ import { GoabDatePicker, GoabDropdown, GoabDropdownItem, GoabFormItem } from '@a
 import { GoabDatePickerOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { DateTime } from 'luxon';
 import React, { FunctionComponent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { REPORT_PERIOD_PRESETS, ReportPeriodPreset } from '@store/serviceReports/models';
 import { getPeriodValidationError, resolvePeriodRange } from '@store/serviceReports/selectors';
 import { ReportingPeriodFields } from '../styled-components';

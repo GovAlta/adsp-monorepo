@@ -10,7 +10,7 @@ import { AgentChat, Attachment } from '@core-services/app-common';
 import MonacoEditor from '@monaco-editor/react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { DeleteModal } from '@components/DeleteModal';
 import { EditorConfigurationForm } from '@components/EditorConfigurationForm';
 import { FullScreenEditor } from '@components/FullScreenEditor';

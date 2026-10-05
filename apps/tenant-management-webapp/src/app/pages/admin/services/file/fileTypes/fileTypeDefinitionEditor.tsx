@@ -7,7 +7,7 @@ import {
   FileTypeModalContent,
 } from '../styled-components';
 import { TabletMessage } from '@components/TabletMessage';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { EditFileTypeDefinitionEditor } from './editFileTypeDefinitionEditor';
 
 export const FileTypeDefinitionEditor = (): JSX.Element => {

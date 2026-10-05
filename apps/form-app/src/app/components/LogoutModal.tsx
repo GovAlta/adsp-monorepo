@@ -4,7 +4,7 @@ import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components'
 import { clearInterval, setInterval } from 'worker-timers';
 import { getKeycloakExpiry } from '../state';
 import { logoutUser, tenantSelector, AppDispatch, getAccessToken, formSelector, saveFormNow } from '../state';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 export const LogoutModal = (): JSX.Element => {
   const [open, setOpen] = useState<boolean>(false);

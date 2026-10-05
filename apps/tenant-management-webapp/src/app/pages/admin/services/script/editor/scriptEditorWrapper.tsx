@@ -21,7 +21,7 @@ import { PageIndicator } from '@components/Indicator';
 import { ScriptTableComponent } from '../scriptList';
 import { ActionState } from '@store/session/models';
 import { renderNoItem } from '@components/NoItem';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { fetchEventStreams } from '@store/stream/actions';
 
 export const getDefaultTestInput = () => {

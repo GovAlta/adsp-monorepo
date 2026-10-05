@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './Editor.module.scss';
 import { GoabButtonGroup, GoabButton } from '@abgov/react-components';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/types';

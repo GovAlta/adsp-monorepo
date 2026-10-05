@@ -10,7 +10,7 @@ import {
   CenterPositionProgressIndicator,
   TagBadgePadding,
 } from '../styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';

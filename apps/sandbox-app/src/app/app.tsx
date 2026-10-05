@@ -1,6 +1,6 @@
 import '@abgov/web-components/index.css';
 import '@abgov/design-tokens/dist/tokens.css';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import styles from './app.module.scss';
 import { Landing } from './components/Landing';
 

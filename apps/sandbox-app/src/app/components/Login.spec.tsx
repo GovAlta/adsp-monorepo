@@ -2,7 +2,7 @@ import React from 'react';
 import { render, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { Login } from './Login';
 import {
   initializeConfig,
@@ -18,7 +18,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
   useLocation: jest.fn(),
   useNavigate: jest.fn(),
   useParams: jest.fn(),

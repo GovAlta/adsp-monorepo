@@ -3,7 +3,7 @@ import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { PdfTemplatesEditor } from './pdfTemplateEditor';
 
-jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
+jest.mock('react-router', () => ({ useNavigate: () => jest.fn() }));
 jest.mock('./previewEditor/TemplateEditor', () => ({
   TemplateEditor: ({ previewVisible, onTogglePreview }: { previewVisible: boolean; onTogglePreview: () => void }) => (
     <button type="button" onClick={onTogglePreview}>

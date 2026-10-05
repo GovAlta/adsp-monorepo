@@ -1,6 +1,6 @@
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import { io, Socket } from 'socket.io-client';
 import { Band, Container, Grid, GridItem, type UserContent } from '@core-services/app-common';
 import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';

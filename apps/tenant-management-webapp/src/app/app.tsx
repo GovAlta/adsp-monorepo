@@ -2,7 +2,7 @@ import '@style/app.css';
 import '@style/colors.scss';
 
 import React, { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import LandingPage from '@pages/public/Landing';
 import { SignInError } from '@pages/public/SignInError';

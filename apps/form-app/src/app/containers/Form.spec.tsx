@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mockState: any;

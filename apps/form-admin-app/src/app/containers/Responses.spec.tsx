@@ -1,14 +1,14 @@
 import { fireEvent, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import configureStore from 'redux-mock-store';
 import { Responses } from './Responses';
 import { findForms, getDefaultFormCriteria, getDefaultResultsSort } from '../state';
 import { FormStatus } from '../state/types';
 
 const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+  ...jest.requireActual('react-router'),
   useNavigate: () => mockNavigate,
 }));
 

@@ -11,7 +11,7 @@ import {
 import { ConfigurationEditor } from './ConfigurationEditor';
 import { ConfigurationData } from './ConfigurationData';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { TabletMessage } from '@components/TabletMessage';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';

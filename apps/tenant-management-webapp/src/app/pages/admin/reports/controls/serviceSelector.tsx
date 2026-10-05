@@ -3,7 +3,7 @@ import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { RootState } from '@store/index';
 import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { reportsPath } from '../paths';
 import { getAvailableServiceReports } from '../registry/serviceReportRegistry';
 

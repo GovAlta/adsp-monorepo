@@ -3,7 +3,7 @@ import '@abgov/design-tokens/dist/tokens.css';
 import { AuthCallback } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useParams, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useParams, useLocation } from 'react-router';
 
 import styles from './app.module.scss';
 import { Layout } from './layout';

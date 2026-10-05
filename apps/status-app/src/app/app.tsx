@@ -5,7 +5,7 @@ import '@style/colors.scss';
 import '@style/goa-core.scss';
 import { fetchConfig, recaptchaScriptLoaded } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, BrowserRouter as Router } from 'react-router-dom';
+import { Route, Routes, BrowserRouter as Router } from 'react-router';
 import ServiceStatusPage from './pages/status';
 import { RootState } from '@store/index';
 import '@abgov/web-components/index.css';

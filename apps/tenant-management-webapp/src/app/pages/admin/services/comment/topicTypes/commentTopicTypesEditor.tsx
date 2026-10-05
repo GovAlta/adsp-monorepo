@@ -7,7 +7,7 @@ import {
 } from '../styled-components';
 import { ModalContent } from '../../styled-components';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { AddEditCommentTopicTypeEditor } from './addEditCommentTopicTypeEditor';
 import { TabletMessage } from '@components/TabletMessage';
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { GoabButton } from '@abgov/react-components';
 
 import { OverviewLayout } from '@components/Overview';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ScriptEditorWrapper } from './editor/scriptEditorWrapper';
 
 interface ScriptOverviewProps {

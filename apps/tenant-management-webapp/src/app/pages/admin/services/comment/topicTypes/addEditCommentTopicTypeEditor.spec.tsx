@@ -5,7 +5,7 @@ import { AddEditCommentTopicTypeEditor } from './addEditCommentTopicTypeEditor';
 import { Provider } from 'react-redux';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
   useParams: () => ({
     id: '122',
   }),
@@ -55,7 +55,7 @@ describe('Comment Component', () => {
     const saveButton = baseElement.querySelector("goa-button[testId='comment-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
-      expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
+      expect(require('react-router').useHistory().push).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,7 +1,7 @@
 import { GoabButton, GoabSideMenu } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import styled from 'styled-components';
 import { AppDispatch, definitionSelector, loginUser, logoutUser, tenantSelector, userSelector } from '../state';
 

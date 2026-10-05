@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { GoabButton, GoabContainer, GoabGrid, GoabIcon, GoabPagination, GoabTable } from '@abgov/react-components';
 import type { GoabPaginationOnChangeDetail } from '@abgov/ui-components-common';
 import { GoAContextMenuIcon } from '@components/ContextMenu';

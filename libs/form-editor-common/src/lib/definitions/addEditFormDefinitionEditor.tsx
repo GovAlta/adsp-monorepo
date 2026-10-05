@@ -19,7 +19,7 @@ import {
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';

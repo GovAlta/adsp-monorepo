@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
 import StatusPage from './status';
 
 function Index(): JSX.Element {

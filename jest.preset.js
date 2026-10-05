@@ -1,3 +1,4 @@
+const path = require('path');
 const nxPreset = require('@nx/jest/preset').default;
 module.exports = {
   ...nxPreset,
@@ -11,5 +12,6 @@ module.exports = {
     },
   },
   transformIgnorePatterns: ['node_modules/(?!(uuid)/)'],
+  setupFiles: [...(nxPreset.setupFiles || []), path.join(__dirname, 'jest.polyfills.js')],
 };
 process.env.TZ = 'UTC';

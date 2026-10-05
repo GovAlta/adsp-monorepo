@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router';
 import {
   AppDispatch,
   definitionSelector,

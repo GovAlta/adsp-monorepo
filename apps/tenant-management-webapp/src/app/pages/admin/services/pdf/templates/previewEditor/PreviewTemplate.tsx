@@ -17,7 +17,7 @@ import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import { streamPdfSocket } from '@store/pdf/action';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { PageIndicator, IndicatorWithDelay, Center } from '@components/Indicator';
 import useWindowDimensions from '@lib/useWindowDimensions';
 

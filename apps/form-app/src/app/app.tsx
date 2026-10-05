@@ -1,7 +1,7 @@
 import '@abgov/web-components/index.css';
 import '@abgov/design-tokens/dist/tokens.css';
 import { AuthCallback } from '@core-services/app-common';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router';
 import { FormTenant } from './containers/FormTenant';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';

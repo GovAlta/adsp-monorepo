@@ -36,7 +36,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper, SearchRow, SearchInputWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 

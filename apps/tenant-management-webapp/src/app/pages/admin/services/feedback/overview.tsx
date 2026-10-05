@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoabButton } from '@abgov/react-components';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 import { useDispatch } from 'react-redux';
 

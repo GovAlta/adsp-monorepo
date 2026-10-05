@@ -189,7 +189,8 @@ export function createPreviewScript(
 
           // In srcdoc previews, react-router URL construction can throw because
           // window.location is about:srcdoc. Use MemoryRouter in preview only.
-          if (specifier === 'react-router-dom' && dep && dep.MemoryRouter) {
+          // Generated templates still import 'react-router-dom' (v6); builder-app itself uses 'react-router' (v7).
+          if ((specifier === 'react-router-dom' || specifier === 'react-router') && dep && dep.MemoryRouter) {
             return {
               ...dep,
               BrowserRouter: dep.MemoryRouter,

@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 
 import { NotificationTypes } from './notificationTypes';
 import { DELETE_NOTIFICATION_TYPE, UPDATE_NOTIFICATION_TYPE } from '@store/notification/actions';

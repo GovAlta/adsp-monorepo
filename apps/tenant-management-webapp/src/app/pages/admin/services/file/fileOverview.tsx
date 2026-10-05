@@ -5,7 +5,7 @@ import { GoabButton } from '@abgov/react-components';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { NoPaddingH2 } from '@components/AppHeader';
 
 interface FileOverviewProps {

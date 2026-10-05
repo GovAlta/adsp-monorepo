@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { GoabButton } from '@abgov/react-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 interface AgentOverviewProps {
   setOpenAddAgent: (val: boolean) => void;

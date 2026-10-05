@@ -2,7 +2,7 @@ import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Route, Routes, useParams, useNavigate, Navigate } from 'react-router';
 import styled from 'styled-components';
 import {
   AppDispatch,

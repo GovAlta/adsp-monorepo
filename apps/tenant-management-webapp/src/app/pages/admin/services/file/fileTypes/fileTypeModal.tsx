@@ -9,7 +9,7 @@ import { toKebabName } from '@lib/kebabName';
 
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface FileTypeModalProps {

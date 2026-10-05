@@ -7,7 +7,7 @@ import {
   FormEditor,
   ModalContent,
 } from '../styled-components';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
 import { TabletMessage } from '@components/TabletMessage';
 import { useDispatch, useSelector } from 'react-redux';

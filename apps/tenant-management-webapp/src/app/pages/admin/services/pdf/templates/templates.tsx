@@ -9,7 +9,7 @@ import { PdfTemplatesTable } from './templatesList';
 import { CorePdfTemplatesTable } from './coreTemplatesList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultPdfTemplate } from '@store/pdf/model';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { DeleteModal } from '@components/DeleteModal';
 
 interface PdfTemplatesProps {

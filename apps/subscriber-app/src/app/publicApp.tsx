@@ -6,7 +6,7 @@ import { NotificationBanner } from './notificationBanner';
 import Header from '@components/AppHeader';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router';
 import PublicSubscriptions from '@pages/public/Subscriptions';
 import Login from '@pages/public/Login';
 import LogoutRedirect from '@pages/public/LogoutRedirect';

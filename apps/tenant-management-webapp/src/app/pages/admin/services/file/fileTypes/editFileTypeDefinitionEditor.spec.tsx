@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { FETCH_FILE_TYPE } from '@store/file/actions';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
   useParams: () => ({
     id: '122',
   }),
@@ -113,7 +113,7 @@ describe('EditFileTypeDefinitionEditor', () => {
     const saveButton = baseElement.querySelector("goa-button[testId='form-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
-      expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
+      expect(require('react-router').useHistory().push).not.toHaveBeenCalled();
     });
   });
 });

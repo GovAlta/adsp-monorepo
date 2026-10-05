@@ -1,6 +1,6 @@
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { FullScreenEditor } from '@components/FullScreenEditor';
 import { useState } from 'react';
 

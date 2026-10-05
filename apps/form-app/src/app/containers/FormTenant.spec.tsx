@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 
 // The container reads the store through plain selectors, so feeding them a state object is enough
 // and avoids standing up the real store.

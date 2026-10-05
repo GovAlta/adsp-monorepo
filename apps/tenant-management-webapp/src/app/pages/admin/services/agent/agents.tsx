@@ -10,7 +10,7 @@ import { deleteAgent, getAgents, updateAgent } from '@store/agent/actions';
 import { AgentsTable } from './agentsTable';
 import { AddEditAgentModal } from './addEditAgentModal';
 import { AgentConfiguration } from '@store/agent/model';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { agentBusySelector } from '../../../../store/agent/selectors';
 import { Center } from '@components/Indicator';
 interface AgentsProps {

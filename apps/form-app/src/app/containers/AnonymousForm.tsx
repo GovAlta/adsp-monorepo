@@ -1,6 +1,6 @@
 import { Container, Grid, GridItem, Recaptcha } from '@core-services/app-common';
 import { FunctionComponent, useCallback, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { SubmittedForm } from '../components/SubmittedForm';

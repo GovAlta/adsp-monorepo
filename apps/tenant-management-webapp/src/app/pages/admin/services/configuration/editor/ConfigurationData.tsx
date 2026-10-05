@@ -8,7 +8,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { getConfigurationActive } from '@store/configuration/action';
 import { RootState } from '@store/index';
 
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useDebounce } from '@lib/useDebounce';
 import { CustomLoader } from '@components/CustomLoader';
 import { ConfigDefinition } from '@store/configuration/model';

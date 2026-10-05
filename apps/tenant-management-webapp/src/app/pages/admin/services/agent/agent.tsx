@@ -6,7 +6,7 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { Agents } from './agents';
 import { AgentOverview } from './overview';
 import { HeadingDiv } from '../styled-components';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { AsidePadding } from '../../../../components/Html';
 
 export const Agent: FunctionComponent = () => {

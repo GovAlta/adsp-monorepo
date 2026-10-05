@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import { Script } from './script';
 import { ScriptsView } from './scriptsView';
 

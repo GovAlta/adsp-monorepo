@@ -3,7 +3,7 @@ import { Container } from '@core-services/app-common';
 import { getNavigationTargetFromParams, NAVIGATION_PARAMS, NavigationOutcome } from '@abgov/jsonforms-components';
 import { FunctionComponent, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router';
 import styled from 'styled-components';
 import {
   AppDispatch,

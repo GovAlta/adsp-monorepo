@@ -1,7 +1,7 @@
 import { GoabAppHeader, GoabButton, GoabMicrositeHeader } from '@abgov/react-components';
 import React, { useEffect } from 'react';
 import { AccountActionsDiv } from './styled-components';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AppDispatch,

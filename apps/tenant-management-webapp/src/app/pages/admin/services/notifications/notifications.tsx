@@ -4,7 +4,7 @@ import { Tab, Tabs } from '@components/Tabs';
 
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationType/notificationTypes';
 import { Subscriptions } from './subscription/subscriptions';

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { AppDispatch, RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';

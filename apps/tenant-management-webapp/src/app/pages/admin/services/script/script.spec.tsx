@@ -5,7 +5,7 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ScriptsView } from './scriptsView';
 import { SESSION_INIT } from '@store/session/models';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 describe('Script list Page', () => {
   const mockStore = configureStore([]);
   const store = mockStore({

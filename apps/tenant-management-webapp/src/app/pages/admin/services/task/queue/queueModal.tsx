@@ -4,7 +4,7 @@ import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from 
 import { NamespaceDropdown } from '@components/NamespaceDropdown';
 
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { TaskDefinition } from '@store/task/model';
 import {
   badCharsCheck,

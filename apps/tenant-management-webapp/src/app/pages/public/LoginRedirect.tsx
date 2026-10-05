@@ -3,7 +3,7 @@ import { Page } from '@components/Html';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { KeycloakCheckSSO } from '@store/tenant/actions';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { LOGIN_TYPES } from '@lib/keycloak';
 import { takeAdminReturnLocation } from '@lib/ssoRedirect';
 

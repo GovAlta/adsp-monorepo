@@ -24,7 +24,7 @@ import {
   formActions,
   formResultTotalsSelector,
 } from '../state';
-import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { NavigateFunction, useNavigate } from 'react-router';
 import { AddTagModal } from '../components/AddTagModal';
 import { SearchLayout } from '../components/SearchLayout';
 import { ContentContainer } from '../components/ContentContainer';

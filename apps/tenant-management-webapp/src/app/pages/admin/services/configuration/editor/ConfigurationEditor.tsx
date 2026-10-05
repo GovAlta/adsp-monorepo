@@ -20,7 +20,7 @@ import { getConfigurationActive } from '@store/configuration/action';
 import { setPdfDisplayFileId } from '@store/pdf/action';
 import { RootState } from '@store/index';
 
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 
 import { ConfigForm } from './ConfigForm';
 import { ConfigDefinition, defaultConfigDefinition } from '@store/configuration/model';

@@ -3,15 +3,15 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Agents } from './agents';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
   useSelector: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+  ...jest.requireActual('react-router'),
   useNavigate: jest.fn(),
 }));
 

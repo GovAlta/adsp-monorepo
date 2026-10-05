@@ -13,7 +13,7 @@ import { SUBSCRIBE_TO_TENANT } from '../store/status/actions';
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
   useLocation: jest.fn().mockReturnValue({
     pathname: '/0014430f-abb9-4b57-915c-de9f3c889696',
     search: '',

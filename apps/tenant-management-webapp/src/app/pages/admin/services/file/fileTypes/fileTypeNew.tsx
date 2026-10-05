@@ -6,7 +6,7 @@ import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 
 import { createSelector } from 'reselect';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { FileTypeDefault } from '@store/file/models';
 interface AddFileTypeProps {
   roles: Role[];

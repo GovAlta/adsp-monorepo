@@ -1,6 +1,6 @@
 import { FunctionComponent, Suspense, lazy, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import styled from 'styled-components';
 import {
   AppDispatch,

@@ -20,7 +20,7 @@ import {
   ButtonMargin,
 } from '../private/Subscriptions/styled-components';
 
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';

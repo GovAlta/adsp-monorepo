@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoabButton } from '@abgov/react-components';
 import { CodeSpan, PRE, FeedbackOverviewSection } from './styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import { useDispatch, useSelector } from 'react-redux';

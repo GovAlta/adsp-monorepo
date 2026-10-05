@@ -8,7 +8,7 @@ import AsideLinks from '@components/AsideLinks';
 import { useSelector } from 'react-redux';
 import { taskAppLoginUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { AsidePadding } from '../../../../components/Html';
 
 export const Task: FunctionComponent = () => {

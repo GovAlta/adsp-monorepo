@@ -1,7 +1,7 @@
 import { GoabButton, GoabMicrositeHeader } from '@abgov/react-components';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router';
 import styled from 'styled-components';
 import {
   AppDispatch,

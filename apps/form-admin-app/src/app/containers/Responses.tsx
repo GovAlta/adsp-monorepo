@@ -9,7 +9,7 @@ import {
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { NavigateFunction, useNavigate } from 'react-router';
 import {
   AppDispatch,
   formBusySelector,

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import { Container, TextGoASkeleton } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router';
 
 import { GoabButton, GoabCallout, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';

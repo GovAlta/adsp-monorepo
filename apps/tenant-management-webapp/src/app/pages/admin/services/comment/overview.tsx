@@ -3,7 +3,7 @@ import { GoabButton } from '@abgov/react-components';
 import { OverviewLayout } from '@components/Overview';
 import { fetchCommentMetrics } from '@store/comment/action';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { CommentMetrics } from './metrics';
 
 interface CommentOverviewProps {

@@ -13,7 +13,7 @@ jest.mock('socket.io-client', () => ({
     disconnect: jest.fn(),
   })),
 }));
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
   useParams: () => ({
     id: 'A-file-server-image-test',
   }),
@@ -110,7 +110,7 @@ describe('Pdf Component', () => {
     const saveButton = baseElement.querySelector("goa-button[testId='template-form-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
-      expect(require('react-router-dom').useHistory().push).not.toHaveBeenCalled();
+      expect(require('react-router').useHistory().push).not.toHaveBeenCalled();
     });
   });
 

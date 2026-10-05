@@ -40,7 +40,7 @@ import {
 
 import { RootState, AppDispatch } from '@store/index';
 import { FetchFileService, UploadFileService } from '@store/file/actions';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
 import { CustomLoader } from '@components/CustomLoader';

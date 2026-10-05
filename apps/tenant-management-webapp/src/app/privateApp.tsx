@@ -1,7 +1,7 @@
 // clean-code-ignore: RULE-19
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';

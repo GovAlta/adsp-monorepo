@@ -5,7 +5,7 @@ import { DeleteScript } from '@store/script/actions';
 import { ScriptItem } from '@store/script/models';
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { TableDataScriptDescription, TableDataScriptId, TableDataScriptName } from '../form/styled-components';
 import { TableDiv } from './styled-components';
 import { renderNoItem } from '@components/NoItem';

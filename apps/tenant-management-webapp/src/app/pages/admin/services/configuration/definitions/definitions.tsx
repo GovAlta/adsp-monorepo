@@ -13,7 +13,7 @@ import {
 } from '@store/configuration/action';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { DeleteModal } from '@components/DeleteModal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { NameDiv } from '../../styled-components';
 
 interface ParentCompProps {

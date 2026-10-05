@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { GoabButton } from '@abgov/react-components';
 import { TenantBasicInfo } from '@store/tenant/models';
 

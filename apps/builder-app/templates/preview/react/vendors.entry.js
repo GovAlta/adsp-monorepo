@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
 import * as ReactJsxRuntime from 'react/jsx-runtime';
-import * as ReactRouterDom from 'react-router-dom';
+import * as ReactRouter from 'react-router';
 import * as AbgovReactComponents from '@abgov/react-components';
 import * as AbgovWebComponents from '@abgov/web-components';
 import '@abgov/web-components/index.css';
@@ -15,16 +15,15 @@ import * as AjvFormats from 'ajv-formats';
 import * as AjvErrors from 'ajv-errors';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
-const registry = (globalScope.__BUILDER_TEMPLATE_DEPS__ =
-  globalScope.__BUILDER_TEMPLATE_DEPS__ || {});
+const registry = (globalScope.__BUILDER_TEMPLATE_DEPS__ = globalScope.__BUILDER_TEMPLATE_DEPS__ || {});
 
 registry['react'] = React;
 registry['react-dom'] = ReactDOM;
 registry['react-dom/client'] = ReactDOMClient;
 registry['react/jsx-runtime'] = ReactJsxRuntime;
 registry['react/jsx-dev-runtime'] = ReactJsxRuntime;
-registry['react-router-dom'] = ReactRouterDom;
-registry['react-router'] = ReactRouterDom;
+registry['react-router-dom'] = ReactRouter;
+registry['react-router'] = ReactRouter;
 registry['@abgov/react-components'] = AbgovReactComponents;
 registry['@abgov/web-components'] = AbgovWebComponents;
 registry['@abgov/web-components/index.css'] = {};

@@ -10,7 +10,7 @@ import {
 import { Container } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import styled from 'styled-components';
 import {
   AppDispatch,

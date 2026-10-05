@@ -5,7 +5,7 @@ import { REPORT_PERIOD_PRESETS, ReportPeriodPreset, ReportingPeriod } from '@sto
 import { resolvePeriodRange } from '@store/serviceReports/selectors';
 import React, { FunctionComponent, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, useParams, useSearchParams } from 'react-router';
 import { ReportingPeriodSelector } from './controls/reportingPeriodSelector';
 import { ServiceSelector } from './controls/serviceSelector';
 import { registerPdfReportLoaders } from './registry/registerPdfLoaders';

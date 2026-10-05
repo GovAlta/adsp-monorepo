@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { GoabCallout, GoabGrid, GoabTooltip } from '@abgov/react-components';
 
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Main, Page } from '@components/Html';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';

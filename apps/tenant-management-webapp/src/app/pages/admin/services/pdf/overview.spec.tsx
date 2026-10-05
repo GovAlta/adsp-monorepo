@@ -5,7 +5,7 @@ import { PdfOverview } from './overview';
 import { render, screen } from '@testing-library/react';
 import { PdfMetrics } from './metrics';
 import { defaultState } from '@store/pdf/reducers';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 
 describe('Test Pdf overview page', () => {
   const mockStore = configureStore([]);

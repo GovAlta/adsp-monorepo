@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Page } from '@components/Html';
 import { RootState, setSession } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { LOGIN_TYPES, getOrCreateKeycloakAuth } from '@lib/keycloak';
 
 interface LoginProps {
