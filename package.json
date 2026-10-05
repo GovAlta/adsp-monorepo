@@ -382,9 +382,6 @@
     "engine.io": "6.6.9",
     "websocket-driver": "0.7.5",
     "http-proxy-middleware": "3.0.7",
-    "webpack-dev-server": {
-      "http-proxy-middleware": "^2.0.9"
-    },
     "piscina": "5.3.0",
     "js-yaml": "4.3.2",
     "@xmldom/xmldom": "0.8.15",
