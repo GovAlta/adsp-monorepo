@@ -38,6 +38,8 @@ import { JsonformsExternalNavigation } from './services/jsonforms/JsonformsExter
 import { JsonformsReviewNavigation } from './services/jsonforms/JsonformsReviewNavigation';
 import { DesignSystemsMain } from './services/DesignSystemsMain';
 import { DesignSystemsExampleOne } from './services/design-systems/DesignSystemsExampleOne';
+import { PlanningPokerMain } from './services/planning-poker/PlanningPokerMain';
+import { PlanningPokerBoard } from './services/planning-poker/PlanningPokerBoard';
 import { FeedbackNotification } from './FeedbackNotification';
 
 export const SandBoxTenant = () => {
@@ -110,6 +112,10 @@ export const SandBoxTenant = () => {
 
                 <Route path="/services/notification" element={<NotificationServiceMain tenantName={tenantName} />} />
                 <Route path="/services/pdf" element={<PDFServiceMain tenantName={tenantName} />} />
+
+                <Route path="/services/planning-poker" element={<PlanningPokerMain tenantName={tenantName} />} />
+                <Route path="/services/planning-poker/:sessionId" element={<PlanningPokerBoard />} />
+
                 <Route path="/services/script" element={<ScriptServiceMain tenantName={tenantName} />} />
                 <Route path="/services/sharepoint" element={<SharepointServiceMain tenantName={tenantName} />} />
                 <Route path="/services/status" element={<StatusServiceMain tenantName={tenantName} />} />

@@ -108,6 +108,13 @@ const SERVICES: ServiceInfo[] = [
     url: '/sharepoint',
   },
   {
+    id: 'PlanningPoker',
+    name: 'Planning poker',
+    show: true,
+    description: 'Team estimation built on script, value, event and push services',
+    url: '/planning-poker',
+  },
+  {
     id: 'ScriptService',
     name: 'Script service',
     show: true,
