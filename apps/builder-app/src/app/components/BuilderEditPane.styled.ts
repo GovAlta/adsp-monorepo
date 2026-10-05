@@ -123,8 +123,25 @@ export const ChatPane = styled.div`
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   padding: 0.75rem 0.75rem 1rem;
   box-sizing: border-box;
+`;
+
+export const PreviewErrorNotice = styled.div`
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff3f0;
+  border: 1px solid #f0b8ae;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #5c1b14;
+  line-height: 1.4;
 `;
 
 export const InfoPaneBody = styled.div`

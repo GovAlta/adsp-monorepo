@@ -10,7 +10,6 @@ import {
   GoabAppFooter,
 } from '@abgov/react-components';
 import { Link, useNavigate } from 'react-router-dom';
-import heroBannerImage from '../assets/hero-banner.png';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -32,7 +31,11 @@ export default function Home() {
       </section>
 
       <div className="hero-banner-wrapper">
-        <GoabHeroBanner heading="Welcome to your Alberta service" backgroundUrl={heroBannerImage}>
+        <GoabHeroBanner
+          heading="Welcome to your Alberta service"
+          backgroundUrl="https://images.unsplash.com/photo-1506104489822-562ca25152fe?w=1280&auto=format&fit=crop&q=80"
+          textColor="#ffffff"
+        >
           <p className="hero-subtitle">
             This starter combines an information-focused service website with an integrated ADSP
             application form so teams can prototype and iterate quickly.
