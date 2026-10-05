@@ -344,6 +344,78 @@ export function createPreviewScript(
 
       const vendorBundleUrl = ${JSON.stringify(vendorBundleUrl)};
 
+      // Capture runtime errors and unhandled rejections that occur during user
+      // interaction (after initial render). Shows a pinned banner in the preview
+      // and posts the error to the parent frame so the builder can automatically
+      // include it in the next message sent to the agent.
+      function showPreviewErrorBanner(message, stack) {
+        var existing = document.getElementById('__preview-error-banner__');
+        if (existing) existing.remove();
+        var banner = document.createElement('div');
+        banner.id = '__preview-error-banner__';
+        banner.setAttribute('style', 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#fff3f0;border-bottom:3px solid #c42c2c;padding:10px 40px 10px 14px;font:13px/1.5 monospace;color:#5c1b14;');
+        var label = document.createElement('span');
+        label.innerHTML = '<strong>Preview error</strong> — ';
+        banner.appendChild(label);
+        var msg = document.createTextNode(String(message));
+        banner.appendChild(msg);
+        if (stack) {
+          var pre = document.createElement('pre');
+          pre.setAttribute('style', 'margin:4px 0 0;font-size:11px;opacity:0.75;white-space:pre-wrap;');
+          pre.textContent = stack.split('\\n').slice(0, 5).join('\\n');
+          banner.appendChild(pre);
+        }
+        var close = document.createElement('button');
+        close.setAttribute('style', 'position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;font-size:16px;color:#5c1b14;line-height:1;');
+        close.setAttribute('aria-label', 'Dismiss');
+        close.textContent = '×';
+        close.addEventListener('click', function() { banner.remove(); });
+        banner.appendChild(close);
+        document.body.appendChild(banner);
+      }
+
+      function reportPreviewError(message, stack) {
+        showPreviewErrorBanner(message, stack);
+        try { window.parent.postMessage({ type: 'preview-error', message: message, stack: stack || '' }, '*'); } catch (_) {}
+      }
+
+      window.addEventListener('error', function(e) {
+        reportPreviewError(e.message || String(e.error), e.error && e.error.stack ? e.error.stack : '');
+      });
+
+      window.addEventListener('unhandledrejection', function(e) {
+        var msg = e.reason instanceof Error ? e.reason.message : String(e.reason || 'Unhandled promise rejection');
+        var stack = e.reason instanceof Error ? (e.reason.stack || '') : '';
+        reportPreviewError(msg, stack);
+      });
+
+      // Prevent plain anchor links (e.g. GoabAppHeader url="/") from navigating
+      // the iframe to the builder app URL. Runs in bubble phase so React Router
+      // <Link> clicks are handled first — React Router calls e.preventDefault()
+      // before the event reaches document, so e.defaultPrevented is true by the
+      // time our handler runs and we skip those. Shadow DOM links (GoAB web
+      // components) never reach React Router, so we catch them here via
+      // composedPath() which exposes the full path including shadow DOM elements.
+      document.addEventListener('click', function(e) {
+        if (e.defaultPrevented) { return; }
+        var path = e.composedPath ? e.composedPath() : [];
+        var anchor = null;
+        for (var i = 0; i < path.length; i++) {
+          if (path[i].tagName === 'A') { anchor = path[i]; break; }
+        }
+        if (!anchor) { return; }
+        var href = anchor.getAttribute('href');
+        if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+          e.preventDefault();
+          // Resolve the href to a router path and let the app navigate internally.
+          // e.g. url="/" on GoabAppHeader should take the user to the home route.
+          try {
+            var routePath = new URL(href, 'http://localhost').pathname || '/';
+            window.dispatchEvent(new CustomEvent('preview:navigate', { detail: routePath }));
+          } catch (_) {}
+        }
+      });
+
       (async function() {
         try {
           restoreRouteState();
