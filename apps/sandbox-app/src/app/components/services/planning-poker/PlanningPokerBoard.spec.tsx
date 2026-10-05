@@ -12,7 +12,7 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router-v7', () => ({
   useParams: () => ({ tenant: 'autotest', sessionId: '8b0f6a52-3c9d-4f1e-9a57-2d6c1e0b7f43' }),
 }));
 

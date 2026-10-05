@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-v7';
 import { v4 as uuidv4 } from 'uuid';
 import { GoabButton, GoabButtonGroup, GoabContainer, GoabFormItem, GoabInput, GoabText } from '@abgov/react-components';
 import { POKER_NICKNAME_MAX_LENGTH } from '../../../state';
