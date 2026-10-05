@@ -11,10 +11,11 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@abgov/jsonforms-components": "^2.60.12",
-    "@abgov/react-components": "^6.11.0",
-    "@abgov/ui-components-common": "^1.9.1",
-    "@abgov/web-components": "^1.41.0",
+    "@abgov/jsonforms-components": "^2.79.0",
+    "@abgov/react-components": "^7.2.2",
+    "@abgov/ui-components-common": "^2.2.1",
+    "@abgov/design-tokens": "^2.12.8",
+    "@abgov/web-components": "^2.2.2",
     "@jsonforms/core": "^3.1.0",
     "@jsonforms/react": "^3.1.0",
     "@mdx-js/mdx": "^3.1.0",

@@ -117,7 +117,7 @@
       "outputs": ["{projectRoot}/.generated/template-bundles/react"],
       "options": {
         "commands": [
-          "npm ci --prefix apps/builder-app/templates/react",
+          "npm ci --prefix apps/builder-app/templates/react --legacy-peer-deps",
           "node apps/builder-app/scripts/build-template-react-vendors.js"
         ],
         "parallel": false
