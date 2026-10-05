@@ -615,15 +615,57 @@ describe('subscription router documented behaviour', () => {
     });
   });
 
-  // Skipped until CS-5492 is fixed: the route registers the handler factory instead of the handler, so requests
-  // hang. The route is also not in subscription.swagger.yml yet.
   describe('GET /subscribers/:subscriber/types/:type/channels', () => {
-    it.skip('responds with the channels of the subscription that the type can send to', async () => {
+    const channelsPath = (subscriberId: string, typeId = 'self-service') =>
+      `/subscription/v1/subscribers/${subscriberId}/types/${typeId}/channels`;
+
+    it('responds with the channels of the subscription that the type can send to', async () => {
+      const withTemplates = type('self-service', {
+        manageSubscribe: true,
+        subscriberRoles: ['applicant'],
+        channels: [Channel.email, Channel.sms],
+        events: [{ namespace: 'test', name: 'happened', templates: { email: { subject: 's', body: 'b' } } }],
+      } as never);
+      jest.spyOn(configuration, 'getNotificationType').mockReturnValueOnce(withTemplates);
       subscribe('self-service', applicantSubscriberId);
-      const res = await request(createApp(applicant)).get(
-        `/subscription/v1/subscribers/${applicantSubscriberId}/types/self-service/channels`,
-      );
+
+      const res = await request(createApp(applicant)).get(channelsPath(applicantSubscriberId));
       expect(res.status).toBe(200);
+      expect(res.body).toEqual([{ channel: Channel.email, address: 'applicant-user@test.co', verified: false }]);
+    });
+
+    it('responds with no channels when the type has no events', async () => {
+      subscribe('self-service', applicantSubscriberId);
+      const res = await request(createApp(applicant)).get(channelsPath(applicantSubscriberId));
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it('responds 403 when the user cannot access the subscriber', async () => {
+      subscribe('self-service', otherSubscriberId);
+      const res = await request(createApp(applicant)).get(channelsPath(otherSubscriberId));
+      expect(res.status).toBe(403);
+      expect(repositoryMock.getSubscription).not.toHaveBeenCalled();
+    });
+
+    it('responds 404 when the subscriber is not subscribed to the type', async () => {
+      const res = await request(createApp(admin)).get(channelsPath(otherSubscriberId));
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 404 for an unknown subscriber', async () => {
+      const res = await request(createApp(admin)).get(channelsPath(unknownSubscriberId));
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 404 for an unknown type', async () => {
+      const res = await request(createApp(admin)).get(channelsPath(otherSubscriberId, 'unknown'));
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 400 for a subscriber ID that is not valid', async () => {
+      const res = await request(createApp(admin)).get(channelsPath('not-an-id'));
+      expect(res.status).toBe(400);
     });
   });
 
