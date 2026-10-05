@@ -372,8 +372,8 @@ describe('router', () => {
       });
     });
 
-    it('can get configuration entity for unauthenticated users.', (done) => {
-      const rateLimitHandler = jest.fn();
+    it('can get configuration entity for unauthenticated users with rate limiting.', (done) => {
+      const rateLimitHandler = jest.fn((_req, _res, next) => next());
       const handler = getConfigurationEntity(
         configurationServiceId,
         repositoryMock,
@@ -441,6 +441,7 @@ describe('router', () => {
       handler(req, null, () => {
         try {
           expect(req.user).toBeNull();
+          expect(rateLimitHandler).toHaveBeenCalledTimes(1);
           expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
           expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
           done();
