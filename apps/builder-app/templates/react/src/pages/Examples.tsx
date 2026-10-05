@@ -1,31 +1,9 @@
-import {
-  GoabButton,
-  GoabCallout,
-  GoabOneColumnLayout,
-  GoabAppHeader,
-  GoabPageBlock,
-  GoabGrid,
-  GoabAppFooter,
-} from '@abgov/react-components';
-import { Link } from 'react-router-dom';
+import { GoabButton, GoabCallout, GoabPageBlock, GoabGrid } from '@abgov/react-components';
+import PublicLayout from '../layouts/PublicLayout';
 
 export default function Examples() {
   return (
-    <GoabOneColumnLayout>
-      <section slot="header" className="app-header-shell">
-        <GoabAppHeader url="/" heading="Government Service">
-          <Link to="/apply" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Apply
-          </Link>
-          <Link to="/components" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Components
-          </Link>
-          <Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>
-            About
-          </Link>
-        </GoabAppHeader>
-      </section>
-
+    <PublicLayout>
       <GoabPageBlock width="704px">
         <div className="page-content">
           <h1 className="page-title">Design System Components</h1>
@@ -107,9 +85,6 @@ export default function Examples() {
         </div>
       </GoabPageBlock>
 
-      <section slot="footer">
-        <GoabAppFooter></GoabAppFooter>
-      </section>
-    </GoabOneColumnLayout>
+    </PublicLayout>
   );
 }
