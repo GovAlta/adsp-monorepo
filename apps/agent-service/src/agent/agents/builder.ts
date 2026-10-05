@@ -124,10 +124,10 @@ export const builderAgent: AgentConfiguration = {
     ## Workflow
 
     1. At the start of the conversation, use mastra_workspace_list_files ('.') to understand the current workspace state.
-    2. Check for project instruction files and follow them when present:
-       - AGENTS.md (root or relevant subdirectory)
-       - .github/copilot-instructions.md
-       - other instruction files referenced by the project
+    2. If AGENTS.md exists in the workspace root, use mastra_workspace_read_file to READ IT IN FULL before doing anything else.
+       AGENTS.md contains mandatory rules about which components exist, which shells to use, and how to avoid known errors.
+       Do NOT skip this step or defer it — violating AGENTS.md rules causes preview crashes.
+       Also read any other instruction files when present (.github/copilot-instructions.md, etc.).
     3. Inspect key project files to infer stack and structure before making changes
        (for example package.json, tsconfig.json, src/main.*, src/App.*).
     4. Read relevant files with mastra_workspace_read_file before editing them.

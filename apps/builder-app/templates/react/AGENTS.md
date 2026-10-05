@@ -18,13 +18,15 @@ src/
 │   └── adspForm.ts         # ADSP form integration config (mock/live)
 ├── components/
 │   └── FormComponent.tsx   # ADSP JSON forms wrapper
+├── layouts/
+│   └── PublicLayout.tsx    # GoabOneColumnLayout + GoabAppHeader (nav lives HERE) + GoabAppFooter
 ├── lib/
 │   └── adspFormApi.ts      # Definition loading and submission helpers
 ├── pages/
-│   ├── Home.tsx            # Landing page with app header + hero banner
-│   ├── Apply.tsx           # Service information + integrated ADSP form
-│   ├── About.tsx           # Template and workflow guidance
-│   └── Examples.tsx        # Component/pattern examples
+│   ├── Home.tsx            # Landing page (uses PublicLayout + GoabHeroBanner)
+│   ├── Apply.tsx           # Service information + integrated ADSP form (uses PublicLayout)
+│   ├── About.tsx           # Template and workflow guidance (uses PublicLayout)
+│   └── Examples.tsx        # Component/pattern examples (uses PublicLayout)
 ├── assets/
 │   └── hero-banner.png     # Hero background image
 ├── styles.css              # Shared page and typography styles
@@ -50,16 +52,39 @@ src/
 
 ## Choosing a Layout Pattern
 
-There are two distinct layout shells. Choose one at the start of every new view — mixing them in the same app is wrong.
+> **Read the user's request first, then `App.tsx`.** The request tells you which shell to use; the existing code tells you how to stay consistent within a section.
+
+There are two distinct layout shells. The user's stated intent determines which one to use — the existing code only tells you whether that shell is already present.
+
+### Step 1 — decide from the request
+
+| User says… | Shell to use — no exceptions |
+|---|---|
+| "workspace", "staff tool", "case management", "admin", "review queue", "internal dashboard", "staff-facing" | **Internal — `GoabWorkSideMenu`** |
+| "citizen portal", "public service", "application form", "Albertans" | **Public — `GoabOneColumnLayout`** |
+
+If the request clearly asks for a staff/workspace feature, use `GoabWorkSideMenu` — even if the app currently only has public pages. An app can have both a public section and an internal workspace section under different routes; they do not conflict.
+
+### Step 2 — match the existing section
+
+Read `App.tsx` and the relevant existing page files to stay consistent *within the section you are adding to*:
+
+| You see in the section you are extending… | All new pages in that section must use |
+|---|---|
+| `GoabWorkSideMenu` / `AppShell` / `WorkspaceShell` | Internal shell |
+| `GoabOneColumnLayout` / `GoabAppHeader` | Public shell |
+
+**Never mix shells on the same page or within the same flow.** But a public `/home` page and a staff `/workspace` page in the same app is fine — they are separate sections.
 
 ### Public-facing (citizen services)
 
 Use when the target audience is Albertans accessing a public service.
 
-Shell: `GoabOneColumnLayout` + `GoabAppHeader` + `GoabAppFooter`
+Shell: `GoabOneColumnLayout` + `GoabAppHeader` + `GoabAppFooter` — already wrapped in `src/layouts/PublicLayout.tsx`.
 
-- `Home.tsx` is the only page that uses `GoabHeroBanner`.
-- Header navigation uses `<Link>` elements inside `GoabAppHeader`.
+- **Nav links live only in `src/layouts/PublicLayout.tsx`** — never add `GoabAppHeader` to individual page files.
+- Wrap every public page with `<PublicLayout>{/* page content */}</PublicLayout>`.
+- `Home.tsx` is the only page that adds `GoabHeroBanner` (placed inside `<PublicLayout>` before the `<GoabPageBlock>`).
 - Use sentence casing for headings and card titles.
 
 ### Internal / staff-facing (workspace tools)
@@ -85,6 +110,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         heading="Service name"
         url="/"
         userName="Staff user"
+        onNavigate={(url) => navigate(url)}
         primaryContent={
           <>
             <GoabWorkSideMenuItem
@@ -92,19 +118,17 @@ function AppShell({ children }: { children: React.ReactNode }) {
               url="/applications"
               icon="list"
               current={pathname.startsWith('/applications')}
-              onClick={(e) => { e.preventDefault(); navigate('/applications'); }}
             />
             <GoabWorkSideMenuItem
               label="Reviews"
               url="/reviews"
               icon="checkmark-circle"
               current={pathname.startsWith('/reviews')}
-              onClick={(e) => { e.preventDefault(); navigate('/reviews'); }}
             />
           </>
         }
       />
-      <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+      <main id="main-content" style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
         <GoabPageBlock width="1200px">
           <div style={{ paddingBlock: '2.5rem' }}>
             {children}
@@ -121,12 +145,12 @@ Layout widths (pass as `width` on `GoabPageBlock`):
 - General content: `1000px`
 - Data-heavy / tables: `1200px`
 
-### Which pattern fits common requests
+### Which pattern fits new requests
 
 | User says… | Use |
 |------------|-----|
 | "application form", "citizen portal", "public service page" | Public (GoabOneColumnLayout) |
-| "workspace", "case management", "staff tool", "admin view", "review queue", "internal dashboard" | Internal (GoabWorkSideMenu) |
+| "workspace", "case management", "staff tool", "admin view", "review queue", "internal dashboard", "staff-facing" | Internal (GoabWorkSideMenu) |
 
 Prefer GOA components over custom HTML/CSS patterns for UI primitives in both cases.
 
@@ -139,12 +163,21 @@ Prefer GOA components over custom HTML/CSS patterns for UI primitives in both ca
 
 ## Routing Pattern
 
-When adding a page:
+Adding a page has **four mandatory steps**. The task is not done until all four are complete.
 
 1. Create `src/pages/NewPage.tsx`.
-2. Add a route in `src/App.tsx`.
-3. Add navigation links in each page header where appropriate.
-4. Verify route reachability in preview.
+2. Add a `<Route>` in `src/App.tsx`.
+3. **Wire navigation — non-negotiable, do this in the same edit batch:**
+   - **Internal shell** (`GoabWorkSideMenu`): add a `<GoabWorkSideMenuItem url="/new-route" label="…" icon="…" current={pathname.startsWith('/new-route')} />` inside `primaryContent` of the `AppShell` / `WorkspaceShell` component. Navigation fires through `onNavigate` on `GoabWorkSideMenu` — never add `onClick` to the item.
+   - **Public shell** (`GoabOneColumnLayout`): add a `<Link to="/new-route">New Page</Link>` inside the `navigation={…}` prop of `GoabAppHeader` in **`src/layouts/PublicLayout.tsx`** — that single file is the only place nav links live; all pages share it automatically.
+4. Self-check before finishing:
+   - Internal: open the `AppShell` / `WorkspaceShell` component and confirm the new `GoabWorkSideMenuItem` is in `primaryContent`.
+   - Public: open `src/layouts/PublicLayout.tsx` and confirm the new `<Link>` is in the `navigation` prop.
+
+**Common mistakes that leave pages unreachable:**
+- Creating the page file and the `<Route>` but forgetting step 3 entirely.
+- Internal: adding `onClick` to `GoabWorkSideMenuItem` — the prop is silently ignored; use `onNavigate` on the parent `GoabWorkSideMenu`.
+- Public: editing a page file's header instead of `src/layouts/PublicLayout.tsx` — individual page files no longer contain `GoabAppHeader`.
 
 ## Builder Preview vs Local Development
 
@@ -163,6 +196,19 @@ When adding a page:
 - When adding or changing dependencies used at runtime, update `package.json` deliberately and validate both:
   1.  local template run (`npm run dev`)
   2.  Builder preview rendering
+
+## Error Recovery Rules
+
+When the preview throws a render error, fix the actual cause — do not change the shell layout or remove working features as a workaround.
+
+| Error message | Likely cause | Fix |
+|---|---|---|
+| "invalid element type" / "element type is invalid" | Component name doesn't exist (e.g. `GoabTag`, `GoabSelect`) | Replace with the correct component from the table above |
+| "X is not a function" | Wrong import or missing prop | Check the import and required props |
+| "Cannot read properties of undefined" | Accessing a field on null data before it loads | Add a loading guard (`if (!data) return null`) |
+| White blank page | Entry file error or missing default export | Check `src/main.tsx` and the page's `export default` |
+
+**Never switch from `GoabWorkSideMenu` to `GoabOneColumnLayout` (or vice versa) as a response to a runtime error.** Shell choice and component errors are independent; fixing one does not require changing the other.
 
 ## Preview QA Checklist
 
@@ -430,17 +476,58 @@ useEffect(() => {
 | Data table (internal) | `<GoabTable version="2" width="100%">` + `<GoabTableSortHeader version="2">` |
 | Pagination | `<GoabPagination version="2" pageNumber={page} itemCount={total} perPageCount={pageSize}>` |
 | Filter chips | `<GoabFilterChip content="…">` |
-| Loading placeholder | `<goa-skeleton type="text" size="3" />` |
+| Loading placeholder | `<GoabSkeleton type="text" size="3" />` |
 | Errors / alerts | `<GoabCallout type="emergency|information|success">` |
-| Form field wrapper | `<goa-form-item label="…" mb="l" id="field-{key}">` |
-| Text input | `<GoabInput>` |
-| Multiline | `<GoabTextarea>` |
-| Date | `<GoabDatePicker>` |
-| Dropdown | `<GoabDropdown>` + `<goa-dropdown-item>` |
-| Status colour | `<GoabBadge type="success|warning|emergency|information">` |
-| Button group | `<goa-button-group gap="relaxed">` |
+| Form field wrapper | `<GoabFormItem label="…" mb="l" id="field-{key}">` |
+| Text input | `<GoabInput name="…" value={…} onChange={…}>` |
+| Multiline | `<GoabTextarea name="…" value={…} onChange={…}>` |
+| Date | `<GoabDatePicker name="…" value={…} onChange={…}>` |
+| Dropdown / select | `<GoabDropdown name="…" value={…} onChange={…}>` + `<GoabDropdownItem value="…" label="…" />` |
+| Status colour / label | `<GoabBadge type="success|warning|emergency|information" content="…">` |
+| Inline tag / chip | `<GoabChip content="…">` or `<GoabFilterChip content="…">` |
+| Button group | `<GoabButtonGroup alignment="start|end">` |
 | Cards / sections | `<GoabContainer accent="thin">` |
 | Grid layout | `<GoabGrid minChildWidth="30ch">` |
+| Tooltip | `<GoabTooltip content="…">` |
+| Modal | `<GoabModal heading="…" open={…} onClose={…}>` |
+| Accordion | `<GoabAccordion heading="…">` |
+
+### Components that do NOT exist — use these instead
+
+| You might try… | Does not exist — use this instead |
+|---|---|
+| `GoabTableHead` / `GoabThead` | Plain `<thead>` — table internals are standard HTML |
+| `GoabTableBody` / `GoabTbody` | Plain `<tbody>` — table internals are standard HTML |
+| `GoabTableRow` / `GoabTr` | Plain `<tr>` — table internals are standard HTML |
+| `GoabTableCell` / `GoabTd` / `GoabTh` | Plain `<td>` / `<th>` — table internals are standard HTML |
+| `GoabTag` | `<GoabBadge>` (status label) or `<GoabChip>` (inline tag) |
+| `GoabSelect` | `<GoabDropdown>` + `<GoabDropdownItem>` |
+| `GoabTextInput` / `GoabTextField` | `<GoabInput>` |
+| `GoabAlert` | `<GoabCallout>` |
+| `GoabList` / `GoabListItem` | Plain `<ul>` / `<li>` |
+
+**Only `GoabTable` and `GoabTableSortHeader` are GOA components. Everything inside them (`<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>`) is plain HTML.**
+
+```tsx
+<GoabTable version="2" width="100%">
+  <thead>
+    <tr>
+      <th>Reference</th>
+      <GoabTableSortHeader name="status" direction="asc" onClick={handleSort}>Status</GoabTableSortHeader>
+    </tr>
+  </thead>
+  <tbody>
+    {rows.map((row) => (
+      <tr key={row.id}>
+        <td>{row.reference}</td>
+        <td><GoabBadge type="information" content={row.status} /></td>
+      </tr>
+    ))}
+  </tbody>
+</GoabTable>
+```
+
+**If a component renders as `undefined` or throws "invalid element type" or "Can't find variable": the component name is wrong — check this table. Do NOT change the shell layout to fix a component naming error.**
 
 ## Useful References
 
