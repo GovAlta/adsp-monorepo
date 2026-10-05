@@ -651,6 +651,9 @@ export const getSubscriptionChannels = (repository: SubscriptionRepository): Req
       const { subscriber } = req.params;
       const notification = req[TYPE_KEY] as NotificationTypeEntity;
       const subscription = await repository.getSubscription(notification, subscriber);
+      if (!subscription) {
+        throw new NotFoundError('Subscription', `${notification.id}:${subscriber}`);
+      }
       const channels = await subscription.getSubscriberChannels(notification);
       res.json(channels);
     } catch (err) {
@@ -899,9 +902,11 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/subscribers/:subscriber/types/:type/channels',
+    validateSubscriberHandler,
     validateTypeHandler,
+    getSubscriber(subscriptionRepository),
     getNotificationType,
-    getSubscriptionChannels
+    getSubscriptionChannels(subscriptionRepository)
   );
 
   return subscriptionRouter;

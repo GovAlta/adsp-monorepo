@@ -1246,6 +1246,47 @@ components:
       404:
         $ref: "#/components/responses/SubscriptionNotFound"
 
+/subscription/v1/subscribers/{subscriber}/types/{type}/channels:
+  parameters:
+    - name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: type
+      description: ID of the notification type.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+    - $ref: "#/components/parameters/SubscriptionTenantId"
+  get:
+    tags:
+      - Subscription
+    description: >
+      Retrieves the channels of the subscriber that the notification type can send to, for the subscriber's
+      subscription to that type. Same permissions as retrieving the subscriber.
+    responses:
+      200:
+        description: Channels successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubscriberChannel"
+      400:
+        $ref: "#/components/responses/SubscriptionBadRequest"
+      401:
+        $ref: "#/components/responses/SubscriptionUnauthorized"
+      403:
+        $ref: "#/components/responses/SubscriptionForbidden"
+      404:
+        $ref: "#/components/responses/SubscriptionNotFound"
+
 /subscription/v1/subscribers/my-subscriber:
   parameters:
     - name: includeSubscriptions
