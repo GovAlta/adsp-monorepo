@@ -15,12 +15,12 @@ import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import {
   isNotEmptyCheck,
-  isValidJSONCheck,
   Validator,
   duplicateNameCheck,
   wordMaxLengthCheck,
   badCharsCheck,
   wordCheck,
+  validateJsonSchema,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
@@ -74,6 +74,10 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
+  const validatePayloadSchema = (schemaText: string): string => {
+    const result = validateJsonSchema(schemaText);
+    return result.valid ? '' : result.error;
+  };
   const descErrMessage = 'Configuration description can not be over 180 characters';
   const { errors, validators } = useValidators(
     'namespace',
@@ -86,7 +90,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   )
     .add('name', 'name', badCharsCheck, isNotEmptyCheck('name'), wordMaxLengthCheck(32, 'Name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Configuration'))
-    .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
+    .add('payloadSchema', 'payloadSchema', validatePayloadSchema)
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 

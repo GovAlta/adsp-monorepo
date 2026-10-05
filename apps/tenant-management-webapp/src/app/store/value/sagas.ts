@@ -16,6 +16,7 @@ import {
   FETCH_VALUE_METRICS_ACTION,
   getValueDefinitionsSuccess,
   getValueLogEntriesSucceeded,
+  saveValueDefinitionFailed,
   UpdateValueDefinitionAction,
   updateValueDefinitionSuccess,
   UPDATE_VALUE_DEFINITION_ACTION,
@@ -43,6 +44,20 @@ const toDefinitionRequest = ({ name, description, jsonSchema }: ValueDefinition)
 
 const getDefinitionUrl = (baseUrl: string, { namespace, name }: ValueDefinition) =>
   `${baseUrl}/value/v1/definitions/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+
+const getErrorMessage = (err: unknown): string => {
+  if (axios.isAxiosError(err) && err.response?.status >= 400) {
+    const data = err.response.data;
+
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    return data?.errorMessage || data?.error || err.message;
+  }
+
+  return err instanceof Error ? err.message : `${err}`;
+};
 
 export function* fetchValueDefinitions(_action: FetchValueDefinitionsAction): SagaIterator {
   yield put(
@@ -90,8 +105,11 @@ export function* createValueDefinition({ definition }: CreateValueDefinitionActi
 
       yield put(updateValueDefinitionSuccess(data));
     } catch (err) {
+      yield put(saveValueDefinitionFailed(getErrorMessage(err)));
       yield put(ErrorNotification({ error: err }));
     }
+  } else {
+    yield put(saveValueDefinitionFailed('Value service is not available.'));
   }
 }
 
@@ -107,8 +125,11 @@ export function* updateValueDefinition({ definition }: UpdateValueDefinitionActi
 
       yield put(updateValueDefinitionSuccess(data));
     } catch (err) {
+      yield put(saveValueDefinitionFailed(getErrorMessage(err)));
       yield put(ErrorNotification({ error: err }));
     }
+  } else {
+    yield put(saveValueDefinitionFailed('Value service is not available.'));
   }
 }
 

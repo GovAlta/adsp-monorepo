@@ -10,17 +10,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import MonacoEditor from '@monaco-editor/react';
 import { useValidators } from '@lib/validation/useValidators';
 import { updateConfigurationDefinition } from '@store/configuration/action';
-import { isValidJSONCheck } from '@lib/validation/checkInput';
+import { validateJsonSchema } from '@lib/validation/checkInput';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { RevisionTable } from '../revisions/revisionsTable';
-import { GoabButton, GoabFormItem, GoabButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabButtonGroup, GoabIcon } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
+import { ErrorMsg } from '@components/styled-components';
 import { getConfigurationActive } from '@store/configuration/action';
 import { setPdfDisplayFileId } from '@store/pdf/action';
 import { RootState } from '@store/index';
 
 import { useNavigate, useParams } from 'react-router-dom';
+import styled from 'styled-components';
 
 import { ConfigForm } from './ConfigForm';
 import { ConfigDefinition, defaultConfigDefinition } from '@store/configuration/model';
@@ -92,6 +94,16 @@ export const ConfigurationEditor = (): JSX.Element => {
     dispatch(updateConfigurationDefinition(saveObject, false));
   };
 
+  const saveCurrentConfigurationTemplate = (): boolean => {
+    validators.remove('payloadSchema');
+    if (!validators.checkAll({ payloadSchema })) {
+      return false;
+    }
+
+    saveConfigurationTemplate({ ...tmpTemplate, configurationSchema: JSON.parse(payloadSchema) });
+    return true;
+  };
+
   const navigate = useNavigate();
 
   const cancel = () => {
@@ -99,8 +111,13 @@ export const ConfigurationEditor = (): JSX.Element => {
     navigate('/admin/services/configuration?templates=true');
   };
 
+  const validatePayloadSchema = (schemaText: string): string => {
+    const result = validateJsonSchema(schemaText);
+    return result.valid ? '' : result.error;
+  };
+
   const { errors, validators } = useValidators('payloadSchema', 'payloadSchema')
-    .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
+    .add('payloadSchema', 'payloadSchema', validatePayloadSchema)
     .build();
 
   const monacoHeight = `calc(100vh - 416px${notifications.length > 0 ? ' - 80px' : ''})`;
@@ -131,7 +148,13 @@ export const ConfigurationEditor = (): JSX.Element => {
                 <Tabs activeIndex={0}>
                   <Tab testId={`pdf-edit-header`} label={<EditorLabelWrapper>Configuration schema</EditorLabelWrapper>}>
                     <div style={{ marginTop: '20px' }}>
-                      <GoabFormItem error={errors?.['payloadSchema']}>
+                      <GoabFormItem>
+                        {errors?.['payloadSchema'] && (
+                          <SchemaError data-testid="configuration-schema-error">
+                            <GoabIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
+                            {errors?.['payloadSchema']}
+                          </SchemaError>
+                        )}
                         <MonacoEditor
                           data-testid="form-schema"
                           height={monacoHeight}
@@ -139,6 +162,7 @@ export const ConfigurationEditor = (): JSX.Element => {
                           onChange={(value) => {
                             validators.remove('payloadSchema');
                             const updatedValue = value ?? '';
+                            setPayloadSchema(updatedValue);
 
                             const validations = {
                               payloadSchema: updatedValue,
@@ -148,7 +172,6 @@ export const ConfigurationEditor = (): JSX.Element => {
                               return;
                             }
 
-                            setPayloadSchema(updatedValue);
                             setTmpTemplate({ ...tmpTemplate, configurationSchema: JSON.parse(updatedValue) });
                           }}
                           language="json"
@@ -186,7 +209,7 @@ export const ConfigurationEditor = (): JSX.Element => {
                     errors?.['payloadSchema']?.length > 0
                   }
                   onClick={() => {
-                    saveConfigurationTemplate(tmpTemplate);
+                    saveCurrentConfigurationTemplate();
                   }}
                   type="primary"
                   testId="template-form-save"
@@ -221,8 +244,9 @@ export const ConfigurationEditor = (): JSX.Element => {
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
-          saveConfigurationTemplate(tmpTemplate);
-          setSaveModal({ visible: false, closeEditor: true });
+          if (saveCurrentConfigurationTemplate()) {
+            setSaveModal({ visible: false, closeEditor: true });
+          }
         }}
         saveDisable={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || EditorError?.testData !== null}
         onCancel={() => {
@@ -232,3 +256,9 @@ export const ConfigurationEditor = (): JSX.Element => {
     </>
   );
 };
+
+const SchemaError = styled(ErrorMsg)`
+  font: var(--goa-typography-body-s);
+  margin-bottom: var(--goa-space-xs);
+  align-items: center;
+`;

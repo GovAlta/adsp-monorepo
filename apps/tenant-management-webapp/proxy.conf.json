@@ -1,31 +1,41 @@
 [
   {
-    "context": ["/config/*"],
-    "target": "https://adsp-dev.gov.ab.ca",
+    "pathFilter": ["/config"],
+    "router": {
+      "/config": "https://adsp-dev.gov.ab.ca"
+    },
     "secure": true,
     "changeOrigin": true
   },
   {
-    "context": ["/auth/*"],
-    "target": "https://access.adsp-dev.gov.ab.ca",
+    "pathFilter": ["/auth"],
+    "router": {
+      "/auth": "https://access.adsp-dev.gov.ab.ca"
+    },
     "secure": true,
     "changeOrigin": true
   },
   {
-    "context": ["/health"],
-    "target": "http://localhost:3333",
+    "pathFilter": ["/health"],
+    "router": {
+      "/health": "http://localhost:3333"
+    },
     "secure": false,
     "changeOrigin": true
   },
   {
-    "context": ["/api/tenant/v1/*"],
-    "target": "https://adsp-dev.gov.ab.ca",
+    "pathFilter": ["/api/tenant/v1"],
+    "router": {
+      "/api/tenant/v1": "https://adsp-dev.gov.ab.ca"
+    },
     "secure": true,
     "changeOrigin": true
   },
   {
-    "context": ["/api/metrics/v1/metrics"],
-    "target": "https://dashboard-metrics-adsp-dev.apps.aro.gov.ab.ca",
+    "pathFilter": ["/api/metrics/v1/metrics"],
+    "router": {
+      "/api/metrics/v1/metrics": "https://dashboard-metrics-adsp-dev.apps.aro.gov.ab.ca"
+    },
     "pathRewrite": {
       "/api": ""
     },
@@ -33,8 +43,10 @@
     "changeOrigin": true
   },
   {
-    "context": ["/api/token-handler/v1/clients"],
-    "target": "https://token-handler-adsp-dev.apps.aro.gov.ab.ca",
+    "pathFilter": ["/api/token-handler/v1/clients"],
+    "router": {
+      "/api/token-handler/v1/clients": "https://token-handler-adsp-dev.apps.aro.gov.ab.ca"
+    },
     "pathRewrite": {
       "/api": ""
     },

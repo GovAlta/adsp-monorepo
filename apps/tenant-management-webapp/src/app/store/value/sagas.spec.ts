@@ -8,6 +8,7 @@ import {
   DELETE_VALUE_DEFINITION_SUCCESS_ACTION,
   FETCH_VALUE_DEFINITIONS_ACTION,
   FETCH_VALUE_DEFINITIONS_SUCCESS_ACTION,
+  SAVE_VALUE_DEFINITION_FAILED_ACTION,
   UPDATE_VALUE_DEFINITION_ACTION,
   UPDATE_VALUE_DEFINITION_SUCCESS_ACTION,
 } from './actions';
@@ -123,6 +124,7 @@ describe('value definition sagas', () => {
     );
 
     expect(actions.find((a) => a.type === UPDATE_VALUE_DEFINITION_SUCCESS_ACTION)).toBeUndefined();
-    expect(actions).toHaveLength(1);
+    expect(actions).toContainEqual({ type: SAVE_VALUE_DEFINITION_FAILED_ACTION, error: 'conflict' });
+    expect(actions).toHaveLength(2);
   });
 });

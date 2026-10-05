@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { defaultValueDefinition, type ValueDefinition } from '@store/value/models';
@@ -8,6 +8,7 @@ import { ValueDefinitionsList } from './definitionsList';
 import { AddEditValueDefinition } from './addEditDefinition';
 import {
   createValueDefinition,
+  clearValueDefinitionSaveError,
   deleteValueDefinition,
   getValueDefinitions,
   updateValueDefinition,
@@ -26,21 +27,24 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const dispatch = useDispatch();
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const definitionSave = useSelector((state: RootState) => state.valueService.save);
+  const completedSave = useRef(definitionSave.completed);
   const definitions = useSelector((state: RootState) =>
     state.valueService.results.map((r) => state.valueService.definitions[r])
   );
 
-  const reset = () => {
+  const reset = useCallback(() => {
     document.body.style.overflow = 'unset';
     setIsEdit(false);
     setOpenAddDefinition(false);
     setSelectedDefinition(defaultValueDefinition);
-  };
+    dispatch(clearValueDefinitionSaveError());
+  }, [dispatch]);
 
-  const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getValueDefinitions());
   }, [dispatch]);
@@ -53,7 +57,16 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
       reset();
       setOpenAddDefinition(true);
     }
-  }, [activeEdit]);
+  }, [activeEdit, reset]);
+  useEffect(() => {
+    if (definitionSave.completed !== completedSave.current) {
+      completedSave.current = definitionSave.completed;
+
+      if (openAddDefinition) {
+        reset();
+      }
+    }
+  }, [definitionSave.completed, openAddDefinition, reset]);
 
   const tenantDefinitions = definitions.filter((d) => !d.isCore);
   const coreDefinitions = definitions.filter((d) => d.isCore);
@@ -65,6 +78,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           size="compact"
           testId="value-add-definition"
           onClick={() => {
+            dispatch(clearValueDefinitionSaveError());
             setOpenAddDefinition(true);
           }}
         >
@@ -79,6 +93,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           onEdit={(def: ValueDefinition) => {
             setSelectedDefinition(def);
             setIsEdit(true);
+            dispatch(clearValueDefinitionSaveError());
             setOpenAddDefinition(true);
           }}
           onDelete={(def: ValueDefinition) => {
@@ -97,6 +112,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
             onEdit={(def: ValueDefinition) => {
               setSelectedDefinition(def);
               setIsEdit(true);
+              dispatch(clearValueDefinitionSaveError());
               setOpenAddDefinition(true);
             }}
             onDelete={(def: ValueDefinition) => {
@@ -114,6 +130,8 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           isEdit={isEdit}
           initialValue={selectedDefinition}
           values={[...tenantDefinitions, ...coreDefinitions]}
+          saving={definitionSave.saving}
+          saveError={definitionSave.error}
           onSave={(definition) => {
             dispatch(isEdit ? updateValueDefinition(definition) : createValueDefinition(definition));
           }}
