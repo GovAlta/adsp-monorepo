@@ -502,94 +502,39 @@ Given('a tenant admin user is on notification subscribers page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Notification', 2000);
-  commonObj.serviceTab('Notification', 'Subscribers').click();
+  commonObj.serviceTab('Notification', 'Recipient registry').click();
   cy.wait(4000);
 });
 
-When('the user searches subscribers with {string} containing {string}', function (searchField, searchText: string) {
-  //Enter search text
-  switch (searchField) {
-    case 'address as':
-      notificationsObj
-        .subscribersAddressAsSearchField()
-        .shadow()
-        .find('input')
-        .clear()
-        .type(searchText, { delay: 100, force: true });
-      notificationsObj.subscribersEmailSearchField().shadow().find('input').clear();
-      break;
-    case 'email':
-      notificationsObj
-        .subscribersEmailSearchField()
-        .shadow()
-        .find('input')
-        .clear()
-        .type(searchText, { delay: 100, force: true });
-      notificationsObj.subscribersAddressAsSearchField().shadow().find('input').clear();
-      break;
-    default:
-      expect(searchField).to.be.oneOf(['address as', 'email']);
-  }
-
-  //Click Search button
-  notificationsObj.subscribersSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+When('the user searches subscribers containing {string}', function (searchText: string) {
+  //Click reset button and enter search text
+  notificationsObj.subscribersResetBtn().shadow().find('button').click({ force: true });
+  notificationsObj
+    .subscribersSearchField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(searchText, { delay: 100, force: true });
+  cy.wait(1000); // Wait for search results to load
 });
 
-When(
-  'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
-  function (addressAs: string, email: string, phoneNumber: string) {
-    notificationsObj
-      .searchSubscriberAddressAs()
-      .shadow()
-      .find('input')
-      .clear()
-      .type(addressAs, { delay: 100, force: true });
-    notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
-    expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
-    if (phoneNumber == 'EMPTY') {
-      notificationsObj.searchSubscriberPhone().shadow().find('input').clear();
-    } else {
-      notificationsObj
-        .searchSubscriberPhone()
-        .shadow()
-        .find('input')
-        .clear()
-        .type(phoneNumber, { delay: 100, force: true });
-    }
-    notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
-    cy.wait(2000);
-  }
-);
-
-Then(
-  'the user views all the subscribers with {string} containing {string}',
-  function (headerLabel, searchText: string) {
-    //Find which column to search
-    let columnNumber;
-    notificationsObj
-      .subscriberTableHeader()
-      .get('th')
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].innerText.toLowerCase() == headerLabel) {
-            columnNumber = i;
-          }
-        }
-      });
-
-    //Search all cells of the column
-    notificationsObj.subscriberTableBody().each((rows) => {
-      cy.wrap(rows).within(() => {
-        cy.get('td').each(($col, index) => {
-          if (index == columnNumber) {
-            expect($col.text().toLowerCase()).to.contain(searchText.toLowerCase());
-          }
+Then('the user views all the subscribers containing {string}', function (searchText: string) {
+  // Each subscriber row should contain the search text in at least one cell.
+  const normalizedSearchText = searchText.replace(/\s+/g, '').toLowerCase();
+  notificationsObj
+    .subscriberTableBody()
+    .find('tr')
+    .each(($row) => {
+      cy.wrap($row)
+        .find('td')
+        .then(($cells) => {
+          const rowContainsSearchText = Array.from($cells).some((cell) =>
+            cell.innerText.replace(/\s+/g, '').toLowerCase().includes(normalizedSearchText)
+          );
+          expect(rowContainsSearchText, `Expected a subscriber row to contain "${searchText}"`).to.equal(true);
         });
-      });
     });
-  }
-);
+});
 
 Then(
   'the user views subscribers with {string} containing {string} and {string} containing {string}',
@@ -625,14 +570,43 @@ Then(
   }
 );
 
-When('the user expands the subscription list for the subscriber of {string} and {string}', function (addressAs, email) {
-  notificationsObj.subscriberIconEye(addressAs, email).shadow().find('button').click({ force: true });
-});
+When(
+  'the user clicks the subscriber of {string}, {string}, {string}',
+  function (addressAs, email, phoneNumber: string) {
+    let phoneNumberInDisplay;
+    expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
+    if (phoneNumber !== 'EMPTY') {
+      phoneNumberInDisplay =
+        phoneNumber.substring(0, 3) + ' ' + phoneNumber.substring(3, 6) + ' ' + phoneNumber.substring(6, 10);
+      notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).click({ force: true });
+    } else {
+      notificationsObj.subscriber(addressAs, email).click({ force: true });
+    }
+  }
+);
 
 Then(
-  'the user views the subscription of {string} for the subscriber of {string} and {string}',
-  function (subscription, addressAs, email) {
-    notificationsObj.subscriberSubscriptions(addressAs, email).invoke('text').should('contain', subscription);
+  'the user views the subscription of {string} for the subscriber of {string}, {string}, {string}',
+  function (subscription: string, addressAs, email, phoneNumber: string) {
+    if (email != 'EMPTY' && email != undefined) {
+      notificationsObj.subscriberDetailsContactInformationEmail().invoke('text').should('contain', email);
+    }
+    if (phoneNumber != 'EMPTY') {
+      notificationsObj
+        .subscriberDetailsContactInformationPhone()
+        .invoke('text')
+        .then((text) => text.replace(/\s+/g, ''))
+        .should('contain', phoneNumber.replace(/\s+/g, ''));
+    }
+    if (addressAs != 'EMPTY') {
+      notificationsObj.subscriberDetailsContactInformationAdressAs().invoke('text').should('contain', addressAs);
+    }
+    notificationsObj.subscriberDetailsSubscriptions().should(($subscriptions) => {
+      const subscriptionFound = Array.from($subscriptions).some(
+        (item) => item.innerText.trim() === subscription.trim()
+      );
+      expect(subscriptionFound, `Expected subscriptions to include "${subscription}"`).to.equal(true);
+    });
   }
 );
 
@@ -682,13 +656,13 @@ Then(
   }
 );
 
-When('the user clicks {string} button of {string}, {string} on subscribers page', function (button, addressAs, email) {
+When('the user clicks {string} button on subscriber details pane', function (button) {
   switch (button) {
     case 'delete':
-      notificationsObj.subscriberDeleteIcon(addressAs, email).shadow().find('button').click({ force: true });
+      notificationsObj.subscriberDetailsDeleteIcon().shadow().find('button').click({ force: true });
       break;
     case 'edit':
-      notificationsObj.subscriberEditIcon(addressAs, email).shadow().find('button').click({ force: true });
+      notificationsObj.subscriberDetailsEditIcon().shadow().find('button').click({ force: true });
       break;
     default:
       expect(button).to.be.oneOf(['delete', 'edit']);
@@ -697,6 +671,10 @@ When('the user clicks {string} button of {string}, {string} on subscribers page'
 
 Then('the user views Delete subscriber modal', function () {
   notificationsObj.subscriberDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete subscriber');
+});
+
+Then('the user views the Delete subscriber confirmation message of {string}', function (subscriberName) {
+  notificationsObj.subscriberDeleteConfirmationModalMessage().invoke('text').should('contain', subscriberName);
 });
 
 When('the user clicks Delete button on Delete subscriber modal', function () {
@@ -829,8 +807,8 @@ When(
   }
 );
 
-When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
-  notificationsObj.subscriberEditIcon(addressAs, email).shadow().find('button').click({ force: true });
+When('the user clicks Edit button on subscribers details pane', function () {
+  notificationsObj.subscriberDetailsEditIcon().shadow().find('button').click({ force: true });
 });
 
 Then('the user views Edit subscriber modal', function () {
