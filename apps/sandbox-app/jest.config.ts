@@ -1,7 +1,6 @@
 export default {
   displayName: 'sandbox-app',
   preset: '../../jest.preset.js',
-  setupFiles: ['<rootDir>/.jest/polyfills.js'],
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
