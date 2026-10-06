@@ -230,6 +230,22 @@ describe('PlanningPokerBoard', () => {
     expect(screen.getByTestId('poker-connection')).toHaveTextContent('Live');
   });
 
+  test('says live updates are not live when the push service refused the connection', () => {
+    // Arrange & Act
+    renderBoard({ connectionError: 'Stream not found.' });
+
+    // Assert
+    expect(screen.getByTestId('poker-connection')).toHaveTextContent('Not live');
+  });
+
+  test('explains why live updates are off', () => {
+    // Arrange & Act
+    renderBoard({ connectionError: 'Stream not found.' });
+
+    // Assert
+    expect(screen.getByTestId('poker-connection-error')).toHaveTextContent('Stream not found.');
+  });
+
   test('includes the session link to share', () => {
     // Arrange & Act
     renderBoard();

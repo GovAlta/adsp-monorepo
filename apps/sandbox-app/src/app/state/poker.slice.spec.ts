@@ -2,6 +2,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import {
   POKER_PRESENCE_TIMEOUT_MS,
+  POKER_STREAM_RETRY_MS,
   PokerState,
   castPokerVote,
   connectPokerStream,
@@ -346,6 +347,28 @@ describe('poker slice', () => {
       // Assert
       expect(next.connected).toBe(true);
     });
+
+    test('keeps the reason the push service refused the connection', () => {
+      // Arrange
+      const state = sessionState({ connected: true });
+
+      // Act
+      const next = pokerReducer(state, pokerActions.streamConnectionFailed('Stream not found.'));
+
+      // Assert
+      expect(next).toMatchObject({ connected: false, connectionError: 'Stream not found.' });
+    });
+
+    test('clears the connection error once live updates connect', () => {
+      // Arrange
+      const state = sessionState({ connectionError: 'Stream not found.' });
+
+      // Act
+      const next = pokerReducer(state, pokerActions.streamConnectionChanged(true));
+
+      // Assert
+      expect(next.connectionError).toBeNull();
+    });
   });
 
   describe('thunk results in state', () => {
@@ -684,7 +707,7 @@ describe('poker slice', () => {
   });
 
   describe('push stream', () => {
-    const socket = { on: jest.fn(), disconnect: jest.fn() };
+    const socket = { on: jest.fn(), disconnect: jest.fn(), connect: jest.fn(), active: false };
     const handlerFor = (eventName: string) => socket.on.mock.calls.find(([name]) => name === eventName)[1];
 
     beforeEach(() => {
@@ -703,6 +726,14 @@ describe('poker slice', () => {
 
       // Assert
       expect(ioMock.mock.calls[0][1].query).toEqual(expectedQuery);
+    });
+
+    test('connects over websocket only so requests cannot land on a different push service pod', async () => {
+      // Arrange & Act
+      await runThunk(connectPokerStream(SESSION_ID));
+
+      // Assert
+      expect(ioMock.mock.calls[0][1].transports).toEqual(['websocket']);
     });
 
     test('dispatches a vote-cast event payload to the store', async () => {
@@ -760,6 +791,52 @@ describe('poker slice', () => {
 
       // Assert
       expect(socket.disconnect).toHaveBeenCalled();
+    });
+
+    test('reports why the push service refused the connection', async () => {
+      // Arrange
+      const { dispatch } = await runThunk(connectPokerStream(SESSION_ID));
+
+      // Act
+      handlerFor('connect_error')(new Error('Stream not found.'));
+
+      // Assert
+      expect(dispatch).toHaveBeenCalledWith(pokerActions.streamConnectionFailed('Stream not found.'));
+    });
+
+    describe('after the push service refused the connection', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      test('tries to connect again', async () => {
+        // Arrange
+        await runThunk(connectPokerStream(SESSION_ID));
+        handlerFor('connect_error')(new Error('Stream not found.'));
+
+        // Act
+        jest.advanceTimersByTime(POKER_STREAM_RETRY_MS);
+
+        // Assert
+        expect(socket.connect).toHaveBeenCalled();
+      });
+
+      test('stops trying once the board is closed', async () => {
+        // Arrange
+        await runThunk(connectPokerStream(SESSION_ID));
+        handlerFor('connect_error')(new Error('Stream not found.'));
+        await runThunk(disconnectPokerStream());
+
+        // Act
+        jest.advanceTimersByTime(POKER_STREAM_RETRY_MS);
+
+        // Assert
+        expect(socket.connect).not.toHaveBeenCalled();
+      });
     });
   });
 });
