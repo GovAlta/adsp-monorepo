@@ -499,6 +499,8 @@ export const BuilderTenant = () => {
           threadId,
           from: 'user',
           content: [{ type: 'text', text: 'Preview error detected — asking agent to fix it.' }],
+          // A system message: sent by the builder, not typed by the user.
+          local: true,
         }),
       );
 
