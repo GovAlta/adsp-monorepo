@@ -20,7 +20,7 @@ import {
   ButtonMargin,
 } from '../private/Subscriptions/styled-components';
 
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom-v7';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
@@ -108,7 +108,8 @@ const Subscriptions = (): JSX.Element => {
           service in the future.{' '}
         </GoAModelTextWrapper>
         <GoabButtonGroup alignment="end">
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             type="secondary"
             testId="unsubscribe-modal-cancel-button"
             onClick={() => {
@@ -117,7 +118,8 @@ const Subscriptions = (): JSX.Element => {
           >
             Cancel
           </GoabButton>
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             type="primary"
             testId="unsubscribe-modal-okay-button"
             onClick={() => {
@@ -126,7 +128,7 @@ const Subscriptions = (): JSX.Element => {
                   type: selectedUnsubscribeSub.typeId,
                   subscriberId: selectedUnsubscribeSub.subscriberId,
                   tenantId: subscriber?.tenantId,
-                })
+                }),
               );
               resetSelectedUnsubscribe();
             }}
