@@ -2,7 +2,7 @@ import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 
 import { GoabCallout } from '@abgov/react-components';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v7';
 import {
   AppDispatch,
   authenticatedUserSelector,

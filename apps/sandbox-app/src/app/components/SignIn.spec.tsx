@@ -11,7 +11,7 @@ import {
   tenantSelector,
   userInitializedSelector,
 } from '../state';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v7';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
