@@ -11,10 +11,12 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
+const mockLocation = { pathname: '/test-tenant' };
+
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useParams: () => ({ tenant: 'test-tenant' }),
-  useLocation: () => ({ pathname: '/test-tenant' }),
+  useLocation: () => mockLocation,
   useNavigate: () => jest.fn(),
   Navigate: () => null,
   Routes: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -68,6 +70,8 @@ jest.mock('./services/EventServiceMain', () => ({ EventServiceMain: () => null }
 jest.mock('./services/ConfigurationServiceMain', () => ({ ConfigurationServiceMain: () => null }));
 jest.mock('./services/feedback/FeedbackCSSLeak', () => ({ FeedbackCSSLeak: () => null }));
 jest.mock('./services/jsonforms/JsonformsExampleOne', () => ({ JsonformsExampleOne: () => null }));
+jest.mock('./services/jsonforms/JsonformsExternalNavigation', () => ({ JsonformsExternalNavigation: () => null }));
+jest.mock('./services/jsonforms/JsonformsReviewNavigation', () => ({ JsonformsReviewNavigation: () => null }));
 jest.mock('./services/DesignSystemsMain', () => ({ DesignSystemsMain: () => null }));
 jest.mock('./services/design-systems/DesignSystemsExampleOne', () => ({ DesignSystemsExampleOne: () => null }));
 jest.mock('./services/planning-poker/PlanningPokerMain', () => ({ PlanningPokerMain: () => null }));
@@ -82,6 +86,7 @@ describe('SandBoxTenant', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLocation.pathname = '/test-tenant';
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     (useSelector as jest.Mock).mockImplementation((selector) => {
       if (selector === authenticatedUserSelector) return null;
@@ -122,5 +127,22 @@ describe('SandBoxTenant', () => {
 
     // Assert
     expect(useFeedbackWidget).toHaveBeenCalledWith('test-tenant');
+  });
+
+  test('shows a back to services button on a service page', () => {
+    // Arrange
+    mockLocation.pathname = '/test-tenant/services/planning-poker';
+    (useSelector as jest.Mock).mockImplementation((selector) => {
+      if (selector === authenticatedUserSelector) return { id: 'u1', name: 'Alice Smith' };
+      if (selector === configInitializedSelector) return true;
+      if (selector === environmentSelector) return { tenantName: 'test-tenant' };
+      return undefined;
+    });
+
+    // Act
+    render(<SandBoxTenant />);
+
+    // Assert
+    expect(screen.getByRole('button', { name: 'Back to services' })).toBeInTheDocument();
   });
 });

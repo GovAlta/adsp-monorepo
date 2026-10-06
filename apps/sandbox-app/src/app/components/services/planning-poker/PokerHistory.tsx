@@ -1,5 +1,6 @@
 import React from 'react';
-import { GoabTable } from '@abgov/react-components';
+import styled from 'styled-components';
+import { GoabText } from '@abgov/react-components';
 import { PokerRound } from '../../../state';
 import { describeRoundResult, isSafeStoryUrl } from './pokerUtils';
 
@@ -13,17 +14,14 @@ export const PokerHistory = ({ history }: PokerHistoryProps) => {
   }
 
   return (
-    <GoabTable width="100%" mb="l" testId="poker-history">
-      <thead>
-        <tr>
-          <th>Story</th>
-          <th>Result</th>
-        </tr>
-      </thead>
-      <tbody>
+    <section aria-label="Estimated stories">
+      <GoabText tag="h3" size="heading-xs" mt="none" mb="xs">
+        Estimated stories
+      </GoabText>
+      <HistoryList data-testid="poker-history">
         {history.map((round) => (
-          <tr key={round.roundId}>
-            <td>
+          <li key={round.roundId}>
+            <StoryTitle>
               {isSafeStoryUrl(round.storyUrl) ? (
                 <a href={round.storyUrl} target="_blank" rel="noreferrer">
                   {round.storyTitle}
@@ -31,11 +29,34 @@ export const PokerHistory = ({ history }: PokerHistoryProps) => {
               ) : (
                 round.storyTitle
               )}
-            </td>
-            <td>{describeRoundResult(round)}</td>
-          </tr>
+            </StoryTitle>
+            <RoundResult>{describeRoundResult(round)}</RoundResult>
+          </li>
         ))}
-      </tbody>
-    </GoabTable>
+      </HistoryList>
+    </section>
   );
 };
+
+const HistoryList = styled.ol`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 24rem;
+  overflow-y: auto;
+
+  li {
+    padding: var(--goa-space-xs) 0;
+    border-bottom: 1px solid var(--goa-color-greyscale-200);
+  }
+`;
+
+const StoryTitle = styled.div`
+  font: var(--goa-typography-body-s);
+  overflow-wrap: anywhere;
+`;
+
+const RoundResult = styled.div`
+  font: var(--goa-typography-body-xs);
+  color: var(--goa-color-text-secondary);
+`;

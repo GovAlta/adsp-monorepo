@@ -27,14 +27,23 @@ Sandbox app ──POST /script/v1/scripts/poker-*──► script service (Lua, 
   no email.
 - Anyone can set a nickname (shown as `userName`) when joining or on the board. It is saved in the
   browser and re-sent with `poker-join`, so others see the change straight away.
+- **Presence.** The board re-runs `poker-join` every 30 seconds as a heartbeat, and runs `poker-leave`
+  when the player leaves the board or closes the tab. Players who leave, or miss heartbeats for 90
+  seconds (crash, lost network), drop off the table on every board and in `poker-get-state`. Opening
+  the session link again rejoins.
+- **Auto-reveal.** Once every player at the table has voted, the board reveals the cards. One board
+  (lowest `userId`) reveals after 1 second; the others only step in after 5 seconds. `poker-reveal`
+  returns the stored result for a round that is already revealed, so extra calls are harmless.
+  Votes from players who dropped are not counted.
 
-| Script              | Does                                                                |
-| ------------------- | ------------------------------------------------------------------- |
-| `poker-start-round` | Saves the round, sends `round-started`                              |
-| `poker-join`        | Saves the participant, sends `participant-joined`                   |
-| `poker-cast-vote`   | Saves the vote, sends `vote-cast` (no card)                         |
-| `poker-get-state`   | Returns the session; cards only after reveal                        |
-| `poker-reveal`      | Closes the round, sends `votes-revealed` with average and consensus |
+| Script              | Does                                                                         |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `poker-start-round` | Saves the round, sends `round-started`                                       |
+| `poker-join`        | Saves the participant as active, sends `participant-joined` (also heartbeat) |
+| `poker-leave`       | Saves the participant as gone, sends `participant-left`                      |
+| `poker-cast-vote`   | Saves the vote, sends `vote-cast` (no card)                                  |
+| `poker-get-state`   | Returns the session with active players; cards only after reveal             |
+| `poker-reveal`      | Closes the round, sends `votes-revealed` with average and consensus          |
 
 The script service and push service both require a role, so the scripts' runner roles and the
 stream's subscriber roles are set to `default-roles-<realm>`. Keycloak gives that role to every user
@@ -50,7 +59,7 @@ round), `participants-<sessionId>`, and `votes-<roundId>` (newest entry per user
    the value service, ask a platform admin to grant them.
 2. **Give team members an account in the `autotest` realm.** The sandbox only signs in to the
    `autotest` tenant. No roles need to be assigned.
-3. **Configure the tenant.** This adds the event definitions, the push stream, and the 5 scripts:
+3. **Configure the tenant.** This adds the event definitions, the push stream, and the 6 scripts:
 
    ```bash
    # Dry run: prints the configuration patches (set TENANT_REALM to see the real role name)
@@ -64,7 +73,7 @@ round), `participants-<sessionId>`, and `votes-<roundId>` (newest entry per user
 
    To set it up by hand in tenant admin instead: create each script from `scripts/*.lua` with runner
    role `default-roles-<realm>`, **Use service account** on, and **Include values in event** off. Then
-   add a push stream `planning-poker-updates` with the 4 `planning-poker` events and
+   add a push stream `planning-poker-updates` with the 5 `planning-poker` events and
    `default-roles-<realm>` as the subscriber role.
 
 4. **Try it.** Open the sandbox, go to **Planning poker**, select **Start new session**, and share the
@@ -84,4 +93,7 @@ round), `participants-<sessionId>`, and `votes-<roundId>` (newest entry per user
 - **Tenant admins can read votes early.** Anyone with `value-reader` (part of tenant admin) can read
   the `votes-<roundId>` values through the value service API.
 - **No cleanup.** Value series are kept, which also gives an estimate history per session.
+- **Heartbeats add up.** Each heartbeat writes a participant value and sends `participant-joined`
+  (plus the script service's own `script-executed`). Sessions with more than about 60 players can
+  push active players past the 200 entries `poker-get-state` reads.
 - Script inputs must be strings. A vote sent as a JSON number is converted to its card text.

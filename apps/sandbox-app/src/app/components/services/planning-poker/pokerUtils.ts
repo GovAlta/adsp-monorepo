@@ -15,6 +15,10 @@ export interface ParticipantRow {
 const SESSION_ID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 const HTTP_URL_PATTERN = /^https?:\/\//i;
 const NICKNAME_STORAGE_KEY = 'planning-poker-nickname';
+const MAX_LISTED_NAMES = 3;
+export const AUTO_REVEAL_DELAY_MS = 1000;
+// Other boards only reveal if the chosen board has not, e.g. because it has not seen the last vote yet.
+export const AUTO_REVEAL_FALLBACK_DELAY_MS = 5000;
 
 export function formatCard(card: string): string {
   return card === 'coffee' ? '☕' : card;
@@ -71,19 +75,40 @@ export function countVotesByCard(votes: Record<string, PokerVote>): CardCount[] 
   return POKER_DECK.filter((card) => counts[card]).map((card) => ({ card, count: counts[card] }));
 }
 
-// Someone can vote before their join is recorded, so voters are included even if not in participants.
-// The participant entry carries the latest nickname, so it wins over the name recorded with a vote.
+// Only players at the table get a seat; votes from players who dropped are ignored.
 export function buildParticipantRows(
   participants: Record<string, PokerParticipant>,
   votes: Record<string, PokerVote>,
 ): ParticipantRow[] {
-  const userIds = new Set([...Object.keys(participants), ...Object.keys(votes)]);
-  return [...userIds]
-    .map((userId) => ({
+  return Object.entries(participants)
+    .map(([userId, { userName }]) => ({
       userId,
-      userName: participants[userId]?.userName || votes[userId]?.userName || 'Unknown',
+      userName,
       hasVoted: !!votes[userId],
       vote: votes[userId]?.vote,
     }))
     .sort((a, b) => a.userName.localeCompare(b.userName));
+}
+
+export function hasEveryoneVoted(round: PokerRound | null, rows: ParticipantRow[]): boolean {
+  return round?.status === 'voting' && rows.length > 0 && rows.every(({ hasVoted }) => hasVoted);
+}
+
+export function describeVotingProgress(rows: ParticipantRow[]): string {
+  const waiting = rows.filter(({ hasVoted }) => !hasVoted).map(({ userName }) => userName);
+  if (rows.length === 0) {
+    return 'Waiting for players to join.';
+  }
+  if (waiting.length === 0) {
+    return 'Everyone has voted. Revealing the cards…';
+  }
+  const listed = waiting.slice(0, MAX_LISTED_NAMES).join(', ');
+  const more = waiting.length > MAX_LISTED_NAMES ? ` and ${waiting.length - MAX_LISTED_NAMES} more` : '';
+  return `${rows.length - waiting.length} of ${rows.length} voted · waiting for ${listed}${more}`;
+}
+
+// Every board computes the same revealer (lowest user ID), so usually only one reveal call is made.
+export function getAutoRevealDelay(rows: ParticipantRow[], myUserId: string | null): number {
+  const [revealerId] = rows.map(({ userId }) => userId).sort();
+  return revealerId === myUserId ? AUTO_REVEAL_DELAY_MS : AUTO_REVEAL_FALLBACK_DELAY_MS;
 }

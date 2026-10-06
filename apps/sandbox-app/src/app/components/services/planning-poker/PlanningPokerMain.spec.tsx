@@ -17,18 +17,26 @@ jest.mock('@abgov/react-components', () => ({
   GoabContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   GoabText: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
   GoabFormItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  GoabButtonGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   GoabInput: ({
     name,
     value,
     testId,
     onChange,
+    onKeyPress,
   }: {
     name: string;
     value: string;
     testId: string;
     onChange: (detail: { name: string; value: string }) => void;
-  }) => <input data-testid={testId} value={value} onChange={(e) => onChange({ name, value: e.target.value })} />,
+    onKeyPress?: (detail: { name: string; value: string; key: string }) => void;
+  }) => (
+    <input
+      data-testid={testId}
+      value={value}
+      onChange={(e) => onChange({ name, value: e.target.value })}
+      onKeyDown={(e) => onKeyPress?.({ name, value, key: e.key })}
+    />
+  ),
   GoabButton: ({
     children,
     testId,
@@ -73,6 +81,18 @@ describe('PlanningPokerMain', () => {
 
     // Act
     fireEvent.click(screen.getByTestId('poker-join-session'));
+
+    // Assert
+    expect(mockNavigate).toHaveBeenCalledWith(`/autotest/services/planning-poker/${SESSION_ID}`);
+  });
+
+  test('joins the session when Enter is pressed in the session field', () => {
+    // Arrange
+    renderMain();
+    fireEvent.change(screen.getByTestId('poker-session-input'), { target: { value: SESSION_ID } });
+
+    // Act
+    fireEvent.keyDown(screen.getByTestId('poker-session-input'), { key: 'Enter' });
 
     // Assert
     expect(mockNavigate).toHaveBeenCalledWith(`/autotest/services/planning-poker/${SESSION_ID}`);

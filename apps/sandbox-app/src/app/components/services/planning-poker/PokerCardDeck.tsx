@@ -33,12 +33,12 @@ const Deck = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: var(--goa-space-s);
-  margin: var(--goa-space-m) 0;
+  margin: var(--goa-space-xs) 0 0;
 `;
 
 const Card = styled.button`
-  width: 64px;
-  height: 96px;
+  width: 3.5rem;
+  height: 5rem;
   border: 2px solid var(--goa-color-interactive-default);
   border-radius: var(--goa-border-radius-m);
   background: var(--goa-color-greyscale-white);
