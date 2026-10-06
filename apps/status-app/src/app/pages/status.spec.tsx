@@ -13,7 +13,7 @@ import { SUBSCRIBE_TO_TENANT } from '../store/status/actions';
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router-dom-v7', () => ({
   useLocation: jest.fn().mockReturnValue({
     pathname: '/0014430f-abb9-4b57-915c-de9f3c889696',
     search: '',
@@ -62,7 +62,7 @@ describe('Service statuses', () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
-      </Provider>
+      </Provider>,
     );
     await waitFor(() => expect(getByText('Cannot find a provider at this url')).toBeTruthy());
   });
@@ -133,7 +133,7 @@ describe('Service statuses (2 of them)', () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
-      </Provider>
+      </Provider>,
     );
     await waitFor(() => expect(getByText('Status service')).toBeTruthy());
     await waitFor(() => expect(getByText('Tenant service')).toBeTruthy());
@@ -143,14 +143,14 @@ describe('Service statuses (2 of them)', () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
-      </Provider>
+      </Provider>,
     );
 
     await waitFor(() =>
-      expect(getByText('This service allows for easy monitoring of application downtime.')).toBeTruthy()
+      expect(getByText('This service allows for easy monitoring of application downtime.')).toBeTruthy(),
     );
     await waitFor(() =>
-      expect(getByText('Allows the provisioning of distinct services in their own namespace.')).toBeTruthy()
+      expect(getByText('Allows the provisioning of distinct services in their own namespace.')).toBeTruthy(),
     );
   });
 
@@ -158,7 +158,7 @@ describe('Service statuses (2 of them)', () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
-      </Provider>
+      </Provider>,
     );
 
     await waitFor(() => expect(getByText(moment(data[0].lastUpdated).calendar())).toBeTruthy());
@@ -169,7 +169,7 @@ describe('Service statuses (2 of them)', () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
-      </Provider>
+      </Provider>,
     );
 
     await waitFor(() => expect(getByText('Sign up for notifications')).toBeTruthy());
@@ -179,7 +179,7 @@ describe('Service statuses (2 of them)', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <ServiceStatuses />
-      </Provider>
+      </Provider>,
     );
 
     const email = baseElement.querySelector("goa-input[testId='email']");
@@ -188,7 +188,7 @@ describe('Service statuses (2 of them)', () => {
       email,
       new CustomEvent('_change', {
         detail: { value: 'bob@smith.com' },
-      })
+      }),
     );
     const subscribeButton = baseElement.querySelector("goa-button[testId='subscribe']");
     fireEvent(subscribeButton, new CustomEvent('_click'));

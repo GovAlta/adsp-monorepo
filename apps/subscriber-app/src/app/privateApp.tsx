@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
-import { Route, Routes, useParams } from 'react-router-dom';
+import { Route, Routes, useParams } from 'react-router-dom-v7';
 import { KeycloakRefreshToken } from '@store/tenant/actions';
 import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
