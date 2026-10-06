@@ -8,6 +8,7 @@ import Header from './Header';
 import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { useSelector } from 'react-redux';
 import { authenticatedUserSelector, environmentSelector, userSelector } from '../state';
+import { buildLoginPath } from '../lib/loginReturn';
 
 interface ServiceInfo {
   /**
@@ -190,9 +191,9 @@ export default function Services() {
 
   useEffect(() => {
     if (!user && userInitialized) {
-      navigate(`/`);
+      navigate(buildLoginPath(environment.tenantName, location.pathname), { replace: true });
     }
-  }, [navigate, user, userInitialized]);
+  }, [navigate, user, userInitialized, environment.tenantName, location.pathname]);
 
   useFeedbackWidget(environment.tenantName);
   return (

@@ -35,6 +35,10 @@ Sandbox app ──POST /script/v1/scripts/poker-*──► script service (Lua, 
   (lowest `userId`) reveals after 1 second; the others only step in after 5 seconds. `poker-reveal`
   returns the stored result for a round that is already revealed, so extra calls are harmless.
   Votes from players who dropped are not counted.
+- **Long sessions.** While a board is open, the sign-in is refreshed in the background and the session
+  expiry warning is hidden, so hour-long grooming sessions are not interrupted. If Keycloak still ends
+  the session (e.g. its maximum session length), the sandbox signs the player in again and returns them
+  to the same board.
 
 | Script              | Does                                                                         |
 | ------------------- | ---------------------------------------------------------------------------- |

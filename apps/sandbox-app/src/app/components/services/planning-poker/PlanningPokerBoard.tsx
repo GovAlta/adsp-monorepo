@@ -27,6 +27,7 @@ import { PokerHistory } from './PokerHistory';
 import { PokerParticipants } from './PokerParticipants';
 import { PokerResults } from './PokerResults';
 import { usePokerPresence } from './usePokerPresence';
+import { useKeepSessionAlive } from '../../../hooks/useKeepSessionAlive';
 import {
   buildParticipantRows,
   buildSessionPath,
@@ -117,6 +118,7 @@ export const PlanningPokerBoard = () => {
   }, [dispatch, sessionId]);
 
   usePokerPresence(sessionId);
+  useKeepSessionAlive();
 
   // Restarts when a new round starts, so each round is revealed once everyone at the table has voted.
   useEffect(() => {

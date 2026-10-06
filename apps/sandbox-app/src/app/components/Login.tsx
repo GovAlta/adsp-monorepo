@@ -11,6 +11,7 @@ import {
 } from '../state';
 
 import { getRealm } from '../lib/keycloak';
+import { getLoginReturnPath } from '../lib/loginReturn';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isUUID = (id: string) => uuidRegex.test(id);
@@ -44,8 +45,7 @@ export const Login = () => {
 
   const tenantLogin = useCallback(
     async (realm: string) => {
-      let loginRedirectUrl = window.location.origin;
-      loginRedirectUrl = `${window.location.origin}/${realm}/services`;
+      const loginRedirectUrl = `${window.location.origin}${getLoginReturnPath(realm, location.search)}`;
 
       const tenantApi = directory['urn:ads:platform:tenant-service'];
       const updatedRealm = isUUID(realm) ? realm : await getRealm(realm, tenantApi);
@@ -56,7 +56,7 @@ export const Login = () => {
         navigate(`/${realm}`);
       }
     },
-    [directory, loginByIDP, navigate],
+    [directory, loginByIDP, navigate, location.search],
   );
 
   useEffect(() => {
