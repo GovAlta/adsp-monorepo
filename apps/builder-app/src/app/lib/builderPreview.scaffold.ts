@@ -311,7 +311,7 @@ export function createPreviewScript(
         const presets = [];
 
         if (isTsFile) {
-          presets.push(['typescript', { allExtensions: true, isTSX: /[.]tsx$/i.test(resolvedPath) }]);
+          presets.push(['typescript', { ignoreExtensions: false }]);
         }
 
         if (/[.](js|jsx|ts|tsx)$/i.test(resolvedPath)) {

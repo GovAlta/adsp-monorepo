@@ -71,22 +71,27 @@ export const configurationSchema = {
           items: { type: 'string' },
         },
         model: {
-          type: 'object',
-          properties: {
-            id: {
-              type: 'string',
-            },
-            reasoningEffort: {
-              type: 'string',
-            },
-            headers: {
+          anyOf: [
+            { type: 'string' },
+            {
               type: 'object',
-              additionalProperties: {
-                type: 'string',
+              properties: {
+                id: {
+                  type: 'string',
+                },
+                reasoningEffort: {
+                  type: 'string',
+                },
+                headers: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'string',
+                  },
+                },
               },
+              additionalProperties: false,
             },
-          },
-          additionalProperties: false,
+          ],
         },
         tools: {
           type: 'array',
