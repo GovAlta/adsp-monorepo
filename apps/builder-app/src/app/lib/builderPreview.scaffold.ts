@@ -29,7 +29,6 @@ export function createPreviewScript(
 
         try {
           const rawPath = typeof initialRouteState.path === 'string' ? initialRouteState.path : '/';
-          const rawHash = typeof initialRouteState.hash === 'string' ? initialRouteState.hash : '';
           const rawQuery = typeof initialRouteState.query === 'string' ? initialRouteState.query : '';
 
           const loweredPath = String(rawPath || '').toLowerCase();
@@ -41,11 +40,11 @@ export function createPreviewScript(
             loweredPath.startsWith('//');
           const normalizedPath = invalidPath ? '/' : rawPath.startsWith('/') ? rawPath : '/' + rawPath;
           const normalizedQuery = rawQuery ? (rawQuery.startsWith('?') ? rawQuery : '?' + rawQuery) : '';
-          const preferredHash = rawHash || (normalizedPath !== '/' || normalizedQuery ? '#' + normalizedPath + normalizedQuery : '');
 
-          if (preferredHash && window.location.hash !== preferredHash) {
-            window.location.hash = preferredHash;
-          }
+          // Set the initial route for PatchedMemoryRouter in the vendor bundle.
+          // Must be set before the vendor bundle script tag loads so MemoryRouter
+          // reads it during first render.
+          window.__BUILDER_INITIAL_ROUTE__ = normalizedPath + normalizedQuery;
         } catch {
           // Ignore route restore errors; preview should still render default route.
         }
@@ -312,7 +311,7 @@ export function createPreviewScript(
         const presets = [];
 
         if (isTsFile) {
-          presets.push(['typescript', { allExtensions: true, isTSX: /[.]tsx$/i.test(resolvedPath) }]);
+          presets.push(['typescript', { ignoreExtensions: false }]);
         }
 
         if (/[.](js|jsx|ts|tsx)$/i.test(resolvedPath)) {

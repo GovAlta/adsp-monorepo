@@ -1,15 +1,7 @@
-import {
-  GoabAppFooter,
-  GoabAppHeader,
-  GoabButton,
-  GoabCallout,
-  GoabContainer,
-  GoabOneColumnLayout,
-  GoabPageBlock,
-} from '@abgov/react-components';
+import { GoabButton, GoabCallout, GoabContainer, GoabPageBlock } from '@abgov/react-components';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { FormComponent } from '../components/FormComponent';
+import PublicLayout from '../layouts/PublicLayout';
 import { adspFormConfig } from '../config/adspForm';
 import {
   type AdspFormDefinition,
@@ -59,21 +51,7 @@ export default function Apply() {
   const hasValidationError = useMemo(() => errors.length > 0, [errors]);
 
   return (
-    <GoabOneColumnLayout>
-      <section slot="header" className="app-header-shell">
-        <GoabAppHeader url="/" heading={adspFormConfig.serviceName}>
-          <Link to="/apply" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Apply
-          </Link>
-          <Link to="/components" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Components
-          </Link>
-          <Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>
-            About
-          </Link>
-        </GoabAppHeader>
-      </section>
-
+    <PublicLayout>
       <GoabPageBlock width="704px">
         <div className="page-content apply-page">
           <h1 className="page-title">Apply for this service</h1>
@@ -175,9 +153,6 @@ export default function Apply() {
         </div>
       </GoabPageBlock>
 
-      <section slot="footer">
-        <GoabAppFooter></GoabAppFooter>
-      </section>
-    </GoabOneColumnLayout>
+    </PublicLayout>
   );
 }

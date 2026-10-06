@@ -1,35 +1,19 @@
 import {
   GoabButton,
   GoabCallout,
-  GoabOneColumnLayout,
-  GoabAppHeader,
   GoabHeroBanner,
   GoabPageBlock,
   GoabGrid,
   GoabContainer,
-  GoabAppFooter,
 } from '@abgov/react-components';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import PublicLayout from '../layouts/PublicLayout';
 
 export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <GoabOneColumnLayout>
-      <section slot="header" className="app-header-shell">
-        <GoabAppHeader url="/" heading="Alberta service">
-          <Link to="/apply" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Apply
-          </Link>
-          <Link to="/components" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Components
-          </Link>
-          <Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>
-            About
-          </Link>
-        </GoabAppHeader>
-      </section>
-
+    <PublicLayout>
       <div className="hero-banner-wrapper">
         <GoabHeroBanner
           heading="Welcome to your Alberta service"
@@ -169,9 +153,6 @@ export default function Home() {
         </div>
       </GoabPageBlock>
 
-      <section slot="footer">
-        <GoabAppFooter></GoabAppFooter>
-      </section>
-    </GoabOneColumnLayout>
+    </PublicLayout>
   );
 }
