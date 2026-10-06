@@ -2,10 +2,16 @@
 -- Runner roles: default-roles-<realm> (every tenant user). Runs with the script service account.
 -- Inputs: sessionId, roundId
 -- Output: JSON string of the revealed round.
+--
+-- Only votes from players still at the table count. Revealing an already revealed round returns the
+-- stored result, because every board auto-reveals once everyone has voted.
 
 local NAMESPACE = 'planning-poker'
 local MAX_ID_LENGTH = 64
 local MAX_VOTE_ENTRIES = 200
+local MAX_PARTICIPANT_ENTRIES = 200
+-- Keep in step with POKER_PRESENCE_TIMEOUT_MS in the sandbox app and poker-get-state.
+local PRESENCE_TIMEOUT_SECONDS = 90
 
 -- Script inputs arrive as a .NET dictionary; check the key first so a missing input reads as nil.
 local function readInput(name, maxLength)
@@ -58,12 +64,26 @@ local function readValues(name, top)
   return values
 end
 
+-- A player has dropped when their newest entry is a leave, or their last heartbeat is too old.
+local function readActivePlayers(sessionId, now)
+  local active, seen = {}, {}
+  for _, entry in ipairs(readValues('participants-' .. sessionId, MAX_PARTICIPANT_ENTRIES)) do
+    local userId = field(entry, 'userId')
+    if userId ~= nil and not seen[userId] then
+      seen[userId] = true
+      local seenAt = tonumber(field(entry, 'seenAt'))
+      active[userId] = field(entry, 'active') == true and seenAt ~= nil and now - seenAt <= PRESENCE_TIMEOUT_SECONDS
+    end
+  end
+  return active
+end
+
 -- Values come back newest first, so the first entry seen for a user is their latest vote.
-local function readLatestVotes(roundId)
+local function readLatestVotes(roundId, players)
   local votes = {}
   for _, entry in ipairs(readValues('votes-' .. roundId, MAX_VOTE_ENTRIES)) do
     local userId = field(entry, 'userId')
-    if userId ~= nil and votes[userId] == nil then
+    if userId ~= nil and players[userId] and votes[userId] == nil then
       votes[userId] = { userName = field(entry, 'userName'), vote = field(entry, 'vote') }
     end
   end
@@ -102,6 +122,7 @@ local function encodeString(value)
 end
 
 -- Minimal JSON encoder since the sandbox has no JSON library; tables with array items encode as arrays.
+-- A table with a rawJson field is emitted as-is (used for the stored votes snapshot).
 local function encodeJson(value)
   local valueType = type(value)
   if valueType == 'string' or valueType == 'userdata' then
@@ -110,6 +131,8 @@ local function encodeJson(value)
     return tostring(value)
   elseif valueType ~= 'table' then
     return 'null'
+  elseif value.rawJson ~= nil then
+    return value.rawJson
   end
 
   local encoded, separator = '', ''
@@ -131,11 +154,25 @@ local sessionId = requireInput('sessionId', MAX_ID_LENGTH)
 local roundId = requireInput('roundId', MAX_ID_LENGTH)
 
 local round = readValues('round-' .. sessionId, 1)[1]
-if field(round, 'roundId') ~= roundId or field(round, 'status') ~= 'voting' then
+if field(round, 'roundId') ~= roundId then
   error('Round ' .. roundId .. ' is not open for voting.')
 end
 
-local votes = readLatestVotes(roundId)
+if field(round, 'status') == 'revealed' then
+  return encodeJson({
+    sessionId = sessionId,
+    roundId = roundId,
+    storyTitle = field(round, 'storyTitle'),
+    storyUrl = field(round, 'storyUrl') or '',
+    status = 'revealed',
+    average = field(round, 'average'),
+    hasAverage = field(round, 'hasAverage'),
+    consensus = field(round, 'consensus'),
+    votes = { rawJson = field(round, 'votesJson') or '{}' },
+  })
+end
+
+local votes = readLatestVotes(roundId, readActivePlayers(sessionId, os.time()))
 local summary = summarizeVotes(votes)
 local revealed = {
   sessionId = sessionId,

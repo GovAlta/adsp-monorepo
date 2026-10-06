@@ -1,8 +1,12 @@
 import {
+  clearValueDefinitionSaveError,
+  CLEAR_VALUE_DEFINITION_SAVE_ERROR_ACTION,
   createValueDefinition,
   CREATE_VALUE_DEFINITION_ACTION,
   deleteValueDefinition,
   DELETE_VALUE_DEFINITION_ACTION,
+  saveValueDefinitionFailed,
+  SAVE_VALUE_DEFINITION_FAILED_ACTION,
   updateValueDefinition,
   updateValueDefinitionSuccess,
   UPDATE_VALUE_DEFINITION_ACTION,
@@ -23,6 +27,11 @@ describe('value definition actions', () => {
       type: UPDATE_VALUE_DEFINITION_SUCCESS_ACTION,
       definition,
     });
+    expect(saveValueDefinitionFailed('Failed to save')).toEqual({
+      type: SAVE_VALUE_DEFINITION_FAILED_ACTION,
+      error: 'Failed to save',
+    });
+    expect(clearValueDefinitionSaveError()).toEqual({ type: CLEAR_VALUE_DEFINITION_SAVE_ERROR_ACTION });
   });
 
   it('creates the delete definition action', () => {

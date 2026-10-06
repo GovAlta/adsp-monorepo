@@ -10,12 +10,21 @@ jest.mock('@abgov/react-components', () => ({
     value,
     testId,
     onChange,
+    onKeyPress,
   }: {
     name: string;
     value: string;
     testId: string;
     onChange: (detail: { name: string; value: string }) => void;
-  }) => <input data-testid={testId} value={value} onChange={(e) => onChange({ name, value: e.target.value })} />,
+    onKeyPress: (detail: { name: string; value: string; key: string }) => void;
+  }) => (
+    <input
+      data-testid={testId}
+      value={value}
+      onChange={(e) => onChange({ name, value: e.target.value })}
+      onKeyDown={(e) => onKeyPress({ name, value, key: e.key })}
+    />
+  ),
   GoabButton: ({
     children,
     testId,
@@ -88,5 +97,17 @@ describe('PokerNickname', () => {
 
     // Assert
     expect(screen.getByTestId('poker-nickname')).toHaveValue('Captain Estimate');
+  });
+
+  test('saves the nickname when Enter is pressed', () => {
+    // Arrange
+    const { props } = renderNickname();
+    fireEvent.change(screen.getByTestId('poker-nickname'), { target: { value: 'Captain Estimate' } });
+
+    // Act
+    fireEvent.keyDown(screen.getByTestId('poker-nickname'), { key: 'Enter' });
+
+    // Assert
+    expect(props.onSave).toHaveBeenCalledWith('Captain Estimate');
   });
 });

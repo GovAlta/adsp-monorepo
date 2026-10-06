@@ -211,3 +211,62 @@ export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown)
 };
 
 const capitalize = (word) => (!word ? word : word[0].toUpperCase() + word.substr(1).toLowerCase());
+export interface SchemaValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+export const validateJsonSchema = (schemaText: string): SchemaValidationResult => {
+  if (!schemaText.trim()) {
+    return {
+      valid: false,
+      error: 'Payload schema is required.',
+    };
+  }
+
+  let schema: unknown;
+
+  try {
+    schema = JSON.parse(schemaText);
+  } catch {
+    return {
+      valid: false,
+      error: 'Payload schema must be valid JSON.',
+    };
+  }
+
+  const valid = ajv.validateSchema(schema);
+
+  if (valid) {
+    return { valid: true };
+  }
+
+  const firstError = ajv.errors?.[0];
+
+  if (!firstError) {
+    return {
+      valid: false,
+      error: 'Payload schema is not a valid JSON Schema.',
+    };
+  }
+
+  // Make invalid type errors easier for the user to understand.
+  if (firstError.instancePath === '/type') {
+    const schemaType =
+      typeof schema === 'object' && schema !== null && 'type' in schema
+        ? (schema as { type?: unknown }).type
+        : undefined;
+
+    return {
+      valid: false,
+      error: `Invalid schema type "${String(
+        schemaType,
+      )}". Allowed types are: object, array, string, number, integer, boolean, and null.`,
+    };
+  }
+
+  return {
+    valid: false,
+    error: `Invalid JSON Schema: ${firstError.instancePath || 'schema'} ${firstError.message ?? ''}`.trim(),
+  };
+};

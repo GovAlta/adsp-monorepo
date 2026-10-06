@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import { PokerResults } from './PokerResults';
 
 jest.mock('@abgov/react-components', () => ({
-  GoabTable: ({ children }: { children: React.ReactNode }) => <table>{children}</table>,
   GoabCallout: ({ children, heading, testId }: { children: React.ReactNode; heading: string; testId: string }) => (
     <div data-testid={testId}>
       <h4>{heading}</h4>
@@ -43,11 +42,11 @@ describe('PokerResults', () => {
     expect(screen.getByTestId('poker-results')).toHaveTextContent('Discuss the highest and lowest votes');
   });
 
-  test('lists one row per card that was picked', () => {
+  test('lists one vote count per card that was picked', () => {
     // Arrange & Act
     render(<PokerResults round={revealedRound} votes={votes} />);
 
     // Assert
-    expect(screen.getAllByRole('row')).toHaveLength(3);
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(['5 × 1', '8 × 1']);
   });
 });

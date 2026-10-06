@@ -4,12 +4,15 @@
 -- Output: JSON string { sessionId, participants, round, votes, history }.
 --
 -- While a round is open, votes only list who has voted. Vote values are returned only after reveal.
+-- Participants only include players still at the table, with seconds since their last heartbeat.
 
 local NAMESPACE = 'planning-poker'
 local MAX_ID_LENGTH = 64
 local MAX_ROUND_ENTRIES = 100
 local MAX_PARTICIPANT_ENTRIES = 200
 local MAX_VOTE_ENTRIES = 200
+-- Keep in step with POKER_PRESENCE_TIMEOUT_MS in the sandbox app and poker-reveal.
+local PRESENCE_TIMEOUT_SECONDS = 90
 
 -- Script inputs arrive as a .NET dictionary; check the key first so a missing input reads as nil.
 local function readInput(name, maxLength)
@@ -70,6 +73,22 @@ local function latestByUser(entries, fields)
     end
   end
   return byUser
+end
+
+-- A player has dropped when their newest entry is a leave, or their last heartbeat is too old.
+local function activeParticipants(entries, now)
+  local active, seen = {}, {}
+  for _, entry in ipairs(entries) do
+    local userId = field(entry, 'userId')
+    if userId ~= nil and not seen[userId] then
+      seen[userId] = true
+      local seenAt = tonumber(field(entry, 'seenAt'))
+      if field(entry, 'active') == true and seenAt ~= nil and now - seenAt <= PRESENCE_TIMEOUT_SECONDS then
+        active[userId] = { userName = field(entry, 'userName'), idleSeconds = math.max(0, now - seenAt) }
+      end
+    end
+  end
+  return active
 end
 
 local function toRound(entry)
@@ -139,7 +158,7 @@ local participants = readValues('participants-' .. sessionId, MAX_PARTICIPANT_EN
 
 local state = {
   sessionId = sessionId,
-  participants = latestByUser(participants, { 'userName' }),
+  participants = activeParticipants(participants, os.time()),
   history = collectHistory(roundEntries),
   votes = {},
 }
