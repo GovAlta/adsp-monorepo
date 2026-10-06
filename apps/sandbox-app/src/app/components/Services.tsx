@@ -1,6 +1,6 @@
 import { GoabAppFooter, GoabCircularProgress, GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom-v7';
 import { CenteredProgress, FlexItem, ServiceContainer } from './styled-components';
 
 import { Band } from '@core-services/app-common';

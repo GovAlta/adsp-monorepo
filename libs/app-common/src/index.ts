@@ -1,4 +1,5 @@
 export * from './components/AuthCallback';
+export * from './components/AuthCallbackV2';
 export * from './components/Band';
 export * from './components/CommentsViewer';
 export * from './components/Container';

@@ -1,8 +1,8 @@
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 
-import { GoabButton, GoabButtonGroup, GoabCallout, GoabCircularProgress } from '@abgov/react-components';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { GoabCallout } from '@abgov/react-components';
+import { useLocation, useNavigate } from 'react-router-dom-v7';
 import {
   AppDispatch,
   authenticatedUserSelector,
@@ -14,7 +14,6 @@ import {
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { CenteredProgress } from './styled-components';
 import { buildLoginPath, isServicesUrl } from '../lib/loginReturn';
 
 const Placeholder = styled.div`
