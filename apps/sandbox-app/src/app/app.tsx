@@ -12,7 +12,7 @@ import { useInitializeFeedbackScript } from './hooks/useInitializeFeedbackScript
 import Services from './components/Services';
 import { useSelector } from 'react-redux';
 import { environmentSelector } from './state';
-import { AuthCallback } from '@core-services/app-common';
+import { AuthCallbackV2 as AuthCallback } from '@core-services/app-common';
 
 declare global {
   interface Window {
