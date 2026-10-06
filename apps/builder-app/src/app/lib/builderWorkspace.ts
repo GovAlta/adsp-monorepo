@@ -67,6 +67,21 @@ export function sortWorkspaceFiles(files: WorkspaceFileMap): WorkspaceSnapshotFi
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 
+/**
+ * Adds the project scaffold files (build and lint configuration) a downloaded workspace needs to run
+ * standalone. Files already in the workspace take precedence over the scaffold.
+ */
+export function mergeScaffoldFiles(
+  files: WorkspaceSnapshotFile[],
+  scaffold: WorkspaceSnapshotFile[],
+): WorkspaceSnapshotFile[] {
+  const existing = new Set(files.map((file) => file.path));
+
+  return [...files, ...scaffold.filter((file) => !existing.has(file.path))].sort((left, right) =>
+    left.path.localeCompare(right.path),
+  );
+}
+
 export function getDefaultSelectedPath(files: WorkspaceFileMap, preferred = DEFAULT_SELECTED_FILE): string {
   if (files[preferred]) {
     return preferred;

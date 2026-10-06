@@ -14,6 +14,7 @@ import {
 } from '@abgov/react-components';
 import { GoabTabsOnChangeDetail } from '@abgov/ui-components-common';
 import { WorkspaceSnapshotFile, isBinaryPath, isImagePath } from '../lib/builderWorkspace';
+import { PREVIEW_COMMANDS } from '../lib/previewRoutes';
 import { type AssetThumbnail } from '../state/agent.slice';
 import {
   Actions,
@@ -317,6 +318,7 @@ export const BuilderEditPane = ({
                 context={{ tenant: tenantLabel }}
                 messages={messages}
                 onSend={onSendPrompt}
+                commands={PREVIEW_COMMANDS}
               />
             </ChatPane>
           ) : activePanelTab === 'info' ? (

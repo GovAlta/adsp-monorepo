@@ -125,7 +125,10 @@
     },
     "generate-react-template-seed": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/.generated/template-seed/react.json"],
+      "outputs": [
+        "{projectRoot}/.generated/template-seed/react.json",
+        "{projectRoot}/.generated/template-seed/react-scaffold.json"
+      ],
       "options": {
         "commands": ["node apps/builder-app/scripts/generate-template-seed.js"],
         "parallel": false

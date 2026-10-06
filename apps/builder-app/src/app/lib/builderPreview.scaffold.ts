@@ -415,6 +415,15 @@ export function createPreviewScript(
         }
       });
 
+      // Allow the builder (parent frame) to navigate the previewed app, e.g. from the /go chat command.
+      window.addEventListener('message', function(e) {
+        if (e.source !== window.parent) { return; }
+        var data = e.data;
+        if (data && data.type === 'preview:navigate' && typeof data.path === 'string') {
+          window.dispatchEvent(new CustomEvent('preview:navigate', { detail: data.path }));
+        }
+      });
+
       (async function() {
         try {
           restoreRouteState();
