@@ -8,10 +8,13 @@ import {
   configInitializedSelector,
   initializeTenant,
   logoutUser,
+  sessionKeepAliveSelector,
   tenantSelector,
   userSelector,
 } from '../state';
 import styled from 'styled-components';
+import { useSessionRefresh } from '../hooks/useSessionRefresh';
+import { SessionExpiryModal } from './SessionExpiryModal';
 
 const UserSpan = styled.span`
   margin-left: var(--goa-space-l);
@@ -25,6 +28,8 @@ export default function Header() {
   const tenant = useSelector(tenantSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
   const configInitialized = useSelector(configInitializedSelector);
+  const keepSessionAlive = useSelector(sessionKeepAliveSelector);
+  const signedIn = userInitialized && !!user;
 
   useEffect(() => {
     if (configInitialized) {
@@ -32,33 +37,32 @@ export default function Header() {
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  useSessionRefresh(signedIn);
+
+  const signOut = () => {
+    if (tenant && tenant.name) {
+      dispatch(logoutUser({ tenant, from: `/${tenant.name}` }));
+    } else {
+      dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
+    }
+  };
+
   return (
     <>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" />
       <GoabAppHeader url="/" heading={'Alberta Digital Service Platform - Sandbox app'}>
         <AccountActionsDiv slot="utilities">
-          {userInitialized && user && (
+          {signedIn && (
             <span>
               <UserSpan>{user.name}</UserSpan>
-              <GoabButton
-                size="compact"
-                mt="s"
-                mr="s"
-                type="tertiary"
-                onClick={() => {
-                  if (tenant && tenant.name) {
-                    dispatch(logoutUser({ tenant, from: `/${tenant.name}` }));
-                  } else {
-                    dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
-                  }
-                }}
-              >
+              <GoabButton size="compact" mt="s" mr="s" type="tertiary" onClick={signOut}>
                 Sign out
               </GoabButton>
             </span>
           )}
         </AccountActionsDiv>
       </GoabAppHeader>
+      {signedIn && !keepSessionAlive && <SessionExpiryModal onSignOut={signOut} />}
     </>
   );
 }
