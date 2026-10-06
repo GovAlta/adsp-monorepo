@@ -21,6 +21,14 @@ import {
 // Type Definitions
 // ========================================
 
+export interface ChatCommand {
+  /** Command name without the leading slash, e.g. 'go'. */
+  name: string;
+  description: string;
+  /** Optional usage hint shown next to the command, e.g. '/go <route>'. */
+  usage?: string;
+}
+
 interface AgentChatProps {
   disabled?: boolean;
   threadId: string;
@@ -29,6 +37,8 @@ interface AgentChatProps {
   draft?: string;
   onDraftChange?: (value: string) => void;
   onSend: (threadId: string, context: Record<string, unknown>, content: UserContent) => void;
+  /** Slash commands handled by the host app; suggested while the user types a leading '/'. */
+  commands?: ChatCommand[];
   onAttachmentUpload?: (file: File) => Promise<Attachment>;
   renderToolCall?: (toolCall: ToolCall) => ReactNode;
   maxJsonChars?: number;
@@ -167,6 +177,41 @@ const FormDiv = styled.div`
   padding: var(--goa-space-m);
 `;
 
+const CommandListDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin: 0 var(--goa-space-xs);
+  border: 1px solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-m);
+  background: var(--goa-color-greyscale-white);
+  overflow: hidden;
+
+  button {
+    display: flex;
+    gap: var(--goa-space-m);
+    align-items: baseline;
+    padding: var(--goa-space-xs) var(--goa-space-m);
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  button[aria-selected='true'],
+  button:hover {
+    background: var(--goa-color-greyscale-100);
+  }
+
+  .command-usage {
+    font-weight: var(--goa-font-weight-bold);
+  }
+
+  .command-description {
+    color: var(--goa-color-text-secondary);
+  }
+`;
+
 const AttachmentItemDiv = styled.div`
   display: flex;
   align-items: center;
@@ -201,7 +246,7 @@ const AttachmentListDiv = styled.div`
 
 const UserMessageItem = memo(styled(({ className, message }: UserMessageItemProps) => {
   return (
-    <div className={className} data-from={message.from}>
+    <div className={className} data-from={message.from} data-local={message.local ? 'true' : undefined}>
       {message.content.map((part, index) => {
         if (part.type === 'text') {
           return (
@@ -238,6 +283,12 @@ const UserMessageItem = memo(styled(({ className, message }: UserMessageItemProp
 
   & .content {
     margin: var(--goa-space-xs) var(--goa-space-xs) var(--goa-space-xs) var(--goa-space-l);
+  }
+
+  &[data-local='true'] .content {
+    font-family: var(--goa-font-family-monospace, monospace);
+    font-size: var(--goa-font-size-2);
+    color: var(--goa-color-text-secondary);
   }
 `);
 
@@ -409,7 +460,7 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
   const showStreamingContinuation = message.streaming && !isThinking && !hasPendingToolCall;
 
   return (
-    <div className={className} data-from={message.from}>
+    <div className={className} data-from={message.from} data-local={message.local ? 'true' : undefined}>
       {isThinking && (
         <div className="activity-indicator" data-kind="thinking">
           <GoabSkeleton type="text" />
@@ -456,6 +507,15 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
   & .activity-indicator[data-kind='continuing'] {
     margin-top: 0;
   }
+
+  &[data-local='true'] .content {
+    margin-top: var(--goa-space-xs);
+    padding: var(--goa-space-s) var(--goa-space-m);
+    border-left: var(--goa-border-width-xl, 4px) solid var(--goa-color-info-default);
+    border-radius: 0 var(--goa-border-radius-m) var(--goa-border-radius-m) 0;
+    background: var(--goa-color-greyscale-100);
+    font-size: var(--goa-font-size-3);
+  }
 `);
 
 // ========================================
@@ -470,6 +530,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   draft: draftProp,
   onDraftChange,
   onSend,
+  commands,
   onAttachmentUpload,
   renderToolCall,
   maxJsonChars,
@@ -614,7 +675,27 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
     setAttachments((prev) => prev.filter((a) => a.urn !== urn));
   };
 
+  // Suggest commands while the user is typing the command name (a leading '/' with no space yet).
+  const commandQuery = /^\/(\S*)$/.exec(draft)?.[1]?.toLowerCase();
+  const commandSuggestions =
+    commandQuery !== undefined && commands
+      ? commands.filter((command) => command.name.toLowerCase().startsWith(commandQuery))
+      : [];
+  const hasExactCommand = commandSuggestions.some((command) => command.name.toLowerCase() === commandQuery);
+
+  const completeCommand = (command: ChatCommand) => setDraft(`/${command.name} `);
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (
+      commandSuggestions.length > 0 &&
+      (event.key === 'Tab' || (event.key === 'Enter' && !event.shiftKey && !hasExactCommand))
+    ) {
+      // Complete a partially typed command instead of sending it (Enter) or moving focus (Tab).
+      completeCommand(commandSuggestions[0]);
+      event.preventDefault();
+      return;
+    }
+
     if (event.key === 'Enter' && !event.shiftKey) {
       handleSend();
       event.preventDefault();
@@ -695,6 +776,25 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
               title="Attach file"
             />
           </AttachmentListDiv>
+        )}
+
+        {commandSuggestions.length > 0 && (
+          <CommandListDiv role="listbox" aria-label="Available commands">
+            {commandSuggestions.map((command, index) => (
+              <button
+                key={command.name}
+                type="button"
+                role="option"
+                aria-selected={index === 0}
+                // Keep focus in the textarea while picking a command.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => completeCommand(command)}
+              >
+                <span className="command-usage">{command.usage ?? `/${command.name}`}</span>
+                <span className="command-description">{command.description}</span>
+              </button>
+            ))}
+          </CommandListDiv>
         )}
 
         <form onKeyDown={handleKeyDown}>

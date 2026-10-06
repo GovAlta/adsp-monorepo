@@ -16,6 +16,8 @@ export interface UserMessage {
   threadId: string;
   content: UserContent;
   from: typeof USER_FROM;
+  /** Handled locally by the host app (e.g. a slash command) rather than sent to the agent. */
+  local?: boolean;
 }
 
 export interface TextPart {
@@ -73,4 +75,6 @@ export interface AgentMessage {
   reasoning?: Reasoning;
   errors?: AgentError[];
   output?: unknown | null;
+  /** Generated locally by the host app (e.g. a slash command reply) rather than by the agent. */
+  local?: boolean;
 }
