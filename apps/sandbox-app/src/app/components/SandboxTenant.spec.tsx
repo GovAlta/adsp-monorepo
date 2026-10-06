@@ -13,8 +13,6 @@ jest.mock('react-redux', () => ({
 
 const mockLocation = { pathname: '/test-tenant' };
 
-const mockLocation = { pathname: '/test-tenant' };
-
 jest.mock('react-router-dom-v7', () => ({
   ...jest.requireActual('react-router-dom-v7'),
   useParams: () => ({ tenant: 'test-tenant' }),
