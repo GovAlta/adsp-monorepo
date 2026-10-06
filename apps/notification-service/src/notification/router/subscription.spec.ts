@@ -1576,6 +1576,35 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
+
+    it.each([
+      ['allows', [ServiceUserRoles.CodeSender], undefined],
+      ['rejects', [], expect.any(UnauthorizedUserError)],
+    ])('%s a user with an additional role', async (_case, additionalRoles, error) => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          id: 'sender',
+          tenantId,
+          name: 'Sender',
+          email: 'sender@test.co',
+          roles: [ServiceUserRoles.CodeSender],
+        },
+        params: { subscriber: 'subscriber' },
+      };
+      const next = jest.fn();
+
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = getSubscriber(repositoryMock, additionalRoles);
+      await handler(req as unknown as Request, {} as Response, next);
+      if (error) {
+        expect(next).toHaveBeenCalledWith(error);
+      } else {
+        expect(next).toHaveBeenCalledWith();
+        expect(req['subscriber']).toBe(subscriber);
+      }
+    });
   });
 
   describe('getSubscriberByUserId', () => {

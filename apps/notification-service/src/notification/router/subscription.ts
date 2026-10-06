@@ -432,7 +432,11 @@ export function createSubscriber(
 }
 
 const SUBSCRIBER_KEY = 'subscriber';
-export function getSubscriber(repository: SubscriptionRepository): RequestHandler {
+// additionalRoles lets other roles load the subscriber when the next handler applies its own access check.
+export function getSubscriber(
+  repository: SubscriptionRepository,
+  additionalRoles: ServiceUserRoles[] = []
+): RequestHandler {
   return async (req, _res, next) => {
     try {
       const user = req.user;
@@ -444,7 +448,8 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
         throw new NotFoundError('Subscriber', subscriber);
       }
 
-      if (!entity.canUpdate(user)) {
+      const hasAdditionalRole = additionalRoles.length > 0 && isAllowedUser(user, tenantId, additionalRoles, true);
+      if (!entity.canUpdate(user) && !hasAdditionalRole) {
         throw new UnauthorizedUserError('access subscriber', user);
       }
 
@@ -874,7 +879,7 @@ export const createSubscriptionRouter = ({
         ['body']
       )
     ),
-    getSubscriber(subscriptionRepository),
+    getSubscriber(subscriptionRepository, [ServiceUserRoles.CodeSender]),
     subscriberOperations(eventService, verifyService)
   );
   subscriptionRouter.delete(

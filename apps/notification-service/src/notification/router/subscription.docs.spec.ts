@@ -556,9 +556,7 @@ describe('subscription router documented behaviour', () => {
       ...extra,
     });
 
-    // Skipped until CS-5490 is decided and fixed: the subscriber model allows it, but the router applies the same
-    // access check as retrieving the subscriber first and responds 403.
-    it.skip.each([
+    it.each([
       ['send-code', { sent: true }],
       ['check-code', { verified: true }],
     ])('allows code-sender to run %s for another subscriber', async (op, result) => {
