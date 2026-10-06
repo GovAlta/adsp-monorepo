@@ -1,6 +1,8 @@
 import { environment } from '../../environments/environment';
 
 export const FORM_GENERATION_AGENT_ID = 'formGenerationAgent';
+export const ACCESS_SERVICE_AGENT_ID = 'AccessServiceAgent';
+export const ACCESS_SERVICE_AGENT_MAX_STEPS = 6;
 
 export interface AgentExecutionLimits {
   timeoutMs: number;

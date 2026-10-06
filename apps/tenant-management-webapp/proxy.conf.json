@@ -40,5 +40,18 @@
     },
     "secure": true,
     "changeOrigin": true
+  },
+  {
+    "context": ["/socket.io"],
+    "target": "http://localhost:3380",
+    "ws": true,
+    "secure": false,
+    "changeOrigin": true
+  },
+  {
+    "context": ["/api/agent/**"],
+    "target": "http://localhost:3380",
+    "secure": false,
+    "changeOrigin": true
   }
 ]

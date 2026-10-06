@@ -11,6 +11,11 @@ jest.mock('react-markdown', () => ({
   ),
 }));
 
+jest.mock('remark-gfm', () => ({
+  __esModule: true,
+  default: () => undefined,
+}));
+
 jest.mock('@abgov/react-components', () => ({
   GoabDetails: ({ heading, children }: { heading: string; children: React.ReactNode }) => (
     <details>
@@ -20,13 +25,9 @@ jest.mock('@abgov/react-components', () => ({
   ),
   GoabFormItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   GoabSkeleton: () => <div data-testid="skeleton" />,
-  GoabTextArea: ({
-    value,
-    onChange,
-  }: {
-    value: string;
-    onChange: (detail: { value: string }) => void;
-  }) => <textarea value={value} onChange={(event) => onChange({ value: event.target.value })} />,
+  GoabTextArea: ({ value, onChange }: { value: string; onChange: (detail: { value: string }) => void }) => (
+    <textarea value={value} onChange={(event) => onChange({ value: event.target.value })} />
+  ),
   GoabIconButton: ({ title, onClick }: { title: string; onClick?: () => void }) => (
     <button type="button" title={title} onClick={onClick} aria-label={title}>
       {title}
@@ -49,6 +50,18 @@ function renderChat(message: AgentMessage, renderToolCall?: (toolCall: ToolCall)
 describe('AgentChat', () => {
   beforeAll(() => {
     Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  it('renders the default welcome message', () => {
+    render(<AgentChat threadId="thread-1" context={{}} messages={[]} onSend={jest.fn()} />);
+
+    expect(screen.getByText('How can I help you?')).toBeInTheDocument();
+  });
+
+  it('hides the welcome message when it is empty', () => {
+    render(<AgentChat threadId="thread-1" context={{}} messages={[]} onSend={jest.fn()} welcomeMessage="" />);
+
+    expect(screen.queryByText('How can I help you?')).not.toBeInTheDocument();
   });
 
   it('renders the agent reply after completed tool call results', () => {

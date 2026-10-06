@@ -2,6 +2,7 @@ import { GoabDetails, GoabFormItem, GoabSkeleton, GoabTextArea, GoabIconButton }
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 import { FunctionComponent, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styled from 'styled-components';
 import { useAutoScroll } from '../hooks';
 import {
@@ -34,6 +35,7 @@ interface AgentChatProps {
   threadId: string;
   context: Record<string, unknown>;
   messages: Message[];
+  welcomeMessage?: string;
   draft?: string;
   onDraftChange?: (value: string) => void;
   onSend: (threadId: string, context: Record<string, unknown>, content: UserContent) => void;
@@ -98,13 +100,13 @@ interface AgentErrorProps {
 // Helpers
 // ========================================
 
-const createWelcomeMessage = (threadId: string): AgentMessage => ({
+const createWelcomeMessage = (threadId: string, content: string): AgentMessage => ({
   id: null,
   threadId,
   streaming: false,
   toolCalls: [],
   from: 'agent',
-  content: 'How can I help you?',
+  content,
   reasoning: null,
 });
 
@@ -167,6 +169,49 @@ const ContainerDiv = styled.div`
     max-width: 100%;
     overflow-x: auto;
     font-size: var(--goa-font-size-2);
+  }
+
+  & .content :is(h1, h2, h3, h4, h5, h6) {
+    margin: var(--goa-space-m) 0 var(--goa-space-s) 0;
+  }
+
+  & .content :is(ul, ol) {
+    margin: var(--goa-space-s) 0;
+    padding-left: var(--goa-space-l);
+  }
+
+  & .content p {
+    margin: 0 0 var(--goa-space-s) 0;
+  }
+
+  & .content p:last-child {
+    margin-bottom: 0;
+  }
+
+  & .content blockquote {
+    margin: var(--goa-space-s) 0;
+    padding-left: var(--goa-space-m);
+    border-left: 3px solid var(--goa-color-greyscale-200);
+    color: var(--goa-color-text-secondary);
+  }
+
+  & .content table {
+    border-collapse: collapse;
+    margin: var(--goa-space-s) 0;
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+
+  & .content th,
+  & .content td {
+    border: 1px solid var(--goa-color-greyscale-200);
+    padding: var(--goa-space-xs) var(--goa-space-s);
+    text-align: left;
+  }
+
+  & .content th {
+    background: var(--goa-color-greyscale-100);
   }
 `;
 
@@ -250,7 +295,7 @@ const UserMessageItem = memo(styled(({ className, message }: UserMessageItemProp
       {message.content.map((part, index) => {
         if (part.type === 'text') {
           return (
-            <Markdown key={index} className="content" data-from={message.from}>
+            <Markdown key={index} className="content" data-from={message.from} remarkPlugins={[remarkGfm]}>
               {part.text}
             </Markdown>
           );
@@ -476,7 +521,7 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
         return <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} maxJsonChars={maxJsonChars} />;
       })}
       {hasText && (
-        <Markdown className="content" data-from={message.from}>
+        <Markdown className="content" data-from={message.from} remarkPlugins={[remarkGfm]}>
           {message.content}
         </Markdown>
       )}
@@ -527,6 +572,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   threadId,
   context,
   messages,
+  welcomeMessage: welcomeMessageText = 'How can I help you?',
   draft: draftProp,
   onDraftChange,
   onSend,
@@ -559,7 +605,10 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   const { scrollContainerRef, targetElementRef, onScroll, resetScroll } = useAutoScroll([messages]);
 
   // Computed values
-  const welcomeMessage = useMemo(() => createWelcomeMessage(threadId), [threadId]);
+  const welcomeMessage = useMemo(
+    () => createWelcomeMessage(threadId, welcomeMessageText),
+    [threadId, welcomeMessageText],
+  );
   const isWaitingForResponse = useMemo(() => messages[messages.length - 1]?.from === 'user', [messages]);
   const lastAgentMessage = [...messages].reverse().find((message): message is AgentMessage => message.from === 'agent');
   const isStreaming = Boolean(lastAgentMessage?.streaming) || isWaitingForResponse;
@@ -708,7 +757,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
       {/* Message list */}
       <div ref={scrollContainerRef} onScroll={onScroll}>
         <div className="message-list">
-          <AgentMessageItem message={welcomeMessage} />
+          {welcomeMessageText.trim().length > 0 && <AgentMessageItem message={welcomeMessage} />}
           {messages.map((message) =>
             message.from === 'user' ? (
               <UserMessageItem key={message.id} message={message} />

@@ -3,11 +3,12 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { render, fireEvent } from '@testing-library/react';
 import { TenantIdp } from './TenantIDP';
+
 describe('User IdP tab in the access service', () => {
   const mockStore = configureStore([]);
 
-  it('Can create the tenant idp component', async () => {
-    const store = mockStore({
+  const createStore = () =>
+    mockStore({
       config: {
         tenantApi: { host: 'foo' },
         serviceUrls: { tenantManagementWebApp: 'http://localhost' },
@@ -23,10 +24,13 @@ describe('User IdP tab in the access service', () => {
       },
     });
 
+  it('Can create the tenant idp component', async () => {
+    const store = createStore();
+
     const { baseElement } = render(
       <Provider store={store}>
         <TenantIdp />
-      </Provider>
+      </Provider>,
     );
 
     const emailInput = await baseElement.querySelector("goa-input[testId='user-search-email-input']");
@@ -37,26 +41,12 @@ describe('User IdP tab in the access service', () => {
   });
 
   it('Search user by email', async () => {
-    const store = mockStore({
-      config: {
-        tenantApi: { host: 'foo' },
-        serviceUrls: { tenantManagementWebApp: 'http://localhost' },
-      },
-      user: { jwt: { token: '' } },
-      session: {
-        realm: 'core',
-        indicator: {
-          show: false,
-          message: 'loading',
-        },
-        loadingStates: [],
-      },
-    });
+    const store = createStore();
 
     const { baseElement } = render(
       <Provider store={store}>
         <TenantIdp />
-      </Provider>
+      </Provider>,
     );
     const emailInput = await baseElement.querySelector("goa-input[testId='user-search-email-input']");
     const emailSearchBtn = baseElement.querySelector("goa-button[testId='user-search-email-btn']");
