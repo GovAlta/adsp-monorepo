@@ -32,6 +32,19 @@ function resolveRedirectUri(from: string): string {
   return new URL(target, window.location.origin).href;
 }
 
+// A tab hash (e.g., #chat) present when Keycloak redirects back yields `#chat#state=...&code=...`,
+// which keycloak-js cannot parse. Drop the leading hash so only the auth response remains.
+function normalizeAuthHash() {
+  const match = /^#[^#&=]*(#(?:state|code|error)=.*)$/.exec(window.location.hash);
+  if (match) {
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${window.location.search}${match[1]}`,
+    );
+  }
+}
+
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
     client = new Keycloak({
@@ -47,11 +60,14 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
 
   // Always call init to process any auth code in the URL and check SSO status
   if (client && !client.authenticated) {
+    normalizeAuthHash();
     try {
       await client.init({
         onLoad: 'check-sso',
         pkceMethod: 'S256',
         checkLoginIframe: true,
+        // Keycloak rejects redirect URIs containing a fragment (e.g., a GoA tab hash such as #chat).
+        redirectUri: `${window.location.origin}${window.location.pathname}${window.location.search}`,
         silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
       });
     } catch {
