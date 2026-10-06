@@ -435,7 +435,12 @@ export function createPreviewScript(
             const script = document.createElement('script');
             script.src = vendorBundleUrl;
             script.onload = resolve;
-            script.onerror = function() { reject(new Error('Failed to load vendor bundle: ' + vendorBundleUrl)); };
+            script.onerror = function() {
+              // Not something the agent can fix by editing files, so it is not reported to the agent.
+              var loadError = new Error('Failed to load vendor bundle: ' + vendorBundleUrl);
+              loadError.builderInfrastructure = true;
+              reject(loadError);
+            };
             document.head.appendChild(script);
           });
 
@@ -450,6 +455,14 @@ export function createPreviewScript(
           const message = error instanceof Error ? error.message : String(error);
           const errorHtml = '<pre style="padding:16px;color:#5c1b14;background:#fff3f0;border:1px solid #f0b8ae;border-radius:12px;font:14px/1.5 monospace;white-space:pre-wrap;">Preview failed: ' + message + '</pre>';
           document.body.innerHTML = errorHtml;
+
+          // Compile and load failures (e.g. a Babel syntax error) are caught here, so the window error
+          // handler never sees them. Report the ones the agent can fix so the builder passes them on.
+          if (!(error && error.builderInfrastructure)) {
+            try {
+              window.parent.postMessage({ type: 'preview-error', message: 'Preview failed: ' + message.slice(0, 4000), stack: '' }, '*');
+            } catch (_) {}
+          }
         }
       })();
     `;
