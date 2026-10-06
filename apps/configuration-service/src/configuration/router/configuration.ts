@@ -43,12 +43,6 @@ export interface ConfigurationRouterProps extends Repositories {
 }
 
 const ENTITY_KEY = 'entity';
-const rateLimitHandler = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 200,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-});
 
 function resolveDefinition(entity: ConfigurationEntity<ConfigurationDefinitions>, namespace: string, name: string) {
   let result = entity?.latest?.configuration[`${namespace}:${name}`];
@@ -174,9 +168,8 @@ export function getConfigurationEntity(
         }
       };
 
-      //if user is not logged in and is not authenticated we want
-      //to do rate limiting for anonymous users.
-      if (!req.isAuthenticated && !user) {
+      // Rate limit anonymous requests. Passport sets req.isAuthenticated on every request, so check for the user.
+      if (!user) {
         // Note: this handler is actually awaitable (is async).
         await rateLimitHandler(req, res, handle);
       } else {
@@ -600,6 +593,12 @@ export function createConfigurationRouter({
 }: ConfigurationRouterProps): Router {
   const apiId = adspId`${serviceId}:v2`;
   const router = Router();
+  const rateLimitHandler = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    limit: 200,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+  });
 
   const validateNamespaceNameHandler = createValidationHandler(
     ...checkSchema(

@@ -300,9 +300,7 @@ describe('configuration router documented behaviour', () => {
       expect(res.status).toBe(401);
     });
 
-    // Skipped until CS-5491 is fixed: getConfigurationEntity only rate limits when req.isAuthenticated is not set,
-    // but passport always sets it.
-    it.skip('rate limits anonymous requests', async () => {
+    it('rate limits anonymous requests', async () => {
       const app = createApp(null);
       const url = `/configuration/v2/configuration/app/public-settings/${path}?tenant=${encodeURIComponent(
         tenantId.toString(),
@@ -312,6 +310,16 @@ describe('configuration router documented behaviour', () => {
       }
       const res = await request(app).get(url);
       expect(res.status).toBe(429);
+    });
+
+    it('does not rate limit authenticated requests', async () => {
+      const app = createApp(reader);
+      const url = `/configuration/v2/configuration/app/settings/${path}`;
+      for (let i = 0; i < 200; i++) {
+        await request(app).get(url);
+      }
+      const res = await request(app).get(url);
+      expect(res.status).toBe(200);
     });
   });
 
