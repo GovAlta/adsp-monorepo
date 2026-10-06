@@ -3,10 +3,19 @@ import { FunctionComponent, useEffect } from 'react';
 
 import { GoabButton, GoabButtonGroup, GoabCallout, GoabCircularProgress } from '@abgov/react-components';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AppDispatch, authenticatedUserSelector, environmentSelector, loginUser, tenantSelector } from '../state';
+import {
+  AppDispatch,
+  authenticatedUserSelector,
+  environmentSelector,
+  hasKeycloakSession,
+  loginUser,
+  tenantSelector,
+  userInitializedSelector,
+} from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { CenteredProgress } from './styled-components';
+import { buildLoginPath, isServicesUrl } from '../lib/loginReturn';
 
 const Placeholder = styled.div`
   padding: 48px;
@@ -25,14 +34,22 @@ export const SignIn: FunctionComponent<SignInProps> = ({ url }) => {
   const from = (location.state as { from?: string })?.from;
   const tenant = useSelector(tenantSelector);
   const authenticatedUser = useSelector(authenticatedUserSelector);
+  const userInitialized = useSelector(userInitializedSelector);
   const environment = useSelector(environmentSelector);
-  const isServicesUrl = (path: string): boolean => /\/services(\/.*)?$/.test(path);
+  const needsLogin =
+    userInitialized && authenticatedUser === null && !hasKeycloakSession() && isServicesUrl(location.pathname);
 
   useEffect(() => {
     if (environment.tenantName && !location.pathname.includes(environment.tenantName)) {
       navigate('/', { state: { from } });
     }
   }, [environment.tenantName, location.pathname, navigate, from]);
+
+  useEffect(() => {
+    if (needsLogin) {
+      navigate(buildLoginPath(environment.tenantName, `${location.pathname}${location.search}`), { replace: true });
+    }
+  }, [needsLogin, environment.tenantName, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (from && authenticatedUser === null) {

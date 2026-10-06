@@ -1,4 +1,4 @@
-import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import { Dispatch, PayloadAction, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Keycloak from 'keycloak-js';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +9,8 @@ import { isAxiosErrorPayload } from './util';
 import { isUUID } from '../lib/keycloak';
 
 export const USER_FEATURE_KEY = 'user';
+// Same window as tenant management web app: refresh once less than this is left of the Keycloak session.
+export const SESSION_REFRESH_WINDOW_SECONDS = 28 * 60;
 
 interface UserProfile {
   id: string;
@@ -27,6 +29,8 @@ export interface UserState {
   tenant: Tenant;
   initialized: boolean;
   busy: boolean;
+  // Set while a page (e.g. a planning poker board) keeps the session alive in the background.
+  keepSessionAlive: boolean;
   user: {
     id: string;
     name: string;
@@ -36,6 +40,7 @@ export interface UserState {
 }
 
 let client: Keycloak;
+let clientInitialized: Promise<void>;
 
 export const getKeycloakExpiry = () => {
   if (client) {
@@ -45,6 +50,27 @@ export const getKeycloakExpiry = () => {
   return 0;
 };
 
+// A service 401 clears the user while Keycloak keeps its session; only a missing session needs a login.
+export const hasKeycloakSession = (): boolean => !!client?.authenticated;
+
+export const isSessionEndingSoon = (): boolean =>
+  getKeycloakExpiry() - Date.now() / 1000 < SESSION_REFRESH_WINDOW_SECONDS;
+
+async function initKeycloakClient(keycloak: Keycloak, dispatch: Dispatch) {
+  try {
+    await keycloak.init({
+      onLoad: 'check-sso',
+      pkceMethod: 'S256',
+    });
+    keycloak.onAuthLogout = () => {
+      dispatch(userActions.clearUser());
+    };
+  } catch {
+    // Keycloak client throws undefined in certain cases.
+  }
+}
+
+// Header and SandBoxTenant both initialize the user, so later callers wait for the same SSO check.
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
     client = new Keycloak({
@@ -52,19 +78,9 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
       clientId: config.environment.access.client_id,
       realm,
     });
-
-    try {
-      await client.init({
-        onLoad: 'check-sso',
-        pkceMethod: 'S256',
-      });
-      client.onAuthLogout = () => {
-        dispatch(userActions.clearUser());
-      };
-    } catch (err) {
-      // Keycloak client throws undefined in certain cases.
-    }
+    clientInitialized = initKeycloakClient(client, dispatch);
   }
+  await clientInitialized;
 
   return client;
 }
@@ -85,6 +101,15 @@ export async function getAccessToken(): Promise<string> {
   }
   return token;
 }
+
+// Refreshing also renews the Keycloak refresh token, which extends the session.
+export const refreshSession = createAsyncThunk('user/refresh-session', async () => {
+  try {
+    await client.updateToken(SESSION_REFRESH_WINDOW_SECONDS);
+  } catch {
+    throw new Error('Your session could not be extended. Sign in again to continue.');
+  }
+});
 
 export const initializeTenant = createAsyncThunk(
   'user/initialize-tenant',
@@ -215,6 +240,7 @@ const initialUserState: UserState = {
   initialized: false,
   tenant: null,
   user: null,
+  keepSessionAlive: false,
   busy: false,
 };
 
@@ -224,6 +250,9 @@ const userSlice = createSlice({
   reducers: {
     clearUser: (state) => {
       state.user = null;
+    },
+    sessionKeepAliveChanged: (state, { payload }: PayloadAction<boolean>) => {
+      state.keepSessionAlive = payload;
     },
   },
   extraReducers: (builder) => {
@@ -267,3 +296,4 @@ export const userSelector = (state: AppState) => state.user;
 export const userBusySelector = (state: AppState) => state.user.busy;
 export const userInitializedSelector = (state: AppState) => state.user.initialized;
 export const authenticatedUserSelector = (state: AppState) => state.user.user;
+export const sessionKeepAliveSelector = (state: AppState) => state.user.keepSessionAlive;

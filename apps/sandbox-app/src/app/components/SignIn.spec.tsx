@@ -3,7 +3,14 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { SignIn } from './SignIn';
-import { authenticatedUserSelector, environmentSelector, loginUser, tenantSelector } from '../state';
+import {
+  authenticatedUserSelector,
+  environmentSelector,
+  hasKeycloakSession,
+  loginUser,
+  tenantSelector,
+  userInitializedSelector,
+} from '../state';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 jest.mock('react-redux', () => ({
@@ -25,6 +32,7 @@ jest.mock('./styled-components', () => ({
 jest.mock('../state', () => ({
   ...jest.requireActual('../state'),
   loginUser: jest.fn((args) => ({ type: 'loginUser', payload: args })),
+  hasKeycloakSession: jest.fn(() => false),
 }));
 
 jest.mock('@core-services/app-common', () => ({
@@ -149,5 +157,60 @@ describe('SignIn Component', () => {
 
     // Assert
     expect(screen.queryByText('Not authorized')).not.toBeInTheDocument();
+  });
+
+  describe('signed out on a services page', () => {
+    const servicePage = { pathname: '/test-tenant/services/planning-poker/8b0f6a52', search: '?tab=2', state: null };
+
+    const setupSignedOut = (userInitialized: boolean) => {
+      (useLocation as jest.Mock).mockReturnValue(servicePage);
+      (useSelector as jest.Mock).mockImplementation((selector) => {
+        if (selector === userInitializedSelector) return userInitialized;
+        if (selector === environmentSelector) return mockEnvironment;
+        if (selector === tenantSelector) return mockTenant;
+        return null;
+      });
+    };
+
+    afterEach(() => {
+      (useLocation as jest.Mock).mockReturnValue({ pathname: '/test-tenant', state: null });
+    });
+
+    test('goes to login and asks to come back to the same page', () => {
+      // Arrange
+      setupSignedOut(true);
+
+      // Act
+      render(<SignIn url="/test-url" />);
+
+      // Assert
+      expect(mockNavigate).toHaveBeenCalledWith(
+        `/test-tenant/login?returnTo=${encodeURIComponent('/test-tenant/services/planning-poker/8b0f6a52?tab=2')}`,
+        { replace: true },
+      );
+    });
+
+    test('waits until the sign-in check has finished', () => {
+      // Arrange
+      setupSignedOut(false);
+
+      // Act
+      render(<SignIn url="/test-url" />);
+
+      // Assert
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    test('does not loop through login when a service rejected a still-valid session', () => {
+      // Arrange
+      setupSignedOut(true);
+      (hasKeycloakSession as jest.Mock).mockReturnValueOnce(true);
+
+      // Act
+      render(<SignIn url="/test-url" />);
+
+      // Assert
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
   });
 });

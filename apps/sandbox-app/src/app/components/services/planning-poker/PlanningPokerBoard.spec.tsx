@@ -9,6 +9,7 @@ import {
   pokerActions,
   pokerSelector,
   pokerUserIdSelector,
+  userActions,
 } from '../../../state';
 import { PlanningPokerBoard } from './PlanningPokerBoard';
 import { AUTO_REVEAL_DELAY_MS, AUTO_REVEAL_FALLBACK_DELAY_MS } from './pokerUtils';
@@ -324,5 +325,13 @@ describe('PlanningPokerBoard', () => {
 
     // Assert
     expect(dispatch).toHaveBeenCalledWith({ type: 'leavePokerSession', payload: SESSION_ID });
+  });
+
+  test('keeps my sign-in alive in the background for long grooming sessions', () => {
+    // Arrange & Act
+    const { dispatch } = renderBoard();
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith(userActions.sessionKeepAliveChanged(true));
   });
 });
