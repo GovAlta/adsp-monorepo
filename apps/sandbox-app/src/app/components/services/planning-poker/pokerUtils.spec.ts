@@ -1,10 +1,15 @@
 import {
+  AUTO_REVEAL_DELAY_MS,
+  AUTO_REVEAL_FALLBACK_DELAY_MS,
   buildParticipantRows,
   buildSessionPath,
   countVotesByCard,
   describeRoundResult,
+  describeVotingProgress,
   extractSessionId,
   formatCard,
+  getAutoRevealDelay,
+  hasEveryoneVoted,
   isSafeStoryUrl,
   loadSavedNickname,
   saveNickname,
@@ -13,7 +18,11 @@ import {
 const SESSION_ID = '8b0f6a52-3c9d-4f1e-9a57-2d6c1e0b7f43';
 const ALICE_ID = 'a1111111-1111-1111-1111-111111111111';
 const BOB_ID = 'b2222222-2222-2222-2222-222222222222';
+const NOW = 1_790_000_000_000;
 const revealedRound = { roundId: 'r1', storyTitle: 'ADSP-123 Login page', status: 'revealed' as const };
+const votingRound = { ...revealedRound, status: 'voting' as const };
+const alice = { userId: ALICE_ID, userName: 'Alice Smith', hasVoted: true };
+const bob = { userId: BOB_ID, userName: 'Bob Jones', hasVoted: false };
 
 describe('pokerUtils', () => {
   test('shows the coffee card as a coffee cup', () => {
@@ -142,10 +151,13 @@ describe('pokerUtils', () => {
     expect(counts).toEqual([]);
   });
 
-  test('includes voters who are not yet in the participant list, sorted by name', () => {
+  test('seats only players at the table, sorted by name, ignoring votes from players who dropped', () => {
     // Arrange
-    const participants = { [BOB_ID]: { userName: 'Bob Jones' } };
-    const votes = { [ALICE_ID]: { userName: 'Alice Smith' } };
+    const participants = {
+      [BOB_ID]: { userName: 'Bob Jones', lastSeen: NOW },
+      [ALICE_ID]: { userName: 'Alice Smith', lastSeen: NOW },
+    };
+    const votes = { [ALICE_ID]: { userName: 'Alice Smith' }, c3333333: { userName: 'Cara Lee' } };
 
     // Act
     const rows = buildParticipantRows(participants, votes);
@@ -159,7 +171,7 @@ describe('pokerUtils', () => {
 
   test('shows the latest nickname from the participant list over the name recorded with a vote', () => {
     // Arrange
-    const participants = { [ALICE_ID]: { userName: 'Captain Estimate' } };
+    const participants = { [ALICE_ID]: { userName: 'Captain Estimate', lastSeen: NOW } };
     const votes = { [ALICE_ID]: { userName: 'Alice Smith' } };
 
     // Act
@@ -167,6 +179,108 @@ describe('pokerUtils', () => {
 
     // Assert
     expect(rows[0].userName).toBe('Captain Estimate');
+  });
+
+  test('knows everyone has voted when every player at the table has a vote', () => {
+    // Arrange
+    const rows = [alice, { ...bob, hasVoted: true }];
+
+    // Act
+    const result = hasEveryoneVoted(votingRound, rows);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  test('waits while someone at the table has not voted', () => {
+    // Arrange
+    const rows = [alice, bob];
+
+    // Act
+    const result = hasEveryoneVoted(votingRound, rows);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  test('does not treat an empty table as everyone voted', () => {
+    // Arrange & Act
+    const result = hasEveryoneVoted(votingRound, []);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  test('does not treat a revealed round as waiting for a reveal', () => {
+    // Arrange & Act
+    const result = hasEveryoneVoted(revealedRound, [alice]);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  test('lets the player with the lowest user ID reveal first', () => {
+    // Arrange
+    const rows = [bob, alice];
+
+    // Act
+    const delay = getAutoRevealDelay(rows, ALICE_ID);
+
+    // Assert
+    expect(delay).toBe(AUTO_REVEAL_DELAY_MS);
+  });
+
+  test('has other players reveal only as a fallback', () => {
+    // Arrange
+    const rows = [bob, alice];
+
+    // Act
+    const delay = getAutoRevealDelay(rows, BOB_ID);
+
+    // Assert
+    expect(delay).toBe(AUTO_REVEAL_FALLBACK_DELAY_MS);
+  });
+
+  test('lists who the table is waiting for', () => {
+    // Arrange
+    const rows = [alice, bob];
+
+    // Act
+    const progress = describeVotingProgress(rows);
+
+    // Assert
+    expect(progress).toBe('1 of 2 voted · waiting for Bob Jones');
+  });
+
+  test('shortens a long waiting list', () => {
+    // Arrange
+    const rows = ['Bob', 'Cara', 'Dan', 'Eve', 'Fay'].map((userName) => ({
+      userId: userName,
+      userName,
+      hasVoted: false,
+    }));
+
+    // Act
+    const progress = describeVotingProgress(rows);
+
+    // Assert
+    expect(progress).toBe('0 of 5 voted · waiting for Bob, Cara, Dan and 2 more');
+  });
+
+  test('says the cards are being revealed once everyone has voted', () => {
+    // Arrange & Act
+    const progress = describeVotingProgress([alice]);
+
+    // Assert
+    expect(progress).toBe('Everyone has voted. Revealing the cards…');
+  });
+
+  test('waits for players when the table is empty', () => {
+    // Arrange & Act
+    const progress = describeVotingProgress([]);
+
+    // Assert
+    expect(progress).toBe('Waiting for players to join.');
   });
 
   describe('saved nickname', () => {

@@ -24,8 +24,12 @@ const stringProperties = (...names) => Object.fromEntries(names.map((name) => [n
 
 const EVENTS = {
   'participant-joined': {
-    description: 'Signalled when a participant joins a planning poker session.',
+    description: 'Signalled when a participant joins a planning poker session, and on each heartbeat.',
     properties: stringProperties('sessionId', 'userId', 'userName'),
+  },
+  'participant-left': {
+    description: 'Signalled when a participant leaves a planning poker session.',
+    properties: stringProperties('sessionId', 'userId'),
   },
   'round-started': {
     description: 'Signalled when a new estimation round is started.',
@@ -64,7 +68,12 @@ const SCRIPTS = [
   {
     id: 'poker-join',
     name: 'Planning poker join',
-    description: 'Records a participant joining a planning poker session.',
+    description: 'Records a participant joining a planning poker session; also used as a heartbeat.',
+  },
+  {
+    id: 'poker-leave',
+    name: 'Planning poker leave',
+    description: 'Records a participant leaving a planning poker session.',
   },
   {
     id: 'poker-cast-vote',

@@ -19,31 +19,31 @@ export const PokerNickname = ({ nickname, defaultName, saving, onSave }: PokerNi
   }, [nickname]);
 
   const trimmed = value.trim();
+  const canSave = !saving && trimmed !== nickname;
+
+  const save = () => {
+    if (canSave) {
+      onSave(trimmed);
+    }
+  };
 
   return (
     <NicknameRow>
-      <GoabFormItem
-        label="Your nickname"
-        requirement="optional"
-        helpText={`Shown to everyone in the session. Leave blank to use ${defaultName}.`}
-      >
+      <GoabFormItem label="Your nickname" labelSize="compact" requirement="optional">
         <GoabInput
           name="nickname"
           value={value}
+          size="compact"
           width="100%"
           maxLength={POKER_NICKNAME_MAX_LENGTH}
           placeholder={defaultName}
           testId="poker-nickname"
           onChange={(detail) => setValue(detail.value)}
+          onKeyPress={({ key }) => key === 'Enter' && save()}
         />
       </GoabFormItem>
-      <GoabButton
-        type="secondary"
-        disabled={saving || trimmed === nickname}
-        testId="poker-save-nickname"
-        onClick={() => onSave(trimmed)}
-      >
-        Save nickname
+      <GoabButton type="secondary" size="compact" disabled={!canSave} testId="poker-save-nickname" onClick={save}>
+        Save
       </GoabButton>
     </NicknameRow>
   );
@@ -51,11 +51,11 @@ export const PokerNickname = ({ nickname, defaultName, saving, onSave }: PokerNi
 
 const NicknameRow = styled.div`
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--goa-space-m);
+  gap: var(--goa-space-s);
 
   > :first-child {
-    flex: 1 1 280px;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 `;

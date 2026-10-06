@@ -1,15 +1,19 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import {
+  POKER_PRESENCE_TIMEOUT_MS,
   PokerState,
   castPokerVote,
   connectPokerStream,
   disconnectPokerStream,
   initialPokerState,
+  joinPokerSession,
+  leavePokerSession,
   loadPokerSession,
   parsePokerSession,
   pokerActions,
   pokerReducer,
+  pokerUserIdSelector,
   revealPokerVotes,
   setPokerNickname,
   startPokerRound,
@@ -32,6 +36,7 @@ const ALICE_ID = 'a1111111-1111-1111-1111-111111111111';
 const BOB_ID = 'b2222222-2222-2222-2222-222222222222';
 const SCRIPT_SERVICE_URL = 'https://script-service.adsp-uat.alberta.ca';
 const PUSH_SERVICE_URL = 'https://push-service.adsp-uat.alberta.ca';
+const NOW = 1_790_000_000_000;
 
 const votingRound = { roundId: ROUND_ID, storyTitle: 'ADSP-123 Login page', storyUrl: '', status: 'voting' as const };
 const revealedRound = { ...votingRound, status: 'revealed' as const, average: 6.5, hasAverage: true, consensus: false };
@@ -69,11 +74,32 @@ const scriptError = (message: string) => {
 };
 
 describe('poker slice', () => {
+  let dateNowSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(NOW);
+  });
+
+  afterEach(() => {
+    dateNowSpy.mockRestore();
   });
 
   describe('parsePokerSession', () => {
+    test('converts the idle seconds of each player into the time they were last seen', () => {
+      // Arrange
+      const output = JSON.stringify({
+        sessionId: SESSION_ID,
+        participants: { [BOB_ID]: { userName: 'Bob Jones', idleSeconds: 20 } },
+      });
+
+      // Act
+      const session = parsePokerSession(output, NOW);
+
+      // Assert
+      expect(session.participants[BOB_ID]).toEqual({ userName: 'Bob Jones', lastSeen: NOW - 20_000 });
+    });
+
     test('converts an empty history object from Lua into an empty array', () => {
       // Arrange
       const output = JSON.stringify({ sessionId: SESSION_ID, participants: {}, votes: {}, history: {} });
@@ -164,7 +190,45 @@ describe('poker slice', () => {
       const next = pokerReducer(state, pokerActions.participantJoined({ userId: BOB_ID, userName: 'Bob Jones' }));
 
       // Assert
-      expect(next.participants[BOB_ID]).toEqual({ userName: 'Bob Jones' });
+      expect(next.participants[BOB_ID]).toEqual({ userName: 'Bob Jones', lastSeen: NOW });
+    });
+
+    test('removes a participant who leaves', () => {
+      // Arrange
+      const state = sessionState({ participants: { [BOB_ID]: { userName: 'Bob Jones', lastSeen: NOW } } });
+
+      // Act
+      const next = pokerReducer(state, pokerActions.participantLeft({ userId: BOB_ID }));
+
+      // Assert
+      expect(next.participants).toEqual({});
+    });
+
+    test('drops players who have not been heard from within the presence timeout', () => {
+      // Arrange
+      const state = sessionState({
+        participants: {
+          [ALICE_ID]: { userName: 'Alice Smith', lastSeen: NOW - POKER_PRESENCE_TIMEOUT_MS },
+          [BOB_ID]: { userName: 'Bob Jones', lastSeen: NOW - POKER_PRESENCE_TIMEOUT_MS - 1 },
+        },
+      });
+
+      // Act
+      const next = pokerReducer(state, pokerActions.participantsPruned(NOW));
+
+      // Assert
+      expect(Object.keys(next.participants)).toEqual([ALICE_ID]);
+    });
+
+    test('keeps the same state when no player has dropped', () => {
+      // Arrange
+      const state = sessionState({ participants: { [BOB_ID]: { userName: 'Bob Jones', lastSeen: NOW } } });
+
+      // Act
+      const next = pokerReducer(state, pokerActions.participantsPruned(NOW));
+
+      // Assert
+      expect(next).toBe(state);
     });
 
     test('clears votes and my selection when a new round starts', () => {
@@ -203,6 +267,20 @@ describe('poker slice', () => {
 
       // Assert
       expect(next.votes[BOB_ID]).toEqual({ userName: 'Bob Jones' });
+    });
+
+    test('seats a voter whose join has not arrived yet', () => {
+      // Arrange
+      const state = sessionState({ round: votingRound });
+
+      // Act
+      const next = pokerReducer(
+        state,
+        pokerActions.voteCast({ roundId: ROUND_ID, userId: BOB_ID, userName: 'Bob Jones' }),
+      );
+
+      // Assert
+      expect(next.participants[BOB_ID]).toEqual({ userName: 'Bob Jones', lastSeen: NOW });
     });
 
     test('ignores a vote for a round that is not current', () => {
@@ -331,6 +409,55 @@ describe('poker slice', () => {
       // Assert
       expect(next.busy.revealing).toBe(true);
     });
+
+    test('seats me as soon as my join or heartbeat is accepted', () => {
+      // Arrange
+      const me = { userId: 'alice.smith@gov.ab.ca', userName: 'Alice Smith', seenAt: NOW };
+
+      // Act
+      const next = pokerReducer(sessionState(), joinPokerSession.fulfilled(me, 'request', SESSION_ID));
+
+      // Assert
+      expect(next.participants[me.userId]).toEqual({ userName: 'Alice Smith', lastSeen: NOW });
+    });
+
+    test('ignores a join that finishes after I opened a different session', () => {
+      // Arrange
+      const me = { userId: 'alice.smith@gov.ab.ca', userName: 'Alice Smith', seenAt: NOW };
+
+      // Act
+      const next = pokerReducer(
+        sessionState(),
+        joinPokerSession.fulfilled(me, 'request', 'c3333333-3333-3333-3333-333333333333'),
+      );
+
+      // Assert
+      expect(next.participants).toEqual({});
+    });
+  });
+
+  describe('pokerUserIdSelector', () => {
+    test('identifies me by email', () => {
+      // Arrange
+      const state = appState();
+
+      // Act
+      const userId = pokerUserIdSelector(state as never);
+
+      // Assert
+      expect(userId).toBe('alice.smith@gov.ab.ca');
+    });
+
+    test('returns null when no one is signed in', () => {
+      // Arrange
+      const state = { ...appState(), user: { user: null } };
+
+      // Act
+      const userId = pokerUserIdSelector(state as never);
+
+      // Assert
+      expect(userId).toBeNull();
+    });
   });
 
   describe('thunks', () => {
@@ -429,6 +556,45 @@ describe('poker slice', () => {
 
       // Assert
       expect(action.payload).toEqual({ status: 500, message: 'Round r1 is not open for voting.' });
+    });
+  });
+
+  describe('leavePokerSession', () => {
+    const fetchMock = jest.fn();
+
+    beforeEach(() => {
+      global.fetch = fetchMock;
+    });
+
+    afterEach(() => {
+      delete global.fetch;
+    });
+
+    test('sends the leave with keepalive so it survives the tab closing', async () => {
+      // Arrange
+      fetchMock.mockResolvedValue({ ok: true });
+
+      // Act
+      await runThunk(leavePokerSession(SESSION_ID));
+
+      // Assert
+      expect(fetchMock).toHaveBeenCalledWith(`${SCRIPT_SERVICE_URL}/script/v1/scripts/poker-leave`, {
+        method: 'POST',
+        keepalive: true,
+        headers: { Authorization: 'Bearer player-token', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputs: { sessionId: SESSION_ID, userId: 'alice.smith@gov.ab.ca' } }),
+      });
+    });
+
+    test('rejects when the script service refuses the leave', async () => {
+      // Arrange
+      fetchMock.mockResolvedValue({ ok: false, status: 500 });
+
+      // Act
+      const { action } = await runThunk(leavePokerSession(SESSION_ID));
+
+      // Assert
+      expect(action.error.message).toBe('Leaving the planning poker session failed with status 500.');
     });
   });
 
@@ -549,6 +715,18 @@ describe('poker slice', () => {
 
       // Assert
       expect(dispatch).toHaveBeenCalledWith(pokerActions.voteCast(payload));
+    });
+
+    test('removes a player from the table when their participant-left event arrives', async () => {
+      // Arrange
+      const payload = { sessionId: SESSION_ID, userId: BOB_ID };
+      const { dispatch } = await runThunk(connectPokerStream(SESSION_ID));
+
+      // Act
+      handlerFor('planning-poker:participant-left')({ payload });
+
+      // Assert
+      expect(dispatch).toHaveBeenCalledWith(pokerActions.participantLeft(payload));
     });
 
     test('marks the stream live when it connects', async () => {

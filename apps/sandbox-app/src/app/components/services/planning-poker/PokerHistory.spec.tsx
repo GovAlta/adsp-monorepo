@@ -4,9 +4,7 @@ import '@testing-library/jest-dom';
 import { PokerHistory } from './PokerHistory';
 
 jest.mock('@abgov/react-components', () => ({
-  GoabTable: ({ children, testId }: { children: React.ReactNode; testId: string }) => (
-    <table data-testid={testId}>{children}</table>
-  ),
+  GoabText: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
 }));
 
 const revealedRound = {

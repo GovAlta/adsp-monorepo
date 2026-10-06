@@ -5,18 +5,26 @@ import { PokerRoundControls } from './PokerRoundControls';
 
 jest.mock('@abgov/react-components', () => ({
   GoabFormItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  GoabButtonGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   GoabInput: ({
     name,
     value,
     testId,
     onChange,
+    onKeyPress,
   }: {
     name: string;
     value: string;
     testId: string;
     onChange: (detail: { name: string; value: string }) => void;
-  }) => <input data-testid={testId} value={value} onChange={(e) => onChange({ name, value: e.target.value })} />,
+    onKeyPress: (detail: { name: string; value: string; key: string }) => void;
+  }) => (
+    <input
+      data-testid={testId}
+      value={value}
+      onChange={(e) => onChange({ name, value: e.target.value })}
+      onKeyDown={(e) => onKeyPress({ name, value, key: e.key })}
+    />
+  ),
   GoabButton: ({
     children,
     testId,
@@ -34,15 +42,11 @@ jest.mock('@abgov/react-components', () => ({
   ),
 }));
 
-const votingRound = { roundId: 'r1', storyTitle: 'ADSP-123 Login page', status: 'voting' as const };
-
 const renderControls = (overrides = {}) => {
   const props = {
     round: null,
     starting: false,
-    revealing: false,
     onStartRound: jest.fn(),
-    onReveal: jest.fn(),
     ...overrides,
   };
   render(<PokerRoundControls {...props} />);
@@ -83,22 +87,26 @@ describe('PokerRoundControls', () => {
     expect(screen.getByTestId('poker-story-title')).toHaveValue('');
   });
 
-  test('disables reveal when no round is open', () => {
-    // Arrange & Act
-    renderControls();
-
-    // Assert
-    expect(screen.getByTestId('poker-reveal')).toBeDisabled();
-  });
-
-  test('reveals the votes of an open round', () => {
+  test('starts a round when Enter is pressed in the story field', () => {
     // Arrange
-    const { onReveal } = renderControls({ round: votingRound });
+    const { onStartRound } = renderControls();
+    fireEvent.change(screen.getByTestId('poker-story-title'), { target: { value: 'ADSP-123 Login page' } });
 
     // Act
-    fireEvent.click(screen.getByTestId('poker-reveal'));
+    fireEvent.keyDown(screen.getByTestId('poker-story-title'), { key: 'Enter' });
 
     // Assert
-    expect(onReveal).toHaveBeenCalled();
+    expect(onStartRound).toHaveBeenCalledWith('ADSP-123 Login page', '');
+  });
+
+  test('does not start a round on Enter without a story', () => {
+    // Arrange
+    const { onStartRound } = renderControls();
+
+    // Act
+    fireEvent.keyDown(screen.getByTestId('poker-story-title'), { key: 'Enter' });
+
+    // Assert
+    expect(onStartRound).not.toHaveBeenCalled();
   });
 });

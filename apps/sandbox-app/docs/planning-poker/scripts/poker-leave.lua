@@ -1,16 +1,14 @@
--- Records a participant joining a planning poker session.
+-- Records a participant leaving a planning poker session (closing the tab or leaving the board).
 -- Runner roles: default-roles-<realm> (every tenant user). Runs with the script service account.
--- Inputs: sessionId, userId, userName
--- Output: the sessionId that was joined.
+-- Inputs: sessionId, userId
+-- Output: the sessionId that was left.
 --
--- The board also runs this as a heartbeat every 30 seconds. Players without a heartbeat for 90 seconds
--- are treated as dropped by poker-get-state and poker-reveal.
+-- Leaving only removes the player from the table; running poker-join again brings them back.
 
 local NAMESPACE = 'planning-poker'
 local MAX_ID_LENGTH = 64
 -- User IDs are emails, which can be up to 254 characters.
 local MAX_USER_ID_LENGTH = 254
-local MAX_NAME_LENGTH = 100
 
 -- Script inputs arrive as a .NET dictionary; check the key first so a missing input reads as nil.
 local function readInput(name, maxLength)
@@ -42,22 +40,19 @@ local sessionId = requireInput('sessionId', MAX_ID_LENGTH)
 local participant = {
   sessionId = sessionId,
   userId = requireInput('userId', MAX_USER_ID_LENGTH),
-  userName = requireInput('userName', MAX_NAME_LENGTH),
 }
 
--- Participants are kept so people who join later can see who is in the session.
 adsp.WriteValue(NAMESPACE, 'participants-' .. sessionId, {
   value = {
     sessionId = sessionId,
     userId = participant.userId,
-    userName = participant.userName,
-    active = true,
+    active = false,
     seenAt = os.time(),
   },
   context = { sessionId = sessionId },
   correlationId = sessionId,
 })
 
-sendEvent('participant-joined', sessionId, participant)
+sendEvent('participant-left', sessionId, participant)
 
 return sessionId

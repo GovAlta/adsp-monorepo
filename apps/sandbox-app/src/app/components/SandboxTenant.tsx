@@ -9,7 +9,6 @@ import {
   initializeTenant,
 } from '../state';
 
-import { Band } from '@core-services/app-common';
 import { SignIn } from './SignIn';
 
 import Header from './Header';
@@ -24,7 +23,7 @@ import { StatusServiceMain } from './services/StatusServiceMain';
 import { ValueServiceMain } from './services/ValueServiceMain';
 import { TaskServiceMain } from './services/TaskServiceMain';
 import { FileServiceMain } from './services/FileServiceMain';
-import { GoabAppFooter, GoabButton, GoabButtonGroup, GoabCircularProgress } from '@abgov/react-components';
+import { GoabAppFooter, GoabButton } from '@abgov/react-components';
 import { ScriptServiceMain } from './services/ScriptServiceMain';
 import { CacheServiceMain } from './services/CacheServiceMain';
 import { DirectoryServiceMain } from './services/DirectoryServiceMain';
@@ -41,6 +40,7 @@ import { DesignSystemsExampleOne } from './services/design-systems/DesignSystems
 import { PlanningPokerMain } from './services/planning-poker/PlanningPokerMain';
 import { PlanningPokerBoard } from './services/planning-poker/PlanningPokerBoard';
 import { FeedbackNotification } from './FeedbackNotification';
+import { ServicePageBar } from './styled-components';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -75,18 +75,18 @@ export const SandBoxTenant = () => {
         ) : (
           authenticatedUser && (
             <section>
-              <Band title="Sandbox services">Services/libraries available for POC</Band>
-              {authenticatedUser && !location.pathname.endsWith(`${environment.tenantName}`) && (
-                <GoabButtonGroup alignment="end" mr={'xl'} mt="l">
+              {!location.pathname.endsWith(`${environment.tenantName}`) && (
+                <ServicePageBar>
                   <GoabButton
                     type="tertiary"
-                    onClick={() => {
-                      navigate(`/${tenantName}/services`);
-                    }}
+                    size="compact"
+                    leadingIcon="arrow-back"
+                    testId="back-to-services"
+                    onClick={() => navigate(`/${tenantName}/services`)}
                   >
                     Back to services
                   </GoabButton>
-                </GoabButtonGroup>
+                </ServicePageBar>
               )}
               <Routes>
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />

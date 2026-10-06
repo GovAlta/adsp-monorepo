@@ -1,5 +1,6 @@
 import React from 'react';
-import { GoabCallout, GoabTable } from '@abgov/react-components';
+import styled from 'styled-components';
+import { GoabCallout } from '@abgov/react-components';
 import { PokerRound, PokerVote } from '../../../state';
 import { countVotesByCard, describeRoundResult, formatCard } from './pokerUtils';
 
@@ -12,33 +13,41 @@ export const PokerResults = ({ round, votes }: PokerResultsProps) => {
   const counts = countVotesByCard(votes);
 
   return (
-    <>
-      <GoabCallout
-        type={round.consensus ? 'success' : 'information'}
-        heading={describeRoundResult(round)}
-        testId="poker-results"
-        mb="m"
-      >
-        {round.consensus ? 'Everyone agreed.' : 'Discuss the highest and lowest votes, then re-vote if needed.'}
-      </GoabCallout>
+    <GoabCallout
+      type={round.consensus ? 'success' : 'information'}
+      size="medium"
+      heading={describeRoundResult(round)}
+      testId="poker-results"
+      ariaLive="polite"
+      mt="m"
+      mb="none"
+    >
+      {round.consensus ? 'Everyone agreed.' : 'Discuss the highest and lowest votes, then re-vote if needed.'}
       {counts.length > 0 && (
-        <GoabTable width="100%" mb="l">
-          <thead>
-            <tr>
-              <th>Card</th>
-              <th>Votes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {counts.map(({ card, count }) => (
-              <tr key={card}>
-                <td>{formatCard(card)}</td>
-                <td>{count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </GoabTable>
+        <VoteCounts aria-label="Votes per card">
+          {counts.map(({ card, count }) => (
+            <li key={card}>
+              <strong>{formatCard(card)}</strong> × {count}
+            </li>
+          ))}
+        </VoteCounts>
       )}
-    </>
+    </GoabCallout>
   );
 };
+
+const VoteCounts = styled.ul`
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--goa-space-xs);
+  list-style: none;
+  margin: var(--goa-space-s) 0 0;
+  padding: 0;
+
+  li {
+    padding: var(--goa-space-2xs) var(--goa-space-s);
+    border: 1px solid var(--goa-color-greyscale-400);
+    border-radius: var(--goa-border-radius-m);
+    background: var(--goa-color-greyscale-white);
+  }
+`;

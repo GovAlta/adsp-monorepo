@@ -1,11 +1,21 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { initialPokerState, PokerState, pokerActions, pokerSelector } from '../../../state';
+import {
+  initialPokerState,
+  POKER_HEARTBEAT_INTERVAL_MS,
+  PokerState,
+  pokerActions,
+  pokerSelector,
+  pokerUserIdSelector,
+} from '../../../state';
 import { PlanningPokerBoard } from './PlanningPokerBoard';
+import { AUTO_REVEAL_DELAY_MS, AUTO_REVEAL_FALLBACK_DELAY_MS } from './pokerUtils';
 
 const SESSION_ID = '8b0f6a52-3c9d-4f1e-9a57-2d6c1e0b7f43';
+const ALICE_ID = 'alice.smith@gov.ab.ca';
+const BOB_ID = 'bob.jones@gov.ab.ca';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -19,6 +29,7 @@ jest.mock('react-router-dom', () => ({
 jest.mock('../../../state', () => ({
   ...jest.requireActual('../../../state'),
   joinPokerSession: jest.fn((sessionId) => ({ type: 'joinPokerSession', payload: sessionId })),
+  leavePokerSession: jest.fn((sessionId) => ({ type: 'leavePokerSession', payload: sessionId })),
   connectPokerStream: jest.fn((sessionId) => ({ type: 'connectPokerStream', payload: sessionId })),
   disconnectPokerStream: jest.fn(() => ({ type: 'disconnectPokerStream' })),
   castPokerVote: jest.fn((vote) => ({ type: 'castPokerVote', payload: vote })),
@@ -49,8 +60,6 @@ jest.mock('@abgov/react-components', () => ({
     </div>
   ),
   GoabText: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
-  GoabDivider: () => <hr />,
-  GoabTable: ({ children }: { children: React.ReactNode }) => <table>{children}</table>,
   GoabBadge: ({ content, testId }: { content: string; testId?: string }) => <span data-testid={testId}>{content}</span>,
   GoabCallout: ({ children, testId }: { children: React.ReactNode; testId: string }) => (
     <div data-testid={testId}>{children}</div>
@@ -63,20 +72,36 @@ jest.mock('@abgov/react-components', () => ({
 }));
 
 const votingRound = { roundId: 'r1', storyTitle: 'ADSP-123 Login page', storyUrl: '', status: 'voting' as const };
-const renderBoard = (poker: Partial<PokerState> = {}) => {
+const renderBoard = (poker: Partial<PokerState> = {}, myUserId = ALICE_ID) => {
   const dispatch = jest.fn();
   (useDispatch as jest.Mock).mockReturnValue(dispatch);
-  (useSelector as jest.Mock).mockImplementation((selector) =>
-    selector === pokerSelector ? { ...initialPokerState, sessionId: SESSION_ID, ...poker } : undefined,
-  );
+  (useSelector as jest.Mock).mockImplementation((selector) => {
+    if (selector === pokerSelector) {
+      return { ...initialPokerState, sessionId: SESSION_ID, ...poker };
+    }
+    return selector === pokerUserIdSelector ? myUserId : undefined;
+  });
   const view = render(<PlanningPokerBoard />);
   return { dispatch, ...view };
+};
+
+const everyoneVoted: Partial<PokerState> = {
+  round: votingRound,
+  participants: {
+    [ALICE_ID]: { userName: 'Alice Smith', lastSeen: 0 },
+    [BOB_ID]: { userName: 'Bob Jones', lastSeen: 0 },
+  },
+  votes: { [ALICE_ID]: { userName: 'Alice Smith' }, [BOB_ID]: { userName: 'Bob Jones' } },
 };
 
 describe('PlanningPokerBoard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   test('restores my saved nickname before joining the session', () => {
@@ -212,5 +237,92 @@ describe('PlanningPokerBoard', () => {
     expect(screen.getByTestId('poker-session-link')).toHaveTextContent(
       `/autotest/services/planning-poker/${SESSION_ID}`,
     );
+  });
+
+  test('shows who the table is waiting for while voting', () => {
+    // Arrange & Act
+    renderBoard({ ...everyoneVoted, votes: { [ALICE_ID]: { userName: 'Alice Smith' } } });
+
+    // Assert
+    expect(screen.getByTestId('poker-round-status')).toHaveTextContent('waiting for Bob Jones');
+  });
+
+  test('reveals the cards once everyone at the table has voted', () => {
+    // Arrange
+    jest.useFakeTimers();
+    const { dispatch } = renderBoard(everyoneVoted);
+
+    // Act
+    act(() => {
+      jest.advanceTimersByTime(AUTO_REVEAL_DELAY_MS);
+    });
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith({ type: 'revealPokerVotes' });
+  });
+
+  test('leaves the first reveal to the chosen player and only steps in as a fallback', () => {
+    // Arrange
+    jest.useFakeTimers();
+    const { dispatch } = renderBoard(everyoneVoted, BOB_ID);
+
+    // Act
+    act(() => {
+      jest.advanceTimersByTime(AUTO_REVEAL_FALLBACK_DELAY_MS - 1);
+    });
+
+    // Assert
+    expect(dispatch).not.toHaveBeenCalledWith({ type: 'revealPokerVotes' });
+  });
+
+  test('does not reveal while someone at the table is still thinking', () => {
+    // Arrange
+    jest.useFakeTimers();
+    const { dispatch } = renderBoard({ ...everyoneVoted, votes: { [ALICE_ID]: { userName: 'Alice Smith' } } });
+
+    // Act
+    act(() => {
+      jest.advanceTimersByTime(AUTO_REVEAL_FALLBACK_DELAY_MS);
+    });
+
+    // Assert
+    expect(dispatch).not.toHaveBeenCalledWith({ type: 'revealPokerVotes' });
+  });
+
+  test('sends a heartbeat so others keep me at the table', () => {
+    // Arrange
+    jest.useFakeTimers();
+    const { dispatch } = renderBoard();
+    dispatch.mockClear();
+
+    // Act
+    act(() => {
+      jest.advanceTimersByTime(POKER_HEARTBEAT_INTERVAL_MS);
+    });
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith({ type: 'joinPokerSession', payload: SESSION_ID });
+  });
+
+  test('leaves the session when leaving the board', () => {
+    // Arrange
+    const { dispatch, unmount } = renderBoard();
+
+    // Act
+    unmount();
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith({ type: 'leavePokerSession', payload: SESSION_ID });
+  });
+
+  test('leaves the session when the tab is closed', () => {
+    // Arrange
+    const { dispatch } = renderBoard();
+
+    // Act
+    window.dispatchEvent(new Event('pagehide'));
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith({ type: 'leavePokerSession', payload: SESSION_ID });
   });
 });

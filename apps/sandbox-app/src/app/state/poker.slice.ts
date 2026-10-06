@@ -10,6 +10,9 @@ export const POKER_FEATURE_KEY = 'poker';
 export const POKER_STREAM_ID = 'planning-poker-updates';
 export const POKER_DECK = ['0', '1', '2', '3', '5', '8', '13', '21', '?', 'coffee'];
 export const POKER_NICKNAME_MAX_LENGTH = 100;
+export const POKER_HEARTBEAT_INTERVAL_MS = 30_000;
+// Keep in step with PRESENCE_TIMEOUT_SECONDS in poker-get-state.lua and poker-reveal.lua.
+export const POKER_PRESENCE_TIMEOUT_MS = 90_000;
 
 const SCRIPT_SERVICE_ID = 'urn:ads:platform:script-service';
 const EVENT_NAMESPACE = 'planning-poker';
@@ -28,6 +31,8 @@ export interface PokerRound {
 
 export interface PokerParticipant {
   userName: string;
+  // Browser time (ms) the player was last heard from; players silent for too long have dropped.
+  lastSeen: number;
 }
 
 export interface PokerVote {
@@ -63,10 +68,21 @@ interface ParticipantJoinedPayload {
   userName: string;
 }
 
+interface ParticipantLeftPayload {
+  userId: string;
+}
+
 interface VoteCastPayload {
   roundId: string;
   userId: string;
   userName: string;
+}
+
+type Seen<T> = T & { seenAt: number };
+
+interface ScriptParticipant {
+  userName: string;
+  idleSeconds?: number;
 }
 
 interface VotesRevealedPayload extends PokerRound {
@@ -75,12 +91,25 @@ interface VotesRevealedPayload extends PokerRound {
 
 let socket: Socket;
 
+// The script reports idle seconds rather than a time, so the browser and server clocks need not agree.
+function toParticipants(
+  participants: Record<string, ScriptParticipant>,
+  receivedAt: number,
+): Record<string, PokerParticipant> {
+  return Object.fromEntries(
+    Object.entries(participants).map(([userId, { userName, idleSeconds }]) => [
+      userId,
+      { userName, lastSeen: receivedAt - (idleSeconds || 0) * 1000 },
+    ]),
+  );
+}
+
 // Lua scripts can only build JSON objects, so empty arrays and maps both arrive as {}.
-export function parsePokerSession(output: string): PokerSession {
+export function parsePokerSession(output: string, receivedAt = Date.now()): PokerSession {
   const session = JSON.parse(output);
   return {
     sessionId: session.sessionId,
-    participants: session.participants || {},
+    participants: toParticipants(session.participants || {}, receivedAt),
     round: session.round || null,
     votes: session.votes || {},
     history: Array.isArray(session.history) ? session.history : [],
@@ -105,11 +134,14 @@ function toPokerRound({
   return { roundId, storyTitle, storyUrl, status, average, hasAverage, consensus };
 }
 
+function toScriptUrl(state: AppState, scriptId: string): string {
+  return new URL(`/script/v1/scripts/${scriptId}`, state.config.directory[SCRIPT_SERVICE_ID]).href;
+}
+
 async function runPokerScript(state: AppState, scriptId: string, inputs: Record<string, string>): Promise<string[]> {
-  const scriptServiceUrl = state.config.directory[SCRIPT_SERVICE_ID];
   const token = await getAccessToken();
   const { data } = await axios.post<string[]>(
-    new URL(`/script/v1/scripts/${scriptId}`, scriptServiceUrl).href,
+    toScriptUrl(state, scriptId),
     { inputs },
     { headers: { Authorization: `Bearer ${token}` } },
   );
@@ -117,9 +149,12 @@ async function runPokerScript(state: AppState, scriptId: string, inputs: Record<
 }
 
 // Participants are identified by email so votes and history read naturally for the team.
+export const pokerUserIdSelector = (state: AppState): string | null =>
+  state.user.user?.email || state.user.user?.id || null;
+
 function currentUserInputs(state: AppState) {
-  const { id, name, email } = state.user.user;
-  return { userId: email || id, userName: state.poker.nickname || name || email };
+  const { name, email } = state.user.user;
+  return { userId: pokerUserIdSelector(state), userName: state.poker.nickname || name || email };
 }
 
 function toNickname(value: string): string | null {
@@ -152,9 +187,26 @@ export const loadPokerSession = createPokerThunk('poker/load-session', async (se
   return parsePokerSession(output);
 });
 
+// Also the presence heartbeat; returns me so my own seat stays current even if my events are delayed.
 export const joinPokerSession = createPokerThunk('poker/join-session', async (sessionId: string, state) => {
-  await runPokerScript(state, 'poker-join', { sessionId, ...currentUserInputs(state) });
-  return sessionId;
+  const participant = currentUserInputs(state);
+  await runPokerScript(state, 'poker-join', { sessionId, ...participant });
+  return { ...participant, seenAt: Date.now() };
+});
+
+// Leaving often happens as the tab closes, which cancels axios (XHR) requests; a keepalive fetch outlives the page.
+export const leavePokerSession = createAsyncThunk('poker/leave-session', async (sessionId: string, { getState }) => {
+  const state = getState() as AppState;
+  const token = await getAccessToken();
+  const response = await fetch(toScriptUrl(state, 'poker-leave'), {
+    method: 'POST',
+    keepalive: true,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: { sessionId, userId: pokerUserIdSelector(state) } }),
+  });
+  if (!response.ok) {
+    throw new Error(`Leaving the planning poker session failed with status ${response.status}.`);
+  }
 });
 
 // The nickname is applied in the pending reducer, so re-joining announces the new name to the session.
@@ -243,6 +295,7 @@ export const connectPokerStream = createAsyncThunk(
     socket.on(`${EVENT_NAMESPACE}:participant-joined`, ({ payload }) =>
       dispatch(pokerActions.participantJoined(payload)),
     );
+    socket.on(`${EVENT_NAMESPACE}:participant-left`, ({ payload }) => dispatch(pokerActions.participantLeft(payload)));
     socket.on(`${EVENT_NAMESPACE}:round-started`, ({ payload }) => dispatch(pokerActions.roundStarted(payload)));
     socket.on(`${EVENT_NAMESPACE}:vote-cast`, ({ payload }) => dispatch(pokerActions.voteCast(payload)));
     socket.on(`${EVENT_NAMESPACE}:votes-revealed`, ({ payload }) => dispatch(pokerActions.votesRevealed(payload)));
@@ -266,6 +319,10 @@ export const initialPokerState: PokerState = {
     renaming: false,
   },
 };
+
+function applyParticipantSeen(state: PokerState, { userId, userName, seenAt }: Seen<ParticipantJoinedPayload>) {
+  state.participants[userId] = { userName, lastSeen: seenAt };
+}
 
 function applyRoundStarted(state: PokerState, round: PokerRound) {
   if (state.round?.roundId !== round.roundId) {
@@ -296,16 +353,34 @@ const pokerSlice = createSlice({
     streamConnectionChanged: (state, { payload }: PayloadAction<boolean>) => {
       state.connected = payload;
     },
-    participantJoined: (state, { payload }: PayloadAction<ParticipantJoinedPayload>) => {
-      state.participants[payload.userId] = { userName: payload.userName };
+    participantJoined: {
+      reducer: (state, { payload }: PayloadAction<Seen<ParticipantJoinedPayload>>) => {
+        applyParticipantSeen(state, payload);
+      },
+      prepare: (payload: ParticipantJoinedPayload) => ({ payload: { ...payload, seenAt: Date.now() } }),
+    },
+    participantLeft: (state, { payload }: PayloadAction<ParticipantLeftPayload>) => {
+      delete state.participants[payload.userId];
+    },
+    participantsPruned: (state, { payload: now }: PayloadAction<number>) => {
+      for (const [userId, { lastSeen }] of Object.entries(state.participants)) {
+        if (now - lastSeen > POKER_PRESENCE_TIMEOUT_MS) {
+          delete state.participants[userId];
+        }
+      }
     },
     roundStarted: (state, { payload }: PayloadAction<PokerRound>) => {
       applyRoundStarted(state, payload);
     },
-    voteCast: (state, { payload }: PayloadAction<VoteCastPayload>) => {
-      if (state.round?.roundId === payload.roundId && state.round.status === 'voting') {
-        state.votes[payload.userId] = { userName: payload.userName };
-      }
+    // A vote also proves the voter is still at the table.
+    voteCast: {
+      reducer: (state, { payload }: PayloadAction<Seen<VoteCastPayload>>) => {
+        applyParticipantSeen(state, payload);
+        if (state.round?.roundId === payload.roundId && state.round.status === 'voting') {
+          state.votes[payload.userId] = { userName: payload.userName };
+        }
+      },
+      prepare: (payload: VoteCastPayload) => ({ payload: { ...payload, seenAt: Date.now() } }),
     },
     votesRevealed: (state, { payload }: PayloadAction<VotesRevealedPayload>) => {
       applyVotesRevealed(state, payload);
@@ -329,6 +404,11 @@ const pokerSlice = createSlice({
       })
       .addCase(loadPokerSession.rejected, (state) => {
         state.busy.loading = false;
+      })
+      .addCase(joinPokerSession.fulfilled, (state, { payload, meta }) => {
+        if (meta.arg === state.sessionId) {
+          applyParticipantSeen(state, payload);
+        }
       })
       .addCase(startPokerRound.pending, (state) => {
         state.busy.starting = true;
