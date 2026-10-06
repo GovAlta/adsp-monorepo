@@ -13,6 +13,7 @@ export const POKER_NICKNAME_MAX_LENGTH = 100;
 export const POKER_HEARTBEAT_INTERVAL_MS = 30_000;
 // Keep in step with PRESENCE_TIMEOUT_SECONDS in poker-get-state.lua and poker-reveal.lua.
 export const POKER_PRESENCE_TIMEOUT_MS = 90_000;
+export const POKER_STREAM_RETRY_MS = 10_000;
 
 const SCRIPT_SERVICE_ID = 'urn:ads:platform:script-service';
 const EVENT_NAMESPACE = 'planning-poker';
@@ -51,6 +52,8 @@ export interface PokerSession {
 
 export interface PokerState extends PokerSession {
   connected: boolean;
+  // Why the push service refused the live updates connection, if it did.
+  connectionError: string | null;
   myVote: string | null;
   // Display name chosen by the user; falls back to the Keycloak name when null.
   nickname: string | null;
@@ -271,6 +274,8 @@ export const connectPokerStream = createAsyncThunk(
         stream: POKER_STREAM_ID,
         criteria: JSON.stringify({ context: { sessionId } }),
       },
+      // Push service runs several pods without sticky sessions; long-polling then fails with "Session ID unknown".
+      transports: ['websocket'],
       withCredentials: true,
       auth: async (cb) => {
         try {
@@ -291,6 +296,14 @@ export const connectPokerStream = createAsyncThunk(
     socket.on('disconnect', () => {
       dispatch(pokerActions.streamConnectionChanged(false));
     });
+    // socket.io does not retry once the push service refuses the connection (e.g. unknown stream or no access).
+    const current = socket;
+    socket.on('connect_error', (err) => {
+      dispatch(pokerActions.streamConnectionFailed(err.message));
+      if (!current.active) {
+        setTimeout(() => socket === current && current.connect(), POKER_STREAM_RETRY_MS);
+      }
+    });
 
     socket.on(`${EVENT_NAMESPACE}:participant-joined`, ({ payload }) =>
       dispatch(pokerActions.participantJoined(payload)),
@@ -305,6 +318,7 @@ export const connectPokerStream = createAsyncThunk(
 export const initialPokerState: PokerState = {
   sessionId: null,
   connected: false,
+  connectionError: null,
   participants: {},
   round: null,
   votes: {},
@@ -352,6 +366,13 @@ const pokerSlice = createSlice({
     },
     streamConnectionChanged: (state, { payload }: PayloadAction<boolean>) => {
       state.connected = payload;
+      if (payload) {
+        state.connectionError = null;
+      }
+    },
+    streamConnectionFailed: (state, { payload }: PayloadAction<string>) => {
+      state.connected = false;
+      state.connectionError = payload;
     },
     participantJoined: {
       reducer: (state, { payload }: PayloadAction<Seen<ParticipantJoinedPayload>>) => {

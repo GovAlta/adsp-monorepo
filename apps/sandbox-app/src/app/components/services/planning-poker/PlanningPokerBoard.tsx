@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom-v7';
 import styled from 'styled-components';
-import { GoabBadge, GoabButton, GoabContainer, GoabText } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabCallout, GoabContainer, GoabText } from '@abgov/react-components';
 import {
   AppDispatch,
   authenticatedUserSelector,
@@ -95,12 +95,22 @@ const SessionLink = ({ link }: { link: string }) => {
   );
 };
 
+const describeConnection = (connected: boolean, connectionError: string | null) => {
+  if (connected) {
+    return { type: 'success', content: 'Live' } as const;
+  }
+  return connectionError
+    ? ({ type: 'emergency', content: 'Not live' } as const)
+    : ({ type: 'important', content: 'Connecting…' } as const);
+};
+
 export const PlanningPokerBoard = () => {
   const { tenant: tenantName, sessionId } = useParams<{ tenant: string; sessionId: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(authenticatedUserSelector);
   const myUserId = useSelector(pokerUserIdSelector);
-  const { round, votes, participants, history, myVote, nickname, connected, busy } = useSelector(pokerSelector);
+  const { round, votes, participants, history, myVote, nickname, connected, connectionError, busy } =
+    useSelector(pokerSelector);
   const isVoting = round?.status === 'voting';
   const isRevealed = round?.status === 'revealed';
   const rows = useMemo(() => buildParticipantRows(participants, votes), [participants, votes]);
@@ -139,16 +149,23 @@ export const PlanningPokerBoard = () => {
         testId={'planningPokerBoard'}
         heading={'Planning poker'}
         actions={
-          <GoabBadge
-            type={connected ? 'success' : 'important'}
-            content={connected ? 'Live' : 'Connecting…'}
-            icon={false}
-            testId="poker-connection"
-          />
+          <GoabBadge {...describeConnection(connected, connectionError)} icon={false} testId="poker-connection" />
         }
       >
         <BoardLayout>
           <BoardMain>
+            {connectionError && (
+              <GoabCallout
+                type="important"
+                size="medium"
+                heading="Live updates are off"
+                testId="poker-connection-error"
+                mb="none"
+              >
+                The push service refused the connection: {connectionError} You won't see other players join, vote or
+                reveal until this is fixed. Retrying every few seconds.
+              </GoabCallout>
+            )}
             <PokerRoundControls
               round={round}
               starting={busy.starting}
