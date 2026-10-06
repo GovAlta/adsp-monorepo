@@ -8,13 +8,14 @@ const user = (local?: boolean): Message => ({
   content: [{ type: 'text', text: 'hi' }],
   ...(local ? { local } : {}),
 });
-const agent = (streaming: boolean): Message => ({
+const agent = (streaming: boolean, local?: boolean): Message => ({
   id: 'a',
   threadId: 't',
   from: 'agent',
   content: 'reply',
   toolCalls: [],
   streaming,
+  ...(local ? { local } : {}),
 });
 
 describe('isAgentBusy', () => {
@@ -34,7 +35,11 @@ describe('isAgentBusy', () => {
     expect(isAgentBusy([agent(false), user()])).toBe(true);
   });
 
-  it('ignores local messages that never go to the agent', () => {
-    expect(isAgentBusy([user(), agent(false), user(true)])).toBe(false);
+  it('is busy after a system message that was sent to the agent', () => {
+    expect(isAgentBusy([user(), agent(false), user(true)])).toBe(true);
+  });
+
+  it('is idle after a slash command, whose local reply follows the echo', () => {
+    expect(isAgentBusy([user(), agent(false), user(true), agent(false, true)])).toBe(false);
   });
 });
