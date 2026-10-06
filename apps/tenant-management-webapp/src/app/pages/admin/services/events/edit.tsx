@@ -1,20 +1,29 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
-import { GoabButton, GoabButtonGroup, GoabInput, GoabFormItem, GoabModal, GoabTextArea } from '@abgov/react-components';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabIcon,
+  GoabInput,
+  GoabFormItem,
+  GoabModal,
+  GoabTextArea,
+} from '@abgov/react-components';
 import {
   wordCheck,
   isNotEmptyCheck,
   Validator,
-  isValidJSONCheck,
   wordMaxLengthCheck,
   badCharsCheckNoSpace,
   duplicateNameCheck,
+  validateJsonSchema,
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { ErrorMsg } from '@components/styled-components';
 import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import styled from 'styled-components';
 import {
@@ -58,6 +67,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
+  const validatePayloadSchema = (schemaText: string): string => {
+    const result = validateJsonSchema(schemaText);
+    return result.valid ? '' : result.error;
+  };
   const descErrMessage = 'Event description can not be over 180 characters';
 
   useEffect(() => {
@@ -74,7 +87,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   )
     .add('name', 'name', badCharsCheckNoSpace, wordMaxLengthCheck(32, 'Name'), isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Event'))
-    .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
+    .add('payloadSchema', 'payloadSchema', validatePayloadSchema)
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
@@ -181,7 +194,13 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             errorMsg={errors?.['description']}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['payloadSchema']} label="Payload schema">
+        <GoabFormItem label="Payload schema">
+          {errors?.['payloadSchema'] && (
+            <SchemaError data-testid="event-schema-error">
+              <GoabIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
+              {errors?.['payloadSchema']}
+            </SchemaError>
+          )}
           <Editor
             data-testid="form-schema"
             height={200}
@@ -212,4 +231,10 @@ const ModalOverwrite = styled.div`
   .modal {
     max-height: 100% !important;
   }
+`;
+
+const SchemaError = styled(ErrorMsg)`
+  font: var(--goa-typography-body-s);
+  margin-bottom: var(--goa-space-xs);
+  align-items: center;
 `;

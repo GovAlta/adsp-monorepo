@@ -1,10 +1,14 @@
 import {
   DELETE_VALUE_DEFINITION_SUCCESS_ACTION,
+  CLEAR_VALUE_DEFINITION_SAVE_ERROR_ACTION,
+  CREATE_VALUE_DEFINITION_ACTION,
   ValueActionTypes,
   FETCH_VALUE_DEFINITIONS_ACTION,
   FETCH_VALUE_DEFINITIONS_SUCCESS_ACTION,
   FETCH_VALUE_LOG_ENTRIES_ACTION,
   FETCH_VALUE_LOG_ENTRIES_SUCCESS_ACTION,
+  SAVE_VALUE_DEFINITION_FAILED_ACTION,
+  UPDATE_VALUE_DEFINITION_ACTION,
   UPDATE_VALUE_DEFINITION_SUCCESS_ACTION,
   CLEAR_VALUE_LOG_ENTRIES_SUCCESS_ACTION,
   FETCH_VALUE_METRICS_SUCCESS_ACTION,
@@ -18,6 +22,7 @@ const defaultState: ValueState = {
   nextEntries: null,
   metrics: {},
   isLoading: { definitions: false, log: false },
+  save: { saving: false, error: '', completed: 0 },
 };
 
 export default function (state: ValueState = defaultState, action: ValueActionTypes): ValueState {
@@ -28,6 +33,16 @@ export default function (state: ValueState = defaultState, action: ValueActionTy
         isLoading: {
           ...state.isLoading,
           definitions: true,
+        },
+      };
+    case CREATE_VALUE_DEFINITION_ACTION:
+    case UPDATE_VALUE_DEFINITION_ACTION:
+      return {
+        ...state,
+        save: {
+          ...state.save,
+          saving: true,
+          error: '',
         },
       };
     case FETCH_VALUE_DEFINITIONS_SUCCESS_ACTION:
@@ -43,6 +58,23 @@ export default function (state: ValueState = defaultState, action: ValueActionTy
           definitions: false,
         },
       };
+    case CLEAR_VALUE_DEFINITION_SAVE_ERROR_ACTION:
+      return {
+        ...state,
+        save: {
+          ...state.save,
+          error: '',
+        },
+      };
+    case SAVE_VALUE_DEFINITION_FAILED_ACTION:
+      return {
+        ...state,
+        save: {
+          ...state.save,
+          saving: false,
+          error: action.error,
+        },
+      };
     case UPDATE_VALUE_DEFINITION_SUCCESS_ACTION: {
       const key = `${action.definition.namespace}:${action.definition.name}`;
       const newState = {
@@ -50,6 +82,11 @@ export default function (state: ValueState = defaultState, action: ValueActionTy
         definitions: {
           ...state.definitions,
           [key]: action.definition,
+        },
+        save: {
+          saving: false,
+          error: '',
+          completed: state.save.completed + 1,
         },
       };
 
