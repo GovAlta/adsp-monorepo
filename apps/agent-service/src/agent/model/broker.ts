@@ -55,6 +55,7 @@ type AgentWithOptionalMemory<TAgentId extends string = string, TTools extends To
 
 export class AgentBroker<TAgentId extends string = string, TTools extends ToolsInput = ToolsInput> {
   private userRoles: string[];
+  private limits: { timeoutMs?: number; maxSteps?: number };
   private readonly threadTtlMs = Math.max(environment.AGENT_THREAD_TTL_MINUTES, 1) * 60 * 1000;
   public get Agent() {
     return this.agent;
@@ -65,17 +66,18 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     private tenantId: AdspId,
     private inputProcessors: BrokerInputProcessor[],
     private agent: AgentWithOptionalMemory<TAgentId, TTools>,
-    { userRoles }: Partial<AgentConfiguration>,
+    { userRoles, maxSteps, timeoutMs }: Partial<AgentConfiguration>,
     private fileServiceClient?: IFileServiceClient,
     private eventService?: EventService,
     private agentId?: string,
     private modelConfig?: AgentModelConfiguration,
   ) {
     this.userRoles = userRoles || [];
+    this.limits = { maxSteps, timeoutMs };
   }
 
   private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string, streaming = false) {
-    const limits = getAgentExecutionLimits(this.agentId);
+    const limits = getAgentExecutionLimits(this.limits);
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       abortExecution(
@@ -104,7 +106,9 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
           `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
           { context: 'AgentBroker', tenant: this.tenantId?.toString() },
         );
-        if (limits.maxSteps !== undefined && stepCount >= limits.maxSteps) {
+        // Only abort when the turn would have continued (pending tool calls); a reply that completes on the
+        // final allowed step is a normal finish.
+        if (limits.maxSteps !== undefined && stepCount >= limits.maxSteps && finishReason === 'tool-calls') {
           abortExecution(
             controller,
             STREAM_ERROR_CODES.MAX_STEPS,

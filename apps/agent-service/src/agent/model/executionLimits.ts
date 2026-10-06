@@ -7,13 +7,17 @@ export interface AgentExecutionLimits {
   maxSteps?: number;
 }
 
-export function getAgentExecutionLimits(agentId?: string): AgentExecutionLimits {
-  if (agentId === FORM_GENERATION_AGENT_ID) {
-    return {
-      timeoutMs: environment.AGENT_FORM_GENERATION_TIMEOUT_MS,
-      maxSteps: environment.AGENT_FORM_GENERATION_MAX_STEPS,
-    };
-  }
-
-  return { timeoutMs: environment.AGENT_REQUEST_TIMEOUT_MS };
+/**
+ * Resolves the execution limits from the agent's configuration, falling back to the service default timeout.
+ * Without a maxSteps the framework stops after 5 steps, which can be spent entirely on tool calls and end
+ * the turn with no reply.
+ */
+export function getAgentExecutionLimits({
+  timeoutMs,
+  maxSteps,
+}: { timeoutMs?: number; maxSteps?: number } = {}): AgentExecutionLimits {
+  return {
+    timeoutMs: timeoutMs ?? environment.AGENT_REQUEST_TIMEOUT_MS,
+    ...(maxSteps !== undefined ? { maxSteps } : {}),
+  };
 }

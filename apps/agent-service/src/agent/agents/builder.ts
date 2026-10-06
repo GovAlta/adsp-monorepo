@@ -90,6 +90,8 @@ export const builderAgent: AgentConfiguration = {
     It generates React/TypeScript source code and persists changes to the workspace so they are immediately
     reflected in the preview.`,
   workspace: { enabled: true },
+  // The builder makes many tool calls per turn; the framework default of 5 steps can end a turn before it replies.
+  maxSteps: 30,
   instructions: `You are a builder agent that creates and iterates on React/TypeScript web application prototypes
     for Alberta government digital services. You work in a file-based workspace. Mastra automatically provides
     you with these workspace tools:
@@ -135,6 +137,9 @@ export const builderAgent: AgentConfiguration = {
     6. For targeted changes (e.g. fix a function), prefer mastra_workspace_edit_file to minimise token output.
     7. Confirm briefly what was changed — 2-4 sentences. Do NOT dump raw source code in the reply
        unless the user explicitly asks to see it.
+    8. User messages may end with a [BUILDER_PREVIEW_SNAPSHOT_JSON] block describing what the user is currently previewing.
+       Its route.path is the page they are viewing: treat "this page", "here" or "the current page" as that route
+       and edit the component rendered for it (find it in the router, usually src/App.tsx).
 
     ## Iterative Building
 

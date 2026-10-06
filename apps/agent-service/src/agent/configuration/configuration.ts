@@ -116,6 +116,10 @@ export interface AgentConfiguration {
   tools?: ToolConfiguration[];
   mcp?: McpConfiguration;
   model?: AgentModelConfiguration;
+  /** Maximum steps (model calls, including tool calls) per turn. The framework default is 5. */
+  maxSteps?: number;
+  /** Time limit for a single request in milliseconds. Defaults to AGENT_REQUEST_TIMEOUT_MS. */
+  timeoutMs?: number;
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
