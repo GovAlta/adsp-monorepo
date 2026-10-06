@@ -205,7 +205,7 @@ const ContainerDiv = styled.div`
 
   & .content th,
   & .content td {
-    border: 1px solid var(--goa-color-greyscale-200);
+    border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
     padding: var(--goa-space-xs) var(--goa-space-s);
     text-align: left;
   }

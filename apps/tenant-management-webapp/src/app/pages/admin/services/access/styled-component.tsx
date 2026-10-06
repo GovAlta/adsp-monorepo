@@ -94,7 +94,7 @@ export const AgentChatContainer = styled.div`
   box-sizing: border-box;
   margin: var(--goa-space-s) 0 0;
   padding: var(--goa-space-s);
-  border: 1px solid var(--goa-color-greyscale-200);
+  border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
   border-radius: var(--goa-border-radius-s);
 
   @media (max-width: 640px) {

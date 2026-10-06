@@ -120,11 +120,11 @@ const SelectorContainer = styled.div`
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 0.75rem;
+  gap: var(--goa-space-s);
+  padding: var(--goa-space-s);
+  background-color: var(--goa-color-greyscale-100);
+  border-radius: var(--goa-border-radius-s);
+  margin-bottom: var(--goa-space-s);
 `;
 
 const TopicSelectorWrapper = styled.div`
@@ -136,34 +136,33 @@ const TopicSelectorWrapper = styled.div`
 const Label = styled.label`
   font-weight: 600;
   font-size: 0.8125rem;
-  color: #333;
+  color: var(--goa-color-greyscale-700);
   display: block;
   margin-bottom: 0.25rem;
 `;
 
 const TopicSelect = styled.select`
   padding: 0.4rem 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-s);
   font-size: 0.8125rem;
   font-family: inherit;
-  background-color: white;
+  background-color: var(--goa-color-greyscale-white);
   cursor: pointer;
 
   &:hover {
-    border-color: #999;
+    border-color: var(--goa-color-greyscale-400);
   }
 
   &:focus {
-    outline: none;
-    border-color: #0070c9;
-    box-shadow: 0 0 0 3px rgba(0, 112, 201, 0.1);
+    outline: var(--goa-border-width-s) solid var(--goa-color-interactive-default);
+    outline-offset: 2px;
   }
 
   &:disabled {
-    background-color: #f5f5f5;
+    background-color: var(--goa-color-greyscale-100);
     cursor: not-allowed;
-    color: #999;
+    color: var(--goa-color-text-disabled);
   }
 `;
 
@@ -182,9 +181,9 @@ const QuestionPill = styled.button`
   padding: 0.3rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 500;
-  border: 1px solid #0070c9;
-  background-color: #f0f7ff;
-  color: #0070c9;
+  border: var(--goa-border-width-s) solid var(--goa-color-interactive-default);
+  background-color: var(--goa-color-info-light);
+  color: var(--goa-color-interactive-default);
   border-radius: 20px;
   cursor: pointer;
   white-space: nowrap;
@@ -192,13 +191,13 @@ const QuestionPill = styled.button`
   position: relative;
 
   &:hover:not(:disabled) {
-    background-color: #0070c9;
-    color: white;
+    background-color: var(--goa-color-interactive-default);
+    color: var(--goa-color-greyscale-white);
   }
 
   &:focus:not(:disabled) {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 112, 201, 0.2);
+    outline: var(--goa-border-width-s) solid var(--goa-color-interactive-default);
+    outline-offset: 2px;
   }
 
   &:disabled {
@@ -213,10 +212,10 @@ const QuestionPill = styled.button`
     bottom: 125%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #333;
-    color: white;
+    background-color: var(--goa-color-greyscale-700);
+    color: var(--goa-color-greyscale-white);
     padding: 0.5rem 0.75rem;
-    border-radius: 4px;
+    border-radius: var(--goa-border-radius-s);
     font-size: 0.7rem;
     white-space: normal;
     width: 180px;
@@ -236,7 +235,7 @@ const QuestionPill = styled.button`
     left: 50%;
     transform: translateX(-50%);
     border: 5px solid transparent;
-    border-top-color: #333;
+    border-top-color: var(--goa-color-greyscale-700);
     z-index: 1000;
     opacity: 0;
     pointer-events: none;
