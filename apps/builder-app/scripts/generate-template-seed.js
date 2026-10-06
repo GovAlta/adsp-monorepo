@@ -4,6 +4,22 @@ const path = require('path');
 const TEMPLATE_DIR = path.resolve(__dirname, '../templates/react');
 const OUTPUT_DIR = path.resolve(__dirname, '../.generated/template-seed');
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'react.json');
+const SCAFFOLD_OUTPUT_FILE = path.join(OUTPUT_DIR, 'react-scaffold.json');
+
+// Project files that make the workspace runnable standalone. They are not seeded into the workspace
+// (the agent does not need them and could break the preview by editing them); the builder adds them
+// to the downloaded archive instead. An explicit allowlist keeps dist/, node_modules and
+// package-lock.json (which would not match agent-modified dependencies) out of the download, as well
+// as README.md (monorepo-relative links) and the legacy .eslintrc.json (superseded by the flat config).
+const SCAFFOLD_FILES = [
+  'index.html',
+  'webpack.config.js',
+  'webpack.common.js',
+  'tsconfig.json',
+  'eslint.config.mjs',
+  '.prettierrc.json',
+  '.gitignore',
+];
 
 // True binary formats — skipped from the seed because large data URLs (e.g. a
 // 1MB PNG) exceed CSS custom property limits in preview. SVG is text and is
@@ -55,7 +71,14 @@ if (fs.existsSync(packageJsonPath)) {
   files.push({ path: 'package.json', content: fs.readFileSync(packageJsonPath, 'utf8') });
 }
 
+const scaffoldFiles = SCAFFOLD_FILES.map((name) => ({
+  path: name,
+  content: fs.readFileSync(path.join(TEMPLATE_DIR, name), 'utf8'),
+}));
+
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 fs.writeFileSync(OUTPUT_FILE, JSON.stringify(files));
+fs.writeFileSync(SCAFFOLD_OUTPUT_FILE, JSON.stringify(scaffoldFiles));
 
 console.log(`[builder-app] Generated template seed: ${files.length} files → ${OUTPUT_FILE}`);
+console.log(`[builder-app] Generated template scaffold: ${scaffoldFiles.length} files → ${SCAFFOLD_OUTPUT_FILE}`);

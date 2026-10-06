@@ -34,12 +34,19 @@ import {
   DEFAULT_SELECTED_FILE,
   getDefaultSelectedPath,
   isImagePath,
+  mergeScaffoldFiles,
   sortWorkspaceFiles,
   type WorkspaceChangeEvent,
   type WorkspaceFileMap,
   type WorkspaceSnapshotFile,
 } from '../lib/builderWorkspace';
 import { createFallbackPreviewDocument, type PreviewRouteState } from '../lib/builderPreview';
+import {
+  extractPreviewRoutes,
+  parsePreviewCommand,
+  resolvePreviewRoute,
+  type PreviewCommand,
+} from '../lib/previewRoutes';
 import { BuilderEditPane } from '../components/BuilderEditPane';
 import {
   EmptyState,
@@ -161,7 +168,19 @@ function normalizePreviewPath(location: Location | undefined): { path: string; h
   };
 }
 
-function capturePreviewSnapshot(frame: HTMLIFrameElement | null): BuilderPreviewSnapshot | null {
+function splitPreviewRoute(route: string): { path: string; hash: string; query: string } {
+  const queryIndex = route.indexOf('?');
+  return {
+    path: queryIndex >= 0 ? route.slice(0, queryIndex) || '/' : route || '/',
+    hash: '',
+    query: queryIndex >= 0 ? route.slice(queryIndex) : '',
+  };
+}
+
+function capturePreviewSnapshot(
+  frame: HTMLIFrameElement | null,
+  routeState?: PreviewRouteState,
+): BuilderPreviewSnapshot | null {
   try {
     const doc = frame?.contentDocument;
     const win = frame?.contentWindow;
@@ -170,7 +189,9 @@ function capturePreviewSnapshot(frame: HTMLIFrameElement | null): BuilderPreview
       return null;
     }
 
-    const route = normalizePreviewPath(win.location);
+    // The preview app uses a MemoryRouter, so the iframe location never reflects the active route;
+    // prefer the route reported by the preview itself.
+    const route = routeState ? splitPreviewRoute(routeState.path) : normalizePreviewPath(win.location);
     const h1 = compactText(doc.querySelector('h1')?.textContent || '', 180);
     const headings = uniqueNonEmpty(
       Array.from(doc.querySelectorAll('h1, h2, h3')).map((node) => node.textContent || ''),
@@ -368,10 +389,7 @@ export const BuilderTenant = () => {
   const workspaceReadRetryTimerRef = useRef<number | null>(null);
   const workspaceReadRetryAttemptsRef = useRef(0);
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
-  const initialPreviewRoute = new URLSearchParams(location.search).get('previewRoute');
-  const previewRouteStateRef = useRef<PreviewRouteState | undefined>(
-    initialPreviewRoute ? { path: initialPreviewRoute, hash: '', query: '' } : undefined,
-  );
+  const previewRouteStateRef = useRef<PreviewRouteState | undefined>(undefined);
 
   const agentServiceUrl = config.environment.agentServiceUrl || config.directory['urn:ads:platform:agent-service'];
   const previewDocument = useMemo(() => createFallbackPreviewDocument(files, previewRouteStateRef.current), [files]);
@@ -425,20 +443,6 @@ export const BuilderTenant = () => {
       if (event.data?.type === 'preview:route-changed' && typeof event.data.path === 'string') {
         const routePath = event.data.path as string;
         previewRouteStateRef.current = { path: routePath, hash: '', query: '' };
-        // Reflect the current preview route in the parent URL so it survives reload
-        // and can be shared or manually edited.
-        try {
-          const sp = new URLSearchParams(window.location.search);
-          if (routePath && routePath !== '/') {
-            sp.set('previewRoute', routePath);
-          } else {
-            sp.delete('previewRoute');
-          }
-          const next = sp.toString();
-          window.history.replaceState(window.history.state, '', `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`);
-        } catch {
-          // non-critical; ignore if history API is unavailable
-        }
       }
     };
     window.addEventListener('message', handler);
@@ -465,7 +469,7 @@ export const BuilderTenant = () => {
           : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
       const errorText = `[BUILDER_PREVIEW_ERROR]\n${error.message}${error.stack ? '\n' + error.stack.split('\n').slice(0, 8).join('\n') : ''}\n[/BUILDER_PREVIEW_ERROR]`;
-      const snapshot = capturePreviewSnapshot(previewFrameRef.current);
+      const snapshot = capturePreviewSnapshot(previewFrameRef.current, previewRouteStateRef.current);
       const snapshotPart = toSnapshotTextPart(snapshot);
 
       dispatch(
@@ -879,6 +883,89 @@ export const BuilderTenant = () => {
     dispatch(logoutUser({ tenant, from: location.pathname }));
   }, [dispatch, location.pathname, tenant]);
 
+  const navigatePreview = (path: string): Promise<string | undefined> =>
+    new Promise((resolve) => {
+      const target = previewFrameRef.current?.contentWindow;
+      if (!target) {
+        resolve(undefined);
+        return;
+      }
+
+      const finish = (route?: string) => {
+        window.clearTimeout(timer);
+        window.removeEventListener('message', onMessage);
+        resolve(route);
+      };
+      const onMessage = (event: MessageEvent) => {
+        if (event.source === target && event.data?.type === 'preview:route-changed') {
+          finish(String(event.data.path));
+        }
+      };
+      const timer = window.setTimeout(() => finish(), 1500);
+
+      window.addEventListener('message', onMessage);
+      target.postMessage({ type: 'preview:navigate', path }, '*');
+    });
+
+  const handlePreviewCommand = async (command: PreviewCommand, text: string) => {
+    const routes = extractPreviewRoutes(files);
+    const currentRoute = previewRouteStateRef.current?.path ?? '/';
+    const routeList = routes.map((route) => `- \`${route}\`${route === currentRoute ? ' (current)' : ''}`).join('\n');
+
+    let reply: string;
+    if (command.name === 'routes') {
+      reply = routes.length
+        ? `Routes in the preview app:\n${routeList}\n\nUse \`/go <route>\` to navigate.`
+        : 'No routes found in the workspace yet.';
+    } else if (!command.argument) {
+      reply = `Usage: \`/go <route>\`. The preview is currently on \`${currentRoute}\`.${routes.length ? `\n\nRoutes:\n${routeList}` : ''}`;
+    } else {
+      const target = resolvePreviewRoute(command.argument, routes);
+      if (!target) {
+        reply = `No route matches \`${command.argument}\`. The preview is still on \`${currentRoute}\`.${
+          routes.length ? `\n\nAvailable routes:\n${routeList}` : ''
+        }`;
+      } else if (target === currentRoute) {
+        reply = `The preview is already on \`${currentRoute}\`.`;
+      } else {
+        const resultingRoute = await navigatePreview(target);
+        if (!resultingRoute) {
+          reply = `The preview did not navigate to \`${target}\`. It is still on \`${previewRouteStateRef.current?.path ?? '/'}\`.`;
+        } else if (resultingRoute === target) {
+          reply = `Preview is now on \`${resultingRoute}\`.`;
+        } else {
+          reply = `Navigated to \`${target}\`, but the app redirected to \`${resultingRoute}\`. Preview is now on \`${resultingRoute}\`.`;
+        }
+      }
+    }
+
+    const createId = () =>
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    dispatch(
+      agentActions.initializeMessage({
+        id: createId(),
+        threadId,
+        from: 'user',
+        content: [{ type: 'text', text }],
+        local: true,
+      }),
+    );
+    dispatch(
+      agentActions.initializeMessage({
+        id: createId(),
+        threadId,
+        from: 'agent',
+        content: reply,
+        toolCalls: [],
+        streaming: false,
+        local: true,
+      }),
+    );
+  };
+
   const handleSendPrompt = (_threadId: string, context: Record<string, unknown>, content: UserContent) => {
     if (!content.length || !socketRef.current) {
       return;
@@ -891,6 +978,12 @@ export const BuilderTenant = () => {
       .trim();
 
     if (!text) {
+      return;
+    }
+
+    const command = parsePreviewCommand(text);
+    if (command) {
+      void handlePreviewCommand(command, text);
       return;
     }
 
@@ -908,7 +1001,7 @@ export const BuilderTenant = () => {
       }),
     );
 
-    const snapshot = capturePreviewSnapshot(previewFrameRef.current);
+    const snapshot = capturePreviewSnapshot(previewFrameRef.current, previewRouteStateRef.current);
     const snapshotPart = toSnapshotTextPart(snapshot);
 
     const pendingError = pendingPreviewErrorRef.current;
@@ -943,11 +1036,24 @@ export const BuilderTenant = () => {
     dispatch(agentActions.setWorkspaceStatus('Refreshing workspace snapshot'));
   };
 
-  const handleDownloadWorkspace = useCallback(() => {
-    const snapshot = sortWorkspaceFiles(files);
-    if (!snapshot.length) {
+  const handleDownloadWorkspace = useCallback(async () => {
+    const workspaceFiles = sortWorkspaceFiles(files);
+    if (!workspaceFiles.length) {
       dispatch(agentActions.setWorkspaceStatus('Workspace is empty; nothing to download'));
       return;
+    }
+
+    // Add the build and lint configuration so the download runs standalone (npm install && npm run dev).
+    let snapshot = workspaceFiles;
+    let hasScaffold = true;
+    try {
+      const response = await fetch('assets/template-seed/react-scaffold.json');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch project scaffold: ${response.status}`);
+      }
+      snapshot = mergeScaffoldFiles(workspaceFiles, (await response.json()) as WorkspaceSnapshotFile[]);
+    } catch {
+      hasScaffold = false;
     }
 
     const archive = createTarArchive(snapshot);
@@ -956,7 +1062,13 @@ export const BuilderTenant = () => {
     const fileName = `workspace${threadSuffix}-${datePart}.tar`;
 
     downloadBlob(archive, fileName);
-    dispatch(agentActions.setWorkspaceStatus(`Downloaded workspace (${snapshot.length} files)`));
+    dispatch(
+      agentActions.setWorkspaceStatus(
+        hasScaffold
+          ? `Downloaded workspace (${snapshot.length} files)`
+          : `Downloaded workspace (${snapshot.length} files) without project configuration files`,
+      ),
+    );
   }, [dispatch, files, threadId]);
 
   const handleSaveWorkspace = useCallback(async () => {
