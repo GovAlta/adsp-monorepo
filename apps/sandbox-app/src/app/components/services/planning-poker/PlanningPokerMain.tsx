@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import { GoabButton, GoabContainer, GoabFormItem, GoabInput, GoabText } from '@abgov/react-components';
