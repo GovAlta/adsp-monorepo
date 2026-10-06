@@ -7,6 +7,16 @@ interface PreviewErrorMessage {
   stack: string;
 }
 
+async function waitFor(condition: () => boolean, timeoutMs = 5000): Promise<void> {
+  const start = Date.now();
+  while (!condition()) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error('Timed out waiting for the preview script to finish');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 // Runs the generated preview script in jsdom (where window.parent is window) and returns the
 // preview-error messages it posts to the parent.
 async function runPreview(
@@ -27,11 +37,18 @@ async function runPreview(
     return node;
   }) as never);
 
-  document.body.innerHTML = '<div id="preview-loading"></div>';
-  new Function(createPreviewScript(JSON.stringify(files), 'null', 'https://example.test/vendors.js'))();
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  try {
+    document.body.innerHTML = '<div id="preview-loading"></div>';
+    new Function(createPreviewScript(JSON.stringify(files), 'null', 'https://example.test/vendors.js'))();
 
-  window.removeEventListener('message', onMessage);
+    // The script writes "Preview failed:" to the page before it posts to the parent, so wait for that
+    // rather than a fixed delay, then let the posted message be delivered.
+    await waitFor(() => (document.body.textContent ?? '').includes('Preview failed:'));
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  } finally {
+    window.removeEventListener('message', onMessage);
+  }
+
   return received;
 }
 
