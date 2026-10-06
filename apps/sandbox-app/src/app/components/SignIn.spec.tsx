@@ -4,14 +4,14 @@ import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { SignIn } from './SignIn';
 import { authenticatedUserSelector, environmentSelector, loginUser, tenantSelector } from '../state';
-import { useLocation, useNavigate } from 'react-router-v7';
+import { useLocation, useNavigate } from 'react-router-dom-v7';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
   useSelector: jest.fn(),
 }));
 
-jest.mock('react-router-v7', () => ({
+jest.mock('react-router-dom-v7', () => ({
   useLocation: jest.fn(() => ({ pathname: '/test-tenant', state: null })),
   useNavigate: jest.fn(),
 }));

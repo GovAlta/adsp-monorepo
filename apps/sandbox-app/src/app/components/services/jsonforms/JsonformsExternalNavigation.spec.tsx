@@ -21,7 +21,7 @@ jest.mock('react-redux', () => ({
     }),
 }));
 
-jest.mock('react-router-v7', () => ({
+jest.mock('react-router-dom-v7', () => ({
   useParams: () => ({ tenant: 'autotest' }),
 }));
 

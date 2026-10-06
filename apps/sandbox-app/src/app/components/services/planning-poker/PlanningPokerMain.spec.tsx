@@ -5,7 +5,7 @@ import { PlanningPokerMain } from './PlanningPokerMain';
 
 const mockNavigate = jest.fn();
 
-jest.mock('react-router-v7', () => ({
+jest.mock('react-router-dom-v7', () => ({
   useNavigate: () => mockNavigate,
 }));
 

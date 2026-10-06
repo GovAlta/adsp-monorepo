@@ -11,8 +11,8 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
-jest.mock('react-router-v7', () => ({
-  ...jest.requireActual('react-router-v7'),
+jest.mock('react-router-dom-v7', () => ({
+  ...jest.requireActual('react-router-dom-v7'),
   useParams: () => ({ tenant: 'test-tenant' }),
   useLocation: () => ({ pathname: '/test-tenant' }),
   useNavigate: () => jest.fn(),

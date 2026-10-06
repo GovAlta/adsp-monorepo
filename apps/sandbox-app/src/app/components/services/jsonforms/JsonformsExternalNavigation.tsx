@@ -11,7 +11,7 @@
 //                           the route, so the links work in whatever environment this runs in.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-v7';
+import { useParams } from 'react-router-dom-v7';
 import { GoabButton, GoabButtonGroup, GoabCallout, GoabContainer, GoabText } from '@abgov/react-components';
 import {
   ContextProviderFactory,
