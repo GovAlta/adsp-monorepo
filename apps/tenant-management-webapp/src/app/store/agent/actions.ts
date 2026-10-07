@@ -177,6 +177,7 @@ export interface AgentResponseAction {
     | ReasoningEndChunk
     | ErrorChunk
     | TripwireChunk;
+  output?: unknown;
   done: boolean;
 }
 
@@ -262,15 +263,15 @@ let queuedMessages: QueuedMessage[] = [];
 
 // Throttle stream chunk dispatches to one batch per animation frame to prevent
 // "Maximum update depth exceeded" when chunks arrive faster than React can render.
-let pendingChunks: Array<{ threadId: string; messageId: string; chunk: unknown; done: boolean }> = [];
+let pendingChunks: Array<{ threadId: string; messageId: string; chunk: unknown; output?: unknown; done: boolean }> = [];
 let rafId: number | null = null;
 
 function flushStreamChunks(dispatch: Dispatch) {
   const chunks = pendingChunks;
   pendingChunks = [];
   rafId = null;
-  for (const { threadId, messageId, chunk, done } of chunks) {
-    dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done });
+  for (const { threadId, messageId, chunk, output, done } of chunks) {
+    dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, output, done });
   }
 }
 
@@ -359,13 +360,13 @@ export function connectAgent() {
     });
 
     socket.on('stream', (message) => {
-      const { threadId, messageId, chunk, done } = message;
+      const { threadId, messageId, chunk, output, done } = message;
       // Heartbeat chunks are keep-alive signals to prevent proxy timeouts; ignore them.
       if (chunk?.type === 'heartbeat') {
         return;
       }
       // Batch chunk dispatches to one per animation frame to avoid overwhelming React.
-      pendingChunks.push({ threadId, messageId, chunk, done });
+      pendingChunks.push({ threadId, messageId, chunk, output, done });
       if (rafId === null) {
         rafId = requestAnimationFrame(() => flushStreamChunks(dispatch));
       }
