@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom-v7';
 import configureStore from 'redux-mock-store';
 import { NavigationMenu } from './NavigationMenu';
 
