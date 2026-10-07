@@ -1205,6 +1205,14 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormSubmission'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
     requestBody:
       required: true
       content:
