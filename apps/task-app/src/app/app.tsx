@@ -1,7 +1,7 @@
 import '@abgov/web-components/index.css';
 import '@abgov/design-tokens/dist/tokens.css';
-import { AuthCallback } from '@core-services/app-common';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { AuthCallbackV2 } from '@core-services/app-common';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom-v7';
 import { TaskTenant } from './containers/TaskTenant';
 
 import styles from './app.module.scss';
@@ -23,7 +23,7 @@ export function App() {
       <Router>
         <Routes>
           <Route index element={<Navigate to="/overview" />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/auth/callback" element={<AuthCallbackV2 />} />
           <Route path="overview" element={<Landing />} />
           <Route path="/:tenant/*" element={<TaskTenant />} />
           <Route path="/:tenant/login" element={<Login />} />
