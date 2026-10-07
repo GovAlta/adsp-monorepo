@@ -1,4 +1,4 @@
-import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
@@ -47,6 +47,7 @@ import {
   resolvePreviewRoute,
   type PreviewCommand,
 } from '../lib/previewRoutes';
+import { isAgentBusy } from '../lib/previewErrors';
 import { BuilderEditPane } from '../components/BuilderEditPane';
 import {
   EmptyState,
@@ -380,6 +381,8 @@ export const BuilderTenant = () => {
   const [hasPendingPreviewError, setHasPendingPreviewError] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const pendingPreviewErrorRef = useRef<{ message: string; stack: string } | null>(null);
+  // The last error sent to the agent automatically, so an unchanged error is not resent in a loop.
+  const lastAutoSentPreviewErrorRef = useRef<string | null>(null);
   const seededWorkspaceRef = useRef(false);
   const autoLoadAttemptedRef = useRef(false);
   const selectedPathRef = useRef(DEFAULT_SELECTED_FILE);
@@ -393,6 +396,15 @@ export const BuilderTenant = () => {
 
   const agentServiceUrl = config.environment.agentServiceUrl || config.directory['urn:ads:platform:agent-service'];
   const previewDocument = useMemo(() => createFallbackPreviewDocument(files, previewRouteStateRef.current), [files]);
+  const agentBusy = isAgentBusy(messages);
+
+  // A pending error belongs to the document it came from. When the preview is rebuilt (e.g. the agent
+  // changed files) drop it: the new document reports its own error if it still fails. Runs as a layout
+  // effect so it precedes any message from the new document.
+  useLayoutEffect(() => {
+    pendingPreviewErrorRef.current = null;
+    setHasPendingPreviewError(false);
+  }, [previewDocument]);
 
   useEffect(() => {
     if (configInitialized && tenantName) {
@@ -450,7 +462,9 @@ export const BuilderTenant = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!hasPendingPreviewError || !isSocketConnected || !threadId) {
+    // Wait while the agent is working: the preview can be broken between its file writes, and a new message
+    // would compete with its turn. If it is still broken when the turn ends, this runs again.
+    if (!hasPendingPreviewError || !isSocketConnected || !threadId || agentBusy) {
       return;
     }
 
@@ -460,6 +474,13 @@ export const BuilderTenant = () => {
         return;
       }
 
+      // The agent already got this error and the preview still fails the same way; leave it pending so it
+      // goes out with the user's next message instead of looping.
+      if (error.message === lastAutoSentPreviewErrorRef.current) {
+        return;
+      }
+
+      lastAutoSentPreviewErrorRef.current = error.message;
       pendingPreviewErrorRef.current = null;
       setHasPendingPreviewError(false);
 
@@ -478,6 +499,8 @@ export const BuilderTenant = () => {
           threadId,
           from: 'user',
           content: [{ type: 'text', text: 'Preview error detected — asking agent to fix it.' }],
+          // A system message: sent by the builder, not typed by the user.
+          local: true,
         }),
       );
 
@@ -496,7 +519,7 @@ export const BuilderTenant = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [hasPendingPreviewError, isSocketConnected, threadId, dispatch]);
+  }, [hasPendingPreviewError, isSocketConnected, threadId, agentBusy, dispatch]);
 
   useEffect(() => {
     if (isImagePath(selectedPath) && files[selectedPath]) {
@@ -1006,6 +1029,7 @@ export const BuilderTenant = () => {
 
     const pendingError = pendingPreviewErrorRef.current;
     pendingPreviewErrorRef.current = null;
+    lastAutoSentPreviewErrorRef.current = null;
     setHasPendingPreviewError(false);
     const errorPart = pendingError
       ? ({

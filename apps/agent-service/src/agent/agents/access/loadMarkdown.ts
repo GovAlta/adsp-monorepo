@@ -8,12 +8,16 @@ const markdownDirectories = [
 ];
 
 export function loadAccessAgentMarkdown(filename: string): string {
-  if (path.basename(filename) !== filename || !filename.endsWith('.md')) {
+  const normalized = path.posix.normalize(filename.replace(/\\/g, '/'));
+  const isValidPath =
+    normalized.endsWith('.md') && !normalized.startsWith('../') && normalized !== '..' && !path.isAbsolute(normalized);
+
+  if (!isValidPath) {
     throw new Error(`Invalid Access Service agent Markdown filename: ${filename}`);
   }
 
   for (const directory of markdownDirectories) {
-    const markdownPath = path.join(directory, filename);
+    const markdownPath = path.join(directory, normalized);
     if (existsSync(markdownPath)) {
       return readFileSync(markdownPath, 'utf8').trim();
     }

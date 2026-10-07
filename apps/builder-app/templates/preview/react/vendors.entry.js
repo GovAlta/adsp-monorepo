@@ -16,6 +16,22 @@ import * as Ajv from 'ajv';
 import * as AjvFormats from 'ajv-formats';
 import * as AjvErrors from 'ajv-errors';
 
+// Ionicons lazily fetches SVG files at runtime via getAssetPath(), which
+// resolves relative to document.baseURI. In a srcdoc iframe, baseURI is
+// "about:srcdoc" which produces invalid fetch URLs. Point to jsDelivr so
+// icons load regardless of the iframe's origin context.
+const IONICONS_ASSET_URL = 'https://cdn.jsdelivr.net/npm/ionicons@8.0.13/dist/';
+
+// The template calls defineCustomElements(window) from main.tsx, and Stencil's
+// bootstrapLazy resets the asset path from document.baseURI on every call, so
+// a one-off setAssetPath at load time is overwritten. Supply resourcesUrl on
+// each call instead.
+const PatchedIoniconsLoader = {
+  ...IoniconsLoader,
+  defineCustomElements: (win, options) =>
+    IoniconsLoader.defineCustomElements(win, { resourcesUrl: IONICONS_ASSET_URL, ...options }),
+};
+
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const registry = (globalScope.__BUILDER_TEMPLATE_DEPS__ =
   globalScope.__BUILDER_TEMPLATE_DEPS__ || {});
@@ -61,8 +77,8 @@ registry['@abgov/react-components'] = AbgovReactComponents;
 registry['@abgov/web-components'] = AbgovWebComponents;
 registry['@abgov/design-tokens/dist/tokens.css'] = {};
 registry['@abgov/web-components/index.css'] = {};
-registry['ionicons/loader'] = IoniconsLoader;
-registry['ionicons/dist/loader'] = IoniconsLoader;
+registry['ionicons/loader'] = PatchedIoniconsLoader;
+registry['ionicons/dist/loader'] = PatchedIoniconsLoader;
 registry['@abgov/jsonforms-components'] = JsonFormsComponents;
 registry['@jsonforms/core'] = JsonFormsCore;
 registry['@jsonforms/react'] = JsonFormsReact;
@@ -70,8 +86,4 @@ registry['ajv'] = Ajv;
 registry['ajv-formats'] = AjvFormats;
 registry['ajv-errors'] = AjvErrors;
 
-// Ionicons lazily fetches SVG files at runtime via getAssetPath(), which
-// resolves relative to document.baseURI. In a srcdoc iframe, baseURI is
-// "about:srcdoc" which produces invalid fetch URLs. Point to jsDelivr so
-// icons load regardless of the iframe's origin context.
-setIoniconsAssetPath(`https://cdn.jsdelivr.net/npm/ionicons@8.0.13/dist/`);
+setIoniconsAssetPath(IONICONS_ASSET_URL);

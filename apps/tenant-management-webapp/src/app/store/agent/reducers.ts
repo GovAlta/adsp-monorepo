@@ -106,10 +106,84 @@ function streamErrorDetails(payload: { code?: string; message: string; details?:
 }
 
 const DEFAULT_STREAM_ERROR_MESSAGE = 'The agent stopped unexpectedly. Anything already saved is in the editor.';
+const ACCESS_SERVICE_AGENT_ID = 'AccessServiceAgent';
 
-function processResponseChunk(message: AgentMessage, action: AgentResponseAction): AgentMessage {
+function outputToText(output: unknown): string {
+  if (typeof output === 'string') {
+    return output;
+  }
+  if (output && typeof output === 'object') {
+    const candidate = output as Record<string, unknown>;
+    if (typeof candidate.text === 'string') {
+      return candidate.text;
+    }
+    if (typeof candidate.answer === 'string') {
+      return candidate.answer;
+    }
+    if (typeof candidate.response === 'string') {
+      return candidate.response;
+    }
+    if (typeof candidate.message === 'string') {
+      return candidate.message;
+    }
+
+    if (typeof candidate.result === 'string') {
+      return candidate.result;
+    }
+    if (candidate.result && typeof candidate.result === 'object') {
+      const nested = candidate.result as Record<string, unknown>;
+      if (typeof nested.response === 'string') return nested.response;
+      if (typeof nested.message === 'string') return nested.message;
+      if (typeof nested.text === 'string') return nested.text;
+      if (typeof nested.answer === 'string') return nested.answer;
+    }
+
+    if (typeof candidate.content === 'string') {
+      return candidate.content;
+    }
+
+    try {
+      return JSON.stringify(candidate, null, 2);
+    } catch {
+      return '';
+    }
+  }
+
+  return '';
+}
+
+function getToolFallbackText(message: AgentMessage): string {
+  for (let i = message.toolCalls.length - 1; i >= 0; i--) {
+    const toolCall = message.toolCalls[i];
+    const resultText = outputToText(toolCall.result);
+    if (resultText.trim().length > 0) {
+      return resultText;
+    }
+
+    const errorText = outputToText(toolCall.error);
+    if (errorText.trim().length > 0) {
+      return errorText;
+    }
+  }
+
+  return '';
+}
+
+function processResponseChunk(
+  message: AgentMessage,
+  action: AgentResponseAction,
+  useAccessOutputFallback = false,
+): AgentMessage {
   if (action.done) {
-    message = { ...message, streaming: false };
+    const outputText = useAccessOutputFallback ? outputToText(action.output) : '';
+    const fallbackText =
+      outputText.trim().length > 0 ? outputText : useAccessOutputFallback ? getToolFallbackText(message) : '';
+    message = {
+      ...message,
+      streaming: false,
+      content: message.content?.trim().length ? message.content : fallbackText,
+      output: action.output ?? message.output,
+    };
   }
 
   switch (action.chunk?.type) {
@@ -352,6 +426,7 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
 
       const threadMessages = { ...state.threadMessages };
       const messages = { ...state.messages };
+      const useAccessOutputFallback = state.threads[action.threadId]?.agent === ACCESS_SERVICE_AGENT_ID;
       if (!state.threadMessages[action.threadId].includes(action.messageId)) {
         threadMessages[action.threadId].push(action.messageId);
         messages[action.messageId] = processResponseChunk(
@@ -364,10 +439,11 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
             streaming: true,
           },
           action,
+          useAccessOutputFallback,
         );
       } else {
         const message = messages[action.messageId];
-        messages[action.messageId] = processResponseChunk(message as AgentMessage, action);
+        messages[action.messageId] = processResponseChunk(message as AgentMessage, action, useAccessOutputFallback);
       }
 
       return { ...state, threadMessages, messages };
