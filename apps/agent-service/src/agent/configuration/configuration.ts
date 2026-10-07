@@ -17,8 +17,6 @@ import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
 import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
-import { createAccessServicePiiDetector } from '../agents/access/piiGuardrails';
-import { isAccessServiceAgentId } from '../agents/access/piiGuardrailConfig';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
@@ -272,10 +270,7 @@ export class AgentServiceConfiguration {
                       logger: this.logger,
                       requestContext: requestContext as RequestContext<Record<string, unknown>>,
                     }),
-                  outputProcessors: ({ requestContext }) =>
-                    isAccessServiceAgentId(requestContext.get('agentId') as string | undefined)
-                      ? [createAccessServicePiiDetector()]
-                      : [],
+                  outputProcessors: () => [],
                 }) as Agent,
               };
             },

@@ -34,16 +34,20 @@ describe('accessServiceAgent', () => {
 
   it('loads each agent instruction from Markdown', () => {
     expect(loadAccessAgentMarkdown('baseKnowledge.md')).toContain('Access Service Base Knowledge');
-    expect(loadAccessAgentMarkdown('supervisor.md')).toContain('troubleshooting orchestrator');
-    expect(loadAccessAgentMarkdown('clientAgent.md')).toContain('client-configuration specialist');
-    expect(loadAccessAgentMarkdown('tokenRoleAgent.md')).toContain('token-validation and authorization specialist');
-    expect(loadAccessAgentMarkdown('identityProviderAgent.md')).toContain('identity-provider specialist');
-    expect(loadAccessAgentMarkdown('architectAgent.md')).toContain('infrastructure architect');
+    expect(loadAccessAgentMarkdown('supervisor/supervisor.md')).toContain('troubleshooting orchestrator');
+    expect(loadAccessAgentMarkdown('clientAgent/clientAgent.md')).toContain('client-configuration specialist');
+    expect(loadAccessAgentMarkdown('tokenRoleAgent/tokenRoleAgent.md')).toContain(
+      'token-validation and authorization specialist',
+    );
+    expect(loadAccessAgentMarkdown('identityProviderAgent/identityProviderAgent.md')).toContain(
+      'identity-provider specialist',
+    );
+    expect(loadAccessAgentMarkdown('architectAgent/architectAgent.md')).toContain('infrastructure architect');
     expect(() => loadAccessAgentMarkdown('../security.md')).toThrow('Invalid Access Service agent Markdown filename');
   });
 
   it('loads clients.md into the client agent only', () => {
-    expect(loadAccessAgentMarkdown('clients.md')).toContain('Public client example: Tenant Admin Webapp');
+    expect(loadAccessAgentMarkdown('clientAgent/clients.md')).toContain('Public client example: Tenant Admin Webapp');
     expect(clientAgent.instructions).toContain('Public client example: Tenant Admin Webapp');
     expect(tokenRoleAgent.instructions).not.toContain('Public client example: Tenant Admin Webapp');
     expect(identityProviderAgent.instructions).not.toContain('Public client example: Tenant Admin Webapp');

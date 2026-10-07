@@ -43,7 +43,7 @@
           },
           {
             "input": "apps/agent-service/src/agent/agents/access",
-            "glob": "*.md",
+            "glob": "**/*.md",
             "output": "assets/access-service-agent"
           }
         ],

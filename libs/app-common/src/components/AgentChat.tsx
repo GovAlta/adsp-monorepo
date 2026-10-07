@@ -86,6 +86,27 @@ function isFailedToolResult(toolCall: ToolCall): boolean {
   return result?.success === false;
 }
 
+function outputToDisplayText(output: unknown, maxChars: number): string {
+  if (typeof output === 'string') {
+    return output;
+  }
+
+  if (output && typeof output === 'object') {
+    const candidate = output as Record<string, unknown>;
+    for (const key of ['text', 'answer', 'response', 'message', 'content']) {
+      if (typeof candidate[key] === 'string') {
+        return candidate[key] as string;
+      }
+    }
+  }
+
+  try {
+    return stringifyTruncated(output, maxChars);
+  } catch {
+    return '';
+  }
+}
+
 interface AgentReasoningProps {
   className?: string;
   reasoning: Reasoning;
@@ -492,24 +513,36 @@ const AgentToolCall = memo(styled(AgentToolCallBase)`
 `);
 
 const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJsonChars }: AgentMessageItemProps) => {
+  const jsonLimit = maxJsonChars ?? DEFAULT_MAX_JSON_CHARS;
   const hasText = message.content?.trim().length > 0;
   const hasReasoning = Boolean(message.reasoning?.content?.trim());
   const hasToolCalls = message.toolCalls.length > 0;
   const hasErrors = Boolean(message.errors?.length);
   const hasPendingToolCall = message.toolCalls.some((toolCall) => !toolCall.result && !toolCall.error);
+  const hasOutput = message.output !== undefined && message.output !== null;
+  const outputFallback = !hasText && hasOutput ? outputToDisplayText(message.output, jsonLimit) : '';
+  const hasOutputFallback = outputFallback.trim().length > 0;
+  const hasRenderableResponse = hasText || hasReasoning || hasToolCalls || hasErrors || hasOutputFallback;
 
-  // Show explicit feedback if the stream has started but no visible output has arrived yet.
-  const isThinking = message.streaming && !hasText && !hasReasoning && !hasToolCalls && !hasErrors;
-
-  // Show a subtle continuation hint for quiet streaming gaps between visible updates.
-  const showStreamingContinuation = message.streaming && !isThinking && !hasPendingToolCall;
+  let statusLabel = '';
+  if (message.streaming) {
+    if (!hasRenderableResponse) {
+      statusLabel = 'Receiving response...';
+    } else if (hasPendingToolCall) {
+      statusLabel = 'Processing tool results...';
+    } else if (!hasText) {
+      statusLabel = 'Finalizing response...';
+    } else {
+      statusLabel = 'Generating response...';
+    }
+  }
 
   return (
     <div className={className} data-from={message.from} data-local={message.local ? 'true' : undefined}>
-      {isThinking && (
+      {statusLabel && (
         <div className="activity-indicator" data-kind="thinking">
           <GoabSkeleton type="text" />
-          <span>Agent is thinking...</span>
+          <span>{statusLabel}</span>
         </div>
       )}
       {message.reasoning && <AgentReasoning reasoning={message.reasoning} />}
@@ -525,10 +558,10 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
           {message.content.trim()}
         </Markdown>
       )}
-      {showStreamingContinuation && (
-        <div className="activity-indicator" data-kind="continuing">
-          <span>Generating response...</span>
-        </div>
+      {!hasText && hasOutputFallback && (
+        <Markdown className="content output-fallback" data-from={message.from} remarkPlugins={[remarkGfm]}>
+          {outputFallback.trim()}
+        </Markdown>
       )}
       {message.errors && message.errors.map((error, index) => <AgentError key={index} error={error} />)}
     </div>
@@ -560,6 +593,11 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
     border-radius: 0 var(--goa-border-radius-m) var(--goa-border-radius-m) 0;
     background: var(--goa-color-greyscale-100);
     font-size: var(--goa-font-size-3);
+  }
+
+  & .output-fallback {
+    border-left: var(--goa-border-width-l, 3px) solid var(--goa-color-greyscale-300);
+    padding-left: var(--goa-space-m);
   }
 `);
 
@@ -772,7 +810,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
           )}
           {isWaitingForResponse && !timedOut && (
             <div className="activity-indicator" data-kind="thinking">
-              <span>Thinking...</span>
+              <span>Sending message to agent...</span>
               <GoabSkeleton type="text" mb="l" mr="4xl" />
             </div>
           )}

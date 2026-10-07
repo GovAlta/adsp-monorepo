@@ -4,7 +4,7 @@ import { loadAccessAgentMarkdown } from './loadMarkdown';
 
 export const ACCESS_SERVICE_AGENTS = ['clientAgent', 'tokenRoleAgent', 'identityProviderAgent', 'architectAgent'];
 const baseKnowledge = loadAccessAgentMarkdown('baseKnowledge.md');
-const supervisorInstructions = loadAccessAgentMarkdown('supervisor.md');
+const supervisorInstructions = loadAccessAgentMarkdown('supervisor/supervisor.md');
 
 export const accessServiceAgent: AgentConfiguration = {
   name: 'Access Service Agent',
