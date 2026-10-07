@@ -4,6 +4,8 @@ import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { BrokerInputProcessor } from '../types';
+import { createAccessServicePiiDetector } from '../agents/access/piiGuardrails';
+import { isAccessServiceAgentId } from '../agents/access/piiGuardrailConfig';
 import { FileServiceDownloadProcessor } from './file';
 
 interface InputProcessorProps {
@@ -13,15 +15,22 @@ interface InputProcessorProps {
 
 export function createInputProcessors({ requestContext }: InputProcessorProps): InputProcessor[] {
   const agentId = requestContext.get('agentId') as string | undefined;
+  const processors: InputProcessor[] = [];
 
-  return [
+  if (isAccessServiceAgentId(agentId)) {
+    processors.push(createAccessServicePiiDetector());
+  }
+
+  processors.push(
     new PromptInjectionDetector({
       model: getAgentModelConfiguration(getAgentModelId(agentId)),
       threshold: 0.8,
       strategy: 'block',
       detectionTypes: ['injection', 'jailbreak', 'system-override'],
     }),
-  ];
+  );
+
+  return processors;
 }
 
 interface BrokerInputProcessorProps {

@@ -19,7 +19,8 @@
         "production",
         "^production",
         "{workspaceRoot}/dist/libs/jsonforms-components/renderer-catalog.json",
-        "{workspaceRoot}/docs/**/*.md"
+        "{workspaceRoot}/docs/**/*.md",
+        "{projectRoot}/src/agent/agents/access/**/*.md"
       ],
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
@@ -39,6 +40,11 @@
             "input": "docs",
             "glob": "**/*.md",
             "output": "assets/docs"
+          },
+          {
+            "input": "apps/agent-service/src/agent/agents/access",
+            "glob": "*.md",
+            "output": "assets/access-service-agent"
           }
         ],
         "webpackConfig": "apps/agent-service/webpack.config.js",

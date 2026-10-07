@@ -78,3 +78,14 @@ export interface AgentMessage {
   /** Generated locally by the host app (e.g. a slash command reply) rather than by the agent. */
   local?: boolean;
 }
+
+/**
+ * Agent context selection for routing user requests to specialized agents
+ * Provides hints to the agent about which domain the user's question pertains to
+ * Reserved field: 'agentContext' in the context Record
+ */
+export interface AgentContextSelection {
+  context: string;
+  subtopic: string;
+  agent: string;
+}

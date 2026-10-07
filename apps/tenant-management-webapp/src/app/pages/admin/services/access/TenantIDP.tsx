@@ -8,9 +8,8 @@ import {
   GoabCircularProgress,
   GoabIconButton,
 } from '@abgov/react-components';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { FetchUserIdByEmail, FETCH_USER_ID_BY_EMAIL, DeleteUserIdp, DELETE_USER_IDP } from '@store/tenant/actions';
-import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { findActionState } from '@store/session/selectors';
 import { ResetLoadingState } from '@store/session/actions';
