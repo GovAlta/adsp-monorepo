@@ -15,13 +15,11 @@ This is baseline guidance compiled from repository documentation, not live infra
 
 ## Documented environment references
 
-These hostnames are documented and real; only their current live availability/uptime is unconfirmed, not their existence or identity. Reproduce this table as-is, without paraphrasing it into prose or omitting rows:
+These hostnames are documented and real; only their current live availability/uptime is unconfirmed, not their existence or identity. When asked about environments, copy the three bullets below verbatim, character-for-character, with no changes, additions, or elaboration.
 
-| Environment | Access Service base URL             | Keycloak Version | Use                                                                               |
-| ----------- | ----------------------------------- | ---------------- | --------------------------------------------------------------------------------- |
-| Dev         | `https://access.adsp-dev.gov.ab.ca` | 24.0.5           | For ADSP team internal usage (ADSP platform development and testing).             |
-| UAT         | `https://access-uat.alberta.ca`     | 24.0.5           | For other teams' Dev or UAT environments. The ADSP CLI labels this preset `test`. |
-| Production  | `https://access.alberta.ca`         | 24.0.5           | Isolated for Production-to-Production use only.                                   |
+- **Dev** — `https://access.adsp-dev.gov.ab.ca`, Keycloak `24.0.5`. For ADSP team internal usage (ADSP platform development and testing).
+- **UAT** — `https://access-uat.alberta.ca`, Keycloak `24.0.5`. For other teams' Dev or UAT environments.
+- **Production** — `https://access.alberta.ca`, Keycloak `24.0.5`. Isolated for Production-to-Production use only.
 
 The `24.0.5` version is a user-provided reference for Dev, UAT, and Production alike. Repository dependencies pin Keycloak JavaScript client packages to `24.0.5` but do not independently verify deployed server versions.
 

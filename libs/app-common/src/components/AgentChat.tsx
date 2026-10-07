@@ -522,7 +522,7 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
       })}
       {hasText && (
         <Markdown className="content" data-from={message.from} remarkPlugins={[remarkGfm]}>
-          {message.content}
+          {message.content.trim()}
         </Markdown>
       )}
       {showStreamingContinuation && (
