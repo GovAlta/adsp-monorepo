@@ -168,7 +168,7 @@ Adding a page has **four mandatory steps**. The task is not done until all four 
 1. Create `src/pages/NewPage.tsx`.
 2. Add a `<Route>` in `src/App.tsx`.
 3. **Wire navigation — non-negotiable, do this in the same edit batch:**
-   - **Internal shell** (`GoabWorkSideMenu`): add a `<GoabWorkSideMenuItem url="/new-route" label="…" icon="…" current={pathname.startsWith('/new-route')} />` inside `primaryContent` of the `AppShell` / `WorkspaceShell` component. Navigation fires through `onNavigate` on `GoabWorkSideMenu` — never add `onClick` to the item.
+   - **Internal shell** (`GoabWorkSideMenu`): add a `<GoabWorkSideMenuItem url="/new-route" label="…" icon="…" current={pathname.startsWith('/new-route')} />` inside `primaryContent` of the `AppShell` / `WorkspaceShell` component. Navigation fires through `onNavigate` on `GoabWorkSideMenu` — never add `onClick` to the item. Pick `icon` names per [Icons](#icons).
    - **Public shell** (`GoabOneColumnLayout`): add a `<Link to="/new-route">New Page</Link>` inside the `navigation={…}` prop of `GoabAppHeader` in **`src/layouts/PublicLayout.tsx`** — that single file is the only place nav links live; all pages share it automatically.
 4. Self-check before finishing:
    - Internal: open the `AppShell` / `WorkspaceShell` component and confirm the new `GoabWorkSideMenuItem` is in `primaryContent`.
@@ -178,6 +178,20 @@ Adding a page has **four mandatory steps**. The task is not done until all four 
 - Creating the page file and the `<Route>` but forgetting step 3 entirely.
 - Internal: adding `onClick` to `GoabWorkSideMenuItem` — the prop is silently ignored; use `onNavigate` on the parent `GoabWorkSideMenu`.
 - Public: editing a page file's header instead of `src/layouts/PublicLayout.tsx` — individual page files no longer contain `GoabAppHeader`.
+
+## Icons
+
+`GoabIcon` (and any `icon="…"` / `leadingIcon="…"` prop, including `GoabWorkSideMenuItem`) accepts two kinds of names:
+
+1. **Built-in GOA icons** — inline SVG, render instantly with no network request. Prefer these when one fits:
+   `add`, `add-circle`, `alert-circle`, `arrow-back`, `arrow-bottom`, `arrow-down`, `arrow-end`, `arrow-forward`, `arrow-start`, `arrow-top`, `arrow-up`, `bookmark`, `calendar`, `call`, `caret-back`, `caret-down`, `caret-forward`, `caret-up`, `checkmark`, `checkmark-circle`, `chevron-back`, `chevron-down`, `chevron-expand`, `chevron-forward`, `chevron-up`, `close`, `close-circle`, `cloud-upload`, `column-sort`, `documents`, `download`, `ellipsis-vertical`, `eye`, `eye-off`, `filter`, `filter-lines`, `flag`, `help-circle`, `information-circle`, `mail`, `menu`, `notifications`, `notifications-off`, `open`, `pencil`, `person-circle`, `reload`, `remove`, `remove-circle`, `scroll-to`, `search`, `settings`, `trash`, `warning`.
+2. **Any [Ionicons v8](https://ionic.io/ionicons) name** — fetched at runtime as `svg/<name>.svg`. Examples that exist: `list`, `home`, `people`, `person`, `document`, `document-text`, `folder`, `clipboard`, `bar-chart`, `stats-chart`, `time`, `card`, `cash`, `briefcase`, `business`, `school`, `medkit`, `map`, `location`, `star`, `heart`, `lock-closed`, `key`, `shield-checkmark`, `create`, `reader`, `receipt`, `grid`, `apps`, `layers`, `chatbubbles`.
+
+Rules:
+- Use exact Ionicons names (kebab-case, e.g. `document-text`). Do not invent names or use other icon sets (Material, Font Awesome, Heroicons). An unknown name fails silently as a blank icon and a 404 for `svg/<name>.svg` in the browser console.
+- Suffixed Ionicons variants (`-outline`, `-sharp`) only work if that exact file exists in Ionicons; prefer the plain name.
+- If an icon is blank and the console shows a 404 for `svg/<name>.svg`, the name is wrong — switch to a built-in icon or a name from the list above.
+- Never add `<ion-icon>` elements, icon font CSS, or inline icon libraries; use `GoabIcon` or the component's `icon` prop.
 
 ## Builder Preview vs Local Development
 
