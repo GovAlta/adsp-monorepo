@@ -17,6 +17,8 @@ module.exports = {
       fs: false,
       path: false,
       process: false,
+      // @jsdevtools/ono (via json-schema-ref-parser) imports Node's util.
+      util: require.resolve('util/'),
     },
     alias: {
       '@': path.resolve(templateRoot, 'src'),
