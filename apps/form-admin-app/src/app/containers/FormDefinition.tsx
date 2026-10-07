@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { AppDispatch, connectStream, definitionSelector, formBusySelector, selectDefinition } from '../state';

@@ -1,7 +1,7 @@
 import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import { AppDispatch, logoutUser, renewSession, sessionExpirySelector, tenantSelector } from '../state';
 
