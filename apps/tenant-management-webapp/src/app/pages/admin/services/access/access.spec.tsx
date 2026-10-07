@@ -1,11 +1,24 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import { render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 
 import { KeycloakApi } from '@store/config/models';
 
 import AccessPage from './access';
+
+jest.mock('@store/agent/actions', () => ({
+  clearThread: (threadId: string) => ({ type: 'agent/CLEAR_THREAD', threadId }),
+  connectAgent: () => ({ type: 'agent/CONNECT_AGENT' }),
+  disconnectAgent: () => ({ type: 'agent/DISCONNECT_AGENT' }),
+  messageAgent: (threadId: string, context: Record<string, unknown>, content: unknown) => ({
+    type: 'agent/MESSAGE_AGENT',
+    threadId,
+    context,
+    content,
+  }),
+  startThread: (agent: string, threadId: string) => ({ type: 'agent/START_THREAD', agent, threadId }),
+}));
 
 describe('Access Page', () => {
   const mockKeycloak: KeycloakApi = {
@@ -52,7 +65,7 @@ describe('Access Page', () => {
     render(
       <Provider store={store}>
         <AccessPage />
-      </Provider>
+      </Provider>,
     );
 
     await waitFor(() => {
@@ -89,7 +102,7 @@ describe('Access Page', () => {
     const { queryByText } = render(
       <Provider store={store}>
         <AccessPage />
-      </Provider>
+      </Provider>,
     );
 
     await waitFor(() => {
@@ -100,5 +113,57 @@ describe('Access Page', () => {
       expect(link).not.toBeNull();
       expect(link.getAttribute('href')).toEqual(`${mockKeycloak.url}/admin/${state.session.realm}/console`);
     });
+  });
+
+  it('connects the AI agent from its own tab and disconnects when leaving it', () => {
+    const store = mockStore({
+      config: {
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo' },
+        serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+      },
+      access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
+      user: { jwt: { token: '' } },
+      agent: {
+        connected: false,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+      },
+      session: {
+        realm: 'core',
+        indicator: {
+          show: false,
+          message: 'loading',
+        },
+      },
+    });
+
+    const { getByTestId, queryByTestId } = render(
+      <Provider store={store}>
+        <AccessPage />
+      </Provider>,
+    );
+
+    expect(queryByTestId('access-service-agent-chat')).toBeNull();
+    fireEvent.click(getByTestId('access-ai-agent-tab-btn'));
+
+    expect(getByTestId('access-service-agent-chat')).toBeTruthy();
+    expect(store.getActions()).toEqual(
+      expect.arrayContaining([
+        { type: 'agent/CONNECT_AGENT' },
+        expect.objectContaining({ type: 'agent/START_THREAD', agent: 'AccessServiceAgent' }),
+      ]),
+    );
+
+    fireEvent.click(getByTestId('tab-btn-0'));
+
+    expect(queryByTestId('access-service-agent-chat')).toBeNull();
+    expect(store.getActions()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'agent/CLEAR_THREAD' }),
+        { type: 'agent/DISCONNECT_AGENT' },
+      ]),
+    );
   });
 });

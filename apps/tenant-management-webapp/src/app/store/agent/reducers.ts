@@ -344,6 +344,12 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         },
       };
     case AGENT_RESPONSE_ACTION: {
+      // The thread may have been cleared (e.g. user switched to a new thread) before a
+      // stray chunk for this threadId arrives; ignore chunks for threads we no longer track.
+      if (!state.threadMessages[action.threadId]) {
+        return state;
+      }
+
       const threadMessages = { ...state.threadMessages };
       const messages = { ...state.messages };
       if (!state.threadMessages[action.threadId].includes(action.messageId)) {

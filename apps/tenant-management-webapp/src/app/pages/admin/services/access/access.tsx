@@ -5,6 +5,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
 import { TenantIdp } from './TenantIDP';
+import { AccessServiceAgent } from './AccessServiceAgent';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line
@@ -25,6 +26,10 @@ export default function (): JSX.Element {
 
           <Tab label="Troubleshooting" data-testid="service-ADSP-idp">
             <TenantIdp />
+          </Tab>
+
+          <Tab label="AI agent" testId="access-ai-agent">
+            <AccessServiceAgent />
           </Tab>
         </Tabs>
       </Main>

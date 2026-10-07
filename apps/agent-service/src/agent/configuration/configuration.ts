@@ -16,6 +16,10 @@ import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfi
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
 import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
+import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
+import { createAccessServicePiiDetector } from '../agents/access/piiGuardrails';
+import { isAccessServiceAgentId } from '../agents/access/piiGuardrailConfig';
+import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
 function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
@@ -193,6 +197,19 @@ export class AgentServiceConfiguration {
               const externalTools = mcpToolsByAgent[key] || {};
               const availableToolMap = availableTools as Record<string, unknown>;
               const modelId = getAgentModelId(key, configuration.model);
+              const defaultOptions = {
+                ...(configuration.outputSchema
+                  ? {
+                      structuredOutput: {
+                        schema: configuration.outputSchema,
+                        errorStrategy: 'warn',
+                      },
+                    }
+                  : {}),
+                ...(key === ACCESS_SERVICE_AGENT_ID
+                  ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
+                  : {}),
+              };
 
               return {
                 ...agents,
@@ -202,14 +219,7 @@ export class AgentServiceConfiguration {
                   description: configuration.description,
                   instructions: withContextualInstructions(configuration.instructions),
                   model: getAgentModelConfiguration(modelId, configuration.model),
-                  defaultOptions: (configuration.outputSchema
-                    ? {
-                        structuredOutput: {
-                          schema: configuration.outputSchema,
-                          errorStrategy: 'warn',
-                        },
-                      }
-                    : undefined) as unknown as never,
+                  defaultOptions: Object.keys(defaultOptions).length ? (defaultOptions as unknown as never) : undefined,
                   agents: () => {
                     const toolAgents: Record<string, Agent> = {};
                     for (const agent of configuration.agents || []) {
@@ -262,6 +272,10 @@ export class AgentServiceConfiguration {
                       logger: this.logger,
                       requestContext: requestContext as RequestContext<Record<string, unknown>>,
                     }),
+                  outputProcessors: ({ requestContext }) =>
+                    isAccessServiceAgentId(requestContext.get('agentId') as string | undefined)
+                      ? [createAccessServicePiiDetector()]
+                      : [],
                 }) as Agent,
               };
             },
