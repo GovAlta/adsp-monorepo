@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { GoabContainer, GoabDetails, GoabRadioGroup, GoabRadioItem, GoabText } from '@abgov/react-components';
+import {
+  GoabContainer,
+  GoabDetails,
+  GoabRadioGroup,
+  GoabRadioItem,
+  GoabTable,
+  GoabText,
+} from '@abgov/react-components';
 import {
   AdspThemes,
   toCssVariables,
@@ -17,16 +24,28 @@ const SELECTABLE_THEMES: Record<string, { label: string; theme: AdspTheme }> = {
   [highContrastDemoTheme.name]: { label: 'High contrast (sandbox demo)', theme: highContrastDemoTheme },
 };
 
+const SECTION_PRIMARY_BACKGROUND = 'var(--adsp-color-status-success)';
+const COMPONENT_PRIMARY_BACKGROUND = '#6a1b9a';
+
 const SUCCESS_PRIMARY_BUTTONS: AdspThemeOverrides = {
   components: {
     button: {
       primary: {
-        background: 'var(--adsp-color-status-success)',
-        borderColor: 'var(--adsp-color-status-success)',
+        background: SECTION_PRIMARY_BACKGROUND,
+        borderColor: SECTION_PRIMARY_BACKGROUND,
         hoverBackground: '#004f35',
         hoverBorderColor: '#004f35',
       },
     },
+  },
+};
+
+const PURPLE_PRIMARY_BUTTON: AdspComponentThemeOverrides<'button'> = {
+  primary: {
+    background: COMPONENT_PRIMARY_BACKGROUND,
+    borderColor: COMPONENT_PRIMARY_BACKGROUND,
+    hoverBackground: '#4a148c',
+    hoverBorderColor: '#4a148c',
   },
 };
 
@@ -37,6 +56,24 @@ const HIGHLIGHTED_CARD: AdspComponentThemeOverrides<'card'> = {
 
 const PILL_BUTTON: AdspComponentThemeOverrides<'button'> = {
   borderRadius: 'var(--adsp-border-radius-round)',
+};
+
+const SQUARE_BADGE: AdspComponentThemeOverrides<'badge'> = {
+  borderRadius: '0',
+};
+
+interface ShowcaseOverrides {
+  card?: AdspComponentThemeOverrides<'card'>;
+  approvedBadge?: AdspComponentThemeOverrides<'badge'>;
+  approveButton?: AdspComponentThemeOverrides<'button'>;
+  requestChangesButton?: AdspComponentThemeOverrides<'button'>;
+}
+
+const COMPONENT_LEVEL_OVERRIDES: ShowcaseOverrides = {
+  card: HIGHLIGHTED_CARD,
+  approvedBadge: SQUARE_BADGE,
+  approveButton: PURPLE_PRIMARY_BUTTON,
+  requestChangesButton: PILL_BUTTON,
 };
 
 const APPLICATION_SETUP = `import '@abgov/design-tokens/dist/tokens.css';
@@ -60,7 +97,9 @@ const brandTheme = createAdspTheme(AdspThemes.standard, {
 </AdspThemeProvider>
 
 // Component level: one instance only
-<AdspButton themeOverrides={{ borderRadius: 'var(--adsp-border-radius-round)' }}>Save</AdspButton>`;
+<AdspButton themeOverrides={{ borderRadius: 'var(--adsp-border-radius-round)' }}>Save</AdspButton>
+
+// Precedence, per token: component > section > theme. Tokens a level doesn't set pass through.`;
 
 const ShowcaseRow = styled.div`
   display: flex;
@@ -74,18 +113,59 @@ const formatCssVariables = (theme: AdspTheme) =>
     .map(([name, value]) => `${name}: ${value};`)
     .join('\n');
 
-const ComponentShowcase = ({ testId }: { testId: string }) => (
-  <AdspCard heading="Application review" testId={testId}>
-    Dummy ADSP components, styled only by the selected theme.
+const precedenceRows = (theme: AdspTheme) => [
+  {
+    button: 'Theme',
+    setBy: 'The selected theme',
+    value: theme.components.button.primary.background,
+    reason: 'Nothing closer sets it',
+  },
+  {
+    button: 'Section',
+    setBy: 'Section provider overrides',
+    value: SECTION_PRIMARY_BACKGROUND,
+    reason: 'Section beats theme',
+  },
+  {
+    button: 'Component',
+    setBy: 'Its own themeOverrides',
+    value: COMPONENT_PRIMARY_BACKGROUND,
+    reason: 'Component beats section',
+  },
+  {
+    button: 'Component, shape only',
+    setBy: 'Section provider overrides (its themeOverrides sets only borderRadius)',
+    value: SECTION_PRIMARY_BACKGROUND,
+    reason: 'Tokens a level does not set pass through from the level above',
+  },
+];
+
+interface ComponentShowcaseProps {
+  testId: string;
+  description?: string;
+  overrides?: ShowcaseOverrides;
+}
+
+const ComponentShowcase = ({
+  testId,
+  description = 'Dummy ADSP components, styled only by the selected theme.',
+  overrides = {},
+}: ComponentShowcaseProps) => (
+  <AdspCard heading="Application review" testId={testId} themeOverrides={overrides.card}>
+    {description}
     <ShowcaseRow>
-      <AdspBadge type="success">Approved</AdspBadge>
+      <AdspBadge type="success" themeOverrides={overrides.approvedBadge}>
+        Approved
+      </AdspBadge>
       <AdspBadge type="info">In review</AdspBadge>
       <AdspBadge type="important">Action required</AdspBadge>
       <AdspBadge type="emergency">Rejected</AdspBadge>
     </ShowcaseRow>
     <ShowcaseRow>
-      <AdspButton>Approve</AdspButton>
-      <AdspButton variant="secondary">Request changes</AdspButton>
+      <AdspButton themeOverrides={overrides.approveButton}>Approve</AdspButton>
+      <AdspButton variant="secondary" themeOverrides={overrides.requestChangesButton}>
+        Request changes
+      </AdspButton>
       <AdspButton disabled>Withdraw</AdspButton>
     </ShowcaseRow>
   </AdspCard>
@@ -136,16 +216,57 @@ export const AdspThemingExample = () => {
           </AdspThemeProvider>
 
           <GoabText size="heading-s">3. Component level</GoabText>
-          <GoabText size="body-m">themeOverrides on a single component changes that instance only.</GoabText>
-          <AdspCard heading="Highlighted card" themeOverrides={HIGHLIGHTED_CARD} testId="instance-override-card">
-            Only this card and the pill button have instance overrides.
+          <GoabText size="body-m">
+            The same components as section 1, but four of them pass themeOverrides: the card (highlighted), the Approved
+            badge (square), Approve (purple) and Request changes (pill). Every other component is unchanged.
+          </GoabText>
+          <ComponentShowcase
+            testId="instance-override-card"
+            description="Only the components given themeOverrides look different from section 1."
+            overrides={COMPONENT_LEVEL_OVERRIDES}
+          />
+
+          <GoabText size="heading-s">4. Precedence: the closest level wins</GoabText>
+          <GoabText size="body-m">
+            Each button sets the primary background at a different level. For each token, component beats section and
+            section beats theme. Switch the theme above: only the Theme button follows it.
+          </GoabText>
+          <AdspCard heading="Which level wins?" testId="precedence-card">
             <ShowcaseRow>
-              <AdspButton themeOverrides={PILL_BUTTON} testId="pill-button">
-                Pill button
-              </AdspButton>
-              <AdspButton testId="regular-button">Regular button</AdspButton>
+              <AdspButton testId="precedence-theme-button">Theme</AdspButton>
+              <AdspThemeProvider overrides={SUCCESS_PRIMARY_BUTTONS}>
+                <AdspButton testId="precedence-section-button">Section</AdspButton>
+                <AdspButton themeOverrides={PURPLE_PRIMARY_BUTTON} testId="precedence-component-button">
+                  Component
+                </AdspButton>
+                <AdspButton themeOverrides={PILL_BUTTON} testId="precedence-shape-button">
+                  Component, shape only
+                </AdspButton>
+              </AdspThemeProvider>
             </ShowcaseRow>
           </AdspCard>
+          <GoabTable width="100%" mt="m" testId="precedence-table">
+            <thead>
+              <tr>
+                <th>Button</th>
+                <th>Primary background set by</th>
+                <th>Value used</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              {precedenceRows(selectedTheme).map(({ button, setBy, value, reason }) => (
+                <tr key={button}>
+                  <td>{button}</td>
+                  <td>{setBy}</td>
+                  <td>
+                    <code>{value}</code>
+                  </td>
+                  <td>{reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </GoabTable>
         </AdspThemeProvider>
 
         <GoabText size="heading-s">No provider</GoabText>

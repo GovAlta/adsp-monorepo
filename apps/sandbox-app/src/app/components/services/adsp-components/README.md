@@ -30,7 +30,8 @@ Sign in, then open **Services → ADSP components → Theming**, or go to `/<ten
 | -------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | 1. Theme level                         | Switching the radio restyles every ADSP component inside `AdspThemeProvider`                      |
 | 2. Section level                       | A nested provider with `overrides` turns primary buttons green in that section only. It still follows the selected theme |
-| 3. Component level                     | `themeOverrides` gives one card a highlight and one button pill-shaped corners. The buttons next to it stay unchanged |
+| 3. Component level                     | The same showcase as section 1, with `themeOverrides` on four components: the card is highlighted, Approved is square, Approve is purple and Request changes is pill-shaped. Everything else matches section 1 |
+| 4. Precedence                          | Four buttons set the same token (primary background) at different levels. Component beats section, section beats theme, and a component that overrides only `borderRadius` keeps the section's background. Switching theme changes only the Theme button. The table lists each value and why it wins |
 | No provider                            | The last card stays on `AdspThemes.standard`, the default when there is no provider                |
 | GoA components on the page             | The container, text and radios don't change: the theme only reaches ADSP components                |
 | Buttons                                | Hover, focus and disabled states come from the stylesheet, which inline styles couldn't do          |
