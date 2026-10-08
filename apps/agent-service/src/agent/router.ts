@@ -44,6 +44,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function toErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 function emitMappedStreamError(
   socket: Socket,
   meta: { agent: string; threadId: string; messageId: string; replyTo: string },
@@ -441,6 +445,15 @@ export function onIoConnection(logger: Logger) {
             }
           }
         } catch (err) {
+          const payloadRecord = isRecord(payload) ? payload : null;
+          logger.warn('Socket message handler failed.', {
+            context: 'AgentRouter',
+            tenant: tenant?.id?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+            agent: typeof payloadRecord?.agent === 'string' ? payloadRecord.agent : undefined,
+            threadId: typeof payloadRecord?.threadId === 'string' ? payloadRecord.threadId : undefined,
+            error: toErrorMessage(err),
+          });
           socket.emit('error', describeStreamError(err));
         }
       });
@@ -568,7 +581,16 @@ export function onIoConnection(logger: Logger) {
             deleteCount: result.deleteCount,
           });
         } catch (err) {
-          socket.emit('error', err.message);
+          const payloadRecord = isRecord(payload) ? payload : null;
+          logger.warn('Workspace update failed.', {
+            context: 'AgentRouter',
+            tenant: tenant?.id?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+            agent: typeof payloadRecord?.agent === 'string' ? payloadRecord.agent : undefined,
+            threadId: typeof payloadRecord?.threadId === 'string' ? payloadRecord.threadId : undefined,
+            error: toErrorMessage(err),
+          });
+          socket.emit('error', toErrorMessage(err));
         }
       });
       socket.on('workspace-read', async (payload) => {
@@ -600,10 +622,19 @@ export function onIoConnection(logger: Logger) {
             files: result.files,
           });
         } catch (err) {
-          socket.emit('error', err.message);
+          const payloadRecord = isRecord(payload) ? payload : null;
+          logger.warn('Workspace read failed.', {
+            context: 'AgentRouter',
+            tenant: tenant?.id?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+            agent: typeof payloadRecord?.agent === 'string' ? payloadRecord.agent : undefined,
+            threadId: typeof payloadRecord?.threadId === 'string' ? payloadRecord.threadId : undefined,
+            error: toErrorMessage(err),
+          });
+          socket.emit('error', toErrorMessage(err));
         }
       });
-      socket.on('disconnect', () => {
+      socket.on('disconnect', (reason) => {
         if (expiryTimeout) {
           clearTimeout(expiryTimeout);
         }
@@ -612,6 +643,16 @@ export function onIoConnection(logger: Logger) {
           context: 'AgentRouter',
           tenant: tenant?.id?.toString(),
           user: `${user.name} (ID: ${user.id})`,
+          reason,
+        });
+      });
+
+      socket.on('error', (err) => {
+        logger.warn('Socket error event received.', {
+          context: 'AgentRouter',
+          tenant: tenant?.id?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+          error: toErrorMessage(err),
         });
       });
 
@@ -631,7 +672,10 @@ export function onIoConnection(logger: Logger) {
           socket.disconnect(true);
         });
     } catch (err) {
-      logger.warn(`Error encountered on socket.io connection. ${err}`);
+      logger.warn('Error encountered on socket.io connection.', {
+        context: 'AgentRouter',
+        error: toErrorMessage(err),
+      });
       socket.disconnect(true);
     }
   };
