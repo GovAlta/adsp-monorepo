@@ -1,0 +1,49 @@
+{
+  "name": "adsp-components-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-components-core/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/adsp-components-core",
+        "tsConfig": "libs/adsp-components-core/tsconfig.lib.json",
+        "project": "libs/adsp-components-core/package.json",
+        "main": "libs/adsp-components-core/src/index.ts",
+        "compiler": "tsc",
+        "format": ["esm", "cjs"],
+        "assets": [
+          {
+            "glob": "adsp-components.css",
+            "input": "libs/adsp-components-core/src",
+            "output": "."
+          },
+          {
+            "glob": "README.md",
+            "input": "libs/adsp-components-core",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/adsp-components-core/jest.config.ts"
+      }
+    }
+  }
+}

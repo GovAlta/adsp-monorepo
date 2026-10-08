@@ -18,6 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@abgov/adsp-cli": ["libs/adsp-cli/src/index.ts"],
+      "@abgov/adsp-components-core": ["libs/adsp-components-core/src/index.ts"],
+      "@abgov/adsp-components-core/adsp-components.css": ["libs/adsp-components-core/src/adsp-components.css"],
+      "@abgov/adsp-components-react": ["libs/adsp-components-react/src/index.ts"],
       "@abgov/adsp-sdk-mcp-server": ["libs/adsp-sdk-mcp-server/src/index.ts"],
       "@abgov/adsp-service-sdk": ["libs/adsp-service-sdk/src/index.ts"],
       "@abgov/data-exchange-standard": ["libs/data-exchange-standard/src/index.ts"],

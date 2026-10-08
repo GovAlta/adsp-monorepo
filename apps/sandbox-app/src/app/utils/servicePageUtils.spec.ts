@@ -1,4 +1,9 @@
-import { addJsonformsPages, addFeedbackServicePages, addDesignSystemPages } from './servicePageUtils';
+import {
+  addJsonformsPages,
+  addFeedbackServicePages,
+  addDesignSystemPages,
+  addAdspComponentsPages,
+} from './servicePageUtils';
 import { ServicePage } from '../components/services/ServiceListTemplate';
 
 describe('servicePageUtils', () => {
@@ -138,6 +143,26 @@ describe('servicePageUtils', () => {
           name: 'Design systems Example 1',
           url: '//services/design-systems/example1',
           testId: 'designSystemsExample1',
+        },
+      ]);
+    });
+  });
+
+  describe('addAdspComponentsPages', () => {
+    test('returns the ADSP components pages for a given tenant', () => {
+      // Arrange
+      const tenantName = 'testTenant';
+
+      // Act
+      const result = addAdspComponentsPages(tenantName);
+
+      // Assert
+      expect(result).toEqual<ServicePage[]>([
+        {
+          id: 'adspTheming',
+          name: 'Theming',
+          url: '/testTenant/services/adsp-components/theming',
+          testId: 'adspTheming',
         },
       ]);
     });
