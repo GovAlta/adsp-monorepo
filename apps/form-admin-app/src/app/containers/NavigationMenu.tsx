@@ -76,7 +76,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           <a
             href={`/${tenantName}/definitions`}
             onClick={(e) => {
-              navigate('definitions');
+              navigate(`/${tenantName}/definitions`);
               e.preventDefault();
             }}
           >
@@ -87,7 +87,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
               <a
                 href={`/${tenantName}/definitions/${definition.id}/responses`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/responses`);
+                  navigate(`/${tenantName}/definitions/${definition.id}/responses`);
                   e.preventDefault();
                 }}
               >
@@ -96,7 +96,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
               <a
                 href={`/${tenantName}/definitions/${definition.id}/configuration`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/configuration`);
+                  navigate(`/${tenantName}/definitions/${definition.id}/configuration`);
                   e.preventDefault();
                 }}
               >
