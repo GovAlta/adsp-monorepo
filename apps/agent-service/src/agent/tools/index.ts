@@ -14,6 +14,7 @@ import { createAdspSdkReferenceTools } from './adspSdkReference';
 import { createSchemaIndexTools } from './schemaIndex';
 import { createSchemaPatchTools } from './schemaPatch';
 import { createSchemaValidateTools } from './schemaValidate';
+import { createBuilderFormSchemaTools } from './builderFormSchema';
 import { createFormGenerationTools } from '../agents/forms/generation';
 
 interface ToolsProps {
@@ -62,6 +63,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
   const { formSchemaPatch } = await createSchemaPatchTools({ logger, directory, tokenProvider });
   const { formSchemaValidate } = await createSchemaValidateTools({ logger, directory, tokenProvider });
   const { formGenerationRun } = await createFormGenerationTools({ logger, directory, tokenProvider });
+  const { builderFormSchemaValidate, formExamplesTool } = createBuilderFormSchemaTools();
 
   return {
     fileDownloadTool,
@@ -89,6 +91,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     formSchemaPatch,
     formSchemaValidate,
     formGenerationRun,
+    builderFormSchemaValidate,
+    formExamplesTool,
   };
 }
 
