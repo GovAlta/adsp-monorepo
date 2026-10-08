@@ -1,0 +1,12 @@
+{
+  "name": "@abgov/adsp-components-react",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "Government of Alberta - React adapter for ADSP application components.",
+  "repository": "https://github.com/GovAlta/adsp-monorepo",
+  "sideEffects": false,
+  "peerDependencies": {
+    "@abgov/adsp-components-core": "0.0.1",
+    "react": "^18.0.0"
+  }
+}

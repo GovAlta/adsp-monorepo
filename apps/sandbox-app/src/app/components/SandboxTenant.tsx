@@ -41,6 +41,8 @@ import { PlanningPokerMain } from './services/planning-poker/PlanningPokerMain';
 import { PlanningPokerBoard } from './services/planning-poker/PlanningPokerBoard';
 import { FeedbackNotification } from './FeedbackNotification';
 import { ServicePageBar } from './styled-components';
+import { AdspComponentsMain } from './services/AdspComponentsMain';
+import { AdspThemingExample } from './services/adsp-components/AdspThemingExample';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -89,6 +91,9 @@ export const SandBoxTenant = () => {
                 </ServicePageBar>
               )}
               <Routes>
+                <Route path="/services/adsp-components" element={<AdspComponentsMain tenantName={tenantName} />} />
+                <Route path="/services/adsp-components/theming" element={<AdspThemingExample />} />
+
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/cache" element={<CacheServiceMain tenantName={tenantName} />} />
                 <Route path="/services/calendar" element={<CalendarServiceMain tenantName={tenantName} />} />
