@@ -37,7 +37,7 @@ export function getAuthenticationClient() {
 export function registerClient(eventService: EventService): RequestHandler {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
-      const { registrationToken } = req.body;
+      const { registrationToken, authCallbackUrl } = req.body;
       const user = req.user;
       const tenant = req.tenant;
 
@@ -46,9 +46,32 @@ export function registerClient(eventService: EventService): RequestHandler {
       }
 
       const client = req[CLIENT] as AuthenticationClient;
-      const result = await client.register(tenant, registrationToken);
+      const result = await client.register(tenant, registrationToken, authCallbackUrl);
 
       res.send({ registered: !!result.clientId });
+
+      eventService.send(clientRegistered(client, user));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function updateClient(eventService: EventService): RequestHandler {
+  return async function (req: Request, res: Response, next: NextFunction) {
+    try {
+      const { redirectUris } = req.body;
+      const user = req.user;
+      const tenant = req.tenant;
+
+      if (!isAllowedUser(user, tenant.id, ServiceRoles.Admin)) {
+        throw new UnauthorizedUserError('update client', user);
+      }
+
+      const client = req[CLIENT] as AuthenticationClient;
+      await client.updateRegistration(redirectUris);
+
+      res.send({ updated: true });
 
       eventService.send(clientRegistered(client, user));
     } catch (err) {
@@ -155,13 +178,29 @@ export function createClientRouter({
     json({ limit: '1mb' }),
     createValidationHandler(
       param('id').isString().isLength({ min: 1, max: 50 }),
-      body('registrationToken').isString().isLength({ min: 1, max: 8192 })
+      body('registrationToken').isString().isLength({ min: 1, max: 8192 }),
+      body('authCallbackUrl').isURL().isLength({ min: 1, max: 2048 })
     ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
     configurationHandler,
     getAuthenticationClient(),
     registerClient(eventService)
+  );
+
+  router.put(
+    '/clients/:id',
+    cors(),
+    json({ limit: '1mb' }),
+    createValidationHandler(
+      param('id').isString().isLength({ min: 1, max: 50 }),
+      body('redirectUris').isArray({ min: 1 })
+    ),
+    passport.authenticate('tenant', { session: false }),
+    tenantHandler,
+    configurationHandler,
+    getAuthenticationClient(),
+    updateClient(eventService)
   );
 
   router.get(

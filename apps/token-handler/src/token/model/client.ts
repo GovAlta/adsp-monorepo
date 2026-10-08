@@ -20,6 +20,11 @@ interface OidcClientRegistrationResponse {
   registration_access_token: string;
 }
 
+interface OidcClientUpdateResponse {
+  client_id: string;
+  registration_access_token: string;
+}
+
 interface OidcTokenResponse {
   access_token: string;
   refresh_token: string;
@@ -34,14 +39,12 @@ export class AuthenticationClient {
   prompt: Prompt;
   scope: string | string[];
   idpHint: string;
-  authCallbackUrl: string;
-  disableVerifyHost: boolean;
+  authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
   targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
-  private strategy: Strategy;
-  private callbackUrl: URL;
+  private strategies = new Map<string, Strategy>();
 
   constructor(
     private accessServiceUrl: URL,
@@ -57,17 +60,15 @@ export class AuthenticationClient {
     this.scope = client.scope;
     this.idpHint = client.idpHint;
     this.authCallbackUrl = client.authCallbackUrl;
-    this.disableVerifyHost = !!client.disableVerifyHost;
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
     this.targets = Object.entries(client.targets).reduce(
       (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
     );
-    this.callbackUrl = new URL(this.authCallbackUrl);
   }
 
-  public async register(tenant: Tenant, registrationToken: string) {
+  public async register(tenant: Tenant, registrationToken: string, authCallbackUrl: string) {
     this.logger.debug(`Registering client ${this.id}...`, {
       context: 'ClientRegistrationEntity',
       tenant: this.tenantId.toString(),
@@ -80,7 +81,7 @@ export class AuthenticationClient {
           client_name: this.id,
           token_endpoint_auth_method: 'client_secret_basic',
           grant_types: ['authorization_code', 'refresh_token'],
-          redirect_uris: [this.authCallbackUrl],
+          redirect_uris: [authCallbackUrl],
         },
         { headers: { Authorization: `Bearer ${registrationToken}` } }
       );
@@ -110,7 +111,7 @@ export class AuthenticationClient {
           await axios.delete(original.registrationUrl, {
             headers: { Authorization: `Bearer ${original.registrationToken}` },
           });
-          this.strategy = null;
+          this.strategies.clear();
         } catch (err) {
           this.logger.warn(
             `Delete of existing client registration at "${original.registrationUrl}" failed with error: ${err}`,
@@ -123,6 +124,52 @@ export class AuthenticationClient {
     } catch (err) {
       if (isAxiosError(err) && err.response.status === 401) {
         throw new InvalidOperationError('Registration request failed. Verify registration token.');
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  public async updateRegistration(redirectUris: string[]) {
+    this.logger.debug(`Updating registration for client ${this.id}...`, {
+      context: 'ClientRegistrationEntity',
+      tenant: this.tenantId.toString(),
+    });
+
+    const credentials = await this.getCredentials();
+    if (!credentials) {
+      throw new InvalidOperationError('Client not registered.');
+    }
+
+    try {
+      const { data } = await axios.put<OidcClientUpdateResponse>(
+        credentials.registrationUrl,
+        {
+          client_id: credentials.clientId,
+          client_name: this.id,
+          token_endpoint_auth_method: 'client_secret_basic',
+          grant_types: ['authorization_code', 'refresh_token'],
+          redirect_uris: redirectUris,
+        },
+        { headers: { Authorization: `Bearer ${credentials.registrationToken}` } }
+      );
+
+      const updated = {
+        ...credentials,
+        registrationToken: data.registration_access_token,
+      };
+
+      this.credentials = await this.repository.save(this, updated);
+
+      this.logger.info(`Updated registration for client ${this.id}.`, {
+        context: 'ClientRegistrationEntity',
+        tenant: this.tenantId.toString(),
+      });
+
+      return this.credentials;
+    } catch (err) {
+      if (isAxiosError(err) && err.response.status === 401) {
+        throw new InvalidOperationError('Update request failed. Registration token may be expired.');
       } else {
         throw err;
       }
@@ -182,40 +229,42 @@ export class AuthenticationClient {
     }
   };
 
-  private async getStrategy(): Promise<Strategy> {
-    // Lazy create the strategy;
-    if (!this.strategy) {
+  private async getStrategy(callbackURL: string): Promise<Strategy> {
+    if (!this.strategies.has(callbackURL)) {
       const credentials = await this.getCredentials();
       if (!credentials) {
         throw new InvalidOperationError('Cannot use client to authenticate before registration.');
       }
 
-      this.strategy = new OidcStrategy(
-        {
-          issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
-          authorizationURL: new URL(
-            `/auth/realms/${credentials.realm}/protocol/openid-connect/auth${
-              this.idpHint ? `?kc_idp_hint=${this.idpHint}` : ''
-            }`,
-            this.accessServiceUrl
-          ).href,
-          tokenURL: new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl)
-            .href,
-          userInfoURL: new URL(
-            `/auth/realms/${credentials.realm}/protocol/openid-connect/userinfo`,
-            this.accessServiceUrl
-          ).href,
-          clientID: credentials.clientId,
-          clientSecret: credentials.clientSecret,
-          callbackURL: this.callbackUrl.href,
-          prompt: this.prompt,
-          scope: this.scope,
-        },
-        this.verify
+      this.strategies.set(
+        callbackURL,
+        new OidcStrategy(
+          {
+            issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
+            authorizationURL: new URL(
+              `/auth/realms/${credentials.realm}/protocol/openid-connect/auth${
+                this.idpHint ? `?kc_idp_hint=${this.idpHint}` : ''
+              }`,
+              this.accessServiceUrl
+            ).href,
+            tokenURL: new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl)
+              .href,
+            userInfoURL: new URL(
+              `/auth/realms/${credentials.realm}/protocol/openid-connect/userinfo`,
+              this.accessServiceUrl
+            ).href,
+            clientID: credentials.clientId,
+            clientSecret: credentials.clientSecret,
+            callbackURL,
+            prompt: this.prompt,
+            scope: this.scope,
+          },
+          this.verify
+        )
       );
     }
 
-    return this.strategy;
+    return this.strategies.get(callbackURL);
   }
 
   public async authenticate(passport: PassportStatic, complete = false): Promise<RequestHandler> {
@@ -224,58 +273,80 @@ export class AuthenticationClient {
       tenant: this.tenantId?.toString(),
     });
 
-    const strategy = await this.getStrategy();
-    const authenticateHandler = passport.authenticate(strategy, {
-      failureRedirect: this.failureRedirectUrl,
-    });
+    return async (req, res, next) => {
+      try {
+        let callbackURL: string;
+        if (!complete) {
+          const queryCallbackUrl = req.query.callbackUrl as string;
+          if (queryCallbackUrl) {
+            callbackURL = queryCallbackUrl;
+          } else if (this.authCallbackUrl) {
+            const { pathname } = new URL(this.authCallbackUrl);
+            callbackURL = `${req.protocol}://${req.get('host')}${pathname}`;
+          } else {
+            throw new InvalidOperationError('callbackUrl query parameter or authCallbackUrl config is required.');
+          }
+          req.session['callbackUrl'] = callbackURL;
+        } else {
+          callbackURL = req.session['callbackUrl'] as string;
+          if (!callbackURL) {
+            throw new InvalidOperationError('No callback URL in session.');
+          }
+        }
 
-    return (req, res, next) => {
-      if (!this.disableVerifyHost && req.hostname !== this.callbackUrl.hostname) {
-        throw new InvalidOperationError('Request not to allowed host.');
-      }
+        const strategy = await this.getStrategy(callbackURL);
+        const authenticateHandler = passport.authenticate(strategy, {
+          failureRedirect: this.failureRedirectUrl,
+        });
 
-      authenticateHandler(
-        req,
-        res,
-        complete
-          ? () => {
-              try {
-                // Set the maxAge based on the expiry time of the refresh token.
-                const { id, name, refreshExp } = req.user as UserSessionData;
-                req.session.cookie.maxAge = (refreshExp - 60) * 1000 - Date.now();
+        authenticateHandler(
+          req,
+          res,
+          complete
+            ? () => {
+                try {
+                  // Set the maxAge based on the expiry time of the refresh token.
+                  const { id, name, refreshExp } = req.user as UserSessionData;
+                  req.session.cookie.maxAge = (refreshExp - 60) * 1000 - Date.now();
 
-                this.logger.info(
-                  `Authenticated user '${name}' (ID: ${id}) on client '${this.id}' (clientID: ${this.credentials?.clientId}).`,
-                  {
-                    context: 'AuthenticationClient',
-                    tenant: this.tenantId?.toString(),
-                  }
-                );
-                generateCsrfToken(req, res);
-                next();
-              } catch (err) {
-                this.logger.warn(
-                  `Error encountered setting CSRF token on authenticated user: ${err}. Terminating session.`
-                );
+                  this.logger.info(
+                    `Authenticated user '${name}' (ID: ${id}) on client '${this.id}' (clientID: ${this.credentials?.clientId}).`,
+                    {
+                      context: 'AuthenticationClient',
+                      tenant: this.tenantId?.toString(),
+                    }
+                  );
+                  generateCsrfToken(req, res);
+                  next();
+                } catch (err) {
+                  this.logger.warn(
+                    `Error encountered setting CSRF token on authenticated user: ${err}. Terminating session.`
+                  );
 
-                req.logout((logoutErr) => {
-                  if (!logoutErr) {
-                    this.logger.info(`Ended session for user (ID: ${req.user?.id}).`, {
-                      context: 'ClientRegistrationEntity',
-                      tenant: this.tenantId.toString(),
-                    });
-                  } else {
-                    this.logger.warn(`Error encountered ending session for user (ID: ${req.user?.id}): ${logoutErr}`, {
-                      context: 'ClientRegistrationEntity',
-                      tenant: this.tenantId.toString(),
-                    });
-                  }
-                  next(err);
-                });
+                  req.logout((logoutErr) => {
+                    if (!logoutErr) {
+                      this.logger.info(`Ended session for user (ID: ${req.user?.id}).`, {
+                        context: 'ClientRegistrationEntity',
+                        tenant: this.tenantId.toString(),
+                      });
+                    } else {
+                      this.logger.warn(
+                        `Error encountered ending session for user (ID: ${req.user?.id}): ${logoutErr}`,
+                        {
+                          context: 'ClientRegistrationEntity',
+                          tenant: this.tenantId.toString(),
+                        }
+                      );
+                    }
+                    next(err);
+                  });
+                }
               }
-            }
-          : next
-      );
+            : next
+        );
+      } catch (err) {
+        next(err);
+      }
     };
   }
 

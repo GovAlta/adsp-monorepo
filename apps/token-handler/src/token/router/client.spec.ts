@@ -10,6 +10,7 @@ import {
   logout,
   registerClient,
   startAuthenticate,
+  updateClient,
 } from './client';
 import { ServiceRoles } from '../roles';
 
@@ -114,6 +115,7 @@ describe('client router', () => {
         },
         body: {
           registrationToken: 'reg-token',
+          authCallbackUrl: 'https://frontend/auth/callback',
         },
         ['tk_client']: client,
       };
@@ -126,6 +128,7 @@ describe('client router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ registered: true }));
+      expect(client.register).toHaveBeenCalledWith(req.tenant, 'reg-token', 'https://frontend/auth/callback');
       expect(eventServiceMock.send).toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
     });
@@ -150,6 +153,7 @@ describe('client router', () => {
         },
         body: {
           registrationToken: 'reg-token',
+          authCallbackUrl: 'https://frontend/auth/callback',
         },
         ['tk_client']: client,
       };
@@ -157,6 +161,82 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = registerClient(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('updateClient', () => {
+    it('can create handler', () => {
+      const handler = updateClient(eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can update client registration', async () => {
+      const client = {
+        id: 'test',
+        authCallbackUrl: 'https://frontend/auth/callback',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        credentials: { clientId: 'test-client' },
+        updateRegistration: jest.fn(),
+      };
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: [ServiceRoles.Admin],
+        },
+        body: {
+          redirectUris: ['https://frontend/auth/callback', 'http://localhost:4200/auth/callback'],
+        },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      client.updateRegistration.mockResolvedValueOnce({ clientId: 'test-client' });
+
+      const handler = updateClient(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ updated: true }));
+      expect(client.updateRegistration).toHaveBeenCalledWith(req.body.redirectUris);
+      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const client = {
+        id: 'test',
+        authCallbackUrl: 'https://frontend/auth/callback',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        credentials: { clientId: 'test-client' },
+        updateRegistration: jest.fn(),
+      };
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: [],
+        },
+        body: {
+          redirectUris: ['https://frontend/auth/callback'],
+        },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = updateClient(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
