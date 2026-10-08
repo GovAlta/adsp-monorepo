@@ -114,7 +114,10 @@
     },
     "build-react-template-vendors": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/.generated/template-bundles/react"],
+      "outputs": [
+        "{projectRoot}/.generated/template-bundles/react",
+        "{projectRoot}/.generated/template-bundle-manifest.json"
+      ],
       "options": {
         "commands": [
           "npm ci --prefix apps/builder-app/templates/react --legacy-peer-deps",
