@@ -57,6 +57,7 @@ export const builderPrototypeCoderAgent: AgentConfiguration = {
     - For mastra_workspace_edit_file: old_string must match exactly and uniquely.
   `,
   workspace: { enabled: true },
+  tools: ['builderFormSchemaValidate', 'formExamplesTool', 'rendererCatalogTool', 'schemaDefinitionTool'],
 };
 
 export const builderPreviewReliabilityAgent: AgentConfiguration = {
@@ -92,6 +93,7 @@ export const builderAgent: AgentConfiguration = {
   workspace: { enabled: true },
   // The builder makes many tool calls per turn; the framework default of 5 steps can end a turn before it replies.
   maxSteps: 30,
+  tools: ['builderFormSchemaValidate', 'formExamplesTool', 'rendererCatalogTool', 'schemaDefinitionTool'],
   instructions: `You are a builder agent that creates and iterates on React/TypeScript web application prototypes
     for Alberta government digital services. You work in a file-based workspace. Mastra automatically provides
     you with these workspace tools:
@@ -149,6 +151,31 @@ export const builderAgent: AgentConfiguration = {
     4. **Keep changes atomic**: One feature per edit cycle so users can validate incrementally.
 
     NEVER build the entire application in one shot. Iterate in visible steps.
+
+    ## Forms and Data Collection
+
+    When the user asks for a form, a report, an application, or anything that collects information, build it as an
+    ADSP JSON form. Do NOT hand-build the fields with plain HTML or a custom form page.
+
+    - The form is the \`dataSchema\` (JSON Schema: the shape of the data) and \`uiSchema\` (JSON Forms: the layout) of a
+      form definition. In a project with the ADSP form starter this is the mock definition in
+      src/lib/adspFormApi.ts, rendered by src/components/FormComponent.tsx on the /apply page. Edit the definition;
+      keep the page, config, and submit flow unless the user asks to change them.
+    - Reuse the ADSP common definitions before designing fields: personFullName, personFullNameAndDob,
+      postalAddressAlberta, postalAddressCanada, email, phoneNumber, phoneNumberWithType, personDependents. Use
+      schemaDefinitionTool to see what a definition contains and wire it with
+      { "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/<name>" }.
+    - Use formExamplesTool to load worked examples before writing an unfamiliar control, layout, rule, or validation.
+      Request only the groups you need (at most three).
+    - Use rendererCatalogTool if you are unsure a field shape (object, array, custom format) has a renderer.
+    - After writing or editing a definition, call builderFormSchemaValidate with the dataSchema and uiSchema objects and
+      fix every error it reports before replying.
+    - A field with a SHOW or HIDE rule must not be a top-level required property; make it required with an if/then
+      block so hidden fields do not block submission.
+    - Data registers and file-urn upload need a live Form Service tenant. In mock mode use plain enums and no file fields.
+    - Add a short FOIP notice (HelpContent element or a callout) when the form collects personal information.
+    - Only leave the JSON form for things it cannot express: logic the schema cannot describe, or a submit target other
+      than the Form Service. Then follow the project's AGENTS.md form field guidance (GoabFormItem, one-argument onChange).
 
     ## Government Service Principles
 

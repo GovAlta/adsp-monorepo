@@ -16,7 +16,8 @@
   },
   "codeExample": {
     "config": "// src/config/adspForm.ts\nexport const adspFormConfig = {\n  mode: 'mock' as 'mock' | 'live',\n  formServiceBaseUrl: 'https://form-service.alberta.ca',\n  definitionId: 'child-care-subsidy-application',\n  // accessToken: obtained from auth flow\n};",
-    "component": "// src/components/FormComponent.tsx\nimport { JsonForms } from '@jsonforms/react';\nimport { GoARenderers } from '@abgov/jsonforms-components';\nimport { adspFormConfig } from '../config/adspForm';\n\nexport default function FormComponent({ onSubmit }) {\n  const [schema, setSchema] = useState(null);\n  const [uiSchema, setUiSchema] = useState(null);\n  const [data, setData] = useState({});\n\n  useEffect(() => {\n    if (adspFormConfig.mode === 'mock') {\n      // Use mock schemas for prototyping\n      setSchema({ type: 'object', properties: { name: { type: 'string' } } });\n      setUiSchema({ type: 'VerticalLayout', elements: [] });\n    } else {\n      // Fetch from Form Service\n      loadFormDefinition(adspFormConfig.definitionId);\n    }\n  }, []);\n\n  return (\n    <JsonForms\n      schema={schema}\n      uischema={uiSchema}\n      data={data}\n      renderers={GoARenderers}\n      onChange={({ data }) => setData(data)}\n    />\n  );\n}"
+    "component": "// src/components/FormComponent.tsx\nimport { JsonForms } from '@jsonforms/react';\nimport { GoARenderers } from '@abgov/jsonforms-components';\nimport { adspFormConfig } from '../config/adspForm';\n\nexport default function FormComponent({ onSubmit }) {\n  const [schema, setSchema] = useState(null);\n  const [uiSchema, setUiSchema] = useState(null);\n  const [data, setData] = useState({});\n\n  useEffect(() => {\n    if (adspFormConfig.mode === 'mock') {\n      // Use mock schemas for prototyping\n      setSchema({ type: 'object', properties: { name: { type: 'string' } } });\n      setUiSchema({ type: 'VerticalLayout', elements: [] });\n    } else {\n      // Fetch from Form Service\n      loadFormDefinition(adspFormConfig.definitionId);\n    }\n  }, []);\n\n  return (\n    <JsonForms\n      schema={schema}\n      uischema={uiSchema}\n      data={data}\n      renderers={GoARenderers}\n      onChange={({ data }) => setData(data)}\n    />\n  );\n}",
+    "definition": "// src/lib/adspFormApi.ts — edit mockDefinition to change the form. Do not hand-build the fields in the page.\nconst mockDefinition = {\n  id: 'mock-collision-report',\n  name: 'Collision report',\n  dataSchema: {\n    type: 'object',\n    required: ['when', 'where', 'contact'],\n    properties: {\n      when: { type: 'string', format: 'date', title: 'When did the collision happen?' },\n      where: { type: 'string', title: 'Where did it happen?' },\n      what: { type: 'string', title: 'What happened?' },\n      contactMethod: { type: 'string', title: 'Preferred contact method', enum: ['Email', 'Phone'] },\n      contact: { $ref: 'https://adsp.alberta.ca/common.v1.schema.json#/definitions/email' },\n    },\n  },\n  uiSchema: {\n    type: 'VerticalLayout',\n    elements: [\n      { type: 'HelpContent', options: { markdown: true, help: 'Your information is collected under FOIP to review this report.' } },\n      { type: 'Control', scope: '#/properties/when' },\n      { type: 'Control', scope: '#/properties/where' },\n      { type: 'Control', scope: '#/properties/what', options: { multi: true } },\n      { type: 'Control', scope: '#/properties/contactMethod', options: { format: 'radio' } },\n      { type: 'Control', scope: '#/properties/contact' },\n    ],\n  },\n};"
   },
   "mockModeNotes": [
     "Mock mode allows rapid prototyping without Form Service setup",
@@ -27,5 +28,14 @@
     "Requires authentication (Keycloak/OIDC)",
     "Form definition must exist in Form Service",
     "Submissions are persisted and can trigger workflows"
+  ],
+  "notes": [
+    "To collect data, edit the dataSchema and uiSchema of mockDefinition. Do not hand-build form fields in the page with plain HTML, custom labels or custom error markup.",
+    "Reuse the common definitions (personFullName, postalAddressAlberta, email, phoneNumber, ...) by $ref before designing fields. Use schemaDefinitionTool to see their shape.",
+    "Call formExamplesTool for worked examples of controls, layouts, rules and validation, and rendererCatalogTool for uncertain field shapes.",
+    "After editing the definition, call builderFormSchemaValidate with both schemas and fix every error it reports.",
+    "A field shown or hidden by a rule must not be top-level required; use an if/then block for conditional required.",
+    "Mock mode: use plain enums for option lists. Data registers and file-urn upload need a live Form Service tenant.",
+    "Keep Apply.tsx as the renderer and keep the submit and confirmation flow; change them only when the user asks."
   ]
 }
