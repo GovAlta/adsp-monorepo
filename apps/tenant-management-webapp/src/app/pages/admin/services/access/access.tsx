@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Aside, Main, Page, AsidePadding } from '@components/Html';
 import AsideLinks from '@components/AsideLinks';
 import { Tab, Tabs } from '@components/Tabs';
@@ -12,7 +12,16 @@ import { RootState } from '@store/index';
 export default function (): JSX.Element {
   // eslint-disable-next-line
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const featureFlags = useSelector((state: RootState) => state.config.featureFlags);
   const accessServiceAIEnabled = useSelector((state: RootState) => state.config.featureFlags?.AccessServiceAI === true);
+
+  useEffect(() => {
+    console.debug('[AccessPage] feature flag state', {
+      accessServiceAIEnabled,
+      accessServiceAIRaw: featureFlags?.AccessServiceAI,
+      featureFlags,
+    });
+  }, [accessServiceAIEnabled, featureFlags]);
 
   return (
     <Page>
