@@ -154,12 +154,41 @@ Layout widths (pass as `width` on `GoabPageBlock`):
 
 Prefer GOA components over custom HTML/CSS patterns for UI primitives in both cases.
 
-## ADSP Form Integration Pattern
+## Forms and data collection
 
-- Keep integration settings centralized in `src/config/adspForm.ts`.
-- Default to `mode: 'mock'` unless the user explicitly asks for live service calls.
-- In live mode, require `formServiceBaseUrl`, `definitionId`, and a valid `accessToken`.
-- Keep submission flow simple: load definition, validate, submit, show confirmation reference.
+**Default: build forms as an ADSP JSON form.** A request to collect information (apply, report, register, request, survey) means editing the form definition, not writing a page full of inputs.
+
+- `mockDefinition` in `src/lib/adspFormApi.ts` holds the form's `dataSchema` (JSON Schema: the data shape) and `uiSchema` (JSON Forms: layout and controls). Edit those. `src/pages/Apply.tsx` renders it through `FormComponent` and already handles loading, validation, submit and the confirmation reference.
+- Reuse the ADSP common definitions before designing fields, wired with `{ "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/<name>" }`: `personFullName`, `personFullNameAndDob`, `postalAddressAlberta`, `postalAddressCanada`, `email`, `phoneNumber`, `phoneNumberWithType`, `personDependents`.
+- Required fields go in the `dataSchema` `required` array. A field with a SHOW/HIDE rule must not be top-level required; use an `if`/`then` block.
+- Show privacy and FOIP text with a `HelpContent` element (`options: { markdown: true, help: '…' }`).
+- Mock mode (the default) cannot use data registers or `file-urn` upload; use plain `enum` lists.
+- Keep integration settings in `src/config/adspForm.ts`, default to `mode: 'mock'`, and in live mode require `formServiceBaseUrl`, `definitionId` and a valid `accessToken`.
+- Validate after every change to the definition (`builderFormSchemaValidate`) and fix all reported errors.
+
+**Hand-build a form only when the JSON form cannot express it** (logic the schema cannot describe, or a submit target other than the Form Service). Then use GOA components, not plain HTML:
+
+```tsx
+<GoabFormItem
+  label="Where did the collision happen?"
+  requirement="required"
+  helpText="For example, near 100 Street and 106 Avenue."
+  error={errors.where}
+  id="field-where"
+>
+  <GoabInput name="where" value={where} error={!!errors.where} onChange={({ value }) => setWhere(value)} />
+</GoabFormItem>
+```
+
+- Do NOT use `<label>`, `<fieldset>`/`<legend>`, `<p className="form-hint">` or `<p className="error-message">`. `GoabFormItem` supplies the label, help text, error and required/optional marker (`requirement="required" | "optional"`). Put radio groups and checkbox lists in a `GoabFormItem` with `type="radio-group"` or `type="checkbox-list"`.
+- `onChange` takes **one** object argument, not `(name, value)`:
+
+| Component | `onChange` receives |
+|-----------|---------------------|
+| `GoabInput`, `GoabTextArea`, `GoabRadioGroup` | `{ name, value, event }` |
+| `GoabDropdown` | `{ name, value, values, event }` (`values` for `multiselect`) |
+| `GoabDatePicker` | `{ name, valueStr, value, event }`; use `valueStr` |
+| `GoabCheckbox` | `{ name, value, checked, event }` |
 
 ## Routing Pattern
 
@@ -494,7 +523,7 @@ useEffect(() => {
 | Errors / alerts | `<GoabCallout type="emergency|information|success">` |
 | Form field wrapper | `<GoabFormItem label="…" mb="l" id="field-{key}">` |
 | Text input | `<GoabInput name="…" value={…} onChange={…}>` |
-| Multiline | `<GoabTextarea name="…" value={…} onChange={…}>` |
+| Multiline | `<GoabTextArea name="…" value={…} onChange={…}>` |
 | Date | `<GoabDatePicker name="…" value={…} onChange={…}>` |
 | Dropdown / select | `<GoabDropdown name="…" value={…} onChange={…}>` + `<GoabDropdownItem value="…" label="…" />` |
 | Status colour / label | `<GoabBadge type="success|warning|emergency|information" content="…">` |
