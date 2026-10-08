@@ -365,6 +365,7 @@ export const BuilderTenant = () => {
   const userInitialized = useSelector((state: AppState) => state.user.initialized);
 
   const [threadId, setThreadId] = useState('');
+  const [isEditPaneCollapsed, setIsEditPaneCollapsed] = useState(false);
   const messages = useSelector((state: AppState) => agentMessagesByThreadSelector(state, threadId));
   const connectionStatus = useSelector(agentConnectionStatusSelector);
   const workspaceStatus = useSelector(agentWorkspaceStatusSelector);
@@ -1177,7 +1178,7 @@ export const BuilderTenant = () => {
   const sortedFiles = sortWorkspaceFiles(files);
   const selectedFileContent = files[selectedPath] ?? '';
   return (
-    <Page>
+    <Page $previewFullWidth={isEditPaneCollapsed}>
       <Shell>
         <PrimaryPreviewViewport>
           <PreviewViewportFrame ref={previewFrameRef} srcDoc={previewDocument} title="Builder preview" />
@@ -1189,6 +1190,8 @@ export const BuilderTenant = () => {
         connectionStatus={connectionStatus}
         workspaceStatus={workspaceStatus}
         hasPendingPreviewError={hasPendingPreviewError}
+        isCollapsed={isEditPaneCollapsed}
+        onCollapsedChange={setIsEditPaneCollapsed}
         tenantLabel={tenant?.name ?? tenantName ?? 'Unknown'}
         userEmail={user?.email}
         canSignOut={Boolean(user && tenant)}
