@@ -9,7 +9,9 @@ import '@abgov/design-tokens/dist/tokens.css';
 import '@abgov/web-components/index.css';
 import * as IoniconsLoader from 'ionicons/loader';
 import { setAssetPath as setIoniconsAssetPath } from 'ionicons';
+import * as DataExchangeStandard from '@abgov/data-exchange-standard';
 import * as JsonFormsComponents from '@abgov/jsonforms-components';
+import { resolveSchemaRefs } from './resolveSchemaRefs.js';
 import * as JsonFormsCore from '@jsonforms/core';
 import * as JsonFormsReact from '@jsonforms/react';
 import * as Ajv from 'ajv';
@@ -33,8 +35,7 @@ const PatchedIoniconsLoader = {
 };
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
-const registry = (globalScope.__BUILDER_TEMPLATE_DEPS__ =
-  globalScope.__BUILDER_TEMPLATE_DEPS__ || {});
+const registry = (globalScope.__BUILDER_TEMPLATE_DEPS__ = globalScope.__BUILDER_TEMPLATE_DEPS__ || {});
 
 // Patch MemoryRouter to restore the initial route from the builder and report
 // navigation events back to the parent frame so nav state is preserved when the
@@ -64,6 +65,21 @@ function _PatchedMemoryRouter({ children, ...props }) {
 }
 _PatchedMemoryRouter.displayName = 'MemoryRouter';
 
+// resolveRefs/tryResolveRefs use @apidevtools/json-schema-ref-parser, which resolves against location.href and fails for
+// any schema when the page is about:srcdoc (the preview iframe). Resolve with a URL-independent implementation that
+// keeps the same contract: resolveRefs returns the schema or throws; tryResolveRefs returns [schema, error?].
+const PatchedJsonFormsComponents = {
+  ...JsonFormsComponents,
+  resolveRefs: async (schema, ...refSchemas) => resolveSchemaRefs(schema, ...refSchemas),
+  tryResolveRefs: async (schema, ...refSchemas) => {
+    try {
+      return [resolveSchemaRefs(schema, ...refSchemas)];
+    } catch (err) {
+      return [schema, err];
+    }
+  },
+};
+
 const PatchedReactRouterDom = { ...ReactRouterDom, MemoryRouter: _PatchedMemoryRouter };
 
 registry['react'] = React;
@@ -79,7 +95,8 @@ registry['@abgov/design-tokens/dist/tokens.css'] = {};
 registry['@abgov/web-components/index.css'] = {};
 registry['ionicons/loader'] = PatchedIoniconsLoader;
 registry['ionicons/dist/loader'] = PatchedIoniconsLoader;
-registry['@abgov/jsonforms-components'] = JsonFormsComponents;
+registry['@abgov/data-exchange-standard'] = DataExchangeStandard;
+registry['@abgov/jsonforms-components'] = PatchedJsonFormsComponents;
 registry['@jsonforms/core'] = JsonFormsCore;
 registry['@jsonforms/react'] = JsonFormsReact;
 registry['ajv'] = Ajv;

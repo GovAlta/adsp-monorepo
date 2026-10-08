@@ -73,8 +73,11 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       'process.env': JSON.stringify({}),
-      process: JSON.stringify({ env: { NODE_ENV: process.env.NODE_ENV || 'development' } }),
     }),
+    // Browser polyfills for the `process` and `Buffer` globals, which some dependencies use at runtime, such as
+    // @apidevtools/json-schema-ref-parser (loaded by tryResolveRefs). Defining `process` as an object literal with
+    // DefinePlugin breaks them: `process.nextTick(...)` becomes `{...}.nextTick(...)`, a syntax error.
+    new webpack.ProvidePlugin({ process: 'process/browser', Buffer: ['buffer', 'Buffer'] }),
   ],
   performance: {
     maxEntrypointSize: 512000,

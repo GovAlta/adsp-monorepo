@@ -1,3 +1,5 @@
+import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { type AdspFormStarterConfig } from '../config/adspForm';
 
 export interface AdspFormDefinition {
@@ -134,14 +136,32 @@ function resolveDefinition(payload: unknown, fallbackId: string): AdspFormDefini
   throw new Error('Unable to parse ADSP form definition response.');
 }
 
+// JsonForms does not resolve remote $refs, so inline the ADSP standard and common definitions before rendering. An
+// unresolvable ref (for example a definition that does not exist in common.v1.schema.json) is reported, since
+// rendering the unresolved schema fails in a less obvious way.
+async function withResolvedRefs(definition: AdspFormDefinition): Promise<AdspFormDefinition> {
+  const [dataSchema, error] = await tryResolveRefs(
+    definition.dataSchema,
+    standardV1JsonSchema,
+    commonV1JsonSchema
+  );
+  if (error) {
+    const reason =
+      error instanceof Error ? error.message.replace(/\s+/g, ' ').slice(0, 300) : String(error);
+    throw new Error(`Form definition has a schema reference that cannot be resolved: ${reason}`);
+  }
+
+  return { ...definition, dataSchema };
+}
+
 export async function loadAdspFormDefinition(
   config: AdspFormStarterConfig
 ): Promise<AdspFormDefinition> {
   if (config.mode === 'mock') {
-    return {
+    return withResolvedRefs({
       ...mockDefinition,
       name: `${config.serviceName} application`,
-    };
+    });
   }
 
   const baseUrl = config.formServiceBaseUrl.trim();
@@ -160,7 +180,7 @@ export async function loadAdspFormDefinition(
   }
 
   const payload = (await response.json()) as unknown;
-  return resolveDefinition(payload, definitionId);
+  return withResolvedRefs(resolveDefinition(payload, definitionId));
 }
 
 export async function submitAdspForm(
