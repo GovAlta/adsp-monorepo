@@ -6,10 +6,13 @@ import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
 import { TenantIdp } from './TenantIDP';
 import { AccessServiceAgent } from './AccessServiceAgent';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const accessServiceAIEnabled = useSelector((state: RootState) => state.config.featureFlags?.AccessServiceAI === true);
 
   return (
     <Page>
@@ -28,9 +31,11 @@ export default function (): JSX.Element {
             <TenantIdp />
           </Tab>
 
-          <Tab label="AI agent" testId="access-ai-agent">
-            <AccessServiceAgent />
-          </Tab>
+          {accessServiceAIEnabled && (
+            <Tab label="AI agent" testId="access-ai-agent">
+              <AccessServiceAgent />
+            </Tab>
+          )}
         </Tabs>
       </Main>
 

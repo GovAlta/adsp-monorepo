@@ -121,6 +121,7 @@ describe('Access Page', () => {
         keycloakApi: mockKeycloak,
         tenantApi: { host: 'foo' },
         serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+        featureFlags: { AccessServiceAI: true },
       },
       access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
       user: { jwt: { token: '' } },
@@ -165,5 +166,39 @@ describe('Access Page', () => {
         { type: 'agent/DISCONNECT_AGENT' },
       ]),
     );
+  });
+
+  it('hides the AI agent tab by default when AccessServiceAI is not enabled', () => {
+    const store = mockStore({
+      config: {
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo' },
+        serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+      },
+      access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
+      user: { jwt: { token: '' } },
+      agent: {
+        connected: false,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+      },
+      session: {
+        realm: 'core',
+        indicator: {
+          show: false,
+          message: 'loading',
+        },
+      },
+    });
+
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <AccessPage />
+      </Provider>,
+    );
+
+    expect(queryByTestId('access-ai-agent-tab-btn')).toBeNull();
+    expect(queryByTestId('access-service-agent-chat')).toBeNull();
   });
 });
