@@ -23,6 +23,12 @@ components:
         isCore:
           type: boolean
           description: True if the definition is a core (platform) definition rather than tenant specific.
+    EventCount:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Number of logged events matching the supplied criteria.
 
 /event/v1/events:
   post:
@@ -127,6 +133,88 @@ components:
               $ref: '#/components/schemas/EventError'
             example:
               errorMessage: 'User Test User (ID: 1234) not permitted to send event.'
+
+/event/v1/events/count:
+  get:
+    tags:
+      - Event
+    description: >
+      Count logged events matching the supplied criteria. Requires the event-reader role and a tenant context.
+      Namespace and event name are each optional and independent of one another; other supplied criteria
+      (timestamp range, correlation ID) are combined with namespace and name when determining the count. The
+      count represents all events accessible to the tenant that match the supplied criteria.
+
+
+      Event logging is provided via the value service, but consumers of this API do not need to call the value
+      service directly.
+    parameters:
+      - name: namespace
+        description: Namespace of the events to count. If omitted, events of all namespaces are counted.
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        example: application-events
+      - name: name
+        description: Name of the events to count. If omitted, events of all names are counted.
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        example: user-registration
+      - name: timestampMin
+        description: Inclusive minimum value of the event timestamp.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: timestampMax
+        description: Inclusive maximum value of the event timestamp.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: correlationId
+        description: Correlation ID associated with the events.
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Events successfully counted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCount'
+            example:
+              count: 1024
+      400:
+        description: >
+          Request is invalid, for example namespace or name is too long, a timestamp is not in ISO 8601 format,
+          or there is no tenant context.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'Validation failed with error(s): timestampMin (query) - Invalid value'
+      401:
+        description: Request does not include a valid bearer token.
+      403:
+        description: User does not have the event-reader role, or the tenant context does not match the user's tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'User Test User (ID: 1234) not permitted to count events.'
 
 /event/v1/definitions:
   get:

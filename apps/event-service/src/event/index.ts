@@ -4,6 +4,7 @@ import { createDefinitionRouter, createEventRouter } from './router';
 import type { EventConfiguration } from './router';
 import type { DomainEventService } from './service';
 import { createJobs, JobProps } from './job';
+import { ValueServiceEventLogRepository } from './repository';
 
 export { configurationSchema } from './configuration';
 export type { EventDefinition, Namespace } from './types';
@@ -19,7 +20,8 @@ export const applyEventMiddleware = (
   app: Application,
   { serviceId, logger, eventService, directory, tokenProvider, configurationService }: EventMiddlewareProps,
 ): Application => {
-  const eventRouter = createEventRouter({ eventService, logger });
+  const eventLogRepository = new ValueServiceEventLogRepository(directory, tokenProvider);
+  const eventRouter = createEventRouter({ eventService, logger, eventLogRepository });
   const definitionRouter = createDefinitionRouter({
     client: new ConfigurationClient<EventConfiguration>(directory, tokenProvider, 'platform', 'event-service'),
     validationService: new AjvValidationService(logger),

@@ -3,13 +3,15 @@ import { RequestHandler, Router } from 'express';
 import { checkSchema } from 'express-validator';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
-import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, isAllowedUser, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
-import { EventServiceRoles } from '../role';
+import { EventLogRepository } from '../repository';
+import { EventServiceRoles, LEGACY_EVENT_LOG_READER_ROLE } from '../role';
 
 interface EventRouterProps {
   logger: Logger;
   eventService: DomainEventService;
+  eventLogRepository: EventLogRepository;
 }
 
 export const assertUserCanSend: RequestHandler = async (req, _res, next) => {
@@ -54,7 +56,7 @@ export const sendEvent =
 
     try {
       const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
-        tenantId
+        tenantId,
       );
 
       logger.debug(`Processing sent event: ${namespace}:${name}...`);
@@ -66,7 +68,7 @@ export const sendEvent =
 
       if (!timeValue) {
         throw new InvalidOperationError(
-          'Event must include a timestamp representing the time when the event occurred.'
+          'Event must include a timestamp representing the time when the event occurred.',
         );
       }
       const timestamp = new Date(timeValue);
@@ -96,14 +98,88 @@ export const sendEvent =
           context: 'event-router',
           tenantId: tenantId.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
       next(err);
     }
   };
 
-export const createEventRouter = ({ logger, eventService }: EventRouterProps): Router => {
+export function countEvents(logger: Logger, repository: EventLogRepository): RequestHandler {
+  return async (req, res, next) => {
+    const user = req.user;
+    const tenant = req.tenant;
+    const {
+      namespace,
+      name,
+      timestampMin: timestampMinValue,
+      timestampMax: timestampMaxValue,
+      correlationId,
+    } = req.query;
+
+    try {
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required for operation.');
+      }
+
+      if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, LEGACY_EVENT_LOG_READER_ROLE], true)) {
+        throw new UnauthorizedUserError('count events', user);
+      }
+
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const count = await repository.countEvents(tenant.id, {
+        namespace: namespace as string,
+        name: name as string,
+        timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
+        timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
+        correlationId: correlationId as string,
+      });
+
+      end();
+      res.send({ count });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export const createEventRouter = ({ logger, eventService, eventLogRepository }: EventRouterProps): Router => {
   const eventRouter = Router();
+
+  eventRouter.get(
+    '/events/count',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          namespace: {
+            optional: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
+          name: {
+            optional: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
+          timestampMin: {
+            optional: true,
+            isISO8601: true,
+          },
+          timestampMax: {
+            optional: true,
+            isISO8601: true,
+          },
+          correlationId: {
+            optional: true,
+            isString: true,
+          },
+        },
+        ['query'],
+      ),
+    ),
+    countEvents(logger, eventLogRepository),
+  );
 
   eventRouter.post(
     '/events',
@@ -135,10 +211,10 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
             isObject: true,
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
-    sendEvent(logger, eventService)
+    sendEvent(logger, eventService),
   );
 
   return eventRouter;

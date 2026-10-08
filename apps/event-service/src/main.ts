@@ -70,6 +70,11 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Administrator role for managing event definitions.',
           inTenantAdmin: true,
         },
+        {
+          role: EventServiceRoles.reader,
+          description: 'Reader role for querying the event logs.',
+          inTenantAdmin: true,
+        },
       ],
       configuration: {
         description: 'Definitions of events including payload schema.',
