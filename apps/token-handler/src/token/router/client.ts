@@ -4,7 +4,7 @@ import * as cors from 'cors';
 import { json, NextFunction, Request, Response, Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { RequestHandler } from 'express-serve-static-core';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { PassportStatic } from 'passport';
 
 import { TokenHandlerConfiguration } from '../configuration';
@@ -232,7 +232,10 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id/auth',
-    createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
+    createValidationHandler(
+      param('id').isString().isLength({ min: 1, max: 50 }),
+      query('callbackUrl').optional().isString().isURL(REDIRECT_URI_OPTIONS).isLength({ max: 2048 })
+    ),
     rateLimitHandler,
     proxyTenantHandler,
     configurationHandler,
