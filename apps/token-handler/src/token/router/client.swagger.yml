@@ -40,7 +40,7 @@ components:
   post:
     tags:
       - Client
-    description: Registers an authentication client. The authCallbackUrl is registered with access service as a valid redirect URI and is not stored in the token handler configuration.
+    description: Registers an authentication client. If provided, the authCallbackUrl is registered with access service as a valid redirect URI and is not stored in the token handler configuration. Otherwise the client is registered without redirect URIs, which can be added directly in access service. Registering a client that is already registered replaces its registration; the previously registered client in access service is deleted, including any redirect URIs configured on it.
     requestBody:
       required: true
       content:
@@ -53,7 +53,7 @@ components:
                 description: Client registration token from tenant realm.
               authCallbackUrl:
                 type: string
-                description: Callback URL to register with access service. Add additional environments directly in access service after registration.
+                description: Optional callback URL to register with access service as a valid redirect URI. Add redirect URIs for additional environments directly in access service after registration.
     responses:
       200:
         description: Request completed successfully.

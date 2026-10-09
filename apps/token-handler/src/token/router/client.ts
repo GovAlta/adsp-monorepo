@@ -15,6 +15,10 @@ import { createTenantHandler } from '../tenant';
 import { UserSessionData } from '../types';
 
 const CLIENT = 'tk_client';
+// Redirect URIs are registered as valid redirect URIs in Keycloak, so register and update share one definition.
+// Hosts without a top level domain (e.g. localhost) are allowed for local development.
+const REDIRECT_URI_OPTIONS = { require_tld: false, require_protocol: true, protocols: ['http', 'https'] };
+
 export function getAuthenticationClient() {
   return async function (req: Request, _res: Response, next: NextFunction) {
     try {
@@ -180,7 +184,7 @@ export function createClientRouter({
     createValidationHandler(
       param('id').isString().isLength({ min: 1, max: 50 }),
       body('registrationToken').isString().isLength({ min: 1, max: 8192 }),
-      body('authCallbackUrl').isURL().isLength({ min: 1, max: 2048 })
+      body('authCallbackUrl').optional().isURL(REDIRECT_URI_OPTIONS).isLength({ min: 1, max: 2048 })
     ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
@@ -195,7 +199,8 @@ export function createClientRouter({
     json({ limit: '1mb' }),
     createValidationHandler(
       param('id').isString().isLength({ min: 1, max: 50 }),
-      body('redirectUris').isArray({ min: 1 })
+      body('redirectUris').isArray({ min: 1 }),
+      body('redirectUris.*').isURL(REDIRECT_URI_OPTIONS).isLength({ min: 1, max: 2048 })
     ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,

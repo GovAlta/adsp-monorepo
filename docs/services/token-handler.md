@@ -101,7 +101,7 @@ There are some special considerations for local development workflows when using
 ## Code examples
 
 ### Register a client
-Registering a client creates a confidential client in access service and securely stores the associated client ID and secret in token handler. It is required before token handler can authenticate users using the client. The `authCallbackUrl` provided here is registered with access service as a valid redirect URI and is not stored in the token handler configuration.
+Registering a client creates a confidential client in access service and securely stores the associated client ID and secret in token handler. It is required before token handler can authenticate users using the client. The optional `authCallbackUrl` provided here is registered with access service as a valid redirect URI and is not stored in the token handler configuration. If it is not provided, the client is registered without redirect URIs, which must then be added to the client in access service (Keycloak) before users can sign in. Registering a client that is already registered replaces its registration: the previously registered client in access service is deleted, including any redirect URIs configured on it.
 
 ```typescript
   const response = await fetch(

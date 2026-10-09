@@ -68,7 +68,7 @@ export class AuthenticationClient {
     );
   }
 
-  public async register(tenant: Tenant, registrationToken: string, authCallbackUrl: string) {
+  public async register(tenant: Tenant, registrationToken: string, authCallbackUrl?: string) {
     this.logger.debug(`Registering client ${this.id}...`, {
       context: 'ClientRegistrationEntity',
       tenant: this.tenantId.toString(),
@@ -81,7 +81,7 @@ export class AuthenticationClient {
           client_name: this.id,
           token_endpoint_auth_method: 'client_secret_basic',
           grant_types: ['authorization_code', 'refresh_token'],
-          redirect_uris: [authCallbackUrl],
+          redirect_uris: authCallbackUrl ? [authCallbackUrl] : [],
         },
         { headers: { Authorization: `Bearer ${registrationToken}` } }
       );
