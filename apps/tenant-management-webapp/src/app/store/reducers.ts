@@ -27,6 +27,7 @@ import Feedback from './feedback/reducers';
 import Value from './value/reducers';
 import Agent from './agent/reducers';
 import sharepointReducer from './sharePoint/reducers';
+import TokenHandler from './tokenHandler/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
@@ -58,4 +59,5 @@ export const rootReducer = combineReducers({
   valueService: Value,
   agent: Agent,
   sharepoint: sharepointReducer,
+  tokenHandler: TokenHandler,
 });
