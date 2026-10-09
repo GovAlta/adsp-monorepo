@@ -482,6 +482,28 @@ describe('AuthenticationClient', () => {
         }
       });
 
+      it('can send a nonce in the authorization request and keep it for verification', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        await initiate(createClient(), 'https://app-a/callback');
+
+        // Passport authenticates with a per request copy of the strategy.
+        const strategy = Object.create(passportMock.authenticate.mock.calls[0][0]);
+        strategy.redirect = jest.fn();
+        strategy.error = jest.fn();
+        strategy.fail = jest.fn();
+
+        const session: Record<string, unknown> = {};
+        strategy.authenticate({ query: {}, session, headers: {} }, { callbackURL: 'https://app-a/callback' });
+
+        expect(strategy.error).not.toHaveBeenCalled();
+        expect(strategy.redirect).toHaveBeenCalledTimes(1);
+        const location = new URL(strategy.redirect.mock.calls[0][0]);
+        const nonce = location.searchParams.get('nonce');
+        expect(nonce).toBeTruthy();
+        expect(location.searchParams.get('redirect_uri')).toBe('https://app-a/callback');
+        expect(JSON.stringify(session)).toContain(nonce);
+      });
+
       it('can create a new strategy after registration', async () => {
         repositoryMock.get.mockReturnValueOnce(credentials);
         const client = createClient();
