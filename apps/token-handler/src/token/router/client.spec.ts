@@ -133,6 +133,29 @@ describe('client router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('can register client without callback URL', async () => {
+      const client = {
+        id: 'test',
+        credentials: { clientId: 'test-client' },
+        register: jest.fn().mockResolvedValueOnce({ clientId: 'test-client' }),
+      };
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.Admin] },
+        body: { registrationToken: 'reg-token' },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = registerClient(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ registered: true }));
+      expect(client.register).toHaveBeenCalledWith(req.tenant, 'reg-token', undefined);
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('can call next with unauthorized for non-admin', async () => {
       const client = {
         id: 'test',

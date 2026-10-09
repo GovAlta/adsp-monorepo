@@ -100,6 +100,39 @@ describe('AuthenticationClient', () => {
       expect(result).toBeTruthy();
     });
 
+    it('can register client without redirect URI', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          targets: {},
+        }
+      );
+
+      axiosMock.post.mockResolvedValueOnce({
+        data: {
+          client_id: 'test-123',
+          client_secret: 'secret secret',
+          registration_client_uri: 'http://access-service/registration/clients/test-123',
+          registration_access_token: 'reg token 123',
+        },
+      });
+      repositoryMock.get.mockResolvedValueOnce(null);
+
+      const result = await client.register(tenant, 'abc-123');
+      expect(result).toBeTruthy();
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ redirect_uris: [] }),
+        expect.anything()
+      );
+    });
+
     it('can throw invalid operation for unauthorized registration response', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
