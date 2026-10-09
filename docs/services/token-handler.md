@@ -29,6 +29,8 @@ Clients are configured in the [configuration service](configuration-service.md) 
 ### Targets
 Targets represent upstream services or APIs that the token handler can proxy requests to. For requests from the frontend to the configured targets, token handler will retrieve a valid access token based on the current user session and include it as a bearer token for the upstream request. Target upstream is configured as an ADSP service or API URN, and the URN must have an entry in the [directory service](directory-service.md). Targets are configured as part of clients in the configuration service under the `platform:token-handler` namespace and name.
 
+The upstream request only carries the user's access token for authentication. Token handler does not pass on the session cookie, CSRF token or tenant headers of the incoming request, and cookies set by the upstream are not passed back to the frontend. Request paths must stay within the target's base path; paths with dot segments (`.` or `..`) or encoded path separators are rejected as invalid, and the query string is passed through unchanged.
+
 ### Cross-site request forgery (CSRF)
 The token handler uses sessions and cookies which can be vulnerable to CSRF attacks. A Cookie-to-header token is used as CSRF protection. Frontend applications need to read the value of the `XSRF-TOKEN` cookie and include it as the value of the `X-XSRF-TOKEN` header in requests to *targets*; this behavior is built into [Angular](https://angular.io/guide/http-security-xsrf-protection).
 

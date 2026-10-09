@@ -34,7 +34,7 @@ components:
       schema:
         type: string
     - name: targetPath
-      description: Request path on the target.
+      description: Request path on the target. Paths with dot segments ('.' or '..') or encoded path separators are rejected as invalid.
       in: path
       required: true
       schema:
