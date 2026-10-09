@@ -17,6 +17,7 @@ export interface TokenHandlerClient {
   authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  keycloakLogout?: boolean;
   targets?: Record<string, TokenHandlerTarget>;
 }
 
