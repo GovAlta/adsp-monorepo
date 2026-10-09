@@ -23,6 +23,7 @@ export const configurationSchema = {
             idpHint: { type: ['string', 'null'] },
             successRedirectUrl: { type: ['string', 'null'] },
             failureRedirectUrl: { type: ['string', 'null'] },
+            keycloakLogout: { type: ['boolean', 'null'] },
             targets: {
               type: 'object',
               patternProperties: {
