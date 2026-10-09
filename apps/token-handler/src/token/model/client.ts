@@ -258,6 +258,9 @@ export class AuthenticationClient {
           clientSecret: credentials.clientSecret,
           // The callback URL is specific to the request and is provided on each authenticate call.
           callbackURL: '',
+          // Send a nonce with the authorization request and verify it in the ID token. The library only uses the
+          // option as a flag, and the value is typed as a string.
+          nonce: 'true',
           prompt: this.prompt,
           scope: this.scope,
         },
