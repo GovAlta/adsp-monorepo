@@ -453,6 +453,35 @@ describe('AuthenticationClient', () => {
         expect(repositoryMock.get).toHaveBeenCalledTimes(1);
       });
 
+      it('can keep registered credentials when loading credentials completes after registration', async () => {
+        let resolveLoad: (value: unknown) => void;
+        repositoryMock.get.mockReturnValueOnce(new Promise((resolve) => (resolveLoad = resolve)));
+        repositoryMock.get.mockReturnValueOnce(null);
+        const client = createClient();
+
+        // Blocks while the credentials are loaded.
+        const initiated = initiate(client, 'https://app-a/callback');
+
+        axiosMock.post.mockResolvedValueOnce({
+          data: {
+            client_id: 'client-456',
+            client_secret: 'new secret',
+            registration_client_uri: 'http://access-service/registration/clients/client-456',
+            registration_access_token: 'new reg token',
+          },
+        });
+        (repositoryMock.save as jest.Mock).mockImplementationOnce((_client, saved) => Promise.resolve(saved));
+        await client.register(tenant, 'abc-123');
+
+        resolveLoad(credentials);
+        await initiated;
+        await initiate(client, 'https://app-a/callback');
+
+        for (const [strategy] of passportMock.authenticate.mock.calls) {
+          expect(strategy._oauth2._clientId).toBe('client-456');
+        }
+      });
+
       it('can create a new strategy after registration', async () => {
         repositoryMock.get.mockReturnValueOnce(credentials);
         const client = createClient();

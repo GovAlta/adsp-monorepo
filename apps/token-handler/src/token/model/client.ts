@@ -181,7 +181,9 @@ export class AuthenticationClient {
     // Lazy load credentials from repository.
     // Note: This object is cached as configuration and update of credentials is handled via cache invalidation.
     if (!this.credentials) {
-      this.credentials = await this.repository.get(this);
+      const loaded = await this.repository.get(this);
+      // Credentials saved by a registration while loading are newer than the loaded credentials.
+      this.credentials = this.credentials ?? loaded;
     }
 
     return this.credentials;
@@ -237,7 +239,7 @@ export class AuthenticationClient {
         throw new InvalidOperationError('Cannot use client to authenticate before registration.');
       }
 
-      this.strategy = new OidcStrategy(
+      const strategy = new OidcStrategy(
         {
           issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
           authorizationURL: new URL(
@@ -261,6 +263,12 @@ export class AuthenticationClient {
         },
         this.verify
       );
+
+      // Only cache the strategy if the credentials were not replaced by a registration while it was created.
+      if (this.credentials !== credentials) {
+        return strategy;
+      }
+      this.strategy = strategy;
     }
 
     return this.strategy;
