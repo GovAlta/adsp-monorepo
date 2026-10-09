@@ -72,7 +72,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
         {
           role: EventServiceRoles.reader,
-          description: 'Reader role for querying the event logs.',
+          description: 'Reader role for querying event logs.',
           inTenantAdmin: true,
         },
       ],

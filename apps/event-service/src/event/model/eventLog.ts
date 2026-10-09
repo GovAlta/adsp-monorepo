@@ -8,6 +8,9 @@ export interface EventLogCriteria {
   correlationId?: string;
 }
 
-export interface EventLogRepository {
-  countEvents(tenantId: AdspId, criteria: EventLogCriteria): Promise<number>;
+//This count response maps to the response data coming from the value service
+export interface EventLogCountResponse {
+  count: number;
+  namespace: string;
+  name: string;
 }

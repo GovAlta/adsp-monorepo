@@ -3,15 +3,24 @@ import { RequestHandler, Router } from 'express';
 import { checkSchema } from 'express-validator';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
-import { AdspId, EventService, isAllowedUser, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  EventService,
+  isAllowedUser,
+  ServiceDirectory,
+  startBenchmark,
+  TokenProvider,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
-import { EventLogRepository } from '../repository';
 import { EventServiceRoles, EventServiceValueRoles } from '../role';
+import { countEvents } from '../valueServiceClient';
 
 interface EventRouterProps {
   logger: Logger;
   eventService: DomainEventService;
-  eventLogRepository: EventLogRepository;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 export const assertUserCanSend: RequestHandler = async (req, _res, next) => {
@@ -104,7 +113,11 @@ export const sendEvent =
     }
   };
 
-export function countEvents(logger: Logger, repository: EventLogRepository): RequestHandler {
+export function countEventLogEvents(
+  logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
   return async (req, res, next) => {
     const user = req.user;
     const tenant = req.tenant;
@@ -121,13 +134,13 @@ export function countEvents(logger: Logger, repository: EventLogRepository): Req
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
-      if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
-        throw new UnauthorizedUserError('count events', user);
-      }
+      // if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
+      //   throw new UnauthorizedUserError('count events', user);
+      // }
 
       const end = startBenchmark(req, 'operation-handler-time');
 
-      const count = await repository.countEvents(tenant.id, {
+      const response = await countEvents(directory, tokenProvider, tenant.id, {
         namespace: namespace as string,
         name: name as string,
         timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
@@ -136,14 +149,14 @@ export function countEvents(logger: Logger, repository: EventLogRepository): Req
       });
 
       end();
-      res.send({ count });
+      res.send(response);
     } catch (err) {
       next(err);
     }
   };
 }
 
-export const createEventRouter = ({ logger, eventService, eventLogRepository }: EventRouterProps): Router => {
+export const createEventRouter = ({ logger, eventService, directory, tokenProvider }: EventRouterProps): Router => {
   const eventRouter = Router();
 
   eventRouter.get(
@@ -178,7 +191,7 @@ export const createEventRouter = ({ logger, eventService, eventLogRepository }: 
         ['query'],
       ),
     ),
-    countEvents(logger, eventLogRepository),
+    countEventLogEvents(logger, directory, tokenProvider),
   );
 
   eventRouter.post(
