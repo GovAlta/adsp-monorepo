@@ -81,7 +81,7 @@ export function updateClient(eventService: EventService): RequestHandler {
 }
 
 export function getClient(): RequestHandler {
-  return function (req, res, next) {
+  return async function (req, res, next) {
     try {
       const user = req.user;
 
@@ -89,9 +89,10 @@ export function getClient(): RequestHandler {
         throw new UnauthorizedUserError('get client', user);
       }
 
-      const { id, authCallbackUrl, successRedirectUrl, failureRedirectUrl, credentials, ..._ } = req[
-        CLIENT
-      ] as AuthenticationClient;
+      const client = req[CLIENT] as AuthenticationClient;
+      const { id, authCallbackUrl, successRedirectUrl, failureRedirectUrl } = client;
+      // Credentials are lazy loaded, so they must be requested to know if the client is registered.
+      const credentials = await client.getCredentials();
       res.send({
         id,
         authCallbackUrl,
