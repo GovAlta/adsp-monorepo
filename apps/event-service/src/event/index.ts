@@ -4,6 +4,7 @@ import { createDefinitionRouter, createEventRouter } from './router';
 import type { EventConfiguration } from './router';
 import type { DomainEventService } from './service';
 import { createJobs, JobProps } from './job';
+import { ValueServiceEventLogRepository } from './repository';
 
 export { configurationSchema } from './configuration';
 export type { EventDefinition, Namespace } from './types';

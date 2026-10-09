@@ -2,6 +2,7 @@ export enum EventServiceRoles {
   sender = 'event-sender',
   admin = 'event-admin',
   reader = 'event-reader',
+  reader = 'event-reader',
 }
 
 // This maps to the configuration services service roles as it used to read

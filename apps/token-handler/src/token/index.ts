@@ -13,6 +13,8 @@ export * from './model';
 export * from './repository';
 export * from './roles';
 export * from './types';
+export * from './upstream';
+export * from './upstream-domains';
 
 interface MiddlewareOptions {
   logger: Logger;
@@ -26,11 +28,12 @@ interface MiddlewareOptions {
 
 export function applyTokenHandlerMiddleware(
   app: Application,
-  { configurationHandler, eventService, passport, sessionStore, tenantHandler, tenantService }: MiddlewareOptions
+  { configurationHandler, eventService, logger, passport, sessionStore, tenantHandler, tenantService }: MiddlewareOptions
 ) {
   const clientRouter = createClientRouter({
     configurationHandler,
     eventService,
+    logger,
     passport,
     tenantHandler,
     tenantService,

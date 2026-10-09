@@ -3,6 +3,8 @@ import { AdspId, User } from '@abgov/adsp-service-sdk';
 export interface UserSessionData extends User {
   accessToken: string;
   refreshToken: string;
+  // ID token from login, which identifies the session when logging out of access service.
+  idToken?: string;
   exp: number;
   refreshExp: number;
   authenticatedBy: string;
@@ -19,6 +21,8 @@ export interface Client {
   authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  // Whether logout also ends the session in access service; requires post logout redirect URIs on the client.
+  keycloakLogout?: boolean;
   targets: Record<string, Target>;
 }
 

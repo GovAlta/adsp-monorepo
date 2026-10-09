@@ -68,7 +68,16 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
         name={params.name}
       />
       <Routes>
-        <Route path={`/:taskId`} element={<TaskDetailsHost onClose={() => navigate('')} />} />
+        <Route
+          path={`/:taskId`}
+          element={
+            <TaskDetailsHost
+              onClose={() => {
+                navigate(`/${params.tenant}/${params.namespace}/${params.name}`);
+              }}
+            />
+          }
+        />
         <Route
           path="/"
           element={

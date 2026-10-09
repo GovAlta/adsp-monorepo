@@ -3,8 +3,8 @@ import { InvalidOperationError, UnauthorizedError } from '@core-services/core-co
 import axios, { isAxiosError } from 'axios';
 import { Request, RequestHandler } from 'express';
 import jwtDecode from 'jwt-decode';
-import { PassportStatic, Strategy } from 'passport';
-import { Strategy as OidcStrategy } from 'passport-openidconnect';
+import { AuthenticateOptions, PassportStatic, Strategy } from 'passport';
+import { AuthenticateOptions as OidcAuthenticateOptions, Strategy as OidcStrategy } from 'passport-openidconnect';
 import * as qs from 'qs';
 import { Logger } from 'winston';
 
@@ -28,6 +28,7 @@ interface OidcClientUpdateResponse {
 interface OidcTokenResponse {
   access_token: string;
   refresh_token: string;
+  id_token?: string;
   expires_in: number;
   refresh_expires_in: number;
 }
@@ -42,9 +43,10 @@ export class AuthenticationClient {
   authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  keycloakLogout: boolean;
   targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
-  private strategies = new Map<string, Strategy>();
+  private strategy: Strategy;
 
   constructor(
     private accessServiceUrl: URL,
@@ -62,13 +64,14 @@ export class AuthenticationClient {
     this.authCallbackUrl = client.authCallbackUrl;
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
+    this.keycloakLogout = !!client.keycloakLogout;
     this.targets = Object.entries(client.targets).reduce(
       (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
     );
   }
 
-  public async register(tenant: Tenant, registrationToken: string, authCallbackUrl: string) {
+  public async register(tenant: Tenant, registrationToken: string, authCallbackUrl?: string) {
     this.logger.debug(`Registering client ${this.id}...`, {
       context: 'ClientRegistrationEntity',
       tenant: this.tenantId.toString(),
@@ -81,7 +84,7 @@ export class AuthenticationClient {
           client_name: this.id,
           token_endpoint_auth_method: 'client_secret_basic',
           grant_types: ['authorization_code', 'refresh_token'],
-          redirect_uris: [authCallbackUrl],
+          redirect_uris: authCallbackUrl ? [authCallbackUrl] : [],
         },
         { headers: { Authorization: `Bearer ${registrationToken}` } }
       );
@@ -96,6 +99,8 @@ export class AuthenticationClient {
       };
 
       this.credentials = await this.repository.save(this, credentials);
+      // The strategy is configured with the credentials, so it needs to be recreated.
+      this.strategy = undefined;
 
       this.logger.info(
         `Registered client ${this.id} on client ID ${this.credentials.clientId} and registration URL: ${this.credentials.registrationUrl}.`,
@@ -111,7 +116,6 @@ export class AuthenticationClient {
           await axios.delete(original.registrationUrl, {
             headers: { Authorization: `Bearer ${original.registrationToken}` },
           });
-          this.strategies.clear();
         } catch (err) {
           this.logger.warn(
             `Delete of existing client registration at "${original.registrationUrl}" failed with error: ${err}`,
@@ -176,11 +180,36 @@ export class AuthenticationClient {
     }
   }
 
-  private async getCredentials(): Promise<ClientCredentials> {
+  /**
+   * Gets the URL to log the user out of access service, which ends the user's single sign on session there.
+   * The URL is for the end session endpoint, and the user is returned to the post logout redirect URI after.
+   *
+   * Returns null if the client is not configured for it, or the ID token of the session is not available.
+   */
+  public async getLogoutUrl(idToken: string, postLogoutRedirectUri: string): Promise<string | null> {
+    if (!this.keycloakLogout || !idToken) {
+      return null;
+    }
+
+    const credentials = await this.getCredentials();
+    if (!credentials) {
+      return null;
+    }
+
+    const url = new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/logout`, this.accessServiceUrl);
+    url.searchParams.set('id_token_hint', idToken);
+    url.searchParams.set('client_id', credentials.clientId);
+    url.searchParams.set('post_logout_redirect_uri', postLogoutRedirectUri);
+    return url.href;
+  }
+
+  public async getCredentials(): Promise<ClientCredentials> {
     // Lazy load credentials from repository.
     // Note: This object is cached as configuration and update of credentials is handled via cache invalidation.
     if (!this.credentials) {
-      this.credentials = await this.repository.get(this);
+      const loaded = await this.repository.get(this);
+      // Credentials saved by a registration while loading are newer than the loaded credentials.
+      this.credentials = this.credentials ?? loaded;
     }
 
     return this.credentials;
@@ -190,7 +219,7 @@ export class AuthenticationClient {
     _iss,
     profile: Record<string, unknown>,
     _context,
-    _idToken,
+    idToken: string | object,
     accessToken: string,
     refreshToken: string,
     verified
@@ -213,6 +242,7 @@ export class AuthenticationClient {
         email: profile['emails']?.[0].value,
         accessToken,
         refreshToken,
+        idToken: typeof idToken === 'string' ? idToken : undefined,
         exp,
         refreshExp,
         authenticatedBy: this.id,
@@ -229,42 +259,49 @@ export class AuthenticationClient {
     }
   };
 
-  private async getStrategy(callbackURL: string): Promise<Strategy> {
-    if (!this.strategies.has(callbackURL)) {
+  private async getStrategy(): Promise<Strategy> {
+    if (!this.strategy) {
       const credentials = await this.getCredentials();
       if (!credentials) {
         throw new InvalidOperationError('Cannot use client to authenticate before registration.');
       }
 
-      this.strategies.set(
-        callbackURL,
-        new OidcStrategy(
-          {
-            issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
-            authorizationURL: new URL(
-              `/auth/realms/${credentials.realm}/protocol/openid-connect/auth${
-                this.idpHint ? `?kc_idp_hint=${this.idpHint}` : ''
-              }`,
-              this.accessServiceUrl
-            ).href,
-            tokenURL: new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl)
-              .href,
-            userInfoURL: new URL(
-              `/auth/realms/${credentials.realm}/protocol/openid-connect/userinfo`,
-              this.accessServiceUrl
-            ).href,
-            clientID: credentials.clientId,
-            clientSecret: credentials.clientSecret,
-            callbackURL,
-            prompt: this.prompt,
-            scope: this.scope,
-          },
-          this.verify
-        )
+      const strategy = new OidcStrategy(
+        {
+          issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
+          authorizationURL: new URL(
+            `/auth/realms/${credentials.realm}/protocol/openid-connect/auth${
+              this.idpHint ? `?kc_idp_hint=${this.idpHint}` : ''
+            }`,
+            this.accessServiceUrl
+          ).href,
+          tokenURL: new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl)
+            .href,
+          userInfoURL: new URL(
+            `/auth/realms/${credentials.realm}/protocol/openid-connect/userinfo`,
+            this.accessServiceUrl
+          ).href,
+          clientID: credentials.clientId,
+          clientSecret: credentials.clientSecret,
+          // The callback URL is specific to the request and is provided on each authenticate call.
+          callbackURL: '',
+          // Send a nonce with the authorization request and verify it in the ID token. The library only uses the
+          // option as a flag, and the value is typed as a string.
+          nonce: 'true',
+          prompt: this.prompt,
+          scope: this.scope,
+        },
+        this.verify
       );
+
+      // Only cache the strategy if the credentials were not replaced by a registration while it was created.
+      if (this.credentials !== credentials) {
+        return strategy;
+      }
+      this.strategy = strategy;
     }
 
-    return this.strategies.get(callbackURL);
+    return this.strategy;
   }
 
   public async authenticate(passport: PassportStatic, complete = false): Promise<RequestHandler> {
@@ -294,10 +331,13 @@ export class AuthenticationClient {
           }
         }
 
-        const strategy = await this.getStrategy(callbackURL);
-        const authenticateHandler = passport.authenticate(strategy, {
+        const strategy = await this.getStrategy();
+        // The callback URL is provided per request, so the same strategy can be used for different callback URLs.
+        const options: AuthenticateOptions & OidcAuthenticateOptions = {
+          callbackURL,
           failureRedirect: this.failureRedirectUrl,
-        });
+        };
+        const authenticateHandler = passport.authenticate(strategy, options);
 
         authenticateHandler(
           req,
@@ -317,6 +357,10 @@ export class AuthenticationClient {
                     }
                   );
                   generateCsrfToken(req, res);
+
+                  // The user is returned to the site that they logged in from after ending the session in access
+                  // service. The site's callback URL is a valid redirect URI of the client, so its host is known to it.
+                  req.session['postLogoutRedirectUri'] = new URL('/', callbackURL).href;
                   next();
                 } catch (err) {
                   this.logger.warn(
@@ -381,6 +425,9 @@ export class AuthenticationClient {
       const now = Date.now() / 1000;
       req.session['passport'].user.accessToken = data.access_token;
       req.session['passport'].user.refreshToken = data.refresh_token;
+      if (data.id_token) {
+        req.session['passport'].user.idToken = data.id_token;
+      }
       // Expiry values could be decoded from the token instead, but that's extra work.
       req.session['passport'].user.exp = now + data.expires_in;
       req.session['passport'].user.refreshExp = now + data.refresh_expires_in;
