@@ -249,13 +249,13 @@ describe('client router', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('can get client', () => {
+    it('can get client', async () => {
       const client = {
         id: 'test',
         authCallbackUrl: 'https://frontend/auth/callback',
         successRedirectUrl: '/success',
         failureRedirectUrl: '/fail',
-        credentials: { clientId: 'test-client' },
+        getCredentials: jest.fn().mockResolvedValue({ clientId: 'test-client' }),
       };
       const req = {
         tenant: {
@@ -272,7 +272,7 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = getClient();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -286,13 +286,36 @@ describe('client router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can call next with unauthorized for non-admin', () => {
+    it('can get unregistered client', async () => {
       const client = {
         id: 'test',
         authCallbackUrl: 'https://frontend/auth/callback',
         successRedirectUrl: '/success',
         failureRedirectUrl: '/fail',
-        credentials: { clientId: 'test-client' },
+        getCredentials: jest.fn().mockResolvedValue(undefined),
+      };
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.Admin] },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getClient();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', clientId: undefined }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const client = {
+        id: 'test',
+        authCallbackUrl: 'https://frontend/auth/callback',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        getCredentials: jest.fn().mockResolvedValue({ clientId: 'test-client' }),
       };
       const req = {
         tenant: {
@@ -309,7 +332,7 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = getClient();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });

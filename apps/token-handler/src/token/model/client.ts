@@ -176,7 +176,7 @@ export class AuthenticationClient {
     }
   }
 
-  private async getCredentials(): Promise<ClientCredentials> {
+  public async getCredentials(): Promise<ClientCredentials> {
     // Lazy load credentials from repository.
     // Note: This object is cached as configuration and update of credentials is handled via cache invalidation.
     if (!this.credentials) {
