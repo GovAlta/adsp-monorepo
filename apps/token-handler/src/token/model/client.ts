@@ -28,6 +28,7 @@ interface OidcClientUpdateResponse {
 interface OidcTokenResponse {
   access_token: string;
   refresh_token: string;
+  id_token?: string;
   expires_in: number;
   refresh_expires_in: number;
 }
@@ -42,6 +43,7 @@ export class AuthenticationClient {
   authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  keycloakLogout: boolean;
   targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
   private strategy: Strategy;
@@ -62,6 +64,7 @@ export class AuthenticationClient {
     this.authCallbackUrl = client.authCallbackUrl;
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
+    this.keycloakLogout = !!client.keycloakLogout;
     this.targets = Object.entries(client.targets).reduce(
       (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
@@ -177,6 +180,29 @@ export class AuthenticationClient {
     }
   }
 
+  /**
+   * Gets the URL to log the user out of access service, which ends the user's single sign on session there.
+   * The URL is for the end session endpoint, and the user is returned to the post logout redirect URI after.
+   *
+   * Returns null if the client is not configured for it, or the ID token of the session is not available.
+   */
+  public async getLogoutUrl(idToken: string, postLogoutRedirectUri: string): Promise<string | null> {
+    if (!this.keycloakLogout || !idToken) {
+      return null;
+    }
+
+    const credentials = await this.getCredentials();
+    if (!credentials) {
+      return null;
+    }
+
+    const url = new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/logout`, this.accessServiceUrl);
+    url.searchParams.set('id_token_hint', idToken);
+    url.searchParams.set('client_id', credentials.clientId);
+    url.searchParams.set('post_logout_redirect_uri', postLogoutRedirectUri);
+    return url.href;
+  }
+
   public async getCredentials(): Promise<ClientCredentials> {
     // Lazy load credentials from repository.
     // Note: This object is cached as configuration and update of credentials is handled via cache invalidation.
@@ -193,7 +219,7 @@ export class AuthenticationClient {
     _iss,
     profile: Record<string, unknown>,
     _context,
-    _idToken,
+    idToken: string | object,
     accessToken: string,
     refreshToken: string,
     verified
@@ -216,6 +242,7 @@ export class AuthenticationClient {
         email: profile['emails']?.[0].value,
         accessToken,
         refreshToken,
+        idToken: typeof idToken === 'string' ? idToken : undefined,
         exp,
         refreshExp,
         authenticatedBy: this.id,
@@ -330,6 +357,10 @@ export class AuthenticationClient {
                     }
                   );
                   generateCsrfToken(req, res);
+
+                  // The user is returned to the site that they logged in from after ending the session in access
+                  // service. The site's callback URL is a valid redirect URI of the client, so its host is known to it.
+                  req.session['postLogoutRedirectUri'] = new URL('/', callbackURL).href;
                   next();
                 } catch (err) {
                   this.logger.warn(
@@ -394,6 +425,9 @@ export class AuthenticationClient {
       const now = Date.now() / 1000;
       req.session['passport'].user.accessToken = data.access_token;
       req.session['passport'].user.refreshToken = data.refresh_token;
+      if (data.id_token) {
+        req.session['passport'].user.idToken = data.id_token;
+      }
       // Expiry values could be decoded from the token instead, but that's extra work.
       req.session['passport'].user.exp = now + data.expires_in;
       req.session['passport'].user.refreshExp = now + data.refresh_expires_in;

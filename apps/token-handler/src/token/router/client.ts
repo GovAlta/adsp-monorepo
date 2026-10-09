@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import { RequestHandler } from 'express-serve-static-core';
 import { body, param, query } from 'express-validator';
 import { PassportStatic } from 'passport';
+import { Logger } from 'winston';
 
 import { TokenHandlerConfiguration } from '../configuration';
 import { clientRegistered } from '../events';
@@ -138,8 +139,45 @@ export function completeAuthenticate(passport: PassportStatic) {
   };
 }
 
-export function logout(): RequestHandler {
-  return function (req, res, next) {
+// Gets the URL to end the session in access service, if the client is configured to; failures do not prevent logout.
+async function getAccessServiceLogoutUrl(req: Request, user: UserSessionData, logger?: Logger): Promise<string | null> {
+  const context = { context: 'ClientRouter', tenant: user.tenantId?.toString() };
+
+  try {
+    const config = await req.getConfiguration<TokenHandlerConfiguration, TokenHandlerConfiguration>();
+    const client = config?.getClient(user.authenticatedBy);
+    if (!client?.keycloakLogout) {
+      return null;
+    }
+
+    // Ending the session in access service ends it for all of the applications that share it, so it is not done
+    // for requests that another site caused the browser to make (e.g. a link or redirect from another site).
+    if (req.get('sec-fetch-site') === 'cross-site') {
+      logger?.warn(`Not ending access service session for cross-site logout request of user (ID: ${user.id}).`, context);
+      return null;
+    }
+
+    const postLogoutRedirectUri = req.session?.['postLogoutRedirectUri'] as string;
+    const logoutUrl = postLogoutRedirectUri ? await client.getLogoutUrl(user.idToken, postLogoutRedirectUri) : null;
+    if (logoutUrl) {
+      logger?.info(`Redirecting user (ID: ${user.id}) to end the access service session.`, context);
+    } else {
+      logger?.warn(
+        `Access service logout is on for client '${client.id}', but is not available for the session of user ` +
+          `(ID: ${user.id}); ending token handler session only.`,
+        context
+      );
+    }
+
+    return logoutUrl;
+  } catch (err) {
+    logger?.warn(`Unable to determine access service logout for user (ID: ${user.id}): ${err}`, context);
+    return null;
+  }
+}
+
+export function logout(logger?: Logger): RequestHandler {
+  return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const user = req.user as UserSessionData;
@@ -151,7 +189,9 @@ export function logout(): RequestHandler {
         throw new InvalidOperationError('User not authenticate by specified client.');
       }
 
-      req.logout((err) => (err ? next(err) : res.redirect('/')));
+      // This needs the user, which is not available after logout.
+      const logoutUrl = await getAccessServiceLogoutUrl(req, user, logger);
+      req.logout((err) => (err ? next(err) : res.redirect(logoutUrl || '/')));
     } catch (err) {
       next(err);
     }
@@ -161,6 +201,7 @@ export function logout(): RequestHandler {
 interface RouterOptions {
   configurationHandler: RequestHandler;
   eventService: EventService;
+  logger?: Logger;
   passport: PassportStatic;
   tenantHandler: RequestHandler;
   tenantService: TenantService;
@@ -169,6 +210,7 @@ interface RouterOptions {
 export function createClientRouter({
   configurationHandler,
   eventService,
+  logger,
   passport,
   tenantHandler,
   tenantService,
@@ -256,7 +298,9 @@ export function createClientRouter({
   router.get(
     '/clients/:id/logout',
     createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
-    logout()
+    rateLimitHandler,
+    configurationHandler,
+    logout(logger)
   );
 
   return router;

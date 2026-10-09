@@ -667,6 +667,8 @@ describe('AuthenticationClient', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(innerHandler).toHaveBeenCalledWith(req, res, expect.any(Function));
       expect(next).toHaveBeenCalledWith();
+      // Where to return the user to when the session in access service is ended.
+      expect(req.session['postLogoutRedirectUri']).toBe('https://frontend/');
     });
 
     it('can handle complete request generate csrf error', async () => {
@@ -858,6 +860,64 @@ describe('AuthenticationClient', () => {
       expect(token).toBe(refreshResponse.access_token);
     });
 
+    it('can keep the ID token up to date', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        { tenantId, id: 'test', name: 'test', targets: {} }
+      );
+
+      const sessionData: Record<string, unknown> = { refreshToken: 'refresh-123', idToken: 'old-id-token' };
+      const req = { user: sessionData, session: { passport: { user: sessionData } } };
+      repositoryMock.get.mockReturnValueOnce({
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      });
+      axiosMock.post.mockResolvedValue({
+        data: {
+          access_token: 'new-access',
+          refresh_token: 'new-refresh',
+          id_token: 'new-id-token',
+          expires_in: 300,
+          refresh_expires_in: 1800,
+        },
+      });
+
+      await client.refreshTokens(req as unknown as Request);
+      expect(sessionData.idToken).toBe('new-id-token');
+    });
+
+    it('can keep the ID token when the response does not include one', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        { tenantId, id: 'test', name: 'test', targets: {} }
+      );
+
+      const sessionData: Record<string, unknown> = { refreshToken: 'refresh-123', idToken: 'old-id-token' };
+      const req = { user: sessionData, session: { passport: { user: sessionData } } };
+      repositoryMock.get.mockReturnValueOnce({
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      });
+      axiosMock.post.mockResolvedValue({
+        data: { access_token: 'new-access', refresh_token: 'new-refresh', expires_in: 300, refresh_expires_in: 1800 },
+      });
+
+      await client.refreshTokens(req as unknown as Request);
+      expect(sessionData.idToken).toBe('old-id-token');
+    });
+
     it('can throw unauthorized for missing credentials', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
@@ -911,6 +971,61 @@ describe('AuthenticationClient', () => {
     });
   });
 
+  describe('getLogoutUrl', () => {
+    const credentials = {
+      realm: tenant.realm,
+      clientId: 'client-123',
+      clientSecret: 'secret secret',
+      registrationUrl: 'http://access-service/registration/clients/client-123',
+      registrationToken: 'reg token 123',
+    };
+
+    const createClient = (keycloakLogout?: boolean) =>
+      new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        { tenantId, id: 'test', name: 'test', keycloakLogout, targets: {} }
+      );
+
+    it('can get the logout URL', async () => {
+      repositoryMock.get.mockReturnValueOnce(credentials);
+
+      const logoutUrl = await createClient(true).getLogoutUrl('id-token', 'https://app.example.ca/');
+
+      const url = new URL(logoutUrl);
+      expect(url.origin + url.pathname).toBe('https://access-service/auth/realms/test/protocol/openid-connect/logout');
+      expect(url.searchParams.get('id_token_hint')).toBe('id-token');
+      expect(url.searchParams.get('client_id')).toBe('client-123');
+      expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://app.example.ca/');
+    });
+
+    it('can encode the values in the logout URL', async () => {
+      repositoryMock.get.mockReturnValueOnce(credentials);
+
+      const logoutUrl = await createClient(true).getLogoutUrl('a.b.c', 'https://app.example.ca/?a=1&b=2');
+
+      expect(new URL(logoutUrl).searchParams.get('post_logout_redirect_uri')).toBe('https://app.example.ca/?a=1&b=2');
+      expect(logoutUrl).not.toContain('a=1&b=2');
+    });
+
+    it.each([undefined, false])('can skip access service logout when not enabled (%s)', async (keycloakLogout) => {
+      expect(await createClient(keycloakLogout).getLogoutUrl('id-token', 'https://app.example.ca/')).toBeNull();
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+    });
+
+    it('can skip access service logout without an ID token', async () => {
+      expect(await createClient(true).getLogoutUrl(undefined, 'https://app.example.ca/')).toBeNull();
+      expect(await createClient(true).getLogoutUrl('', 'https://app.example.ca/')).toBeNull();
+    });
+
+    it('can skip access service logout when the client is not registered', async () => {
+      repositoryMock.get.mockReturnValueOnce(null);
+      expect(await createClient(true).getLogoutUrl('id-token', 'https://app.example.ca/')).toBeNull();
+    });
+  });
+
   describe('verify', () => {
     it('can verify user', () => {
       const client = new AuthenticationClient(
@@ -947,8 +1062,25 @@ describe('AuthenticationClient', () => {
           refreshExp: refresh.exp,
           name: profile.displayName,
           roles: expect.arrayContaining(['tester', 'test:tester']),
+          idToken: 'id-token',
         })
       );
+    });
+
+    it('can ignore an ID token that is not a string', () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        { tenantId, id: 'test', name: 'test', targets: {} }
+      );
+
+      jwtDecodeMock.mockReturnValueOnce({ sub: 'tester', exp: 321 }).mockReturnValueOnce({ exp: 123 });
+
+      const verified = jest.fn();
+      client.verify('test-iss', { displayName: 'Tester' }, {}, { not: 'a string' }, 'access', 'refresh', verified);
+      expect(verified).toHaveBeenCalledWith(null, expect.objectContaining({ idToken: undefined }));
     });
 
     it('can handle token without roles', () => {

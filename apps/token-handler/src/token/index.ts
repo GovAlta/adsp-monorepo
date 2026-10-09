@@ -28,11 +28,12 @@ interface MiddlewareOptions {
 
 export function applyTokenHandlerMiddleware(
   app: Application,
-  { configurationHandler, eventService, passport, sessionStore, tenantHandler, tenantService }: MiddlewareOptions
+  { configurationHandler, eventService, logger, passport, sessionStore, tenantHandler, tenantService }: MiddlewareOptions
 ) {
   const clientRouter = createClientRouter({
     configurationHandler,
     eventService,
+    logger,
     passport,
     tenantHandler,
     tenantService,

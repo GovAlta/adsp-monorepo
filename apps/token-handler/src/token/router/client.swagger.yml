@@ -160,9 +160,14 @@ components:
   get:
     tags:
       - Client
-    description: Completes authentication via the client.
+    description: >-
+      Logs the user out by ending their session in the token handler, and redirects to the root of the site. If the
+      client is configured with keycloakLogout, redirects to the access service end session endpoint instead, which
+      ends the user's session there and returns to the root of the site.
     security:
       - sessionCookie: []
     responses:
-      200:
-        description: Request completed successfully.
+      302:
+        description: User logged out and redirected.
+      400:
+        description: No user is logged in, or the user was not authenticated by the client.
