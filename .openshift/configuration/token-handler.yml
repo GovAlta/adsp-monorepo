@@ -13,6 +13,12 @@ items:
       DIRECTORY_URL: http://directory-service:3333
       DIR_PLATFORM_CONFIGURATION_SERVICE_V2: http://configuration-service:3333/configuration/v2
       LOG_LEVEL: debug
+      # Hosts that target upstreams can use; a comma separated list of host names (optionally with a port), and
+      # '*.example.ca' for subdomains.
+      # Upstreams are not restricted if it is not set. When set, upstreams in the platform namespace (urn:ads:platform:)
+      # are not checked, so cluster internal URLs of platform services do not need to be listed.
+      # Quote the value if it starts with '*', which is otherwise read as a YAML alias.
+      # UPSTREAM_ALLOWED_DOMAINS: '*.example.ca,*.example.org'
   - apiVersion: v1
     kind: Secret
     metadata:

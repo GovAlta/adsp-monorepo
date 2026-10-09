@@ -1,4 +1,4 @@
-import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import * as compression from 'compression';
 import * as express from 'express';
@@ -16,6 +16,7 @@ import {
   TokenHandlerConfiguration,
   applyTokenHandlerMiddleware,
   configurationSchema,
+  createRestrictedDirectory,
 } from './token';
 import { createRedisRepository } from './redis';
 
@@ -33,6 +34,18 @@ const initializeApp = async (): Promise<express.Application> => {
   if (environment.TRUSTED_PROXY) {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
+
+  const allowedUpstreamDomains = environment.UPSTREAM_ALLOWED_DOMAINS;
+  if (allowedUpstreamDomains.length > 0) {
+    logger.info(`Target upstreams are restricted to domains: ${allowedUpstreamDomains.join(', ')}`);
+  } else {
+    logger.warn(
+      'UPSTREAM_ALLOWED_DOMAINS is not set, so target upstreams are not restricted to allowed domains.'
+    );
+  }
+
+  // The directory that is restricted to the allowed upstream domains, created once the directory is available.
+  let upstreamDirectory: ServiceDirectory;
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -84,7 +97,7 @@ const initializeApp = async (): Promise<express.Application> => {
         return new TokenHandlerConfiguration(
           accessServiceUrl,
           logger,
-          directory,
+          (upstreamDirectory ??= createRestrictedDirectory(directory, allowedUpstreamDomains, logger)),
           repository,
           tenantId,
           tenantId

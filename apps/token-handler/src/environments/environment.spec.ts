@@ -60,6 +60,40 @@ describe('environment', () => {
     expect(onInvalid.mock.calls[0][0].STORE_SECRET).toBeInstanceOf(envalid.EnvMissingError);
   });
 
+  it('can default to no allowed upstream domains', () => {
+    const environment = createEnvironment({ ...valid }, onInvalid);
+
+    expect(onInvalid).not.toHaveBeenCalled();
+    expect(environment.UPSTREAM_ALLOWED_DOMAINS).toEqual([]);
+  });
+
+  it('can parse allowed upstream domains', () => {
+    const environment = createEnvironment(
+      { ...valid, UPSTREAM_ALLOWED_DOMAINS: 'form-service, *.apps.example.ca' },
+      onInvalid
+    );
+
+    expect(onInvalid).not.toHaveBeenCalled();
+    expect(environment.UPSTREAM_ALLOWED_DOMAINS).toEqual(['form-service', '*.apps.example.ca']);
+  });
+
+  it('can report invalid allowed upstream domains', () => {
+    createEnvironment({ ...valid, UPSTREAM_ALLOWED_DOMAINS: 'https://user:secret@api.example.ca' }, onInvalid);
+
+    expect(onInvalid).toHaveBeenCalledTimes(1);
+    const errors = onInvalid.mock.calls[0][0];
+    expect(Object.keys(errors)).toEqual(['UPSTREAM_ALLOWED_DOMAINS']);
+    expect(errors['UPSTREAM_ALLOWED_DOMAINS'].message).toContain('position 1');
+    expect(errors['UPSTREAM_ALLOWED_DOMAINS'].message).not.toContain('secret');
+  });
+
+  it('can report allowed upstream domains with no domains', () => {
+    createEnvironment({ ...valid, UPSTREAM_ALLOWED_DOMAINS: ' , ' }, onInvalid);
+
+    expect(onInvalid).toHaveBeenCalledTimes(1);
+    expect(onInvalid.mock.calls[0][0]['UPSTREAM_ALLOWED_DOMAINS'].message).toContain('no domains');
+  });
+
   it('can accept secrets of the minimum length', () => {
     createEnvironment({ ...valid, STORE_SECRET: 'a'.repeat(16) }, onInvalid);
     expect(onInvalid).not.toHaveBeenCalled();
