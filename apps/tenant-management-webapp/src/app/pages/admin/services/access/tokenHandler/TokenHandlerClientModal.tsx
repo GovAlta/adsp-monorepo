@@ -1,6 +1,13 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components';
-import type { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabCheckbox,
+  GoabFormItem,
+  GoabInput,
+  GoabModal,
+} from '@abgov/react-components';
+import type { GoabCheckboxOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { useSelector } from 'react-redux';
 import { toKebabName } from '@lib/kebabName';
 import { RootState } from '@store/index';
@@ -20,6 +27,7 @@ export const TokenHandlerClientModal: FunctionComponent<Props> = ({ client, onSa
   const [successRedirectUrl, setSuccessRedirectUrl] = useState(client?.successRedirectUrl || '');
   const [failureRedirectUrl, setFailureRedirectUrl] = useState(client?.failureRedirectUrl || '');
   const [idpHint, setIdpHint] = useState(client?.idpHint || '');
+  const [keycloakLogout, setKeycloakLogout] = useState(!!client?.keycloakLogout);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const id = isNew ? toKebabName(name.trim()) : client.id;
@@ -47,6 +55,7 @@ export const TokenHandlerClientModal: FunctionComponent<Props> = ({ client, onSa
       successRedirectUrl: successRedirectUrl.trim() || undefined,
       failureRedirectUrl: failureRedirectUrl.trim() || undefined,
       idpHint: idpHint.trim() || undefined,
+      keycloakLogout: keycloakLogout || undefined,
       targets: client?.targets || {},
     });
   };
@@ -94,12 +103,25 @@ export const TokenHandlerClientModal: FunctionComponent<Props> = ({ client, onSa
           testId="failure-redirect-input"
         />
       </GoabFormItem>
-      <GoabFormItem label="IDP hint">
+      <GoabFormItem mb="s" label="IDP hint">
         <GoabInput size="compact" width="100%"
           name="idp-hint"
           value={idpHint}
           onChange={(detail: GoabInputOnChangeDetail) => setIdpHint(detail.value)}
           testId="idp-hint-input"
+        />
+      </GoabFormItem>
+      <GoabFormItem
+        label="Logout"
+        helpText="Also ends the user's session in Keycloak. Add the site's root URL (e.g. https://myapp.example.ca/) to the client's valid post logout redirect URIs in Keycloak first; otherwise users see an error and are not logged out of Keycloak."
+      >
+        <GoabCheckbox
+          size="compact"
+          name="keycloak-logout"
+          checked={keycloakLogout}
+          text="End the Keycloak session on logout"
+          onChange={(detail: GoabCheckboxOnChangeDetail) => setKeycloakLogout(detail.checked)}
+          testId="keycloak-logout-checkbox"
         />
       </GoabFormItem>
     </GoabModal>

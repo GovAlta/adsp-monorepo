@@ -157,6 +157,10 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
               <td>{client.idpHint}</td>
             </tr>
           )}
+          <tr>
+            <td><strong>Keycloak logout</strong></td>
+            <td>{client.keycloakLogout ? 'Ends the Keycloak session' : 'Token handler session only'}</td>
+          </tr>
         </tbody>
       </GoabTable>
 
