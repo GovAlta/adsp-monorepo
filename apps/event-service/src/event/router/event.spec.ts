@@ -5,7 +5,7 @@ import { Logger } from 'winston';
 import { createEventRouter, sendEvent } from '.';
 import { DomainEventService, NamespaceEntity } from '..';
 import { EventLogRepository } from '../repository';
-import { EventServiceRoles, LEGACY_EVENT_LOG_READER_ROLE } from '../role';
+import { EventServiceRoles, EventServiceValueRoles } from '../role';
 import { assertUserCanSend, countEvents } from './event';
 
 describe('event router', () => {
@@ -430,9 +430,9 @@ describe('event router', () => {
       expect(eventLogRepositoryMock.countEvents).not.toHaveBeenCalled();
     });
 
-    it('can pass with the legacy value-reader role', async () => {
+    it('can pass with the value service reader role', async () => {
       const req = {
-        user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [LEGACY_EVENT_LOG_READER_ROLE] },
+        user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceValueRoles.Reader] },
         tenant: { id: tenantId },
         query: {},
       };

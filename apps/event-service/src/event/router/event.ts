@@ -6,7 +6,7 @@ import { NamespaceEntity } from '../model';
 import { AdspId, EventService, isAllowedUser, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
 import { EventLogRepository } from '../repository';
-import { EventServiceRoles, LEGACY_EVENT_LOG_READER_ROLE } from '../role';
+import { EventServiceRoles, EventServiceValueRoles } from '../role';
 
 interface EventRouterProps {
   logger: Logger;
@@ -121,7 +121,7 @@ export function countEvents(logger: Logger, repository: EventLogRepository): Req
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
-      if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, LEGACY_EVENT_LOG_READER_ROLE], true)) {
+      if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
         throw new UnauthorizedUserError('count events', user);
       }
 
