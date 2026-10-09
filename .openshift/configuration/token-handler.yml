@@ -20,6 +20,11 @@ items:
         app: token-handler
         component: api
       name: token-handler
+    # CLIENT_SECRET, STORE_SECRET, SESSION_SECRET and SECRET_SALT are required; the token handler does not start if
+    # one is missing, or if a store or session secret or the salt is shorter than 16 characters. Use long random
+    # values (32 characters or more).
+    # Changing STORE_SECRET or SECRET_SALT makes stored client credentials and sessions unreadable, so registered
+    # clients must be registered again. Changing SESSION_SECRET only ends current sessions.
     stringData:
       CLIENT_ID: urn:ads:platform:token-handler
       CLIENT_SECRET:
