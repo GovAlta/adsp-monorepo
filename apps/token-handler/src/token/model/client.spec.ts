@@ -385,6 +385,98 @@ describe('AuthenticationClient', () => {
       expect(passportMock.authenticate).toHaveBeenCalledWith(expect.any(Strategy), expect.any(Object));
     });
 
+    describe('callback URL', () => {
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+
+      const createClient = () =>
+        new AuthenticationClient(
+          new URL('https://access-service'),
+          loggerMock as unknown as Logger,
+          directoryMock,
+          repositoryMock,
+          { tenantId, id: 'test', name: 'test', targets: {} }
+        );
+
+      const initiate = async (client: AuthenticationClient, callbackUrl: string) => {
+        const handler = await client.authenticate(passportMock as unknown as PassportStatic);
+        const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: { callbackUrl }, session: {} };
+        await handler(req as unknown as Request, {} as unknown as Response, jest.fn());
+      };
+
+      beforeEach(() => {
+        passportMock.authenticate.mockReset();
+        passportMock.authenticate.mockReturnValue(jest.fn());
+      });
+
+      it('can provide the callback URL on initiate', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+
+        await initiate(createClient(), 'https://app-a/callback');
+
+        expect(passportMock.authenticate).toHaveBeenCalledWith(
+          expect.any(Strategy),
+          expect.objectContaining({ callbackURL: 'https://app-a/callback' })
+        );
+      });
+
+      it('can provide the callback URL from the session on complete', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const client = createClient();
+
+        const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
+        const req = { protocol: 'https', get: jest.fn(() => 'frontend'), session: { callbackUrl: 'https://app-a/callback' } };
+        await handler(req as unknown as Request, {} as unknown as Response, jest.fn());
+
+        expect(passportMock.authenticate).toHaveBeenCalledWith(
+          expect.any(Strategy),
+          expect.objectContaining({ callbackURL: 'https://app-a/callback' })
+        );
+      });
+
+      it('can use one strategy for different callback URLs', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const client = createClient();
+
+        await initiate(client, 'https://app-a/callback');
+        await initiate(client, 'https://app-b/callback');
+
+        const [first, second] = passportMock.authenticate.mock.calls;
+        expect(first[0]).toBe(second[0]);
+        expect(first[1].callbackURL).toBe('https://app-a/callback');
+        expect(second[1].callbackURL).toBe('https://app-b/callback');
+        expect(repositoryMock.get).toHaveBeenCalledTimes(1);
+      });
+
+      it('can create a new strategy after registration', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const client = createClient();
+        await initiate(client, 'https://app-a/callback');
+
+        axiosMock.post.mockResolvedValueOnce({
+          data: {
+            client_id: 'client-456',
+            client_secret: 'new secret',
+            registration_client_uri: 'http://access-service/registration/clients/client-456',
+            registration_access_token: 'new reg token',
+          },
+        });
+        axiosMock.delete.mockRejectedValueOnce(new Error('failed'));
+        (repositoryMock.save as jest.Mock).mockImplementationOnce((_client, saved) => Promise.resolve(saved));
+        await client.register(tenant, 'abc-123');
+
+        await initiate(client, 'https://app-a/callback');
+
+        const [first, second] = passportMock.authenticate.mock.calls;
+        expect(first[0]).not.toBe(second[0]);
+      });
+    });
+
     it('can create authenticate handler with idp hint', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),

@@ -3,8 +3,8 @@ import { InvalidOperationError, UnauthorizedError } from '@core-services/core-co
 import axios, { isAxiosError } from 'axios';
 import { Request, RequestHandler } from 'express';
 import jwtDecode from 'jwt-decode';
-import { PassportStatic, Strategy } from 'passport';
-import { Strategy as OidcStrategy } from 'passport-openidconnect';
+import { AuthenticateOptions, PassportStatic, Strategy } from 'passport';
+import { AuthenticateOptions as OidcAuthenticateOptions, Strategy as OidcStrategy } from 'passport-openidconnect';
 import * as qs from 'qs';
 import { Logger } from 'winston';
 
@@ -44,7 +44,7 @@ export class AuthenticationClient {
   failureRedirectUrl?: string;
   targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
-  private strategies = new Map<string, Strategy>();
+  private strategy: Strategy;
 
   constructor(
     private accessServiceUrl: URL,
@@ -96,6 +96,8 @@ export class AuthenticationClient {
       };
 
       this.credentials = await this.repository.save(this, credentials);
+      // The strategy is configured with the credentials, so it needs to be recreated.
+      this.strategy = undefined;
 
       this.logger.info(
         `Registered client ${this.id} on client ID ${this.credentials.clientId} and registration URL: ${this.credentials.registrationUrl}.`,
@@ -111,7 +113,6 @@ export class AuthenticationClient {
           await axios.delete(original.registrationUrl, {
             headers: { Authorization: `Bearer ${original.registrationToken}` },
           });
-          this.strategies.clear();
         } catch (err) {
           this.logger.warn(
             `Delete of existing client registration at "${original.registrationUrl}" failed with error: ${err}`,
@@ -229,42 +230,40 @@ export class AuthenticationClient {
     }
   };
 
-  private async getStrategy(callbackURL: string): Promise<Strategy> {
-    if (!this.strategies.has(callbackURL)) {
+  private async getStrategy(): Promise<Strategy> {
+    if (!this.strategy) {
       const credentials = await this.getCredentials();
       if (!credentials) {
         throw new InvalidOperationError('Cannot use client to authenticate before registration.');
       }
 
-      this.strategies.set(
-        callbackURL,
-        new OidcStrategy(
-          {
-            issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
-            authorizationURL: new URL(
-              `/auth/realms/${credentials.realm}/protocol/openid-connect/auth${
-                this.idpHint ? `?kc_idp_hint=${this.idpHint}` : ''
-              }`,
-              this.accessServiceUrl
-            ).href,
-            tokenURL: new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl)
-              .href,
-            userInfoURL: new URL(
-              `/auth/realms/${credentials.realm}/protocol/openid-connect/userinfo`,
-              this.accessServiceUrl
-            ).href,
-            clientID: credentials.clientId,
-            clientSecret: credentials.clientSecret,
-            callbackURL,
-            prompt: this.prompt,
-            scope: this.scope,
-          },
-          this.verify
-        )
+      this.strategy = new OidcStrategy(
+        {
+          issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
+          authorizationURL: new URL(
+            `/auth/realms/${credentials.realm}/protocol/openid-connect/auth${
+              this.idpHint ? `?kc_idp_hint=${this.idpHint}` : ''
+            }`,
+            this.accessServiceUrl
+          ).href,
+          tokenURL: new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl)
+            .href,
+          userInfoURL: new URL(
+            `/auth/realms/${credentials.realm}/protocol/openid-connect/userinfo`,
+            this.accessServiceUrl
+          ).href,
+          clientID: credentials.clientId,
+          clientSecret: credentials.clientSecret,
+          // The callback URL is specific to the request and is provided on each authenticate call.
+          callbackURL: '',
+          prompt: this.prompt,
+          scope: this.scope,
+        },
+        this.verify
       );
     }
 
-    return this.strategies.get(callbackURL);
+    return this.strategy;
   }
 
   public async authenticate(passport: PassportStatic, complete = false): Promise<RequestHandler> {
@@ -294,10 +293,13 @@ export class AuthenticationClient {
           }
         }
 
-        const strategy = await this.getStrategy(callbackURL);
-        const authenticateHandler = passport.authenticate(strategy, {
+        const strategy = await this.getStrategy();
+        // The callback URL is provided per request, so the same strategy can be used for different callback URLs.
+        const options: AuthenticateOptions & OidcAuthenticateOptions = {
+          callbackURL,
           failureRedirect: this.failureRedirectUrl,
-        });
+        };
+        const authenticateHandler = passport.authenticate(strategy, options);
 
         authenticateHandler(
           req,
