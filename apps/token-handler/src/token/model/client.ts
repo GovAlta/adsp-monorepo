@@ -3,8 +3,8 @@ import { InvalidOperationError, UnauthorizedError } from '@core-services/core-co
 import axios, { isAxiosError } from 'axios';
 import { Request, RequestHandler } from 'express';
 import jwtDecode from 'jwt-decode';
-import { PassportStatic, Strategy } from 'passport';
-import { Strategy as OidcStrategy } from 'passport-openidconnect';
+import { AuthenticateOptions, PassportStatic, Strategy } from 'passport';
+import { AuthenticateOptions as OidcAuthenticateOptions, Strategy as OidcStrategy } from 'passport-openidconnect';
 import * as qs from 'qs';
 import { Logger } from 'winston';
 
@@ -17,6 +17,11 @@ interface OidcClientRegistrationResponse {
   client_id: string;
   client_secret: string;
   registration_client_uri: string;
+  registration_access_token: string;
+}
+
+interface OidcClientUpdateResponse {
+  client_id: string;
   registration_access_token: string;
 }
 
@@ -34,14 +39,12 @@ export class AuthenticationClient {
   prompt: Prompt;
   scope: string | string[];
   idpHint: string;
-  authCallbackUrl: string;
-  disableVerifyHost: boolean;
+  authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
   targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
   private strategy: Strategy;
-  private callbackUrl: URL;
 
   constructor(
     private accessServiceUrl: URL,
@@ -57,17 +60,15 @@ export class AuthenticationClient {
     this.scope = client.scope;
     this.idpHint = client.idpHint;
     this.authCallbackUrl = client.authCallbackUrl;
-    this.disableVerifyHost = !!client.disableVerifyHost;
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
     this.targets = Object.entries(client.targets).reduce(
       (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
     );
-    this.callbackUrl = new URL(this.authCallbackUrl);
   }
 
-  public async register(tenant: Tenant, registrationToken: string) {
+  public async register(tenant: Tenant, registrationToken: string, authCallbackUrl?: string) {
     this.logger.debug(`Registering client ${this.id}...`, {
       context: 'ClientRegistrationEntity',
       tenant: this.tenantId.toString(),
@@ -80,7 +81,7 @@ export class AuthenticationClient {
           client_name: this.id,
           token_endpoint_auth_method: 'client_secret_basic',
           grant_types: ['authorization_code', 'refresh_token'],
-          redirect_uris: [this.authCallbackUrl],
+          redirect_uris: authCallbackUrl ? [authCallbackUrl] : [],
         },
         { headers: { Authorization: `Bearer ${registrationToken}` } }
       );
@@ -95,6 +96,8 @@ export class AuthenticationClient {
       };
 
       this.credentials = await this.repository.save(this, credentials);
+      // The strategy is configured with the credentials, so it needs to be recreated.
+      this.strategy = undefined;
 
       this.logger.info(
         `Registered client ${this.id} on client ID ${this.credentials.clientId} and registration URL: ${this.credentials.registrationUrl}.`,
@@ -110,7 +113,6 @@ export class AuthenticationClient {
           await axios.delete(original.registrationUrl, {
             headers: { Authorization: `Bearer ${original.registrationToken}` },
           });
-          this.strategy = null;
         } catch (err) {
           this.logger.warn(
             `Delete of existing client registration at "${original.registrationUrl}" failed with error: ${err}`,
@@ -129,11 +131,59 @@ export class AuthenticationClient {
     }
   }
 
-  private async getCredentials(): Promise<ClientCredentials> {
+  public async updateRegistration(redirectUris: string[]) {
+    this.logger.debug(`Updating registration for client ${this.id}...`, {
+      context: 'ClientRegistrationEntity',
+      tenant: this.tenantId.toString(),
+    });
+
+    const credentials = await this.getCredentials();
+    if (!credentials) {
+      throw new InvalidOperationError('Client not registered.');
+    }
+
+    try {
+      const { data } = await axios.put<OidcClientUpdateResponse>(
+        credentials.registrationUrl,
+        {
+          client_id: credentials.clientId,
+          client_name: this.id,
+          token_endpoint_auth_method: 'client_secret_basic',
+          grant_types: ['authorization_code', 'refresh_token'],
+          redirect_uris: redirectUris,
+        },
+        { headers: { Authorization: `Bearer ${credentials.registrationToken}` } }
+      );
+
+      const updated = {
+        ...credentials,
+        registrationToken: data.registration_access_token,
+      };
+
+      this.credentials = await this.repository.save(this, updated);
+
+      this.logger.info(`Updated registration for client ${this.id}.`, {
+        context: 'ClientRegistrationEntity',
+        tenant: this.tenantId.toString(),
+      });
+
+      return this.credentials;
+    } catch (err) {
+      if (isAxiosError(err) && err.response.status === 401) {
+        throw new InvalidOperationError('Update request failed. Registration token may be expired.');
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  public async getCredentials(): Promise<ClientCredentials> {
     // Lazy load credentials from repository.
     // Note: This object is cached as configuration and update of credentials is handled via cache invalidation.
     if (!this.credentials) {
-      this.credentials = await this.repository.get(this);
+      const loaded = await this.repository.get(this);
+      // Credentials saved by a registration while loading are newer than the loaded credentials.
+      this.credentials = this.credentials ?? loaded;
     }
 
     return this.credentials;
@@ -183,14 +233,13 @@ export class AuthenticationClient {
   };
 
   private async getStrategy(): Promise<Strategy> {
-    // Lazy create the strategy;
     if (!this.strategy) {
       const credentials = await this.getCredentials();
       if (!credentials) {
         throw new InvalidOperationError('Cannot use client to authenticate before registration.');
       }
 
-      this.strategy = new OidcStrategy(
+      const strategy = new OidcStrategy(
         {
           issuer: new URL(`/auth/realms/${credentials.realm}`, this.accessServiceUrl).href,
           authorizationURL: new URL(
@@ -207,12 +256,22 @@ export class AuthenticationClient {
           ).href,
           clientID: credentials.clientId,
           clientSecret: credentials.clientSecret,
-          callbackURL: this.callbackUrl.href,
+          // The callback URL is specific to the request and is provided on each authenticate call.
+          callbackURL: '',
+          // Send a nonce with the authorization request and verify it in the ID token. The library only uses the
+          // option as a flag, and the value is typed as a string.
+          nonce: 'true',
           prompt: this.prompt,
           scope: this.scope,
         },
         this.verify
       );
+
+      // Only cache the strategy if the credentials were not replaced by a registration while it was created.
+      if (this.credentials !== credentials) {
+        return strategy;
+      }
+      this.strategy = strategy;
     }
 
     return this.strategy;
@@ -224,58 +283,83 @@ export class AuthenticationClient {
       tenant: this.tenantId?.toString(),
     });
 
-    const strategy = await this.getStrategy();
-    const authenticateHandler = passport.authenticate(strategy, {
-      failureRedirect: this.failureRedirectUrl,
-    });
+    return async (req, res, next) => {
+      try {
+        let callbackURL: string;
+        if (!complete) {
+          const queryCallbackUrl = req.query.callbackUrl as string;
+          if (queryCallbackUrl) {
+            callbackURL = queryCallbackUrl;
+          } else if (this.authCallbackUrl) {
+            const { pathname } = new URL(this.authCallbackUrl);
+            callbackURL = `${req.protocol}://${req.get('host')}${pathname}`;
+          } else {
+            throw new InvalidOperationError('callbackUrl query parameter or authCallbackUrl config is required.');
+          }
+          req.session['callbackUrl'] = callbackURL;
+        } else {
+          callbackURL = req.session['callbackUrl'] as string;
+          if (!callbackURL) {
+            throw new InvalidOperationError('No callback URL in session.');
+          }
+        }
 
-    return (req, res, next) => {
-      if (!this.disableVerifyHost && req.hostname !== this.callbackUrl.hostname) {
-        throw new InvalidOperationError('Request not to allowed host.');
-      }
+        const strategy = await this.getStrategy();
+        // The callback URL is provided per request, so the same strategy can be used for different callback URLs.
+        const options: AuthenticateOptions & OidcAuthenticateOptions = {
+          callbackURL,
+          failureRedirect: this.failureRedirectUrl,
+        };
+        const authenticateHandler = passport.authenticate(strategy, options);
 
-      authenticateHandler(
-        req,
-        res,
-        complete
-          ? () => {
-              try {
-                // Set the maxAge based on the expiry time of the refresh token.
-                const { id, name, refreshExp } = req.user as UserSessionData;
-                req.session.cookie.maxAge = (refreshExp - 60) * 1000 - Date.now();
+        authenticateHandler(
+          req,
+          res,
+          complete
+            ? () => {
+                try {
+                  // Set the maxAge based on the expiry time of the refresh token.
+                  const { id, name, refreshExp } = req.user as UserSessionData;
+                  req.session.cookie.maxAge = (refreshExp - 60) * 1000 - Date.now();
 
-                this.logger.info(
-                  `Authenticated user '${name}' (ID: ${id}) on client '${this.id}' (clientID: ${this.credentials?.clientId}).`,
-                  {
-                    context: 'AuthenticationClient',
-                    tenant: this.tenantId?.toString(),
-                  }
-                );
-                generateCsrfToken(req, res);
-                next();
-              } catch (err) {
-                this.logger.warn(
-                  `Error encountered setting CSRF token on authenticated user: ${err}. Terminating session.`
-                );
+                  this.logger.info(
+                    `Authenticated user '${name}' (ID: ${id}) on client '${this.id}' (clientID: ${this.credentials?.clientId}).`,
+                    {
+                      context: 'AuthenticationClient',
+                      tenant: this.tenantId?.toString(),
+                    }
+                  );
+                  generateCsrfToken(req, res);
+                  next();
+                } catch (err) {
+                  this.logger.warn(
+                    `Error encountered setting CSRF token on authenticated user: ${err}. Terminating session.`
+                  );
 
-                req.logout((logoutErr) => {
-                  if (!logoutErr) {
-                    this.logger.info(`Ended session for user (ID: ${req.user?.id}).`, {
-                      context: 'ClientRegistrationEntity',
-                      tenant: this.tenantId.toString(),
-                    });
-                  } else {
-                    this.logger.warn(`Error encountered ending session for user (ID: ${req.user?.id}): ${logoutErr}`, {
-                      context: 'ClientRegistrationEntity',
-                      tenant: this.tenantId.toString(),
-                    });
-                  }
-                  next(err);
-                });
+                  req.logout((logoutErr) => {
+                    if (!logoutErr) {
+                      this.logger.info(`Ended session for user (ID: ${req.user?.id}).`, {
+                        context: 'ClientRegistrationEntity',
+                        tenant: this.tenantId.toString(),
+                      });
+                    } else {
+                      this.logger.warn(
+                        `Error encountered ending session for user (ID: ${req.user?.id}): ${logoutErr}`,
+                        {
+                          context: 'ClientRegistrationEntity',
+                          tenant: this.tenantId.toString(),
+                        }
+                      );
+                    }
+                    next(err);
+                  });
+                }
               }
-            }
-          : next
-      );
+            : next
+        );
+      } catch (err) {
+        next(err);
+      }
     };
   }
 

@@ -4,7 +4,7 @@ import * as cors from 'cors';
 import { json, NextFunction, Request, Response, Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { RequestHandler } from 'express-serve-static-core';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { PassportStatic } from 'passport';
 
 import { TokenHandlerConfiguration } from '../configuration';
@@ -15,6 +15,10 @@ import { createTenantHandler } from '../tenant';
 import { UserSessionData } from '../types';
 
 const CLIENT = 'tk_client';
+// Redirect URIs are registered as valid redirect URIs in Keycloak, so register and update share one definition.
+// Hosts without a top level domain (e.g. localhost) are allowed for local development.
+const REDIRECT_URI_OPTIONS = { require_tld: false, require_protocol: true, protocols: ['http', 'https'] };
+
 export function getAuthenticationClient() {
   return async function (req: Request, _res: Response, next: NextFunction) {
     try {
@@ -37,7 +41,7 @@ export function getAuthenticationClient() {
 export function registerClient(eventService: EventService): RequestHandler {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
-      const { registrationToken } = req.body;
+      const { registrationToken, authCallbackUrl } = req.body;
       const user = req.user;
       const tenant = req.tenant;
 
@@ -46,7 +50,7 @@ export function registerClient(eventService: EventService): RequestHandler {
       }
 
       const client = req[CLIENT] as AuthenticationClient;
-      const result = await client.register(tenant, registrationToken);
+      const result = await client.register(tenant, registrationToken, authCallbackUrl);
 
       res.send({ registered: !!result.clientId });
 
@@ -57,8 +61,31 @@ export function registerClient(eventService: EventService): RequestHandler {
   };
 }
 
+export function updateClient(eventService: EventService): RequestHandler {
+  return async function (req: Request, res: Response, next: NextFunction) {
+    try {
+      const { redirectUris } = req.body;
+      const user = req.user;
+      const tenant = req.tenant;
+
+      if (!isAllowedUser(user, tenant.id, ServiceRoles.Admin)) {
+        throw new UnauthorizedUserError('update client', user);
+      }
+
+      const client = req[CLIENT] as AuthenticationClient;
+      await client.updateRegistration(redirectUris);
+
+      res.send({ updated: true });
+
+      eventService.send(clientRegistered(client, user));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function getClient(): RequestHandler {
-  return function (req, res, next) {
+  return async function (req, res, next) {
     try {
       const user = req.user;
 
@@ -66,9 +93,10 @@ export function getClient(): RequestHandler {
         throw new UnauthorizedUserError('get client', user);
       }
 
-      const { id, authCallbackUrl, successRedirectUrl, failureRedirectUrl, credentials, ..._ } = req[
-        CLIENT
-      ] as AuthenticationClient;
+      const client = req[CLIENT] as AuthenticationClient;
+      const { id, authCallbackUrl, successRedirectUrl, failureRedirectUrl } = client;
+      // Credentials are lazy loaded, so they must be requested to know if the client is registered.
+      const credentials = await client.getCredentials();
       res.send({
         id,
         authCallbackUrl,
@@ -155,13 +183,30 @@ export function createClientRouter({
     json({ limit: '1mb' }),
     createValidationHandler(
       param('id').isString().isLength({ min: 1, max: 50 }),
-      body('registrationToken').isString().isLength({ min: 1, max: 8192 })
+      body('registrationToken').isString().isLength({ min: 1, max: 8192 }),
+      body('authCallbackUrl').optional().isURL(REDIRECT_URI_OPTIONS).isLength({ min: 1, max: 2048 })
     ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
     configurationHandler,
     getAuthenticationClient(),
     registerClient(eventService)
+  );
+
+  router.put(
+    '/clients/:id',
+    cors(),
+    json({ limit: '1mb' }),
+    createValidationHandler(
+      param('id').isString().isLength({ min: 1, max: 50 }),
+      body('redirectUris').isArray({ min: 1 }),
+      body('redirectUris.*').isURL(REDIRECT_URI_OPTIONS).isLength({ min: 1, max: 2048 })
+    ),
+    passport.authenticate('tenant', { session: false }),
+    tenantHandler,
+    configurationHandler,
+    getAuthenticationClient(),
+    updateClient(eventService)
   );
 
   router.get(
@@ -187,7 +232,10 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id/auth',
-    createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
+    createValidationHandler(
+      param('id').isString().isLength({ min: 1, max: 50 }),
+      query('callbackUrl').optional().isString().isURL(REDIRECT_URI_OPTIONS).isLength({ max: 2048 })
+    ),
     rateLimitHandler,
     proxyTenantHandler,
     configurationHandler,

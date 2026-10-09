@@ -127,6 +127,14 @@ export const ChatPane = styled.div`
   flex-direction: column;
   padding: 0.75rem 0.75rem 1rem;
   box-sizing: border-box;
+
+  /* AgentChat's root sets height: 100%, which overflows the pane when a sibling (the preview error
+     notice) sits above it. Size it to the remaining space instead. */
+  & > :last-child {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+  }
 `;
 
 export const PreviewErrorNotice = styled.div`

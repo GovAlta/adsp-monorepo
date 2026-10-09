@@ -1,12 +1,8 @@
 import emptyStateHtml from './builderPreview.empty.html';
 import scaffoldHtml from './builderPreview.scaffold.html';
 import { createPreviewScript } from './builderPreview.scaffold';
+import { TEMPLATE_VENDOR_BUNDLES } from './templateBundles';
 import { type WorkspaceFileMap } from './builderWorkspace';
-
-// Maps previewTemplateId values to their vendor bundle asset paths.
-const TEMPLATE_VENDOR_BUNDLES: Record<string, string> = {
-  react: 'assets/template-bundles/react/vendors.js',
-};
 
 function detectVendorBundleUrl(files: WorkspaceFileMap): string | null {
   const pkgContent = files['package.json'];

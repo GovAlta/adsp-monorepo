@@ -1,6 +1,6 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
-export const Page = styled.main`
+export const Page = styled.main<{ $previewFullWidth?: boolean }>`
   --builder-bg: var(--goa-color-greyscale-white);
   --builder-panel: rgba(255, 255, 255, 0.95);
   --builder-ink: var(--goa-color-text-default);
@@ -38,6 +38,12 @@ export const Page = styled.main`
   @media (max-width: 900px) {
     --builder-preview-right-gutter: 0;
   }
+
+  ${({ $previewFullWidth }) =>
+    $previewFullWidth &&
+    css`
+      --builder-preview-right-gutter: 0;
+    `}
 `;
 
 export const Shell = styled.section`

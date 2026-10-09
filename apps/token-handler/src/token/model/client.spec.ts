@@ -96,8 +96,41 @@ describe('AuthenticationClient', () => {
       axiosMock.post.mockResolvedValueOnce({ data: registration });
       repositoryMock.get.mockResolvedValueOnce(null);
 
+      const result = await client.register(tenant, 'abc-123', 'https://frontend/callback');
+      expect(result).toBeTruthy();
+    });
+
+    it('can register client without redirect URI', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          targets: {},
+        }
+      );
+
+      axiosMock.post.mockResolvedValueOnce({
+        data: {
+          client_id: 'test-123',
+          client_secret: 'secret secret',
+          registration_client_uri: 'http://access-service/registration/clients/test-123',
+          registration_access_token: 'reg token 123',
+        },
+      });
+      repositoryMock.get.mockResolvedValueOnce(null);
+
       const result = await client.register(tenant, 'abc-123');
       expect(result).toBeTruthy();
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ redirect_uris: [] }),
+        expect.anything()
+      );
     });
 
     it('can throw invalid operation for unauthorized registration response', async () => {
@@ -120,7 +153,9 @@ describe('AuthenticationClient', () => {
       );
       axiosMock.isAxiosError.mockReturnValueOnce(true);
 
-      await expect(client.register(tenant, 'abc-123')).rejects.toThrow(InvalidOperationError);
+      await expect(client.register(tenant, 'abc-123', 'https://frontend/callback')).rejects.toThrow(
+        InvalidOperationError
+      );
     });
 
     it('can passthrough error for failed registration response', async () => {
@@ -140,7 +175,7 @@ describe('AuthenticationClient', () => {
 
       axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
 
-      await expect(client.register(tenant, 'abc-123')).rejects.toThrow(Error);
+      await expect(client.register(tenant, 'abc-123', 'https://frontend/callback')).rejects.toThrow(Error);
     });
 
     it('can delete existing', async () => {
@@ -175,7 +210,7 @@ describe('AuthenticationClient', () => {
       };
       repositoryMock.get.mockReturnValueOnce(original);
 
-      await client.register(tenant, 'abc-123');
+      await client.register(tenant, 'abc-123', 'https://frontend/callback');
       expect(axios.delete).toHaveBeenCalledWith(
         original.registrationUrl,
         expect.objectContaining({
@@ -218,7 +253,98 @@ describe('AuthenticationClient', () => {
 
       axiosMock.delete.mockRejectedValueOnce(new Error('oh noes!'));
 
-      await client.register(tenant, 'abc-123');
+      await client.register(tenant, 'abc-123', 'https://frontend/callback');
+    });
+  });
+
+  describe('updateRegistration', () => {
+    it('can update registration', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+      repositoryMock.get.mockResolvedValueOnce(credentials);
+      axiosMock.put.mockResolvedValueOnce({
+        data: { client_id: 'client-123', registration_access_token: 'new-reg-token' },
+      });
+
+      const result = await client.updateRegistration(['https://frontend/callback', 'http://localhost:4200/callback']);
+      expect(result).toBeTruthy();
+      expect(axios.put).toHaveBeenCalledWith(
+        credentials.registrationUrl,
+        expect.objectContaining({ redirect_uris: ['https://frontend/callback', 'http://localhost:4200/callback'] }),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: `Bearer ${credentials.registrationToken}` }),
+        })
+      );
+    });
+
+    it('can throw invalid operation for no credentials', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      repositoryMock.get.mockResolvedValueOnce(null);
+
+      await expect(client.updateRegistration(['https://frontend/callback'])).rejects.toThrow(InvalidOperationError);
+    });
+
+    it('can throw invalid operation for unauthorized update response', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          targets: {},
+        }
+      );
+
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+      repositoryMock.get.mockResolvedValueOnce(credentials);
+      axiosMock.put.mockRejectedValueOnce(
+        new AxiosError('oh noes!', null, null, {}, { status: 401 } as unknown as AxiosResponse)
+      );
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+
+      await expect(client.updateRegistration(['https://frontend/callback'])).rejects.toThrow(InvalidOperationError);
     });
   });
 
@@ -247,9 +373,159 @@ describe('AuthenticationClient', () => {
       };
       repositoryMock.get.mockReturnValueOnce(credentials);
 
+      const innerHandler = jest.fn();
+      passportMock.authenticate.mockReturnValueOnce(innerHandler);
       const handler = await client.authenticate(passportMock as unknown as PassportStatic);
-      expect(handler).toBeTruthy();
+
+      const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: { callbackUrl: 'https://frontend/callback' }, session: {} };
+      const res = {};
+      const next = jest.fn();
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(passportMock.authenticate).toHaveBeenCalledWith(expect.any(Strategy), expect.any(Object));
+    });
+
+    describe('callback URL', () => {
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+
+      const createClient = () =>
+        new AuthenticationClient(
+          new URL('https://access-service'),
+          loggerMock as unknown as Logger,
+          directoryMock,
+          repositoryMock,
+          { tenantId, id: 'test', name: 'test', targets: {} }
+        );
+
+      const initiate = async (client: AuthenticationClient, callbackUrl: string) => {
+        const handler = await client.authenticate(passportMock as unknown as PassportStatic);
+        const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: { callbackUrl }, session: {} };
+        await handler(req as unknown as Request, {} as unknown as Response, jest.fn());
+      };
+
+      beforeEach(() => {
+        passportMock.authenticate.mockReset();
+        passportMock.authenticate.mockReturnValue(jest.fn());
+      });
+
+      it('can provide the callback URL on initiate', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+
+        await initiate(createClient(), 'https://app-a/callback');
+
+        expect(passportMock.authenticate).toHaveBeenCalledWith(
+          expect.any(Strategy),
+          expect.objectContaining({ callbackURL: 'https://app-a/callback' })
+        );
+      });
+
+      it('can provide the callback URL from the session on complete', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const client = createClient();
+
+        const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
+        const req = { protocol: 'https', get: jest.fn(() => 'frontend'), session: { callbackUrl: 'https://app-a/callback' } };
+        await handler(req as unknown as Request, {} as unknown as Response, jest.fn());
+
+        expect(passportMock.authenticate).toHaveBeenCalledWith(
+          expect.any(Strategy),
+          expect.objectContaining({ callbackURL: 'https://app-a/callback' })
+        );
+      });
+
+      it('can use one strategy for different callback URLs', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const client = createClient();
+
+        await initiate(client, 'https://app-a/callback');
+        await initiate(client, 'https://app-b/callback');
+
+        const [first, second] = passportMock.authenticate.mock.calls;
+        expect(first[0]).toBe(second[0]);
+        expect(first[1].callbackURL).toBe('https://app-a/callback');
+        expect(second[1].callbackURL).toBe('https://app-b/callback');
+        expect(repositoryMock.get).toHaveBeenCalledTimes(1);
+      });
+
+      it('can keep registered credentials when loading credentials completes after registration', async () => {
+        let resolveLoad: (value: unknown) => void;
+        repositoryMock.get.mockReturnValueOnce(new Promise((resolve) => (resolveLoad = resolve)));
+        repositoryMock.get.mockReturnValueOnce(null);
+        const client = createClient();
+
+        // Blocks while the credentials are loaded.
+        const initiated = initiate(client, 'https://app-a/callback');
+
+        axiosMock.post.mockResolvedValueOnce({
+          data: {
+            client_id: 'client-456',
+            client_secret: 'new secret',
+            registration_client_uri: 'http://access-service/registration/clients/client-456',
+            registration_access_token: 'new reg token',
+          },
+        });
+        (repositoryMock.save as jest.Mock).mockImplementationOnce((_client, saved) => Promise.resolve(saved));
+        await client.register(tenant, 'abc-123');
+
+        resolveLoad(credentials);
+        await initiated;
+        await initiate(client, 'https://app-a/callback');
+
+        for (const [strategy] of passportMock.authenticate.mock.calls) {
+          expect(strategy._oauth2._clientId).toBe('client-456');
+        }
+      });
+
+      it('can send a nonce in the authorization request and keep it for verification', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        await initiate(createClient(), 'https://app-a/callback');
+
+        // Passport authenticates with a per request copy of the strategy.
+        const strategy = Object.create(passportMock.authenticate.mock.calls[0][0]);
+        strategy.redirect = jest.fn();
+        strategy.error = jest.fn();
+        strategy.fail = jest.fn();
+
+        const session: Record<string, unknown> = {};
+        strategy.authenticate({ query: {}, session, headers: {} }, { callbackURL: 'https://app-a/callback' });
+
+        expect(strategy.error).not.toHaveBeenCalled();
+        expect(strategy.redirect).toHaveBeenCalledTimes(1);
+        const location = new URL(strategy.redirect.mock.calls[0][0]);
+        const nonce = location.searchParams.get('nonce');
+        expect(nonce).toBeTruthy();
+        expect(location.searchParams.get('redirect_uri')).toBe('https://app-a/callback');
+        expect(JSON.stringify(session)).toContain(nonce);
+      });
+
+      it('can create a new strategy after registration', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const client = createClient();
+        await initiate(client, 'https://app-a/callback');
+
+        axiosMock.post.mockResolvedValueOnce({
+          data: {
+            client_id: 'client-456',
+            client_secret: 'new secret',
+            registration_client_uri: 'http://access-service/registration/clients/client-456',
+            registration_access_token: 'new reg token',
+          },
+        });
+        axiosMock.delete.mockRejectedValueOnce(new Error('failed'));
+        (repositoryMock.save as jest.Mock).mockImplementationOnce((_client, saved) => Promise.resolve(saved));
+        await client.register(tenant, 'abc-123');
+
+        await initiate(client, 'https://app-a/callback');
+
+        const [first, second] = passportMock.authenticate.mock.calls;
+        expect(first[0]).not.toBe(second[0]);
+      });
     });
 
     it('can create authenticate handler with idp hint', async () => {
@@ -277,12 +553,19 @@ describe('AuthenticationClient', () => {
       };
       repositoryMock.get.mockReturnValueOnce(credentials);
 
+      const innerHandler = jest.fn();
+      passportMock.authenticate.mockReturnValueOnce(innerHandler);
       const handler = await client.authenticate(passportMock as unknown as PassportStatic);
-      expect(handler).toBeTruthy();
+
+      const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: { callbackUrl: 'https://frontend/callback' }, session: {} };
+      const res = {};
+      const next = jest.fn();
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(passportMock.authenticate).toHaveBeenCalledWith(expect.any(Strategy), expect.any(Object));
     });
 
-    it('can throw invalid operation for no credentials', async () => {
+    it('can call next with invalid operation for no credentials', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
@@ -299,9 +582,13 @@ describe('AuthenticationClient', () => {
 
       repositoryMock.get.mockReturnValueOnce(null);
 
-      await expect(client.authenticate(passportMock as unknown as PassportStatic)).rejects.toThrow(
-        InvalidOperationError
-      );
+      const handler = await client.authenticate(passportMock as unknown as PassportStatic);
+      const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: { callbackUrl: 'https://frontend/callback' }, session: {} };
+      const res = {};
+      const next = jest.fn();
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
     it('can handle initiate request', async () => {
@@ -332,11 +619,11 @@ describe('AuthenticationClient', () => {
       passportMock.authenticate.mockReturnValueOnce(innerHandler);
       const handler = await client.authenticate(passportMock as unknown as PassportStatic);
 
-      const req = { hostname: 'frontend' };
+      const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: { callbackUrl: 'https://frontend/callback' }, session: {} };
       const res = {};
       const next = jest.fn();
 
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(innerHandler).toHaveBeenCalledWith(req, res, next);
     });
 
@@ -369,14 +656,15 @@ describe('AuthenticationClient', () => {
       const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
 
       const req = {
-        hostname: 'frontend',
+        protocol: 'https',
+        get: jest.fn(() => 'frontend'),
         user: { id: 'test', name: 'tester', refreshExp: 1800 },
-        session: { cookie: {} },
+        session: { cookie: {}, callbackUrl: 'https://frontend/callback' },
       };
       const res = { cookie: jest.fn() };
       const next = jest.fn();
 
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(innerHandler).toHaveBeenCalledWith(req, res, expect.any(Function));
       expect(next).toHaveBeenCalledWith();
     });
@@ -410,15 +698,16 @@ describe('AuthenticationClient', () => {
       const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
 
       const req = {
-        hostname: 'frontend',
+        protocol: 'https',
+        get: jest.fn(() => 'frontend'),
         user: { id: 'test', name: 'tester', refreshExp: 1800 },
-        session: { cookie: {} },
+        session: { cookie: {}, callbackUrl: 'https://frontend/callback' },
         logout: jest.fn((cb) => cb()),
       };
       const res = {};
       const next = jest.fn();
 
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(innerHandler).toHaveBeenCalledWith(req, res, expect.any(Function));
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
@@ -452,20 +741,44 @@ describe('AuthenticationClient', () => {
       const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
 
       const req = {
-        hostname: 'frontend',
+        protocol: 'https',
+        get: jest.fn(() => 'frontend'),
         user: { id: 'test', name: 'tester', refreshExp: 1800 },
-        session: { cookie: {} },
+        session: { cookie: {}, callbackUrl: 'https://frontend/callback' },
         logout: jest.fn((cb) => cb(new Error('oh noes!'))),
       };
       const res = {};
       const next = jest.fn();
 
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(innerHandler).toHaveBeenCalledWith(req, res, expect.any(Function));
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
 
-    it('can throw invalid operation for unknown host', async () => {
+    it('can throw invalid operation for missing callbackUrl', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          targets: {},
+        }
+      );
+
+      const handler = await client.authenticate(passportMock as unknown as PassportStatic);
+      const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: {}, session: {} };
+      const res = {};
+      const next = jest.fn();
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can fall back to authCallbackUrl config for callbackUrl', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
@@ -493,54 +806,13 @@ describe('AuthenticationClient', () => {
       passportMock.authenticate.mockReturnValueOnce(innerHandler);
       const handler = await client.authenticate(passportMock as unknown as PassportStatic);
 
-      const req = { hostname: 'not-the-same' };
+      const req = { protocol: 'https', get: jest.fn(() => 'frontend'), query: {}, session: {} };
       const res = {};
       const next = jest.fn();
 
-      expect(() => handler(req as unknown as Request, res as unknown as Response, next)).toThrowError(
-        InvalidOperationError
-      );
-    });
-
-    it('can disable verify host', async () => {
-      const client = new AuthenticationClient(
-        new URL('https://access-service'),
-        loggerMock as unknown as Logger,
-        directoryMock,
-        repositoryMock,
-        {
-          tenantId,
-          id: 'test',
-          name: 'test',
-          authCallbackUrl: 'https://frontend/callback',
-          disableVerifyHost: true,
-          targets: {},
-        }
-      );
-
-      const credentials = {
-        realm: tenant.realm,
-        clientId: 'client-123',
-        clientSecret: 'secret secret',
-        registrationUrl: 'http://access-service/registration/clients/client-123',
-        registrationToken: 'reg token 123',
-      };
-      repositoryMock.get.mockReturnValueOnce(credentials);
-
-      const innerHandler = jest.fn((_req, _res, next) => next());
-      passportMock.authenticate.mockReturnValueOnce(innerHandler);
-      const handler = await client.authenticate(passportMock as unknown as PassportStatic);
-
-      const req = {
-        hostname: 'not-the-same',
-        user: { id: 'test', name: 'tester', refreshExp: 1800 },
-        session: { cookie: {} },
-      };
-      const res = { cookie: jest.fn() };
-      const next = jest.fn();
-
-      handler(req as unknown as Request, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(passportMock.authenticate).toHaveBeenCalledWith(expect.any(Strategy), expect.any(Object));
+      expect(req.session['callbackUrl']).toBe('https://frontend/callback');
     });
   });
 

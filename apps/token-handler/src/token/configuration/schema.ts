@@ -11,6 +11,7 @@ export const configurationSchema = {
             name: { type: 'string' },
             description: { type: ['string', 'null'] },
             authCallbackUrl: { type: 'string' },
+            disableVerifyHost: { type: ['boolean', 'null'] },
             prompt: {
               type: ['string', 'null'],
               enum: ['none', 'login', 'consent', 'select_account', null],
@@ -20,7 +21,6 @@ export const configurationSchema = {
               items: { type: 'string' },
             },
             idpHint: { type: ['string', 'null'] },
-            disableVerifyHost: { type: ['boolean', 'null'] },
             successRedirectUrl: { type: ['string', 'null'] },
             failureRedirectUrl: { type: ['string', 'null'] },
             targets: {
@@ -38,7 +38,7 @@ export const configurationSchema = {
               },
             },
           },
-          required: ['id', 'name', 'authCallbackUrl'],
+          required: ['id', 'name'],
           additionalProperties: false,
         },
       },

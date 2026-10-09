@@ -16,8 +16,7 @@ export interface Client {
   idpHint?: string;
   prompt?: Prompt;
   scope?: string | string[];
-  disableVerifyHost?: boolean;
-  authCallbackUrl: string;
+  authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
   targets: Record<string, Target>;

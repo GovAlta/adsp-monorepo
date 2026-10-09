@@ -119,6 +119,8 @@
         "apps/value-service/**/*",
         "apps/verify-service/**/*",
         "libs/adsp-cli/**/*",
+        "libs/adsp-components-core/**/*",
+        "libs/adsp-components-react/**/*",
         "libs/adsp-feedback/**/*",
         "libs/adsp-sdk-mcp-server/**/*",
         "libs/adsp-service-sdk/**/*",

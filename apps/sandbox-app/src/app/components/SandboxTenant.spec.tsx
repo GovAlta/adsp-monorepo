@@ -76,6 +76,8 @@ jest.mock('./services/DesignSystemsMain', () => ({ DesignSystemsMain: () => null
 jest.mock('./services/design-systems/DesignSystemsExampleOne', () => ({ DesignSystemsExampleOne: () => null }));
 jest.mock('./services/planning-poker/PlanningPokerMain', () => ({ PlanningPokerMain: () => null }));
 jest.mock('./services/planning-poker/PlanningPokerBoard', () => ({ PlanningPokerBoard: () => null }));
+jest.mock('./services/AdspComponentsMain', () => ({ AdspComponentsMain: () => null }));
+jest.mock('./services/adsp-components/AdspThemingExample', () => ({ AdspThemingExample: () => null }));
 jest.mock('@core-services/app-common', () => ({
   ...jest.requireActual('@core-services/app-common'),
   Band: () => null,

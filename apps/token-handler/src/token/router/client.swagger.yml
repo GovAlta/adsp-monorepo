@@ -40,7 +40,7 @@ components:
   post:
     tags:
       - Client
-    description: Registers an authentication client.
+    description: Registers an authentication client. If provided, the authCallbackUrl is registered with access service as a valid redirect URI and is not stored in the token handler configuration. Otherwise the client is registered without redirect URIs, which can be added directly in access service. Registering a client that is already registered replaces its registration; the previously registered client in access service is deleted, including any redirect URIs configured on it.
     requestBody:
       required: true
       content:
@@ -51,13 +51,49 @@ components:
               registrationToken:
                 type: string
                 description: Client registration token from tenant realm.
+              authCallbackUrl:
+                type: string
+                description: Optional callback URL to register with access service as a valid redirect URI. Add redirect URIs for additional environments directly in access service after registration.
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AuthenticationClient"
+              type: object
+              properties:
+                registered:
+                  type: boolean
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+  put:
+    tags:
+      - Client
+    description: Updates the registered redirect URIs for the authentication client in access service. Uses the stored management token from initial registration; no external token required.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              redirectUris:
+                type: array
+                items:
+                  type: string
+                description: List of redirect URIs to register with access service.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                updated:
+                  type: boolean
       401:
         description: Not authorized.
       403:
@@ -72,7 +108,7 @@ components:
       schema:
         type: string
     - name: X-ADSP-TENANT
-      description: ID of the tenant.
+      description: ID or name of the tenant.
       in: header
       required: true
       schema:
@@ -99,7 +135,7 @@ components:
       schema:
         type: string
     - name: X-ADSP-TENANT
-      description: ID of the tenant.
+      description: ID or name of the tenant.
       in: header
       required: true
       schema:

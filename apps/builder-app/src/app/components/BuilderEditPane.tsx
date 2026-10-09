@@ -157,6 +157,8 @@ interface BuilderEditPaneProps {
   connectionStatus: string;
   workspaceStatus: string;
   hasPendingPreviewError?: boolean;
+  isCollapsed: boolean;
+  onCollapsedChange: (isCollapsed: boolean) => void;
   tenantLabel: string;
   userEmail?: string;
   canSignOut: boolean;
@@ -185,6 +187,8 @@ export const BuilderEditPane = ({
   connectionStatus,
   workspaceStatus,
   hasPendingPreviewError = false,
+  isCollapsed,
+  onCollapsedChange,
   tenantLabel,
   userEmail,
   canSignOut,
@@ -208,7 +212,6 @@ export const BuilderEditPane = ({
 }: BuilderEditPaneProps) => {
   const [activePanelTab, setActivePanelTab] = useState<PanelTab>('chat');
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('list');
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [showTarballForm, setShowTarballForm] = useState(false);
   const [tarballUrnInput, setTarballUrnInput] = useState('');
   const [copyLinkLabel, setCopyLinkLabel] = useState('Copy link');
@@ -264,7 +267,7 @@ export const BuilderEditPane = ({
         variant="dark"
         size="medium"
         ariaLabel="Open edit pane"
-        onClick={() => setIsCollapsed(false)}
+        onClick={() => onCollapsedChange(false)}
       />
     </PanelLauncher>
   ) : (
@@ -281,7 +284,7 @@ export const BuilderEditPane = ({
               variant="nocolor"
               size="medium"
               ariaLabel="Hide panel"
-              onClick={() => setIsCollapsed(true)}
+              onClick={() => onCollapsedChange(true)}
             />
           </PanelCollapseButton>
         </PanelHeaderActions>

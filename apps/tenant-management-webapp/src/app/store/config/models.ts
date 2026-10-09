@@ -44,10 +44,12 @@ export interface ServiceUrls {
   exportServiceUrl: string;
   formAppApiUrl: string;
   agentServiceApiUrl: string;
+  tokenHandlerApiUrl?: string;
 }
 
 export interface FeatureFlags {
   Access: boolean;
+  AccessServiceAI: boolean;
   Calendar: boolean;
   Comment: boolean;
   Configuration: boolean;
