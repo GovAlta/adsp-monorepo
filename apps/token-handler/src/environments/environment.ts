@@ -2,6 +2,8 @@ import * as dotenv from 'dotenv';
 import * as envalid from 'envalid';
 import * as util from 'util';
 
+import { parseAllowedDomains } from '../token/upstream-domains';
+
 dotenv.config();
 
 const MIN_SECRET_LENGTH = 16;
@@ -13,6 +15,8 @@ const secret = envalid.makeValidator<string>((input) => {
   }
   return input;
 });
+
+const domainList = envalid.makeValidator<string[]>(parseAllowedDomains);
 
 /**
  * Fail fast on invalid configuration; the service must not run with missing or weak secrets.
@@ -50,6 +54,8 @@ export const createEnvironment = (
       LOG_LEVEL: envalid.str({ default: 'debug' }),
       PORT: envalid.num({ default: 3600 }),
       TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+      // Domains that target upstreams are allowed to be on; upstreams are not restricted if there are none.
+      UPSTREAM_ALLOWED_DOMAINS: domainList({ default: [] }),
     },
     {
       reporter: ({ errors }) => {
