@@ -15,6 +15,7 @@ import {
 } from '@store/tokenHandler/actions';
 import { TokenHandlerClient, TokenHandlerTarget } from '@store/tokenHandler/models';
 import { TokenHandlerClientModal } from './TokenHandlerClientModal';
+import { TokenHandlerProxyInfo } from './TokenHandlerProxyInfo';
 import { TokenHandlerTargetModal } from './TokenHandlerTargetModal';
 import styled from 'styled-components';
 
@@ -224,6 +225,11 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
           Add target
         </GoabButton>
       </SectionHeader>
+      <p data-testid="targets-description">
+        Targets are the services and APIs that the application can call through the token handler, which adds the
+        user's access token to the requests. Requests other than <code>GET</code> need the <code>X-XSRF-TOKEN</code>{' '}
+        header, set to the value of the <code>XSRF-TOKEN</code> cookie.
+      </p>
       {targets.length > 0 ? (
         <GoabTable width="100%" testId="targets-table">
           <thead>
@@ -261,6 +267,8 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
       ) : (
         <p>No targets configured. Add a target to proxy requests to an upstream service.</p>
       )}
+
+      <TokenHandlerProxyInfo clientId={clientId} targetIds={targets.map((target) => target.id)} />
 
       <DeleteModal
         isOpen={deleteOpen}

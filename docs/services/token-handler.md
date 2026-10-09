@@ -22,7 +22,7 @@ client `urn:ads:platform:token-handler`
 ### Clients
 Clients correspond to OAuth clients (OIDC relying party) in [access service](access-service.md). The token handler requires configuration of clients to support client registration in access service. Registration creates confidential clients (with client ID and secret) which are used to authenticate users.
 
-Clients are configured in the [configuration service](configuration-service.md) under the `platform:token-handler` namespace and name. The frontend application passes the OIDC callback URL at auth initiation time via the `?callbackUrl=` query parameter on the `/auth` endpoint (e.g. `https://myapp.alberta.ca/auth?callbackUrl=https://myapp.alberta.ca/auth/callback`). This means no callback URL needs to be stored in the token handler configuration, and the same configuration works across all environments including local development. Redirect URI validation is handled by access service; the `callbackUrl` provided must be registered in the Keycloak client's *Valid Redirect URIs*.
+Clients are configured in the [configuration service](configuration-service.md) under the `platform:token-handler` namespace and name. The frontend application passes the OIDC callback URL at auth initiation time via the `?callbackUrl=` query parameter on the sign in endpoint (e.g. `https://myapp.example.ca/token-handler/clients/my-client/auth?callbackUrl=https://myapp.example.ca/token-handler/clients/my-client/callback`; see [Reverse proxy](#reverse-proxy)). This means no callback URL needs to be stored in the token handler configuration, and the same configuration works across all environments including local development. Redirect URI validation is handled by access service; the `callbackUrl` provided must be registered in the Keycloak client's *Valid Redirect URIs*.
 
 > **Deprecated fallback:** Existing configurations with `authCallbackUrl` set will continue to work — the token handler extracts the path from `authCallbackUrl` and combines it with the incoming request's host and protocol when no `?callbackUrl=` query parameter is provided.
 
@@ -44,65 +44,47 @@ The token handler uses sessions and cookies which can be vulnerable to CSRF atta
 ### Reverse proxy
 Frontend applications must use a reverse proxy to proxy requests to the token handler from the frontend site domain. The token handler sets a session cookie without the domain attribute, and browsers will associate the cookie with the domain of the authorization callback request. Consequently the cookie will only be included on subsequent requests to the site if that callback request is to the same domain as the rest of the site.
 
-The sign in endpoint (`/clients/${clientId}/auth`) needs to know the tenant, which is the `tenant` query parameter (e.g. `?tenant=My Tenant`, which a frontend can set to the name of its tenant) or the `X-ADSP-TENANT` header. The tenant is kept in the session, so the callback endpoint (`/clients/${clientId}/callback`) does not need it. The header can be set by the reverse proxy configuration to restrict a frontend domain to one tenant, and is used instead of the query parameter if both are provided. The tenant is the name of the tenant (as it is, ignoring case, or in the kebab-case form that has hyphens in place of spaces, e.g. `my-tenant-name`) or a full tenant URN. The name is the same in every environment, but the URN is not.
+All routes of the token handler are under the `/token-handler/v1` path of its URL, so a single proxy location is enough. The frontend can use any path for it; the examples use `/token-handler`. The frontend then uses these paths:
+
+- Sign in: `/token-handler/clients/${clientId}/auth?tenant=<tenant name>&callbackUrl=<callback URL>`
+- Sign in callback: `/token-handler/clients/${clientId}/callback`; the callback URL passed when signing in is this path on the frontend site.
+- Sign out: `/token-handler/clients/${clientId}/logout`
+- Session information: `/token-handler/sessions`
+- Targets: `/token-handler/targets/${targetId}/...`
+
+The sign in endpoint needs to know the tenant, which is the `tenant` query parameter or the `X-ADSP-TENANT` header. The frontend can hardcode the name of its tenant for the parameter, since the name is the same in every environment (a tenant URN is not). The tenant is kept in the session, so the callback endpoint does not need it. The reverse proxy can set the header to restrict the frontend domain to one tenant, and the header is used instead of the query parameter if both are provided. The value is the name of the tenant (as it is, ignoring case, or in the kebab-case form that has hyphens in place of spaces, e.g. `my-tenant-name`) or a full tenant URN.
+
+The proxy should also set the `X-Forwarded-For` and `X-Forwarded-Proto` headers, which the token handler uses for rate limiting and to mark cookies as secure. The `Host` header of the original request is not needed (except by clients that still use the deprecated `authCallbackUrl` fallback).
 
 #### Nginx configuration example
 
 ```
-location /auth {
-  proxy_pass <token handler URL>/token-handler/v1/clients/my-client;
-  proxy_set_header Host $host;
-  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-  proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
-  proxy_set_header X-Adsp-Tenant <Tenant URN e.g. urn:ads:platform:tenant-service:v2:/tenants/...>;
-}
-
-location /sessions {
-  proxy_pass <token handler URL>/token-handler/v1/sessions;
-  proxy_set_header Host $host;
-  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-  proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
-}
-
-location /api {
-  proxy_pass <token handler URL>/token-handler/v1/targets/my-upstream-api;
-  proxy_set_header Host $host;
+location /token-handler/ {
+  proxy_pass <token handler URL>/token-handler/v1/;
+  proxy_ssl_server_name on;
   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
 }
 ```
+
+`proxy_ssl_server_name` is needed when the token handler URL is HTTPS. Use `$scheme` for `X-Forwarded-Proto` if nginx terminates TLS itself. To restrict the frontend domain to one tenant, also add `proxy_set_header X-Adsp-Tenant "<tenant name>";` to the location. The client page in tenant management shows this configuration with the values of the client.
 
 ### Local development
 There are some special considerations for local development workflows when using the token handler.
 
 - Webpack DevServer proxy can be used to proxy requests to the token handler. The frontend passes the `tenant` query parameter when it signs in, or the proxy can inject the `X-ADSP-TENANT` header; the tenant name can be used instead of the full URN.
-- The frontend passes `?callbackUrl=http://localhost:<port>/auth/callback` when redirecting to `/auth` for local development. Add this URL to the Keycloak client's *Valid Redirect URIs* directly in the access service admin console — no token handler configuration change is required.
+- The frontend passes `?callbackUrl=http://localhost:<port>/token-handler/clients/<clientId>/callback` when redirecting to the sign in path for local development. Add this URL to the Keycloak client's *Valid Redirect URIs* directly in the access service admin console — no token handler configuration change is required.
 - The token handler can only proxy requests to upstream services and APIs that are registered in directory service; i.e. local running instances of backends cannot be used. In practice, this means that when working with full stack applications, local development of the frontend will require a deployed instance of the backend.
 
 #### Webpack DevServer proxy configuration example
 
 ```json
 {
-  "/auth": {
-    "target": "<token handler URL>/token-handler/v1/clients/my-client",
+  "/token-handler": {
+    "target": "<token handler URL>",
     "secure": true,
     "changeOrigin": true,
-    "pathRewrite": { "^/auth": "" },
-    "headers": {
-      "X-ADSP-TENANT": "<Tenant name or URN>"
-    }
-  },
-  "/sessions": {
-    "target": "<token handler URL>/token-handler/v1/sessions",
-    "secure": true,
-    "changeOrigin": true,
-    "pathRewrite": { "^/sessions": "" }
-  },
-  "/api": {
-    "target": "<token handler URL>/token-handler/v1/targets/my-upstream-api",
-    "secure": true,
-    "changeOrigin": true,
-    "pathRewrite": { "^/api": "" }
+    "pathRewrite": { "^/token-handler": "/token-handler/v1" }
   }
 }
 ```
@@ -123,7 +105,7 @@ Registering a client creates a confidential client in access service and securel
       },
       body: JSON.stringify({
         registrationToken,
-        authCallbackUrl: 'https://myapp.alberta.ca/auth/callback',
+        authCallbackUrl: 'https://myapp.example.ca/token-handler/clients/my-client/callback',
       }),
     }
   );
@@ -147,8 +129,8 @@ Updating a client's registration allows changing the registered redirect URIs in
       },
       body: JSON.stringify({
         redirectUris: [
-          'https://myapp.alberta.ca/auth/callback',
-          'http://localhost:4200/auth/callback',
+          'https://myapp.example.ca/token-handler/clients/my-client/callback',
+          'http://localhost:4200/token-handler/clients/my-client/callback',
         ],
       }),
     }
