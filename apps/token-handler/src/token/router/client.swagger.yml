@@ -107,10 +107,28 @@ components:
       required: true
       schema:
         type: string
+    - name: tenant
+      description: >-
+        Name or URN of the tenant. The tenant is kept in the session for the callback. Required unless the
+        X-ADSP-TENANT header is provided, which is used instead if both are provided.
+      in: query
+      required: false
+      schema:
+        type: string
+    - name: callbackUrl
+      description: >-
+        URL of the callback of the application, which is a valid redirect URI of the client in access service. Required
+        unless the client has the deprecated authCallbackUrl configuration.
+      in: query
+      required: false
+      schema:
+        type: string
     - name: X-ADSP-TENANT
-      description: ID or name of the tenant.
+      description: >-
+        Name or URN of the tenant, for example set by the reverse proxy of an application to restrict it to one tenant.
+        Used instead of the tenant query parameter.
       in: header
-      required: true
+      required: false
       schema:
         type: string
   get:
@@ -135,9 +153,11 @@ components:
       schema:
         type: string
     - name: X-ADSP-TENANT
-      description: ID or name of the tenant.
+      description: >-
+        Name or URN of the tenant. If it is not provided, the tenant that was provided to sign in on the same session
+        is used.
       in: header
-      required: true
+      required: false
       schema:
         type: string
   get:
