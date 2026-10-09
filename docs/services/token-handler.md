@@ -44,7 +44,7 @@ The token handler uses sessions and cookies which can be vulnerable to CSRF atta
 ### Reverse proxy
 Frontend applications must use a reverse proxy to proxy requests to the token handler from the frontend site domain. The token handler sets a session cookie without the domain attribute, and browsers will associate the cookie with the domain of the authorization callback request. Consequently the cookie will only be included on subsequent requests to the site if that callback request is to the same domain as the rest of the site.
 
-The `/clients/${clientId}/auth` and `/clients/${clientId}/callback` endpoints require the tenant ID to be provided in the `X-ADSP-TENANT` header, which can also be addressed via reverse proxy configuration. The header value can be a full tenant URN or the tenant name (e.g. `my-tenant-name`).
+The sign in endpoint (`/clients/${clientId}/auth`) needs to know the tenant, which is the `tenant` query parameter (e.g. `?tenant=My Tenant`, which a frontend can set to the name of its tenant) or the `X-ADSP-TENANT` header. The tenant is kept in the session, so the callback endpoint (`/clients/${clientId}/callback`) does not need it. The header can be set by the reverse proxy configuration to restrict a frontend domain to one tenant, and is used instead of the query parameter if both are provided. The tenant is the name of the tenant (as it is, ignoring case, or in the kebab-case form that has hyphens in place of spaces, e.g. `my-tenant-name`) or a full tenant URN. The name is the same in every environment, but the URN is not.
 
 #### Nginx configuration example
 
@@ -75,7 +75,7 @@ location /api {
 ### Local development
 There are some special considerations for local development workflows when using the token handler.
 
-- Webpack DevServer proxy can be used to proxy requests to the token handler. The proxy must inject the `X-ADSP-TENANT` header; the tenant name (e.g. `my-tenant`) can be used instead of the full URN.
+- Webpack DevServer proxy can be used to proxy requests to the token handler. The frontend passes the `tenant` query parameter when it signs in, or the proxy can inject the `X-ADSP-TENANT` header; the tenant name can be used instead of the full URN.
 - The frontend passes `?callbackUrl=http://localhost:<port>/auth/callback` when redirecting to `/auth` for local development. Add this URL to the Keycloak client's *Valid Redirect URIs* directly in the access service admin console — no token handler configuration change is required.
 - The token handler can only proxy requests to upstream services and APIs that are registered in directory service; i.e. local running instances of backends cannot be used. In practice, this means that when working with full stack applications, local development of the frontend will require a deployed instance of the backend.
 

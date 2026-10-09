@@ -12,7 +12,7 @@ import { TokenHandlerConfiguration } from '../configuration';
 import { clientRegistered } from '../events';
 import { AuthenticationClient } from '../model';
 import { ServiceRoles } from '../roles';
-import { createTenantHandler } from '../tenant';
+import { createTenantHandler, keepTenantInSession } from '../tenant';
 import { UserSessionData } from '../types';
 
 const CLIENT = 'tk_client';
@@ -270,18 +270,23 @@ export function createClientRouter({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
   });
-  const proxyTenantHandler = createTenantHandler(tenantService);
+  // The tenant is provided when signing in, and is kept in the session to complete it.
+  const initiateTenantHandler = createTenantHandler(tenantService, 'initiate');
+  const completeTenantHandler = createTenantHandler(tenantService, 'complete');
 
   router.get(
     '/clients/:id/auth',
     createValidationHandler(
       param('id').isString().isLength({ min: 1, max: 50 }),
-      query('callbackUrl').optional().isString().isURL(REDIRECT_URI_OPTIONS).isLength({ max: 2048 })
+      query('callbackUrl').optional().isString().isURL(REDIRECT_URI_OPTIONS).isLength({ max: 2048 }),
+      query('tenant').optional({ checkFalsy: true }).isString().isLength({ min: 1, max: 100 })
     ),
     rateLimitHandler,
-    proxyTenantHandler,
+    initiateTenantHandler,
     configurationHandler,
     getAuthenticationClient(),
+    // The tenant is only kept for clients that exist.
+    keepTenantInSession,
     startAuthenticate(passport)
   );
 
@@ -289,7 +294,7 @@ export function createClientRouter({
     '/clients/:id/callback',
     createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
     rateLimitHandler,
-    proxyTenantHandler,
+    completeTenantHandler,
     configurationHandler,
     getAuthenticationClient(),
     completeAuthenticate(passport)
