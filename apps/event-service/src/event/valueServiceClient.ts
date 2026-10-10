@@ -12,11 +12,11 @@ export const countEvents = async (
   const countUrl = new URL('v1/event-service/values/event/count', valueServiceUrl);
 
   // Event namespace and name are stored in the logged value's context, not its namespace/name.
-  const context: Record<string, string> = {};
-  if (criteria.namespace) {
+  const context: Record<string, string | number | boolean> = { ...criteria.context };
+  if (!context.namespace && criteria.namespace) {
     context.namespace = criteria.namespace;
   }
-  if (criteria.name) {
+  if (!context.name && criteria.name) {
     context.name = criteria.name;
   }
 

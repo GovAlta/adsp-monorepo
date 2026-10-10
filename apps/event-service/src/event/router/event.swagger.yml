@@ -186,6 +186,12 @@ components:
         required: false
         schema:
           type: string
+      - name: context
+        description: JSON object of context values the events must match. Namespace and name take precedence over matching keys.
+        in: query
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Events successfully counted.

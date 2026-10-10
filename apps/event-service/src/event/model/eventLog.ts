@@ -6,6 +6,7 @@ export interface EventLogCriteria {
   timestampMin?: Date;
   timestampMax?: Date;
   correlationId?: string;
+  context?: Record<string, string | number | boolean>;
 }
 
 //This count response maps to the response data coming from the value service
