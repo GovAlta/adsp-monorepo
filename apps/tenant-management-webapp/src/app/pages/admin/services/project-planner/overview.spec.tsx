@@ -3,11 +3,18 @@ import { fireEvent, render } from '@testing-library/react';
 import { PlannerOverview } from './overview';
 
 describe('PlannerOverview', () => {
-  it('explains the planner and starts planning', () => {
-    const onStart = jest.fn();
-    const { getByText, getByTestId } = render(<PlannerOverview onStart={onStart} />);
+  it('explains the planner', () => {
+    const { getByText } = render(<PlannerOverview onStart={jest.fn()} />);
+
     expect(getByText(/helps you describe a business problem/i)).toBeTruthy();
-    fireEvent.click(getByTestId('start-solution'));
-    expect(onStart).toHaveBeenCalled();
+  });
+
+  it('starts planning when the start button is selected', () => {
+    const onStart = jest.fn();
+    const { container } = render(<PlannerOverview onStart={onStart} />);
+
+    fireEvent(container.querySelector('goa-button[testid="start-solution"]') as Element, new CustomEvent('_click'));
+
+    expect(onStart).toHaveBeenCalledTimes(1);
   });
 });
