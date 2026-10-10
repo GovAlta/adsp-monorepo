@@ -28,6 +28,7 @@ import { ValueRouter } from './services/value';
 import { SharePoint } from './services/sharePoint';
 import { CacheRouter } from './services/cache';
 import { AgentRouter } from './services/agent';
+import { ProjectPlannerRouter } from './services/project-planner';
 import { serviceVariables } from '../../../featureFlag';
 
 import { ScriptRouter } from './services/script';
@@ -75,6 +76,8 @@ const TenantManagement = (): JSX.Element => {
         return <Notifications />;
       case 'PDF':
         return <PDFRouter />;
+      case 'Project Planner':
+        return <ProjectPlannerRouter />;
       case 'Script':
         return <ScriptRouter />;
       case 'SharePoint':

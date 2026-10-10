@@ -1,0 +1,113 @@
+paths:
+  /planner/v1/patterns:
+    get:
+      tags: [Pattern]
+      summary: Retrieves business patterns (built-in plus tenant-defined).
+      responses:
+        200: { description: Patterns retrieved. }
+  /planner/v1/patterns/{patternId}:
+    get:
+      tags: [Pattern]
+      summary: Retrieves a business pattern.
+      parameters:
+        - { name: patternId, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Pattern retrieved. }
+        404: { description: Pattern not found. }
+  /planner/v1/patterns/match:
+    post:
+      tags: [Pattern]
+      summary: Matches free text against patterns and explains the confidence.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text: { type: string }
+              required: [text]
+      responses:
+        200: { description: Ranked pattern matches and clarifying questions when confidence is low. }
+  /planner/v1/specialists:
+    get:
+      tags: [Specialist]
+      summary: Retrieves the service specialists known to the planner.
+      responses:
+        200: { description: Specialists retrieved. }
+  /planner/v1/solutions:
+    get:
+      tags: [Solution]
+      summary: Retrieves solutions. Users see their own; planner-admin sees all in the tenant.
+      parameters:
+        - { name: top, in: query, schema: { type: integer } }
+        - { name: after, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+      responses:
+        200: { description: Solutions retrieved. }
+    post:
+      tags: [Solution]
+      summary: Creates a solution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                scenario: { type: string, enum: [new, prototype, existing-app, reconfigure] }
+                problemStatement: { type: string }
+              required: [name]
+      responses:
+        201: { description: Solution created. }
+  /planner/v1/solutions/{id}:
+    get:
+      tags: [Solution]
+      summary: Retrieves a solution including its structured state.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Solution retrieved. }
+        404: { description: Solution not found. }
+    patch:
+      tags: [Solution]
+      summary: Updates solution details, concepts, decisions (with reasons), and questions.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Solution updated. }
+    delete:
+      tags: [Solution]
+      summary: Deletes a solution.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Deletion result. }
+  /planner/v1/solutions/{id}/analyze:
+    post:
+      tags: [Solution]
+      summary: Extracts concepts, matches patterns, and generates hypotheses and next steps.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Analyzed solution. }
+  /planner/v1/solutions/{id}/consult/{service}:
+    post:
+      tags: [Solution, Specialist]
+      summary: Consults a service specialist about fit, questions, dependencies and risks.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: service, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Consultation result. }
+  /planner/v1/solutions/{id}/handoff/{service}:
+    post:
+      tags: [Solution, Specialist]
+      summary: Records a hand-off to a service workspace and returns the context package.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: service, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Workspace path and solution context. }
