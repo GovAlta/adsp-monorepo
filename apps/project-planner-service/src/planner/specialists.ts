@@ -1,0 +1,126 @@
+import { SpecialistDefinition } from './types';
+
+const def = (
+  order: number,
+  service: string,
+  displayName: string,
+  purpose: string,
+  questions: string[],
+  dependsOn: string[] = [],
+  risks: string[] = [],
+): SpecialistDefinition => ({
+  service,
+  displayName,
+  purpose,
+  workspacePath: `/admin/services/${service.replace(/-service$/, '')}`,
+  questions,
+  dependsOn,
+  risks,
+  order,
+});
+
+export const SPECIALISTS: SpecialistDefinition[] = [
+  def(
+    1,
+    'configuration-service',
+    'Configuration service',
+    'Tenant-scoped configuration such as workflow definitions and status values.',
+    ['Which values (statuses, rules, lookups) should administrators change without a release?'],
+  ),
+  def(
+    2,
+    'file-service',
+    'File service',
+    'Secure file upload, storage, and retrieval with file types and role-based access.',
+    ['What file types are needed and who can read or upload each?', 'What are the retention requirements?'],
+    [],
+    ['Security classification and retention are domain-specific.'],
+  ),
+  def(
+    3,
+    'form-service',
+    'Form service',
+    'Form definitions, drafts, submissions, and review dispositions.',
+    ['Who completes the form, and is authentication required?', 'Does the form need staff review or disposition?'],
+    ['file-service'],
+    ['Forms that collect attachments need file types configured first.'],
+  ),
+  def(
+    4,
+    'value-service',
+    'Value service',
+    'Store and query business values and metrics over time.',
+    ['What values must be recorded and queried?'],
+  ),
+  def(
+    5,
+    'event-service',
+    'Event service',
+    'Domain events, event log, and audit trail.',
+    ['Which actions must be recorded for audit?'],
+  ),
+  def(
+    6,
+    'notification-service',
+    'Notification service',
+    'Templated notifications to subscribers across email, SMS and bot channels.',
+    ['Who is notified, on which events, and over which channels?'],
+    ['event-service'],
+    ['Notification content may expose personal information.'],
+  ),
+  def(
+    7,
+    'comment-service',
+    'Comment service',
+    'Topics and comments for notes and discussion.',
+    ['Who can read and who can write notes?'],
+  ),
+  def(
+    8,
+    'task-service',
+    'Task service',
+    'Task queues and assignment of work to staff.',
+    ['Which queues are required and who works them?', 'Is formal assignment needed?'],
+    ['event-service'],
+  ),
+  def(
+    9,
+    'calendar-service',
+    'Calendar service',
+    'Calendars and scheduled events.',
+    ['Who owns calendars and who may book?'],
+  ),
+  def(
+    10,
+    'pdf-service',
+    'PDF service',
+    'Template-driven PDF generation.',
+    ['Which documents are generated, and from which data?'],
+    ['file-service'],
+  ),
+  def(
+    11,
+    'status-service',
+    'Status service',
+    'Application status and public notices.',
+    ['Is public status communication required?'],
+  ),
+  def(
+    12,
+    'feedback-service',
+    'Feedback service',
+    'Collect user feedback on applications.',
+    ['Where will feedback be collected?'],
+  ),
+  def(
+    13,
+    'push-service',
+    'Push service',
+    'WebSocket gateway for real-time event streams.',
+    ['Do clients need real-time updates?'],
+    ['event-service'],
+  ),
+];
+
+export const getSpecialist = (service: string): SpecialistDefinition | undefined =>
+  SPECIALISTS.find((s) => s.service === service || s.service === `${service}-service`);

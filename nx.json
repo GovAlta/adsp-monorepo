@@ -98,6 +98,7 @@
         "apps/form-service/**/*",
         "apps/notification-service/**/*",
         "apps/pdf-service/**/*",
+        "apps/project-planner-service/**/*",
         "apps/push-service/**/*",
         "apps/sandbox-app/**/*",
         "apps/sandbox-app-e2e/**/*",
