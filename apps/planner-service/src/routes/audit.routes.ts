@@ -12,7 +12,7 @@ import { createAuditMiddleware, AuditService } from '../middleware/audit.middlew
 // ✓ ASVS:V4.2.2 — rate-limit audit routes to prevent log enumeration / DoS
 const auditRateLimit = rateLimit({
   windowMs: 60_000,
-  max: 60,
+  max: 600,
   standardHeaders: true,
   legacyHeaders: false,
   message: { statusCode: 429, error: 'Too Many Requests', message: 'Audit log rate limit exceeded' },

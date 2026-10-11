@@ -140,8 +140,8 @@ app.use(cors({ origin: DEV_CORS_ORIGINS, methods: ['GET','POST','PUT','PATCH','D
 app.use(express.json());
 
 // Rate limiters — intentionally generous for local dev; present to satisfy CodeQL rule
-const apiLimiter = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false });
-const staticLimiter = rateLimit({ windowMs: 60_000, max: 600, standardHeaders: true, legacyHeaders: false });
+const apiLimiter = rateLimit({ windowMs: 60_000, max: 3_000, standardHeaders: true, legacyHeaders: false });
+const staticLimiter = rateLimit({ windowMs: 60_000, max: 6_000, standardHeaders: true, legacyHeaders: false });
 
 // ── Dev auth middleware (permissive — warns but never rejects) ─────────────────
 function devAuth(req, _res, next) {
