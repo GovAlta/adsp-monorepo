@@ -185,6 +185,97 @@ describe('MaasLlm', () => {
       expect(post.mock.calls[0][1].messages[1].content).toContain('actor:Resident');
     });
 
+    describe('conversation context', () => {
+      const context = {
+        answers: [{ question: 'Who approves large grants?', answer: 'The deputy minister' }],
+        conversation: [
+          { role: 'user' as const, content: 'We also handle appeals.' },
+          { role: 'assistant' as const, content: 'Noted, appeals are cases too.' },
+        ],
+        message: 'Can officers reassign cases?',
+      };
+      const userPrompt = () => post.mock.calls[0][1].messages[1].content as string;
+
+      it('includes answered questions and answers in the prompt', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+
+        await buildLlm().analyze('Residents apply for grants.', patterns, [], context);
+
+        expect(userPrompt()).toContain('Q: Who approves large grants?\nA: The deputy minister');
+      });
+
+      it('includes the conversation history in the prompt', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+
+        await buildLlm().analyze('Residents apply for grants.', patterns, [], context);
+
+        expect(userPrompt()).toContain('user: We also handle appeals.\nassistant: Noted, appeals are cases too.');
+      });
+
+      it('limits the conversation history to the last 12 messages', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+        const conversation = Array.from({ length: 14 }, (_v, i) => ({ role: 'user' as const, content: `message-${i}-end` }));
+
+        await buildLlm().analyze('Residents apply for grants.', patterns, [], { answers: [], conversation });
+
+        expect(userPrompt()).not.toContain('message-1-end');
+        expect(userPrompt()).toContain('message-2-end');
+      });
+
+      it('includes the latest user message in the prompt', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+
+        await buildLlm().analyze('Residents apply for grants.', patterns, [], context);
+
+        expect(userPrompt()).toContain('"""Can officers reassign cases?"""');
+      });
+
+      it('omits context sections when the context is empty', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+
+        await buildLlm().analyze('Residents apply for grants.', patterns, [], { answers: [], conversation: [] });
+
+        expect(userPrompt()).not.toMatch(/already answered these questions|Conversation so far|The user\u0027s latest message/);
+      });
+
+      it('omits context sections when no context is provided', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+
+        await buildLlm().analyze('Residents apply for grants.', patterns, []);
+
+        expect(userPrompt()).not.toMatch(/already answered these questions|Conversation so far|The user\u0027s latest message/);
+      });
+    });
+
+    describe('reply', () => {
+      it('returns the trimmed reply from the model', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, reply: '  Officers can reassign cases.  ' })));
+
+        const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+
+        expect(result.reply).toBe('Officers can reassign cases.');
+      });
+
+      it.each([
+        ['missing', undefined],
+        ['not a string', 42],
+      ])('returns an empty reply when the reply is %s', async (_name, reply) => {
+        post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, reply })));
+
+        const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+
+        expect(result.reply).toBe('');
+      });
+
+      it('truncates a reply longer than 2000 characters', async () => {
+        post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, reply: 'a'.repeat(2500) })));
+
+        const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+
+        expect(result.reply).toHaveLength(2000);
+      });
+    });
+
     it('parses JSON returned inside a markdown code fence', async () => {
       post.mockResolvedValueOnce(completion('```json\n' + JSON.stringify(validAnalysis) + '\n```'));
 

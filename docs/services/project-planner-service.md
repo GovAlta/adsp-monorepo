@@ -43,6 +43,9 @@ Base path `/planner/v1`. See the service swagger docs for details.
 | POST | /solutions/{id}/analyze | Extract concepts, match patterns, generate hypotheses and next steps. Body `mode` is `ai` (default when a model is configured) or `rules`. |
 | POST | /solutions/{id}/consult/{service} | Consult a service specialist. Optional body `question` and `mode`. |
 | POST | /solutions/{id}/handoff/{service} | Hand off to a service workspace with context. |
+| POST | /solutions/{id}/chat | Send a message (`{message, mode}`); the analysis is refined using the answers and conversation and the reply is appended to `state.conversation`. |
+| PUT | /solutions/{id}/questions/{questionId} | Answer a clarifying question (`{answer}`); an empty answer reopens it. |
+| GET | /solutions/{id}/export | Download the solution as a JSON attachment. |
 | GET | /analysis/options | Available analysis modes, the default mode and the model name. |
 
 ## AI analysis

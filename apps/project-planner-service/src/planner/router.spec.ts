@@ -811,6 +811,147 @@ describe('planner router routes', () => {
     });
   });
 
+  describe('PUT /solutions/:id/questions/:questionId', () => {
+    const QUESTION_ID = '8c1d5e2a-3b4f-4a6d-9e7c-1f2a3b4c5d6e';
+    const answerQuestion = (body: object = { answer: 'The director' }, user: User = owner, questionId = QUESTION_ID) =>
+      request(buildApp(user)).put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${questionId}`).send(body);
+
+    beforeEach(() => {
+      const stored = solutionOwnedBy('owner-1');
+      stored.state.questions = [
+        { id: QUESTION_ID, question: 'Who approves?', raisedBy: 'ai', status: 'answered', answer: 'Old answer' },
+        { id: 'other-id', question: 'How many users?', raisedBy: 'planner', status: 'open' },
+      ];
+      repository.get.mockResolvedValue(stored);
+    });
+
+    it('marks the question as answered with the trimmed answer', async () => {
+      const res = await answerQuestion({ answer: '  The director  ' });
+
+      expect(res.body.state.questions[0]).toEqual({
+        id: QUESTION_ID,
+        question: 'Who approves?',
+        raisedBy: 'ai',
+        status: 'answered',
+        answer: 'The director',
+      });
+    });
+
+    it('leaves other questions untouched', async () => {
+      const res = await answerQuestion();
+
+      expect(res.body.state.questions[1]).toEqual({
+        id: 'other-id',
+        question: 'How many users?',
+        raisedBy: 'planner',
+        status: 'open',
+      });
+    });
+
+    it.each([['empty', ''], ['whitespace only', '   ']])('reopens the question when the answer is %s', async (_name, answer) => {
+      const res = await answerQuestion({ answer });
+
+      expect(res.body.state.questions[0]).toEqual({ id: QUESTION_ID, question: 'Who approves?', raisedBy: 'ai', status: 'open' });
+    });
+
+    it('sends a solution-updated event with the answer operation', async () => {
+      await answerQuestion();
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ operation: 'answer' }) }),
+      );
+    });
+
+    it('increments the revision', async () => {
+      const res = await answerQuestion();
+
+      expect(res.body.revision).toBe(2);
+    });
+
+    it('returns 404 for an unknown question', async () => {
+      const res = await answerQuestion({ answer: 'x' }, owner, '11111111-2222-4333-8444-555555555555');
+
+      expect(res.status).toBe(404);
+    });
+
+    it.each([
+      ['missing', {}],
+      ['not a string', { answer: 7 }],
+      ['too long', { answer: 'x'.repeat(5001) }],
+    ])('returns 400 when the answer is %s', async (_name, body) => {
+      const res = await answerQuestion(body);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for a malformed question id', async () => {
+      const res = await answerQuestion({ answer: 'x' }, owner, 'not-a-uuid');
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await answerQuestion({ answer: 'x' }, stranger);
+
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('GET /solutions/:id/export', () => {
+    const exportSolution = (user: User = owner) =>
+      request(buildApp(user)).get(`/planner/v1/solutions/${SOLUTION_ID}/export`);
+
+    beforeEach(() => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+    });
+
+    it('returns the solution as a JSON attachment', async () => {
+      const res = await exportSolution();
+
+      expect(res.headers['content-disposition']).toBe(`attachment; filename="planner-${SOLUTION_ID}.json"`);
+    });
+
+    it('includes solution details and state', async () => {
+      const res = await exportSolution();
+
+      expect(res.body).toMatchObject({
+        id: SOLUTION_ID,
+        name: 'S',
+        scenario: 'new',
+        status: 'draft',
+        revision: 1,
+        exportedAt: expect.any(String),
+        state: expect.objectContaining({ questions: [] }),
+      });
+    });
+
+    it('does not expose the tenant id', async () => {
+      const res = await exportSolution();
+
+      expect(res.body.tenantId).toBeUndefined();
+    });
+
+    it('allows an admin to export another user\'s solution', async () => {
+      const res = await exportSolution(admin);
+
+      expect(res.status).toBe(200);
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await exportSolution(stranger);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 404 when the solution does not exist', async () => {
+      repository.get.mockResolvedValueOnce(null);
+
+      const res = await exportSolution();
+
+      expect(res.status).toBe(404);
+    });
+  });
+
   describe('AI-assisted planning', () => {
     const MODEL = 'GOA-Default';
     const llm = { model: MODEL, analyze: jest.fn(), consult: jest.fn() };
@@ -845,6 +986,7 @@ describe('planner router routes', () => {
         },
       ],
       questions: ['Who approves grants above the delegated limit?'],
+      reply: 'Grant applications look like a case management problem.',
       model: MODEL,
     };
 
@@ -884,6 +1026,119 @@ describe('planner router routes', () => {
       });
     });
 
+    describe('POST /solutions/:id/chat', () => {
+      const message = 'The director approves everything above $10,000.';
+      const chat = (app: express.Express, body: object = { message }) =>
+        request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/chat`).send(body);
+
+      beforeEach(() => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = aiText;
+        repository.get.mockResolvedValue(stored);
+      });
+
+      it('passes the message and stored problem statement to the llm', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await chat(buildApp(owner, true, llm));
+
+        expect(llm.analyze).toHaveBeenCalledWith(aiText, expect.any(Array), [], { answers: [], conversation: [], message });
+      });
+
+      it('appends the user message and assistant reply to the conversation', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.body.state.conversation).toEqual([
+          { role: 'user', content: message, at: expect.any(String) },
+          { role: 'assistant', content: aiAnalysis.reply, at: expect.any(String) },
+        ]);
+      });
+
+      it('trims the message before using it', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await chat(buildApp(owner, true, llm), { message: `  ${message}  ` });
+
+        expect(llm.analyze.mock.calls[0][3].message).toBe(message);
+      });
+
+      it('keeps the problem statement unchanged in ai mode', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.body.state.problemStatement).toBe(aiText);
+      });
+
+      it('sends a solution-updated event with the chat operation', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await chat(buildApp(owner, true, llm));
+
+        expect(eventService.send).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: expect.objectContaining({ operation: 'chat' }) }),
+        );
+      });
+
+      it('appends the failure warning to the assistant reply when the llm throws', async () => {
+        llm.analyze.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.body.state.conversation[1].content).toContain(
+          '(AI analysis failed (Model request failed (HTTP 503)); used rule-based analysis.)',
+        );
+      });
+
+      it('folds the message into the problem statement in rules mode', async () => {
+        const res = await chat(buildApp(owner, true, llm), { message, mode: 'rules' });
+
+        expect(res.body.state.problemStatement).toBe(`${aiText}\n${message}`);
+      });
+
+      it('replies with a rule-based notice in rules mode', async () => {
+        const res = await chat(buildApp(owner, true, llm), { message, mode: 'rules' });
+
+        expect(res.body.state.conversation[1].content).toContain('Rule-based analysis refreshed');
+      });
+
+      it('falls back to rules with a warning when no llm is configured', async () => {
+        const res = await chat(buildApp(), { message, mode: 'ai' });
+
+        expect(res.body.state.analysis.warning).toBe('AI analysis is not configured; used rule-based analysis.');
+      });
+
+      it.each([
+        ['missing', {}],
+        ['empty', { message: '' }],
+        ['whitespace only', { message: '   ' }],
+        ['not a string', { message: 42 }],
+        ['too long', { message: 'x'.repeat(5001) }],
+        ['with an invalid mode', { message: 'Hello', mode: 'bogus' }],
+      ])('returns 400 when the message is %s', async (_name, body) => {
+        const res = await chat(buildApp(owner, true, llm), body);
+
+        expect(res.status).toBe(400);
+      });
+
+      it('returns 403 for a user who does not own the solution', async () => {
+        const res = await chat(buildApp(stranger, true, llm));
+
+        expect(res.status).toBe(403);
+      });
+
+      it('returns 500 when saving fails', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+        repository.save.mockRejectedValueOnce(new Error('db down'));
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(500);
+      });
+    });
+
     describe('POST /solutions/:id/analyze', () => {
       it('uses the llm by default when one is configured', async () => {
         llm.analyze.mockResolvedValueOnce(aiAnalysis);
@@ -893,12 +1148,44 @@ describe('planner router routes', () => {
         expect(res.body.state.analysis).toMatchObject({ mode: 'ai', model: MODEL });
       });
 
-      it('passes the text, patterns and existing concepts to the llm', async () => {
+      it('passes the text, patterns, existing concepts and empty context to the llm', async () => {
         llm.analyze.mockResolvedValueOnce(aiAnalysis);
 
         await analyze(buildApp(owner, true, llm));
 
-        expect(llm.analyze).toHaveBeenCalledWith(aiText, expect.arrayContaining([expect.objectContaining({ id: 'case-management' })]), []);
+        expect(llm.analyze).toHaveBeenCalledWith(
+          aiText,
+          expect.arrayContaining([expect.objectContaining({ id: 'case-management' })]),
+          [],
+          { answers: [], conversation: [], message: undefined },
+        );
+      });
+
+      it('passes answered questions and prior conversation to the llm as context', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.questions = [
+          { id: 'q-1', question: 'Who approves?', raisedBy: 'ai', status: 'answered', answer: 'The director' },
+          { id: 'q-2', question: 'How many users?', raisedBy: 'ai', status: 'open' },
+        ];
+        stored.state.conversation = [{ role: 'user', content: 'Earlier message', at: '2026-01-01T00:00:00.000Z' }];
+        repository.get.mockResolvedValueOnce(stored);
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await analyze(buildApp(owner, true, llm));
+
+        expect(llm.analyze.mock.calls[0][3]).toEqual({
+          answers: [{ question: 'Who approves?', answer: 'The director' }],
+          conversation: [{ role: 'user', content: 'Earlier message' }],
+          message: undefined,
+        });
+      });
+
+      it('does not append to the conversation when analyzing without a message', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.conversation).toEqual([]);
       });
 
       it('stores the llm matches and hypotheses', async () => {

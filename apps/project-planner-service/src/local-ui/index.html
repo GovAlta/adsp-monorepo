@@ -65,6 +65,8 @@
       let options = { modes: ['rules'], defaultMode: 'rules' };
       let mode = 'rules';
       let busy = false;
+      let chatDraft = '';
+      const answerDrafts = {};
 
       const api = async (method, path, body) => {
         const res = await fetch(API + path, {
@@ -125,10 +127,11 @@
         if (section === 'problem') {
           return `<div class="stack">
             <goa-textarea id="problem" name="problem" rows="6" width="100%" value="${esc(draftText)}" aria-label="Problem statement"></goa-textarea>
-            <goa-radio-group id="mode" name="mode" value="${esc(mode)}" orientation="horizontal" arialabel="Analysis mode">
-              <goa-radio-item value="ai" label="AI analysis${options.model ? ` (${esc(options.model)})` : ''}" ${options.modes.includes('ai') ? '' : 'disabled="true"'}></goa-radio-item>
-              <goa-radio-item value="rules" label="Rule-based"></goa-radio-item>
-            </goa-radio-group>
+            <div class="row" role="group" aria-label="Analysis mode">
+              <span><strong>Analysis mode:</strong></span>
+              <goa-button type="${mode === 'ai' ? 'primary' : 'secondary'}" size="compact" data-mode="ai" ${options.modes.includes('ai') ? '' : 'disabled="true"'}>AI analysis${options.model ? ` (${esc(options.model)})` : ''}</goa-button>
+              <goa-button type="${mode === 'rules' ? 'primary' : 'secondary'}" size="compact" data-mode="rules">Rule-based</goa-button>
+            </div>
             <div class="row"><goa-button id="analyzeBtn" type="primary">${busy ? 'Analyzing…' : 'Save &amp; analyze'}</goa-button>
             <goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>
             ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
@@ -157,9 +160,28 @@
             : '<p class="muted">No concepts yet.</p>';
         }
         if (section === 'questions') {
-          return st.questions.length
-            ? list(st.questions.map((q) => `${esc(q.question)} <goa-badge type="${q.status === 'open' ? 'important' : 'success'}" content="${esc(q.status)}"></goa-badge> <span class="muted">(${esc(q.raisedBy)})</span>`))
-            : '<p class="muted">No open questions.</p>';
+          const open = st.questions.filter((q) => q.status === 'open');
+          return `<div class="stack">
+            ${st.questions.length ? `<p class="muted">${open.length} open · ${st.questions.length - open.length} answered. Answer questions, then refine the analysis.</p>` : '<p class="muted">No questions yet. Run an analysis first.</p>'}
+            ${st.questions.map((q) => `<goa-container type="non-interactive" accent="thin">
+              <div class="row"><strong>${esc(q.question)}</strong> <goa-badge type="${q.status === 'open' ? 'important' : 'success'}" content="${esc(q.status)}"></goa-badge> <span class="muted">(${esc(q.raisedBy)})</span></div>
+              <goa-spacer vspacing="s"></goa-spacer>
+              <goa-textarea data-answer="${q.id}" name="a-${q.id}" rows="2" width="100%" value="${esc(answerDrafts[q.id] ?? q.answer ?? '')}" aria-label="Answer to: ${esc(q.question)}"></goa-textarea>
+              <goa-spacer vspacing="s"></goa-spacer>
+              <div class="row"><goa-button type="secondary" size="compact" data-save-answer="${q.id}">${q.status === 'answered' ? 'Update answer' : 'Save answer'}</goa-button></div>
+            </goa-container>`).join('')}
+            ${st.questions.length ? `<div class="row"><goa-button id="refineBtn" type="primary">${busy ? 'Refining…' : 'Refine analysis with my answers'}</goa-button></div>
+            ${busy ? '<goa-circular-progress visible="true" message="Refining — this can take up to a minute"></goa-circular-progress>' : ''}` : ''}
+          </div>`;
+        }
+        if (section === 'conversation') {
+          const msgs = st.conversation || [];
+          return `<div class="stack">
+            ${msgs.length ? msgs.map((m) => `<goa-callout type="${m.role === 'user' ? 'information' : 'success'}" heading="${m.role === 'user' ? 'You' : 'Planner'}">${esc(m.content)}</goa-callout>`).join('') : `<p class="muted">Ask a question, add detail, or correct the planner's understanding. ${mode === 'ai' ? 'The AI will answer and refine the analysis.' : 'Switch to AI analysis for conversational replies.'}</p>`}
+            <goa-textarea id="chatInput" name="chat" rows="3" width="100%" value="${esc(chatDraft)}" placeholder="e.g. Applicants are small non-profits; decisions need a committee vote." aria-label="Message to the planner"></goa-textarea>
+            <div class="row"><goa-button id="sendBtn" type="primary">${busy ? 'Thinking…' : 'Send'}</goa-button></div>
+            ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
+          </div>`;
         }
         if (section === 'steps') {
           return list(st.nextSteps.map((n) => `<strong>${esc(n.title)}</strong>${n.service ? ` <goa-badge type="information" content="${esc(n.service)}"></goa-badge>` : ''} — ${esc(n.reason)}`), 'Run an analysis to get next steps.');
@@ -178,12 +200,55 @@
         return '';
       }
 
-      const tabs = [['problem', 'Problem & analysis'], ['hypotheses', 'Hypotheses'], ['concepts', 'Concepts'], ['questions', 'Questions'], ['steps', 'Next steps'], ['specialists', 'Specialists'], ['patterns', 'Pattern catalog']];
+      const tabs = [['problem', 'Problem & analysis'], ['conversation', 'Conversation'], ['hypotheses', 'Hypotheses'], ['concepts', 'Concepts'], ['questions', 'Questions'], ['steps', 'Next steps'], ['specialists', 'Specialists'], ['patterns', 'Pattern catalog']];
+
+      const download = (filename, content, type) => {
+        const url = URL.createObjectURL(new Blob([content], { type }));
+        const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      };
+
+      function toMarkdown(s) {
+        const st = s.state;
+        const lines = [`# ${s.name}`, '', `Status: ${s.status} · Exported ${new Date().toLocaleString()}`, '', '## Problem statement', '', st.problemStatement || '_None_', ''];
+        if (st.analysis) lines.push(`_Analysis: ${st.analysis.mode === 'ai' ? `AI (${st.analysis.model || 'model'})` : 'rule-based'}${st.analysis.warning ? ` — ${st.analysis.warning}` : ''}_`, '');
+        lines.push('## Pattern matches', '');
+        st.patternMatches.forEach((m) => lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`));
+        lines.push('', '## Hypotheses', '');
+        st.hypotheses.forEach((h) => {
+          lines.push(`### ${h.title} (${h.confidence} confidence)`, '', h.rationale, '', '**Recommended services (in order)**', '');
+          [...h.recommendations].sort((a, b) => a.order - b.order).forEach((r) => lines.push(`${r.order}. **${r.service}** — ${r.reason}`));
+          if (h.assumptions.length) lines.push('', '**Assumptions**', '', ...h.assumptions.map((a) => `- ${a}`));
+          if (h.unknowns.length) lines.push('', '**Unknowns**', '', ...h.unknowns.map((a) => `- ${a}`));
+          lines.push('');
+        });
+        lines.push('## Concepts', '');
+        st.concepts.forEach((c) => lines.push(`- ${c.type}: ${c.name}`));
+        lines.push('', '## Questions and answers', '');
+        st.questions.forEach((q) => lines.push(`- **${q.question}** (${q.status})${q.answer ? `\n  - Answer: ${q.answer}` : ''}`));
+        lines.push('', '## Next steps', '');
+        st.nextSteps.forEach((n) => lines.push(`- **${n.title}** — ${n.reason}`));
+        if ((st.conversation || []).length) {
+          lines.push('', '## Conversation', '');
+          st.conversation.forEach((m) => lines.push(`- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content}`));
+        }
+        return lines.join('\n') + '\n';
+      }
+
+      const safeName = (s) => s.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'solution';
 
       function renderWorkspace() {
         if (!current) return;
         $('workspace').innerHTML = `<goa-container accent="thick">
           <h2 style="margin-top:0">${esc(current.name)} <goa-badge type="information" content="${esc(current.status)}"></goa-badge></h2>
+          <div class="row" aria-label="Export">
+            <goa-button id="exportJsonBtn" type="secondary" size="compact" leadingicon="download">Download JSON</goa-button>
+            <goa-button id="exportMdBtn" type="secondary" size="compact" leadingicon="document-text">Download report (.md)</goa-button>
+          </div>
+          <goa-spacer vspacing="m"></goa-spacer>
           <div class="row" role="toolbar" aria-label="Sections">${tabs.map(([id, label]) => `<goa-button type="${section === id ? 'primary' : 'tertiary'}" size="compact" data-section="${id}">${esc(label)}</goa-button>`).join('')}</div>
           <goa-spacer vspacing="m"></goa-spacer>
           <div id="section">${sectionHtml()}</div></goa-container>`;
@@ -193,6 +258,48 @@
           if (section === 'specialists' && !specialists) specialists = (await api('GET', '/specialists')).results;
           renderWorkspace();
         })));
+        $('workspace').querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('_click', () => { mode = b.dataset.mode; renderWorkspace(); }));
+        $('exportJsonBtn')?.addEventListener('_click', () => run(async () => {
+          const data = await api('GET', `/solutions/${current.id}/export`);
+          download(`planner-${safeName(current)}.json`, JSON.stringify(data, null, 2), 'application/json');
+        }));
+        $('exportMdBtn')?.addEventListener('_click', () => download(`planner-${safeName(current)}.md`, toMarkdown(current), 'text/markdown'));
+        $('chatInput')?.addEventListener('_change', (e) => (chatDraft = e.detail.value));
+        $('sendBtn')?.addEventListener('_click', () => run(async () => {
+          if (busy || !chatDraft.trim()) return;
+          busy = true;
+          renderWorkspace();
+          try {
+            current = await api('POST', `/solutions/${current.id}/chat`, { message: chatDraft.trim(), mode });
+            chatDraft = '';
+            await loadSolutions();
+          } finally {
+            busy = false;
+            renderWorkspace();
+          }
+        }));
+        $('workspace').querySelectorAll('[data-answer]').forEach((t) => t.addEventListener('_change', (e) => (answerDrafts[t.dataset.answer] = e.detail.value)));
+        $('workspace').querySelectorAll('[data-save-answer]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          const id = b.dataset.saveAnswer;
+          const answer = answerDrafts[id] ?? current.state.questions.find((q) => q.id === id)?.answer ?? '';
+          current = await api('PUT', `/solutions/${current.id}/questions/${id}`, { answer });
+          delete answerDrafts[id];
+          notify('success', 'Answer saved.');
+          renderWorkspace();
+        })));
+        $('refineBtn')?.addEventListener('_click', () => run(async () => {
+          if (busy) return;
+          busy = true;
+          renderWorkspace();
+          try {
+            current = await api('POST', `/solutions/${current.id}/analyze`, { mode });
+            notify('success', 'Analysis refined using your answers.');
+            await loadSolutions();
+          } finally {
+            busy = false;
+            renderWorkspace();
+          }
+        }));
         $('problem')?.addEventListener('_change', (e) => (draftText = e.detail.value));
         $('mode')?.addEventListener('_change', (e) => (mode = e.detail.value));
         $('analyzeBtn')?.addEventListener('_click', () => run(async () => {

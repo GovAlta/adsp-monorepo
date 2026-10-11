@@ -135,6 +135,12 @@ export interface AnalysisInfo {
   analyzedOn: string;
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  at: string;
+}
+
 export interface SolutionState {
   problemStatement: string;
   concepts: BusinessConcept[];
@@ -146,6 +152,7 @@ export interface SolutionState {
   artifacts: SolutionArtifact[];
   nextSteps: NextStep[];
   analysis?: AnalysisInfo;
+  conversation?: ConversationMessage[];
 }
 
 export interface Solution {

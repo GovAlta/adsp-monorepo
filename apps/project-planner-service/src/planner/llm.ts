@@ -25,11 +25,20 @@ export interface LlmConfig {
   insecureTls: boolean;
 }
 
+export interface AnalysisContext {
+  // Questions the user has answered; the model must not ask these again.
+  answers: { question: string; answer: string }[];
+  conversation: { role: 'user' | 'assistant'; content: string }[];
+  message?: string;
+}
+
 export interface LlmAnalysis {
   concepts: BusinessConcept[];
   matches: PatternMatch[];
   hypotheses: Hypothesis[];
   questions: string[];
+  // Plain-language reply to the user's latest message or a summary of what changed.
+  reply: string;
   model: string;
 }
 
@@ -42,7 +51,12 @@ export interface LlmConsultation {
 
 export interface PlannerLlm {
   readonly model: string;
-  analyze(text: string, patterns: BusinessPattern[], existing: BusinessConcept[]): Promise<LlmAnalysis>;
+  analyze(
+    text: string,
+    patterns: BusinessPattern[],
+    existing: BusinessConcept[],
+    context?: AnalysisContext,
+  ): Promise<LlmAnalysis>;
   consult(state: SolutionState, specialist: SpecialistDefinition, question?: string): Promise<LlmConsultation>;
 }
 
@@ -136,7 +150,12 @@ export class MaasLlm implements PlannerLlm {
     }
   }
 
-  async analyze(text: string, patterns: BusinessPattern[], existing: BusinessConcept[]): Promise<LlmAnalysis> {
+  async analyze(
+    text: string,
+    patterns: BusinessPattern[],
+    existing: BusinessConcept[],
+    context?: AnalysisContext,
+  ): Promise<LlmAnalysis> {
     const serviceNames = SPECIALISTS.map((s) => s.service);
     const catalog = patterns.map((p) => ({
       id: p.id,
@@ -153,6 +172,13 @@ export class MaasLlm implements PlannerLlm {
     const user = [
       `Business problem:\n"""${text}"""`,
       existing.length ? `Concepts already confirmed by the user: ${existing.map((c) => `${c.type}:${c.name}`).join(', ')}` : '',
+      context?.answers.length
+        ? `The user has already answered these questions (treat the answers as facts and do not ask them again):\n${context.answers.map((a) => `Q: ${a.question}\nA: ${a.answer}`).join('\n')}`
+        : '',
+      context?.conversation.length
+        ? `Conversation so far:\n${context.conversation.slice(-12).map((m) => `${m.role}: ${m.content}`).join('\n')}`
+        : '',
+      context?.message ? `The user's latest message (respond to it in "reply" and refine the analysis accordingly): """${context.message}"""` : '',
       `Known business patterns (use these ids): ${JSON.stringify(catalog)}`,
       `ADSP services you may recommend (use these exact names): ${JSON.stringify(services)}`,
       `Return JSON with this shape:
@@ -160,9 +186,10 @@ export class MaasLlm implements PlannerLlm {
   "concepts": [{"type": one of ${JSON.stringify(CONCEPT_TYPES)}, "name": "short name", "description": "one sentence"}],
   "matches": [{"patternId": "<pattern id>", "score": 0-10, "level": "high|medium|low", "explanation": "why it fits, plain language"}],
   "hypotheses": [{"title": "...", "patternId": "<pattern id or empty>", "confidence": "high|medium|low", "rationale": "plain-language explanation of the approach and why", "recommendations": [{"service": "<service name>", "reason": "why this service", "order": 1}], "assumptions": ["..."], "unknowns": ["..."]}],
-  "questions": ["clarifying question to ask the user"]
+  "questions": ["clarifying question to ask the user"],
+  "reply": "2-4 plain-language sentences: answer the user's latest message if any, otherwise summarize what you understood and what changed"
 }
-Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and up to 6 questions. Recommendation order is the suggested implementation order starting at 1.`,
+Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and up to 6 questions (only questions that are still unanswered). Recommendation order is the suggested implementation order starting at 1.`,
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -232,7 +259,14 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
     if (matches.length === 0 && hypotheses.length === 0) {
       throw new Error('Model response did not contain usable matches or hypotheses.');
     }
-    return { concepts, matches, hypotheses, questions: asStrings(json.questions, 6), model: this.config.model };
+    return {
+      concepts,
+      matches,
+      hypotheses,
+      questions: asStrings(json.questions, 6),
+      reply: asString(json.reply, 2000),
+      model: this.config.model,
+    };
   }
 
   async consult(state: SolutionState, specialist: SpecialistDefinition, question?: string): Promise<LlmConsultation> {

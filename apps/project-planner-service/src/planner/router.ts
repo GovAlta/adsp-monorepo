@@ -111,6 +111,7 @@ interface AnalysisResult {
   hypotheses: Hypothesis[];
   concepts: BusinessConcept[];
   questionTexts: string[];
+  reply: string;
 }
 
 const dedupeConcepts = (existing: BusinessConcept[], incoming: BusinessConcept[]): BusinessConcept[] => {
@@ -140,6 +141,95 @@ async function persist(
 export function createPlannerRouter({ logger, solutionRepository, eventService, llm }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+
+  async function runAnalysis(
+    req: Request,
+    solution: Solution,
+    { text, mode, message }: { text: string; mode?: AnalysisMode; message?: string },
+  ): Promise<Solution> {
+    const patterns = await getPatterns(req);
+    const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
+    const now = new Date().toISOString();
+    let result: AnalysisResult | undefined;
+    let warning: string | undefined;
+    if (requestedMode === 'ai') {
+      if (!llm) {
+        warning = 'AI analysis is not configured; used rule-based analysis.';
+      } else {
+        try {
+          const analysis = await llm.analyze(text, patterns, solution.state.concepts, {
+            answers: solution.state.questions.filter((q) => q.status === 'answered' && q.answer).map((q) => ({ question: q.question, answer: q.answer })),
+            conversation: (solution.state.conversation || []).map(({ role, content }) => ({ role, content })),
+            message,
+          });
+          result = {
+            mode: 'ai',
+            model: analysis.model,
+            matches: analysis.matches,
+            hypotheses: analysis.hypotheses,
+            concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
+            questionTexts: analysis.questions,
+            reply: analysis.reply,
+          };
+        } catch (err) {
+          logger.warn(`AI analysis failed, falling back to rules: ${(err as Error).message}`);
+          warning = `AI analysis failed (${(err as Error).message}); used rule-based analysis.`;
+        }
+      }
+    }
+
+    // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
+    const ruleText = message ? `${text}\n${message}` : text;
+    if (!result) {
+      const matches = matchPatterns(ruleText, patterns);
+      const hypotheses = buildHypotheses(matches, patterns);
+      result = {
+        mode: 'rules',
+        matches,
+        hypotheses,
+        concepts: extractConcepts(ruleText, solution.state.concepts),
+        questionTexts: hypotheses
+          .filter((h) => h.confidence !== 'high')
+          .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
+        reply: 'Rule-based analysis refreshed using your message. Switch to AI analysis for conversational answers.',
+      };
+    }
+
+    const existingQuestions = new Set(solution.state.questions.map((q) => q.question));
+    const newQuestions = result.questionTexts
+      .filter((q, i, all) => !existingQuestions.has(q) && all.indexOf(q) === i)
+      .map((question) => ({
+        id: randomUUID(),
+        question,
+        raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
+        status: 'open' as const,
+      }));
+
+    const conversation = [...(solution.state.conversation || [])];
+    if (message) {
+      conversation.push({ role: 'user', content: message, at: now });
+      conversation.push({ role: 'assistant', content: warning ? `${result.reply} (${warning})` : result.reply, at: now });
+    }
+
+    const state: SolutionState = {
+      ...solution.state,
+      problemStatement: result.mode === 'rules' ? ruleText : text,
+      concepts: [...solution.state.concepts, ...result.concepts],
+      patternMatches: result.matches,
+      hypotheses: result.hypotheses,
+      questions: [...solution.state.questions, ...newQuestions],
+      conversation,
+      analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
+    };
+    state.nextSteps = buildNextSteps(state);
+    return persist(
+      req,
+      solutionRepository,
+      eventService,
+      { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
+      message ? 'chat' : 'analyze',
+    );
+  }
 
   router.get('/analysis/options', requirePlannerUser, (_req, res) => {
     res.send({
@@ -342,83 +432,87 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const patterns = await getPatterns(req);
         const text = req.body.text || solution.state.problemStatement;
         if (!text) {
           throw new InvalidOperationError('Solution has no problem statement to analyze.');
         }
-
-        const requestedMode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
-        let result: AnalysisResult | undefined;
-        let warning: string | undefined;
-        if (requestedMode === 'ai') {
-          if (!llm) {
-            warning = 'AI analysis is not configured; used rule-based analysis.';
-          } else {
-            try {
-              const analysis = await llm.analyze(text, patterns, solution.state.concepts);
-              result = {
-                mode: 'ai',
-                model: analysis.model,
-                matches: analysis.matches,
-                hypotheses: analysis.hypotheses,
-                concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
-                questionTexts: analysis.questions,
-              };
-            } catch (err) {
-              logger.warn(`AI analysis failed, falling back to rules: ${(err as Error).message}`);
-              warning = `AI analysis failed (${(err as Error).message}); used rule-based analysis.`;
-            }
-          }
-        }
-        if (!result) {
-          const matches = matchPatterns(text, patterns);
-          const hypotheses = buildHypotheses(matches, patterns);
-          result = {
-            mode: 'rules',
-            matches,
-            hypotheses,
-            concepts: extractConcepts(text, solution.state.concepts),
-            questionTexts: hypotheses
-              .filter((h) => h.confidence !== 'high')
-              .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
-          };
-        }
-
-        const existingQuestions = new Set(solution.state.questions.map((q) => q.question));
-        const newQuestions = result.questionTexts
-          .filter((q, i, all) => !existingQuestions.has(q) && all.indexOf(q) === i)
-          .map((question) => ({
-            id: randomUUID(),
-            question,
-            raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
-            status: 'open' as const,
-          }));
-
-        const state: SolutionState = {
-          ...solution.state,
-          problemStatement: text,
-          concepts: [...solution.state.concepts, ...result.concepts],
-          patternMatches: result.matches,
-          hypotheses: result.hypotheses,
-          questions: [...solution.state.questions, ...newQuestions],
-          analysis: { mode: result.mode, model: result.model, warning, analyzedOn: new Date().toISOString() },
-        };
-        state.nextSteps = buildNextSteps(state);
-        res.send(
-          await persist(
-            req,
-            solutionRepository,
-            eventService,
-            { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
-            'analyze',
-          ),
-        );
+        res.send(await runAnalysis(req, solution, { text, mode: req.body.mode }));
       } catch (err) {
         next(err);
       }
     },
   );
+
+  router.post(
+    '/solutions/:id/chat',
+    requirePlannerUser,
+    validateId,
+    createValidationHandler(
+      body('message').isString().trim().isLength({ min: 1, max: 5000 }),
+      body('mode').optional().isIn(['ai', 'rules']),
+    ),
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const message: string = req.body.message.trim();
+        res.send(await runAnalysis(req, solution, { text: solution.state.problemStatement, mode: req.body.mode, message }));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.put(
+    '/solutions/:id/questions/:questionId',
+    requirePlannerUser,
+    validateId,
+    createValidationHandler(
+      param('questionId').isUUID(),
+      body('answer').isString().isLength({ max: 5000 }),
+    ),
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const existing = solution.state.questions.find((q) => q.id === req.params.questionId);
+        if (!existing) {
+          throw new NotFoundError('question', req.params.questionId);
+        }
+        const answer: string = req.body.answer.trim();
+        const questions = solution.state.questions.map((q) =>
+          q.id === existing.id
+            ? answer
+              ? { ...q, status: 'answered' as const, answer }
+              : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
+            : q,
+        );
+        const state = { ...solution.state, questions };
+        state.nextSteps = buildNextSteps(state);
+        res.send(await persist(req, solutionRepository, eventService, { ...solution, state }, 'answer'));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get('/solutions/:id/export', requirePlannerUser, validateId, getSolution(solutionRepository), (req, res) => {
+    const solution = loaded(req);
+    res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
+    res.send({
+      exportedAt: new Date().toISOString(),
+      id: solution.id,
+      name: solution.name,
+      description: solution.description,
+      scenario: solution.scenario,
+      status: solution.status,
+      createdByName: solution.createdByName,
+      createdOn: solution.createdOn,
+      updatedOn: solution.updatedOn,
+      revision: solution.revision,
+      state: solution.state,
+    });
+  });
 
   router.post(
     '/solutions/:id/consult/:service',
