@@ -102,6 +102,26 @@ paths:
         - { name: service, in: path, required: true, schema: { type: string } }
       responses:
         200: { description: Consultation result. }
+  /planner/v1/specialists/{service}/chat:
+    post:
+      tags: [Specialist]
+      summary: Converses directly with a service specialist (ask, recommend, design, validate, sample code).
+      parameters:
+        - { name: service, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages: { type: array, items: { type: object, required: [role, content], properties: { role: { type: string, enum: [user, assistant] }, content: { type: string } } } }
+                intent: { type: string, enum: [ask, recommend, design, validate, sample] }
+                solutionId: { type: string, format: uuid }
+                mode: { type: string, enum: [ai, rules] }
+      responses:
+        200: { description: Specialist reply with suggestions, samples, validation and follow-ups. }
   /planner/v1/solutions/{id}/handoff/{service}:
     post:
       tags: [Solution, Specialist]

@@ -9,7 +9,7 @@ import { createPlannerRouter, getSolution, requirePlannerUser } from './router';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist } from './specialists';
 import { Solution } from './types';
-import type { LlmAnalysis, LlmConsultation, PlannerLlm } from './llm';
+import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -954,7 +954,7 @@ describe('planner router routes', () => {
 
   describe('AI-assisted planning', () => {
     const MODEL = 'GOA-Default';
-    const llm = { model: MODEL, analyze: jest.fn(), consult: jest.fn() };
+    const llm = { model: MODEL, analyze: jest.fn(), consult: jest.fn(), converse: jest.fn() };
     const aiText = 'Residents submit grant applications that officers review and approve.';
 
     const aiAnalysis: LlmAnalysis = {
@@ -994,6 +994,8 @@ describe('planner router routes', () => {
       advice: 'Start with a single intake form for grant applicants.',
       questions: ['Which fields are mandatory?'],
       risks: ['Duplicate submissions'],
+      supports: [],
+      constraints: [],
       model: MODEL,
     };
 
@@ -1352,7 +1354,27 @@ describe('planner router routes', () => {
           expect.objectContaining({ problemStatement: '' }),
           expect.objectContaining({ service: 'form-service' }),
           'Can applicants save drafts?',
+          undefined,
         );
+      });
+
+      it('passes the proposal to the llm as the fourth argument', async () => {
+        llm.consult.mockResolvedValueOnce(consultation);
+
+        await consult(buildApp(owner, true, llm), { proposal: 'Use one intake form with draft saving.' });
+
+        expect(llm.consult).toHaveBeenCalledWith(
+          expect.objectContaining({ problemStatement: '' }),
+          expect.objectContaining({ service: 'form-service' }),
+          undefined,
+          'Use one intake form with draft saving.',
+        );
+      });
+
+      it('returns 400 when the proposal is not a string', async () => {
+        const res = await consult(buildApp(owner, true, llm), { proposal: 42 });
+
+        expect(res.status).toBe(400);
       });
 
       it('skips the llm when rules mode is requested', async () => {
@@ -1395,6 +1417,189 @@ describe('planner router routes', () => {
         const res = await consult(buildApp(owner, true, llm), { question: 42 });
 
         expect(res.status).toBe(400);
+      });
+    });
+
+    describe('POST /specialists/:service/chat', () => {
+      const messages = [{ role: 'user', content: 'How do I let applicants save drafts?' }];
+      const specialistReply: SpecialistReply = {
+        reply: 'Enable draft saving on the form definition.',
+        suggestions: ['Set an expiry for drafts'],
+        samples: [{ language: 'json', title: 'Form definition', code: '{"supportDrafts":true}' }],
+        followUps: ['How long should drafts be kept?'],
+        model: MODEL,
+      };
+      const chat = (app: express.Express, body: object = { messages }, service = 'form-service') =>
+        request(app).post(`/planner/v1/specialists/${service}/chat`).send(body);
+
+      it('returns the llm reply in ai mode', async () => {
+        llm.converse.mockResolvedValueOnce(specialistReply);
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.body).toEqual({ service: 'form-service', mode: 'ai', ...specialistReply });
+      });
+
+      it('resolves the specialist from its short name', async () => {
+        llm.converse.mockResolvedValueOnce(specialistReply);
+
+        const res = await chat(buildApp(owner, true, llm), { messages }, 'form');
+
+        expect(res.body.service).toBe('form-service');
+      });
+
+      it('passes the specialist, messages and default ask intent to the llm without a solution state', async () => {
+        llm.converse.mockResolvedValueOnce(specialistReply);
+
+        await chat(buildApp(owner, true, llm));
+
+        expect(llm.converse).toHaveBeenCalledWith(
+          expect.objectContaining({ service: 'form-service' }),
+          messages,
+          'ask',
+          undefined,
+        );
+      });
+
+      it('passes the requested intent to the llm', async () => {
+        llm.converse.mockResolvedValueOnce(specialistReply);
+
+        await chat(buildApp(owner, true, llm), { messages, intent: 'validate' });
+
+        expect(llm.converse).toHaveBeenCalledWith(expect.anything(), messages, 'validate', undefined);
+      });
+
+      it('does not look up a solution when no solutionId is supplied', async () => {
+        llm.converse.mockResolvedValueOnce(specialistReply);
+
+        await chat(buildApp(owner, true, llm));
+
+        expect(repository.get).not.toHaveBeenCalled();
+      });
+
+      it('falls back to rule-based guidance when the llm throws', async () => {
+        llm.converse.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.body).toMatchObject({
+          service: 'form-service',
+          mode: 'rules',
+          warning: 'AI specialist was unavailable; showing rule-based guidance.',
+          samples: [],
+        });
+      });
+
+      it('logs a warning when the llm chat fails', async () => {
+        llm.converse.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        await chat(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI specialist chat failed'));
+      });
+
+      it('warns that ai is not configured when ai mode is requested without an llm', async () => {
+        const res = await chat(buildApp(), { messages, mode: 'ai' });
+
+        expect(res.body).toMatchObject({ mode: 'rules', warning: 'AI is not configured; showing rule-based guidance.' });
+      });
+
+      it('returns rule-based guidance without a warning when no llm is configured and no mode is requested', async () => {
+        const res = await chat(buildApp());
+
+        expect(res.body.warning).toBeUndefined();
+      });
+
+      it('skips the llm when rules mode is requested', async () => {
+        await chat(buildApp(owner, true, llm), { messages, mode: 'rules' });
+
+        expect(llm.converse).not.toHaveBeenCalled();
+      });
+
+      it('returns rule-based guidance without a warning when rules mode is requested', async () => {
+        const res = await chat(buildApp(owner, true, llm), { messages, mode: 'rules', intent: 'recommend' });
+
+        expect(res.body).toMatchObject({ service: 'form-service', mode: 'rules', followUps: getSpecialist('form-service').questions });
+      });
+
+      it('omits the warning when rules mode is requested explicitly', async () => {
+        const res = await chat(buildApp(owner, true, llm), { messages, mode: 'rules' });
+
+        expect(res.body.warning).toBeUndefined();
+      });
+
+      it('returns 404 for an unknown specialist', async () => {
+        const res = await chat(buildApp(owner, true, llm), { messages }, 'payments');
+
+        expect(res.status).toBe(404);
+      });
+
+      it('returns 400 when the last message is not from the user', async () => {
+        const res = await chat(buildApp(owner, true, llm), {
+          messages: [...messages, { role: 'assistant', content: 'Enable draft saving.' }],
+        });
+
+        expect(res.body.error).toBe('The last message must be from the user.');
+      });
+
+      it('rejects an assistant-ended conversation with a client error status', async () => {
+        const res = await chat(buildApp(owner, true, llm), {
+          messages: [{ role: 'assistant', content: 'Enable draft saving.' }],
+        });
+
+        expect(res.status).toBe(400);
+      });
+
+      it.each([
+        ['missing', {}],
+        ['empty', { messages: [] }],
+        ['with an invalid role', { messages: [{ role: 'system', content: 'Hi' }] }],
+        ['with empty content', { messages: [{ role: 'user', content: '' }] }],
+        ['with an invalid intent', { messages, intent: 'chat' }],
+        ['with a solutionId that is not a UUID', { messages, solutionId: 'abc' }],
+        ['with an invalid mode', { messages, mode: 'bogus' }],
+      ])('returns 400 when the request is %s', async (_name, body) => {
+        const res = await chat(buildApp(owner, true, llm), body);
+
+        expect(res.status).toBe(400);
+      });
+
+      describe('with a solutionId', () => {
+        it('returns 404 when the solution does not exist', async () => {
+          repository.get.mockResolvedValueOnce(undefined);
+
+          const res = await chat(buildApp(owner, true, llm), { messages, solutionId: SOLUTION_ID });
+
+          expect(res.status).toBe(404);
+        });
+
+        it('returns 403 when the solution belongs to another non-admin user', async () => {
+          repository.get.mockResolvedValueOnce(solutionOwnedBy('owner-1'));
+
+          const res = await chat(buildApp(stranger, true, llm), { messages, solutionId: SOLUTION_ID });
+
+          expect(res.status).toBe(403);
+        });
+
+        it('passes the solution state to the llm for the owner', async () => {
+          const solution = solutionOwnedBy('owner-1');
+          repository.get.mockResolvedValueOnce(solution);
+          llm.converse.mockResolvedValueOnce(specialistReply);
+
+          await chat(buildApp(owner, true, llm), { messages, solutionId: SOLUTION_ID });
+
+          expect(llm.converse).toHaveBeenCalledWith(expect.anything(), messages, 'ask', solution.state);
+        });
+
+        it('passes the solution state to the llm for a planner admin', async () => {
+          const solution = solutionOwnedBy('owner-1');
+          repository.get.mockResolvedValueOnce(solution);
+          llm.converse.mockResolvedValueOnce(specialistReply);
+
+          await chat(buildApp(admin, true, llm), { messages, solutionId: SOLUTION_ID });
+
+          expect(llm.converse).toHaveBeenCalledWith(expect.anything(), messages, 'ask', solution.state);
+        });
       });
     });
   });

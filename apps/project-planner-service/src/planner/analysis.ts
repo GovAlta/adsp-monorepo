@@ -138,6 +138,9 @@ export interface ConsultResult {
   risks: string[];
   // Present when the AI specialist contributed guidance.
   advice?: string;
+  supports?: string[];
+  constraints?: string[];
+  validation?: { verdict: 'sound' | 'needs-changes' | 'not-a-fit'; findings: string[] };
 }
 
 export function consultSpecialist(state: SolutionState, service: string): ConsultResult | undefined {

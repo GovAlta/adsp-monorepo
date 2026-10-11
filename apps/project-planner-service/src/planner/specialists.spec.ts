@@ -1,4 +1,5 @@
-import { getSpecialist, SPECIALISTS } from './specialists';
+import type { SpecialistIntent } from './llm';
+import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 
 describe('specialists', () => {
   describe('SPECIALISTS', () => {
@@ -36,6 +37,68 @@ describe('specialists', () => {
 
     it('returns undefined for an unknown service', () => {
       expect(getSpecialist('payments')).toBeUndefined();
+    });
+  });
+
+  describe('ruleBasedSpecialistReply', () => {
+    const formService = getSpecialist('form-service');
+    const valueService = getSpecialist('value-service');
+    const INTROS: [SpecialistIntent, string][] = [
+      ['ask', 'Here is what this service is for and what to settle first.'],
+      ['recommend', 'Start with these decisions to shape a service-specific solution.'],
+      ['design', 'Use these questions and pitfalls to refine your design.'],
+      ['validate', 'Check your proposal against these points; detailed validation needs AI mode.'],
+      ['sample', 'Sample code needs AI mode. In the meantime, here is what the code must cover.'],
+    ];
+
+    it.each(INTROS)('starts the %s reply with its intent introduction', (intent, intro) => {
+      const result = ruleBasedSpecialistReply(valueService, intent);
+
+      expect(result.reply.startsWith(intro)).toBe(true);
+    });
+
+    it.each(INTROS)('describes the service purpose in the %s reply', (intent) => {
+      const result = ruleBasedSpecialistReply(valueService, intent);
+
+      expect(result.reply).toContain(`${valueService.displayName}: ${valueService.purpose}`);
+    });
+
+    it.each(INTROS)('lists dependencies in the %s reply when the service has them', (intent) => {
+      const result = ruleBasedSpecialistReply(formService, intent);
+
+      expect(result.reply).toContain('Depends on: file-service.');
+    });
+
+    it('joins multiple dependencies with commas', () => {
+      const specialist = { ...formService, dependsOn: ['file-service', 'event-service'] };
+
+      const result = ruleBasedSpecialistReply(specialist, 'ask');
+
+      expect(result.reply).toContain('Depends on: file-service, event-service.');
+    });
+
+    it.each(INTROS)('omits the dependency line in the %s reply when there are none', (intent) => {
+      const result = ruleBasedSpecialistReply(valueService, intent);
+
+      expect(result.reply).not.toContain('Depends on');
+    });
+
+    it('returns the specialist risks as suggestions', () => {
+      const result = ruleBasedSpecialistReply(formService, 'design');
+
+      expect(result.suggestions).toEqual(formService.risks);
+    });
+
+    it('returns the specialist questions as follow-ups', () => {
+      const result = ruleBasedSpecialistReply(formService, 'recommend');
+
+      expect(result.followUps).toEqual(formService.questions);
+    });
+
+    it('returns no code samples', () => {
+      const result = ruleBasedSpecialistReply(formService, 'sample');
+
+      expect(result.samples).toEqual([]);
     });
   });
 });

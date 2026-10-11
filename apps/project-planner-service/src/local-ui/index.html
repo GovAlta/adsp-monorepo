@@ -66,6 +66,8 @@
       let mode = 'rules';
       let busy = false;
       let chatDraft = '';
+      let spec = { service: null, intent: 'ask', messages: [], draft: '' };
+      const INTENTS = [['ask', 'Ask'], ['recommend', 'Recommend'], ['design', 'Refine design'], ['validate', 'Validate'], ['sample', 'Sample code']];
       const answerDrafts = {};
 
       const api = async (method, path, body) => {
@@ -107,13 +109,46 @@
         current = await api('GET', `/solutions/${id}`);
         draftText = current.state.problemStatement || '';
         consultResult = null;
+        spec = { service: null, intent: 'ask', messages: [], draft: '' };
         renderList();
         renderWorkspace();
       }
 
       const list = (items, empty = 'None') => (items?.length ? `<ul class="plain">${items.map((i) => `<li>${i}</li>`).join('')}</ul>` : `<p class="muted">${empty}</p>`);
 
-      function renderObject(o) {
+      function renderSpecialistChat() {
+        if (!spec.service) return '<p class="muted">Choose Chat on a service to talk with its specialist directly: ask questions, get recommendations, refine a design, validate a plan or get sample code.</p>';
+        const def = (specialists || []).find((s) => s.service === spec.service);
+        const sample = (x) => `<goa-details heading="${esc(x.title || x.language)}"><pre style="white-space:pre-wrap;overflow:auto">${esc(x.code)}</pre></goa-details>`;
+        const turn = (m) => m.role === 'user'
+          ? `<goa-callout type="important" heading="You">${esc(m.content)}</goa-callout>`
+          : `<goa-callout type="information" heading="${esc(def?.displayName || spec.service)}${m.mode === 'rules' ? ' (rule-based)' : ''}">
+              <div style="white-space:pre-wrap">${esc(m.content)}</div>
+              ${m.warning ? `<p class="muted">${esc(m.warning)}</p>` : ''}
+              ${m.validation ? `<p><strong>Verdict:</strong> ${esc(m.validation.verdict)}</p><ul>${m.validation.findings.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+              ${m.suggestions?.length ? `<p><strong>Recommendations</strong></p><ul>${m.suggestions.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+              ${(m.samples || []).map(sample).join('')}
+              ${m.followUps?.length ? `<div class="row">${m.followUps.map((f) => `<goa-button type="tertiary" size="compact" data-followup="${esc(f)}">${esc(f)}</goa-button>`).join('')}</div>` : ''}
+            </goa-callout>`;
+        return `<div class="stack"><h3>Specialist chat: ${esc(def?.displayName || spec.service)}</h3>
+          <div class="row">${INTENTS.map(([k, label]) => `<goa-button type="${spec.intent === k ? 'primary' : 'secondary'}" size="compact" data-intent="${k}">${label}</goa-button>`).join('')}</div>
+          ${spec.messages.map(turn).join('')}
+          <goa-textarea id="specInput" name="spec" rows="3" width="100%" value="${esc(spec.draft)}" aria-label="Message to the specialist"></goa-textarea>
+          <div class="row"><goa-button id="specSend">Send</goa-button></div></div>`;
+      }
+      async function sendSpecialist(text) {
+        if (busy || !text.trim()) return;
+        spec.messages.push({ role: 'user', content: text.trim() });
+        spec.draft = '';
+        const res = await api('POST', `/specialists/${spec.service}/chat`, {
+          messages: spec.messages.map((m) => ({ role: m.role, content: m.content })),
+          intent: spec.intent,
+          solutionId: current?.id,
+          mode,
+        });
+        spec.messages.push({ role: 'assistant', content: res.reply, mode: res.mode, warning: res.warning, validation: res.validation, suggestions: res.suggestions, samples: res.samples, followUps: res.followUps });
+        renderWorkspace();
+      }      function renderObject(o) {
         const { advice, ...rest } = o;
         const adviceHtml = advice ? `<h4 style="margin-bottom:0">Guidance</h4>${advice.split(/\n{2,}/).map((p) => `<p style="margin-top:0">${esc(p)}</p>`).join('')}` : '';
         return adviceHtml + Object.entries(rest)
@@ -190,8 +225,9 @@
           const progress = Object.fromEntries(st.specialists.map((s) => [s.service, s.status]));
           return `<div class="stack"><goa-table width="100%"><table><thead><tr><th>Service</th><th>Purpose</th><th>Status</th><th></th></tr></thead><tbody>
             ${(specialists || []).map((s) => `<tr><td>${esc(s.displayName)}</td><td>${esc(s.purpose)}</td><td>${esc(progress[s.service] || 'not-started')}</td>
-              <td><goa-button type="secondary" size="compact" data-consult="${s.service}">Consult</goa-button></td></tr>`).join('')}</tbody></table></goa-table>
-            ${consultResult ? `<goa-callout type="information" heading="Specialist: ${esc(consultResult.service || '')}">${renderObject(consultResult)}</goa-callout>` : ''}</div>`;
+              <td><div class="row"><goa-button type="secondary" size="compact" data-consult="${s.service}">Consult</goa-button><goa-button type="tertiary" size="compact" data-spec="${s.service}">Chat</goa-button></div></td></tr>`).join('')}</tbody></table></goa-table>
+            ${consultResult ? `<goa-callout type="information" heading="Specialist: ${esc(consultResult.service || '')}">${renderObject(consultResult)}</goa-callout>` : ''}
+            ${renderSpecialistChat()}</div>`;
         }
         if (section === 'patterns') {
           const block = (heading, items) =>
@@ -324,6 +360,14 @@
           $('workspace').innerHTML = '<goa-callout type="information" heading="Solution deleted">Choose or create another solution.</goa-callout>';
           await loadSolutions();
         }));
+        $('workspace').querySelectorAll('[data-spec]').forEach((b) => b.addEventListener('_click', () => {
+          spec = { service: b.dataset.spec, intent: 'ask', messages: [], draft: '' };
+          renderWorkspace();
+        }));
+        $('workspace').querySelectorAll('[data-intent]').forEach((b) => b.addEventListener('_click', () => { spec.intent = b.dataset.intent; renderWorkspace(); }));
+        $('specInput')?.addEventListener('_change', (e) => (spec.draft = e.detail.value));
+        $('specSend')?.addEventListener('_click', () => run(() => sendSpecialist(spec.draft)));
+        $('workspace').querySelectorAll('[data-followup]').forEach((b) => b.addEventListener('_click', () => run(() => sendSpecialist(b.dataset.followup))));
         $('workspace').querySelectorAll('[data-consult]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           consultResult = await api('POST', `/solutions/${current.id}/consult/${b.dataset.consult}`, { mode });
           current = await api('GET', `/solutions/${current.id}`);

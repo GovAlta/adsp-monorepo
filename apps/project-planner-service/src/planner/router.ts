@@ -7,11 +7,11 @@ import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { buildHypotheses, buildNextSteps, ConsultResult, consultSpecialist, extractConcepts, matchPatterns } from './analysis';
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
-import { mergeConsultation, PlannerLlm } from './llm';
+import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
 import { SolutionRepository } from './repository';
 import { PlannerServiceRoles } from './roles';
-import { getSpecialist, SPECIALISTS } from './specialists';
+import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
   AnalysisMode,
   BusinessConcept,
@@ -35,6 +35,7 @@ interface PlannerRouterProps {
 }
 
 const SOLUTION_KEY = 'solution';
+const SPECIALIST_INTENTS: SpecialistIntent[] = ['ask', 'recommend', 'design', 'validate', 'sample'];
 const SPECIALIST_STATUSES: SpecialistStatus[] = ['not-started', 'consulted', 'in-workspace', 'completed'];
 const SOLUTION_STATUSES = ['draft', 'analyzed', 'in-progress', 'completed', 'archived'];
 const ALL_ROLES = [PlannerServiceRoles.Admin, PlannerServiceRoles.User];
@@ -520,6 +521,7 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
     validateId,
     createValidationHandler(
       body('question').optional().isString().isLength({ max: 2000 }),
+      body('proposal').optional().isString().isLength({ max: 5000 }),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
     getSolution(solutionRepository),
@@ -534,7 +536,7 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
         const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
         if (mode === 'ai' && llm) {
           try {
-            const consultation = await llm.consult(solution.state, getSpecialist(req.params.service), req.body.question);
+            const consultation = await llm.consult(solution.state, getSpecialist(req.params.service), req.body.question, req.body.proposal);
             result = mergeConsultation(baseResult, consultation);
           } catch (err) {
             logger.warn(`AI consultation failed, using rule-based guidance: ${(err as Error).message}`);
@@ -551,6 +553,68 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
         ];
         await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists } }, 'consult');
         res.send(result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // Direct access to a specialist, without requiring a planner session.
+  router.post(
+    '/specialists/:service/chat',
+    requirePlannerUser,
+    createValidationHandler(
+      body('messages').isArray({ min: 1, max: 40 }),
+      body('messages.*.role').isIn(['user', 'assistant']),
+      body('messages.*.content').isString().isLength({ min: 1, max: 5000 }),
+      body('intent').optional().isIn(SPECIALIST_INTENTS),
+      body('solutionId').optional().isUUID(),
+      body('mode').optional().isIn(['ai', 'rules']),
+    ),
+    async (req, res, next) => {
+      try {
+        const specialist = getSpecialist(req.params.service);
+        if (!specialist) {
+          throw new NotFoundError('specialist', req.params.service);
+        }
+        const messages: SpecialistChatMessage[] = req.body.messages;
+        if (messages[messages.length - 1].role !== 'user') {
+          throw new InvalidOperationError('The last message must be from the user.');
+        }
+        const intent: SpecialistIntent = req.body.intent || 'ask';
+
+        let state: SolutionState | undefined;
+        if (req.body.solutionId) {
+          const tenantId = getTenantId(req);
+          const solution = await solutionRepository.get(tenantId, req.body.solutionId);
+          if (!solution) {
+            throw new NotFoundError('solution', req.body.solutionId);
+          }
+          if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
+            throw new UnauthorizedUserError('access solution', req.user);
+          }
+          state = solution.state;
+        }
+
+        const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
+        let warning: string;
+        if (mode === 'ai' && llm) {
+          try {
+            res.send({ service: specialist.service, mode: 'ai', ...(await llm.converse(specialist, messages, intent, state)) });
+            return;
+          } catch (err) {
+            logger.warn(`AI specialist chat failed, using rule-based guidance: ${(err as Error).message}`);
+            warning = 'AI specialist was unavailable; showing rule-based guidance.';
+          }
+        } else if (mode === 'ai') {
+          warning = 'AI is not configured; showing rule-based guidance.';
+        }
+        res.send({
+          service: specialist.service,
+          mode: 'rules',
+          warning,
+          ...ruleBasedSpecialistReply(specialist, intent),
+        });
       } catch (err) {
         next(err);
       }

@@ -1,7 +1,15 @@
 import axios from 'axios';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
-import { createLlmFromEnv, LlmConfig, LlmConsultation, MaasLlm, mergeConsultation, parseJsonObject } from './llm';
+import {
+  createLlmFromEnv,
+  LlmConfig,
+  LlmConsultation,
+  MaasLlm,
+  mergeConsultation,
+  parseJsonObject,
+  SpecialistChatMessage,
+} from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
 import { getSpecialist } from './specialists';
 import { SolutionState } from './types';
@@ -568,7 +576,72 @@ describe('MaasLlm', () => {
 
       const result = await buildLlm().consult(emptyState(), specialist);
 
-      expect(result).toEqual({ ...consultJson, model: 'GOA-Default' });
+      expect(result).toMatchObject({ ...consultJson, model: 'GOA-Default' });
+    });
+
+    it('maps fit, supports, constraints and validation from the response', async () => {
+      post.mockResolvedValueOnce(
+        completion(
+          JSON.stringify({
+            ...consultJson,
+            fit: 'recommended',
+            supports: ['Grant intake'],
+            constraints: ['Forms need a published definition'],
+            validation: { verdict: 'needs-changes', findings: ['Missing draft retention'] },
+          }),
+        ),
+      );
+
+      const result = await buildLlm().consult(emptyState(), specialist, undefined, 'Use one intake form.');
+
+      expect(result).toMatchObject({
+        fit: 'recommended',
+        supports: ['Grant intake'],
+        constraints: ['Forms need a published definition'],
+        validation: { verdict: 'needs-changes', findings: ['Missing draft retention'] },
+      });
+    });
+
+    it('includes the proposal to validate in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(consultJson)));
+
+      await buildLlm().consult(emptyState(), specialist, undefined, 'Use one intake form.');
+
+      expect(post.mock.calls[0][1].messages[1].content).toContain('Plan to validate:\n"""Use one intake form."""');
+    });
+
+    it('omits the plan section when no proposal is supplied', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(consultJson)));
+
+      await buildLlm().consult(emptyState(), specialist);
+
+      expect(post.mock.calls[0][1].messages[1].content).not.toContain('Plan to validate');
+    });
+
+    it('leaves fit undefined when the fit is not recognised', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...consultJson, fit: 'perfect' })));
+
+      const result = await buildLlm().consult(emptyState(), specialist);
+
+      expect(result.fit).toBeUndefined();
+    });
+
+    it('leaves validation undefined when the verdict is not recognised', async () => {
+      post.mockResolvedValueOnce(
+        completion(JSON.stringify({ ...consultJson, validation: { verdict: 'perfect', findings: ['x'] } })),
+      );
+
+      const result = await buildLlm().consult(emptyState(), specialist);
+
+      expect(result.validation).toBeUndefined();
+    });
+
+    it('defaults supports and constraints to empty lists', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(consultJson)));
+
+      const result = await buildLlm().consult(emptyState(), specialist);
+
+      expect(result).toMatchObject({ supports: [], constraints: [] });
     });
 
     it('asks the model to explain the service when no question is supplied', async () => {
@@ -584,7 +657,7 @@ describe('MaasLlm', () => {
 
       await buildLlm().consult(emptyState(), specialist, 'Can applicants save drafts?');
 
-      expect(post.mock.calls[0][1].messages[1].content).toContain('The user asks: Can applicants save drafts?');
+      expect(post.mock.calls[0][1].messages[1].content).toContain('The planner asks: Can applicants save drafts?');
     });
 
     it('states that the solution is not analyzed when there are no hypotheses', async () => {
@@ -648,6 +721,198 @@ describe('MaasLlm', () => {
       const result = await buildLlm().consult(emptyState(), specialist);
 
       expect(result.advice).toBe(consultJson.advice);
+    });
+  });
+
+  describe('converse', () => {
+    const specialist = getSpecialist('form-service');
+    const messages: SpecialistChatMessage[] = [{ role: 'user', content: 'How do I let applicants save drafts?' }];
+    const converseJson = {
+      reply: 'Enable draft saving on the form definition.',
+      suggestions: ['Set an expiry for drafts'],
+      samples: [{ language: 'json', title: 'Form definition', code: '{"supportDrafts":true}' }],
+      followUps: ['How long should drafts be kept?'],
+    };
+    const systemPrompt = () => post.mock.calls[0][1].messages[0].content as string;
+
+    it('maps a valid response to reply, suggestions, samples and follow-ups', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      const result = await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(result).toEqual({ ...converseJson, validation: undefined, model: 'GOA-Default' });
+    });
+
+    it('maps a valid validation verdict', async () => {
+      const validation = { verdict: 'not-a-fit', findings: ['Use the task service instead'] };
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, validation })));
+
+      const result = await buildLlm().converse(specialist, messages, 'validate');
+
+      expect(result.validation).toEqual(validation);
+    });
+
+    it('drops a validation with an unrecognised verdict', async () => {
+      const validation = { verdict: 'perfect', findings: ['x'] };
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, validation })));
+
+      const result = await buildLlm().converse(specialist, messages, 'validate');
+
+      expect(result.validation).toBeUndefined();
+    });
+
+    it('limits samples to four', async () => {
+      const samples = [1, 2, 3, 4, 5, 6].map((n) => ({ language: 'json', title: `Sample ${n}`, code: `{"n":${n}}` }));
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, samples })));
+
+      const result = await buildLlm().converse(specialist, messages, 'sample');
+
+      expect(result.samples.map((s) => s.title)).toEqual(['Sample 1', 'Sample 2', 'Sample 3', 'Sample 4']);
+    });
+
+    it('drops samples without code', async () => {
+      const samples = [
+        { language: 'json', title: 'Empty', code: '   ' },
+        { language: 'json', title: 'Missing' },
+        null,
+        { language: 'json', title: 'Kept', code: '{}' },
+      ];
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, samples })));
+
+      const result = await buildLlm().converse(specialist, messages, 'sample');
+
+      expect(result.samples).toEqual([{ language: 'json', title: 'Kept', code: '{}' }]);
+    });
+
+    it('defaults the sample language to text', async () => {
+      const samples = [{ title: 'Snippet', code: 'POST /forms' }];
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, samples })));
+
+      const result = await buildLlm().converse(specialist, messages, 'sample');
+
+      expect(result.samples[0].language).toBe('text');
+    });
+
+    it('returns no samples when samples is not a list', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, samples: 'none' })));
+
+      const result = await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(result.samples).toEqual([]);
+    });
+
+    it('defaults suggestions and follow-ups to empty lists', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ reply: 'Use one form.' })));
+
+      const result = await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(result).toMatchObject({ suggestions: [], followUps: [], samples: [] });
+    });
+
+    it('limits follow-ups to five', async () => {
+      const followUps = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'].map((q) => `Question ${q}?`);
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...converseJson, followUps })));
+
+      const result = await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(result.followUps).toHaveLength(5);
+    });
+
+    it.each([
+      ['missing', {}],
+      ['blank', { reply: '   ' }],
+    ])('throws when the reply is %s', async (_name, json) => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(json)));
+
+      await expect(buildLlm().converse(specialist, messages, 'ask')).rejects.toThrow(
+        'Model response did not contain a reply.',
+      );
+    });
+
+    it('sends the last twelve messages after the system prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+      const history: SpecialistChatMessage[] = Array.from({ length: 15 }, (_v, i) => ({
+        role: i % 2 === 0 ? 'user' : 'assistant',
+        content: `Message ${i}`,
+      }));
+
+      await buildLlm().converse(specialist, history, 'ask');
+
+      expect(post.mock.calls[0][1].messages.slice(1).map((m: { content: string }) => m.content)).toEqual(
+        history.slice(-12).map((m) => m.content),
+      );
+    });
+
+    it('truncates long messages to 4000 characters', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(specialist, [{ role: 'user', content: 'x'.repeat(5000) }], 'ask');
+
+      expect(post.mock.calls[0][1].messages[1].content).toHaveLength(4000);
+    });
+
+    it('starts the request with a system message for the specialist', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(post.mock.calls[0][1].messages[0]).toMatchObject({ role: 'system' });
+    });
+
+    it.each([
+      ['ask', 'answer the user\'s question about this service.'],
+      ['recommend', 'recommend a service-specific solution'],
+      ['design', 'help refine the user\'s service-specific design'],
+      ['validate', 'validate the user\'s proposed solution'],
+      ['sample', 'provide concise, realistic sample code'],
+    ] as const)('includes the %s intent guidance in the system prompt', async (intent, guidance) => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(specialist, messages, intent);
+
+      expect(systemPrompt()).toContain(`Current task: ${guidance}`);
+    });
+
+    it('includes the specialist purpose and dependencies in the system prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(systemPrompt()).toContain(`Service purpose: ${specialist.purpose} Dependencies: file-service.`);
+    });
+
+    it('states there are no dependencies or recorded pitfalls when the specialist has none', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(getSpecialist('value-service'), messages, 'ask');
+
+      expect(systemPrompt()).toContain('Dependencies: none. Known pitfalls: none recorded.');
+    });
+
+    it('includes the solution problem statement when state is supplied', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(specialist, messages, 'design', emptyState());
+
+      expect(systemPrompt()).toContain('Solution context: """Residents apply for grants."""');
+    });
+
+    it('omits the solution context when no state is supplied', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      await buildLlm().converse(specialist, messages, 'design');
+
+      expect(systemPrompt()).not.toContain('Solution context');
+    });
+
+    it('repairs invalid JSON with a second request', async () => {
+      post
+        .mockResolvedValueOnce(completion('not json'))
+        .mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
+
+      const result = await buildLlm().converse(specialist, messages, 'ask');
+
+      expect(result.reply).toBe(converseJson.reply);
     });
   });
 
@@ -763,8 +1028,32 @@ describe('mergeConsultation', () => {
     advice: 'AI advice.',
     questions: ['Which fields are mandatory?', 'Can applicants save drafts?'],
     risks: ['Duplicate submissions'],
+    fit: 'recommended',
+    supports: ['Grant intake'],
+    constraints: ['Forms need a published definition'],
+    validation: { verdict: 'sound', findings: ['Plan covers drafts'] },
     model: 'GOA-Default',
   };
+
+  it('uses the AI fit over the base fit', () => {
+    expect(mergeConsultation(base, ai).fit).toBe('recommended');
+  });
+
+  it('keeps the base fit when the AI gives none', () => {
+    expect(mergeConsultation(base, { ...ai, fit: undefined }).fit).toBe('optional');
+  });
+
+  it('takes supports from the AI consultation', () => {
+    expect(mergeConsultation(base, ai).supports).toEqual(['Grant intake']);
+  });
+
+  it('takes constraints from the AI consultation', () => {
+    expect(mergeConsultation(base, ai).constraints).toEqual(['Forms need a published definition']);
+  });
+
+  it('takes validation from the AI consultation', () => {
+    expect(mergeConsultation(base, ai).validation).toEqual({ verdict: 'sound', findings: ['Plan covers drafts'] });
+  });
 
   it('replaces the advice with the AI advice', () => {
     expect(mergeConsultation(base, ai).advice).toBe('AI advice.');
@@ -783,7 +1072,7 @@ describe('mergeConsultation', () => {
   });
 
   it('preserves the other fields of the base result', () => {
-    expect(mergeConsultation(base, ai)).toMatchObject({ service: 'form-service', fit: 'optional' });
+    expect(mergeConsultation(base, ai)).toMatchObject({ service: 'form-service', displayName: 'Form service' });
   });
 
   it('does not mutate the base result', () => {

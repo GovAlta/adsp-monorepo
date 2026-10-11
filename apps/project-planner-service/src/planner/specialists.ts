@@ -1,3 +1,4 @@
+import type { SpecialistIntent } from './llm';
 import { SpecialistDefinition } from './types';
 
 const def = (
@@ -124,3 +125,30 @@ export const SPECIALISTS: SpecialistDefinition[] = [
 
 export const getSpecialist = (service: string): SpecialistDefinition | undefined =>
   SPECIALISTS.find((s) => s.service === service || s.service === `${service}-service`);
+
+const RULE_INTRO: Record<SpecialistIntent, string> = {
+  ask: 'Here is what this service is for and what to settle first.',
+  recommend: 'Start with these decisions to shape a service-specific solution.',
+  design: 'Use these questions and pitfalls to refine your design.',
+  validate: 'Check your proposal against these points; detailed validation needs AI mode.',
+  sample: 'Sample code needs AI mode. In the meantime, here is what the code must cover.',
+};
+
+export interface RuleBasedSpecialistReply {
+  reply: string;
+  suggestions: string[];
+  samples: never[];
+  followUps: string[];
+}
+
+export const ruleBasedSpecialistReply = (
+  specialist: SpecialistDefinition,
+  intent: SpecialistIntent,
+): RuleBasedSpecialistReply => ({
+  reply:
+    `${RULE_INTRO[intent]}\n\n${specialist.displayName}: ${specialist.purpose}` +
+    (specialist.dependsOn.length ? `\n\nDepends on: ${specialist.dependsOn.join(', ')}.` : ''),
+  suggestions: specialist.risks,
+  samples: [],
+  followUps: specialist.questions,
+});
