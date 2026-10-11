@@ -636,18 +636,22 @@ app.get('/info', (req, res) => {
   res.json({ name: 'ADSP Planner — Local Dev Server', version: 'local-dev', port: PORT, note: 'All auth stubbed. Keycloak/MongoDB not required.' });
 });
 
-app.listen(PORT, () => {
-  console.log('');
-  console.log('  ┌─────────────────────────────────────────────────────────┐');
-  console.log('  │  ADSP Project Planner — Local Dev Server                │');
-  console.log('  │  ⚠️  NOT FOR PRODUCTION                                 │');
-  console.log('  ├─────────────────────────────────────────────────────────┤');
-  console.log(`  │  Dashboard:   http://localhost:${PORT}                     │`);
-  console.log(`  │  API base:    http://localhost:${PORT}/api/v1              │`);
-  console.log(`  │  Health:      http://localhost:${PORT}/health              │`);
-  console.log(`  │  Dev login:   http://localhost:${PORT}/dev-login?persona=admin │`);
-  console.log('  └─────────────────────────────────────────────────────────┘');
-  console.log('');
-  console.log('  To run the UI: cd apps/planner-ui && npm run dev  →  http://localhost:5173');
-  console.log('');
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log('');
+    console.log('  ┌─────────────────────────────────────────────────────────┐');
+    console.log('  │  ADSP Project Planner — Local Dev Server                │');
+    console.log('  │  ⚠️  NOT FOR PRODUCTION                                 │');
+    console.log('  ├─────────────────────────────────────────────────────────┤');
+    console.log(`  │  Dashboard:   http://localhost:${PORT}                     │`);
+    console.log(`  │  API base:    http://localhost:${PORT}/api/v1              │`);
+    console.log(`  │  Health:      http://localhost:${PORT}/health              │`);
+    console.log(`  │  Dev login:   http://localhost:${PORT}/dev-login?persona=admin │`);
+    console.log('  └─────────────────────────────────────────────────────────┘');
+    console.log('');
+    console.log('  To run the UI: cd apps/planner-ui && npm run dev  →  http://localhost:5173');
+    console.log('');
+  });
+}
+
+module.exports = { app };
