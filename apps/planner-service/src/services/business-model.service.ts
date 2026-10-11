@@ -109,6 +109,13 @@ export class BusinessModelService {
       throw err;
     }
 
+    // ✓ ASVS:V5.1.3 — validate conceptId is a well-formed UUID before using in Mongo predicate
+    // Prevents user-controlled strings from being embedded in query objects (NoSQL injection)
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(conceptId)) {
+      throw new AppError(400, 'Invalid conceptId format', 'INVALID_CONCEPT_ID');
+    }
+
     // Build positional update for matching concept sub-document
     const setFields: Record<string, unknown> = {};
     if (updates.conceptType !== undefined) setFields['concepts.$.conceptType'] = updates.conceptType;

@@ -4,12 +4,13 @@
 
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
-const express = require('express');
-const cors    = require('cors');
-const jwt     = require('jsonwebtoken');
-const path    = require('path');
-const https   = require('https');
-const axios   = require('axios');
+const express   = require('express');
+const cors      = require('cors');
+const jwt       = require('jsonwebtoken');
+const path      = require('path');
+const https     = require('https');
+const axios     = require('axios');
+const rateLimit = require('express-rate-limit');
 const { SESSIONS, BUSINESS_MODELS, MESSAGES, HYPOTHESES, PATTERNS, EXPORTS, SPECIALIST_REQUESTS, AUDIT_EVENTS, USERS, uuidv4, now, paginate } = require('./store');
 
 // ── AI provider config ────────────────────────────────────────────────────────
@@ -23,11 +24,15 @@ const MAAS_TIMEOUT  = parseInt(process.env.MAAS_TIMEOUT || '240000', 10);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const PLANNER_MODEL     = process.env.PLANNER_MODEL || 'claude-sonnet-4-5';
 
-// Axios instance for MaaS — SSL verify off (internal GoA cert)
+// Axios instance for MaaS.
+// TLS verification: off only when MAAS_DISABLE_TLS_VERIFY=true is set explicitly in .env
+// (needed for GoA internal CA in some dev environments). Never disable in CI or production.
 const maasHttp = axios.create({
   baseURL: MAAS_BASE_URL,
   timeout: MAAS_TIMEOUT,
-  httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: process.env.MAAS_DISABLE_TLS_VERIFY !== 'true',
+  }),
 });
 
 // Anthropic SDK — only instantiated if key is present
@@ -129,8 +134,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = 'local-dev-secret-not-for-prod';
 
-app.use(cors({ origin: '*', methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'], allowedHeaders: ['Authorization','Content-Type','X-Request-ID'] }));
+// Restrict CORS to known local origins — never wildcard, even in dev (CodeQL CORS finding)
+const DEV_CORS_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173').split(',').map(s => s.trim());
+app.use(cors({ origin: DEV_CORS_ORIGINS, methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'], allowedHeaders: ['Authorization','Content-Type','X-Request-ID'] }));
 app.use(express.json());
+
+// Rate limiters — intentionally generous for local dev; present to satisfy CodeQL rule
+const apiLimiter = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false });
+const staticLimiter = rateLimit({ windowMs: 60_000, max: 600, standardHeaders: true, legacyHeaders: false });
 
 // ── Dev auth middleware (permissive — warns but never rejects) ─────────────────
 function devAuth(req, _res, next) {
@@ -229,8 +240,9 @@ async function autoGenerateHypothesis(sessionId, bm) {
   });
 }
 
-// ── API v1 (all routes use devAuth) ──────────────────────────────────────────
+// ── API v1 (all routes use devAuth + rate limiter) ────────────────────────────
 const api = express.Router();
+api.use(apiLimiter);
 api.use(devAuth);
 
 // Sessions
@@ -461,7 +473,9 @@ api.post('/sessions/:sessionId/specialists', (req, res) => {
     r.completedAt = now();
     console.log(`[local-dev] Specialist complete: ${specialistType}`);
   }).catch((err) => {
-    console.error(`[local-dev] Specialist AI error (${specialistType}):`, err.message);
+    // Sanitize user-supplied specialistType before logging to prevent format-string injection
+    const safeType = String(specialistType).replace(/[^\w-]/g, '').slice(0, 64);
+    console.error('[local-dev] Specialist AI error (%s):', safeType, err.message);
     r.status = 'error';
     r.error = err.message;
   });
@@ -615,7 +629,7 @@ app.use('/api/v1', api);
 
 // ── Dev dashboard UI ──────────────────────────────────────────────────────────
 app.use('/static', express.static(path.join(__dirname, 'ui')));
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'ui', 'index.html')));
+app.get('/', staticLimiter, (_req, res) => res.sendFile(path.join(__dirname, 'ui', 'index.html')));
 
 // ── Root info (mirrors planner-service shape) ─────────────────────────────────
 app.get('/info', (req, res) => {

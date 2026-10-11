@@ -90,7 +90,14 @@ async function initializeApp(): Promise<express.Application> {
         includeSubDomains: true,
         preload: true,
       },
-      contentSecurityPolicy: false, // API service; no HTML content
+      // API service returns JSON, not HTML. Restrict all content sources to 'none'
+      // so any accidental HTML response cannot load external resources.
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
     }),
   );
 

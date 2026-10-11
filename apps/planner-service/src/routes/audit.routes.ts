@@ -1,12 +1,22 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { Logger } from 'winston';
+import rateLimit from 'express-rate-limit';
 import { AuditController } from '../controllers/audit.controller';
 import { AuditEventService } from '../services/audit.service';
 import { requireAuth, requireAdmin } from '../middleware/auth.middleware';
 import { tenantMiddleware } from '../middleware/tenant.middleware';
 import { validateParams } from '../middleware/validation.middleware';
 import { createAuditMiddleware, AuditService } from '../middleware/audit.middleware';
+
+// ✓ ASVS:V4.2.2 — rate-limit audit routes to prevent log enumeration / DoS
+const auditRateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { statusCode: 429, error: 'Too Many Requests', message: 'Audit log rate limit exceeded' },
+});
 
 // ✓ ASVS:V3.5.2 — requireAuth applied to all audit routes; no public access
 // ✓ ASVS:V4.1.2 — requireAdmin enforced on ALL audit routes (FAC-S4-030)
@@ -59,6 +69,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
   const auditController = new AuditController(auditEventService, logger);
 
   const router = Router();
+  router.use(auditRateLimit);
 
   // -----------------------------------------------------------------------
   // GET /api/v1/audit — list audit events (paginated, filterable)
