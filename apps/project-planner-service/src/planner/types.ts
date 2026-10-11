@@ -60,8 +60,12 @@ export interface ServiceMapping {
   reason: string;
 }
 
+// built-in: shipped with the service; customized: a built-in overridden by the tenant; custom: created by the tenant.
+export type PatternSource = 'built-in' | 'customized' | 'custom';
+
 export interface BusinessPattern {
   id: string;
+  source?: PatternSource;
   name: string;
   description: string;
   domainLanguage: string[];

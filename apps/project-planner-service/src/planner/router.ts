@@ -9,7 +9,7 @@ import { buildHypotheses, buildNextSteps, ConsultResult, consultSpecialist, extr
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
-import { SolutionRepository } from './repository';
+import { PatternRepository, SolutionRepository } from './repository';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
@@ -29,6 +29,7 @@ interface PlannerRouterProps {
   apiId: AdspId;
   logger: Logger;
   solutionRepository: SolutionRepository;
+  patternRepository: PatternRepository;
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
@@ -62,21 +63,100 @@ const getTenantId = (req: Request): AdspId => {
 
 const isPlannerAdmin = (user: User, tenantId: AdspId) => isAllowedUser(user, tenantId, PlannerServiceRoles.Admin);
 
-async function getPatterns(req: Request): Promise<BusinessPattern[]> {
+const BUILT_IN_IDS = new Set(BUILT_IN_PATTERNS.map((p) => p.id));
+
+// Effective catalogue: built-in patterns, overridden by configuration, overridden by stored tenant patterns.
+async function getPatterns(req: Request, patternRepository: PatternRepository): Promise<BusinessPattern[]> {
   const [config] = await req.getConfiguration<PlannerConfiguration>();
   const overrides = config?.patterns || {};
-  const merged = new Map(BUILT_IN_PATTERNS.map((p) => [p.id, p]));
-  Object.values(overrides).forEach((p) =>
-    merged.set(p.id, { commonFeatures: [], weakSignals: [], clarifyingQuestions: [], assumptions: [], knownUnknowns: [], description: '', ...p }),
-  );
+  const stored = await patternRepository.find(getTenantId(req));
+  const merged = new Map<string, BusinessPattern>(BUILT_IN_PATTERNS.map((p) => [p.id, { ...p, source: 'built-in' }]));
+  const withDefaults = (p: BusinessPattern): BusinessPattern => ({
+    commonFeatures: [],
+    weakSignals: [],
+    clarifyingQuestions: [],
+    assumptions: [],
+    knownUnknowns: [],
+    description: '',
+    ...p,
+    source: BUILT_IN_IDS.has(p.id) ? 'customized' : 'custom',
+  });
+  Object.values(overrides).forEach((p) => merged.set(p.id, withDefaults(p)));
+  stored.forEach((p) => merged.set(p.id, withDefaults(p)));
   return [...merged.values()];
 }
+
+const PATTERN_ID = /^[a-z0-9][a-z0-9-]{1,59}$/;
+const slugify = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+const text = (value: unknown, max = 2000): string => (typeof value === 'string' ? value.trim().slice(0, max) : '');
+const texts = (value: unknown): string[] =>
+  (Array.isArray(value) ? value : []).map((v) => text(v, 500)).filter(Boolean);
+const signals = (value: unknown): { description: string; keywords: string[] }[] =>
+  (Array.isArray(value) ? value : [])
+    .map((s) => ({ description: text(s?.description, 500), keywords: texts(s?.keywords) }))
+    .filter((s) => s.description && s.keywords.length > 0);
+
+// Builds a pattern from request input, keeping only known fields.
+const toPattern = (id: string, input: Record<string, unknown>): BusinessPattern => ({
+  id,
+  name: text(input.name, 100),
+  description: text(input.description),
+  domainLanguage: texts(input.domainLanguage),
+  commonFeatures: texts(input.commonFeatures),
+  strongSignals: signals(input.strongSignals),
+  weakSignals: signals(input.weakSignals),
+  serviceMappings: (Array.isArray(input.serviceMappings) ? input.serviceMappings : [])
+    .map((m) => ({ service: text(m?.service, 100), reason: text(m?.reason, 500) }))
+    .filter((m) => m.service),
+  clarifyingQuestions: texts(input.clarifyingQuestions),
+  assumptions: texts(input.assumptions),
+  knownUnknowns: texts(input.knownUnknowns),
+});
+
+const patternValidation = () => [
+  body('name').isString().trim().isLength({ min: 1, max: 100 }),
+  body('description').optional().isString().isLength({ max: 2000 }),
+  body('domainLanguage').isArray({ min: 1, max: 100 }),
+  body('commonFeatures').optional().isArray({ max: 50 }),
+  body('strongSignals').isArray({ min: 1, max: 50 }),
+  body('strongSignals.*.description').isString().trim().isLength({ min: 1, max: 500 }),
+  body('strongSignals.*.keywords').isArray({ min: 1, max: 50 }),
+  body('weakSignals').optional().isArray({ max: 50 }),
+  body('weakSignals.*.description').isString().trim().isLength({ min: 1, max: 500 }),
+  body('weakSignals.*.keywords').isArray({ min: 1, max: 50 }),
+  body('serviceMappings').isArray({ min: 1, max: 30 }),
+  body('serviceMappings.*.service')
+    .isString()
+    .custom((service: string) => SPECIALISTS.some((s) => s.service === service))
+    .withMessage('must be an ADSP specialist service'),
+  body('serviceMappings.*.reason').isString().trim().isLength({ min: 1, max: 500 }),
+  body('clarifyingQuestions').optional().isArray({ max: 50 }),
+  body('assumptions').optional().isArray({ max: 50 }),
+  body('knownUnknowns').optional().isArray({ max: 50 }),
+];
 
 export const requirePlannerUser: RequestHandler = (req, _res, next) => {
   try {
     const tenantId = getTenantId(req);
     if (!isAllowedUser(req.user, tenantId, ALL_ROLES)) {
       throw new UnauthorizedUserError('access planner', req.user);
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
+  try {
+    if (!isPlannerAdmin(req.user, getTenantId(req))) {
+      throw new UnauthorizedUserError('manage patterns', req.user);
     }
     next();
   } catch (err) {
@@ -139,7 +219,7 @@ async function persist(
   return saved;
 }
 
-export function createPlannerRouter({ logger, solutionRepository, eventService, llm }: PlannerRouterProps): Router {
+export function createPlannerRouter({ logger, solutionRepository, patternRepository, eventService, llm }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
 
@@ -148,7 +228,7 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
     solution: Solution,
     { text, mode, message }: { text: string; mode?: AnalysisMode; message?: string },
   ): Promise<Solution> {
-    const patterns = await getPatterns(req);
+    const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
     const now = new Date().toISOString();
     let result: AnalysisResult | undefined;
@@ -242,7 +322,7 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
 
   router.get('/patterns', requirePlannerUser, async (req, res, next) => {
     try {
-      res.send({ results: await getPatterns(req) });
+      res.send({ results: await getPatterns(req, patternRepository) });
     } catch (err) {
       next(err);
     }
@@ -250,11 +330,69 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
 
   router.get('/patterns/:patternId', requirePlannerUser, async (req, res, next) => {
     try {
-      const pattern = (await getPatterns(req)).find((p) => p.id === req.params.patternId);
+      const pattern = (await getPatterns(req, patternRepository)).find((p) => p.id === req.params.patternId);
       if (!pattern) {
         throw new NotFoundError('pattern', req.params.patternId);
       }
       res.send(pattern);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post(
+    '/patterns',
+    requirePlannerAdmin,
+    createValidationHandler(body('id').optional().matches(PATTERN_ID), ...patternValidation()),
+    async (req, res, next) => {
+      try {
+        const id: string = req.body.id || slugify(req.body.name);
+        if (!PATTERN_ID.test(id)) {
+          throw new InvalidOperationError('Pattern name must produce an id of letters, numbers and hyphens.');
+        }
+        if ((await getPatterns(req, patternRepository)).some((p) => p.id === id)) {
+          throw new InvalidOperationError(`Pattern '${id}' already exists; update it instead.`);
+        }
+        const pattern = await patternRepository.save(getTenantId(req), toPattern(id, req.body), req.user);
+        res.status(201).send({ ...pattern, source: 'custom' });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // Updating a built-in pattern stores a tenant copy that overrides it.
+  router.put(
+    '/patterns/:patternId',
+    requirePlannerAdmin,
+    createValidationHandler(param('patternId').matches(PATTERN_ID), ...patternValidation()),
+    async (req, res, next) => {
+      try {
+        const { patternId } = req.params;
+        if (!(await getPatterns(req, patternRepository)).some((p) => p.id === patternId)) {
+          throw new NotFoundError('pattern', patternId);
+        }
+        const pattern = await patternRepository.save(getTenantId(req), toPattern(patternId, req.body), req.user);
+        res.send({ ...pattern, source: BUILT_IN_IDS.has(patternId) ? 'customized' : 'custom' });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // Deleting a customized built-in pattern restores the built-in version.
+  router.delete('/patterns/:patternId', requirePlannerAdmin, async (req, res, next) => {
+    try {
+      const { patternId } = req.params;
+      const deleted = await patternRepository.delete(getTenantId(req), patternId);
+      if (!deleted) {
+        const exists = (await getPatterns(req, patternRepository)).some((p) => p.id === patternId);
+        if (!exists) {
+          throw new NotFoundError('pattern', patternId);
+        }
+        throw new InvalidOperationError('Built-in and configured patterns cannot be deleted; update the pattern to customize it.');
+      }
+      res.sendStatus(204);
     } catch (err) {
       next(err);
     }
@@ -266,7 +404,7 @@ export function createPlannerRouter({ logger, solutionRepository, eventService, 
     createValidationHandler(body('text').isString().isLength({ min: 1, max: 20000 })),
     async (req, res, next) => {
       try {
-        const patterns = await getPatterns(req);
+        const patterns = await getPatterns(req, patternRepository);
         const matches = matchPatterns(req.body.text, patterns);
         const best = matches[0];
         res.send({

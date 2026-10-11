@@ -2,10 +2,12 @@ import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
 import { createRepositories } from './index';
+import { PostgresPatternRepository } from './pattern';
 import { PostgresSolutionRepository } from './solution';
 
 jest.mock('knex', () => ({ knex: jest.fn() }));
 jest.mock('./solution', () => ({ PostgresSolutionRepository: jest.fn() }));
+jest.mock('./pattern', () => ({ PostgresPatternRepository: jest.fn() }));
 jest.mock('@abgov/adsp-service-sdk', () => ({
   ...jest.requireActual('@abgov/adsp-service-sdk'),
   retry: { execute: jest.fn() },
@@ -63,6 +65,18 @@ describe('createRepositories', () => {
     await createRepositories(props);
 
     expect(PostgresSolutionRepository).toHaveBeenCalledWith(knexMock);
+  });
+
+  it('creates the pattern repository with the knex instance', async () => {
+    await createRepositories(props);
+
+    expect(PostgresPatternRepository).toHaveBeenCalledWith(knexMock);
+  });
+
+  it('returns the pattern repository instance', async () => {
+    const { patternRepository } = await createRepositories(props);
+
+    expect(patternRepository).toBe((PostgresPatternRepository as unknown as jest.Mock).mock.instances[0]);
   });
 
   it('rethrows migration failures so they can be retried', async () => {

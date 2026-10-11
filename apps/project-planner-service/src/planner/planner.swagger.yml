@@ -5,7 +5,30 @@ paths:
       summary: Retrieves business patterns (built-in plus tenant-defined).
       responses:
         200: { description: Patterns retrieved. }
+    post:
+      tags: [Pattern]
+      summary: Creates a custom pattern (planner-admin).
+      responses:
+        201: { description: Pattern created. }
+        400: { description: Invalid pattern or the id already exists. }
   /planner/v1/patterns/{patternId}:
+    put:
+      tags: [Pattern]
+      summary: Updates a pattern, or customizes a built-in pattern with a tenant copy (planner-admin).
+      parameters:
+        - { name: patternId, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Pattern updated. }
+        404: { description: Pattern not found. }
+    delete:
+      tags: [Pattern]
+      summary: Deletes a custom pattern, or restores a customized built-in pattern (planner-admin).
+      parameters:
+        - { name: patternId, in: path, required: true, schema: { type: string } }
+      responses:
+        204: { description: Pattern deleted. }
+        400: { description: Built-in patterns cannot be deleted. }
+        404: { description: Pattern not found. }
     get:
       tags: [Pattern]
       summary: Retrieves a business pattern.

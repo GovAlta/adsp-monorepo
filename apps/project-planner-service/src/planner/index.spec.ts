@@ -15,6 +15,7 @@ describe('applyPlannerMiddleware', () => {
   const logger = {} as Logger;
   const eventService = {} as EventService;
   const solutionRepository = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
+  const patternRepository = { find: jest.fn(), save: jest.fn(), delete: jest.fn() };
 
   beforeEach(() => {
     createPlannerRouterMock.mockReturnValue(routerMock);
@@ -25,24 +26,25 @@ describe('applyPlannerMiddleware', () => {
   });
 
   it('mounts the planner router at /planner/v1', () => {
-    applyPlannerMiddleware(appMock as unknown as Application, { serviceId, logger, solutionRepository, eventService });
+    applyPlannerMiddleware(appMock as unknown as Application, { serviceId, logger, solutionRepository, patternRepository, eventService });
 
     expect(appMock.use).toHaveBeenCalledWith('/planner/v1', routerMock);
   });
 
   it('creates the router with the v1 api id and dependencies', () => {
-    applyPlannerMiddleware(appMock as unknown as Application, { serviceId, logger, solutionRepository, eventService });
+    applyPlannerMiddleware(appMock as unknown as Application, { serviceId, logger, solutionRepository, patternRepository, eventService });
 
     expect(createPlannerRouterMock).toHaveBeenCalledWith({
       apiId: expect.objectContaining({}),
       logger,
       solutionRepository,
+      patternRepository,
       eventService,
     });
   });
 
   it('derives the api id from the service id', () => {
-    applyPlannerMiddleware(appMock as unknown as Application, { serviceId, logger, solutionRepository, eventService });
+    applyPlannerMiddleware(appMock as unknown as Application, { serviceId, logger, solutionRepository, patternRepository, eventService });
 
     expect(createPlannerRouterMock.mock.calls[0][0].apiId.toString()).toBe(`${serviceId}:v1`);
   });
@@ -52,6 +54,7 @@ describe('applyPlannerMiddleware', () => {
       serviceId,
       logger,
       solutionRepository,
+      patternRepository,
       eventService,
     });
 

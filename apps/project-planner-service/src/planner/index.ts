@@ -2,7 +2,7 @@ import { AdspId, adspId, EventService } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { PlannerLlm } from './llm';
-import { SolutionRepository } from './repository';
+import { PatternRepository, SolutionRepository } from './repository';
 import { createPlannerRouter } from './router';
 
 export * from './analysis';
@@ -19,6 +19,7 @@ interface PlannerMiddlewareProps {
   serviceId: AdspId;
   logger: Logger;
   solutionRepository: SolutionRepository;
+  patternRepository: PatternRepository;
   eventService: EventService;
   llm?: PlannerLlm;
 }

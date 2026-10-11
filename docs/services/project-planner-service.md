@@ -42,6 +42,9 @@ Base path `/planner/v1`. See the service swagger docs for details.
 |:-|:-|:-|
 | GET | /patterns, /patterns/{patternId} | Retrieve business patterns. |
 | POST | /patterns/match | Match free text against patterns. |
+| POST | /patterns | Create a custom pattern (admin). |
+| PUT | /patterns/{id} | Update or customize a pattern (admin). |
+| DELETE | /patterns/{id} | Delete a custom pattern or reset a customized built-in (admin). |
 | GET | /specialists | Retrieve service specialists. |
 | GET, POST | /solutions | List own solutions (all for planner-admin) or create one. |
 | GET, PATCH, DELETE | /solutions/{id} | Retrieve, update, or delete a solution. |
@@ -74,4 +77,9 @@ AI analysis calls an OpenAI-compatible chat completions endpoint (the GoA Model 
 
 ## Business pattern library
 
-The service ships 19 built-in business patterns (case management, grant applications, permit/licence, registration, inspection, complaint intake, consultation, eligibility, booking, document submission, incident reporting, FOIP-style requests, referral routing, status tracking, audit trail, public reporting, document generation, notification subscriptions, internal service requests). Each pattern provides: name, purpose, domain language, common features (`commonFeatures`), strong signals, weak or misleading signals, likely ADSP service mappings (each with a reason), clarifying questions, assumptions and known unknowns. Tenants can override patterns through configuration.
+The service ships 19 built-in business patterns (case management, grant applications, permit/licence, registration, inspection, complaint intake, consultation, eligibility, booking, document submission, incident reporting, FOIP-style requests, referral routing, status tracking, audit trail, public reporting, document generation, notification subscriptions, internal service requests). Each pattern provides: name, purpose, domain language, common features (`commonFeatures`), strong signals, weak or misleading signals, likely ADSP service mappings (each with a reason), clarifying questions, assumptions and known unknowns. Tenants manage patterns through the API (`planner-admin` role only for writes):
+
+- `POST /patterns` creates a custom pattern. The `id` is optional and defaults to a slug of the name.
+- `PUT /patterns/{id}` updates a pattern. Updating a built-in pattern stores a tenant copy that overrides it.
+- `DELETE /patterns/{id}` deletes a custom pattern. Deleting a customized built-in pattern restores the built-in version. Built-in patterns themselves cannot be deleted.
+ pattern returned by the API has a `source` of `built-in`, `customized` or `custom`. The effective catalogue is built-in patterns, overridden by configuration (`patterns`), overridden by tenant patterns stored through the API, and it feeds both rule-based matching and AI analysis. Service mappings must reference a known specialist service.

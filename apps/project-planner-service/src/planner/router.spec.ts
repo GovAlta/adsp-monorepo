@@ -5,10 +5,10 @@ import * as express from 'express';
 import type { Request, Response } from 'express';
 import * as request from 'supertest';
 import { Logger } from 'winston';
-import { createPlannerRouter, getSolution, requirePlannerUser } from './router';
+import { createPlannerRouter, getSolution, requirePlannerAdmin, requirePlannerUser } from './router';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist } from './specialists';
-import { Solution } from './types';
+import { BusinessPattern, Solution } from './types';
 import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
 
@@ -68,6 +68,24 @@ describe('planner router handlers', () => {
     expect(next).toHaveBeenCalledWith(expect.any(Error));
   });
 
+  it('requirePlannerAdmin allows planner admins', () => {
+    const req = { tenant: { id: tenantId }, user: makeUser('a', [PlannerServiceRoles.Admin]) } as unknown as Request;
+    requirePlannerAdmin(req, {} as Response, next);
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('requirePlannerAdmin rejects planner users who are not admins', () => {
+    const req = { tenant: { id: tenantId }, user: makeUser('u', [PlannerServiceRoles.User]) } as unknown as Request;
+    requirePlannerAdmin(req, {} as Response, next);
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it('requirePlannerAdmin rejects missing tenant', () => {
+    const req = { user: makeUser('a', [PlannerServiceRoles.Admin]) } as unknown as Request;
+    requirePlannerAdmin(req, {} as Response, next);
+    expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+  });
+
   it('getSolution loads owner solution', async () => {
     repository.get.mockResolvedValueOnce(makeSolution('u'));
     const req = {
@@ -122,6 +140,7 @@ describe('planner router routes', () => {
   const stranger = makeUser('stranger-1', [PlannerServiceRoles.User]);
 
   const repository = { get: jest.fn(), find: jest.fn(), save: jest.fn(), delete: jest.fn() };
+  const patternRepository = { find: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const eventService = { send: jest.fn() };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
@@ -143,6 +162,7 @@ describe('planner router routes', () => {
         apiId: adspId`urn:ads:platform:project-planner-service:v1`,
         logger: logger as unknown as Logger,
         solutionRepository: repository,
+        patternRepository,
         eventService: eventService as unknown as EventService,
         llm,
       }),
@@ -157,6 +177,8 @@ describe('planner router routes', () => {
 
   beforeEach(() => {
     repository.save.mockImplementation(async (s: Solution) => s);
+    patternRepository.find.mockResolvedValue([]);
+    patternRepository.save.mockImplementation(async (_tenantId: unknown, pattern: BusinessPattern) => pattern);
     getConfiguration.mockResolvedValue([undefined]);
   });
 
@@ -289,6 +311,477 @@ describe('planner router routes', () => {
       getConfiguration.mockRejectedValueOnce(new Error('configuration unavailable'));
 
       const res = await request(buildApp()).get('/planner/v1/patterns/case-management');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  const landTitlePattern: BusinessPattern = {
+    id: 'land-title',
+    name: 'Land Title',
+    description: 'Registering parcels of land.',
+    domainLanguage: ['parcel', 'conveyance'],
+    commonFeatures: ['title search'],
+    strongSignals: [{ description: 'Titles are registered against parcels', keywords: ['parcel', 'title'] }],
+    weakSignals: [],
+    serviceMappings: [{ service: 'form-service', reason: 'Capture registration applications.' }],
+    clarifyingQuestions: ['Who may register a title?'],
+    assumptions: [],
+    knownUnknowns: [],
+  };
+  const validBody = {
+    name: 'Grant Intake',
+    description: 'Applicants request funding.',
+    domainLanguage: ['grant', 'funding'],
+    strongSignals: [{ description: 'Applicants request money', keywords: ['grant'] }],
+    serviceMappings: [{ service: 'form-service', reason: 'Collect applications.' }],
+  };
+
+  describe('pattern catalogue layering', () => {
+    it('tags built-in patterns with the built-in source', async () => {
+      const res = await request(buildApp()).get('/planner/v1/patterns/case-management');
+
+      expect(res.body.source).toBe('built-in');
+    });
+
+    it('tags patterns that exist only in configuration as custom', async () => {
+      getConfiguration.mockResolvedValueOnce([{ patterns: { 'land-title': landTitlePattern } }]);
+
+      const res = await request(buildApp()).get('/planner/v1/patterns/land-title');
+
+      expect(res.body.source).toBe('custom');
+    });
+
+    it('tags configuration overrides of built-in ids as customized', async () => {
+      getConfiguration.mockResolvedValueOnce([
+        { patterns: { 'case-management': { ...landTitlePattern, id: 'case-management' } } },
+      ]);
+
+      const res = await request(buildApp()).get('/planner/v1/patterns/case-management');
+
+      expect(res.body.source).toBe('customized');
+    });
+
+    it('tags stored patterns with new ids as custom', async () => {
+      patternRepository.find.mockResolvedValueOnce([landTitlePattern]);
+
+      const res = await request(buildApp()).get('/planner/v1/patterns/land-title');
+
+      expect(res.body.source).toBe('custom');
+    });
+
+    it('tags stored patterns that replace a built-in id as customized', async () => {
+      patternRepository.find.mockResolvedValueOnce([{ ...landTitlePattern, id: 'case-management' }]);
+
+      const res = await request(buildApp()).get('/planner/v1/patterns');
+
+      expect(res.body.results.find((p) => p.id === 'case-management').source).toBe('customized');
+    });
+
+    it('lets stored patterns override configuration patterns with the same id', async () => {
+      getConfiguration.mockResolvedValueOnce([{ patterns: { 'land-title': { ...landTitlePattern, name: 'Configured' } } }]);
+      patternRepository.find.mockResolvedValueOnce([{ ...landTitlePattern, name: 'Stored' }]);
+
+      const res = await request(buildApp()).get('/planner/v1/patterns/land-title');
+
+      expect(res.body.name).toBe('Stored');
+    });
+
+    it('fills defaults for omitted fields on stored patterns', async () => {
+      const { clarifyingQuestions: _omitted, ...partial } = landTitlePattern;
+      patternRepository.find.mockResolvedValueOnce([partial as BusinessPattern]);
+
+      const res = await request(buildApp()).get('/planner/v1/patterns/land-title');
+
+      expect(res.body.clarifyingQuestions).toEqual([]);
+    });
+
+    it('loads stored patterns for the request tenant', async () => {
+      await request(buildApp()).get('/planner/v1/patterns');
+
+      expect(patternRepository.find).toHaveBeenCalledWith(tenantId);
+    });
+
+    it('matches text against stored tenant patterns', async () => {
+      patternRepository.find.mockResolvedValueOnce([landTitlePattern]);
+
+      const res = await request(buildApp())
+        .post('/planner/v1/patterns/match')
+        .send({ text: 'Each parcel needs a conveyance and a registered title.' });
+
+      expect(res.body.matches[0].patternId).toBe('land-title');
+    });
+
+    it('returns 500 when stored patterns cannot be loaded', async () => {
+      patternRepository.find.mockRejectedValueOnce(new Error('database unavailable'));
+
+      const res = await request(buildApp()).get('/planner/v1/patterns');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('POST /patterns', () => {
+    const post = (body: unknown, user: User | null = admin, withTenant = true) =>
+      request(buildApp(user, withTenant)).post('/planner/v1/patterns').send(body as object);
+
+    it('returns 403 for a planner user who is not an admin', async () => {
+      const res = await post(validBody, owner);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('does not save the pattern when the user is not an admin', async () => {
+      await post(validBody, owner);
+
+      expect(patternRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when there is no tenant context', async () => {
+      const res = await post(validBody, admin, false);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 201 when an admin creates a pattern', async () => {
+      const res = await post(validBody);
+
+      expect(res.status).toBe(201);
+    });
+
+    it('defaults the pattern id to a slug of the name', async () => {
+      const res = await post({ ...validBody, name: '  Grant Intake & Funding! ' });
+
+      expect(res.body.id).toBe('grant-intake-funding');
+    });
+
+    it('uses the supplied id when one is given', async () => {
+      const res = await post({ ...validBody, id: 'grants-2026' });
+
+      expect(res.body.id).toBe('grants-2026');
+    });
+
+    it('tags the created pattern as custom', async () => {
+      const res = await post(validBody);
+
+      expect(res.body.source).toBe('custom');
+    });
+
+    it('saves the pattern for the tenant with the creating user', async () => {
+      await post(validBody);
+
+      expect(patternRepository.save).toHaveBeenCalledWith(
+        tenantId,
+        expect.objectContaining({ id: 'grant-intake' }),
+        admin,
+      );
+    });
+
+    it('stores only known fields, trimmed, with defaults for optional arrays', async () => {
+      await post({ ...validBody, name: '  Grant Intake  ', isAdmin: true, source: 'built-in' });
+
+      expect(patternRepository.save).toHaveBeenCalledWith(
+        tenantId,
+        {
+          id: 'grant-intake',
+          name: 'Grant Intake',
+          description: 'Applicants request funding.',
+          domainLanguage: ['grant', 'funding'],
+          commonFeatures: [],
+          strongSignals: [{ description: 'Applicants request money', keywords: ['grant'] }],
+          weakSignals: [],
+          serviceMappings: [{ service: 'form-service', reason: 'Collect applications.' }],
+          clarifyingQuestions: [],
+          assumptions: [],
+          knownUnknowns: [],
+        },
+        admin,
+      );
+    });
+
+    it('drops blank list entries and signals without keywords when sanitizing', async () => {
+      await post({
+        ...validBody,
+        domainLanguage: ['grant', '   ', 7],
+        strongSignals: [
+          { description: 'Applicants request money', keywords: ['grant'] },
+          { description: 'Weak entry', keywords: [' '] },
+        ],
+      });
+
+      expect(patternRepository.save).toHaveBeenCalledWith(
+        tenantId,
+        expect.objectContaining({
+          domainLanguage: ['grant'],
+          strongSignals: [{ description: 'Applicants request money', keywords: ['grant'] }],
+        }),
+        admin,
+      );
+    });
+
+    it('returns 400 when the name cannot produce a valid id', async () => {
+      const res = await post({ ...validBody, name: '!!' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('does not save when the name cannot produce a valid id', async () => {
+      await post({ ...validBody, name: '!!' });
+
+      expect(patternRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the pattern id already exists as a built-in', async () => {
+      const res = await post({ ...validBody, id: 'case-management' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when the pattern id already exists as a stored pattern', async () => {
+      patternRepository.find.mockResolvedValueOnce([landTitlePattern]);
+
+      const res = await post({ ...validBody, id: 'land-title' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when the slugged name collides with an existing pattern', async () => {
+      const res = await post({ ...validBody, name: 'Case Management' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('does not save a duplicate pattern', async () => {
+      await post({ ...validBody, id: 'case-management' });
+
+      expect(patternRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an explicit id that is malformed', async () => {
+      const res = await post({ ...validBody, id: 'Not Valid' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 500 when saving fails', async () => {
+      patternRepository.save.mockRejectedValueOnce(new Error('database unavailable'));
+
+      const res = await post(validBody);
+
+      expect(res.status).toBe(500);
+    });
+
+    const { name: _name, ...withoutName } = validBody;
+    const { domainLanguage: _domainLanguage, ...withoutDomainLanguage } = validBody;
+    const { strongSignals: _strongSignals, ...withoutStrongSignals } = validBody;
+    const { serviceMappings: _serviceMappings, ...withoutServiceMappings } = validBody;
+    test.each([
+      ['name is missing', withoutName],
+      ['name is blank', { ...validBody, name: '   ' }],
+      ['name exceeds 100 characters', { ...validBody, name: 'n'.repeat(101) }],
+      ['description is not a string', { ...validBody, description: 42 }],
+      ['domainLanguage is missing', withoutDomainLanguage],
+      ['domainLanguage is empty', { ...validBody, domainLanguage: [] }],
+      ['strongSignals is missing', withoutStrongSignals],
+      ['strongSignals is empty', { ...validBody, strongSignals: [] }],
+      ['a strong signal has no description', { ...validBody, strongSignals: [{ keywords: ['grant'] }] }],
+      ['a strong signal has no keywords', { ...validBody, strongSignals: [{ description: 'Money', keywords: [] }] }],
+      ['a weak signal has no keywords', { ...validBody, weakSignals: [{ description: 'Money', keywords: [] }] }],
+      ['serviceMappings is missing', withoutServiceMappings],
+      ['serviceMappings is empty', { ...validBody, serviceMappings: [] }],
+      [
+        'a service mapping names an unknown service',
+        { ...validBody, serviceMappings: [{ service: 'teleport-service', reason: 'Not real.' }] },
+      ],
+      [
+        'a service mapping has no reason',
+        { ...validBody, serviceMappings: [{ service: 'form-service', reason: ' ' }] },
+      ],
+      ['commonFeatures is not an array', { ...validBody, commonFeatures: 'title search' }],
+    ])('returns 400 when %s', async (_case, body) => {
+      const res = await post(body);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('does not save a pattern that fails validation', async () => {
+      await post({ ...validBody, serviceMappings: [{ service: 'teleport-service', reason: 'Not real.' }] });
+
+      expect(patternRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('PUT /patterns/:patternId', () => {
+    const put = (patternId: string, body: unknown = validBody, user: User | null = admin) =>
+      request(buildApp(user)).put(`/planner/v1/patterns/${patternId}`).send(body as object);
+
+    it('returns 403 for a planner user who is not an admin', async () => {
+      const res = await put('case-management', validBody, owner);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('saves a tenant copy of a built-in pattern', async () => {
+      await put('case-management');
+
+      expect(patternRepository.save).toHaveBeenCalledWith(
+        tenantId,
+        expect.objectContaining({ id: 'case-management', name: 'Grant Intake' }),
+        admin,
+      );
+    });
+
+    it('tags an updated built-in pattern as customized', async () => {
+      const res = await put('case-management');
+
+      expect(res.body.source).toBe('customized');
+    });
+
+    it('returns 200 when updating a built-in pattern', async () => {
+      const res = await put('case-management');
+
+      expect(res.status).toBe(200);
+    });
+
+    it('tags an updated custom pattern as custom', async () => {
+      patternRepository.find.mockResolvedValueOnce([landTitlePattern]);
+
+      const res = await put('land-title');
+
+      expect(res.body.source).toBe('custom');
+    });
+
+    it('keeps the path id when the body supplies a different id', async () => {
+      patternRepository.find.mockResolvedValueOnce([landTitlePattern]);
+
+      const res = await put('land-title', { ...validBody, id: 'other-id' });
+
+      expect(res.body.id).toBe('land-title');
+    });
+
+    it('updates patterns that only exist in configuration', async () => {
+      getConfiguration.mockResolvedValueOnce([{ patterns: { 'land-title': landTitlePattern } }]);
+
+      const res = await put('land-title');
+
+      expect(res.status).toBe(200);
+    });
+
+    it('returns 404 for an unknown pattern', async () => {
+      const res = await put('unknown-pattern');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('does not save when the pattern is unknown', async () => {
+      await put('unknown-pattern');
+
+      expect(patternRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the body fails validation', async () => {
+      const res = await put('case-management', { ...validBody, domainLanguage: [] });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when a service mapping names an unknown service', async () => {
+      const res = await put('case-management', {
+        ...validBody,
+        serviceMappings: [{ service: 'teleport-service', reason: 'Not real.' }],
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when the path id is malformed', async () => {
+      const res = await put('X', validBody);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 500 when saving fails', async () => {
+      patternRepository.save.mockRejectedValueOnce(new Error('database unavailable'));
+
+      const res = await put('case-management');
+
+      expect(res.status).toBe(500);
+    });
+  });
+
+  describe('DELETE /patterns/:patternId', () => {
+    const del = (patternId: string, user: User | null = admin) =>
+      request(buildApp(user)).delete(`/planner/v1/patterns/${patternId}`);
+
+    it('returns 403 for a planner user who is not an admin', async () => {
+      const res = await del('land-title', owner);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 204 when a stored custom pattern is deleted', async () => {
+      patternRepository.delete.mockResolvedValueOnce(true);
+
+      const res = await del('land-title');
+
+      expect(res.status).toBe(204);
+    });
+
+    it('deletes the stored pattern for the tenant', async () => {
+      patternRepository.delete.mockResolvedValueOnce(true);
+
+      await del('land-title');
+
+      expect(patternRepository.delete).toHaveBeenCalledWith(tenantId, 'land-title');
+    });
+
+    it('returns 204 when deleting a customized built-in pattern to restore the built-in', async () => {
+      patternRepository.delete.mockResolvedValueOnce(true);
+
+      const res = await del('case-management');
+
+      expect(res.status).toBe(204);
+    });
+
+    it('restores the built-in pattern after its customization is deleted', async () => {
+      patternRepository.delete.mockResolvedValueOnce(true);
+      patternRepository.find.mockResolvedValueOnce([]);
+      await del('case-management');
+
+      const res = await request(buildApp()).get('/planner/v1/patterns/case-management');
+
+      expect(res.body.source).toBe('built-in');
+    });
+
+    it('returns 400 when deleting a built-in pattern with no stored override', async () => {
+      patternRepository.delete.mockResolvedValueOnce(false);
+
+      const res = await del('case-management');
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when deleting a configured pattern with no stored override', async () => {
+      patternRepository.delete.mockResolvedValueOnce(false);
+      getConfiguration.mockResolvedValueOnce([{ patterns: { 'land-title': landTitlePattern } }]);
+
+      const res = await del('land-title');
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 404 for an unknown pattern', async () => {
+      patternRepository.delete.mockResolvedValueOnce(false);
+
+      const res = await del('unknown-pattern');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 500 when deletion fails', async () => {
+      patternRepository.delete.mockRejectedValueOnce(new Error('database unavailable'));
+
+      const res = await del('land-title');
 
       expect(res.status).toBe(500);
     });

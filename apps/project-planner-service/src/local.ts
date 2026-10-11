@@ -7,8 +7,8 @@ import * as cors from 'cors';
 import * as path from 'path';
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService, User } from '@abgov/adsp-service-sdk';
-import { createLogger } from '@core-services/core-common';
-import { createLlmFromEnv, PlannerServiceRoles, Solution, SolutionRepository } from './planner';
+import { createErrorHandler, createLogger } from '@core-services/core-common';
+import { BusinessPattern, createLlmFromEnv, PatternRepository, PlannerServiceRoles, Solution, SolutionRepository } from './planner';
 import { createPlannerRouter } from './planner/router';
 
 const port = Number(process.env.PORT || 3381);
@@ -53,6 +53,20 @@ const repository: SolutionRepository = {
   },
 };
 
+const patternStore = new Map<string, BusinessPattern>();
+const patternRepository: PatternRepository = {
+  async find(tenant) {
+    return [...patternStore.entries()].filter(([k]) => k.startsWith(`${tenant.toString()}|`)).map(([, p]) => p);
+  },
+  async save(tenant, pattern) {
+    patternStore.set(key(tenant.toString(), pattern.id), pattern);
+    return pattern;
+  },
+  async delete(tenant, id) {
+    return patternStore.delete(key(tenant.toString(), id));
+  },
+};
+
 const eventService = {
   send: (event: unknown) => logger.debug(`event: ${JSON.stringify(event, (_k, v) => (typeof v === 'object' && v?.constructor?.name === 'AdspId' ? v.toString() : v))}`),
 } as unknown as EventService;
@@ -81,10 +95,12 @@ app.use(
     apiId: adspId`${serviceId}:v1`,
     logger,
     solutionRepository: repository,
+    patternRepository,
     eventService,
     llm: createLlmFromEnv(process.env, logger),
   }),
 );
+app.use('/planner/v1', createErrorHandler(logger));
 // Paths resolve from the repo root, where the local runner is started.
 const root = process.cwd();
 app.use('/ds', express.static(path.resolve(root, 'node_modules/@abgov/web-components')));

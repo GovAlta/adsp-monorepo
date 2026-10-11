@@ -66,6 +66,7 @@
       let mode = 'rules';
       let busy = false;
       let chatDraft = '';
+      let patternEdit = null;
       let spec = { service: null, intent: 'ask', messages: [], draft: '' };
       const INTENTS = [['ask', 'Ask'], ['recommend', 'Recommend'], ['design', 'Refine design'], ['validate', 'Validate'], ['sample', 'Sample code']];
       const answerDrafts = {};
@@ -148,6 +149,46 @@
         });
         spec.messages.push({ role: 'assistant', content: res.reply, mode: res.mode, warning: res.warning, validation: res.validation, suggestions: res.suggestions, samples: res.samples, followUps: res.followUps });
         renderWorkspace();
+      }      const PATTERN_FIELDS = [
+        ['name', 'Business pattern (name)', 1],
+        ['description', 'Purpose', 3],
+        ['domainLanguage', 'Common domain language (one per line)', 4],
+        ['commonFeatures', 'Common features (one per line)', 4],
+        ['strongSignals', 'Strong confidence signals (one per line: description | keyword, keyword)', 5],
+        ['weakSignals', 'Weak or misleading signals (one per line: description | keyword, keyword)', 4],
+        ['serviceMappings', 'Likely ADSP service mappings (one per line: service-name: reason)', 5],
+        ['clarifyingQuestions', 'Clarifying questions (one per line)', 4],
+        ['assumptions', 'Assumptions (one per line)', 3],
+        ['knownUnknowns', 'Known unknowns (one per line)', 3],
+      ];
+      const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
+      const signalText = (list) => (list || []).map((s) => `${s.description} | ${s.keywords.join(', ')}`).join('\n');
+      const toSignals = (s) => lines(s).map((l) => { const [d, k = ''] = l.split('|'); return { description: d.trim(), keywords: k.split(',').map((x) => x.trim()).filter(Boolean) }; });
+      const toMappings = (s) => lines(s).map((l) => { const i = l.indexOf(':'); return { service: (i < 0 ? l : l.slice(0, i)).trim(), reason: i < 0 ? '' : l.slice(i + 1).trim() }; });
+      function patternToFields(p) {
+        return {
+          name: p.name || '', description: p.description || '',
+          domainLanguage: (p.domainLanguage || []).join('\n'), commonFeatures: (p.commonFeatures || []).join('\n'),
+          strongSignals: signalText(p.strongSignals), weakSignals: signalText(p.weakSignals),
+          serviceMappings: (p.serviceMappings || []).map((m) => `${m.service}: ${m.reason}`).join('\n'),
+          clarifyingQuestions: (p.clarifyingQuestions || []).join('\n'), assumptions: (p.assumptions || []).join('\n'), knownUnknowns: (p.knownUnknowns || []).join('\n'),
+        };
+      }
+      function fieldsToPattern(f) {
+        return {
+          name: f.name.trim(), description: f.description.trim(), domainLanguage: lines(f.domainLanguage), commonFeatures: lines(f.commonFeatures),
+          strongSignals: toSignals(f.strongSignals), weakSignals: toSignals(f.weakSignals), serviceMappings: toMappings(f.serviceMappings),
+          clarifyingQuestions: lines(f.clarifyingQuestions), assumptions: lines(f.assumptions), knownUnknowns: lines(f.knownUnknowns),
+        };
+      }
+      function renderPatternEditor() {
+        return `<div class="stack"><h3>${patternEdit.id ? `Edit pattern: ${esc(patternEdit.id)}` : 'New pattern'}</h3>
+          ${PATTERN_FIELDS.map(([k, label, rows]) => `<goa-form-item label="${esc(label)}"><goa-textarea data-pf="${k}" name="pf-${k}" rows="${rows}" width="100%" value="${esc(patternEdit.fields[k])}" aria-label="${esc(label)}"></goa-textarea></goa-form-item>`).join('')}
+          <p class="muted">Valid services: ${(specialists || []).map((s) => esc(s.service)).join(', ')}</p>
+          <div class="row"><goa-button id="savePattern">Save pattern</goa-button><goa-button type="tertiary" id="cancelPattern">Cancel</goa-button></div></div>`;
+      }
+      async function reloadPatterns() {
+        patterns = (await api('GET', '/patterns')).results;
       }      function renderObject(o) {
         const { advice, ...rest } = o;
         const adviceHtml = advice ? `<h4 style="margin-bottom:0">Guidance</h4>${advice.split(/\n{2,}/).map((p) => `<p style="margin-top:0">${esc(p)}</p>`).join('')}` : '';
@@ -232,9 +273,11 @@
         if (section === 'patterns') {
           const block = (heading, items) =>
             items && items.length ? `<goa-details heading="${esc(heading)}"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></goa-details>` : '';
-          return `<goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Description</th><th>Services</th></tr></thead><tbody>
-            ${(patterns || []).map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.description)}${block('Common domain language', p.domainLanguage)}${block('Common features', p.commonFeatures)}${block('Strong confidence signals', (p.strongSignals || []).map((s) => s.description))}${block('Weak or misleading signals', (p.weakSignals || []).map((s) => s.description))}${block('Clarifying questions', p.clarifyingQuestions)}${block('Assumptions', p.assumptions)}${block('Known unknowns', p.knownUnknowns)}</td><td>${p.serviceMappings.map((m) => `<div><b>${esc(m.service)}</b>: ${esc(m.reason)}</div>`).join('')}</td></tr>`).join('')}</tbody></table></goa-table>`;
-        }
+          if (patternEdit) return renderPatternEditor();
+          const sourceBadge = (s) => `<goa-badge type="${s === 'built-in' ? 'information' : s === 'custom' ? 'success' : 'important'}" content="${esc(s)}"></goa-badge>`;
+          const actions = (p) => `<div class="row"><goa-button type="secondary" size="compact" data-pedit="${esc(p.id)}">Edit</goa-button>${p.source === 'built-in' ? '' : `<goa-button type="tertiary" size="compact" data-pdelete="${esc(p.id)}">${p.source === 'custom' ? 'Delete' : 'Reset to built-in'}</goa-button>`}</div>`;
+          return `<div class="stack"><div class="row"><goa-button id="newPattern">New pattern</goa-button></div><goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Description</th><th>Services</th><th></th></tr></thead><tbody>
+            ${(patterns || []).map((p) => `<tr><td>${esc(p.name)}<br>${sourceBadge(p.source)}</td><td>${esc(p.description)}${block('Common domain language', p.domainLanguage)}${block('Common features', p.commonFeatures)}${block('Strong confidence signals', (p.strongSignals || []).map((s) => s.description))}${block('Weak or misleading signals', (p.weakSignals || []).map((s) => s.description))}${block('Clarifying questions', p.clarifyingQuestions)}${block('Assumptions', p.assumptions)}${block('Known unknowns', p.knownUnknowns)}</td><td>${p.serviceMappings.map((m) => `<div><b>${esc(m.service)}</b>: ${esc(m.reason)}</div>`).join('')}</td><td>${actions(p)}</td></tr>`).join('')}</tbody></table></goa-table></div>`;        }
         return '';
       }
 
@@ -292,7 +335,7 @@
           <div id="section">${sectionHtml()}</div></goa-container>`;
         $('workspace').querySelectorAll('[data-section]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           section = b.dataset.section;
-          if (section === 'patterns' && !patterns) patterns = (await api('GET', '/patterns')).results;
+          if (section === 'patterns') { await reloadPatterns(); patternEdit = null; if (!specialists) specialists = (await api('GET', '/specialists')).results; }
           if (section === 'specialists' && !specialists) specialists = (await api('GET', '/specialists')).results;
           renderWorkspace();
         })));
@@ -360,6 +403,27 @@
           $('workspace').innerHTML = '<goa-callout type="information" heading="Solution deleted">Choose or create another solution.</goa-callout>';
           await loadSolutions();
         }));
+        $('newPattern')?.addEventListener('_click', () => { patternEdit = { id: null, fields: patternToFields({}) }; renderWorkspace(); });
+        $('cancelPattern')?.addEventListener('_click', () => { patternEdit = null; renderWorkspace(); });
+        $('workspace').querySelectorAll('[data-pf]').forEach((t) => t.addEventListener('_change', (e) => (patternEdit.fields[t.dataset.pf] = e.detail.value)));
+        $('savePattern')?.addEventListener('_click', () => run(async () => {
+          const body = fieldsToPattern(patternEdit.fields);
+          if (patternEdit.id) await api('PUT', `/patterns/${patternEdit.id}`, body);
+          else await api('POST', '/patterns', body);
+          patternEdit = null;
+          await reloadPatterns();
+          renderWorkspace();
+        }));
+        $('workspace').querySelectorAll('[data-pedit]').forEach((b) => b.addEventListener('_click', () => {
+          const p = patterns.find((x) => x.id === b.dataset.pedit);
+          patternEdit = { id: p.id, fields: patternToFields(p) };
+          renderWorkspace();
+        }));
+        $('workspace').querySelectorAll('[data-pdelete]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          await api('DELETE', `/patterns/${b.dataset.pdelete}`);
+          await reloadPatterns();
+          renderWorkspace();
+        })));
         $('workspace').querySelectorAll('[data-spec]').forEach((b) => b.addEventListener('_click', () => {
           spec = { service: b.dataset.spec, intent: 'ask', messages: [], draft: '' };
           renderWorkspace();

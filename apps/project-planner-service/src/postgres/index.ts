@@ -1,7 +1,8 @@
 import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-import { SolutionRepository } from '../planner';
+import { PatternRepository, SolutionRepository } from '../planner';
+import { PostgresPatternRepository } from './pattern';
 import { PostgresSolutionRepository } from './solution';
 
 interface PostgresRepositoryProps {
@@ -17,6 +18,7 @@ interface PostgresRepositoryProps {
 interface Repositories {
   isConnected: () => Promise<boolean>;
   solutionRepository: SolutionRepository;
+  patternRepository: PatternRepository;
 }
 
 export const createRepositories = async ({
@@ -67,5 +69,6 @@ export const createRepositories = async ({
       }
     },
     solutionRepository: new PostgresSolutionRepository(knex),
+    patternRepository: new PostgresPatternRepository(knex),
   };
 };
