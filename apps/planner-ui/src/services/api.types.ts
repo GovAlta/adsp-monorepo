@@ -309,6 +309,13 @@ export interface SendSpecialistMessageResponse {
   assistantMessage: SpecialistDirectMessage;
 }
 
+export interface SpecialistType {
+  id: string;
+  label: string;
+  description: string;
+  suggestions: string[];
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // User context (operationIds: getCurrentUserContext, getUserById, listUsers)
 // Mirrors OpenAPI UserContext schema — separate from the existing User type.

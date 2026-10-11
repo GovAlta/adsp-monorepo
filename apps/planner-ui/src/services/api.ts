@@ -35,6 +35,7 @@ import type {
   SpecialistRequestWithResponse,
   SpecialistDirectMessage,
   SendSpecialistMessageResponse,
+  SpecialistType,
   UserContext,
   CurrentUserContext,
 } from './api.types';
@@ -308,6 +309,15 @@ async function sendSpecialistMessage(
 }
 
 /**
+ * Get the full catalogue of available specialist types from the server.
+ * Adding a new service to the server automatically makes it appear here.
+ * GET /specialists/types
+ */
+async function getSpecialistTypes(): Promise<SpecialistType[]> {
+  return request<SpecialistType[]>({ method: 'GET', url: '/specialists/types' });
+}
+
+/**
  * Get the full direct-chat message history for a specialist.
  * GET /sessions/{sessionId}/specialists/{type}/messages
  */
@@ -528,6 +538,7 @@ export const api = {
   getSpecialistRequest,
   requestSpecialistConsultation,
   getSpecialistResponse,
+  getSpecialistTypes,
   sendSpecialistMessage,
   getSpecialistMessages,
   // Patterns

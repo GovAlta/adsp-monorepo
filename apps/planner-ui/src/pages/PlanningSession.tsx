@@ -31,6 +31,7 @@ import type {
   PlanningSession as PlanningSessionType,
   ConversationMessage,
   BusinessModel,
+  SpecialistType,
 } from '../services/api.types';
 import IntegrationPendingBanner from '../components/IntegrationPendingBanner';
 import ConfidenceBadge from '../components/ConfidenceBadge';
@@ -49,13 +50,6 @@ interface ErrorState {
   message?: string;
 }
 
-const SPECIALIST_LIST = [
-  { serviceId: 'form-service', label: 'Form Service Specialist', intId: 'INT-003' },
-  { serviceId: 'pdf-service', label: 'PDF Service Specialist', intId: 'INT-004' },
-  { serviceId: 'comment-service', label: 'Comment Service Specialist', intId: 'INT-005' },
-  { serviceId: 'notification-service', label: 'Notification Service Specialist', intId: 'INT-006' },
-];
-
 type SpecialistStatus = 'available' | 'pending' | 'ready' | 'error';
 interface SpecialistState {
   status: SpecialistStatus;
@@ -72,9 +66,8 @@ const PlanningSession: React.FC = () => {
   const [sessionData, setSessionData] = useState<PlanningSessionType | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [businessModel, setBusinessModel] = useState<BusinessModel | null>(null);
-  const [specialists, setSpecialists] = useState<Record<string, SpecialistState>>(
-    Object.fromEntries(SPECIALIST_LIST.map((s) => [s.serviceId, { status: 'available' }]))
-  );
+  const [specialistTypes, setSpecialistTypes] = useState<SpecialistType[]>([]);
+  const [specialists, setSpecialists] = useState<Record<string, SpecialistState>>({});
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -103,14 +96,17 @@ const PlanningSession: React.FC = () => {
     setPageLoading(true);
     try {
       // ✓ ASVS:V-9.1.1 — auth header injected by api service layer
-      const [session, msgResult, model] = await Promise.all([
+      const [session, msgResult, model, types] = await Promise.all([
         api.getSession(sessionId),
         api.listMessages(sessionId, { page: 1, pageSize: 50 }),
         api.getBusinessModel(sessionId),
+        api.getSpecialistTypes(),
       ]);
       setSessionData(session);
       setMessages(msgResult.items);
       setBusinessModel(model);
+      setSpecialistTypes(types);
+      setSpecialists(Object.fromEntries(types.map((t) => [t.id, { status: 'available' as SpecialistStatus }])));
     } catch (err: unknown) {
       const status = (err as { status?: number }).status;
       if (status === 404) {
@@ -561,65 +557,72 @@ const PlanningSession: React.FC = () => {
             )}
           </GoAContainer>
 
-          {/* Specialist consultation panel */}
+          {/* Specialist consultation panel — list loaded dynamically from server */}
           <GoAContainer>
             <h3>Specialist Consultation</h3>
             <p>
               Consult specialist agents for deep technical guidance on each ADSP service.
             </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {SPECIALIST_LIST.map((specialist) => {
-                const state = specialists[specialist.serviceId] ?? { status: 'available' };
-                return (
-                  <li
-                    key={specialist.serviceId}
-                    style={{
-                      padding: 'var(--goa-space-s) 0',
-                      borderBottom: '1px solid var(--goa-color-greyscale-200)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--goa-space-s)' }}>
-                      <span style={{ flex: 1 }}>{specialist.label}</span>
-                      <div style={{ display: 'flex', gap: 'var(--goa-space-xs)', alignItems: 'center' }}>
-                        {state.status === 'available' && (
-                          <GoAButton type="tertiary" size="compact" onClick={() => handleConsultSpecialist(specialist.serviceId)}>
-                            Consult
+            {specialistTypes.length === 0 ? (
+              <p style={{ color: 'var(--goa-color-text-secondary)', fontSize: '0.9em' }}>Loading specialists…</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {specialistTypes.map((specialist) => {
+                  const state = specialists[specialist.id] ?? { status: 'available' };
+                  return (
+                    <li
+                      key={specialist.id}
+                      style={{
+                        padding: 'var(--goa-space-s) 0',
+                        borderBottom: '1px solid var(--goa-color-greyscale-200)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--goa-space-s)' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500 }}>{specialist.label}</div>
+                          <div style={{ fontSize: '0.82em', color: 'var(--goa-color-text-secondary)' }}>{specialist.description}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 'var(--goa-space-xs)', alignItems: 'center', flexShrink: 0 }}>
+                          {state.status === 'available' && (
+                            <GoAButton type="tertiary" size="compact" onClick={() => handleConsultSpecialist(specialist.id)}>
+                              Consult
+                            </GoAButton>
+                          )}
+                          {state.status === 'pending' && (
+                            <GoABadge type="information" content="Consulting…" />
+                          )}
+                          {state.status === 'ready' && (
+                            <GoABadge type="success" content="Ready" />
+                          )}
+                          {state.status === 'error' && (
+                            <GoABadge type="emergency" content="Error" />
+                          )}
+                          <GoAButton
+                            type="secondary"
+                            size="compact"
+                            onClick={() => navigate(`/sessions/${sessionId}/specialists/${specialist.id}`)}
+                          >
+                            Chat Directly
                           </GoAButton>
-                        )}
-                        {state.status === 'pending' && (
-                          <GoABadge type="information" content="Consulting…" />
-                        )}
-                        {state.status === 'ready' && (
-                          <GoABadge type="success" content="Ready" />
-                        )}
-                        {state.status === 'error' && (
-                          <GoABadge type="emergency" content="Error" />
-                        )}
-                        <GoAButton
-                          type="secondary"
-                          size="compact"
-                          onClick={() => navigate(`/sessions/${sessionId}/specialists/${specialist.serviceId}`)}
-                        >
-                          Chat Directly
-                        </GoAButton>
+                        </div>
                       </div>
-                    </div>
-                    {state.status === 'ready' && state.response && (
-                      <div style={{
-                        marginTop: 'var(--goa-space-s)',
-                        padding: 'var(--goa-space-s)',
-                        background: 'var(--goa-color-greyscale-100)',
-                        borderRadius: 'var(--goa-border-radius-m)',
-                        fontSize: '0.9em',
-                        wordBreak: 'break-word',
-                      }} className="markdown-body">
-                        <ReactMarkdown>{state.response}</ReactMarkdown>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                      {state.status === 'ready' && state.response && (
+                        <div style={{
+                          marginTop: 'var(--goa-space-s)',
+                          padding: 'var(--goa-space-s)',
+                          background: 'var(--goa-color-greyscale-100)',
+                          borderRadius: 'var(--goa-border-radius-m)',
+                          fontSize: '0.9em',
+                          wordBreak: 'break-word',
+                        }} className="markdown-body">
+                          <ReactMarkdown>{state.response}</ReactMarkdown>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </GoAContainer>
         </div>
       </div>

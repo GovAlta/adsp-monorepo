@@ -23,52 +23,10 @@ import {
   GoABadge,
 } from '@abgov/react-components';
 import { api } from '../services/api';
-import type { SpecialistDirectMessage } from '../services/api.types';
+import type { SpecialistDirectMessage, SpecialistType } from '../services/api.types';
 
-const SPECIALIST_META: Record<string, { label: string; description: string; suggestions: string[] }> = {
-  'form-service': {
-    label: 'Form Service Specialist',
-    description: 'Design forms, validation rules, multi-step wizards, file uploads, and submission workflows.',
-    suggestions: [
-      'How do I build a multi-step permit application form?',
-      'What validation patterns work best for income verification?',
-      'Show me how to handle file attachments in a form submission.',
-      'How do I configure conditional fields based on permit type?',
-    ],
-  },
-  'pdf-service': {
-    label: 'PDF Service Specialist',
-    description: 'Generate PDF certificates, letters, receipts, and reports from templates and data.',
-    suggestions: [
-      'Show me a GoA-branded permit certificate template.',
-      'How do I batch-generate approval letters for 500 applicants?',
-      'What template engine syntax does pdf-service support?',
-      'How do I embed QR codes or barcodes in generated PDFs?',
-    ],
-  },
-  'comment-service': {
-    label: 'Comment Service Specialist',
-    description: 'Design threaded discussions, case notes, public consultations, and stakeholder communication.',
-    suggestions: [
-      'How do I set up staff-only vs. applicant-visible comments on a case?',
-      'Show me how to trigger a notification when a new comment is added.',
-      'Can comment-service support moderated public consultations?',
-      'How do I build an audit trail from comment history?',
-    ],
-  },
-  'notification-service': {
-    label: 'Notification Service Specialist',
-    description: 'Design and deliver email, SMS, and in-app notifications for status updates and reminders.',
-    suggestions: [
-      'How do I send a status update email when an application moves to "Approved"?',
-      'Show me a Handlebars email template for a permit approval.',
-      'How do I manage subscriber opt-ins and CASL compliance?',
-      'What are the rate limits and retry policies for notification delivery?',
-    ],
-  },
-};
-
-const DEFAULT_META = {
+const DEFAULT_META: SpecialistType = {
+  id: '',
   label: 'ADSP Specialist',
   description: 'Get expert guidance on ADSP platform services.',
   suggestions: [],
@@ -78,8 +36,8 @@ const SpecialistChat: React.FC = () => {
   const { sessionId, type } = useParams<{ sessionId: string; type: string }>();
   const navigate = useNavigate();
   const specialistType = type || 'form-service';
-  const meta = SPECIALIST_META[specialistType] ?? DEFAULT_META;
 
+  const [meta, setMeta] = useState<SpecialistType>(DEFAULT_META);
   const [messages, setMessages] = useState<SpecialistDirectMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,8 +57,13 @@ const SpecialistChat: React.FC = () => {
   const loadHistory = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const history = await api.getSpecialistMessages(sessionId, specialistType);
+      const [history, types] = await Promise.all([
+        api.getSpecialistMessages(sessionId, specialistType),
+        api.getSpecialistTypes(),
+      ]);
       setMessages(history);
+      const found = types.find((t) => t.id === specialistType);
+      if (found) setMeta(found);
     } catch {
       // New chat — empty history is fine
     } finally {
