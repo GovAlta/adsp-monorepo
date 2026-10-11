@@ -7,7 +7,9 @@ import * as request from 'supertest';
 import { Logger } from 'winston';
 import { createPlannerRouter, getSolution, requirePlannerUser } from './router';
 import { PlannerServiceRoles } from './roles';
+import { getSpecialist } from './specialists';
 import { Solution } from './types';
+import type { LlmAnalysis, LlmConsultation, PlannerLlm } from './llm';
 import { solutionCreated } from './events';
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -124,7 +126,7 @@ describe('planner router routes', () => {
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
 
-  const buildApp = (user: User | null = owner, withTenant = true) => {
+  const buildApp = (user: User | null = owner, withTenant = true, llm?: PlannerLlm) => {
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
@@ -142,6 +144,7 @@ describe('planner router routes', () => {
         logger: logger as unknown as Logger,
         solutionRepository: repository,
         eventService: eventService as unknown as EventService,
+        llm,
       }),
     );
     app.use((err: { extra?: { statusCode?: number }; message: string }, _req, res, _next) => {
@@ -805,6 +808,307 @@ describe('planner router routes', () => {
       const res = await consult('unknown');
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('AI-assisted planning', () => {
+    const MODEL = 'GOA-Default';
+    const llm = { model: MODEL, analyze: jest.fn(), consult: jest.fn() };
+    const aiText = 'Residents submit grant applications that officers review and approve.';
+
+    const aiAnalysis: LlmAnalysis = {
+      concepts: [
+        { id: 'c-1', type: 'actor', name: 'Grant officer', source: 'extracted', confidence: 0.7 },
+        { id: 'c-2', type: 'document', name: 'Grant application', source: 'extracted', confidence: 0.7 },
+      ],
+      matches: [
+        {
+          patternId: 'case-management',
+          patternName: 'Case Management',
+          score: 8,
+          level: 'high',
+          matchedLanguage: [],
+          matchedSignals: [],
+          explanation: 'Officers work each application as a case.',
+        },
+      ],
+      hypotheses: [
+        {
+          id: 'h-1',
+          title: 'Grant case workflow',
+          patternId: 'case-management',
+          confidence: 'high',
+          rationale: 'Applications are reviewed as cases.',
+          recommendations: [{ service: 'form-service', reason: 'Collect applications', order: 1 }],
+          assumptions: [],
+          unknowns: [],
+        },
+      ],
+      questions: ['Who approves grants above the delegated limit?'],
+      model: MODEL,
+    };
+
+    const consultation: LlmConsultation = {
+      advice: 'Start with a single intake form for grant applicants.',
+      questions: ['Which fields are mandatory?'],
+      risks: ['Duplicate submissions'],
+      model: MODEL,
+    };
+
+    const analyze = (app: express.Express, body: object = { text: aiText }) =>
+      request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/analyze`).send(body);
+    const consult = (app: express.Express, body: object = {}) =>
+      request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/consult/form-service`).send(body);
+
+    beforeEach(() => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+    });
+
+    describe('GET /analysis/options', () => {
+      it('offers ai and rules modes with ai as default when an llm is configured', async () => {
+        const res = await request(buildApp(owner, true, llm)).get('/planner/v1/analysis/options');
+
+        expect(res.body).toEqual({ modes: ['ai', 'rules'], defaultMode: 'ai', model: MODEL });
+      });
+
+      it('offers only rules mode when no llm is configured', async () => {
+        const res = await request(buildApp()).get('/planner/v1/analysis/options');
+
+        expect(res.body).toEqual({ modes: ['rules'], defaultMode: 'rules' });
+      });
+
+      it('returns 403 for a user without a planner role', async () => {
+        const res = await request(buildApp(makeUser('nobody', []), true, llm)).get('/planner/v1/analysis/options');
+
+        expect(res.status).toBe(403);
+      });
+    });
+
+    describe('POST /solutions/:id/analyze', () => {
+      it('uses the llm by default when one is configured', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.analysis).toMatchObject({ mode: 'ai', model: MODEL });
+      });
+
+      it('passes the text, patterns and existing concepts to the llm', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await analyze(buildApp(owner, true, llm));
+
+        expect(llm.analyze).toHaveBeenCalledWith(aiText, expect.arrayContaining([expect.objectContaining({ id: 'case-management' })]), []);
+      });
+
+      it('stores the llm matches and hypotheses', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.hypotheses[0].title).toBe('Grant case workflow');
+      });
+
+      it('does not record a warning when ai analysis succeeds', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.analysis.warning).toBeUndefined();
+      });
+
+      it('records an analyzedOn timestamp', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(new Date(res.body.state.analysis.analyzedOn).getTime()).not.toBeNaN();
+      });
+
+      it('attributes llm questions to ai', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.questions).toEqual([
+          expect.objectContaining({ question: 'Who approves grants above the delegated limit?', raisedBy: 'ai', status: 'open' }),
+        ]);
+      });
+
+      it('skips llm concepts that duplicate existing concepts ignoring case', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.concepts = [{ id: 'x', type: 'actor', name: 'GRANT OFFICER', source: 'user' }];
+        repository.get.mockResolvedValueOnce(stored);
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.concepts.map((c) => c.name)).toEqual(['GRANT OFFICER', 'Grant application']);
+      });
+
+      it('drops duplicate concepts returned within the same llm response', async () => {
+        llm.analyze.mockResolvedValueOnce({
+          ...aiAnalysis,
+          concepts: [...aiAnalysis.concepts, { ...aiAnalysis.concepts[0], id: 'c-3' }],
+        });
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.concepts).toHaveLength(2);
+      });
+
+      it('skips llm questions that already exist on the solution', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.questions = [
+          { id: 'q-1', question: 'Who approves grants above the delegated limit?', raisedBy: 'user', status: 'open' },
+        ];
+        repository.get.mockResolvedValueOnce(stored);
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.questions).toHaveLength(1);
+      });
+
+      it('uses the llm when ai mode is explicitly requested', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'ai' });
+
+        expect(res.body.state.analysis.mode).toBe('ai');
+      });
+
+      it('skips the llm when rules mode is requested', async () => {
+        await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'rules' });
+
+        expect(llm.analyze).not.toHaveBeenCalled();
+      });
+
+      it('records rules mode without a warning when rules mode is requested', async () => {
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'rules' });
+
+        expect(res.body.state.analysis).toEqual({ mode: 'rules', analyzedOn: expect.any(String) });
+      });
+
+      it('falls back to rules with a warning when the llm throws', async () => {
+        llm.analyze.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.analysis).toMatchObject({
+          mode: 'rules',
+          warning: 'AI analysis failed (Model request failed (HTTP 503)); used rule-based analysis.',
+        });
+      });
+
+      it('logs a warning when the llm throws', async () => {
+        llm.analyze.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        await analyze(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI analysis failed'));
+      });
+
+      it('still saves the solution as analyzed when the llm throws', async () => {
+        llm.analyze.mockRejectedValueOnce(new Error('timeout'));
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.status).toBe('analyzed');
+      });
+
+      it('warns that ai is not configured when ai mode is requested without an llm', async () => {
+        const res = await analyze(buildApp(), { text: aiText, mode: 'ai' });
+
+        expect(res.body.state.analysis).toMatchObject({
+          mode: 'rules',
+          warning: 'AI analysis is not configured; used rule-based analysis.',
+        });
+      });
+
+      it('does not warn when no llm is configured and no mode is requested', async () => {
+        const res = await analyze(buildApp());
+
+        expect(res.body.state.analysis.warning).toBeUndefined();
+      });
+
+      it('returns 400 when the mode is not ai or rules', async () => {
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'magic' });
+
+        expect(res.status).toBe(400);
+      });
+    });
+
+    describe('POST /solutions/:id/consult/:service', () => {
+      it('merges the llm advice into the consultation result', async () => {
+        llm.consult.mockResolvedValueOnce(consultation);
+
+        const res = await consult(buildApp(owner, true, llm));
+
+        expect(res.body.advice).toBe(consultation.advice);
+      });
+
+      it('keeps the rule-based questions alongside the llm questions', async () => {
+        llm.consult.mockResolvedValueOnce(consultation);
+
+        const res = await consult(buildApp(owner, true, llm));
+
+        expect(res.body.questions).toEqual(expect.arrayContaining(['Which fields are mandatory?', ...getSpecialist('form-service').questions]));
+      });
+
+      it('passes the user question to the llm', async () => {
+        llm.consult.mockResolvedValueOnce(consultation);
+
+        await consult(buildApp(owner, true, llm), { question: 'Can applicants save drafts?' });
+
+        expect(llm.consult).toHaveBeenCalledWith(
+          expect.objectContaining({ problemStatement: '' }),
+          expect.objectContaining({ service: 'form-service' }),
+          'Can applicants save drafts?',
+        );
+      });
+
+      it('skips the llm when rules mode is requested', async () => {
+        await consult(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(llm.consult).not.toHaveBeenCalled();
+      });
+
+      it('falls back to rule-based guidance silently when the llm throws', async () => {
+        llm.consult.mockRejectedValueOnce(new Error('Model request failed'));
+
+        const res = await consult(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(200);
+      });
+
+      it('returns the rule-based advice when the llm throws', async () => {
+        llm.consult.mockRejectedValueOnce(new Error('Model request failed'));
+
+        const res = await consult(buildApp(owner, true, llm));
+
+        expect(res.body.advice).not.toBe(consultation.advice);
+      });
+
+      it('logs a warning when the llm consultation fails', async () => {
+        llm.consult.mockRejectedValueOnce(new Error('Model request failed'));
+
+        await consult(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI consultation failed'));
+      });
+
+      it('does not call an llm when none is configured', async () => {
+        const res = await consult(buildApp(), { mode: 'ai' });
+
+        expect(res.status).toBe(200);
+      });
+
+      it('returns 400 when the question is not a string', async () => {
+        const res = await consult(buildApp(owner, true, llm), { question: 42 });
+
+        expect(res.status).toBe(400);
+      });
     });
   });
 

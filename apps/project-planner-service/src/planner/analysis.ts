@@ -136,6 +136,8 @@ export interface ConsultResult {
   questions: string[];
   dependencies: { service: string; satisfied: boolean }[];
   risks: string[];
+  // Present when the AI specialist contributed guidance.
+  advice?: string;
 }
 
 export function consultSpecialist(state: SolutionState, service: string): ConsultResult | undefined {

@@ -21,6 +21,11 @@ export const environment = envalid.cleanEnv(
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3381 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    MAAS_API_KEY: envalid.str({ default: '' }),
+    MAAS_BASE_URL: envalid.str({ default: 'https://maas.int.gov.ab.ca/v1' }),
+    MAAS_MODEL: envalid.str({ default: 'GOA-Default' }),
+    MAAS_TIMEOUT_MS: envalid.num({ default: 120000 }),
+    MAAS_INSECURE_TLS: envalid.bool({ default: false }),
   },
   {
     reporter: ({ errors }) => {

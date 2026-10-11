@@ -125,6 +125,16 @@ export interface NextStep {
   reason: string;
 }
 
+export type AnalysisMode = 'ai' | 'rules';
+
+export interface AnalysisInfo {
+  mode: AnalysisMode;
+  model?: string;
+  // Set when AI analysis was requested but the rule-based fallback produced the result.
+  warning?: string;
+  analyzedOn: string;
+}
+
 export interface SolutionState {
   problemStatement: string;
   concepts: BusinessConcept[];
@@ -135,6 +145,7 @@ export interface SolutionState {
   specialists: SpecialistProgress[];
   artifacts: SolutionArtifact[];
   nextSteps: NextStep[];
+  analysis?: AnalysisInfo;
 }
 
 export interface Solution {

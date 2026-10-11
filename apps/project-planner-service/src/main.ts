@@ -12,6 +12,7 @@ import { environment } from './environments/environment';
 import {
   applyPlannerMiddleware,
   configurationSchema,
+  createLlmFromEnv,
   PlannerServiceRoles,
   SolutionCreatedDefinition,
   SolutionDeletedDefinition,
@@ -106,6 +107,16 @@ const initializeApp = async (): Promise<express.Application> => {
     logger,
     solutionRepository: repositories.solutionRepository,
     eventService,
+    llm: createLlmFromEnv(
+      {
+        MAAS_API_KEY: environment.MAAS_API_KEY,
+        MAAS_BASE_URL: environment.MAAS_BASE_URL,
+        MAAS_MODEL: environment.MAAS_MODEL,
+        MAAS_TIMEOUT_MS: String(environment.MAAS_TIMEOUT_MS),
+        MAAS_INSECURE_TLS: String(environment.MAAS_INSECURE_TLS),
+      },
+      logger,
+    ),
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

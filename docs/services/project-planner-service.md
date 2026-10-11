@@ -40,9 +40,21 @@ Base path `/planner/v1`. See the service swagger docs for details.
 | GET | /specialists | Retrieve service specialists. |
 | GET, POST | /solutions | List own solutions (all for planner-admin) or create one. |
 | GET, PATCH, DELETE | /solutions/{id} | Retrieve, update, or delete a solution. |
-| POST | /solutions/{id}/analyze | Extract concepts, match patterns, generate hypotheses and next steps. |
-| POST | /solutions/{id}/consult/{service} | Consult a service specialist. |
+| POST | /solutions/{id}/analyze | Extract concepts, match patterns, generate hypotheses and next steps. Body `mode` is `ai` (default when a model is configured) or `rules`. |
+| POST | /solutions/{id}/consult/{service} | Consult a service specialist. Optional body `question` and `mode`. |
 | POST | /solutions/{id}/handoff/{service} | Hand off to a service workspace with context. |
+| GET | /analysis/options | Available analysis modes, the default mode and the model name. |
+
+## AI analysis
+AI analysis calls an OpenAI-compatible chat completions endpoint (the GoA Model as a Service) and is the default mode when `MAAS_API_KEY` is set. The result is validated against the pattern catalog and specialist list. If the model call fails or is not configured, the service falls back to rule-based analysis and records a warning in the solution `analysis` field. Requests retry up to 3 times with exponential backoff on 5xx, 429 and network errors.
+
+| environment variable | default | description |
+|:-|:-|:-|
+| MAAS_API_KEY | | Virtual key for the model service. Supply as a secret; AI mode is off when empty. |
+| MAAS_BASE_URL | https://maas.int.gov.ab.ca/v1 | Model service base URL. |
+| MAAS_MODEL | GOA-Default | Model name. |
+| MAAS_TIMEOUT_MS | 120000 | Per-request timeout. |
+| MAAS_INSECURE_TLS | false | Skip TLS certificate validation (internal endpoints with a private CA only). |
 
 ## Events
 | name | description |

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ADSP Project Planner (local)</title>
+    <link rel="stylesheet" href="/ds/index.css" />
+    <link rel="stylesheet" href="/tokens/tokens.css" />
+    <script type="module" src="/ds/index.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+      body { margin: 0; font-family: var(--goa-font-family-sans, 'acumin-pro-semi-condensed', Arial, sans-serif); background: #fff; color: #333; }
+      main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+      .layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start; }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .sol-item { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #dcdcdc; border-radius: 4px; padding: .75rem; margin-bottom: .5rem; cursor: pointer; font: inherit; }
+      .sol-item:hover { background: #f1f1f1; }
+      .sol-item[aria-current='true'] { border: 2px solid #0081a2; padding: calc(.75rem - 1px); }
+      .sol-item small { color: #666; display: block; margin-top: .25rem; }
+      .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+      .stack > * + * { margin-top: 1rem; }
+      .muted { color: #666; }
+      ul.plain { margin: .25rem 0; padding-left: 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <goa-microsite-header type="alpha" version="local dev build"></goa-microsite-header>
+    <goa-app-header heading="ADSP Project Planner" url="/ui"></goa-app-header>
+
+    <main>
+      <div id="message"></div>
+      <div class="layout">
+        <aside aria-label="Solutions">
+          <goa-container accent="thick">
+            <h2 style="margin-top: 0">Solutions</h2>
+            <div class="stack">
+              <goa-input id="newName" name="newName" placeholder="Name for a new solution" width="100%" aria-label="New solution name"></goa-input>
+              <goa-button id="createBtn" type="primary">Create solution</goa-button>
+            </div>
+            <goa-spacer vspacing="m"></goa-spacer>
+            <div id="solutions" role="list"></div>
+          </goa-container>
+        </aside>
+
+        <section aria-label="Solution workspace" id="workspace">
+          <goa-callout type="information" heading="No solution selected">
+            Create a solution or choose one from the list to describe a business problem and get a pattern match.
+          </goa-callout>
+        </section>
+      </div>
+    </main>
+
+    <script type="module">
+      const API = '/planner/v1';
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      let solutions = [];
+      let current = null;
+      let section = 'problem';
+      let draftText = '';
+      let consultResult = null;
+      let patterns = null;
+      let specialists = null;
+      let newName = '';
+      let options = { modes: ['rules'], defaultMode: 'rules' };
+      let mode = 'rules';
+      let busy = false;
+
+      const api = async (method, path, body) => {
+        const res = await fetch(API + path, {
+          method,
+          headers: body ? { 'Content-Type': 'application/json' } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch { data = { error: text }; }
+        if (!res.ok) throw new Error((data && (data.errorMessage || data.error || data.message)) || `${res.status} ${res.statusText}`);
+        return data;
+      };
+
+      const notify = (type, text) => {
+        $('message').innerHTML = text ? `<goa-callout type="${type}" heading="${type === 'emergency' ? 'Error' : 'Done'}">${esc(text)}</goa-callout><goa-spacer vspacing="m"></goa-spacer>` : '';
+        if (text && type !== 'emergency') setTimeout(() => ($('message').innerHTML = ''), 3500);
+      };
+      const run = async (fn) => {
+        try { await fn(); } catch (e) { notify('emergency', e.message); }
+      };
+
+      const levelType = (l) => (l === 'high' ? 'success' : l === 'medium' ? 'important' : 'information');
+
+      async function loadSolutions() {
+        solutions = (await api('GET', '/solutions?top=50')).results || [];
+        renderList();
+      }
+      function renderList() {
+        $('solutions').innerHTML = solutions.length
+          ? solutions.map((s) => `<button class="sol-item" role="listitem" data-id="${s.id}" ${current?.id === s.id ? 'aria-current="true"' : ''}>
+              <strong>${esc(s.name)}</strong>
+              <small>${esc(s.status)} · rev ${s.revision}</small></button>`).join('')
+          : '<p class="muted">No solutions yet.</p>';
+        $('solutions').querySelectorAll('.sol-item').forEach((b) => b.addEventListener('click', () => run(() => select(b.dataset.id))));
+      }
+      async function select(id) {
+        current = await api('GET', `/solutions/${id}`);
+        draftText = current.state.problemStatement || '';
+        consultResult = null;
+        renderList();
+        renderWorkspace();
+      }
+
+      const list = (items, empty = 'None') => (items?.length ? `<ul class="plain">${items.map((i) => `<li>${i}</li>`).join('')}</ul>` : `<p class="muted">${empty}</p>`);
+
+      function renderObject(o) {
+        const { advice, ...rest } = o;
+        const adviceHtml = advice ? `<h4 style="margin-bottom:0">Guidance</h4>${advice.split(/\n{2,}/).map((p) => `<p style="margin-top:0">${esc(p)}</p>`).join('')}` : '';
+        return adviceHtml + Object.entries(rest)
+          .filter(([k]) => k !== 'service')
+          .map(([k, v]) => `<h4 style="margin-bottom:0">${esc(k)}</h4>${Array.isArray(v) ? list(v.map((i) => (typeof i === 'object' ? esc(JSON.stringify(i)) : esc(i)))) : `<p style="margin-top:0">${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</p>`}`)
+          .join('');
+      }
+
+      function sectionHtml() {
+        const st = current.state;
+        if (section === 'problem') {
+          return `<div class="stack">
+            <goa-textarea id="problem" name="problem" rows="6" width="100%" value="${esc(draftText)}" aria-label="Problem statement"></goa-textarea>
+            <goa-radio-group id="mode" name="mode" value="${esc(mode)}" orientation="horizontal" arialabel="Analysis mode">
+              <goa-radio-item value="ai" label="AI analysis${options.model ? ` (${esc(options.model)})` : ''}" ${options.modes.includes('ai') ? '' : 'disabled="true"'}></goa-radio-item>
+              <goa-radio-item value="rules" label="Rule-based"></goa-radio-item>
+            </goa-radio-group>
+            <div class="row"><goa-button id="analyzeBtn" type="primary">${busy ? 'Analyzing…' : 'Save &amp; analyze'}</goa-button>
+            <goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>
+            ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
+            ${st.analysis ? `<goa-callout type="${st.analysis.warning ? 'important' : 'success'}" heading="${st.analysis.mode === 'ai' ? `AI analysis${st.analysis.model ? ` · ${esc(st.analysis.model)}` : ''}` : 'Rule-based analysis'}">${st.analysis.warning ? esc(st.analysis.warning) : `Completed ${esc(new Date(st.analysis.analyzedOn).toLocaleString())}`}</goa-callout>` : ''}
+            <h3>Pattern matches</h3>
+            ${st.patternMatches.length ? `<goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Score</th><th>Confidence</th><th>Why</th></tr></thead><tbody>
+              ${st.patternMatches.map((m) => `<tr><td>${esc(m.patternName)}</td><td>${m.score}</td><td><goa-badge type="${levelType(m.level)}" content="${esc(m.level)}"></goa-badge></td><td>${esc(m.explanation)}</td></tr>`).join('')}
+              </tbody></table></goa-table>` : '<p class="muted">Not analyzed yet.</p>'}
+          </div>`;
+        }
+        if (section === 'hypotheses') {
+          return st.hypotheses.length
+            ? `<goa-accordion-group>${st.hypotheses.map((h, i) => `<goa-accordion heading="${esc(h.title)}" secondarytext="${esc(h.confidence)} confidence" ${i === 0 ? 'open="true"' : ''}>
+                <p>${esc(h.rationale)}</p>
+                <h4>Recommended services</h4>
+                ${list([...h.recommendations].sort((a, b) => a.order - b.order).map((r) => `<strong>${r.order}. ${esc(r.service)}</strong> — ${esc(r.reason)}`))}
+                <h4>Assumptions</h4>${list(h.assumptions.map(esc))}
+                <h4>Unknowns</h4>${list(h.unknowns.map(esc))}
+              </goa-accordion>`).join('')}</goa-accordion-group>`
+            : '<p class="muted">Run an analysis to see solution hypotheses.</p>';
+        }
+        if (section === 'concepts') {
+          return st.concepts.length
+            ? `<goa-table width="100%"><table><thead><tr><th>Type</th><th>Name</th><th>Source</th></tr></thead><tbody>
+               ${st.concepts.map((c) => `<tr><td><goa-badge type="information" content="${esc(c.type)}"></goa-badge></td><td>${esc(c.name)}</td><td>${esc(c.source)}</td></tr>`).join('')}</tbody></table></goa-table>`
+            : '<p class="muted">No concepts yet.</p>';
+        }
+        if (section === 'questions') {
+          return st.questions.length
+            ? list(st.questions.map((q) => `${esc(q.question)} <goa-badge type="${q.status === 'open' ? 'important' : 'success'}" content="${esc(q.status)}"></goa-badge> <span class="muted">(${esc(q.raisedBy)})</span>`))
+            : '<p class="muted">No open questions.</p>';
+        }
+        if (section === 'steps') {
+          return list(st.nextSteps.map((n) => `<strong>${esc(n.title)}</strong>${n.service ? ` <goa-badge type="information" content="${esc(n.service)}"></goa-badge>` : ''} — ${esc(n.reason)}`), 'Run an analysis to get next steps.');
+        }
+        if (section === 'specialists') {
+          const progress = Object.fromEntries(st.specialists.map((s) => [s.service, s.status]));
+          return `<div class="stack"><goa-table width="100%"><table><thead><tr><th>Service</th><th>Purpose</th><th>Status</th><th></th></tr></thead><tbody>
+            ${(specialists || []).map((s) => `<tr><td>${esc(s.displayName)}</td><td>${esc(s.purpose)}</td><td>${esc(progress[s.service] || 'not-started')}</td>
+              <td><goa-button type="secondary" size="compact" data-consult="${s.service}">Consult</goa-button></td></tr>`).join('')}</tbody></table></goa-table>
+            ${consultResult ? `<goa-callout type="information" heading="Specialist: ${esc(consultResult.service || '')}">${renderObject(consultResult)}</goa-callout>` : ''}</div>`;
+        }
+        if (section === 'patterns') {
+          return `<goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Description</th><th>Services</th></tr></thead><tbody>
+            ${(patterns || []).map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.description)}</td><td>${p.serviceMappings.map((m) => esc(m.service)).join(', ')}</td></tr>`).join('')}</tbody></table></goa-table>`;
+        }
+        return '';
+      }
+
+      const tabs = [['problem', 'Problem & analysis'], ['hypotheses', 'Hypotheses'], ['concepts', 'Concepts'], ['questions', 'Questions'], ['steps', 'Next steps'], ['specialists', 'Specialists'], ['patterns', 'Pattern catalog']];
+
+      function renderWorkspace() {
+        if (!current) return;
+        $('workspace').innerHTML = `<goa-container accent="thick">
+          <h2 style="margin-top:0">${esc(current.name)} <goa-badge type="information" content="${esc(current.status)}"></goa-badge></h2>
+          <div class="row" role="toolbar" aria-label="Sections">${tabs.map(([id, label]) => `<goa-button type="${section === id ? 'primary' : 'tertiary'}" size="compact" data-section="${id}">${esc(label)}</goa-button>`).join('')}</div>
+          <goa-spacer vspacing="m"></goa-spacer>
+          <div id="section">${sectionHtml()}</div></goa-container>`;
+        $('workspace').querySelectorAll('[data-section]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          section = b.dataset.section;
+          if (section === 'patterns' && !patterns) patterns = (await api('GET', '/patterns')).results;
+          if (section === 'specialists' && !specialists) specialists = (await api('GET', '/specialists')).results;
+          renderWorkspace();
+        })));
+        $('problem')?.addEventListener('_change', (e) => (draftText = e.detail.value));
+        $('mode')?.addEventListener('_change', (e) => (mode = e.detail.value));
+        $('analyzeBtn')?.addEventListener('_click', () => run(async () => {
+          if (busy) return;
+          busy = true;
+          renderWorkspace();
+          try {
+            await api('PATCH', `/solutions/${current.id}`, { problemStatement: draftText });
+            current = await api('POST', `/solutions/${current.id}/analyze`, { mode });
+            notify('success', 'Analysis complete.');
+            await loadSolutions();
+          } finally {
+            busy = false;
+            renderWorkspace();
+          }
+        }));
+        $('deleteBtn')?.addEventListener('_click', () => run(async () => {
+          await api('DELETE', `/solutions/${current.id}`);
+          current = null;
+          $('workspace').innerHTML = '<goa-callout type="information" heading="Solution deleted">Choose or create another solution.</goa-callout>';
+          await loadSolutions();
+        }));
+        $('workspace').querySelectorAll('[data-consult]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          consultResult = await api('POST', `/solutions/${current.id}/consult/${b.dataset.consult}`, { mode });
+          current = await api('GET', `/solutions/${current.id}`);
+          renderWorkspace();
+        })));
+      }
+
+      $('newName').addEventListener('_change', (e) => (newName = e.detail.value));
+      $('createBtn').addEventListener('_click', () => run(async () => {
+        if (!newName.trim()) throw new Error('Enter a name for the solution.');
+        const created = await api('POST', '/solutions', { name: newName.trim() });
+        newName = '';
+        $('newName').setAttribute('value', '');
+        await loadSolutions();
+        section = 'problem';
+        await select(created.id);
+      }));
+
+      run(async () => {
+        options = await api('GET', '/analysis/options');
+        mode = options.defaultMode;
+        await loadSolutions();
+      });
+    </script>
+  </body>
+</html>
