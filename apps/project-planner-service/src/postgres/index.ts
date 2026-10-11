@@ -62,7 +62,7 @@ export const createRepositories = async ({
       try {
         await knex.raw('SELECT 1');
         return true;
-      } catch (err) {
+      }       catch {
         return false;
       }
     },

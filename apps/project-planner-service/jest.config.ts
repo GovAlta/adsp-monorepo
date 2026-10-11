@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'project-planner-service',
   preset: '../../jest-cover.preset.js',

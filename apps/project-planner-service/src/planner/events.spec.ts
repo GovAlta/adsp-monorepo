@@ -50,7 +50,7 @@ describe('planner events', () => {
     test.each([[SolutionCreatedDefinition], [SolutionUpdatedDefinition], [SolutionDeletedDefinition]])(
       'describes the solution in payload schema %#',
       (definition) => {
-        expect((definition.payloadSchema as any).properties.solution.properties).toHaveProperty('scenario');
+        expect((definition.payloadSchema as { properties: Record<string, { properties: unknown }> }).properties.solution.properties).toHaveProperty('scenario');
       },
     );
 
