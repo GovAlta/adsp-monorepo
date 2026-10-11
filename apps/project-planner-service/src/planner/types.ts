@@ -65,6 +65,7 @@ export interface BusinessPattern {
   name: string;
   description: string;
   domainLanguage: string[];
+  commonFeatures: string[];
   strongSignals: Signal[];
   weakSignals: Signal[];
   serviceMappings: ServiceMapping[];

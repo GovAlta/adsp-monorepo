@@ -65,3 +65,7 @@ AI analysis calls an OpenAI-compatible chat completions endpoint (the GoA Model 
 | solution-created | Signalled when a solution is created. |
 | solution-updated | Signalled when a solution is updated, analyzed, consulted or handed off. |
 | solution-deleted | Signalled when a solution is deleted. |
+
+## Business pattern library
+
+The service ships 19 built-in business patterns (case management, grant applications, permit/licence, registration, inspection, complaint intake, consultation, eligibility, booking, document submission, incident reporting, FOIP-style requests, referral routing, status tracking, audit trail, public reporting, document generation, notification subscriptions, internal service requests). Each pattern provides: name, purpose, domain language, common features (`commonFeatures`), strong signals, weak or misleading signals, likely ADSP service mappings (each with a reason), clarifying questions, assumptions and known unknowns. Tenants can override patterns through configuration.

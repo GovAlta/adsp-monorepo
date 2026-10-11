@@ -11,6 +11,7 @@ export const configurationSchema = {
           name: { type: 'string' },
           description: { type: 'string' },
           domainLanguage: { type: 'array', items: { type: 'string' } },
+          commonFeatures: { type: 'array', items: { type: 'string' } },
           strongSignals: {
             type: 'array',
             items: {

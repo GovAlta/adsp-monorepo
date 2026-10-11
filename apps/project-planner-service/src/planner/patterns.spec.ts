@@ -25,6 +25,22 @@ describe('BUILT_IN_PATTERNS', () => {
       expect(pattern.domainLanguage.length).toBeGreaterThan(0);
     });
 
+    it('has common features', () => {
+      expect(pattern.commonFeatures.length).toBeGreaterThanOrEqual(4);
+    });
+
+    it('has at least three weak signals', () => {
+      expect(pattern.weakSignals.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('has at least five clarifying questions', () => {
+      expect(pattern.clarifyingQuestions.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it('has at least three assumptions and three known unknowns', () => {
+      expect([pattern.assumptions.length >= 3, pattern.knownUnknowns.length >= 3]).toEqual([true, true]);
+    });
+
     it('has strong signals with descriptions and keywords', () => {
       expect(
         pattern.strongSignals.length > 0 &&

@@ -17,6 +17,8 @@ describe('Patterns', () => {
       { service: 'form-service', reason: 'Intake forms.' },
       { service: 'task-service', reason: 'Assignment of work.' },
     ],
+    commonFeatures: ['Applicants submit an intake form.'],
+    assumptions: ['Records persist beyond initial submission.'],
     clarifyingQuestions: ['Does the submission become a long-lived record after intake?'],
   };
   const permitting: BusinessPattern = {
@@ -63,10 +65,10 @@ describe('Patterns', () => {
     expect(await findByText('Issue permits.')).toBeTruthy();
   });
 
-  it('joins the mapped services into one cell', async () => {
+  it('lists each mapped service with its reason', async () => {
     const { findAllByText } = render(<Patterns />);
 
-    expect(await findAllByText('form-service, task-service')).toHaveLength(2);
+    expect(await findAllByText('form-service')).toHaveLength(2);
   });
 
   it('shows clarifying questions for patterns that have them', async () => {
@@ -75,11 +77,18 @@ describe('Patterns', () => {
     expect(await findByText('Does the submission become a long-lived record after intake?')).toBeTruthy();
   });
 
-  it('omits the clarifying questions section for patterns without questions', async () => {
+  it('shows common features and assumptions when provided', async () => {
+    const { findAllByText } = render(<Patterns />);
+    await findAllByText('Applicants submit an intake form.');
+
+    expect(await findAllByText('Records persist beyond initial submission.')).toHaveLength(2);
+  });
+
+  it('omits sections that have no items', async () => {
     const { container, findByText } = render(<Patterns />);
     await findByText('Permitting');
 
-    expect(container.querySelectorAll('goa-details')).toHaveLength(1);
+    expect(container.querySelectorAll('goa-details[heading="Clarifying questions"]')).toHaveLength(1);
   });
 
   it('renders the table with no rows when loading patterns fails', async () => {

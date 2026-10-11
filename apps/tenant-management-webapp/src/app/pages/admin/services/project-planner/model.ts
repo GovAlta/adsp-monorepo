@@ -80,8 +80,13 @@ export interface BusinessPattern {
   name: string;
   description: string;
   domainLanguage: string[];
+  commonFeatures?: string[];
+  strongSignals?: { description: string; keywords: string[] }[];
+  weakSignals?: { description: string; keywords: string[] }[];
   serviceMappings: { service: string; reason: string }[];
   clarifyingQuestions: string[];
+  assumptions?: string[];
+  knownUnknowns?: string[];
 }
 
 export interface HandoffResult {

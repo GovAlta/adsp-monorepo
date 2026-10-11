@@ -35,17 +35,36 @@ export const Patterns: FunctionComponent = () => {
               <td>{pattern.name}</td>
               <td>
                 {pattern.description}
-                {pattern.clarifyingQuestions?.length > 0 && (
-                  <GoabDetails heading="Clarifying questions">
-                    <ul>
-                      {pattern.clarifyingQuestions.map((q) => (
-                        <li key={q}>{q}</li>
-                      ))}
-                    </ul>
-                  </GoabDetails>
+                {[
+                  ['Common domain language', pattern.domainLanguage],
+                  ['Common features', pattern.commonFeatures],
+                  ['Strong confidence signals', pattern.strongSignals?.map((s) => s.description)],
+                  ['Weak or misleading signals', pattern.weakSignals?.map((s) => s.description)],
+                  ['Clarifying questions', pattern.clarifyingQuestions],
+                  ['Assumptions', pattern.assumptions],
+                  ['Known unknowns', pattern.knownUnknowns],
+                ].map(
+                  ([heading, items]: [string, string[] | undefined]) =>
+                    items?.length > 0 && (
+                      <GoabDetails heading={heading} key={heading}>
+                        <ul>
+                          {items.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </GoabDetails>
+                    ),
                 )}
               </td>
-              <td>{pattern.serviceMappings.map((m) => m.service).join(', ')}</td>
+              <td>
+                <ul>
+                  {pattern.serviceMappings.map((m) => (
+                    <li key={m.service}>
+                      <b>{m.service}</b>: {m.reason}
+                    </li>
+                  ))}
+                </ul>
+              </td>
             </tr>
           ))}
         </tbody>

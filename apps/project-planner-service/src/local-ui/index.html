@@ -194,8 +194,10 @@
             ${consultResult ? `<goa-callout type="information" heading="Specialist: ${esc(consultResult.service || '')}">${renderObject(consultResult)}</goa-callout>` : ''}</div>`;
         }
         if (section === 'patterns') {
+          const block = (heading, items) =>
+            items && items.length ? `<goa-details heading="${esc(heading)}"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></goa-details>` : '';
           return `<goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Description</th><th>Services</th></tr></thead><tbody>
-            ${(patterns || []).map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.description)}</td><td>${p.serviceMappings.map((m) => esc(m.service)).join(', ')}</td></tr>`).join('')}</tbody></table></goa-table>`;
+            ${(patterns || []).map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.description)}${block('Common domain language', p.domainLanguage)}${block('Common features', p.commonFeatures)}${block('Strong confidence signals', (p.strongSignals || []).map((s) => s.description))}${block('Weak or misleading signals', (p.weakSignals || []).map((s) => s.description))}${block('Clarifying questions', p.clarifyingQuestions)}${block('Assumptions', p.assumptions)}${block('Known unknowns', p.knownUnknowns)}</td><td>${p.serviceMappings.map((m) => `<div><b>${esc(m.service)}</b>: ${esc(m.reason)}</div>`).join('')}</td></tr>`).join('')}</tbody></table></goa-table>`;
         }
         return '';
       }

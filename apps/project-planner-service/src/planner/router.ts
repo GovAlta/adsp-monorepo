@@ -66,7 +66,7 @@ async function getPatterns(req: Request): Promise<BusinessPattern[]> {
   const overrides = config?.patterns || {};
   const merged = new Map(BUILT_IN_PATTERNS.map((p) => [p.id, p]));
   Object.values(overrides).forEach((p) =>
-    merged.set(p.id, { weakSignals: [], clarifyingQuestions: [], assumptions: [], knownUnknowns: [], description: '', ...p }),
+    merged.set(p.id, { commonFeatures: [], weakSignals: [], clarifyingQuestions: [], assumptions: [], knownUnknowns: [], description: '', ...p }),
   );
   return [...merged.values()];
 }
