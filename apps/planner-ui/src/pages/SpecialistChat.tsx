@@ -57,18 +57,18 @@ const SpecialistChat: React.FC = () => {
   const loadHistory = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const [history, types] = await Promise.all([
-        api.getSpecialistMessages(sessionId, specialistType),
-        api.getSpecialistTypes(),
-      ]);
+      const history = await api.getSpecialistMessages(sessionId, specialistType);
       setMessages(history);
-      const found = types.find((t) => t.id === specialistType);
-      if (found) setMeta(found);
     } catch {
       // New chat — empty history is fine
     } finally {
       setLoadingHistory(false);
     }
+    // Load specialist metadata separately so a missing /types endpoint never breaks the chat page
+    api.getSpecialistTypes().then((types) => {
+      const found = types.find((t) => t.id === specialistType);
+      if (found) setMeta(found);
+    }).catch(() => {});
   }, [sessionId, specialistType]);
 
   useEffect(() => {

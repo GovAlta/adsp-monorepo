@@ -96,17 +96,22 @@ const PlanningSession: React.FC = () => {
     setPageLoading(true);
     try {
       // ✓ ASVS:V-9.1.1 — auth header injected by api service layer
-      const [session, msgResult, model, types] = await Promise.all([
+      // Specialist types are loaded separately — a failure there must never prevent session loading.
+      const [session, msgResult, model] = await Promise.all([
         api.getSession(sessionId),
         api.listMessages(sessionId, { page: 1, pageSize: 50 }),
         api.getBusinessModel(sessionId),
-        api.getSpecialistTypes(),
       ]);
       setSessionData(session);
       setMessages(msgResult.items);
       setBusinessModel(model);
-      setSpecialistTypes(types);
-      setSpecialists(Object.fromEntries(types.map((t) => [t.id, { status: 'available' as SpecialistStatus }])));
+      // Non-blocking: fetch specialist catalogue after core session data loads
+      api.getSpecialistTypes().then((types) => {
+        setSpecialistTypes(types);
+        setSpecialists(Object.fromEntries(types.map((t) => [t.id, { status: 'available' as SpecialistStatus }])));
+      }).catch(() => {
+        // Server may not support this endpoint yet — silently ignore, panel shows "Loading…"
+      });
     } catch (err: unknown) {
       const status = (err as { status?: number }).status;
       if (status === 404) {
