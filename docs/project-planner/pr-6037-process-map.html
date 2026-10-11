@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PR #6037 · ADSP Project Planner · process map</title>
+    <style>
+      :root {
+        --bg: #f7f8fa;
+        --ink: #1f2933;
+        --muted: #5f6b7a;
+        --border: #e3e7ec;
+        --line: #9aa5b1;
+        --hl: #0b63ce;
+        --high: #c62828;
+        --med: #c25e00;
+        --col-w: 172px;
+        --lane-h: 96px;
+        --label-w: 200px;
+        --head-h: 40px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+      main { transition: margin-right 0.2s; }
+      a { color: var(--hl); }
+
+      header { padding: 18px 24px 10px; }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      .subtitle { color: var(--muted); margin: 0; }
+      .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .stat {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 3px 12px;
+        font-size: 13px;
+      }
+      .stat b { font-variant-numeric: tabular-nums; }
+      .stat.warn b { color: var(--high); }
+
+      .toolbar {
+        position: sticky; top: 0; z-index: 20;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+        padding: 10px 24px;
+        background: rgba(247,248,250,0.96);
+        border-bottom: 1px solid var(--border);
+      }
+      .group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+      .group-label {
+        font-size: 11px; font-weight: 600; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.05em; margin-right: 2px;
+      }
+      .chip, .btn {
+        font: inherit; font-size: 13px; color: var(--ink);
+        background: #fff; border: 1px solid #cfd6de;
+        border-radius: 999px; padding: 4px 12px; cursor: pointer;
+      }
+      .btn { border-radius: 6px; }
+      .chip[aria-pressed='true'], .btn[aria-pressed='true'] {
+        background: var(--ink); border-color: var(--ink); color: #fff;
+      }
+      .btn:disabled { opacity: 0.4; cursor: default; }
+      .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+      .readout { min-width: 96px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+      :is(.chip,.btn,.node,.gap-card,.jump):focus-visible { outline: 3px solid var(--hl); outline-offset: 2px; }
+
+      .legend {
+        display: flex; flex-wrap: wrap; gap: 6px 18px;
+        padding: 10px 24px 0; font-size: 12px; color: var(--muted);
+      }
+      .legend > span { display: inline-flex; align-items: center; gap: 6px; }
+      .sw { display: inline-block; width: 24px; border-top: 2px solid var(--line); }
+      .sw.ret { border-top-style: dashed; }
+      .sw.data { border-top: 2px dotted #8d6e63; }
+
+      .viewport {
+        margin: 10px 24px 0;
+        scroll-margin-top: 120px;
+        overflow: auto;
+        max-height: max(420px, calc(100vh - 150px));
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+      .hint { margin: 6px 24px 0; font-size: 12px; color: var(--muted); }
+
+      .map {
+        position: relative;
+        display: grid;
+        grid-template-columns: var(--label-w) repeat(var(--cols), var(--col-w));
+        grid-template-rows: var(--head-h) repeat(var(--lanes), var(--lane-h));
+        width: max-content;
+      }
+      .corner, .phase {
+        grid-row: 1; position: sticky; top: 0;
+        display: flex; align-items: center;
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.06em; color: var(--muted);
+        background: #fff; border-bottom: 1px solid var(--border);
+      }
+      .corner {
+        grid-column: 1; left: 0; z-index: 7;
+        padding: 0 14px; border-right: 1px solid var(--border);
+      }
+      .phase { z-index: 4; justify-content: center; border-left: 1px dashed #cfd6de; }
+      .phase-div {
+        grid-row: 2 / -1; position: relative; z-index: 0;
+        border-left: 1px dashed #d5dbe2; pointer-events: none;
+      }
+      .band {
+        grid-column: 1 / -1; position: relative; z-index: 0;
+        background: var(--tint); border-bottom: 1px solid #e9edf1;
+      }
+      .lane-label {
+        grid-column: 1; position: sticky; left: 0; z-index: 5;
+        display: flex; flex-direction: column; justify-content: center;
+        padding: 8px 14px;
+        background: var(--tint);
+        border-right: 3px solid var(--accent);
+        border-bottom: 1px solid #e9edf1;
+      }
+      .lane-label .kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+      .lane-label .name { font-weight: 600; font-size: 13.5px; }
+      .lane-label .sub { font-size: 12px; color: var(--muted); line-height: 1.3; }
+
+      svg.edges {
+        position: absolute; left: 0; top: 0;
+        z-index: 1; overflow: visible; pointer-events: none;
+      }
+      .edge { transition: opacity 0.15s; }
+      .edge path { fill: none; stroke: var(--line); stroke-width: 1.6; marker-end: url(#arrow); }
+      .edge.return path { stroke-dasharray: 5 4; }
+      .edge.data path { stroke: #8d6e63; stroke-dasharray: 2 4; marker-end: url(#arrow-data); }
+      .edge.hl path { stroke: var(--hl); stroke-width: 2.4; marker-end: url(#arrow-hl); }
+      .edge .lbl { opacity: 0; transition: opacity 0.15s; }
+      .edge .lbl rect { fill: #fff; stroke: #cfd6de; }
+      .edge .lbl text { font-size: 11px; fill: var(--ink); }
+      .show-labels .edge .lbl, .edge.hl .lbl { opacity: 1; }
+      .edge.hl .lbl rect { stroke: var(--hl); }
+      .dimmed .edge:not(.hl) { opacity: 0.12; }
+
+      .node {
+        position: relative; z-index: 2;
+        align-self: center; justify-self: center;
+        width: calc(var(--col-w) - 22px); min-height: 62px;
+        padding: 6px 9px 7px;
+        font: inherit; text-align: left; color: var(--ink);
+        background: #fff;
+        border: 1px solid #d5dbe2;
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(16,24,40,0.06);
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      }
+      .node:hover { box-shadow: 0 4px 10px rgba(16,24,40,0.12); }
+      .node .top { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+      .num {
+        display: inline-grid; place-items: center;
+        min-width: 20px; height: 20px; padding: 0 5px;
+        border-radius: 999px; background: var(--accent);
+        color: #fff; font-size: 11px; font-weight: 700;
+      }
+      .badges { display: flex; gap: 3px; margin-left: auto; }
+      .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.02em; border-radius: 4px; padding: 1px 5px; }
+      .badge.new { background: #dcfce7; color: #14532d; }
+      .badge.gap { background: var(--high); color: #fff; }
+      .badge.gap.med { background: var(--med); }
+      .node .title { font-weight: 600; font-size: 12.5px; line-height: 1.25; }
+      .node .meta { font-size: 11px; color: var(--muted); line-height: 1.3; }
+      body:not(.hide-gaps) .node.has-gap { border-color: #f0b4b4; border-left-color: var(--accent); }
+      .hide-gaps .badge.gap { display: none; }
+      .dimmed .node:not(.hl) { opacity: 0.25; }
+      .node.hl { box-shadow: 0 0 0 3px rgba(11,99,206,0.28), 0 4px 10px rgba(16,24,40,0.12); }
+      .node.current { transform: scale(1.05); box-shadow: 0 0 0 3px var(--hl), 0 6px 16px rgba(11,99,206,0.25); }
+      .node.out, .edge.out { opacity: 0.12 !important; }
+
+      .panel {
+        position: fixed; top: 0; right: 0; z-index: 30;
+        width: min(400px, 100vw); height: 100vh; overflow: auto;
+        padding: 20px 22px 28px;
+        background: #fff; border-left: 1px solid var(--border);
+        box-shadow: -8px 0 24px rgba(16,24,40,0.12);
+        transform: translateX(100%); transition: transform 0.2s;
+      }
+      .panel.open { transform: none; }
+      .panel .close { position: absolute; top: 12px; right: 12px; }
+      .crumb { font-size: 12px; color: var(--muted); padding-right: 40px; }
+      .panel h2 { font-size: 18px; margin: 6px 0 2px; }
+      .panel .lead { margin: 0; color: var(--muted); }
+      .panel h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 18px 0 6px; }
+      .panel p { margin: 0 0 6px; }
+      .panel ul { margin: 0; padding-left: 18px; }
+      .code {
+        display: block; margin: 4px 0; padding: 3px 7px;
+        font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #f3f5f7; border-radius: 4px; word-break: break-all;
+      }
+      .jump {
+        display: block; width: 100%; margin: 4px 0; padding: 6px 9px;
+        font: inherit; font-size: 13px; text-align: left; color: var(--ink);
+        background: #f7f9fb; border: 1px solid var(--border);
+        border-radius: 6px; cursor: pointer;
+      }
+      .jump:hover { border-color: var(--hl); }
+      .jump small { color: var(--muted); }
+      .gapbox {
+        margin-top: 8px; padding: 10px 12px;
+        background: #fdecec; border-left: 4px solid var(--high); border-radius: 6px;
+      }
+      .gapbox.med { background: #fff4e5; border-left-color: var(--med); }
+      .gapbox .gid { font-size: 12px; font-weight: 700; color: var(--high); }
+      .gapbox.med .gid { color: var(--med); }
+      .gapbox .fix { margin-top: 6px; }
+      .panel-nav { display: flex; gap: 8px; margin-top: 22px; }
+
+      section.gaps { padding: 22px 24px 40px; }
+      .gaps h2 { font-size: 16px; margin: 0 0 4px; }
+      .gaps .lead { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+      .gap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; }
+      .gap-card {
+        padding: 10px 12px; font: inherit; text-align: left; color: var(--ink);
+        background: #fff; border: 1px solid var(--border);
+        border-left: 4px solid var(--high); border-radius: 8px; cursor: pointer;
+      }
+      .gap-card.med { border-left-color: var(--med); }
+      .gap-card:hover { box-shadow: 0 4px 10px rgba(16,24,40,0.1); }
+      .gap-card .gid { font-size: 12px; font-weight: 700; color: var(--high); }
+      .gap-card.med .gid { color: var(--med); }
+      .gap-card .t { display: block; font-weight: 600; margin: 2px 0 4px; }
+      .gap-card .s { display: block; font-size: 12.5px; color: var(--muted); }
+      .gap-card .steps { display: block; margin-top: 6px; font-size: 12px; color: var(--hl); }
+
+      @media (min-width: 1100px) { body.panel-open main { margin-right: 400px; } }
+      @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>ADSP Project Planner — process map</h1>
+        <p class="subtitle">
+          End-to-end request flow after
+          <a href="https://github.com/GovAlta/adsp-monorepo/pull/6037">PR #6037</a>
+          (feat: ADSP Planner enhancements — Project Planner service · patterns · business model · hypothesis · export,
+          by Sanchit Raizada). Adds a full AI-assisted planning session pipeline on top of the GoA ADSP platform.
+        </p>
+        <div class="stats" id="stats"></div>
+      </header>
+
+      <div class="toolbar" role="toolbar" aria-label="Map controls">
+        <div class="group" id="phase-chips"><span class="group-label">Phase</span></div>
+        <div class="group">
+          <span class="group-label">Walk through</span>
+          <button class="btn" id="prev" type="button">← Prev</button>
+          <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
+          <button class="btn" id="next" type="button">Next →</button>
+          <span class="readout" id="readout" aria-live="polite"></span>
+        </div>
+        <div class="group">
+          <label class="toggle"><input type="checkbox" id="toggle-gaps" checked /> Show gaps</label>
+          <label class="toggle"><input type="checkbox" id="toggle-labels" /> Show all arrow labels</label>
+        </div>
+      </div>
+
+      <div class="legend" aria-label="Legend">
+        <span><i class="sw"></i> Request / call</span>
+        <span><i class="sw ret"></i> Response / return</span>
+        <span><i class="sw data"></i> Data load / store</span>
+        <span><b class="badge new">NEW</b> New in this PR</span>
+        <span><b class="badge gap med">G1</b> Medium gap / risk</span>
+        <span><b class="badge gap">G2</b> High gap / risk</span>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <div class="map" id="map">
+          <svg class="edges" id="edges" aria-hidden="true">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1" />
+              </marker>
+              <marker id="arrow-hl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#0b63ce" />
+              </marker>
+              <marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#8d6e63" />
+              </marker>
+            </defs>
+            <g id="edge-layer"></g>
+          </svg>
+        </div>
+      </div>
+      <p class="hint">Click a step for details · ← / → to walk through · Esc to close · ⌘/Ctrl − to zoom out</p>
+
+      <section class="gaps" aria-labelledby="gaps-title">
+        <h2 id="gaps-title">Gaps / risks on this map</h2>
+        <p class="lead">Click a gap to highlight the steps it affects.</p>
+        <div class="gap-grid" id="gap-grid"></div>
+      </section>
+    </main>
+
+    <aside class="panel" id="panel" aria-label="Step details" aria-hidden="true">
+      <button class="btn close" id="close" type="button" aria-label="Close details">✕</button>
+      <div id="panel-body"></div>
+      <div class="panel-nav">
+        <button class="btn" id="panel-prev" type="button">← Prev step</button>
+        <button class="btn" id="panel-next" type="button">Next step →</button>
+      </div>
+    </aside>
+
+    <script>
+      (() => {
+        'use strict';
+
+        // ── Lanes ────────────────────────────────────────────────────────
+        const LANES = [
+          {
+            id: 'user',
+            kind: 'Actor',
+            name: 'GoA Planner User',
+            sub: 'GoA staff · Chrome / Edge browser',
+            accent: '#6b4fbb',
+            tint: '#f4f1fc',
+          },
+          {
+            id: 'ui',
+            kind: 'Frontend (NEW)',
+            name: 'planner-ui',
+            sub: 'React 18 + Vite · @abgov/react-components v4.24',
+            accent: '#0b63ce',
+            tint: '#eef5fc',
+          },
+          {
+            id: 'api',
+            kind: 'Backend (NEW)',
+            name: 'planner-service / local-dev',
+            sub: 'Express · JWT middleware · serial MaaS queue',
+            accent: '#b45309',
+            tint: '#fdf5ea',
+          },
+          {
+            id: 'maas',
+            kind: 'AI Service',
+            name: 'GoA MaaS',
+            sub: 'maas.int.gov.ab.ca/v1 · GOA-Default · 240 s timeout',
+            accent: '#00838f',
+            tint: '#eaf6f7',
+          },
+          {
+            id: 'db',
+            kind: 'Data',
+            name: 'Persistent Store',
+            sub: 'MongoDB (prod) · in-memory store (dev)',
+            accent: '#6d4c41',
+            tint: '#f6f1ee',
+          },
+          {
+            id: 'adsp',
+            kind: 'Platform',
+            name: 'ADSP Platform',
+            sub: 'Keycloak OIDC · Config Service · Notification Service',
+            accent: '#2e7d32',
+            tint: '#eef7ef',
+          },
+        ];
+
+        // ── Phases ───────────────────────────────────────────────────────
+        const PHASES = [
+          { id: 'auth',     name: '1 · Auth',          from: 1,  to: 2  },
+          { id: 'session',  name: '2 · Session',        from: 3,  to: 4  },
+          { id: 'convo',    name: '3 · Conversation',   from: 5,  to: 8  },
+          { id: 'analysis', name: '4 · Hypothesis',     from: 9,  to: 11 },
+          { id: 'export',   name: '5 · Export',         from: 12, to: 14 },
+        ];
+
+        // ── Gaps ─────────────────────────────────────────────────────────
+        const GAPS = {
+          G1: {
+            sev: 'med',
+            title: 'MaaS SSL certificate validation disabled',
+            summary:
+              "The Express API sets rejectUnauthorized: false on every HTTPS call to maas.int.gov.ab.ca. This suppresses Node.js TLS chain verification, making the connection vulnerable to a MITM attack on the internal network. It was introduced as a workaround for the GoA internal CA not being in Node's trust store.",
+            fix: "Import the GoA internal CA certificate into the Node runtime's trust store (NODE_EXTRA_CA_CERTS env var pointing at the .pem bundle) and remove the rejectUnauthorized override. Alternatively, provision a publicly-trusted certificate on the MaaS endpoint.",
+            nodes: ['llm-call', 'hyp-llm'],
+          },
+          G2: {
+            sev: 'med',
+            title: 'Hypothesis auto-generation is fire-and-forget — silent failure',
+            summary:
+              "When confidence reaches 70%, the server calls autoGenerateHypothesis() as a non-awaited async side-effect inside the message handler. If the MaaS call fails (timeout, quota, network error), the hypothesis status remains 'draft' with no title or summary and no error surfaced to the user. The UI polls for up to 90 s before showing 'Hypothesis not yet available' — the only observable symptom.",
+            fix: 'Persist the hypothesis generation error to the hypothesis record (e.g. generationError field) so the UI can render an informative callout. Add a server-side retry with exponential backoff (max 3 attempts) rather than a single fire-and-forget call.',
+            nodes: ['conf-gate', 'hyp-llm', 'hyp-store', 'hyp-page'],
+          },
+          G3: {
+            sev: 'med',
+            title: 'Dev in-memory store resets on every server restart',
+            summary:
+              "local-dev/src/store.js holds all session, business model, hypothesis, and pattern data purely in memory. Any server restart (code change, crash, port conflict kill) loses the entire conversation history. Sessions seeded in the store.js file survive restarts, but any session created through the UI is lost.",
+            fix: 'Add an optional file-system persistence layer to local-dev (JSON file or SQLite via better-sqlite3) that hydrates on start and flushes on write. This is dev-only infrastructure — the production planner-service uses MongoDB and is unaffected.',
+            nodes: ['persist', 'hyp-store'],
+          },
+        };
+
+        // ── Nodes ────────────────────────────────────────────────────────
+        const NODES = [
+          // ── Phase 1: Auth ─────────────────────────────────────────────
+          {
+            id: 'navigate',
+            lane: 'user',
+            col: 1,
+            title: 'Open ADSP Planner',
+            meta: 'Navigate to / or /sessions',
+            gaps: [],
+            new: true,
+            what: 'The GoA staff member navigates to the ADSP Project Planner SPA at http://localhost:5173 (dev) or the production URL. The React app loads; if no valid Keycloak session cookie exists, main.tsx redirects to the Keycloak OIDC login page with check-sso.',
+            notes: [
+              'ASVS V-4.1.1: every route is behind Keycloak check-sso in main.tsx — unauthenticated direct navigation to any sub-route redirects to login.',
+            ],
+            code: ['apps/planner-ui/src/main.tsx', 'apps/planner-ui/src/App.tsx'],
+          },
+          {
+            id: 'oidc',
+            lane: 'adsp',
+            col: 2,
+            title: 'Keycloak OIDC',
+            meta: 'JWT issued · realm_access.roles attached',
+            gaps: [],
+            what: "Keycloak's OIDC authorization-code flow authenticates the user and issues a JWT. The token's realm_access.roles includes one of: planner-user, planner-admin, or tenant-admin. The planner-service (Express) validates this token on every protected API route via passport-jwt with the ADSP JWKS endpoint.",
+            notes: [
+              "Role planner-admin unlocks /admin/* routes. tenant-admin unlocks /admin/users. planner-user can access /sessions and /patterns (read-only) but gets 403 on admin endpoints.",
+              'The dev server (local-dev) bypasses Keycloak and injects a hard-coded dev JWT from the DEV_JWT env variable — no Keycloak instance required for local development.',
+            ],
+            code: ['apps/planner-service/src/middleware/auth.ts', 'apps/local-dev/src/server.js'],
+          },
+
+          // ── Phase 2: Session ──────────────────────────────────────────
+          {
+            id: 'dashboard',
+            lane: 'ui',
+            col: 3,
+            title: 'My Sessions dashboard',
+            meta: 'Status chips · pagination · idle indicator',
+            gaps: [],
+            new: true,
+            what: "SessionDashboard renders the user's planning sessions in a sortable, filterable, paginated GoATable. Status chips are plain <span> elements with GoA brand colours (Active=#007a4e, Paused=#ee7100) and explicit white text — bypassing GoABadge's light-background constraint. Sessions idle for 7+ days show an inline warning.",
+            notes: [
+              'FAC-S5-025: userId and tenantId are server-side scoping only — never rendered in table cells.',
+              'FAC-S5-024: sessionId is a route param, not a query string carrying Protected B data.',
+            ],
+            code: ['apps/planner-ui/src/pages/SessionDashboard.tsx'],
+          },
+          {
+            id: 'sess-load',
+            lane: 'api',
+            col: 4,
+            title: 'GET /sessions',
+            meta: 'Tenant-scoped · page / pageSize / status filter',
+            gaps: [],
+            new: true,
+            what: "The planner-service returns the authenticated user's sessions filtered by tenantId extracted from the JWT. Supports pagination (page, pageSize), status filter, and sort. The response shape is { items: PlanningSession[], total: number }. The dev server returns the in-memory SESSIONS array filtered by the dev user ID.",
+            notes: [],
+            code: [
+              'apps/planner-service/src/routes/sessions.ts',
+              'apps/local-dev/src/server.js (GET /sessions)',
+            ],
+          },
+
+          // ── Phase 3: Conversation ─────────────────────────────────────
+          {
+            id: 'plan-page',
+            lane: 'ui',
+            col: 5,
+            title: 'Planning Session page',
+            meta: 'Conversation + Business Model panel',
+            gaps: [],
+            new: true,
+            what: "PlanningSession.tsx renders a two-column layout: the left column hosts the AI conversation (Markdown responses, Enter-to-send, Shift+Enter for newline), and the right column shows the Business Model panel with a live confidence score on a 3-stop colour ramp (red→purple→green via RGB interpolation). A 'Save as PDF' button calls window.print() with a print stylesheet that hides nav chrome.",
+            notes: [
+              'Confidence ≥ 70% shows a callout: "Your solution hypothesis is ready to review."',
+              'Rate-limit protection: 4 retries with 5 s / 10 s / 15 s / 20 s backoff on 429 responses from MaaS.',
+            ],
+            code: [
+              'apps/planner-ui/src/pages/PlanningSession.tsx',
+              'apps/planner-ui/src/components/ConfidenceBadge.tsx',
+              'apps/planner-ui/src/goa-tokens.css (@media print)',
+            ],
+          },
+          {
+            id: 'post-msg',
+            lane: 'api',
+            col: 6,
+            title: 'POST /sessions/:id/messages',
+            meta: 'Serial MaaS queue · 2 s gap between calls',
+            gaps: [],
+            new: true,
+            what: "The message handler appends the user's message to the session conversation history, then enqueues a MaaS completion call via the enqueueSpecialistCall serial queue. The queue ensures only one concurrent outbound MaaS call (regardless of tab count or concurrent users on dev), with a 2 s gap between calls to stay within GoA MaaS rate limits.",
+            notes: [
+              "The system prompt instructs the GOA-Default model to act as an ADSP Planning Agent: extract business context, identify ADSP service opportunities, and build the business model incrementally.",
+              'Specialist consultation (Form Service, PDF Service, Comment Service, Notification Service) uses the same queue with a focused brief prompt per specialist.',
+            ],
+            code: [
+              'apps/local-dev/src/server.js (POST /sessions/:id/messages)',
+              'apps/planner-service/src/controllers/messages.ts',
+            ],
+          },
+          {
+            id: 'llm-call',
+            lane: 'maas',
+            col: 7,
+            title: 'GOA-Default completion',
+            meta: 'OpenAI-compatible · 240 s timeout · SSL override',
+            gaps: ['G1'],
+            what: "The planner-service calls the GoA MaaS OpenAI-compatible API at maas.int.gov.ab.ca/v1/chat/completions with model: 'GOA-Default'. The HTTP agent sets rejectUnauthorized: false as a workaround for the GoA internal CA. Timeout is 240 seconds. The virtual key is read from MAAS_API_KEY in the environment — never logged or persisted.",
+            notes: [
+              'The model receives the full conversation history (system prompt + prior messages) on each call, enabling stateful multi-turn reasoning without server-side context management.',
+            ],
+            code: [
+              'apps/local-dev/src/server.js (callMaaS)',
+              'apps/planner-service/src/services/maas.ts',
+            ],
+          },
+          {
+            id: 'extract',
+            lane: 'api',
+            col: 8,
+            title: 'Extract concepts · update BM',
+            meta: '15-type taxonomy · confidence scoring',
+            gaps: [],
+            new: true,
+            what: "After receiving the AI response, the server runs concept extraction over the combined user+AI message text. Keywords are matched against 19 pattern groups covering all 15 ConceptTypes (actor, goal, activity, decision, evidence, business_rule, constraint, evaluation_criteria, workflow, outcome, document, event, external_system, assumption, unknown). Each new concept increments the business model's confidence score (max 95%).",
+            notes: [
+              'Confidence is computed as: min(95, existingConcepts.length × 10 + 10). The cap of 95% prevents a "100% certain" state before hypothesis generation.',
+              'The AI response and updated business model are returned together in the POST /messages response.',
+            ],
+            code: ['apps/local-dev/src/server.js (extractConcepts, updateBusinessModel)'],
+          },
+          {
+            id: 'persist',
+            lane: 'db',
+            col: 8,
+            title: 'Persist message + BM snapshot',
+            meta: 'Messages array · concepts · confidenceScore',
+            gaps: ['G3'],
+            what: 'The message record (role, content, timestamp) is appended to the session conversation. The updated business model (concepts array + confidenceScore) is written back to the store. In the production planner-service, these are separate MongoDB collections with tenant-scoped writes.',
+            notes: [],
+            code: [
+              'apps/local-dev/src/store.js (MESSAGES, BUSINESS_MODELS)',
+              'apps/planner-service/src/services/businessModel.ts',
+            ],
+          },
+
+          // ── Phase 4: Hypothesis ───────────────────────────────────────
+          {
+            id: 'conf-gate',
+            lane: 'api',
+            col: 9,
+            title: 'Confidence gate',
+            meta: 'confidence ≥ 70%? → async hypothesis gen',
+            gaps: ['G2'],
+            new: true,
+            what: "After each message exchange, the server checks: (a) confidence score ≥ 70, and (b) no active hypothesis exists for the session. If both conditions are true, autoGenerateHypothesis() is called as a non-awaited Promise — the main message response is returned immediately without waiting. The UI also exposes a manual 'Generate Hypothesis' button on the HypothesisReview page that calls POST /sessions/:id/hypotheses/generate, which returns 422 if confidence < 70.",
+            notes: [
+              'The hypothesis is created immediately in status: draft with placeholder content, then the async MaaS call fills in title, summary, and reasoning, flipping status to proposed.',
+            ],
+            code: [
+              'apps/local-dev/src/server.js (autoGenerateHypothesis)',
+              'apps/planner-service/src/controllers/hypotheses.ts',
+            ],
+          },
+          {
+            id: 'hyp-llm',
+            lane: 'maas',
+            col: 10,
+            title: 'Hypothesis generation',
+            meta: 'Title · summary · ADSP reasoning',
+            gaps: ['G1', 'G2'],
+            what: "A second MaaS completion call (separate from the conversation queue) generates: a one-sentence hypothesis title, a 2–3 sentence executive summary, and a Planning Agent Reasoning section explaining which ADSP services were identified and why. The prompt includes the full conversation history and the current business model as JSON.",
+            notes: [
+              'This call runs outside the serial enqueueSpecialistCall queue — it is a background side-effect, not a user-triggered synchronous call.',
+            ],
+            code: ['apps/local-dev/src/server.js (autoGenerateHypothesis → callMaaS)'],
+          },
+          {
+            id: 'hyp-store',
+            lane: 'db',
+            col: 11,
+            title: 'Hypothesis saved',
+            meta: "status: proposed · title · summary · reasoning",
+            gaps: ['G2', 'G3'],
+            what: "The hypothesis record is updated from status: 'draft' to status: 'proposed' with the MaaS-generated title, summary, and reasoning. The UI polls GET /sessions/:id/hypothesis every 3 seconds (up to 20 attempts / 90 seconds) until it sees status === 'proposed'.",
+            notes: [
+              "If the MaaS call fails, the record remains in status: 'draft' with empty title/summary. The poller times out and the UI shows 'Hypothesis not yet available' with a retry button.",
+            ],
+            code: [
+              'apps/local-dev/src/store.js (HYPOTHESES)',
+              'apps/planner-ui/src/pages/HypothesisReview.tsx (polling loop)',
+            ],
+          },
+
+          // ── Phase 5: Export ───────────────────────────────────────────
+          {
+            id: 'bm-page',
+            lane: 'ui',
+            col: 12,
+            title: 'Business Model Review',
+            meta: '5 tabs · 15 concept types · Download JSON',
+            gaps: [],
+            new: true,
+            what: "BusinessModelReview.tsx groups all 15 concept types across 5 GoA tabs: Actors · Goals & Activities (goal, activity, outcome, evaluation_criteria) · Rules & Decisions (business_rule, decision, constraint, assumption, unknown) · Systems (system, external_system, document, event) · Evidence (evidence, workflow, process, other). The 'Download Business Model' button creates a Blob URL from JSON.stringify(businessModel) and triggers a browser file-save.",
+            notes: [],
+            code: ['apps/planner-ui/src/pages/BusinessModelReview.tsx'],
+          },
+          {
+            id: 'hyp-page',
+            lane: 'ui',
+            col: 12,
+            title: 'Hypothesis Review',
+            meta: 'Accept · Revise · Planning Agent Reasoning',
+            gaps: ['G2'],
+            new: true,
+            what: "HypothesisReview.tsx shows the generated hypothesis with an expandable Planning Agent Reasoning section. 'Accept Hypothesis' calls PATCH /sessions/:id/hypothesis to set status: 'accepted', then navigates to the export page. 'Submit Revision' rejects the current hypothesis, sends a revision message to the Planning Agent via POST /messages, and returns to the conversation.",
+            notes: [
+              "The confidence score is shown here with the same RGB colour ramp as the planning session. If confidence < 70%, the 'Generate Hypothesis' button is hidden and a threshold message is shown.",
+            ],
+            code: ['apps/planner-ui/src/pages/HypothesisReview.tsx'],
+          },
+          {
+            id: 'accept-api',
+            lane: 'api',
+            col: 13,
+            title: "PATCH hypothesis → 'accepted'",
+            meta: 'Unlocks export endpoint',
+            gaps: [],
+            new: true,
+            what: "PATCH /sessions/:id/hypothesis validates that the caller owns the session and that the hypothesis is in 'proposed' status, then transitions it to 'accepted'. The session's export endpoint (GET /sessions/:id/export) only returns data when an accepted hypothesis exists — this is the gate that prevents exporting an unreviewed session.",
+            notes: [],
+            code: [
+              'apps/planner-service/src/controllers/hypotheses.ts',
+              'apps/local-dev/src/server.js (PATCH /sessions/:id/hypothesis)',
+            ],
+          },
+          {
+            id: 'export-dl',
+            lane: 'api',
+            col: 14,
+            title: 'GET /sessions/:id/export',
+            meta: 'Full session JSON · Content-Disposition: attachment',
+            gaps: [],
+            new: true,
+            what: "The export endpoint assembles the full session package: session metadata, all conversation messages, the complete business model with all 15-type concepts, and the accepted hypothesis including AI reasoning. The response sets Content-Disposition: attachment; filename=export-{sessionId}.json to trigger a browser file-save. The UI's 'Download JSON Export' button calls this endpoint.",
+            notes: [
+              'Protected B compliance: the export payload excludes raw userId/tenantId from response bodies (FAC-S5-025). Session IDs are included as they are non-personal opaque identifiers.',
+            ],
+            code: [
+              'apps/planner-service/src/controllers/sessions.ts (exportSession)',
+              'apps/planner-ui/src/pages/SessionExport.tsx',
+            ],
+          },
+        ];
+
+        // ── Edges ────────────────────────────────────────────────────────
+        const EDGES = [
+          ['navigate',  'oidc',      'OIDC redirect'],
+          ['oidc',      'navigate',  'JWT + session cookie',    'return'],
+          ['navigate',  'dashboard', 'page render'],
+          ['dashboard', 'sess-load', 'GET /sessions',           'data'],
+          ['sess-load', 'dashboard', 'items[] + total',         'return'],
+          ['dashboard', 'plan-page', 'navigate /sessions/:id'],
+          ['plan-page', 'post-msg',  'POST /messages'],
+          ['post-msg',  'llm-call',  'completion request'],
+          ['llm-call',  'extract',   'AI response text',        'return'],
+          ['extract',   'persist',   'message + BM update',     'data'],
+          ['extract',   'plan-page', 'response + confidence',   'return'],
+          ['extract',   'conf-gate', 'confidence check'],
+          ['conf-gate', 'hyp-llm',   'async MaaS call (≥70%)'],
+          ['hyp-llm',   'hyp-store', 'title · summary · reason','return'],
+          ['hyp-store', 'hyp-page',  'polled every 3 s',        'data'],
+          ['plan-page', 'bm-page',   'Review BM wizard step'],
+          ['bm-page',   'hyp-page',  'wizard nav'],
+          ['hyp-page',  'accept-api','Accept Hypothesis'],
+          ['accept-api','export-dl', 'navigate /export'],
+          ['export-dl', 'hyp-page',  'file download',           'return'],
+        ].map(([from, to, label, kind = 'call']) => ({ from, to, label, kind }));
+
+        // ─────────────────────────────────────────────────────────────────
+        // Rendering engine
+        // ─────────────────────────────────────────────────────────────────
+
+        const N = Object.fromEntries(NODES.map((n, i) => [n.id, Object.assign(n, { step: i + 1 })]));
+        const L = Object.fromEntries(LANES.map((l, i) => [l.id, Object.assign(l, { row: i + 2 })]));
+        const COLS = Math.max(...NODES.map((n) => n.col));
+        const phaseOf = (n) => PHASES.find((p) => n.col >= p.from && n.col <= p.to);
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const scrollBehavior = reduceMotion ? 'auto' : 'smooth';
+
+        const $ = (id) => document.getElementById(id);
+        const map = $('map');
+        const viewport = $('viewport');
+        const svg = $('edges');
+        const layer = $('edge-layer');
+        const panel = $('panel');
+        const panelBody = $('panel-body');
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+
+        const state = { selected: null, hover: null, gapFocus: null, phase: 'all', timer: null };
+        const nodeEls = {};
+        let edgeEls = [];
+
+        function el(tag, cls, text) {
+          const e = document.createElement(tag);
+          if (cls) e.className = cls;
+          if (text != null) e.textContent = text;
+          return e;
+        }
+
+        function svgEl(tag, attrs = {}) {
+          const e = document.createElementNS(SVG_NS, tag);
+          for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+          return e;
+        }
+
+        // Header stats
+        const newCount  = NODES.filter((n) => n.new).length;
+        const gapCount  = Object.keys(GAPS).length;
+        const phaseCount = PHASES.length;
+        [
+          [NODES.length, 'steps'],
+          [LANES.length, 'lanes'],
+          [phaseCount, 'phases'],
+          [newCount, 'new components'],
+          [2799195, 'lines added'],
+          [gapCount, 'medium gaps / risks'],
+        ].forEach(([value, label]) => {
+          const s = el('span', 'stat');
+          s.append(el('b', null, typeof value === 'number' ? value.toLocaleString() : String(value)), ` ${label}`);
+          $('stats').append(s);
+        });
+
+        // Grid
+        map.style.setProperty('--cols', COLS);
+        map.style.setProperty('--lanes', LANES.length);
+        map.append(el('div', 'corner', 'Lane'));
+
+        PHASES.forEach((p) => {
+          const head = el('div', 'phase', p.name);
+          head.style.gridColumn = `${p.from + 1} / ${p.to + 2}`;
+          const div = el('div', 'phase-div');
+          div.style.gridColumn = `${p.from + 1}`;
+          map.append(head, div);
+        });
+
+        LANES.forEach((lane) => {
+          const band = el('div', 'band');
+          band.style.gridRow = lane.row;
+          band.style.setProperty('--tint', lane.tint);
+          const label = el('div', 'lane-label');
+          label.style.gridRow = lane.row;
+          label.style.setProperty('--tint', lane.tint);
+          label.style.setProperty('--accent', lane.accent);
+          label.append(el('span', 'kind', lane.kind), el('span', 'name', lane.name), el('span', 'sub', lane.sub));
+          map.append(band, label);
+        });
+
+        NODES.forEach((n) => {
+          const lane = L[n.lane];
+          const b = el('button', 'node');
+          b.type = 'button';
+          b.style.gridColumn = n.col + 1;
+          b.style.gridRow = lane.row;
+          b.style.setProperty('--accent', lane.accent);
+          b.setAttribute('aria-label', `Step ${n.step}: ${n.title}. Lane: ${lane.name}.${n.gaps.length ? ` Gaps: ${n.gaps.join(', ')}.` : ''}`);
+          if (n.gaps.length) b.classList.add('has-gap');
+
+          const top = el('div', 'top');
+          const badges = el('span', 'badges');
+          if (n.new) badges.append(el('span', 'badge new', 'NEW'));
+          n.gaps.forEach((g) => badges.append(el('span', `badge gap ${GAPS[g].sev}`, g)));
+          top.append(el('span', 'num', String(n.step)), badges);
+          b.append(top, el('div', 'title', n.title), el('div', 'meta', n.meta));
+
+          b.addEventListener('click', (e) => { e.stopPropagation(); stopPlay(); state.gapFocus = null; select(n.id, { scroll: false }); });
+          const hoverOn = () => { state.hover = n.id; applyHighlight(); };
+          const hoverOff = () => { state.hover = null; applyHighlight(); };
+          b.addEventListener('mouseenter', hoverOn);
+          b.addEventListener('mouseleave', hoverOff);
+          b.addEventListener('focus', hoverOn);
+          b.addEventListener('blur', hoverOff);
+
+          nodeEls[n.id] = b;
+          map.append(b);
+        });
+
+        // Edges
+        function box(id) {
+          const e = nodeEls[id];
+          const x = e.offsetLeft, y = e.offsetTop, w = e.offsetWidth, h = e.offsetHeight;
+          return { x, y, w, h, cx: x + w / 2, cy: y + h / 2, col: N[id].col };
+        }
+
+        function draw() {
+          svg.setAttribute('width', map.scrollWidth);
+          svg.setAttribute('height', map.scrollHeight);
+          layer.replaceChildren();
+          edgeEls = EDGES.map((edge) => {
+            const a = box(edge.from), b = box(edge.to);
+            let d, lx, ly, anchor = 'middle';
+
+            if (a.col === b.col) {
+              const offset = edge.kind === 'return' ? 16 : -16;
+              const down = b.cy > a.cy;
+              const x = a.cx + offset;
+              const y1 = down ? a.y + a.h : a.y;
+              const y2 = down ? b.y - 2 : b.y + b.h + 2;
+              d = `M ${x} ${y1} L ${x} ${y2}`;
+              lx = offset > 0 ? x + 6 : x - 6;
+              ly = (y1 + y2) / 2 + 4;
+              anchor = offset > 0 ? 'start' : 'end';
+            } else {
+              const x1 = a.x + a.w, y1 = a.cy;
+              const x2 = b.x - 2, y2 = b.cy;
+              const dx = Math.max(36, (x2 - x1) / 2);
+              d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+              lx = (x1 + x2) / 2;
+              ly = (y1 + y2) / 2 + 4;
+            }
+
+            const g = svgEl('g', { class: `edge ${edge.kind}` });
+            g.append(svgEl('path', { d }));
+            const lbl = svgEl('g', { class: 'lbl' });
+            const text = svgEl('text', { x: lx, y: ly, 'text-anchor': anchor });
+            text.textContent = edge.label;
+            lbl.append(text);
+            g.append(lbl);
+            layer.append(g);
+
+            const bb = text.getBBox();
+            lbl.insertBefore(svgEl('rect', { x: bb.x - 5, y: bb.y - 2, width: bb.width + 10, height: bb.height + 4, rx: 4 }), text);
+            return { edge, g };
+          });
+          applyPhase();
+          applyHighlight();
+        }
+
+        function applyHighlight() {
+          const focus = new Set(), hot = new Set();
+          if (state.gapFocus) {
+            GAPS[state.gapFocus].nodes.forEach((id) => focus.add(id));
+            EDGES.forEach((e, i) => { if (focus.has(e.from) && focus.has(e.to)) hot.add(i); });
+          }
+          for (const active of [state.selected, state.hover]) {
+            if (!active) continue;
+            focus.add(active);
+            EDGES.forEach((e, i) => {
+              if (e.from === active || e.to === active) { hot.add(i); focus.add(e.from); focus.add(e.to); }
+            });
+          }
+          map.classList.toggle('dimmed', focus.size > 0);
+          for (const [id, b] of Object.entries(nodeEls)) {
+            b.classList.toggle('hl', focus.has(id));
+            b.classList.toggle('current', id === state.selected);
+          }
+          edgeEls.forEach(({ g }, i) => { g.classList.toggle('hl', hot.has(i)); if (hot.has(i)) layer.append(g); });
+        }
+
+        function applyPhase() {
+          const out = (n) => state.phase !== 'all' && phaseOf(n).id !== state.phase;
+          NODES.forEach((n) => nodeEls[n.id].classList.toggle('out', out(n)));
+          edgeEls.forEach(({ edge, g }) => g.classList.toggle('out', out(N[edge.from]) && out(N[edge.to])));
+        }
+
+        const chips = $('phase-chips');
+        const corner = map.querySelector('.corner');
+
+        function setPhase(id, { scroll = true } = {}) {
+          state.phase = id;
+          chips.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.phase === id)));
+          applyPhase();
+          if (!scroll) return;
+          const first = NODES.find((n) => id === 'all' || phaseOf(n).id === id);
+          const left = id === 'all' ? 0 : nodeEls[first.id].offsetLeft - corner.offsetWidth - 24;
+          viewport.scrollTo({ left: Math.max(0, left), behavior: scrollBehavior });
+        }
+
+        function scrollToNode(id) {
+          const b = nodeEls[id];
+          const visibleW = viewport.clientWidth - corner.offsetWidth;
+          const left = b.offsetLeft - corner.offsetWidth - Math.max(0, (visibleW - b.offsetWidth) / 2);
+          let top = viewport.scrollTop;
+          if (b.offsetTop - corner.offsetHeight < top) top = b.offsetTop - corner.offsetHeight - 12;
+          else if (b.offsetTop + b.offsetHeight > top + viewport.clientHeight) top = b.offsetTop + b.offsetHeight - viewport.clientHeight + 12;
+          viewport.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: scrollBehavior });
+          const rect = viewport.getBoundingClientRect();
+          if (rect.bottom < 120 || rect.top > window.innerHeight - 120) viewport.scrollIntoView({ behavior: scrollBehavior, block: 'start' });
+        }
+
+        [{ id: 'all', name: 'All' }, ...PHASES].forEach((p) => {
+          const c = el('button', 'chip', p.name);
+          c.type = 'button'; c.dataset.phase = p.id;
+          c.setAttribute('aria-pressed', String(p.id === 'all'));
+          c.addEventListener('click', () => setPhase(p.id));
+          chips.append(c);
+        });
+
+        function section(title, ...children) {
+          const frag = document.createDocumentFragment();
+          frag.append(el('h3', null, title), ...children);
+          return frag;
+        }
+
+        function jumpButton(id, prefix, label) {
+          const n = N[id];
+          const btn = el('button', 'jump');
+          btn.type = 'button';
+          btn.append(`${prefix} ${n.step}. ${n.title} `, el('small', null, `(${L[n.lane].name}) — ${label}`));
+          btn.addEventListener('click', () => { stopPlay(); select(id); });
+          return btn;
+        }
+
+        function renderPanel(n) {
+          const lane = L[n.lane];
+          panelBody.replaceChildren();
+          panelBody.append(
+            el('div', 'crumb', `Step ${n.step} of ${NODES.length} · ${phaseOf(n).name} · ${lane.kind}: ${lane.name}`),
+            el('h2', null, n.title),
+            el('p', 'lead', n.meta),
+          );
+
+          panelBody.append(section('What happens', el('p', null, n.what)));
+
+          if (n.notes?.length) {
+            const ul = el('ul');
+            n.notes.forEach((t) => ul.append(el('li', null, t)));
+            panelBody.append(section('Watch out', ul));
+          }
+
+          const incoming = EDGES.filter((e) => e.to === n.id);
+          const outgoing = EDGES.filter((e) => e.from === n.id);
+          if (incoming.length) panelBody.append(section('Comes from', ...incoming.map((e) => jumpButton(e.from, '←', e.label))));
+          if (outgoing.length) panelBody.append(section('Goes to', ...outgoing.map((e) => jumpButton(e.to, '→', e.label))));
+
+          if (n.code.length) panelBody.append(section('Code', ...n.code.map((c) => el('code', 'code', c))));
+
+          if (n.gaps.length && !document.body.classList.contains('hide-gaps')) {
+            const boxes = n.gaps.map((id) => {
+              const g = GAPS[id];
+              const b = el('div', `gapbox ${g.sev}`);
+              b.append(el('div', 'gid', `${id} · Medium`), el('strong', null, g.title), el('p', null, g.summary));
+              const fix = el('div', 'fix');
+              fix.append(el('strong', null, 'Fix: '), g.fix);
+              b.append(fix);
+              return b;
+            });
+            panelBody.append(section('Gaps / risks', ...boxes));
+          }
+
+          panel.classList.add('open');
+          panel.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('panel-open');
+        }
+
+        function closePanel() {
+          stopPlay(); state.selected = null; state.gapFocus = null;
+          panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true');
+          document.body.classList.remove('panel-open');
+          applyHighlight(); updateStepUI();
+        }
+
+        const currentIndex = () => (state.selected ? N[state.selected].step - 1 : -1);
+
+        function select(id, { scroll = true } = {}) {
+          state.selected = id;
+          if (state.phase !== 'all' && phaseOf(N[id]).id !== state.phase) setPhase(phaseOf(N[id]).id, { scroll: false });
+          renderPanel(N[id]); applyHighlight(); updateStepUI();
+          if (scroll) scrollToNode(id);
+        }
+
+        function go(delta) {
+          let i = Math.min(NODES.length - 1, Math.max(0, currentIndex() + delta));
+          if (currentIndex() < 0 && state.phase !== 'all') i = NODES.findIndex((n) => phaseOf(n).id === state.phase);
+          state.gapFocus = null; select(NODES[i].id);
+        }
+
+        function updateStepUI() {
+          const i = currentIndex();
+          $('readout').textContent = i < 0 ? `${NODES.length} steps` : `Step ${i + 1} / ${NODES.length}`;
+          $('prev').disabled = i <= 0; $('next').disabled = i >= NODES.length - 1;
+          $('panel-prev').disabled = i <= 0; $('panel-next').disabled = i >= NODES.length - 1;
+        }
+
+        function stopPlay() {
+          if (state.timer) clearInterval(state.timer);
+          state.timer = null; $('play').textContent = 'Play'; $('play').setAttribute('aria-pressed', 'false');
+        }
+
+        function togglePlay() {
+          if (state.timer) return stopPlay();
+          if (currentIndex() >= NODES.length - 1) { state.gapFocus = null; select(NODES[0].id); }
+          else if (currentIndex() < 0) { go(1); }
+          $('play').textContent = 'Pause'; $('play').setAttribute('aria-pressed', 'true');
+          state.timer = setInterval(() => { if (currentIndex() >= NODES.length - 1) return stopPlay(); go(1); }, 1700);
+        }
+
+        $('prev').addEventListener('click', () => (stopPlay(), go(-1)));
+        $('next').addEventListener('click', () => (stopPlay(), go(1)));
+        $('panel-prev').addEventListener('click', () => (stopPlay(), go(-1)));
+        $('panel-next').addEventListener('click', () => (stopPlay(), go(1)));
+        $('play').addEventListener('click', togglePlay);
+        $('close').addEventListener('click', closePanel);
+        $('toggle-labels').addEventListener('change', (e) => map.classList.toggle('show-labels', e.target.checked));
+        $('toggle-gaps').addEventListener('change', (e) => {
+          document.body.classList.toggle('hide-gaps', !e.target.checked);
+          if (state.selected) renderPanel(N[state.selected]);
+        });
+        viewport.addEventListener('click', (e) => { if (!e.target.closest('.node') && state.selected) closePanel(); });
+        document.addEventListener('keydown', (e) => {
+          if (e.metaKey || e.ctrlKey || e.altKey || e.target.matches('input, select, textarea')) return;
+          if (e.key === 'ArrowRight') { e.preventDefault(); stopPlay(); go(1); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); stopPlay(); go(-1); }
+          else if (e.key === 'Escape') { closePanel(); }
+        });
+
+        Object.entries(GAPS).forEach(([id, g]) => {
+          const card = el('button', `gap-card ${g.sev}`);
+          card.type = 'button';
+          card.append(
+            el('span', 'gid', `${id} · Medium`),
+            el('span', 't', g.title),
+            el('span', 's', g.summary),
+            el('span', 'steps', `Steps ${g.nodes.map((n) => N[n].step).join(', ')} →`),
+          );
+          card.addEventListener('click', () => { stopPlay(); state.gapFocus = id; viewport.scrollIntoView({ behavior: scrollBehavior, block: 'start' }); select(g.nodes[0]); });
+          $('gap-grid').append(card);
+        });
+
+        updateStepUI();
+        new ResizeObserver(() => draw()).observe(map);
+        requestAnimationFrame(draw);
+      })();
+    </script>
+  </body>
+</html>
