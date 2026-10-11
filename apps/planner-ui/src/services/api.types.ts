@@ -293,6 +293,23 @@ export interface SpecialistRequestWithResponse extends SpecialistRequest {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Specialist direct chat (multi-turn interactive mode)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export interface SpecialistDirectMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  /** Protected B — contains user questions and specialist responses */
+  content: string;
+  createdAt: string;
+}
+
+export interface SendSpecialistMessageResponse {
+  userMessage: SpecialistDirectMessage;
+  assistantMessage: SpecialistDirectMessage;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // User context (operationIds: getCurrentUserContext, getUserById, listUsers)
 // Mirrors OpenAPI UserContext schema — separate from the existing User type.
 // ──────────────────────────────────────────────────────────────────────────────

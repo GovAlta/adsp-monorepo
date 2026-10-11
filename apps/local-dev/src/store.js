@@ -1483,6 +1483,10 @@ const PATTERNS = [
 // Keyed by sessionId → array of request objects (status: pending | complete | error)
 const SPECIALIST_REQUESTS = {};
 
+// ── Specialist Direct Chats ───────────────────────────────────────────────────
+// Keyed by "sessionId:type" → array of {id, role, content, createdAt}
+const SPECIALIST_DIRECT_CHATS = {};
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 const EXPORTS = {};
 
@@ -1513,4 +1517,4 @@ function paginate(items, page = 1, pageSize = 20) {
   };
 }
 
-module.exports = { SESSIONS, BUSINESS_MODELS, MESSAGES, HYPOTHESES, PATTERNS, EXPORTS, SPECIALIST_REQUESTS, AUDIT_EVENTS, USERS, uuidv4, now, ts, paginate };
+module.exports = { SESSIONS, BUSINESS_MODELS, MESSAGES, HYPOTHESES, PATTERNS, EXPORTS, SPECIALIST_REQUESTS, SPECIALIST_DIRECT_CHATS, AUDIT_EVENTS, USERS, uuidv4, now, ts, paginate };

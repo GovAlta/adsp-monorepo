@@ -578,22 +578,31 @@ const PlanningSession: React.FC = () => {
                       borderBottom: '1px solid var(--goa-color-greyscale-200)',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span>{specialist.label}</span>
-                      {state.status === 'available' && (
-                        <GoAButton type="tertiary" size="compact" onClick={() => handleConsultSpecialist(specialist.serviceId)}>
-                          Consult
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--goa-space-s)' }}>
+                      <span style={{ flex: 1 }}>{specialist.label}</span>
+                      <div style={{ display: 'flex', gap: 'var(--goa-space-xs)', alignItems: 'center' }}>
+                        {state.status === 'available' && (
+                          <GoAButton type="tertiary" size="compact" onClick={() => handleConsultSpecialist(specialist.serviceId)}>
+                            Consult
+                          </GoAButton>
+                        )}
+                        {state.status === 'pending' && (
+                          <GoABadge type="information" content="Consulting…" />
+                        )}
+                        {state.status === 'ready' && (
+                          <GoABadge type="success" content="Ready" />
+                        )}
+                        {state.status === 'error' && (
+                          <GoABadge type="emergency" content="Error" />
+                        )}
+                        <GoAButton
+                          type="secondary"
+                          size="compact"
+                          onClick={() => navigate(`/sessions/${sessionId}/specialists/${specialist.serviceId}`)}
+                        >
+                          Chat Directly
                         </GoAButton>
-                      )}
-                      {state.status === 'pending' && (
-                        <GoABadge type="information" content="Consulting…" />
-                      )}
-                      {state.status === 'ready' && (
-                        <GoABadge type="success" content="Ready" />
-                      )}
-                      {state.status === 'error' && (
-                        <GoABadge type="emergency" content="Error" />
-                      )}
+                      </div>
                     </div>
                     {state.status === 'ready' && state.response && (
                       <div style={{

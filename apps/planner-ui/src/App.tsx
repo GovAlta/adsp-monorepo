@@ -21,6 +21,7 @@ import PatternDetail from './pages/PatternDetail';
 import SessionHistory from './pages/SessionHistory';
 import AuditLog from './pages/AuditLog';
 import UserManagement from './pages/UserManagement';
+import SpecialistChat from './pages/SpecialistChat';
 
 function AppShell() {
   const location = useLocation();
@@ -56,6 +57,7 @@ function AppShell() {
           <Route path="/sessions/:sessionId/business-model" element={<BusinessModelReview />} />
           <Route path="/sessions/:sessionId/hypothesis" element={<HypothesisReview />} />
           <Route path="/sessions/:sessionId/export" element={<SessionExport />} />
+          <Route path="/sessions/:sessionId/specialists/:type" element={<SpecialistChat />} />
           <Route path="/patterns" element={<PatternLibrary readOnly />} />
           <Route path="/admin" element={<AdminHub />} />
           <Route path="/admin/patterns" element={<PatternLibrary />} />

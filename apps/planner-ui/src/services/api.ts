@@ -33,6 +33,8 @@ import type {
   UpdateUserRequest,
   CreateExportRequest,
   SpecialistRequestWithResponse,
+  SpecialistDirectMessage,
+  SendSpecialistMessageResponse,
   UserContext,
   CurrentUserContext,
 } from './api.types';
@@ -288,6 +290,37 @@ async function getSpecialistResponse(
   });
 }
 
+/**
+ * Send a message to a specialist in direct-chat (multi-turn) mode.
+ * Returns both the persisted user message and the specialist's reply synchronously.
+ * POST /sessions/{sessionId}/specialists/{type}/messages
+ */
+async function sendSpecialistMessage(
+  sessionId: string,
+  specialistType: string,
+  content: string
+): Promise<SendSpecialistMessageResponse> {
+  return request<SendSpecialistMessageResponse>({
+    method: 'POST',
+    url: `/sessions/${sessionId}/specialists/${specialistType}/messages`,
+    data: { content },
+  });
+}
+
+/**
+ * Get the full direct-chat message history for a specialist.
+ * GET /sessions/{sessionId}/specialists/{type}/messages
+ */
+async function getSpecialistMessages(
+  sessionId: string,
+  specialistType: string
+): Promise<SpecialistDirectMessage[]> {
+  return request<SpecialistDirectMessage[]>({
+    method: 'GET',
+    url: `/sessions/${sessionId}/specialists/${specialistType}/messages`,
+  });
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Patterns
 // ──────────────────────────────────────────────────────────────────────────────
@@ -495,6 +528,8 @@ export const api = {
   getSpecialistRequest,
   requestSpecialistConsultation,
   getSpecialistResponse,
+  sendSpecialistMessage,
+  getSpecialistMessages,
   // Patterns
   listPatterns,
   getPattern,
