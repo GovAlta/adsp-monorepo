@@ -1,0 +1,305 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "audience": {
+    "name": "GoA Program Manager",
+    "types": ["stakeholder"],
+    "description": "Government of Alberta program managers and decision-makers who are indirect beneficiaries of ADSP Project Planner outputs. They receive and review planning session exports prepared by business analysts to make informed decisions about solution direction, implementation investment, and resource allocation. They do not directly interact with the planner-service interface but their approval decisions determine whether an accepted hypothesis proceeds to implementation.",
+    "goals": [
+      "Review plain-language solution plan exports to understand proposed ADSP service compositions without technical expertise",
+      "Evaluate cost, effort, and implementation order implications of proposed solutions",
+      "Approve or redirect solution hypotheses before implementation investment is committed"
+    ],
+    "outcomes": [
+      "Informed and accountable decision-making on ADSP-based digital solution investments",
+      "Clear non-technical documentation of proposed solution direction with transparent reasoning",
+      "Accountability trail supporting governance obligations for digital investment decisions"
+    ]
+  },
+  "journeys": [
+    {
+      "name": "Review Exported Session Plan and Make Investment Decision",
+      "description": "The program manager receives an exported ADSP Project Planner session document from a business analyst, reviews the plain-language solution hypothesis and its reasoning, evaluates implementation implications, and makes an approval or redirection decision on the proposed solution direction.",
+      "trigger": "Business analyst shares a completed planning session export (JSON document) with the program manager for review and decision.",
+      "goal": "Understand the proposed ADSP solution composition well enough to approve or redirect the investment without requiring technical expertise.",
+      "stages": [
+        {
+          "name": "Receive and Open the Export",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Receive the exported planning session document from the business analyst via email or shared document link.",
+              "needs": [
+                "Clear context about what the document contains and why it requires a decision",
+                "A format that can be opened and read without specialized tools or technical background"
+              ],
+              "touchpoint": "Email or document-sharing communication from the business analyst containing the exported session plan",
+              "frontstage": [
+                "Email message from business analyst describing the attached or linked planning session export",
+                "The Planning Session Export JSON file containing session title, business problem summary, and solution hypothesis"
+              ],
+              "backstage": [
+                "Business analyst used UC-008 (Export Session Plan) to produce the JSON export via GET /api/v1/sessions/{id}/export",
+                "planner-service serialized the full session state including business model, hypotheses, and reasoning into the portable JSON artifact"
+              ],
+              "thinking": "\"I need to review this before the project team can move forward. I hope this document gives me what I need to make a real decision.\"",
+              "emotionalContext": "Cautiously expectant — understands a decision is expected but uncertain whether the document will be accessible enough to act on without a technical background",
+              "feeling": "neutral",
+              "painPoints": [
+                "The export is a raw JSON file, which is not inherently human-readable without a viewer or a formatting step by the analyst"
+              ],
+              "opportunities": [
+                "The analyst could accompany the export with a plain-language summary email explaining what decision is needed",
+                "Export format could include a rendered human-readable summary section alongside the structured JSON to serve non-technical reviewers"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Comprehend the Solution Hypothesis",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Review the plain-language solution hypothesis to understand which ADSP services are proposed and what problem they address.",
+              "needs": [
+                "Plain-language description of the proposed solution that does not assume ADSP technical knowledge (SN-003)",
+                "Clear statement of the business problem the solution is designed to address"
+              ],
+              "touchpoint": "Planning Session Export document — hypothesis section and business problem statement",
+              "frontstage": [
+                "Plain-language hypothesis title and description naming the proposed ADSP service composition",
+                "Business problem statement in non-technical terms capturing the program area's need",
+                "List of recommended ADSP services with plain-language descriptions of what each service does"
+              ],
+              "backstage": [
+                "Planning Agent (Anthropic Claude) generated the hypothesis by matching the business model against the GoA business pattern library",
+                "Specialist sub-agents contributed implementation-depth guidance that informed the hypothesis content",
+                "UC-004 (Review and Accept Solution Hypothesis) was completed by the analyst before the session was exported"
+              ],
+              "thinking": "\"Okay — so the team is proposing to use an online form and a PDF generator to replace the paper-based submission process. That part makes sense. But I am not sure what 'notification-service' means in practice.\"",
+              "emotionalContext": "Engaged but requiring translation — the hypothesis content is partly accessible but technical ADSP service names create comprehension gaps for a non-technical reviewer",
+              "feeling": "neutral",
+              "painPoints": [
+                "ADSP service names such as 'form-service' and 'pdf-service' are technical identifiers that carry no inherent meaning for a program manager without further explanation",
+                "The export structure may not visually separate the high-level solution narrative from implementation details"
+              ],
+              "opportunities": [
+                "Include a plain-language 'what this means for your program' summary at the top of the hypothesis section, satisfying SN-003",
+                "Provide a one-sentence plain-language description of each recommended ADSP service for non-technical readers"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Review the reasoning section to understand why each service was recommended.",
+              "needs": [
+                "Transparent explanation of the recommendation logic so the decision can be justified to other stakeholders (SN-011)",
+                "Confidence that the AI-generated reasoning reflects the actual business problem rather than a generic or incorrect template match"
+              ],
+              "touchpoint": "Planning Session Export document — hypothesis reasoning and matched business pattern section",
+              "frontstage": [
+                "Reasoning narrative explaining why each ADSP service was selected for this specific business problem",
+                "Matched business pattern name showing the problem type recognized by the Planning Agent",
+                "Open questions the Planning Agent flagged as needing resolution before implementation can begin"
+              ],
+              "backstage": [
+                "Planning Agent matched the business model against the configured pattern library and selected the highest-confidence pattern",
+                "Reasoning was generated by Anthropic Claude and shaped by the matched business pattern's ADSP service mappings",
+                "Business analyst reviewed and accepted the hypothesis through UC-004 before it was included in the export"
+              ],
+              "thinking": "\"The reasoning is actually clearer than I expected. It explains that the form-service was chosen because the intake process involves multiple departments and needs branching logic. I can explain that at the steering table.\"",
+              "emotionalContext": "Growing confidence — the reasoning transparency makes the recommendation feel grounded and defensible rather than arbitrary, satisfying the accountability need behind SN-011",
+              "feeling": "positive",
+              "painPoints": [
+                "If the analyst did not correct the business model before accepting, the reasoning may reflect inaccurate problem assumptions that the program manager cannot detect from the export alone"
+              ],
+              "opportunities": [
+                "Surfacing analyst corrections to the business model in the export would give the program manager confidence that the problem representation was validated before the recommendation was generated",
+                "A 'key assumptions' section in the export would allow the program manager to spot-check reasoning accuracy against their own understanding of the program"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Evaluate Investment Implications",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Assess the cost, effort, and implementation order implications of the proposed solution.",
+              "needs": [
+                "Indication of implementation complexity and sequencing so resource commitments can be estimated",
+                "Clear articulation of what the program area must provide versus what the ADSP platform provides out of the box"
+              ],
+              "touchpoint": "Planning Session Export document — implementation order and recommended next steps sections",
+              "frontstage": [
+                "Recommended implementation order listing which ADSP services to integrate in which sequence",
+                "Recommended next steps section with specific actions for the development team",
+                "Any specialist agent outputs included in the export indicating the depth of implementation guidance already available"
+              ],
+              "backstage": [
+                "Implementation order was determined by the Planning Agent based on service dependencies and the matched business pattern",
+                "Specialist sub-agent sessions (if run by the analyst) contributed depth of guidance to the next steps content",
+                "planner-service persisted all session state including specialist progress to MongoDB before export"
+              ],
+              "thinking": "\"The export shows Phase 1 is just the form and intake workflow — that sounds manageable. Phase 2 adds PDF generation. I can present this as two fundable increments rather than one large budget ask.\"",
+              "emotionalContext": "Pragmatic and calculating — translating the technical implementation sequence into budget and timeline language that fits the program's governance and funding processes",
+              "feeling": "positive",
+              "painPoints": [
+                "The export does not include effort estimates or cost ranges — the program manager must extrapolate these independently from the implementation order alone",
+                "Without input from a developer, the program manager may misinterpret the complexity of each recommended integration"
+              ],
+              "opportunities": [
+                "A rough effort-level indicator such as low, medium, or high per recommended ADSP service integration could be included in the export without requiring formal estimation",
+                "Linking to ADSP service documentation from the export would allow the program manager to request further context from the development team with specific reference points"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Make Approval Decision",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Approve the solution hypothesis to proceed to implementation planning, or flag concerns for redirection.",
+              "needs": [
+                "Confidence that the proposed solution addresses the program's actual need",
+                "A clear record of the decision and its rationale to support governance obligations"
+              ],
+              "touchpoint": "Email reply or project management tool — decision communicated back to the business analyst",
+              "frontstage": [
+                "Program manager's written approval or redirection note communicated to the analyst",
+                "The exported session document retained in project documentation as the evidentiary basis for the decision"
+              ],
+              "backstage": [
+                "No planner-service action occurs at this step — the approval decision is external to the service",
+                "The exported JSON document serves as the accountability artifact linking the hypothesis to the approval decision",
+                "If approved, the analyst proceeds to developer handoff; if redirected, the analyst returns to the planner-service to request a hypothesis revision"
+              ],
+              "thinking": "\"I am comfortable approving Phase 1. The reasoning holds up, the business problem matches what I understood the team was solving, and I can explain it at the steering committee without needing the technical team in the room.\"",
+              "emotionalContext": "Resolved and accountable — the reasoning transparency and plain-language framing provided enough confidence to act; the decision feels defensible to governance stakeholders",
+              "feeling": "positive",
+              "painPoints": [
+                "There is no formal feedback mechanism back to the planner-service — the program manager's approval exists only in email or a project tool and is not linked to the planning session artifact"
+              ],
+              "opportunities": [
+                "An approval-annotation field in the export format would create a traceable link between the program manager's decision and the planning artifact, strengthening the governance record",
+                "A structured decision record template accompanying the export could simplify the governance documentation required after approval"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "Program manager has approved the solution hypothesis for implementation planning, with the exported session document retained as the accountability artifact supporting the governance decision."
+    },
+    {
+      "name": "Provide Feedback to Redirect Planning Direction",
+      "description": "After reviewing the exported session plan, the program manager identifies a gap, misalignment, or constraint that the proposed hypothesis does not address. They formulate specific feedback, communicate it to the business analyst, and receive a revised export after the analyst has requested a hypothesis revision through the planner-service.",
+      "trigger": "The program manager identifies during the review process that the proposed solution hypothesis does not align with program priorities, budget constraints, or the actual business problem as they understand it.",
+      "goal": "Communicate specific and actionable feedback to the business analyst so the planning session can be revised and a more suitable hypothesis generated.",
+      "stages": [
+        {
+          "name": "Identify Gap or Misalignment",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Identify the specific aspect of the proposed solution that conflicts with program constraints, strategic direction, or the actual business problem.",
+              "needs": [
+                "Enough context from the export to pinpoint what is specifically misaligned rather than what is generally unsatisfying",
+                "A way to distinguish between a misaligned hypothesis and an inaccurately represented business problem in the model"
+              ],
+              "touchpoint": "Planning Session Export document — re-reading hypothesis, reasoning, and business model sections",
+              "frontstage": [
+                "Plain-language hypothesis description showing the proposed solution scope",
+                "Business model section showing how the Planning Agent understood the business problem",
+                "Reasoning section showing why the current ADSP services were selected"
+              ],
+              "backstage": [
+                "The business model and hypothesis were generated and accepted in the planner-service prior to export",
+                "Any analyst corrections to the business model are reflected in the exported state but may not be prominently surfaced in the document structure",
+                "The planner-service retains the live session that can still be revised by the analyst"
+              ],
+              "thinking": "\"The export says the problem is about speeding up internal routing. But we actually need external applicants to submit directly. The analyst may have described the wrong workflow — the recommendation follows logically from what was entered, but the input was wrong.\"",
+              "emotionalContext": "Concerned and alert — realizing the problem statement may be inaccurate, which undermines the entire recommendation chain and delays the project",
+              "feeling": "negative",
+              "painPoints": [
+                "The program manager cannot verify whether the business model was correctly described or corrected without access to the full planning conversation",
+                "No clear signal in the export distinguishes a hypothesis generated from a validated business model from one generated from an incomplete or incorrect model"
+              ],
+              "opportunities": [
+                "Including a visible flag in the export indicating whether the analyst validated the business model before generating the hypothesis would allow the program manager to calibrate trust in the recommendation",
+                "A plain-language 'problem statement as understood by the Planning Agent' section at the top of the export would allow the program manager to catch model errors at a glance"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Formulate and Communicate Feedback",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Document your specific feedback and communicate it to the business analyst so they can return to the planner-service for a revision.",
+              "needs": [
+                "A clear way to reference specific sections of the export when articulating concerns",
+                "Confidence that the feedback will result in a meaningful revision rather than superficial wording changes"
+              ],
+              "touchpoint": "Email or project management tool — feedback message to the business analyst referencing the export",
+              "frontstage": [
+                "Program manager's written feedback message naming the specific misalignment and the section of the export it relates to",
+                "Reference to the relevant section of the exported document such as the business problem statement or hypothesis scope"
+              ],
+              "backstage": [
+                "No planner-service action occurs at this step — communication is external to the service",
+                "The analyst will use this feedback to re-enter the planning conversation via the planner-service and request a hypothesis revision",
+                "The planner-service planning session remains open and resumable for the analyst with all prior context intact"
+              ],
+              "thinking": "\"I need to be specific: it is not that the hypothesis is wrong in isolation — it is that the problem statement fed into it was wrong. I need the analyst to correct what the system understands as the business problem before re-running the recommendation.\"",
+              "emotionalContext": "Focused and directive — translating the identified gap into actionable guidance for the analyst, while aware that the revision cycle adds delay to project timelines",
+              "feeling": "neutral",
+              "painPoints": [
+                "The program manager must communicate feedback through an unstructured external channel with no standard format or template — there is no structured input path back to the planning session"
+              ],
+              "opportunities": [
+                "A structured feedback form linked to the export session ID could route program manager feedback directly into the planning session context for the analyst to act on",
+                "An analyst-facing notes field in the session could capture program manager feedback for reference during the revision conversation"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Receive and Review Revised Export",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Receive the revised session export from the analyst after the hypothesis has been updated to reflect your feedback.",
+              "needs": [
+                "A clear indication of what changed between the original export and the revised one so review effort is focused",
+                "Confirmation that the feedback was fully addressed rather than only partially incorporated"
+              ],
+              "touchpoint": "Revised Planning Session Export shared by the business analyst via email or document link",
+              "frontstage": [
+                "Revised export document with updated business problem statement and revised solution hypothesis",
+                "Updated reasoning section reflecting the corrected problem understanding",
+                "Revised recommended next steps aligned with the corrected solution direction"
+              ],
+              "backstage": [
+                "Analyst returned to the planner-service session and corrected the business model using the business model editor",
+                "Planning Agent generated a revised hypothesis based on the corrected business model",
+                "Analyst accepted the revised hypothesis through UC-004 and re-ran the export via UC-008"
+              ],
+              "thinking": "\"The revised export now correctly describes external applicant submission. The hypothesis has changed to include a public-facing form — that aligns with what we actually need. I can approve this version.\"",
+              "emotionalContext": "Relieved and more confident — the revision addressed the specific concern and the updated hypothesis now matches the actual program need",
+              "feeling": "positive",
+              "painPoints": [
+                "There is no diff or change-log between the original export and the revised one — the program manager must compare documents manually to confirm what changed and verify the feedback was fully addressed"
+              ],
+              "opportunities": [
+                "A revision summary section in the export indicating what changed from the previous version would reduce re-review effort and increase confidence that feedback was acted on",
+                "Version numbering in the export filename or a header field would help the program manager confirm they are reviewing the most current version"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "Program manager has received a corrected hypothesis export that addresses the identified misalignment and is now positioned to provide approval. The feedback loop completed through the planner-service revision capability without discarding the existing planning session context."
+    }
+  ]
+}

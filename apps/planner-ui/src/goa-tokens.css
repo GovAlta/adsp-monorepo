@@ -1,0 +1,168 @@
+/*
+ * GoA Design System tokens — injected when @abgov/web-components is not separately installed.
+ * Values mirror @abgov/web-components v2.x / design.alberta.ca token set.
+ * When the real package is installed its own :root block takes precedence (same property names,
+ * higher specificity wins).  This file must be imported before any component CSS.
+ */
+:root {
+  /* ── Greyscale ─────────────────────────────────────────────────────────── */
+  --goa-color-greyscale-white:    #ffffff;
+  --goa-color-greyscale-100:      #f1f1f1;
+  --goa-color-greyscale-200:      #dcdcdc;
+  --goa-color-greyscale-300:      #c8c8c8;
+  --goa-color-greyscale-400:      #adadad;
+  --goa-color-greyscale-500:      #949494;
+  --goa-color-greyscale-600:      #6a6a6a;
+  --goa-color-greyscale-700:      #494949;
+  --goa-color-greyscale-black:    #000000;
+
+  /* ── Text ──────────────────────────────────────────────────────────────── */
+  --goa-color-text-default:       #333333;
+  --goa-color-text-secondary:     #666666;
+  --goa-color-text-light:         #949494;
+  --goa-color-text-disabled:      #adadad;
+
+  /* ── Interactive (primary blue) ─────────────────────────────────────────── */
+  --goa-color-interactive-default:  #0070c4;
+  --goa-color-interactive-hover:    #004a8f;
+  --goa-color-interactive-active:   #00336e;
+  --goa-color-interactive-focus:    #feba35;
+  --goa-color-interactive-disabled: #adadad;
+
+  /* ── Brand ─────────────────────────────────────────────────────────────── */
+  --goa-color-brand-default:       #003366;
+  --goa-color-brand-light:         #0070c4;
+
+  /* ── Status ─────────────────────────────────────────────────────────────── */
+  --goa-color-status-success:      #2e8540;
+  --goa-color-status-warning:      #f5a623;
+  --goa-color-status-emergency:    #d93f21;
+  --goa-color-status-info:         #0070c4;
+
+  /* ── Success ─────────────────────────────────────────────────────────────── */
+  --goa-color-success-default:     #2e8540;
+  --goa-color-success-light:       #d5f0db;
+  --goa-color-success-background:  #dff0d8;
+
+  /* ── Info ─────────────────────────────────────────────────────────────── */
+  --goa-color-info-default:        #0070c4;
+  --goa-color-info-light:          #d0e7f8;
+  --goa-color-info-background:     #e8f0fe;
+
+  /* ── Warning ─────────────────────────────────────────────────────────────── */
+  --goa-color-warning-default:     #f5a623;
+  --goa-color-warning-light:       #fde8b5;
+  --goa-color-warning-background:  #fef6e6;
+
+  /* ── Emergency ─────────────────────────────────────────────────────────────── */
+  --goa-color-emergency-default:   #d93f21;
+  --goa-color-emergency-light:     #fbd7cf;
+  --goa-color-emergency-background:#fce8e4;
+  --goa-color-emergency-onDefault: #ffffff;
+
+  /* ── Surface ─────────────────────────────────────────────────────────────── */
+  --goa-color-surface:             #ffffff;
+
+  /* ── Spacing ─────────────────────────────────────────────────────────────── */
+  --goa-space-3xs:  2px;
+  --goa-space-2xs:  4px;
+  --goa-space-xs:   4px;
+  --goa-space-s:    8px;
+  --goa-space-m:    16px;
+  --goa-space-l:    24px;
+  --goa-space-xl:   32px;
+  --goa-space-2xl:  48px;
+  --goa-space-3xl:  64px;
+  --goa-space-4xl:  96px;
+  /* numeric aliases */
+  --goa-space-1:    2px;
+  --goa-space-2:    4px;
+  --goa-space-3:    8px;
+  --goa-space-4:    12px;
+  --goa-space-5:    16px;
+  --goa-space-6:    20px;
+  --goa-space-7:    24px;
+  --goa-space-8:    32px;
+  --goa-space-9:    40px;
+  --goa-space-10:   48px;
+
+  /* ── Border radius ──────────────────────────────────────────────────────── */
+  --goa-border-radius-s:    2px;
+  --goa-border-radius-m:    4px;
+  --goa-border-radius-l:    8px;
+  --goa-border-radius-xl:   12px;
+  --goa-border-radius-2xl:  24px;
+  --goa-border-radius-full: 9999px;
+
+  /* ── Typography ─────────────────────────────────────────────────────────── */
+  --goa-font-family-sans:         'acumin-pro-semi-condensed', system-ui, -apple-system, sans-serif;
+  --goa-font-family-mono:         'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --goa-font-weight-regular:      400;
+  --goa-font-weight-medium:       500;
+  --goa-font-weight-bold:         700;
+  --goa-font-size-1:              12px;
+  --goa-font-size-2:              14px;
+  --goa-font-size-3:              16px;
+  --goa-font-size-4:              18px;
+  --goa-font-size-5:              20px;
+  --goa-font-size-6:              24px;
+  --goa-font-size-7:              28px;
+  --goa-font-size-8:              32px;
+  --goa-font-size-9:              40px;
+  --goa-font-size-10:             48px;
+  --goa-line-height-1:            1.2;
+  --goa-line-height-2:            1.4;
+  --goa-line-height-3:            1.6;
+
+  /* ── Shadow ─────────────────────────────────────────────────────────────── */
+  --goa-shadow-1:  0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+  --goa-shadow-2:  0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.14);
+  --goa-shadow-3:  0 10px 20px rgba(0,0,0,0.14), 0 6px 6px rgba(0,0,0,0.12);
+}
+
+/* Base reset consistent with GoA Design System expectations */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--goa-font-family-sans);
+  font-size: var(--goa-font-size-3);
+  line-height: var(--goa-line-height-3);
+  color: var(--goa-color-text-default);
+  background-color: var(--goa-color-greyscale-100);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 12pt;
+  }
+  nav, header, footer,
+  [data-testid="nav"],
+  .goa-microsite-header,
+  goa-microsite-header,
+  goa-app-header,
+  .planning-session__sidebar,
+  button,
+  goa-button,
+  [role="navigation"],
+  [role="progressbar"] {
+    display: none !important;
+  }
+  [role="log"],
+  .markdown-body,
+  .planning-session__chat,
+  main, section, article {
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+  }
+  a { color: #000; text-decoration: none; }
+  * { box-shadow: none !important; }
+}

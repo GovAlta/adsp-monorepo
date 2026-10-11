@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "stage": 2,
+  "stageName": "Service Requirements",
+  "validatedAt": "2026-10-10T01:10:00Z",
+  "overallStatus": "PASSED",
+  "gateRetryCount": 0,
+  "validationRules": [
+    {
+      "ruleId": "FAC-S2-001",
+      "description": "service-description.json satisfies all GOA-001..GOA-015 structural and content rules",
+      "status": "PASS",
+      "evidence": "requirements/services/service-description.json: ministry, programArea, serviceName all populated; digitalPresence[] contains 3 entries (TMW web app, REST API v1, health endpoints); supportChannels[] contains 3 entries each with hours field; physicalLocations: []; governingDocuments[] contains 6 entries (FOIP Act, GoA Digital Service Standard, GoA Information Management Regulation, WCAG 2.1 AA, OWASP ASVS 4.0, ADSP Platform Service Pattern); formsAndDocuments[] contains 2 entries; audiences[] contains 5 entries each with goals[] and outcomes[]. All GOA-001 through GOA-015 sub-rules satisfied.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-002",
+      "description": "audience-identification.json satisfies all AUD-001..AUD-013 rules including AUD-010/AUD-011 audience type semantic correctness",
+      "status": "PASS",
+      "evidence": "requirements/services/audience-identification.json: summary.total=5; audiences[]: GoA Business Analyst (types=[GoA employee]), GoA Developer (types=[GoA employee]), ADSP Tenant Administrator (types=[GoA employee]), ADSP Platform Team (types=[GoA employee]), GoA Program Manager (types=[stakeholder]). AUD-010: type assignments semantically correct — 4 internal staff classified as GoA employee, 1 non-staff decision-maker classified as stakeholder. AUD-011: GoA Program Manager correctly typed as stakeholder (indirect beneficiary, no direct service interaction). All derivedFromStakeholderClasses[] populated with exact class names. AUD-013: all user-facing interactionMode classes covered.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-003",
+      "description": "One journey-map-{slug}.json exists for each audience in audience-identification.json",
+      "status": "PASS",
+      "evidence": "requirements/services/journey-map-goa-business-analyst.json, requirements/services/journey-map-goa-developer.json, requirements/services/journey-map-adsp-tenant-administrator.json, requirements/services/journey-map-adsp-platform-team.json, requirements/services/journey-map-goa-program-manager.json — all 5 audience slugs from audience-identification.json.audiences[] have a corresponding journey map file. dependencyGate.journeyMapsWritten=5 equals dependencyGate.journeyMapsRequired=5.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-004",
+      "description": "Each journey map satisfies AJM-001..AJM-018 rules including AJM-004 (all distinct workflows represented)",
+      "status": "PASS",
+      "evidence": "All 5 journey-map-{slug}.json files passed 18/18 AJM rules as reported by their factory-stage-2-journey-batch sub-subagents. AJM-004 (distinct workflow coverage): goa-business-analyst covers 3 journeys (planning new session, resuming interrupted session, exporting); goa-developer covers 3 journeys (new app scoping, specialist deep-dive, session resumption); adsp-tenant-administrator covers 2 journeys (pattern library management, governance review); adsp-platform-team covers 3 journeys (compliance verification, monitoring/incident response, security review); goa-program-manager covers 2 journeys (investment decision review, feedback/redirection). All distinct audience workflows from audience-identification.json.audiences[].goals[] are represented.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-005",
+      "description": "future-state.json satisfies all FS-001..FS-014 structural rules",
+      "status": "PASS",
+      "evidence": "requirements/services/future-state.json: totalOpportunities=12 (>=10, satisfies FS-003); all 12 opportunities use identifier field with FS-nnn pattern (FS-001..FS-012); each opportunity has category from allowed enum [process-automation(6), communication(2), data-management(3), self-service(1)]; priority and effort each from enum [high/medium/low]; affectedAudiences[] minItems=1 on all entries; sources[] minItems=1 on all entries with all 5 fields populated (audienceName, journeyName, stageName, stepNumber, text); painPointsAddressed[] minItems=1; benefits[] minItems=2. summary block accurate: totalOpportunities=12, byCategory and byPriority match opportunity counts, sourceFiles[] lists all 5 journey map paths.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-006",
+      "description": "sitemap.json satisfies all SMP-001..SMP-017 structural and semantic rules including SMP-003/SMP-004 (touchpoint mapping, no invented pages)",
+      "status": "PASS",
+      "evidence": "requirements/services/sitemap.json: top-level container is areas[] (not portals/sections, FH-011 compliant); 2 areas (planning-workspace, administration) satisfying SMP-002 minItems=2; all 12 pages carry kebab-case slugs (SMP-006); all pageTypes drawn from page-type-catalog.md (list-index, start-page, wizard, detail-view, wizard-step-review, section-hub, edit-form, report-results, user-management); all pages private-authenticated matching Keycloak-gated service. SMP-003: each page's keyContent references touchpoints directly observed in journey map steps (planning-session references Conversational Discovery steps; audit-log references ADSP Tenant Administrator Examine the Audit Log steps). SMP-004: all pages derive from actual journey map steps via linkedJourneySteps[] — no pages represent workflows absent from the 5 journey maps. SMP-010: all FS-001..FS-012 identifiers appear in at least one page's futureStateOpportunities[].",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-007",
+      "description": "stage-progress.json is complete and schema-compliant with all completionGates true",
+      "status": "PASS",
+      "evidence": "requirements/audit/stage-progress.json: currentStage=2, all required top-level keys present; completionGates: serviceDescriptionComplete=true, audienceIdentificationComplete=true, journeyMapsComplete=true, futureStateComplete=true, sitemapComplete=true; completedBatches[] contains 7 entries (1 Phase A, 5 Phase B, 1 Phase C); dependencyGate.phaseBComplete=true; resourcesPending=[]; pendingPhases=[].",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-008",
+      "description": "Journey map slugs match the kebab-case derivation rule for each audience name",
+      "status": "PASS",
+      "evidence": "Audience name to slug mapping verified: 'GoA Business Analyst' -> goa-business-analyst, 'GoA Developer' -> goa-developer, 'ADSP Tenant Administrator' -> adsp-tenant-administrator, 'ADSP Platform Team' -> adsp-platform-team, 'GoA Program Manager' -> goa-program-manager. All 5 journey map filenames follow requirements/services/journey-map-{slug}.json pattern.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-009",
+      "description": "serviceName and ministry values are consistent across all Stage 2 artifacts",
+      "status": "PASS",
+      "evidence": "serviceName='ADSP Project Planner' and ministry='Service Alberta and Red Tape Reduction / Technology and Innovation' verified consistent in: requirements/services/service-description.json, requirements/services/audience-identification.json, requirements/services/future-state.json, requirements/services/sitemap.json, and all 5 journey-map-{slug}.json files.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-010",
+      "description": "All Stage 2 output artifacts exist on disk and no required artifact is missing or empty",
+      "status": "PASS",
+      "evidence": "Verified on-disk: requirements/services/service-description.json, requirements/services/audience-identification.json, requirements/services/journey-map-goa-business-analyst.json, requirements/services/journey-map-goa-developer.json, requirements/services/journey-map-adsp-tenant-administrator.json, requirements/services/journey-map-adsp-platform-team.json, requirements/services/journey-map-goa-program-manager.json, requirements/services/future-state.json, requirements/services/sitemap.json — all 9 artifact files created. No artifact is empty or skeleton-only.",
+      "failReason": null,
+      "remediationAction": null
+    }
+  ],
+  "crossStageConsistency": [
+    {
+      "checkId": "XSTAGE-S2-001",
+      "description": "Every audience in audience-identification.json carries a non-empty derivedFromStakeholderClasses[] with exact class names from requirements/brd/stakeholders.json, and every user-facing stakeholder class is named by at least one audience",
+      "status": "PASS",
+      "evidence": "requirements/services/audience-identification.json.audiences[].derivedFromStakeholderClasses verified against requirements/brd/stakeholders.json: 'GoA Business Analyst' -> ['GoA Business Analyst'] (Direct internal user); 'GoA Developer' -> ['GoA Developer'] (Direct internal user); 'ADSP Tenant Administrator' -> ['ADSP Tenant Administrator'] (System administrator); 'ADSP Platform Team' -> ['ADSP Platform Team'] (System administrator); 'GoA Program Manager' -> ['GoA Program Manager'] (Indirect beneficiary). All user-facing interactionMode classes [Direct internal user, System administrator] are covered by at least one audience. Exact class name matching confirmed — no paraphrasing of class names.",
+      "failReason": null
+    },
+    {
+      "checkId": "XSTAGE-S2-002",
+      "description": "service-description.json aligns with context_of_use.json settings, channels, and constraints from Stage 1",
+      "status": "PASS",
+      "evidence": "requirements/brd/context_of_use.json setting (GoA internal platform, Keycloak-authenticated, TMW web app channel) aligns with requirements/services/service-description.json: digitalPresence includes TMW web app entry; physicalLocations=[]; service is fully digital, internal GoA. Channel constraints from context_of_use (no public access, Keycloak OIDC required) reflected in sitemap.json viewType=private-authenticated on all pages. Ministry and programArea in service-description.json consistent with context_of_use.json organizational context.",
+      "failReason": null
+    },
+    {
+      "checkId": "XSTAGE-S2-003",
+      "description": "Audience applicableSNs[] in audience-identification.json reference SN-nnn identifiers present in requirements/brd/stakeholder_needs.json",
+      "status": "PASS",
+      "evidence": "requirements/services/audience-identification.json.audiences[].applicableSNs[] entries cross-checked against requirements/brd/stakeholder_needs.json stakeholderNeeds[].id values. All SN-nnn identifiers referenced in applicableSNs arrays correspond to stakeholder need entries in stakeholder_needs.json. No invented SN-nnn identifiers used.",
+      "failReason": null
+    },
+    {
+      "checkId": "XSTAGE-S2-004",
+      "description": "Sitemap keyContent entries reference data entities from requirements/data_io_schema.json $defs, confirming page content relevance to the data model",
+      "status": "PASS",
+      "evidence": "requirements/services/sitemap.json keyContent entries reference data entities present in requirements/data_io_schema.json $defs: session-dashboard keyContent references planning sessions (PlanningSession entity); business-model-review keyContent references business model entities and entity classification (BusinessModel, BusinessModelEntity); session-export keyContent references session export artifact (SessionExport); pattern-library and pattern-editor keyContent reference business pattern templates (BusinessPattern); audit-log keyContent references audit log records (AuditLogRecord). All major $defs entities in data_io_schema.json are represented in at least one sitemap page's keyContent.",
+      "failReason": null
+    }
+  ]
+}

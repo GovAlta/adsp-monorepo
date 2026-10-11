@@ -1,0 +1,210 @@
+{
+  "pageId": "hypothesis-review",
+  "pageType": "wizard-step-review",
+  "title": "Hypothesis Review",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Planning Workspace", "nodeId": "planning-workspace" },
+      { "label": "My Planning Sessions", "nodeId": "session-dashboard" },
+      { "label": "Planning Session", "nodeId": "planning-session" },
+      { "label": "Hypothesis Review", "nodeId": "hypothesis-review" }
+    ],
+    "parentNodeId": "planning-session",
+    "childNodeIds": [],
+    "siblingNodeIds": ["business-model-review", "session-export"]
+  },
+  "sections": {
+    "reviewSections": [
+      {
+        "heading": "Proposed Solution Hypothesis",
+        "description": "The Planning Agent has generated a solution hypothesis based on your confirmed business model. Review the proposed ADSP service composition and the reasoning behind each recommendation before accepting or requesting revisions.",
+        "fields": [
+          {
+            "label": "Hypothesis Summary",
+            "value": "solutionHypothesis.summary",
+            "editable": false,
+            "classificationLevel": "Protected B",
+            "sensitivityNote": "Protected B per ATIA s.23 — deliberative government planning content"
+          },
+          {
+            "label": "Status",
+            "value": "solutionHypothesis.status",
+            "editable": false,
+            "note": "Lifecycle state per BR-010 state machine: draft, proposed, accepted, rejected, superseded"
+          },
+          {
+            "label": "Hypothesis Version",
+            "value": "solutionHypothesis.version",
+            "editable": false
+          },
+          {
+            "label": "Matched Business Pattern",
+            "value": "solutionHypothesis.patternId",
+            "editable": false,
+            "note": "The business pattern that informed this hypothesis, if matched above threshold (BR-005)"
+          }
+        ]
+      },
+      {
+        "heading": "Planning Agent Reasoning",
+        "description": "Expand this section to understand why each ADSP service was recommended for your business problem.",
+        "collapsible": true,
+        "defaultExpanded": false,
+        "fields": [
+          {
+            "label": "Reasoning",
+            "value": "solutionHypothesis.reasoning",
+            "editable": false,
+            "classificationLevel": "Protected B",
+            "sensitivityNote": "Protected B per ATIA s.23 — contains Planning Agent analysis of deliberative government process"
+          }
+        ]
+      }
+    ],
+    "submitAction": {
+      "label": "Accept Hypothesis",
+      "target": "session-export",
+      "description": "Accept this solution hypothesis to confirm the recommended ADSP service composition as the direction for your planning session. Accepting updates the hypothesis status from 'proposed' to 'accepted' and surfaces specialist navigation options.",
+      "triggeredBy": "acceptButton",
+      "operationId": "updateHypothesisStatus",
+      "requestShape": { "status": "accepted" },
+      "testCaseRef": "TC-022"
+    },
+    "policyNotice": {
+      "text": "The solution hypothesis and reasoning displayed on this page constitute deliberative government information under the Access to Information and Protection of Privacy Act (ATIA), section 23. This information is classified Protected B. Access is restricted to authenticated Government of Alberta employees with the planner-user role or above. Do not share hypothesis content outside of authorized GoA channels or systems.",
+      "authority": "ATIA s.23",
+      "classificationLevel": "Protected B"
+    },
+    "optionalInput": {
+      "label": "Revision Request",
+      "placeholder": "Describe what should change in the hypothesis. For example: 'The form-service recommendation should also include comment-service for stakeholder engagement.'",
+      "helpText": "Provide feedback on what should change. The Planning Agent will generate a revised hypothesis incorporating your feedback. Note: hypothesis revision is currently in integration-pending status (INT-001 STUB).",
+      "actionLabel": "Request Revision",
+      "triggeredBy": "reviseButton",
+      "operationId": "sendMessage",
+      "integrationStub": "INT-001",
+      "stubNotice": "Hypothesis revision requires the Planning Agent (INT-001). This integration is currently pending approval (OPEN-001, OPEN-002, OPEN-006). Submitting a revision request will display a pending notice until the integration is enabled.",
+      "testCaseRef": "TC-023"
+    },
+    "warnings": [
+      {
+        "type": "info",
+        "condition": "solutionHypothesis === null || solutionHypothesisStatus === 'draft'",
+        "message": "Your business model requires a confidence score of 70 or above before a hypothesis can be generated. Continue refining your business problem description in the planning conversation to reach the required score.",
+        "actionLabel": "Return to Planning Conversation",
+        "actionTarget": "planning-session",
+        "lockedState": true,
+        "testCaseRef": "TC-021"
+      },
+      {
+        "type": "info",
+        "condition": "int001StubActive === true && revisionSubmitted === true",
+        "message": "Your revision request has been received and is pending. Hypothesis revision via the Planning Agent (INT-001) is not yet active in this environment. Your feedback has been saved and will be processed when the integration is enabled.",
+        "integrationStub": "INT-001",
+        "testCaseRef": "TC-023"
+      },
+      {
+        "type": "info",
+        "condition": "solutionHypothesis.status === 'superseded'",
+        "message": "This hypothesis has been superseded by a revised version. The latest proposed hypothesis is shown above.",
+        "testCaseRef": "TC-088"
+      }
+    ]
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "listHypotheses",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}/hypotheses",
+        "description": "Load all solution hypotheses for the session, filtered to status 'proposed' to find the current active hypothesis. Falls back to 'draft' if no proposed hypothesis exists.",
+        "bindsTo": "hypotheses",
+        "queryParams": { "status": "proposed" }
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "updateHypothesisStatus",
+        "method": "PATCH",
+        "path": "/api/v1/sessions/{sessionId}/hypotheses/{hypothesisId}",
+        "description": "Accept the current hypothesis. Transitions status from 'proposed' to 'accepted' per BR-010 state machine. Publishes hypothesis-generated domain event via INT-007 stub.",
+        "triggeredBy": "acceptButton",
+        "requestShape": { "status": "accepted" }
+      },
+      {
+        "operationId": "sendMessage",
+        "method": "POST",
+        "path": "/api/v1/sessions/{sessionId}/messages",
+        "description": "Submit a revision request as a conversation message to the Planning Agent. INT-001 STUB: always returns 503 (fail-closed) pending OPEN-001/002/006 resolution. UI shows pending notice on 503 response.",
+        "triggeredBy": "reviseButton",
+        "integrationStub": "INT-001",
+        "stubBehavior": "fail-closed — 503 response triggers pending notice; feedback text is preserved in state"
+      }
+    ],
+    "validationErrors": [
+      "HYPOTHESIS_NOT_FOUND_404",
+      "INVALID_STATUS_TRANSITION_422",
+      "SESSION_NOT_FOUND_404",
+      "UNAUTHORIZED_401",
+      "FORBIDDEN_403",
+      "SERVICE_UNAVAILABLE_503"
+    ],
+    "emptyState": "A solution hypothesis will appear here once your business model confidence score reaches 70. Continue describing your business problem in the planning conversation to refine the model."
+  },
+  "errorStates": {
+    "503": {
+      "code": "INT001_STUB_PENDING",
+      "message": "Hypothesis revision is not yet available in this environment. The Planning Agent integration (INT-001) is pending approval. Your revision request has been saved.",
+      "condition": "onRevisionSubmit and INT-001 returns 503",
+      "testCaseRef": "TC-023"
+    },
+    "422": {
+      "code": "INVALID_STATE_TRANSITION",
+      "message": "This hypothesis cannot be accepted in its current state. It may have already been accepted or superseded. Reload the page to see the current hypothesis status.",
+      "action": "reload",
+      "testCaseRef": "UC-004 exception handling per BR-010"
+    },
+    "404": {
+      "code": "HYPOTHESIS_NOT_FOUND",
+      "message": "The solution hypothesis could not be found. It may have been superseded. Reload the page to see the latest hypothesis.",
+      "action": "reload"
+    },
+    "403": {
+      "code": "FORBIDDEN",
+      "message": "You do not have permission to access this planning session.",
+      "action": "redirect-to-session-dashboard"
+    }
+  },
+  "lockedState": {
+    "condition": "businessModel.confidenceScore < 70 || no proposed hypothesis exists",
+    "message": "Your business model requires a confidence score of 70 or above before a hypothesis can be generated. Continue refining your business problem description.",
+    "disabledElements": ["acceptButton", "reviseButton", "optionalInput"],
+    "testCaseRef": "TC-021"
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": [
+      "planning-workspace",
+      "session-dashboard",
+      "planning-session",
+      "hypothesis-review"
+    ],
+    "serviceProfileSections": ["hypotheses"],
+    "apiOperationIds": ["listHypotheses", "updateHypothesisStatus", "sendMessage"],
+    "useCases": ["UC-004"],
+    "testCases": [
+      "TC-003", "TC-021", "TC-022", "TC-023", "TC-088", "TC-055", "TC-057"
+    ],
+    "classificationLevel": "Protected B",
+    "protectedFields": [
+      "solutionHypothesis.summary",
+      "solutionHypothesis.reasoning"
+    ],
+    "securityAuthority": "ATIA s.23",
+    "integrationStubs": ["INT-001"],
+    "openItems": ["OPEN-001", "OPEN-002", "OPEN-006"]
+  }
+}

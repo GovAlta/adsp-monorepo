@@ -1,0 +1,384 @@
+{
+  "validator": "fac_s4_runner",
+  "overallStatus": "PASS",
+  "findings": [
+    {
+      "ruleId": "FAC-S4-001",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\openapi.yaml",
+      "failReason": "openapi.yaml present, parses (strict, no duplicate keys), openapi=3.1.0",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-002",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\openapi.json",
+      "failReason": "openapi.json matches openapi.yaml (normalized dict equality)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-003",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\api-specification.md",
+      "failReason": "all 38 operationId(s) referenced in api-specification.md (prose quality LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-004",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\package.json",
+      "failReason": "build PASS: npm run build (stack=node, exit=0)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-005",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "shared types at index.ts; all 13 service(s) reference it (structural shadowing LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-006",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no duplicate middleware among 6 file(s) across 7 concern(s) (semantic LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-007",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\README.md",
+      "failReason": "README.md present with Build/Run/Container headings (quality LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-008",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\Dockerfile",
+      "failReason": "Dockerfile multi-stage (2 stages) + non-root USER (node) (minimal-image quality LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-009",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\package.json",
+      "failReason": "build manifest present for detected stack=node",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-010",
+      "status": "PASS",
+      "evidence": "openapi.yaml paths",
+      "failReason": "all 3 required health endpoints present",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-011",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no secret patterns matched across 63 source file(s) (novel patterns LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-012",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "declared stack node matches detected manifest (package.json)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-013",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\compliance-report.md",
+      "failReason": "1 compliance report(s) reviewed; no Critical / High severities",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-014",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\services\\sitemap.json",
+      "failReason": "all 9 data-operation page(s) covered by OpenAPI (tag/operationId match)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-015",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 11 controller(s) have \u22651 matching test file (32 test file(s) total)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-016",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 98 applicable TC(s) referenced in test code (semantic correctness LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-017",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\test-traceability-report.md",
+      "failReason": "all 10 UC(s) referenced; coverage 100% \u2265 80% (mapping correctness LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-018",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "schema alignment PASS: 11 entity(ies), 6 enumeration(s); openApiSchemaName + property-name + enum-value set equality (novel type-mapping LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-019",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all SQL column references across 13 service file(s) appear in data_model.json (52 canonical columns)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-020",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "pagination wrapper consistent across 24 file(s): items (semantic LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-021",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\tests\\integration",
+      "failReason": "10 integration test file(s); no stub markers; 11 Data Integrity TC(s) covered",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-022",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 13 service(s) covered by a SQL-column validation test (helpers: ['validateQueryColumns', 'ValidateQueryColumns', 'validate_query_columns', 'assertColumnsExist'])",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-023",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\requirements\\database\\requirements-to-controller-mapping.json",
+      "failReason": "RTC mapping PASS: 48 row(s), 38 mapped operationId(s), 0 escalation(s) all dated (prose quality LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-024",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database",
+      "failReason": "rbac-contract.json absent \u2014 RBAC scope N/A",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-025",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database",
+      "failReason": "rbac-contract.json absent \u2014 RBAC scope N/A",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-026",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no protected-category field names in URL paths/query parameters (classificationLevel=Protected B)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-027",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "every logging file that references a protected-category field also references a redaction primitive (99 files scanned)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-028",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no hardcoded credential literals (99 files scanned)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-029",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "TLS-enforcement primitive present (e.g. openapi.json)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-030",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "auth primitive present in every non-public controller file (0 unguarded; classificationLevel=Protected B)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-031",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 7 callable INT(s) have a failure-aspect integration test present in code",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-032",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 8 authenticated INT(s) have a negative-auth test in code",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-033",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database\\ddl_script.sql",
+      "failReason": "DDL declares no named application schema; nothing to parameterize (public-schema build) \u2014 N/A",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-034",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no uncast numeric SQL expressions found across 13 service file(s)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-035",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no unserialized paginated/list responses found across 24 controller/service file(s)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-001",
+      "status": "PASS",
+      "evidence": "openapi.yaml components.schemas",
+      "failReason": "11 schema(s) align with data_model entities (OAS superset: 3 non-entity schema(s); one-way coverage, semantic align LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-002",
+      "status": "PASS",
+      "evidence": "sitemap.json + openapi.yaml",
+      "failReason": "all 3 interactable entity/entities have CRUD endpoints",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-003",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 12 app-enforced BR(s) referenced in source; reverse check PASS (semantic LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-004",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 8 INT(s) represented in source per Implementation Status (stub-shape conformance LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-005",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\agent-artifacts\\skeleton_integrations_manifest.md",
+      "failReason": "manifest PASS: 8 row(s); INT set equality; per-row rules satisfied",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-006",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no Catalog-Auto INTs; rule vacuously satisfied",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-007",
+      "status": "PASS",
+      "evidence": "openapi.yaml paths",
+      "failReason": "6 resource segment(s); no generic nouns; plural-consistent (vocabulary-fit LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-008",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database",
+      "failReason": "rbac-contract.json absent \u2014 RBAC scope N/A",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-009",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "primary-key id types align between data_model.json and OpenAPI (11 id property/properties checked)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-010",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no Catalog-Auto INTs; client env-var wiring check vacuously satisfied",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-011",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all qualified SQL column aliases match their data_model openApiPropertyName across 13 service file(s)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S4-012",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 0 declared filter-type field(s) are referenced in the implementation (no dead filter parameters)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-001",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "every endpoint has controller + service + route + test",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-002",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\migrations",
+      "failReason": "1 migration file(s); all 11 DDL table(s) present (mig-only infrastructure: 0)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-003",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "auth coverage: 32/32 protected endpoint(s) guarded (method=JWT/Keycloak OIDC)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-004",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "no unsanctioned stub/TODO markers across 99 source file(s) (7 sanctioned stub/deferred-integration file(s) exempted)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-005",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 32 test file(s) contain route + assertion",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-006",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service",
+      "failReason": "all 3 build/lint/test command(s) exited 0 (stack=node)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S4-COV-007",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\api-build-spec.json",
+      "failReason": "not found: C:\\code\\pronghorn-team\\adsp-monorepo\\apps\\planner-service\\api-build-spec.json; deferring to FAC-S4-016",
+      "remediationAction": null
+    }
+  ]
+}

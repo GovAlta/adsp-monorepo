@@ -1,0 +1,198 @@
+{
+  "schemaVersion": "1.0",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "programArea": "Alberta Digital Service Platform",
+  "serviceName": "ADSP Project Planner",
+  "serviceDescription": "The ADSP Project Planner is an AI-agent-powered microservice integrated into the Tenant Management Webapp (TMW) that enables GoA business analysts and developers to discover how ADSP services can address their business problems through natural language conversation. The Planning Agent — powered by Anthropic Claude — conducts guided discovery, builds a structured business model from user input, matches the problem against a configurable library of known GoA business patterns, and generates plain-language ADSP service composition hypotheses. Specialist sub-agents for form-service, pdf-service, comment-service, and notification-service provide implementation-depth guidance. All planning sessions persist across browser sessions, allowing multi-day planning engagements. The service is implemented as a Node.js/TypeScript/Express microservice following all ADSP platform service patterns, including Keycloak JWT authentication, MongoDB persistence, RabbitMQ domain events, and the initializePlatform() SDK initialization.",
+  "governingDocuments": [
+    {
+      "type": "act",
+      "name": "Freedom of Information and Protection of Privacy Act (FOIP)",
+      "citation": "RSA 2000, c F-25 — Governs the collection, use, and disclosure of personal and organizational information held by GoA. Applies to planning session data that may contain GoA program information."
+    },
+    {
+      "type": "standard",
+      "name": "GoA Digital Service Standard",
+      "citation": "Government of Alberta Digital Service Standard — Sets requirements for all GoA digital service design, accessibility, and delivery."
+    },
+    {
+      "type": "regulation",
+      "name": "GoA Information Management Regulation",
+      "citation": "AR 224/2001 — Governs retention and disposition of government records. Planning session data constitutes GoA records subject to defined retention periods."
+    },
+    {
+      "type": "standard",
+      "name": "WCAG 2.1 Level AA",
+      "citation": "Web Content Accessibility Guidelines 2.1, Level AA — Mandatory accessibility standard for all GoA public-facing and internal digital interfaces."
+    },
+    {
+      "type": "standard",
+      "name": "OWASP Application Security Verification Standard (ASVS) 4.0",
+      "citation": "OWASP ASVS Level 2 — Applicable security baseline for a Protected B GoA information system processing planning session data."
+    },
+    {
+      "type": "framework",
+      "name": "ADSP Platform Service Pattern and Compliance Checklist",
+      "citation": "Internal ADSP platform documentation — Mandates initializePlatform() SDK initialization, Keycloak JWT authentication, MongoDB persistence, RabbitMQ domain events, and Configuration Service integration for all ADSP platform services."
+    }
+  ],
+  "digitalPresence": [
+    {
+      "type": "web-application",
+      "name": "Tenant Management Webapp (TMW) — Planner Section",
+      "description": "Primary user interface for the ADSP Project Planner, integrated as new navigable pages within the existing TMW application. Accessible to authenticated GoA users with the planner-user, planner-admin, or tenant-admin Keycloak role.",
+      "url": "https://adsp.alberta.ca (ADSP platform TMW)",
+      "audiences": ["GoA Business Analyst", "GoA Developer", "ADSP Tenant Administrator"]
+    },
+    {
+      "type": "rest-api",
+      "name": "planner-service REST API (v1)",
+      "description": "Express 5 REST API providing session management, conversational AI, business model, hypothesis management, pattern management, and session export endpoints. Protected by Keycloak JWT. Base path: /api/v1/.",
+      "url": "https://planner-service.adsp.alberta.ca/api/v1/",
+      "audiences": ["GoA Developer", "ADSP Platform Team"]
+    },
+    {
+      "type": "health-endpoint",
+      "name": "planner-service Health Check Endpoints",
+      "description": "Liveness (/health/live) and readiness (/health/ready) endpoints for ADSP platform monitoring and Kubernetes pod lifecycle management.",
+      "url": "https://planner-service.adsp.alberta.ca/health/",
+      "audiences": ["ADSP Platform Team"]
+    }
+  ],
+  "supportChannels": [
+    {
+      "type": "email",
+      "name": "ADSP Platform Support",
+      "description": "Primary support channel for ADSP services including planner-service. For questions about service configuration, tenant onboarding, and platform operations.",
+      "contact": "adsp-support@gov.ab.ca",
+      "hours": "Monday to Friday, 8:00 AM to 4:30 PM MT (excluding statutory holidays)"
+    },
+    {
+      "type": "web form",
+      "name": "ADSP Service Catalog Help Desk",
+      "description": "Online support request submission for GoA staff needing assistance with ADSP services, feature requests, or incident reporting.",
+      "contact": "https://adsp.alberta.ca/support",
+      "hours": "Available 24/7 for submission; responses during business hours Monday to Friday"
+    },
+    {
+      "type": "general contact",
+      "name": "Alberta Digital Service Platform — GitHub Issues",
+      "description": "Technical issue tracking and feature requests for ADSP platform services. Available to GoA developers and platform team members for defect reporting and platform enhancement discussions.",
+      "contact": "https://github.com/GovAlta/adsp-monorepo/issues",
+      "hours": "Available 24/7 for submission; responses from ADSP Platform Team during business hours"
+    }
+  ],
+  "physicalLocations": [],
+  "formsAndDocuments": [
+    {
+      "name": "Planning Session Export (JSON)",
+      "purpose": "Portable JSON document produced by the session export feature (GET /api/v1/sessions/{id}/export). Contains the complete planning session state including business model, solution hypotheses, open questions, and recommended next steps. Used for stakeholder sharing and project documentation.",
+      "format": "JSON"
+    },
+    {
+      "name": "Business Pattern Template (Configuration)",
+      "purpose": "Structured configuration record stored via the ADSP Configuration Service defining a reusable GoA business process pattern. Includes name, description, domain language, strong signal keywords, ADSP service mappings, and clarifying questions. Managed by Tenant Administrators via the pattern library management interface.",
+      "format": "JSON (via ADSP Configuration Service)"
+    }
+  ],
+  "audiences": [
+    {
+      "name": "GoA Business Analyst",
+      "types": ["GoA employee"],
+      "description": "Government of Alberta business analysts and program managers who use the ADSP Project Planner to describe business problems in natural language, explore AI-generated ADSP service composition recommendations, and guide solution planning for digital service modernization projects. Low to medium technical proficiency with deep GoA domain knowledge.",
+      "goals": [
+        "Describe business problems without requiring prior ADSP technical knowledge",
+        "Receive plain-language solution recommendations that can be communicated to program stakeholders",
+        "Maintain and resume multi-day planning sessions without re-entering context",
+        "Review and correct the AI's business model to ensure accurate problem representation",
+        "Export completed session plans for stakeholder sharing"
+      ],
+      "outcomes": [
+        "Reduced barrier to ADSP adoption through conversational AI discovery",
+        "Structured business model capturing the program area's problem accurately",
+        "Accepted solution hypothesis ready for developer implementation planning",
+        "Portable session export usable in project documentation and stakeholder presentations"
+      ]
+    },
+    {
+      "name": "GoA Developer",
+      "types": ["GoA employee"],
+      "description": "Government of Alberta software developers who use the ADSP Project Planner to explore technical implementation options for new or enhanced GoA applications using ADSP services. High technical proficiency with familiarity in REST APIs, TypeScript, and ADSP service documentation. May provide existing requirements documents or application code as input.",
+      "goals": [
+        "Obtain deep ADSP service integration guidance through specialist agents for form-service, pdf-service, comment-service, and notification-service",
+        "Rapidly scope new application features or ADSP integrations against established technical patterns",
+        "Navigate seamlessly between the planning session and specialist workspaces with pre-loaded context",
+        "Understand solution hypothesis reasoning at implementation-detail level"
+      ],
+      "outcomes": [
+        "Technical implementation plan grounded in ADSP specialist agent guidance",
+        "Identified ADSP service composition pattern suitable for the business problem",
+        "Validated integration approach with specialist-endorsed configuration recommendations"
+      ]
+    },
+    {
+      "name": "ADSP Tenant Administrator",
+      "types": ["GoA employee"],
+      "description": "ADSP-registered GoA department administrators responsible for managing the business pattern library and user access for their tenant. Medium technical proficiency with familiarity in TMW administrative interface and ADSP configuration concepts. Infrequent users who act primarily when adding, updating, or maintaining business pattern templates.",
+      "goals": [
+        "Create and maintain tenant-specific business pattern templates to capture departmental process knowledge",
+        "Deactivate outdated or incorrect patterns to maintain pattern matching accuracy",
+        "Review planning session history across the tenant for oversight and governance purposes",
+        "Audit administrative actions through the audit log"
+      ],
+      "outcomes": [
+        "Business pattern library that accurately reflects the department's recurring business process types",
+        "Faster planning sessions for analysts as pattern matching accelerates hypothesis generation",
+        "Governance oversight of AI-assisted planning activities within the tenant"
+      ]
+    },
+    {
+      "name": "ADSP Platform Team",
+      "types": ["GoA employee"],
+      "description": "The Government of Alberta technology team responsible for operating, monitoring, and maintaining the Alberta Digital Service Platform. Responsible for enforcing platform standards compliance, ensuring multi-tenant data isolation, and maintaining operational reliability of the planner-service. High technical proficiency with deep ADSP platform architecture knowledge.",
+      "goals": [
+        "Verify planner-service compliance with all ADSP platform service patterns including initializePlatform(), Keycloak JWT, MongoDB, and RabbitMQ",
+        "Monitor service health, LLM API performance, and error rates via structured observability",
+        "Enforce multi-tenant data isolation and conduct security audit reviews",
+        "Configure and enforce role-based access control and session inactivity timeout policies"
+      ],
+      "outcomes": [
+        "planner-service operates within the ADSP platform operational model without special-casing",
+        "All tenant data isolation requirements are provably enforced at API and database layers",
+        "Security events and administrative actions are fully auditable with tamper-evident audit logs"
+      ]
+    },
+    {
+      "name": "GoA Program Manager",
+      "types": ["stakeholder"],
+      "description": "Government of Alberta program managers who are indirect beneficiaries of ADSP Project Planner outputs. They receive and review planning session exports prepared by business analysts to make decisions about solution direction and implementation investment. They do not directly interact with the planner-service interface but influence planning through feedback on hypotheses and outputs.",
+      "goals": [
+        "Review solution plan exports to evaluate proposed ADSP service compositions",
+        "Approve or redirect solution hypotheses before implementation investment is committed",
+        "Understand cost, effort, and implementation order implications of proposed solutions"
+      ],
+      "outcomes": [
+        "Informed decision-making on ADSP-based digital solution investments",
+        "Clear, non-technical documentation of proposed solution direction",
+        "Accountability trail showing the reasoning behind technology recommendations"
+      ]
+    }
+  ],
+  "additionalContext": {
+    "painPoints": [
+      "GoA program staff cannot easily evaluate whether ADSP services address their business needs without significant prior architectural knowledge, creating a high barrier to adoption",
+      "Planning engagements spanning multiple days lose context when browser sessions are closed, requiring analysts to restart discovery from scratch",
+      "Developer investigations of ADSP service suitability require manual consultation of multiple service documentation sources with no guided discovery",
+      "Tenant administrators have no self-service mechanism to encode department-specific business process patterns into the planning system"
+    ],
+    "keyCapabilities": [
+      "Conversational AI planning via Anthropic Claude with streaming responses",
+      "Incremental business model construction from natural language with user correction capability",
+      "GoA business pattern library with automatic matching and hypothesis acceleration",
+      "Specialist sub-agents for form-service, pdf-service, comment-service, and notification-service",
+      "Persistent planning sessions resumable across browser restarts",
+      "ADSP platform-native implementation following all mandatory platform service patterns"
+    ],
+    "technicalStack": "Node.js 22 / TypeScript / Express 5 (backend); React 18 / GoA Design System 2.0 @abgov/react-components (UI); MongoDB via Mongoose (persistence); RabbitMQ via ADSP SDK (domain events); Keycloak JWT via passport-jwt (authentication); Anthropic Claude via @anthropic-ai/sdk (LLM inference)"
+  }
+}

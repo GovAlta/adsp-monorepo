@@ -1,0 +1,196 @@
+{
+  "schemaVersion": "1.0",
+  "rows": [
+    {
+      "sn": "SN-001",
+      "brq": ["BRQ-001", "BRQ-002"],
+      "streq": ["STREQ-001", "STREQ-002"],
+      "sysreq": ["SYSREQ-001", "SYSREQ-002", "SYSREQ-008", "SYSREQ-017"],
+      "swreq": ["SWREQ-003", "SWREQ-015"],
+      "usrreq": ["USRREQ-003", "USRREQ-008"],
+      "uc": ["UC-001", "UC-002"],
+      "br": ["BR-004", "BR-006"],
+      "int": ["INT-001"],
+      "tc": ["TC-001", "TC-003", "TC-004", "TC-021", "TC-022", "TC-045", "TC-046"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-002",
+      "brq": ["BRQ-002", "BRQ-003"],
+      "streq": ["STREQ-002", "STREQ-003"],
+      "sysreq": ["SYSREQ-002"],
+      "swreq": ["SWREQ-003", "SWREQ-006"],
+      "usrreq": ["USRREQ-003"],
+      "uc": ["UC-002", "UC-003"],
+      "br": ["BR-004", "BR-005", "BR-006"],
+      "tc": ["TC-003", "TC-005", "TC-013", "TC-025", "TC-026", "TC-035", "TC-036"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-003",
+      "brq": ["BRQ-003", "BRQ-004"],
+      "streq": ["STREQ-003", "STREQ-004"],
+      "sysreq": ["SYSREQ-003", "SYSREQ-004"],
+      "swreq": ["SWREQ-003", "SWREQ-004", "SWREQ-005"],
+      "usrreq": ["USRREQ-004"],
+      "uc": ["UC-004"],
+      "br": ["BR-004", "BR-005", "BR-010"],
+      "tc": ["TC-006", "TC-016", "TC-021", "TC-022", "TC-025", "TC-026", "TC-029", "TC-030", "TC-031", "TC-032"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-004",
+      "brq": ["BRQ-001", "BRQ-007"],
+      "streq": ["STREQ-005"],
+      "sysreq": ["SYSREQ-005"],
+      "swreq": ["SWREQ-002"],
+      "usrreq": ["USRREQ-006"],
+      "uc": ["UC-006"],
+      "br": ["BR-001"],
+      "tc": ["TC-008", "TC-018", "TC-033", "TC-034"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-005",
+      "brq": ["BRQ-005"],
+      "streq": ["STREQ-006"],
+      "sysreq": ["SYSREQ-003", "SYSREQ-006"],
+      "swreq": ["SWREQ-008", "SWREQ-012"],
+      "uc": ["UC-007"],
+      "br": ["BR-005"],
+      "int": ["INT-002"],
+      "tc": ["TC-025", "TC-026"],
+      "verificationMethod": "T",
+      "naJustifications": {
+        "usrreq": "USRREQ-007 pattern library UI covered under SN-010 row"
+      }
+    },
+    {
+      "sn": "SN-006",
+      "brq": ["BRQ-006"],
+      "streq": ["STREQ-007"],
+      "sysreq": ["SYSREQ-007"],
+      "swreq": ["SWREQ-003", "SWREQ-007"],
+      "usrreq": ["USRREQ-005"],
+      "uc": ["UC-005"],
+      "br": ["BR-009"],
+      "int": ["INT-003", "INT-004", "INT-005", "INT-006"],
+      "tc": ["TC-007", "TC-017", "TC-040", "TC-048"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-007",
+      "brq": ["BRQ-007"],
+      "streq": ["STREQ-008"],
+      "sysreq": ["SYSREQ-010", "SYSREQ-012"],
+      "swreq": ["SWREQ-011"],
+      "uc": ["UC-009"],
+      "br": ["BR-001", "BR-007"],
+      "tc": ["TC-011", "TC-012", "TC-019", "TC-041", "TC-042", "TC-063"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-008",
+      "brq": ["BRQ-008", "BRQ-009"],
+      "streq": ["STREQ-009", "STREQ-010"],
+      "sysreq": ["SYSREQ-010", "SYSREQ-011", "SYSREQ-014", "SYSREQ-023"],
+      "swreq": ["SWREQ-001", "SWREQ-009", "SWREQ-016"],
+      "uc": ["UC-009"],
+      "br": ["BR-012"],
+      "int": ["INT-007", "INT-008"],
+      "tc": ["TC-043", "TC-044", "TC-049", "TC-050"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-009",
+      "brq": ["BRQ-009"],
+      "streq": ["STREQ-011"],
+      "sysreq": ["SYSREQ-010", "SYSREQ-009", "SYSREQ-021", "SYSREQ-024"],
+      "swreq": ["SWREQ-010", "SWREQ-014"],
+      "usrreq": ["USRREQ-001", "USRREQ-002", "USRREQ-003", "USRREQ-004", "USRREQ-005"],
+      "uc": ["UC-009"],
+      "tc": ["TC-011", "TC-055", "TC-056", "TC-057"],
+      "verificationMethod": "T",
+      "naJustifications": {
+        "swreq": "SWREQ-010 GoA Design System component conformance verified by Demonstration in Stage 5 UI review; not covered by automated test"
+      }
+    },
+    {
+      "sn": "SN-010",
+      "brq": ["BRQ-005"],
+      "streq": ["STREQ-006", "STREQ-012"],
+      "sysreq": ["SYSREQ-006", "SYSREQ-022"],
+      "swreq": ["SWREQ-008"],
+      "usrreq": ["USRREQ-007"],
+      "uc": ["UC-007"],
+      "br": ["BR-005", "BR-007", "BR-008"],
+      "int": ["INT-002"],
+      "tc": ["TC-009", "TC-020", "TC-047", "TC-054"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-011",
+      "brq": ["BRQ-003", "BRQ-004"],
+      "streq": ["STREQ-013"],
+      "sysreq": ["SYSREQ-002", "SYSREQ-004", "SYSREQ-016"],
+      "swreq": ["SWREQ-003"],
+      "usrreq": ["USRREQ-004"],
+      "uc": ["UC-002", "UC-004"],
+      "tc": ["TC-003", "TC-006"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-012",
+      "brq": ["BRQ-010"],
+      "streq": ["STREQ-014"],
+      "sysreq": ["SYSREQ-013", "SYSREQ-018", "SYSREQ-019", "SYSREQ-020", "SYSREQ-015"],
+      "swreq": ["SWREQ-011", "SWREQ-013"],
+      "uc": ["UC-009", "UC-010"],
+      "br": ["BR-001", "BR-007", "BR-008"],
+      "tc": ["TC-015", "TC-019", "TC-037", "TC-038", "TC-039", "TC-050", "TC-051", "TC-052", "TC-053", "TC-054", "TC-065", "TC-121", "TC-123"],
+      "verificationMethod": "T"
+    },
+    {
+      "sn": "SN-013",
+      "brq": [],
+      "streq": [],
+      "sysreq": ["SYSREQ-010", "SYSREQ-005"],
+      "swreq": [],
+      "br": ["BR-001"],
+      "tc": ["TC-116", "TC-117", "TC-122"],
+      "verificationMethod": "T",
+      "naJustifications": {
+        "uc": "DDL-derived data integrity TCs do not trace to specific use cases; they verify schema constraints at the MongoDB persistence layer",
+        "brq": "Not traceable to business requirements; DDL schema integrity constraints generated by database-architect Step 9"
+      }
+    },
+    {
+      "sn": "SN-014",
+      "brq": [],
+      "streq": [],
+      "sysreq": ["SYSREQ-002", "SYSREQ-004"],
+      "swreq": ["SWREQ-003"],
+      "br": ["BR-006", "BR-010"],
+      "tc": ["TC-118", "TC-119", "TC-120"],
+      "verificationMethod": "T",
+      "naJustifications": {
+        "uc": "DDL-derived enum constraint tests do not trace to specific use cases; they verify Mongoose validators at the persistence layer",
+        "brq": "Not traceable to business requirements; DDL schema integrity constraints generated by database-architect Step 9"
+      }
+    },
+    {
+      "sn": "SN-015",
+      "brq": [],
+      "streq": [],
+      "sysreq": ["SYSREQ-020", "SYSREQ-010"],
+      "swreq": ["SWREQ-013"],
+      "br": ["BR-008"],
+      "tc": ["TC-121", "TC-123", "TC-124"],
+      "verificationMethod": "T",
+      "naJustifications": {
+        "uc": "DDL-derived audit and uniqueness constraint tests do not trace to specific use cases",
+        "brq": "Not traceable to business requirements; DDL schema integrity constraints generated by database-architect Step 9"
+      }
+    }
+  ]
+}

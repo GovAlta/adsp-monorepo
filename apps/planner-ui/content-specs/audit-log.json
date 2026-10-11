@@ -1,0 +1,248 @@
+{
+  "pageId": "audit-log",
+  "pageType": "report-results",
+  "title": "Audit Log",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "roles": ["planner-admin", "tenant-admin"],
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Administration", "nodeId": "admin-hub", "href": "/admin" },
+      { "label": "Audit Log", "nodeId": "audit-log", "href": "/admin/audit-log", "current": true }
+    ],
+    "parentNodeId": "admin-hub",
+    "childNodeIds": [],
+    "siblingNodeIds": ["pattern-library", "session-history", "user-management"]
+  },
+  "sections": {
+    "integrityBanner": {
+      "type": "hmac-status",
+      "description": "Prominent HMAC chain integrity status banner rendered at top of page before the filter controls and table. Loaded via verifyAuditChain (GET /api/v1/audit/verify) on page mount before table data is fetched.",
+      "verifiedLabel": "Chain Verified — all audit records are intact and tamper-evident",
+      "verifiedVariant": "success",
+      "brokenLabel": "Integrity Warning — one or more audit records may have been tampered with. Contact ADSP Support immediately.",
+      "brokenVariant": "error",
+      "brokenCta": {
+        "label": "Contact ADSP Support",
+        "href": "https://adsp.alberta.ca/support",
+        "type": "external-link"
+      },
+      "loadOperationId": "verifyAuditChain",
+      "tcReference": ["TC-045", "TC-046"],
+      "businessRules": ["BR-014", "BR-015"]
+    },
+    "filterControls": {
+      "filters": [
+        {
+          "label": "Action Type",
+          "name": "resourceType",
+          "type": "multi-select",
+          "options": [
+            { "value": "pattern.created", "label": "Pattern Created" },
+            { "value": "pattern.updated", "label": "Pattern Updated" },
+            { "value": "pattern.deactivated", "label": "Pattern Deactivated" },
+            { "value": "session.exported", "label": "Session Exported" },
+            { "value": "role.assigned", "label": "Role Assigned" },
+            { "value": "role.changed", "label": "Role Changed" },
+            { "value": "user.deactivated", "label": "User Deactivated" },
+            { "value": "audit.accessed", "label": "Audit Log Accessed" }
+          ],
+          "description": "Filter by audit event action type. Plain-language labels map to resourceType values accepted by listAuditEvents resourceType query param."
+        },
+        {
+          "label": "Actor",
+          "name": "actorId",
+          "type": "dropdown",
+          "description": "Filter by actor. Displayed as displayName in UI. actorId is sent as query param to listAuditEvents per OpenAPI spec (/audit?actorId=). Actor identity in audit records is Protected A (GoA employee userId).",
+          "securityNote": "FAC-S5-024: actorId query param is defined in OpenAPI spec for listAuditEvents. It is a GoA employee userId (Protected A, not Protected B). Display in filter dropdown uses displayName. No Protected B data flows through URL query strings on this page."
+        },
+        {
+          "label": "Date Range",
+          "name": "since",
+          "type": "date-range",
+          "description": "Filter events from start date (since param, ISO-8601) to end date. The since param maps directly to listAuditEvents query param."
+        }
+      ]
+    },
+    "runAction": {
+      "label": "Apply Filters",
+      "description": "Fetch filtered audit events from listAuditEvents (GET /api/v1/audit) with selected filter values. HMAC chain status is loaded independently on page mount via verifyAuditChain and does not change when filters are applied."
+    },
+    "resultsTable": {
+      "columns": [
+        {
+          "header": "Timestamp",
+          "key": "occurredAt",
+          "sortable": true,
+          "isLink": false,
+          "type": "datetime",
+          "defaultSort": "desc"
+        },
+        {
+          "header": "Actor",
+          "key": "actorDisplayName",
+          "sortable": false,
+          "isLink": false,
+          "description": "auditEvent.actorId resolved to displayName. Raw actorId is never rendered in the table.",
+          "securityNote": "FAC-S5-025: actorId is Protected A. Masked to displayName in column display. Annotate component render with // ASVS:V-8.3.1"
+        },
+        {
+          "header": "Action",
+          "key": "actionLabel",
+          "sortable": false,
+          "isLink": false,
+          "description": "Plain-language action label derived from auditEvent.action field (e.g. Pattern Created, Session Exported, Role Assigned)"
+        },
+        {
+          "header": "Affected Resource",
+          "key": "resourceId",
+          "sortable": false,
+          "isLink": false,
+          "type": "text",
+          "description": "Affected resource identifier: session ID, pattern ID, or user identifier as an opaque reference"
+        },
+        {
+          "header": "Outcome",
+          "key": "outcome",
+          "sortable": false,
+          "isLink": false,
+          "type": "badge",
+          "badgeVariants": {
+            "success": "success",
+            "failure": "error"
+          }
+        }
+      ],
+      "readOnly": true,
+      "editDeleteControls": false,
+      "readOnlyNote": "TC-047: No edit or delete controls are present on any audit row. Audit entries are immutable per BR-014. The absence of onSubmit bindings targeting audit records mechanically enforces read-only display.",
+      "rowClickAction": "none"
+    },
+    "emptyState": {
+      "message": "No audit events match the selected filters."
+    },
+    "exportAction": {
+      "label": "Export Audit Log",
+      "description": "Export the filtered audit event list as PDF or CSV. Generated client-side from listAuditEvents paginated result set.",
+      "formats": ["PDF", "CSV"],
+      "triggerOperationId": "listAuditEvents",
+      "pdfNote": "TC-048: PDF export includes HMAC chain status (verified or integrity-warning) as a header section, sourced from the verifyAuditChain result loaded on page mount. Generated client-side using browser print API or PDF generation library.",
+      "csvNote": "TC-049: CSV export of filtered audit events. Columns: timestamp, actorDisplayName, actionLabel, resourceId, outcome. Raw actorId excluded from export (FAC-S5-025 — display name only in all rendered and exported output).",
+      "exportNote": "No dedicated audit log export endpoint in OpenAPI spec. Export is generated client-side from listAuditEvents paginated result with current filters applied.",
+      "accessControl": {
+        "roles": ["planner-admin", "tenant-admin"],
+        "description": "Export access restricted to admin roles."
+      }
+    },
+    "pagination": {
+      "perPage": 25,
+      "description": "Server-side pagination via page and pageSize query params on GET /api/v1/audit"
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "verifyAuditChain",
+        "method": "GET",
+        "path": "/api/v1/audit/verify",
+        "description": "Verifies HMAC chain integrity of the audit log. Result drives integrityBanner variant (success green or error red with CTA). Called on page mount before table data is fetched. Requires planner-admin or tenant-admin role.",
+        "bindsTo": "integrityBanner"
+      },
+      {
+        "operationId": "listAuditEvents",
+        "method": "GET",
+        "path": "/api/v1/audit",
+        "description": "Fetches paginated audit events for the current tenant. Requires planner-admin or tenant-admin role (BR-007). Returns AuditEvent records with actorId, action, resourceId, outcome, occurredAt. Access to this endpoint itself generates an audit entry per BR-008.",
+        "bindsTo": "resultsTable",
+        "queryParams": ["page", "pageSize", "actorId", "resourceType", "since"]
+      }
+    ],
+    "onSubmit": [],
+    "validationErrors": [],
+    "emptyState": "No audit events match the selected filters."
+  },
+  "accessControl": {
+    "roles": ["planner-admin", "tenant-admin"],
+    "deniedRoles": ["planner-user"],
+    "deniedMessage": "You do not have permission to view the audit log. This area is restricted to tenant administrators and platform administrators.",
+    "deniedTCs": ["TC-036", "TC-039"]
+  },
+  "errorStates": [
+    {
+      "condition": "403 — planner-user attempts to access audit log",
+      "type": "page-level-error",
+      "message": "You do not have permission to view the audit log.",
+      "tcReference": ["TC-036", "TC-039"]
+    },
+    {
+      "condition": "verifyAuditChain returns verified: false",
+      "type": "integrity-banner-error",
+      "message": "Integrity Warning — one or more audit records may have been tampered with. Contact ADSP Support immediately.",
+      "tcReference": ["TC-046"]
+    },
+    {
+      "condition": "listAuditEvents returns empty result set with active filters",
+      "type": "empty-state",
+      "message": "No audit events match the selected filters."
+    },
+    {
+      "condition": "503 — listAuditEvents or verifyAuditChain service unavailable",
+      "type": "inline-error-banner",
+      "message": "Audit log is temporarily unavailable. Please try again in a few moments."
+    }
+  ],
+  "immutabilityNote": "TC-047: This page is entirely read-only. No edit, delete, or modify controls are present on any audit event row. Immutability is enforced by the complete absence of any onSubmit binding targeting audit records, and by hiding all row action controls from the UI.",
+  "securityContext": {
+    "classificationLevel": "Protected A",
+    "protectedFields": [
+      {
+        "field": "auditEvent.actorId",
+        "classification": "Protected A (GoA employee userId)",
+        "displayAs": "actorDisplayName",
+        "maskingRule": "FAC-S5-025: render actor display name resolved from user context; never render raw actorId in table or export output",
+        "annotation": "// ASVS:V-8.3.1",
+        "note": "OpenAPI classifies audit_event as Protected A. actorId is a GoA employee userId — display as displayName per POPA s.17 principles."
+      }
+    ],
+    "urlLeakageNote": "FAC-S5-024: actorId filter is a standard query param per OpenAPI listAuditEvents spec (/audit?actorId=). This is a Protected A employee userId, not Protected B. No Protected B data flows through URL query strings on this page.",
+    "storageNote": "FAC-S5-026: No Protected A or B fields written to localStorage or sessionStorage. Filter state held in component state only. Audit event content (action, resourceId, outcome) is Protected A display-only data."
+  },
+  "hmacIntegrityModel": {
+    "businessRules": ["BR-014", "BR-015"],
+    "sysReq": "SYSREQ-020",
+    "description": "Audit records are HMAC-chained on creation (AUDIT_SIGNING_KEY env var per openapi.yaml x-security). verifyAuditChain checks chain integrity over a specified index range. A verified: false result triggers the red integrity warning banner. The chain cannot be repaired by end users — ADSP Support must investigate.",
+    "tcCoverage": ["TC-045", "TC-046"]
+  },
+  "tcCoverage": {
+    "covered": ["TC-045", "TC-046", "TC-047", "TC-048", "TC-049", "TC-055", "TC-057"],
+    "description": "TC-045: HMAC chain verified — green success banner. TC-046: HMAC chain broken — red integrity warning banner with ADSP Support CTA. TC-047: no edit/delete controls anywhere on page — immutable read-only display. TC-048: PDF export includes HMAC chain status header. TC-049: CSV export of filtered audit events with displayName (not raw actorId). TC-055: keyboard navigation through filter controls, table, pagination, and export action. TC-057: colour contrast for success/error badges and integrity banner."
+  },
+  "policyNotices": [
+    {
+      "policy": "BR-014",
+      "description": "Audit log is immutable. No edit or delete controls are rendered on any audit event row."
+    },
+    {
+      "policy": "BR-015",
+      "description": "HMAC chain integrity is verified on page load via verifyAuditChain. A broken chain triggers an immediate integrity warning banner with ADSP Support contact link."
+    },
+    {
+      "policy": "SYSREQ-020",
+      "description": "Audit events are HMAC-chained per SYSREQ-020 security event logging requirement. Verification is performed on page load."
+    },
+    {
+      "policy": "BR-008",
+      "description": "Access to the audit log endpoint itself generates a new audit entry (noted in OpenAPI listAuditEvents description). This is transparent to the UI — no special handling required client-side."
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["audit-log", "admin-hub"],
+    "apiOperationIds": ["verifyAuditChain", "listAuditEvents"],
+    "ucCoverage": ["UC-008"],
+    "tcCoverage": ["TC-045", "TC-046", "TC-047", "TC-048", "TC-049", "TC-055", "TC-057"],
+    "brCoverage": ["BR-007", "BR-008", "BR-014", "BR-015"],
+    "note": "No dedicated UC for audit-log in use_cases.json. Governed by BR-014 (immutable audit log) and BR-015 (HMAC chain integrity). Export endpoints for PDF/CSV are not present in OpenAPI spec — exports are generated client-side from listAuditEvents result."
+  }
+}

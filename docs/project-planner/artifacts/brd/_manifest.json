@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "generatedAt": "2026-10-09T01:30:00Z",
+  "factoryStage": "1",
+  "amendmentHistory": [
+    {
+      "amendedBy": "database-architect",
+      "amendedAt": "2026-10-10T00:00:00Z",
+      "factoryStage": "3",
+      "description": "Step 9 DDL-derived test case generation. Appended TC-116 through TC-124 (9 new Data Integrity test cases) to test_specifications.json testCases[]. Added testDesign TD-007 (MongoDB Schema Data Integrity). Updated coverageMatrix for SYSREQ-010, SYSREQ-020, SWREQ-013. Added RTM rows SN-013, SN-014, SN-015 to traceability_matrix.json. Appended ASSUMPTION-009 to assumptions.json documenting MongoDB validator deployment requirement.",
+      "artifactsAmended": [
+        "brd/test_specifications.json",
+        "brd/traceability_matrix.json",
+        "brd/assumptions.json"
+      ],
+      "newIds": {
+        "testCases": ["TC-116","TC-117","TC-118","TC-119","TC-120","TC-121","TC-122","TC-123","TC-124"],
+        "testDesigns": ["TD-007"],
+        "rtmRows": ["SN-013","SN-014","SN-015"],
+        "assumptions": ["ASSUMPTION-009"]
+      }
+    }
+  ],
+  "files": {
+    "metadata": {
+      "path": "brd/metadata.json",
+      "schema": "metadata.schema.json",
+      "recordCount": 1
+    },
+    "stakeholders": {
+      "path": "brd/stakeholders.json",
+      "schema": "stakeholders.schema.json",
+      "recordCount": 5
+    },
+    "context_of_use": {
+      "path": "brd/context_of_use.json",
+      "schema": "context_of_use.schema.json",
+      "recordCount": 1
+    },
+    "stakeholder_needs": {
+      "path": "brd/stakeholder_needs.json",
+      "schema": "stakeholder_need.schema.json",
+      "recordCount": 12
+    },
+    "requirements": {
+      "path": "brd/requirements.json",
+      "schema": "requirement.schema.json",
+      "recordCount": 72
+    },
+    "use_cases": {
+      "path": "brd/use_cases.json",
+      "schema": "use_case.schema.json",
+      "recordCount": 10
+    },
+    "business_rules": {
+      "path": "brd/business_rules.json",
+      "schema": "business_rule.schema.json",
+      "recordCount": 12
+    },
+    "integration_points": {
+      "path": "brd/integration_points.json",
+      "schema": "integration_point.schema.json",
+      "recordCount": 8
+    },
+    "test_specifications": {
+      "path": "brd/test_specifications.json",
+      "schema": "test_case.schema.json",
+      "recordCount": 66
+    },
+    "traceability_matrix": {
+      "path": "brd/traceability_matrix.json",
+      "schema": "traceability_matrix.schema.json",
+      "recordCount": 12
+    },
+    "assumptions": {
+      "path": "brd/assumptions.json",
+      "schema": "assumption.schema.json",
+      "recordCount": 8
+    },
+    "open_issues": {
+      "path": "brd/open_issues.json",
+      "schema": "open_issue.schema.json",
+      "recordCount": 6
+    },
+    "glossary": {
+      "path": "brd/glossary.json",
+      "schema": "glossary.schema.json",
+      "recordCount": 15
+    }
+  }
+}

@@ -1,0 +1,413 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "audience": {
+    "name": "ADSP Tenant Administrator",
+    "types": ["GoA employee"],
+    "description": "ADSP-registered GoA department administrators responsible for managing the business pattern library and overseeing planning activity within their tenant. They have medium technical proficiency and are familiar with the TMW administrative interface and ADSP configuration concepts. They infrequently interact with the service, primarily to create, update, or deactivate business pattern templates and review session history and audit logs for governance purposes.",
+    "goals": [
+      "Create and maintain tenant-specific business pattern templates encoding departmental process knowledge",
+      "Deactivate outdated patterns to keep the pattern library accurate",
+      "Review tenant-wide session history for oversight and governance reporting",
+      "Audit administrative actions via the immutable audit log",
+      "Manage user role assignments for the planner-service within the tenant"
+    ],
+    "outcomes": [
+      "Business pattern library that reflects the department's recurring process types, accelerating analyst planning sessions",
+      "Self-service configuration capability reducing dependency on platform team for pattern updates",
+      "Governance oversight of AI-assisted planning activities with full administrative audit trail"
+    ]
+  },
+  "journeys": [
+    {
+      "name": "Managing the Business Pattern Library",
+      "description": "The Tenant Administrator creates, edits, and deactivates business pattern templates through the TMW administrative interface to keep the tenant's pattern library accurate and current. This journey is triggered infrequently, typically when a new departmental process type is identified, an existing pattern needs updating, or an outdated pattern must be retired.",
+      "trigger": "A departmental process has evolved, a new recurring business problem type has been identified, or an existing pattern is producing inaccurate planning matches.",
+      "goal": "Create or update business pattern templates that accurately reflect the department's recurring process types, and deactivate outdated patterns, with all changes immediately reflected in the pattern matching engine and recorded in the immutable audit log.",
+      "stages": [
+        {
+          "name": "Access and Orient to the Pattern Library",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Log into the TMW administrative interface using your departmental Keycloak credentials.",
+              "needs": [
+                "Valid Keycloak credentials with planner-admin or tenant-admin role assigned",
+                "Network access to the ADSP Tenant Management Webapp"
+              ],
+              "touchpoint": "Tenant Management Webapp (TMW) — Keycloak login page (INT-008)",
+              "frontstage": [
+                "Keycloak login prompt integrated in the TMW interface",
+                "Role-based redirect to the TMW administrative dashboard after successful authentication"
+              ],
+              "backstage": [
+                "Keycloak JWT Authorization Server (INT-008) validates RS256 JWT signature and role claims via passport-jwt middleware",
+                "Tenant context and role claims extracted from JWT and applied to the user session",
+                "planner-admin or tenant-admin role claim gates access to administrative sections"
+              ],
+              "thinking": "\"I need to update the pattern library before the analysts run their planning sessions this week.\"",
+              "emotionalContext": "Purposeful and task-oriented. The administrator arrives with a clear goal and is familiar with the Keycloak login flow from prior TMW use, so authentication itself is routine.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Infrequent use means the administrator may not remember the exact navigation path to the pattern library after authentication, requiring exploration of the TMW menu structure."
+              ],
+              "opportunities": [
+                "Post-authentication redirect could land directly on the pattern library section for users with the planner-admin role, reducing orientation time for this infrequent workflow."
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Navigate to the ADSP Project Planner administrative section and open the Pattern Library management view.",
+              "needs": [
+                "Clear TMW navigation structure that exposes the Pattern Library section without deep menu traversal",
+                "Visible summary of current pattern count and active versus inactive status at a glance"
+              ],
+              "touchpoint": "Tenant Management Webapp (TMW) — ADSP Project Planner admin navigation and Pattern Library index",
+              "frontstage": [
+                "TMW navigation menu with an ADSP Project Planner administrative section",
+                "Pattern library index page listing existing patterns with name, status badge (active/inactive), and last-modified date"
+              ],
+              "backstage": [
+                "planner-service REST API GET /api/v1/patterns called to retrieve the tenant's pattern list",
+                "ADSP Configuration Service (INT-002) returns stored business pattern records for the tenant",
+                "Pattern list rendered with pagination; tenant isolation enforced by tenantId scoping from JWT"
+              ],
+              "thinking": "\"Let me see what patterns we already have so I know what needs updating or creating.\"",
+              "emotionalContext": "Oriented and ready. Seeing the full pattern index gives the administrator a complete picture of the library state, enabling a confident decision about what action to take next.",
+              "feeling": "positive",
+              "painPoints": [
+                "No aggregate status indicator or bulk health summary on the index makes it difficult to quickly assess how many patterns are stale or inactive without scanning each row."
+              ],
+              "opportunities": [
+                "Filter and sort controls on the pattern index — sortable by last-modified date, filterable by status — would help administrators identify outdated patterns requiring attention without scanning the full list."
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Author or Modify a Business Pattern Template",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Select an existing pattern to edit, or initiate creation of a new pattern template by clicking 'Add Pattern'.",
+              "needs": [
+                "Pattern creation form with all required fields clearly labeled",
+                "For existing patterns: form pre-populated with current values to support incremental editing"
+              ],
+              "touchpoint": "TMW — Pattern Editor form",
+              "frontstage": [
+                "Pattern editor form with fields for name, description, domain language, strong signal keywords, ADSP service mappings, and clarifying questions",
+                "For existing patterns: all fields pre-populated with current stored values",
+                "Field-level help text explaining each attribute's role in the pattern matching algorithm"
+              ],
+              "backstage": [
+                "For edit: planner-service REST API GET /api/v1/patterns/{patternId} fetches current pattern record",
+                "ADSP Configuration Service (INT-002) returns the stored pattern JSON for the tenant",
+                "For new pattern: empty form initialized with template field structure"
+              ],
+              "thinking": "\"I need to make sure the signal keywords are specific enough to match the right business problems without triggering false positives.\"",
+              "emotionalContext": "Focused but moderately uncertain. The administrator understands the business domain well but must translate domain knowledge into a structured technical vocabulary — signal keywords, service mappings — without immediate feedback on whether those choices will be effective in practice.",
+              "feeling": "neutral",
+              "painPoints": [
+                "No inline guidance on how signal keywords interact with the pattern matching algorithm makes it difficult to calibrate keyword specificity before saving.",
+                "No preview of how similar or conflicting the new pattern is to existing patterns in the library, risking duplication."
+              ],
+              "opportunities": [
+                "A live pattern similarity check showing how the new pattern's signal keywords compare to existing active patterns would help administrators avoid unintentional overlap.",
+                "Inline examples of well-formed signal keyword sets from other patterns (anonymized) would scaffold authoring for less experienced administrators."
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Complete all required pattern fields — name, description, domain language, signal keywords, ADSP service mappings, and clarifying questions — and review each section before submitting.",
+              "needs": [
+                "Understanding of the department's recurring business process types to inform pattern content",
+                "Knowledge of which ADSP services address the pattern's core business problem for the service mapping section",
+                "Ability to identify strong discriminating signal keywords that distinguish this pattern from adjacent ones"
+              ],
+              "touchpoint": "TMW — Pattern Editor form",
+              "frontstage": [
+                "Editable text fields and structured input areas for each pattern attribute",
+                "Required field validation indicators and character guidance for constrained fields",
+                "ADSP service mapping selector presenting the available ADSP service options"
+              ],
+              "backstage": [
+                "Client-side field validation runs on blur/submit to catch missing required fields before the network call",
+                "No backend write occurs until the administrator explicitly submits the completed form"
+              ],
+              "thinking": "\"I want to capture enough detail that the AI can use this pattern reliably — the clarifying questions need to reflect what a planner would actually need to know about this type of request.\"",
+              "emotionalContext": "Deliberate and thoughtful. The administrator is encoding department-specific process knowledge into a structured form and must balance completeness against over-specification, knowing that this pattern will guide AI interactions for many future analyst sessions.",
+              "feeling": "neutral",
+              "painPoints": [
+                "No version history on patterns makes it difficult to understand what has changed since the last update or to revert an inadvertent edit.",
+                "No test harness to simulate how the completed pattern would perform against representative session inputs before activating it."
+              ],
+              "opportunities": [
+                "Auto-suggest signal keywords derived from the pattern name and description text could reduce manual keyword brainstorming effort.",
+                "A sandbox 'test this pattern' mode accepting a sample business problem statement would let the administrator validate matching effectiveness before publishing."
+              ]
+            },
+            {
+              "stepNumber": 3,
+              "action": "Submit the completed pattern form and verify the success confirmation.",
+              "needs": [
+                "Immediate, unambiguous feedback confirming the save succeeded and the pattern is active in the library",
+                "Clear error messages if required fields are missing or if the Configuration Service is unavailable"
+              ],
+              "touchpoint": "TMW — Pattern Editor form / success notification",
+              "frontstage": [
+                "Submit button triggers the save action with a loading state indicator",
+                "Success notification confirming the pattern is saved and active, with the pattern ID displayed",
+                "Automatic return to the pattern index showing the updated pattern in the list with current status"
+              ],
+              "backstage": [
+                "planner-service REST API POST /api/v1/patterns (create) or PATCH /api/v1/patterns/{patternId} (update) called",
+                "ADSP Configuration Service (INT-002) persists the pattern record for the tenant; on write failure returns HTTP 503 per INT-002 error handling",
+                "Audit log entry written with actor, action (created or updated), timestamp, and patternId per UC-007 and SN-012",
+                "HMAC chain updated on the audit record for tamper-evidence"
+              ],
+              "thinking": "\"Good — the pattern saved. I should check the audit log to confirm my action was recorded for the governance record.\"",
+              "emotionalContext": "Relieved and satisfied. The success confirmation resolves the uncertainty of whether the save completed, and knowledge that an audit log entry has been written provides assurance that the administrative action is properly recorded.",
+              "feeling": "positive",
+              "painPoints": [
+                "If the ADSP Configuration Service is temporarily unavailable, the save fails entirely with no partial state and no clear recovery path, leaving the administrator to retry manually with no indication of when the service will be available again."
+              ],
+              "opportunities": [
+                "An inline link from the success confirmation directly to the audit log entry for this action would let the administrator verify the governance record in a single step without navigating to the audit section separately."
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Deactivate an Outdated Pattern",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Return to the pattern index, identify a pattern that is outdated or no longer reflects current business process, and open its detail view to confirm it should be deactivated.",
+              "needs": [
+                "Pattern index clearly displaying active versus inactive status for each pattern",
+                "Last-modified date visible to help identify patterns that have not been reviewed recently",
+                "Ability to read the full pattern content before deciding to deactivate"
+              ],
+              "touchpoint": "TMW — Pattern Library index and pattern detail view",
+              "frontstage": [
+                "Pattern index rows with status badges (Active/Inactive) and last-modified date column",
+                "Pattern detail view accessible from the index row, showing full pattern content including signal keywords and service mappings"
+              ],
+              "backstage": [
+                "planner-service REST API GET /api/v1/patterns returns the tenant's pattern list with status and metadata",
+                "ADSP Configuration Service (INT-002) supplies stored records scoped to the tenant"
+              ],
+              "thinking": "\"This pattern was authored two years ago and the business process has changed significantly — I need to deactivate it before it misleads an analyst into a wrong solution path.\"",
+              "emotionalContext": "Deliberate and cautious. The administrator wants to be certain the pattern is genuinely obsolete before deactivating, because reactivation requires additional steps and an incorrect deactivation could affect in-progress analyst sessions.",
+              "feeling": "neutral",
+              "painPoints": [
+                "No indication of whether the pattern has matched any active or recent sessions makes it difficult to assess the immediate impact of deactivation on in-progress work."
+              ],
+              "opportunities": [
+                "Usage statistics on the pattern detail view — number of sessions matched in the last 90 days — would give the administrator concrete data to support the deactivation decision and estimate downstream impact."
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Select the deactivate action, confirm in the confirmation dialog, and verify the pattern status changes to inactive in the UI.",
+              "needs": [
+                "Confirmation dialog that clearly states the effect of deactivation on future pattern matching",
+                "Immediate UI status update after confirmation so the administrator sees the change took effect",
+                "Reference to the audit log entry confirming the governance record was created"
+              ],
+              "touchpoint": "TMW — Pattern deactivation confirmation dialog and pattern detail view",
+              "frontstage": [
+                "Deactivate action button on the pattern detail view",
+                "Confirmation modal stating: 'Deactivating this pattern will remove it from future planning session matches. This action will be recorded in the audit log.'",
+                "Pattern status badge updates to 'Inactive' immediately after confirmation",
+                "Success notification referencing the audit log entry ID"
+              ],
+              "backstage": [
+                "planner-service REST API PATCH /api/v1/patterns/{patternId} with status set to inactive",
+                "ADSP Configuration Service (INT-002) updates the pattern record; change is immediately reflected for new pattern matching requests",
+                "Audit log entry written with actor, action (deactivated), timestamp, and patternId per UC-007 and SN-012",
+                "HMAC chain updated for tamper-evidence"
+              ],
+              "thinking": "\"The pattern is deactivated and logged. The library is more accurate now, and I have an audit trail proving I took this action.\"",
+              "emotionalContext": "Satisfied and confident. The confirmation dialog communicated the consequences clearly, the immediate UI update confirmed the action took effect, and the audit reference closes the governance loop without requiring a separate navigation step.",
+              "feeling": "positive",
+              "painPoints": [
+                "No bulk deactivation capability requires the administrator to deactivate each outdated pattern individually, which is time-consuming when a pattern library review identifies multiple stale patterns simultaneously."
+              ],
+              "opportunities": [
+                "Multi-select with bulk deactivate action on the pattern index would significantly reduce the effort of periodic library hygiene reviews when multiple patterns need retirement at once."
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "The tenant's business pattern library is updated with current, accurate patterns and outdated patterns are deactivated. All changes are immediately reflected in the pattern matching engine for subsequent analyst planning sessions, and every administrative action is immutably recorded in the audit log for governance purposes."
+    },
+    {
+      "name": "Reviewing Session History and Audit Log for Governance",
+      "description": "The Tenant Administrator reviews tenant-wide planning session history and examines the immutable audit log to fulfill governance and oversight obligations. This journey is triggered by a reporting cycle, a governance inquiry, a compliance review, or a specific event requiring investigation of administrative or planning activity within the tenant.",
+      "trigger": "A quarterly governance report is due, a compliance or security review has been initiated, or an anomalous planning or administrative activity has been flagged for investigation.",
+      "goal": "Obtain a complete, filtered view of tenant planning session activity and confirm that the immutable audit log accurately records all administrative actions with a verified HMAC integrity chain, satisfying governance reporting and oversight requirements.",
+      "stages": [
+        {
+          "name": "Access the Governance Review Interface",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Log into TMW and navigate to the ADSP Project Planner administrative area to access the session history and audit log sections.",
+              "needs": [
+                "Authenticated TMW session with planner-admin or tenant-admin role for access to governance sections",
+                "Clear navigation path in TMW to governance review functionality without requiring deep menu exploration"
+              ],
+              "touchpoint": "Tenant Management Webapp (TMW) — ADSP Project Planner admin section (INT-008)",
+              "frontstage": [
+                "TMW navigation with ADSP Project Planner administrative section visible after authentication",
+                "Governance subsection containing Session History and Audit Log navigation items, visible only to authorized roles"
+              ],
+              "backstage": [
+                "Keycloak JWT Authorization Server (INT-008) confirms planner-admin or tenant-admin role claim on each API request to governance endpoints",
+                "Role-based UI rendering shows governance navigation items only for users holding the required roles"
+              ],
+              "thinking": "\"I need to check session activity for last quarter's governance report and confirm the audit log is intact before I submit.\"",
+              "emotionalContext": "Task-oriented and purposeful. The administrator has a specific reporting or compliance obligation driving this session and approaches the interface knowing what needs to be accomplished.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Infrequent use of governance sections means the administrator may need to re-orient to the TMW navigation structure each time, adding friction at the start of a time-sensitive review."
+              ],
+              "opportunities": [
+                "A 'Governance' quick-access card or shortcut on the TMW administrative dashboard would allow the administrator to reach session history and audit log views in a single click, reducing orientation overhead for infrequent but important tasks."
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Review Tenant Session History",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Open the Session History view and apply filters for date range, user, and session status to scope the review to the relevant period and population.",
+              "needs": [
+                "Filter controls for date range, user (tenant-scoped), and session status (active, completed, archived)",
+                "Paginated session list with meaningful per-session summary data: session ID, owner, creation date, status, last-activity timestamp"
+              ],
+              "touchpoint": "TMW — Session History view",
+              "frontstage": [
+                "Session history page with filter panel: date range picker, user dropdown restricted to tenant users, session status selector",
+                "Paginated session list displaying session ID, owner, created date, session status, and last activity timestamp per row"
+              ],
+              "backstage": [
+                "planner-service REST API GET /api/v1/admin/sessions with date, user, and status filter parameters",
+                "MongoDB query scoped to tenantId from the JWT, applying filter predicates; result set returned with cursor-based pagination",
+                "Multi-tenant data isolation enforced: only sessions belonging to the requesting administrator's tenant are accessible"
+              ],
+              "thinking": "\"I want all completed sessions from the past 90 days across our department's analysts so I can include the right data in the governance report.\"",
+              "emotionalContext": "Focused and methodical. The administrator is performing a structured reporting function and values precise filter controls so the review scope is correct on the first query, avoiding a re-run with corrected parameters.",
+              "feeling": "positive",
+              "painPoints": [
+                "No export function for the filtered session history list makes it difficult to produce a formatted governance report without manually transcribing session data from the UI.",
+                "If the tenant has many users, an unsearchable user dropdown makes filtering to a specific analyst slow and error-prone."
+              ],
+              "opportunities": [
+                "CSV or JSON export of the filtered session history list would directly support governance reporting workflows without manual data extraction or transcription.",
+                "Searchable user dropdown with autocomplete would improve filtering efficiency in tenants with large user populations."
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Select a specific session from the history list to review its summary details, hypothesis count, and export history.",
+              "needs": [
+                "Summary view of session content showing key metadata without exposing the full conversation transcript by default",
+                "Key data points visible: session owner, creation date, last-activity date, session status, business model summary, hypothesis count, and export history"
+              ],
+              "touchpoint": "TMW — Session Detail view",
+              "frontstage": [
+                "Session detail panel showing: session owner, creation and last-activity dates, session status, business model summary (sector, problem type), number of hypotheses generated, and export history with timestamps",
+                "Option to expand the full conversation transcript if the administrator needs to review session content in detail"
+              ],
+              "backstage": [
+                "planner-service REST API GET /api/v1/admin/sessions/{sessionId} fetches the session record",
+                "MongoDB query scoped to tenantId enforces data isolation — administrators cannot access sessions from other tenants even by direct ID reference",
+                "Full conversation messages excluded from default response unless a content-detail flag is explicitly set"
+              ],
+              "thinking": "\"This session shows an unusual pattern match result — I should note the session ID and check for any related audit log entries when I get there.\"",
+              "emotionalContext": "Analytical and alert. The administrator is evaluating session data for governance purposes and may identify items warranting deeper investigation in the audit log, acting as an informed first line of oversight.",
+              "feeling": "neutral",
+              "painPoints": [
+                "No annotation or flagging capability on sessions prevents the administrator from marking sessions of interest for follow-up without maintaining external notes alongside the TMW review."
+              ],
+              "opportunities": [
+                "An inline session annotation field would let administrators tag sessions with notes visible only to tenant administrators, enabling structured governance workflows where flagged items can be tracked to resolution."
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Examine the Audit Log",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Navigate to the Audit Log view and apply filters for action type, actor, and date range to locate the relevant administrative action records.",
+              "needs": [
+                "Filter controls for action type (created, updated, deactivated), actor, and date range",
+                "Chronologically ordered, immutable audit entries presented in a readable tabular format"
+              ],
+              "touchpoint": "TMW — Audit Log view",
+              "frontstage": [
+                "Audit Log page with filter panel: action type multi-select (pattern created, pattern updated, pattern deactivated), actor dropdown, date range picker",
+                "Paginated audit log table displaying: timestamp, actor display name, action type, affected resource ID (patternId or sessionId), and outcome (success or failure)"
+              ],
+              "backstage": [
+                "planner-service REST API GET /api/v1/admin/audit with filter parameters applied",
+                "Audit records fetched from MongoDB collection scoped to the tenant's audit namespace",
+                "Server-side HMAC chain integrity verified before entries are returned; any detected chain break surfaces as a warning flag in the API response",
+                "Immutable records: no update or delete operations permitted on audit entries by any role"
+              ],
+              "thinking": "\"I need to verify that my pattern library changes from last week were all recorded with the correct timestamps and my actor ID.\"",
+              "emotionalContext": "Vigilant and detail-oriented. The administrator is confirming that the governance record is complete and accurate, which carries real compliance weight for the department — an incomplete or tampered audit log would be a serious governance problem.",
+              "feeling": "positive",
+              "painPoints": [
+                "If audit entries display action codes rather than plain-language labels, identifying specific events requires cross-referencing code definitions, slowing the review.",
+                "No export capability for audit log records makes it difficult to include immutable evidence in formal governance submissions or external compliance reports."
+              ],
+              "opportunities": [
+                "Audit log export in PDF or CSV format would allow administrators to attach tamper-evident evidence directly to governance submissions.",
+                "Action type labels displayed in plain language ('Pattern created', 'Pattern deactivated', 'Session exported') rather than technical constants would improve readability for governance reviewers who are not deeply technical."
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Review the audit chain integrity status, confirm the records are complete for the review period, and close the governance review.",
+              "needs": [
+                "Clear, prominent indicator of the HMAC audit chain integrity verification result",
+                "Confidence that the audit record is complete and unaltered before submitting a governance report"
+              ],
+              "touchpoint": "TMW — Audit Log view",
+              "frontstage": [
+                "Audit chain integrity status banner: 'All records verified — audit chain intact' or 'Integrity warning detected — contact ADSP Support at adsp-support@gov.ab.ca'",
+                "No edit or delete controls visible on any audit entry, reinforcing immutability",
+                "Administrator confirms the review is complete and closes the session"
+              ],
+              "backstage": [
+                "Server-side HMAC chain verification completes when the audit log API responds; result included in the response metadata",
+                "Any integrity violation triggers an automated platform alert to the ADSP Platform Team for investigation",
+                "No write-back to the audit log from the read view; audit records are immutable by design per SN-012"
+              ],
+              "thinking": "\"All records are verified and the chain is intact. I can complete the governance report with confidence that this evidence is defensible.\"",
+              "emotionalContext": "Reassured and complete. The visible integrity confirmation gives the administrator confidence that the governance record is defensible and unaltered, closing the review on a positive note with a clear compliance outcome.",
+              "feeling": "positive",
+              "painPoints": [
+                "If an HMAC chain integrity warning appears, the administrator has no self-service diagnostic or remediation path and must open a support ticket with ADSP Support, creating an unresolved blocker if the governance submission deadline is imminent."
+              ],
+              "opportunities": [
+                "Proactive HMAC chain health monitoring with automated email alerts to tenant administrators would surface any integrity issues before they are encountered during a time-sensitive governance review, reducing surprise and response-time pressure.",
+                "An in-TMW guided support workflow for integrity warnings — capturing context and routing directly to ADSP Support — would reduce the friction of escalating an integrity issue when one is detected."
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "The administrator has reviewed tenant planning session activity and confirmed the audit log is complete and HMAC-verified for the review period. The governance report can be submitted with confidence, backed by an immutable, tamper-evident administrative audit trail per SN-012 and UC-010."
+    }
+  ]
+}

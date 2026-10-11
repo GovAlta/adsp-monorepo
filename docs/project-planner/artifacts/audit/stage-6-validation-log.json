@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "stage": 6,
+  "stageName": "Security Validation",
+  "validatedAt": "2026-10-10T00:00:00Z",
+  "overallStatus": "PASSED",
+  "gateRetryCount": 0,
+  "validationRules": [
+    {
+      "ruleId": "FAC-S6-001",
+      "description": "Security classification yaml present and classificationLevel in scope for Stage 6",
+      "status": "PASS",
+      "evidence": "requirements/audit/security-classification.yaml present; schemaVersion=1.0; classificationLevel=Protected B; classifiedAt=2026-10-10T00:00:00Z; serviceName=planner-service. Stage 6 reconciliation in scope."
+    },
+    {
+      "ruleId": "FAC-S6-002",
+      "description": "Stage 4 category-aware rules FAC-S4-026..030 reconcile to PASS or N/A",
+      "status": "PASS",
+      "evidence": "requirements/audit/stage-4-validation-log.json: FAC-S4-026 PASS (no protected-category field names in URL paths/query parameters), FAC-S4-027 PASS (every logging file referencing a protected-category field also references a redaction primitive; 99 files scanned), FAC-S4-028 PASS (no hardcoded credential literals; 99 files scanned), FAC-S4-029 PASS (TLS-enforcement primitive present), FAC-S4-030 PASS (auth primitive present in every non-public controller file; 0 unguarded). All 5 rules PASS. Validator: fac_s6_runner."
+    },
+    {
+      "ruleId": "FAC-S6-003",
+      "description": "Stage 5 category-aware rules FAC-S5-024..026 reconcile to PASS or N/A",
+      "status": "PASS",
+      "evidence": "requirements/audit/stage-5-validation-log.json: FAC-S5-024 PASS (no Protected B field tokens in URL construction patterns across apps/planner-ui/src/), FAC-S5-025 PASS (MaskedField primitive present with ASVS:V-8.3.1 and CAS:RULE-017 annotations; used in BusinessModelReview, HypothesisReview, SessionExport, UserManagement), FAC-S5-026 PASS (0 instances of localStorage.setItem/sessionStorage.setItem/cookie writes; Keycloak token managed by window.__keycloak). All 3 rules PASS. Validator: fac_s6_runner."
+    },
+    {
+      "ruleId": "FAC-S6-004",
+      "description": "ASVS annotation density meets advisory floor across Stage 4 and Stage 5 source files",
+      "status": "PASS",
+      "evidence": "fac_s6_runner: 15 ASVS markers (pattern ASVS:V-N.N.N) across 10/81 scoped source files (stage4=57 files, stage5=24 files). ASVS annotations confirmed in apps/planner-ui/src/services/api.ts, apps/planner-ui/src/pages/*.tsx, apps/planner-ui/src/components/MaskedField.tsx, apps/planner-ui/src/components/HmacStatusBanner.tsx. Advisory floor met. Density concentrated in Stage 5 client security boundary files."
+    },
+    {
+      "ruleId": "FAC-S6-005",
+      "description": "CAS annotation density meets advisory floor across Stage 4 source files",
+      "status": "PASS",
+      "evidence": "fac_s6_runner: 103 CAS markers (pattern CAS:RULE-NNN) across 57 Stage 4 source files under apps/planner-service/src/ (test files excluded). Advisory floor met. CAS annotations distributed across controllers, services, middleware, routes, and Mongoose schema files."
+    },
+    {
+      "ruleId": "FAC-S6-006",
+      "description": "No FOIP references in any generated source (unconditional, all builds)",
+      "status": "PASS",
+      "evidence": "fac_s6_runner: 0 FOIP token occurrences across 81 scoped source files (stage4=57, stage5=24; test/spec files excluded per SRT). Self-check grep found 2 FOIP occurrences in 1 excluded e2e spec file under apps/planner-ui/e2e/ — outside scoped source set per spec exclusion rules. No FOIP references in production source files. GoA BlueTeam unconditional ban satisfied."
+    }
+  ]
+}

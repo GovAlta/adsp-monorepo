@@ -1,0 +1,1035 @@
+{
+  "schemaVersion": "1.2",
+  "lastCompletedStage": "Stage 4: API Build",
+  "completedAt": "2026-10-10T00:00:00Z",
+  "templateMode": false,
+  "clientDocPath": "DEFERRED",
+  "factoryInputs": {
+    "controllerTechStack": "node.js/express",
+    "clientTechStack": "React 18 / GoA Design System 2.0",
+    "securityMethod": "JWT/Keycloak OIDC",
+    "apiType": "REST",
+    "databaseConnectionString": "PROVIDED",
+    "clientDocPath": "DEFERRED",
+    "templateMode": false,
+    "buildRootPath": "C:\\code\\pronghorn-team\\adsp-monorepo",
+    "stage4Output": "apps/planner-service",
+    "stage5Output": "apps/planner-ui"
+  },
+  "executionContract": {
+    "version": "1.2",
+    "gateConfirmation": "MANDATORY",
+    "gateConfirmationRule": "Both the stage subagent self-reported PASS AND the independent fac_sN_runner.py validator PASS are required before proceeding. Validator result is authoritative (Rule 6 non-supersession).",
+    "executionDisciplineRules": [
+      "STRUCTURAL â€” stage subagent boundary IS stage boundary; dispatcher refuses to spawn stage N+1 until stage N gate passes.",
+      "Read your upstream artifacts via the Read tool from the paths listed in `## Upstream Artifact Paths` of your invocation message. The `.claude/hooks/enforce_srt_reads.py` PreToolUse hook intercepts every Read from a subagent and BLOCKS any path outside your stage's `selective-reading-table.json` slice (plus the harness tree, the build's requirements/audit/ dir, and your own output dir). The block IS the drift-prevention mechanism â€” replacing the earlier inline-everything mechanism that did not scale at production size. If a stage needs a new upstream slice, AMEND the SRT entry first; never expand reads silently.",
+      "Before generating any artifact, outline its structure. Always â€” regardless of predicted size, because size predictions are unreliable. Fill section-by-section, validating each section as you produce it. Chunked writing to disk is enforced by Rule 8 / the batch sub-subagent boundary.",
+      "HARNESS-STATE â€” dispatcher owns working-state.json. Stage subagent emits working-state-delta.json as its last act; dispatcher merges.",
+      "Cross-reference by ID, not prose. Treat traceability_matrix.json as the single source of truth. Do not invent links.",
+      "FAC-Sn-xxx validation rules are authoritative and non-superseding. Check each rule as the relevant output is produced â€” concurrent, not deferred. External validators (template-orchestrator, api-reviewer, build/lint/test exit codes) do NOT substitute for stage skill rules. Both must pass independently, each with its own audit log entry.",
+      "If you cannot satisfy a validation rule, emit a failure-classification.json with class in {current-stage, upstream, user-input}, the failing rule ID, and a one-sentence reason. Do not attempt to regenerate the full artifact â€” fix only the specific deficiency, and do not touch rows/fields/units that already pass (regenerating clean artifacts during remediation is how regressions get introduced â€” FH-006). REMEDIATION IS BATCHED: the dispatcher splits a large remediation set into scoped invocations â€” structural/schema fixes in their own short pass FIRST, then bulk generation split into capped batches (the batched stages 4/5/7 cap each Mode-3 invocation at <=8 findings via `## Findings Batch`; the non-batched stages 1/3 split a large coverage/generation remediation into <=~30-new-entries passes, structural fixes first). Each remediation invocation addresses ONLY its named scope; the rest is the next batch.",
+      "Break every artifact into logical units regardless of predicted size â€” size predictions are unreliable. For multi-file outputs, generate in dependency order (shared utilities, then models, then controllers, then tests). Write each unit to disk as you produce it; do not accumulate unwritten content. CHUNK WITHIN A FILE TOO: a single Write/Edit is emitted inside your 32,000-output-token response budget, so a large collection artifact (e.g. test_specifications.json with 100+ test cases, a big OpenAPI spec) MUST be written as an initial skeleton + first batch, then successive Edit-appends of <=~30 entries each, recording a `partialArtifacts[]` cursor in stage-progress.json between batches. Never emit a single write larger than ~40 KB â€” the global `enforce_write_chunking.py` PreToolUse hook BLOCKS oversized build-side writes precisely because an over-large write truncates the response mid-content and silently drops the artifact (FH-006). The cap is mechanical and non-negotiable; design your writes to stay under it rather than discovering it by being blocked.",
+      "STRUCTURAL â€” Claude Code subagent contract prevents arbitrary context injection; subagent prompt is assembled from its own .claude/agents/<name>.md plus a task-specific invocation message.",
+      "DISPATCHER-LAYER â€” all ref:<identifier> references are resolved by invoking scripts/resolve_ref.py, which locates the markdown file whose id: frontmatter field matches. Never assume a path. Never invent a location. Stage subagents receive resolved skill content embedded in their prompt; they do not resolve ref: themselves.",
+      "HARNESS-STATE â€” dispatcher writes working-state.json after every gate pass via a single Write call. PostToolUse hook verifies schema and state consistency. Stage subagents never write this file.",
+      "Evidence must reference artifact paths, section numbers, line numbers, and derived identifiers. MUST NOT quote code, SQL, error messages, config values, or verbatim user content. Mechanical writing (file path, schema, write timing, per-rule entry format) is enforced by the PreToolUse hook + stage-validation-log.schema.json + audit_log_completeness.py.",
+      "STRUCTURAL â€” Claude Code subagent invocation is sequential by default; batched stages spawn batch sub-subagents one at a time with stage-progress.json checkpoints.",
+      "Compaction will occur. On detection (you cannot recall the validation checklist, current batch, or execution discipline rules), execute the recovery sequence for YOUR layer in order. Each layer has its own narrow recovery file set: dispatcher reads working-state.json only; stage subagent reads stage skill + working-state.json + stage-progress.json if mid-batch; batch sub-subagent reads stage-progress.json.completedBatches[] to find resume point. Do NOT re-read full orchestrator or all upstream artifacts.",
+      "Evidence/failReason/remediationAction fields MUST reference artifact paths, section numbers, line numbers, and derived identifiers; MUST NOT quote code, SQL, error messages, config values, or verbatim user content. databaseConnectionString MUST be written as 'PROVIDED'. The PreToolUse redaction hook is a second-line defense â€” block-on-detection for 9 secret patterns. Your discipline is the first line."
+    ],
+    "contextRecoveryProtocol": [
+      "1. Read requirements/audit/working-state.json to restore stage history and working state.",
+      "2. Read requirements/audit/stage-progress.json (if present) to find the current batch position.",
+      "3. Read the stage skill file named in working-state.executionContract.currentStageSkillFile.",
+      "4. Do NOT re-read the full orchestrator or all upstream artifacts â€” the recovery set is narrow by design."
+    ],
+    "selectiveReadingTable": "Factory Agent/Orchestrator/selective-reading-table.json",
+    "currentStageSkillFile": ".claude/agents/factory-stage-4.md",
+    "clientDocPathRule": "clientDocPath is resolved at Stage 2 handoff. Do NOT resolve before Stage 2 gate PASS. Current value: DEFERRED.",
+    "resumeProtocol": "On session restart: read working-state.json to determine lastCompletedStage and stageHistory. Check for stage-progress.json to detect in-flight stage. Re-dispatch factory-stage-monitor with cycleNumber=1 if a stage is in-flight."
+  },
+  "workingState": {
+    "serviceName": "ADSP Project Planner",
+    "entities": [
+      {
+        "name": "PlanningSession",
+        "keyAttributes": [
+          "tenantId",
+          "userId",
+          "sessionId",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      {
+        "name": "BusinessModel",
+        "keyAttributes": [
+          "sessionId",
+          "tenantId",
+          "concepts",
+          "confidenceScore",
+          "version"
+        ]
+      },
+      {
+        "name": "BusinessConcept",
+        "keyAttributes": [
+          "conceptId",
+          "conceptType",
+          "label",
+          "description",
+          "confidence"
+        ]
+      },
+      {
+        "name": "ConversationMessage",
+        "keyAttributes": [
+          "messageId",
+          "sessionId",
+          "role",
+          "content",
+          "timestamp"
+        ]
+      },
+      {
+        "name": "SolutionHypothesis",
+        "keyAttributes": [
+          "hypothesisId",
+          "sessionId",
+          "status",
+          "summary",
+          "reasoning",
+          "serviceComposition"
+        ]
+      },
+      {
+        "name": "ServiceMapping",
+        "keyAttributes": [
+          "serviceId",
+          "serviceType",
+          "rationale",
+          "configuration"
+        ]
+      },
+      {
+        "name": "BusinessPattern",
+        "keyAttributes": [
+          "patternId",
+          "tenantId",
+          "name",
+          "strongSignals",
+          "serviceComposition",
+          "active"
+        ]
+      },
+      {
+        "name": "PatternConcept",
+        "keyAttributes": [
+          "conceptType",
+          "label",
+          "weight"
+        ]
+      },
+      {
+        "name": "AuditLogEntry",
+        "keyAttributes": [
+          "entryId",
+          "tenantId",
+          "userId",
+          "action",
+          "resourceType",
+          "resourceId",
+          "timestamp",
+          "hmac"
+        ]
+      },
+      {
+        "name": "SpecialistRequest",
+        "keyAttributes": [
+          "requestId",
+          "specialistType",
+          "sessionId",
+          "payload",
+          "timestamp"
+        ]
+      },
+      {
+        "name": "SpecialistResponse",
+        "keyAttributes": [
+          "requestId",
+          "specialistType",
+          "guidance",
+          "timestamp"
+        ]
+      },
+      {
+        "name": "SessionExport",
+        "keyAttributes": [
+          "sessionId",
+          "exportFormat",
+          "generatedAt",
+          "content"
+        ]
+      },
+      {
+        "name": "UserContext",
+        "keyAttributes": [
+          "userId",
+          "tenantId",
+          "roles",
+          "displayName"
+        ]
+      }
+    ],
+    "audiences": [
+      "GoA Business Analyst",
+      "GoA Developer",
+      "ADSP Platform Team",
+      "ADSP Tenant Administrator",
+      "GoA Program Manager"
+    ],
+    "businessRuleIds": [
+      "BR-001",
+      "BR-002",
+      "BR-003",
+      "BR-004",
+      "BR-005",
+      "BR-006",
+      "BR-007",
+      "BR-008",
+      "BR-009",
+      "BR-010",
+      "BR-011",
+      "BR-012"
+    ],
+    "useCaseIds": [
+      "UC-001",
+      "UC-002",
+      "UC-003",
+      "UC-004",
+      "UC-005",
+      "UC-006",
+      "UC-007",
+      "UC-008",
+      "UC-009",
+      "UC-010"
+    ],
+    "testCaseIds": [
+      "TC-001",
+      "TC-002",
+      "TC-003",
+      "TC-004",
+      "TC-005",
+      "TC-006",
+      "TC-007",
+      "TC-008",
+      "TC-009",
+      "TC-010",
+      "TC-011",
+      "TC-012",
+      "TC-013",
+      "TC-014",
+      "TC-015",
+      "TC-016",
+      "TC-017",
+      "TC-018",
+      "TC-019",
+      "TC-020",
+      "TC-021",
+      "TC-022",
+      "TC-023",
+      "TC-024",
+      "TC-025",
+      "TC-026",
+      "TC-027",
+      "TC-028",
+      "TC-029",
+      "TC-030",
+      "TC-031",
+      "TC-032",
+      "TC-033",
+      "TC-034",
+      "TC-035",
+      "TC-036",
+      "TC-037",
+      "TC-038",
+      "TC-039",
+      "TC-040",
+      "TC-041",
+      "TC-042",
+      "TC-043",
+      "TC-044",
+      "TC-045",
+      "TC-046",
+      "TC-047",
+      "TC-048",
+      "TC-049",
+      "TC-050",
+      "TC-051",
+      "TC-052",
+      "TC-053",
+      "TC-054",
+      "TC-055",
+      "TC-056",
+      "TC-057",
+      "TC-058",
+      "TC-059",
+      "TC-060",
+      "TC-061",
+      "TC-062",
+      "TC-063",
+      "TC-064",
+      "TC-065",
+      "TC-066",
+      "TC-067",
+      "TC-068",
+      "TC-069",
+      "TC-070",
+      "TC-071",
+      "TC-072",
+      "TC-073",
+      "TC-074",
+      "TC-075",
+      "TC-076",
+      "TC-077",
+      "TC-078",
+      "TC-079",
+      "TC-080",
+      "TC-081",
+      "TC-082",
+      "TC-083",
+      "TC-084",
+      "TC-085",
+      "TC-086",
+      "TC-087",
+      "TC-088",
+      "TC-089",
+      "TC-090",
+      "TC-091",
+      "TC-092",
+      "TC-093",
+      "TC-094",
+      "TC-095",
+      "TC-096",
+      "TC-097",
+      "TC-098",
+      "TC-099",
+      "TC-100",
+      "TC-101",
+      "TC-102",
+      "TC-103",
+      "TC-104",
+      "TC-105",
+      "TC-106",
+      "TC-107",
+      "TC-108",
+      "TC-109",
+      "TC-110",
+      "TC-111",
+      "TC-112",
+      "TC-113",
+      "TC-114",
+      "TC-115",
+      "TC-116",
+      "TC-117",
+      "TC-118",
+      "TC-119",
+      "TC-120",
+      "TC-121",
+      "TC-122",
+      "TC-123",
+      "TC-124"
+    ],
+    "journeyMapCount": 5,
+    "sitemapPageCount": 12,
+    "futureStateOpportunityIds": [
+      "FS-001",
+      "FS-002",
+      "FS-003",
+      "FS-004",
+      "FS-005",
+      "FS-006",
+      "FS-007",
+      "FS-008",
+      "FS-009",
+      "FS-010",
+      "FS-011",
+      "FS-012"
+    ],
+    "tables": [
+      {
+        "name": "planning_session",
+        "primaryKey": "pk_planning_session"
+      },
+      {
+        "name": "business_model",
+        "primaryKey": "pk_business_model"
+      },
+      {
+        "name": "business_concept",
+        "primaryKey": "pk_business_concept"
+      },
+      {
+        "name": "concept_relationship",
+        "primaryKey": "pk_concept_relationship"
+      },
+      {
+        "name": "hypothesis_record",
+        "primaryKey": "pk_hypothesis_record"
+      },
+      {
+        "name": "conversation_message",
+        "primaryKey": "pk_conversation_message"
+      },
+      {
+        "name": "audit_event",
+        "primaryKey": "pk_audit_event"
+      },
+      {
+        "name": "specialist_request",
+        "primaryKey": "pk_specialist_request"
+      },
+      {
+        "name": "specialist_response",
+        "primaryKey": "pk_specialist_response"
+      },
+      {
+        "name": "session_export",
+        "primaryKey": "pk_session_export"
+      },
+      {
+        "name": "user_context",
+        "primaryKey": "pk_user_context"
+      }
+    ],
+    "foreignKeys": [
+      "fk_business_model_session",
+      "fk_business_concept_model",
+      "fk_concept_rel_source",
+      "fk_hypothesis_record_session",
+      "fk_conversation_msg_session",
+      "fk_specialist_req_session",
+      "fk_specialist_resp_request",
+      "fk_session_export_session"
+    ],
+    "constraintEnforcedRules": [
+      "BR-006",
+      "BR-010"
+    ],
+    "applicationDeferredRules": [
+      "BR-001",
+      "BR-004",
+      "BR-005",
+      "BR-008",
+      "BR-009"
+    ],
+    "securityContext": {
+      "classificationLevel": "Protected B",
+      "protectedDataCategories": [
+        "Other"
+      ],
+      "classifiedAt": "2026-10-10T00:00:00Z"
+    },
+    "apiEndpoints": [
+      {
+        "method": "POST",
+        "path": "/sessions",
+        "operationId": "createSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions",
+        "operationId": "listSessions",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}",
+        "operationId": "getSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/sessions/{sessionId}",
+        "operationId": "updateSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}",
+        "operationId": "archiveSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}/messages",
+        "operationId": "sendMessage",
+        "controllerFile": "src/controllers/messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/messages",
+        "operationId": "listMessages",
+        "controllerFile": "src/controllers/messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/model",
+        "operationId": "getBusinessModel",
+        "controllerFile": "src/controllers/business-model.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/sessions/{sessionId}/model",
+        "operationId": "updateBusinessModel",
+        "controllerFile": "src/controllers/business-model.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/hypotheses",
+        "operationId": "listHypotheses",
+        "controllerFile": "src/controllers/hypotheses.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/hypotheses/{hypothesisId}",
+        "operationId": "getHypothesis",
+        "controllerFile": "src/controllers/hypotheses.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/sessions/{sessionId}/hypotheses/{hypothesisId}",
+        "operationId": "updateHypothesisStatus",
+        "controllerFile": "src/controllers/hypotheses.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}/specialists",
+        "operationId": "consultSpecialist",
+        "controllerFile": "src/controllers/specialists.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/specialists/{requestId}",
+        "operationId": "getSpecialistRequest",
+        "controllerFile": "src/controllers/specialists.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}/exports",
+        "operationId": "initiateExport",
+        "controllerFile": "src/controllers/exports.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/exports",
+        "operationId": "listExports",
+        "controllerFile": "src/controllers/exports.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/exports/{exportId}",
+        "operationId": "getExport",
+        "controllerFile": "src/controllers/exports.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/patterns",
+        "operationId": "listPatterns",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/patterns",
+        "operationId": "createPattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/patterns/{patternId}",
+        "operationId": "getPattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "path": "/patterns/{patternId}",
+        "operationId": "updatePattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/patterns/{patternId}/deactivate",
+        "operationId": "deactivatePattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/audit",
+        "operationId": "listAuditEvents",
+        "controllerFile": "src/controllers/audit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/audit/{eventId}",
+        "operationId": "getAuditEvent",
+        "controllerFile": "src/controllers/audit.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/audit/verify",
+        "operationId": "verifyAuditChain",
+        "controllerFile": "src/controllers/audit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/metrics",
+        "operationId": "getMetrics",
+        "controllerFile": "src/main.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/health",
+        "operationId": "getHealth",
+        "controllerFile": "src/routes/health.routes.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/health/live",
+        "operationId": "getLiveness",
+        "controllerFile": "src/routes/health.routes.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/health/ready",
+        "operationId": "getReadiness",
+        "controllerFile": "src/routes/health.routes.ts"
+      }
+    ],
+    "retryIterations": 2,
+    "pages": [
+      "session-dashboard",
+      "new-session-start",
+      "planning-session",
+      "business-model-review",
+      "hypothesis-review",
+      "session-export",
+      "admin-hub",
+      "pattern-library",
+      "pattern-editor",
+      "session-history",
+      "audit-log",
+      "user-management"
+    ],
+    "clientTechStack": "React 18 / GoA Design System 2.0 (@abgov/react-components v4.x)",
+    "unitTestCoverage": {
+      "mapped": 12,
+      "total": 12
+    },
+    "integrationTestCoverage": {
+      "mapped": 12,
+      "total": 12
+    },
+    "e2eCoverage": {
+      "mapped": 8,
+      "total": 10
+    },
+    "crossPipelineTraceability": {
+      "entities": {
+        "status": "PASS"
+      },
+      "audiences": {
+        "status": "PASS"
+      },
+      "businessRules": {
+        "status": "PASS"
+      },
+      "integrationPoints": {
+        "status": "PASS"
+      },
+      "serviceName": {
+        "status": "PASS"
+      },
+      "dataFields": {
+        "status": "PASS"
+      },
+      "testCases": {
+        "status": "PASS"
+      }
+    },
+    "ucToPageMapping": [
+      {
+        "ucId": "UC-001",
+        "pages": [
+          "new-session-start",
+          "planning-session"
+        ]
+      },
+      {
+        "ucId": "UC-002",
+        "pages": [
+          "planning-session",
+          "business-model-review"
+        ]
+      },
+      {
+        "ucId": "UC-003",
+        "pages": [
+          "business-model-review"
+        ]
+      },
+      {
+        "ucId": "UC-004",
+        "pages": [
+          "planning-session",
+          "hypothesis-review"
+        ]
+      },
+      {
+        "ucId": "UC-005",
+        "pages": [
+          "planning-session"
+        ]
+      },
+      {
+        "ucId": "UC-006",
+        "pages": [
+          "session-dashboard",
+          "planning-session"
+        ]
+      },
+      {
+        "ucId": "UC-007",
+        "pages": [
+          "session-export"
+        ]
+      },
+      {
+        "ucId": "UC-008",
+        "pages": [
+          "session-history"
+        ]
+      },
+      {
+        "ucId": "UC-009",
+        "pages": [
+          "new-session-start"
+        ]
+      },
+      {
+        "ucId": "UC-010",
+        "pages": [
+          "admin-hub",
+          "pattern-library",
+          "pattern-editor"
+        ]
+      }
+    ],
+    "validationReport": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "stage6Completed": true,
+    "stage6AdvisorySeverity": "NONE",
+    "stage6FailingRules": [],
+    "stage7Completed": true,
+    "stage7HardGateStatus": "PASS",
+    "stage7MaturityScore": "4.84",
+    "stage7FailingHardRules": [],
+    "stage7AdvisoryFindings": []
+  },
+  "stageHistory": [
+    {
+      "stage": 1,
+      "name": "Stage 1: Business Requirements",
+      "status": "PASSED",
+      "startedAt": "2026-10-09T00:00:00Z",
+      "completedAt": "2026-10-09T00:00:00Z",
+      "gateRetryCount": 0,
+      "userConfirmedProceed": false,
+      "artifactsWritten": [
+        "requirements/brd/_manifest.json",
+        "requirements/brd/metadata.json",
+        "requirements/brd/stakeholders.json",
+        "requirements/brd/context_of_use.json",
+        "requirements/brd/stakeholder_needs.json",
+        "requirements/brd/requirements.json",
+        "requirements/brd/use_cases.json",
+        "requirements/brd/business_rules.json",
+        "requirements/brd/integration_points.json",
+        "requirements/brd/test_specifications.json",
+        "requirements/brd/traceability_matrix.json",
+        "requirements/brd/assumptions.json",
+        "requirements/brd/open_issues.json",
+        "requirements/brd/glossary.json",
+        "requirements/data_io_schema.json",
+        "requirements/audit/stage-1-validation-log.json",
+        "requirements/audit/working-state-delta.json"
+      ],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.1.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": 2,
+      "name": "Stage 2: Service Requirements",
+      "status": "PASSED",
+      "startedAt": "2026-10-10T05:30:00Z",
+      "completedAt": "2026-10-10T08:35:00Z",
+      "gateRetryCount": 1,
+      "userConfirmedProceed": true,
+      "artifactsWritten": [
+        "requirements/services/service-description.json",
+        "requirements/services/audience-identification.json",
+        "requirements/services/journey-map-goa-business-analyst.json",
+        "requirements/services/journey-map-goa-developer.json",
+        "requirements/services/journey-map-adsp-tenant-administrator.json",
+        "requirements/services/journey-map-adsp-platform-team.json",
+        "requirements/services/journey-map-goa-program-manager.json",
+        "requirements/services/future-state.json",
+        "requirements/services/sitemap.json",
+        "requirements/audit/stage-2-validation-log.json",
+        "requirements/audit/working-state-delta.json",
+        "requirements/audit/stage-progress.json",
+        "requirements/audit/stage-2-heartbeat.log"
+      ],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.2.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": 3,
+      "name": "Stage 3: Database Design",
+      "status": "PASSED",
+      "startedAt": "2026-10-10T08:37:00Z",
+      "completedAt": "2026-10-10T08:55:00Z",
+      "gateRetryCount": 0,
+      "userConfirmedProceed": true,
+      "artifactsWritten": [
+        "requirements/database/ddl_script.sql",
+        "requirements/database/index_recommendations.sql",
+        "requirements/database/json_schema.json",
+        "requirements/database/data_model.json",
+        "requirements/brd/test_specifications.json",
+        "requirements/brd/traceability_matrix.json",
+        "requirements/brd/assumptions.json",
+        "requirements/brd/_manifest.json",
+        "requirements/audit/stage-3-validation-log.json",
+        "requirements/audit/working-state-delta.json"
+      ],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.3.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": "classify",
+      "name": "Stage Classify: Security Classification",
+      "status": "PASSED",
+      "startedAt": "2026-10-10T08:57:00Z",
+      "completedAt": "2026-10-10T09:05:00Z",
+      "gateRetryCount": 1,
+      "userConfirmedProceed": true,
+      "artifactsWritten": [
+        "requirements/audit/security-classification.yaml",
+        "requirements/audit/security-classification-details.yaml",
+        "requirements/audit/stage-classify-validation-log.json"
+      ],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.classify.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": 4,
+      "name": "Stage 4: API Controllers",
+      "status": "PASSED",
+      "startedAt": null,
+      "completedAt": null,
+      "gateRetryCount": 0,
+      "userConfirmedProceed": false,
+      "artifactsWritten": [
+        "apps/planner-service/openapi.yaml",
+        "apps/planner-service/openapi.json",
+        "apps/planner-service/api-specification.md",
+        "apps/planner-service/src/main.ts",
+        "apps/planner-service/src/types/index.ts",
+        "apps/planner-service/src/middleware/auth.middleware.ts",
+        "apps/planner-service/src/middleware/validation.middleware.ts",
+        "apps/planner-service/src/middleware/error.middleware.ts",
+        "apps/planner-service/src/middleware/audit.middleware.ts",
+        "apps/planner-service/src/middleware/rate-limit.middleware.ts",
+        "apps/planner-service/src/middleware/cors.middleware.ts",
+        "apps/planner-service/src/controllers/sessions.controller.ts",
+        "apps/planner-service/src/controllers/messages.controller.ts",
+        "apps/planner-service/src/controllers/business-model.controller.ts",
+        "apps/planner-service/src/controllers/hypotheses.controller.ts",
+        "apps/planner-service/src/controllers/specialists.controller.ts",
+        "apps/planner-service/src/controllers/exports.controller.ts",
+        "apps/planner-service/src/controllers/patterns.controller.ts",
+        "apps/planner-service/src/controllers/audit.controller.ts",
+        "apps/planner-service/src/services/sessions.service.ts",
+        "apps/planner-service/src/services/messages.service.ts",
+        "apps/planner-service/src/services/business-model.service.ts",
+        "apps/planner-service/src/services/hypotheses.service.ts",
+        "apps/planner-service/src/services/specialists.service.ts",
+        "apps/planner-service/src/services/exports.service.ts",
+        "apps/planner-service/src/services/patterns.service.ts",
+        "apps/planner-service/src/services/audit.service.ts",
+        "apps/planner-service/src/services/llm.service.ts",
+        "apps/planner-service/src/services/event.service.ts",
+        "apps/planner-service/src/services/config.service.ts",
+        "apps/planner-service/src/routes/sessions.routes.ts",
+        "apps/planner-service/src/routes/messages.routes.ts",
+        "apps/planner-service/src/routes/business-model.routes.ts",
+        "apps/planner-service/src/routes/hypotheses.routes.ts",
+        "apps/planner-service/src/routes/specialists.routes.ts",
+        "apps/planner-service/src/routes/exports.routes.ts",
+        "apps/planner-service/src/routes/patterns.routes.ts",
+        "apps/planner-service/src/routes/audit.routes.ts",
+        "apps/planner-service/src/routes/health.routes.ts",
+        "apps/planner-service/src/mongo/schemas/planning-session.schema.ts",
+        "apps/planner-service/src/mongo/schemas/conversation-message.schema.ts",
+        "apps/planner-service/src/mongo/schemas/business-model.schema.ts",
+        "apps/planner-service/src/mongo/schemas/business-concept.schema.ts",
+        "apps/planner-service/src/mongo/schemas/concept-relationship.schema.ts",
+        "apps/planner-service/src/mongo/schemas/hypothesis-record.schema.ts",
+        "apps/planner-service/src/mongo/schemas/specialist-request.schema.ts",
+        "apps/planner-service/src/mongo/schemas/export-record.schema.ts",
+        "apps/planner-service/src/mongo/schemas/business-pattern.schema.ts",
+        "apps/planner-service/src/mongo/schemas/audit-event.schema.ts",
+        "apps/planner-service/src/mongo/schemas/tenant-config.schema.ts",
+        "apps/planner-service/src/config/database.ts",
+        "apps/planner-service/src/config/environment.ts",
+        "apps/planner-service/README.md",
+        "apps/planner-service/Dockerfile",
+        "apps/planner-service/package.json",
+        "apps/planner-service/tsconfig.json",
+        "apps/planner-service/jest.config.ts",
+        "apps/planner-service/test-traceability-report.md",
+        "apps/planner-service/compliance-report.md",
+        "apps/planner-service/agent-artifacts/integration-config-status.json",
+        "apps/planner-service/agent-artifacts/integration-config.template.env",
+        "apps/planner-service/agent-artifacts/skeleton_integrations_manifest.md",
+        "requirements/database/requirements-to-controller-mapping.json",
+        "requirements/audit/stage-4-validation-log.json",
+        "requirements/audit/working-state-delta.json",
+        "requirements/audit/stage-progress.json"
+      ],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.4.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": 5,
+      "name": "Stage 5: Client Interface",
+      "status": "PASSED",
+      "startedAt": null,
+      "completedAt": null,
+      "gateRetryCount": 0,
+      "userConfirmedProceed": false,
+      "artifactsWritten": [
+        "apps/planner-ui/content-specs/session-dashboard.json",
+        "apps/planner-ui/content-specs/new-session-start.json",
+        "apps/planner-ui/content-specs/planning-session.json",
+        "apps/planner-ui/content-specs/business-model-review.json",
+        "apps/planner-ui/content-specs/hypothesis-review.json",
+        "apps/planner-ui/content-specs/session-export.json",
+        "apps/planner-ui/content-specs/admin-hub.json",
+        "apps/planner-ui/content-specs/pattern-library.json",
+        "apps/planner-ui/content-specs/pattern-editor.json",
+        "apps/planner-ui/content-specs/session-history.json",
+        "apps/planner-ui/content-specs/audit-log.json",
+        "apps/planner-ui/content-specs/user-management.json",
+        "apps/planner-ui/design-system.json",
+        "apps/planner-ui/src/pages/SessionDashboard.tsx",
+        "apps/planner-ui/src/pages/NewSessionStart.tsx",
+        "apps/planner-ui/src/pages/PlanningSession.tsx",
+        "apps/planner-ui/src/pages/BusinessModelReview.tsx",
+        "apps/planner-ui/src/pages/HypothesisReview.tsx",
+        "apps/planner-ui/src/pages/SessionExport.tsx",
+        "apps/planner-ui/src/pages/AdminHub.tsx",
+        "apps/planner-ui/src/pages/PatternLibrary.tsx",
+        "apps/planner-ui/src/pages/PatternEditor.tsx",
+        "apps/planner-ui/src/pages/SessionHistory.tsx",
+        "apps/planner-ui/src/pages/AuditLog.tsx",
+        "apps/planner-ui/src/pages/UserManagement.tsx",
+        "apps/planner-ui/src/components/MaskedField.tsx",
+        "apps/planner-ui/src/components/ConfidenceBadge.tsx",
+        "apps/planner-ui/src/components/IntegrationPendingBanner.tsx",
+        "apps/planner-ui/src/components/HmacStatusBanner.tsx",
+        "apps/planner-ui/src/services/api.ts",
+        "apps/planner-ui/src/services/api.types.ts",
+        "apps/planner-ui/src/main.tsx",
+        "apps/planner-ui/src/App.tsx",
+        "apps/planner-ui/index.html",
+        "apps/planner-ui/.env",
+        "apps/planner-ui/.env.example",
+        "apps/planner-ui/__tests__/setup.ts",
+        "apps/planner-ui/__tests__/handlers/sessions.ts",
+        "apps/planner-ui/__tests__/handlers/businessModel.ts",
+        "apps/planner-ui/__tests__/handlers/hypothesis.ts",
+        "apps/planner-ui/__tests__/handlers/patterns.ts",
+        "apps/planner-ui/__tests__/handlers/admin.ts",
+        "apps/planner-ui/__tests__/handlers/auditLog.ts",
+        "apps/planner-ui/__tests__/handlers/users.ts",
+        "apps/planner-ui/__tests__/SessionDashboard.test.tsx",
+        "apps/planner-ui/__tests__/NewSessionStart.test.tsx",
+        "apps/planner-ui/__tests__/PlanningSession.test.tsx",
+        "apps/planner-ui/__tests__/BusinessModelReview.test.tsx",
+        "apps/planner-ui/__tests__/HypothesisReview.test.tsx",
+        "apps/planner-ui/__tests__/SessionExport.test.tsx",
+        "apps/planner-ui/__tests__/AdminHub.test.tsx",
+        "apps/planner-ui/__tests__/PatternLibrary.test.tsx",
+        "apps/planner-ui/__tests__/PatternEditor.test.tsx",
+        "apps/planner-ui/__tests__/SessionHistory.test.tsx",
+        "apps/planner-ui/__tests__/AuditLog.test.tsx",
+        "apps/planner-ui/__tests__/UserManagement.test.tsx",
+        "apps/planner-ui/__tests__/integration/SessionDashboard.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/NewSessionStart.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/PlanningSession.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/BusinessModelReview.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/HypothesisReview.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/SessionExport.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/AdminHub.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/PatternLibrary.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/PatternEditor.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/SessionHistory.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/AuditLog.integration.test.tsx",
+        "apps/planner-ui/__tests__/integration/UserManagement.integration.test.tsx",
+        "apps/planner-ui/e2e/fixtures/auth.ts",
+        "apps/planner-ui/e2e/uc001-start-planning-session.spec.ts",
+        "apps/planner-ui/e2e/uc002-business-discovery.spec.ts",
+        "apps/planner-ui/e2e/uc003-review-business-model.spec.ts",
+        "apps/planner-ui/e2e/uc004-hypothesis-review.spec.ts",
+        "apps/planner-ui/e2e/uc006-resume-session.spec.ts",
+        "apps/planner-ui/e2e/uc007-export-session.spec.ts",
+        "apps/planner-ui/e2e/uc008-session-history.spec.ts",
+        "apps/planner-ui/e2e/uc010-pattern-management.spec.ts",
+        "apps/planner-ui/playwright.config.ts",
+        "apps/planner-ui/test-traceability-report.md",
+        "apps/planner-ui/validation-report.json",
+        "apps/planner-ui/package.json",
+        "apps/planner-ui/vite.config.ts",
+        "apps/planner-ui/tsconfig.json",
+        "apps/planner-ui/eslint.config.js",
+        "requirements/audit/stage-5-validation-log.json",
+        "requirements/audit/working-state-delta.json",
+        "requirements/audit/stage-progress.json",
+        "requirements/audit/stage-5-heartbeat.log"
+      ],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.5.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": 6,
+      "name": "Stage 6: Security Validation",
+      "status": "PASSED",
+      "startedAt": null,
+      "completedAt": null,
+      "gateRetryCount": 0,
+      "userConfirmedProceed": false,
+      "artifactsWritten": [],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.6.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    },
+    {
+      "stage": 7,
+      "name": "Stage 7: Test & Quality",
+      "status": "PASSED",
+      "startedAt": null,
+      "completedAt": null,
+      "gateRetryCount": 0,
+      "userConfirmedProceed": false,
+      "artifactsWritten": [],
+      "dispatcherNotes": "Auto-populated by finalize_stage.py from working-state-delta.7.json. startedAt defaulted to completedAt (true start unknown to the script). Dispatcher should overwrite startedAt/elapsedMinutes + dispatcherNotes with cycle history + remediation notes."
+    }
+  ]
+}

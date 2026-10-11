@@ -1,0 +1,560 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "planner-service/data-io-schema",
+  "title": "ADSP Planner Service — Data I/O Schema",
+  "description": "Canonical data definitions for the planner-service. Defines all entities exchanged via REST API and stored in MongoDB. Referenced by business rules (applicableDataElements) and test cases (testData.dataElementRef).",
+  "$defs": {
+    "PlanningSession": {
+      "type": "object",
+      "description": "A persistent planning workspace scoped to a single tenant and user. Encapsulates the entire lifecycle of a user's engagement with the Planning Agent.",
+      "required": ["sessionId", "tenantId", "userId", "status", "createdAt", "updatedAt"],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the planning session (UUID v4)."
+        },
+        "tenantId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "ADSP tenant identifier. Sessions are strictly isolated per tenant."
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Keycloak user identifier (sub claim). Sessions are scoped to tenant+user."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "User-provided or AI-generated short title for the planning session."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "paused", "completed", "archived"],
+          "description": "Lifecycle status of the planning session.",
+          "x-state-transitions": {
+            "active": ["paused", "completed"],
+            "paused": ["active", "archived"],
+            "completed": ["archived"],
+            "archived": []
+          }
+        },
+        "businessModelId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to the associated BusinessModel document."
+        },
+        "hypothesisIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" },
+          "description": "References to SolutionHypothesis documents generated in this session."
+        },
+        "openQuestions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of unresolved questions the Planning Agent has identified."
+        },
+        "nextSteps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Recommended next actions as of the last session state update."
+        },
+        "specialistProgress": {
+          "type": "object",
+          "description": "Map of specialist service ID to progress status.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["not-started", "in-progress", "complete"]
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the session was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the last modification."
+        },
+        "lastResumedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the most recent session resume, or null if never resumed."
+        }
+      }
+    },
+    "BusinessModel": {
+      "type": "object",
+      "description": "The structured representation of the user's business problem, incrementally constructed by the Planning Agent from conversation. This is the Planning Agent's primary reasoning artifact.",
+      "required": ["modelId", "sessionId", "tenantId", "concepts", "confidenceScore", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "modelId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this business model document."
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to the parent PlanningSession."
+        },
+        "tenantId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "ADSP tenant identifier for data isolation."
+        },
+        "concepts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BusinessConcept" },
+          "description": "Ordered collection of identified and classified business concepts."
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Assumptions the Planning Agent has made about the problem domain."
+        },
+        "unknowns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Areas of uncertainty or missing information identified by the Planning Agent."
+        },
+        "confidenceScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Agent-assigned confidence score (0-100) reflecting how well the business problem is understood. A score of 70 or above triggers solution hypothesis generation.",
+          "x-business-rules": ["BR-004", "BR-005"]
+        },
+        "matchedPatternId": {
+          "type": ["string", "null"],
+          "description": "ID of the matched BusinessPattern, or null if no pattern match above threshold."
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Monotonically incrementing version number for optimistic concurrency."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BusinessConcept": {
+      "type": "object",
+      "description": "A single classified business concept identified by the Planning Agent from conversation. Concepts are the atomic building blocks of the business model.",
+      "required": ["conceptId", "conceptType", "name"],
+      "properties": {
+        "conceptId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this concept within the business model."
+        },
+        "conceptType": {
+          "type": "string",
+          "enum": ["Actor", "Goal", "Activity", "Decision", "Evidence", "BusinessRule", "Constraint", "EvaluationCriteria", "Workflow", "Outcome", "Document", "Event", "ExternalSystem", "Assumption", "Unknown"],
+          "description": "ISO/IEC/IEEE 29148-aligned business concept classification.",
+          "x-business-rules": ["BR-006"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Short, descriptive name for the concept."
+        },
+        "description": {
+          "type": ["string", "null"],
+          "description": "Optional extended description of the concept."
+        },
+        "sourceText": {
+          "type": ["string", "null"],
+          "description": "Excerpt from conversation that led the agent to identify this concept."
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ConceptRelationship" },
+          "description": "Relationships to other business concepts."
+        }
+      }
+    },
+    "ConceptRelationship": {
+      "type": "object",
+      "description": "A directed relationship between two business concepts in the business model.",
+      "required": ["targetConceptId", "relationshipType"],
+      "properties": {
+        "targetConceptId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the related concept."
+        },
+        "relationshipType": {
+          "type": "string",
+          "enum": ["uses", "produces", "triggers", "governs", "requires", "part-of"],
+          "description": "Type of directed relationship from source concept to target concept."
+        },
+        "description": {
+          "type": ["string", "null"],
+          "description": "Optional clarifying note about the relationship."
+        }
+      }
+    },
+    "SolutionHypothesis": {
+      "type": "object",
+      "description": "A proposed ADSP-based solution approach derived from the business model. Treated as tentative and subject to user refinement.",
+      "required": ["hypothesisId", "sessionId", "tenantId", "status", "adspServices", "summary", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "hypothesisId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this solution hypothesis."
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to the parent PlanningSession."
+        },
+        "tenantId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "ADSP tenant identifier for data isolation."
+        },
+        "patternId": {
+          "type": ["string", "null"],
+          "description": "ID of the BusinessPattern that informed this hypothesis, or null."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "proposed", "accepted", "rejected", "superseded"],
+          "description": "Lifecycle status of the solution hypothesis.",
+          "x-state-transitions": {
+            "draft": ["proposed"],
+            "proposed": ["accepted", "rejected"],
+            "accepted": ["superseded"],
+            "rejected": [],
+            "superseded": []
+          },
+          "x-business-rules": ["BR-010"]
+        },
+        "adspServices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "List of ADSP service IDs recommended in this hypothesis."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Plain-language summary of the proposed solution for non-technical stakeholders."
+        },
+        "reasoning": {
+          "type": "string",
+          "description": "The Planning Agent's explanation of why these services were recommended and how they address the business model."
+        },
+        "implementationOrder": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Recommended order for implementing the proposed ADSP services."
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Version number for optimistic concurrency control."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BusinessPattern": {
+      "type": "object",
+      "description": "A reusable template capturing a known GoA business process pattern with ADSP service mappings and clarifying questions. Stored in the ADSP Configuration Service.",
+      "required": ["patternId", "name", "purpose", "adspServiceMappings", "isActive", "createdAt", "updatedAt"],
+      "properties": {
+        "patternId": {
+          "type": "string",
+          "description": "Unique identifier for the business pattern."
+        },
+        "tenantId": {
+          "type": ["string", "null"],
+          "description": "If set, a tenant-specific pattern override; null for global platform patterns."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Human-readable pattern name (e.g., 'Case Management', 'Grant Application')."
+        },
+        "purpose": {
+          "type": "string",
+          "description": "One-paragraph description of what business problem this pattern addresses."
+        },
+        "domainLanguage": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Common domain terms used in this pattern type (used for pattern matching confidence)."
+        },
+        "commonFeatures": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Typical features present in applications of this pattern type."
+        },
+        "strongSignals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "High-confidence indicators that a conversation matches this pattern."
+        },
+        "weakSignals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Low-confidence or potentially misleading indicators for this pattern."
+        },
+        "adspServiceMappings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ServiceMapping" },
+          "minItems": 1,
+          "description": "ADSP services recommended for this pattern with their role."
+        },
+        "clarifyingQuestions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Questions the Planning Agent should ask to confirm or rule out this pattern."
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Default assumptions made when this pattern is applied."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether this pattern is available for matching. Inactive patterns are soft-deleted."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ServiceMapping": {
+      "type": "object",
+      "description": "Maps an ADSP service to its role within a business pattern.",
+      "required": ["serviceId", "role"],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "description": "ADSP service identifier (e.g., 'form-service', 'notification-service')."
+        },
+        "role": {
+          "type": "string",
+          "description": "The function this service plays in the pattern (e.g., 'intake form', 'status notifications')."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this service is required or optional in the pattern."
+        }
+      }
+    },
+    "ConversationMessage": {
+      "type": "object",
+      "description": "A single message in the planning session conversation. Messages are append-only and constitute the raw conversation history.",
+      "required": ["messageId", "sessionId", "tenantId", "role", "content", "timestamp"],
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this message."
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to the parent PlanningSession."
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "ADSP tenant identifier for data isolation."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant", "system"],
+          "description": "Message originator: user input, AI assistant response, or system-generated instruction."
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Message text content."
+        },
+        "agentId": {
+          "type": ["string", "null"],
+          "description": "Identifier of the specialist agent if this message was generated by a specialist (null for planner or user messages)."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the message was created."
+        }
+      }
+    },
+    "SpecialistAgentConfig": {
+      "type": "object",
+      "description": "Configuration for a specialist agent instance within a tenant. Stored in ADSP Configuration Service.",
+      "required": ["agentId", "serviceId", "tenantId", "isEnabled", "modelVersion"],
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "description": "Unique identifier for this specialist agent configuration."
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "The ADSP service this specialist covers (e.g., 'form-service')."
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "ADSP tenant identifier."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Whether this specialist agent is available in the tenant."
+        },
+        "modelVersion": {
+          "type": "string",
+          "description": "Pinned Anthropic model version for this specialist (e.g., 'claude-sonnet-4-5').",
+          "x-business-rules": ["BR-002"]
+        }
+      }
+    },
+    "SessionListResponse": {
+      "type": "object",
+      "description": "Paginated response for session list API endpoint.",
+      "required": ["sessions", "total", "page", "pageSize"],
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PlanningSession" }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of sessions matching the filter criteria."
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Current page number (1-based)."
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Number of sessions per page.",
+          "x-business-rules": ["BR-011"]
+        }
+      }
+    },
+    "DomainEvent": {
+      "type": "object",
+      "description": "RabbitMQ domain event published by the planner-service for session lifecycle changes.",
+      "required": ["eventId", "eventType", "tenantId", "sessionId", "timestamp", "payload"],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this domain event."
+        },
+        "eventType": {
+          "type": "string",
+          "enum": ["session-created", "session-updated", "session-completed", "session-archived", "hypothesis-generated", "specialist-delegated"],
+          "description": "Classification of the domain event.",
+          "x-business-rules": ["BR-012"]
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "ADSP tenant identifier."
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to the affected PlanningSession."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the event occurred."
+        },
+        "payload": {
+          "type": "object",
+          "description": "Event-specific payload data."
+        }
+      }
+    },
+    "LLMRequest": {
+      "type": "object",
+      "description": "Request payload sent to Anthropic Claude API for agent inference.",
+      "required": ["model", "messages", "max_tokens"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Anthropic model identifier (e.g., 'claude-sonnet-4-5').",
+          "x-business-rules": ["BR-002"]
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string", "enum": ["user", "assistant"] },
+              "content": { "type": "string" }
+            }
+          }
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "Maximum number of tokens in the response.",
+          "x-business-rules": ["BR-003"]
+        },
+        "system": {
+          "type": ["string", "null"],
+          "description": "System prompt injecting agent persona and context."
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "description": "Standard error response shape for the planner-service REST API.",
+      "required": ["error", "message", "statusCode"],
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "Machine-readable error code."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error description."
+        },
+        "statusCode": {
+          "type": "integer",
+          "description": "HTTP status code."
+        },
+        "details": {
+          "type": "object",
+          "description": "Optional additional error context."
+        }
+      }
+    }
+  }
+}

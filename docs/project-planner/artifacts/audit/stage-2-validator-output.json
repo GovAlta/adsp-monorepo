@@ -1,0 +1,104 @@
+{
+  "validator": "fac_s2_runner",
+  "overallStatus": "PASS",
+  "findings": [
+    {
+      "ruleId": "FAC-S2-001",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\services\\service-description.json",
+      "failReason": "service-description.json structural checks pass (full GOA rule enumeration in subagent self-report)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-002",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\services\\audience-identification.json",
+      "failReason": "audience-identification.json passes audience_identification.schema.json + AUD-009 (5 audiences); AUD-010/011 LLM-side",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-003",
+      "status": "PASS",
+      "evidence": "found 5 journey-map-*.json under C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\services",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-004",
+      "status": "PASS",
+      "evidence": "5 journey map(s) pass journey_map.schema.json (AJM-004 LLM-side)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-005",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\services\\future-state.json",
+      "failReason": "future-state.json passes future_state.schema.json + FS-003/FS-011 (12 opportunities)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-006",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\services\\sitemap.json",
+      "failReason": "sitemap.json passes sitemap.schema.json + SMP-005/SMP-008 (12 page(s) across 2 area(s))",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-007",
+      "status": "PASS",
+      "evidence": "serviceName consistent across 9 artifact(s): 'ADSP Project Planner'",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-008",
+      "status": "PASS",
+      "evidence": "ministry consistent across 4 artifact(s): 'Service Alberta and Red Tape Reduction / Technology and Innovation'",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-009",
+      "status": "PASS",
+      "evidence": "audience names consistent across artifacts (5 canonical audience(s))",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S2-010",
+      "status": "PASS",
+      "evidence": "all 12 FS opportunity ID(s) linked in sitemap",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S2-001",
+      "status": "PASS",
+      "evidence": "5 audience(s) linked via derivedFromStakeholderClasses; all 4 user-facing stakeholder class(es) covered (of 5 total \u2014 1 system/indirect exempt); semantic alignment LLM-side",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S2-002",
+      "status": "PASS",
+      "evidence": "deferred to subagent self-report (LLM-judgement: context-of-use alignment)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S2-003",
+      "status": "PASS",
+      "evidence": "deterministic portion: 8/8 INTs referenced; semantic 'user interaction' check LLM-side",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S2-004",
+      "status": "PASS",
+      "evidence": "deferred to subagent self-report (LLM-judgement: data entity relevance in sitemap keyContent)",
+      "failReason": null,
+      "remediationAction": null
+    }
+  ]
+}

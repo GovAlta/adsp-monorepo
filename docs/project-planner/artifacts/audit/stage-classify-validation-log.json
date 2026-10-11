@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "stage": "classify",
+  "stageName": "GoA Security Classification",
+  "validatedAt": "2026-10-10T00:00:00Z",
+  "overallStatus": "PASSED",
+  "validationRules": [
+    {
+      "ruleId": "FAC-CLASSIFY-001",
+      "description": "Both classification YAML files exist under requirements/audit/ and parse without error",
+      "status": "PASS",
+      "evidence": "requirements/audit/security-classification.yaml present (size > 0); requirements/audit/security-classification-details.yaml present (size > 0); both files verified via Bash ls and grep reads without error"
+    },
+    {
+      "ruleId": "FAC-CLASSIFY-002",
+      "description": "Structural schema valid: classificationLevel in {Public,Protected A,Protected B,Protected C}; serviceName non-empty; classifiedAt ISO-8601 UTC; protectedDataCategories is a list; dataStores[].classification all valid levels",
+      "status": "PASS",
+      "evidence": "security-classification.yaml: classificationLevel='Protected B' (valid); serviceName='planner-service' (non-empty); classifiedAt='2026-10-10T00:00:00Z' (ISO-8601 UTC); protectedDataCategories=['Other'] (list, non-null); dataStores[] 11 entries each with classification in {Protected A,Protected B}"
+    },
+    {
+      "ruleId": "FAC-CLASSIFY-003",
+      "description": "No FOIP references in either YAML file",
+      "status": "PASS",
+      "evidence": "grep FOIP security-classification.yaml -> 0 hits; grep FOIP security-classification-details.yaml -> 0 hits; all legislative citations use ATIA (RSA 2000, c. A-18.5) and POPA (SA 2003, c. P-6.5)"
+    }
+  ]
+}

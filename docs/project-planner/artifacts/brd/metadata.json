@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "serviceName": "planner-service",
+  "purpose": "This Business Requirements Document specifies the functional and non-functional requirements for the ADSP Planner Service — a new AI-agent-powered service added to the Alberta Digital Service Platform (ADSP). The planner-service introduces a network of AI agents into the Tenant Management Webapp (TMW) to help GoA customers discover how ADSP services can address their business problems, reducing the barrier to ADSP adoption by allowing users to describe business goals in natural language rather than requiring deep upfront architectural knowledge.",
+  "scope": {
+    "inScope": "The planner-service encompasses: (1) a Planning Agent with conversational AI powered by Anthropic Claude that constructs structured business models from user input; (2) specialist sub-agents for form-service, pdf-service, comment-service, and notification-service; (3) persistent planning sessions scoped to tenant and user stored in MongoDB; (4) a configurable business pattern library managed via the ADSP Configuration Service; (5) UI integration into the Tenant Management Webapp (TMW) using GoA Design System 2.0; (6) multi-tenant data isolation following ADSP platform conventions; (7) RabbitMQ domain events for session lifecycle; (8) all ADSP SDK patterns including initializePlatform() initialization, Keycloak JWT authentication, and Express REST API endpoints.",
+    "outOfScope": "The following are explicitly excluded from MVP scope: direct integration with Jira or ServiceNow; automated code generation or deployment pipeline creation; automated infrastructure provisioning; integration with services beyond the four named specialists in MVP (form, pdf, comment, notification)."
+  },
+  "definitions": [
+    { "term": "ADSP", "definition": "Alberta Digital Service Platform — the GoA shared platform of reusable digital services." },
+    { "term": "TMW", "definition": "Tenant Management Webapp — the existing ADSP administrative web application into which the planner UI is integrated." },
+    { "term": "LLM", "definition": "Large Language Model — the AI model (Anthropic Claude) powering the planning and specialist agents." },
+    { "term": "Planning Agent", "definition": "The primary AI agent that interacts with users to elicit business problems, build business models, and coordinate specialists." },
+    { "term": "Specialist Agent", "definition": "A domain-specific AI agent with deep knowledge of one ADSP service, subordinate to the Planning Agent." },
+    { "term": "Business Model", "definition": "The structured representation of a user's business problem constructed incrementally by the Planning Agent from conversation." },
+    { "term": "Solution Hypothesis", "definition": "A proposed ADSP-based implementation approach derived from the business model, treated as tentative and subject to user refinement." },
+    { "term": "Business Pattern", "definition": "A reusable template capturing a known GoA business process pattern with ADSP service mappings and clarifying questions." },
+    { "term": "Planning Session", "definition": "A persistent, user-scoped workspace capturing conversation history, business model state, and solution hypotheses." },
+    { "term": "GoA", "definition": "Government of Alberta." },
+    { "term": "RBAC", "definition": "Role-Based Access Control — controls user access to features based on assigned roles." },
+    { "term": "Tenant", "definition": "An ADSP-registered organization unit with isolated configuration and data." },
+    { "term": "initializePlatform()", "definition": "The ADSP SDK function that registers service configuration, event definitions, and health endpoints." }
+  ],
+  "references": [
+    { "citation": "ISO/IEC/IEEE 29148:2018 — Systems and software engineering — Life cycle processes — Requirements engineering" },
+    { "citation": "ISO/IEC/IEEE 15288:2023 — Systems and software engineering — System life cycle processes" },
+    { "citation": "ISO/IEC/IEEE 12207:2017 — Systems and software engineering — Software life cycle processes" },
+    { "citation": "ISO 25065:2019 — Systems and software engineering — Systems and software Quality Requirements and Evaluation — Common Industry Format for Usability — Requirements" },
+    { "citation": "ISO/IEC/IEEE 29119-3:2021 — Software and systems engineering — Software testing — Part 3: Test documentation" },
+    { "citation": "ADSP Service Catalog", "url": "https://adsp.alberta.ca" },
+    { "citation": "GoA Design System 2.0", "url": "https://design.alberta.ca" },
+    { "citation": "OWASP Application Security Verification Standard (ASVS) 4.0" },
+    { "citation": "WCAG 2.1 Level AA — Web Content Accessibility Guidelines" },
+    { "citation": "GoA Information Management Regulation" }
+  ],
+  "documentOverview": "This BRD is structured as a sharded JSON bundle produced by the GoA Software Factory Stage 1 pipeline. It covers stakeholder identification, stakeholder needs elicitation, requirements specification at all levels (BRQ through USRREQ), business rules, integration points, test specifications, and a full traceability matrix. Downstream pipeline stages (Stage 2 onward) consume this bundle to produce service design, database schema, API definitions, and client UI artifacts for the planner-service Nx project under apps/planner-service/ in the adsp-monorepo.",
+  "governingStandards": [
+    "ISO/IEC/IEEE 29148:2018",
+    "ISO/IEC/IEEE 15288:2023",
+    "ISO/IEC/IEEE 12207:2017",
+    "ISO 25065:2019",
+    "ISO/IEC/IEEE 29119-3:2021"
+  ],
+  "pipelineMode": "Standard — planner-service new ADSP platform service"
+}

@@ -1,0 +1,14 @@
+{
+  "deltaFields": {
+    "securityContext": {
+      "classificationLevel": "Protected B",
+      "protectedDataCategories": ["Other"],
+      "classifiedAt": "2026-10-10T00:00:00Z"
+    }
+  },
+  "artifactsWritten": [
+    "requirements/audit/security-classification.yaml",
+    "requirements/audit/security-classification-details.yaml",
+    "requirements/audit/stage-classify-validation-log.json"
+  ]
+}

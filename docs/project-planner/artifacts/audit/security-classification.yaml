@@ -1,0 +1,151 @@
+---
+# GoA Information Security Classification — planner-service
+# Produced by: factory-classify (GoA Software Factory)
+# Governing frameworks: ATIA (2003, c. A-18.5), POPA (2003, c. P-6.5)
+# Classification date: 2026-10-10T00:00:00Z
+
+schemaVersion: "1.0"
+classificationLevel: "Protected B"
+classifiedAt: "2026-10-10T00:00:00Z"
+serviceName: "planner-service"
+classificationBasis: >
+  The planner-service stores and processes GoA government deliberative and program-design
+  content authored by GoA employees during AI-assisted business planning sessions.
+  Conversation content (conversation_message.content), business models
+  (business_model / business_concept), and solution hypotheses (hypothesis_record)
+  constitute deliberative process records under ATIA s.23. Unauthorized disclosure
+  could reasonably be expected to cause serious harm by revealing unpublished GoA
+  program designs, policy options, and internal organizational strategies.
+  Employee identity data (planning_session.user_id, audit_event.actor_id,
+  user_context.user_id) is Protected A under POPA s.17. The application-level
+  classification is Protected B — the highest level present across all data stores.
+
+protectedDataCategories:
+  - "Other"
+  # "Other" denotes GoA government operational and deliberative content (ATIA s.23)
+  # and GoA employee identity data (POPA s.17). Neither category maps to a standard
+  # PII subtype (PHN, SIN, FinancialAccount, etc.) — the sensitive content is
+  # government program and policy material authored by employees in an official capacity.
+
+dataStores:
+  - name: "planning_session"
+    mongoCollection: "planningSessions"
+    classification: "Protected B"
+    rationale: >
+      Stores tenantId + userId (GoA employee identity, POPA s.17 Protected A baseline)
+      plus session state that links the employee to a named business-planning engagement
+      on a specific GoA program. Session title and status reveal which programs a GoA
+      employee is analyzing. Combined attribution raises classification to Protected B
+      per ATIA s.23 (deliberative process linkage).
+
+  - name: "business_model"
+    mongoCollection: "businessModels"
+    classification: "Protected B"
+    rationale: >
+      Stores the structured representation of the GoA employee's business problem
+      analysis — confidence scoring (reflecting depth of organizational insight),
+      matched pattern identifiers, and JSONB arrays of business concepts and
+      assumptions. Disclosure could reveal government program design, organizational
+      analysis, and internal assessment of program capabilities. ATIA s.23.
+
+  - name: "business_concept"
+    mongoCollection: "businessModels (embedded in concepts[])"
+    classification: "Protected B"
+    rationale: >
+      Embedded sub-documents within business_model containing concept names,
+      typed classifications (Actor, Goal, Activity, etc.), descriptions, and
+      source_text (verbatim excerpts from the user's planning conversation).
+      source_text directly contains deliberative government content. ATIA s.23.
+
+  - name: "concept_relationship"
+    mongoCollection: "businessModels (embedded in concepts[].relationships[])"
+    classification: "Protected B"
+    rationale: >
+      Embedded relationship graph linking business_concept nodes within Protected B
+      business_model documents. Inherits Protected B by embedding context.
+      Reveals internal program structure and dependency analysis. ATIA s.23.
+
+  - name: "hypothesis_record"
+    mongoCollection: "solutionHypotheses"
+    classification: "Protected B"
+    rationale: >
+      Stores AI-generated solution hypotheses including summary (plain-language
+      description of proposed government solution) and reasoning (Planning Agent's
+      analysis of why specific ADSP services were recommended). Classification
+      follows the Protected B input data (business_model) from which hypotheses
+      are derived. ATIA s.23 deliberative content.
+
+  - name: "conversation_message"
+    mongoCollection: "conversationMessages"
+    classification: "Protected B"
+    rationale: >
+      Append-only store of all conversation turns between GoA employees and the
+      Planning Agent. content field contains verbatim employee statements about
+      GoA programs, organizational problems, and business design decisions.
+      This is the primary Protected B data store — direct deliberative government
+      content. ATIA s.23. Sent to external LLM (INT-001 Anthropic) — data boundary
+      controls required (see details YAML, section integrationRisks).
+
+  - name: "audit_event"
+    mongoCollection: "auditEvents"
+    classification: "Protected A"
+    rationale: >
+      Administrative audit log recording actor identity (actor_id — GoA employee
+      Keycloak sub claim), action type, resource reference, and outcome. Does not
+      store planning session content. GoA employee identifier warrants Protected A
+      under POPA s.17. Administrative audit records for a GoA system are Protected A.
+
+  - name: "specialist_request"
+    mongoCollection: "specialistRequests"
+    classification: "Protected B"
+    rationale: >
+      JSONB request_payload contains session context excerpts forwarded to specialist
+      agents for deep ADSP service guidance. Payload inherits Protected B
+      classification from the conversation_message and business_model content it
+      encapsulates. ATIA s.23. Note: transmitted to future external specialist
+      microservices (INT-003 through INT-006, currently Stub status).
+
+  - name: "specialist_response"
+    mongoCollection: "specialistResponses"
+    classification: "Protected B"
+    rationale: >
+      JSONB response_payload stores specialist agent analysis generated in response
+      to Protected B context. AI-generated analysis of Protected B input inherits
+      the Protected B classification of the input. ATIA s.23.
+
+  - name: "session_export"
+    mongoCollection: "sessionExports"
+    classification: "Protected B"
+    rationale: >
+      JSONB export_data is a serialized snapshot of the complete planning session
+      including business models and hypotheses. A full dump of Protected B planning
+      content in a portable format. Retention and disposition controls (SYSREQ-022)
+      apply at Protected B level. ATIA s.23.
+
+  - name: "user_context"
+    mongoCollection: "userContexts"
+    classification: "Protected A"
+    rationale: >
+      Stores GoA employee user_id + tenant_id with UI preferences (JSONB) and
+      a pointer to last_active_session_id. The preferences are low-sensitivity
+      user interface settings. The user_id is a GoA employee identifier (POPA s.17).
+      No session content is stored here. Protected A.
+
+integrationClassificationNotes:
+  - integrationId: "INT-001"
+    name: "Anthropic Claude API"
+    classificationBoundary: >
+      Protected B conversation content (conversation_message.content) and business
+      model context are sent to Anthropic PBC (US-based external party) as LLM
+      inference inputs. This is an out-of-jurisdiction transfer of Protected B GoA
+      government deliberative content. OPEN-001, OPEN-002, and OPEN-006 (per BRD
+      integration_points.json) must be resolved with GoA legal/privacy counsel
+      before enabling the live integration. Implementation is currently Stub
+      (fail-closed). Data minimization and contractual data processing agreements
+      are mandatory mitigations.
+  - integrationId: "INT-008"
+    name: "Keycloak JWT Authorization Server"
+    classificationBoundary: >
+      Keycloak issues JWTs containing tenantId and userId (GoA employee identity).
+      JWT validation is performed locally (no per-request remote call). The userId
+      claim is Protected A. No Protected B content transits Keycloak.

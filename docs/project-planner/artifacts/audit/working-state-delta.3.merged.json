@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "stage": 3,
+  "stageName": "Database Design",
+  "generatedAt": "2026-10-10T02:58:00Z",
+  "deltaFields": {
+    "tables": [
+      { "name": "planning_session", "primaryKey": "pk_planning_session" },
+      { "name": "business_model", "primaryKey": "pk_business_model" },
+      { "name": "business_concept", "primaryKey": "pk_business_concept" },
+      { "name": "concept_relationship", "primaryKey": "pk_concept_relationship" },
+      { "name": "hypothesis_record", "primaryKey": "pk_hypothesis_record" },
+      { "name": "conversation_message", "primaryKey": "pk_conversation_message" },
+      { "name": "audit_event", "primaryKey": "pk_audit_event" },
+      { "name": "specialist_request", "primaryKey": "pk_specialist_request" },
+      { "name": "specialist_response", "primaryKey": "pk_specialist_response" },
+      { "name": "session_export", "primaryKey": "pk_session_export" },
+      { "name": "user_context", "primaryKey": "pk_user_context" }
+    ],
+    "foreignKeys": [
+      "fk_business_model_session",
+      "fk_business_concept_model",
+      "fk_concept_rel_source",
+      "fk_hypothesis_record_session",
+      "fk_conversation_msg_session",
+      "fk_specialist_req_session",
+      "fk_specialist_resp_request",
+      "fk_session_export_session"
+    ],
+    "constraintEnforcedRules": [
+      "BR-006",
+      "BR-010"
+    ],
+    "applicationDeferredRules": [
+      "BR-001",
+      "BR-004",
+      "BR-005",
+      "BR-008",
+      "BR-009"
+    ],
+    "testCaseIds": [
+      "TC-116",
+      "TC-117",
+      "TC-118",
+      "TC-119",
+      "TC-120",
+      "TC-121",
+      "TC-122",
+      "TC-123",
+      "TC-124"
+    ]
+  },
+  "artifactsWritten": [
+    "requirements/database/ddl_script.sql",
+    "requirements/database/index_recommendations.sql",
+    "requirements/database/json_schema.json",
+    "requirements/database/data_model.json",
+    "requirements/brd/test_specifications.json",
+    "requirements/brd/traceability_matrix.json",
+    "requirements/brd/assumptions.json",
+    "requirements/brd/_manifest.json",
+    "requirements/audit/stage-3-validation-log.json",
+    "requirements/audit/working-state-delta.json"
+  ]
+}

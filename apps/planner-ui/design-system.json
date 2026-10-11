@@ -1,0 +1,565 @@
+{
+  "version": "1.0",
+  "designSystemVersion": "GoA Design System 2.0",
+  "clientStack": "React 18",
+  "surface": "private-authenticated",
+  "shell": {
+    "type": "goa-work-side-menu",
+    "cssClass": "goa-work-side-menu",
+    "navigation": {
+      "areas": [
+        {
+          "areaId": "planning-workspace",
+          "heading": "Planning Workspace",
+          "items": [
+            { "pageId": "session-dashboard", "label": "My Planning Sessions", "icon": "home", "route": "/sessions" },
+            { "pageId": "planning-session", "label": "Active Session", "icon": "chatbubble", "route": "/sessions/:sessionId" }
+          ],
+          "hiddenItems": [
+            { "pageId": "new-session-start", "reason": "Transient start page — accessed via CTA from session-dashboard, not via side-menu" }
+          ],
+          "childRouteItems": [
+            { "pageId": "business-model-review", "parentRoute": "/sessions/:sessionId/model", "visibleInWizardStepProgress": true },
+            { "pageId": "hypothesis-review", "parentRoute": "/sessions/:sessionId/hypothesis", "visibleInWizardStepProgress": true },
+            { "pageId": "session-export", "parentRoute": "/sessions/:sessionId/export", "visibleInWizardStepProgress": true }
+          ]
+        },
+        {
+          "areaId": "administration",
+          "heading": "Administration",
+          "requiredRoles": ["planner-admin", "tenant-admin"],
+          "items": [
+            { "pageId": "admin-hub", "label": "Administration", "icon": "settings", "route": "/admin" },
+            { "pageId": "pattern-library", "label": "Pattern Library", "icon": "library", "route": "/admin/patterns" },
+            { "pageId": "session-history", "label": "Session History", "icon": "time", "route": "/admin/session-history" },
+            { "pageId": "audit-log", "label": "Audit Log", "icon": "lock-closed", "route": "/admin/audit-log" },
+            { "pageId": "user-management", "label": "User Management", "icon": "people", "route": "/admin/users", "requiredRole": "tenant-admin" }
+          ],
+          "childRouteItems": [
+            { "pageId": "pattern-editor", "parentRoute": "/admin/patterns/:patternId", "note": "Also accessible at /admin/patterns/new for create mode" }
+          ]
+        }
+      ]
+    }
+  },
+  "componentMapping": {
+    "session-dashboard": {
+      "pageType": "list-index",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "toolbar": {
+          "search": "GoabxInput",
+          "primaryAction": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Start New Session" }
+        },
+        "filterDrawer": {
+          "component": "GoabxDetails",
+          "filters": [
+            { "field": "status", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "items": "GoabxDropdownItem" }
+          ]
+        },
+        "dataTable": {
+          "component": "GoabxTable",
+          "sortableColumns": ["title", "status", "updatedAt"],
+          "sortHeader": "GoabxTableSortHeader",
+          "staticHeaders": ["businessProblemSummary", "actions"],
+          "statusCell": "GoabxBadge",
+          "actionsCell": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Resume" }
+        },
+        "pagination": { "component": "GoabxPagination", "props": { "perPageCount": 20 } },
+        "emptyState": { "component": "GoabxCallout", "props": { "type": "information" } },
+        "sessionResumeWarning": { "component": "GoabxCallout", "props": { "type": "information", "heading": "Session Idle Warning" }, "condition": "session idle > 7 days" },
+        "authExceptionBanner": { "component": "GoabxNotification", "props": { "type": "emergency" }, "condition": "JWT expired / 401" }
+      },
+      "protectedFields": ["userId", "tenantId"],
+      "protectedFieldNote": "userId and tenantId are server-side scoping only — never rendered in UI. businessProblemSummary is display-only read-only text.",
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "new-session-start": {
+      "pageType": "start-page",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "alert": { "component": "GoabxCallout", "props": { "type": "information", "heading": "Planning Agent is in test mode" } },
+        "description": { "component": "GoabxContainer", "props": { "maxWidth": "740px" } },
+        "serviceInfo": { "component": "GoabxContainer" },
+        "preparation": { "component": "GoabxContainer", "props": { "maxWidth": "740px" } },
+        "sessionTitleForm": {
+          "component": "GoabxFormItem",
+          "props": { "label": "Session title", "requirement": "required" },
+          "input": { "component": "GoabxInput", "props": { "name": "title", "maxLength": 200 } }
+        },
+        "startAction": {
+          "primary": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Start Planning Session" },
+          "secondary": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Cancel" }
+        },
+        "mongoErrorBanner": { "component": "GoabxCallout", "props": { "type": "emergency", "heading": "Unable to create session" }, "condition": "POST /sessions returns 503" }
+      },
+      "protectedFields": [],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "planning-session": {
+      "pageType": "wizard",
+      "layout": "two-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "stepProgress": {
+          "component": "GoabxContainer",
+          "note": "Custom step indicator — no GoabxStepper; build with GoabxContainer + step badges + dividers",
+          "steps": ["Describe Problem", "Review Model", "Review Hypothesis", "Export"]
+        },
+        "primaryPanel": {
+          "chatInput": { "component": "GoabxFormItem", "props": { "label": "Your message" }, "textarea": { "component": "GoabxTextArea", "props": { "name": "messageContent", "maxCount": 10000 } } },
+          "sendButton": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Send Message", "disabledWhenStub": true },
+          "integrationPendingBanner": { "component": "IntegrationPendingBanner", "props": { "intId": "INT-001" } },
+          "llmUnavailableError": { "component": "GoabxCallout", "props": { "type": "emergency" }, "condition": "POST /messages 503" },
+          "rateLimitBanner": { "component": "GoabxCallout", "props": { "type": "emergency" }, "condition": "POST /messages 429" },
+          "rateLimitWarning": { "component": "GoabxCallout", "props": { "type": "important" }, "condition": "80% of rate limit" }
+        },
+        "sidePanel": {
+          "businessModelStatusCard": {
+            "component": "GoabxContainer",
+            "confidenceBadge": "ConfidenceBadge",
+            "viewModelButton": { "component": "GoabxButton", "props": { "type": "tertiary" }, "label": "View Business Model" },
+            "incompleteWarning": { "component": "GoabxCallout", "props": { "type": "information" } }
+          },
+          "specialistConsultationPanel": {
+            "component": "GoabxContainer",
+            "specialistButtons": { "component": "GoabxButton", "props": { "type": "secondary", "disabled": "whenStub" } }
+          }
+        },
+        "contextSummary": { "component": "GoabxCallout", "props": { "type": "information", "heading": "Welcome back" }, "condition": "session re-entry" },
+        "staleSummary": { "component": "GoabxCallout", "props": { "type": "important", "heading": "Extended context recap" }, "condition": "idle > 7 days" },
+        "stepNavigation": {
+          "back": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Back to Session List" },
+          "continue": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Review Business Model" },
+          "cancel": { "component": "GoabxButton", "props": { "type": "tertiary" }, "label": "Save and Exit" }
+        }
+      },
+      "protectedFields": ["conversationMessage.content", "planningSession.userId", "planningSession.tenantId"],
+      "protectedFieldNote": "Message content in Protected B — in-memory React state only, no localStorage. userId/tenantId not rendered in client UI.",
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "business-model-review": {
+      "pageType": "detail-view",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "itemHeading": {
+          "component": "GoabxContainer",
+          "heading": "h1 Business Model",
+          "statusBadge": { "component": "ConfidenceBadge", "note": "success>=70, warning 50-69, emergency<50" }
+        },
+        "keyFields": {
+          "problemSummary": { "component": "MaskedField", "props": { "fieldName": "businessModel.problemSummary" }, "annotation": "ASVS:V-8.3.1 ATIA s.23" },
+          "confidenceScore": { "component": "GoabxFormItem", "props": { "label": "Confidence Score", "readonly": true } },
+          "extractionDate": { "component": "GoabxFormItem", "props": { "label": "Extraction Date", "readonly": true } },
+          "conceptCount": { "component": "GoabxFormItem", "props": { "label": "Concept Count", "readonly": true } }
+        },
+        "contextActions": {
+          "confirm": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Confirm Business Model" },
+          "return": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Return to Planning Conversation" }
+        },
+        "tabs": {
+          "component": "div",
+          "props": { "role": "tablist" },
+          "note": "No GoabxTabs component — use div[role=tablist] + aria-controls pattern",
+          "tabs": [
+            { "id": "actors", "label": "Actors", "table": "GoabxTable", "inlineEdit": { "component": "GoabxDropdown", "name": "conceptType", "items": "GoabxDropdownItem" } },
+            { "id": "processes", "label": "Processes", "table": "GoabxTable", "inlineEdit": { "component": "GoabxDropdown", "name": "conceptType", "items": "GoabxDropdownItem" } },
+            { "id": "systems", "label": "Systems", "table": "GoabxTable", "inlineEdit": { "component": "GoabxDropdown", "name": "conceptType", "items": "GoabxDropdownItem" } }
+          ]
+        },
+        "warnings": {
+          "confidenceLow": { "component": "GoabxCallout", "props": { "type": "emergency" } },
+          "confidenceModerate": { "component": "GoabxCallout", "props": { "type": "important" } },
+          "confidenceHigh": { "component": "GoabxCallout", "props": { "type": "success" } },
+          "emptyModel": { "component": "GoabxCallout", "props": { "type": "information" } }
+        },
+        "policyNotice": { "component": "GoabxCallout", "props": { "type": "information" }, "text": "ATIA s.23 Protected B notice" }
+      },
+      "protectedFields": ["businessModel.problemSummary", "businessConcept.name", "businessConcept.description", "businessConcept.sourceText"],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "hypothesis-review": {
+      "pageType": "wizard-step-review",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "reviewSections": {
+          "proposedHypothesis": {
+            "heading": "Proposed Solution Hypothesis",
+            "fields": {
+              "summary": { "component": "MaskedField", "props": { "fieldName": "solutionHypothesis.summary" }, "annotation": "ASVS:V-8.3.1 ATIA s.23" },
+              "status": { "component": "GoabxFormItem", "props": { "label": "Status", "readonly": true } },
+              "version": { "component": "GoabxFormItem", "props": { "label": "Hypothesis Version", "readonly": true } },
+              "patternId": { "component": "GoabxFormItem", "props": { "label": "Matched Business Pattern", "readonly": true } }
+            }
+          },
+          "planningAgentReasoning": {
+            "component": "GoabxDetails",
+            "props": { "heading": "Planning Agent Reasoning", "open": false },
+            "reasoning": { "component": "MaskedField", "props": { "fieldName": "solutionHypothesis.reasoning" }, "annotation": "ASVS:V-8.3.1 ATIA s.23" }
+          }
+        },
+        "submitAction": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Accept Hypothesis" },
+        "optionalInput": {
+          "label": "Revision Request",
+          "textarea": { "component": "GoabxFormItem", "props": { "label": "Revision Request" }, "input": { "component": "GoabxTextArea", "name": "revisionRequest" } },
+          "submit": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Request Revision" }
+        },
+        "policyNotice": { "component": "GoabxCallout", "props": { "type": "information" }, "text": "ATIA s.23 Protected B deliberative information notice" },
+        "warnings": {
+          "lockedNoHypothesis": { "component": "GoabxCallout", "props": { "type": "information" } },
+          "int001StubPending": { "component": "GoabxCallout", "props": { "type": "information" } },
+          "hypothesisSuperseded": { "component": "GoabxCallout", "props": { "type": "information" } }
+        },
+        "integrationPendingBanner": { "component": "IntegrationPendingBanner", "props": { "intId": "INT-001" } }
+      },
+      "protectedFields": ["solutionHypothesis.summary", "solutionHypothesis.reasoning"],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "session-export": {
+      "pageType": "detail-view",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "itemHeading": {
+          "heading": "h1 Session Plan Export",
+          "statusBadge": { "component": "GoabxBadge", "note": "information=active, warning=paused, success=completed, emergency=archived" }
+        },
+        "keyFields": {
+          "title": { "component": "MaskedField", "props": { "fieldName": "planningSession.title" }, "annotation": "ASVS:V-8.3.1 ATIA s.23" },
+          "businessProblemSummary": { "component": "MaskedField", "props": { "fieldName": "planningSession.businessProblemSummary" }, "annotation": "ASVS:V-8.3.1 ATIA s.23" },
+          "hypothesisStatus": { "component": "GoabxFormItem", "props": { "label": "Hypothesis Status", "readonly": true } },
+          "createdAt": { "component": "GoabxFormItem", "props": { "label": "Created Date", "readonly": true } },
+          "updatedAt": { "component": "GoabxFormItem", "props": { "label": "Last Updated", "readonly": true } }
+        },
+        "contextActions": {
+          "download": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Download JSON Export", "disabledWhen": "hypothesisStatus !== accepted" },
+          "back": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Back to Planning Session" }
+        },
+        "tabs": {
+          "component": "div",
+          "props": { "role": "tablist" },
+          "tabs": [
+            { "id": "business-model-summary", "label": "Business Model Summary", "content": "GoabxFormItem read-only fields" },
+            { "id": "hypothesis-summary", "label": "Hypothesis Summary", "maskedFields": ["solutionHypothesis.summary", "solutionHypothesis.reasoning"], "component": "MaskedField" },
+            { "id": "specialist-consultations", "label": "Specialist Consultations", "content": "GoabxTable read-only" }
+          ]
+        },
+        "emptyState": { "component": "GoabxCallout", "props": { "type": "information" }, "condition": "hypothesisStatus !== accepted" },
+        "policyNotice": { "component": "GoabxCallout", "props": { "type": "information" }, "text": "ATIA s.23 + POPA s.17 Protected B notice" }
+      },
+      "protectedFields": ["planningSession.title", "planningSession.businessProblemSummary", "solutionHypothesis.summary", "solutionHypothesis.reasoning", "sessionExport.userId", "sessionExport.tenantId"],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "admin-hub": {
+      "pageType": "section-hub",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "hubIntro": { "component": "GoabxContainer", "heading": "h1 Administration" },
+        "sectionTiles": {
+          "layout": { "component": "GoabxGrid", "props": { "gap": "m", "minChildWidth": "260px" } },
+          "tiles": [
+            { "tileId": "tile-pattern-library", "component": "GoabxContainer", "icon": "GoabxIconButton library", "heading": "h2 Pattern Library", "statsBadge": "GoabxBadge type=information from listPatterns.total", "cta": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Manage Patterns" } },
+            { "tileId": "tile-session-history", "component": "GoabxContainer", "icon": "GoabxIconButton time", "heading": "h2 Session History", "statsBadge": "GoabxBadge type=information from listSessions.total", "cta": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "View History" } },
+            { "tileId": "tile-audit-log", "component": "GoabxContainer", "icon": "GoabxIconButton lock-closed", "heading": "h2 Audit Log", "statsBadge": "GoabxBadge type=information from listAuditEvents.total", "cta": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "View Audit Log" } },
+            { "tileId": "tile-user-management", "component": "GoabxContainer", "requiredRole": "tenant-admin", "icon": "GoabxIconButton people", "heading": "h2 User Management", "cta": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Manage Users" } }
+          ]
+        }
+      },
+      "protectedFields": [],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "pattern-library": {
+      "pageType": "list-index",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "toolbar": {
+          "search": "GoabxInput placeholder=Search patterns by name or keyword",
+          "resultCountBadge": "GoabxBadge type=midtone",
+          "primaryAction": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Create Pattern" }
+        },
+        "filterDrawer": {
+          "component": "GoabxDetails",
+          "props": { "heading": "Filter Patterns", "open": false },
+          "filters": [
+            { "field": "status", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "items": "GoabxDropdownItem (all/active/inactive)" },
+            { "field": "dateModifiedRange", "components": ["GoabxFormItem", "GoabxDatePicker from", "GoabxDatePicker to"] }
+          ]
+        },
+        "dataTable": {
+          "component": "GoabxTable",
+          "sortableColumns": ["name", "lastModified", "matchCount"],
+          "sortHeader": "GoabxTableSortHeader",
+          "staticHeaders": ["status"],
+          "statusCell": "GoabxBadge success=active midtone=inactive",
+          "nameCell": "link to pattern-editor"
+        },
+        "pagination": { "component": "GoabxPagination", "props": { "perPageCount": 20 } },
+        "emptyState": { "component": "GoabxCallout", "props": { "type": "information" }, "cta": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Create Pattern" } },
+        "int002StubBanner": { "component": "GoabxCallout", "props": { "type": "important", "heading": "Pattern data is temporarily unavailable" }, "condition": "INT-002 returns 503" }
+      },
+      "protectedFields": [],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "pattern-editor": {
+      "pageType": "edit-form",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "formIntro": { "component": "GoabxContainer", "heading": "h1 Create Business Pattern (create) / Edit Business Pattern (edit)" },
+        "formFields": {
+          "name": { "component": "GoabxFormItem", "props": { "label": "Pattern Name", "requirement": "required" }, "input": { "component": "GoabxInput", "props": { "name": "name", "maxLength": 120 } } },
+          "description": { "component": "GoabxFormItem", "props": { "label": "Description", "requirement": "required" }, "input": { "component": "GoabxTextArea", "props": { "name": "description", "maxCount": 2000 } } },
+          "status": { "component": "GoabxFormItem", "props": { "label": "Status", "requirement": "required" }, "input": { "component": "GoabxDropdown", "props": { "name": "status", "value": "active" }, "items": "GoabxDropdownItem (active/inactive)" } },
+          "keywords": { "component": "GoabxFormItem", "props": { "label": "Keywords" }, "input": { "component": "GoabxInput", "props": { "name": "keywords" }, "note": "Custom tag-input pattern built on GoabxInput + chip display" } },
+          "serviceAffinity": { "component": "GoabxFormItem", "props": { "label": "Service Affinity" }, "input": { "component": "GoabxDropdown", "props": { "name": "serviceAffinity", "multiSelect": true }, "items": "GoabxDropdownItem per ADSP service" } },
+          "matchThreshold": { "component": "GoabxFormItem", "props": { "label": "Match Threshold", "requirement": "required" }, "input": { "component": "GoabxInput", "props": { "name": "matchThreshold", "type": "number", "min": 0, "max": 100 } } }
+        },
+        "formActions": {
+          "save": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Save Pattern" },
+          "cancel": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Cancel" },
+          "deactivate": { "component": "GoabxButton", "props": { "type": "secondary", "variant": "destructive" }, "label": "Deactivate Pattern", "condition": "editMode only" }
+        },
+        "errorBanner": { "component": "GoabxCallout", "props": { "type": "emergency" }, "condition": "400/413/422/503" }
+      },
+      "protectedFields": [],
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "session-history": {
+      "pageType": "report-results",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "filterControls": {
+          "component": "GoabxDetails",
+          "props": { "heading": "Filters", "open": true },
+          "filters": [
+            { "field": "dateRange", "components": ["GoabxFormItem", "GoabxDatePicker from", "GoabxDatePicker to"] },
+            { "field": "userRef", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "note": "Searchable; selection resolved to opaque userRef — FAC-S5-024: not raw POPA s.17 userId in URL" },
+            { "field": "status", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "items": "GoabxDropdownItem (active/completed/archived)" }
+          ]
+        },
+        "runAction": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Apply Filters" },
+        "resultsTable": {
+          "component": "GoabxTable",
+          "sortableColumns": ["ownerDisplayName", "status", "createdAt", "lastActivityAt"],
+          "sortHeader": "GoabxTableSortHeader",
+          "staticHeaders": ["id", "businessProblemSummary"],
+          "ownerDisplayNameNote": "// ASVS:V-8.3.1 // CAS:RULE-017 — raw userId masked to displayName; never rendered",
+          "statusCell": "GoabxBadge success=active information=completed midtone=archived"
+        },
+        "rowDetailPanel": {
+          "component": "GoabxContainer",
+          "trigger": "row-click expand",
+          "adminAnnotation": { "component": "GoabxFormItem", "props": { "label": "Governance Note", "roleGating": "planner-admin/tenant-admin" }, "input": { "component": "GoabxTextArea", "name": "adminAnnotation" } }
+        },
+        "exportAction": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Export Results" },
+        "pagination": { "component": "GoabxPagination", "props": { "perPageCount": 20 } },
+        "emptyState": { "component": "GoabxCallout", "props": { "type": "information" } }
+      },
+      "protectedFields": ["planningSession.userId"],
+      "protectedFieldNote": "userId masked to ownerDisplayName — never rendered raw. // ASVS:V-8.3.1 // CAS:RULE-017 annotation required on ownerDisplayName render.",
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "audit-log": {
+      "pageType": "report-results",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "integrityBanner": {
+          "component": "HmacStatusBanner",
+          "note": "Custom shared component — wraps GoabxCallout. verified:true → type=success; verified:false → type=emergency with ADSP Support CTA",
+          "loadedBy": "verifyAuditChain on page mount — before table data fetch"
+        },
+        "filterControls": {
+          "component": "GoabxDetails",
+          "props": { "heading": "Filters", "open": true },
+          "filters": [
+            { "field": "resourceType", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "props": { "multiSelect": true }, "items": "GoabxDropdownItem per action type" },
+            { "field": "actorId", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "note": "Displayed as displayName; actorId is Protected A GoA employee userId per OpenAPI — standard listAuditEvents query param" },
+            { "field": "dateRange", "components": ["GoabxFormItem", "GoabxDatePicker since", "GoabxDatePicker until"] }
+          ]
+        },
+        "runAction": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Apply Filters" },
+        "resultsTable": {
+          "component": "GoabxTable",
+          "props": { "width": "100%", "readOnly": true },
+          "immutabilityNote": "No edit/delete controls per BR-014 (TC-047)",
+          "sortableColumns": ["occurredAt"],
+          "sortHeader": "GoabxTableSortHeader",
+          "staticHeaders": ["actorDisplayName", "actionLabel", "resourceId", "outcome"],
+          "actorDisplayNameNote": "// ASVS:V-8.3.1 — raw actorId never displayed; resolved to displayName",
+          "outcomeCell": "GoabxBadge success=success emergency=failure"
+        },
+        "exportAction": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Export Audit Log" },
+        "pagination": { "component": "GoabxPagination", "props": { "perPageCount": 25 } },
+        "emptyState": { "component": "GoabxCallout", "props": { "type": "information" } }
+      },
+      "protectedFields": ["auditEvent.actorId"],
+      "protectedFieldNote": "actorId is Protected A (GoA employee userId). Masked to actorDisplayName in all rendered and exported output. // ASVS:V-8.3.1 annotation required.",
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    },
+    "user-management": {
+      "pageType": "user-management",
+      "layout": "single-column",
+      "primaryContainer": "GoabxContainer",
+      "sections": {
+        "toolbar": {
+          "search": "GoabxInput placeholder=Search by name or email (client-side filter)",
+          "primaryAction": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Invite User", "roleGating": "tenant-admin only" }
+        },
+        "filterDrawer": {
+          "component": "GoabxDetails",
+          "props": { "heading": "Filters", "open": false },
+          "filters": [
+            { "field": "role", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "items": "GoabxDropdownItem (All Roles/planner-user/planner-admin)" },
+            { "field": "status", "component": "GoabxDropdown", "wrapper": "GoabxFormItem", "items": "GoabxDropdownItem (All/active/inactive)" }
+          ]
+        },
+        "userTable": {
+          "component": "GoabxTable",
+          "sortableColumns": ["displayName", "roles", "lastActivityAt"],
+          "sortHeader": "GoabxTableSortHeader",
+          "staticHeaders": ["email", "status"],
+          "emailCell": { "component": "MaskedField", "props": { "fieldName": "user.email", "roleGating": "full to tenant-admin; masked to planner-admin" }, "annotation": "// ASVS:V-8.3.1 // CAS:RULE-017" },
+          "statusCell": "GoabxBadge success=active midtone=inactive"
+        },
+        "rowActions": {
+          "editRole": { "component": "GoabxDropdown", "props": { "name": "editRole" }, "items": "GoabxDropdownItem (planner-user/planner-admin)", "roleGating": "tenant-admin", "condition": "row.status === active" },
+          "deactivate": { "component": "GoabxButton", "props": { "type": "secondary", "variant": "destructive" }, "label": "Deactivate", "roleGating": "tenant-admin", "condition": "row.status === active", "triggersModal": "deactivateConfirmModal" }
+        },
+        "deactivateConfirmModal": {
+          "component": "GoabxModal",
+          "props": { "heading": "Deactivate User" },
+          "confirm": { "component": "GoabxButton", "props": { "type": "primary", "variant": "destructive" }, "label": "Deactivate" },
+          "cancel": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Cancel" }
+        },
+        "inviteModal": {
+          "component": "GoabxModal",
+          "props": { "heading": "Invite User" },
+          "fields": {
+            "email": { "component": "GoabxFormItem", "props": { "label": "Email Address", "requirement": "required" }, "input": { "component": "GoabxInput", "props": { "name": "email", "type": "email" } }, "note": "FAC-S5-026: held as component state only — cleared on modal close or success" },
+            "role": { "component": "GoabxFormItem", "props": { "label": "Role", "requirement": "required" }, "input": { "component": "GoabxDropdown", "name": "role", "items": "GoabxDropdownItem (planner-user/planner-admin)" } },
+            "displayName": { "component": "GoabxFormItem", "props": { "label": "Display Name" }, "input": { "component": "GoabxInput", "name": "displayName" } }
+          },
+          "submit": { "component": "GoabxButton", "props": { "type": "primary" }, "label": "Send Invitation" },
+          "cancel": { "component": "GoabxButton", "props": { "type": "secondary" }, "label": "Cancel" }
+        },
+        "pagination": { "component": "GoabxPagination", "props": { "perPageCount": 20 } },
+        "emptyState": { "component": "GoabxCallout", "props": { "type": "information" } }
+      },
+      "protectedFields": ["user.email"],
+      "protectedFieldNote": "user.email is Protected A — MaskedField renders masked (***@domain) for planner-admin; full email to tenant-admin only. // ASVS:V-8.3.1 // CAS:RULE-017 annotation required.",
+      "loadingState": "GoabxCircularProgress",
+      "errorState": "GoabxCallout"
+    }
+  },
+  "sharedComponents": {
+    "MaskedField": {
+      "description": "Custom wrapper for Protected B and Protected A field rendering. Renders masked value via GoabxBadge type=information when unmask=false, or full text when unmask=true (role-gated). Required for all fields in each page's protectedFields array.",
+      "props": ["value", "unmask", "fieldName"],
+      "securityAnnotations": ["ASVS:V-8.3.1", "CAS:RULE-017"],
+      "maskPattern": "First character + asterisks for strings; ***@domain.ca for email fields",
+      "pagesRequired": ["business-model-review", "hypothesis-review", "session-export", "session-history (display logic)", "audit-log (display logic)", "user-management"]
+    },
+    "ConfidenceBadge": {
+      "description": "Custom wrapper around GoabxBadge mapping numeric 0-100 confidence score to GoA badge type: success>=70, warning 50-69, emergency<50.",
+      "props": ["score", "showLabel"],
+      "underlyingComponent": "GoabxBadge",
+      "pagesRequired": ["planning-session", "business-model-review"]
+    },
+    "IntegrationPendingBanner": {
+      "description": "Custom wrapper around GoabxCallout type=information. Renders standardised INT-xxx stub notice banner.",
+      "props": ["intId", "heading", "body"],
+      "underlyingComponent": "GoabxCallout",
+      "pagesRequired": ["planning-session", "hypothesis-review"]
+    },
+    "HmacStatusBanner": {
+      "description": "Custom wrapper around GoabxCallout. verified=true → type=success; verified=false → type=emergency with ADSP Support CTA link.",
+      "props": ["verified", "verifiedLabel", "brokenLabel", "supportHref"],
+      "underlyingComponent": "GoabxCallout",
+      "pagesRequired": ["audit-log"]
+    }
+  },
+  "tokens": {
+    "colors": {
+      "note": "Use GoA Design System 2.0 CSS custom properties — do not hardcode hex values",
+      "primary": "var(--goa-color-interactive-default)",
+      "danger": "var(--goa-color-status-emergency)",
+      "warning": "var(--goa-color-status-warning)",
+      "success": "var(--goa-color-status-success)",
+      "info": "var(--goa-color-status-information)"
+    },
+    "spacing": {
+      "note": "Use GoA Design System 2.0 spacing tokens",
+      "xs": "var(--goa-space-xs)",
+      "s": "var(--goa-space-s)",
+      "m": "var(--goa-space-m)",
+      "l": "var(--goa-space-l)",
+      "xl": "var(--goa-space-xl)"
+    },
+    "typography": {
+      "note": "Use GoA Design System 2.0 typography tokens — do not hardcode font-family or font-size values",
+      "body": "var(--goa-font-family-sans)",
+      "heading": "var(--goa-font-family-sans)",
+      "mono": "var(--goa-font-family-mono)"
+    }
+  },
+  "dsValidation": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "rules": {
+      "DS-001": { "status": "PASS", "evidence": "All 12 pages use goa-work-side-menu shell — surface=private-authenticated" },
+      "DS-002": { "status": "PASS", "evidence": "Shell cssClass: goa-work-side-menu wraps all pages" },
+      "DS-003": { "status": "PASS", "evidence": "All interactive components use @abgov/react-components Goabx prefix: GoabxButton, GoabxInput, GoabxFormItem, GoabxModal, GoabxTable, GoabxBadge, etc." },
+      "DS-004": { "status": "PASS", "evidence": "Shell components (goa-work-side-menu, goa-side-menu, goa-side-menu-heading) use GoA Web Components pattern via shell.type definition" },
+      "DS-005": { "status": "PASS", "evidence": "Navigation uses goa-side-menu with goa-side-menu-heading per area, items grouped by areaId" },
+      "DS-006": { "status": "PASS-N/A", "evidence": "No filter drawers use slot=actions pattern — filter drawers use GoabxDetails collapsible; GoA filter slot pattern not applicable for this page set" },
+      "DS-007": { "status": "PASS", "evidence": "Modals on user-management (inviteModal, deactivateConfirmModal) use GoabxModal with open={boolean} state pattern" },
+      "DS-008": { "status": "PASS", "evidence": "All form inputs wrapped in GoabxFormItem: session title (new-session-start), pattern fields (pattern-editor), invite modal fields (user-management), revision request (hypothesis-review)" },
+      "DS-009": { "status": "PASS", "evidence": "All data tables use GoabxTable with GoabxTableSortHeader for sortable columns; plain th for non-sortable" },
+      "DS-010": { "status": "PASS", "evidence": "GoabxBadge used for status indicators with type: success/warning/emergency/information/midtone across all list-index and report-results pages" },
+      "DS-011": { "status": "PASS", "evidence": "GoabxButton used throughout with type=primary/secondary/tertiary; destructive variant for Deactivate actions on user-management and pattern-editor" },
+      "DS-012": { "status": "PASS", "evidence": "GoabxCallout for inline page alerts/notices; GoabxNotification for toast-style authExceptionBanner on session-dashboard" },
+      "DS-013": { "status": "PASS", "evidence": "GoabxPagination used on all list-index and report-results pages: session-dashboard (20/page), pattern-library (20/page), session-history (20/page), audit-log (25/page), user-management (20/page)" },
+      "DS-014": { "status": "PASS", "evidence": "MaskedField defined as custom wrapper component for Protected B/A fields — NOT a GoA component. Defined in sharedComponents with ASVS:V-8.3.1 and CAS:RULE-017 annotations." },
+      "DS-A001": { "status": "PASS", "evidence": "GoA Design System version 2.0 declared; @abgov/react-components v4.x used (Goabx prefix)" },
+      "DS-A002": { "status": "PASS", "evidence": "Only components from @abgov/react-components v4.x registry used: GoabxButton, GoabxBadge, GoabxCallout, GoabxContainer, GoabxDatePicker, GoabxDetails, GoabxDropdown, GoabxDropdownItem, GoabxFormItem, GoabxGrid, GoabxIconButton, GoabxInput, GoabxModal, GoabxNotification, GoabxPagination, GoabxTable, GoabxTableSortHeader, GoabxTextArea, GoabxCircularProgress" },
+      "DS-A003": { "status": "PASS", "evidence": "All form inputs wrapped in GoabxFormItem: verified across new-session-start, planning-session, hypothesis-review, pattern-editor, session-history, user-management inviteModal" },
+      "DS-A004": { "status": "PASS", "evidence": "Error messages on form fields use GoabxFormItem error prop pattern — documented in formFields validation rules" },
+      "DS-A005": { "status": "PASS", "evidence": "All GoabxDropdown instances use GoabxDropdownItem children" },
+      "DS-A006": { "status": "PASS-N/A", "evidence": "No GoabxRadioGroup components required by any page's content spec" },
+      "DS-A007": { "status": "PASS", "evidence": "GoabxTableSortHeader used for sortable columns; plain th used for non-sortable columns across all table pages" },
+      "DS-A008": { "status": "PASS", "evidence": "Loading states use GoabxCircularProgress documented in every page's loadingState property" },
+      "DS-A009": { "status": "PASS", "evidence": "GoabxContainer used for content width constraints on all pages (maxWidth props on primary panels)" },
+      "DS-A010": { "status": "PASS", "evidence": "GoabxModal trigger is open={boolean} state — defined in inviteModal and deactivateConfirmModal on user-management" },
+      "DS-A011": { "status": "PASS", "evidence": "goa-work-side-menu navigation items specified in shell.navigation.areas with side-menu-heading per area" },
+      "DS-A012": { "status": "PASS", "evidence": "GoabxCallout used for inline page alerts/notices; GoabxNotification used for toast-style session-expired banner on session-dashboard" },
+      "DS-A013": { "status": "PASS", "evidence": "MaskedField renders GoabxBadge type=information with masked text pattern when unmask=false per sharedComponents definition" }
+    },
+    "allPagesMapped": true,
+    "pagesWithProtectedFields": [
+      "session-dashboard", "planning-session", "business-model-review",
+      "hypothesis-review", "session-export", "session-history",
+      "audit-log", "user-management"
+    ],
+    "pagesWithNoProtectedFields": [
+      "new-session-start", "admin-hub", "pattern-library", "pattern-editor"
+    ]
+  }
+}

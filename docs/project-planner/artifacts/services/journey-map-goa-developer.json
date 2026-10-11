@@ -1,0 +1,476 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "audience": {
+    "name": "GoA Developer",
+    "types": ["GoA employee"],
+    "description": "Government of Alberta software developers who use the ADSP Project Planner to scope new applications or enhancements against ADSP services and obtain deep technical implementation guidance through specialist agents. They have high technical proficiency with REST APIs, TypeScript, and ADSP service documentation. They may provide existing requirements documents or application code as starting input and navigate between the planning session and specialist workspaces.",
+    "goals": [
+      "Scope new GoA application features against ADSP services rapidly through guided discovery",
+      "Navigate to specialist workspaces (form, PDF, comment, notification) with session context pre-loaded",
+      "Obtain implementation-level guidance from specialist agents on ADSP service configuration and integration patterns",
+      "Understand the technical reasoning behind recommended ADSP service compositions",
+      "Resume planning sessions across multiple work days without re-entering context"
+    ],
+    "outcomes": [
+      "Technical implementation plan grounded in ADSP specialist agent guidance",
+      "Clear understanding of recommended ADSP service composition with implementation order",
+      "Validated integration approach with specialist-endorsed configuration recommendations",
+      "Specialist progress tracked within the planning session for handoff documentation"
+    ]
+  },
+  "journeys": [
+    {
+      "name": "New Application ADSP Scoping",
+      "description": "A developer receives a new feature request or greenfield application brief and uses the ADSP Project Planner to scope the technical requirements against ADSP services, build a structured business model through guided discovery, evaluate an AI-generated service composition hypothesis, and produce an exportable implementation plan.",
+      "trigger": "Developer is assigned to scope a new GoA application or feature and needs to determine which ADSP services apply and in what composition order",
+      "goal": "Produce a validated ADSP service composition hypothesis with full technical reasoning and an exportable implementation plan ready for specialist consultation",
+      "stages": [
+        {
+          "name": "Session Initiation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Navigate to the ADSP Project Planner within the Tenant Management Webapp and create a new planning session with a descriptive title",
+              "needs": [
+                "Authenticated access to TMW with planner-user or planner-admin Keycloak role",
+                "A clear project scope or feature brief to name the session meaningfully"
+              ],
+              "touchpoint": "TMW Planner Section — New Session page (UC-001, INT-008)",
+              "frontstage": [
+                "New session creation form with a title input field",
+                "Session list showing existing sessions ordered by last activity",
+                "Confirmation message after session is created"
+              ],
+              "backstage": [
+                "Keycloak JWT validated by passport-jwt middleware via INT-008 before session creation is permitted",
+                "POST /api/v1/sessions creates a new planning session document in MongoDB with tenantId and userId extracted from the JWT"
+              ],
+              "thinking": "\"I need a planning session for this new permit workflow feature — let me give it a name that reflects the project so I can find it later.\"",
+              "emotionalContext": "Developer is focused and purposeful, establishing a structured workspace before beginning technical analysis",
+              "feeling": "positive",
+              "painPoints": [],
+              "opportunities": [
+                "Session title field could suggest names based on the developer's recently accessed applications in TMW to reduce cognitive overhead"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Problem Input and Business Model Building",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Paste an existing requirements document or code snippet, or describe the application feature in natural language, to initiate the Planning Agent discovery conversation",
+              "needs": [
+                "Ability to paste multi-line content including code or markdown requirements",
+                "Immediate confirmation that the Planning Agent has parsed and understood the input"
+              ],
+              "touchpoint": "TMW Planner Chat Interface (UC-002, SN-001, INT-001)",
+              "frontstage": [
+                "Streaming Planning Agent response summarising its interpretation of the pasted content",
+                "Business model panel updating in real time as entities are extracted",
+                "Character or token count indicator for large pastes"
+              ],
+              "backstage": [
+                "Anthropic Claude API (INT-001) invoked with the pasted content and a structured extraction prompt",
+                "Incremental business model document written to MongoDB as entities are identified from the input"
+              ],
+              "thinking": "\"I have the requirements doc already — can the agent extract what it needs directly, or should I write a plain-language summary instead?\"",
+              "emotionalContext": "Curious and slightly uncertain about how well the agent handles technical requirements prose versus conversational input",
+              "feeling": "neutral",
+              "painPoints": [
+                "No explicit input mode guidance in the UI — developer cannot tell whether to paste raw code, a requirements document, or a free-text problem statement"
+              ],
+              "opportunities": [
+                "Input mode selector (code / requirements doc / free text) that adjusts the Planning Agent's parsing strategy accordingly"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Answer the Planning Agent's targeted clarifying questions about actors, data flows, and integration constraints to complete the business model",
+              "needs": [
+                "Focused, specific questions rather than open-ended prompts",
+                "Ability to indicate that a question does not apply to skip it without breaking the conversation flow"
+              ],
+              "touchpoint": "TMW Planner Chat Interface (UC-002, SN-002, INT-001)",
+              "frontstage": [
+                "Targeted clarifying questions from the Planning Agent based on identified gaps",
+                "Business model completeness indicator updating after each answer",
+                "Structured business model panel showing newly added entities in real time"
+              ],
+              "backstage": [
+                "Multi-turn conversation orchestrated by the Planning Agent via INT-001 using prior context",
+                "Business model entities incrementally persisted to MongoDB after each conversational turn"
+              ],
+              "thinking": "\"Good — it is asking specific questions about the actors and what data moves between them. This is faster than writing up a full context document myself.\"",
+              "emotionalContext": "Engaged and progressively confident as the structured business model begins to accurately reflect the feature under investigation",
+              "feeling": "positive",
+              "painPoints": [
+                "Agent may ask questions that repeat information already present in the pasted requirements document, wasting developer time"
+              ],
+              "opportunities": [
+                "Planning Agent pre-populates clarifying question answers from the pasted input and asks the developer to confirm or override rather than re-enter from scratch"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Business Model Review",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Open the business model panel and review classified entities, actors, processes, and data flows for technical accuracy, correcting any misclassifications",
+              "needs": [
+                "Clear visual presentation distinguishing agent-inferred classifications from developer-confirmed values",
+                "Inline edit controls for each classification without requiring re-entry into the chat"
+              ],
+              "touchpoint": "TMW Business Model Viewer (UC-003, SN-002)",
+              "frontstage": [
+                "Structured business model panel with entity type labels and actor relationships",
+                "Inline edit control per classification with a save button",
+                "Correction confirmation message and model refresh after each edit"
+              ],
+              "backstage": [
+                "Business model record fetched via GET /api/v1/sessions/{id}/model from MongoDB",
+                "Correction payload sent via PATCH /api/v1/sessions/{id}/model and persisted to MongoDB"
+              ],
+              "thinking": "\"The actors look right, but it has classified the reporting module as a notification service dependency — that is not accurate for this feature.\"",
+              "emotionalContext": "Technically critical and detail-oriented; developer applies domain expertise to validate the AI interpretation against their own mental model",
+              "feeling": "neutral",
+              "painPoints": [
+                "Agent classifications have no confidence score or source explanation, making it hard to judge whether a correction is necessary or simply a matter of preference"
+              ],
+              "opportunities": [
+                "Each classification shows an agent confidence level and the source text phrase that drove the inference, helping the developer decide whether to correct or accept"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Solution Hypothesis Evaluation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Read the Planning Agent's ADSP service composition hypothesis, examining the recommended services, implementation order, business pattern match, and technical reasoning",
+              "needs": [
+                "Full technical rationale exposed — not limited to the service names alone",
+                "Business pattern match label and match strength so the developer can validate the pattern classification"
+              ],
+              "touchpoint": "TMW Hypothesis Panel (UC-004, SN-003, SN-005, INT-002)",
+              "frontstage": [
+                "Solution hypothesis listing recommended ADSP services with implementation order",
+                "Business pattern match label with match confidence indicator",
+                "Expandable technical reasoning section showing the agent's inference chain",
+                "Links to ADSP service documentation for each recommended service"
+              ],
+              "backstage": [
+                "Hypothesis generated via Anthropic Claude API (INT-001) using the corrected business model",
+                "Business pattern matched from the tenant pattern library in the ADSP Configuration Service (INT-002)",
+                "Hypothesis document persisted to MongoDB with status DRAFT"
+              ],
+              "thinking": "\"It recommends form-service combined with pdf-service — that matches what I expected. Let me expand the reasoning to check the composition order justification.\"",
+              "emotionalContext": "Analytically engaged; evaluating whether the recommended composition aligns with ADSP capabilities the developer already understands and the project's technical constraints",
+              "feeling": "positive",
+              "painPoints": [
+                "Hypothesis stops at service names and rationale — no integration code samples or configuration starting points are provided at this stage"
+              ],
+              "opportunities": [
+                "Each recommended service in the hypothesis panel includes a direct link to that service's specialist workspace, enabling one-click deep-dive from within the hypothesis review"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Accept the hypothesis or submit a revision request explaining the technical constraint that the current hypothesis does not address",
+              "needs": [
+                "Accept and Request Revision actions visually distinct and labelled clearly",
+                "Revision request input that captures the specific constraint so the agent can regenerate with that context"
+              ],
+              "touchpoint": "TMW Hypothesis Panel — Accept and Revise controls (UC-004, INT-007)",
+              "frontstage": [
+                "Accept Hypothesis button that locks the hypothesis and enables specialist workspace navigation",
+                "Request Revision input field that re-engages the Planning Agent with the developer's constraint",
+                "Status label on hypothesis panel updating to ACCEPTED after confirmation"
+              ],
+              "backstage": [
+                "Hypothesis status updated to ACCEPTED in MongoDB via PATCH /api/v1/sessions/{id}/hypothesis",
+                "Domain event published to ADSP RabbitMQ via INT-007 on hypothesis acceptance"
+              ],
+              "thinking": "\"I will accept this — the reasoning is sound and the composition pattern matches what we already use for the forms portal. Time to consult the specialists.\"",
+              "emotionalContext": "Confident and decisive; the transparent rationale provided by the Planning Agent has given the developer enough assurance to commit to the composition direction",
+              "feeling": "very positive",
+              "painPoints": [],
+              "opportunities": [
+                "On hypothesis acceptance, the system automatically suggests which specialist agent to consult first based on the implementation order in the accepted hypothesis"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Implementation Planning and Export",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Trigger the session export to produce a portable JSON artifact capturing the business model, accepted hypothesis, specialist consultation findings, and recommended next steps",
+              "needs": [
+                "Export includes specialist consultation results that have already been gathered in this session",
+                "JSON structure is documented and predictable for integration into project brief tooling"
+              ],
+              "touchpoint": "TMW Session Export (UC-008)",
+              "frontstage": [
+                "Export Session button on the session detail page",
+                "File download dialog delivering a JSON export",
+                "Export completion confirmation with file size and timestamp"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions/{id}/export assembles the business model, accepted hypothesis, open questions, specialist notes, and recommended next steps from MongoDB subdocuments into a single JSON document"
+              ],
+              "thinking": "\"I want to include this in the project brief before the architecture review — the export will give the full team the business model, the hypothesis reasoning, and the specialist findings in one place.\"",
+              "emotionalContext": "Satisfied and productive; the developer is consolidating planning outputs for handoff and feels that the session has delivered concrete, shareable artefacts",
+              "feeling": "very positive",
+              "painPoints": [
+                "Export is JSON only — stakeholders who cannot read raw JSON require the developer to manually reformat the content for presentations or project documentation"
+              ],
+              "opportunities": [
+                "PDF export option powered by ADSP pdf-service to produce a stakeholder-readable formatted session summary alongside the technical JSON"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "Developer has a validated ADSP service composition hypothesis with full technical reasoning grounded in GoA business pattern matching, accompanied by a structured JSON export ready for project documentation and specialist agent handoff."
+    },
+    {
+      "name": "Specialist Agent Deep-Dive Consultation",
+      "description": "Having accepted an ADSP service composition hypothesis, the developer navigates to one or more specialist agent workspaces (form-service, pdf-service, comment-service, or notification-service) with session context pre-loaded to obtain implementation-depth guidance, then returns to the planning session with specialist findings captured.",
+      "trigger": "Developer has an accepted hypothesis recommending one or more ADSP specialist services and needs implementation-level configuration guidance, integration code patterns, or ADSP SDK setup instructions",
+      "goal": "Obtain service-specific technical guidance from the relevant specialist agent with session context pre-loaded, and return to the planning session with findings captured for export",
+      "stages": [
+        {
+          "name": "Specialist Workspace Navigation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Select the relevant specialist workspace from the hypothesis panel to open the form-service, pdf-service, comment-service, or notification-service specialist agent with session context pre-loaded",
+              "needs": [
+                "Session context (business model and accepted hypothesis) automatically transferred to the specialist workspace without re-entry",
+                "Clear indication of which specialist workspaces are available and which correspond to services in the accepted hypothesis"
+              ],
+              "touchpoint": "TMW Hypothesis Panel — Specialist Workspace links (UC-005, SN-006, INT-003, INT-004, INT-005, INT-006)",
+              "frontstage": [
+                "Specialist workspace navigation links rendered for each service recommended in the accepted hypothesis",
+                "Context transfer confirmation banner in the specialist workspace header",
+                "Breadcrumb showing the originating planning session name and a Return to Session link"
+              ],
+              "backstage": [
+                "Session context payload (business model summary and hypothesis) assembled and sent to the specialist agent via INT-003, INT-004, INT-005, or INT-006",
+                "Specialist workspace opened with hypothesis and business model pre-loaded into the specialist agent's system context"
+              ],
+              "thinking": "\"It opened the form-service workspace with my session context already loaded. I do not need to re-explain the problem from scratch to a different agent.\"",
+              "emotionalContext": "Relieved and efficient; seamless context handoff removes the cognitive overhead of re-narrating the problem statement to a second agent",
+              "feeling": "positive",
+              "painPoints": [
+                "Specialist workspaces are currently stub implementations with interface contracts not yet defined (OPEN-005) — real implementation guidance is not available in the current build"
+              ],
+              "opportunities": [
+                "Context-transfer confirmation checklist in the specialist workspace header showing exactly which session fields were received, giving the developer confidence the handoff was complete"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Specialist Consultation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Pose specific technical questions to the specialist agent about ADSP service configuration, REST API integration patterns, TypeScript client setup, and ADSP SDK version compatibility",
+              "needs": [
+                "Specialist agent with access to current ADSP service documentation for the relevant service",
+                "Ability to receive runnable TypeScript code samples aligned with the ADSP SDK and GoA design patterns"
+              ],
+              "touchpoint": "Specialist Agent Workspace Chat (UC-005, SN-006, INT-001)",
+              "frontstage": [
+                "Specialist agent chat interface with streaming responses",
+                "Syntax-highlighted code blocks with a copy-to-clipboard control",
+                "Inline links to ADSP service documentation referenced in the agent's response"
+              ],
+              "backstage": [
+                "Specialist agent invokes Anthropic Claude API (INT-001) with a service-specific system prompt, the transferred session context, and the developer's question",
+                "Specialist responses draw on form-service, pdf-service, comment-service, or notification-service documentation injected into the system prompt"
+              ],
+              "thinking": "\"I need to know how to configure multi-page forms with conditional field visibility — let me ask the form-service specialist directly rather than hunting through the docs.\"",
+              "emotionalContext": "Focused and technically motivated; this is the high-value interaction where implementation-depth guidance that saves hours of documentation research is delivered",
+              "feeling": "positive",
+              "painPoints": [
+                "Specialist agent is a stub — actual implementation guidance is not yet available as INT-003 through INT-006 are stub integrations without live specialist microservices behind them"
+              ],
+              "opportunities": [
+                "Specialist agent pre-generates a TypeScript integration scaffold based on the transferred hypothesis context before the developer asks their first question, giving an immediate starting point"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Follow up with additional questions on edge cases, error handling patterns, ADSP SDK configuration options, and service-specific rate limits until guidance is satisfactory",
+              "needs": [
+                "Conversation history retained within the specialist workspace across the full consultation",
+                "Ability to copy code samples from the chat directly into the development environment"
+              ],
+              "touchpoint": "Specialist Agent Workspace Chat (UC-005, SN-006, INT-001)",
+              "frontstage": [
+                "Multi-turn conversation with full scrollable history",
+                "Copy-to-clipboard control on each code block",
+                "Session summary panel updating with key specialist findings as the conversation progresses"
+              ],
+              "backstage": [
+                "Multi-turn conversation state maintained within the specialist workspace session tied to the planning session ID",
+                "Specialist findings appended to the planning session MongoDB record for inclusion in the session export"
+              ],
+              "thinking": "\"I need to confirm how the form-service handles draft save state before I close this workspace — let me ask one more question about the draft API before returning.\"",
+              "emotionalContext": "Thorough and methodical; developer systematically works through all anticipated implementation questions to avoid blocking discovery during actual development",
+              "feeling": "positive",
+              "painPoints": [
+                "No way to bookmark or pin specific answers within the specialist workspace for quick reference during implementation later"
+              ],
+              "opportunities": [
+                "Pin or bookmark control on individual specialist answers that automatically populates the specialist notes section of the planning session export"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Return to Planning Session",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Navigate back to the originating planning session using the breadcrumb or Return to Session button, with specialist findings automatically reflected in the session record",
+              "needs": [
+                "Specialist findings written to the planning session record before the workspace closes so they appear in the export",
+                "Return navigation preserves the specialist conversation history for future reference"
+              ],
+              "touchpoint": "Specialist Workspace — Return to Session navigation (UC-005)",
+              "frontstage": [
+                "Return to Planning Session breadcrumb link or dedicated button in the specialist workspace header",
+                "Planning session hypothesis panel updated with a specialist consultation completed badge and timestamp",
+                "Specialist findings summary visible in the session detail view"
+              ],
+              "backstage": [
+                "Specialist findings written to the planning session MongoDB record before the workspace navigates away",
+                "Hypothesis status in MongoDB updated to reflect specialist consultation completed for the relevant service"
+              ],
+              "thinking": "\"Back in the planning session — the specialist findings are visible here now. I have what I need to finalise the export and move to implementation.\"",
+              "emotionalContext": "Satisfied and ready to consolidate; specialist consultation has resolved the implementation-depth gap and the developer feels prepared to begin coding",
+              "feeling": "very positive",
+              "painPoints": [
+                "Hypothesis panel on the planning session page does not clearly indicate which specialist services have been consulted and which remain — developer must check manually"
+              ],
+              "opportunities": [
+                "Hypothesis panel shows a per-service specialist consultation status row with completed badge, timestamp, and a one-line key finding summary for each service in the composition"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "Developer has implementation-level guidance from the relevant ADSP specialist agent with findings captured in the planning session record, ready for export and immediate use in application development."
+    },
+    {
+      "name": "Session Resumption Across Work Days",
+      "description": "A developer returns to TMW after a break — same day, overnight, or across multiple work days — and needs to restore their planning session context to continue specialist consultations, revise the hypothesis, or finalise the session export without re-entering any prior context.",
+      "trigger": "Developer returns to an in-progress planning session after closing the browser or being away for one or more work days",
+      "goal": "Restore complete planning session context immediately on re-entry so that specialist consultations, hypothesis revisions, or the session export can continue without any re-narration of the problem",
+      "stages": [
+        {
+          "name": "Session Re-entry",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Log in to TMW, navigate to the ADSP Project Planner, and locate the in-progress session from the session list",
+              "needs": [
+                "Session list sorted by most recent activity so the in-progress session is near the top",
+                "Session card preview showing last activity timestamp, current phase, and completion status at a glance"
+              ],
+              "touchpoint": "TMW Planner Session List (UC-006, SN-004, INT-008)",
+              "frontstage": [
+                "Session list with titles, last-modified timestamps, and status labels (e.g., In Progress, Hypothesis Accepted, Export Ready)",
+                "Search and filter by session title",
+                "In-progress badge on sessions with an accepted hypothesis or an active specialist consultation"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions returns the session list filtered by tenantId and userId extracted from the Keycloak JWT (INT-008)",
+                "MongoDB query returns sessions ordered by updatedAt descending to surface the most recently active session"
+              ],
+              "thinking": "\"I was mid-way through the specialist consultation on this session yesterday — I hope all the context is still there and I do not need to re-explain the problem.\"",
+              "emotionalContext": "Mildly apprehensive; developer is uncertain whether the session has persisted fully and is braced for the cost of re-entry if context is missing",
+              "feeling": "neutral",
+              "painPoints": [
+                "Session list cards do not indicate which specialist workspaces have already been visited — developer must open the session and navigate to the hypothesis panel to check"
+              ],
+              "opportunities": [
+                "Session list card shows a mini progress indicator: Problem Described, Model Reviewed, Hypothesis Accepted, and Specialist Consulted — giving the developer a re-entry status at a glance before clicking in"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Open the session and review the business model, hypothesis status, and specialist consultation history to re-orient before continuing",
+              "needs": [
+                "Full session state rendered immediately on open without a separate reload action",
+                "Clear visual indication of completed steps and a suggested next action"
+              ],
+              "touchpoint": "TMW Planner Session Detail (UC-006, SN-004)",
+              "frontstage": [
+                "Business model panel pre-populated with all prior entities and corrections",
+                "Hypothesis panel showing current status and the accepted service composition",
+                "Specialist consultation history visible with timestamps and service labels",
+                "Suggested next action banner indicating the recommended continuation point (e.g., Consult pdf-service Specialist)"
+              ],
+              "backstage": [
+                "Full session record retrieved from MongoDB via GET /api/v1/sessions/{id}, assembling business model, hypothesis, conversation history, and specialist notes from subdocuments in a single request"
+              ],
+              "thinking": "\"Everything is here — I accepted the hypothesis and consulted form-service already. I can see I still need to consult the pdf-service specialist. I know exactly where to pick up.\"",
+              "emotionalContext": "Relieved and re-oriented; full context restoration confirms the persistent session model is working as designed and eliminates the expected re-entry tax",
+              "feeling": "positive",
+              "painPoints": [
+                "No Planning Agent greeting or context summary on session re-open — developer must manually scan the business model and hypothesis panels to reconstruct where the session stands"
+              ],
+              "opportunities": [
+                "Planning Agent automatically generates a one-paragraph returning-user context summary on session open, naming decisions made in the prior session and the recommended next step"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Continuation and Progress",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Proceed with the outstanding planning activity using the full restored session context, whether that is a specialist consultation, a hypothesis revision, or the session export",
+              "needs": [
+                "Planning Agent has access to the full prior conversation history so the developer does not need to re-explain the problem",
+                "Specialist workspaces for services not yet consulted are accessible directly from the session detail without re-navigating through the hypothesis"
+              ],
+              "touchpoint": "TMW Planner Session Detail and Chat (UC-006, SN-004, INT-001)",
+              "frontstage": [
+                "Planning Agent chat with full prior conversation history scrollable from the session open point",
+                "Specialist workspace navigation links active for each service in the accepted hypothesis, with visited and not-yet-visited states distinguished",
+                "Export button enabled and clearly visible once the hypothesis is in ACCEPTED status"
+              ],
+              "backstage": [
+                "Full conversation history retrieved from MongoDB and included in the INT-001 context payload on first agent re-engagement, ensuring continuity without developer re-narration",
+                "All specialist workspace sessions are tied to the planning session ID and remain re-enterable from the session detail view without data loss"
+              ],
+              "thinking": "\"I can scroll back through the conversation and see exactly what was decided. The agent will have the same context — I can ask my next question directly without any preamble.\"",
+              "emotionalContext": "Confident and productive; the persistent session model eliminates context re-entry cost and lets the developer immediately continue deep technical work",
+              "feeling": "very positive",
+              "painPoints": [
+                "Long conversation histories passed in full on each agent re-engagement may increase Planning Agent response latency as the token count grows over multiple sessions"
+              ],
+              "opportunities": [
+                "Conversation summarisation feature that compresses prior context into a structured decision log while preserving key decisions, reducing token overhead on re-engagement without losing continuity"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "Developer resumes the planning session with full context intact, continuing specialist consultations or finalising the session export without any re-entry overhead or loss of prior discoveries."
+    }
+  ]
+}

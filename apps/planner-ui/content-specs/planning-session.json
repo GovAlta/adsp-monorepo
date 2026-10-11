@@ -1,0 +1,268 @@
+{
+  "pageId": "planning-session",
+  "pageType": "wizard",
+  "title": "Planning Session",
+  "surface": "staff-portal",
+  "layout": "two-column",
+  "authRequired": true,
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Planning Workspace", "nodeId": "planning-workspace" },
+      { "label": "My Planning Sessions", "nodeId": "session-dashboard" },
+      { "label": "Planning Session", "nodeId": "planning-session" }
+    ],
+    "parentNodeId": "session-dashboard",
+    "childNodeIds": ["business-model-review", "hypothesis-review", "session-export"],
+    "siblingNodeIds": []
+  },
+  "sections": {
+    "stepProgress": {
+      "steps": [
+        { "label": "Describe Problem", "nodeId": "planning-session" },
+        { "label": "Review Model", "nodeId": "business-model-review" },
+        { "label": "Review Hypothesis", "nodeId": "hypothesis-review" },
+        { "label": "Export", "nodeId": "session-export" }
+      ],
+      "currentStep": 1
+    },
+    "stepContent": {
+      "currentStepNodeId": "planning-session",
+      "pageType": "wizard",
+      "panels": {
+        "primaryPanel": {
+          "heading": "Describe your business problem",
+          "description": "Type your message in the field below. The Planning Agent will ask clarifying questions and build a structured business model as you describe your situation.",
+          "chatInterface": {
+            "description": "Conversational interface between user and the Planning Agent. Displays conversation history with per-message role indicators (user / assistant). Supports streaming agent responses with a typing indicator.",
+            "messageInputLabel": "Your message",
+            "messageInputPlaceholder": "Describe your business problem or answer the agent's question...",
+            "messageMaxLength": 10000,
+            "sendButtonLabel": "Send Message",
+            "integrationStatus": {
+              "intId": "INT-001",
+              "status": "STUB",
+              "pendingNoticeHeading": "Planning Agent is in test mode",
+              "pendingNoticeBody": "The AI Planning Agent is temporarily unavailable while the Anthropic Claude API integration is being finalized. The Send Message button is disabled. You can still review prior conversation history if resuming a session.",
+              "sendButtonDisabledWhenStub": true
+            },
+            "errorStates": {
+              "llmUnavailable": {
+                "heading": "Planning Agent temporarily unavailable",
+                "body": "The AI Planning Agent could not process your message at this time. Your message has been preserved. Please try again in a few minutes.",
+                "condition": "POST /api/v1/sessions/{sessionId}/messages returns 503",
+                "ucRef": "UC-002",
+                "exceptionFlow": "3e",
+                "tcRef": "TC-004"
+              },
+              "rateLimitExceeded": {
+                "heading": "Request limit reached",
+                "body": "You have reached the maximum number of Planning Agent requests for this hour. The limit resets in {retryAfter} seconds. Please wait before sending additional messages.",
+                "condition": "POST /api/v1/sessions/{sessionId}/messages returns 429",
+                "headerRef": "Retry-After",
+                "tcRef": "TC-024"
+              },
+              "rateLimitWarning": {
+                "heading": "Approaching request limit",
+                "body": "You have used 80% of your Planning Agent request allocation for this hour. Consider summarizing your next message to make the most of your remaining requests.",
+                "condition": "requestCount reaches 80% of limit (40 of 50)",
+                "tcRef": "TC-069"
+              },
+              "sessionNotFound": {
+                "heading": "Session not found",
+                "body": "This planning session could not be found or is no longer accessible. You will be returned to your session list.",
+                "condition": "GET /api/v1/sessions/{sessionId} returns 404",
+                "redirect": "session-dashboard",
+                "ucRef": "UC-006",
+                "exceptionFlow": "2e"
+              }
+            }
+          }
+        },
+        "sidePanel": {
+          "heading": "Session Details",
+          "businessModelStatusCard": {
+            "heading": "Business Model",
+            "description": "The Planning Agent builds your business model from your conversation. It shows the actors, goals, activities, and constraints identified so far.",
+            "confidenceLabel": "Confidence",
+            "viewModelLink": "business-model-review",
+            "incompleteModelWarning": {
+              "heading": "Business model incomplete",
+              "body": "The business model does not yet have enough information to generate a hypothesis. Continue describing your business problem to help the agent understand your situation.",
+              "condition": "confidenceScore < 70 after pattern matching",
+              "tcRef": "TC-087"
+            },
+            "lowConfidenceNotice": {
+              "body": "Confidence is below the threshold needed for hypothesis generation (69%). Continue the conversation to provide more context.",
+              "condition": "confidenceScore = 69",
+              "tcRef": "TC-021"
+            },
+            "hypothesisReady": {
+              "body": "A solution hypothesis has been generated. Review the hypothesis to see recommended ADSP services.",
+              "condition": "confidenceScore >= 70",
+              "tcRef": "TC-022"
+            }
+          },
+          "specialistConsultationPanel": {
+            "heading": "Specialist Consultation",
+            "description": "Once a solution hypothesis is accepted, you can consult specialist agents for deep technical guidance on each recommended ADSP service.",
+            "specialists": [
+              {
+                "serviceId": "form-service",
+                "label": "Form Service Specialist",
+                "intId": "INT-003",
+                "status": "STUB",
+                "stubNotice": "Form Service Specialist is not yet available. Specialist integrations are pending OPEN-005 resolution.",
+                "tcRef": "TC-007"
+              },
+              {
+                "serviceId": "pdf-service",
+                "label": "PDF Service Specialist",
+                "intId": "INT-004",
+                "status": "STUB",
+                "stubNotice": "PDF Service Specialist is not yet available."
+              },
+              {
+                "serviceId": "comment-service",
+                "label": "Comment Service Specialist",
+                "intId": "INT-005",
+                "status": "STUB",
+                "stubNotice": "Comment Service Specialist is not yet available."
+              },
+              {
+                "serviceId": "notification-service",
+                "label": "Notification Service Specialist",
+                "intId": "INT-006",
+                "status": "STUB",
+                "stubNotice": "Notification Service Specialist is not yet available."
+              }
+            ],
+            "specialistUnavailableError": {
+              "heading": "Specialist temporarily unavailable",
+              "body": "The specialist agent for this service could not be reached. You have been returned to the planning session. Please try again later.",
+              "condition": "POST /api/v1/sessions/{sessionId}/specialists returns 503",
+              "ucRef": "UC-005",
+              "exceptionFlow": "2e",
+              "tcRef": "TC-017"
+            },
+            "disabledSpecialistNotice": {
+              "heading": "Specialist not enabled",
+              "body": "This specialist agent is not enabled for your tenant. Contact your ADSP tenant administrator to enable specialist consultations.",
+              "condition": "consultSpecialist returns 403 (BR-009 gate)",
+              "tcRef": "TC-040"
+            }
+          }
+        }
+      }
+    },
+    "stepNavigation": {
+      "backLabel": "Back to Session List",
+      "continueLabel": "Review Business Model",
+      "cancelLabel": "Save and Exit",
+      "cancelTarget": "session-dashboard",
+      "cancelWarning": "Your session progress is automatically saved. You can resume this session at any time from your session list."
+    },
+    "contextSummary": {
+      "heading": "Welcome back",
+      "description": "You are resuming a previous planning session. Here is a summary of where you left off:",
+      "items": [
+        { "label": "Session title", "value": "{session.title}" },
+        { "label": "Last active", "value": "{session.updatedAt}" },
+        { "label": "Business model status", "value": "{businessModel.confidenceScore}% confidence — {businessModel.concepts.length} concepts identified" },
+        { "label": "Hypothesis status", "value": "{hypothesis.status}" }
+      ],
+      "condition": "session re-entry (lastResumedAt is not null)",
+      "staleSummary": {
+        "heading": "Extended context recap",
+        "body": "This session has been idle for more than 7 days. The Planning Agent will provide a detailed recap of all prior decisions and open questions when messaging is enabled.",
+        "condition": "session idle > 7 days",
+        "ucRef": "UC-006",
+        "alternateFlow": "5a",
+        "tcRef": "TC-018"
+      }
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "getSession",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}",
+        "description": "Load the planning session state including title, status, businessModelId, lastResumedAt, and timestamps. Used to populate the context summary banner on re-entry.",
+        "bindsTo": "sections.contextSummary",
+        "protectedFields": ["userId", "tenantId"]
+      },
+      {
+        "operationId": "listMessages",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}/messages",
+        "description": "Load conversation history (last 50 messages paginated) for display in the chat interface.",
+        "bindsTo": "sections.stepContent.panels.primaryPanel.chatInterface",
+        "queryParams": ["page", "pageSize"],
+        "protectedFields": ["content"]
+      },
+      {
+        "operationId": "getBusinessModel",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}/model",
+        "description": "Load the current business model to display confidence score and concept count in the side panel status card.",
+        "bindsTo": "sections.stepContent.panels.sidePanel.businessModelStatusCard",
+        "protectedFields": []
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "sendMessage",
+        "method": "POST",
+        "path": "/api/v1/sessions/{sessionId}/messages",
+        "description": "Submit a user message to the Planning Agent. INT-001 is STUB/fail-closed — returns 503 until activated. Message content is Protected B.",
+        "triggeredBy": "Send Message button",
+        "integrationStatus": "STUB/fail-closed (INT-001)",
+        "protectedFields": ["content"]
+      },
+      {
+        "operationId": "consultSpecialist",
+        "method": "POST",
+        "path": "/api/v1/sessions/{sessionId}/specialists",
+        "description": "Delegate to a specialist agent for deep service guidance. All specialist integrations are STUB/fail-closed (INT-003..006) pending OPEN-005.",
+        "triggeredBy": "Consult specialist button in side panel",
+        "integrationStatus": "STUB/fail-closed (INT-003, INT-004, INT-005, INT-006)"
+      },
+      {
+        "operationId": "updateSession",
+        "method": "PATCH",
+        "path": "/api/v1/sessions/{sessionId}",
+        "description": "Update session status to paused when user clicks Save and Exit.",
+        "triggeredBy": "Save and Exit button"
+      }
+    ],
+    "validationErrors": [
+      "400",
+      "401",
+      "403",
+      "404",
+      "422",
+      "429",
+      "503"
+    ],
+    "emptyState": "Your conversation will appear here as you describe your business problem and the Planning Agent responds."
+  },
+  "testCoverage": {
+    "tcIds": ["TC-003", "TC-004", "TC-007", "TC-008", "TC-017", "TC-018", "TC-021", "TC-022", "TC-024", "TC-040", "TC-055", "TC-057", "TC-069", "TC-087"],
+    "ucIds": ["UC-002", "UC-005", "UC-006"]
+  },
+  "securityNotes": {
+    "classificationLevel": "Protected B",
+    "protectedFields": ["conversationMessage.content", "businessModel data", "hypothesis summary/reasoning", "planningSession.userId", "planningSession.tenantId"],
+    "fieldMasking": "conversationMessage.content is redacted in server-side structured logs per Winston log redaction config. userId and tenantId are not rendered in the client UI. Message content is never appended to URL query strings.",
+    "storageRestriction": "No Protected B fields (message content, model data, hypothesis) may be written to localStorage, sessionStorage, or document.cookie. In-memory React state only.",
+    "asvs": ["V-3.2.2", "V-8.3.1", "V-9.1.1"],
+    "cas": ["CAS-RULE-007"],
+    "rateLimiting": "Express-rate-limit on /messages and /specialists endpoints. UI displays warning at 80% utilization (TC-069) and enforces stop at 50 requests/hour per tenant (TC-024, BR-003)."
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["planning-workspace", "planning-session", "business-model-review", "hypothesis-review", "session-export"],
+    "serviceProfileSections": ["planning-workspace"],
+    "apiOperationIds": ["getSession", "listMessages", "getBusinessModel", "sendMessage", "consultSpecialist", "updateSession"]
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "pageId": "pattern-library",
+  "pageType": "list-index",
+  "title": "Pattern Library",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "accessControl": {
+    "requiredRoles": ["planner-admin", "tenant-admin"],
+    "deniedRoles": ["planner-user"],
+    "deniedResponse": "403",
+    "deniedMessage": "You do not have permission to access the Pattern Library. Contact your tenant administrator to request access.",
+    "tenantScopeNote": "All patterns are scoped to the authenticated user's tenantId per BR-001. Cross-tenant pattern access is blocked at the API layer.",
+    "testCoverageIds": ["TC-072"]
+  },
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Administration", "nodeId": "admin-hub" },
+      { "label": "Pattern Library", "nodeId": "pattern-library" }
+    ],
+    "parentNodeId": "admin-hub",
+    "childNodeIds": ["pattern-editor"],
+    "siblingNodeIds": ["session-history", "audit-log", "user-management"]
+  },
+  "sections": {
+    "toolbar": {
+      "searchPlaceholder": "Search patterns by name or keyword",
+      "primaryAction": {
+        "label": "Create Pattern",
+        "target": "pattern-editor",
+        "testCoverageIds": ["TC-029"]
+      },
+      "resultCountLabel": "patterns",
+      "badgeNote": "Pattern count badge reflects the total filtered result count. Updates on filter change.",
+      "testCoverageIds": ["TC-075"]
+    },
+    "filterDrawer": {
+      "heading": "Filter Patterns",
+      "filters": [
+        {
+          "label": "Status",
+          "name": "status",
+          "type": "select",
+          "options": [
+            { "value": "all", "label": "All Statuses" },
+            { "value": "active", "label": "Active" },
+            { "value": "inactive", "label": "Inactive" }
+          ],
+          "defaultValue": "all",
+          "testCoverageIds": ["TC-028"]
+        },
+        {
+          "label": "Last Modified",
+          "name": "dateModifiedRange",
+          "type": "date-range",
+          "startLabel": "From",
+          "endLabel": "To",
+          "helpText": "Filter patterns modified within this date range."
+        }
+      ]
+    },
+    "dataTable": {
+      "columns": [
+        {
+          "header": "Pattern Name",
+          "key": "name",
+          "sortable": true,
+          "isLink": true,
+          "linkTarget": "pattern-editor",
+          "linkParam": "patternId",
+          "testCoverageIds": ["TC-027"]
+        },
+        {
+          "header": "Status",
+          "key": "status",
+          "sortable": false,
+          "isLink": false,
+          "renderAs": "badge",
+          "badgeVariants": {
+            "active": "success",
+            "inactive": "inactive"
+          },
+          "testCoverageIds": ["TC-028"]
+        },
+        {
+          "header": "Last Modified",
+          "key": "lastModified",
+          "sortable": true,
+          "isLink": false,
+          "renderAs": "datetime"
+        },
+        {
+          "header": "Match Count",
+          "key": "matchCount",
+          "sortable": true,
+          "isLink": false,
+          "helpText": "Number of planning sessions where this pattern was suggested by the Planning Agent."
+        }
+      ],
+      "defaultSort": {
+        "column": "lastModified",
+        "direction": "DESC"
+      }
+    },
+    "pagination": {
+      "perPage": 20,
+      "pageSizeOptions": [10, 20, 50]
+    },
+    "emptyState": {
+      "message": "No business patterns have been created for this tenant. Create your first pattern to enable AI-assisted pattern matching in planning sessions.",
+      "cta": {
+        "label": "Create Pattern",
+        "target": "pattern-editor",
+        "testCoverageIds": ["TC-029"]
+      }
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "listPatterns",
+        "method": "GET",
+        "path": "/api/v1/patterns",
+        "description": "Fetch paginated list of business patterns for the tenant. Tenant scope is enforced at the API layer (BR-001). INT-002 stub returns empty list (OPEN-004).",
+        "bindsTo": "patterns",
+        "stubNote": "INT-002 is Stub/lookup-empty — returns empty list pending ADSP Config Service provisioning (OPEN-004). Page will display empty state in stub mode."
+      }
+    ],
+    "onSubmit": [],
+    "validationErrors": [],
+    "emptyState": "No business patterns have been created for this tenant. Create your first pattern to enable AI-assisted pattern matching in planning sessions."
+  },
+  "errorStates": [
+    {
+      "condition": "403 — user holds planner-user role only",
+      "display": "Access denied message shown. Redirect to session-dashboard.",
+      "testCoverageIds": ["TC-072"]
+    },
+    {
+      "condition": "503 — INT-002 Config Service stub unavailable",
+      "display": "Inline warning banner: 'Pattern data is temporarily unavailable. The pattern service is being provisioned. Please try again later.' Empty state shown in table.",
+      "testCoverageIds": ["TC-027"]
+    },
+    {
+      "condition": "No patterns match current filter",
+      "display": "Empty state with 'No patterns match your current filters. Clear filters to see all patterns.' and a Clear Filters action.",
+      "testCoverageIds": ["TC-028"]
+    }
+  ],
+  "accessibility": {
+    "keyboardNavigation": "Table rows are focusable. Sort controls are keyboard accessible. Pattern Name link is the primary row action.",
+    "contrastRequirement": "Meets WCAG 2.1 AA contrast ratio for all table text, badge text, and action buttons.",
+    "testCoverageIds": ["TC-055", "TC-057"]
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["pattern-library"],
+    "apiOperationIds": ["listPatterns"],
+    "useCases": ["UC-010"],
+    "testCases": ["TC-027", "TC-028", "TC-029", "TC-055", "TC-057", "TC-072", "TC-075", "TC-082"],
+    "integrationPoints": [
+      {
+        "intId": "INT-002",
+        "service": "ADSP Config Service",
+        "status": "Stub",
+        "stubNote": "Returns empty list (OPEN-004). listPatterns endpoint returns 200 with empty items array and X-Integration-Stubbed: INT-002 header."
+      }
+    ],
+    "securityNote": "Patterns are tenant-scoped configuration (internal config, not Protected B data). Tenant isolation enforced at API layer (BR-001). TC-072 verifies cross-tenant access block."
+  }
+}

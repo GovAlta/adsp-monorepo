@@ -1,0 +1,104 @@
+{
+  "validator": "fac_s3_runner",
+  "overallStatus": "PASS",
+  "findings": [
+    {
+      "ruleId": "FAC-S3-001",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database\\ddl_script.sql present; 11 CREATE TABLE statement(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-002",
+      "status": "PASS",
+      "evidence": "all 11 table(s) have named PRIMARY KEY constraints",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-003",
+      "status": "PASS",
+      "evidence": "all 8 FK constraint(s) have ON DELETE + ON UPDATE",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-004",
+      "status": "PASS",
+      "evidence": "no vendor-extension hits in ddl_script.sql (deterministic blocklist; LLM-side catches novel vendor syntax)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-007",
+      "status": "PASS",
+      "evidence": "json_schema.json has draft 2020-12 + 11 entity definition(s) in $defs",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-009",
+      "status": "PASS",
+      "evidence": "all 4 FK column(s) covered by index recommendations",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-010",
+      "status": "PASS",
+      "evidence": "all identifiers across 11 table(s) pass character-set + prefix + plural checks (semantic qualifier LLM-side)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-011",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database\\data_model.json",
+      "failReason": "data_model.json schema-valid; 11 entity(ies), 6 enumeration(s); DDL set-equality + BR consistency PASS; deprecated artifacts absent (semantic adequacy of rationale prose LLM-side)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-012",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\database\\ddl_script.sql: no canonical RBAC tables declared \u2014 rule N/A",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-013",
+      "status": "PASS",
+      "evidence": "no extension-dependent operator-class indexes; rule vacuously satisfied",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-014",
+      "status": "PASS",
+      "evidence": "no seed_reference_data.sql (seed level 'none' or out-of-band); rule N/A",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S3-001",
+      "status": "PASS",
+      "evidence": "all 13 entity(ies) have a corresponding DDL table (direct or via 7 originalToNormalized mapping(s))",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S3-002",
+      "status": "PASS",
+      "evidence": "no x-business-rules in data_io_schema $defs; rule vacuously satisfied",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S3-003",
+      "status": "PASS",
+      "evidence": "no mandatory-coverage INTs (all 8 Deferred/Stub); rule vacuously satisfied",
+      "failReason": null,
+      "remediationAction": null
+    }
+  ]
+}

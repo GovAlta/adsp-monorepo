@@ -1,0 +1,135 @@
+{
+  "pageId": "admin-hub",
+  "pageType": "section-hub",
+  "title": "Administration",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "accessControl": {
+    "requiredRoles": ["planner-admin", "tenant-admin"],
+    "deniedRoles": ["planner-user"],
+    "deniedResponse": "403",
+    "deniedMessage": "You do not have permission to access the Administration area. Contact your tenant administrator to request access.",
+    "testCoverageIds": ["TC-036", "TC-039"]
+  },
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Administration", "nodeId": "admin-hub" }
+    ],
+    "parentNodeId": null,
+    "childNodeIds": ["pattern-library", "session-history", "audit-log", "user-management"],
+    "siblingNodeIds": []
+  },
+  "sections": {
+    "hubIntro": {
+      "title": "Administration",
+      "description": "Manage business pattern templates, review tenant planning session history, examine the immutable audit log, and administer user access for this tenant."
+    },
+    "sectionTiles": [
+      {
+        "id": "tile-pattern-library",
+        "title": "Pattern Library",
+        "description": "Create and manage business pattern templates that guide the AI Planning Agent when matching session content to recommended ADSP service compositions.",
+        "icon": "library",
+        "statsLabel": "Active Patterns",
+        "statsBinding": "listPatterns.total",
+        "ctaLabel": "Manage Patterns",
+        "ctaTarget": "pattern-library",
+        "requiredRole": "planner-admin",
+        "testCoverageIds": ["TC-035", "TC-075"]
+      },
+      {
+        "id": "tile-session-history",
+        "title": "Session History",
+        "description": "Review all planning sessions conducted within this tenant. Filter by date range, user, or status and export results for governance reporting.",
+        "icon": "history",
+        "statsLabel": "Tenant Sessions",
+        "statsBinding": "listSessions.total",
+        "ctaLabel": "View History",
+        "ctaTarget": "session-history",
+        "requiredRole": "planner-admin",
+        "testCoverageIds": ["TC-035"]
+      },
+      {
+        "id": "tile-audit-log",
+        "title": "Audit Log",
+        "description": "View the immutable HMAC-chained audit log of all administrative actions. Verify chain integrity and export records for compliance submissions.",
+        "icon": "security",
+        "statsLabel": "Audit Events (30 days)",
+        "statsBinding": "listAuditEvents.total",
+        "ctaLabel": "View Audit Log",
+        "ctaTarget": "audit-log",
+        "requiredRole": "planner-admin",
+        "testCoverageIds": ["TC-035", "TC-082"]
+      },
+      {
+        "id": "tile-user-management",
+        "title": "User Management",
+        "description": "Assign and edit planner-service roles for users within this tenant. Invite users, modify role assignments, and deactivate access as required.",
+        "icon": "people",
+        "statsLabel": null,
+        "statsBinding": null,
+        "ctaLabel": "Manage Users",
+        "ctaTarget": "user-management",
+        "requiredRole": "tenant-admin",
+        "testCoverageIds": ["TC-035"]
+      }
+    ]
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "listPatterns",
+        "method": "GET",
+        "path": "/api/v1/patterns",
+        "description": "Fetch pattern count for the Pattern Library tile stats badge. Uses page=1&pageSize=1 to retrieve total without full payload.",
+        "bindsTo": "listPatterns.total",
+        "queryParams": { "page": 1, "pageSize": 1 }
+      },
+      {
+        "operationId": "listSessions",
+        "method": "GET",
+        "path": "/api/v1/sessions",
+        "description": "Fetch session count (tenant-scoped for admin role) for the Session History tile stats badge.",
+        "bindsTo": "listSessions.total",
+        "queryParams": { "page": 1, "pageSize": 1 }
+      },
+      {
+        "operationId": "listAuditEvents",
+        "method": "GET",
+        "path": "/api/v1/audit",
+        "description": "Fetch audit event count (last 30 days) for the Audit Log tile stats badge. Requires planner-admin role.",
+        "bindsTo": "listAuditEvents.total",
+        "queryParams": { "page": 1, "pageSize": 1 }
+      }
+    ],
+    "onSubmit": [],
+    "validationErrors": [],
+    "emptyState": null
+  },
+  "errorStates": [
+    {
+      "condition": "403 — user holds planner-user role only",
+      "display": "Access denied message: 'You do not have permission to access the Administration area.'",
+      "testCoverageIds": ["TC-036", "TC-039"]
+    },
+    {
+      "condition": "stats badge load failure (network error or 503 from INT-002 stub)",
+      "display": "Tile renders without stats badge; loading indicator replaced with '--'. Tile navigation remains functional.",
+      "testCoverageIds": ["TC-035"]
+    }
+  ],
+  "accessibility": {
+    "keyboardNavigation": "All section tiles are focusable and operable by keyboard. CTA buttons have descriptive aria-labels. Tile headings use heading hierarchy h2.",
+    "contrastRequirement": "Meets WCAG 2.1 AA contrast ratio for all tile text and badge text on tile background.",
+    "testCoverageIds": ["TC-055", "TC-057"]
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["admin-hub"],
+    "apiOperationIds": ["listPatterns", "listSessions", "listAuditEvents"],
+    "useCases": ["UC-009", "UC-010"],
+    "testCases": ["TC-035", "TC-036", "TC-039", "TC-055", "TC-057", "TC-075", "TC-082"],
+    "securityNote": "Admin-hub aggregate counts (pattern count, session count, audit event count) do not expose individual Protected B fields. Stats bindings return only numeric totals, not session content or personal data."
+  }
+}

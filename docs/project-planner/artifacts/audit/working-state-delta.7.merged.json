@@ -1,0 +1,9 @@
+{
+  "deltaFields": {
+    "stage7Completed": true,
+    "stage7HardGateStatus": "PASS",
+    "stage7MaturityScore": "4.84",
+    "stage7FailingHardRules": [],
+    "stage7AdvisoryFindings": []
+  }
+}

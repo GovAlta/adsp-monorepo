@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "service": "planner-service",
+  "generatedAt": "2026-10-10T00:00:00Z",
+  "integrations": [
+    {
+      "integrationId": "INT-001",
+      "name": "Anthropic Claude API",
+      "implementationStatus": "Stub",
+      "stubBehavior": "fail-closed",
+      "stubFile": "src/services/llm.service.ts",
+      "responseHeader": "X-Integration-Stubbed: INT-001",
+      "blockedBy": ["OPEN-001", "OPEN-002", "OPEN-006"],
+      "configVarsRequired": ["ANTHROPIC_API_KEY", "PLANNER_MODEL_VERSION"],
+      "configVarsPresent": false,
+      "notes": "NEVER enable live calls until OPEN-001/002/006 are resolved. Protected B data exfiltration risk."
+    },
+    {
+      "integrationId": "INT-002",
+      "name": "ADSP Configuration Service",
+      "implementationStatus": "Stub",
+      "stubBehavior": "lookup-empty",
+      "stubFile": "src/services/config.service.ts",
+      "responseHeader": "X-Integration-Stubbed: INT-002",
+      "blockedBy": ["OPEN-004"],
+      "configVarsRequired": ["DIRECTORY_URL"],
+      "configVarsPresent": true,
+      "notes": "Read returns empty list. Write operations fail-closed until INT-002 is provisioned."
+    },
+    {
+      "integrationId": "INT-007",
+      "name": "ADSP Event Service (RabbitMQ)",
+      "implementationStatus": "Stub",
+      "stubBehavior": "fire-and-forget",
+      "stubFile": "src/services/event.service.ts",
+      "responseHeader": "X-Integration-Stubbed: INT-007",
+      "blockedBy": [],
+      "configVarsRequired": ["AMQP_HOST", "AMQP_USER", "AMQP_PASSWORD"],
+      "configVarsPresent": false,
+      "notes": "Events are logged locally. Replace stub body with ADSP SDK eventService.send() when platform is provisioned."
+    }
+  ]
+}

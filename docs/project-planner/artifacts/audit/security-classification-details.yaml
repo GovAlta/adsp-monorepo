@@ -1,0 +1,555 @@
+---
+# GoA Application and Data Store Security Classification — Details
+# planner-service | ADSP Project Planner
+# Produced by: factory-classify (GoA Software Factory)
+# Governing frameworks: ATIA (RSA 2000, c. A-18.5), POPA (SA 2003, c. P-6.5)
+# Classification date: 2026-10-10T00:00:00Z
+
+classificationLevel: "Protected B"
+serviceName: "planner-service"
+classifiedAt: "2026-10-10T00:00:00Z"
+
+# =============================================================================
+# Phase 1 — Information Asset Inventory
+# =============================================================================
+informationAssets:
+
+  - assetId: "IA-001"
+    entityName: "planning_session"
+    mongoCollection: "planningSessions"
+    dataModelRef: "data_model.json entities[0]"
+    dataFields:
+      - field: "session_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier, no inherent sensitivity"
+      - field: "tenant_id"
+        sensitivity: "Protected A"
+        notes: "ADSP tenant identifier — organizational identity, POPA s.17"
+      - field: "user_id"
+        sensitivity: "Protected A"
+        notes: "Keycloak sub claim — GoA employee identity, POPA s.17"
+      - field: "status"
+        sensitivity: "Protected B (contextual)"
+        notes: "Session lifecycle state — reveals whether employee is actively working on a program analysis"
+      - field: "title"
+        sensitivity: "Protected B"
+        notes: "User-provided or AI-generated session title — may name the GoA program under analysis"
+      - field: "business_model_id"
+        sensitivity: "Low (reference)"
+        notes: "UUID reference to associated business_model"
+      - field: "last_resumed_at"
+        sensitivity: "Protected A"
+        notes: "Timestamp linked to employee work activity"
+      - field: "created_at / updated_at"
+        sensitivity: "Protected A"
+        notes: "Operational timestamps for employee planning activity"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 (deliberative process linkage via session title and employee attribution); POPA s.17 (user_id)"
+    rationale: >
+      A planning_session record links a specific GoA employee (user_id) to a named
+      program analysis engagement (title). The combination reveals which government
+      programs a particular employee is analyzing, constituting deliberative process
+      information under ATIA s.23. The user_id alone is Protected A; the contextual
+      attribution elevates the record to Protected B.
+
+  - assetId: "IA-002"
+    entityName: "business_model"
+    mongoCollection: "businessModels"
+    dataModelRef: "data_model.json entities[1]"
+    dataFields:
+      - field: "model_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "session_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "Session and tenant context"
+      - field: "confidence_score"
+        sensitivity: "Protected B"
+        notes: "Reveals depth of organizational analysis completed on a government program"
+      - field: "matched_pattern_id"
+        sensitivity: "Protected B"
+        notes: "Reveals which GoA business process category the employee's program matches (e.g., Case Management, Grant Application)"
+      - field: "version"
+        sensitivity: "Low"
+        notes: "Optimistic concurrency counter"
+      - field: "concepts[] (embedded business_concept)"
+        sensitivity: "Protected B"
+        notes: "Full structured business analysis including concept names, types, descriptions, source_text"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — deliberative government business analysis and program design"
+    rationale: >
+      The business_model is the Planning Agent's primary reasoning artifact representing
+      a structured decomposition of a GoA employee's business problem. It encapsulates
+      the GoA program under analysis through concept names, relationship structures,
+      and the verbatim source_text fragments extracted from conversation. This constitutes
+      deliberative government analysis that if disclosed could reveal internal program
+      design, organizational intent, and policy options not yet publicly announced.
+      Per ATIA s.23, deliberative materials produced in the process of government
+      decision-making are Protected B.
+
+  - assetId: "IA-003"
+    entityName: "business_concept"
+    mongoCollection: "businessModels (embedded in concepts[])"
+    dataModelRef: "data_model.json entities[2]"
+    dataFields:
+      - field: "concept_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "concept_type"
+        sensitivity: "Protected B (contextual)"
+        notes: "BR-006 enum (Actor, Goal, Activity, etc.) — reveals program structural analysis"
+      - field: "name"
+        sensitivity: "Protected B"
+        notes: "Short descriptive name of the identified government business concept"
+      - field: "description"
+        sensitivity: "Protected B"
+        notes: "Extended description — deliberative program analysis content"
+      - field: "source_text"
+        sensitivity: "Protected B"
+        notes: "Verbatim excerpt from employee conversation — direct deliberative government content"
+      - field: "relationships[] (embedded concept_relationship)"
+        sensitivity: "Protected B"
+        notes: "Structural relationships between program concepts — organizational analysis"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — direct deliberative content via source_text; program analysis via name/description"
+    rationale: >
+      business_concept.source_text contains verbatim text from the employee's
+      conversation with the Planning Agent, representing the rawest form of government
+      deliberative content in the system. The concept name and description fields
+      capture the Planning Agent's structured interpretation of that content. Both
+      fields constitute deliberative process records under ATIA s.23.
+
+  - assetId: "IA-004"
+    entityName: "concept_relationship"
+    mongoCollection: "businessModels (embedded in concepts[].relationships[])"
+    dataModelRef: "data_model.json entities[3]"
+    dataFields:
+      - field: "relationship_id / source_concept_id / target_concept_id"
+        sensitivity: "Low (reference)"
+        notes: "UUID identifiers"
+      - field: "relationship_type"
+        sensitivity: "Protected B (contextual)"
+        notes: "BR-006 enum (uses, produces, triggers, etc.) — reveals program dependency analysis"
+      - field: "description"
+        sensitivity: "Protected B"
+        notes: "Optional relationship annotation — may contain deliberative content"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — embedded within Protected B business_model; relationship graph reveals program structural analysis"
+    rationale: >
+      concept_relationship records are embedded within the Protected B business_model
+      document and form the graph structure of the government program analysis.
+      The relationship type and description fields encode the Planning Agent's
+      analysis of how government program components depend on and interact with each
+      other. Inherits Protected B from embedding context. ATIA s.23.
+
+  - assetId: "IA-005"
+    entityName: "hypothesis_record"
+    mongoCollection: "solutionHypotheses"
+    dataModelRef: "data_model.json entities[4]"
+    dataFields:
+      - field: "hypothesis_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "session_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "Session and tenant context"
+      - field: "status"
+        sensitivity: "Protected B (contextual)"
+        notes: "BR-010 state machine — reveals whether government planning decisions have been finalized"
+      - field: "summary"
+        sensitivity: "Protected B"
+        notes: "Plain-language description of proposed GoA solution — deliberative program design content"
+      - field: "reasoning"
+        sensitivity: "Protected B"
+        notes: "Planning Agent analysis of why specific ADSP services were recommended — AI deliberative output derived from Protected B input"
+      - field: "pattern_id"
+        sensitivity: "Protected B (contextual)"
+        notes: "Identifies which GoA business pattern was applied — reveals program categorization"
+      - field: "version"
+        sensitivity: "Low"
+        notes: "Concurrency counter"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — AI-generated deliberative output derived from Protected B business analysis; program design recommendations"
+    rationale: >
+      The hypothesis_record is the key output artifact of the planning process,
+      containing AI-generated recommendations for government program implementation.
+      The summary and reasoning fields describe how GoA programs should be structured
+      and which government services should be used to address the business problem.
+      These recommendations are derived from Protected B business_model input and
+      constitute deliberative planning output under ATIA s.23. Classification of
+      AI-generated content follows the classification of the input data that drove
+      the generation.
+
+  - assetId: "IA-006"
+    entityName: "conversation_message"
+    mongoCollection: "conversationMessages"
+    dataModelRef: "data_model.json entities[5]"
+    dataFields:
+      - field: "message_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "session_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "Session and tenant context"
+      - field: "role"
+        sensitivity: "Low"
+        notes: "user/assistant/system — operational metadata"
+      - field: "content"
+        sensitivity: "Protected B"
+        notes: >
+          Verbatim conversational text from GoA employees describing their business
+          problems, program designs, organizational challenges, and planning decisions.
+          This is the most sensitive field in the system — the direct source of all
+          deliberative government content that flows into business_model and
+          hypothesis_record. ATIA s.23 primary driver.
+      - field: "agent_id"
+        sensitivity: "Protected A (contextual)"
+        notes: "Identifies which specialist agent was involved — operational metadata"
+      - field: "timestamp"
+        sensitivity: "Protected A"
+        notes: "Timestamp of employee communication activity"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — primary source of government deliberative content; verbatim employee statements about GoA programs"
+    rationale: >
+      conversation_message is the primary Protected B data store. The content field
+      captures verbatim statements from GoA employees describing their programs,
+      organizational problems, and planning decisions. Employees may discuss
+      unpublished program designs, internal budget constraints, organizational
+      restructuring, or policy alternatives — all deliberative government content
+      under ATIA s.23. This is also the field transmitted to Anthropic Claude API
+      (INT-001), creating an out-of-jurisdiction data transfer risk requiring
+      mandatory policy approval (OPEN-001, OPEN-002, OPEN-006).
+
+  - assetId: "IA-007"
+    entityName: "audit_event"
+    mongoCollection: "auditEvents"
+    dataModelRef: "data_model.json entities[6]"
+    dataFields:
+      - field: "event_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "timestamp"
+        sensitivity: "Protected A"
+        notes: "Administrative activity timestamp"
+      - field: "actor_id"
+        sensitivity: "Protected A"
+        notes: "GoA employee Keycloak sub claim — employee identity in workplace context; POPA s.17"
+      - field: "tenant_id"
+        sensitivity: "Protected A"
+        notes: "Organizational unit identifier"
+      - field: "action"
+        sensitivity: "Protected A"
+        notes: "Administrative action type (e.g., BusinessPattern.create) — operational metadata, not session content"
+      - field: "resource_id / resource_type"
+        sensitivity: "Protected A"
+        notes: "References to affected resources — administrative metadata"
+      - field: "outcome"
+        sensitivity: "Protected A"
+        notes: "success/failure indicator — operational metadata"
+      - field: "hmac"
+        sensitivity: "Protected A"
+        notes: "HMAC-SHA256 integrity hash per SWREQ-013 — cryptographic metadata"
+      - field: "previous_event_id"
+        sensitivity: "Protected A"
+        notes: "Chain reference for integrity — operational metadata"
+    entityClassification: "Protected A"
+    classificationDriver: "POPA s.17 — GoA employee identity (actor_id); administrative audit records for a GoA system"
+    rationale: >
+      The audit_event entity records administrative actions (pattern management,
+      specialist configuration, authentication failures) with actor identity and
+      outcome. It does NOT store planning session content — the content classification
+      (Protected B) is not transferred to the audit metadata. The actor_id is a
+      GoA employee identifier warranting Protected A under POPA s.17. Administrative
+      audit logs for GoA systems are Protected A. The HMAC integrity chain
+      (BR-009 / SYSREQ-020) further protects record immutability.
+
+  - assetId: "IA-008"
+    entityName: "specialist_request"
+    mongoCollection: "specialistRequests"
+    dataModelRef: "data_model.json entities[7]"
+    dataFields:
+      - field: "request_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "session_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "Session and tenant context"
+      - field: "specialist_type"
+        sensitivity: "Protected A"
+        notes: "Which ADSP specialist was invoked (form-service, pdf-service, etc.)"
+      - field: "request_payload"
+        sensitivity: "Protected B"
+        notes: >
+          JSONB payload containing session context excerpts forwarded to specialist
+          agents. The context excerpt includes portions of conversation_message
+          content and business_model state — inheriting Protected B classification
+          from those sources. ATIA s.23.
+      - field: "status"
+        sensitivity: "Protected A"
+        notes: "Invocation lifecycle state — operational metadata"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — request_payload contains Protected B session context transmitted to specialist agents (INT-003 to INT-006)"
+    rationale: >
+      The request_payload field carries Protected B session context to specialist
+      agent endpoints. All four specialist integrations (INT-003 to INT-006) are
+      currently Stub status with pending interface contracts (OPEN-005), but the
+      schema is designed to carry deliberative content. The entity is classified
+      Protected B as a precaution against inadvertent data exposure when
+      integrations become live. ATIA s.23 applies to the forwarded content.
+
+  - assetId: "IA-009"
+    entityName: "specialist_response"
+    mongoCollection: "specialistResponses"
+    dataModelRef: "data_model.json entities[8]"
+    dataFields:
+      - field: "response_id / request_id / session_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "Identifiers and tenant context"
+      - field: "response_payload"
+        sensitivity: "Protected B"
+        notes: >
+          JSONB payload containing specialist agent analysis. Generated in response
+          to Protected B context (specialist_request.request_payload). AI-generated
+          analysis of Protected B input inherits Protected B classification. ATIA s.23.
+      - field: "received_at"
+        sensitivity: "Protected A"
+        notes: "Operational timestamp"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — response_payload is AI-generated analysis derived from Protected B specialist_request context"
+    rationale: >
+      specialist_response.response_payload contains the specialist agent's
+      analysis of the forwarded Protected B planning context. Per the classification
+      principle that AI-generated output inherits the classification of the input,
+      and that the analysis constitutes deliberative government service design
+      guidance, this store is Protected B under ATIA s.23.
+
+  - assetId: "IA-010"
+    entityName: "session_export"
+    mongoCollection: "sessionExports"
+    dataModelRef: "data_model.json entities[9]"
+    dataFields:
+      - field: "export_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "session_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "Session and tenant context"
+      - field: "user_id"
+        sensitivity: "Protected A"
+        notes: "GoA employee identity — POPA s.17"
+      - field: "export_data"
+        sensitivity: "Protected B"
+        notes: >
+          JSONB serialization of the complete planning session including business
+          models, hypotheses, and conversation fragments. Represents the full
+          Protected B content of the session in a portable format. ATIA s.23.
+      - field: "format / exported_at"
+        sensitivity: "Protected A"
+        notes: "Export format and timestamp — operational metadata"
+    entityClassification: "Protected B"
+    classificationDriver: "ATIA s.23 — export_data is a complete serialization of Protected B session content"
+    rationale: >
+      session_export consolidates all Protected B planning session content into a
+      single exportable document (SYSREQ-016). The export_data field is a full
+      snapshot of business models and hypotheses. This makes session_export the
+      highest-risk artifact for inadvertent disclosure — a single document containing
+      the entirety of a Protected B planning engagement. Retention and disposition
+      controls (SYSREQ-022) are mandatory at Protected B level.
+
+  - assetId: "IA-011"
+    entityName: "user_context"
+    mongoCollection: "userContexts"
+    dataModelRef: "data_model.json entities[10]"
+    dataFields:
+      - field: "context_id"
+        sensitivity: "Low"
+        notes: "UUID — system identifier"
+      - field: "user_id / tenant_id"
+        sensitivity: "Protected A"
+        notes: "GoA employee identity and organizational unit — POPA s.17"
+      - field: "preferences"
+        sensitivity: "Protected A"
+        notes: "UI preferences JSONB — low-sensitivity user interface settings tied to employee identity"
+      - field: "last_active_session_id"
+        sensitivity: "Protected A"
+        notes: "UUID pointer to last session — reveals activity pattern but not content"
+      - field: "created_at / updated_at"
+        sensitivity: "Protected A"
+        notes: "Activity timestamps tied to employee identity"
+    entityClassification: "Protected A"
+    classificationDriver: "POPA s.17 — GoA employee identity (user_id); no session content stored"
+    rationale: >
+      user_context stores only the GoA employee's identity (user_id + tenant_id)
+      combined with UI preferences and a session pointer. No planning session content
+      is present. The employee identity warrants Protected A under POPA s.17 but
+      the absence of deliberative content means Protected B is not required. The
+      unique constraint (uq_user_context_user_tenant) ensures no cross-tenant identity
+      leakage.
+
+# =============================================================================
+# Phase 2 — Integration Point Classification Assessment
+# =============================================================================
+integrationRisks:
+
+  - integrationId: "INT-001"
+    name: "Anthropic Claude API"
+    externalParty: "Anthropic PBC (US-based)"
+    dataTransmitted:
+      - "conversation_message.content (Protected B verbatim user input)"
+      - "business_model context (Protected B structured analysis)"
+    classificationBoundaryRisk: "HIGH"
+    legislativeReference: "ATIA s.23 (deliberative content); POPA s.5 (collection limitation principle)"
+    currentStatus: "Stub (fail-closed) — live integration blocked pending OPEN-001, OPEN-002, OPEN-006"
+    mandatoryMitigations:
+      - "GoA legal/privacy counsel approval for out-of-jurisdiction transfer of Protected B government deliberative content"
+      - "Data Processing Agreement (DPA) with Anthropic establishing contractual data processing obligations"
+      - "Data minimization — strip identifiable tenant/user context before LLM inference where technically feasible"
+      - "No training data use provision in contractual terms"
+      - "Review whether ATIA s.23 exemptions prohibit transmission of specific deliberative content to commercial LLMs"
+    openItems:
+      - "OPEN-001: GoA information management policy approval for Anthropic API use"
+      - "OPEN-002: Anthropic API key provisioning and secrets management"
+      - "OPEN-006: Data governance sign-off for LLM inference on GoA program content"
+
+  - integrationId: "INT-002"
+    name: "ADSP Configuration Service"
+    externalParty: "ADSP Platform (Government of Alberta)"
+    dataTransmitted:
+      - "BusinessPattern records (program categorization templates — Protected A)"
+      - "SpecialistAgentConfig records (Protected A)"
+    classificationBoundaryRisk: "LOW"
+    legislativeReference: "ATIA s.17 (government operational information)"
+    currentStatus: "Stub — live integration pending ADSP platform provisioning"
+    mandatoryMitigations:
+      - "ADSP service-to-service JWT authentication required (initializePlatform() SDK)"
+      - "Patterns containing specific unpublished program designs should be reviewed for Protected B uplift before storage"
+
+  - integrationId: "INT-003 to INT-006"
+    name: "Specialist Agent APIs (Form, PDF, Comment, Notification)"
+    externalParty: "GoA planner-service ecosystem (future Nx projects)"
+    dataTransmitted:
+      - "specialist_request.request_payload (Protected B session context excerpts)"
+      - "conversation_message fragments and business_model state"
+    classificationBoundaryRisk: "MEDIUM"
+    legislativeReference: "ATIA s.23 (deliberative content forwarded to internal GoA services)"
+    currentStatus: "Stub (fail-closed) — interface contracts pending OPEN-005"
+    mandatoryMitigations:
+      - "Specialist agent endpoints must operate within the GoA government network"
+      - "Service-to-service authentication via ADSP JWT required before transmitting Protected B payloads"
+      - "Future specialist implementations must be classified at Protected B minimum"
+
+  - integrationId: "INT-007"
+    name: "ADSP Event Service (RabbitMQ)"
+    externalParty: "ADSP Platform (Government of Alberta)"
+    dataTransmitted:
+      - "DomainEvent payloads: tenantId, sessionId, eventType (Protected A operational metadata)"
+    classificationBoundaryRisk: "LOW"
+    legislativeReference: "ATIA s.17 (government operational information)"
+    currentStatus: "Stub — pending ADSP platform provisioning"
+    mandatoryMitigations:
+      - "Domain event payloads must NOT include session content (only session references)"
+      - "RabbitMQ message broker must be within GoA network boundary"
+
+  - integrationId: "INT-008"
+    name: "Keycloak JWT Authorization Server"
+    externalParty: "ADSP Platform Keycloak (Government of Alberta)"
+    dataTransmitted:
+      - "JWT claims: tenantId, userId, roles (Protected A GoA employee identity)"
+    classificationBoundaryRisk: "LOW"
+    legislativeReference: "POPA s.17 (employee identity)"
+    currentStatus: "Stub — pending ADSP Keycloak client registration"
+    mandatoryMitigations:
+      - "JWT validation performed locally using cached public key — no per-request remote call"
+      - "userId claim must not be logged in cleartext in application logs"
+
+# =============================================================================
+# Phase 3 — Derived Security Control Requirements
+# =============================================================================
+derivedSecurityControls:
+
+  controlLevel: "Protected B (OWASP ASVS Level 2)"
+  brdReference: "SYSREQ-018 (OWASP ASVS Level 2), SYSREQ-019 (TLS), SYSREQ-020 (audit), SYSREQ-021 (timeout)"
+
+  urlParameterControls:
+    - "Protected B fields (conversation_message.content, business_model fields) MUST NOT appear in URL query parameters"
+    - "session_id, user_id, and tenant_id in URL path parameters are acceptable (no content — reference only)"
+    - "All API endpoints require HTTPS/TLS 1.2+ (SYSREQ-019)"
+
+  dataAtRestControls:
+    - "MongoDB collections containing Protected B data (planningSessions, businessModels, conversationMessages, solutionHypotheses, specialistRequests, specialistResponses, sessionExports) require encryption at rest"
+    - "audit_event and user_context (Protected A) require appropriate access controls"
+    - "MongoDB must be deployed within GoA network boundary; no public internet exposure"
+
+  dataInTransitControls:
+    - "TLS 1.2+ for all API endpoints (SYSREQ-019)"
+    - "HSTS headers required on all responses"
+    - "Service-to-service calls (Configuration Service, Event Service, Keycloak) must use TLS"
+    - "INT-001 (Anthropic API): Protected B content transmission blocked until OPEN-001/002/006 resolved"
+
+  accessControls:
+    - "Three-level RBAC (BR-007): planner-user, planner-admin, tenant-admin"
+    - "Session access scoped to tenant_id + user_id (BR-001)"
+    - "Inactivity timeout: 60 min for planner-user, 30 min for planner-admin (SYSREQ-021)"
+    - "All endpoints require valid Keycloak JWT (SYSREQ-009)"
+
+  auditControls:
+    - "HMAC integrity chain on audit_event (SWREQ-013) — mandatory for Protected B system audit trail"
+    - "Append-only audit log (BR-008) — no delete or update operations permitted"
+    - "Audit required before administrative action completes (BR-008)"
+
+  retentionDispositionControls:
+    - "Default retention: 2 years from session completion (SYSREQ-022)"
+    - "Protected B content disposition must follow GoA Information Management Regulation"
+    - "session_export records require same retention policy as source session"
+
+  antiPatternsToEnforce:
+    - "Protected B field (conversation_message.content) MUST NOT appear in URL query parameters (OWASP ASVS V1.2.4)"
+    - "Protected B content MUST NOT be logged in cleartext application logs"
+    - "userId / actor_id (Protected A) MUST NOT be logged as a cleartext string in external-facing systems"
+    - "INT-001 live integration MUST remain fail-closed until OPEN-001/002/006 are formally resolved"
+    - "Specialist agent payloads (INT-003..006) MUST use GoA-internal service-to-service JWT before going live"
+
+# =============================================================================
+# Phase 4 — Classification Governance Notes
+# =============================================================================
+governanceNotes:
+  - note: >
+      The application-level classification of Protected B is driven by
+      conversation_message.content, business_concept.source_text,
+      hypothesis_record.summary/reasoning, and business_model (with embedded
+      concepts). These stores contain verbatim GoA employee statements and
+      AI-generated analysis of government program design — deliberative content
+      under ATIA s.23.
+    atiaSection: "s.23 (deliberative processes of government)"
+
+  - note: >
+      GoA employee identity data (planning_session.user_id, audit_event.actor_id,
+      user_context.user_id) is Protected A under POPA s.17. These fields track
+      employee activity within the government system and must not be shared
+      outside the GoA network boundary without appropriate authority.
+    popaSection: "s.17 (personal information of employees in workplace context)"
+
+  - note: >
+      The Anthropic Claude API integration (INT-001) represents the most significant
+      classification boundary risk. Transmitting Protected B government deliberative
+      content to a commercial US-based LLM provider without approved data processing
+      agreements would constitute an unauthorized disclosure under ATIA. The BRD
+      flags three open items (OPEN-001, OPEN-002, OPEN-006) that must be formally
+      closed before the integration is enabled. Stage 6 security validation must
+      specifically verify that the Anthropic integration remains fail-closed until
+      these items are resolved.
+    atiaSection: "s.23 (deliberative content); s.10 (duty to assist while protecting)"
+
+  - note: >
+      Stage 6 re-classification should verify that no Protected B field values
+      are placed in URL query parameters, HTTP headers (other than Authorization),
+      or application log files. The url-query-parameter anti-pattern is the highest
+      risk vector for inadvertent disclosure of deliberative content.
+    stage6RevalidationRequired: true
+
+reclassificationTriggers:
+    - "Introduction of citizen-facing features (would require POPA analysis for public-facing data)"
+    - "Addition of fields storing PHN, SIN, financial, medical, or biometric data (would trigger specific Protected B/C category classification)"
+    - "Live activation of INT-001 (Anthropic API) — requires re-classification review with approved DPA"
+    - "Live activation of INT-003 to INT-006 (specialist agents) — requires verification that endpoints remain within GoA network"
+    - "Change in data retention policy below GoA Information Management Regulation minimum"

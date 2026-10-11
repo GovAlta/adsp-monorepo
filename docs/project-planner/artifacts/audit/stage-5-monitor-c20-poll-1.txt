@@ -1,0 +1,23 @@
+MTIME:1791662154
+NOW:1791662230
+---TAIL---
+[2026-10-10T18:50:10Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 0/10 | applying targeted fixes — setup.ts Blob polyfill first
+[2026-10-10T18:51:41Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 5/10 | all targeted edits applied — running npm test
+[2026-10-10T18:54:48Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 9/10 | targeted fixes applied — running final test verification
+[2026-10-10T18:56:29Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 10/10 | 235 passed 44 skipped 0 failed — validation-report.json updated — returning to factory-stage-5
+[2026-10-10T18:56:50Z] Stage 5 | Pre-Handoff Gate Step 6 | 12/12 | ci-orchestrator reports 0 failures; running npm test to independently confirm
+[2026-10-10T18:59:29Z] Stage 5 | Retry 1 batch 7 | 12/12 | Fixing E2E vitest exclusion, AuditLog PDF button role, integration suite failures
+[2026-10-10T18:59:30Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 0/3 | Starting remediation: Issues A (vite exclude), B (AuditLog selector), C (integration test failures)
+[2026-10-10T19:13:24Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 0/3 | Root causes identified: A=vitest-exclude-missing, B=button-accessible-name-mismatch (4 occurrences TC-048), C=duplicate-server.listen-on-sessions-server (6 files). Starting fixes.
+[2026-10-10T19:13:45Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 1/3 | Fix A (vite.config exclude) and Fix B (AuditLog TC-048 selectors) written. Starting Fix C: removing duplicate MSW lifecycle from 6 integration test files.
+[2026-10-10T19:14:26Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 2/3 | Fix C complete: 6 integration files updated. Running npm test to verify.
+[2026-10-10T19:22:01Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 2/3 | Analyzing 12 remaining test failures. Root causes: DOM mock before render (SessionExport), multiple text matches (SessionDashboard/PlanningSession), mock path wrong (HypothesisReview/PlanningSession), stale mock calls (NewSessionStart), multiple callouts (BusinessModelReview). Reading files.
+[2026-10-10T19:29:40Z] Stage 5 | ci-orchestrator phase Remediate batch 7/7 | 0/12 | resuming after compaction — reading remaining failing files
+[2026-10-10T19:33:23Z] Stage 5 | ci-orchestrator phase Remediate batch 7/7 | 0/12 | starting fixes: HypothesisReview mock-path + TC-088, NewSessionStart clearAllMocks, PlanningSession mock-paths + text queries
+[2026-10-10T19:34:42Z] Stage 5 | ci-orchestrator phase Remediate batch 7/7 | 6/12 | all 6 file edits done — running npm test
+[2026-10-10T19:39:45Z] Stage 5 | ci-orchestrator phase Remediate batch 7/7 | 12/12 | COMPLETE — 279 passed, 0 failed, 0 skipped; validation-report.json updated
+[2026-10-10T19:40:21Z] Stage 5 | Pre-Handoff Gate Steps 4+5+6 | 12/12 | PASS: lint exit=0 (28 warns), build exit=0, tests exit=0 (279/279). Updating validation log.
+[2026-10-10T19:45:40Z] Stage 5 | Pre-Handoff Gate Steps 2+7 | 12/12 | validation-log PASSED (FAC-S5-020 PASS FAC-S5-027 PASS overallStatus PASSED); stage-progress gates all true
+[2026-10-10T19:53:01Z] Stage 5 | Retry 2 start | 12/12 | 7 FAIL rules from fac_s5_runner: FAC-S5-004 FAC-S5-005 FAC-S5-010 FAC-S5-015 XSTAGE-S5-006 XSTAGE-S5-009 XSTAGE-S5-010
+[2026-10-10T19:55:53Z] Stage 5 | Retry 2 remediate batch | 12/12 | ci-orchestrator Remediate dispatched for FAC-S5-005 FAC-S5-015 XSTAGE-S5-006 XSTAGE-S5-009
+[2026-10-10T19:55:53Z] Stage 5 | ci-orchestrator Remediate batch 1/1 | 0/4 | invocation start — reading target files

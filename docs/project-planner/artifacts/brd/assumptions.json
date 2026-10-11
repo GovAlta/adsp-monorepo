@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "items": [
+    {
+      "id": "ASSUMPTION-001",
+      "statement": "The ADSP platform Keycloak realm is pre-configured with the planner-service client registration, including the planner-user, planner-admin, and tenant-admin role definitions, before planner-service is deployed to any ADSP tenant environment. Without prior realm configuration, all authenticated users receive HTTP 403 and the service is functionally unusable.",
+      "affectedRequirements": ["SYSREQ-010", "SYSREQ-013"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-002",
+      "statement": "An Anthropic API key with sufficient quota is provisioned and available as a secured environment variable before the Planning Agent is enabled in production. API key management, rotation, and quota monitoring are handled outside the planner-service codebase by the ADSP Platform Team. OPEN-001 tracks the API key management question.",
+      "affectedRequirements": ["SYSREQ-001", "SYSREQ-008"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-003",
+      "statement": "planner-service is deployed inside the existing ADSP monorepo as an Nx application under apps/planner-service/, sharing the monorepo's existing Nx workspace tooling, ESLint configuration, TypeScript 5 compiler settings, and shared packages. A standalone project structure is not assumed.",
+      "affectedRequirements": ["STREQ-001"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-004",
+      "statement": "The Tenant Management Webapp (TMW) embeds the planner-service React UI as a routed section within the existing TMW navigation structure. TMW provides the shell, authentication flow, and GoA Design System 2.0 theme. No standalone deployment of the planner UI is required for this build.",
+      "affectedRequirements": ["STREQ-011", "USRREQ-001", "USRREQ-002"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-005",
+      "statement": "MongoDB is provisioned with encryption-at-rest enabled and is accessible to planner-service via the ADSP-provisioned connection string. The connection string is provided as a secured secret and is not stored in source code or build artifacts. If MongoDB lacks encryption-at-rest, SYSREQ-015 cannot be satisfied.",
+      "affectedRequirements": ["SYSREQ-015", "SYSREQ-012"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-006",
+      "statement": "The ADSP Configuration Service is available in all target deployment environments and supports namespaced configuration reads and writes for tenant-scoped planner-service BusinessPattern configurations. OPEN-004 tracks the Config Service provisioning dependency.",
+      "affectedRequirements": ["SYSREQ-006", "INT-002"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-007",
+      "statement": "The four Specialist Agent services (Form, PDF, Comment, Notification) are distinct Nx applications to be implemented in future builds. For the current planner-service build, all specialist integrations are represented as Stub implementation status with fail-closed stub behavior. Interface contract is unresolved (OPEN-005).",
+      "affectedRequirements": ["SYSREQ-007", "INT-003", "INT-004", "INT-005", "INT-006"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-008",
+      "statement": "The claude-sonnet-4-5 model version is available in the Anthropic API at production launch and is approved for use with GoA citizen-facing data. If a different model version is required by GoA information management policy, OPEN-002 must be resolved before production enablement. Model version is pinned per BR-002.",
+      "affectedRequirements": ["SYSREQ-008"],
+      "validationStatus": "Pending"
+    },
+    {
+      "id": "ASSUMPTION-009",
+      "statement": "The MongoDB instance provisioned for planner-service has the $jsonSchema collection validators applied via the db.createCollection() commands in requirements/database/ddl_script.sql (MongoDB Reference section). If the validators are not applied (e.g., validators are disabled via validationLevel: off), DDL-derived data integrity test cases TC-117, TC-121, TC-122 will not be enforceable at the database layer and must rely entirely on application-layer validation. Multi-tenant isolation (TC-122) is application-layer only regardless of validator state, as MongoDB has no row-level security. The SQL CREATE TABLE statements in ddl_script.sql are the schema contract for factory validators; the db.createCollection() commands are the deployment instructions.",
+      "affectedRequirements": ["SYSREQ-010", "SYSREQ-020", "SWREQ-013"],
+      "validationStatus": "Pending",
+      "addedBy": "database-architect",
+      "addedAt": "2026-10-10T00:00:00Z",
+      "factoryStage": "3"
+    }
+  ]
+}

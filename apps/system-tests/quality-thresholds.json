@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "standard": "ISO 25010",
+  "generatedAt": "2026-10-10T00:00:00Z",
+  "smokeSkipReason": "PERF-SMOKE-SKIP: k6 not installed in pipeline environment. Install k6 (https://k6.io/docs/get-started/installation/) and re-run to generate smokePassed=true entries. Full load runs are deferred to deploy environment (deferredFullRun: true).",
+  "workflows": [
+    {
+      "workflowId": "WF-001",
+      "name": "Start Planning Session",
+      "script": "perf/session-lifecycle.k6.js",
+      "smokeCommand": "k6 run --vus 1 --iterations 1 perf/session-lifecycle.k6.js",
+      "smokeSkip": true,
+      "smokeSkipReason": "PERF-SMOKE-SKIP: k6 not installed",
+      "deferredFullRun": true,
+      "thresholds": {
+        "latencyP95Ms": 500,
+        "latencyP99Ms": 2000,
+        "errorRatePct": 5
+      }
+    },
+    {
+      "workflowId": "WF-002",
+      "name": "Send Message / Describe Business Problem",
+      "script": "perf/session-lifecycle.k6.js",
+      "smokeCommand": "k6 run --vus 1 --iterations 1 perf/session-lifecycle.k6.js",
+      "smokeSkip": true,
+      "smokeSkipReason": "PERF-SMOKE-SKIP: k6 not installed",
+      "deferredFullRun": true,
+      "thresholds": {
+        "latencyP95Ms": 5000,
+        "latencyP99Ms": 30000,
+        "errorRatePct": 5,
+        "llmFirstTokenP95Ms": 5000
+      }
+    },
+    {
+      "workflowId": "WF-005",
+      "name": "Resume Interrupted Planning Session",
+      "script": "perf/concurrent-sessions.k6.js",
+      "smokeCommand": "k6 run --vus 1 --iterations 1 perf/concurrent-sessions.k6.js",
+      "smokeSkip": true,
+      "smokeSkipReason": "PERF-SMOKE-SKIP: k6 not installed",
+      "deferredFullRun": true,
+      "thresholds": {
+        "latencyP95Ms": 3000,
+        "throughputRps": 10,
+        "errorRatePct": 5
+      }
+    },
+    {
+      "workflowId": "WF-008",
+      "name": "Manage Business Pattern Library",
+      "script": "perf/concurrent-sessions.k6.js",
+      "smokeCommand": "k6 run --vus 1 --iterations 1 perf/concurrent-sessions.k6.js",
+      "smokeSkip": true,
+      "smokeSkipReason": "PERF-SMOKE-SKIP: k6 not installed",
+      "deferredFullRun": true,
+      "thresholds": {
+        "latencyP95Ms": 500,
+        "errorRatePct": 5
+      }
+    }
+  ],
+  "globalThresholds": {
+    "performanceEfficiency": {
+      "responseTimeP95Ms": 500,
+      "responseTimeP99Ms": 2000,
+      "llmFirstTokenP95Ms": 5000,
+      "sessionResumeLoadP95Ms": 3000,
+      "concurrentSessions": 50
+    },
+    "reliability": {
+      "availabilityPct": 99.5,
+      "mttrMinutes": 30
+    },
+    "security": {
+      "authFailureReturnsHttp401": true,
+      "unauthorizedSessionReturnsHttp404": true,
+      "rateLimitExceededReturnsHttp429": true
+    },
+    "usability": {
+      "streamingFirstTokenP95Ms": 5000
+    }
+  }
+}

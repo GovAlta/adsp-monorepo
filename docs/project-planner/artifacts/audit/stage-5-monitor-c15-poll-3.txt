@@ -1,0 +1,23 @@
+MTIME:1791657158
+NOW:1791657186
+---TAIL---
+[2026-10-10T17:58:36Z] Stage 5 | ci-orchestrator remediate batch 3/4 | 0/3 | start: FAC-S5-020 Goabx->GoA rename + vite types + tsconfig exclude
+[2026-10-10T17:59:22Z] Stage 5 | ci-orchestrator remediate batch 3/4 | 2/3 | fixes applied: Goabx rename done (40 files), vite/client ref added, tsconfig exclude added. Starting build verification.
+[2026-10-10T18:01:37Z] Stage 5 | ci-orchestrator remediate batch 3/4 | 3/3 | complete: Fix1(40-file Goabx rename), Fix2(vite/client ref), Fix3(tsconfig noUnused removed+exclude). 70 TS2322 prop-mismatch errors remain in 10 src files - deferred to batch 4.
+[2026-10-10T18:02:00Z] Stage 5 | Retry 1 batch 4 | 12/12 | Investigating prop-type mismatches for batch 4 fix
+[2026-10-10T18:03:51Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 0/9 | invocation-start FAC-S5-020 prop-API fixes A-I
+[2026-10-10T18:05:49Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 0/9 | reading complete — starting Fix A ConfidenceBadge+PlanningSession
+[2026-10-10T18:06:42Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 2/9 | AuditLog.tsx fixes C D E F complete — starting PatternEditor.tsx fixes C D G I
+[2026-10-10T18:07:25Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 4/9 | PatternLibrary.tsx fixes C D E F complete — starting SessionDashboard.tsx fixes C F
+[2026-10-10T18:08:08Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 6/9 | SessionHistory.tsx fixes C D E F complete — starting UserManagement.tsx fixes C D F
+[2026-10-10T18:08:48Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 8/9 | UserManagement.tsx fixes C D F complete — running npm run build
+[2026-10-10T18:12:32Z] Stage 5 | ci-orchestrator Remediate batch 4/4 | 9/9 | tsc exit 0 verified — validation-report.json remediationBatch4 written — returning to factory-stage-5
+[2026-10-10T18:13:58Z] Stage 5 | ci-orchestrator remediate batch 5/5 | 0/3 | invocation-start FAC-S5-020 entry-files
+[2026-10-10T18:14:33Z] Stage 5 | ci-orchestrator remediate batch 5/5 | 3/3 | entry files written index.html main.tsx App.tsx
+[2026-10-10T18:15:04Z] Stage 5 | ci-orchestrator remediate batch 5/5 | 3/3 | self-validation complete build exit 0 returning to factory-stage-5
+[2026-10-10T18:15:19Z] Stage 5 | Pre-Handoff Gate Steps 4+5+6 | 12/12 | Build exit=0; re-verifying lint then running test suite
+[2026-10-10T18:20:35Z] Stage 5 | Retry 1 batch 6 | 12/12 | 44 test failures: dispatching ci-orchestrator batch 6 (jsdom mocks, query fixes, PatternEditor submit, AuditLog data)
+[2026-10-10T18:20:36Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 0/6 | invocation start - FAC-S5-027 test suite fixes
+[2026-10-10T18:31:19Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 1/9 | applying Category A fix to setup.ts
+[2026-10-10T18:31:51Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 4/9 | Categories A-B done; applying Category C AuditLog unit test fixes
+[2026-10-10T18:32:38Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 8/9 | all source edits applied; running npm test in apps/planner-ui

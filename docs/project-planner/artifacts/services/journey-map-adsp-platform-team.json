@@ -1,0 +1,567 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "audience": {
+    "name": "ADSP Platform Team",
+    "types": ["GoA employee"],
+    "description": "The Government of Alberta ADSP technology team responsible for operating, monitoring, and enforcing compliance of the planner-service within the ADSP platform. They have deep ADSP platform architecture knowledge and high technical proficiency. They verify service compliance with mandatory platform patterns, monitor health and observability endpoints, enforce multi-tenant data isolation, and conduct security reviews.",
+    "goals": [
+      "Verify planner-service compliance with ADSP platform patterns including initializePlatform(), Keycloak JWT, MongoDB, and RabbitMQ",
+      "Monitor service health and LLM API performance through structured observability endpoints",
+      "Enforce and audit multi-tenant data isolation at API and database layers",
+      "Review security audit logs and assess OWASP ASVS Level 2 conformance",
+      "Configure RBAC role policies and session inactivity timeout settings"
+    ],
+    "outcomes": [
+      "planner-service operates within the standard ADSP platform operational model without special-casing",
+      "All tenant data isolation requirements are provably enforced and auditable",
+      "Security events and administrative actions are tamper-evidently logged for compliance and incident response"
+    ]
+  },
+  "journeys": [
+    {
+      "name": "Platform Compliance Verification for Production Onboarding",
+      "description": "The ADSP Platform Team verifies that the planner-service satisfies all mandatory platform patterns before approving production deployment. This involves checking initializePlatform() SDK initialization, Keycloak JWT configuration, RabbitMQ domain event registration, MongoDB connectivity, multi-tenant data isolation enforcement, and RBAC role configuration.",
+      "trigger": "A new planner-service build is submitted for platform onboarding review prior to production deployment",
+      "goal": "Confirm planner-service satisfies every mandatory ADSP platform pattern and approve production promotion",
+      "stages": [
+        {
+          "name": "Platform Pattern Inspection",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Review the planner-service startup logs to confirm initializePlatform() completes successfully and all required ADSP service registrations are present",
+              "needs": [
+                "Access to planner-service structured JSON startup logs",
+                "ADSP platform compliance checklist specifying required initializePlatform() registrations"
+              ],
+              "touchpoint": "planner-service Health Check Endpoints (/health/live, /health/ready) and structured JSON logging output",
+              "frontstage": [
+                "Live and ready endpoint responses confirming service startup state",
+                "Structured JSON log entries showing initializePlatform() completion and ADSP SDK registration events"
+              ],
+              "backstage": [
+                "SYSREQ-012: initializePlatform() called at service startup registering Configuration Service, Event Service, and Value Service",
+                "SYSREQ-023: Structured JSON logging captures startup sequence including SDK initialization steps"
+              ],
+              "thinking": "\"I need to verify that initializePlatform() executed cleanly and that every expected ADSP service dependency is registered before I can sign off on platform compliance.\"",
+              "emotionalContext": "Methodical and focused; this is a checklist-driven gate with clear pass/fail criteria. Confidence is moderate until the log evidence confirms each registration.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Startup log verbosity may require manual scanning to locate SDK initialization entries among general application logs",
+                "No structured compliance report output means registration completeness must be inferred from log patterns"
+              ],
+              "opportunities": [
+                "A dedicated /health/ready response payload exposing ADSP SDK registration status would reduce manual log scanning",
+                "A structured compliance manifest emitted at startup would accelerate platform onboarding reviews aligned with SYSREQ-008"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Verify RabbitMQ domain event registration by inspecting the ADSP Event Service configuration and confirming session-created, session-updated, and hypothesis-generated events are registered",
+              "needs": [
+                "Access to ADSP Event Service registration records for planner-service",
+                "Expected event schema definitions for session-created, session-updated, and hypothesis-generated events"
+              ],
+              "touchpoint": "ADSP Event Service (RabbitMQ) — INT-007 integration",
+              "frontstage": [
+                "Event Service registration listing for planner-service showing registered event types",
+                "ADSP platform Event Service administration interface"
+              ],
+              "backstage": [
+                "SYSREQ-011: planner-service publishes session-created, session-updated, and hypothesis-generated domain events",
+                "SYSREQ-008: Domain event registration is a mandatory ADSP platform service compliance requirement"
+              ],
+              "thinking": "\"I need to confirm all three domain events are registered with correct schemas — missing or mismatched event registration could cause downstream consumer failures across the platform.\"",
+              "emotionalContext": "Diligent and precise; event schema mismatches have platform-wide impact so each registration detail matters.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Cross-referencing event registrations with expected schemas requires consulting both planner-service documentation and the ADSP Event Service administration interface separately"
+              ],
+              "opportunities": [
+                "Automated event schema validation against a service-owned schema manifest would eliminate manual cross-referencing and accelerate compliance verification"
+              ]
+            },
+            {
+              "stepNumber": 3,
+              "action": "Confirm Keycloak JWT authentication configuration by checking realm settings, RS256 algorithm enforcement, JWKS endpoint caching behavior, and that the three required RBAC roles are defined",
+              "needs": [
+                "Access to Keycloak realm configuration for the planner-service client",
+                "SYSREQ-009 and SYSREQ-013 requirements for JWT validation and RBAC role definitions"
+              ],
+              "touchpoint": "Keycloak JWT Authorization Server — INT-008 integration",
+              "frontstage": [
+                "Keycloak realm administration console showing planner-service client configuration",
+                "Role definitions for planner-user, planner-admin, and tenant-admin"
+              ],
+              "backstage": [
+                "SYSREQ-009: passport-jwt validates RS256 JWT; JWKS endpoint cached; invalid tokens return HTTP 401",
+                "SYSREQ-013: Three-level RBAC — planner-user, planner-admin, tenant-admin; missing role returns HTTP 403"
+              ],
+              "thinking": "\"I need to verify that all three RBAC roles exist in the realm, RS256 is enforced, and the JWKS cache TTL is set appropriately to avoid stale key failures.\"",
+              "emotionalContext": "Careful and thorough; Keycloak misconfiguration is a security risk that can silently pass authentication while enabling unauthorized access.",
+              "feeling": "negative",
+              "painPoints": [
+                "JWKS cache TTL verification requires inspecting service configuration values rather than a directly visible Keycloak setting",
+                "Role mapping must be manually verified across both Keycloak and the planner-service authorization middleware"
+              ],
+              "opportunities": [
+                "A planner-service configuration endpoint exposing JWT validation settings in non-secret form would reduce manual cross-referencing effort",
+                "RBAC role matrix documentation in the service README would speed this verification step aligned with SYSREQ-013"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Multi-Tenant Isolation Validation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute cross-tenant access test scenarios against the planner-service REST API to verify tenantId filter enforcement on all MongoDB queries and confirm HTTP 403 is returned on cross-tenant access attempts",
+              "needs": [
+                "Test tenant credentials for two distinct tenants",
+                "Access to planner-service REST API (v1) in a test environment",
+                "SYSREQ-007 expected behavior specification: HTTP 403 on cross-tenant access"
+              ],
+              "touchpoint": "planner-service REST API (v1) — https://planner-service.adsp.alberta.ca/api/v1/",
+              "frontstage": [
+                "API responses to cross-tenant session access attempts showing HTTP 403 status codes",
+                "Test harness output confirming tenant boundary enforcement across session, business model, and hypothesis endpoints"
+              ],
+              "backstage": [
+                "SYSREQ-007: tenantId filter applied on all MongoDB queries; cross-tenant access returns HTTP 403",
+                "SN-007: Multi-tenant data isolation enforced at API and database layers"
+              ],
+              "thinking": "\"A single bypass of tenant isolation would be a critical security incident — I need to test boundary conditions, not just happy-path scenarios.\"",
+              "emotionalContext": "High-stakes and vigilant; multi-tenant isolation failures are the most severe compliance gap in a shared-platform service. Rigorous testing here prevents platform-wide data exposure.",
+              "feeling": "negative",
+              "painPoints": [
+                "No automated cross-tenant isolation test suite is included with the service — manual test case construction is required for each review cycle",
+                "Reproducing edge cases such as ObjectId overlap across tenants requires deep knowledge of the MongoDB document structure"
+              ],
+              "opportunities": [
+                "A platform-provided multi-tenant isolation test harness would standardize this verification across all ADSP services",
+                "Service-level integration tests targeting SYSREQ-007 scenarios could be run as part of the platform onboarding pipeline"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Review MongoDB query implementation to confirm tenantId is present in every database query filter and that no cross-tenant data leakage is possible through aggregation pipelines or index scans",
+              "needs": [
+                "Access to planner-service source code repository",
+                "SYSREQ-007 compliance criteria for tenantId enforcement at the database layer"
+              ],
+              "touchpoint": "planner-service source code repository and MongoDB Mongoose model definitions",
+              "frontstage": [
+                "Source code review showing tenantId field presence in all Mongoose query filters",
+                "MongoDB collection index definitions confirming compound indexes include tenantId"
+              ],
+              "backstage": [
+                "SYSREQ-007: All MongoDB queries include tenantId filter enforced via Mongoose middleware or explicit filter injection",
+                "SN-007: Database-layer isolation must be independently verifiable from API-layer enforcement"
+              ],
+              "thinking": "\"API-layer enforcement alone is not sufficient — I need to see that even if the middleware were bypassed, the database queries themselves would not return cross-tenant data.\"",
+              "emotionalContext": "Analytical and methodical; code review requires concentration and pattern recognition across the entire data access layer.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Large service codebases require systematic review tooling to confirm tenantId presence across all query sites — manual review is error-prone at scale"
+              ],
+              "opportunities": [
+                "A linting rule or static analysis check enforcing tenantId filter presence in all Mongoose queries would provide continuous compliance assurance between review cycles"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Compliance Sign-Off and Configuration",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Configure RBAC role policies and session inactivity timeout settings via the ADSP Configuration Service for the planner-service deployment",
+              "needs": [
+                "ADSP Configuration Service access with platform-admin or tenant-admin role",
+                "SYSREQ-013 RBAC role definitions and organizational session timeout policy values"
+              ],
+              "touchpoint": "ADSP Configuration Service integration — planner-service configuration namespace",
+              "frontstage": [
+                "Configuration Service interface showing planner-service configuration namespace",
+                "Role policy definitions and session inactivity timeout configuration values"
+              ],
+              "backstage": [
+                "SYSREQ-008: Configuration Service integration is a mandatory ADSP platform pattern",
+                "SYSREQ-013: RBAC role policies govern planner-user, planner-admin, and tenant-admin access levels"
+              ],
+              "thinking": "\"I need to set the session timeout to a value that balances security with usability for multi-day planning sessions — too short will frustrate users, too long is an ASVS violation.\"",
+              "emotionalContext": "Considered and deliberate; configuration decisions have long-term operational impact and require balancing security policy with user experience requirements.",
+              "feeling": "positive",
+              "painPoints": [
+                "No documented recommended values for session inactivity timeout — must determine appropriate value from OWASP ASVS requirements and GoA security policy independently"
+              ],
+              "opportunities": [
+                "Platform-provided default configuration templates for common ADSP service security settings would reduce per-service configuration decision burden"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Record compliance verification findings and approve planner-service for production deployment by issuing formal platform sign-off",
+              "needs": [
+                "Completed checklist of all ADSP platform pattern verifications",
+                "Documentation channel for recording compliance sign-off decision and evidence"
+              ],
+              "touchpoint": "ADSP platform internal governance and deployment approval process",
+              "frontstage": [
+                "Platform compliance checklist with all items verified and evidence recorded",
+                "Formal production deployment approval issued in the ADSP platform governance system"
+              ],
+              "backstage": [
+                "SYSREQ-008: Platform compliance verification is a mandatory gate before production deployment",
+                "SN-008: ADSP platform service compliance verification ensures consistent operational model across all platform services"
+              ],
+              "thinking": "\"All checks are complete and the service meets the platform requirements — I can issue the sign-off with confidence that planner-service will operate within the ADSP operational model.\"",
+              "emotionalContext": "Satisfied and confident; completing a thorough compliance review with positive findings is professionally rewarding and provides assurance to the wider platform.",
+              "feeling": "very positive",
+              "painPoints": [
+                "Compliance sign-off process is manual and lacks automated tracking — findings must be documented in a separate system outside the platform tooling"
+              ],
+              "opportunities": [
+                "An automated compliance dashboard tracking ADSP platform pattern verification status across all services would reduce manual documentation overhead",
+                "Integrating the compliance checklist into the ADSP service catalog would provide persistent audit evidence for each service version"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "planner-service receives ADSP platform compliance sign-off and is promoted to production operating within the standard platform operational model without special-casing"
+    },
+    {
+      "name": "Ongoing Monitoring and Incident Response",
+      "description": "The ADSP Platform Team routinely monitors planner-service health, structured observability endpoints, and LLM API performance metrics. When anomalies or degradation are detected, they investigate using structured logs and health endpoints and then coordinate remediation steps to restore service.",
+      "trigger": "An automated platform monitoring alert fires indicating service degradation, or a scheduled routine health review window is reached",
+      "goal": "Detect and resolve planner-service operational issues including LLM API degradation through structured observability data",
+      "stages": [
+        {
+          "name": "Health and Observability Review",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Check planner-service liveness and readiness endpoints to confirm the service is accepting traffic and all dependencies are reachable",
+              "needs": [
+                "Access to planner-service health endpoints /health/live and /health/ready",
+                "Baseline readiness criteria including MongoDB, RabbitMQ, and Anthropic Claude API reachability checks"
+              ],
+              "touchpoint": "planner-service Health Check Endpoints — https://planner-service.adsp.alberta.ca/health/",
+              "frontstage": [
+                "/health/live response confirming the process is alive",
+                "/health/ready response showing dependency health status including MongoDB, RabbitMQ, and LLM API reachability"
+              ],
+              "backstage": [
+                "SYSREQ-023: Health check endpoints return structured JSON responses; /health/ready includes dependency connectivity checks",
+                "INT-001: Anthropic Claude API availability is a critical external dependency for all planning session functionality"
+              ],
+              "thinking": "\"If readiness is failing I need to know which dependency is the root cause — the health endpoint response must give me that granularity or I am starting blind on the incident.\"",
+              "emotionalContext": "Alert and focused; health check review is rapid triage and the speed of this step directly determines how quickly an incident is contained and resolved.",
+              "feeling": "neutral",
+              "painPoints": [
+                "If /health/ready returns unhealthy without per-dependency breakdown, root cause identification requires jumping directly to log analysis without a clear starting point",
+                "LLM API health is externally dependent on Anthropic service status and is outside the platform team's direct control or remediation"
+              ],
+              "opportunities": [
+                "Per-dependency health status in the /health/ready response body for MongoDB, RabbitMQ, and LLM API would reduce triage time from minutes to seconds",
+                "Integration with the ADSP platform monitoring dashboard to surface planner-service health alongside other platform services"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Review structured JSON logs to identify error patterns, elevated latency events, and LLM API performance degradation within the current monitoring window",
+              "needs": [
+                "Access to planner-service structured JSON log stream via the ADSP platform log aggregation system",
+                "Log query capability to filter by error level, LLM API response times, and tenant context",
+                "SYSREQ-023 structured logging field schema for query construction"
+              ],
+              "touchpoint": "planner-service structured JSON logging output via ADSP platform log aggregation",
+              "frontstage": [
+                "Structured JSON log entries with severity, timestamp, tenant context, and operation identifiers",
+                "LLM API response time metrics logged per request for latency trend analysis"
+              ],
+              "backstage": [
+                "SYSREQ-023: All application log entries are structured JSON with a consistent field schema",
+                "INT-001: LLM API latency directly affects streaming response quality for all active planning conversations"
+              ],
+              "thinking": "\"I am looking for patterns — a single slow LLM response is noise, but a sustained increase in p95 latency is a signal that needs attention before users start reporting degraded experience.\"",
+              "emotionalContext": "Investigative and pattern-seeking; log analysis requires sustained concentration and the ability to distinguish noise from signal across high-volume log streams.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Structured log query tools may not be purpose-built for LLM API latency percentile analysis without custom query construction",
+                "Correlating LLM API degradation with specific tenant activity requires joining log entries across multiple event types"
+              ],
+              "opportunities": [
+                "Pre-built log query templates for common planner-service operational scenarios such as LLM latency spikes and MongoDB error bursts would accelerate routine monitoring",
+                "A dedicated LLM API performance metrics endpoint would expose aggregated latency data without requiring log parsing on every review cycle"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Incident Investigation and Resolution",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Isolate the affected component — LLM API, MongoDB, RabbitMQ, or application code — by correlating health endpoint data with structured log error events to establish the incident root cause",
+              "needs": [
+                "Health endpoint data from the current incident window",
+                "Structured log error events with component context and timestamp correlation",
+                "ADSP platform runbook for planner-service incident response"
+              ],
+              "touchpoint": "planner-service Health Check Endpoints and structured JSON logging",
+              "frontstage": [
+                "Correlated health and log data pinpointing the failing component",
+                "Timeline of error events relative to the incident onset for root cause determination"
+              ],
+              "backstage": [
+                "SYSREQ-023: Structured JSON logging provides traceable event sequences enabling incident correlation",
+                "INT-001: External Anthropic Claude API failures manifest as LLM_API_ERROR log entries with HTTP status codes"
+              ],
+              "thinking": "\"The degradation started at a specific timestamp — I need to see what changed in the logs at that exact moment to determine whether this is an LLM API outage or a service-side regression.\"",
+              "emotionalContext": "Urgent and pressured; active incident investigation requires quick decisions with incomplete information while minimizing service impact duration.",
+              "feeling": "negative",
+              "painPoints": [
+                "External LLM API incidents require waiting for Anthropic service status updates — the platform team has no direct remediation lever beyond circuit-breaking or disabling the feature",
+                "Correlating multi-component failures without distributed tracing significantly increases mean time to isolation"
+              ],
+              "opportunities": [
+                "Adding distributed trace IDs to planner-service log entries would reduce incident isolation time and enable end-to-end request tracing",
+                "A graceful degradation mode for LLM API unavailability providing an informative error instead of silent failure would reduce user impact during external outages"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Execute the appropriate remediation action — restart the degraded pod, apply a configuration change, or coordinate with Anthropic support — and verify service restoration via health endpoints",
+              "needs": [
+                "Kubernetes pod management access for planner-service workload",
+                "ADSP Configuration Service write access for configuration-driven remediations",
+                "Clear service restoration criteria for incident closure"
+              ],
+              "touchpoint": "planner-service Health Check Endpoints and ADSP platform Kubernetes management interface",
+              "frontstage": [
+                "Post-remediation /health/ready response confirming all dependencies are healthy",
+                "Structured log stream showing error rate return to baseline levels"
+              ],
+              "backstage": [
+                "SYSREQ-023: Health endpoints drive Kubernetes liveness and readiness probes for automated pod lifecycle management",
+                "SYSREQ-008: Service restarts must re-execute initializePlatform() to restore all ADSP SDK registrations"
+              ],
+              "thinking": "\"After the restart I need to confirm that initializePlatform() completed again — a partially initialized service can look healthy on the liveness probe while missing event registrations.\"",
+              "emotionalContext": "Cautiously optimistic; post-remediation verification is a critical step that prevents premature incident closure and recurrence.",
+              "feeling": "positive",
+              "painPoints": [
+                "Post-restart initializePlatform() completion is not directly surfaced by the health endpoints — log review is required to confirm SDK re-registration after each restart"
+              ],
+              "opportunities": [
+                "Exposing ADSP SDK initialization status in the /health/ready response payload would make post-restart verification immediate and unambiguous, aligning SYSREQ-008 and SYSREQ-023"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "planner-service restored to healthy operational state with root cause documented, service impact period recorded, and structural improvements identified to prevent recurrence"
+    },
+    {
+      "name": "Security Review and Audit Log Verification",
+      "description": "The ADSP Platform Team conducts periodic security reviews of the planner-service covering HMAC-chained audit log integrity verification, OWASP ASVS Level 2 conformance assessment, and RBAC enforcement validation. Reviews support GoA compliance reporting and incident investigation readiness.",
+      "trigger": "Scheduled periodic security review cycle or a compliance audit request from GoA security governance",
+      "goal": "Validate OWASP ASVS Level 2 conformance, verify HMAC audit log chain integrity, and produce a security review report for compliance records",
+      "stages": [
+        {
+          "name": "Audit Log Access and Integrity Verification",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Access the planner-service audit log endpoint and retrieve the audit event records for the review period",
+              "needs": [
+                "Platform-admin role granting access to the planner-service audit log API endpoint",
+                "Review period date range for audit log retrieval",
+                "SYSREQ-020 specification for audit log structure and HMAC chaining field definitions"
+              ],
+              "touchpoint": "planner-service REST API (v1) — audit log endpoint",
+              "frontstage": [
+                "Paginated audit event records with timestamp, actorId, tenantId, action, and HMAC chain fields",
+                "Audit log API response confirming successful record retrieval for the specified period"
+              ],
+              "backstage": [
+                "SYSREQ-020: HMAC-chained audit log records every security-relevant event; chain enables tamper detection",
+                "SN-012: Security audit logging is required for GoA compliance posture for Protected B information systems"
+              ],
+              "thinking": "\"I need the full record set for the review period — any gaps in the audit log sequence are themselves a finding that must be reported regardless of other review outcomes.\"",
+              "emotionalContext": "Precise and compliance-oriented; audit log access is the foundation of the security review and any retrieval failure is immediately material to the review outcome.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Large audit log volumes for high-activity tenants require pagination handling that slows the retrieval step",
+                "No dedicated bulk audit log export format — retrieval requires API pagination rather than a single structured export operation"
+              ],
+              "opportunities": [
+                "A bulk audit log export endpoint accepting date range parameters would simplify retrieval for periodic security reviews",
+                "Integration with the ADSP platform centralized audit log aggregation service would eliminate per-service retrieval workflows"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Verify the HMAC chain integrity across the retrieved audit log records to confirm no records have been tampered with or deleted since original logging",
+              "needs": [
+                "Retrieved audit event records with HMAC chain fields",
+                "HMAC verification tooling and shared secret access restricted to platform-admin",
+                "SYSREQ-020 HMAC chaining algorithm specification"
+              ],
+              "touchpoint": "planner-service audit log records and HMAC verification tooling",
+              "frontstage": [
+                "HMAC chain verification result indicating overall chain integrity status",
+                "Identification of any broken chain links indicating potential tampering events or missing records"
+              ],
+              "backstage": [
+                "SYSREQ-020: Each audit log entry includes an HMAC computed over the current record and previous record hash enabling sequential tamper detection",
+                "SN-012: Tamper-evident audit logging is a security compliance requirement for GoA Protected B information systems"
+              ],
+              "thinking": "\"A broken HMAC chain is a security incident indicator, not just a data quality issue — if I find a chain break I need to immediately assess whether it represents unauthorized deletion or system corruption.\"",
+              "emotionalContext": "Highly focused and alert; HMAC verification is a binary security signal and any chain failure requires immediate escalation to the security incident process.",
+              "feeling": "neutral",
+              "painPoints": [
+                "HMAC verification requires custom tooling or scripting — no platform-provided audit log integrity checker exists for SYSREQ-020 compliant services",
+                "Determining whether a chain break is operational such as a crash during write versus adversarial requires additional forensic investigation beyond the chain check itself"
+              ],
+              "opportunities": [
+                "A platform-provided HMAC chain verification utility for SYSREQ-020 compliant services would standardize integrity checking across all ADSP audit logs",
+                "Continuous background chain integrity monitoring would surface tampering in near-real-time rather than only at periodic review intervals"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "OWASP ASVS Conformance Assessment",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Assess planner-service against OWASP ASVS Level 2 control requirements covering authentication, session management, access control, and API security clusters",
+              "needs": [
+                "OWASP ASVS 4.0 Level 2 control checklist",
+                "SYSREQ-018 conformance requirements and evidence criteria",
+                "Access to planner-service configuration, API behavior documentation, and authentication flow specifications"
+              ],
+              "touchpoint": "planner-service REST API (v1), Keycloak JWT Authorization Server (INT-008), and planner-service technical documentation",
+              "frontstage": [
+                "ASVS Level 2 control checklist with planner-service assessment findings recorded per control",
+                "Evidence artifacts including API response headers, authentication flow logs, and configuration values"
+              ],
+              "backstage": [
+                "SYSREQ-018: OWASP ASVS Level 2 conformance is the mandatory security baseline for this Protected B GoA information system",
+                "SYSREQ-009: Keycloak JWT RS256 validation directly addresses ASVS authentication controls",
+                "SYSREQ-013: Three-level RBAC directly addresses ASVS access control controls"
+              ],
+              "thinking": "\"ASVS Level 2 has over a hundred controls — I need to prioritize the authentication, session management, and data protection clusters first since those are most likely to surface gaps in a new service.\"",
+              "emotionalContext": "Thorough and systematic; ASVS assessment is high-effort compliance work requiring sustained concentration with significant security implications if control gaps are missed.",
+              "feeling": "negative",
+              "painPoints": [
+                "ASVS Level 2 assessment is a significant time investment with more than 100 controls and no automated assessment tooling maps directly to this service technology stack",
+                "Some ASVS controls require dynamic testing such as session fixation and token replay that must be conducted in a staging environment with controlled test data"
+              ],
+              "opportunities": [
+                "A planner-service ASVS control mapping document as a SYSREQ-018 evidence package would allow reviewers to focus on high-risk controls rather than rechecking established patterns",
+                "Automated security scanning integrated into the service CI/CD pipeline would provide continuous ASVS coverage for programmatically detectable vulnerabilities"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Verify RBAC enforcement is correctly applied across all API endpoints by testing role-permission boundaries for planner-user, planner-admin, and tenant-admin roles",
+              "needs": [
+                "Test accounts provisioned for each of the three RBAC roles",
+                "SYSREQ-013 role permission matrix specifying allowed operations per role",
+                "planner-service REST API (v1) complete endpoint list"
+              ],
+              "touchpoint": "planner-service REST API (v1) — protected endpoints with role-based access control",
+              "frontstage": [
+                "API responses showing HTTP 403 for role-insufficient requests across all protected endpoints",
+                "Role permission boundary test results confirming planner-user, planner-admin, and tenant-admin access levels are correctly enforced"
+              ],
+              "backstage": [
+                "SYSREQ-013: Authorization middleware enforces role-based access at each endpoint; missing required role returns HTTP 403",
+                "SN-012: RBAC enforcement is a platform compliance requirement verified during all security reviews"
+              ],
+              "thinking": "\"I need to test the permission boundaries systematically — that planner-user cannot reach admin endpoints, that planner-admin cannot exceed tenant-admin capabilities, and that no role escalation path exists.\"",
+              "emotionalContext": "Precise and boundary-focused; RBAC testing requires methodical coverage of the full permission matrix to avoid gaps that could enable privilege escalation.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Manual RBAC testing across all endpoints and three role levels requires constructing many individual test cases with no automated RBAC test suite provided with the service"
+              ],
+              "opportunities": [
+                "An RBAC test matrix document accompanying the service specifying expected HTTP response codes per endpoint per role would reduce manual test case construction effort",
+                "Automated RBAC boundary testing as part of the service integration test suite would provide ongoing assurance aligned with SYSREQ-013"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Findings Documentation and Security Sign-Off",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Document security review findings, record HMAC chain verification results, ASVS gap assessments, and RBAC test outcomes in the security review report",
+              "needs": [
+                "Completed findings from all preceding assessment steps",
+                "Security review report template aligned with GoA security governance requirements",
+                "ADSP audit trail access for recording the security review event"
+              ],
+              "touchpoint": "ADSP platform internal security review documentation system and planner-service audit log",
+              "frontstage": [
+                "Security review report with findings organized by ASVS control cluster and severity rating",
+                "Audit log entry recording the security review event with reviewer identity and timestamp"
+              ],
+              "backstage": [
+                "SYSREQ-020: Administrative and security review actions are logged in the HMAC-chained audit log",
+                "SN-012: Security review completion must itself be auditable for GoA compliance reporting purposes"
+              ],
+              "thinking": "\"Every finding needs a severity rating and a remediation recommendation — partial findings with no actionable guidance are useless to the development team and do not satisfy compliance records.\"",
+              "emotionalContext": "Responsible and thorough; security report authoring carries professional accountability and must be defensible under external audit scrutiny.",
+              "feeling": "neutral",
+              "painPoints": [
+                "No standardized security review report template exists for ADSP services — each review requires independent format decisions that reduce cross-service comparability",
+                "Documenting ASVS gap findings requires accurately citing control numbers and severity without a pre-mapped evidence package from the service"
+              ],
+              "opportunities": [
+                "A standardized ADSP security review report template covering ASVS, HMAC audit, and RBAC sections would reduce documentation effort and improve findings comparability across services",
+                "Persisting the security review report in the ADSP service catalog alongside the compliance checklist would maintain a longitudinal compliance record per service"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Issue security review sign-off and communicate findings to the planner-service development team including any required remediation actions before the next review cycle",
+              "needs": [
+                "Completed and approved security review report",
+                "Communication channel to the planner-service development team",
+                "Clear severity classification for any identified gaps requiring remediation"
+              ],
+              "touchpoint": "ADSP platform governance communication channels and ADSP GitHub Issues repository",
+              "frontstage": [
+                "Formal security review sign-off recorded in the ADSP governance system",
+                "Findings report delivered to the planner-service development team via GitHub Issues or direct channel"
+              ],
+              "backstage": [
+                "SN-012: Security review outcomes feed into the GoA compliance reporting cycle for Protected B information systems",
+                "SYSREQ-018: OWASP ASVS Level 2 gaps require tracked remediation before the next compliance cycle closes"
+              ],
+              "thinking": "\"If there are critical findings the development team needs them immediately with clear remediation guidance — a well-structured findings report reduces back-and-forth and accelerates resolution.\"",
+              "emotionalContext": "Professionally accountable and collaborative; the sign-off signals completion of the review obligation while the findings communication initiates the remediation partnership.",
+              "feeling": "positive",
+              "painPoints": [
+                "No integrated findings tracking between the security review process and the development team backlog — gaps must be manually translated into GitHub Issues",
+                "Severity classification requires judgment calls that may differ between reviewers without a standardized ADSP severity rubric"
+              ],
+              "opportunities": [
+                "Automated creation of GitHub Issues from security review findings would close the loop between security review completion and development team remediation tracking",
+                "A shared ADSP security severity rubric would standardize finding classification across all platform service security reviews"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "Security review report produced with HMAC chain integrity confirmed, OWASP ASVS Level 2 conformance assessed, RBAC boundaries validated, and all findings communicated to the development team with severity ratings and remediation guidance"
+    }
+  ]
+}

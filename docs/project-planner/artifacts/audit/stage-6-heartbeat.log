@@ -1,0 +1,8 @@
+[2026-10-10T20:38:56Z] Stage 6 | reconciliation | 0/6 | Stage started — reading upstream artifacts confirmed
+[2026-10-10T20:40:28Z] Stage 6 | reconciliation | 1/6 | FAC-S6-001 PASS — security-classification.yaml present, classificationLevel=Protected B
+[2026-10-10T20:40:28Z] Stage 6 | reconciliation | 2/6 | FAC-S6-002 PASS — FAC-S4-026..030 all reconcile PASS
+[2026-10-10T20:40:28Z] Stage 6 | reconciliation | 3/6 | FAC-S6-003 PASS — FAC-S5-024..026 all reconcile PASS
+[2026-10-10T20:40:28Z] Stage 6 | reconciliation | 4/6 | FAC-S6-004 PASS — 15 ASVS markers across 10/81 source files
+[2026-10-10T20:40:28Z] Stage 6 | reconciliation | 5/6 | FAC-S6-005 PASS — 103 CAS markers across 57 Stage 4 source files
+[2026-10-10T20:40:28Z] Stage 6 | reconciliation | 6/6 | FAC-S6-006 PASS — 0 FOIP references in 81 scoped source files
+[2026-10-10T20:41:19Z] Stage 6 | complete | 6/6 | All artifacts written — stage-6-validation-log.json, working-state-delta.json, stage-progress.json; advisorySeverity=NONE

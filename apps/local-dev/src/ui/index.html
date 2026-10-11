@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADSP Project Planner — Local Dev</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3347; --text: #e8eaf0; --muted: #7a8099;
+    --green: #22c55e; --blue: #3b82f6; --orange: #f59e0b;
+    --red: #ef4444; --purple: #a855f7;
+    --font: 'Segoe UI', system-ui, sans-serif; --mono: 'Consolas', 'Courier New', monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
+
+  /* Header */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 10; }
+  .logo { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo span { color: var(--blue); }
+  .badge { background: #14532d; color: var(--green); border: 1px solid #166534; border-radius: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; letter-spacing: 0.5px; }
+  .warn-badge { background: #451a03; color: var(--orange); border: 1px solid #78350f; border-radius: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; }
+  header .spacer { flex: 1; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; box-shadow: 0 0 6px var(--green); }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 57px); }
+
+  /* Sidebar */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px 16px; overflow-y: auto; }
+  .sidebar h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 14px; }
+  .card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+
+  /* Persona buttons */
+  .persona-btn { display: block; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; color: var(--text); font-size: 13px; transition: border-color 0.15s, background 0.15s; }
+  .persona-btn:hover { border-color: var(--blue); background: #1e2638; }
+  .persona-btn.active { border-color: var(--green); background: #0f2318; }
+  .persona-btn .role { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .persona-btn .role.admin { color: var(--orange); }
+  .persona-btn .role.user { color: var(--blue); }
+  .persona-btn .role.viewer { color: var(--purple); }
+
+  /* Claims box */
+  #claims-box { font-family: var(--mono); font-size: 11px; color: var(--green); background: #0a1a0f; border: 1px solid #166534; border-radius: 6px; padding: 10px; margin-top: 10px; white-space: pre-wrap; word-break: break-all; display: none; max-height: 140px; overflow-y: auto; }
+
+  /* Nav links */
+  .page-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 5px; color: var(--muted); text-decoration: none; font-size: 13px; margin-bottom: 2px; transition: color 0.1s, background 0.1s; }
+  .page-link:hover { color: var(--text); background: var(--surface2); }
+  .page-link .icon { font-size: 14px; width: 18px; text-align: center; }
+
+  /* Main panel */
+  .main { padding: 24px; overflow-y: auto; }
+  .main h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+  /* Endpoint groups */
+  .endpoint-group { margin-bottom: 24px; }
+  .group-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .endpoint-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; border: 1px solid transparent; margin-bottom: 4px; cursor: pointer; transition: background 0.1s, border-color 0.1s; }
+  .endpoint-row:hover { background: var(--surface2); border-color: var(--border); }
+  .endpoint-row.active { background: #1a2035; border-color: var(--blue); }
+  .method { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 3px; min-width: 48px; text-align: center; }
+  .GET    { background: #14532d; color: var(--green); }
+  .POST   { background: #1e3a5f; color: #60a5fa; }
+  .PATCH  { background: #451a03; color: var(--orange); }
+  .PUT    { background: #3b1f6e; color: var(--purple); }
+  .DELETE { background: #450a0a; color: var(--red); }
+  .ep-path { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; }
+  .ep-desc { font-size: 11px; color: var(--muted); }
+
+  /* Response panel */
+  .response-panel { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: none; }
+  .response-header { background: var(--surface2); padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+  .response-header .ep-label { font-family: var(--mono); font-size: 12px; color: var(--text); }
+  .status-chip { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+  .status-2xx { background: #14532d; color: var(--green); }
+  .status-4xx { background: #451a03; color: var(--orange); }
+  .status-5xx { background: #450a0a; color: var(--red); }
+  .response-body { padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre; max-height: 400px; overflow-y: auto; }
+
+  /* JSON syntax highlight */
+  .json-key    { color: #7dd3fc; }
+  .json-string { color: #86efac; }
+  .json-number { color: #fca5a5; }
+  .json-bool   { color: var(--orange); }
+  .json-null   { color: var(--muted); }
+
+  /* Request form */
+  .req-form { padding: 14px 16px; border-top: 1px solid var(--border); display: none; }
+  .req-form label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .req-form textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: var(--mono); font-size: 12px; padding: 8px; resize: vertical; min-height: 80px; }
+  .req-form textarea:focus { outline: none; border-color: var(--blue); }
+  .btn { background: var(--blue); color: white; border: none; border-radius: 5px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .btn:hover { background: #2563eb; }
+  .btn.danger { background: var(--red); }
+
+  /* Footer */
+  .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 16px 24px; font-size: 12px; color: var(--muted); }
+  .cmd { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-family: var(--mono); color: var(--text); }
+  .footer p { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ADSP Project Planner <span>/ Local Dev</span></div>
+  <div class="badge">DEV MODE</div>
+  <div class="warn-badge">⚠ NOT FOR PRODUCTION</div>
+  <div class="spacer"></div>
+  <span id="server-status"><span class="status-dot"></span>Server running on port 3001</span>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Authentication</h2>
+    <div class="card">
+      <h3>Login as Persona</h3>
+      <button class="persona-btn" onclick="login('admin')" id="btn-admin">
+        <strong>Admin User</strong>
+        <div class="role admin">planner-admin · tenant-admin · planner-user</div>
+      </button>
+      <button class="persona-btn" onclick="login('user')" id="btn-user">
+        <strong>Planner User</strong>
+        <div class="role user">planner-user</div>
+      </button>
+      <button class="persona-btn" onclick="login('viewer')" id="btn-viewer">
+        <strong>Read-Only Viewer</strong>
+        <div class="role viewer">no roles</div>
+      </button>
+      <div id="claims-box"></div>
+    </div>
+
+    <h2>Planner UI Pages</h2>
+    <div class="card" style="padding:10px 12px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Run <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">npm run dev</code> in <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">apps/planner-ui</code> first</div>
+      <a class="page-link" href="http://localhost:5173/" target="_blank"><span class="icon">🏠</span>Session Dashboard</a>
+      <a class="page-link" href="http://localhost:5173/new-session" target="_blank"><span class="icon">➕</span>New Session</a>
+      <a class="page-link" href="http://localhost:5173/session/sess-001" target="_blank"><span class="icon">💬</span>Planning Session</a>
+      <a class="page-link" href="http://localhost:5173/session/sess-001/model" target="_blank"><span class="icon">🗺</span>Business Model</a>
+      <a class="page-link" href="http://localhost:5173/session/sess-001/hypotheses" target="_blank"><span class="icon">💡</span>Hypothesis Review</a>
+      <a class="page-link" href="http://localhost:5173/session/sess-001/export" target="_blank"><span class="icon">📤</span>Session Export</a>
+      <a class="page-link" href="http://localhost:5173/admin" target="_blank"><span class="icon">⚙️</span>Admin Hub</a>
+      <a class="page-link" href="http://localhost:5173/patterns" target="_blank"><span class="icon">📚</span>Pattern Library</a>
+      <a class="page-link" href="http://localhost:5173/patterns/new" target="_blank"><span class="icon">✏️</span>Pattern Editor</a>
+      <a class="page-link" href="http://localhost:5173/history" target="_blank"><span class="icon">🕐</span>Session History</a>
+      <a class="page-link" href="http://localhost:5173/audit" target="_blank"><span class="icon">🔍</span>Audit Log</a>
+      <a class="page-link" href="http://localhost:5173/users" target="_blank"><span class="icon">👥</span>User Management</a>
+    </div>
+  </aside>
+
+  <!-- Main panel -->
+  <main class="main">
+    <h2>API Explorer</h2>
+
+    <!-- Sessions -->
+    <div class="endpoint-group">
+      <div class="group-header">Sessions</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions</span><span class="ep-desc">List sessions</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('POST','/api/v1/sessions',{title:'Test Session '+Date.now()})">
+        <span class="method POST">POST</span><span class="ep-path">/api/v1/sessions</span><span class="ep-desc">Create session</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions/sess-001')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions/sess-001</span><span class="ep-desc">Get session</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('PATCH','/api/v1/sessions/sess-001',{title:'Updated Title'})">
+        <span class="method PATCH">PATCH</span><span class="ep-path">/api/v1/sessions/sess-001</span><span class="ep-desc">Update session</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="endpoint-group">
+      <div class="group-header">Messages</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions/sess-001/messages')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions/sess-001/messages</span><span class="ep-desc">List messages</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('POST','/api/v1/sessions/sess-001/messages',{content:'Hello, what is the key value proposition?'})">
+        <span class="method POST">POST</span><span class="ep-path">/api/v1/sessions/sess-001/messages</span><span class="ep-desc">Send message (LLM stub)</span>
+      </div>
+    </div>
+
+    <!-- Business Model -->
+    <div class="endpoint-group">
+      <div class="group-header">Business Model</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions/sess-001/model')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions/sess-001/model</span><span class="ep-desc">Get business model</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('PATCH','/api/v1/sessions/sess-001/model',{updates:[{conceptId:'bc-001',conceptType:'partner'}]})">
+        <span class="method PATCH">PATCH</span><span class="ep-path">/api/v1/sessions/sess-001/model</span><span class="ep-desc">Update concept type</span>
+      </div>
+    </div>
+
+    <!-- Hypotheses -->
+    <div class="endpoint-group">
+      <div class="group-header">Hypotheses</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions/sess-001/hypotheses')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions/sess-001/hypotheses</span><span class="ep-desc">List hypotheses</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions/sess-001/hypotheses/hyp-001')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions/sess-001/hypotheses/hyp-001</span><span class="ep-desc">Get hypothesis</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('PATCH','/api/v1/sessions/sess-001/hypotheses/hyp-001',{status:'accepted'})">
+        <span class="method PATCH">PATCH</span><span class="ep-path">/api/v1/sessions/sess-001/hypotheses/hyp-001</span><span class="ep-desc">Accept hypothesis</span>
+      </div>
+    </div>
+
+    <!-- Specialists -->
+    <div class="endpoint-group">
+      <div class="group-header">Specialists (stubbed)</div>
+      <div class="endpoint-row" onclick="fire('POST','/api/v1/sessions/sess-001/specialists',{specialistType:'form',context:'Need form design help'})">
+        <span class="method POST">POST</span><span class="ep-path">/api/v1/sessions/sess-001/specialists</span><span class="ep-desc">Consult specialist</span>
+      </div>
+    </div>
+
+    <!-- Patterns -->
+    <div class="endpoint-group">
+      <div class="group-header">Patterns</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/patterns')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/patterns</span><span class="ep-desc">List patterns</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('POST','/api/v1/patterns',{name:'My Pattern',description:'A new pattern',category:'process'})">
+        <span class="method POST">POST</span><span class="ep-path">/api/v1/patterns</span><span class="ep-desc">Create pattern</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/patterns/pat-001')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/patterns/pat-001</span><span class="ep-desc">Get pattern</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('PUT','/api/v1/patterns/pat-001/deactivate')">
+        <span class="method PUT">PUT</span><span class="ep-path">/api/v1/patterns/pat-001/deactivate</span><span class="ep-desc">Deactivate pattern</span>
+      </div>
+    </div>
+
+    <!-- Exports -->
+    <div class="endpoint-group">
+      <div class="group-header">Exports</div>
+      <div class="endpoint-row" onclick="fire('POST','/api/v1/sessions/sess-001/exports',{format:'json'})">
+        <span class="method POST">POST</span><span class="ep-path">/api/v1/sessions/sess-001/exports</span><span class="ep-desc">Export session</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/sessions/sess-001/exports')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/sessions/sess-001/exports</span><span class="ep-desc">List exports</span>
+      </div>
+    </div>
+
+    <!-- Audit -->
+    <div class="endpoint-group">
+      <div class="group-header">Audit (admin only)</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/audit')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/audit</span><span class="ep-desc">List audit events</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/audit/verify')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/audit/verify</span><span class="ep-desc">Verify HMAC chain</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/audit/aud-001')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/audit/aud-001</span><span class="ep-desc">Get audit event</span>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="endpoint-group">
+      <div class="group-header">Users</div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/users/me')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/users/me</span><span class="ep-desc">My user context</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/api/v1/users')">
+        <span class="method GET">GET</span><span class="ep-path">/api/v1/users</span><span class="ep-desc">List users (admin)</span>
+      </div>
+    </div>
+
+    <!-- Health -->
+    <div class="endpoint-group">
+      <div class="group-header">Health (no auth)</div>
+      <div class="endpoint-row" onclick="fire('GET','/health')">
+        <span class="method GET">GET</span><span class="ep-path">/health</span><span class="ep-desc">Full health check</span>
+      </div>
+      <div class="endpoint-row" onclick="fire('GET','/health/live')">
+        <span class="method GET">GET</span><span class="ep-path">/health/live</span><span class="ep-desc">Liveness probe</span>
+      </div>
+    </div>
+
+    <!-- Response panel -->
+    <div class="response-panel" id="response-panel">
+      <div class="response-header">
+        <span class="ep-label" id="resp-label">—</span>
+        <span class="status-chip" id="resp-status"></span>
+        <span id="resp-time" style="font-size:11px;color:var(--muted);margin-left:auto;"></span>
+      </div>
+      <div class="req-form" id="req-form">
+        <label>Request Body (JSON)</label>
+        <textarea id="req-body" rows="4"></textarea>
+        <button class="btn" onclick="sendReq()">Send Request</button>
+      </div>
+      <div class="response-body" id="resp-body">—</div>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  <p>
+    <strong>Quick start:</strong>
+    <code class="cmd">cd apps/local-dev &amp;&amp; npm install</code> →
+    <code class="cmd">node src/server.js</code> →
+    open <code class="cmd">http://localhost:3001</code>
+  </p>
+  <p>
+    <strong>Real UI:</strong> In a second terminal:
+    <code class="cmd">cd apps/planner-ui &amp;&amp; npm run dev</code> →
+    open <code class="cmd">http://localhost:5173</code>
+    (uses <code class="cmd">apps/planner-ui/.env.local</code> to point at this stub server)
+  </p>
+  <p style="color:#4a5568;">⚠ All data is in-memory and resets on server restart. JWT secret is <code class="cmd">local-dev-secret-not-for-prod</code> — never use in production.</p>
+</footer>
+
+<script>
+  var currentMethod = 'GET';
+  var currentUrl = '';
+  var currentBody = null;
+  var token = localStorage.getItem('dev-token') || '';
+
+  // Restore persona button state
+  var savedPersona = localStorage.getItem('dev-persona');
+  if (savedPersona) highlightPersona(savedPersona);
+
+  function highlightPersona(p) {
+    ['admin','user','viewer'].forEach(function(x) {
+      document.getElementById('btn-'+x).classList.toggle('active', x === p);
+    });
+  }
+
+  function login(persona) {
+    fetch('/dev-login?persona=' + persona)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        token = d.token;
+        localStorage.setItem('dev-token', token);
+        localStorage.setItem('dev-persona', persona);
+        highlightPersona(persona);
+        var box = document.getElementById('claims-box');
+        box.style.display = 'block';
+        box.textContent = JSON.stringify(d.claims, null, 2);
+      })
+      .catch(function(e) { alert('Login failed: ' + e.message); });
+  }
+
+  function fire(method, path, body) {
+    currentMethod = method;
+    currentUrl = path;
+    currentBody = body || null;
+
+    var panel = document.getElementById('response-panel');
+    var form = document.getElementById('req-form');
+    panel.style.display = 'block';
+    document.getElementById('resp-label').textContent = method + ' ' + path;
+
+    if (method === 'POST' || method === 'PATCH' || method === 'PUT') {
+      form.style.display = 'block';
+      document.getElementById('req-body').value = body ? JSON.stringify(body, null, 2) : '';
+    } else {
+      form.style.display = 'none';
+      sendReq();
+    }
+
+    document.getElementById('response-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function sendReq() {
+    var url = 'http://localhost:3001' + currentUrl;
+    var opts = {
+      method: currentMethod,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if ((currentMethod === 'POST' || currentMethod === 'PATCH' || currentMethod === 'PUT')) {
+      var raw = document.getElementById('req-body').value;
+      try { opts.body = raw; } catch(e) {}
+    }
+
+    var t0 = Date.now();
+    document.getElementById('resp-body').textContent = 'Loading…';
+    document.getElementById('resp-status').textContent = '';
+    document.getElementById('resp-status').className = 'status-chip';
+
+    fetch(url, opts)
+      .then(function(r) {
+        var elapsed = Date.now() - t0;
+        var code = r.status;
+        var chip = document.getElementById('resp-status');
+        chip.textContent = code;
+        chip.className = 'status-chip ' + (code < 300 ? 'status-2xx' : code < 500 ? 'status-4xx' : 'status-5xx');
+        document.getElementById('resp-time').textContent = elapsed + ' ms';
+        return r.text().then(function(txt) {
+          try { return JSON.parse(txt); } catch(e) { return txt; }
+        });
+      })
+      .then(function(data) {
+        var body = document.getElementById('resp-body');
+        if (typeof data === 'string') {
+          body.textContent = data;
+        } else {
+          body.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+        }
+      })
+      .catch(function(e) {
+        document.getElementById('resp-body').textContent = 'Error: ' + e.message + '\n\nMake sure the dev server is running on port 3001.';
+        var chip = document.getElementById('resp-status');
+        chip.textContent = 'ERR';
+        chip.className = 'status-chip status-5xx';
+      });
+  }
+
+  function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+      var cls = 'json-number';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-string';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-bool';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "classes": [
+    {
+      "name": "GoA Business Analyst",
+      "concerns": [
+        "Rapid problem articulation without requiring prior ADSP technical knowledge",
+        "Non-technical plain language solution recommendations and reasoning",
+        "Persistent sessions to support multi-day planning engagements across browser restarts"
+      ],
+      "authority": "Contributor",
+      "interactionMode": "Direct internal user"
+    },
+    {
+      "name": "GoA Developer",
+      "concerns": [
+        "ADSP service integration guidance and access to specialist agents for technical depth",
+        "Implementation planning for service composition based on accepted hypotheses",
+        "Technical implementation detail from specialist agents on individual ADSP services"
+      ],
+      "authority": "Builder",
+      "interactionMode": "Direct internal user"
+    },
+    {
+      "name": "ADSP Platform Team",
+      "concerns": [
+        "Platform standards compliance including initializePlatform, Keycloak, MongoDB, and RabbitMQ patterns",
+        "Multi-tenant data isolation and operational reliability of the planner-service",
+        "Security audit trail and monitoring for all tenant operations"
+      ],
+      "authority": "Approver",
+      "interactionMode": "System administrator"
+    },
+    {
+      "name": "ADSP Tenant Administrator",
+      "concerns": [
+        "Tenant-scoped configuration of business pattern libraries via the administrative interface",
+        "User access management and RBAC role assignments for planner-service",
+        "Custom pattern creation and maintenance for department-specific business processes"
+      ],
+      "authority": "Operator",
+      "interactionMode": "System administrator"
+    },
+    {
+      "name": "GoA Program Manager",
+      "concerns": [
+        "Solution plan visibility and progress tracking across planning engagements",
+        "Cost and effort estimation for proposed ADSP service compositions",
+        "Approval of solution hypotheses before implementation investment is committed"
+      ],
+      "authority": "Decision-maker",
+      "interactionMode": "Indirect beneficiary"
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "validator": "fac_s1_runner",
+  "overallStatus": "PASS",
+  "findings": [
+    {
+      "ruleId": "FAC-S1-001",
+      "status": "PASS",
+      "evidence": "_manifest.json valid; 13 shard(s) listed and present on disk",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-002",
+      "status": "PASS",
+      "evidence": "13 shard(s) schema-validated against their declared schemas",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-003",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\data_io_schema.json has $schema = draft 2020-12",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-004",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\data_io_schema.json.$defs contains 13 entity definition(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-005",
+      "status": "PASS",
+      "evidence": "C:\\code\\pronghorn-team\\adsp-monorepo\\requirements\\brd\\integration_points.json present; structural check passes (count=8)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-005a",
+      "status": "PASS",
+      "evidence": "8 INT(s) validated against service-catalog",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-005b",
+      "status": "PASS",
+      "evidence": "8 INT status field(s) validated",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-006",
+      "status": "PASS",
+      "evidence": "all 15 required Stage 1 artifacts exist",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-007",
+      "status": "PASS",
+      "evidence": "RTM covers 12 SN(s) and 72 requirement(s) without orphans",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-008",
+      "status": "PASS",
+      "evidence": "QG-1/2/5/7/9/10/11 deterministic checks pass (QG-3/4/6/8/12 are LLM-side)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-009",
+      "status": "PASS",
+      "evidence": "test_specifications.json has 115 test case(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-010",
+      "status": "PASS",
+      "evidence": "coverageMatrix passes for 67 T-verified requirement(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-011",
+      "status": "PASS",
+      "evidence": "cross-reference scan clean across 13 shards (243 id(s))",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-012",
+      "status": "PASS",
+      "evidence": "BVA boundaries covered for 5 BR(s) declaring boundaryValues[]",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-013",
+      "status": "PASS",
+      "evidence": "state-transition coverage complete for 2 state field(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-014",
+      "status": "PASS",
+      "evidence": "decision-table coverage (>=2 combinations) met for 11 decision BR(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-015",
+      "status": "PASS",
+      "evidence": "use-case-flow coverage complete across 10 UC(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-016",
+      "status": "PASS",
+      "evidence": "equivalence-partition coverage complete for 5 input domain(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-017",
+      "status": "PASS",
+      "evidence": "bidirectional RTM completeness: 115 TC, 10 UC, 12 BR, 8 INT all traced (RTM citation or source-linkage)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-018",
+      "status": "PASS",
+      "evidence": "ADVISORY (non-blocking) requirement-quality observations \u2014 6 requirement(s) with possible vague qualifiers (RQ-T001 \u2014 replace with measurable criteria or confirm acceptable): BRQ-003: sufficient; BRQ-006: appropriate; BRQ-010: appropriate; SYSREQ-013: sufficient; SYSREQ-014: sufficient; SYSREQ-018: appropriate | 67 requirement(s) with >=2 'shall' clauses \u2014 REVIEW for compound-requirement violation (RQ-SYS002; split independently-testable conditions): BRQ-001 (2 'shall'); BRQ-002 (2 'shall'); BRQ-003 (2 'shall'); BRQ-004 (2 'shall'); BRQ-005 (2 'shall'); BRQ-006 (3 'shall'); BRQ-007 (3 'shall'); BRQ-009 (2 'shall'); BRQ-010 (4 'shall'); STREQ-001 (3 'shall'); STREQ-002 (3 'shall'); STREQ-003 (3 'shall'); STREQ-004 (3 'shall'); STREQ-005 (2 'shall'); STREQ-006 (2 'shall') ... (+52 more)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S1-019",
+      "status": "PASS",
+      "evidence": "BR/INT coverage complete: 12 TC-requiring BR(s) + 8 INT(s) all covered by a TC or RTM row",
+      "failReason": null,
+      "remediationAction": null
+    }
+  ]
+}

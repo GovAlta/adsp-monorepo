@@ -1,0 +1,23 @@
+MTIME:1791659666
+NOW:1791659974
+---TAIL---
+[2026-10-10T18:13:58Z] Stage 5 | ci-orchestrator remediate batch 5/5 | 0/3 | invocation-start FAC-S5-020 entry-files
+[2026-10-10T18:14:33Z] Stage 5 | ci-orchestrator remediate batch 5/5 | 3/3 | entry files written index.html main.tsx App.tsx
+[2026-10-10T18:15:04Z] Stage 5 | ci-orchestrator remediate batch 5/5 | 3/3 | self-validation complete build exit 0 returning to factory-stage-5
+[2026-10-10T18:15:19Z] Stage 5 | Pre-Handoff Gate Steps 4+5+6 | 12/12 | Build exit=0; re-verifying lint then running test suite
+[2026-10-10T18:20:35Z] Stage 5 | Retry 1 batch 6 | 12/12 | 44 test failures: dispatching ci-orchestrator batch 6 (jsdom mocks, query fixes, PatternEditor submit, AuditLog data)
+[2026-10-10T18:20:36Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 0/6 | invocation start - FAC-S5-027 test suite fixes
+[2026-10-10T18:31:19Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 1/9 | applying Category A fix to setup.ts
+[2026-10-10T18:31:51Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 4/9 | Categories A-B done; applying Category C AuditLog unit test fixes
+[2026-10-10T18:32:38Z] Stage 5 | ci-orchestrator Remediate batch 6/6 | 8/9 | all source edits applied; running npm test in apps/planner-ui
+[2026-10-10T18:40:53Z] Stage 5 | ci-orchestrator remediate batch 6/6 | resumed | resuming from compaction — 13 tests still failing
+[2026-10-10T18:50:10Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 0/10 | applying targeted fixes — setup.ts Blob polyfill first
+[2026-10-10T18:51:41Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 5/10 | all targeted edits applied — running npm test
+[2026-10-10T18:54:48Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 9/10 | targeted fixes applied — running final test verification
+[2026-10-10T18:56:29Z] Stage 5 | ci-orchestrator remediate batch 6/6 | 10/10 | 235 passed 44 skipped 0 failed — validation-report.json updated — returning to factory-stage-5
+[2026-10-10T18:56:50Z] Stage 5 | Pre-Handoff Gate Step 6 | 12/12 | ci-orchestrator reports 0 failures; running npm test to independently confirm
+[2026-10-10T18:59:29Z] Stage 5 | Retry 1 batch 7 | 12/12 | Fixing E2E vitest exclusion, AuditLog PDF button role, integration suite failures
+[2026-10-10T18:59:30Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 0/3 | Starting remediation: Issues A (vite exclude), B (AuditLog selector), C (integration test failures)
+[2026-10-10T19:13:24Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 0/3 | Root causes identified: A=vitest-exclude-missing, B=button-accessible-name-mismatch (4 occurrences TC-048), C=duplicate-server.listen-on-sessions-server (6 files). Starting fixes.
+[2026-10-10T19:13:45Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 1/3 | Fix A (vite.config exclude) and Fix B (AuditLog TC-048 selectors) written. Starting Fix C: removing duplicate MSW lifecycle from 6 integration test files.
+[2026-10-10T19:14:26Z] Stage 5 | ci-orchestrator Remediate batch 7/7 | 2/3 | Fix C complete: 6 integration files updated. Running npm test to verify.

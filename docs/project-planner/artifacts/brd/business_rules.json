@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.0",
+  "items": [
+    {
+      "id": "BR-001",
+      "ruleName": "Session Tenant-User Scoping",
+      "ruleStatement": "A PlanningSession is uniquely scoped to a combination of tenantId and userId. A user may only read, update, or delete sessions where both the tenantId matches their JWT tenantId claim and the userId matches their JWT userId claim. A planner-admin may read all sessions within their tenant but may not modify sessions belonging to other users.",
+      "ruleType": "Authorization",
+      "applicableDataElements": ["$defs/PlanningSession/properties/tenantId", "$defs/PlanningSession/properties/userId"],
+      "sourceRequirements": ["BRQ-007", "SYSREQ-010"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Requests that violate tenant or user scoping constraints return HTTP 403 with an error body indicating the resource is not accessible for the authenticated identity.",
+      "tags": []
+    },
+    {
+      "id": "BR-002",
+      "ruleName": "LLM Model Version Pinning",
+      "ruleStatement": "All Planning Agent and Specialist Agent LLM calls shall use a model version specified in the SpecialistAgentConfig.modelVersion field or, for the Planning Agent, the PLANNER_MODEL_VERSION environment variable. If neither is configured, the default version 'claude-sonnet-4-5' shall be used. Model version updates require an explicit configuration change; the system shall never auto-upgrade to the latest available model version without explicit operator action.",
+      "ruleType": "Constraint",
+      "applicableDataElements": ["$defs/SpecialistAgentConfig/properties/modelVersion", "$defs/LLMRequest/properties/model"],
+      "sourceRequirements": ["SYSREQ-008"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "If the configured model version is rejected by the Anthropic API (e.g., deprecated), the system shall fail with HTTP 503 and a log entry naming the invalid model version. The system shall not silently fall back to an alternative version.",
+      "boundaryValues": [
+        { "parameter": "modelVersion string length", "kind": "minimum", "value": 5 },
+        { "parameter": "modelVersion string length", "kind": "maximum", "value": 50 }
+      ]
+    },
+    {
+      "id": "BR-003",
+      "ruleName": "Per-Tenant LLM Request Rate Limit",
+      "ruleStatement": "Each ADSP tenant is limited to a maximum of 50 LLM inference requests per hour across all users in the tenant. This limit applies to both Planning Agent and Specialist Agent calls combined. When a tenant reaches 80% of the limit, a warning notification shall be surfaced to the requesting user. When the limit is reached, subsequent requests within the same hour return HTTP 429 with a Retry-After header indicating when the quota resets.",
+      "ruleType": "Constraint",
+      "applicableDataElements": ["$defs/PlanningSession/properties/tenantId", "$defs/LLMRequest/properties/max_tokens"],
+      "sourceRequirements": ["SYSREQ-008"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Rate limit state is tracked in an in-memory counter with a sliding 1-hour window. If the counter store is unavailable, the system shall fail open (allow the request) and log a warning.",
+      "boundaryValues": [
+        { "parameter": "requests per hour per tenant", "kind": "minimum", "value": 0 },
+        { "parameter": "requests per hour per tenant", "kind": "maximum", "value": 50 },
+        { "parameter": "warning threshold", "kind": "midrange", "value": 40 }
+      ]
+    },
+    {
+      "id": "BR-004",
+      "ruleName": "Business Model Completeness Confidence Threshold for Hypothesis Generation",
+      "ruleStatement": "The Planning Agent shall not generate a SolutionHypothesis until the BusinessModel.confidenceScore reaches or exceeds 70 (on a 0-100 scale). The confidenceScore is set by the Planning Agent after each model update based on: number of classified concepts (minimum 3), presence of at least one Goal concept, presence of at least one Actor concept, and absence of more than 50% Unknown-typed concepts. A score below 70 indicates insufficient model completeness.",
+      "ruleType": "Validation",
+      "applicableDataElements": ["$defs/BusinessModel/properties/confidenceScore"],
+      "sourceRequirements": ["SYSREQ-004", "BRQ-002"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "If the user explicitly requests hypothesis generation when the confidenceScore is below 70, the system shall warn the user that the business model may be incomplete and request confirmation before proceeding.",
+      "boundaryValues": [
+        { "parameter": "confidenceScore trigger threshold", "kind": "minimum", "value": 70 },
+        { "parameter": "confidenceScore maximum", "kind": "maximum", "value": 100 },
+        { "parameter": "confidenceScore minimum allowed", "kind": "minimum", "value": 0 },
+        { "parameter": "confidenceScore below-threshold warning trigger", "kind": "midrange", "value": 50 }
+      ]
+    },
+    {
+      "id": "BR-005",
+      "ruleName": "Pattern Matching Confidence Threshold",
+      "ruleStatement": "A BusinessPattern match shall only be surfaced to the Planning Agent when the PatternMatchingService composite confidence score for that pattern equals or exceeds 60 (on a 0-100 scale). The composite score is computed from: domain language overlap ratio (weighted 40%), strong signal presence count normalised to the pattern total (weighted 40%), and concept type distribution match (weighted 20%). Only the top-scoring pattern above the threshold is used when multiple patterns match.",
+      "ruleType": "Computation",
+      "applicableDataElements": ["$defs/BusinessModel/properties/matchedPatternId", "$defs/BusinessPattern/properties/strongSignals"],
+      "sourceRequirements": ["SYSREQ-003", "BRQ-005"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "If no pattern exceeds the threshold, the Planning Agent proceeds without a matched pattern, using its general reasoning capabilities. The absence of a pattern match is logged for observability purposes.",
+      "boundaryValues": [
+        { "parameter": "pattern match threshold", "kind": "minimum", "value": 60 },
+        { "parameter": "composite score maximum", "kind": "maximum", "value": 100 },
+        { "parameter": "composite score minimum", "kind": "minimum", "value": 0 }
+      ]
+    },
+    {
+      "id": "BR-006",
+      "ruleName": "Business Concept Type Validity",
+      "ruleStatement": "A BusinessConcept.conceptType must be one of the following enumerated values: Actor, Goal, Activity, Decision, Evidence, BusinessRule, Constraint, EvaluationCriteria, Workflow, Outcome, Document, Event, ExternalSystem, Assumption, Unknown. No other concept type values are permitted. The 'Unknown' type is valid for concepts the Planning Agent has identified but cannot yet classify with confidence.",
+      "ruleType": "Validation",
+      "applicableDataElements": ["$defs/BusinessConcept/properties/conceptType"],
+      "sourceRequirements": ["SYSREQ-002", "BRQ-002"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Attempts to set an invalid conceptType via the API return HTTP 400 with an error identifying the allowed values. Invalid types in agent-generated concepts are logged and the concept is saved with type 'Unknown' as a safe default."
+    },
+    {
+      "id": "BR-007",
+      "ruleName": "Planner Service Role Hierarchy Enforcement",
+      "ruleStatement": "Access to planner-service resources is governed by a three-level role hierarchy extracted from the Keycloak JWT. Level 1 — planner-user: can create and manage own sessions and interact with agents. Level 2 — planner-admin: all Level 1 permissions plus manage business patterns, view all tenant sessions, and view audit logs. Level 3 — tenant-admin: all Level 2 permissions plus manage specialist agent configurations and user role assignments. All permissions default to denied; a user must hold an explicit role to receive any access.",
+      "ruleType": "Authorization",
+      "applicableDataElements": ["$defs/PlanningSession/properties/tenantId", "$defs/BusinessPattern/properties/tenantId"],
+      "sourceRequirements": ["BRQ-010", "SYSREQ-013"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Requests from users with no planner role return HTTP 403 with a message directing the user to contact their administrator for access. Role checks are enforced at the route handler level and cannot be bypassed via query parameters or headers.",
+      "conflictsWith": [
+        {
+          "ruleId": "BR-001",
+          "nature": "planner-admin can view all tenant sessions (BR-007 Level 2) while BR-001 restricts modification to own sessions",
+          "resolution": "BR-001 governs write operations; BR-007 Level 2 grants additional read scope. Both rules apply; planner-admin can read but not write to other users' sessions."
+        }
+      ]
+    },
+    {
+      "id": "BR-008",
+      "ruleName": "Administrative Action Audit Requirement",
+      "ruleStatement": "Every administrative action performed via the planner-service API must produce an audit log entry before the action response is returned to the caller. Administrative actions include: creating, updating, or deactivating a BusinessPattern; modifying SpecialistAgentConfig; reading the audit log; and all authentication failures. The audit entry must be written atomically with the action. If the audit write fails, the administrative action must be rolled back and HTTP 503 returned.",
+      "ruleType": "Constraint",
+      "applicableDataElements": ["$defs/BusinessPattern/properties/patternId", "$defs/PlanningSession/properties/tenantId"],
+      "sourceRequirements": ["SYSREQ-020", "BRQ-010"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "If the audit_events write fails (MongoDB unavailable), the administrative action is rolled back transactionally and HTTP 503 is returned. The failure is logged to the application log for operator investigation."
+    },
+    {
+      "id": "BR-009",
+      "ruleName": "Specialist Agent Availability Gate",
+      "ruleStatement": "A specialist agent for a given ADSP service may only be invoked if the SpecialistAgentConfig for that service has isEnabled=true for the authenticated tenant. If the specialist is disabled or no configuration exists, the Planning Agent must not delegate to that specialist and the user must not be offered the specialist navigation option. The Planning Agent shall disclose to the user which specialists are unavailable and provide alternative guidance.",
+      "ruleType": "Authorization",
+      "applicableDataElements": ["$defs/SpecialistAgentConfig/properties/isEnabled", "$defs/SpecialistAgentConfig/properties/serviceId"],
+      "sourceRequirements": ["SYSREQ-007", "BRQ-006"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Attempts to invoke a disabled specialist via the API return HTTP 403 with a message that the specialist is not enabled for the tenant. The SpecialistNavigator UI shall not render navigation options for disabled specialists."
+    },
+    {
+      "id": "BR-010",
+      "ruleName": "Solution Hypothesis Status Transition Rules",
+      "ruleStatement": "A SolutionHypothesis status must follow the defined lifecycle: draft is the initial status set by the generation process; proposed is set when the hypothesis is presented to the user; accepted or rejected are set by explicit user action; superseded is set when a newer hypothesis replaces a proposed one. The following transitions are forbidden: proposed to draft; accepted to proposed; rejected to any status; superseded to any status. These transitions constitute terminal states.",
+      "ruleType": "Constraint",
+      "applicableDataElements": ["$defs/SolutionHypothesis/properties/status"],
+      "sourceRequirements": ["SYSREQ-004", "BRQ-003"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Attempts to perform a forbidden status transition via the API return HTTP 422 with an error body identifying the current status and the set of valid transitions from it."
+    },
+    {
+      "id": "BR-011",
+      "ruleName": "Session List Pagination Limits",
+      "ruleStatement": "The GET /api/v1/sessions endpoint must return paginated results. The minimum page size is 1 and the maximum is 100. Requesting a page size greater than 100 shall be treated as a validation error and return HTTP 400. If no page size is specified, the default is 20. If no page number is specified, the default is 1. A total count of matching records shall always be included in the response.",
+      "ruleType": "Constraint",
+      "applicableDataElements": ["$defs/SessionListResponse/properties/pageSize", "$defs/SessionListResponse/properties/page"],
+      "sourceRequirements": ["SWREQ-002"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "A pageSize value of 0 or a negative number returns HTTP 400. A page number of 0 or negative returns HTTP 400. These are treated as validation failures, not server errors.",
+      "boundaryValues": [
+        { "parameter": "pageSize minimum", "kind": "minimum", "value": 1 },
+        { "parameter": "pageSize maximum", "kind": "maximum", "value": 100 },
+        { "parameter": "pageSize default", "kind": "midrange", "value": 20 }
+      ]
+    },
+    {
+      "id": "BR-012",
+      "ruleName": "Domain Event Type Registry",
+      "ruleStatement": "Only event types registered with the ADSP event service during initializePlatform() may be published to RabbitMQ. The registered event types for planner-service are: session-created, session-updated, session-completed, session-archived, hypothesis-generated, specialist-delegated. Publishing an unregistered event type shall fail with a validation error. Events must include tenantId and sessionId in their payload.",
+      "ruleType": "Validation",
+      "applicableDataElements": ["$defs/DomainEvent/properties/eventType", "$defs/DomainEvent/properties/tenantId"],
+      "sourceRequirements": ["SYSREQ-011", "SWREQ-009"],
+      "enforcementPoint": "API",
+      "exceptionHandling": "Attempts to publish an unregistered event type are blocked by the EventPublicationService with a validation error logged at WARN level. The originating operation continues; unregistered events are dropped rather than causing a rollback."
+    }
+  ]
+}

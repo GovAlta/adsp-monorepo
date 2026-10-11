@@ -1,0 +1,453 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "summary": {
+    "totalOpportunities": 12,
+    "byCategory": {
+      "process-automation": 6,
+      "communication": 2,
+      "data-management": 3,
+      "self-service": 1
+    },
+    "byPriority": {
+      "high": 8,
+      "medium": 4
+    },
+    "affectedAudiences": [
+      "GoA Business Analyst",
+      "GoA Developer",
+      "ADSP Tenant Administrator",
+      "ADSP Platform Team",
+      "GoA Program Manager"
+    ],
+    "sourceFiles": [
+      "requirements/services/journey-map-goa-business-analyst.json",
+      "requirements/services/journey-map-goa-developer.json",
+      "requirements/services/journey-map-adsp-tenant-administrator.json",
+      "requirements/services/journey-map-adsp-platform-team.json",
+      "requirements/services/journey-map-goa-program-manager.json"
+    ]
+  },
+  "opportunities": [
+    {
+      "identifier": "FS-001",
+      "title": "LLM Inference Progress Transparency",
+      "category": "process-automation",
+      "priority": "high",
+      "effort": "low",
+      "description": "Provide real-time visual feedback while the Planning Agent generates responses, so analysts and developers know the system is working and can estimate when interaction will resume.",
+      "currentState": "The UI provides no indication of Planning Agent processing state; users cannot distinguish between normal LLM inference latency and a hung request, causing anxiety and premature session abandonment.",
+      "futureState": "A streaming progress indicator (typing animation, token-by-token streaming, or spinner labelled with the active operation) appears during every Planning Agent inference cycle, and LLM API response time is exposed on the /health/ready endpoint for platform monitoring.",
+      "affectedAudiences": ["GoA Business Analyst", "GoA Developer", "ADSP Platform Team"],
+      "sources": [
+        {
+          "audienceName": "GoA Business Analyst",
+          "journeyName": "Planning a New ADSP-Based Solution",
+          "stageName": "Conversational Discovery",
+          "stepNumber": 1,
+          "text": "No visual indicator shows that the Planning Agent is actively generating a response; users cannot distinguish normal latency from a hung request."
+        },
+        {
+          "audienceName": "ADSP Platform Team",
+          "journeyName": "Ongoing Monitoring and Incident Response",
+          "stageName": "Health and Observability Review",
+          "stepNumber": 2,
+          "text": "LLM API response time metrics are logged per request for latency trend analysis; a dedicated LLM API performance metrics endpoint would expose aggregated latency data without requiring log parsing on every review cycle."
+        }
+      ],
+      "painPointsAddressed": [
+        "Absence of inference progress feedback causes session abandonment during normal LLM latency",
+        "Platform team cannot distinguish LLM degradation from application errors without per-request latency metrics"
+      ],
+      "benefits": [
+        "Reduces anxiety-driven session abandonment during normal Planning Agent response times",
+        "Enables platform team to detect and alert on LLM API latency regression before users are impacted"
+      ]
+    },
+    {
+      "identifier": "FS-002",
+      "title": "Human-Readable Export with Plain-Language Executive Summary",
+      "category": "communication",
+      "priority": "high",
+      "effort": "medium",
+      "description": "Extend the planning session export artifact to include a rendered plain-language executive summary section alongside the structured JSON, enabling non-technical program managers and stakeholders to review and act on planning outputs without specialized tools or technical background.",
+      "currentState": "The session export is a raw JSON file that requires technical knowledge to read; program managers must rely entirely on the analyst to translate the hypothesis into understandable terms, creating a communication bottleneck and governance gap.",
+      "futureState": "The export artifact includes a self-contained executive summary section with a plain-language problem statement, a one-sentence description of each recommended ADSP service, a 'what this means for your program' narrative, and a key assumptions list — readable as a standalone document by non-technical stakeholders.",
+      "affectedAudiences": ["GoA Program Manager", "GoA Business Analyst"],
+      "sources": [
+        {
+          "audienceName": "GoA Program Manager",
+          "journeyName": "Review Exported Session Plan and Make Investment Decision",
+          "stageName": "Receive and Open the Export",
+          "stepNumber": 1,
+          "text": "Export format could include a rendered human-readable summary section alongside the structured JSON to serve non-technical reviewers."
+        },
+        {
+          "audienceName": "GoA Program Manager",
+          "journeyName": "Review Exported Session Plan and Make Investment Decision",
+          "stageName": "Comprehend the Solution Hypothesis",
+          "stepNumber": 1,
+          "text": "Include a plain-language 'what this means for your program' summary at the top of the hypothesis section, satisfying SN-003; provide a one-sentence plain-language description of each recommended ADSP service for non-technical readers."
+        }
+      ],
+      "painPointsAddressed": [
+        "Raw JSON export is inaccessible to non-technical program managers without analyst mediation",
+        "ADSP service names are technical identifiers carrying no inherent meaning for non-technical reviewers"
+      ],
+      "benefits": [
+        "Program managers can independently review and act on planning exports without requiring analyst translation at every approval step",
+        "Governance documentation is self-contained and defensible without additional narrative authored by the analyst"
+      ]
+    },
+    {
+      "identifier": "FS-003",
+      "title": "Persistent Session Context Recovery for Multi-Day Planning",
+      "category": "process-automation",
+      "priority": "high",
+      "effort": "low",
+      "description": "Deliver an AI-generated context summary when a user re-opens an existing planning session after a break, orienting them to where the conversation left off without requiring them to re-read the full message history.",
+      "currentState": "Users returning to an in-progress session must manually scroll through conversation history to re-establish context, which is time-consuming for complex multi-day sessions and increases the risk of duplicating earlier work.",
+      "futureState": "On session re-open, the Planning Agent automatically synthesizes a brief context summary (key business problem, entities captured, hypotheses generated, open questions) and presents it as the first message of the resumed session, enabling the user to continue efficiently from the last decision point.",
+      "affectedAudiences": ["GoA Business Analyst", "GoA Developer"],
+      "sources": [
+        {
+          "audienceName": "GoA Business Analyst",
+          "journeyName": "Resuming an Interrupted Planning Session",
+          "stageName": "Session Resumption",
+          "stepNumber": 1,
+          "text": "Planning Agent returning-user context summary on re-open to restore conversational context and reduce manual scroll-back through prior conversation."
+        },
+        {
+          "audienceName": "GoA Developer",
+          "journeyName": "Session Resumption Across Work Days",
+          "stageName": "Session Recovery",
+          "stepNumber": 1,
+          "text": "Per-service consultation status displayed in the hypothesis panel to orient a returning developer to the current state of specialist consultations without re-reading the full session."
+        }
+      ],
+      "painPointsAddressed": [
+        "Manual scroll-back through conversation history to re-establish context is time-consuming for multi-day sessions",
+        "Risk of duplicating earlier specialist consultation work when resuming after a break"
+      ],
+      "benefits": [
+        "Reduces session re-entry time from minutes to seconds, enabling efficient multi-day planning workflows",
+        "Preserves planning momentum across interrupted work sessions without losing accumulated context"
+      ]
+    },
+    {
+      "identifier": "FS-004",
+      "title": "Business Model Entity Classification Confidence Scoring",
+      "category": "data-management",
+      "priority": "high",
+      "effort": "medium",
+      "description": "Annotate each entity in the AI-generated business model with a confidence score and source text attribution, enabling analysts and developers to identify and correct low-confidence classifications before proceeding to hypothesis generation.",
+      "currentState": "The business model is presented as a flat list of entities without any indication of the Planning Agent's confidence in each classification, making it difficult for users to prioritize corrections or assess the reliability of the AI output.",
+      "futureState": "Each entity in the business model carries a confidence indicator (high/medium/low) with the source conversation text that drove the classification, and entities are grouped by type (actor, process, system) to support systematic review and targeted correction.",
+      "affectedAudiences": ["GoA Business Analyst", "GoA Developer"],
+      "sources": [
+        {
+          "audienceName": "GoA Business Analyst",
+          "journeyName": "Planning a New ADSP-Based Solution",
+          "stageName": "Business Model Review and Correction",
+          "stepNumber": 1,
+          "text": "Business model entity classification confidence scores with source text attribution to enable targeted correction of low-confidence entries without reviewing every entity."
+        },
+        {
+          "audienceName": "GoA Developer",
+          "journeyName": "New Application ADSP Scoping",
+          "stageName": "Entity Classification Review",
+          "stepNumber": 1,
+          "text": "Confidence scores on entity classifications with source text attribution to support developer review of AI-generated business model accuracy before accepting the hypothesis."
+        }
+      ],
+      "painPointsAddressed": [
+        "No confidence indication makes it impossible to prioritize corrections in the business model",
+        "Flat entity list without type grouping requires full review even when only a few entries are likely incorrect"
+      ],
+      "benefits": [
+        "Analysts and developers can focus correction effort on low-confidence entities, reducing review time for accurate classifications",
+        "Source text attribution makes the AI's reasoning transparent, enabling informed correction decisions rather than guesswork"
+      ]
+    },
+    {
+      "identifier": "FS-005",
+      "title": "Investment-Ready Export with Effort Indicators and Version History",
+      "category": "communication",
+      "priority": "medium",
+      "effort": "medium",
+      "description": "Enhance the planning session export with relative effort indicators per ADSP service integration, version numbering, and a revision summary that highlights what changed between export iterations, supporting program managers in making and tracking investment decisions.",
+      "currentState": "Exports contain no effort or complexity indication for recommended integrations, no version number, and no change log between revisions, requiring program managers to manually compare documents and make effort estimates without supporting data.",
+      "futureState": "Each recommended ADSP service integration in the export carries a low/medium/high effort indicator. Exports are version-numbered and include a revision summary section listing what changed from the prior version, enabling program managers to review revisions efficiently and build phased implementation budgets.",
+      "affectedAudiences": ["GoA Program Manager", "GoA Business Analyst"],
+      "sources": [
+        {
+          "audienceName": "GoA Program Manager",
+          "journeyName": "Review Exported Session Plan and Make Investment Decision",
+          "stageName": "Evaluate Investment Implications",
+          "stepNumber": 1,
+          "text": "A rough effort-level indicator such as low, medium, or high per recommended ADSP service integration could be included in the export without requiring formal estimation."
+        },
+        {
+          "audienceName": "GoA Program Manager",
+          "journeyName": "Provide Feedback to Redirect Planning Direction",
+          "stageName": "Receive and Review Revised Export",
+          "stepNumber": 1,
+          "text": "A revision summary section in the export indicating what changed from the previous version would reduce re-review effort and increase confidence that feedback was acted on; version numbering in the export filename or a header field would help confirm the most current version."
+        }
+      ],
+      "painPointsAddressed": [
+        "No effort indicators force program managers to extrapolate integration complexity independently, increasing decision risk",
+        "Absence of version numbering and revision summaries requires manual document comparison to confirm feedback was addressed"
+      ],
+      "benefits": [
+        "Program managers can structure phased implementation budgets from a single export without developer involvement at the approval stage",
+        "Revision summaries reduce re-review time and provide an accountability record showing how feedback was incorporated"
+      ]
+    },
+    {
+      "identifier": "FS-006",
+      "title": "Business Pattern Library Authoring Assistance",
+      "category": "process-automation",
+      "priority": "medium",
+      "effort": "medium",
+      "description": "Provide tenant administrators with authoring guidance tools when creating or updating business pattern templates: auto-suggested signal keywords, a live pattern similarity check, and a sandbox test mode for validating matching effectiveness before publishing.",
+      "currentState": "The pattern editor provides blank fields with no guidance on keyword calibration or overlap detection; administrators must rely entirely on domain knowledge to author keywords and have no way to test pattern effectiveness before activating it, risking library quality degradation over time.",
+      "futureState": "The pattern editor auto-suggests signal keywords from the pattern name and description, surfaces a live similarity check against existing active patterns to prevent unintentional overlap, and provides a sandbox test mode accepting a sample business problem statement to validate matching effectiveness before publishing.",
+      "affectedAudiences": ["ADSP Tenant Administrator", "GoA Business Analyst"],
+      "sources": [
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Managing the Business Pattern Library",
+          "stageName": "Author or Modify a Business Pattern Template",
+          "stepNumber": 1,
+          "text": "A live pattern similarity check showing how the new pattern's signal keywords compare to existing active patterns would help administrators avoid unintentional overlap; inline examples of well-formed signal keyword sets from other patterns would scaffold authoring for less experienced administrators."
+        },
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Managing the Business Pattern Library",
+          "stageName": "Author or Modify a Business Pattern Template",
+          "stepNumber": 2,
+          "text": "Auto-suggest signal keywords derived from the pattern name and description text could reduce manual keyword brainstorming effort; a sandbox 'test this pattern' mode accepting a sample business problem statement would let the administrator validate matching effectiveness before publishing."
+        }
+      ],
+      "painPointsAddressed": [
+        "No guidance on keyword specificity calibration leads to patterns that are too broad or too narrow for reliable matching",
+        "No duplicate or overlap detection risks creating competing patterns that produce inconsistent Planning Agent results"
+      ],
+      "benefits": [
+        "Auto-suggested keywords and similarity checks reduce the domain expertise required to author high-quality patterns, expanding who can maintain the library",
+        "Sandbox testing before publishing prevents low-quality patterns from degrading Planning Agent accuracy for active analyst sessions"
+      ]
+    },
+    {
+      "identifier": "FS-007",
+      "title": "Governance Reporting and Audit Log Export",
+      "category": "self-service",
+      "priority": "high",
+      "effort": "low",
+      "description": "Enable tenant administrators to export filtered planning session history and immutable audit log records in CSV, JSON, or PDF format for use in governance reports and compliance submissions without manual data extraction.",
+      "currentState": "Session history and audit log data are only accessible through paginated UI views with no export capability; administrators must manually transcribe or screenshot data for inclusion in governance reports, which is time-consuming and error-prone.",
+      "futureState": "Administrators can export the current filtered view of session history as CSV or JSON and can export audit log records as PDF or CSV with the HMAC chain integrity status included, producing tamper-evident governance evidence in one step.",
+      "affectedAudiences": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+      "sources": [
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Reviewing Session History and Audit Log for Governance",
+          "stageName": "Review Tenant Session History",
+          "stepNumber": 1,
+          "text": "CSV or JSON export of the filtered session history list would directly support governance reporting workflows without manual data extraction or transcription."
+        },
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Reviewing Session History and Audit Log for Governance",
+          "stageName": "Examine the Audit Log",
+          "stepNumber": 1,
+          "text": "Audit log export in PDF or CSV format would allow administrators to attach tamper-evident evidence directly to governance submissions; action type labels displayed in plain language would improve readability for governance reviewers."
+        }
+      ],
+      "painPointsAddressed": [
+        "No session history export forces manual transcription for governance reports, increasing time and error risk",
+        "No audit log export prevents administrators from attaching immutable evidence to formal compliance submissions"
+      ],
+      "benefits": [
+        "Governance reporting time is reduced from hours of manual extraction to a single export action per review cycle",
+        "PDF audit log exports with HMAC integrity status provide defensible, tamper-evident evidence directly suitable for compliance submissions"
+      ]
+    },
+    {
+      "identifier": "FS-008",
+      "title": "Per-Dependency Health Observability and SDK Initialization Status",
+      "category": "data-management",
+      "priority": "high",
+      "effort": "medium",
+      "description": "Enrich the /health/ready endpoint to expose per-dependency health status (MongoDB, RabbitMQ, Anthropic Claude API) and ADSP SDK initialization state, enabling the platform team to perform rapid triage and unambiguous post-restart verification without log analysis.",
+      "currentState": "The /health/ready endpoint returns an aggregate healthy/unhealthy status without per-dependency breakdown; ADSP SDK initialization state is only visible in startup logs; post-restart verification requires log review to confirm SDK re-registration, increasing mean time to recovery.",
+      "futureState": "The /health/ready response body includes per-dependency connectivity status (MongoDB, RabbitMQ, LLM API) and a field indicating ADSP SDK initialization completion state, enabling platform engineers to identify failing dependencies in seconds and confirm post-restart health without log review.",
+      "affectedAudiences": ["ADSP Platform Team"],
+      "sources": [
+        {
+          "audienceName": "ADSP Platform Team",
+          "journeyName": "Ongoing Monitoring and Incident Response",
+          "stageName": "Health and Observability Review",
+          "stepNumber": 1,
+          "text": "Per-dependency health status in the /health/ready response body for MongoDB, RabbitMQ, and LLM API would reduce triage time from minutes to seconds; integration with the ADSP platform monitoring dashboard to surface planner-service health alongside other platform services."
+        },
+        {
+          "audienceName": "ADSP Platform Team",
+          "journeyName": "Ongoing Monitoring and Incident Response",
+          "stageName": "Incident Investigation and Resolution",
+          "stepNumber": 2,
+          "text": "Exposing ADSP SDK initialization status in the /health/ready response payload would make post-restart verification immediate and unambiguous, aligning SYSREQ-008 and SYSREQ-023; post-restart initializePlatform() completion is not directly surfaced by the health endpoints currently."
+        }
+      ],
+      "painPointsAddressed": [
+        "Aggregate health status without per-dependency breakdown forces log analysis as the first triage step, increasing incident response time",
+        "ADSP SDK re-registration status after pod restarts is not surfaced in health endpoints, requiring manual log inspection before incident closure"
+      ],
+      "benefits": [
+        "Incident triage time is reduced from log-search minutes to seconds by surfacing per-dependency status directly in the health endpoint",
+        "Post-restart verification becomes a single health endpoint check rather than a log analysis task, reducing mean time to recovery"
+      ]
+    },
+    {
+      "identifier": "FS-009",
+      "title": "Graceful LLM API Degradation Mode",
+      "category": "process-automation",
+      "priority": "high",
+      "effort": "low",
+      "description": "Implement a graceful degradation mode for Anthropic Claude API unavailability that surfaces an informative, user-visible error message explaining the temporary limitation and expected recovery path, rather than a silent failure or cryptic error.",
+      "currentState": "When the Anthropic Claude API is unavailable, planning session interactions fail with no user-facing explanation; the platform team has no direct remediation lever for external LLM API outages and users receive no guidance on expected recovery time or alternatives.",
+      "futureState": "On LLM API unavailability, the service enters a defined degradation mode that surfaces a clear user-facing message ('AI planning is temporarily unavailable; your session is preserved and will resume automatically when the service recovers'), preserves session state, and logs a structured LLM_API_UNAVAILABLE event for monitoring.",
+      "affectedAudiences": ["GoA Business Analyst", "GoA Developer", "ADSP Platform Team"],
+      "sources": [
+        {
+          "audienceName": "ADSP Platform Team",
+          "journeyName": "Ongoing Monitoring and Incident Response",
+          "stageName": "Incident Investigation and Resolution",
+          "stepNumber": 1,
+          "text": "A graceful degradation mode for LLM API unavailability providing an informative error instead of silent failure would reduce user impact during external outages; external LLM API incidents require waiting for Anthropic service status updates with no direct remediation lever beyond circuit-breaking."
+        },
+        {
+          "audienceName": "ADSP Platform Team",
+          "journeyName": "Ongoing Monitoring and Incident Response",
+          "stageName": "Health and Observability Review",
+          "stepNumber": 1,
+          "text": "LLM API health is externally dependent on Anthropic service status and is outside the platform team's direct control or remediation; if /health/ready returns unhealthy without per-dependency breakdown, root cause identification requires jumping directly to log analysis."
+        }
+      ],
+      "painPointsAddressed": [
+        "Silent LLM API failures leave users with no explanation, causing them to abandon sessions unnecessarily",
+        "Platform team has no observable degradation state to communicate to users or to track in monitoring"
+      ],
+      "benefits": [
+        "Users understand the temporary nature of LLM unavailability and retain their session rather than abandoning work",
+        "Structured degradation events enable the platform team to detect, communicate, and track LLM API outage impact systematically"
+      ]
+    },
+    {
+      "identifier": "FS-010",
+      "title": "Pattern Usage Analytics for Data-Driven Library Governance",
+      "category": "data-management",
+      "priority": "medium",
+      "effort": "medium",
+      "description": "Expose usage metrics on business pattern detail views (session match counts, last-matched date) and enable session annotation for governance tracking, giving tenant administrators concrete data to support pattern lifecycle decisions and structured oversight workflows.",
+      "currentState": "Pattern detail views show only content fields with no indication of how frequently a pattern has been matched or whether it has been used in recent sessions; administrators must make deactivation decisions based solely on content assessment without usage evidence.",
+      "futureState": "Each pattern detail view displays a rolling 90-day match count and last-matched timestamp. The session history view includes an inline annotation field allowing tenant administrators to tag sessions with governance notes, enabling structured follow-up workflows for flagged planning activity.",
+      "affectedAudiences": ["ADSP Tenant Administrator"],
+      "sources": [
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Managing the Business Pattern Library",
+          "stageName": "Deactivate an Outdated Pattern",
+          "stepNumber": 1,
+          "text": "Usage statistics on the pattern detail view — number of sessions matched in the last 90 days — would give the administrator concrete data to support the deactivation decision and estimate downstream impact on in-progress sessions."
+        },
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Reviewing Session History and Audit Log for Governance",
+          "stageName": "Review Tenant Session History",
+          "stepNumber": 2,
+          "text": "An inline session annotation field would let administrators tag sessions with notes visible only to tenant administrators, enabling structured governance workflows where flagged items can be tracked to resolution."
+        }
+      ],
+      "painPointsAddressed": [
+        "No usage data for pattern deactivation decisions forces administrators to rely on content assessment alone, risking premature deactivation of actively-used patterns",
+        "No annotation capability prevents structured governance tracking of sessions of interest without maintaining external notes"
+      ],
+      "benefits": [
+        "Usage metrics enable data-driven pattern lifecycle management, reducing the risk of deactivating patterns still in active use",
+        "Session annotation supports structured governance workflows that can be tracked within the TMW interface rather than in external documents"
+      ]
+    },
+    {
+      "identifier": "FS-011",
+      "title": "Proactive HMAC Audit Chain Integrity Monitoring",
+      "category": "process-automation",
+      "priority": "high",
+      "effort": "medium",
+      "description": "Implement continuous background HMAC chain integrity monitoring with automated email alerts to tenant administrators and the platform team, surfacing integrity issues in near-real-time rather than only during periodic governance reviews.",
+      "currentState": "HMAC chain integrity is only verified when an administrator or platform engineer explicitly accesses the audit log view; a chain break may go undetected between review cycles, creating a time-sensitive compliance gap that is only discovered under deadline pressure.",
+      "futureState": "A background job periodically verifies the HMAC chain for each tenant's audit log. Any detected chain break triggers an automated alert email to the affected tenant administrator and the ADSP Platform Team, and an in-TMW guided support workflow captures the context needed for escalation to ADSP Support.",
+      "affectedAudiences": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+      "sources": [
+        {
+          "audienceName": "ADSP Tenant Administrator",
+          "journeyName": "Reviewing Session History and Audit Log for Governance",
+          "stageName": "Examine the Audit Log",
+          "stepNumber": 2,
+          "text": "Proactive HMAC chain health monitoring with automated email alerts to tenant administrators would surface any integrity issues before they are encountered during a time-sensitive governance review, reducing surprise and response-time pressure."
+        },
+        {
+          "audienceName": "ADSP Platform Team",
+          "journeyName": "Security Review and Audit Log Verification",
+          "stageName": "Audit Log Access and Integrity Verification",
+          "stepNumber": 2,
+          "text": "Continuous background chain integrity monitoring would surface tampering in near-real-time rather than only at periodic review intervals; a platform-provided HMAC chain verification utility for SYSREQ-020 compliant services would standardize integrity checking across all ADSP audit logs."
+        }
+      ],
+      "painPointsAddressed": [
+        "Periodic-only HMAC verification allows chain breaks to go undetected between review cycles, creating compliance gaps",
+        "Discovering a chain break during a governance review with an imminent submission deadline creates unresolved blockers with no self-service recovery path"
+      ],
+      "benefits": [
+        "Near-real-time chain break detection reduces the window during which a potential tampering event goes undetected from weeks to hours",
+        "Proactive alerts give administrators and the platform team time to investigate and resolve integrity issues before they impact governance submission timelines"
+      ]
+    },
+    {
+      "identifier": "FS-012",
+      "title": "Specialist Agent Navigation and Consultation Status Tracking",
+      "category": "process-automation",
+      "priority": "medium",
+      "effort": "low",
+      "description": "Add per-service consultation status indicators to the hypothesis panel and provide direct navigation from each hypothesis item to its relevant specialist agent, enabling analysts and developers to track and navigate specialist consultations without manual session history review.",
+      "currentState": "The hypothesis panel does not indicate which recommended ADSP services have been explored through specialist consultations; navigating from a hypothesis item to the relevant specialist agent requires manual search through the session, and specialist answers cannot be bookmarked for quick reference.",
+      "futureState": "Each recommended ADSP service in the hypothesis panel shows a consultation status badge (not started, in progress, completed) with a direct link to launch or resume the relevant specialist agent session. Specialist answers can be bookmarked and surfaced in a reference panel accessible throughout the planning session.",
+      "affectedAudiences": ["GoA Business Analyst", "GoA Developer"],
+      "sources": [
+        {
+          "audienceName": "GoA Developer",
+          "journeyName": "Specialist Agent Deep-Dive Consultation",
+          "stageName": "Specialist Consultation",
+          "stepNumber": 1,
+          "text": "Direct hypothesis-to-specialist links and per-service consultation status indicators in the hypothesis panel to reduce navigation overhead when moving between hypothesis review and specialist deep-dive sessions."
+        },
+        {
+          "audienceName": "GoA Business Analyst",
+          "journeyName": "Planning a New ADSP-Based Solution",
+          "stageName": "Hypothesis Review and Acceptance",
+          "stepNumber": 1,
+          "text": "Per-service consultation status in the hypothesis panel to indicate which specialists have been consulted for each recommended service, enabling analysts to track specialist engagement without re-reading session history."
+        }
+      ],
+      "painPointsAddressed": [
+        "No consultation status indicator requires analysts to re-read session history to determine which specialist agents have been engaged",
+        "Absence of direct hypothesis-to-specialist navigation creates unnecessary friction when moving between the planning session and specialist consultations"
+      ],
+      "benefits": [
+        "Consultation status indicators reduce the cognitive overhead of tracking multi-specialist engagement across complex planning sessions",
+        "Direct hypothesis-to-specialist links reduce navigation time and support systematic coverage of all recommended services in the hypothesis"
+      ]
+    }
+  ]
+}

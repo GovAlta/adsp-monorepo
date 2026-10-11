@@ -1,0 +1,134 @@
+{
+  "pageId": "new-session-start",
+  "pageType": "start-page",
+  "title": "Start a New Planning Session",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Planning Workspace", "nodeId": "planning-workspace" },
+      { "label": "My Planning Sessions", "nodeId": "session-dashboard" },
+      { "label": "Start a New Planning Session", "nodeId": "new-session-start" }
+    ],
+    "parentNodeId": "session-dashboard",
+    "childNodeIds": ["planning-session"],
+    "siblingNodeIds": []
+  },
+  "sections": {
+    "description": {
+      "text": "The ADSP Project Planner guides you through a structured conversation to identify which ADSP platform services best support your business problem. You will describe your business situation, and the AI Planning Agent will ask clarifying questions, extract business concepts, and generate a solution hypothesis recommending the right ADSP services for your context. Your progress is automatically saved so you can pause and resume across work days."
+    },
+    "alert": {
+      "type": "information",
+      "heading": "Planning Agent is in test mode",
+      "body": "The AI Planning Agent (INT-001) is currently operating in stub mode pending contract approval for the Anthropic Claude API (OPEN-001, OPEN-002, OPEN-006). In this mode, the agent will not process your business problem description or generate concept extractions. You can still navigate the planning workspace and familiarize yourself with the interface. Messaging will resume when the integration is activated."
+    },
+    "serviceInfo": [
+      {
+        "heading": "Estimated time",
+        "value": "Approximately 30 minutes for an initial business problem description. You can pause and resume at any time."
+      },
+      {
+        "heading": "Auto-save",
+        "value": "Your progress is saved automatically after each Planning Agent response. You will not lose work if you close the browser."
+      },
+      {
+        "heading": "Output format",
+        "value": "At the end of your session you can export a structured JSON document containing your business model, accepted solution hypothesis, and implementation recommendations."
+      }
+    ],
+    "preparation": {
+      "heading": "Before you begin",
+      "intro": "To get the most value from your planning session, have the following ready before you start:",
+      "items": [
+        {
+          "label": "Business problem statement",
+          "detail": "A plain-language description of the problem your program or service is trying to solve. It does not need to be technical — describe it from the perspective of the affected users or program staff."
+        },
+        {
+          "label": "Stakeholder context",
+          "detail": "Who are the main actors involved? Include both internal GoA staff and external clients or partners who interact with the business process."
+        },
+        {
+          "label": "Known constraints",
+          "detail": "Any policy, regulatory, budget, or timeline constraints that the solution must respect."
+        },
+        {
+          "label": "Estimated scope",
+          "detail": "A rough sense of the scale — is this a single form and approval workflow, a multi-step service delivery process, or something larger?"
+        }
+      ]
+    },
+    "sessionTitleForm": {
+      "heading": "Name your session",
+      "intro": "Give this planning session a title that will help you identify it in your session list.",
+      "fields": [
+        {
+          "label": "Session title",
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "maxLength": 200,
+          "placeholder": "e.g. Grants Online Application Modernization",
+          "validation": "1 to 200 characters required",
+          "errorMessage": "Enter a session title between 1 and 200 characters."
+        }
+      ]
+    },
+    "startAction": {
+      "label": "Start Planning Session",
+      "target": "planning-session",
+      "secondaryLabel": "Cancel",
+      "secondaryTarget": "session-dashboard"
+    },
+    "mongoErrorBanner": {
+      "heading": "Unable to create session",
+      "body": "The planning session could not be created due to a system error. Please try again in a moment. If this problem persists, contact ADSP Support.",
+      "condition": "POST /api/v1/sessions returns 503",
+      "ucRef": "UC-001",
+      "exceptionFlow": "3e"
+    }
+  },
+  "dataBindings": {
+    "onLoad": [],
+    "onSubmit": [
+      {
+        "operationId": "createSession",
+        "method": "POST",
+        "path": "/api/v1/sessions",
+        "description": "Create a new planning session with the provided title. Persists PlanningSession in MongoDB with status active, linked BusinessModel, and publishes session-created domain event via INT-007 stub.",
+        "triggeredBy": "Start Planning Session button",
+        "requestBody": {
+          "title": "string (1-200 chars, required)"
+        },
+        "successRedirect": "planning-session",
+        "protectedFields": []
+      }
+    ],
+    "validationErrors": [
+      "400",
+      "401",
+      "403",
+      "503"
+    ],
+    "emptyState": null
+  },
+  "testCoverage": {
+    "tcIds": ["TC-001", "TC-037", "TC-051", "TC-055", "TC-057", "TC-099"],
+    "ucIds": ["UC-001"]
+  },
+  "securityNotes": {
+    "classificationLevel": "Protected B",
+    "protectedFields": [],
+    "fieldMasking": "Session title input is sanitized server-side via Zod schema validation (SYSREQ-024). XSS payloads in session title are stripped at the API layer before persistence (TC-051).",
+    "asvs": ["V-9.1.1"],
+    "cas": ["CAS-RULE-007"]
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["planning-workspace", "new-session-start"],
+    "serviceProfileSections": ["planning-workspace"],
+    "apiOperationIds": ["createSession"]
+  }
+}

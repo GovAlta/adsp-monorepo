@@ -1,0 +1,263 @@
+{
+  "pageId": "session-export",
+  "pageType": "detail-view",
+  "title": "Export Session Plan",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Planning Workspace", "nodeId": "planning-workspace" },
+      { "label": "My Planning Sessions", "nodeId": "session-dashboard" },
+      { "label": "Planning Session", "nodeId": "planning-session" },
+      { "label": "Export Session Plan", "nodeId": "session-export" }
+    ],
+    "parentNodeId": "planning-session",
+    "childNodeIds": [],
+    "siblingNodeIds": ["business-model-review", "hypothesis-review"]
+  },
+  "sections": {
+    "itemHeading": {
+      "title": "Session Plan Export",
+      "subtitle": "planningSession.title",
+      "subtitleFallback": "Untitled Planning Session",
+      "statusBadge": {
+        "valueKey": "planningSession.status",
+        "tiers": [
+          { "condition": "status === 'active'", "label": "Active", "variant": "information" },
+          { "condition": "status === 'paused'", "label": "Paused", "variant": "warning" },
+          { "condition": "status === 'completed'", "label": "Completed", "variant": "success" },
+          { "condition": "status === 'archived'", "label": "Archived", "variant": "emergency" }
+        ]
+      },
+      "breadcrumb": [
+        "Planning Workspace",
+        "My Planning Sessions",
+        "Planning Session",
+        "Export Session Plan"
+      ]
+    },
+    "keyFields": [
+      {
+        "label": "Session Title",
+        "key": "planningSession.title",
+        "editable": false,
+        "helpText": "The title of your planning session as set when the session was created.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Session title is Protected B per ATIA s.23 — deliberative government process content."
+      },
+      {
+        "label": "Business Problem Summary",
+        "key": "planningSession.businessProblemSummary",
+        "editable": false,
+        "helpText": "A summary of the business problem extracted by the Planning Agent. Derived from the session's business model content.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Protected B per ATIA s.23. Redacted in structured logs.",
+        "apiNote": "businessProblemSummary is a derived/virtual field assembled from the BusinessModel context. Closest upstream field is businessModel.matchedPatternId combined with session conversation context."
+      },
+      {
+        "label": "Hypothesis Status",
+        "key": "planningSession.hypothesisStatus",
+        "editable": false,
+        "helpText": "The status of the most recent solution hypothesis for this session. Export requires an accepted hypothesis.",
+        "type": "string",
+        "apiNote": "hypothesisStatus is a derived field resolved by calling listHypotheses with status=accepted filter. It reflects the status of the most recent SolutionHypothesis record."
+      },
+      {
+        "label": "Created Date",
+        "key": "planningSession.createdAt",
+        "editable": false,
+        "helpText": "Date and time this planning session was created.",
+        "type": "date-time"
+      },
+      {
+        "label": "Last Updated",
+        "key": "planningSession.updatedAt",
+        "editable": false,
+        "helpText": "Date and time this planning session was last modified.",
+        "type": "date-time"
+      }
+    ],
+    "contextActions": [
+      {
+        "label": "Download JSON Export",
+        "variant": "primary",
+        "operationId": "initiateExport",
+        "condition": "planningSession.hypothesisStatus === 'accepted'",
+        "description": "Generate and download the complete session plan as a structured JSON export. The export assembles the planning session, business model, accepted hypothesis, reasoning, and implementation order into a portable document. The export format parameter is passed in the POST request body — never in the URL.",
+        "disabledWhen": "planningSession.hypothesisStatus !== 'accepted'",
+        "requestShape": { "format": "json" },
+        "securityNote": "FAC-S5-024: format is a non-protected export control parameter passed in the POST /api/v1/sessions/{sessionId}/exports request body. Protected B data (userId, tenantId, conversation content, business model, hypothesis summary and reasoning) is never placed in URL query strings.",
+        "testCaseRef": "TC-034",
+        "roleBasedRendering": {
+          "plannerUser": "exportData rendered without userId and tenantId fields per POPA s.17",
+          "plannerAdmin": "exportData rendered with all fields including userId and tenantId"
+        }
+      },
+      {
+        "label": "Back to Planning Session",
+        "variant": "secondary",
+        "operationId": null,
+        "target": "planning-session",
+        "condition": "always",
+        "description": "Return to the planning conversation to complete or refine the session before exporting."
+      }
+    ],
+    "tabs": [
+      {
+        "label": "Business Model Summary",
+        "contentType": "summary-readonly",
+        "contentRef": "businessModel",
+        "description": "Read-only summary of the accepted business model for this session, including extracted concept counts by category and confidence score.",
+        "fields": [
+          { "label": "Confidence Score", "key": "businessModel.confidenceScore" },
+          { "label": "Concept Count", "key": "businessModel.conceptCount" },
+          { "label": "Matched Pattern", "key": "businessModel.matchedPatternId" },
+          { "label": "Model Version", "key": "businessModel.version" }
+        ],
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Business model concept content is Protected B per ATIA s.23"
+      },
+      {
+        "label": "Hypothesis Summary",
+        "contentType": "summary-readonly",
+        "contentRef": "solutionHypothesis",
+        "description": "Read-only summary of the accepted solution hypothesis, including recommended ADSP service composition and reasoning.",
+        "fields": [
+          { "label": "Hypothesis Status", "key": "solutionHypothesis.status" },
+          { "label": "Summary", "key": "solutionHypothesis.summary", "classificationLevel": "Protected B" },
+          { "label": "Reasoning", "key": "solutionHypothesis.reasoning", "classificationLevel": "Protected B" },
+          { "label": "Pattern ID", "key": "solutionHypothesis.patternId" }
+        ],
+        "emptyMessage": "No accepted hypothesis found for this session. Complete the hypothesis review step before exporting.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Hypothesis summary and reasoning are Protected B per ATIA s.23"
+      },
+      {
+        "label": "Specialist Consultations",
+        "contentType": "summary-readonly",
+        "contentRef": "specialistRequests",
+        "description": "Summary of any specialist agent consultations completed during this planning session, including Form, PDF, Comment, and Notification specialist results.",
+        "fields": [
+          { "label": "Specialist Type", "key": "specialistRequest.specialistType" },
+          { "label": "Status", "key": "specialistRequest.status" },
+          { "label": "Requested At", "key": "specialistRequest.createdAt" }
+        ],
+        "emptyMessage": "No specialist consultations were completed during this session.",
+        "loadNote": "Specialist consultation data requires a separate load call not included in the primary onLoad bindings. If no specialist requests are available, display the empty message."
+      }
+    ],
+    "emptyState": {
+      "condition": "planningSession.hypothesisStatus !== 'accepted'",
+      "message": "This session cannot be exported until the hypothesis has been reviewed and accepted. Complete the hypothesis review step first.",
+      "actionLabel": "Go to Hypothesis Review",
+      "actionTarget": "hypothesis-review",
+      "testCaseRef": "TC-032"
+    },
+    "policyNotice": {
+      "text": "The exported session plan contains deliberative government information under ATIA s.23, and personal information under POPA s.17. This information is classified Protected B. Exported files must be handled in accordance with GoA information management policies. Do not share exported files outside of authorized channels. User identity information (userId, tenantId) is excluded from exports for the planner-user role.",
+      "authority": "ATIA s.23, POPA s.17",
+      "classificationLevel": "Protected B"
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "getSession",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}",
+        "description": "Load the planning session to populate itemHeading title, status badge, and keyFields (title, createdAt, updatedAt). Also used to check session exportability.",
+        "bindsTo": "planningSession"
+      },
+      {
+        "operationId": "getBusinessModel",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}/model",
+        "description": "Load the business model to populate the Business Model Summary tab with confidence score, concept counts, and matched pattern.",
+        "bindsTo": "businessModel"
+      },
+      {
+        "operationId": "listHypotheses",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}/hypotheses",
+        "queryParams": { "status": "accepted" },
+        "description": "Load the accepted solution hypothesis for this session. Used to determine export eligibility (must have at least one accepted hypothesis) and to populate the Hypothesis Summary tab.",
+        "bindsTo": "solutionHypothesis",
+        "note": "getHypothesis (GET /sessions/{sessionId}/hypotheses/{hypothesisId}) is used once the hypothesisId is known from the listHypotheses response."
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "initiateExport",
+        "method": "POST",
+        "path": "/api/v1/sessions/{sessionId}/exports",
+        "description": "Create a new SessionExport record assembling the full session state. Returns SessionExport with exportData. Client triggers a browser file download of the returned exportData as {sessionTitle}-{date}.json. Note: format is included in the request body, NOT as a URL query parameter per FAC-S5-024.",
+        "triggeredBy": "downloadExportButton",
+        "requestShape": { "format": "json" },
+        "securityNote": "FAC-S5-024: format is a non-protected export control parameter passed in the POST request body. Protected B fields (conversation content, business model, hypothesis summary, reasoning, userId, tenantId) are never placed in URL query strings."
+      }
+    ],
+    "validationErrors": ["404", "403", "409", "503"],
+    "emptyState": "This session cannot be exported until the hypothesis has been reviewed and accepted. Complete the hypothesis review step first."
+  },
+  "errorStates": {
+    "503": {
+      "code": "EXPORT_SERVICE_UNAVAILABLE",
+      "message": "The export service is temporarily unavailable. No partial export has been created. Please try again in a few minutes.",
+      "action": "retry",
+      "testCaseRef": "TC-034 exception — UC-008 exception flow 2e"
+    },
+    "404": {
+      "code": "SESSION_NOT_FOUND",
+      "message": "This planning session could not be found. It may have been archived.",
+      "action": "redirect-to-session-dashboard",
+      "testCaseRef": "UC-008 session not found"
+    },
+    "403": {
+      "code": "EXPORT_FORBIDDEN",
+      "message": "You do not have permission to export this planning session. You can only export your own planning sessions.",
+      "action": "redirect-to-session-dashboard",
+      "testCaseRef": "TC-033 planner-user cannot export other sessions"
+    },
+    "409": {
+      "code": "EXPORT_CONFLICT",
+      "message": "A concurrent export is already in progress for this session. Please wait a moment and try again.",
+      "action": "retry"
+    }
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": [
+      "planning-workspace",
+      "session-dashboard",
+      "planning-session",
+      "session-export"
+    ],
+    "serviceProfileSections": ["exports", "sessions", "hypotheses", "business-model"],
+    "apiOperationIds": ["getSession", "getBusinessModel", "listHypotheses", "getHypothesis", "initiateExport"],
+    "useCases": ["UC-008"],
+    "testCases": [
+      "TC-030", "TC-031", "TC-032", "TC-033", "TC-034", "TC-055", "TC-057"
+    ],
+    "classificationLevel": "Protected B",
+    "protectedFields": [
+      "planningSession.title",
+      "planningSession.businessProblemSummary",
+      "solutionHypothesis.summary",
+      "solutionHypothesis.reasoning",
+      "sessionExport.exportData.conversationMessages[].content",
+      "sessionExport.exportData.businessModel",
+      "sessionExport.userId",
+      "sessionExport.tenantId"
+    ],
+    "securityAuthority": "ATIA s.23, POPA s.17",
+    "roleBasedFieldExclusion": {
+      "plannerUser": ["sessionExport.userId", "sessionExport.tenantId"],
+      "plannerAdmin": []
+    },
+    "futureStateOpportunities": ["FS-002", "FS-005"],
+    "cs002Fix": "Regenerated 2026-10-10 with pageType: detail-view to match sitemap pageType. Prior version incorrectly used report-results.",
+    "note-TC-031": "TC-031 covers DOCX export format; DOCX is not supported in the current API (CreateExportRequest.format enum = [json] only). TC-031 maps to future-state opportunity FS-002.",
+    "note-exportOperationId": "The export action uses operationId: initiateExport (POST /sessions/{sessionId}/exports) as defined in openapi.yaml. The invocation instruction referenced exportSession which does not exist in the OpenAPI spec; initiateExport is the correct operationId."
+  }
+}

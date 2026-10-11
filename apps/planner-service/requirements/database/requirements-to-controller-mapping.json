@@ -1,0 +1,1151 @@
+{
+  "schemaVersion": "1.0",
+  "generatedAt": "2026-10-10T00:00:00Z",
+  "controllerTechStack": "Node.js/TypeScript/Express",
+  "stage4Output": "apps/planner-service",
+  "resourceList": [
+    {
+      "resourceName": "sessions",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "serviceFile": "src/services/sessions.service.ts",
+      "routeFile": "src/routes/sessions.routes.ts",
+      "description": "Planning session lifecycle â€” create, list, retrieve, update status, archive. Serves UC-001, UC-006, UC-010 (admin list), SYSREQ-022 (retention/archive)."
+    },
+    {
+      "resourceName": "messages",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "serviceFile": "src/services/messages.service.ts",
+      "routeFile": "src/routes/messages.routes.ts",
+      "description": "Conversation messaging â€” send user message, retrieve conversation history. Triggers LLM via stub INT-001. Serves UC-002."
+    },
+    {
+      "resourceName": "business-model",
+      "controllerFile": "src/controllers/business-model.controller.ts",
+      "serviceFile": "src/services/business-model.service.ts",
+      "routeFile": "src/routes/business-model.routes.ts",
+      "description": "Business model retrieval and concept-type correction. Serves UC-003."
+    },
+    {
+      "resourceName": "hypotheses",
+      "controllerFile": "src/controllers/hypotheses.controller.ts",
+      "serviceFile": "src/services/hypotheses.service.ts",
+      "routeFile": "src/routes/hypotheses.routes.ts",
+      "description": "Solution hypothesis listing, retrieval, and status lifecycle transitions (accept/reject/supersede). Serves UC-004."
+    },
+    {
+      "resourceName": "specialists",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "serviceFile": "src/services/specialists.service.ts",
+      "routeFile": "src/routes/specialists.routes.ts",
+      "description": "Specialist agent consultation â€” delegate to form/pdf/comment/notification stubs (INT-003..006). Serves UC-005."
+    },
+    {
+      "resourceName": "patterns",
+      "controllerFile": "src/controllers/patterns.controller.ts",
+      "serviceFile": "src/services/patterns.service.ts",
+      "routeFile": "src/routes/patterns.routes.ts",
+      "description": "Business pattern library CRUD â€” planner-admin/tenant-admin role guarded. Calls INT-002 Config Service stub. Serves UC-007."
+    },
+    {
+      "resourceName": "exports",
+      "controllerFile": "src/controllers/exports.controller.ts",
+      "serviceFile": "src/services/exports.service.ts",
+      "routeFile": "src/routes/exports.routes.ts",
+      "description": "Session plan export â€” assembles and serialises session state to portable JSON. Serves UC-008."
+    },
+    {
+      "resourceName": "audit",
+      "controllerFile": "src/controllers/audit.controller.ts",
+      "serviceFile": "src/services/audit.service.ts",
+      "routeFile": "src/routes/audit.routes.ts",
+      "description": "Audit log read-only view for planner-admin/tenant-admin. HMAC-chained AuditEvent collection. Serves UC-010 (audit log portion), SYSREQ-020."
+    },
+    {
+      "resourceName": "health",
+      "controllerFile": "src/controllers/health.controller.ts",
+      "serviceFile": null,
+      "routeFile": "src/routes/health.routes.ts",
+      "description": "ADSP infrastructure health probe (/health). Checks MongoDB readyState and process uptime inline â€” no separate service layer. Serves SYSREQ-023. No JWT required."
+    },
+    {
+      "resourceName": "metrics",
+      "controllerFile": "src/controllers/metrics.controller.ts",
+      "serviceFile": null,
+      "routeFile": "src/routes/metrics.routes.ts",
+      "description": "Prometheus-compatible metrics endpoint (/metrics). Stub implementation (SYSREQ-023); no separate service layer. No JWT required."
+    }
+  ],
+  "rows": [
+    {
+      "requirementId": "UC-001",
+      "requirementType": "UC",
+      "title": "Start Planning Session",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [
+        "createSession"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions",
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "POST /api/v1/sessions creates PlanningSession + BusinessModel in MongoDB (entities: planning_session, business_model), publishes session-created event via INT-007 stub, enforces tenantId/userId from JWT per BR-001. All roles planner-user+ authorized.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "createSession",
+          "endpoint": "/sessions"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-002",
+      "requirementType": "UC",
+      "title": "Describe Business Problem and Build Model",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [
+        "sendMessage",
+        "listMessages"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/messages",
+      "serviceFile": "src/services/messages.service.ts",
+      "evidence": "POST persists ConversationMessage, invokes LLM via INT-001 stub (fail-closed), updates BusinessModel via business-model.service, runs PatternMatchingService (BR-005). GET retrieves conversation history. Input max 10000 chars per SYSREQ-024.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "sendMessage",
+          "endpoint": "/sessions/{sessionId}/messages"
+        },
+        {
+          "operationId": "listMessages",
+          "endpoint": "/sessions/{sessionId}/messages"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-003",
+      "requirementType": "UC",
+      "title": "Review and Correct Business Model",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/business-model.controller.ts",
+      "operationIds": [
+        "getBusinessModel",
+        "updateBusinessModel"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/sessions/:sessionId/model",
+      "serviceFile": "src/services/business-model.service.ts",
+      "evidence": "GET returns BusinessModel with embedded BusinessConcept list (entity: business_model, business_concept). PATCH updates conceptType on individual concepts per BR-006 enum validation; increments model version; returns HTTP 409 on concurrent version conflict.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "getBusinessModel",
+          "endpoint": "/sessions/{sessionId}/model"
+        },
+        {
+          "operationId": "updateBusinessModel",
+          "endpoint": "/sessions/{sessionId}/model"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-004",
+      "requirementType": "UC",
+      "title": "Review and Accept Solution Hypothesis",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/hypotheses.controller.ts",
+      "operationIds": [
+        "listHypotheses",
+        "getHypothesis",
+        "updateHypothesisStatus"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/sessions/:sessionId/hypotheses",
+      "serviceFile": "src/services/hypotheses.service.ts",
+      "evidence": "GET /hypotheses lists SolutionHypothesis records; GET /:hypothesisId retrieves one; PATCH /:hypothesisId/status transitions status (accepted/rejected/superseded) per BR-010 lifecycle rules. Publishes hypothesis-generated event via INT-007 stub on accept.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "listHypotheses",
+          "endpoint": "/sessions/{sessionId}/hypotheses"
+        },
+        {
+          "operationId": "getHypothesis",
+          "endpoint": "/sessions/{sessionId}/hypotheses"
+        },
+        {
+          "operationId": "updateHypothesisStatus",
+          "endpoint": "/sessions/{sessionId}/hypotheses"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-005",
+      "requirementType": "UC",
+      "title": "Consult Specialist Agent",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "operationIds": [
+        "consultSpecialist",
+        "getSpecialistRequest"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/specialists",
+      "serviceFile": "src/services/specialists.service.ts",
+      "evidence": "POST creates SpecialistRequest, delegates to INT-003..006 stubs (fail-closed, 60s timeout per SWREQ-007), updates session specialistProgress. GET /:requestId retrieves SpecialistRequest+SpecialistResponse. Enforces specialist availability gate per BR-009.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "consultSpecialist",
+          "endpoint": "/sessions/{sessionId}/specialists"
+        },
+        {
+          "operationId": "getSpecialistRequest",
+          "endpoint": "/sessions/{sessionId}/specialists"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-006",
+      "requirementType": "UC",
+      "title": "Resume Interrupted Planning Session",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [
+        "listSessions",
+        "getSession",
+        "updateSession"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/sessions",
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "GET /sessions lists own sessions (planner-user) or all tenant sessions (planner-admin) per BR-007; GET /:sessionId retrieves full session state; PATCH /:sessionId updates status to 'active' and lastResumedAt on resume. All queries tenant-scoped per BR-001.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "listSessions",
+          "endpoint": "/sessions"
+        },
+        {
+          "operationId": "getSession",
+          "endpoint": "/sessions"
+        },
+        {
+          "operationId": "updateSession",
+          "endpoint": "/sessions"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-007",
+      "requirementType": "UC",
+      "title": "Manage Business Pattern Library",
+      "priority": "Should",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/patterns.controller.ts",
+      "operationIds": [
+        "listPatterns",
+        "createPattern",
+        "getPattern",
+        "updatePattern",
+        "deactivatePattern",
+        "deletePattern"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/patterns",
+      "serviceFile": "src/services/patterns.service.ts",
+      "evidence": "GET /patterns lists active patterns (planner-user+); POST /patterns creates; GET /:patternId retrieves; PUT /:patternId updates; PUT /:patternId/deactivate soft-deletes. Write endpoints require planner-admin+ per BR-007. Calls INT-002 Config Service stub. Writes audit entries per BR-008.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "listPatterns",
+          "endpoint": "/patterns"
+        },
+        {
+          "operationId": "createPattern",
+          "endpoint": "/patterns"
+        },
+        {
+          "operationId": "getPattern",
+          "endpoint": "/patterns"
+        },
+        {
+          "operationId": "updatePattern",
+          "endpoint": "/patterns"
+        },
+        {
+          "operationId": "deactivatePattern",
+          "endpoint": "/patterns"
+        },
+        {
+          "operationId": "deletePattern",
+          "endpoint": "/patterns"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-008",
+      "requirementType": "UC",
+      "title": "Export Session Plan",
+      "priority": "Should",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/exports.controller.ts",
+      "operationIds": [
+        "initiateExport",
+        "getExport",
+        "listExports"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/exports",
+      "serviceFile": "src/services/exports.service.ts",
+      "evidence": "POST assembles SessionExport from PlanningSession, BusinessModel, SolutionHypotheses, ConversationMessages (entities: session_export); GET /:exportId retrieves. Own-sessions-only for planner-user per BR-001; planner-admin may export any session.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "initiateExport",
+          "endpoint": "/sessions/{sessionId}/exports"
+        },
+        {
+          "operationId": "getExport",
+          "endpoint": "/sessions/{sessionId}/exports"
+        },
+        {
+          "operationId": "listExports",
+          "endpoint": "/sessions/{sessionId}/exports"
+        }
+      ]
+    },
+    {
+      "requirementId": "UC-009",
+      "requirementType": "UC",
+      "title": "Authenticate and Access Planner",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "Authentication is handled entirely by passport-jwt Express middleware configured via ADSP SDK (initializePlatform). No dedicated controller endpoint is required; middleware runs on every request route. INT-008 (Keycloak) is the mechanism.",
+      "notRequiredReason": "Fully implemented as route-level passport-jwt middleware; no controller endpoint needed. Keycloak JWT validation occurs at the Express middleware layer before any route handler executes.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "UC-010",
+      "requirementType": "UC",
+      "title": "View Session History and Audit Log",
+      "priority": "Should",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/audit.controller.ts",
+      "operationIds": [
+        "listAuditEvents",
+        "verifyAuditChain",
+        "getAuditEvent"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/audit",
+      "serviceFile": "src/services/audit.service.ts",
+      "evidence": "GET /api/v1/audit returns paginated AuditEvent records (entity: audit_event), restricted to planner-admin/tenant-admin per BR-007. All-tenant session list served by sessions.controller GET /api/v1/sessions with admin token. Audit log access itself generates an audit entry per BR-008.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "listAuditEvents",
+          "endpoint": "/audit"
+        },
+        {
+          "operationId": "verifyAuditChain",
+          "endpoint": "/audit"
+        },
+        {
+          "operationId": "getAuditEvent",
+          "endpoint": "/audit"
+        }
+      ]
+    },
+    {
+      "requirementId": "SYSREQ-009",
+      "requirementType": "SYSREQ",
+      "title": "Keycloak JWT authentication via ADSP platform SDK",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "Implemented as passport-jwt Express middleware; ADSP SDK configures the Keycloak realm public key and validates RS256 JWT on every request. Returns HTTP 401 on missing/expired/invalid token. No controller endpoint needed.",
+      "notRequiredReason": "Authentication is a cross-cutting middleware concern; no dedicated REST endpoint maps to this requirement.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-010",
+      "requirementType": "SYSREQ",
+      "title": "MongoDB persistence with tenant-scoped data isolation",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "Tenant isolation is enforced at the service/repository layer: every Mongoose query receives tenantId extracted by tenant-middleware from the JWT (SWREQ-008). All 11 entities include tenantId index. No dedicated REST endpoint; enforced across all controllers.",
+      "notRequiredReason": "Cross-cutting data-layer pattern enforced in repository code for all controllers; not mapped to a single endpoint.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-011",
+      "requirementType": "SYSREQ",
+      "title": "RabbitMQ domain event publication for session lifecycle",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [
+        "createSession",
+        "updateSession",
+        "archiveSession"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions",
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "Domain event publication (session-created, session-updated, session-completed, hypothesis-generated, specialist-delegated) deferred to INT-007 stub (fire-and-forget); events are logged but not transmitted to live RabbitMQ. Six event types per BR-012.",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-007",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-012",
+      "requirementType": "SYSREQ",
+      "title": "ADSP initializePlatform() SDK startup registration",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "initializePlatform() is called in main.ts at service startup before Express server binds; registers service config schema, domain event types, health endpoints, and service metadata. Not a REST endpoint.",
+      "notRequiredReason": "ADSP SDK startup call in main.ts startup sequence; no REST controller endpoint maps to this requirement.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-013",
+      "requirementType": "SYSREQ",
+      "title": "Three-level RBAC with role hierarchy enforcement",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/user-management.controller.ts",
+      "operationIds": [
+        "listUsers",
+        "createUser",
+        "getUserById",
+        "updateUser",
+        "deactivateUser"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/users",
+      "serviceFile": "src/services/user-management.service.ts",
+      "evidence": "GET /users lists tenant users (listUsers, planner-admin+). POST /users creates user entry (createUser, planner-admin+). GET /users/:userId retrieves by id (getUserById). PATCH /users/:userId updates (updateUser). DELETE /users/:userId deactivates (deactivateUser). BR-007: all user CRUD requires planner-admin or tenant-admin.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "listUsers",
+          "endpoint": "/users"
+        },
+        {
+          "operationId": "createUser",
+          "endpoint": "/users"
+        },
+        {
+          "operationId": "getUserById",
+          "endpoint": "/users"
+        },
+        {
+          "operationId": "updateUser",
+          "endpoint": "/users"
+        },
+        {
+          "operationId": "deactivateUser",
+          "endpoint": "/users"
+        }
+      ]
+    },
+    {
+      "requirementId": "SYSREQ-017",
+      "requirementType": "SYSREQ",
+      "title": "Resilient LLM API calls with retry and circuit breaker",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [
+        "sendMessage"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/messages",
+      "serviceFile": "src/services/messages.service.ts",
+      "evidence": "LLMCallWrapper with exponential backoff (3 retries, 1â€“16s) and circuit breaker (open after 3 failures/30s, close after 60s) deferred to INT-001 stub. Stub returns HTTP 503 fail-closed response to avoid live Anthropic calls pending OPEN-001/002/006 resolution.",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-001",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-018",
+      "requirementType": "SYSREQ",
+      "title": "OWASP ASVS Level 2 security conformance",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "ASVS Level 2 controls applied via: helmet() middleware (output encoding, HSTS), express-rate-limit on /messages and /specialists, Zod/Joi schema validation on all write endpoints, parameterised Mongoose queries. No dedicated REST endpoint.",
+      "notRequiredReason": "Cross-cutting security middleware concern applied uniformly across all controllers; not a dedicated endpoint.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-019",
+      "requirementType": "SYSREQ",
+      "title": "TLS 1.2 enforcement and HTTPS-only access",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "TLS termination and HTTPS redirect handled at the ADSP ingress/gateway layer. HSTS header set via helmet() middleware on all responses. Cookies marked Secure+HttpOnly+SameSite=Strict in session cookie middleware. No controller endpoint.",
+      "notRequiredReason": "TLS enforcement is an infrastructure/ingress concern; HSTS is applied as response middleware not a controller endpoint.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-020",
+      "requirementType": "SYSREQ",
+      "title": "Administrative audit logging with HMAC tamper-evidence",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/audit.controller.ts",
+      "operationIds": [
+        "listAuditEvents"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/audit",
+      "serviceFile": "src/services/audit.service.ts",
+      "evidence": "AuditEvent documents written by audit middleware (SWREQ-013) on all admin routes; each record includes HMAC-SHA256 chain using AUDIT_SIGNING_KEY env var per BR-008. GET /api/v1/audit provides read-only view for planner-admin+. Entity: audit_event.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "listAuditEvents",
+          "endpoint": "/audit"
+        }
+      ]
+    },
+    {
+      "requirementId": "SYSREQ-021",
+      "requirementType": "SYSREQ",
+      "title": "Session inactivity timeout with per-role configuration",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "Token expiry enforced by Keycloak JWT (role-specific token TTL configured in Keycloak realm). Expired tokens return HTTP 401 via passport-jwt middleware. Session state preserved in MongoDB for resumption post-re-auth. No dedicated controller endpoint.",
+      "notRequiredReason": "Inactivity timeout is enforced at the Keycloak/JWT layer; conversation state preservation is handled by MongoDB persistence in sessions.service. No REST endpoint maps directly to this requirement.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-022",
+      "requirementType": "SYSREQ",
+      "title": "Data retention and disposition policy per GoA regulations",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [
+        "archiveSession"
+      ],
+      "httpMethod": "DELETE",
+      "urlPattern": "/api/v1/sessions/:sessionId",
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "DELETE /api/v1/sessions/:sessionId performs soft-archive setting status='archived' and archivedAt timestamp; hard deletion deferred to scheduled retention job. Retention period configurable per tenant via INT-002 Config Service stub. Entity: planning_session.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "archiveSession",
+          "endpoint": "/sessions/{sessionId}"
+        }
+      ]
+    },
+    {
+      "requirementId": "SYSREQ-023",
+      "requirementType": "SYSREQ",
+      "title": "Service health monitoring and structured observability",
+      "priority": "Must",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/health.controller.ts",
+      "operationIds": [
+        "getHealth",
+        "getMetrics",
+        "getLiveness",
+        "getReadiness",
+        "getLivenessAlias",
+        "getReadinessAlias"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/health",
+      "serviceFile": null,
+      "evidence": "GET /health returns 200 (healthy/degraded) or 503 (unhealthy) based on mongoose.connection.readyState and process.uptime(). No separate service layer â€” checks are inline in HealthController. GET /metrics served by MetricsController (stub Prometheus text, [IMPL-DEFERRED: SYSREQ-023]). Winston structured JSON logging on all requests. ADSP platform pattern per SWREQ-016.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "getHealth",
+          "endpoint": "/health"
+        },
+        {
+          "operationId": "getMetrics",
+          "endpoint": "/health"
+        },
+        {
+          "operationId": "getLiveness",
+          "endpoint": "/health"
+        },
+        {
+          "operationId": "getReadiness",
+          "endpoint": "/health"
+        },
+        {
+          "operationId": "getLivenessAlias",
+          "endpoint": "/health/liveness"
+        },
+        {
+          "operationId": "getReadinessAlias",
+          "endpoint": "/health/readiness"
+        }
+      ]
+    },
+    {
+      "requirementId": "SYSREQ-024",
+      "requirementType": "SYSREQ",
+      "title": "Server-side input validation with field-level error responses",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "Zod/Joi validation middleware applied at all write route handlers; enforces max lengths (message: 10000, title: 200, pattern fields: 5000), required fields, and enum constraints per SWREQ-014. Returns HTTP 400 with field-level errors array. Applied across all controllers.",
+      "notRequiredReason": "Validation is a request-processing middleware concern applied uniformly to all write endpoints; no dedicated REST endpoint maps to this requirement.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-001",
+      "requirementType": "INT",
+      "title": "Anthropic Claude API â€” LLM inference",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [
+        "sendMessage"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/messages",
+      "serviceFile": "src/services/messages.service.ts",
+      "evidence": "INT-001 is Stub/fail-closed. POST /messages calls LLMCallWrapper which returns HTTP 503 stub response. OPEN-001, OPEN-002, OPEN-006 must resolve before live Anthropic API integration. Stub tagged [IMPL-DEFERRED: INT-001] in LLMCallWrapper.",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-001",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-002",
+      "requirementType": "INT",
+      "title": "ADSP Configuration Service â€” pattern storage",
+      "priority": "Should",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/patterns.controller.ts",
+      "operationIds": [
+        "listPatterns",
+        "createPattern",
+        "updatePattern",
+        "deactivatePattern"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/patterns",
+      "serviceFile": "src/services/patterns.service.ts",
+      "evidence": "INT-002 is Stub/lookup-empty. ConfigurationServiceAdapter returns empty pattern list on read; returns HTTP 503 on write. ADSP Config Service provisioning in target tenant environments unconfirmed (OPEN-004). Stub tagged [IMPL-DEFERRED: INT-002].",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-002",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-003",
+      "requirementType": "INT",
+      "title": "Form Service Specialist Agent",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "operationIds": [
+        "consultSpecialist"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/specialists",
+      "serviceFile": "src/services/specialists.service.ts",
+      "evidence": "INT-003 is Stub/fail-closed. SpecialistAgentService returns HTTP 503 for form-service specialist requests; Planning Agent falls back to general guidance. Interface contract pending OPEN-005. Stub tagged [IMPL-DEFERRED: INT-003].",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-003",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-004",
+      "requirementType": "INT",
+      "title": "PDF Service Specialist Agent",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "operationIds": [
+        "consultSpecialist"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/specialists",
+      "serviceFile": "src/services/specialists.service.ts",
+      "evidence": "INT-004 is Stub/fail-closed. SpecialistAgentService returns HTTP 503 for pdf-service specialist requests; Planning Agent falls back to general guidance. Interface contract pending OPEN-005. Stub tagged [IMPL-DEFERRED: INT-004].",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-004",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-005",
+      "requirementType": "INT",
+      "title": "Comment Service Specialist Agent",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "operationIds": [
+        "consultSpecialist"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/specialists",
+      "serviceFile": "src/services/specialists.service.ts",
+      "evidence": "INT-005 is Stub/fail-closed. SpecialistAgentService returns HTTP 503 for comment-service specialist requests; Planning Agent falls back to general guidance. Interface contract pending OPEN-005. Stub tagged [IMPL-DEFERRED: INT-005].",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-005",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-006",
+      "requirementType": "INT",
+      "title": "Notification Service Specialist Agent",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "operationIds": [
+        "consultSpecialist"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions/:sessionId/specialists",
+      "serviceFile": "src/services/specialists.service.ts",
+      "evidence": "INT-006 is Stub/fail-closed. SpecialistAgentService returns HTTP 503 for notification-service specialist requests; Planning Agent falls back to general guidance. Interface contract pending OPEN-005. Stub tagged [IMPL-DEFERRED: INT-006].",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-006",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-007",
+      "requirementType": "INT",
+      "title": "ADSP Event Service (RabbitMQ) â€” domain events",
+      "priority": "Must",
+      "mappingStatus": "Deferred",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [
+        "createSession",
+        "updateSession",
+        "archiveSession"
+      ],
+      "httpMethod": "POST",
+      "urlPattern": "/api/v1/sessions",
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "INT-007 is Stub/fire-and-forget. EventPublicationService logs events (session-created, session-updated, session-completed, session-archived, hypothesis-generated, specialist-delegated) but does not transmit to RabbitMQ. ADSP event service requires live platform provisioning. Stub tagged [IMPL-DEFERRED: INT-007].",
+      "notRequiredReason": null,
+      "deferredToIntegration": "INT-007",
+      "status": "Deferred",
+      "controllers": []
+    },
+    {
+      "requirementId": "INT-008",
+      "requirementType": "INT",
+      "title": "Keycloak JWT Authorization Server",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "Keycloak JWT validation is handled by passport-jwt middleware configured by ADSP SDK; it is an inbound integration (token arrives in Authorization header) not an outbound call. No controller endpoint needed.",
+      "notRequiredReason": "Inbound JWT validation middleware; handled at the ADSP SDK/passport-jwt layer. Not an outbound integration requiring a stub endpoint.",
+      "deferredToIntegration": null,
+      "status": "Not Required",
+      "controllers": []
+    },
+    {
+      "requirementId": "SYSREQ-001",
+      "requirementType": "SYSREQ",
+      "title": "Conversational AI planning interface via Anthropic Claude",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/llm.service.ts",
+      "evidence": "SYSREQ-001 implemented via messages.controller.ts + llm.service.ts (INT-001 stub/fail-closed). LLM conversation interface via POST /messages.",
+      "notRequiredReason": "SYSREQ-001 LLM interface implemented as messages.controller.ts + llm.service.ts stub; no additional dedicated endpoint.",
+      "deferredToIntegration": "INT-001"
+    },
+    {
+      "requirementId": "SYSREQ-002",
+      "requirementType": "SYSREQ",
+      "title": "Incremental business model construction engine",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/business-model.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/business-model.service.ts",
+      "evidence": "SYSREQ-002 implemented in business-model.service.ts: incremental concept extraction on sendMessage; served by UC-003 endpoints.",
+      "notRequiredReason": "SYSREQ-002 is the business-logic layer behind UC-003 endpoints; no additional dedicated endpoint.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SYSREQ-003",
+      "requirementType": "SYSREQ",
+      "title": "Business pattern matching against configured pattern library",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/patterns.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/patterns.service.ts",
+      "evidence": "SYSREQ-003 implemented in patterns.service.ts; pattern library CRUD served by UC-007 endpoints. INT-002 Config Service stub.",
+      "notRequiredReason": "SYSREQ-003 is the pattern matching engine behind UC-007 and POST /messages; no additional dedicated endpoint.",
+      "deferredToIntegration": "INT-002"
+    },
+    {
+      "requirementId": "SYSREQ-004",
+      "requirementType": "SYSREQ",
+      "title": "Solution hypothesis generation and versioned management",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/hypotheses.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/hypotheses.service.ts",
+      "evidence": "SYSREQ-004 implemented in hypotheses.service.ts; served by UC-004 endpoints (listHypotheses, getHypothesis, updateHypothesisStatus).",
+      "notRequiredReason": "SYSREQ-004 is the hypothesis engine behind UC-004; no additional dedicated endpoint.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SYSREQ-005",
+      "requirementType": "SYSREQ",
+      "title": "Persistent session storage with full state restoration",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "SYSREQ-005 implemented via MongoDB persistence in sessions.service.ts + Mongoose schemas. Full state restoration served by getSession (UC-006).",
+      "notRequiredReason": "SYSREQ-005 is the persistence layer behind UC-001/UC-006; served by existing session endpoints.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SYSREQ-007",
+      "requirementType": "SYSREQ",
+      "title": "Specialist agent orchestration and delegation protocol",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/specialists.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/specialists.service.ts",
+      "evidence": "SYSREQ-007 implemented as specialists.service.ts orchestration layer; UC-005 endpoints serve the delegation protocol. INT-003..006 stubs fail-closed.",
+      "notRequiredReason": "SYSREQ-007 is the orchestration layer behind UC-005; served by existing specialist endpoints.",
+      "deferredToIntegration": "INT-003"
+    },
+    {
+      "requirementId": "SYSREQ-008",
+      "requirementType": "SYSREQ",
+      "title": "Anthropic Claude API integration with resilient error handling",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/llm.service.ts",
+      "evidence": "SYSREQ-008 implemented in llm.service.ts with retry (3x, exponential backoff) and circuit breaker. Stub/fail-closed per INT-001 pending OPEN-001/002/006.",
+      "notRequiredReason": "SYSREQ-008 is the LLM API integration layer in llm.service.ts; no dedicated REST endpoint.",
+      "deferredToIntegration": "INT-001"
+    },
+    {
+      "requirementId": "SYSREQ-014",
+      "requirementType": "SYSREQ",
+      "title": "WCAG 2.1 Level AA accessible GoA Design System UI",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "SYSREQ-014 is a UI accessibility requirement deferred to Stage 5. planner-service is a REST API; WCAG compliance belongs to the React frontend (apps/planner-app).",
+      "notRequiredReason": "Stage 5 scope: UI accessibility requirements implemented in client interface build (apps/planner-app), not in planner-service REST API.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SWREQ-001",
+      "requirementType": "SWREQ",
+      "title": "Anthropic SDK integration with conversation context management",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/llm.service.ts",
+      "evidence": "SWREQ-001 implemented in llm.service.ts (Anthropic SDK wrapper stub). Conversation context in messages.service.ts via ConversationMessage entity. INT-001 stub/fail-closed.",
+      "notRequiredReason": "SWREQ-001 is the LLM SDK integration layer in llm.service.ts; no dedicated REST endpoint.",
+      "deferredToIntegration": "INT-001"
+    },
+    {
+      "requirementId": "SWREQ-002",
+      "requirementType": "SWREQ",
+      "title": "Planning session REST API controller",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/sessions.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/sessions.service.ts",
+      "evidence": "SWREQ-002 implemented as sessions.controller.ts (5 endpoints: createSession, listSessions, getSession, updateSession, archiveSession). Serves UC-001, UC-006, SYSREQ-022.",
+      "notRequiredReason": "SWREQ-002 is the sessions controller itself; covered by UC-001 and UC-006 mapped rows.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SWREQ-003",
+      "requirementType": "SWREQ",
+      "title": "BusinessModel Mongoose schema and tenant-scoped repository",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/business-model.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/business-model.service.ts",
+      "evidence": "SWREQ-003 implemented as business-model.schema.ts (Mongoose schema) + business-model.service.ts (tenant-scoped repository). All queries include tenantId per BR-001.",
+      "notRequiredReason": "SWREQ-003 is the data access layer behind UC-003 endpoints; no additional dedicated endpoint.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SWREQ-004",
+      "requirementType": "SWREQ",
+      "title": "Pattern matching service with composite confidence scoring",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/patterns.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/patterns.service.ts",
+      "evidence": "SWREQ-004 implemented in patterns.service.ts with pattern matching engine and confidence scoring triggered by sendMessage response. INT-002 stub.",
+      "notRequiredReason": "SWREQ-004 is the pattern matching engine behind UC-007; served by existing pattern endpoints.",
+      "deferredToIntegration": "INT-002"
+    },
+    {
+      "requirementId": "SWREQ-005",
+      "requirementType": "SWREQ",
+      "title": "SolutionHypothesis generation service triggered by confidence threshold",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/hypotheses.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/hypotheses.service.ts",
+      "evidence": "SWREQ-005 implemented in hypotheses.service.ts: hypothesis generation triggered when pattern confidence exceeds threshold; BR-010 status lifecycle.",
+      "notRequiredReason": "SWREQ-005 is the hypothesis generation engine behind UC-004; served by existing hypothesis endpoints.",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SWREQ-009",
+      "requirementType": "SWREQ",
+      "title": "Domain event publication service wrapping RabbitMQ",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/event.service.ts",
+      "evidence": "SWREQ-009 implemented in event.service.ts: EventPublicationService wraps INT-007 RabbitMQ stub. Domain events logged but not transmitted until INT-007 live.",
+      "notRequiredReason": "SWREQ-009 is the event service layer; deferred to INT-007 stub. No dedicated REST endpoint.",
+      "deferredToIntegration": "INT-007"
+    },
+    {
+      "requirementId": "SWREQ-010",
+      "requirementType": "SWREQ",
+      "title": "React planner workspace UI components using GoA Design System 2.0",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": null,
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": null,
+      "evidence": "SWREQ-010 is a UI component requirement deferred to Stage 5. React UI components implemented in apps/planner-app, not in planner-service REST API.",
+      "notRequiredReason": "Stage 5 scope: React UI components are in the client interface build (apps/planner-app).",
+      "deferredToIntegration": null
+    },
+    {
+      "requirementId": "SWREQ-015",
+      "requirementType": "SWREQ",
+      "title": "LLMCallWrapper with retry and circuit breaker",
+      "priority": "Must",
+      "mappingStatus": "Not Required",
+      "status": "Not Required",
+      "controllerFile": "src/controllers/messages.controller.ts",
+      "operationIds": [],
+      "controllers": [],
+      "httpMethod": null,
+      "urlPattern": null,
+      "serviceFile": "src/services/llm.service.ts",
+      "evidence": "SWREQ-015 implemented in llm.service.ts: LLMCallWrapper with 3 retries (1-16s exponential), circuit breaker (open after 3 failures/30s, close after 60s). INT-001 stub pending OPEN-001/002/006.",
+      "notRequiredReason": "SWREQ-015 is the LLM resilience wrapper in llm.service.ts; no dedicated REST endpoint.",
+      "deferredToIntegration": "INT-001"
+    },
+    {
+      "requirementId": "SYSREQ-026",
+      "requirementType": "SYSREQ",
+      "title": "User identity context endpoint for planner-service JWT claims",
+      "priority": "Should",
+      "mappingStatus": "Mapped",
+      "controllerFile": "src/controllers/user-management.controller.ts",
+      "operationIds": [
+        "getCurrentUserContext"
+      ],
+      "httpMethod": "GET",
+      "urlPattern": "/api/v1/users/me",
+      "serviceFile": "src/services/user-management.service.ts",
+      "evidence": "GET /api/v1/users/me returns the authenticated user profile (userId, tenantId, roles, email, displayName) extracted from the Keycloak JWT via INT-008. Satisfies sitemap user-management page API requirement (FAC-S4-014). Protected B fields returned to authenticated user only; email/displayName never logged.",
+      "notRequiredReason": null,
+      "deferredToIntegration": null,
+      "status": "Mapped",
+      "controllers": [
+        {
+          "operationId": "getCurrentUserContext",
+          "endpoint": "/users/me"
+        }
+      ]
+    }
+  ],
+  "unmappedMustEscalations": [],
+  "totals": {
+    "rows": 48,
+    "mapped": 14,
+    "notRequired": 25,
+    "deferred": 9
+  }
+}

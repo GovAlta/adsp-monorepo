@@ -1,0 +1,250 @@
+{
+  "stage": 4,
+  "deltaFields": {
+    "apiEndpoints": [
+      {
+        "method": "POST",
+        "path": "/sessions",
+        "operationId": "createSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions",
+        "operationId": "listSessions",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}",
+        "operationId": "getSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/sessions/{sessionId}",
+        "operationId": "updateSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}",
+        "operationId": "archiveSession",
+        "controllerFile": "src/controllers/sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}/messages",
+        "operationId": "sendMessage",
+        "controllerFile": "src/controllers/messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/messages",
+        "operationId": "listMessages",
+        "controllerFile": "src/controllers/messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/model",
+        "operationId": "getBusinessModel",
+        "controllerFile": "src/controllers/business-model.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/sessions/{sessionId}/model",
+        "operationId": "updateBusinessModel",
+        "controllerFile": "src/controllers/business-model.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/hypotheses",
+        "operationId": "listHypotheses",
+        "controllerFile": "src/controllers/hypotheses.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/hypotheses/{hypothesisId}",
+        "operationId": "getHypothesis",
+        "controllerFile": "src/controllers/hypotheses.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/sessions/{sessionId}/hypotheses/{hypothesisId}",
+        "operationId": "updateHypothesisStatus",
+        "controllerFile": "src/controllers/hypotheses.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}/specialists",
+        "operationId": "consultSpecialist",
+        "controllerFile": "src/controllers/specialists.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/specialists/{requestId}",
+        "operationId": "getSpecialistRequest",
+        "controllerFile": "src/controllers/specialists.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/sessions/{sessionId}/exports",
+        "operationId": "initiateExport",
+        "controllerFile": "src/controllers/exports.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/exports",
+        "operationId": "listExports",
+        "controllerFile": "src/controllers/exports.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/sessions/{sessionId}/exports/{exportId}",
+        "operationId": "getExport",
+        "controllerFile": "src/controllers/exports.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/patterns",
+        "operationId": "listPatterns",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/patterns",
+        "operationId": "createPattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/patterns/{patternId}",
+        "operationId": "getPattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "path": "/patterns/{patternId}",
+        "operationId": "updatePattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/patterns/{patternId}/deactivate",
+        "operationId": "deactivatePattern",
+        "controllerFile": "src/controllers/patterns.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/audit",
+        "operationId": "listAuditEvents",
+        "controllerFile": "src/controllers/audit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/audit/{eventId}",
+        "operationId": "getAuditEvent",
+        "controllerFile": "src/controllers/audit.controller.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/audit/verify",
+        "operationId": "verifyAuditChain",
+        "controllerFile": "src/controllers/audit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/metrics",
+        "operationId": "getMetrics",
+        "controllerFile": "src/main.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/health",
+        "operationId": "getHealth",
+        "controllerFile": "src/routes/health.routes.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/health/live",
+        "operationId": "getLiveness",
+        "controllerFile": "src/routes/health.routes.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/health/ready",
+        "operationId": "getReadiness",
+        "controllerFile": "src/routes/health.routes.ts"
+      }
+    ],
+    "retryIterations": 2
+  },
+  "artifactsWritten": [
+    "apps/planner-service/openapi.yaml",
+    "apps/planner-service/openapi.json",
+    "apps/planner-service/api-specification.md",
+    "apps/planner-service/src/main.ts",
+    "apps/planner-service/src/types/index.ts",
+    "apps/planner-service/src/middleware/auth.middleware.ts",
+    "apps/planner-service/src/middleware/validation.middleware.ts",
+    "apps/planner-service/src/middleware/error.middleware.ts",
+    "apps/planner-service/src/middleware/audit.middleware.ts",
+    "apps/planner-service/src/middleware/rate-limit.middleware.ts",
+    "apps/planner-service/src/middleware/cors.middleware.ts",
+    "apps/planner-service/src/controllers/sessions.controller.ts",
+    "apps/planner-service/src/controllers/messages.controller.ts",
+    "apps/planner-service/src/controllers/business-model.controller.ts",
+    "apps/planner-service/src/controllers/hypotheses.controller.ts",
+    "apps/planner-service/src/controllers/specialists.controller.ts",
+    "apps/planner-service/src/controllers/exports.controller.ts",
+    "apps/planner-service/src/controllers/patterns.controller.ts",
+    "apps/planner-service/src/controllers/audit.controller.ts",
+    "apps/planner-service/src/services/sessions.service.ts",
+    "apps/planner-service/src/services/messages.service.ts",
+    "apps/planner-service/src/services/business-model.service.ts",
+    "apps/planner-service/src/services/hypotheses.service.ts",
+    "apps/planner-service/src/services/specialists.service.ts",
+    "apps/planner-service/src/services/exports.service.ts",
+    "apps/planner-service/src/services/patterns.service.ts",
+    "apps/planner-service/src/services/audit.service.ts",
+    "apps/planner-service/src/services/llm.service.ts",
+    "apps/planner-service/src/services/event.service.ts",
+    "apps/planner-service/src/services/config.service.ts",
+    "apps/planner-service/src/routes/sessions.routes.ts",
+    "apps/planner-service/src/routes/messages.routes.ts",
+    "apps/planner-service/src/routes/business-model.routes.ts",
+    "apps/planner-service/src/routes/hypotheses.routes.ts",
+    "apps/planner-service/src/routes/specialists.routes.ts",
+    "apps/planner-service/src/routes/exports.routes.ts",
+    "apps/planner-service/src/routes/patterns.routes.ts",
+    "apps/planner-service/src/routes/audit.routes.ts",
+    "apps/planner-service/src/routes/health.routes.ts",
+    "apps/planner-service/src/mongo/schemas/planning-session.schema.ts",
+    "apps/planner-service/src/mongo/schemas/conversation-message.schema.ts",
+    "apps/planner-service/src/mongo/schemas/business-model.schema.ts",
+    "apps/planner-service/src/mongo/schemas/business-concept.schema.ts",
+    "apps/planner-service/src/mongo/schemas/concept-relationship.schema.ts",
+    "apps/planner-service/src/mongo/schemas/hypothesis-record.schema.ts",
+    "apps/planner-service/src/mongo/schemas/specialist-request.schema.ts",
+    "apps/planner-service/src/mongo/schemas/export-record.schema.ts",
+    "apps/planner-service/src/mongo/schemas/business-pattern.schema.ts",
+    "apps/planner-service/src/mongo/schemas/audit-event.schema.ts",
+    "apps/planner-service/src/mongo/schemas/tenant-config.schema.ts",
+    "apps/planner-service/src/config/database.ts",
+    "apps/planner-service/src/config/environment.ts",
+    "apps/planner-service/README.md",
+    "apps/planner-service/Dockerfile",
+    "apps/planner-service/package.json",
+    "apps/planner-service/tsconfig.json",
+    "apps/planner-service/jest.config.ts",
+    "apps/planner-service/test-traceability-report.md",
+    "apps/planner-service/compliance-report.md",
+    "apps/planner-service/agent-artifacts/integration-config-status.json",
+    "apps/planner-service/agent-artifacts/integration-config.template.env",
+    "apps/planner-service/agent-artifacts/skeleton_integrations_manifest.md",
+    "requirements/database/requirements-to-controller-mapping.json",
+    "requirements/audit/stage-4-validation-log.json",
+    "requirements/audit/working-state-delta.json",
+    "requirements/audit/stage-progress.json"
+  ]
+}

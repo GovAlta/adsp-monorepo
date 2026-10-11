@@ -1,0 +1,43 @@
+{
+  "stage": 2,
+  "deltaFields": {
+    "audiences": [
+      "GoA Business Analyst",
+      "GoA Developer",
+      "ADSP Tenant Administrator",
+      "ADSP Platform Team",
+      "GoA Program Manager"
+    ],
+    "journeyMapCount": 5,
+    "sitemapPageCount": 12,
+    "futureStateOpportunityIds": [
+      "FS-001",
+      "FS-002",
+      "FS-003",
+      "FS-004",
+      "FS-005",
+      "FS-006",
+      "FS-007",
+      "FS-008",
+      "FS-009",
+      "FS-010",
+      "FS-011",
+      "FS-012"
+    ]
+  },
+  "artifactsWritten": [
+    "requirements/services/service-description.json",
+    "requirements/services/audience-identification.json",
+    "requirements/services/journey-map-goa-business-analyst.json",
+    "requirements/services/journey-map-goa-developer.json",
+    "requirements/services/journey-map-adsp-tenant-administrator.json",
+    "requirements/services/journey-map-adsp-platform-team.json",
+    "requirements/services/journey-map-goa-program-manager.json",
+    "requirements/services/future-state.json",
+    "requirements/services/sitemap.json",
+    "requirements/audit/stage-2-validation-log.json",
+    "requirements/audit/working-state-delta.json",
+    "requirements/audit/stage-progress.json",
+    "requirements/audit/stage-2-heartbeat.log"
+  ]
+}

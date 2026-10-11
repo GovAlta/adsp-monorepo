@@ -1,0 +1,252 @@
+{
+  "pageId": "pattern-editor",
+  "pageType": "edit-form",
+  "title": "Pattern Editor",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "accessControl": {
+    "requiredRoles": ["planner-admin", "tenant-admin"],
+    "deniedRoles": ["planner-user"],
+    "deniedResponse": "403",
+    "deniedMessage": "You do not have permission to edit business patterns. Contact your tenant administrator to request access.",
+    "testCoverageIds": ["TC-036"]
+  },
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Administration", "nodeId": "admin-hub" },
+      { "label": "Pattern Library", "nodeId": "pattern-library" },
+      { "label": "Pattern Editor", "nodeId": "pattern-editor" }
+    ],
+    "parentNodeId": "pattern-library",
+    "childNodeIds": [],
+    "siblingNodeIds": []
+  },
+  "sections": {
+    "formIntro": {
+      "createMode": {
+        "title": "Create Business Pattern",
+        "description": "Define a new business pattern template. The AI Planning Agent will use this pattern when matching planning session content to recommend ADSP service compositions.",
+        "mode": "create"
+      },
+      "editMode": {
+        "title": "Edit Business Pattern",
+        "description": "Update this pattern template. Changes take effect immediately for new planning sessions. Existing sessions are not retroactively affected.",
+        "mode": "edit"
+      }
+    },
+    "formFields": [
+      {
+        "label": "Pattern Name",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Citizen Notification Workflow",
+        "helpText": "Must be unique within your tenant. Used as the display label when the Planning Agent suggests this pattern.",
+        "validationRules": [
+          { "rule": "required", "message": "Pattern name is required." },
+          { "rule": "maxLength", "value": 120, "message": "Pattern name must not exceed 120 characters." },
+          { "rule": "unique-per-tenant", "message": "A pattern with this name already exists for this tenant. Choose a different name.", "serverValidated": true, "errorCode": "400", "testCoverageIds": ["TC-029"] }
+        ],
+        "securityNote": "Input is sanitized server-side against XSS injection per SYSREQ-024 Zod validation.",
+        "testCoverageIds": ["TC-029", "TC-052"]
+      },
+      {
+        "label": "Description",
+        "name": "description",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Describe the business scenario or workflow this pattern represents...",
+        "helpText": "Describe the business pattern this template represents. This text helps the Planning Agent understand when to apply this pattern.",
+        "validationRules": [
+          { "rule": "required", "message": "Description is required." },
+          { "rule": "maxLength", "value": 2000, "message": "Description must not exceed 2000 characters." }
+        ],
+        "testCoverageIds": ["TC-029"]
+      },
+      {
+        "label": "Status",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "helpText": "Active patterns are used by the Planning Agent. Inactive patterns are retained for audit purposes but excluded from matching.",
+        "options": [
+          { "value": "active", "label": "Active" },
+          { "value": "inactive", "label": "Inactive" }
+        ],
+        "defaultValue": "active",
+        "validationRules": [
+          { "rule": "required", "message": "Status is required." }
+        ],
+        "testCoverageIds": ["TC-028", "TC-029"]
+      },
+      {
+        "label": "Keywords",
+        "name": "keywords",
+        "type": "tag-input",
+        "required": false,
+        "placeholder": "Add a keyword and press Enter",
+        "helpText": "Press Enter to add keywords that help match this pattern. Keywords are used by the Planning Agent for semantic matching.",
+        "validationRules": [
+          { "rule": "maxItems", "value": 20, "message": "A pattern may not have more than 20 keywords." },
+          { "rule": "maxItemLength", "value": 50, "message": "Each keyword must not exceed 50 characters." }
+        ],
+        "testCoverageIds": ["TC-029"]
+      },
+      {
+        "label": "Service Affinity",
+        "name": "serviceAffinity",
+        "type": "multi-select",
+        "required": false,
+        "helpText": "Select ADSP services this pattern typically requires. Used to pre-populate specialist consultations when this pattern is matched.",
+        "options": [
+          { "value": "form-service", "label": "Form Service" },
+          { "value": "pdf-service", "label": "PDF Generation Service" },
+          { "value": "comment-service", "label": "Comment Service" },
+          { "value": "notification-service", "label": "Notification Service" },
+          { "value": "file-service", "label": "File Service" },
+          { "value": "directory-service", "label": "Directory Service" },
+          { "value": "event-service", "label": "Event Service" },
+          { "value": "task-service", "label": "Task Service" }
+        ],
+        "validationRules": [],
+        "testCoverageIds": ["TC-029"]
+      },
+      {
+        "label": "Match Threshold",
+        "name": "matchThreshold",
+        "type": "number",
+        "required": true,
+        "placeholder": "e.g. 70",
+        "helpText": "Minimum confidence score (0-100) required for the Planning Agent to suggest this pattern during a session. Lower values result in more frequent suggestions.",
+        "validationRules": [
+          { "rule": "required", "message": "Match threshold is required." },
+          { "rule": "min", "value": 0, "message": "Match threshold must be between 0 and 100." },
+          { "rule": "max", "value": 100, "message": "Match threshold must be between 0 and 100." },
+          { "rule": "integer", "message": "Match threshold must be a whole number." }
+        ],
+        "testCoverageIds": ["TC-029"]
+      }
+    ],
+    "formActions": {
+      "primaryLabel": "Save Pattern",
+      "primaryOperationId": {
+        "createMode": "createPattern",
+        "editMode": "updatePattern"
+      },
+      "cancelLabel": "Cancel",
+      "cancelTarget": "pattern-library",
+      "deleteLabel": "Deactivate Pattern",
+      "deleteOperationId": "deactivatePattern",
+      "deleteNote": "Soft-deactivate only — pattern is retained for audit purposes and set to status=inactive. Hard delete is not available from the UI. Sets status to inactive and writes HMAC audit entry per BR-008.",
+      "deleteAvailableInModes": ["edit"],
+      "testCoverageIds": ["TC-029", "TC-082", "TC-083"]
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "getPattern",
+        "method": "GET",
+        "path": "/api/v1/patterns/{patternId}",
+        "description": "Fetch existing pattern data to pre-populate all form fields. Only invoked in edit mode when patternId is present in route params. INT-002 stub.",
+        "bindsTo": "pattern",
+        "applicableMode": "edit"
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "createPattern",
+        "method": "POST",
+        "path": "/api/v1/patterns",
+        "description": "Create a new business pattern. Requires planner-admin or tenant-admin role (BR-007). Writes HMAC audit entry (BR-008). INT-002 stub returns 503.",
+        "triggeredBy": "Save Pattern (create mode)",
+        "auditNote": "Audit event written per BR-008. HMAC chain updated (TC-082, TC-083).",
+        "applicableMode": "create"
+      },
+      {
+        "operationId": "updatePattern",
+        "method": "PUT",
+        "path": "/api/v1/patterns/{patternId}",
+        "description": "Update an existing business pattern. Requires planner-admin or tenant-admin role (BR-007). Writes HMAC audit entry (BR-008). INT-002 stub returns 503.",
+        "triggeredBy": "Save Pattern (edit mode)",
+        "auditNote": "Audit event written per BR-008. HMAC chain updated (TC-082, TC-083).",
+        "applicableMode": "edit"
+      },
+      {
+        "operationId": "deactivatePattern",
+        "method": "PUT",
+        "path": "/api/v1/patterns/{patternId}/deactivate",
+        "description": "Soft-deactivate a business pattern. Sets status to inactive. Retained for audit trail. Requires planner-admin or tenant-admin role (BR-007). Writes HMAC audit entry (BR-008).",
+        "triggeredBy": "Deactivate Pattern button (edit mode only)",
+        "auditNote": "Audit event written per BR-008. HMAC chain updated (TC-082, TC-083).",
+        "applicableMode": "edit"
+      }
+    ],
+    "validationErrors": [
+      "400 — pattern name already exists within tenant (duplicate name validation)",
+      "413 — request payload too large (pattern description or keywords exceeds server limit)",
+      "422 — pattern schema invalid (malformed field values fail Zod validation)"
+    ],
+    "emptyState": null
+  },
+  "errorStates": [
+    {
+      "condition": "400 — duplicate pattern name within tenant",
+      "display": "Inline validation error on the Pattern Name field: 'A pattern with this name already exists for this tenant. Choose a different name.'",
+      "testCoverageIds": ["TC-029"]
+    },
+    {
+      "condition": "413 — payload too large",
+      "display": "Page-level error banner: 'Your pattern content is too large to save. Shorten the description or reduce the number of keywords and try again.'",
+      "testCoverageIds": ["TC-053"]
+    },
+    {
+      "condition": "422 — schema invalid (malformed pattern data)",
+      "display": "Page-level error banner: 'The pattern data contains invalid values. Review all fields and correct any errors before saving.' Field-level errors shown where applicable.",
+      "testCoverageIds": ["TC-054"]
+    },
+    {
+      "condition": "503 — INT-002 Config Service stub unavailable",
+      "display": "Page-level warning banner: 'Pattern management is temporarily unavailable. The pattern service is being provisioned. Your changes have not been saved.'",
+      "testCoverageIds": ["TC-029"]
+    },
+    {
+      "condition": "403 — insufficient role on save attempt",
+      "display": "Page-level error banner: 'You do not have permission to save pattern changes.'",
+      "testCoverageIds": ["TC-036"]
+    },
+    {
+      "condition": "404 — pattern not found on edit mode load",
+      "display": "Page-level error: 'The requested pattern could not be found. It may have been deactivated or deleted. Return to Pattern Library.'",
+      "testCoverageIds": ["TC-029"]
+    },
+    {
+      "condition": "XSS attempt in pattern name field",
+      "display": "Input is sanitized server-side via Zod validation. Client-side: field value is bound as text content (not innerHTML). No script execution risk.",
+      "testCoverageIds": ["TC-052"]
+    }
+  ],
+  "accessibility": {
+    "keyboardNavigation": "All form fields are reachable by Tab key. Validation errors are announced via aria-live regions. Save Pattern and Deactivate Pattern buttons have descriptive aria-labels.",
+    "contrastRequirement": "Meets WCAG 2.1 AA contrast ratio for all form labels, help text, validation messages, and action buttons.",
+    "testCoverageIds": ["TC-055", "TC-057"]
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["pattern-editor"],
+    "apiOperationIds": ["getPattern", "createPattern", "updatePattern", "deactivatePattern"],
+    "useCases": ["UC-010"],
+    "testCases": ["TC-028", "TC-029", "TC-052", "TC-053", "TC-054", "TC-055", "TC-057", "TC-082", "TC-083"],
+    "integrationPoints": [
+      {
+        "intId": "INT-002",
+        "service": "ADSP Config Service",
+        "status": "Stub",
+        "stubNote": "createPattern and updatePattern return 503 while INT-002 is stub. deactivatePattern also returns 503 stub. Page displays stub warning banner in all submit scenarios."
+      }
+    ],
+    "dualModeNote": "Pattern editor operates in create mode (no patternId route param) and edit mode (patternId present). Breadcrumb label and formIntro title change per mode. deleteOperationId (Deactivate Pattern) only visible in edit mode.",
+    "securityNote": "businessPattern.name, description, and keywords are tenant-scoped configuration, not Protected B data. XSS protection (TC-052) is enforced server-side via Zod schema validation (SYSREQ-024). No Protected B fields are rendered or submitted on this page. No browser storage writes of sensitive data."
+  }
+}

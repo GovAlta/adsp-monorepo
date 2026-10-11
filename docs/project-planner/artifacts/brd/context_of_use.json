@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "userGroups": [
+    {
+      "name": "Business Analysts",
+      "frequencyOfUse": "Weekly to daily during active project planning phases",
+      "experience": "Low to medium technical proficiency; domain experts in GoA business processes with limited ADSP architectural knowledge",
+      "accessibilityConsiderations": "May require screen reader support and keyboard-only navigation; must meet WCAG 2.1 Level AA"
+    },
+    {
+      "name": "Developers",
+      "frequencyOfUse": "As needed when scoping new application features or planning ADSP integrations",
+      "experience": "High technical proficiency; familiar with REST APIs, TypeScript, and ADSP service documentation",
+      "accessibilityConsiderations": "Standard WCAG 2.1 Level AA requirements apply"
+    },
+    {
+      "name": "Tenant Administrators",
+      "frequencyOfUse": "Infrequently — primarily when adding, updating, or deactivating business pattern templates",
+      "experience": "Medium technical proficiency; familiar with TMW administrative interface and ADSP configuration concepts",
+      "accessibilityConsiderations": "Standard WCAG 2.1 Level AA requirements apply"
+    }
+  ],
+  "tasks": [
+    {
+      "name": "Start a planning session",
+      "goal": "Initiate a new PlanningSession to begin exploring an ADSP-based solution for a business problem",
+      "userGroups": ["Business Analysts", "Developers"]
+    },
+    {
+      "name": "Describe business problem through conversation",
+      "goal": "Engage with the Planning Agent to build a structured BusinessModel from natural language descriptions over multiple turns",
+      "userGroups": ["Business Analysts", "Developers"]
+    },
+    {
+      "name": "Review and refine business model",
+      "goal": "Review the Planning Agent's structured business concept extraction, correct misclassifications, and confirm accuracy before hypothesis generation",
+      "userGroups": ["Business Analysts", "Developers"]
+    },
+    {
+      "name": "Review solution hypothesis",
+      "goal": "Evaluate the proposed ADSP service composition presented in plain language with reasoning, and accept or request revision",
+      "userGroups": ["Business Analysts", "Developers"]
+    },
+    {
+      "name": "Consult specialist agent",
+      "goal": "Obtain deep technical guidance on a specific ADSP service (form, PDF, comment, notification) from the appropriate specialist agent",
+      "userGroups": ["Developers"]
+    },
+    {
+      "name": "Resume interrupted session",
+      "goal": "Reopen a paused planning session and continue from the last saved state without re-entering information",
+      "userGroups": ["Business Analysts", "Developers"]
+    },
+    {
+      "name": "Manage business pattern library",
+      "goal": "Create, update, or deactivate tenant-scoped business pattern templates to improve pattern matching accuracy",
+      "userGroups": ["Tenant Administrators"]
+    },
+    {
+      "name": "Export session plan",
+      "goal": "Download a completed session plan as a structured document for sharing with stakeholders or storing in a project management tool",
+      "userGroups": ["Business Analysts", "Developers"]
+    }
+  ],
+  "technicalEnvironment": [
+    "Desktop browser (Chrome, Edge, Firefox) on government workstations",
+    "Government network with firewall restrictions on outbound connections",
+    "Tenant Management Webapp (TMW) as the host application shell",
+    "ADSP Platform with Keycloak SSO authentication",
+    "React 18 + GoA Design System 2.0 frontend",
+    "Node.js 22 + Express 5 backend on ADSP-provisioned infrastructure"
+  ],
+  "physicalEnvironment": [
+    "GoA government office environment or approved remote work location",
+    "Standard government workstation with widescreen display and keyboard/mouse",
+    "Stable internet connection to GoA network (VPN for remote workers)"
+  ]
+}

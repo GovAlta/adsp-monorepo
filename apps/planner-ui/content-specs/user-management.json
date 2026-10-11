@@ -1,0 +1,337 @@
+{
+  "pageId": "user-management",
+  "pageType": "user-management",
+  "title": "User Management",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "roles": ["tenant-admin"],
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Administration", "nodeId": "admin-hub", "href": "/admin" },
+      { "label": "User Management", "nodeId": "user-management", "href": "/admin/user-management", "current": true }
+    ],
+    "parentNodeId": "admin-hub",
+    "childNodeIds": [],
+    "siblingNodeIds": ["pattern-library", "session-history", "audit-log"]
+  },
+  "sections": {
+    "toolbar": {
+      "searchPlaceholder": "Search by name or email",
+      "searchDescription": "Filters the currently loaded user list by displayName or email. Applied client-side against the current page of results. Does not trigger a new API call on each keystroke.",
+      "primaryAction": {
+        "label": "Invite User",
+        "opens": "inviteModal",
+        "roleGating": ["tenant-admin"],
+        "description": "Opens the Invite User modal to send a new user invitation and assign an initial planner-service role. Not available to planner-admin."
+      }
+    },
+    "filterDrawer": {
+      "filters": [
+        {
+          "label": "Role",
+          "name": "role",
+          "type": "select",
+          "options": [
+            { "value": "", "label": "All Roles" },
+            { "value": "planner-user", "label": "Planner User" },
+            { "value": "planner-admin", "label": "Planner Admin" }
+          ],
+          "description": "Filter users by assigned planner-service role"
+        },
+        {
+          "label": "Status",
+          "name": "status",
+          "type": "select",
+          "options": [
+            { "value": "", "label": "All" },
+            { "value": "active", "label": "Active" },
+            { "value": "inactive", "label": "Inactive" }
+          ],
+          "description": "Filter users by account status"
+        }
+      ]
+    },
+    "userTable": {
+      "columns": [
+        {
+          "header": "Name",
+          "key": "displayName",
+          "sortable": true,
+          "isProtected": false,
+          "description": "User display name from Keycloak JWT claims"
+        },
+        {
+          "header": "Email",
+          "key": "email",
+          "sortable": false,
+          "isProtected": true,
+          "classification": "Protected A",
+          "description": "User email address. Protected A field — visible in full to tenant-admin; masked (***@domain.ca) to planner-admin.",
+          "securityNote": "FAC-S5-025: email is Protected A. Use MaskedField component for planner-admin view. Full email rendered to tenant-admin only. Annotate component with // ASVS:V-8.3.1 // CAS:RULE-017",
+          "maskPattern": "***@domain",
+          "roleVisibility": {
+            "tenant-admin": "full",
+            "planner-admin": "masked"
+          }
+        },
+        {
+          "header": "Role",
+          "key": "roles",
+          "sortable": true,
+          "isProtected": false,
+          "description": "Current planner-service role assignment: planner-user or planner-admin"
+        },
+        {
+          "header": "Last Activity",
+          "key": "lastActivityAt",
+          "sortable": true,
+          "isProtected": false,
+          "type": "date"
+        },
+        {
+          "header": "Status",
+          "key": "status",
+          "sortable": false,
+          "isProtected": false,
+          "type": "badge",
+          "badgeVariants": {
+            "active": "success",
+            "inactive": "neutral"
+          }
+        }
+      ]
+    },
+    "rowActions": [
+      {
+        "label": "Edit Role",
+        "variant": "secondary",
+        "type": "inline-dropdown",
+        "operationId": "updateUser",
+        "description": "Inline role selector to change user planner-service role between planner-user and planner-admin. On selection change triggers updateUser PATCH with new role value. Server generates audit event per BR-008 and SN-012.",
+        "condition": "row.status === 'active'",
+        "roleGating": ["tenant-admin"],
+        "options": [
+          { "value": "planner-user", "label": "Planner User" },
+          { "value": "planner-admin", "label": "Planner Admin" }
+        ],
+        "auditNote": "TC-082: Role change generates immutable audit event server-side via updateUser (BR-008). Client does not need to trigger audit logging."
+      },
+      {
+        "label": "Deactivate",
+        "variant": "destructive",
+        "type": "button-with-confirm",
+        "operationId": "deactivateUser",
+        "description": "Soft-deactivates the user account within the tenant. Prompts a confirmation dialog before proceeding. Server generates audit event per BR-008.",
+        "condition": "row.status === 'active'",
+        "roleGating": ["tenant-admin"],
+        "confirmDialog": {
+          "title": "Deactivate User",
+          "body": "Are you sure you want to deactivate this user? They will no longer be able to access the ADSP Project Planner.",
+          "confirmLabel": "Deactivate",
+          "cancelLabel": "Cancel"
+        }
+      }
+    ],
+    "inviteModal": {
+      "title": "Invite User",
+      "description": "Send an invitation to a new user and assign their initial planner-service role within this tenant. Invitation is sent via createUser POST to /api/v1/users.",
+      "fields": [
+        {
+          "label": "Email Address",
+          "name": "email",
+          "type": "email",
+          "required": true,
+          "description": "Recipient GoA email address",
+          "validation": "Required. Must be a valid email address format.",
+          "securityNote": "FAC-S5-026: Email entered in modal is held as component state only. Not written to localStorage or sessionStorage. Cleared on modal close or success."
+        },
+        {
+          "label": "Role",
+          "name": "role",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "planner-user", "label": "Planner User" },
+            { "value": "planner-admin", "label": "Planner Admin" }
+          ],
+          "description": "Initial role assignment for the invited user within this tenant"
+        },
+        {
+          "label": "Display Name",
+          "name": "displayName",
+          "type": "text",
+          "required": false,
+          "description": "Optional display name. If omitted, identity will be resolved from Keycloak on the user's first login."
+        }
+      ],
+      "submitLabel": "Send Invitation",
+      "cancelLabel": "Cancel",
+      "submitOperationId": "createUser",
+      "submitMethod": "POST",
+      "submitPath": "/api/v1/users",
+      "successMessage": "Invitation sent. The user will receive an email with instructions to access the ADSP Project Planner.",
+      "errorStates": [
+        {
+          "condition": "400 — email already exists in tenant",
+          "message": "A user with this email address already exists in your tenant."
+        },
+        {
+          "condition": "403 — insufficient role to invite",
+          "message": "You do not have permission to invite users."
+        }
+      ]
+    },
+    "pagination": {
+      "perPage": 20,
+      "description": "Server-side pagination via page and pageSize params on GET /api/v1/users"
+    },
+    "emptyState": {
+      "message": "No users have been added to this tenant yet."
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "listUsers",
+        "method": "GET",
+        "path": "/api/v1/users",
+        "description": "Fetches paginated list of users in the current tenant with their assigned roles, status, and last activity. Requires planner-admin or tenant-admin role.",
+        "bindsTo": "userTable",
+        "queryParams": ["page", "pageSize"],
+        "securityNote": "FAC-S5-024: No Protected A fields (email, displayName) are passed as URL query params. Only standard pagination params used."
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "createUser",
+        "method": "POST",
+        "path": "/api/v1/users",
+        "description": "Creates (invites) a new user with initial role. Triggered by Invite User modal submit action.",
+        "bindsTo": "inviteModal",
+        "requestBody": { "email": "string", "role": "planner-user|planner-admin", "displayName": "string (optional)" },
+        "securityNote": "FAC-S5-024: Email and role are submitted in POST request body, never in URL query string. FAC-S5-026: Modal form state cleared after submit."
+      },
+      {
+        "operationId": "updateUser",
+        "method": "PATCH",
+        "path": "/api/v1/users/{userId}",
+        "description": "Updates user role assignment. Triggered by Edit Role inline dropdown selection change. Generates server-side audit event per BR-008 (TC-082).",
+        "bindsTo": "rowActions[editRole]",
+        "requestBody": { "role": "planner-user|planner-admin" },
+        "securityNote": "FAC-S5-024: userId is a route parameter only (/users/{userId}). Role value is submitted in PATCH request body."
+      },
+      {
+        "operationId": "deactivateUser",
+        "method": "DELETE",
+        "path": "/api/v1/users/{userId}",
+        "description": "Soft-deactivates user account within tenant after confirmation dialog. Generates server-side audit event per BR-008.",
+        "bindsTo": "rowActions[deactivate]",
+        "securityNote": "FAC-S5-024: userId is a route parameter only. No body params. Deactivation is a soft delete (status=inactive)."
+      }
+    ],
+    "validationErrors": [
+      {
+        "field": "email",
+        "condition": "empty or invalid email format",
+        "message": "Please enter a valid email address."
+      },
+      {
+        "field": "role",
+        "condition": "not selected",
+        "message": "Please select a role for this user."
+      }
+    ],
+    "emptyState": "No users have been added to this tenant yet."
+  },
+  "accessControl": {
+    "roles": ["tenant-admin"],
+    "restrictedRoles": ["planner-admin"],
+    "restrictedNote": "planner-admin can read the user list (listUsers) but all write row actions (Edit Role, Deactivate) and the Invite User button are hidden. Email column is masked to ***@domain for planner-admin.",
+    "deniedRoles": ["planner-user"],
+    "deniedMessage": "You do not have permission to access User Management. This area is restricted to tenant administrators.",
+    "deniedTCs": ["TC-036", "TC-039"]
+  },
+  "errorStates": [
+    {
+      "condition": "403 — planner-user attempts to access User Management",
+      "type": "page-level-error",
+      "message": "You do not have permission to access User Management.",
+      "tcReference": ["TC-036", "TC-039"]
+    },
+    {
+      "condition": "listUsers returns empty set",
+      "type": "empty-state",
+      "message": "No users have been added to this tenant yet."
+    },
+    {
+      "condition": "503 — listUsers service unavailable",
+      "type": "inline-error-banner",
+      "message": "User list is temporarily unavailable. Please try again in a few moments."
+    },
+    {
+      "condition": "createUser 400 — email already exists",
+      "type": "modal-field-error",
+      "field": "email",
+      "message": "A user with this email address already exists in your tenant."
+    },
+    {
+      "condition": "updateUser 404 — user not found",
+      "type": "row-level-error",
+      "message": "User not found. The user list will refresh."
+    }
+  ],
+  "securityContext": {
+    "classificationLevel": "Protected A",
+    "protectedFields": [
+      {
+        "field": "user.email",
+        "classification": "Protected A (admin operational data)",
+        "maskingRule": "FAC-S5-025: email rendered full to tenant-admin; masked (***@domain) to planner-admin using MaskedField component",
+        "annotation": "// ASVS:V-8.3.1 // CAS:RULE-017",
+        "storageNote": "FAC-S5-026: Email collected in invite modal as form state only. Cleared on modal close or success. Never written to localStorage or sessionStorage."
+      },
+      {
+        "field": "user.displayName",
+        "classification": "Protected A (admin operational data)",
+        "maskingRule": "No masking required for displayName — non-sensitive display data rendered as-is."
+      }
+    ],
+    "urlLeakageNote": "FAC-S5-024: Email and role values are submitted in POST/PATCH request bodies (inviteModal via createUser, role edit via updateUser). userId appears as route parameter only (/users/{userId}). No Protected A fields placed in URL query strings.",
+    "storageNote": "FAC-S5-026: No user PII (email, displayName) written to localStorage or sessionStorage. User list data held in component state. Invite form fields are component state; cleared on modal close or successful submission."
+  },
+  "auditTrail": {
+    "sysReq": "SN-012",
+    "businessRule": "BR-008",
+    "description": "All role changes (updateUser PATCH) and account deactivations (deactivateUser DELETE) generate immutable audit events server-side per BR-008. Client spec does not trigger audit logging directly — it is server-side behaviour transparent to the UI.",
+    "tcCoverage": ["TC-082"]
+  },
+  "scopeNote": "tenant-admin role itself is managed via Keycloak directly and is outside scope for this page. This page manages planner-service roles only: planner-user and planner-admin assignments within the tenant.",
+  "tcCoverage": {
+    "covered": ["TC-036", "TC-039", "TC-055", "TC-057", "TC-082"],
+    "description": "TC-036: planner-user denied admin access (403 error state). TC-039: no-role user denied (403 error state). TC-055: keyboard navigation for toolbar search, filter drawer, table rows, row action dropdowns, and invite modal form fields. TC-057: colour contrast for status badges, error states, and destructive action buttons. TC-082: audit event generated on role change via updateUser — verified by checking audit log after role edit."
+  },
+  "policyNotices": [
+    {
+      "policy": "SN-012",
+      "description": "All user role assignments and deactivations are recorded in the immutable audit log per SN-012."
+    },
+    {
+      "policy": "BR-016",
+      "description": "Role assignment is governed by BR-016. tenant-admin role itself is managed via Keycloak directly and is out of scope for this page."
+    },
+    {
+      "policy": "BR-008",
+      "description": "Write operations (createUser, updateUser, deactivateUser) generate audit events server-side per BR-008."
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["user-management", "admin-hub"],
+    "apiOperationIds": ["listUsers", "createUser", "updateUser", "deactivateUser"],
+    "ucCoverage": [],
+    "tcCoverage": ["TC-036", "TC-039", "TC-055", "TC-057", "TC-082"],
+    "brCoverage": ["BR-008", "BR-016"],
+    "note": "No dedicated UC in use_cases.json for user-management. Governed by BR-016 (role assignment) and SN-012 (audit trail on role change). Full Keycloak tenant-admin role management is delegated to ADSP Access Service and is out of scope. This page manages planner-service roles only. createUser (POST /api/v1/users) used for invite flow — verified in openapi.yaml at line 1077."
+  }
+}

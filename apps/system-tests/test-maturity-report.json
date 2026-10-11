@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "maturityScore": "4.84",
+  "capabilityLevel": "4",
+  "subMetrics": {
+    "assertionDensityPerFile": "33.51",
+    "negativePathRatio": "0.89",
+    "boundaryCompletenessRatio": "1.00",
+    "integrationAspectCompleteness": "1.00",
+    "shortStubRatio": "0.00",
+    "traceabilityDensity": "7.30"
+  },
+  "coverageGaps": [
+    "Response-contract schema validation deferred — no contract-test-report.json; run npm install && npx jest contract/ after Testcontainers provisioned",
+    "k6 performance smoke runs deferred — k6 not installed in pipeline; run k6 run perf/*.k6.js after provisioning",
+    "INT-001..INT-006 failure-mode tests deferred — all 6 INTs at Stub status; unblocks when promoted to Live"
+  ],
+  "weakDesignObservations": [
+    "6 of 8 INTs (INT-001..006) are Stub; failure-mode (timeout/5xx/circuit-breaker) tests cannot be written against a stub — largest residual risk surface",
+    "LLM hypothesis generation (INT-001) is fail-closed stub; UC-002/UC-004 LLM paths TEST-DEFERRED until INT-001 promoted to Live",
+    "Traceability density 7.30 TC/UC (73 files / 10 UCs) — well above Level 4 threshold; cross-system E2E coverage extends density significantly beyond Stage 4 unit tests alone"
+  ]
+}

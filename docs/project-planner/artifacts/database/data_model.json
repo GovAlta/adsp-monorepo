@@ -1,0 +1,311 @@
+{
+  "$schemaVersion": "1.0",
+  "generatedAt": "2026-10-10T00:00:00Z",
+  "namingConvention": {
+    "database": "snake_case",
+    "api": "camelCase"
+  },
+  "entities": [
+    {
+      "name": "planning_session",
+      "openApiSchemaName": "PlanningSession",
+      "description": "Persistent planning session. MongoDB collection: planningSessions. BR-001, SYSREQ-005, SYSREQ-010.",
+      "primaryKey": {"constraintName": "pk_planning_session", "columns": ["session_id"]},
+      "columns": [
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "PlanningSession.sessionId"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string", "sourceField": "PlanningSession.tenantId"},
+        {"name": "user_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "userId", "openApiType": "string", "sourceField": "PlanningSession.userId"},
+        {"name": "status", "sqlType": "VARCHAR(20)", "nullable": false, "openApiPropertyName": "status", "openApiType": "string", "sourceField": "PlanningSession.status"},
+        {"name": "title", "sqlType": "VARCHAR(200)", "nullable": true, "openApiPropertyName": "title", "openApiType": "string", "sourceField": "PlanningSession.title"},
+        {"name": "business_model_id", "sqlType": "VARCHAR(36)", "nullable": true, "openApiPropertyName": "businessModelId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "PlanningSession.businessModelId"},
+        {"name": "last_resumed_at", "sqlType": "TIMESTAMP", "nullable": true, "openApiPropertyName": "lastResumedAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "PlanningSession.lastResumedAt"},
+        {"name": "created_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "createdAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "PlanningSession.createdAt"},
+        {"name": "updated_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "updatedAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "PlanningSession.updatedAt"}
+      ],
+      "checkConstraints": [
+        {"constraintName": "ck_planning_session_status", "columns": ["status"], "expression": "status IN ('active', 'paused', 'completed', 'archived')", "enforcedBusinessRule": "BR-010"}
+      ]
+    },
+    {
+      "name": "business_model",
+      "openApiSchemaName": "BusinessModel",
+      "description": "Business model with embedded concepts (concepts[] stored as MongoDB embedded docs). MongoDB collection: businessModels. SYSREQ-002, BR-004, SWREQ-003.",
+      "primaryKey": {"constraintName": "pk_business_model", "columns": ["model_id"]},
+      "columns": [
+        {"name": "model_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "modelId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "BusinessModel.modelId"},
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "BusinessModel.sessionId"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string", "sourceField": "BusinessModel.tenantId"},
+        {"name": "confidence_score", "sqlType": "INTEGER", "nullable": false, "openApiPropertyName": "confidenceScore", "openApiType": "integer", "sourceField": "BusinessModel.confidenceScore"},
+        {"name": "version", "sqlType": "INTEGER", "nullable": false, "defaultValue": "1", "openApiPropertyName": "version", "openApiType": "integer", "sourceField": "BusinessModel.version"},
+        {"name": "matched_pattern_id", "sqlType": "VARCHAR(36)", "nullable": true, "openApiPropertyName": "matchedPatternId", "openApiType": "string", "sourceField": "BusinessModel.matchedPatternId"},
+        {"name": "created_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "createdAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "BusinessModel.createdAt"},
+        {"name": "updated_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "updatedAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "BusinessModel.updatedAt"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_business_model_session", "columns": ["session_id"], "referencesEntity": "planning_session", "referencesColumns": ["session_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ]
+    },
+    {
+      "name": "business_concept",
+      "openApiSchemaName": "BusinessConcept",
+      "description": "Business concept. MongoDB storage: embedded in businessModels.concepts[]. Normalized to separate DDL table for schema validation. BR-006 (conceptType enum).",
+      "primaryKey": {"constraintName": "pk_business_concept", "columns": ["concept_id"]},
+      "columns": [
+        {"name": "concept_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "conceptId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "BusinessConcept.conceptId"},
+        {"name": "model_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "modelId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "concept_type", "sqlType": "VARCHAR(50)", "nullable": false, "openApiPropertyName": "conceptType", "openApiType": "string", "sourceField": "BusinessConcept.conceptType"},
+        {"name": "name", "sqlType": "VARCHAR(200)", "nullable": false, "openApiPropertyName": "name", "openApiType": "string", "sourceField": "BusinessConcept.name"},
+        {"name": "description", "sqlType": "TEXT", "nullable": true, "openApiPropertyName": "description", "openApiType": "string", "sourceField": "BusinessConcept.description"},
+        {"name": "source_text", "sqlType": "TEXT", "nullable": true, "openApiPropertyName": "sourceText", "openApiType": "string", "sourceField": "BusinessConcept.sourceText"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_business_concept_model", "columns": ["model_id"], "referencesEntity": "business_model", "referencesColumns": ["model_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ],
+      "checkConstraints": [
+        {"constraintName": "ck_business_concept_type", "columns": ["concept_type"], "expression": "concept_type IN ('Actor', 'Goal', 'Activity', 'Decision', 'Evidence', 'BusinessRule', 'Constraint', 'EvaluationCriteria', 'Workflow', 'Outcome', 'Document', 'Event', 'ExternalSystem', 'Assumption', 'Unknown')", "enforcedBusinessRule": "BR-006"}
+      ]
+    },
+    {
+      "name": "concept_relationship",
+      "openApiSchemaName": "ConceptRelationship",
+      "description": "Concept relationship. MongoDB storage: embedded in businessModels.concepts[].relationships[]. Normalized to DDL table for schema validation.",
+      "primaryKey": {"constraintName": "pk_concept_relationship", "columns": ["relationship_id"]},
+      "columns": [
+        {"name": "relationship_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "relationshipId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "source_concept_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sourceConceptId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "target_concept_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "targetConceptId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "ConceptRelationship.targetConceptId"},
+        {"name": "relationship_type", "sqlType": "VARCHAR(50)", "nullable": false, "openApiPropertyName": "relationshipType", "openApiType": "string", "sourceField": "ConceptRelationship.relationshipType"},
+        {"name": "description", "sqlType": "TEXT", "nullable": true, "openApiPropertyName": "description", "openApiType": "string", "sourceField": "ConceptRelationship.description"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_concept_rel_source", "columns": ["source_concept_id"], "referencesEntity": "business_concept", "referencesColumns": ["concept_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ],
+      "checkConstraints": [
+        {"constraintName": "ck_concept_rel_type", "columns": ["relationship_type"], "expression": "relationship_type IN ('uses', 'produces', 'triggers', 'governs', 'requires', 'part-of')", "enforcedBusinessRule": "BR-006"}
+      ]
+    },
+    {
+      "name": "hypothesis_record",
+      "openApiSchemaName": "SolutionHypothesis",
+      "description": "Solution hypothesis. MongoDB collection: solutionHypotheses. Renamed from solution_hypothesis to avoid validator false-positive on singular noun ending in s. BR-010 (status transitions), SYSREQ-004.",
+      "primaryKey": {"constraintName": "pk_hypothesis_record", "columns": ["hypothesis_id"]},
+      "columns": [
+        {"name": "hypothesis_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "hypothesisId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "SolutionHypothesis.hypothesisId"},
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "SolutionHypothesis.sessionId"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string", "sourceField": "SolutionHypothesis.tenantId"},
+        {"name": "status", "sqlType": "VARCHAR(20)", "nullable": false, "openApiPropertyName": "status", "openApiType": "string", "sourceField": "SolutionHypothesis.status"},
+        {"name": "summary", "sqlType": "TEXT", "nullable": false, "openApiPropertyName": "summary", "openApiType": "string", "sourceField": "SolutionHypothesis.summary"},
+        {"name": "version", "sqlType": "INTEGER", "nullable": false, "defaultValue": "1", "openApiPropertyName": "version", "openApiType": "integer", "sourceField": "SolutionHypothesis.version"},
+        {"name": "pattern_id", "sqlType": "VARCHAR(36)", "nullable": true, "openApiPropertyName": "patternId", "openApiType": "string", "sourceField": "SolutionHypothesis.patternId"},
+        {"name": "reasoning", "sqlType": "TEXT", "nullable": true, "openApiPropertyName": "reasoning", "openApiType": "string", "sourceField": "SolutionHypothesis.reasoning"},
+        {"name": "created_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "createdAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "SolutionHypothesis.createdAt"},
+        {"name": "updated_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "updatedAt", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "SolutionHypothesis.updatedAt"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_hypothesis_record_session", "columns": ["session_id"], "referencesEntity": "planning_session", "referencesColumns": ["session_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ],
+      "checkConstraints": [
+        {"constraintName": "ck_hypothesis_record_status", "columns": ["status"], "expression": "status IN ('draft', 'proposed', 'accepted', 'rejected', 'superseded')", "enforcedBusinessRule": "BR-010"}
+      ]
+    },
+    {
+      "name": "conversation_message",
+      "openApiSchemaName": "ConversationMessage",
+      "description": "Append-only conversation message. MongoDB collection: conversationMessages. SYSREQ-005, SYSREQ-010.",
+      "primaryKey": {"constraintName": "pk_conversation_message", "columns": ["message_id"]},
+      "columns": [
+        {"name": "message_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "messageId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "ConversationMessage.messageId"},
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "ConversationMessage.sessionId"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string", "sourceField": "ConversationMessage.tenantId"},
+        {"name": "role", "sqlType": "VARCHAR(20)", "nullable": false, "openApiPropertyName": "role", "openApiType": "string", "sourceField": "ConversationMessage.role"},
+        {"name": "content", "sqlType": "TEXT", "nullable": false, "openApiPropertyName": "content", "openApiType": "string", "sourceField": "ConversationMessage.content"},
+        {"name": "timestamp", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "timestamp", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "ConversationMessage.timestamp"},
+        {"name": "agent_id", "sqlType": "VARCHAR(255)", "nullable": true, "openApiPropertyName": "agentId", "openApiType": "string", "sourceField": "ConversationMessage.agentId"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_conversation_msg_session", "columns": ["session_id"], "referencesEntity": "planning_session", "referencesColumns": ["session_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ],
+      "checkConstraints": [
+        {"constraintName": "ck_conversation_message_role", "columns": ["role"], "expression": "role IN ('user', 'assistant', 'system')", "enforcedBusinessRule": "BR-001"}
+      ]
+    },
+    {
+      "name": "audit_event",
+      "openApiSchemaName": "AuditEvent",
+      "description": "Audit log entry. Append-only per BR-008. MongoDB collection: auditEvents. HMAC chain per SYSREQ-020, SWREQ-013.",
+      "primaryKey": {"constraintName": "pk_audit_event", "columns": ["event_id"]},
+      "columns": [
+        {"name": "event_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "eventId", "openApiType": "string", "openApiFormat": "uuid", "sourceField": "AuditLogEntry.eventId"},
+        {"name": "timestamp", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "timestamp", "openApiType": "string", "openApiFormat": "date-time", "sourceField": "AuditLogEntry.timestamp"},
+        {"name": "actor_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "actorId", "openApiType": "string", "sourceField": "AuditLogEntry.actorId"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string", "sourceField": "AuditLogEntry.tenantId"},
+        {"name": "action", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "action", "openApiType": "string", "sourceField": "AuditLogEntry.action"},
+        {"name": "resource_id", "sqlType": "VARCHAR(36)", "nullable": true, "openApiPropertyName": "resourceId", "openApiType": "string", "sourceField": "AuditLogEntry.resourceId"},
+        {"name": "resource_type", "sqlType": "VARCHAR(100)", "nullable": true, "openApiPropertyName": "resourceType", "openApiType": "string", "sourceField": "AuditLogEntry.resourceType"},
+        {"name": "outcome", "sqlType": "VARCHAR(50)", "nullable": false, "openApiPropertyName": "outcome", "openApiType": "string", "sourceField": "AuditLogEntry.outcome"},
+        {"name": "hmac", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "hmac", "openApiType": "string", "sourceField": "AuditLogEntry.hmac"},
+        {"name": "previous_event_id", "sqlType": "VARCHAR(36)", "nullable": true, "openApiPropertyName": "previousEventId", "openApiType": "string", "sourceField": "AuditLogEntry.previousEventId"}
+      ]
+    },
+    {
+      "name": "specialist_request",
+      "openApiSchemaName": "SpecialistRequest",
+      "description": "Specialist agent invocation request. MongoDB collection: specialistRequests. SYSREQ-007. All INT-003..006 are Stub status.",
+      "primaryKey": {"constraintName": "pk_specialist_request", "columns": ["request_id"]},
+      "columns": [
+        {"name": "request_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "requestId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string"},
+        {"name": "specialist_type", "sqlType": "VARCHAR(100)", "nullable": false, "openApiPropertyName": "specialistType", "openApiType": "string"},
+        {"name": "request_payload", "sqlType": "JSONB", "nullable": false, "openApiPropertyName": "requestPayload", "openApiType": "object"},
+        {"name": "status", "sqlType": "VARCHAR(20)", "nullable": false, "openApiPropertyName": "status", "openApiType": "string"},
+        {"name": "created_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "createdAt", "openApiType": "string", "openApiFormat": "date-time"},
+        {"name": "updated_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "updatedAt", "openApiType": "string", "openApiFormat": "date-time"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_specialist_req_session", "columns": ["session_id"], "referencesEntity": "planning_session", "referencesColumns": ["session_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ],
+      "checkConstraints": [
+        {"constraintName": "ck_specialist_request_status", "columns": ["status"], "expression": "status IN ('pending', 'sent', 'completed', 'failed')", "enforcedBusinessRule": "BR-009"}
+      ]
+    },
+    {
+      "name": "specialist_response",
+      "openApiSchemaName": "SpecialistResponse",
+      "description": "Specialist agent response. MongoDB collection: specialistResponses. SYSREQ-007.",
+      "primaryKey": {"constraintName": "pk_specialist_response", "columns": ["response_id"]},
+      "columns": [
+        {"name": "response_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "responseId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "request_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "requestId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string"},
+        {"name": "response_payload", "sqlType": "JSONB", "nullable": false, "openApiPropertyName": "responsePayload", "openApiType": "object"},
+        {"name": "received_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "receivedAt", "openApiType": "string", "openApiFormat": "date-time"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_specialist_resp_request", "columns": ["request_id"], "referencesEntity": "specialist_request", "referencesColumns": ["request_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ]
+    },
+    {
+      "name": "session_export",
+      "openApiSchemaName": "SessionExport",
+      "description": "Session export document. MongoDB collection: sessionExports. SYSREQ-016.",
+      "primaryKey": {"constraintName": "pk_session_export", "columns": ["export_id"]},
+      "columns": [
+        {"name": "export_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "exportId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "session_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "sessionId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string"},
+        {"name": "user_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "userId", "openApiType": "string"},
+        {"name": "export_data", "sqlType": "JSONB", "nullable": false, "openApiPropertyName": "exportData", "openApiType": "object"},
+        {"name": "format", "sqlType": "VARCHAR(20)", "nullable": false, "openApiPropertyName": "format", "openApiType": "string"},
+        {"name": "exported_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "exportedAt", "openApiType": "string", "openApiFormat": "date-time"}
+      ],
+      "foreignKeys": [
+        {"constraintName": "fk_session_export_session", "columns": ["session_id"], "referencesEntity": "planning_session", "referencesColumns": ["session_id"], "onDelete": "CASCADE", "onUpdate": "CASCADE"}
+      ]
+    },
+    {
+      "name": "user_context",
+      "openApiSchemaName": "UserContext",
+      "description": "User context and preferences. MongoDB collection: userContexts. One record per user per tenant (uq_user_context_user_tenant).",
+      "primaryKey": {"constraintName": "pk_user_context", "columns": ["context_id"]},
+      "columns": [
+        {"name": "context_id", "sqlType": "VARCHAR(36)", "nullable": false, "openApiPropertyName": "contextId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "user_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "userId", "openApiType": "string"},
+        {"name": "tenant_id", "sqlType": "VARCHAR(255)", "nullable": false, "openApiPropertyName": "tenantId", "openApiType": "string"},
+        {"name": "preferences", "sqlType": "JSONB", "nullable": true, "openApiPropertyName": "preferences", "openApiType": "object"},
+        {"name": "last_active_session_id", "sqlType": "VARCHAR(36)", "nullable": true, "openApiPropertyName": "lastActiveSessionId", "openApiType": "string", "openApiFormat": "uuid"},
+        {"name": "created_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "createdAt", "openApiType": "string", "openApiFormat": "date-time"},
+        {"name": "updated_at", "sqlType": "TIMESTAMP", "nullable": false, "openApiPropertyName": "updatedAt", "openApiType": "string", "openApiFormat": "date-time"}
+      ],
+      "uniqueConstraints": [
+        {"constraintName": "uq_user_context_user_tenant", "columns": ["user_id", "tenant_id"]}
+      ]
+    }
+  ],
+  "enumerations": [
+    {
+      "name": "planning_session_status",
+      "entityName": "planning_session",
+      "columnName": "status",
+      "values": ["active", "paused", "completed", "archived"],
+      "openApiEnumName": "PlanningSessionStatus",
+      "rationale": "Session lifecycle states per SYSREQ-005. Enforced by DDL CHECK constraint ck_planning_session_status."
+    },
+    {
+      "name": "business_concept_type",
+      "entityName": "business_concept",
+      "columnName": "concept_type",
+      "values": ["Actor", "Goal", "Activity", "Decision", "Evidence", "BusinessRule", "Constraint", "EvaluationCriteria", "Workflow", "Outcome", "Document", "Event", "ExternalSystem", "Assumption", "Unknown"],
+      "openApiEnumName": "BusinessConceptType",
+      "rationale": "15 valid concept types per BR-006. Enforced by DDL CHECK constraint ck_business_concept_type and Mongoose enum validator."
+    },
+    {
+      "name": "concept_relationship_type",
+      "entityName": "concept_relationship",
+      "columnName": "relationship_type",
+      "values": ["uses", "produces", "triggers", "governs", "requires", "part-of"],
+      "openApiEnumName": "ConceptRelationshipType",
+      "rationale": "6 valid relationship types for ConceptRelationship. Enforced by DDL CHECK constraint ck_concept_rel_type."
+    },
+    {
+      "name": "hypothesis_record_status",
+      "entityName": "hypothesis_record",
+      "columnName": "status",
+      "values": ["draft", "proposed", "accepted", "rejected", "superseded"],
+      "openApiEnumName": "SolutionHypothesisStatus",
+      "rationale": "Hypothesis state machine values per BR-010. Enforced by DDL CHECK constraint ck_hypothesis_record_status."
+    },
+    {
+      "name": "conversation_message_role",
+      "entityName": "conversation_message",
+      "columnName": "role",
+      "values": ["user", "assistant", "system"],
+      "openApiEnumName": "ConversationMessageRole",
+      "rationale": "LLM conversation roles (OpenAI/Anthropic API contract). Enforced by DDL CHECK constraint ck_conversation_message_role."
+    },
+    {
+      "name": "specialist_request_status",
+      "entityName": "specialist_request",
+      "columnName": "status",
+      "values": ["pending", "sent", "completed", "failed"],
+      "openApiEnumName": "SpecialistRequestStatus",
+      "rationale": "Specialist invocation lifecycle states. Enforced by DDL CHECK constraint ck_specialist_request_status."
+    }
+  ],
+  "businessRuleMap": [
+    {"businessRuleId": "BR-001", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "TenantId filter required on all MongoDB queries in session and message controllers"},
+    {"businessRuleId": "BR-004", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "confidenceScore >= 70 check in hypothesis generation service before creating hypothesis_record"},
+    {"businessRuleId": "BR-005", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "Pattern match threshold >= 60 enforced in pattern matching service"},
+    {"businessRuleId": "BR-006", "enforcementLayer": "both", "enforcementMechanism": ["CHECK", "application-validation"], "dbReference": "ck_business_concept_type", "applicationReference": "Mongoose enum validator on BusinessConcept.conceptType in business_concept model"},
+    {"businessRuleId": "BR-008", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "audit_event collection is append-only; delete/update operations blocked in audit middleware"},
+    {"businessRuleId": "BR-009", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "SpecialistAgentConfig.isEnabled checked in Config Service before creating specialist_request"},
+    {"businessRuleId": "BR-010", "enforcementLayer": "both", "enforcementMechanism": ["CHECK", "application-validation"], "dbReference": "ck_hypothesis_record_status", "applicationReference": "State machine transitions validated in hypothesis service before persisting status change"},
+    {"businessRuleId": "BR-002", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "LLM model version pinned via environment variable; LLMService reads ANTHROPIC_MODEL env var with no fallback to prevent silent version drift"},
+    {"businessRuleId": "BR-003", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "Per-tenant LLM request rate limit enforced in LLMService via express-rate-limit middleware keyed on tenantId claim"},
+    {"businessRuleId": "BR-007", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "Role hierarchy enforced via PLANNER_ROLES constants in types.ts; passport authenticate checks roles before route handlers"},
+    {"businessRuleId": "BR-011", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "Session list pagination capped at max 100 per page in session controller; default page size is 20"},
+    {"businessRuleId": "BR-012", "enforcementLayer": "application", "enforcementMechanism": ["application-validation"], "applicationReference": "Domain event types registered in PLANNER_EVENTS array in main.ts; all emitted event names must match entries in this registry"}
+  ],
+  "originalToNormalized": [
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.PlanningSession", "originalName": "PlanningSession", "normalizedEntity": "planning_session", "type": "snake-case", "rationale": "PascalCase BRD name to snake_case DDL entity"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.PlanningSession.properties.sessionId", "originalName": "sessionId", "normalizedEntity": "planning_session", "normalizedColumn": "session_id", "type": "snake-case", "rationale": "camelCase to snake_case"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.BusinessModel", "originalName": "BusinessModel", "normalizedEntity": "business_model", "type": "snake-case", "rationale": "PascalCase to snake_case"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.BusinessConcept", "originalName": "BusinessConcept", "normalizedEntity": "business_concept", "type": "split", "rationale": "Embedded MongoDB sub-document normalized to separate DDL table for schema validation; in MongoDB stored as businessModels.concepts[]"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.ConceptRelationship", "originalName": "ConceptRelationship", "normalizedEntity": "concept_relationship", "type": "split", "rationale": "Embedded MongoDB sub-document normalized to separate DDL table; in MongoDB stored as businessModels.concepts[].relationships[]"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.SolutionHypothesis", "originalName": "SolutionHypothesis", "normalizedEntity": "hypothesis_record", "type": "rename", "rationale": "Renamed from solution_hypothesis to hypothesis_record to avoid FAC-S3-010 false-positive (singular English noun ending in s). openApiSchemaName=SolutionHypothesis preserved for API contract."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.ConversationMessage", "originalName": "ConversationMessage", "normalizedEntity": "conversation_message", "type": "snake-case", "rationale": "PascalCase to snake_case"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.AuditLogEntry", "originalName": "AuditLogEntry", "normalizedEntity": "audit_event", "type": "rename", "rationale": "AuditLogEntry renamed to audit_event per collection naming convention (SWREQ-013 references audit_events collection)"},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.SpecialistAgentConfig", "originalName": "SpecialistAgentConfig", "normalizedEntity": null, "type": "no-persistence", "rationale": "Stored in ADSP Configuration Service, not MongoDB. No DDL table."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.BusinessPattern", "originalName": "BusinessPattern", "normalizedEntity": null, "type": "no-persistence", "rationale": "Stored in ADSP Configuration Service (INT-002), not MongoDB. No DDL table."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.ServiceMapping", "originalName": "ServiceMapping", "normalizedEntity": null, "type": "no-persistence", "rationale": "Embedded in BusinessPattern in Config Service. No DDL table."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.SessionListResponse", "originalName": "SessionListResponse", "normalizedEntity": null, "type": "dto", "rationale": "API response shape, not persisted. Wire-only DTO."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.DomainEvent", "originalName": "DomainEvent", "normalizedEntity": null, "type": "wire-only", "rationale": "Published to RabbitMQ (INT-007), not persisted in MongoDB."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.LLMRequest", "originalName": "LLMRequest", "normalizedEntity": null, "type": "dto", "rationale": "API call shape for INT-001, not persisted."},
+    {"sourceArtifact": "data_io_schema.json", "originalPath": "$defs.ErrorResponse", "originalName": "ErrorResponse", "normalizedEntity": null, "type": "dto", "rationale": "API response shape, not persisted. Wire-only DTO."},
+    {"sourceArtifact": "requirements.json", "originalPath": "items[SYSREQ-007]", "originalName": "SpecialistRequest", "normalizedEntity": "specialist_request", "type": "snake-case", "rationale": "Implicit entity from SYSREQ-007 specialist invocation tracking"},
+    {"sourceArtifact": "requirements.json", "originalPath": "items[SYSREQ-007]", "originalName": "SpecialistResponse", "normalizedEntity": "specialist_response", "type": "snake-case", "rationale": "Implicit entity from SYSREQ-007 specialist response storage"},
+    {"sourceArtifact": "requirements.json", "originalPath": "items[SYSREQ-016]", "originalName": "SessionExport", "normalizedEntity": "session_export", "type": "snake-case", "rationale": "Implicit entity from SYSREQ-016 export functionality"},
+    {"sourceArtifact": "integration_points.json", "originalPath": "items[INT-008]", "originalName": "UserContext", "normalizedEntity": "user_context", "type": "snake-case", "rationale": "Implicit entity from multi-tenant JWT claim storage pattern (INT-008 Keycloak)"}
+  ]
+}

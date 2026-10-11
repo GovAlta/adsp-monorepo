@@ -1,0 +1,2456 @@
+openapi: "3.1.0"
+info:
+  title: "ADSP Planner Service API"
+  version: "1.0.0"
+  description: |
+    AI-powered conversational business planning service for the Alberta Digital Service Platform (ADSP).
+
+    **Classification: Protected B** (GoA deliberative process content per ATIA s.23).
+
+    All endpoints require Keycloak JWT authentication except /health/* and /metrics.
+
+    INT-001 (Anthropic Claude API) is STUB/fail-closed pending resolution of:
+    - OPEN-001: Anthropic API contract approval
+    - OPEN-002: API key provisioning
+    - OPEN-006: IM policy approval for out-of-jurisdiction data transfer
+
+    Roles:
+    - `planner-user`: create/read/update own sessions; read patterns; consult specialists
+    - `planner-admin`: full access to all tenant sessions; manage patterns; view audit log
+    - `tenant-admin`: equivalent to planner-admin for their tenant
+
+    Log redaction: conversation content (conversation_message.content), business model data,
+    and hypothesis summaries are redacted in structured logs via Winston pino-style redaction.
+    Fields redacted: content, summary, reasoning, requestPayload, responsePayload, exportData.
+  x-security:
+    classificationLevel: "Protected B"
+    tlsEnforcement: "TLS 1.2 minimum; HSTS enforced via helmet() middleware (max-age=31536000; includeSubDomains)"
+    auditLogging: "HMAC-chained audit events per BR-008 and SYSREQ-020; AUDIT_SIGNING_KEY env var"
+    dataResidency: "Canada — Alberta Government ADSP platform. INT-001 out-of-jurisdiction transfer blocked pending OPEN-001/002/006."
+    inputValidation: "Zod schema validation on all write endpoints; message max 10000 chars (SYSREQ-024)"
+    rateLimiting: "express-rate-limit on /messages and /specialists endpoints; 429 with Retry-After on breach"
+  contact:
+    name: "ADSP Platform Team"
+    url: "https://adsp.alberta.ca"
+  license:
+    name: "Government of Alberta"
+
+servers:
+  - url: "/api/v1"
+    description: "ADSP Planner Service API v1"
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: sessions
+    description: >
+      Planning session lifecycle — create, list, retrieve, update status, archive.
+      Serves UC-001 (create), UC-006 (resume/list/update), SYSREQ-022 (archive/retention).
+  - name: messages
+    description: >
+      Conversation messaging — send user message to Planning Agent, retrieve conversation history.
+      Triggers LLM inference via INT-001 stub (fail-closed). Serves UC-002.
+  - name: business-model
+    description: >
+      Business model retrieval and concept correction.
+      Returns BusinessModel with embedded BusinessConcept list. Serves UC-003.
+  - name: hypotheses
+    description: >
+      Solution hypothesis listing, retrieval, and status lifecycle transitions (accept/reject/supersede).
+      Enforces BR-010 state machine. Serves UC-004.
+  - name: specialists
+    description: >
+      Specialist agent consultation — delegate to form/pdf/comment/notification stubs (INT-003..006, all Stub/fail-closed).
+      Serves UC-005.
+  - name: patterns
+    description: >
+      Business pattern library CRUD.
+      Write endpoints require planner-admin+ (BR-007). Calls INT-002 Config Service stub. Serves UC-007.
+  - name: exports
+    description: >
+      Session plan export — assembles and serialises session state to portable JSON.
+      Serves UC-008.
+  - name: audit
+    description: >
+      Administrative audit log read-only view. Requires planner-admin+ (BR-007).
+      HMAC-chained AuditEvent collection (BR-008, SYSREQ-020). Serves UC-010.
+  - name: health
+    description: >
+      ADSP liveness and readiness probes. No JWT required. Serves SYSREQ-023.
+  - name: metrics
+    description: >
+      Prometheus metrics endpoint. No JWT required. Serves SYSREQ-023 (observability).
+  - name: user-management
+    description: >
+      Current user context endpoint. Returns the authenticated user's own profile and
+      role context within the planner service. Full user management (invite, deactivate,
+      role assignment) is delegated to the ADSP Access Service (Keycloak). Serves the
+      user-management sitemap page (FAC-S4-014).
+
+paths:
+  /sessions:
+    post:
+      operationId: createSession
+      summary: Create a new planning session
+      description: >
+        Creates a new PlanningSession document in MongoDB with status 'active', plus an empty linked
+        BusinessModel. Publishes session-created domain event via INT-007 stub. Enforces tenantId/userId
+        from JWT per BR-001. Serves UC-001.
+      tags: [sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanningSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listSessions
+      summary: List planning sessions
+      description: >
+        Returns paginated list of PlanningSession records. planner-user sees own sessions only;
+        planner-admin/tenant-admin see all tenant sessions (BR-007). All queries tenant-scoped per BR-001.
+        Admin invocation is operationId listAllSessions (same endpoint, role-based filter). Serves UC-006, UC-010.
+      tags: [sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          description: Filter by session status
+          schema:
+            $ref: '#/components/schemas/PlanningSessionStatus'
+      responses:
+        '200':
+          description: Paginated list of sessions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PlanningSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+    get:
+      operationId: getSession
+      summary: Get a planning session by ID
+      description: >
+        Retrieves full session state including status, title, businessModelId, timestamps.
+        planner-user may only retrieve own sessions; planner-admin may retrieve any tenant session.
+        Serves UC-006.
+      tags: [sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Planning session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanningSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateSession
+      summary: Update a planning session (status or title)
+      description: >
+        Updates session status (e.g., active, paused, completed) and/or title.
+        Sets lastResumedAt when transitioning to 'active'. Publishes session-updated domain event
+        via INT-007 stub. Serves UC-006, SYSREQ-011.
+      tags: [sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanningSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: archiveSession
+      summary: Archive (soft-delete) a planning session
+      description: >
+        Soft-archives the session by setting status='archived' and archivedAt timestamp.
+        Hard deletion is handled by the scheduled retention job (SYSREQ-022). Publishes
+        session-archived domain event via INT-007 stub. Serves SYSREQ-022.
+      tags: [sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Session archived successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/messages:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+    post:
+      operationId: sendMessage
+      summary: Send a message to the Planning Agent
+      description: >
+        Persists the user ConversationMessage, assembles LLM context, and calls INT-001
+        (Anthropic Claude API). INT-001 is currently STUB/fail-closed — the stub returns HTTP 503
+        pending OPEN-001, OPEN-002, and OPEN-006 resolution. On live integration, the assistant
+        response is streamed, parsed for business concepts, and used to update BusinessModel.
+        PatternMatchingService runs post-update (BR-005). If confidenceScore reaches 70 (BR-004),
+        HypothesisGenerationService is triggered. Rate-limited per SYSREQ-018.
+        Message content max 10000 chars (SYSREQ-024). Serves UC-002, SYSREQ-017.
+        [IMPL-DEFERRED: INT-001]
+      tags: [messages]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: Message sent; assistant response included
+          headers:
+            X-Integration-Stubbed:
+              description: "Present when INT-001 is stub: value=INT-001"
+              schema:
+                type: string
+                example: "INT-001"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listMessages
+      summary: List conversation messages for a session
+      description: >
+        Returns paginated conversation history for the session. Messages are append-only
+        per BR-008 (conversation_message). planner-user may only access own sessions.
+        Serves UC-002.
+      tags: [messages]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: Paginated list of conversation messages
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ConversationMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/model:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+    get:
+      operationId: getBusinessModel
+      summary: Get the business model for a session
+      description: >
+        Returns the BusinessModel document with embedded BusinessConcept list and
+        ConceptRelationship graphs. Serves UC-003.
+      tags: [business-model]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Business model with embedded concepts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessModelWithConcepts'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateBusinessModel
+      summary: Update concept types in the business model
+      description: >
+        Allows users to correct conceptType classifications on individual BusinessConcepts.
+        Validates against BusinessConceptType enum per BR-006. Increments model version.
+        Returns HTTP 409 on concurrent version conflict (optimistic locking).
+        Serves UC-003.
+      tags: [business-model]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBusinessModelRequest'
+      responses:
+        '200':
+          description: Updated business model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessModelWithConcepts'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /sessions/{sessionId}/hypotheses:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+    get:
+      operationId: listHypotheses
+      summary: List solution hypotheses for a session
+      description: >
+        Returns paginated list of SolutionHypothesis records for the session.
+        Hypotheses are generated when BusinessModel confidenceScore reaches 70 (BR-004).
+        planner-user may only access own sessions. Serves UC-004.
+      tags: [hypotheses]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          description: Filter by hypothesis status
+          schema:
+            $ref: '#/components/schemas/SolutionHypothesisStatus'
+      responses:
+        '200':
+          description: Paginated list of hypotheses
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SolutionHypothesis'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/hypotheses/{hypothesisId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+      - $ref: '#/components/parameters/HypothesisIdParam'
+    get:
+      operationId: getHypothesis
+      summary: Get a specific solution hypothesis
+      description: >
+        Retrieves a single SolutionHypothesis by ID. Serves UC-004.
+      tags: [hypotheses]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Solution hypothesis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolutionHypothesis'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateHypothesisStatus
+      summary: Update the status of a solution hypothesis
+      description: >
+        Transitions the hypothesis status per BR-010 state machine:
+        draft → proposed → accepted | rejected | superseded.
+        Returns HTTP 422 for invalid state transitions. Publishes hypothesis-generated
+        event via INT-007 stub on acceptance. Serves UC-004.
+      tags: [hypotheses]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHypothesisStatusRequest'
+      responses:
+        '200':
+          description: Updated hypothesis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolutionHypothesis'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /sessions/{sessionId}/specialists:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+    post:
+      operationId: consultSpecialist
+      summary: Consult a specialist agent
+      description: >
+        Creates a SpecialistRequest and delegates to the appropriate specialist stub
+        (INT-003 Form Service, INT-004 PDF Service, INT-005 Comment Service, INT-006 Notification Service).
+        All specialist integrations are currently STUB/fail-closed returning HTTP 503.
+        Interface contracts pending OPEN-005. Planning Agent falls back to general guidance on stub failure.
+        Enforces specialist availability gate per BR-009. Rate-limited per SYSREQ-018.
+        Timeout: 60s per SWREQ-007. Serves UC-005.
+        [IMPL-DEFERRED: INT-003] [IMPL-DEFERRED: INT-004] [IMPL-DEFERRED: INT-005] [IMPL-DEFERRED: INT-006]
+      tags: [specialists]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsultSpecialistRequest'
+      responses:
+        '202':
+          description: Specialist consultation request accepted
+          headers:
+            X-Integration-Stubbed:
+              description: "Present when specialist is stub: value=INT-003|INT-004|INT-005|INT-006"
+              schema:
+                type: string
+                example: "INT-003"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecialistRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /sessions/{sessionId}/specialists/{requestId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+      - $ref: '#/components/parameters/RequestIdParam'
+    get:
+      operationId: getSpecialistRequest
+      summary: Get a specialist request and its response
+      description: >
+        Retrieves a SpecialistRequest with its associated SpecialistResponse (if completed).
+        Serves UC-005.
+      tags: [specialists]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Specialist request with optional response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecialistRequestWithResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /patterns:
+    get:
+      operationId: listPatterns
+      summary: List business patterns
+      description: >
+        Returns paginated list of active business patterns from Config Service (INT-002 stub).
+        INT-002 is Stub/lookup-empty — returns empty list pending ADSP Config Service provisioning (OPEN-004).
+        Available to all authenticated roles. Serves UC-007.
+        [IMPL-DEFERRED: INT-002]
+      tags: [patterns]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: Paginated list of business patterns
+          headers:
+            X-Integration-Stubbed:
+              description: "Present when INT-002 Config Service is stub: value=INT-002"
+              schema:
+                type: string
+                example: "INT-002"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BusinessPattern'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createPattern
+      summary: Create a business pattern
+      description: >
+        Creates a new business pattern in Config Service (INT-002 stub, returns 503).
+        Requires planner-admin or tenant-admin role (BR-007). Writes audit entry per BR-008.
+        Serves UC-007. [IMPL-DEFERRED: INT-002]
+      tags: [patterns]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatternRequest'
+      responses:
+        '201':
+          description: Pattern created
+          headers:
+            X-Integration-Stubbed:
+              description: "INT-002 stub; value=INT-002"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessPattern'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /patterns/{patternId}:
+    parameters:
+      - $ref: '#/components/parameters/PatternIdParam'
+    get:
+      operationId: getPattern
+      summary: Get a business pattern by ID
+      description: >
+        Retrieves a specific business pattern from Config Service (INT-002 stub).
+        Serves UC-007. [IMPL-DEFERRED: INT-002]
+      tags: [patterns]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Business pattern
+          headers:
+            X-Integration-Stubbed:
+              description: "INT-002 stub; value=INT-002"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessPattern'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updatePattern
+      summary: Update a business pattern
+      description: >
+        Updates a business pattern in Config Service (INT-002 stub, returns 503).
+        Requires planner-admin or tenant-admin role (BR-007). Writes audit entry per BR-008.
+        Serves UC-007. [IMPL-DEFERRED: INT-002]
+      tags: [patterns]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePatternRequest'
+      responses:
+        '200':
+          description: Updated pattern
+          headers:
+            X-Integration-Stubbed:
+              description: "INT-002 stub; value=INT-002"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessPattern'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: deletePattern
+      summary: Delete (hard-delete) a business pattern
+      description: >
+        Permanently deletes a business pattern from Config Service (INT-002 stub, returns 503).
+        Requires planner-admin or tenant-admin role (BR-007). Writes audit entry per BR-008.
+        Serves UC-007. [IMPL-DEFERRED: INT-002]
+      tags: [patterns]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Pattern deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /patterns/{patternId}/deactivate:
+    parameters:
+      - $ref: '#/components/parameters/PatternIdParam'
+    put:
+      operationId: deactivatePattern
+      summary: Deactivate (soft-delete) a business pattern
+      description: >
+        Soft-deactivates a business pattern in Config Service (INT-002 stub, returns 503).
+        Requires planner-admin or tenant-admin role (BR-007). Writes audit entry per BR-008.
+        Serves UC-007. [IMPL-DEFERRED: INT-002]
+      tags: [patterns]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Deactivated pattern
+          headers:
+            X-Integration-Stubbed:
+              description: "INT-002 stub; value=INT-002"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessPattern'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /sessions/{sessionId}/exports:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+    post:
+      operationId: initiateExport
+      summary: Export a planning session to portable JSON
+      description: >
+        Assembles a SessionExport from PlanningSession, BusinessModel, SolutionHypotheses,
+        and ConversationMessages. planner-user may only export own sessions; planner-admin
+        may export any tenant session (BR-001, BR-007). Serves UC-008.
+      tags: [exports]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportRequest'
+      responses:
+        '201':
+          description: Export created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionExport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listExports
+      summary: List exports for a session
+      description: >
+        Returns a paginated list of SessionExport records for the given session.
+        planner-user may only list exports for own sessions; planner-admin may list
+        exports for any tenant session (BR-007). Serves UC-008.
+      tags: [exports]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: Paginated list of session exports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSessionExports'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/exports/{exportId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionIdParam'
+      - $ref: '#/components/parameters/ExportIdParam'
+    get:
+      operationId: getExport
+      summary: Get a session export by ID
+      description: >
+        Retrieves a SessionExport document. planner-user may only access own session exports.
+        Serves UC-008.
+      tags: [exports]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Session export
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionExport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /audit:
+    get:
+      operationId: listAuditEvents
+      summary: List audit log events
+      description: >
+        Returns paginated HMAC-chained AuditEvent records. Requires planner-admin or
+        tenant-admin role (BR-007). Access to this endpoint itself generates an audit
+        entry per BR-008. Serves UC-010, SYSREQ-020.
+        Classification: Protected A (audit_event entity).
+      tags: [audit]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: actorId
+          in: query
+          description: Filter by actor (GoA employee userId)
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: since
+          in: query
+          description: Filter events after this timestamp (ISO-8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated list of audit events
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /audit/verify:
+    get:
+      operationId: verifyAuditChain
+      summary: Verify audit chain HMAC integrity
+      description: >
+        Verifies the HMAC chain integrity of the audit log over a specified index range.
+        Returns a verification result indicating whether the chain is intact and, if not,
+        the index at which the first failure was detected. Requires planner-admin+ (BR-007).
+        Serves SYSREQ-020.
+      tags: [audit]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startIndex
+          in: query
+          required: false
+          description: Start of the index range to verify (inclusive, 0-based)
+          schema:
+            type: integer
+            minimum: 0
+        - name: endIndex
+          in: query
+          required: false
+          description: End of the index range to verify (inclusive, 0-based)
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          description: Audit chain verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                    description: True if all HMAC hashes in the range are valid
+                  failedAtIndex:
+                    type: integer
+                    description: Index of the first failed hash (present only when verified is false)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /audit/{eventId}:
+    get:
+      operationId: getAuditEvent
+      summary: Get a single audit event by ID
+      description: >
+        Retrieves a single AuditEvent by its ID. Requires planner-admin+ (BR-007).
+        Serves UC-010.
+      tags: [audit]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Audit event unique identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/me:
+    get:
+      operationId: getCurrentUserContext
+      summary: Get current user context
+      description: >
+        Returns the authenticated user's own profile and planner-service role context
+        (tenantId, userId, roles). This endpoint fulfills the user-management sitemap
+        page's API requirement — full user management (invite, deactivate, role
+        assignment) is delegated to the ADSP Access Service. Serves FAC-S4-014.
+      tags: [user-management]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user context
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - userId
+                  - tenantId
+                  - roles
+                properties:
+                  userId:
+                    type: string
+                    description: Keycloak user sub claim
+                  tenantId:
+                    type: string
+                    description: ADSP tenant identifier from JWT
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    description: Planner-service roles assigned to the user
+                  email:
+                    type: string
+                    description: User email (if present in JWT claims)
+                  displayName:
+                    type: string
+                    description: User display name (if present in JWT claims)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users:
+    get:
+      operationId: listUsers
+      summary: List users in tenant
+      description: >
+        Returns a paginated list of users in the current tenant with their assigned roles and status.
+        Requires planner-admin or tenant-admin role. Serves the user-management sitemap page.
+      tags: [user-management]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserContext'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createUser
+      summary: Create (invite) a user in tenant
+      description: >
+        Creates a new user record and assigns initial role within the tenant.
+        Requires planner-admin or tenant-admin role. Writes audit entry per BR-008.
+      tags: [user-management]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - role
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum: [planner-user, planner-admin]
+                displayName:
+                  type: string
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserContext'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User identifier (Keycloak sub)
+    get:
+      operationId: getUserById
+      summary: Get a specific user's context
+      description: >
+        Returns the user context record for a specific user within the current tenant.
+        Requires planner-admin or tenant-admin role.
+      tags: [user-management]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserContext'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateUser
+      summary: Update a user's role or status
+      description: >
+        Updates a user's role assignment or account status within the tenant.
+        Requires planner-admin or tenant-admin role. Writes audit entry per BR-008.
+      tags: [user-management]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [planner-user, planner-admin]
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '200':
+          description: Updated user context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserContext'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deactivateUser
+      summary: Deactivate a user
+      description: >
+        Soft-deactivates a user account within the tenant.
+        Requires planner-admin or tenant-admin role. Writes audit entry per BR-008.
+      tags: [user-management]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: User deactivated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /health:
+    servers:
+      - url: "/"
+        description: "Root-relative health endpoint"
+    get:
+      operationId: getHealth
+      summary: Service health check
+      description: >
+        Returns a summary health status for the service. No JWT required. Serves SYSREQ-023.
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /health/live:
+    servers:
+      - url: "/"
+        description: "Root-relative health endpoint"
+    get:
+      operationId: getLiveness
+      summary: Liveness probe
+      description: >
+        Returns 200 if the service process is alive. No JWT required. Serves SYSREQ-023.
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+        '503':
+          description: Service is not alive
+
+  /health/liveness:
+    servers:
+      - url: "/"
+        description: "Root-relative health endpoint"
+    get:
+      operationId: getLivenessAlias
+      summary: Liveness probe (alias)
+      description: >
+        Alias for /health/live. Returns 200 if the service process is alive.
+        No JWT required. Serves SYSREQ-023 (FAC-S4-010).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /health/ready:
+    servers:
+      - url: "/"
+        description: "Root-relative health endpoint"
+    get:
+      operationId: getReadiness
+      summary: Readiness probe
+      description: >
+        Returns 200 if the service is ready to accept traffic (MongoDB, RabbitMQ stub, and
+        Anthropic stub connectivity checked with 5s timeout each). Returns 503 on failure.
+        No JWT required. Serves SYSREQ-023.
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+                  checks:
+                    type: object
+                    properties:
+                      mongodb:
+                        type: string
+                        enum: [ok, fail]
+                      rabbitmq:
+                        type: string
+                        enum: [ok, fail, stub]
+                      anthropic:
+                        type: string
+                        enum: [ok, fail, stub]
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "not-ready"
+                  checks:
+                    type: object
+
+  /health/readiness:
+    servers:
+      - url: "/"
+        description: "Root-relative health endpoint"
+    get:
+      operationId: getReadinessAlias
+      summary: Readiness probe (alias)
+      description: >
+        Alias for /health/ready. Returns 200 if the service is ready to accept traffic.
+        Returns 503 on failure. No JWT required. Serves SYSREQ-023 (FAC-S4-010).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  db:
+                    type: boolean
+                    example: true
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  db:
+                    type: boolean
+                    example: false
+
+  /metrics:
+    servers:
+      - url: "/"
+        description: "Root-relative metrics endpoint"
+    get:
+      operationId: getMetrics
+      summary: Prometheus metrics
+      description: >
+        Returns Prometheus-format metrics. No JWT required. Serves SYSREQ-023 (observability).
+      tags: [metrics]
+      security: []
+      responses:
+        '200':
+          description: Prometheus metrics text
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Keycloak JWT. Issued by ADSP Keycloak realm. Contains tenantId and role claims
+        (planner-user, planner-admin, tenant-admin). RS256 signed. Validated by
+        passport-jwt middleware via ADSP SDK. Returns 401 on missing/expired/invalid token.
+
+  schemas:
+    PlanningSession:
+      type: object
+      description: >
+        Persistent planning session. MongoDB collection: planningSessions.
+        Classification: Protected B (ATIA s.23 — deliberative process linkage via title+userId).
+        BR-001, SYSREQ-005, SYSREQ-010.
+      required:
+        - sessionId
+        - tenantId
+        - userId
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Unique session identifier (UUID v4)
+        tenantId:
+          type: string
+          description: ADSP tenant identifier extracted from JWT claim
+        userId:
+          type: string
+          description: Keycloak user identifier (GoA employee sub claim, Protected A)
+        status:
+          type: string
+          description: Session lifecycle state (ck_planning_session_status per SYSREQ-005)
+          enum: [active, paused, completed, archived]
+        title:
+          type: string
+          maxLength: 200
+          description: Session title (1-200 chars per SYSREQ-024)
+        businessModelId:
+          type: string
+          format: uuid
+          description: Reference to the linked BusinessModel document
+        lastResumedAt:
+          type: string
+          format: date-time
+          description: Timestamp of last session resume (UC-006)
+        createdAt:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    BusinessModel:
+      type: object
+      description: >
+        Business model with embedded concepts. MongoDB collection: businessModels.
+        Classification: Protected B (ATIA s.23 — program design analysis content).
+        SYSREQ-002, BR-004, SWREQ-003.
+      required:
+        - modelId
+        - sessionId
+        - tenantId
+        - confidenceScore
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        modelId:
+          type: string
+          format: uuid
+          description: Unique model identifier
+        sessionId:
+          type: string
+          format: uuid
+          description: Reference to parent PlanningSession
+        tenantId:
+          type: string
+          description: ADSP tenant identifier
+        confidenceScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Model confidence score 0-100. Hypothesis generated when reaches 70 (BR-004).
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version, incremented on each update
+        matchedPatternId:
+          type: string
+          description: ID of matched business pattern (set when pattern score >= 60, BR-005)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BusinessModelWithConcepts:
+      allOf:
+        - $ref: '#/components/schemas/BusinessModel'
+        - type: object
+          properties:
+            concepts:
+              type: array
+              description: Embedded business concepts (MongoDB sub-documents)
+              items:
+                $ref: '#/components/schemas/BusinessConceptWithRelationships'
+
+    BusinessConcept:
+      type: object
+      description: >
+        Business concept. MongoDB storage: embedded in businessModels.concepts[].
+        Classification: Protected B (ATIA s.23 — sourceText contains verbatim deliberative content).
+        BR-006 (conceptType enum).
+      required:
+        - conceptId
+        - modelId
+        - conceptType
+        - name
+      properties:
+        conceptId:
+          type: string
+          format: uuid
+          description: Unique concept identifier
+        modelId:
+          type: string
+          format: uuid
+          description: Reference to parent BusinessModel
+        conceptType:
+          type: string
+          description: Business concept classification type (ck_business_concept_type)
+          enum: [Actor, Goal, Activity, Decision, Evidence, BusinessRule, Constraint, EvaluationCriteria, Workflow, Outcome, Document, Event, ExternalSystem, Assumption, Unknown]
+        name:
+          type: string
+          maxLength: 200
+          description: Concept name
+        description:
+          type: string
+          description: Optional concept description
+        sourceText:
+          type: string
+          description: >
+            Verbatim source text from planning conversation. Protected B — redacted in logs.
+
+    BusinessConceptWithRelationships:
+      allOf:
+        - $ref: '#/components/schemas/BusinessConcept'
+        - type: object
+          properties:
+            relationships:
+              type: array
+              description: Concept relationships (embedded sub-documents)
+              items:
+                $ref: '#/components/schemas/ConceptRelationship'
+
+    ConceptRelationship:
+      type: object
+      description: >
+        Concept relationship. MongoDB storage: embedded in businessModels.concepts[].relationships[].
+        Classification: Protected B (inherits from BusinessModel context). BR-006.
+      required:
+        - relationshipId
+        - sourceConceptId
+        - targetConceptId
+        - relationshipType
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+          description: Unique relationship identifier
+        sourceConceptId:
+          type: string
+          format: uuid
+          description: Source concept reference
+        targetConceptId:
+          type: string
+          format: uuid
+          description: Target concept reference
+        relationshipType:
+          type: string
+          description: Relationship type between concepts (ck_concept_relationship_type)
+          enum: [uses, produces, triggers, governs, requires, part-of]
+        description:
+          type: string
+          description: Optional relationship description
+
+    SolutionHypothesis:
+      type: object
+      description: >
+        Solution hypothesis. MongoDB collection: solutionHypotheses.
+        Entity: hypothesis_record (renamed for DDL clarity, openApiSchemaName=SolutionHypothesis preserved).
+        Classification: Protected B (ATIA s.23 — summary and reasoning contain deliberative content).
+        BR-010 (status transitions), SYSREQ-004.
+      required:
+        - hypothesisId
+        - sessionId
+        - tenantId
+        - status
+        - summary
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        hypothesisId:
+          type: string
+          format: uuid
+          description: Unique hypothesis identifier
+        sessionId:
+          type: string
+          format: uuid
+          description: Reference to parent PlanningSession
+        tenantId:
+          type: string
+          description: ADSP tenant identifier
+        status:
+          type: string
+          description: Hypothesis lifecycle state (ck_hypothesis_record_status)
+          enum: [draft, proposed, accepted, rejected, superseded]
+        summary:
+          type: string
+          description: >
+            Plain-language description of the proposed government solution.
+            Protected B — redacted in logs.
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version
+        patternId:
+          type: string
+          description: ID of the matched business pattern that informed this hypothesis
+        reasoning:
+          type: string
+          description: >
+            Planning Agent's analysis of recommended ADSP services.
+            Protected B — redacted in logs.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ConversationMessage:
+      type: object
+      description: >
+        Append-only conversation message. MongoDB collection: conversationMessages.
+        Classification: Protected B (ATIA s.23 — content is verbatim GoA deliberative content).
+        SYSREQ-005, SYSREQ-010.
+      required:
+        - messageId
+        - sessionId
+        - tenantId
+        - role
+        - content
+        - timestamp
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        sessionId:
+          type: string
+          format: uuid
+          description: Reference to parent PlanningSession
+        tenantId:
+          type: string
+          description: ADSP tenant identifier
+        role:
+          type: string
+          description: Message sender role (ck_conversation_message_role)
+          enum: [user, assistant, system]
+        content:
+          type: string
+          maxLength: 10000
+          description: >
+            Message content (max 10000 chars per SYSREQ-024).
+            Protected B — redacted in logs. Transmitted to Anthropic Claude API (INT-001 stub).
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        agentId:
+          type: string
+          description: Optional agent identifier for assistant messages
+
+    AuditEvent:
+      type: object
+      description: >
+        Audit log entry. Append-only per BR-008. MongoDB collection: auditEvents.
+        HMAC chain per SYSREQ-020, SWREQ-013. Classification: Protected A (GoA employee actorId per POPA s.17).
+      required:
+        - eventId
+        - timestamp
+        - actorId
+        - tenantId
+        - action
+        - outcome
+        - hmac
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        actorId:
+          type: string
+          description: GoA employee Keycloak sub claim (Protected A per POPA s.17)
+        tenantId:
+          type: string
+          description: ADSP tenant identifier
+        action:
+          type: string
+          description: Action performed (e.g., SESSION_CREATED, HYPOTHESIS_ACCEPTED)
+        resourceId:
+          type: string
+          description: Identifier of the affected resource
+        resourceType:
+          type: string
+          description: Type of the affected resource (e.g., PlanningSession, SolutionHypothesis)
+        outcome:
+          type: string
+          description: Outcome of the action (e.g., SUCCESS, FAILURE)
+        hmac:
+          type: string
+          description: HMAC-SHA256 chain value using AUDIT_SIGNING_KEY env var (BR-008)
+        previousEventId:
+          type: string
+          description: Reference to previous audit event for HMAC chain integrity
+
+    SpecialistRequest:
+      type: object
+      description: >
+        Specialist agent invocation request. MongoDB collection: specialistRequests.
+        Classification: Protected B (requestPayload contains session context excerpts).
+        SYSREQ-007. All INT-003..006 are Stub status.
+      required:
+        - requestId
+        - sessionId
+        - tenantId
+        - specialistType
+        - requestPayload
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        specialistType:
+          type: string
+          description: "One of: form-service, pdf-service, comment-service, notification-service"
+          example: "form-service"
+        requestPayload:
+          type: object
+          description: >
+            Specialist context payload. Protected B — redacted in logs.
+            Transmitted to INT-003..006 stubs (fail-closed).
+        status:
+          type: string
+          description: Specialist invocation lifecycle state (ck_specialist_request_status)
+          enum: [pending, sent, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SpecialistResponse:
+      type: object
+      description: >
+        Specialist agent response. MongoDB collection: specialistResponses.
+        Classification: Protected B (inherits from requestPayload context). SYSREQ-007.
+      required:
+        - responseId
+        - requestId
+        - sessionId
+        - tenantId
+        - responsePayload
+        - receivedAt
+      properties:
+        responseId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        responsePayload:
+          type: object
+          description: Specialist agent analysis payload. Protected B — redacted in logs.
+        receivedAt:
+          type: string
+          format: date-time
+
+    SpecialistRequestWithResponse:
+      allOf:
+        - $ref: '#/components/schemas/SpecialistRequest'
+        - type: object
+          properties:
+            response:
+              $ref: '#/components/schemas/SpecialistResponse'
+
+    SessionExport:
+      type: object
+      description: >
+        Session export document. MongoDB collection: sessionExports.
+        Classification: Protected B (exportData is a full dump of Protected B planning content).
+        SYSREQ-016.
+      required:
+        - exportId
+        - sessionId
+        - tenantId
+        - userId
+        - exportData
+        - format
+        - exportedAt
+      properties:
+        exportId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        userId:
+          type: string
+          description: GoA employee identifier (Protected A per POPA s.17)
+        exportData:
+          type: object
+          description: >
+            Serialized snapshot of PlanningSession, BusinessModel, SolutionHypotheses, and
+            ConversationMessages. Protected B — redacted in logs.
+        format:
+          type: string
+          description: Export format (e.g., json)
+        exportedAt:
+          type: string
+          format: date-time
+
+    UserContext:
+      type: object
+      description: >
+        User context and preferences. MongoDB collection: userContexts.
+        One record per user per tenant (uq_user_context_user_tenant). Classification: Protected A.
+      required:
+        - contextId
+        - userId
+        - tenantId
+        - createdAt
+        - updatedAt
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          description: GoA employee identifier (Protected A per POPA s.17)
+        tenantId:
+          type: string
+        preferences:
+          type: object
+          description: UI preferences (low-sensitivity; Protected A)
+        lastActiveSessionId:
+          type: string
+          format: uuid
+          description: Reference to last active PlanningSession
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── Enumerations ─────────────────────────────────────────────────────────────
+
+    PlanningSessionStatus:
+      type: string
+      description: >
+        Session lifecycle states per SYSREQ-005.
+        Enforced by DDL CHECK constraint ck_planning_session_status.
+      enum:
+        - active
+        - paused
+        - completed
+        - archived
+
+    BusinessConceptType:
+      type: string
+      description: >
+        15 valid concept types per BR-006.
+        Enforced by DDL CHECK constraint ck_business_concept_type and Mongoose enum validator.
+      enum:
+        - Actor
+        - Goal
+        - Activity
+        - Decision
+        - Evidence
+        - BusinessRule
+        - Constraint
+        - EvaluationCriteria
+        - Workflow
+        - Outcome
+        - Document
+        - Event
+        - ExternalSystem
+        - Assumption
+        - Unknown
+
+    ConceptRelationshipType:
+      type: string
+      description: >
+        6 valid relationship types for ConceptRelationship.
+        Enforced by DDL CHECK constraint ck_concept_rel_type.
+      enum:
+        - uses
+        - produces
+        - triggers
+        - governs
+        - requires
+        - part-of
+
+    SolutionHypothesisStatus:
+      type: string
+      description: >
+        Hypothesis state machine values per BR-010.
+        Enforced by DDL CHECK constraint ck_hypothesis_record_status.
+      enum:
+        - draft
+        - proposed
+        - accepted
+        - rejected
+        - superseded
+
+    ConversationMessageRole:
+      type: string
+      description: >
+        LLM conversation roles (OpenAI/Anthropic API contract).
+        Enforced by DDL CHECK constraint ck_conversation_message_role.
+      enum:
+        - user
+        - assistant
+        - system
+
+    SpecialistRequestStatus:
+      type: string
+      description: >
+        Specialist invocation lifecycle states.
+        Enforced by DDL CHECK constraint ck_specialist_request_status.
+      enum:
+        - pending
+        - sent
+        - completed
+        - failed
+
+    # ── DTOs ─────────────────────────────────────────────────────────────────────
+
+    ErrorResponse:
+      type: object
+      description: RFC 7807 Problem Details format for all error responses
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI identifying the problem type
+          example: "https://adsp.alberta.ca/errors/validation-error"
+        title:
+          type: string
+          description: Human-readable problem title
+          example: "Validation Error"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence
+          example: "Field 'content' exceeds maximum length of 10000 characters"
+        instance:
+          type: string
+          format: uri
+          description: URI identifying the specific occurrence
+
+    PaginatedResult:
+      type: object
+      description: Generic pagination wrapper for list endpoints
+      required:
+        - items
+        - total
+        - page
+        - pageSize
+      properties:
+        items:
+          type: array
+          items: {}
+          description: Page of results
+        total:
+          type: integer
+          description: Total count of matching records
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items per page
+
+    DomainEvent:
+      type: object
+      description: >
+        Domain event published to RabbitMQ via INT-007 stub (fire-and-forget, logged but not transmitted).
+        Six event types per BR-012. [IMPL-DEFERRED: INT-007]
+      required:
+        - eventType
+        - tenantId
+        - sessionId
+        - timestamp
+      properties:
+        eventType:
+          type: string
+          enum:
+            - session-created
+            - session-updated
+            - session-completed
+            - session-archived
+            - hypothesis-generated
+            - specialist-delegated
+        tenantId:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+        payload:
+          type: object
+          description: Event-specific payload
+        timestamp:
+          type: string
+          format: date-time
+
+    BusinessPattern:
+      type: object
+      description: >
+        Business pattern for matching against business models. Stored in ADSP Configuration
+        Service (INT-002 stub). Not persisted in MongoDB. Serves UC-007.
+      required:
+        - patternId
+        - name
+        - description
+        - isActive
+      properties:
+        patternId:
+          type: string
+          description: Unique pattern identifier (Config Service assigned)
+        name:
+          type: string
+          maxLength: 200
+          description: Pattern name
+        description:
+          type: string
+          maxLength: 5000
+          description: Pattern description and matching criteria
+        matchThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Confidence threshold for pattern match (BR-005, default 60)
+        serviceMappings:
+          type: array
+          description: ADSP service recommendations for this pattern
+          items:
+            type: object
+            properties:
+              serviceId:
+                type: string
+              recommendation:
+                type: string
+        isActive:
+          type: boolean
+          description: Whether the pattern is active (deactivate sets to false)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── Request Bodies ────────────────────────────────────────────────────────────
+
+    CreateSessionRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Session title (required, 1-200 chars per SYSREQ-024)
+
+    UpdateSessionRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/PlanningSessionStatus'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Message content (max 10000 chars per SYSREQ-024). Protected B.
+
+    UpdateBusinessModelRequest:
+      type: object
+      required:
+        - version
+        - conceptUpdates
+      properties:
+        version:
+          type: integer
+          description: Current model version for optimistic locking (409 on mismatch)
+        conceptUpdates:
+          type: array
+          items:
+            type: object
+            required:
+              - conceptId
+              - conceptType
+            properties:
+              conceptId:
+                type: string
+                format: uuid
+              conceptType:
+                $ref: '#/components/schemas/BusinessConceptType'
+
+    UpdateHypothesisStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/SolutionHypothesisStatus'
+          description: Target status per BR-010 state machine transitions
+
+    ConsultSpecialistRequest:
+      type: object
+      required:
+        - specialistType
+        - requestPayload
+      properties:
+        specialistType:
+          type: string
+          description: "One of: form-service, pdf-service, comment-service, notification-service"
+          enum:
+            - form-service
+            - pdf-service
+            - comment-service
+            - notification-service
+        requestPayload:
+          type: object
+          description: Context payload for the specialist (Protected B — contains session excerpts)
+
+    CreatePatternRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        matchThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 60
+        serviceMappings:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceId:
+                type: string
+              recommendation:
+                type: string
+
+    UpdatePatternRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        matchThreshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+        serviceMappings:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceId:
+                type: string
+              recommendation:
+                type: string
+
+    CreateExportRequest:
+      type: object
+      properties:
+        format:
+          type: string
+          enum: [json]
+          default: json
+          description: Export format (currently only JSON supported)
+
+    PaginatedSessionExports:
+      type: object
+      description: Paginated list of SessionExport records
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionExport'
+        total:
+          type: integer
+          description: Total number of exports matching the query
+        page:
+          type: integer
+          description: Current page number (1-based)
+        pageSize:
+          type: integer
+          description: Number of items per page
+
+    HealthStatus:
+      type: object
+      description: Service health status summary
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall health status
+        checks:
+          type: object
+          properties:
+            mongo:
+              type: string
+              enum: [up, down]
+            uptime:
+              type: number
+              description: Process uptime in seconds
+        version:
+          type: string
+          description: Service version
+        serviceName:
+          type: string
+          description: Service name
+
+  parameters:
+    SessionIdParam:
+      name: sessionId
+      in: path
+      required: true
+      description: Planning session UUID identifier
+      schema:
+        type: string
+        format: uuid
+
+    HypothesisIdParam:
+      name: hypothesisId
+      in: path
+      required: true
+      description: Solution hypothesis UUID identifier
+      schema:
+        type: string
+        format: uuid
+
+    RequestIdParam:
+      name: requestId
+      in: path
+      required: true
+      description: Specialist request UUID identifier
+      schema:
+        type: string
+        format: uuid
+
+    PatternIdParam:
+      name: patternId
+      in: path
+      required: true
+      description: Business pattern identifier
+      schema:
+        type: string
+
+    ExportIdParam:
+      name: exportId
+      in: path
+      required: true
+      description: Session export UUID identifier
+      schema:
+        type: string
+        format: uuid
+
+    PageParam:
+      name: page
+      in: query
+      description: Page number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSizeParam:
+      name: pageSize
+      in: query
+      description: Number of items per page (max 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    BadRequest:
+      description: Bad Request — validation failure
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/validation-error"
+            title: "Validation Error"
+            status: 400
+            detail: "Field 'content' exceeds maximum length of 10000 characters"
+
+    Unauthorized:
+      description: Unauthorized — missing or invalid Keycloak JWT
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: 'Bearer realm="adsp", error="invalid_token"'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/unauthorized"
+            title: "Unauthorized"
+            status: 401
+            detail: "JWT is missing or has expired"
+
+    Forbidden:
+      description: Forbidden — insufficient role
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/forbidden"
+            title: "Forbidden"
+            status: 403
+            detail: "Role 'planner-admin' required to access audit log"
+
+    NotFound:
+      description: Not Found — resource does not exist or is not accessible to this user
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/not-found"
+            title: "Not Found"
+            status: 404
+            detail: "PlanningSession not found or access denied"
+
+    Conflict:
+      description: Conflict — concurrent modification detected (optimistic locking failure)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/conflict"
+            title: "Conflict"
+            status: 409
+            detail: "BusinessModel version mismatch — reload and retry"
+
+    UnprocessableEntity:
+      description: Unprocessable Entity — invalid state transition or business rule violation
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/invalid-transition"
+            title: "Unprocessable Entity"
+            status: 422
+            detail: "Cannot transition hypothesis from 'accepted' to 'draft' (BR-010)"
+
+    TooManyRequests:
+      description: Too Many Requests — rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds until the rate limit resets
+          schema:
+            type: integer
+            example: 60
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/rate-limited"
+            title: "Too Many Requests"
+            status: 429
+            detail: "Rate limit exceeded for /messages endpoint"
+
+    ServiceUnavailable:
+      description: >
+        Service Unavailable — dependent service (MongoDB, Anthropic Claude stub,
+        or specialist stub) is unavailable. INT-001 stub always returns 503.
+      headers:
+        Retry-After:
+          description: Suggested retry interval in seconds
+          schema:
+            type: integer
+            example: 30
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            type: "https://adsp.alberta.ca/errors/service-unavailable"
+            title: "Service Unavailable"
+            status: 503
+            detail: "INT-001 (Anthropic Claude API) is STUB/fail-closed pending OPEN-001/002/006 resolution"

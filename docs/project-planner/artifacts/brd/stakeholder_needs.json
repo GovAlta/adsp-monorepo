@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0",
+  "items": [
+    {
+      "id": "SN-001",
+      "title": "AI-assisted business problem discovery through natural language",
+      "description": "Business analysts and developers need to describe their business problems in natural language without requiring prior knowledge of ADSP services or architectural terminology. The system must guide users through progressive discovery, asking clarifying questions and inferring business concepts from conversational input.",
+      "rationale": "GoA program staff are domain experts, not technology architects. Requiring them to frame problems in service terms before discovery creates a barrier that prevents adoption; a conversational entry point removes this barrier and ensures broader uptake across program areas.",
+      "source": ["Project Context — The Planner section"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "A user with no ADSP knowledge can describe a business problem in plain language and receive a structured set of identified business concepts without needing to name any specific ADSP service.",
+      "verificationMethod": "T",
+      "businessCapability": "Conversational AI Planning"
+    },
+    {
+      "id": "SN-002",
+      "title": "Structured business model construction from conversation",
+      "description": "The system must incrementally build a structured business model from user conversation, identifying and classifying business concepts such as Actors, Goals, Activities, Decisions, Business Rules, Workflows, Constraints, and Outcomes. This model serves as the Planner's reasoning foundation rather than raw conversation history.",
+      "rationale": "A structured model enables deterministic confidence scoring, pattern matching, and hypothesis generation that raw conversation history cannot support. Structuring the model incrementally allows the user to correct misclassifications early and reduces rework downstream.",
+      "source": ["Project Context — The Business Model section"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "After a multi-turn conversation, a retrievable BusinessModel contains at least three typed concepts with valid conceptType values and a calculated confidenceScore.",
+      "verificationMethod": "T",
+      "businessCapability": "Business Model Engineering"
+    },
+    {
+      "id": "SN-003",
+      "title": "Solution hypothesis generation from business model",
+      "description": "Once sufficient business model confidence is established, the system must generate one or more solution hypotheses that propose how ADSP services can be composed to address the identified business problem. Hypotheses must be presented in non-technical, plain language with reasoning explained.",
+      "rationale": "The core value proposition of the planner service is translating a business problem into an actionable ADSP service composition. Plain language delivery ensures the output is useful to program managers and business analysts who make funding and prioritization decisions.",
+      "source": ["Project Context — Responsibilities and Planning Pipeline"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "When BusinessModel.confidenceScore reaches 70, the system generates a SolutionHypothesis with status proposed and includes a plain-language summary and reasoning field.",
+      "verificationMethod": "T",
+      "businessCapability": "Solution Planning"
+    },
+    {
+      "id": "SN-004",
+      "title": "Persistent planning sessions resumable across browser sessions",
+      "description": "Planning engagements may span multiple days or weeks. Users must be able to close their browser, return later, and resume from precisely where they left off without repeating previously-provided information. Session state must persist decisions, reasoning, open questions, and specialist-agent progress.",
+      "rationale": "Complex program design is not completed in a single sitting. Without persistence across browser sessions, users must restart from scratch after any interruption, destroying accumulated context and discouraging use of the tool for longer engagements.",
+      "source": ["Project Context — Persistence section"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "A user can create a session, close the browser, reopen the session hours later, and continue the conversation with all prior context including the BusinessModel and ConversationMessages intact.",
+      "verificationMethod": "T",
+      "businessCapability": "Session Persistence"
+    },
+    {
+      "id": "SN-005",
+      "title": "GoA business pattern recognition and matching",
+      "description": "The planner must maintain knowledge of typical GoA business process patterns (e.g., Case Management, Grant Applications, Permit/Licence Application) and proactively identify when a user's problem matches a known pattern, accelerating solution hypothesis generation and reducing ambiguity.",
+      "rationale": "GoA program areas frequently implement variations of well-known process patterns. Surfacing a matching pattern early in discovery reduces hypothesis generation time and anchors the conversation in proven ADSP service compositions rather than general reasoning.",
+      "source": ["Project Context — Business Patterns section"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "When a BusinessModel matches a BusinessPattern with composite score >= 60, the matchedPatternId is set and the Planning Agent's next response references the matched pattern's name and recommends its service mappings.",
+      "verificationMethod": "T",
+      "businessCapability": "Pattern Library and Matching"
+    },
+    {
+      "id": "SN-006",
+      "title": "Specialist agent coordination for deep service guidance",
+      "description": "The planner must delegate detailed, service-specific guidance to specialist agents for form-service, pdf-service, comment-service, and notification-service. Specialists must be able to guide both the planner (for solution validation) and users directly (for implementation detail).",
+      "rationale": "Deep implementation guidance for individual ADSP services (e.g., form builder patterns, PDF generation workflows) requires domain knowledge beyond the Planning Agent's general reasoning scope. Specialist delegation allows the Planning Agent to scale without becoming a shallow expert on every service.",
+      "source": ["Project Context — The Specialists section"],
+      "stakeholderClass": "GoA Developer",
+      "priority": "Must",
+      "acceptanceCriteria": "When a SolutionHypothesis references form-service, the Planning Agent can invoke the Form Specialist Agent stub and return its guidance to the user within the same conversation thread.",
+      "verificationMethod": "T",
+      "businessCapability": "Agent Orchestration"
+    },
+    {
+      "id": "SN-007",
+      "title": "Multi-tenant data isolation following ADSP conventions",
+      "description": "As an ADSP platform service, all planning sessions, business models, and configuration data must be strictly isolated per tenant. No tenant may access another tenant's data. The service must follow ADSP's multi-tenancy model using the platform SDK.",
+      "rationale": "ADSP serves multiple GoA program areas as distinct tenants with independent data governance obligations. Cross-tenant data leakage would violate FOIP requirements and GoA data sovereignty policies, creating legal liability and eroding platform trust.",
+      "source": ["Specific Instructions — Multi-tenant requirement"],
+      "stakeholderClass": "ADSP Platform Team",
+      "priority": "Must",
+      "acceptanceCriteria": "A user from Tenant A cannot read or modify any PlanningSession, BusinessModel, or BusinessPattern record belonging to Tenant B, enforced at the API layer via tenantId extracted from the JWT.",
+      "verificationMethod": "T",
+      "businessCapability": "Multi-Tenant Isolation"
+    },
+    {
+      "id": "SN-008",
+      "title": "ADSP platform service compliance",
+      "description": "The planner-service must follow all ADSP service patterns including initializePlatform() SDK initialization, Keycloak JWT authentication via passport-jwt, MongoDB for persistence, RabbitMQ for domain events, Express router patterns, domain event definitions, and configuration schema registration.",
+      "rationale": "ADSP platform compliance ensures planner-service integrates with platform-wide observability, security, and operational tooling. Non-compliance would make the service an isolated silo that cannot benefit from platform investments in monitoring, incident response, and self-service tenant management.",
+      "source": ["Specific Instructions — ADSP service patterns"],
+      "stakeholderClass": "ADSP Platform Team",
+      "priority": "Must",
+      "acceptanceCriteria": "planner-service starts up via initializePlatform(), registers its domain event types, and all API routes require and validate Keycloak JWTs with correct role claims.",
+      "verificationMethod": "T",
+      "businessCapability": "Platform Compliance"
+    },
+    {
+      "id": "SN-009",
+      "title": "GoA Design System 2.0 compliant UI in TMW",
+      "description": "All user interface components must be implemented using the GoA Design System 2.0 (@abgov/react-components) and integrated into the existing Tenant Management Webapp. The UI must meet WCAG 2.1 Level AA accessibility requirements.",
+      "rationale": "GoA Design System compliance ensures visual and interaction consistency with other GoA digital services, reducing cognitive load for users who work across multiple GoA tools. WCAG 2.1 AA compliance is required by GoA digital standards and Alberta accessibility legislation.",
+      "source": ["Specific Instructions — UI integration and GoA Design System"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "All interactive planner UI components use @abgov/react-components exclusively; the UI passes automated WCAG 2.1 Level AA contrast and keyboard navigation checks with zero critical failures.",
+      "verificationMethod": "T",
+      "businessCapability": "UI/UX Standards"
+    },
+    {
+      "id": "SN-010",
+      "title": "Configurable business pattern library management",
+      "description": "Tenant administrators must be able to create, update, and deactivate business pattern templates via the TMW administrative interface. Patterns must be stored via the ADSP Configuration Service and include all required template fields as specified in the pattern definition.",
+      "rationale": "Different GoA program areas have unique domain vocabularies and service compositions. A configurable pattern library allows platform administrators to encode institutional knowledge without requiring code changes, ensuring the planner stays relevant as the GoA program landscape evolves.",
+      "source": ["Specific Instructions — Business patterns configurable library"],
+      "stakeholderClass": "ADSP Tenant Administrator",
+      "priority": "Should",
+      "acceptanceCriteria": "A planner-admin can create a new BusinessPattern, update its strongSignals, and deactivate it; all changes are persisted via the Config Service and reflected in the pattern matching engine within one session restart cycle.",
+      "verificationMethod": "T",
+      "businessCapability": "Pattern Library Administration"
+    },
+    {
+      "id": "SN-011",
+      "title": "Reasoning transparency and explainability",
+      "description": "The planner must explain its reasoning at each decision point — why a particular business pattern was matched, why specific ADSP services were recommended, and what information is still missing. This builds user trust and enables refinement of hypotheses.",
+      "rationale": "AI-generated recommendations without reasoning are difficult for program managers to justify to stakeholders and to evaluate for accuracy. Transparent reasoning enables users to identify and correct errors in the business model before committing to an ADSP service composition.",
+      "source": ["Project Context — Reasoning Responsibilities"],
+      "stakeholderClass": "GoA Business Analyst",
+      "priority": "Must",
+      "acceptanceCriteria": "Each SolutionHypothesis includes a populated reasoning field of at least 50 characters explaining which BusinessConcepts drove the ADSP service recommendations.",
+      "verificationMethod": "T",
+      "businessCapability": "AI Explainability"
+    },
+    {
+      "id": "SN-012",
+      "title": "Security, audit logging, and RBAC for all operations",
+      "description": "All planner-service operations must be protected by role-based access control enforced via Keycloak JWT. Security events and administrative actions must be audited. The service must conform to GoA security standards including OWASP ASVS and TLS enforcement.",
+      "rationale": "planner-service handles GoA program data and connects to commercial AI APIs. A weak security posture creates exposure under FOIP, risks cross-tenant data leakage, and undermines GoA confidence in the platform. Mandatory audit logging provides an accountability trail for administrative actions.",
+      "source": ["system-base-requirements.json sections 1-3, 10"],
+      "stakeholderClass": "ADSP Platform Team",
+      "priority": "Must",
+      "acceptanceCriteria": "All API endpoints enforce role-based access; every administrative action produces an auditable log entry before the response is returned; TLS 1.2 minimum is enforced on all connections; OWASP ASVS Level 2 penetration test passes.",
+      "verificationMethod": "T",
+      "businessCapability": "Security and Governance"
+    }
+  ]
+}

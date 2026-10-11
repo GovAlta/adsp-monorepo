@@ -1,0 +1,163 @@
+{
+  "pageId": "session-dashboard",
+  "pageType": "list-index",
+  "title": "My Planning Sessions",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Planning Workspace", "nodeId": "planning-workspace" },
+      { "label": "My Planning Sessions", "nodeId": "session-dashboard" }
+    ],
+    "parentNodeId": "planning-workspace",
+    "childNodeIds": [],
+    "siblingNodeIds": ["new-session-start"]
+  },
+  "sections": {
+    "toolbar": {
+      "searchPlaceholder": "Search sessions by title or problem summary",
+      "primaryAction": {
+        "label": "Start New Session",
+        "target": "new-session-start"
+      }
+    },
+    "filterDrawer": {
+      "heading": "Filter Sessions",
+      "filters": [
+        {
+          "label": "Status",
+          "name": "status",
+          "type": "select",
+          "options": [
+            { "label": "All Statuses", "value": "" },
+            { "label": "Active", "value": "active" },
+            { "label": "Paused", "value": "paused" },
+            { "label": "Completed", "value": "completed" },
+            { "label": "Archived", "value": "archived" }
+          ]
+        }
+      ]
+    },
+    "dataTable": {
+      "columns": [
+        {
+          "header": "Session Title",
+          "key": "title",
+          "sortable": true,
+          "isLink": true
+        },
+        {
+          "header": "Status",
+          "key": "status",
+          "sortable": true,
+          "isLink": false
+        },
+        {
+          "header": "Last Activity",
+          "key": "updatedAt",
+          "sortable": true,
+          "isLink": false
+        },
+        {
+          "header": "Business Problem Summary",
+          "key": "businessProblemSummary",
+          "sortable": false,
+          "isLink": false
+        },
+        {
+          "header": "Actions",
+          "key": "actions",
+          "sortable": false,
+          "isLink": false
+        }
+      ],
+      "rows": [],
+      "defaultSort": { "column": "updatedAt", "direction": "desc" },
+      "rowActions": [
+        {
+          "label": "Resume",
+          "triggeredBy": "Resume button",
+          "target": "planning-session",
+          "condition": "status in [active, paused]"
+        }
+      ]
+    },
+    "pagination": {
+      "totalItems": 0,
+      "perPage": 20
+    },
+    "emptyState": {
+      "message": "You have no planning sessions yet. Start your first session to begin exploring ADSP service options.",
+      "clearFiltersLink": false,
+      "cta": {
+        "label": "Start New Session",
+        "target": "new-session-start"
+      }
+    },
+    "accessControl": {
+      "description": "Visible to authenticated users with planner-user, planner-admin, or tenant-admin role. Users with no planner role see HTTP 403 with an explanation directing them to their administrator.",
+      "ucRef": "UC-009",
+      "exceptionFlow": "5e"
+    },
+    "sessionResumeWarning": {
+      "heading": "Session Idle Warning",
+      "body": "This session has been idle for more than 7 days. The Planning Agent will provide a detailed context recap to help you continue effectively.",
+      "condition": "lastResumedAt or createdAt older than 7 days",
+      "ucRef": "UC-006",
+      "alternateFlow": "5a"
+    },
+    "authExceptionBanner": {
+      "heading": "Session Expired",
+      "body": "Your session has expired. You will be redirected to sign in.",
+      "condition": "JWT expired or 401 returned",
+      "ucRef": "UC-009",
+      "exceptionFlow": "2e"
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "listSessions",
+        "method": "GET",
+        "path": "/api/v1/sessions",
+        "description": "Load the authenticated user's planning sessions, paginated and filtered by status. planner-user sees own sessions only per BR-001.",
+        "bindsTo": "sections.dataTable.rows",
+        "queryParams": ["status", "page", "pageSize"],
+        "protectedFields": ["userId", "tenantId"]
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "updateSession",
+        "method": "PATCH",
+        "path": "/api/v1/sessions/{sessionId}",
+        "description": "Resume a paused session — sets status to active and updates lastResumedAt.",
+        "triggeredBy": "Resume button on session row"
+      }
+    ],
+    "validationErrors": [
+      "401",
+      "403",
+      "404"
+    ],
+    "emptyState": "You have no planning sessions yet. Start your first session to begin exploring ADSP service options."
+  },
+  "testCoverage": {
+    "tcIds": ["TC-001", "TC-002", "TC-008", "TC-011", "TC-012", "TC-014", "TC-019", "TC-037", "TC-039", "TC-041", "TC-042", "TC-050", "TC-055", "TC-056", "TC-057", "TC-080"],
+    "ucIds": ["UC-001", "UC-006", "UC-009"]
+  },
+  "securityNotes": {
+    "classificationLevel": "Protected B",
+    "protectedFields": ["userId", "tenantId"],
+    "fieldMasking": "userId and tenantId are not rendered in the visible table; they are used only for server-side scoping per BR-001. businessProblemSummary may contain deliberative content — display is read-only with no query-string exposure.",
+    "asvs": ["V-3.2.2", "V-8.3.1"],
+    "cas": ["CAS-RULE-007"]
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["planning-workspace", "session-dashboard"],
+    "serviceProfileSections": ["planning-workspace"],
+    "apiOperationIds": ["listSessions", "updateSession"]
+  }
+}

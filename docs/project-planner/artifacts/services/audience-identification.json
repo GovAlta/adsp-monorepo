@@ -1,0 +1,102 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "summary": {
+    "total": 5,
+    "public": 0,
+    "stakeholder": 1,
+    "goaEmployee": 4
+  },
+  "audiences": [
+    {
+      "name": "GoA Business Analyst",
+      "types": ["GoA employee"],
+      "description": "Government of Alberta business analysts and program staff who engage with the ADSP Project Planner to describe business problems in natural language and receive AI-guided ADSP service composition recommendations. They have domain expertise in GoA business processes but low to medium technical proficiency with ADSP architecture. They are the primary users of the conversational planning interface, business model viewer, and session export capability.",
+      "goals": [
+        "Describe a business problem in plain language without needing to know ADSP service names or architecture",
+        "Review and correct the Planning Agent's structured business model to ensure accurate problem representation",
+        "Evaluate plain-language solution hypotheses and accept or request revisions",
+        "Resume multi-day planning sessions from exactly where they left off",
+        "Export completed planning sessions for sharing with program stakeholders"
+      ],
+      "outcomes": [
+        "Reduced barrier to ADSP adoption through guided conversational discovery",
+        "Accurate structured business model built from natural language input with user corrections applied",
+        "Accepted ADSP service composition hypothesis ready for developer handoff",
+        "Portable JSON session plan export for stakeholder communication and documentation"
+      ],
+      "derivedFromStakeholderClasses": ["GoA Business Analyst"]
+    },
+    {
+      "name": "GoA Developer",
+      "types": ["GoA employee"],
+      "description": "Government of Alberta software developers who use the ADSP Project Planner to scope new applications or enhancements against ADSP services and obtain deep technical implementation guidance through specialist agents. They have high technical proficiency with REST APIs, TypeScript, and ADSP service documentation. They may provide existing requirements documents or application code as starting input and navigate between the planning session and specialist workspaces.",
+      "goals": [
+        "Scope new GoA application features against ADSP services rapidly through guided discovery",
+        "Navigate to specialist workspaces (form, PDF, comment, notification) with session context pre-loaded",
+        "Obtain implementation-level guidance from specialist agents on ADSP service configuration and integration patterns",
+        "Understand the technical reasoning behind recommended ADSP service compositions",
+        "Resume planning sessions across multiple work days without re-entering context"
+      ],
+      "outcomes": [
+        "Technical implementation plan grounded in ADSP specialist agent guidance",
+        "Clear understanding of recommended ADSP service composition with implementation order",
+        "Validated integration approach with specialist-endorsed configuration recommendations",
+        "Specialist progress tracked within the planning session for handoff documentation"
+      ],
+      "derivedFromStakeholderClasses": ["GoA Developer"]
+    },
+    {
+      "name": "ADSP Tenant Administrator",
+      "types": ["GoA employee"],
+      "description": "ADSP-registered GoA department administrators responsible for managing the business pattern library and overseeing planning activity within their tenant. They have medium technical proficiency and are familiar with the TMW administrative interface and ADSP configuration concepts. They infrequently interact with the service, primarily to create, update, or deactivate business pattern templates and review session history and audit logs for governance purposes.",
+      "goals": [
+        "Create and maintain tenant-specific business pattern templates encoding departmental process knowledge",
+        "Deactivate outdated patterns to keep the pattern library accurate",
+        "Review tenant-wide session history for oversight and governance reporting",
+        "Audit administrative actions via the immutable audit log",
+        "Manage user role assignments for the planner-service within the tenant"
+      ],
+      "outcomes": [
+        "Business pattern library that reflects the department's recurring process types, accelerating analyst planning sessions",
+        "Self-service configuration capability reducing dependency on platform team for pattern updates",
+        "Governance oversight of AI-assisted planning activities with full administrative audit trail"
+      ],
+      "derivedFromStakeholderClasses": ["ADSP Tenant Administrator"]
+    },
+    {
+      "name": "ADSP Platform Team",
+      "types": ["GoA employee"],
+      "description": "The Government of Alberta ADSP technology team responsible for operating, monitoring, and enforcing compliance of the planner-service within the ADSP platform. They have deep ADSP platform architecture knowledge and high technical proficiency. They verify service compliance with mandatory platform patterns, monitor health and observability endpoints, enforce multi-tenant data isolation, and conduct security reviews.",
+      "goals": [
+        "Verify planner-service compliance with ADSP platform patterns including initializePlatform(), Keycloak JWT, MongoDB, and RabbitMQ",
+        "Monitor service health and LLM API performance through structured observability endpoints",
+        "Enforce and audit multi-tenant data isolation at API and database layers",
+        "Review security audit logs and assess OWASP ASVS Level 2 conformance",
+        "Configure RBAC role policies and session inactivity timeout settings"
+      ],
+      "outcomes": [
+        "planner-service operates within the standard ADSP platform operational model without special-casing",
+        "All tenant data isolation requirements are provably enforced and auditable",
+        "Security events and administrative actions are tamper-evidently logged for compliance and incident response"
+      ],
+      "derivedFromStakeholderClasses": ["ADSP Platform Team"]
+    },
+    {
+      "name": "GoA Program Manager",
+      "types": ["stakeholder"],
+      "description": "Government of Alberta program managers and decision-makers who are indirect beneficiaries of ADSP Project Planner outputs. They receive and review planning session exports prepared by business analysts to make informed decisions about solution direction, implementation investment, and resource allocation. They do not directly interact with the planner-service interface but their approval decisions determine whether an accepted hypothesis proceeds to implementation.",
+      "goals": [
+        "Review plain-language solution plan exports to understand proposed ADSP service compositions without technical expertise",
+        "Evaluate cost, effort, and implementation order implications of proposed solutions",
+        "Approve or redirect solution hypotheses before implementation investment is committed"
+      ],
+      "outcomes": [
+        "Informed and accountable decision-making on ADSP-based digital solution investments",
+        "Clear non-technical documentation of proposed solution direction with transparent reasoning",
+        "Accountability trail supporting governance obligations for digital investment decisions"
+      ],
+      "derivedFromStakeholderClasses": ["GoA Program Manager"]
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+{
+  "pageId": "session-history",
+  "pageType": "report-results",
+  "title": "Session History",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "roles": ["planner-admin", "tenant-admin"],
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Administration", "nodeId": "admin-hub", "href": "/admin" },
+      { "label": "Session History", "nodeId": "session-history", "href": "/admin/session-history", "current": true }
+    ],
+    "parentNodeId": "admin-hub",
+    "childNodeIds": [],
+    "siblingNodeIds": ["pattern-library", "audit-log", "user-management"]
+  },
+  "sections": {
+    "filterControls": {
+      "filters": [
+        {
+          "label": "Date Range",
+          "name": "dateRange",
+          "type": "date-range",
+          "description": "Filter sessions by creation date range",
+          "required": false
+        },
+        {
+          "label": "User",
+          "name": "userRef",
+          "type": "searchable-dropdown",
+          "description": "Filter by session owner. Displayed as displayName in UI. Selection resolved to opaque userRef before filter is applied — raw userId is never placed in a URL query string.",
+          "required": false,
+          "securityNote": "FAC-S5-024: user filter passes an opaque userRef in the request context, not a raw POPA s.17 userId in the URL query string"
+        },
+        {
+          "label": "Status",
+          "name": "status",
+          "type": "select",
+          "options": [
+            { "value": "active", "label": "Active" },
+            { "value": "completed", "label": "Completed" },
+            { "value": "archived", "label": "Archived" }
+          ],
+          "required": false
+        }
+      ]
+    },
+    "runAction": {
+      "label": "Apply Filters",
+      "description": "Fetch the filtered session list from listSessions (GET /api/v1/sessions) using admin-scope JWT. Only sessions belonging to the current tenant are returned (BR-001 tenant isolation)."
+    },
+    "resultsTable": {
+      "columns": [
+        {
+          "header": "Session ID",
+          "key": "id",
+          "sortable": false,
+          "isLink": false,
+          "description": "Truncated UUID displayed as short ID (first 8 chars)"
+        },
+        {
+          "header": "Owner",
+          "key": "ownerDisplayName",
+          "sortable": true,
+          "isLink": false,
+          "description": "planningSession.userId resolved to displayName from user context. Raw userId is never rendered in the UI.",
+          "securityNote": "FAC-S5-025: raw userId is masked to displayName. Annotate component render with // ASVS:V-8.3.1 and // CAS:RULE-017"
+        },
+        {
+          "header": "Status",
+          "key": "status",
+          "sortable": true,
+          "isLink": false,
+          "type": "badge",
+          "badgeVariants": {
+            "active": "success",
+            "completed": "information",
+            "archived": "neutral"
+          }
+        },
+        {
+          "header": "Created",
+          "key": "createdAt",
+          "sortable": true,
+          "isLink": false,
+          "type": "date"
+        },
+        {
+          "header": "Last Activity",
+          "key": "lastActivityAt",
+          "sortable": true,
+          "isLink": false,
+          "type": "date"
+        },
+        {
+          "header": "Business Problem Summary",
+          "key": "businessProblemSummary",
+          "sortable": false,
+          "isLink": false,
+          "type": "truncated-text",
+          "maxChars": 100
+        }
+      ],
+      "rowClickAction": "expand-detail-panel",
+      "rowSelectionBehavior": "single-select"
+    },
+    "rowDetailPanel": {
+      "description": "Inline detail panel expanded on row click. Does not navigate away from page.",
+      "trigger": "row-click",
+      "fields": [
+        {
+          "label": "Business Model Summary",
+          "key": "businessModelSummary",
+          "type": "text"
+        },
+        {
+          "label": "Hypothesis Count",
+          "key": "hypothesisCount",
+          "type": "number"
+        },
+        {
+          "label": "Specialist Sessions",
+          "key": "specialistSessionCount",
+          "type": "number"
+        },
+        {
+          "label": "Export History",
+          "key": "exportCount",
+          "type": "number",
+          "description": "Number of times this session has been exported via initiateExport"
+        }
+      ],
+      "adminAnnotation": {
+        "label": "Governance Note",
+        "name": "adminAnnotation",
+        "type": "textarea",
+        "description": "Governance tracking note visible only to planner-admin and tenant-admin roles. Saved to session metadata via updateSession PATCH.",
+        "roleGating": ["planner-admin", "tenant-admin"],
+        "saveOperationId": "updateSession",
+        "saveMethod": "PATCH",
+        "savePath": "/api/v1/sessions/{sessionId}",
+        "tcReference": "TC-081"
+      }
+    },
+    "emptyState": {
+      "message": "No planning sessions match the selected filters. Try adjusting your date range or removing filters."
+    },
+    "exportAction": {
+      "label": "Export Results",
+      "description": "Export the current filtered session list as CSV or JSON. Fetches all matching sessions via listSessions (paginated, admin-scope) and formats client-side.",
+      "formats": ["CSV", "JSON"],
+      "triggerOperationId": "listSessions",
+      "exportNote": "No dedicated bulk export endpoint in OpenAPI spec. Export is generated client-side from listSessions paginated result set with current filter state applied. TC-043: CSV includes sessionId, ownerDisplayName, status, createdAt, lastActivityAt, businessProblemSummary. TC-044: JSON export same fields. Raw userId is NOT included in either export format (FAC-S5-025).",
+      "accessControl": {
+        "roles": ["planner-admin", "tenant-admin"],
+        "description": "Only admin roles can export. planner-user receives 403."
+      }
+    },
+    "pagination": {
+      "perPage": 20,
+      "description": "Server-side pagination via page and pageSize params on GET /api/v1/sessions"
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "listSessions",
+        "method": "GET",
+        "path": "/api/v1/sessions",
+        "description": "Fetches paginated planning sessions for the tenant. planner-admin and tenant-admin roles receive all tenant sessions per BR-007 JWT role-based filter. Returns status, createdAt, lastActivityAt, businessProblemSummary, and ownerDisplayName resolved from userId.",
+        "bindsTo": "resultsTable",
+        "queryParams": ["page", "pageSize", "status"],
+        "securityNote": "FAC-S5-024: Status and date-range are standard non-PII query params. User filter uses opaque userRef in component state; not passed as raw userId in URL query string."
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "updateSession",
+        "method": "PATCH",
+        "path": "/api/v1/sessions/{sessionId}",
+        "description": "Saves admin governance annotation to the session record. Only invoked when admin modifies the annotation field in the row detail panel.",
+        "bindsTo": "rowDetailPanel.adminAnnotation",
+        "tcReference": "TC-081"
+      }
+    ],
+    "validationErrors": [],
+    "emptyState": "No planning sessions match the selected filters. Try adjusting your date range or removing filters."
+  },
+  "accessControl": {
+    "roles": ["planner-admin", "tenant-admin"],
+    "deniedRoles": ["planner-user"],
+    "deniedMessage": "You do not have permission to view session history. This area is restricted to tenant administrators and platform administrators.",
+    "deniedTCs": ["TC-036", "TC-039"],
+    "crossTenantNote": "TC-041: listSessions is tenant-scoped per BR-001. planner-admin cannot see sessions from other tenants. TC-042: admin cannot see other tenant user data. ownerDisplayName is resolved within current tenant context only."
+  },
+  "errorStates": [
+    {
+      "condition": "403 — planner-user attempts to access page",
+      "type": "page-level-error",
+      "message": "You do not have permission to view session history.",
+      "tcReference": ["TC-036", "TC-039"]
+    },
+    {
+      "condition": "listSessions returns empty set with active filters",
+      "type": "empty-state",
+      "message": "No planning sessions match the selected filters. Try adjusting your date range or removing filters.",
+      "tcReference": ["TC-038"]
+    },
+    {
+      "condition": "503 — listSessions service unavailable",
+      "type": "inline-error-banner",
+      "message": "Session history is temporarily unavailable. Please try again in a few moments."
+    },
+    {
+      "condition": "updateSession 422 — annotation save failure",
+      "type": "field-level-error",
+      "message": "Unable to save governance note. Please check the note content and try again.",
+      "tcReference": ["TC-081"]
+    }
+  ],
+  "securityContext": {
+    "classificationLevel": "Protected B",
+    "protectedFields": [
+      {
+        "field": "planningSession.userId",
+        "displayAs": "ownerDisplayName",
+        "maskingRule": "FAC-S5-025: render display name from user context lookup; never render raw Keycloak userId in table, detail panel, or export output",
+        "annotation": "// ASVS:V-8.3.1 // CAS:RULE-017",
+        "popa": "POPA s.17"
+      }
+    ],
+    "urlLeakageNote": "FAC-S5-024: User filter uses opaque userRef resolved from dropdown selection; not a raw POPA s.17 userId in URL query string. listSessions standard query params (status, page, pageSize) do not carry Protected B data.",
+    "storageNote": "FAC-S5-026: No Protected B fields written to localStorage or sessionStorage. Filter state (status, date range) held in component state only. Business problem summaries and session content are Protected B deliberative process records — never persisted client-side."
+  },
+  "tcCoverage": {
+    "covered": ["TC-038", "TC-041", "TC-042", "TC-043", "TC-044", "TC-055", "TC-057", "TC-080", "TC-081"],
+    "description": "TC-038: planner-admin sees all tenant sessions via listSessions admin scope. TC-041: cross-tenant sessions not visible (BR-001 tenant isolation). TC-042: admin cannot see other tenant user data. TC-043: CSV export of filtered results. TC-044: JSON export of filtered results. TC-055: keyboard navigation for filters, table, detail panel, and export action. TC-057: colour contrast for status badges and error states. TC-080: session access by owner (planner-user sees only own sessions via listSessions; admin sees all). TC-081: admin annotation saved via updateSession PATCH."
+  },
+  "policyNotices": [
+    {
+      "policy": "POPA s.17",
+      "description": "Session owner identity (userId) is a personal identifier. Displayed as displayName only. Raw userId is never rendered in the UI or included in exports."
+    },
+    {
+      "policy": "ATIA s.23",
+      "description": "Business problem summaries and session content are protected deliberative process records under ATIA s.23."
+    },
+    {
+      "policy": "BR-001",
+      "description": "All session queries are tenant-scoped. Admin view is limited to sessions within the current tenant."
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": ["session-history", "admin-hub"],
+    "apiOperationIds": ["listSessions", "updateSession"],
+    "ucCoverage": ["UC-008"],
+    "tcCoverage": ["TC-038", "TC-041", "TC-042", "TC-043", "TC-044", "TC-055", "TC-057", "TC-080", "TC-081"],
+    "brCoverage": ["BR-001", "BR-007"],
+    "exportNote": "No dedicated bulk session-list export endpoint in OpenAPI spec. Export is generated client-side from listSessions paginated result. Raw userId excluded from all export formats per POPA s.17."
+  }
+}

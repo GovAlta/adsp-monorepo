@@ -1,0 +1,7 @@
+[2026-10-10T08:59:23Z] Stage classify | stage-start | 0/4 | Initializing classification; reading upstream artifacts
+[2026-10-10T09:00:51Z] Stage classify | phase-1-end | 1/4 | Evidence collection complete: 11 entities from data_model.json, 8 integration points, all BRD shards read
+[2026-10-10T09:01:00Z] Stage classify | phase-2-start | 2/4 | Beginning classification assessment for 11 entities
+[2026-10-10T09:01:42Z] Stage classify | phase-2-progress | 2/4 | security-classification.yaml written; writing details YAML
+[2026-10-10T09:03:48Z] Stage classify | phase-2-end | 2/4 | Both YAML classification files written; updating progress and beginning self-validation
+[2026-10-10T09:03:57Z] Stage classify | self-validation | 3/4 | Running FAC-CLASSIFY-001..003 checks
+[2026-10-10T09:04:39Z] Stage classify | stage-end | 4/4 | Classification complete — Protected B; all 3 FAC-CLASSIFY rules PASSED; delta and validation log written

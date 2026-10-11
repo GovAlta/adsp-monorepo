@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "items": [
+    {
+      "id": "OPEN-001",
+      "kind": "question",
+      "statement": "Anthropic API Key Management and Rotation Strategy: The planner-service requires an Anthropic API key for LLM inference. There is no defined process for provisioning, rotating, or auditing API key usage within GoA ADSP. Questions: (1) where the key is stored; (2) who provisions and rotates keys; (3) how usage and billing are attributed per tenant; (4) whether a GoA enterprise agreement with Anthropic is required.",
+      "stakeholderToConsult": "ADSP Platform Team",
+      "affectedRequirements": ["SYSREQ-001", "SYSREQ-008"],
+      "status": "Open"
+    },
+    {
+      "id": "OPEN-002",
+      "kind": "question",
+      "statement": "LLM Model Version Pinning Policy: The default Planning Agent model is assumed to be claude-sonnet-4-5 but no formal GoA information management policy has confirmed (1) this model version is approved for GoA program data; (2) data residency requirements are satisfied by Anthropic's API hosting region; (3) the model version remains available for the expected service lifetime. A formal model approval process must be established.",
+      "stakeholderToConsult": "GoA Program Manager",
+      "affectedRequirements": ["SYSREQ-008"],
+      "status": "Open"
+    },
+    {
+      "id": "OPEN-003",
+      "kind": "question",
+      "statement": "Per-Tenant LLM Cost Attribution and Billing Model: No billing model for cross-charging LLM costs to individual GoA program areas or tenants has been defined. Questions: (1) how Anthropic API costs are tracked per tenant; (2) whether a cost threshold triggers service suspension; (3) how rate limits should be adjusted for high-volume tenants.",
+      "stakeholderToConsult": "GoA Program Manager",
+      "affectedRequirements": ["SYSREQ-008"],
+      "status": "Open"
+    },
+    {
+      "id": "OPEN-004",
+      "kind": "question",
+      "statement": "ADSP Configuration Service Availability in Target Environments: It is unconfirmed whether the Configuration Service is available in all target ADSP tenant environments. Clarification needed: (1) minimum ADSP platform version required; (2) namespace capacity limits for pattern storage; (3) whether tenant administrators must explicitly enable Configuration Service before using pattern management features.",
+      "stakeholderToConsult": "ADSP Platform Team",
+      "affectedRequirements": ["SYSREQ-006"],
+      "status": "Open"
+    },
+    {
+      "id": "OPEN-005",
+      "kind": "gap",
+      "statement": "Specialist Agent Interface Contract and Authentication: The four Specialist Agent integrations (INT-003 through INT-006) are implemented as stubs. Before any specialist goes live, an interface contract must be defined covering: (1) API schema for specialist request/response; (2) service-to-service authentication; (3) specialist versioning and backward compatibility; (4) error handling and retry policy.",
+      "stakeholderToConsult": "GoA Developer",
+      "affectedRequirements": ["SYSREQ-007", "INT-003", "INT-004", "INT-005", "INT-006"],
+      "status": "Open"
+    },
+    {
+      "id": "OPEN-006",
+      "kind": "question",
+      "statement": "Data Residency and PII Handling for LLM Conversation Content: When users describe business problems to the Planning Agent, conversation content may include PII or sensitive program data transmitted to Anthropic API. Questions: (1) data classification policy for planning session content; (2) whether users must be warned about third-party API transmission; (3) how long Anthropic retains API inputs; (4) whether a data processing agreement with Anthropic is required under FOIP.",
+      "stakeholderToConsult": "GoA Program Manager",
+      "affectedRequirements": ["SYSREQ-018", "SYSREQ-012"],
+      "status": "Open"
+    }
+  ]
+}

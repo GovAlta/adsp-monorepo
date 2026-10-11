@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adsp.alberta.ca/planner-service/database-schema",
+  "title": "planner-service MongoDB Database Schema",
+  "description": "JSON Schema (Draft 2020-12) for all planner-service MongoDB collections. Adapted from Stage 3 DDL. Used for OpenAPI cross-check (XSTAGE-S4-001) and Stage 5 form-field alignment (XSTAGE-S5-005).",
+  "$defs": {
+    "ConceptRelationship": {
+      "type": "object",
+      "description": "Embedded sub-document in BusinessConcept.relationships[]",
+      "required": ["targetConceptId", "relationshipType"],
+      "additionalProperties": false,
+      "properties": {
+        "targetConceptId": { "type": "string", "format": "uuid", "description": "UUID of the target concept" },
+        "relationshipType": {
+          "type": "string",
+          "enum": ["uses", "produces", "triggers", "governs", "requires", "part-of"],
+          "description": "Typed relationship between concepts"
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "BusinessConcept": {
+      "type": "object",
+      "description": "Embedded sub-document in BusinessModel.concepts[]",
+      "required": ["conceptId", "conceptType", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "conceptId": { "type": "string", "format": "uuid" },
+        "conceptType": {
+          "type": "string",
+          "enum": [
+            "Actor", "Goal", "Activity", "Decision", "Evidence",
+            "BusinessRule", "Constraint", "EvaluationCriteria", "Workflow",
+            "Outcome", "Document", "Event", "ExternalSystem", "Assumption", "Unknown"
+          ],
+          "description": "Typed business concept category (BR-006: 15 valid values)"
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string" },
+        "sourceText": { "type": "string", "description": "Original text from which concept was extracted" },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ConceptRelationship" },
+          "default": []
+        }
+      }
+    },
+    "PlanningSession": {
+      "type": "object",
+      "description": "Persisted planning session. Maps to planningSessions MongoDB collection.",
+      "required": ["sessionId", "tenantId", "userId", "status", "createdAt", "updatedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": { "type": "string", "format": "uuid", "description": "Unique session identifier" },
+        "tenantId": { "type": "string", "description": "Tenant identifier from JWT claim (BR-001)" },
+        "userId": { "type": "string", "description": "User identifier from JWT claim" },
+        "status": {
+          "type": "string",
+          "enum": ["active", "paused", "completed", "archived"],
+          "description": "Session lifecycle status"
+        },
+        "title": { "type": "string", "maxLength": 200 },
+        "businessModelId": { "type": "string", "format": "uuid" },
+        "hypothesisIds": { "type": "array", "items": { "type": "string", "format": "uuid" }, "default": [] },
+        "openQuestions": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "nextSteps": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "specialistProgress": {
+          "type": "object",
+          "description": "Map of specialistType to progress status",
+          "additionalProperties": { "type": "string" }
+        },
+        "lastResumedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "BusinessModel": {
+      "type": "object",
+      "description": "Business model with embedded concepts. Maps to businessModels MongoDB collection.",
+      "required": ["modelId", "sessionId", "tenantId", "concepts", "confidenceScore", "version", "createdAt", "updatedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "modelId": { "type": "string", "format": "uuid" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "tenantId": { "type": "string" },
+        "concepts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BusinessConcept" },
+          "default": []
+        },
+        "confidenceScore": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence score 0-100. Hypothesis generation triggered at >=70 (BR-004)"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optimistic concurrency version, incremented on each update"
+        },
+        "assumptions": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "unknowns": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "matchedPatternId": { "type": "string", "description": "BusinessPattern ID from Config Service (BR-005)" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SolutionHypothesis": {
+      "type": "object",
+      "description": "Solution hypothesis. Maps to solutionHypotheses MongoDB collection (DDL: hypothesis_record).",
+      "required": ["hypothesisId", "sessionId", "tenantId", "status", "adspServices", "summary", "version", "createdAt", "updatedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "hypothesisId": { "type": "string", "format": "uuid" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "tenantId": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "proposed", "accepted", "rejected", "superseded"],
+          "description": "Hypothesis status. State transitions enforced by BR-010."
+        },
+        "adspServices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "ADSP service IDs recommended in this hypothesis"
+        },
+        "summary": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "patternId": { "type": "string" },
+        "reasoning": { "type": "string" },
+        "implementationOrder": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ConversationMessage": {
+      "type": "object",
+      "description": "Conversation message. Maps to conversationMessages MongoDB collection.",
+      "required": ["messageId", "sessionId", "tenantId", "role", "content", "timestamp"],
+      "additionalProperties": false,
+      "properties": {
+        "messageId": { "type": "string", "format": "uuid" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "tenantId": { "type": "string" },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant", "system"],
+          "description": "Message sender role"
+        },
+        "content": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "agentId": { "type": "string", "description": "Specialist agent ID when role=assistant and delegated" }
+      }
+    },
+    "AuditEvent": {
+      "type": "object",
+      "description": "Audit log entry. Maps to auditEvents MongoDB collection (append-only, BR-008, SWREQ-013).",
+      "required": ["eventId", "timestamp", "actorId", "tenantId", "action", "outcome", "hmac"],
+      "additionalProperties": false,
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "actorId": { "type": "string", "description": "User or service account performing the action" },
+        "tenantId": { "type": "string" },
+        "action": { "type": "string", "description": "Action performed (e.g., SESSION_CREATED)" },
+        "resourceId": { "type": "string" },
+        "resourceType": { "type": "string" },
+        "outcome": { "type": "string", "description": "Result: SUCCESS or FAILURE" },
+        "hmac": { "type": "string", "description": "HMAC-SHA256 of event payload using AUDIT_SIGNING_KEY (SWREQ-013)" },
+        "previousEventId": {
+          "type": ["string", "null"],
+          "description": "Chain reference to prior event for HMAC integrity (SYSREQ-020)"
+        }
+      }
+    },
+    "SpecialistRequest": {
+      "type": "object",
+      "description": "Specialist agent invocation request. Maps to specialistRequests collection.",
+      "required": ["requestId", "sessionId", "tenantId", "specialistType", "requestPayload", "status", "createdAt", "updatedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "requestId": { "type": "string", "format": "uuid" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "tenantId": { "type": "string" },
+        "specialistType": { "type": "string", "description": "Specialist service identifier (e.g., form-service)" },
+        "requestPayload": { "type": "object", "description": "Request parameters for the specialist" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "sent", "completed", "failed"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SpecialistResponse": {
+      "type": "object",
+      "description": "Specialist agent response. Maps to specialistResponses collection.",
+      "required": ["responseId", "requestId", "sessionId", "tenantId", "responsePayload", "receivedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "responseId": { "type": "string", "format": "uuid" },
+        "requestId": { "type": "string", "format": "uuid" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "tenantId": { "type": "string" },
+        "responsePayload": { "type": "object", "description": "Response data from the specialist" },
+        "receivedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SessionExport": {
+      "type": "object",
+      "description": "Exported session document. Maps to sessionExports collection (SYSREQ-016).",
+      "required": ["exportId", "sessionId", "tenantId", "userId", "exportData", "format", "exportedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "exportId": { "type": "string", "format": "uuid" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "tenantId": { "type": "string" },
+        "userId": { "type": "string" },
+        "exportData": { "type": "object", "description": "Full session snapshot as portable JSON" },
+        "format": { "type": "string", "description": "Export format (e.g., json)" },
+        "exportedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "UserContext": {
+      "type": "object",
+      "description": "User session context and preferences. Maps to userContexts collection.",
+      "required": ["contextId", "userId", "tenantId", "createdAt", "updatedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "contextId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "preferences": { "type": "object", "description": "User preference key-value pairs" },
+        "lastActiveSessionId": { "type": "string", "format": "uuid" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

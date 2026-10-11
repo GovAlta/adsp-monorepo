@@ -1,0 +1,504 @@
+{
+  "schemaVersion": "1.0",
+  "items": [
+    {
+      "id": "UC-001",
+      "name": "Start Planning Session",
+      "summary": "A GoA business analyst or developer initiates a new planning session by providing an initial title and optional description of the business problem they want to explore.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["Planning Agent", "MongoDB"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer"],
+      "preconditions": ["User is authenticated via Keycloak JWT with planner-user role", "User is associated with an active ADSP tenant"],
+      "trigger": "User navigates to the Planner section in TMW and selects 'New Planning Session'",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Selects 'New Planning Session' from the planner dashboard", "systemResponse": "System displays a new session creation form" },
+        { "step": 2, "actor": "User", "action": "Enters a session title (required) and optional initial description of the business problem", "systemResponse": "System validates the title length (1-200 characters)" },
+        { "step": 3, "actor": "System", "action": "Creates a PlanningSession document in MongoDB with status 'active', tenantId, userId, title, and timestamps", "systemResponse": "Session is persisted with a generated UUID" },
+        { "step": 4, "actor": "System", "action": "Creates an empty BusinessModel document linked to the session and publishes a session-created domain event", "systemResponse": "BusinessModel and domain event are persisted" },
+        { "step": 5, "actor": "Planning Agent", "action": "Generates a welcome message introducing the planning process and prompts for the user's business problem", "systemResponse": "Agent response is stored as a ConversationMessage and streamed to the UI" },
+        { "step": 6, "actor": "User", "action": "Reads the welcome message and begins describing their business problem", "systemResponse": "User is in active conversation state" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "2a",
+          "branchesFromStep": 2,
+          "name": "Active session already exists for this user",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Detects that the user has an existing active or paused session", "systemResponse": "System displays a prompt asking whether to continue the existing session or start a new one" },
+            { "step": 2, "actor": "User", "action": "Chooses to start a new session despite the existing one", "systemResponse": "System proceeds with new session creation" }
+          ],
+          "rejoinsAtStep": 3
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "3e",
+          "branchesFromStep": 3,
+          "name": "MongoDB write failure",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "MongoDB write fails due to connectivity or validation error", "systemResponse": "System returns HTTP 503 with a user-visible error message and logs the failure" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["A new PlanningSession exists in MongoDB with status 'active'", "A linked BusinessModel document exists with version 1", "A session-created domain event has been published to RabbitMQ", "The user is in the active planning workspace"],
+      "businessRules": ["BR-001", "BR-007"],
+      "sourceRequirements": ["SYSREQ-001", "SYSREQ-005"],
+      "integrationPoints": ["INT-001"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "execute" },
+        { "role": "planner-admin", "access": "execute" },
+        { "role": "tenant-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "On-demand, typically once per new business problem or feature"
+    },
+    {
+      "id": "UC-002",
+      "name": "Describe Business Problem and Build Model",
+      "summary": "A user engages in a multi-turn conversation with the Planning Agent to describe their business problem. The agent asks clarifying questions, infers business concepts, and incrementally updates the structured business model.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["Planning Agent", "PatternMatchingService", "MongoDB", "Anthropic Claude API"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer"],
+      "preconditions": ["An active PlanningSession exists for the user", "The user is authenticated with planner-user role or higher"],
+      "trigger": "User types a message in the planning chat interface and submits it",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Types a message describing their business problem or answering a clarifying question and submits", "systemResponse": "System validates the message content (max 10000 characters)" },
+        { "step": 2, "actor": "System", "action": "Persists the user ConversationMessage to MongoDB and assembles the LLM context from session history and current BusinessModel", "systemResponse": "Context assembled within 500ms" },
+        { "step": 3, "actor": "System", "action": "Calls the Anthropic Claude API with the assembled context via the LLMCallWrapper", "systemResponse": "Streaming response begins within 5 seconds" },
+        { "step": 4, "actor": "Planning Agent", "action": "Streams response to the user including business concept inferences and follow-up questions", "systemResponse": "UI displays streaming text with typing indicator" },
+        { "step": 5, "actor": "System", "action": "Parses the agent response to extract newly identified business concepts and updates the BusinessModel document atomically", "systemResponse": "BusinessModel version incremented and persisted" },
+        { "step": 6, "actor": "System", "action": "Runs PatternMatchingService against the updated model; if a match exceeds the threshold, surfaced to the agent context for next turn", "systemResponse": "Pattern match status updated in session state" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "6a",
+          "branchesFromStep": 6,
+          "name": "Business pattern matched above threshold",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Pattern match confidence reaches or exceeds 60; the matched pattern is noted in the session state", "systemResponse": "Pattern match stored in BusinessModel.matchedPatternId" },
+            { "step": 2, "actor": "Planning Agent", "action": "In the next turn, uses the matched pattern's clarifying questions and service mappings to focus conversation", "systemResponse": "Pattern-specific guidance applied to conversation" }
+          ],
+          "rejoinsAtStep": null
+        },
+        {
+          "id": "5a",
+          "branchesFromStep": 5,
+          "name": "Business model confidence reaches 70 — hypothesis triggered",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "BusinessModel confidenceScore reaches or exceeds 70 after model update", "systemResponse": "HypothesisGenerationService is triggered asynchronously" },
+            { "step": 2, "actor": "System", "action": "HypothesisGenerationService generates and persists a SolutionHypothesis with status 'proposed'", "systemResponse": "Hypothesis appears in the UI HypothesisPanel" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "3e",
+          "branchesFromStep": 3,
+          "name": "Anthropic Claude API unavailable",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "LLMCallWrapper exhausts retries or circuit breaker is open", "systemResponse": "System returns HTTP 503 with a user-visible message that the AI service is temporarily unavailable. The user message is preserved in the session for retry." }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["User message and agent response are persisted as ConversationMessages", "BusinessModel is updated with any newly identified concepts", "Pattern matching has been re-evaluated", "If confidenceScore >= 70, a SolutionHypothesis has been generated"],
+      "businessRules": ["BR-001", "BR-003", "BR-004", "BR-005"],
+      "sourceRequirements": ["SYSREQ-001", "SYSREQ-002", "SYSREQ-003"],
+      "integrationPoints": ["INT-001"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "execute" },
+        { "role": "planner-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "Multiple times per session, potentially dozens of turns"
+    },
+    {
+      "id": "UC-003",
+      "name": "Review and Correct Business Model",
+      "summary": "A user reviews the structured business model the Planning Agent has constructed from their conversation, identifies any misclassified concepts, and corrects them through the UI.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["MongoDB"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer"],
+      "preconditions": ["An active PlanningSession exists with at least one concept in the BusinessModel", "User is authenticated with planner-user role or higher"],
+      "trigger": "User selects 'View Business Model' from the planning session workspace",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Opens the Business Model view within the active session", "systemResponse": "System displays the BusinessModelViewer component with all concepts listed by type" },
+        { "step": 2, "actor": "User", "action": "Reviews the list of classified concepts and their types", "systemResponse": "Concepts are displayed with type badges and source text excerpts" },
+        { "step": 3, "actor": "User", "action": "Selects a misclassified concept and changes its type using the type selector dropdown", "systemResponse": "System validates the new type is a valid enum value" },
+        { "step": 4, "actor": "System", "action": "Updates the BusinessConcept conceptType in MongoDB and increments the BusinessModel version", "systemResponse": "Model view refreshes with corrected concept type" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "3a",
+          "branchesFromStep": 3,
+          "name": "User corrects multiple concepts",
+          "steps": [
+            { "step": 1, "actor": "User", "action": "Continues correcting additional misclassified concepts one by one", "systemResponse": "Each correction is persisted immediately" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "4e",
+          "branchesFromStep": 4,
+          "name": "Concurrent modification conflict",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "BusinessModel version has changed since the user loaded the view (concurrent agent update)", "systemResponse": "System returns HTTP 409 and prompts the user to refresh the model view" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["BusinessConcept types reflect user corrections", "BusinessModel version has been incremented for each correction", "PatternMatchingService will re-evaluate on next agent turn"],
+      "businessRules": ["BR-006"],
+      "sourceRequirements": ["SYSREQ-002", "SYSREQ-005"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "execute" },
+        { "role": "planner-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "One to several times per session"
+    },
+    {
+      "id": "UC-004",
+      "name": "Review and Accept Solution Hypothesis",
+      "summary": "A user reviews one or more solution hypotheses generated by the Planning Agent, understands the reasoning, and either accepts a hypothesis or requests a revised one.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["Planning Agent", "MongoDB", "Anthropic Claude API"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer", "GoA Program Manager"],
+      "preconditions": ["At least one SolutionHypothesis exists with status 'proposed'", "User is authenticated with planner-user role or higher"],
+      "trigger": "A SolutionHypothesis is generated and the HypothesisPanel displays in the workspace",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Views the HypothesisPanel displaying the proposed solution hypothesis", "systemResponse": "System displays the plain-language summary, ADSP service list, and reasoning (initially collapsed)" },
+        { "step": 2, "actor": "User", "action": "Expands the reasoning section to understand why the services were recommended", "systemResponse": "Full reasoning explanation and implementation order are displayed" },
+        { "step": 3, "actor": "User", "action": "Selects 'Accept Hypothesis' to confirm the proposed solution direction", "systemResponse": "System updates the SolutionHypothesis status from 'proposed' to 'accepted' in MongoDB" },
+        { "step": 4, "actor": "System", "action": "Publishes a hypothesis-generated domain event with the accepted hypothesis details", "systemResponse": "Domain event persisted to RabbitMQ" },
+        { "step": 5, "actor": "System", "action": "Updates the session status to reflect an accepted hypothesis and surfaces recommended next steps", "systemResponse": "Session workspace shows specialist navigation options" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "3a",
+          "branchesFromStep": 3,
+          "name": "User requests a revised hypothesis",
+          "steps": [
+            { "step": 1, "actor": "User", "action": "Selects 'Request Revision' and provides feedback on what should change", "systemResponse": "Feedback is sent to the Planning Agent as a new conversation message" },
+            { "step": 2, "actor": "System", "action": "Original hypothesis status is set to 'superseded'. HypothesisGenerationService is triggered again with feedback context", "systemResponse": "A new SolutionHypothesis is generated and displayed" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "3e",
+          "branchesFromStep": 3,
+          "name": "Hypothesis revision — LLM unavailable",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Anthropic API unavailable during revision generation", "systemResponse": "System notifies user the revision is pending and will complete when the service recovers. Feedback is preserved." }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["SolutionHypothesis status is 'accepted' or 'superseded'", "Domain event published", "Session shows recommended next steps based on accepted hypothesis"],
+      "businessRules": ["BR-010"],
+      "sourceRequirements": ["SYSREQ-004", "SYSREQ-016"],
+      "integrationPoints": ["INT-001"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "execute" },
+        { "role": "planner-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "Once to several times per completed session"
+    },
+    {
+      "id": "UC-005",
+      "name": "Consult Specialist Agent",
+      "summary": "A GoA developer navigates to a specialist agent workspace for an ADSP service (form-service, pdf-service, comment-service, or notification-service) to receive deep technical guidance on the selected service within the context of their planning session.",
+      "primaryActor": "GoA Developer",
+      "secondaryActors": ["Specialist Agent", "Planning Agent", "Anthropic Claude API"],
+      "stakeholders": ["GoA Developer"],
+      "preconditions": ["A SolutionHypothesis with status 'proposed' or 'accepted' exists referencing the target service", "User is authenticated with planner-user role or higher", "The specialist agent for the target service is enabled in the tenant configuration"],
+      "trigger": "User selects a specialist service from the SpecialistNavigator component within the planning session",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Selects the form-service specialist from the SpecialistNavigator", "systemResponse": "System loads the specialist workspace with the relevant session context pre-injected" },
+        { "step": 2, "actor": "System", "action": "Calls SpecialistAgentService to initialize the specialist agent with session business model and hypothesis context", "systemResponse": "Specialist agent context assembled within 2 seconds" },
+        { "step": 3, "actor": "User", "action": "Asks a service-specific technical question in the specialist chat", "systemResponse": "Specialist agent receives the question with context" },
+        { "step": 4, "actor": "Specialist Agent", "action": "Provides deep service-specific guidance on form configuration, integration patterns, and implementation steps", "systemResponse": "Streaming response displayed in the specialist workspace" },
+        { "step": 5, "actor": "System", "action": "Updates the session specialistProgress map to mark the target service as 'in-progress'", "systemResponse": "Progress persisted to MongoDB" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "1a",
+          "branchesFromStep": 1,
+          "name": "Specialist initiated by Planning Agent delegation",
+          "steps": [
+            { "step": 1, "actor": "Planning Agent", "action": "Identifies a service-specific question requiring specialist depth and delegates automatically", "systemResponse": "SpecialistAgentService invoked with delegation context" },
+            { "step": 2, "actor": "Specialist Agent", "action": "Returns a response that the Planning Agent integrates into the main session context", "systemResponse": "Delegation response stored in specialistProgress" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "2e",
+          "branchesFromStep": 2,
+          "name": "Specialist agent endpoint unavailable",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "SpecialistAgentService call times out or returns error after 60 seconds", "systemResponse": "System displays an error message that the specialist is temporarily unavailable. The specialistProgress entry is marked as 'not-started' and the user is returned to the planning session." }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["Specialist workspace is loaded with session context", "specialistProgress updated for the target service", "User can navigate back to the planning session without losing context"],
+      "businessRules": ["BR-009"],
+      "sourceRequirements": ["SYSREQ-007"],
+      "integrationPoints": ["INT-003", "INT-004", "INT-005", "INT-006"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "execute" },
+        { "role": "planner-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "One to several times per session for technical guidance"
+    },
+    {
+      "id": "UC-006",
+      "name": "Resume Interrupted Planning Session",
+      "summary": "A user who previously started a planning session returns to it after a break (hours, days, or weeks) and continues from exactly where they left off with full context restored.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["Planning Agent", "MongoDB"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer"],
+      "preconditions": ["A PlanningSession exists with status 'active' or 'paused' for the authenticated user", "User is authenticated with planner-user role or higher"],
+      "trigger": "User selects an existing session from the session list and clicks 'Resume'",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Selects a paused or active session from the session list and clicks Resume", "systemResponse": "System begins loading session state" },
+        { "step": 2, "actor": "System", "action": "Fetches the PlanningSession, BusinessModel, SolutionHypotheses, and last 50 ConversationMessages from MongoDB", "systemResponse": "All state loaded within 3 seconds" },
+        { "step": 3, "actor": "System", "action": "Updates the session lastResumedAt timestamp and status to 'active' if it was 'paused'", "systemResponse": "Session state updated in MongoDB" },
+        { "step": 4, "actor": "System", "action": "Renders the planning workspace with restored conversation history, current business model, and hypothesis status", "systemResponse": "Workspace displayed with full context" },
+        { "step": 5, "actor": "Planning Agent", "action": "Generates a brief context summary acknowledging prior conversation and suggesting next steps based on current session state", "systemResponse": "Welcome-back message streamed to the UI" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "5a",
+          "branchesFromStep": 5,
+          "name": "Session has been idle for more than 7 days",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Detects session has been idle more than 7 days and prompts the Planning Agent to provide a more detailed context recap", "systemResponse": "Extended context summary generated covering all prior decisions and open questions" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "2e",
+          "branchesFromStep": 2,
+          "name": "Session not found or not owned by user",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Session does not exist or does not belong to the authenticated user tenant+userId", "systemResponse": "System returns HTTP 404 and displays an error message. User is returned to the session list." }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["Session status is 'active'", "lastResumedAt timestamp updated", "User is in the active planning workspace with full prior context"],
+      "businessRules": ["BR-001", "BR-008"],
+      "sourceRequirements": ["SYSREQ-005"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "own-sessions-only" },
+        { "role": "planner-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "Common — multi-day planning is the norm for complex GoA projects"
+    },
+    {
+      "id": "UC-007",
+      "name": "Manage Business Pattern Library",
+      "summary": "An ADSP tenant administrator creates, edits, or deactivates business pattern templates to customize the pattern library available for planning sessions in their tenant.",
+      "primaryActor": "ADSP Tenant Administrator",
+      "secondaryActors": ["ADSP Configuration Service"],
+      "stakeholders": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+      "preconditions": ["User is authenticated with planner-admin or tenant-admin role", "ADSP Configuration Service is available"],
+      "trigger": "Administrator navigates to the Pattern Library management section in TMW",
+      "mainFlow": [
+        { "step": 1, "actor": "Administrator", "action": "Views the list of active business patterns for the tenant", "systemResponse": "System displays a paginated list of BusinessPattern records fetched from the Configuration Service" },
+        { "step": 2, "actor": "Administrator", "action": "Selects 'Create New Pattern' and fills in the required pattern fields", "systemResponse": "Form is displayed with all BusinessPattern fields and validation rules" },
+        { "step": 3, "actor": "Administrator", "action": "Submits the new pattern form", "systemResponse": "System validates all required fields and field constraints" },
+        { "step": 4, "actor": "System", "action": "Creates the BusinessPattern record via the Configuration Service adapter and invalidates the local cache", "systemResponse": "Pattern persisted with a generated patternId and isActive=true" },
+        { "step": 5, "actor": "System", "action": "Writes an audit log entry for the pattern creation action", "systemResponse": "Audit record persisted with actor, action, patternId, and timestamp" }
+      ],
+      "alternateFlows": [
+        {
+          "id": "2a",
+          "branchesFromStep": 2,
+          "name": "Edit existing pattern",
+          "steps": [
+            { "step": 1, "actor": "Administrator", "action": "Selects an existing pattern and edits its fields", "systemResponse": "Form pre-populated with existing pattern data" },
+            { "step": 2, "actor": "Administrator", "action": "Saves the edited pattern", "systemResponse": "Pattern updated in Configuration Service; audit log entry written for update action" }
+          ],
+          "rejoinsAtStep": null
+        },
+        {
+          "id": "2b",
+          "branchesFromStep": 2,
+          "name": "Deactivate a pattern",
+          "steps": [
+            { "step": 1, "actor": "Administrator", "action": "Selects an active pattern and clicks Deactivate", "systemResponse": "Confirmation dialog displayed" },
+            { "step": 2, "actor": "Administrator", "action": "Confirms deactivation", "systemResponse": "Pattern isActive set to false; audit log entry written for deactivation action; cache invalidated" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "exceptionFlows": [
+        {
+          "id": "3e",
+          "branchesFromStep": 3,
+          "name": "Validation failure on pattern form",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Required fields are missing or exceed maximum lengths", "systemResponse": "HTTP 400 returned with field-level errors array; user prompted to correct the form" }
+          ],
+          "rejoinsAtStep": null
+        },
+        {
+          "id": "4e",
+          "branchesFromStep": 4,
+          "name": "Configuration Service unavailable",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Configuration Service call fails or times out", "systemResponse": "HTTP 503 returned; user informed that pattern management is temporarily unavailable. No partial state is written." }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["BusinessPattern record is created, updated, or deactivated in Configuration Service", "Local pattern cache is invalidated", "Audit log entry records the administrative action"],
+      "businessRules": ["BR-008"],
+      "sourceRequirements": ["SYSREQ-006", "SWREQ-006"],
+      "integrationPoints": ["INT-002"],
+      "authorizedRoles": [
+        { "role": "planner-admin", "access": "execute", "note": "planner-user cannot manage patterns" },
+        { "role": "tenant-admin", "access": "execute" }
+      ],
+      "priority": "Should",
+      "frequencyOfUse": "Infrequent — when new patterns are needed or existing ones need updating"
+    },
+    {
+      "id": "UC-008",
+      "name": "Export Session Plan",
+      "summary": "A user exports the complete planning session state as a portable JSON file for sharing with stakeholders or storing externally.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["MongoDB"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer", "GoA Program Manager"],
+      "preconditions": ["An active, paused, or completed PlanningSession exists for the user", "User is authenticated with planner-user role or higher"],
+      "trigger": "User clicks the Export button on the session detail view",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Clicks the Export button on the session detail view", "systemResponse": "System initiates session export" },
+        { "step": 2, "actor": "System", "action": "Fetches PlanningSession, BusinessModel, SolutionHypotheses, and ConversationMessages from MongoDB", "systemResponse": "Export data assembled within 2 seconds" },
+        { "step": 3, "actor": "System", "action": "Serializes the export payload to JSON conforming to the data_io_schema and initiates a file download", "systemResponse": "Browser triggers download of a JSON file named {title}-{date}.json" },
+        { "step": 4, "actor": "System", "action": "Displays a success confirmation toast", "systemResponse": "User sees confirmation that the export has been downloaded" }
+      ],
+      "alternateFlows": [],
+      "exceptionFlows": [
+        {
+          "id": "2e",
+          "branchesFromStep": 2,
+          "name": "Database read failure during export",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "MongoDB read fails", "systemResponse": "HTTP 503 returned with user-visible error. No partial export is produced." }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["A valid JSON export file has been downloaded by the user", "The session state in the database is unchanged by the export operation"],
+      "businessRules": [],
+      "sourceRequirements": ["SYSREQ-016"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "own-sessions-only" },
+        { "role": "planner-admin", "access": "execute" }
+      ],
+      "priority": "Should",
+      "frequencyOfUse": "End of planning engagement, typically once per completed session"
+    },
+    {
+      "id": "UC-009",
+      "name": "Authenticate and Access Planner",
+      "summary": "A GoA user authenticates via Keycloak SSO through the Tenant Management Webapp and accesses the planner-service with the appropriate Keycloak JWT token containing their tenant and role claims.",
+      "primaryActor": "GoA Business Analyst",
+      "secondaryActors": ["Keycloak", "ADSP Platform SDK"],
+      "stakeholders": ["GoA Business Analyst", "GoA Developer", "ADSP Platform Team"],
+      "preconditions": ["User has a valid GoA Keycloak account", "User has been assigned the planner-user, planner-admin, or tenant-admin role in Keycloak"],
+      "trigger": "User navigates to the TMW Planner section",
+      "mainFlow": [
+        { "step": 1, "actor": "User", "action": "Navigates to the TMW application", "systemResponse": "If not authenticated, TMW redirects to Keycloak login" },
+        { "step": 2, "actor": "User", "action": "Authenticates via Keycloak (existing SSO session or new login)", "systemResponse": "Keycloak issues a JWT bearer token containing tenantId, userId, and role claims" },
+        { "step": 3, "actor": "User", "action": "Navigates to the Planner section within TMW", "systemResponse": "React app sends the JWT in the Authorization header to the planner-service API" },
+        { "step": 4, "actor": "System", "action": "Passport-jwt middleware validates the token and extracts tenantId and userId claims", "systemResponse": "Request proceeds with authenticated user context" },
+        { "step": 5, "actor": "System", "action": "RBAC middleware checks that the user has at least the planner-user role", "systemResponse": "If role present, access is granted; if not, HTTP 403 is returned with an explanation message" }
+      ],
+      "alternateFlows": [],
+      "exceptionFlows": [
+        {
+          "id": "2e",
+          "branchesFromStep": 2,
+          "name": "Token expired or invalid",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "JWT validation fails due to expiry, invalid signature, or missing claims", "systemResponse": "HTTP 401 returned; TMW redirects to Keycloak login" }
+          ],
+          "rejoinsAtStep": null
+        },
+        {
+          "id": "5e",
+          "branchesFromStep": 5,
+          "name": "User has no planner role",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "User is authenticated but has no planner-user, planner-admin, or tenant-admin role", "systemResponse": "HTTP 403 returned; UI displays a message explaining access is not authorized and directing the user to their administrator" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["User is authenticated and their tenantId and userId are available for all subsequent operations", "RBAC is enforced on all API requests"],
+      "businessRules": ["BR-007"],
+      "sourceRequirements": ["SYSREQ-009", "SYSREQ-013"],
+      "authorizedRoles": [
+        { "role": "planner-user", "access": "execute" },
+        { "role": "planner-admin", "access": "execute" },
+        { "role": "tenant-admin", "access": "execute" }
+      ],
+      "priority": "Must",
+      "frequencyOfUse": "Every user session start"
+    },
+    {
+      "id": "UC-010",
+      "name": "View Session History and Audit Log",
+      "summary": "An ADSP tenant administrator reviews the planning session history for their tenant and views the administrative audit log to check for unauthorized or anomalous actions.",
+      "primaryActor": "ADSP Tenant Administrator",
+      "secondaryActors": ["MongoDB"],
+      "stakeholders": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+      "preconditions": ["User is authenticated with planner-admin or tenant-admin role"],
+      "trigger": "Administrator navigates to the Session History or Audit Log section in TMW",
+      "mainFlow": [
+        { "step": 1, "actor": "Administrator", "action": "Navigates to the Session History section for the tenant", "systemResponse": "System displays a paginated list of all sessions for the tenant (not filtered to the admin's own sessions)" },
+        { "step": 2, "actor": "Administrator", "action": "Filters the list by date range, status, or user", "systemResponse": "System applies filters and returns the matching sessions" },
+        { "step": 3, "actor": "Administrator", "action": "Navigates to the Audit Log section", "systemResponse": "System displays a paginated, read-only view of the audit_events collection for the tenant" },
+        { "step": 4, "actor": "Administrator", "action": "Reviews audit entries filtering by action type or actor", "systemResponse": "System returns filtered audit entries in descending timestamp order" }
+      ],
+      "alternateFlows": [],
+      "exceptionFlows": [
+        {
+          "id": "1e",
+          "branchesFromStep": 1,
+          "name": "User has insufficient role",
+          "steps": [
+            { "step": 1, "actor": "System", "action": "Request received with planner-user role JWT", "systemResponse": "HTTP 403 returned; audit log and all-tenant session history are accessible only to planner-admin and tenant-admin roles" }
+          ],
+          "rejoinsAtStep": null
+        }
+      ],
+      "postconditions": ["Administrator has reviewed session and audit data without modifying any records", "Audit log read access is itself logged"],
+      "businessRules": ["BR-007", "BR-008"],
+      "sourceRequirements": ["SYSREQ-013", "SYSREQ-020"],
+      "authorizedRoles": [
+        { "role": "planner-admin", "access": "read-all-tenant-sessions" },
+        { "role": "tenant-admin", "access": "read-all-tenant-sessions" }
+      ],
+      "priority": "Should",
+      "frequencyOfUse": "Periodically for compliance review or incident investigation"
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "generatedDate": "2026-10-10",
+  "summary": {
+    "totalPages": 12,
+    "areas": ["planning-workspace", "administration"]
+  },
+  "areas": [
+    {
+      "id": "planning-workspace",
+      "name": "Planning Workspace",
+      "description": "The authenticated planning session interface used by GoA Business Analysts and Developers to initiate, conduct, and export AI-assisted planning sessions. All pages require Keycloak authentication with the planner-user role.",
+      "viewType": "private-authenticated",
+      "audiences": ["GoA Business Analyst", "GoA Developer"],
+      "pages": [
+        {
+          "id": "session-dashboard",
+          "slug": "session-dashboard",
+          "title": "My Planning Sessions",
+          "description": "The authenticated entry point showing all planning sessions belonging to the logged-in user. Displays session status, last-activity date, and business problem summary per session, with controls to resume an in-progress session or start a new one.",
+          "viewType": "private-authenticated",
+          "pageType": "list-index",
+          "primaryAudiences": ["GoA Business Analyst", "GoA Developer"],
+          "keyContent": ["sessions"],
+          "linkedJourneySteps": [
+            {
+              "audience": "GoA Business Analyst",
+              "journey": "Resuming an Interrupted Planning Session",
+              "stage": "Session Resumption",
+              "step": 1
+            },
+            {
+              "audience": "GoA Developer",
+              "journey": "Session Resumption Across Work Days",
+              "stage": "Session Recovery",
+              "step": 1
+            }
+          ],
+          "futureStateOpportunities": ["FS-003"]
+        },
+        {
+          "id": "new-session-start",
+          "slug": "new-session-start",
+          "title": "Start a New Planning Session",
+          "description": "A preparation checkpoint placed before the planning conversation begins. Sets user expectations by describing the planning process, listing what information to have ready, and explaining how the AI Planning Agent will guide the session.",
+          "viewType": "private-authenticated",
+          "pageType": "start-page",
+          "primaryAudiences": ["GoA Business Analyst", "GoA Developer"],
+          "keyContent": [
+            "Plain-language description of the AI-assisted planning process and what the session will produce",
+            "List of preparation items: business problem statement, stakeholder context, known constraints",
+            "Estimated session duration and indication that progress is auto-saved",
+            "Start Planning Session action button"
+          ],
+          "linkedJourneySteps": [
+            {
+              "audience": "GoA Business Analyst",
+              "journey": "Planning a New ADSP-Based Solution",
+              "stage": "Session Initiation",
+              "step": 1
+            },
+            {
+              "audience": "GoA Developer",
+              "journey": "New Application ADSP Scoping",
+              "stage": "Session Initiation",
+              "step": 1
+            }
+          ],
+          "futureStateOpportunities": []
+        },
+        {
+          "id": "planning-session",
+          "slug": "planning-session",
+          "title": "Planning Session",
+          "description": "The core multi-step planning conversation wizard hosting the AI Planning Agent interaction. Contains the conversational interface for business discovery, the business model review editor, hypothesis review and acceptance, and specialist agent consultation launch points.",
+          "viewType": "private-authenticated",
+          "pageType": "wizard",
+          "primaryAudiences": ["GoA Business Analyst", "GoA Developer"],
+          "keyContent": [
+            "Conversational interface with Planning Agent streaming responses and inference progress indicator",
+            "Specialist agent consultation status panel showing per-service engagement status",
+            "Session state auto-save with explicit checkpoint confirmation",
+            "Context summary banner on session re-entry for returning users",
+            "Graceful error messaging when AI Planning Agent is temporarily unavailable"
+          ],
+          "linkedJourneySteps": [
+            {
+              "audience": "GoA Business Analyst",
+              "journey": "Planning a New ADSP-Based Solution",
+              "stage": "Conversational Discovery",
+              "step": 1
+            },
+            {
+              "audience": "GoA Developer",
+              "journey": "New Application ADSP Scoping",
+              "stage": "Entity Classification Review",
+              "step": 1
+            }
+          ],
+          "futureStateOpportunities": ["FS-001", "FS-003", "FS-008", "FS-009", "FS-012"],
+          "childPages": [
+            {
+              "id": "business-model-review",
+              "slug": "business-model-review",
+              "title": "Business Model Review",
+              "description": "The AI-generated business model entity view presented after the initial discovery conversation. Displays extracted actors, processes, and systems with per-entity confidence indicators and source text attribution, enabling targeted review and inline correction before hypothesis generation.",
+              "viewType": "private-authenticated",
+              "pageType": "detail-view",
+              "primaryAudiences": ["GoA Business Analyst", "GoA Developer"],
+              "keyContent": ["sessions"],
+              "linkedJourneySteps": [
+                {
+                  "audience": "GoA Business Analyst",
+                  "journey": "Planning a New ADSP-Based Solution",
+                  "stage": "Business Model Review and Correction",
+                  "step": 1
+                }
+              ],
+              "futureStateOpportunities": ["FS-004"]
+            },
+            {
+              "id": "hypothesis-review",
+              "slug": "hypothesis-review",
+              "title": "Hypothesis Review",
+              "description": "The solution hypothesis summary step presenting the Planning Agent's recommended ADSP service composition with plain-language reasoning. The user reviews, requests revisions, or accepts the hypothesis to proceed to specialist consultation or export.",
+              "viewType": "private-authenticated",
+              "pageType": "wizard-step-review",
+              "primaryAudiences": ["GoA Business Analyst", "GoA Developer"],
+              "keyContent": [
+                "Plain-language hypothesis title and solution description with recommended ADSP service composition",
+                "Reasoning section explaining why each service was selected for the identified business pattern",
+                "Recommended implementation order with per-service consultation status and specialist launch links",
+                "Accept Hypothesis and Request Revision action buttons",
+                "Open questions flagged by the Planning Agent requiring resolution before implementation"
+              ],
+              "linkedJourneySteps": [
+                {
+                  "audience": "GoA Business Analyst",
+                  "journey": "Planning a New ADSP-Based Solution",
+                  "stage": "Hypothesis Review and Acceptance",
+                  "step": 1
+                },
+                {
+                  "audience": "GoA Developer",
+                  "journey": "Specialist Agent Deep-Dive Consultation",
+                  "stage": "Specialist Consultation",
+                  "step": 1
+                }
+              ],
+              "futureStateOpportunities": ["FS-012"]
+            },
+            {
+              "id": "session-export",
+              "slug": "session-export",
+              "title": "Export Session Plan",
+              "description": "The planning session export page enabling the user to download the complete session artifact as a structured JSON export. The export includes the business model, accepted hypothesis, reasoning, implementation order, and an executive summary section for non-technical stakeholders.",
+              "viewType": "private-authenticated",
+              "pageType": "detail-view",
+              "primaryAudiences": ["GoA Business Analyst", "GoA Developer"],
+              "keyContent": ["sessions"],
+              "linkedJourneySteps": [
+                {
+                  "audience": "GoA Business Analyst",
+                  "journey": "Exporting a Completed Session Plan for Stakeholders",
+                  "stage": "Export Preparation",
+                  "step": 1
+                },
+                {
+                  "audience": "GoA Program Manager",
+                  "journey": "Review Exported Session Plan and Make Investment Decision",
+                  "stage": "Receive and Open the Export",
+                  "step": 1
+                }
+              ],
+              "futureStateOpportunities": ["FS-002", "FS-005"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "administration",
+      "name": "Administration",
+      "description": "The administrative interface for ADSP Tenant Administrators and the ADSP Platform Team. Provides tools for managing the business pattern library, reviewing tenant session history, examining the immutable audit log, and managing user access.",
+      "viewType": "private-authenticated",
+      "audiences": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+      "pages": [
+        {
+          "id": "admin-hub",
+          "slug": "admin-hub",
+          "title": "Administration",
+          "description": "The section hub entry point for all ADSP Project Planner administrative functions. Provides navigation tiles to the pattern library, session history, audit log, and user management sections, with role-based visibility ensuring only authorized roles see the governance sections.",
+          "viewType": "private-authenticated",
+          "pageType": "section-hub",
+          "primaryAudiences": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+          "keyContent": [
+            "Navigation tile for Pattern Library with active pattern count and last-modified date",
+            "Navigation tile for Session History with count of sessions in the current review period",
+            "Navigation tile for Audit Log with HMAC chain health status indicator",
+            "Navigation tile for User Management with active user count",
+            "Governance quick-access shortcut card for tenant administrators with a pending review obligation"
+          ],
+          "linkedJourneySteps": [
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Reviewing Session History and Audit Log for Governance",
+              "stage": "Access the Governance Review Interface",
+              "step": 1
+            }
+          ],
+          "futureStateOpportunities": []
+        },
+        {
+          "id": "pattern-library",
+          "slug": "pattern-library",
+          "title": "Pattern Library",
+          "description": "The paginated business pattern template index showing all active and inactive patterns for the tenant. Supports filtering by status and sorting by last-modified date. Entry point for creating new patterns and editing or deactivating existing ones.",
+          "viewType": "private-authenticated",
+          "pageType": "list-index",
+          "primaryAudiences": ["ADSP Tenant Administrator"],
+          "keyContent": ["patterns"],
+          "linkedJourneySteps": [
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Managing the Business Pattern Library",
+              "stage": "Access and Orient to the Pattern Library",
+              "step": 2
+            }
+          ],
+          "futureStateOpportunities": ["FS-006", "FS-010"]
+        },
+        {
+          "id": "pattern-editor",
+          "slug": "pattern-editor",
+          "title": "Pattern Editor",
+          "description": "The create and edit form for business pattern templates. For new patterns presents a blank form with field-level guidance. For existing patterns pre-populates all fields with current values. Provides authoring assistance through auto-suggested keywords and a live similarity check against existing active patterns.",
+          "viewType": "private-authenticated",
+          "pageType": "edit-form",
+          "primaryAudiences": ["ADSP Tenant Administrator"],
+          "keyContent": ["patterns"],
+          "linkedJourneySteps": [
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Managing the Business Pattern Library",
+              "stage": "Author or Modify a Business Pattern Template",
+              "step": 1
+            },
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Managing the Business Pattern Library",
+              "stage": "Author or Modify a Business Pattern Template",
+              "step": 2
+            }
+          ],
+          "futureStateOpportunities": ["FS-006"]
+        },
+        {
+          "id": "session-history",
+          "slug": "session-history",
+          "title": "Session History",
+          "description": "A filtered reporting view of all planning sessions within the tenant. Supports date range, user, and status filters. Enables governance reporting through CSV or JSON export of the filtered result set and inline session annotation for tracking flagged items.",
+          "viewType": "private-authenticated",
+          "pageType": "report-results",
+          "primaryAudiences": ["ADSP Tenant Administrator"],
+          "keyContent": [
+            "Filter panel: date range picker, searchable user dropdown, session status selector (active/completed/archived)",
+            "Paginated session list: session ID, owner, created date, status badge, and last-activity timestamp per row",
+            "Session detail panel on row selection: business model summary, hypothesis count, specialist sessions completed, export history",
+            "Inline session annotation field for governance tracking notes visible only to tenant administrators",
+            "Export filtered results as CSV or JSON action button for governance reporting"
+          ],
+          "linkedJourneySteps": [
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Reviewing Session History and Audit Log for Governance",
+              "stage": "Review Tenant Session History",
+              "step": 1
+            },
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Reviewing Session History and Audit Log for Governance",
+              "stage": "Review Tenant Session History",
+              "step": 2
+            }
+          ],
+          "futureStateOpportunities": ["FS-007", "FS-010"]
+        },
+        {
+          "id": "audit-log",
+          "slug": "audit-log",
+          "title": "Audit Log",
+          "description": "The immutable HMAC-chained administrative action log. Displays all security-relevant events (pattern created/updated/deactivated, session exported, role changes) in reverse-chronological order with filter controls and a prominent HMAC chain integrity status banner. Supports PDF and CSV export for compliance submissions.",
+          "viewType": "private-authenticated",
+          "pageType": "report-results",
+          "primaryAudiences": ["ADSP Tenant Administrator", "ADSP Platform Team"],
+          "keyContent": [
+            "HMAC chain integrity status banner: verified (green) or integrity warning (red with ADSP Support contact link)",
+            "Filter panel: action type multi-select with plain-language labels, actor dropdown, date range picker",
+            "Paginated audit log table: timestamp, actor display name, plain-language action label, affected resource ID, outcome badge",
+            "No edit or delete controls on any audit entry (read-only, immutable display)",
+            "Export audit log records as PDF (with HMAC chain status) or CSV action button"
+          ],
+          "linkedJourneySteps": [
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Reviewing Session History and Audit Log for Governance",
+              "stage": "Examine the Audit Log",
+              "step": 1
+            },
+            {
+              "audience": "ADSP Platform Team",
+              "journey": "Security Review and Audit Log Verification",
+              "stage": "Audit Log Access and Integrity Verification",
+              "step": 1
+            }
+          ],
+          "futureStateOpportunities": ["FS-007", "FS-011"]
+        },
+        {
+          "id": "user-management",
+          "slug": "user-management",
+          "title": "User Management",
+          "description": "The tenant user access management page for assigning and editing planner-service roles (planner-user, planner-admin) within the tenant. Supports user search, role assignment, and account deactivation with full audit trail per SN-012.",
+          "viewType": "private-authenticated",
+          "pageType": "user-management",
+          "primaryAudiences": ["ADSP Tenant Administrator"],
+          "keyContent": ["user-management"],
+          "linkedJourneySteps": [
+            {
+              "audience": "ADSP Tenant Administrator",
+              "journey": "Managing the Business Pattern Library",
+              "stage": "Access and Orient to the Pattern Library",
+              "step": 1
+            }
+          ],
+          "futureStateOpportunities": []
+        }
+      ]
+    }
+  ]
+}

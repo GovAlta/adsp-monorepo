@@ -1,0 +1,287 @@
+{
+  "pageId": "business-model-review",
+  "pageType": "detail-view",
+  "title": "Business Model Review",
+  "surface": "staff-portal",
+  "layout": "single-column",
+  "authRequired": true,
+  "navigation": {
+    "breadcrumb": [
+      { "label": "Planning Workspace", "nodeId": "planning-workspace" },
+      { "label": "My Planning Sessions", "nodeId": "session-dashboard" },
+      { "label": "Planning Session", "nodeId": "planning-session" },
+      { "label": "Business Model Review", "nodeId": "business-model-review" }
+    ],
+    "parentNodeId": "planning-session",
+    "childNodeIds": [],
+    "siblingNodeIds": ["hypothesis-review", "session-export"]
+  },
+  "sections": {
+    "itemHeading": {
+      "title": "Business Model",
+      "subtitle": "businessModel.matchedPatternId",
+      "subtitleFallback": "No pattern matched yet. Continue refining your business problem description.",
+      "statusBadge": {
+        "valueKey": "businessModel.confidenceScore",
+        "tiers": [
+          {
+            "condition": "confidenceScore < 50",
+            "label": "Low Confidence",
+            "variant": "danger",
+            "description": "Score below 50 — insufficient information for hypothesis generation"
+          },
+          {
+            "condition": "confidenceScore >= 50 && confidenceScore < 70",
+            "label": "Moderate Confidence",
+            "variant": "warning",
+            "description": "Score 50-69 — can proceed but hypothesis quality may be limited"
+          },
+          {
+            "condition": "confidenceScore >= 70",
+            "label": "High Confidence",
+            "variant": "success",
+            "description": "Score 70+ — sufficient for hypothesis generation per BR-004"
+          }
+        ]
+      },
+      "breadcrumb": [
+        "Planning Workspace",
+        "My Planning Sessions",
+        "Planning Session",
+        "Business Model Review"
+      ]
+    },
+    "keyFields": [
+      {
+        "label": "Business Problem Summary",
+        "key": "businessModel.problemSummary",
+        "editable": true,
+        "helpText": "A summary of the business problem as extracted by the Planning Agent from your planning conversation. You may refine this description before confirming the model. Saved via PATCH /api/v1/sessions/{sessionId}/model. Classification: Protected B per ATIA s.23.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Protected B per ATIA s.23 — deliberative government process content. Redacted in structured logs.",
+        "apiNote": "problemSummary is a derived/virtual field assembled from the businessModel context by the client layer. The PlanningSession title and BusinessModel matchedPatternId are the closest upstream schema fields. Backend support for explicit problemSummary persistence is subject to implementation decision."
+      },
+      {
+        "label": "Confidence Score",
+        "key": "businessModel.confidenceScore",
+        "editable": false,
+        "helpText": "Score 0-100 indicating how completely the Planning Agent has modelled your business problem. A score of 70 or above is required for hypothesis generation per BR-004. Higher scores reflect more complete and diverse concept sets.",
+        "type": "integer",
+        "range": { "min": 0, "max": 100 }
+      },
+      {
+        "label": "Extraction Date",
+        "key": "businessModel.extractedAt",
+        "editable": false,
+        "helpText": "The date and time the business model was last updated by the Planning Agent. Corresponds to businessModel.updatedAt in the API response.",
+        "type": "date-time",
+        "apiNote": "extractedAt maps to businessModel.updatedAt in the OpenAPI BusinessModel schema."
+      },
+      {
+        "label": "Concept Count",
+        "key": "businessModel.conceptCount",
+        "editable": false,
+        "helpText": "Total number of business concepts extracted across all categories (Actors, Processes, Systems, and other types). A larger and more diverse concept set generally produces a higher confidence score.",
+        "type": "integer",
+        "apiNote": "conceptCount is a derived field computed as businessModel.concepts.length from the BusinessModelWithConcepts API response."
+      }
+    ],
+    "contextActions": [
+      {
+        "label": "Confirm Business Model",
+        "variant": "primary",
+        "operationId": "updateBusinessModel",
+        "condition": "businessModel.confidenceScore >= 50",
+        "description": "Confirm that the business model accurately represents your business problem and advance to hypothesis review. Inline concept type corrections are saved immediately via PATCH /api/v1/sessions/{sessionId}/model. A confidence score of 70 or above is required for hypothesis generation per BR-004.",
+        "disabledWhen": "businessModel.confidenceScore < 50 || businessModel.concepts.length === 0",
+        "testCaseRef": "TC-006"
+      },
+      {
+        "label": "Return to Planning Conversation",
+        "variant": "secondary",
+        "operationId": null,
+        "target": "planning-session",
+        "condition": "always",
+        "description": "Return to the planning conversation to provide additional context about your business problem, increasing the model confidence score."
+      }
+    ],
+    "tabs": [
+      {
+        "label": "Actors",
+        "contentType": "concept-list",
+        "contentRef": "businessModel.concepts[conceptType=Actor]",
+        "description": "Business actors extracted from your planning conversation. Actors represent people, organizations, or roles involved in your business process.",
+        "inlineEditable": true,
+        "editOperationId": "updateBusinessModel",
+        "conceptTypeFilter": ["Actor"],
+        "conceptTypeOptions": [
+          "Actor", "Goal", "Activity", "Decision", "Evidence",
+          "BusinessRule", "Constraint", "EvaluationCriteria", "Workflow",
+          "Outcome", "Document", "Event", "ExternalSystem", "Assumption", "Unknown"
+        ],
+        "confidenceIndicator": true,
+        "emptyMessage": "No Actor concepts have been identified yet. Continue your planning conversation and describe the people and organizations involved in your business problem.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Concept names and source text are Protected B per ATIA s.23"
+      },
+      {
+        "label": "Processes",
+        "contentType": "concept-list",
+        "contentRef": "businessModel.concepts[conceptType IN [Activity,Workflow,Goal,Outcome,Event,Decision,BusinessRule,Constraint,EvaluationCriteria]]",
+        "description": "Business processes, goals, activities, decisions, workflows, outcomes, and business rules extracted from your planning conversation.",
+        "inlineEditable": true,
+        "editOperationId": "updateBusinessModel",
+        "conceptTypeFilter": [
+          "Activity", "Workflow", "Goal", "Outcome", "Event",
+          "Decision", "BusinessRule", "Constraint", "EvaluationCriteria"
+        ],
+        "conceptTypeOptions": [
+          "Actor", "Goal", "Activity", "Decision", "Evidence",
+          "BusinessRule", "Constraint", "EvaluationCriteria", "Workflow",
+          "Outcome", "Document", "Event", "ExternalSystem", "Assumption", "Unknown"
+        ],
+        "confidenceIndicator": true,
+        "emptyMessage": "No Process concepts have been identified yet. Continue describing your business workflow, goals, and key decision points.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Concept names and source text are Protected B per ATIA s.23"
+      },
+      {
+        "label": "Systems",
+        "contentType": "concept-list",
+        "contentRef": "businessModel.concepts[conceptType IN [ExternalSystem,Document,Evidence]]",
+        "description": "External systems, tools, technology components, supporting documents, and evidence items identified in your planning conversation.",
+        "inlineEditable": true,
+        "editOperationId": "updateBusinessModel",
+        "conceptTypeFilter": ["ExternalSystem", "Document", "Evidence"],
+        "conceptTypeOptions": [
+          "Actor", "Goal", "Activity", "Decision", "Evidence",
+          "BusinessRule", "Constraint", "EvaluationCriteria", "Workflow",
+          "Outcome", "Document", "Event", "ExternalSystem", "Assumption", "Unknown"
+        ],
+        "confidenceIndicator": true,
+        "emptyMessage": "No System concepts have been identified yet. Describe any technology systems, tools, or platforms involved in your business process.",
+        "classificationLevel": "Protected B",
+        "sensitivityNote": "Concept names and source text are Protected B per ATIA s.23"
+      }
+    ],
+    "warnings": [
+      {
+        "type": "danger",
+        "condition": "businessModel.confidenceScore < 50",
+        "message": "Model confidence is too low to proceed. Return to the planning conversation to provide more context.",
+        "actionLabel": "Return to Planning Conversation",
+        "actionTarget": "planning-session",
+        "testCaseRef": "TC-021"
+      },
+      {
+        "type": "warning",
+        "condition": "businessModel.confidenceScore >= 50 && businessModel.confidenceScore < 70",
+        "message": "Model confidence is moderate. You can proceed, but adding more detail will improve hypothesis quality.",
+        "actionLabel": "Return to Planning Conversation",
+        "actionTarget": "planning-session",
+        "testCaseRef": "TC-021"
+      },
+      {
+        "type": "info",
+        "condition": "businessModel.confidenceScore >= 70",
+        "message": "Your business model has sufficient confidence to generate a hypothesis.",
+        "testCaseRef": "TC-006"
+      },
+      {
+        "type": "info",
+        "condition": "businessModel.concepts.length === 0",
+        "message": "No business concepts have been extracted yet. Return to the planning conversation to describe your business problem in more detail.",
+        "actionLabel": "Return to Planning Conversation",
+        "actionTarget": "planning-session",
+        "testCaseRef": "TC-025"
+      },
+      {
+        "type": "warning",
+        "condition": "submitAttempted && businessModel.confidenceScore < 70",
+        "message": "Your business model is incomplete. A confidence score of 70 or above is required before a hypothesis can be generated. Review your concept list and return to the conversation to provide more detail.",
+        "testCaseRef": "TC-087"
+      }
+    ],
+    "policyNotice": {
+      "text": "Business model content is government deliberative information protected under ATIA s.23. Do not export or share outside of the GoA planning process.",
+      "authority": "ATIA s.23",
+      "classificationLevel": "Protected B"
+    }
+  },
+  "dataBindings": {
+    "onLoad": [
+      {
+        "operationId": "getBusinessModel",
+        "method": "GET",
+        "path": "/api/v1/sessions/{sessionId}/model",
+        "description": "Load the business model with all embedded business concepts and concept relationships for the active session. Returns BusinessModelWithConcepts schema including confidenceScore, version, matchedPatternId, and concepts array with embedded relationship graphs.",
+        "bindsTo": "businessModel"
+      }
+    ],
+    "onSubmit": [
+      {
+        "operationId": "updateBusinessModel",
+        "method": "PATCH",
+        "path": "/api/v1/sessions/{sessionId}/model",
+        "description": "Save one or more concept type corrections. Request body includes version for optimistic locking and conceptUpdates array with conceptId and new conceptType per BR-006. Triggered immediately on each inline concept type change by the user.",
+        "triggeredBy": "conceptTypeEdit",
+        "requestShape": {
+          "version": "businessModel.version",
+          "conceptUpdates": [{ "conceptId": "uuid", "conceptType": "BusinessConceptType" }]
+        },
+        "securityNote": "FAC-S5-024: Protected B concept content (name, description, sourceText) is never placed in URL query strings. Updates use PATCH request body only."
+      }
+    ],
+    "validationErrors": ["400", "409", "503"],
+    "emptyState": "No business concepts have been extracted yet. Return to the planning conversation to describe your business problem in more detail."
+  },
+  "errorStates": {
+    "409": {
+      "code": "MODEL_VERSION_CONFLICT",
+      "message": "The business model was updated by the Planning Agent while you were reviewing it. Please reload the page to see the latest version before making further corrections.",
+      "action": "reload",
+      "testCaseRef": "UC-003 exception flow 4e"
+    },
+    "404": {
+      "code": "SESSION_NOT_FOUND",
+      "message": "This planning session could not be found. It may have been archived or you may not have permission to access it.",
+      "action": "redirect-to-session-dashboard",
+      "testCaseRef": "UC-006 exception flow 2e"
+    },
+    "403": {
+      "code": "FORBIDDEN",
+      "message": "You do not have permission to access this planning session.",
+      "action": "redirect-to-session-dashboard"
+    },
+    "503": {
+      "code": "SERVICE_UNAVAILABLE",
+      "message": "The planning service is temporarily unavailable. Your changes have not been saved. Please try again in a moment.",
+      "action": "retry"
+    }
+  },
+  "metadata": {
+    "generatedAt": "2026-10-10T00:00:00Z",
+    "sourceNodes": [
+      "planning-workspace",
+      "session-dashboard",
+      "planning-session",
+      "business-model-review"
+    ],
+    "serviceProfileSections": ["business-model"],
+    "apiOperationIds": ["getBusinessModel", "updateBusinessModel"],
+    "useCases": ["UC-003"],
+    "testCases": [
+      "TC-003", "TC-005", "TC-006", "TC-021", "TC-022",
+      "TC-025", "TC-026", "TC-087", "TC-055", "TC-057"
+    ],
+    "classificationLevel": "Protected B",
+    "protectedFields": [
+      "businessModel.problemSummary",
+      "businessConcept.name",
+      "businessConcept.description",
+      "businessConcept.sourceText"
+    ],
+    "securityAuthority": "ATIA s.23",
+    "cs002Fix": "Regenerated 2026-10-10 with pageType: detail-view to match sitemap pageType. Prior version incorrectly used wizard-step-review."
+  }
+}

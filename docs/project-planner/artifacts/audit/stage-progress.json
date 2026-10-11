@@ -1,0 +1,62 @@
+{
+  "currentStage": 7,
+  "stageName": "Test & Quality",
+  "stageSkillFile": ".claude/agents/factory-stage-7.md",
+  "currentPhase": "complete",
+  "phaseName": "Stage 7 Complete",
+  "templateMode": false,
+  "hybridGate": true,
+  "retryIterations": 1,
+  "completionGates": {
+    "logEmitted": true,
+    "maturityReportEmitted": true,
+    "deltaEmitted": true
+  },
+  "completedBatches": [
+    {
+      "phase": "generate",
+      "batchNumber": 1,
+      "description": "system-test-builder Mode:Generate batch-1 — 8 cross-system workflows (WF-001..WF-008)",
+      "completedAt": "2026-10-10T21:00:05Z",
+      "artifactsWritten": [
+        "apps/system-tests/e2e/wf-001-create-session.e2e.ts",
+        "apps/system-tests/e2e/wf-002-send-message.e2e.ts",
+        "apps/system-tests/e2e/wf-003-update-business-model.e2e.ts",
+        "apps/system-tests/e2e/wf-004-accept-hypothesis.e2e.ts",
+        "apps/system-tests/e2e/wf-005-resume-session.e2e.ts",
+        "apps/system-tests/e2e/wf-006-consult-specialist.e2e.ts",
+        "apps/system-tests/e2e/wf-007-export-session.e2e.ts",
+        "apps/system-tests/e2e/wf-008-manage-patterns.e2e.ts",
+        "apps/system-tests/quality-thresholds.json",
+        "apps/system-tests/test-maturity-report.json"
+      ]
+    },
+    {
+      "phase": "remediation-1",
+      "batchNumber": 1,
+      "description": "system-test-builder Mode:Remediate iteration-1 batch-1 — FAC-S7-001,002,003,005,006",
+      "completedAt": "2026-10-10T21:30:00Z",
+      "artifactsWritten": [
+        "apps/system-tests/e2e/wf-001-create-session.e2e.ts",
+        "apps/system-tests/e2e/wf-002-send-message.e2e.ts",
+        "apps/system-tests/e2e/wf-005-resume-session.e2e.ts",
+        "apps/system-tests/e2e/wf-006-consult-specialist.e2e.ts",
+        "apps/system-tests/e2e/wf-007-export-session.e2e.ts",
+        "apps/system-tests/e2e/wf-008-manage-patterns.e2e.ts",
+        "apps/system-tests/quality-thresholds.json"
+      ]
+    },
+    {
+      "phase": "finalize",
+      "batchNumber": 1,
+      "description": "Harness contract artifacts emitted after fac_s7_runner PASS",
+      "completedAt": "2026-10-10T21:30:00Z",
+      "artifactsWritten": [
+        "requirements/audit/stage-7-validation-log.json",
+        "apps/system-tests/test-maturity-report.json",
+        "requirements/audit/working-state-delta.json",
+        "requirements/audit/stage-7.complete"
+      ]
+    }
+  ]
+}

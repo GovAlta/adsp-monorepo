@@ -1,0 +1,522 @@
+{
+  "serviceName": "ADSP Project Planner",
+  "ministry": "Service Alberta and Red Tape Reduction / Technology and Innovation",
+  "audience": {
+    "name": "GoA Business Analyst",
+    "types": ["GoA employee"],
+    "description": "Government of Alberta business analysts and program staff who engage with the ADSP Project Planner to describe business problems in natural language and receive AI-guided ADSP service composition recommendations. They have domain expertise in GoA business processes but low to medium technical proficiency with ADSP architecture. They are the primary users of the conversational planning interface, business model viewer, and session export capability.",
+    "goals": [
+      "Describe a business problem in plain language without needing to know ADSP service names or architecture",
+      "Review and correct the Planning Agent's structured business model to ensure accurate problem representation",
+      "Evaluate plain-language solution hypotheses and accept or request revisions",
+      "Resume multi-day planning sessions from exactly where they left off",
+      "Export completed planning sessions for sharing with program stakeholders"
+    ],
+    "outcomes": [
+      "Reduced barrier to ADSP adoption through guided conversational discovery",
+      "Accurate structured business model built from natural language input with user corrections applied",
+      "Accepted ADSP service composition hypothesis ready for developer handoff",
+      "Portable JSON session plan export for stakeholder communication and documentation"
+    ]
+  },
+  "journeys": [
+    {
+      "name": "Planning a New ADSP-Based Solution",
+      "description": "A business analyst who has identified a GoA business problem navigates to the ADSP Project Planner for the first time, engages in a guided multi-turn conversation with the Planning Agent, reviews and corrects the structured business model, and ultimately accepts a plain-language ADSP service composition hypothesis ready for developer handoff.",
+      "trigger": "A GoA business analyst needs to evaluate whether ADSP services can address a new or existing business problem and does not know which services to use.",
+      "goal": "Obtain an accepted ADSP service composition hypothesis with transparent reasoning, ready for developer implementation planning.",
+      "stages": [
+        {
+          "name": "Session Initiation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Navigate to the TMW Planner section via the Tenant Management Webapp sidebar.",
+              "needs": [
+                "Quick access to the planner tool within the familiar TMW interface without requiring separate login (SN-009)"
+              ],
+              "touchpoint": "TMW — Planner navigation entry point (GoA Design System 2.0 compliant sidebar, UC-001, INT-008 Keycloak JWT authentication)",
+              "frontstage": [
+                "TMW sidebar menu item 'Project Planner' rendered in GoA Design System 2.0 components",
+                "Planner landing page listing existing sessions and a 'New Session' button"
+              ],
+              "backstage": [
+                "Keycloak JWT validated by planner-service middleware before page renders (INT-008)",
+                "Existing sessions fetched from MongoDB via GET /api/v1/sessions scoped to the authenticated user's tenantId"
+              ],
+              "thinking": "\"I need help figuring out which ADSP services might solve our permit workflow problem — I hope this tool doesn't require me to know all the service names first.\"",
+              "emotionalContext": "Cautious optimism mixed with mild uncertainty about whether the tool will be accessible without ADSP architectural knowledge.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Entry into the tool may feel uncertain if the landing page does not clearly signal that plain-language input is sufficient (SN-001, SN-009)"
+              ],
+              "opportunities": [
+                "Clear onboarding copy on the landing page that signals no ADSP knowledge is required reduces initial hesitation and sets correct expectations (SN-001)"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Create a new planning session by entering a descriptive title and confirming creation.",
+              "needs": [
+                "A low-friction session creation flow with no upfront technical configuration required (SN-001, SN-009)"
+              ],
+              "touchpoint": "TMW — New Session dialog (UC-001)",
+              "frontstage": [
+                "'New Session' modal with a single title input field and a 'Create' button rendered in GoA Design System 2.0",
+                "Confirmation that the session was created and the conversation view loads immediately"
+              ],
+              "backstage": [
+                "POST /api/v1/sessions creates a session document in MongoDB with status 'active' and the provided title",
+                "RabbitMQ domain event 'session.created' published via ADSP Event Service (INT-007)"
+              ],
+              "thinking": "\"Good — just a title. I can name it after the program area without having to configure anything technical.\"",
+              "emotionalContext": "Mild relief at the minimal friction of session creation; positively surprised that no technical configuration is required upfront.",
+              "feeling": "positive",
+              "painPoints": [],
+              "opportunities": [
+                "Pre-populated title suggestions based on common GoA program area types could further reduce initial friction (SN-005)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Conversational Discovery",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Type the initial business problem description in plain language into the conversation input.",
+              "needs": [
+                "Confidence that plain language is sufficient with no ADSP service knowledge required (SN-001)",
+                "Streaming response feedback so the system does not appear frozen during LLM inference (SN-009)"
+              ],
+              "touchpoint": "TMW — Conversation panel with Planning Agent (UC-002, INT-001 Anthropic Claude API)",
+              "frontstage": [
+                "Text input area with placeholder copy signalling that plain-language problem descriptions are expected",
+                "Streaming Planning Agent response with a typing indicator during LLM inference via INT-001"
+              ],
+              "backstage": [
+                "POST /api/v1/sessions/{id}/messages routes the user message to the Planning Agent Claude instance",
+                "Planning Agent constructs a guided discovery prompt and calls Anthropic Claude API with streaming enabled (INT-001)",
+                "Partial response tokens streamed back to the client via SSE"
+              ],
+              "thinking": "\"I'll describe it the way I would to a colleague — 'we need to digitize our permit application process for about 500 applicants per month'. Let's see what it does with that.\"",
+              "emotionalContext": "Engaged and curious; slightly apprehensive about whether the AI response will be relevant and expressed in business terms rather than ADSP jargon.",
+              "feeling": "positive",
+              "painPoints": [
+                "Long initial latency before the first streaming token appears could be mistaken for a broken connection by a user unfamiliar with LLM inference times (SN-001, SN-009)"
+              ],
+              "opportunities": [
+                "A visible 'thinking' indicator with an estimated response time banner sets correct expectations for LLM latency and prevents repeated submission attempts (SN-009)"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Read the Planning Agent's follow-up questions and respond with clarifying details about actors, volumes, and constraints.",
+              "needs": [
+                "Questions framed in business terms rather than ADSP jargon (SN-001)",
+                "Incremental business model updates visible alongside the conversation so progress feels tangible (SN-002)"
+              ],
+              "touchpoint": "TMW — Conversation panel multi-turn exchange (UC-002, INT-001 Anthropic Claude API)",
+              "frontstage": [
+                "Planning Agent follow-up questions rendered in GoA Design System 2.0 chat bubbles",
+                "Business model panel updating incrementally alongside the conversation as the agent extracts entities (SN-002)"
+              ],
+              "backstage": [
+                "Planning Agent extracts structured entities — actors, processes, data objects, constraints — from each user message and updates the session's businessModel document in MongoDB",
+                "Pattern matching runs after each business model update and may surface matched GoA business patterns (SN-005)"
+              ],
+              "thinking": "\"These questions are asking about who submits, how many per month, and what happens after submission — this is actually helping me think through the problem more clearly.\"",
+              "emotionalContext": "Growing confidence as the questions are domain-relevant and clearly derived from the problem description; sense of collaborative discovery rather than form-filling.",
+              "feeling": "positive",
+              "painPoints": [
+                "If the agent asks several consecutive questions before showing any model output, the interaction may feel indistinguishable from a static web form (SN-002)"
+              ],
+              "opportunities": [
+                "Showing the incrementally constructed business model after each exchange makes the AI's understanding tangible and builds the analyst's trust in the output (SN-002, SN-011)"
+              ]
+            },
+            {
+              "stepNumber": 3,
+              "action": "Monitor the business model panel as it updates in real time alongside the conversation.",
+              "needs": [
+                "Visual confirmation that the system is accurately capturing the described problem structure (SN-002, SN-011)"
+              ],
+              "touchpoint": "TMW — Business model panel (live update during UC-002)",
+              "frontstage": [
+                "Business model viewer panel showing structured entities: actors, processes, data objects, and constraints",
+                "Matched GoA business patterns displayed as highlighted badges if pattern matching fires (SN-005)"
+              ],
+              "backstage": [
+                "Business model data fetched from GET /api/v1/sessions/{id}/model after each agent response",
+                "Pattern matching service compares the current model against the Configuration Service pattern library and appends matched pattern IDs (SN-005)"
+              ],
+              "thinking": "\"I can see 'permit applicant' as an actor and '500/month' captured as a volume constraint — that's right. But the inspector review step hasn't appeared yet.\"",
+              "emotionalContext": "Engaged and analytical; beginning to identify gaps in the model that will require correction. A sense of ownership emerging over the structured representation.",
+              "feeling": "neutral",
+              "painPoints": [
+                "If the business model panel is not visible without scrolling on smaller viewports, the conversational flow and model visibility are separated (SN-009)"
+              ],
+              "opportunities": [
+                "A split-pane layout keeping the conversation and business model panel simultaneously visible on a standard GoA workstation viewport reduces cognitive switching cost (SN-002, SN-009)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Business Model Review and Correction",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Open the business model viewer to inspect the full structured representation of the described problem.",
+              "needs": [
+                "Clear visual grouping of all captured entities by classification with the conversation source visible for each (SN-002, SN-011)"
+              ],
+              "touchpoint": "TMW — Business model viewer (UC-003)",
+              "frontstage": [
+                "Full-page or expanded business model viewer with categorised entities: actors, processes, data objects, constraints",
+                "Each entity labelled with its classification and the conversation excerpt that sourced it"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions/{id}/model returns the full current businessModel JSON document",
+                "UI renders the model using GoA Design System 2.0 structured list or card components (SN-009)"
+              ],
+              "thinking": "\"Let me see the full picture before the hypothesis is generated — I want to confirm the inspector review workflow is captured and classified correctly.\"",
+              "emotionalContext": "Deliberate and methodical; taking ownership of accuracy before the hypothesis is produced. Some concern that the model may be incomplete or contain misclassified entities.",
+              "feeling": "neutral",
+              "painPoints": [
+                "If entities are listed without grouping by type, scanning for a specific missing or misclassified entity requires significant scrolling (SN-002)"
+              ],
+              "opportunities": [
+                "Grouping entities by classification with section headers and an entity count badge per category enables rapid scanning for gaps or errors (SN-002, SN-009)"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Identify a misclassified entity and apply a correction using the inline edit control.",
+              "needs": [
+                "Direct inline correction capability without leaving the model viewer or restarting the conversation (SN-002)"
+              ],
+              "touchpoint": "TMW — Business model viewer inline edit (UC-003)",
+              "frontstage": [
+                "Inline edit control accessible on focus or explicit action for each entity item in GoA Design System 2.0",
+                "Confirmation toast after the correction is saved, showing the updated classification"
+              ],
+              "backstage": [
+                "PATCH /api/v1/sessions/{id}/model/entities/{entityId} applies the correction to the businessModel document in MongoDB",
+                "Correction recorded as a user-override event in the session audit trail",
+                "Pattern matching re-runs against the corrected model to update matched pattern results (SN-005)"
+              ],
+              "thinking": "\"I'll reclassify 'inspector' from 'data object' to 'actor' — that's clearly a person in this workflow. Good, I can fix it right here without going back into the chat.\"",
+              "emotionalContext": "Empowered by the ability to correct the AI's interpretation directly; relief that the correction path is short and does not require re-explaining the problem in conversation.",
+              "feeling": "positive",
+              "painPoints": [
+                "If the correction UI is only triggered by hover without a keyboard-accessible equivalent, screen reader users and keyboard-only users cannot apply corrections (SN-009)"
+              ],
+              "opportunities": [
+                "Keyboard-accessible inline edit controls and visible focus indicators compliant with WCAG 2.1 AA ensure all users can review and correct business model entities (SN-009)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Hypothesis Review and Acceptance",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Read the plain-language ADSP service composition hypothesis generated by the Planning Agent.",
+              "needs": [
+                "Plain-language summary of which ADSP services are recommended and why, requiring no prior ADSP knowledge to understand (SN-003, SN-011)"
+              ],
+              "touchpoint": "TMW — Hypothesis panel (UC-004)",
+              "frontstage": [
+                "HypothesisPanel displaying the recommended ADSP service composition in plain language",
+                "Each recommended service listed with a one-sentence plain-language description of its role in the proposed solution"
+              ],
+              "backstage": [
+                "Planning Agent has called Anthropic Claude to generate a hypothesis from the corrected business model and matched patterns (INT-001)",
+                "Hypothesis document stored in MongoDB and returned via GET /api/v1/sessions/{id}/hypotheses/{hypothesisId}"
+              ],
+              "thinking": "\"It's recommending form-service for the application intake and notification-service for status updates. That makes sense for what I described.\"",
+              "emotionalContext": "Encouraged that the recommendation aligns with the described business problem; mild uncertainty about whether the reasoning will be detailed enough to explain to a program manager.",
+              "feeling": "positive",
+              "painPoints": [
+                "If ADSP service names appear in the hypothesis without plain-language explanations, the BA cannot evaluate the recommendation without consulting separate ADSP documentation (SN-003)"
+              ],
+              "opportunities": [
+                "Embedding plain-language descriptions of each recommended service directly in the HypothesisPanel removes the need for the BA to consult external documentation (SN-003, SN-011)"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Expand the reasoning section to understand why each ADSP service was recommended.",
+              "needs": [
+                "Transparent, stakeholder-explainable reasoning for each service recommendation that references the business model evidence (SN-011)"
+              ],
+              "touchpoint": "TMW — Hypothesis panel reasoning disclosure (UC-004, SN-011)",
+              "frontstage": [
+                "Expandable reasoning section per service showing the business model evidence that drove the recommendation",
+                "Matched GoA business patterns cited by name with a plain-language explanation of how they map to the described problem (SN-005)"
+              ],
+              "backstage": [
+                "Reasoning extracted from the Planning Agent's Claude response and stored as a structured reasoning[] array in the hypothesis document",
+                "Pattern match IDs resolved to human-readable pattern names from the Configuration Service (SN-005)"
+              ],
+              "thinking": "\"The reasoning shows it matched our tenant's 'permit intake' pattern — that's exactly the type of workflow we have. I can use this language when I explain the recommendation to my manager.\"",
+              "emotionalContext": "Confidence building as the reasoning is transparent, grounded in recognisable business terms, and references the analyst's own corrections; feels equipped to advocate for the recommendation.",
+              "feeling": "very positive",
+              "painPoints": [],
+              "opportunities": [
+                "Citing matched GoA patterns by name in the reasoning gives the BA concrete shared vocabulary to use when explaining the recommendation to non-technical stakeholders (SN-005, SN-011)"
+              ]
+            },
+            {
+              "stepNumber": 3,
+              "action": "Accept the hypothesis to mark the planning session as complete with an approved service composition recommendation.",
+              "needs": [
+                "Clear accept and revise actions with accessible labels, unambiguous confirmation state, and focus management compliant with GoA Design System 2.0 (SN-009)"
+              ],
+              "touchpoint": "TMW — Hypothesis panel accept/revise action row (UC-004)",
+              "frontstage": [
+                "'Accept Hypothesis' and 'Request Revision' buttons rendered in GoA Design System 2.0 primary and secondary button styles",
+                "Session status banner updating to 'Hypothesis Accepted' immediately on confirmation"
+              ],
+              "backstage": [
+                "PATCH /api/v1/sessions/{id}/hypotheses/{hypothesisId} with status 'accepted' persists the acceptance decision in MongoDB",
+                "RabbitMQ event 'hypothesis.accepted' published via ADSP Event Service (INT-007)",
+                "Session status updated to 'hypothesis-accepted' in the session document in MongoDB"
+              ],
+              "thinking": "\"Accepted. The session is now marked complete. I can export this and send it to the project team.\"",
+              "emotionalContext": "Satisfied and purposeful; the session has produced a concrete, usable output. Eager to share the result with the developer and program manager.",
+              "feeling": "very positive",
+              "painPoints": [
+                "If no persistent confirmation state exists after acceptance the BA may be uncertain whether the action was registered, especially after a slow network response (SN-009)"
+              ],
+              "opportunities": [
+                "A persistent 'Hypothesis Accepted' banner with an embedded export call-to-action immediately visible after acceptance removes the need to navigate separately to initiate export (SN-009)"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "An accepted ADSP service composition hypothesis is documented in the planning session with a structured business model, matched GoA patterns, and transparent reasoning, ready for developer implementation planning and stakeholder communication."
+    },
+    {
+      "name": "Resuming an Interrupted Planning Session",
+      "description": "A GoA business analyst who started a planning session on a previous day or in a previous browser session returns to TMW and resumes the session from exactly where they left off, with full conversation history and business model context restored, without re-entering any prior information.",
+      "trigger": "A GoA business analyst returns to the ADSP Project Planner after closing their browser or pausing work for more than one day and needs to continue an in-progress planning session.",
+      "goal": "Resume the in-progress planning session from the exact point of interruption with full prior context restored, without re-entering any conversation history or business model information.",
+      "stages": [
+        {
+          "name": "Session Re-Entry",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Navigate to the TMW Planner section and locate the prior session in the session list.",
+              "needs": [
+                "Session list that clearly identifies in-progress sessions by title, status badge, and last-modified timestamp (SN-004)"
+              ],
+              "touchpoint": "TMW — Planner landing page session list (UC-006, INT-008 Keycloak JWT)",
+              "frontstage": [
+                "Session list displaying all sessions with title, status badge ('In Progress', 'Hypothesis Accepted'), and last-modified timestamp",
+                "Visual distinction between in-progress and completed sessions enabling quick identification of the session to resume"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions returns all sessions belonging to the authenticated user scoped by tenantId, sorted by last-modified descending",
+                "Keycloak JWT scopes the query so only the authenticated user's sessions are returned (INT-008)"
+              ],
+              "thinking": "\"I can see my 'Permit Workflow Digitization' session from last Tuesday — it's still showing 'In Progress'. The persistence has held.\"",
+              "emotionalContext": "Relieved to see the session is still present and correctly labelled; the persistence promise is validated without having to test it.",
+              "feeling": "positive",
+              "painPoints": [
+                "If the session list does not show a last-modified timestamp, the BA cannot distinguish between multiple in-progress sessions with similar names (SN-004)"
+              ],
+              "opportunities": [
+                "Sorting sessions by last-modified descending by default surfaces the most recently active session at the top, minimising scan time on return visits (SN-004)"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Open the prior session by clicking its title or selecting the 'Resume' action.",
+              "needs": [
+                "Immediate context restoration with no loading gates, re-authentication prompts, or re-entry of prior content (SN-004)"
+              ],
+              "touchpoint": "TMW — Session list row resume action (UC-006)",
+              "frontstage": [
+                "'Resume' link or clickable session row navigates to the session conversation view",
+                "Session conversation view loads with the full prior message history and current business model state visible immediately"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions/{id} returns the full session document including conversationHistory[], businessModel, and hypotheses[]",
+                "MongoDB retrieval enforces tenantId isolation ensuring no cross-tenant session access (INT-008)"
+              ],
+              "thinking": "\"It opened right to where I left off — the last message is there and the business model panel is showing the same entities from last week.\"",
+              "emotionalContext": "Pleasantly surprised by seamless restoration; the multi-day planning use case works exactly as the landing page promised.",
+              "feeling": "very positive",
+              "painPoints": [
+                "If the session takes more than a few seconds to load a long conversation history, the BA may perceive the tool as slow or unreliable (SN-004, SN-009)"
+              ],
+              "opportunities": [
+                "Progressive loading of conversation history — most recent messages first, earlier turns loaded on scroll — avoids a long initial page load for sessions with deep conversation histories (SN-004, SN-009)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Context Re-Orientation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Scroll through the restored conversation history and review the current business model state to re-orient before continuing.",
+              "needs": [
+                "Readable, well-structured conversation history with clear visual distinction between user and agent messages (SN-002, SN-004)"
+              ],
+              "touchpoint": "TMW — Conversation panel restored state (UC-006)",
+              "frontstage": [
+                "Conversation history rendered with clear visual distinction between user messages and Planning Agent responses",
+                "Business model panel showing the last-persisted state with all prior entities and user corrections intact"
+              ],
+              "backstage": [
+                "Full conversationHistory[] array from MongoDB rendered in chronological order",
+                "businessModel document rendered from MongoDB, reflecting all prior user corrections applied via UC-003"
+              ],
+              "thinking": "\"Right — I had described the permit intake process and we were working through the inspector review stage. The model is still missing the appeal pathway I hadn't described yet.\"",
+              "emotionalContext": "Thoughtful re-engagement; restored context removes the frustration of restarting from scratch. Some cognitive work required to re-enter the problem space after the break.",
+              "feeling": "neutral",
+              "painPoints": [
+                "Long conversation histories may require significant scrolling to reach the last message, displacing the business model panel from view (SN-004, SN-009)"
+              ],
+              "opportunities": [
+                "A 'Jump to last message' affordance and a persistent summary panel showing the last Planning Agent question at the top of the conversation view reduce re-orientation time on return (SN-004)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Session Continuation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Continue the conversation with the Planning Agent from the last exchange point, providing newly recalled details without repeating prior context.",
+              "needs": [
+                "Planning Agent that retains full prior conversation context and does not re-ask questions already answered in earlier turns (SN-001, SN-004)"
+              ],
+              "touchpoint": "TMW — Conversation panel message input (UC-002 continued, INT-001 Anthropic Claude API)",
+              "frontstage": [
+                "Message input pre-focused and ready for the next user contribution",
+                "Planning Agent response that references prior conversation context, demonstrating continuity from the earlier session"
+              ],
+              "backstage": [
+                "POST /api/v1/sessions/{id}/messages includes the full conversationHistory[] in the Planning Agent's Claude context window sent to INT-001",
+                "Planning Agent continues building the businessModel from the current state, appending new entities without resetting prior ones"
+              ],
+              "thinking": "\"I'll add the appeal pathway now. It remembered what we covered last week without me having to repeat myself — that's exactly what I needed for a multi-day engagement.\"",
+              "emotionalContext": "Confident and productive; the seamless continuation of context eliminates the most significant friction point in multi-day planning work.",
+              "feeling": "very positive",
+              "painPoints": [
+                "If the LLM context window cannot accommodate the full prior conversation history, the Planning Agent may re-ask questions already answered in earlier turns (SN-004)"
+              ],
+              "opportunities": [
+                "Compressing earlier conversation turns into a structured context summary allows very long planning sessions to continue without loss of key prior decisions (SN-004, SN-001)"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "The planning session is fully restored with all prior conversation history, business model entities, and user corrections intact. The analyst continues the discovery workflow seamlessly from the point of interruption without re-entering any prior context."
+    },
+    {
+      "name": "Exporting a Completed Session Plan for Stakeholders",
+      "description": "A GoA business analyst whose planning session has an accepted ADSP service composition hypothesis exports the session as a portable JSON document to share with program managers and stakeholders for review, decision-making, and project documentation, without requiring stakeholders to have TMW access.",
+      "trigger": "A GoA business analyst has accepted a planning session hypothesis and needs to share the session output with program stakeholders who do not have access to the TMW Planner.",
+      "goal": "Download a portable JSON session plan export containing the full planning context, business model, hypothesis, and reasoning for stakeholder sharing and project documentation.",
+      "stages": [
+        {
+          "name": "Export Preparation",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Review the session summary to confirm the accepted hypothesis and verify completeness of the business model and open questions before exporting.",
+              "needs": [
+                "A session summary view that shows hypothesis acceptance status, business model completeness, and any unresolved open questions before committing to export (SN-003, SN-011)"
+              ],
+              "touchpoint": "TMW — Session summary or hypothesis panel (UC-008 pre-step)",
+              "frontstage": [
+                "Session summary panel showing: accepted hypothesis title, matched GoA pattern names, business model entity count, and any flagged open questions",
+                "Visual 'ready to export' indicator rendered when the session hypothesis is in 'accepted' status"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions/{id} returns the session document including hypothesis status, businessModel summary, and openQuestions[]",
+                "Open questions surfaced by the Planning Agent during the conversation and stored in the session document"
+              ],
+              "thinking": "\"The hypothesis is accepted and the model looks complete. There are two open questions flagged — I'll reference those in my handoff note. Ready to export.\"",
+              "emotionalContext": "Methodical and purposeful; conducting a final check before sharing. Confident the output is sufficiently complete for a productive stakeholder review.",
+              "feeling": "positive",
+              "painPoints": [
+                "Without a pre-export summary, the BA may export a session with unresolved open questions and discover the gap only after distributing the file to stakeholders (SN-003)"
+              ],
+              "opportunities": [
+                "A pre-export checklist showing hypothesis status, flagged open questions, and model completeness prevents incomplete or ambiguous exports from reaching stakeholders (SN-003, SN-011)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Export and Distribution",
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Click the Export Session Plan button to download the JSON session plan to the local device.",
+              "needs": [
+                "One-click export with no additional configuration required and immediate file download without perceptible server-side delay (SN-004, SN-009)"
+              ],
+              "touchpoint": "TMW — Export action in session toolbar or hypothesis panel (UC-008, GET /api/v1/sessions/{id}/export)",
+              "frontstage": [
+                "'Export Session Plan' button visible in the session toolbar or hypothesis panel action row in GoA Design System 2.0",
+                "Browser file download dialog or automatic save to the default Downloads folder with a descriptive filename"
+              ],
+              "backstage": [
+                "GET /api/v1/sessions/{id}/export assembles the complete export document from MongoDB: businessModel, accepted hypothesis, reasoning[], matched patterns, conversationSummary, openQuestions, recommendedNextSteps",
+                "Response returned as application/json with Content-Disposition: attachment header triggering browser download"
+              ],
+              "thinking": "\"Downloaded. The filename matches the session title. I can attach this directly to the project brief and send it to the project team.\"",
+              "emotionalContext": "Satisfied and productive; a tangible portable artefact from the AI-assisted planning session is in hand. The session's value is made concrete and shareable.",
+              "feeling": "very positive",
+              "painPoints": [
+                "A raw JSON file may not be immediately readable by program managers or executives without a viewer tool or pre-formatted document (SN-003)"
+              ],
+              "opportunities": [
+                "A human-readable PDF export option or a shareable TMW read-only session link would increase accessibility of the session output for non-technical program stakeholders (SN-003, SN-011)"
+              ]
+            },
+            {
+              "stepNumber": 2,
+              "action": "Share the exported JSON file with program stakeholders via GoA email or project documentation tools.",
+              "needs": [
+                "Exported file format that is self-describing and interpretable by stakeholders or their tools without requiring TMW access (SN-003, SN-011)"
+              ],
+              "touchpoint": "GoA email or SharePoint (external to planner-service — post-export distribution)",
+              "frontstage": [
+                "BA attaches the JSON export to an email or uploads to the project SharePoint site",
+                "Stakeholders receive the file and can open it directly or use a JSON viewer to review the session plan"
+              ],
+              "backstage": [
+                "No planner-service involvement after download; the export is a portable artefact that has left the system perimeter",
+                "FOIP compliance: file may contain GoA program information; the BA is responsible for handling per RSA 2000, c F-25"
+              ],
+              "thinking": "\"I'll attach it to the project brief with a short summary note. My manager can see the recommended services and the reasoning behind them without needing to log in to TMW.\"",
+              "emotionalContext": "Confident that the export contains sufficient context for a productive stakeholder review; a small residual uncertainty about whether the raw JSON format will be self-explanatory to non-technical readers.",
+              "feeling": "positive",
+              "painPoints": [
+                "Program managers receiving a raw JSON file may find the structure difficult to interpret without an accompanying key or rendered summary view (SN-003, SN-011)"
+              ],
+              "opportunities": [
+                "Including a plain-language 'executiveSummary' section at the top of the JSON export — listing the hypothesis title, recommended services in plain language, and key reasoning — makes the file self-describing for non-technical readers (SN-003, SN-011)"
+              ]
+            }
+          ]
+        }
+      ],
+      "outcome": "A portable JSON session plan export containing the accepted ADSP service composition hypothesis, structured business model, matched GoA patterns, transparent reasoning, and recommended next steps is downloaded and distributed to program stakeholders, enabling informed decision-making before developer handoff."
+    }
+  ]
+}

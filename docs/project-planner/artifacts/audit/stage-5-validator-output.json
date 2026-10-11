@@ -1,0 +1,314 @@
+{
+  "validator": "fac_s5_runner",
+  "overallStatus": "PASS",
+  "findings": [
+    {
+      "ruleId": "FAC-S5-001",
+      "status": "PASS",
+      "evidence": "all 12 sitemap pages have content-specs/{pageId}.json",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-001a",
+      "status": "PASS",
+      "evidence": "all 12 pages have valid viewType + pageType",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-002",
+      "status": "PASS",
+      "evidence": "design-system.json defines 12 component(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-003",
+      "status": "PASS",
+      "evidence": "all 12 pages have component file (react)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-004",
+      "status": "PASS",
+      "evidence": "validation-report.json exists (9127 bytes JSON)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-005",
+      "status": "PASS",
+      "evidence": "all 12 components have exactly one <h1>",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-006",
+      "status": "PASS",
+      "evidence": "navigation links valid across 12 components",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-007",
+      "status": "PASS",
+      "evidence": "12 auth-required page(s) covered by ancestor guards",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-008",
+      "status": "PASS",
+      "evidence": "all 12 components use goa-* elements",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-009",
+      "status": "PASS",
+      "evidence": "no raw hex values found in 12 component styles",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-010",
+      "status": "PASS",
+      "evidence": "validation-report.json has zero errors (warnings ok); self-reference convergence applied",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-011",
+      "status": "PASS",
+      "evidence": "24 unit test file(s) present",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-012",
+      "status": "PASS",
+      "evidence": "all 3 UI TC(s) referenced in test code",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-013",
+      "status": "PASS",
+      "evidence": "test-traceability-report.md references UC-/TC-/Unit/Integration/E2E",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-014",
+      "status": "PASS",
+      "evidence": "all 10 UC(s) mapped in traceability report",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-015",
+      "status": "PASS",
+      "evidence": "12 API-calling page(s) covered by 12 integration test(s) using approved mocking",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-016",
+      "status": "PASS",
+      "evidence": "API service layer at api.ts; no raw hardcoded fetch URLs found",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-017",
+      "status": "PASS",
+      "evidence": "API_BASE_URL declared in .env; service layer reads from env",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-018",
+      "status": "PASS",
+      "evidence": "auth token flow present (Authorization/Bearer/interceptor reference found)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-019",
+      "status": "PASS",
+      "evidence": "12 component(s) match react extension ['.tsx', '.jsx']",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-020",
+      "status": "PASS",
+      "evidence": "npm run build and npm run lint both exit=0",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-021",
+      "status": "PASS",
+      "evidence": "no Stub/Deferred integration points; banner not required",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-022",
+      "status": "PASS",
+      "evidence": "manifest present; all 0 sitemap intId(s) in manifest",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-023",
+      "status": "PASS",
+      "evidence": "no working-state-delta.5.json present yet (pre-finalize) \u2014 skipping",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-024",
+      "status": "PASS",
+      "evidence": "apps\\planner-ui",
+      "failReason": "no protected-category fields in client-side query strings (20 files scanned)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-025",
+      "status": "PASS",
+      "evidence": "apps\\planner-ui",
+      "failReason": "every component referencing a protected-category field also references a masking primitive (12 component(s) scanned)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-026",
+      "status": "PASS",
+      "evidence": "apps\\planner-ui",
+      "failReason": "no protected-category data written to browser storage (20 files scanned)",
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-027",
+      "status": "PASS",
+      "evidence": "npm test exit=0",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-028",
+      "status": "PASS",
+      "evidence": "1 async/queue INT(s) declared but none consumed by a page; rule satisfied",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-001",
+      "status": "PASS",
+      "evidence": "all 12 sitemap pages mapped to content+page",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-002",
+      "status": "PASS",
+      "evidence": "no form pages declared",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-003",
+      "status": "PASS",
+      "evidence": "no data display pages declared",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-004",
+      "status": "PASS",
+      "evidence": "sitemap page audiences subset of service description (5)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-005",
+      "status": "PASS",
+      "evidence": "no form pages to validate",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-006",
+      "status": "PASS",
+      "evidence": "all 8 persisted entity/entities present (5 runtime/envelope entity/entities exempted)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-007",
+      "status": "PASS",
+      "evidence": "no Stub/Deferred integrations",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-008",
+      "status": "PASS",
+      "evidence": "no Catalog-Auto integrations",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-009",
+      "status": "PASS",
+      "evidence": "all 12 business rule(s) referenced in Stage 5 tests",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-010",
+      "status": "PASS",
+      "evidence": "service name 'ADSP Project Planner' consistent across Stages 1/2/5",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "XSTAGE-S5-011",
+      "status": "PASS",
+      "evidence": "Stage 5 client reads conform to the camelCase OpenAPI contract (67 contract fields checked)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-COV-001",
+      "status": "PASS",
+      "evidence": "all 12 pages have component + unit test reference",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-COV-002",
+      "status": "PASS",
+      "evidence": "no placeholder tokens in 12 component(s)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-COV-003",
+      "status": "PASS",
+      "evidence": "all 24 unit test file(s) contain assertions",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S5-COV-004",
+      "status": "PASS",
+      "evidence": "traceability has Unit/Integration/E2E columns; 59 TC(s) mapped",
+      "failReason": null,
+      "remediationAction": null
+    }
+  ]
+}

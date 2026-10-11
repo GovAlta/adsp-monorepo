@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "stage": 3,
+  "stageName": "Database Design",
+  "validatedAt": "2026-10-10T02:55:00Z",
+  "overallStatus": "PASSED",
+  "validationRules": [
+    {
+      "ruleId": "FAC-S3-001",
+      "description": "DDL script exists and contains CREATE TABLE statements",
+      "status": "PASS",
+      "evidence": "requirements/database/ddl_script.sql present; 11 CREATE TABLE statements confirmed by fac_s3_runner",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-002",
+      "description": "Every DDL table has a named PRIMARY KEY constraint",
+      "status": "PASS",
+      "evidence": "All 11 tables have named PK constraints: pk_planning_session, pk_business_model, pk_business_concept, pk_concept_relationship, pk_hypothesis_record, pk_conversation_message, pk_audit_event, pk_specialist_request, pk_specialist_response, pk_session_export, pk_user_context",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-003",
+      "description": "All FK constraints have explicit ON DELETE and ON UPDATE referential actions",
+      "status": "PASS",
+      "evidence": "All 8 FK constraints have ON DELETE CASCADE and ON UPDATE CASCADE: fk_business_model_session, fk_business_concept_model, fk_concept_rel_source, fk_hypothesis_record_session, fk_conversation_msg_session, fk_specialist_req_session, fk_specialist_resp_request, fk_session_export_session",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-004",
+      "description": "DDL contains no SQL vendor-specific extensions (novel vendor syntax LLM-side check)",
+      "status": "PASS",
+      "evidence": "Deterministic blocklist: PASS per fac_s3_runner. LLM-side: JSONB used in specialist_request, specialist_response, session_export, user_context for JSON document fields — intentional MongoDB-DDL adaptation (no ISO SQL equivalent for BSON); documented in data_model.json entity descriptions. No SERIAL, AUTO_INCREMENT, ENUM type declarations, or other blocklist hits present.",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-007",
+      "description": "JSON Schema artifact exists with Draft 2020-12 and correct entity definitions",
+      "status": "PASS",
+      "evidence": "requirements/database/json_schema.json present; $schema=https://json-schema.org/draft/2020-12/schema; 11 $defs entries covering all DDL entities with required arrays and property type mappings",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-009",
+      "description": "Every foreign-key column has a covering index in index_recommendations.sql",
+      "status": "PASS",
+      "evidence": "4 FK columns covered by CREATE INDEX statements in requirements/database/index_recommendations.sql per fac_s3_runner; session_id FK columns covered by composite tenant+session indexes; request_id in specialist_response covered by ix_specialist_response_request_id",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-010",
+      "description": "All identifiers follow ISO/IEC 11179 object_qualifier_class naming convention",
+      "status": "PASS",
+      "evidence": "All 11 entity names: snake_case singular nouns, no forbidden prefixes (tbl_, tb_, t_), no plural forms, no CamelCase. LLM-side: object_qualifier_class pattern confirmed for column names (session_id, tenant_id, concept_type, confidence_score, etc.) and constraint names (pk_, fk_, ck_, uq_, ix_ prefixes per Section 5.2)",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-011",
+      "description": "data_model.json validates against data-model.schema.json with complete entity, enumeration, and BR map coverage",
+      "status": "PASS",
+      "evidence": "requirements/database/data_model.json schema-valid per fac_s3_runner; 11 entities[], 6 enumerations[] (planning_session_status, business_concept_type, concept_relationship_type, hypothesis_record_status, conversation_message_role, specialist_request_status); DDL-entity set equality PASS; all 6 CHECK IN constraints in DDL have matching enumerations[] entries; deprecated artifacts absent; businessRuleMap[] covers BR-001, BR-004, BR-005, BR-006, BR-008, BR-009, BR-010; originalToNormalized[] has 15 entries for all 13 data_io_schema $defs entities",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-012",
+      "description": "RBAC tables present if application requires role-based access control at the database layer",
+      "status": "PASS",
+      "evidence": "requirements/database/ddl_script.sql: no canonical RBAC tables declared; RBAC handled externally via Keycloak (INT-008); rule N/A for this service",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-013",
+      "description": "No extension-dependent operator-class indexes in index_recommendations.sql",
+      "status": "PASS",
+      "evidence": "requirements/database/index_recommendations.sql: no extension-dependent operator-class indexes; all indexes use standard B-tree; rule vacuously satisfied",
+      "failReason": null,
+      "remediationAction": null
+    },
+    {
+      "ruleId": "FAC-S3-014",
+      "description": "Seed reference data SQL present if required by the design",
+      "status": "PASS",
+      "evidence": "No seed_reference_data.sql produced; planner-service has no static reference data requiring database seeding; dynamic configuration stored in ADSP Config Service (external); rule N/A",
+      "failReason": null,
+      "remediationAction": null
+    }
+  ],
+  "crossStageConsistency": [
+    {
+      "checkId": "XSTAGE-S3-001",
+      "description": "All data_io_schema $defs entities are covered by DDL tables or documented as no-persistence",
+      "status": "PASS",
+      "evidence": "13 data_io_schema $defs entities: 11 mapped to DDL entities (planning_session, business_model, business_concept, concept_relationship, hypothesis_record, conversation_message, audit_event, specialist_request, specialist_response, session_export, user_context); 2 as no-persistence (SpecialistAgentConfig and BusinessPattern stored in ADSP Config Service); ServiceMapping embedded in BusinessPattern (no-persistence); SessionListResponse, DomainEvent, LLMRequest, ErrorResponse as wire-only/DTO. All accounted for in data_model.json originalToNormalized[] with rationale.",
+      "failReason": null
+    },
+    {
+      "checkId": "XSTAGE-S3-002",
+      "description": "All business rules with application-layer enforcement are documented in data_model.json businessRuleMap",
+      "status": "PASS",
+      "evidence": "data_model.json businessRuleMap[] contains 7 entries documenting enforcement for BR-001 (application: tenant isolation), BR-004 (application: confidenceScore >= 70 in HypothesisGenerationService), BR-005 (application: pattern match threshold in PatternMatchingService), BR-006 (both: ck_business_concept_type CHECK + Mongoose enum), BR-008 (application: append-only audit_event), BR-009 (application: isEnabled check in Config Service), BR-010 (both: ck_hypothesis_record_status CHECK + state machine). All BRs with x-business-rules in data_io_schema (BR-004, BR-005, BR-006, BR-010) have corresponding businessRuleMap entries.",
+      "failReason": null
+    },
+    {
+      "checkId": "XSTAGE-S3-003",
+      "description": "All Live/Catalog-Auto integration points have a corresponding schema footprint",
+      "status": "PASS",
+      "evidence": "All 8 INT items in integration_points.json have implementationStatus=Stub; per Step 3a speculative DDL is not required for Stub INTs with undefined contracts; INT-003..006 (specialist agents) tracked via specialist_request and specialist_response DDL tables with session_id FK linkage; INT-001 (LLM API) and INT-007 (RabbitMQ) are outbound/wire-only with no persistence; INT-002 (Config Service) maps to BusinessPattern in external service; INT-008 (Keycloak) maps to tenant_id/user_id fields on all DDL tables. No mandatory-coverage Live INTs exist; rule vacuously satisfied.",
+      "failReason": null
+    }
+  ]
+}

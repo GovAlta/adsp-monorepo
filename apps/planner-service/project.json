@@ -1,0 +1,65 @@
+{
+  "name": "planner-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/planner-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/planner-service",
+        "main": "apps/planner-service/src/main.ts",
+        "tsConfig": "apps/planner-service/tsconfig.app.json",
+        "assets": [],
+        "webpackConfig": "apps/planner-service/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "planner-service:build",
+        "runBuildTargetDependencies": false,
+        "port": 7796
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "planner-service:build:development"
+        },
+        "production": {
+          "buildTarget": "planner-service:build:production"
+        }
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/planner-service/jest.config.ts"
+      }
+    }
+  }
+}

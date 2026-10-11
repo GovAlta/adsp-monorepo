@@ -1,0 +1,180 @@
+{
+  "generatedAt": "2026-10-10T00:00:00Z",
+  "phase": "4",
+  "batch": "4",
+  "pages": [
+    {
+      "pageId": "session-dashboard",
+      "pageType": "list-index",
+      "componentPath": "src/pages/SessionDashboard.tsx",
+      "route": "/sessions",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": false,
+      "notes": "userId and tenantId are server-side scoping only — never rendered. No localStorage writes."
+    },
+    {
+      "pageId": "new-session-start",
+      "pageType": "start-page",
+      "componentPath": "src/pages/NewSessionStart.tsx",
+      "route": "/sessions/new",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": false,
+      "notes": "No Protected B fields rendered. Title input sanitized server-side."
+    },
+    {
+      "pageId": "planning-session",
+      "pageType": "wizard",
+      "componentPath": "src/pages/PlanningSession.tsx",
+      "route": "/sessions/:sessionId/planning",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": false,
+      "notes": "Message content in React state only. INT-001 is STUB — Send button always disabled. userId/tenantId not rendered."
+    },
+    {
+      "pageId": "business-model-review",
+      "pageType": "detail-view",
+      "componentPath": "src/pages/BusinessModelReview.tsx",
+      "route": "/sessions/:sessionId/model",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": true,
+      "maskedFields": [
+        "businessModel.problemSummary",
+        "businessConcept.name",
+        "businessConcept.description"
+      ],
+      "securityAnnotations": ["ASVS:V-8.3.1", "CAS:RULE-017"],
+      "notes": "All concept name/description fields use MaskedField canUnmask=true. Inline concept-type edits via PATCH body (FAC-S5-024). No localStorage writes (FAC-S5-026)."
+    },
+    {
+      "pageId": "hypothesis-review",
+      "pageType": "wizard-step-review",
+      "componentPath": "src/pages/HypothesisReview.tsx",
+      "route": "/sessions/:sessionId/hypothesis",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": true,
+      "maskedFields": [
+        "solutionHypothesis.summary",
+        "solutionHypothesis.reasoning"
+      ],
+      "securityAnnotations": ["ASVS:V-8.3.1", "CAS:RULE-017"],
+      "notes": "Locked state when no hypothesis. INT-001 STUB — Request Revision disabled. Accept via PATCH body. No localStorage writes (FAC-S5-026)."
+    },
+    {
+      "pageId": "session-export",
+      "pageType": "detail-view",
+      "componentPath": "src/pages/SessionExport.tsx",
+      "route": "/sessions/:sessionId/export",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": true,
+      "maskedFields": [
+        "planningSession.title",
+        "planningSession.businessProblemSummary",
+        "solutionHypothesis.summary",
+        "solutionHypothesis.reasoning"
+      ],
+      "securityAnnotations": ["ASVS:V-8.3.1", "CAS:RULE-017"],
+      "notes": "Export format in POST body not URL (FAC-S5-024). Anchor element removed after download click — no persistent blob URL. No localStorage writes (FAC-S5-026)."
+    },
+    {
+      "pageId": "admin-hub",
+      "pageType": "section-hub",
+      "componentPath": "src/pages/AdminHub.tsx",
+      "route": "/admin",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": false,
+      "securityAnnotations": ["ASVS:V-9.1.1"],
+      "notes": "Aggregate stats (patternCount, sessionCount, auditCount) are numeric totals only — no personal data. FAC-S5-025 PASS-N/A. No localStorage writes (FAC-S5-026). Access: planner-admin or tenant-admin."
+    },
+    {
+      "pageId": "pattern-library",
+      "pageType": "list-index",
+      "componentPath": "src/pages/PatternLibrary.tsx",
+      "route": "/admin/patterns",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": false,
+      "securityAnnotations": ["ASVS:V-9.1.1"],
+      "notes": "Pattern data is tenant-scoped configuration, not Protected B. Filter params (status, page, sort) safe as query params (FAC-S5-024). FAC-S5-025 PASS-N/A. No localStorage writes (FAC-S5-026). INT-002 stub handled."
+    },
+    {
+      "pageId": "pattern-editor",
+      "pageType": "edit-form",
+      "componentPath": "src/pages/PatternEditor.tsx",
+      "route": "/admin/patterns/:patternId",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": false,
+      "securityAnnotations": ["ASVS:V-9.1.1"],
+      "notes": "Dual mode: create (/admin/patterns/new) and edit (/admin/patterns/:patternId). Field values in POST/PUT body (FAC-S5-024). FAC-S5-025 PASS-N/A (pattern config, not Protected B). No localStorage writes (FAC-S5-026). TC-052: inputs as controlled React text, no innerHTML. Deactivate = soft-deactivate (BR-008, TC-082, TC-083)."
+    },
+    {
+      "pageId": "session-history",
+      "pageType": "report-results",
+      "componentPath": "src/pages/SessionHistory.tsx",
+      "route": "/admin/session-history",
+      "authRequired": true,
+      "classificationLevel": "Protected B",
+      "protectedFieldsRendered": true,
+      "maskedFields": ["planningSession.userId"],
+      "securityAnnotations": ["ASVS:V-8.3.1", "CAS:RULE-017"],
+      "notes": "userId resolved to ownerDisplayName via user lookup; raw userId never rendered (FAC-S5-025). User filter holds opaque userRef in component state — not in URL query string (FAC-S5-024). CSV/JSON exports exclude raw userId (TC-043, TC-044). No localStorage writes (FAC-S5-026). Access: planner-admin or tenant-admin."
+    },
+    {
+      "pageId": "audit-log",
+      "pageType": "report-results",
+      "componentPath": "src/pages/AuditLog.tsx",
+      "route": "/admin/audit-log",
+      "authRequired": true,
+      "classificationLevel": "Protected A",
+      "protectedFieldsRendered": true,
+      "maskedFields": ["auditEvent.actorId"],
+      "securityAnnotations": ["ASVS:V-8.3.1", "ASVS:V-10.4.1"],
+      "notes": "actorId resolved to actorDisplayName via MaskedField; raw actorId never rendered (FAC-S5-025). HMAC chain integrity verified on mount via HmacStatusBanner (TC-045, TC-046). NO edit/delete controls on any row — immutable (BR-014, TC-047). CSV export excludes raw actorId (TC-049). No localStorage writes (FAC-S5-026). Access: planner-admin or tenant-admin."
+    },
+    {
+      "pageId": "user-management",
+      "pageType": "user-management",
+      "componentPath": "src/pages/UserManagement.tsx",
+      "route": "/admin/users",
+      "authRequired": true,
+      "classificationLevel": "Protected A",
+      "protectedFieldsRendered": true,
+      "maskedFields": ["user.email"],
+      "securityAnnotations": ["ASVS:V-8.3.1", "CAS:RULE-017"],
+      "notes": "user.email rendered via MaskedField canUnmask={isTenantAdmin}; planner-admin sees masked email (FAC-S5-025). Email not in URL query strings (FAC-S5-024). Invite form email cleared on close/success (FAC-S5-026). Role change triggers server-side audit event (TC-082, BR-008, SN-012). Access: tenant-admin for writes; planner-admin read-only."
+    }
+  ],
+  "sharedComponents": [
+    {
+      "component": "MaskedField",
+      "path": "src/components/MaskedField.tsx",
+      "annotations": ["ASVS:V-8.3.1", "CAS:RULE-017"]
+    },
+    {
+      "component": "HmacStatusBanner",
+      "path": "src/components/HmacStatusBanner.tsx",
+      "annotations": ["ASVS:V-10.4.1"],
+      "notes": "Verifies HMAC audit chain integrity on mount via api.verifyAuditChain(). Used by AuditLog page. Renders success or emergency GoabxCallout (TC-045, TC-046, BR-014, BR-015, SYSREQ-020)."
+    },
+    {
+      "component": "IntegrationPendingBanner",
+      "path": "src/components/IntegrationPendingBanner.tsx"
+    },
+    {
+      "component": "ConfidenceBadge",
+      "path": "src/components/ConfidenceBadge.tsx"
+    }
+  ],
+  "apiServiceLayer": {
+    "path": "src/services/api.ts",
+    "typesPath": "src/services/api.types.ts",
+    "annotations": ["ASVS:V-9.1.1", "FAC-S5-017", "FAC-S5-018"]
+  }
+}
