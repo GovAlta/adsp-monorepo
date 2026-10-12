@@ -21,6 +21,14 @@
       .stack > * + * { margin-top: 1rem; }
       .muted { color: #666; }
       ul.plain { margin: .25rem 0; padding-left: 1.25rem; }
+      main.wide { max-width: 1840px; }
+      .cv { display: grid; grid-template-columns: 220px 1fr; gap: 1rem; align-items: start; }
+      @media (max-width: 1100px) { .cv { grid-template-columns: 1fr; } }
+      .cv-rail { display: flex; flex-direction: column; gap: .35rem; border-right: 1px solid #dcdcdc; padding-right: .75rem; }
+      .cv-rail goa-button { display: block; }
+      .cv-rail h4 { margin: .75rem 0 .25rem; color: #666; text-transform: uppercase; font-size: .75rem; letter-spacing: .04em; }
+      .cv-panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 1rem; align-items: start; }
+      .cv-panes h3 { margin-top: 0; }
     </style>
   </head>
   <body>
@@ -57,6 +65,8 @@
       let solutions = [];
       let current = null;
       let section = 'problem';
+      let view = 'default';
+      let cvFocus = 'solution';
       let draftText = '';
       let consultResult = null;
       let patterns = null;
@@ -111,6 +121,7 @@
         draftText = current.state.problemStatement || '';
         consultResult = null;
         spec = newSpec();
+        cvFocus = 'solution';
         renderList();
         renderWorkspace();
       }
@@ -235,9 +246,9 @@
           .join('');
       }
 
-      function sectionHtml() {
+      function sectionHtml(sec = section) {
         const st = current.state;
-        if (section === 'problem') {
+        if (sec === 'problem') {
           return `<div class="stack">
             <goa-textarea id="problem" name="problem" rows="6" width="100%" value="${esc(draftText)}" aria-label="Problem statement"></goa-textarea>
             <div class="row" role="group" aria-label="Analysis mode">
@@ -255,7 +266,7 @@
               </tbody></table></goa-table>` : '<p class="muted">Not analyzed yet.</p>'}
           </div>`;
         }
-        if (section === 'hypotheses') {
+        if (sec === 'hypotheses') {
           return st.hypotheses.length
             ? `<goa-accordion-group>${st.hypotheses.map((h, i) => `<goa-accordion heading="${esc(h.title)}" secondarytext="${esc(h.confidence)} confidence" ${i === 0 ? 'open="true"' : ''}>
                 <p>${esc(h.rationale)}</p>
@@ -266,13 +277,13 @@
               </goa-accordion>`).join('')}</goa-accordion-group>`
             : '<p class="muted">Run an analysis to see solution hypotheses.</p>';
         }
-        if (section === 'concepts') {
+        if (sec === 'concepts') {
           return st.concepts.length
             ? `<goa-table width="100%"><table><thead><tr><th>Type</th><th>Name</th><th>Source</th></tr></thead><tbody>
                ${st.concepts.map((c) => `<tr><td><goa-badge type="information" content="${esc(c.type)}"></goa-badge></td><td>${esc(c.name)}</td><td>${esc(c.source)}</td></tr>`).join('')}</tbody></table></goa-table>`
             : '<p class="muted">No concepts yet.</p>';
         }
-        if (section === 'questions') {
+        if (sec === 'questions') {
           const open = st.questions.filter((q) => q.status === 'open');
           return `<div class="stack">
             ${st.questions.length ? `<p class="muted">${open.length} open · ${st.questions.length - open.length} answered. Answer questions, then refine the analysis.</p>` : '<p class="muted">No questions yet. Run an analysis first.</p>'}
@@ -287,7 +298,7 @@
             ${busy ? '<goa-circular-progress visible="true" message="Refining — this can take up to a minute"></goa-circular-progress>' : ''}` : ''}
           </div>`;
         }
-        if (section === 'conversation') {
+        if (sec === 'conversation') {
           const msgs = st.conversation || [];
           return `<div class="stack">
             ${msgs.length ? msgs.map((m) => `<goa-callout type="${m.role === 'user' ? 'information' : 'success'}" heading="${m.role === 'user' ? 'You' : 'Planner'}">${esc(m.content)}</goa-callout>`).join('') : `<p class="muted">Ask a question, add detail, or correct the planner's understanding. ${mode === 'ai' ? 'The AI will answer and refine the analysis.' : 'Switch to AI analysis for conversational replies.'}</p>`}
@@ -296,10 +307,10 @@
             ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
           </div>`;
         }
-        if (section === 'steps') {
+        if (sec === 'steps') {
           return list(st.nextSteps.map((n) => `<strong>${esc(n.title)}</strong>${n.service ? ` <goa-badge type="information" content="${esc(n.service)}"></goa-badge>` : ''} — ${esc(n.reason)}`), 'Run an analysis to get next steps.');
         }
-        if (section === 'specialists') {
+        if (sec === 'specialists') {
           const progress = Object.fromEntries(st.specialists.map((s) => [s.service, s.status]));
           return `<div class="stack"><goa-table width="100%"><table><thead><tr><th>Service</th><th>Purpose</th><th>Status</th><th></th></tr></thead><tbody>
             ${(specialists || []).map((s) => `<tr><td>${esc(s.displayName)}</td><td>${esc(s.purpose)}</td><td>${esc(progress[s.service] || 'not-started')}</td>
@@ -307,7 +318,7 @@
             ${consultResult ? `<goa-callout type="information" heading="Specialist: ${esc(consultResult.service || '')}">${renderObject(consultResult)}</goa-callout>` : ''}
             ${renderSpecialistChat()}</div>`;
         }
-        if (section === 'patterns') {
+        if (sec === 'patterns') {
           const block = (heading, items) =>
             items && items.length ? `<goa-details heading="${esc(heading)}"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></goa-details>` : '';
           if (patternEdit) return renderPatternEditor();
@@ -319,6 +330,44 @@
       }
 
       const tabs = [['problem', 'Problem & analysis'], ['conversation', 'Conversation'], ['hypotheses', 'Hypotheses'], ['concepts', 'Concepts'], ['questions', 'Questions'], ['steps', 'Next steps'], ['specialists', 'Specialists'], ['patterns', 'Pattern catalog']];
+
+      const VIEWS = [['default', 'Default view'], ['compressed', 'Compressed view']];
+
+      function compressedHtml() {
+        const st = current.state;
+        const rail = `<nav class="cv-rail" aria-label="Navigation">
+          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution workspace</goa-button>
+          <h4>Specialists</h4>
+          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${esc(s.displayName)}</goa-button>`).join('')}
+          <h4>Reference</h4>
+          <goa-button type="${cvFocus === 'patterns' ? 'primary' : 'tertiary'}" size="compact" data-cv="patterns">Pattern catalog</goa-button>
+        </nav>`;
+        let main;
+        if (cvFocus === 'patterns') main = sectionHtml('patterns');
+        else if (cvFocus !== 'solution') {
+          main = `<div class="stack"><div class="row"><goa-button type="secondary" size="compact" data-consult="${esc(cvFocus)}">Consult on this solution</goa-button></div>
+            ${consultResult && consultResult.service === cvFocus ? `<goa-callout type="information" heading="Consultation">${renderObject(consultResult)}</goa-callout>` : ''}
+            ${renderSpecialistChat()}</div>`;
+        } else {
+          const questions = st.analysis
+            ? `<h3>Questions</h3>${sectionHtml('questions')}`
+            : '<h3>Questions</h3><p class="muted">Save and analyze the problem first; questions to refine the solution will appear here.</p>';
+          main = `<div class="cv-panes">
+            <goa-container accent="thin"><div class="stack">
+              <h3>Problem, analysis &amp; conversation</h3>
+              ${sectionHtml('problem')}
+              ${questions}
+              <h3>Conversation</h3>
+              ${sectionHtml('conversation')}
+            </div></goa-container>
+            <goa-container accent="thin"><div class="stack">
+              <h3>Hypotheses</h3>${sectionHtml('hypotheses')}
+              <h3>Concepts</h3>${sectionHtml('concepts')}
+              <h3>Next steps</h3>${sectionHtml('steps')}
+            </div></goa-container></div>`;
+        }
+        return `<div class="cv">${rail}<div class="cv-main" id="cvMain">${main}</div></div>`;
+      }
 
       const download = (filename, content, type) => {
         const url = URL.createObjectURL(new Blob([content], { type }));
@@ -367,9 +416,31 @@
             <goa-button id="exportMdBtn" type="secondary" size="compact" leadingicon="document-text">Download report (.md)</goa-button>
           </div>
           <goa-spacer vspacing="m"></goa-spacer>
-          <div class="row" role="toolbar" aria-label="Sections">${tabs.map(([id, label]) => `<goa-button type="${section === id ? 'primary' : 'tertiary'}" size="compact" data-section="${id}">${esc(label)}</goa-button>`).join('')}</div>
+          <div class="row" role="group" aria-label="View"><strong>View:</strong>${VIEWS.map(([id, label]) => `<goa-button type="${view === id ? 'primary' : 'secondary'}" size="compact" data-view="${id}">${label}</goa-button>`).join('')}</div>
           <goa-spacer vspacing="m"></goa-spacer>
-          <div id="section">${sectionHtml()}</div></goa-container>`;
+          ${view === 'compressed' ? compressedHtml() : `<div class="row" role="toolbar" aria-label="Sections">${tabs.map(([id, label]) => `<goa-button type="${section === id ? 'primary' : 'tertiary'}" size="compact" data-section="${id}">${esc(label)}</goa-button>`).join('')}</div>
+          <goa-spacer vspacing="m"></goa-spacer>
+          <div id="section">${sectionHtml()}</div>`}</goa-container>`;
+        document.querySelector('main').classList.toggle('wide', view === 'compressed');
+        $('workspace').querySelectorAll('[data-view]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          view = b.dataset.view;
+          if (!specialists) specialists = (await api('GET', '/specialists')).results;
+          if (view === 'compressed' && !patterns) await reloadPatterns();
+          renderWorkspace();
+        })));
+        $('workspace').querySelectorAll('[data-cv]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          cvFocus = b.dataset.cv;
+          if (cvFocus === 'patterns') { await reloadPatterns(); patternEdit = null; }
+          renderWorkspace();
+        })));
+        $('workspace').querySelectorAll('[data-cv-spec]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          cvFocus = b.dataset.cvSpec;
+          spec = newSpec(cvFocus);
+          await loadChats();
+          renderWorkspace();
+          $('specInput')?.scrollIntoView?.({ block: 'center' });
+          $('specInput')?.focus?.();
+        })));
         $('workspace').querySelectorAll('[data-section]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           section = b.dataset.section;
           if (section === 'patterns') { await reloadPatterns(); patternEdit = null; if (!specialists) specialists = (await api('GET', '/specialists')).results; }
