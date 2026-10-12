@@ -22,13 +22,18 @@
       .muted { color: #666; }
       ul.plain { margin: .25rem 0; padding-left: 1.25rem; }
       main.wide { max-width: 1840px; }
-      .cv { display: grid; grid-template-columns: 220px 1fr; gap: 1rem; align-items: start; }
+      main.wide .layout { grid-template-columns: 250px 1fr; gap: 1rem; }
+      .cv-rail { gap: .2rem; padding-right: .5rem; }
+      .cv { display: grid; grid-template-columns: 160px 1fr; gap: 1rem; align-items: start; }
       @media (max-width: 1100px) { .cv { grid-template-columns: 1fr; } }
       .cv-rail { display: flex; flex-direction: column; gap: .35rem; border-right: 1px solid #dcdcdc; padding-right: .75rem; }
       .cv-rail goa-button { display: block; }
       .cv-rail h4 { margin: .75rem 0 .25rem; color: #666; text-transform: uppercase; font-size: .75rem; letter-spacing: .04em; }
-      .cv-panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 1rem; align-items: start; }
-      .cv-panes h3 { margin-top: 0; }
+      .cv-panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1rem; align-items: start; }
+      .cv-panes h3 { margin: 0; font-size: 1.1rem; }
+      .pane { max-height: calc(100vh - 250px); min-height: 320px; overflow: auto; padding-right: .5rem; }
+      .pane > * + * { margin-top: .6rem; }
+      .cv-panes goa-container { min-width: 0; }
     </style>
   </head>
   <body>
@@ -66,6 +71,13 @@
       let current = null;
       let section = 'problem';
       let view = 'default';
+      let refineLabel = 'Refine analysis with my answers';
+      let altReply = '';
+      const SOL_MODES = [['mode1', 'Mode 1: Initial solution, I refine'], ['mode2', 'Mode 2: AI asks, final solution'], ['mode3', 'Mode 3: Alternative workflows']];
+      const solModeKey = (id) => `planner-solmode-${id}`;
+      const finalKey = (id) => `planner-final-${id}`;
+      const getSolMode = () => (current && localStorage.getItem(solModeKey(current.id))) || 'mode1';
+      const isFinal = () => !!current && (localStorage.getItem(finalKey(current.id)) === '1' || (!!current.state.analysis && current.state.questions.length === 0));
       let renaming = false;
       let nameDraft = '';
       let cvFocus = 'solution';
@@ -123,6 +135,7 @@
         draftText = current.state.problemStatement || '';
         consultResult = null;
         spec = newSpec();
+        altReply = '';
         cvFocus = 'solution';
         renaming = false;
         renderList();
@@ -297,7 +310,7 @@
               <goa-spacer vspacing="s"></goa-spacer>
               <div class="row"><goa-button type="secondary" size="compact" data-save-answer="${q.id}">${q.status === 'answered' ? 'Update answer' : 'Save answer'}</goa-button></div>
             </goa-container>`).join('')}
-            ${st.questions.length ? `<div class="row"><goa-button id="refineBtn" type="primary">${busy ? 'Refining…' : 'Refine analysis with my answers'}</goa-button></div>
+            ${st.questions.length ? `<div class="row"><goa-button id="refineBtn" type="primary">${busy ? 'Refining…' : refineLabel}</goa-button></div>
             ${busy ? '<goa-circular-progress visible="true" message="Refining — this can take up to a minute"></goa-circular-progress>' : ''}` : ''}
           </div>`;
         }
@@ -336,14 +349,42 @@
 
       const VIEWS = [['default', 'Default view'], ['compressed', 'Compressed view']];
 
+      const cdet = (title, html, open = false) => `<goa-details heading="${esc(title)}" ${open ? 'open="true"' : ''}>${html}</goa-details>`;
+
+      function alternativesHtml() {
+        const st = current.state;
+        const top = st.patternMatches[0];
+        const alts = st.patternMatches.slice(1, 4).map((m) => {
+          const p = (patterns || []).find((x) => x.id === m.patternId || x.name === m.patternName);
+          return `<goa-container type="non-interactive" accent="thin"><div class="row"><strong>${esc(m.patternName)}</strong> <goa-badge type="${levelType(m.level)}" content="${esc(m.level)}"></goa-badge></div>
+            <p>${esc(m.explanation)}</p>
+            ${p ? `<p><strong>Typical workflow</strong></p>${list((p.commonFeatures || []).slice(0, 5).map(esc))}<p><strong>Services</strong></p>${list(p.serviceMappings.map((x) => `<b>${esc(x.service)}</b>: ${esc(x.reason)}`))}` : ''}</goa-container>`;
+        });
+        const otherHyp = st.hypotheses.slice(1).map((h) => `<goa-container type="non-interactive" accent="thin"><strong>${esc(h.title)}</strong> <goa-badge type="information" content="${esc(h.confidence)} confidence"></goa-badge><p>${esc(h.rationale)}</p>${list([...h.recommendations].sort((a, b) => a.order - b.order).map((r) => `<b>${esc(r.service)}</b> — ${esc(r.reason)}`))}</goa-container>`);
+        const aiOk = options.modes.includes('ai');
+        return `<div class="cv-panes">
+          <goa-container accent="thin"><div class="stack pane">
+            <h3>Current approach</h3>
+            ${st.analysis ? `<p><strong>${esc(st.hypotheses[0]?.title || top?.patternName || 'Initial solution')}</strong></p><p>${esc(st.hypotheses[0]?.rationale || '')}</p>` : '<p class="muted">Analyze the problem first (Mode 1 or 2) to get a baseline to compare alternatives against.</p>'}
+            <h3>Problem statement</h3><p>${esc(st.problemStatement || 'None')}</p>
+          </div></goa-container>
+          <goa-container accent="thin"><div class="stack pane">
+            <h3>Alternative workflows</h3>
+            ${st.analysis ? (alts.concat(otherHyp).join('') || '<p class="muted">No other strong patterns matched.</p>') : ''}
+            <div class="row"><goa-button id="altAiBtn" type="primary" ${aiOk && st.analysis ? '' : 'disabled="true"'}>${busy ? 'Thinking…' : 'Ask AI for more alternatives'}</goa-button></div>
+            ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
+            ${altReply ? `<goa-callout type="information" heading="AI-suggested alternatives"><div style="white-space:pre-wrap">${esc(altReply)}</div></goa-callout>` : ''}
+          </div></goa-container></div>`;
+      }
+
       function compressedHtml() {
         const st = current.state;
         const rail = `<nav class="cv-rail" aria-label="Navigation">
-          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution workspace</goa-button>
+          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution</goa-button>
           <h4>Specialists</h4>
-          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${esc(s.displayName)}</goa-button>`).join('')}
+          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
           <h4>Reference</h4>
-          <goa-button type="${cvFocus === 'patterns' ? 'primary' : 'tertiary'}" size="compact" data-cv="patterns">Pattern catalog</goa-button>
+          <goa-button type="${cvFocus === 'patterns' ? 'primary' : 'tertiary'}" size="compact" data-cv="patterns">Patterns</goa-button>
         </nav>`;
         let main;
         if (cvFocus === 'patterns') main = sectionHtml('patterns');
@@ -352,22 +393,47 @@
             ${consultResult && consultResult.service === cvFocus ? `<goa-callout type="information" heading="Consultation">${renderObject(consultResult)}</goa-callout>` : ''}
             ${renderSpecialistChat()}</div>`;
         } else {
-          const questions = st.analysis
-            ? `<h3>Questions</h3>${sectionHtml('questions')}`
-            : '<h3>Questions</h3><p class="muted">Save and analyze the problem first; questions to refine the solution will appear here.</p>';
-          main = `<div class="cv-panes">
-            <goa-container accent="thin"><div class="stack">
-              <h3>Problem, analysis &amp; conversation</h3>
-              ${sectionHtml('problem')}
-              ${questions}
-              <h3>Conversation</h3>
-              ${sectionHtml('conversation')}
-            </div></goa-container>
-            <goa-container accent="thin"><div class="stack">
-              <h3>Hypotheses</h3>${sectionHtml('hypotheses')}
-              <h3>Concepts</h3>${sectionHtml('concepts')}
-              <h3>Next steps</h3>${sectionHtml('steps')}
-            </div></goa-container></div>`;
+          const sm = getSolMode();
+          const modeBar = `<div class="row" role="group" aria-label="Solution mode" style="margin-bottom:1rem"><strong>Solution mode:</strong>${SOL_MODES.map(([id, label]) => `<goa-button type="${sm === id ? 'primary' : 'secondary'}" size="compact" data-solmode="${id}">${label}</goa-button>`).join('')}</div>`;
+          const hint = { mode1: 'Initial solution from the problem statement and follow-up questions; you refine it.', mode2: 'Give the problem statement, answer the AI follow-up questions, and get a final refined solution. Then refine by conversation or consult a specialist.', mode3: 'Compare other ways this problem could be solved.' }[sm];
+          let panes;
+          if (sm === 'mode3') panes = alternativesHtml();
+          else if (sm === 'mode2') {
+            refineLabel = 'Generate final refined solution';
+            const fin = isFinal();
+            const recs = (st.hypotheses[0]?.recommendations || []).slice().sort((a, b) => a.order - b.order);
+            panes = `<div class="cv-panes">
+              <goa-container accent="thin"><div class="stack pane">
+                <h3>1. Problem statement</h3>${sectionHtml('problem')}
+                <h3>2. Follow-up questions</h3>${st.analysis ? sectionHtml('questions') : '<p class="muted">Save and analyze the problem; the AI will ask follow-up questions here.</p>'}
+                ${fin ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : ''}
+              </div></goa-container>
+              <goa-container accent="thin"><div class="stack pane">
+                <h3>3. ${fin ? 'Final refined solution' : 'Draft solution (refined after your answers)'}</h3>
+                ${fin ? '<goa-callout type="success" heading="Final refined solution" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Draft" size="medium">Answer the follow-up questions, then choose Generate final refined solution.</goa-callout>'}
+                ${st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), true)}${cdet('Concepts', sectionHtml('concepts'), fin)}${cdet('Next steps', sectionHtml('steps'), fin)}` : '<p class="muted">Analyze the problem to see the draft solution.</p>'}
+                ${fin ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : ''}
+              </div></goa-container></div>`;
+          } else {
+            refineLabel = 'Refine analysis with my answers';
+            const questions = st.analysis
+              ? `<h3>Questions</h3>${sectionHtml('questions')}`
+              : '<h3>Questions</h3><p class="muted">Save and analyze the problem first; questions to refine the solution will appear here.</p>';
+            panes = `<div class="cv-panes">
+              <goa-container accent="thin"><div class="stack pane">
+                <h3>Problem, analysis &amp; conversation</h3>
+                ${sectionHtml('problem')}
+                ${questions}
+                <h3>Conversation</h3>
+                ${sectionHtml('conversation')}
+              </div></goa-container>
+              <goa-container accent="thin"><div class="stack pane">
+                ${cdet('Hypotheses', sectionHtml('hypotheses'), true)}
+                ${cdet('Concepts', sectionHtml('concepts'), true)}
+                ${cdet('Next steps', sectionHtml('steps'), true)}
+              </div></goa-container></div>`;
+          }
+          main = `${modeBar}<p class="muted" style="margin-top:0">${esc(hint)}</p>${panes}`;
         }
         return `<div class="cv">${rail}<div class="cv-main" id="cvMain">${main}</div></div>`;
       }
@@ -436,6 +502,24 @@
           if (view === 'compressed' && !patterns) await reloadPatterns();
           renderWorkspace();
         })));
+        $('workspace').querySelectorAll('[data-solmode]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          localStorage.setItem(solModeKey(current.id), b.dataset.solmode);
+          if (!patterns) await reloadPatterns();
+          renderWorkspace();
+        })));
+        $('altAiBtn')?.addEventListener('_click', () => run(async () => {
+          if (busy) return;
+          busy = true;
+          renderWorkspace();
+          try {
+            current = await api('POST', `/solutions/${current.id}/chat`, { message: 'Suggest 2-3 alternative workflows or solution approaches for this problem, with the ADSP services each would use and the trade-offs compared with the current approach.', mode: 'ai' });
+            const msgs = current.state.conversation || [];
+            altReply = [...msgs].reverse().find((m) => m.role !== 'user')?.content || '';
+          } finally {
+            busy = false;
+            renderWorkspace();
+          }
+        }));
         $('workspace').querySelectorAll('[data-cv]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           cvFocus = b.dataset.cv;
           if (cvFocus === 'patterns') { await reloadPatterns(); patternEdit = null; }
@@ -502,6 +586,7 @@
           renderWorkspace();
           try {
             current = await api('POST', `/solutions/${current.id}/analyze`, { mode });
+            if (getSolMode() === 'mode2') localStorage.setItem(finalKey(current.id), '1');
             notify('success', 'Analysis refined using your answers.');
             await loadSolutions();
           } finally {
