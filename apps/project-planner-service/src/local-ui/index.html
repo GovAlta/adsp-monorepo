@@ -74,6 +74,7 @@
       let chatCounts = {};
       let refineLabel = 'Refine analysis with my answers';
       let altReply = '';
+      let discoverDraft = '';
       const SOL_MODES = [['mode1', 'Mode 1: Initial solution, I refine'], ['mode2', 'Mode 2: AI asks, final solution'], ['mode3', 'Mode 3: Alternative workflows']];
       const solModeKey = (id) => `planner-solmode-${id}`;
       const finalKey = (id) => `planner-final-${id}`;
@@ -358,6 +359,15 @@
 
       const VIEWS = [['default', 'Default view'], ['compressed', 'Compressed view']];
 
+      function confidenceHtml() {
+        const c = current.state.confidence;
+        if (!c) return '<p class="muted" style="margin:0">Confidence: not assessed yet — analyze the problem to see how well it is understood.</p>';
+        const ok = c.score >= c.threshold;
+        const bar = `<div role="progressbar" aria-valuenow="${c.score}" aria-valuemin="0" aria-valuemax="100" aria-label="Confidence" style="background:#dcdcdc;border-radius:4px;height:14px;flex:1;min-width:160px;max-width:420px;position:relative"><div style="width:${c.score}%;background:${ok ? '#006f4c' : '#feba35'};height:100%;border-radius:4px"></div><div style="position:absolute;left:${c.threshold}%;top:-2px;bottom:-2px;border-left:2px solid #333" title="Threshold ${c.threshold}%"></div></div>`;
+        const factors = c.factors.map((f) => `<div class="row" style="flex-wrap:nowrap"><span style="min-width:190px">${esc(f.label)}</span><div style="background:#dcdcdc;height:8px;width:140px;border-radius:4px"><div style="width:${f.score}%;background:${f.score >= c.threshold ? '#006f4c' : '#feba35'};height:100%;border-radius:4px"></div></div><span>${f.score}%</span>${f.note ? `<span class="muted">${esc(f.note)}</span>` : ''}</div>`).join('');
+        return `<div class="stack" style="gap:.25rem"><div class="row" style="flex-wrap:nowrap"><strong>Confidence: ${c.score}%</strong>${bar}<goa-badge type="${ok ? 'success' : 'important'}" content="${ok ? 'Sufficient to propose a solution' : 'Below ' + c.threshold + '% — more detail needed'}"></goa-badge></div>${cdet('Confidence breakdown', factors, false)}</div>`;
+      }
+
       const cdet = (title, html, open = false) => `<goa-details heading="${esc(title)}" ${open ? 'open="true"' : ''}>${html}</goa-details>`;
 
       function alternativesHtml() {
@@ -408,20 +418,35 @@
           let panes;
           if (sm === 'mode3') panes = alternativesHtml();
           else if (sm === 'mode2') {
-            refineLabel = 'Generate final refined solution';
-            const fin = isFinal();
+            const dsc = st.discovery;
+            const ready = !!dsc?.ready;
             const recs = (st.hypotheses[0]?.recommendations || []).slice().sort((a, b) => a.order - b.order);
+            const thread = (dsc?.messages || []).map((m) => `<goa-callout type="${m.role === 'user' ? 'information' : 'important'}" heading="${m.role === 'user' ? 'You' : 'Planner'}" size="medium"><div style="white-space:pre-wrap">${esc(m.content)}</div></goa-callout>`).join('');
+            const discoveryControls = dsc
+              ? `${ready ? '' : `<goa-textarea id="discoverInput" name="discoverInput" rows="4" width="100%" value="${esc(discoverDraft)}" aria-label="Your reply"></goa-textarea>`}
+                <div class="row">${ready ? '' : `<goa-button id="discoverSend" type="primary">${busy ? 'Thinking…' : 'Send reply'}</goa-button><goa-button id="discoverForce" type="secondary">Show solution now</goa-button>`}
+                <goa-button id="discoverRestart" type="tertiary">Start over</goa-button></div>`
+              : `<div class="row"><goa-button id="discoverStart" type="primary">${busy ? 'Thinking…' : 'Start discovery'}</goa-button></div>`;
             panes = `<div class="cv-panes">
               <goa-container accent="thin"><div class="stack pane">
-                <h3>1. Problem statement</h3>${sectionHtml('problem')}
-                <h3>2. Follow-up questions</h3>${st.analysis ? sectionHtml('questions') : '<p class="muted">Save and analyze the problem; the AI will ask follow-up questions here.</p>'}
-                ${fin ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : ''}
+                <h3>1. Problem statement</h3>
+                <goa-textarea id="problem" name="problem" rows="5" width="100%" value="${esc(draftText)}" aria-label="Problem statement"></goa-textarea>
+                <div class="row" role="group" aria-label="Analysis mode" style="flex-wrap:nowrap"><span><strong>Analysis mode:</strong></span>
+                  <goa-button type="${mode === 'ai' ? 'primary' : 'secondary'}" size="compact" data-mode="ai" ${options.modes.includes('ai') ? '' : 'disabled="true"'}>AI analysis</goa-button>
+                  <goa-button type="${mode === 'rules' ? 'primary' : 'secondary'}" size="compact" data-mode="rules">Rule-based</goa-button></div>
+                <h3>2. Discovery conversation</h3>
+                ${dsc?.warning ? `<goa-callout type="important" heading="Note" size="medium">${esc(dsc.warning)}</goa-callout>` : ''}
+                ${thread || '<p class="muted">Start discovery and the Planner will ask clarifying questions in one message. Answer them; once confidence passes 50% the solution is presented.</p>'}
+                ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
+                ${discoveryControls}
+                ${ready ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : ''}
+                <div class="row"><goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>
               </div></goa-container>
               <goa-container accent="thin"><div class="stack pane">
-                <h3>3. ${fin ? 'Final refined solution' : 'Draft solution (refined after your answers)'}</h3>
-                ${fin ? '<goa-callout type="success" heading="Final refined solution" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Draft" size="medium">Answer the follow-up questions, then choose Generate final refined solution.</goa-callout>'}
-                ${st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), true)}${cdet('Concepts', sectionHtml('concepts'), fin)}${cdet('Next steps', sectionHtml('steps'), fin)}` : '<p class="muted">Analyze the problem to see the draft solution.</p>'}
-                ${fin ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : ''}
+                <h3>3. ${ready ? 'Proposed solution' : 'Proposed solution (after discovery)'}</h3>
+                ${ready ? '<goa-callout type="success" heading="Solution presented" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Not yet" size="medium">The solution is presented once confidence reaches 50%, or when you choose Show solution now.</goa-callout>'}
+                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), true)}${cdet('Concepts', sectionHtml('concepts'), true)}${cdet('Next steps', sectionHtml('steps'), false)}` : ''}
+                ${ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : ''}
               </div></goa-container></div>`;
           } else {
             refineLabel = 'Refine analysis with my answers';
@@ -501,6 +526,8 @@
 <goa-spacer vspacing="m"></goa-spacer>
           <div class="row" role="group" aria-label="View"><strong>View:</strong>${VIEWS.map(([id, label]) => `<goa-button type="${view === id ? 'primary' : 'secondary'}" size="compact" data-view="${id}">${label}</goa-button>`).join('')}</div>
           <goa-spacer vspacing="m"></goa-spacer>
+          ${confidenceHtml()}
+          <goa-spacer vspacing="m"></goa-spacer>
           ${view === 'compressed' ? compressedHtml() : `<div class="row" role="toolbar" aria-label="Sections">${tabs.map(([id, label]) => `<goa-button type="${section === id ? 'primary' : 'tertiary'}" size="compact" data-section="${id}">${esc(label)}</goa-button>`).join('')}</div>
           <goa-spacer vspacing="m"></goa-spacer>
           <div id="section">${sectionHtml()}</div>`}</goa-container>`;
@@ -516,6 +543,28 @@
           if (!patterns) await reloadPatterns();
           renderWorkspace();
         })));
+        $('discoverInput')?.addEventListener('_change', (e) => (discoverDraft = e.detail.value));
+        const discover = (body) => run(async () => {
+          if (busy) return;
+          busy = true;
+          renderWorkspace();
+          try {
+            if (draftText !== current.state.problemStatement) await api('PATCH', `/solutions/${current.id}`, { problemStatement: draftText });
+            current = await api('POST', `/solutions/${current.id}/discovery`, { mode, ...body });
+            discoverDraft = '';
+            await loadSolutions();
+          } finally {
+            busy = false;
+            renderWorkspace();
+          }
+        });
+        $('discoverStart')?.addEventListener('_click', () => discover({ restart: true }));
+        $('discoverRestart')?.addEventListener('_click', () => discover({ restart: true }));
+        $('discoverSend')?.addEventListener('_click', () => {
+          if (!discoverDraft.trim()) return notify('emergency', 'Type a reply first.');
+          return discover({ message: discoverDraft.trim() });
+        });
+        $('discoverForce')?.addEventListener('_click', () => discover({ force: true, ...(discoverDraft.trim() ? { message: discoverDraft.trim() } : {}) }));
         $('altAiBtn')?.addEventListener('_click', () => run(async () => {
           if (busy) return;
           busy = true;

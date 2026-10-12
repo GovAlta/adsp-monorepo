@@ -7,6 +7,7 @@ import { createPlannerRouter } from './router';
 
 export * from './analysis';
 export * from './configuration';
+export * from './discovery';
 export * from './events';
 export * from './llm';
 export * from './patterns';

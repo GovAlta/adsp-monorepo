@@ -6,6 +6,7 @@ import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { buildHypotheses, buildNextSteps, ConsultResult, consultSpecialist, extractConcepts, matchPatterns } from './analysis';
+import { assessConfidence, computeConfidence, DISCOVERY_THRESHOLD, normalizeFactors, ruleAssess, ruleDiscoveryReply, userEvidence } from './discovery';
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
@@ -244,7 +245,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         try {
           const analysis = await llm.analyze(text, patterns, solution.state.concepts, {
             answers: solution.state.questions.filter((q) => q.status === 'answered' && q.answer).map((q) => ({ question: q.question, answer: q.answer })),
-            conversation: (solution.state.conversation || []).map(({ role, content }) => ({ role, content })),
+            conversation: [...(solution.state.discovery?.messages || []), ...(solution.state.conversation || [])].map(({ role, content }) => ({ role, content })),
             message,
           });
           result = {
@@ -265,14 +266,15 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
 
     // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
     const ruleText = message ? `${text}\n${message}` : text;
+    const matchText = solution.state.discovery ? `${ruleText}\n${userEvidence('', solution.state.discovery.messages)}` : ruleText;
     if (!result) {
-      const matches = matchPatterns(ruleText, patterns);
+      const matches = matchPatterns(matchText, patterns);
       const hypotheses = buildHypotheses(matches, patterns);
       result = {
         mode: 'rules',
         matches,
         hypotheses,
-        concepts: extractConcepts(ruleText, solution.state.concepts),
+        concepts: extractConcepts(matchText, solution.state.concepts),
         questionTexts: hypotheses
           .filter((h) => h.confidence !== 'high')
           .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
@@ -307,6 +309,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
+    state.confidence = assessConfidence(state);
     return persist(
       req,
       solutionRepository,
@@ -580,6 +583,85 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           throw new InvalidOperationError('Solution has no problem statement to analyze.');
         }
         res.send(await runAnalysis(req, solution, { text, mode: req.body.mode }));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    '/solutions/:id/discovery',
+    requirePlannerUser,
+    validateId,
+    createValidationHandler(
+      body('message').optional().isString().trim().isLength({ min: 1, max: 5000 }),
+      body('mode').optional().isIn(['ai', 'rules']),
+      body('force').optional().isBoolean(),
+      body('restart').optional().isBoolean(),
+    ),
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const problem = solution.state.problemStatement.trim();
+        if (!problem) {
+          throw new InvalidOperationError('Enter a problem statement before starting discovery.');
+        }
+        const now = new Date().toISOString();
+        const prior = req.body.restart ? [] : solution.state.discovery?.messages || [];
+        const messages = req.body.message ? [...prior, { role: 'user' as const, content: req.body.message.trim(), at: now }] : prior;
+        const requestedMode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
+
+        let reply: string | undefined;
+        let factors = ruleAssess(userEvidence(problem, messages));
+        let model: string | undefined;
+        let warning: string | undefined;
+        let mode: AnalysisMode = 'rules';
+        if (requestedMode === 'ai') {
+          if (!llm) {
+            warning = 'AI analysis is not configured; used rule-based discovery.';
+          } else {
+            try {
+              const patterns = await getPatterns(req, patternRepository);
+              const result = await llm.discover(problem, messages.map(({ role, content }) => ({ role, content })), patterns);
+              factors = normalizeFactors(result.factors, userEvidence(problem, messages));
+              reply = result.reply;
+              model = result.model;
+              mode = 'ai';
+            } catch (err) {
+              logger.warn(`AI discovery failed, falling back to rules: ${(err as Error).message}`);
+              warning = `AI discovery failed (${(err as Error).message}); used rule-based discovery.`;
+            }
+          }
+        }
+
+        const confidence = computeConfidence(factors);
+        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
+        reply = reply || ruleDiscoveryReply(factors, confidence, ready);
+        if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
+          reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
+        }
+
+        const discovery = {
+          messages: [...messages, { role: 'assistant' as const, content: reply, at: now }],
+          confidence,
+          threshold: DISCOVERY_THRESHOLD,
+          factors,
+          ready,
+          mode,
+          model,
+          warning,
+          updatedOn: now,
+        };
+        const withDiscovery: Solution = {
+          ...solution,
+          state: { ...solution.state, discovery, confidence: { score: confidence, threshold: DISCOVERY_THRESHOLD, factors } },
+        };
+        res.send(
+          ready
+            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode })
+            : await persist(req, solutionRepository, eventService, withDiscovery, 'discovery'),
+        );
       } catch (err) {
         next(err);
       }

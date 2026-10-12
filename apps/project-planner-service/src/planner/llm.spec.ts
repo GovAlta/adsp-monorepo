@@ -724,6 +724,127 @@ describe('MaasLlm', () => {
     });
   });
 
+  describe('discover', () => {
+    const problem = 'Residents apply for grants and officers review each one.';
+    const discoverJson = {
+      reply: '1. Who approves grants above the delegated limit?',
+      factors: [
+        { id: 'problem', score: 60, note: 'Goal is clear' },
+        { id: 'users', score: 30, note: '' },
+      ],
+    };
+
+    it('returns the reply, model and factor scores', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(discoverJson)));
+
+      const result = await buildLlm().discover(problem, [], patterns);
+
+      expect(result).toEqual({
+        reply: discoverJson.reply,
+        factors: [
+          { id: 'problem', score: 60, note: 'Goal is clear' },
+          { id: 'users', score: 30, note: undefined },
+        ],
+        model: 'GOA-Default',
+      });
+    });
+
+    it('drops factors with ids that are not discovery factors', async () => {
+      post.mockResolvedValueOnce(
+        completion(JSON.stringify({ ...discoverJson, factors: [...discoverJson.factors, { id: 'budget', score: 90 }] })),
+      );
+
+      const result = await buildLlm().discover(problem, [], patterns);
+
+      expect(result.factors.map((f) => f.id)).toEqual(['problem', 'users']);
+    });
+
+    it('ignores factor entries that are not objects', async () => {
+      post.mockResolvedValueOnce(
+        completion(JSON.stringify({ ...discoverJson, factors: [null, 'users', ...discoverJson.factors] })),
+      );
+
+      const result = await buildLlm().discover(problem, [], patterns);
+
+      expect(result.factors).toHaveLength(2);
+    });
+
+    it('treats a non-numeric score as zero', async () => {
+      post.mockResolvedValueOnce(
+        completion(JSON.stringify({ ...discoverJson, factors: [{ id: 'process', score: 'high' }] })),
+      );
+
+      const result = await buildLlm().discover(problem, [], patterns);
+
+      expect(result.factors[0].score).toBe(0);
+    });
+
+    it('includes the problem in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(discoverJson)));
+
+      await buildLlm().discover(problem, [], patterns);
+
+      expect(post.mock.calls[0][1].messages[1].content).toContain(problem);
+    });
+
+    it('states that there is no conversation yet when there are no messages', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(discoverJson)));
+
+      await buildLlm().discover(problem, [], patterns);
+
+      expect(post.mock.calls[0][1].messages[1].content).toContain('No conversation yet.');
+    });
+
+    it('includes the conversation so far in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(discoverJson)));
+
+      await buildLlm().discover(problem, [{ role: 'user', content: 'Officers approve within 10 days.' }], patterns);
+
+      expect(post.mock.calls[0][1].messages[1].content).toContain('user: Officers approve within 10 days.');
+    });
+
+    it('limits the prompt to the last 16 messages', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(discoverJson)));
+      const many = Array.from({ length: 20 }, (_, i) => ({ role: 'user' as const, content: `Answer number ${i}.` }));
+
+      await buildLlm().discover(problem, many, patterns);
+
+      expect(post.mock.calls[0][1].messages[1].content).not.toContain('Answer number 3.');
+    });
+
+    it('lists the pattern names in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(discoverJson)));
+
+      await buildLlm().discover(problem, [], patterns);
+
+      expect(post.mock.calls[0][1].messages[1].content).toContain(patterns[0].name);
+    });
+
+    it('throws when the reply is missing', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ factors: discoverJson.factors })));
+
+      await expect(buildLlm().discover(problem, [], patterns)).rejects.toThrow(
+        'Model response did not contain a discovery message and factor scores.',
+      );
+    });
+
+    it('throws when no valid factors are returned', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ reply: 'Tell me more.', factors: [{ id: 'budget', score: 5 }] })));
+
+      await expect(buildLlm().discover(problem, [], patterns)).rejects.toThrow(
+        'Model response did not contain a discovery message and factor scores.',
+      );
+    });
+
+    it('throws when factors is not an array', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ reply: 'Tell me more.', factors: 'many' })));
+
+      await expect(buildLlm().discover(problem, [], patterns)).rejects.toThrow(
+        'Model response did not contain a discovery message and factor scores.',
+      );
+    });
+  });
+
   describe('converse', () => {
     const specialist = getSpecialist('form-service');
     const messages: SpecialistChatMessage[] = [{ role: 'user', content: 'How do I let applicants save drafts?' }];

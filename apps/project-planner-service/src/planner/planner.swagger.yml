@@ -125,6 +125,24 @@ paths:
         - { name: service, in: path, required: true, schema: { type: string } }
       responses:
         200: { description: Consultation result. }
+  /planner/v1/solutions/{id}/discovery:
+    post:
+      tags: [Solution]
+      summary: Advances the discovery conversation; presents the solution once confidence reaches 50% (or force is set).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, maxLength: 5000, description: The user's reply to the planner's questions. }
+                mode: { type: string, enum: [ai, rules] }
+                force: { type: boolean, description: Present the solution regardless of confidence. }
+                restart: { type: boolean, description: Clear the discovery thread and start over. }
+      responses:
+        200: { description: The solution with state.discovery and state.confidence updated. }
   /planner/v1/specialists/{service}/chat:
     post:
       tags: [Specialist]

@@ -58,6 +58,7 @@ Base path `/planner/v1`. See the service swagger docs for details.
 | DELETE | /specialists/chats/{chatId} | Delete a saved chat. |
 | POST | /solutions/{id}/handoff/{service} | Hand off to a service workspace with context. |
 | POST | /solutions/{id}/chat | Send a message (`{message, mode}`); the analysis is refined using the answers and conversation and the reply is appended to `state.conversation`. |
+| POST | /solutions/{id}/discovery | Discovery conversation (Compressed View Mode 2). Body `{message?, mode?, force?, restart?}`. The planner replies with one message of clarifying questions and scores six factors (problem, users, process, information, communication, constraints). When the average (`state.confidence.score`) reaches 50, or `force` is true, the solution is analyzed and presented (`state.discovery.ready`). `restart` clears the discovery thread. |
 | PUT | /solutions/{id}/questions/{questionId} | Answer a clarifying question (`{answer}`); an empty answer reopens it. |
 | GET | /solutions/{id}/export | Download the solution as a JSON attachment. |
 | GET | /analysis/options | Available analysis modes, the default mode and the model name. |

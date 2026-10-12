@@ -146,6 +146,30 @@ export interface ConversationMessage {
   at: string;
 }
 
+// One dimension of understanding the planner needs before proposing a solution.
+export interface ConfidenceFactor {
+  id: string;
+  label: string;
+  // 0-100: how well the conversation so far defines this dimension.
+  score: number;
+  note?: string;
+}
+
+// AI-led discovery: the planner asks clarifying questions until confidence passes the threshold.
+export interface DiscoveryState {
+  messages: ConversationMessage[];
+  // 0-100, the average of the factor scores.
+  confidence: number;
+  threshold: number;
+  factors: ConfidenceFactor[];
+  // True once confidence reached the threshold (or the user asked to proceed) and a solution was presented.
+  ready: boolean;
+  mode: AnalysisMode;
+  model?: string;
+  warning?: string;
+  updatedOn: string;
+}
+
 export interface SolutionState {
   problemStatement: string;
   concepts: BusinessConcept[];
@@ -158,6 +182,9 @@ export interface SolutionState {
   nextSteps: NextStep[];
   analysis?: AnalysisInfo;
   conversation?: ConversationMessage[];
+  discovery?: DiscoveryState;
+  // Overall understanding of the problem, shown for every solution regardless of mode.
+  confidence?: { score: number; threshold: number; factors: ConfidenceFactor[] };
 }
 
 export interface Solution {

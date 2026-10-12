@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { Agent } from 'https';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
+import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { SPECIALISTS } from './specialists';
 import {
   BusinessConcept,
@@ -66,6 +67,13 @@ export interface LlmConsultation {
   model: string;
 }
 
+export interface LlmDiscovery {
+  // A single message: clarifying questions, or a short summary once understanding is sufficient.
+  reply: string;
+  factors: { id: string; score: number; note?: string }[];
+  model: string;
+}
+
 export interface SpecialistChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -88,6 +96,11 @@ export interface PlannerLlm {
     existing: BusinessConcept[],
     context?: AnalysisContext,
   ): Promise<LlmAnalysis>;
+  discover(
+    problem: string,
+    messages: { role: 'user' | 'assistant'; content: string }[],
+    patterns: BusinessPattern[],
+  ): Promise<LlmDiscovery>;
   consult(
     state: SolutionState,
     specialist: SpecialistDefinition,
@@ -325,6 +338,39 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       reply: asString(json.reply, 2000),
       model: this.config.model,
     };
+  }
+
+  async discover(
+    problem: string,
+    messages: { role: 'user' | 'assistant'; content: string }[],
+    patterns: BusinessPattern[],
+  ): Promise<LlmDiscovery> {
+    const system =
+      'You are the discovery assistant for the Government of Alberta Digital Service Platform (ADSP). ' +
+      'A user describes a business problem in plain language. Before any solution is proposed you hold a short conversation to understand it. ' +
+      'Write for non-technical readers. Never propose a solution or name ADSP services in your reply. ' +
+      'Reply with a single JSON object only, no commentary.';
+    const user = [
+      `Business problem:\n"""${problem}"""`,
+      messages.length ? `Conversation so far:\n${messages.slice(-16).map((m) => `${m.role}: ${m.content.slice(0, 2000)}`).join('\n')}` : 'No conversation yet.',
+      `Business patterns that may apply (for your own context): ${patterns.map((p) => p.name).join(', ')}`,
+      `Rate each factor from 0 to 100 for how well the problem and conversation so far define it (0 = unknown, 50 = partly understood, 100 = clear and complete):\n${DISCOVERY_FACTORS.map((f) => `- ${f.id}: ${f.label}`).join('\n')}`,
+      `Return JSON: {"factors": [{"id": "<factor id>", "score": 0-100, "note": "what is still unclear, or empty"}], ` +
+        `"reply": "ONE message. If the average score is below ${DISCOVERY_THRESHOLD}, ask only the 2-4 most important clarifying questions about the weakest factors as a numbered list, and do not repeat questions already answered. If the average is ${DISCOVERY_THRESHOLD} or higher, write 2-3 sentences summarizing your understanding and say you will now present the proposed solution."}`,
+    ].join('\n\n');
+    const json = await this.completeJson([
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ]);
+    const reply = asString(json.reply, 3000);
+    const factors = (Array.isArray(json.factors) ? json.factors : [])
+      .filter((f): f is Record<string, unknown> => !!f && typeof f === 'object')
+      .map((f) => ({ id: asString(f.id, 50), score: Number(f.score) || 0, note: asString(f.note, 300) || undefined }))
+      .filter((f) => DISCOVERY_FACTORS.some((d) => d.id === f.id));
+    if (!reply || factors.length === 0) {
+      throw new Error('Model response did not contain a discovery message and factor scores.');
+    }
+    return { reply, factors, model: this.config.model };
   }
 
   async consult(

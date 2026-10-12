@@ -11,6 +11,7 @@ import { getSpecialist } from './specialists';
 import { BusinessPattern, Solution, SpecialistChat } from './types';
 import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
+import { DISCOVERY_FACTORS } from './discovery';
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
@@ -1641,7 +1642,7 @@ describe('planner router routes', () => {
 
   describe('AI-assisted planning', () => {
     const MODEL = 'GOA-Default';
-    const llm = { model: MODEL, analyze: jest.fn(), consult: jest.fn(), converse: jest.fn() };
+    const llm = { model: MODEL, analyze: jest.fn(), discover: jest.fn(), consult: jest.fn(), converse: jest.fn() };
     const aiText = 'Residents submit grant applications that officers review and approve.';
 
     const aiAnalysis: LlmAnalysis = {
@@ -1825,6 +1826,312 @@ describe('planner router routes', () => {
         const res = await chat(buildApp(owner, true, llm));
 
         expect(res.status).toBe(500);
+      });
+    });
+
+    describe('POST /solutions/:id/discovery', () => {
+      const vagueProblem = 'We handle grants.';
+      const detailedProblem =
+        'Our goal is to reduce the backlog of grant applications. Applicants submit a form with documents, ' +
+        'staff review and approve each one, applicants get an email and can track status, and privacy legislation applies.';
+      const lowFactors = [
+        { id: 'problem', score: 30, note: 'Goal unclear' },
+        { id: 'users', score: 10 },
+      ];
+      const highFactors = DISCOVERY_FACTORS.map((f) => ({ id: f.id, score: 80 }));
+      const discovery = (app: express.Express, body: object = {}) =>
+        request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/discovery`).send(body);
+      const storeSolution = (problemStatement: string, state: Partial<Solution['state']> = {}) => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state = { ...stored.state, problemStatement, ...state };
+        repository.get.mockResolvedValue(stored);
+      };
+
+      beforeEach(() => {
+        storeSolution(vagueProblem);
+      });
+
+      it('rejects discovery when the problem statement is blank', async () => {
+        storeSolution('   ');
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(400);
+      });
+
+      it('rejects an invalid mode', async () => {
+        const res = await discovery(buildApp(owner, true, llm), { mode: 'magic' });
+
+        expect(res.status).toBe(400);
+      });
+
+      it('rejects an empty message', async () => {
+        const res = await discovery(buildApp(owner, true, llm), { message: '' });
+
+        expect(res.status).toBe(400);
+      });
+
+      it('returns 403 for a user who does not own the solution', async () => {
+        const res = await discovery(buildApp(stranger, true, llm));
+
+        expect(res.status).toBe(403);
+      });
+
+      it('returns 500 when the solution cannot be saved', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+        repository.save.mockRejectedValueOnce(new Error('database unavailable'));
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(500);
+      });
+
+      it('passes the problem, trimmed message and patterns to the llm', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        await discovery(buildApp(owner, true, llm), { message: '  Officers approve grants.  ' });
+
+        expect(llm.discover).toHaveBeenCalledWith(
+          vagueProblem,
+          [{ role: 'user', content: 'Officers approve grants.' }],
+          expect.any(Array),
+        );
+      });
+
+      it('persists the assistant reply as discovery progress when confidence is below the threshold', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.state.discovery.messages).toEqual([
+          expect.objectContaining({ role: 'assistant', content: 'Who uses it?' }),
+        ]);
+      });
+
+      it('records ai mode and model on the discovery state', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.state.discovery).toMatchObject({ mode: 'ai', model: MODEL, ready: false });
+      });
+
+      it('does not run the analysis while confidence is below the threshold', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.status).toBe('draft');
+      });
+
+      it('sends a solution-updated event with the discovery operation', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        await discovery(buildApp(owner, true, llm));
+
+        expect(eventService.send).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: expect.objectContaining({ operation: 'discovery' }) }),
+        );
+      });
+
+      it('sets the overall confidence from the merged factor scores', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.state.confidence).toMatchObject({ score: res.body.state.discovery.confidence, threshold: 50 });
+      });
+
+      it('appends the user message before the assistant reply', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm), { message: 'Officers approve grants.' });
+
+        expect(res.body.state.discovery.messages.map((m) => m.role)).toEqual(['user', 'assistant']);
+      });
+
+      it('keeps earlier discovery messages when continuing', async () => {
+        storeSolution(vagueProblem, {
+          discovery: {
+            messages: [{ role: 'assistant', content: 'What is the goal?', at: '2026-03-01T10:00:00.000Z' }],
+            confidence: 10,
+            threshold: 50,
+            factors: [],
+            ready: false,
+            mode: 'ai',
+            updatedOn: '2026-03-01T10:00:00.000Z',
+          },
+        });
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm), { message: 'Reduce the backlog.' });
+
+        expect(res.body.state.discovery.messages).toHaveLength(3);
+      });
+
+      it('discards earlier discovery messages when restart is true', async () => {
+        storeSolution(vagueProblem, {
+          discovery: {
+            messages: [{ role: 'assistant', content: 'What is the goal?', at: '2026-03-01T10:00:00.000Z' }],
+            confidence: 10,
+            threshold: 50,
+            factors: [],
+            ready: false,
+            mode: 'ai',
+            updatedOn: '2026-03-01T10:00:00.000Z',
+          },
+        });
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm), { restart: true });
+
+        expect(res.body.state.discovery.messages).toHaveLength(1);
+      });
+
+      it('falls back to rule-based discovery with a warning when the llm fails', async () => {
+        llm.discover.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.state.discovery).toMatchObject({
+          mode: 'rules',
+          warning: 'AI discovery failed (Model request failed (HTTP 503)); used rule-based discovery.',
+        });
+      });
+
+      it('logs a warning when the llm fails', async () => {
+        llm.discover.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        await discovery(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI discovery failed'));
+      });
+
+      it('replies with rule-based questions when the llm fails', async () => {
+        llm.discover.mockRejectedValueOnce(new Error('Model request failed (HTTP 503)'));
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.state.discovery.messages[0].content).toContain('to propose a solution). To get there');
+      });
+
+      it('uses rules with a warning when ai is requested but no llm is configured', async () => {
+        const res = await discovery(buildApp(), { mode: 'ai' });
+
+        expect(res.body.state.discovery).toMatchObject({
+          mode: 'rules',
+          warning: 'AI analysis is not configured; used rule-based discovery.',
+        });
+      });
+
+      it('defaults to rules without a warning when no llm is configured', async () => {
+        const res = await discovery(buildApp());
+
+        expect(res.body.state.discovery.warning).toBeUndefined();
+      });
+
+      it('uses rules without calling the llm when rules mode is requested', async () => {
+        await discovery(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(llm.discover).not.toHaveBeenCalled();
+      });
+
+      it('presents the solution when rule-based confidence reaches the threshold', async () => {
+        storeSolution(detailedProblem);
+
+        const res = await discovery(buildApp(), { mode: 'rules' });
+
+        expect(res.body).toMatchObject({ status: 'analyzed', state: { discovery: { ready: true } } });
+      });
+
+      it('presents the solution when the llm reports confidence at the threshold', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'I understand it.', factors: highFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await discovery(buildApp(owner, true, llm));
+
+        expect(res.body.state.analysis).toMatchObject({ mode: 'ai', model: MODEL });
+      });
+
+      it('analyzes the problem statement when ready', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'I understand it.', factors: highFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await discovery(buildApp(owner, true, llm));
+
+        expect(llm.analyze).toHaveBeenCalledWith(vagueProblem, expect.any(Array), [], expect.any(Object));
+      });
+
+      it('sends discovery messages to the analysis as conversation context', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'I understand it.', factors: highFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await discovery(buildApp(owner, true, llm), { message: 'Officers approve grants.' });
+
+        expect(llm.analyze.mock.calls[0][3].conversation).toEqual([
+          { role: 'user', content: 'Officers approve grants.' },
+          { role: 'assistant', content: 'I understand it.' },
+        ]);
+      });
+
+      it('sends an analyze solution-updated event when ready', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'I understand it.', factors: highFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await discovery(buildApp(owner, true, llm));
+
+        expect(eventService.send).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: expect.objectContaining({ operation: 'analyze' }) }),
+        );
+      });
+
+      it('proceeds below the threshold when force is true', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await discovery(buildApp(owner, true, llm), { force: true });
+
+        expect(res.body.status).toBe('analyzed');
+      });
+
+      it('explains that the solution was proposed at low confidence when force is true', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'Who uses it?', factors: lowFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await discovery(buildApp(owner, true, llm), { force: true });
+
+        expect(res.body.state.discovery.messages[0].content).toContain('Proceeding with a proposed solution at');
+      });
+
+      it('does not add the low-confidence note when force is true but confidence is sufficient', async () => {
+        llm.discover.mockResolvedValueOnce({ reply: 'I understand it.', factors: highFactors, model: MODEL });
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await discovery(buildApp(owner, true, llm), { force: true });
+
+        expect(res.body.state.discovery.messages[0].content).toBe('I understand it.');
+      });
+
+      it('includes the discovery answers in rule-based pattern matching', async () => {
+        storeSolution('We handle a complaint');
+
+        const res = await discovery(buildApp(), {
+          mode: 'rules',
+          force: true,
+          message: 'Staff review each application, assign cases, and escalate with audit history and notes.',
+        });
+
+        expect(res.body.state.patternMatches[0].patternId).toBe('case-management');
+      });
+    });
+
+    describe('POST /solutions/:id/analyze confidence', () => {
+      it('sets the overall confidence on the analyzed solution', async () => {
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await analyze(buildApp(owner, true, llm));
+
+        expect(res.body.state.confidence).toMatchObject({ threshold: 50, factors: expect.any(Array) });
       });
     });
 
