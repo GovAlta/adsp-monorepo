@@ -482,7 +482,7 @@
                 ${discoveryControls}`;
             const p3 = `<h3>3. ${ready ? 'Proposed solution' : 'Proposed solution (after discovery)'}</h3>
                 ${ready ? '<goa-callout type="success" heading="Solution presented" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Not yet" size="medium">The solution is presented once confidence reaches 50%, or when you choose Show solution now.</goa-callout>'}
-                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), false)}${cdet('Concepts', sectionHtml('concepts'), false)}${cdet('Next steps', sectionHtml('steps'), false)}<h3>Project blueprint</h3>${blueprintHtml()}` : ''}`;
+                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), false)}${cdet('Concepts', sectionHtml('concepts'), false)}${cdet('Next steps', sectionHtml('steps'), false)}<h3>Project blueprint</h3>${blueprintHtml()}`.replace(/ open="true"/g, '') : ''}`;
             const p4 = ready ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : '';
             const p5 = ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : '';
             const del = '<div class="row"><goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>';
