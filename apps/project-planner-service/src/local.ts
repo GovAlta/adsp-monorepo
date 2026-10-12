@@ -5,11 +5,15 @@
 import * as express from 'express';
 import * as cors from 'cors';
 import * as path from 'path';
+import { config as loadEnv } from 'dotenv';
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler, createLogger } from '@core-services/core-common';
 import { BusinessPattern, createLlmFromEnv, PatternRepository, PlannerServiceRoles, Solution, SolutionRepository, SpecialistChat, SpecialistChatRepository } from './planner';
 import { createPlannerRouter } from './planner/router';
+
+// Local secrets (MAAS_API_KEY) come from a git-ignored .env; real environment variables win.
+loadEnv({ path: path.resolve(process.cwd(), 'apps/project-planner-service/.env') });
 
 const port = Number(process.env.PORT || 3381);
 const serviceId = adspId`urn:ads:platform:project-planner-service`;
