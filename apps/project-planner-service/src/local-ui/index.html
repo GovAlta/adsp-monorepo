@@ -77,12 +77,16 @@
       let refineLabel = 'Refine analysis with my answers';
       let altReply = '';
       let discoverDraft = '';
-      const SOL_MODES = [['mode1', 'Mode 1: Initial solution, I refine'], ['mode2', 'Mode 2: AI asks, final solution'], ['mode3', 'Mode 3: Alternative workflows']];
+      const SOL_MODES = [['mode2', 'Guided Discovery'], ['mode1', 'Rapid Recommend'], ['mode3', 'Option Explorer']];
       const solModeKey = (id) => `planner-solmode-${id}`;
-      const LAYOUTS = [['two', 'Two columns'], ['one', 'One column']];
-      const getLayout = () => localStorage.getItem('planner-layout') || 'two';
+      const LAYOUTS = [['one', 'One column'], ['two', 'Two columns']];
+      const getLayout = () => localStorage.getItem('planner-layout-v2') || 'one';
       const finalKey = (id) => `planner-final-${id}`;
-      const getSolMode = () => (current && localStorage.getItem(solModeKey(current.id))) || 'mode1';
+      const getSolMode = () => (current && localStorage.getItem(solModeKey(current.id))) || 'mode2';
+      // Lays out the workplace areas as one stacked column or two side-by-side panes.
+      const layoutPanes = (left, right) => getLayout() === 'one'
+        ? `<goa-container accent="thin"><div class="stack">${left}${right}</div></goa-container>`
+        : `<div class="cv-panes"><goa-container accent="thin"><div class="stack pane">${left}</div></goa-container><goa-container accent="thin"><div class="stack pane">${right}</div></goa-container></div>`;
       const isFinal = () => !!current && (localStorage.getItem(finalKey(current.id)) === '1' || (!!current.state.analysis && current.state.questions.length === 0));
       let renaming = false;
       let nameDraft = '';
@@ -423,19 +427,15 @@
         });
         const otherHyp = st.hypotheses.slice(1).map((h) => `<goa-container type="non-interactive" accent="thin"><strong>${esc(h.title)}</strong> <goa-badge type="information" content="${esc(h.confidence)} confidence"></goa-badge><p>${esc(h.rationale)}</p>${list([...h.recommendations].sort((a, b) => a.order - b.order).map((r) => `<b>${esc(r.service)}</b> — ${esc(r.reason)}`))}</goa-container>`);
         const aiOk = options.modes.includes('ai');
-        return `<div class="cv-panes">
-          <goa-container accent="thin"><div class="stack pane">
+        return layoutPanes(`
             <h3>Current approach</h3>
-            ${st.analysis ? `<p><strong>${esc(st.hypotheses[0]?.title || top?.patternName || 'Initial solution')}</strong></p><p>${esc(st.hypotheses[0]?.rationale || '')}</p>` : '<p class="muted">Analyze the problem first (Mode 1 or 2) to get a baseline to compare alternatives against.</p>'}
-            <h3>Problem statement</h3><p>${esc(st.problemStatement || 'None')}</p>
-          </div></goa-container>
-          <goa-container accent="thin"><div class="stack pane">
+            ${st.analysis ? `<p><strong>${esc(st.hypotheses[0]?.title || top?.patternName || 'Initial solution')}</strong></p><p>${esc(st.hypotheses[0]?.rationale || '')}</p>` : '<p class="muted">Analyze the problem first (Rapid Recommend or Guided Discovery) to get a baseline to compare alternatives against.</p>'}
+            <h3>Problem statement</h3><p>${esc(st.problemStatement || 'None')}</p>`, `
             <h3>Alternative workflows</h3>
             ${st.analysis ? (alts.concat(otherHyp).join('') || '<p class="muted">No other strong patterns matched.</p>') : ''}
             <div class="row"><goa-button id="altAiBtn" type="primary" ${aiOk && st.analysis ? '' : 'disabled="true"'}>${busy ? 'Thinking…' : 'Ask AI for more alternatives'}</goa-button></div>
             ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
-            ${altReply ? `<goa-callout type="information" heading="AI-suggested alternatives"><div style="white-space:pre-wrap">${esc(altReply)}</div></goa-callout>` : ''}
-          </div></goa-container></div>`;
+            ${altReply ? `<goa-callout type="information" heading="AI-suggested alternatives"><div style="white-space:pre-wrap">${esc(altReply)}</div></goa-callout>` : ''}`);
       }
 
       function compressedHtml() {
@@ -455,7 +455,7 @@
             ${renderSpecialistChat()}</div>`;
         } else {
           const sm = getSolMode();
-          const layoutBar = sm === 'mode2' ? `<div class="row" role="group" aria-label="Layout" style="margin-bottom:1rem"><strong>Layout:</strong>${LAYOUTS.map(([id, label]) => `<goa-button type="${getLayout() === id ? 'primary' : 'secondary'}" size="compact" data-layout="${id}">${label}</goa-button>`).join('')}</div>` : '';
+          const layoutBar = `<div class="row" role="group" aria-label="Layout" style="margin-bottom:1rem"><strong>Layout:</strong>${LAYOUTS.map(([id, label]) => `<goa-button type="${getLayout() === id ? 'primary' : 'secondary'}" size="compact" data-layout="${id}">${label}</goa-button>`).join('')}</div>`;
           const modeBar = `<div class="row" style="gap:2rem"><div class="row" role="group" aria-label="Mode" style="margin-bottom:1rem"><strong>Mode:</strong>${SOL_MODES.map(([id, label]) => `<goa-button type="${sm === id ? 'primary' : 'secondary'}" size="compact" data-solmode="${id}">${label}</goa-button>`).join('')}</div>${layoutBar}</div>`;
           const hint = { mode1: 'Initial solution from the problem statement and follow-up questions; you refine it.', mode2: 'Give the problem statement, answer the AI follow-up questions, and get a final refined solution. Then refine by conversation or consult a specialist.', mode3: 'Compare other ways this problem could be solved.' }[sm];
           let panes;
@@ -486,30 +486,20 @@
             const p4 = ready ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : '';
             const p5 = ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : '';
             const del = '<div class="row"><goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>';
-            panes = getLayout() === 'one'
-              ? `<goa-container accent="thin"><div class="stack">${p1}${p2}${p3}${p4}${p5}${del}</div></goa-container>`
-              : `<div class="cv-panes">
-              <goa-container accent="thin"><div class="stack pane">${p1}${p2}${p4}${del}</div></goa-container>
-              <goa-container accent="thin"><div class="stack pane">${p3}${p5}</div></goa-container></div>`;
+            panes = getLayout() === 'one' ? layoutPanes(`${p1}${p2}${p3}`, `${p4}${p5}${del}`) : layoutPanes(`${p1}${p2}${p4}${del}`, `${p3}${p5}`);
           } else {
             refineLabel = 'Refine analysis with my answers';
             const questions = st.analysis
               ? `<h3>Questions</h3>${sectionHtml('questions')}`
               : '<h3>Questions</h3><p class="muted">Save and analyze the problem first; questions to refine the solution will appear here.</p>';
-            panes = `<div class="cv-panes">
-              <goa-container accent="thin"><div class="stack pane">
-                <h3>Problem, analysis &amp; conversation</h3>
+            panes = layoutPanes(`<h3>Problem, analysis &amp; conversation</h3>
                 ${sectionHtml('problem')}
                 ${questions}
                 <h3>Conversation</h3>
-                ${sectionHtml('conversation')}
-              </div></goa-container>
-              <goa-container accent="thin"><div class="stack pane">
-                ${cdet('Hypotheses', sectionHtml('hypotheses'), true)}
+                ${sectionHtml('conversation')}`, `${cdet('Hypotheses', sectionHtml('hypotheses'), true)}
                 ${cdet('Concepts', sectionHtml('concepts'), true)}
                 ${cdet('Next steps', sectionHtml('steps'), true)}
-                ${cdet('Blueprint', blueprintHtml(), false)}
-              </div></goa-container></div>`;
+                ${cdet('Blueprint', blueprintHtml(), false)}`);
           }
           main = `${modeBar}<p class="muted" style="margin-top:0">${esc(hint)}</p>${panes}`;
         }
@@ -618,7 +608,7 @@
           if (!patterns) await reloadPatterns();
           renderWorkspace();
         })));
-        $('workspace').querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('_click', () => { localStorage.setItem('planner-layout', b.dataset.layout); renderWorkspace(); }));
+        $('workspace').querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('_click', () => { localStorage.setItem('planner-layout-v2', b.dataset.layout); renderWorkspace(); }));
         $('discoverInput')?.addEventListener('_change', (e) => (discoverDraft = e.detail.value));
         const generateBlueprint = (refreshConsultations) => run(async () => {
           if (busy) return;
