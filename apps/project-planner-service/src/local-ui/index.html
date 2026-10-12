@@ -24,7 +24,7 @@
       ul.plain { margin: .25rem 0; padding-left: 1.25rem; }
       main.wide { max-width: 1840px; }
       .cv-rail { gap: .2rem; padding-right: .5rem; }
-      .cv { display: grid; grid-template-columns: 160px 1fr; gap: 1rem; align-items: start; }
+      .cv { display: grid; grid-template-columns: 205px 1fr; gap: 1rem; align-items: start; }
       @media (max-width: 1100px) { .cv { grid-template-columns: 1fr; } }
       .cv-rail { display: flex; flex-direction: column; gap: .35rem; border-right: 1px solid #dcdcdc; padding-right: .75rem; }
       .cv-rail goa-button { display: block; }
@@ -388,7 +388,7 @@
       function compressedHtml() {
         const st = current.state;
         const rail = `<nav class="cv-rail" aria-label="Navigation">
-          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution</goa-button>
+          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution workspace</goa-button>
           <h4>Specialists</h4>
           ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${chatCounts[s.service] ? `<strong>${esc(s.displayName.replace(/ service$/i, ''))} (${chatCounts[s.service]})</strong>` : esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
           <h4>Reference</h4>
