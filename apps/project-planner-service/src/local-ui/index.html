@@ -79,6 +79,8 @@
       let discoverDraft = '';
       const SOL_MODES = [['mode1', 'Mode 1: Initial solution, I refine'], ['mode2', 'Mode 2: AI asks, final solution'], ['mode3', 'Mode 3: Alternative workflows']];
       const solModeKey = (id) => `planner-solmode-${id}`;
+      const LAYOUTS = [['two', 'Two columns'], ['one', 'One column']];
+      const getLayout = () => localStorage.getItem('planner-layout') || 'two';
       const finalKey = (id) => `planner-final-${id}`;
       const getSolMode = () => (current && localStorage.getItem(solModeKey(current.id))) || 'mode1';
       const isFinal = () => !!current && (localStorage.getItem(finalKey(current.id)) === '1' || (!!current.state.analysis && current.state.questions.length === 0));
@@ -175,10 +177,13 @@
           : '<p class="muted">No saved chats with this specialist yet.</p>';
         return `<div class="stack"><h3>Specialist chat: ${esc(def?.displayName || spec.service)}</h3>
           ${history}
-          <div class="row"><goa-button type="secondary" size="compact" id="newChat">New chat</goa-button>
-            <goa-button type="secondary" size="compact" id="dlAllMd">Download all chats (Markdown)</goa-button>
-            <goa-button type="secondary" size="compact" id="dlAllJson">Download all chats (JSON)</goa-button>
-            ${spec.chatId ? '<goa-button type="secondary" size="compact" id="dlChatMd">Download this chat (Markdown)</goa-button><goa-button type="secondary" size="compact" id="dlChatJson">Download this chat (JSON)</goa-button>' : ''}</div>
+          <div class="row"><goa-button type="secondary" size="compact" id="newChat">New chat</goa-button></div>
+          <div class="row" role="group" aria-label="Download all chats"><strong>All chats:</strong>
+            <goa-button type="tertiary" size="compact" leadingicon="download" id="dlAllMd">Markdown</goa-button>
+            <goa-button type="tertiary" size="compact" leadingicon="download" id="dlAllJson">JSON</goa-button></div>
+          ${spec.chatId ? `<div class="row" role="group" aria-label="Download this chat"><strong>This chat:</strong>
+            <goa-button type="tertiary" size="compact" leadingicon="download" id="dlChatMd">Markdown</goa-button>
+            <goa-button type="tertiary" size="compact" leadingicon="download" id="dlChatJson">JSON</goa-button></div>` : ''}
           <div class="row">${INTENTS.map(([k, label]) => `<goa-button type="${spec.intent === k ? 'primary' : 'secondary'}" size="compact" data-intent="${k}">${label}</goa-button>`).join('')}</div>
           ${spec.messages.map(turn).join('')}
           <goa-textarea id="specInput" name="spec" rows="3" width="100%" value="${esc(spec.draft)}" aria-label="Message to the specialist"></goa-textarea>
@@ -450,7 +455,8 @@
             ${renderSpecialistChat()}</div>`;
         } else {
           const sm = getSolMode();
-          const modeBar = `<div class="row" role="group" aria-label="Mode" style="margin-bottom:1rem"><strong>Mode:</strong>${SOL_MODES.map(([id, label]) => `<goa-button type="${sm === id ? 'primary' : 'secondary'}" size="compact" data-solmode="${id}">${label}</goa-button>`).join('')}</div>`;
+          const layoutBar = sm === 'mode2' ? `<div class="row" role="group" aria-label="Layout" style="margin-bottom:1rem"><strong>Layout:</strong>${LAYOUTS.map(([id, label]) => `<goa-button type="${getLayout() === id ? 'primary' : 'secondary'}" size="compact" data-layout="${id}">${label}</goa-button>`).join('')}</div>` : '';
+          const modeBar = `<div class="row" style="gap:2rem"><div class="row" role="group" aria-label="Mode" style="margin-bottom:1rem"><strong>Mode:</strong>${SOL_MODES.map(([id, label]) => `<goa-button type="${sm === id ? 'primary' : 'secondary'}" size="compact" data-solmode="${id}">${label}</goa-button>`).join('')}</div>${layoutBar}</div>`;
           const hint = { mode1: 'Initial solution from the problem statement and follow-up questions; you refine it.', mode2: 'Give the problem statement, answer the AI follow-up questions, and get a final refined solution. Then refine by conversation or consult a specialist.', mode3: 'Compare other ways this problem could be solved.' }[sm];
           let panes;
           if (sm === 'mode3') panes = alternativesHtml();
@@ -464,27 +470,27 @@
                 <div class="row"><goa-button id="discoverSend" type="primary">${busy ? 'Thinking…' : ready ? 'Send & refine solution' : 'Send reply'}</goa-button>${ready ? '' : '<goa-button id="discoverForce" type="secondary">Show solution now</goa-button>'}
                 <goa-button id="discoverRestart" type="tertiary">Start over</goa-button></div>`
               : `<div class="row"><goa-button id="discoverStart" type="primary">${busy ? 'Thinking…' : 'Start discovery'}</goa-button></div>`;
-            panes = `<div class="cv-panes">
-              <goa-container accent="thin"><div class="stack pane">
-                <h3>1. Problem statement</h3>
+            const p1 = `<h3>1. Problem statement</h3>
                 <goa-textarea id="problem" name="problem" rows="5" width="100%" value="${esc(draftText)}" aria-label="Problem statement"></goa-textarea>
                 <div class="row" role="group" aria-label="Analysis mode" style="flex-wrap:nowrap"><span><strong>Analysis mode:</strong></span>
                   <goa-button type="${mode === 'ai' ? 'primary' : 'secondary'}" size="compact" data-mode="ai" ${options.modes.includes('ai') ? '' : 'disabled="true"'}>AI analysis</goa-button>
-                  <goa-button type="${mode === 'rules' ? 'primary' : 'secondary'}" size="compact" data-mode="rules">Rule-based</goa-button></div>
-                <h3>2. Discovery conversation</h3>
+                  <goa-button type="${mode === 'rules' ? 'primary' : 'secondary'}" size="compact" data-mode="rules">Rule-based</goa-button></div>`;
+            const p2 = `<h3>2. Discovery conversation</h3>
                 ${dsc?.warning ? `<goa-callout type="important" heading="Note" size="medium">${esc(dsc.warning)}</goa-callout>` : ''}
                 ${thread || '<p class="muted">Start discovery and the Planner will ask clarifying questions in one message. Answer them; once confidence passes 50% the solution is presented.</p>'}
                 ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
-                ${discoveryControls}
-                ${ready ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : ''}
-                <div class="row"><goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>
-              </div></goa-container>
-              <goa-container accent="thin"><div class="stack pane">
-                <h3>3. ${ready ? 'Proposed solution' : 'Proposed solution (after discovery)'}</h3>
+                ${discoveryControls}`;
+            const p3 = `<h3>3. ${ready ? 'Proposed solution' : 'Proposed solution (after discovery)'}</h3>
                 ${ready ? '<goa-callout type="success" heading="Solution presented" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Not yet" size="medium">The solution is presented once confidence reaches 50%, or when you choose Show solution now.</goa-callout>'}
-                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), false)}${cdet('Concepts', sectionHtml('concepts'), false)}${cdet('Next steps', sectionHtml('steps'), false)}<h3>Project blueprint</h3>${blueprintHtml()}` : ''}
-                ${ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : ''}
-              </div></goa-container></div>`;
+                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), false)}${cdet('Concepts', sectionHtml('concepts'), false)}${cdet('Next steps', sectionHtml('steps'), false)}<h3>Project blueprint</h3>${blueprintHtml()}` : ''}`;
+            const p4 = ready ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : '';
+            const p5 = ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : '';
+            const del = '<div class="row"><goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>';
+            panes = getLayout() === 'one'
+              ? `<goa-container accent="thin"><div class="stack">${p1}${p2}${p3}${p4}${p5}${del}</div></goa-container>`
+              : `<div class="cv-panes">
+              <goa-container accent="thin"><div class="stack pane">${p1}${p2}${p4}${del}</div></goa-container>
+              <goa-container accent="thin"><div class="stack pane">${p3}${p5}</div></goa-container></div>`;
           } else {
             refineLabel = 'Refine analysis with my answers';
             const questions = st.analysis
@@ -523,6 +529,12 @@
         const st = s.state;
         const lines = [`# ${s.name}`, '', `Status: ${s.status} · Exported ${new Date().toLocaleString()}`, '', '## Problem statement', '', st.problemStatement || '_None_', ''];
         if (st.analysis) lines.push(`_Analysis: ${st.analysis.mode === 'ai' ? 'AI' : 'rule-based'}${st.analysis.warning ? ` — ${st.analysis.warning}` : ''}_`, '');
+        if (st.confidence) {
+          lines.push(`## Confidence: ${st.confidence.score}% (threshold ${st.confidence.threshold}%)`, '', ...st.confidence.factors.map((f) => `- ${f.label}: ${f.score}%${f.note ? ` — ${f.note}` : ''}`), '');
+        }
+        if (st.discovery?.messages?.length) {
+          lines.push('## Discovery conversation', '', ...st.discovery.messages.map((m) => `- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content.replace(/\n+/g, ' ')}`), '');
+        }
         lines.push('## Pattern matches', '');
         st.patternMatches.forEach((m) => lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`));
         lines.push('', '## Hypotheses', '');
@@ -606,6 +618,7 @@
           if (!patterns) await reloadPatterns();
           renderWorkspace();
         })));
+        $('workspace').querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('_click', () => { localStorage.setItem('planner-layout', b.dataset.layout); renderWorkspace(); }));
         $('discoverInput')?.addEventListener('_change', (e) => (discoverDraft = e.detail.value));
         const generateBlueprint = (refreshConsultations) => run(async () => {
           if (busy) return;
@@ -630,8 +643,8 @@
             if (draftText !== current.state.problemStatement) await api('PATCH', `/solutions/${current.id}`, { problemStatement: draftText });
             current = await api('POST', `/solutions/${current.id}/discovery`, { mode, ...body });
             discoverDraft = '';
-            // The proposed solution includes the full blueprint, so build it the first time the solution is presented.
-            if (current.state.discovery?.ready && !current.state.blueprint) {
+            // The proposed solution includes the full blueprint: build it when first presented and rebuild it after each refinement.
+            if (current.state.discovery?.ready && (!current.state.blueprint || body.message)) {
               renderWorkspace();
               current = await api('POST', `/solutions/${current.id}/blueprint`, { mode });
               await loadChatCounts();
