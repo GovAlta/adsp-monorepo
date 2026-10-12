@@ -170,6 +170,85 @@ export interface DiscoveryState {
   updatedOn: string;
 }
 
+export interface BlueprintLayer {
+  name: string;
+  description: string;
+  components: string[];
+}
+
+export interface BlueprintServiceRole {
+  order: number;
+  service: string;
+  displayName: string;
+  role: string;
+  reason: string;
+  dependsOn: string[];
+  capabilities: string[];
+}
+
+// Consolidated guidance from one specialist: a saved consultation when one exists, otherwise a fresh one.
+export interface SpecialistNote {
+  service: string;
+  displayName: string;
+  fit: 'recommended' | 'optional' | 'not-indicated';
+  source: 'saved-consultation' | 'ai' | 'rules';
+  summary: string;
+  supports: string[];
+  constraints: string[];
+  questions: string[];
+  risks: string[];
+  validation?: { verdict: string; findings: string[] };
+  chatHighlights: string[];
+  consultedOn: string;
+}
+
+export interface BlueprintWorkflow {
+  name: string;
+  actors: string[];
+  steps: string[];
+}
+
+// The complete plan behind a proposed solution.
+export interface SolutionBlueprint {
+  generatedOn: string;
+  mode: AnalysisMode;
+  model?: string;
+  warning?: string;
+  overview: {
+    title: string;
+    summary: string;
+    objectives: string[];
+    scope: string[];
+    outOfScope: string[];
+    stakeholders: string[];
+    successMeasures: string[];
+    risks: string[];
+  };
+  architecture: {
+    summary: string;
+    layers: BlueprintLayer[];
+    integrations: string[];
+    security: string[];
+    diagram: string;
+  };
+  serviceMapping: BlueprintServiceRole[];
+  specialistNotes: SpecialistNote[];
+  workflows: BlueprintWorkflow[];
+  dataGovernance: {
+    dataEntities: string[];
+    accessControl: string[];
+    retention: string[];
+    privacy: string[];
+    audit: string[];
+    compliance: string[];
+  };
+  delivery: {
+    phases: { name: string; items: string[] }[];
+    nonFunctional: string[];
+    openQuestions: string[];
+  };
+}
+
 export interface SolutionState {
   problemStatement: string;
   concepts: BusinessConcept[];
@@ -183,6 +262,7 @@ export interface SolutionState {
   analysis?: AnalysisInfo;
   conversation?: ConversationMessage[];
   discovery?: DiscoveryState;
+  blueprint?: SolutionBlueprint;
   // Overall understanding of the problem, shown for every solution regardless of mode.
   confidence?: { score: number; threshold: number; factors: ConfidenceFactor[] };
 }

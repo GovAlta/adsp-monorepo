@@ -344,6 +344,7 @@
             ${consultResult ? `<goa-callout type="information" heading="Specialist: ${esc(consultResult.service || '')}">${renderObject(consultResult)}</goa-callout>` : ''}
             ${renderSpecialistChat()}</div>`;
         }
+        if (sec === 'blueprint') return blueprintHtml();
         if (sec === 'patterns') {
           const block = (heading, items) =>
             items && items.length ? `<goa-details heading="${esc(heading)}"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></goa-details>` : '';
@@ -355,9 +356,43 @@
         return '';
       }
 
-      const tabs = [['problem', 'Problem & analysis'], ['conversation', 'Conversation'], ['hypotheses', 'Hypotheses'], ['concepts', 'Concepts'], ['questions', 'Questions'], ['steps', 'Next steps'], ['specialists', 'Specialists'], ['patterns', 'Pattern catalog']];
+      const tabs = [['problem', 'Problem & analysis'], ['conversation', 'Conversation'], ['hypotheses', 'Hypotheses'], ['concepts', 'Concepts'], ['questions', 'Questions'], ['steps', 'Next steps'], ['blueprint', 'Blueprint'], ['specialists', 'Specialists'], ['patterns', 'Pattern catalog']];
 
       const VIEWS = [['default', 'Default view'], ['compressed', 'Compressed view']];
+
+      function blueprintHtml() {
+        const st = current.state;
+        const bp = st.blueprint;
+        if (!st.hypotheses.length) return '<p class="muted">Analyze the problem first; the blueprint is built from the proposed solution.</p>';
+        const stale = bp && st.analysis && new Date(st.analysis.analyzedOn) > new Date(bp.generatedOn);
+        const controls = `<div class="row"><goa-button id="bpGenerate" type="${bp ? 'secondary' : 'primary'}" size="compact">${busy ? 'Generating…' : bp ? 'Regenerate blueprint' : 'Generate blueprint'}</goa-button>
+          ${bp ? '<goa-button id="bpRefresh" type="tertiary" size="compact">Regenerate with fresh specialist consultations</goa-button>' : ''}</div>
+          ${busy ? '<goa-circular-progress visible="true" message="Consulting the recommended specialists and drafting the blueprint — this can take a few minutes"></goa-circular-progress>' : ''}`;
+        if (!bp) return `<div class="stack"><p>The blueprint turns the proposed solution into a complete plan: project overview, technical architecture, ADSP service mapping, consolidated specialist consultation notes, core workflows, data and governance, and a delivery plan.</p>${controls}</div>`;
+        const o = bp.overview, a = bp.architecture, d = bp.dataGovernance, dl = bp.delivery;
+        const sub = (title, items) => (items?.length ? `<h4 style="margin-bottom:.2rem">${esc(title)}</h4>${list(items.map(esc))}` : '');
+        const notes = bp.specialistNotes.map((n) => `<goa-container type="non-interactive" accent="thin"><div class="stack">
+            <div class="row"><strong>${esc(n.displayName)}</strong> <goa-badge type="${n.fit === 'recommended' ? 'success' : 'information'}" content="${esc(n.fit)}"></goa-badge> <goa-badge type="information" content="${esc(n.source.replace('-', ' '))}"></goa-badge> <span class="muted">${esc(new Date(n.consultedOn).toLocaleString())}</span></div>
+            <div style="white-space:pre-wrap">${esc(n.summary)}</div>
+            ${sub('Can support', n.supports)}${sub('Constraints', n.constraints)}${sub('Questions to resolve', n.questions)}${sub('Risks', n.risks)}
+            ${n.validation ? `${sub(`Validation: ${n.validation.verdict}`, n.validation.findings)}` : ''}
+            ${n.chatHighlights?.length ? `<h4 style="margin-bottom:.2rem">From saved chats</h4>${list(n.chatHighlights.map((h) => `<span style="white-space:pre-wrap">${esc(h)}</span>`))}` : ''}</div></goa-container>`).join('');
+        return `<div class="stack">
+          ${controls}
+          <p class="muted" style="margin:0">Generated ${esc(new Date(bp.generatedOn).toLocaleString())} · ${bp.mode === 'ai' ? 'AI' : 'rule-based'}</p>
+          ${bp.warning ? `<goa-callout type="important" heading="Note" size="medium">${esc(bp.warning)}</goa-callout>` : ''}
+          ${stale ? '<goa-callout type="important" heading="Out of date" size="medium">The solution was re-analyzed after this blueprint was generated. Regenerate it to include the latest answers.</goa-callout>' : ''}
+          ${cdet('1. Project blueprint', `<h3 style="margin-top:0">${esc(o.title)}</h3><p>${esc(o.summary)}</p>${sub('Objectives', o.objectives)}${sub('Scope', o.scope)}${sub('Out of scope', o.outOfScope)}${sub('Stakeholders', o.stakeholders)}${sub('Success measures', o.successMeasures)}${sub('Key risks', o.risks)}`, true)}
+          ${cdet('2. Technical architecture', `<p>${esc(a.summary)}</p>
+            <goa-table width="100%"><table><thead><tr><th>Layer</th><th>Purpose</th><th>Components</th></tr></thead><tbody>${a.layers.map((l) => `<tr><td><strong>${esc(l.name)}</strong></td><td>${esc(l.description)}</td><td>${esc(l.components.join(', '))}</td></tr>`).join('')}</tbody></table></goa-table>
+            <pre style="white-space:pre;overflow:auto;font-size:.8rem" aria-label="Architecture diagram">${esc(a.diagram)}</pre>${sub('Integrations', a.integrations)}${sub('Security', a.security)}`, true)}
+          ${cdet('3. ADSP service mapping', `<goa-table width="100%"><table><thead><tr><th>#</th><th>Service</th><th>Role in this solution</th><th>Why</th><th>Depends on</th></tr></thead><tbody>${bp.serviceMapping.map((s) => `<tr><td>${s.order}</td><td><strong>${esc(s.service)}</strong></td><td>${esc(s.role)}${s.capabilities.length ? `<ul>${s.capabilities.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}</td><td>${esc(s.reason)}</td><td>${esc(s.dependsOn.join(', ') || '—')}</td></tr>`).join('')}</tbody></table></goa-table>`, true)}
+          ${cdet('4. Specialist consultation notes', notes || '<p class="muted">No recommended services.</p>', true)}
+          ${cdet('5. Core workflows', bp.workflows.map((w) => `<h4 style="margin-bottom:.2rem">${esc(w.name)}</h4>${w.actors.length ? `<p class="muted" style="margin:0">Actors: ${esc(w.actors.join(', '))}</p>` : ''}<ol>${w.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>`).join(''), false)}
+          ${cdet('6. Data & governance', `${sub('Data entities', d.dataEntities)}${sub('Access control', d.accessControl)}${sub('Retention', d.retention)}${sub('Privacy', d.privacy)}${sub('Audit', d.audit)}${sub('Compliance', d.compliance)}`, false)}
+          ${cdet('7. Delivery plan & other considerations', `${dl.phases.map((p) => `${sub(p.name, p.items)}`).join('')}${sub('Non-functional requirements', dl.nonFunctional)}${sub('Open questions', dl.openQuestions)}`, false)}
+        </div>`;
+      }
 
       function confidenceHtml() {
         const c = current.state.confidence;
@@ -445,7 +480,7 @@
               <goa-container accent="thin"><div class="stack pane">
                 <h3>3. ${ready ? 'Proposed solution' : 'Proposed solution (after discovery)'}</h3>
                 ${ready ? '<goa-callout type="success" heading="Solution presented" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Not yet" size="medium">The solution is presented once confidence reaches 50%, or when you choose Show solution now.</goa-callout>'}
-                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), true)}${cdet('Concepts', sectionHtml('concepts'), true)}${cdet('Next steps', sectionHtml('steps'), false)}` : ''}
+                ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), false)}${cdet('Concepts', sectionHtml('concepts'), false)}${cdet('Next steps', sectionHtml('steps'), false)}<h3>Project blueprint</h3>${blueprintHtml()}` : ''}
                 ${ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : ''}
               </div></goa-container></div>`;
           } else {
@@ -465,6 +500,7 @@
                 ${cdet('Hypotheses', sectionHtml('hypotheses'), true)}
                 ${cdet('Concepts', sectionHtml('concepts'), true)}
                 ${cdet('Next steps', sectionHtml('steps'), true)}
+                ${cdet('Blueprint', blueprintHtml(), false)}
               </div></goa-container></div>`;
           }
           main = `${modeBar}<p class="muted" style="margin-top:0">${esc(hint)}</p>${panes}`;
@@ -505,6 +541,31 @@
           lines.push('', '## Conversation', '');
           st.conversation.forEach((m) => lines.push(`- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content}`));
         }
+        const bp = st.blueprint;
+        if (bp) {
+          const bullets = (title, items) => items?.length && lines.push('', `**${title}**`, '', ...items.map((i) => `- ${i}`));
+          lines.push('', '# Project blueprint', '', `_Generated ${bp.generatedOn} (${bp.mode === 'ai' ? 'AI' : 'rule-based'})_`, '', `## 1. ${bp.overview.title}`, '', bp.overview.summary);
+          bullets('Objectives', bp.overview.objectives); bullets('Scope', bp.overview.scope); bullets('Out of scope', bp.overview.outOfScope);
+          bullets('Stakeholders', bp.overview.stakeholders); bullets('Success measures', bp.overview.successMeasures); bullets('Key risks', bp.overview.risks);
+          lines.push('', '## 2. Technical architecture', '', bp.architecture.summary, '', ...bp.architecture.layers.map((l) => `- **${l.name}** — ${l.description} (${l.components.join(', ')})`), '', '```', bp.architecture.diagram, '```');
+          bullets('Integrations', bp.architecture.integrations); bullets('Security', bp.architecture.security);
+          lines.push('', '## 3. ADSP service mapping', '', ...bp.serviceMapping.map((s) => `${s.order}. **${s.service}** — ${s.role}. _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`));
+          lines.push('', '## 4. Specialist consultation notes');
+          bp.specialistNotes.forEach((n) => {
+            lines.push('', `### ${n.displayName} (${n.fit}, ${n.source})`, '', n.summary);
+            bullets('Can support', n.supports); bullets('Constraints', n.constraints); bullets('Questions to resolve', n.questions); bullets('Risks', n.risks);
+            if (n.validation) bullets(`Validation: ${n.validation.verdict}`, n.validation.findings);
+            bullets('From saved chats', n.chatHighlights);
+          });
+          lines.push('', '## 5. Core workflows');
+          bp.workflows.forEach((w) => lines.push('', `### ${w.name}`, '', ...(w.actors.length ? [`Actors: ${w.actors.join(', ')}`, ''] : []), ...w.steps.map((s, i) => `${i + 1}. ${s}`)));
+          lines.push('', '## 6. Data & governance');
+          const g = bp.dataGovernance;
+          bullets('Data entities', g.dataEntities); bullets('Access control', g.accessControl); bullets('Retention', g.retention); bullets('Privacy', g.privacy); bullets('Audit', g.audit); bullets('Compliance', g.compliance);
+          lines.push('', '## 7. Delivery plan & other considerations');
+          bp.delivery.phases.forEach((p) => bullets(p.name, p.items));
+          bullets('Non-functional requirements', bp.delivery.nonFunctional); bullets('Open questions', bp.delivery.openQuestions);
+        }
         return lines.join('\n') + '\n';
       }
 
@@ -544,6 +605,21 @@
           renderWorkspace();
         })));
         $('discoverInput')?.addEventListener('_change', (e) => (discoverDraft = e.detail.value));
+        const generateBlueprint = (refreshConsultations) => run(async () => {
+          if (busy) return;
+          busy = true;
+          renderWorkspace();
+          try {
+            current = await api('POST', `/solutions/${current.id}/blueprint`, { mode, refreshConsultations });
+            await Promise.all([loadSolutions(), loadChatCounts()]);
+            notify('success', 'Blueprint generated.');
+          } finally {
+            busy = false;
+            renderWorkspace();
+          }
+        });
+        $('bpGenerate')?.addEventListener('_click', () => generateBlueprint(false));
+        $('bpRefresh')?.addEventListener('_click', () => generateBlueprint(true));
         const discover = (body) => run(async () => {
           if (busy) return;
           busy = true;
@@ -552,6 +628,12 @@
             if (draftText !== current.state.problemStatement) await api('PATCH', `/solutions/${current.id}`, { problemStatement: draftText });
             current = await api('POST', `/solutions/${current.id}/discovery`, { mode, ...body });
             discoverDraft = '';
+            // The proposed solution includes the full blueprint, so build it the first time the solution is presented.
+            if (current.state.discovery?.ready && !current.state.blueprint) {
+              renderWorkspace();
+              current = await api('POST', `/solutions/${current.id}/blueprint`, { mode });
+              await loadChatCounts();
+            }
             await loadSolutions();
           } finally {
             busy = false;

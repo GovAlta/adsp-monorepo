@@ -6,6 +6,16 @@ import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { buildHypotheses, buildNextSteps, ConsultResult, consultSpecialist, extractConcepts, matchPatterns } from './analysis';
+import {
+  assembleBlueprint,
+  BlueprintServiceDetail,
+  buildRuleBlueprint,
+  chatHighlights,
+  mergeBlueprintCore,
+  recommendedServices,
+  storedConsult,
+  toSpecialistNote,
+} from './blueprint';
 import { assessConfidence, computeConfidence, DISCOVERY_THRESHOLD, normalizeFactors, ruleAssess, ruleDiscoveryReply, userEvidence } from './discovery';
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
@@ -24,6 +34,8 @@ import {
   Solution,
   SolutionState,
   SpecialistChat,
+  SpecialistNote,
+  SpecialistProgress,
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
@@ -752,46 +764,127 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const baseResult = consultSpecialist(solution.state, req.params.service);
-        if (!baseResult) {
-          throw new NotFoundError('specialist', req.params.service);
+        const { result, specialists } = await runConsult(req, solution, req.params.service, {
+          question: req.body.question,
+          proposal: req.body.proposal,
+          mode: req.body.mode,
+        });
+        await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists } }, 'consult');
+        res.send(result);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // Consults a specialist (AI with a rules fallback) and records the exchange in the user's saved chats.
+  async function runConsult(
+    req: Request,
+    solution: Solution,
+    service: string,
+    { question, proposal, mode }: { question?: string; proposal?: string; mode?: AnalysisMode },
+  ): Promise<{ result: ConsultResult; specialists: SpecialistProgress[] }> {
+    const baseResult = consultSpecialist(solution.state, service);
+    if (!baseResult) {
+      throw new NotFoundError('specialist', service);
+    }
+    let result: ConsultResult = baseResult;
+    if ((mode || (llm ? 'ai' : 'rules')) === 'ai' && llm) {
+      try {
+        const consultation = await llm.consult(solution.state, getSpecialist(service), question, proposal);
+        result = mergeConsultation(baseResult, consultation);
+      } catch (err) {
+        logger.warn(`AI consultation failed, using rule-based guidance: ${(err as Error).message}`);
+      }
+    }
+    const specialists = [
+      ...solution.state.specialists.filter((s) => s.service !== result.service),
+      {
+        service: result.service,
+        status: (solution.state.specialists.find((s) => s.service === result.service)?.status || 'consulted') as SpecialistStatus,
+        updatedOn: new Date().toISOString(),
+      },
+    ];
+    const [existingChat] = await specialistChatRepository.find({ ...userChatCriteria(req), service: result.service, solutionId: solution.id });
+    const at = new Date().toISOString();
+    const asked: string = question || 'Consult on this solution';
+    await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: asked }, [
+      { role: 'user', content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked, at, intent: 'consult' },
+      {
+        role: 'assistant',
+        content: result.advice || result.reason,
+        at,
+        intent: 'consult',
+        mode: result.advice ? 'ai' : 'rules',
+        validation: result.validation,
+        consult: { ...result },
+      },
+    ]);
+    return { result, specialists };
+  }
+
+  router.post(
+    '/solutions/:id/blueprint',
+    requirePlannerUser,
+    validateId,
+    createValidationHandler(body('mode').optional().isIn(['ai', 'rules']), body('refreshConsultations').optional().isBoolean()),
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const hypothesis = solution.state.hypotheses[0];
+        if (!hypothesis) {
+          throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
         }
-        let result: ConsultResult = baseResult;
-        const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
-        if (mode === 'ai' && llm) {
-          try {
-            const consultation = await llm.consult(solution.state, getSpecialist(req.params.service), req.body.question, req.body.proposal);
-            result = mergeConsultation(baseResult, consultation);
-          } catch (err) {
-            logger.warn(`AI consultation failed, using rule-based guidance: ${(err as Error).message}`);
+        const requestedMode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
+        const chats = await specialistChatRepository.find({ ...userChatCriteria(req), solutionId: solution.id });
+
+        // Reuse each saved consultation; consult only the recommended services that have none (or all when refreshing).
+        const notes: SpecialistNote[] = [];
+        let specialists = solution.state.specialists;
+        let working = solution;
+        for (const { service } of recommendedServices(solution.state)) {
+          const chat = chats.find((c) => c.service === service);
+          const saved = req.body.refreshConsultations ? undefined : [...(chat?.messages || [])].reverse().find((m) => storedConsult(m));
+          const highlights = chatHighlights(chat?.messages || []);
+          if (saved) {
+            notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
+            continue;
+          }
+          const { result, specialists: updated } = await runConsult(req, working, service, { mode: requestedMode });
+          specialists = updated;
+          working = { ...working, state: { ...working.state, specialists } };
+          notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+        }
+
+        const patterns = await getPatterns(req, patternRepository);
+        const patternId = hypothesis.patternId || solution.state.patternMatches[0]?.patternId;
+        let core = buildRuleBlueprint(solution.state, patterns.find((p) => p.id === patternId));
+        let details: BlueprintServiceDetail[] = [];
+        let mode: AnalysisMode = 'rules';
+        let model: string | undefined;
+        let warning: string | undefined;
+        if (requestedMode === 'ai') {
+          if (!llm) {
+            warning = 'AI analysis is not configured; used a rule-based blueprint.';
+          } else {
+            try {
+              const generated = await llm.blueprint(solution.state, notes);
+              core = mergeBlueprintCore(core, generated.core);
+              details = generated.services;
+              mode = 'ai';
+              model = generated.model;
+            } catch (err) {
+              logger.warn(`AI blueprint failed, falling back to rules: ${(err as Error).message}`);
+              warning = `AI blueprint failed (${(err as Error).message}); used a rule-based blueprint.`;
+            }
           }
         }
-        const specialists = [
-          ...solution.state.specialists.filter((s) => s.service !== result.service),
-          {
-            service: result.service,
-            status: (solution.state.specialists.find((s) => s.service === result.service)?.status ||
-              'consulted') as SpecialistStatus,
-            updatedOn: new Date().toISOString(),
-          },
-        ];
-        await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists } }, 'consult');
-        const [existingChat] = await specialistChatRepository.find({ ...userChatCriteria(req), service: result.service, solutionId: solution.id });
-        const at = new Date().toISOString();
-        const question: string = req.body.question || 'Consult on this solution';
-        await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: question }, [
-          { role: 'user', content: req.body.proposal ? `${question}\n\nPlan to validate:\n${req.body.proposal}` : question, at, intent: 'consult' },
-          {
-            role: 'assistant',
-            content: result.advice || result.reason,
-            at,
-            intent: 'consult',
-            mode: result.advice ? 'ai' : 'rules',
-            validation: result.validation,
-            consult: { ...result },
-          },
-        ]);
-        res.send(result);
+
+        const blueprint = assembleBlueprint(solution.state, core, notes, { generatedOn: new Date().toISOString(), mode, model, warning }, details);
+        res.send(
+          await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),
+        );
       } catch (err) {
         next(err);
       }

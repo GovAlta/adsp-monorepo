@@ -12,7 +12,7 @@ import {
 } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
 import { getSpecialist } from './specialists';
-import { SolutionState } from './types';
+import { SolutionState, SpecialistNote } from './types';
 
 jest.mock('axios');
 
@@ -721,6 +721,158 @@ describe('MaasLlm', () => {
       const result = await buildLlm().consult(emptyState(), specialist);
 
       expect(result.advice).toBe(consultJson.advice);
+    });
+  });
+
+  describe('blueprint', () => {
+    const blueprintJson = {
+      overview: { summary: 'Officers review grant applications as cases.', objectives: ['Faster decisions', ' '], risks: ['Approval limits'] },
+      architecture: {
+        summary: 'Tenant-scoped services.',
+        layers: [
+          { name: 'Experience', description: 'Web app', components: ['Officer view'] },
+          { name: '', description: 'Nameless layer', components: [] },
+          'not a layer',
+        ],
+        integrations: ['Finance system'],
+        security: ['Service roles'],
+      },
+      services: [
+        { service: 'form-service', role: 'Collects applications', capabilities: ['Draft saving'] },
+        { service: 'made-up-service', role: 'Unknown', capabilities: [] },
+      ],
+      workflows: [
+        { name: 'Review', actors: ['Grant officer'], steps: ['Open file in form-service'] },
+        { name: 'No steps', actors: [], steps: [] },
+      ],
+      dataGovernance: { retention: ['7 years'] },
+      delivery: { phases: [{ name: 'Foundation', items: ['Set up tenant'] }, { name: '' }], nonFunctional: ['Accessibility'] },
+    };
+    const state = (): SolutionState => ({
+      ...emptyState(),
+      concepts: [{ id: 'c-1', type: 'actor', name: 'Grant officer', source: 'extracted' }],
+      discovery: { messages: [{ role: 'user', content: 'Officers review grants.', at: '2026-03-01' }] } as unknown as SolutionState['discovery'],
+      hypotheses: [
+        {
+          id: 'h-1',
+          title: 'Grant case workflow',
+          patternId: 'case-management',
+          confidence: 'high',
+          rationale: 'Applications are reviewed as cases.',
+          recommendations: [
+            { service: 'file-service', reason: 'Store attachments', order: 2 },
+            { service: 'form-service', reason: 'Collect applications', order: 1 },
+          ],
+          assumptions: [],
+          unknowns: [],
+        },
+      ],
+    });
+    const note: SpecialistNote = {
+      service: 'form-service',
+      displayName: 'Form service',
+      fit: 'recommended',
+      source: 'ai',
+      summary: 'Use one intake form.',
+      supports: [],
+      constraints: ['One form'],
+      questions: [],
+      risks: ['Duplicate submissions'],
+      chatHighlights: [],
+      consultedOn: '2026-03-01',
+    };
+    const userPrompt = () => post.mock.calls[0][1].messages[1].content as string;
+
+    it('returns the model name', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const result = await buildLlm().blueprint(state(), [note]);
+
+      expect(result.model).toBe('GOA-Default');
+    });
+
+    it('maps the overview summary and cleans blank list items', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { core } = await buildLlm().blueprint(state(), [note]);
+
+      expect(core.overview).toMatchObject({ summary: blueprintJson.overview.summary, objectives: ['Faster decisions'], risks: ['Approval limits'] });
+    });
+
+    it('drops layers without a name', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { core } = await buildLlm().blueprint(state(), [note]);
+
+      expect(core.architecture?.layers).toEqual([{ name: 'Experience', description: 'Web app', components: ['Officer view'] }]);
+    });
+
+    it('drops workflows without steps', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { core } = await buildLlm().blueprint(state(), [note]);
+
+      expect(core.workflows).toEqual([{ name: 'Review', actors: ['Grant officer'], steps: ['Open file in form-service'] }]);
+    });
+
+    it('drops delivery phases without a name', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { core } = await buildLlm().blueprint(state(), [note]);
+
+      expect(core.delivery?.phases).toEqual([{ name: 'Foundation', items: ['Set up tenant'] }]);
+    });
+
+    it('keeps only services that are known specialists', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { services } = await buildLlm().blueprint(state(), [note]);
+
+      expect(services).toEqual([{ service: 'form-service', role: 'Collects applications', capabilities: ['Draft saving'] }]);
+    });
+
+    it('includes the problem, discovery, services in order, concepts and specialist notes in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      await buildLlm().blueprint(state(), [note]);
+
+      expect(userPrompt()).toEqual(
+        expect.stringMatching(/Residents apply for grants\.[\s\S]*user: Officers review grants\.[\s\S]*1\. form-service: Collect applications\n2\. file-service[\s\S]*actor:Grant officer[\s\S]*- form-service \(recommended\): Use one intake form\. Constraints: One form\. Risks: Duplicate submissions/),
+      );
+    });
+
+    it('omits optional prompt sections when the solution has no analysis yet', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      await buildLlm().blueprint(emptyState(), []);
+
+      expect(userPrompt()).not.toMatch(/Proposed approach|Business concepts|Specialist notes|Discovery conversation/);
+    });
+
+    it('accepts a response with only workflows', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ workflows: blueprintJson.workflows })));
+
+      const { core } = await buildLlm().blueprint(emptyState(), []);
+
+      expect(core.workflows).toHaveLength(1);
+    });
+
+    it('accepts a response with only layers', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ architecture: blueprintJson.architecture })));
+
+      const { core } = await buildLlm().blueprint(emptyState(), []);
+
+      expect(core.architecture?.layers).toHaveLength(1);
+    });
+
+    it.each([
+      ['an empty object', {}],
+      ['non-object sections', { overview: 'text', architecture: [], workflows: 'none', services: 'none' }],
+      ['only a services list', { services: blueprintJson.services }],
+    ])('throws when the response is %s', async (_label, json) => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(json)));
+
+      await expect(buildLlm().blueprint(emptyState(), [])).rejects.toThrow('Model response did not contain a usable blueprint.');
     });
   });
 

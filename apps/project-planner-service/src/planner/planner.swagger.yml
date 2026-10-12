@@ -143,6 +143,23 @@ paths:
                 restart: { type: boolean, description: Clear the discovery thread and start over. }
       responses:
         200: { description: The solution with state.discovery and state.confidence updated. }
+  /planner/v1/solutions/{id}/blueprint:
+    post:
+      tags: [Solution]
+      summary: Generates the complete project blueprint (architecture, ADSP service mapping, specialist notes, workflows, data and governance, delivery).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode: { type: string, enum: [ai, rules] }
+                refreshConsultations: { type: boolean, description: Run fresh specialist consultations instead of reusing saved ones. }
+      responses:
+        200: { description: The solution with state.blueprint populated. }
+        400: { description: The solution has no analysis yet. }
   /planner/v1/specialists/{service}/chat:
     post:
       tags: [Specialist]

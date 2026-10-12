@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { Agent } from 'https';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
+import { BlueprintCore, BlueprintServiceDetail } from './blueprint';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { SPECIALISTS } from './specialists';
 import {
@@ -14,6 +15,7 @@ import {
   PatternMatch,
   SolutionState,
   SpecialistDefinition,
+  SpecialistNote,
 } from './types';
 import { randomUUID } from 'crypto';
 
@@ -74,6 +76,12 @@ export interface LlmDiscovery {
   model: string;
 }
 
+export interface LlmBlueprint {
+  core: Partial<BlueprintCore>;
+  services: BlueprintServiceDetail[];
+  model: string;
+}
+
 export interface SpecialistChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -101,6 +109,7 @@ export interface PlannerLlm {
     messages: { role: 'user' | 'assistant'; content: string }[],
     patterns: BusinessPattern[],
   ): Promise<LlmDiscovery>;
+  blueprint(state: SolutionState, notes: SpecialistNote[]): Promise<LlmBlueprint>;
   consult(
     state: SolutionState,
     specialist: SpecialistDefinition,
@@ -371,6 +380,102 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       throw new Error('Model response did not contain a discovery message and factor scores.');
     }
     return { reply, factors, model: this.config.model };
+  }
+
+  async blueprint(state: SolutionState, notes: SpecialistNote[]): Promise<LlmBlueprint> {
+    const system =
+      'You are the solution architect for the Government of Alberta Digital Service Platform (ADSP). ' +
+      'Turn the proposed solution and the specialist consultation notes into a complete project blueprint. ' +
+      'Use only the ADSP services listed. Be specific to this problem, practical and concise; write for a mixed business and technical audience. ' +
+      'Reply with a single JSON object only, no commentary.';
+    const hypothesis = state.hypotheses[0];
+    const user = [
+      `Problem statement:\n"""${state.problemStatement}"""`,
+      state.discovery?.messages.length
+        ? `Discovery conversation:\n${state.discovery.messages.slice(-12).map((m) => `${m.role}: ${m.content.slice(0, 1200)}`).join('\n')}`
+        : '',
+      hypothesis
+        ? `Proposed approach: ${hypothesis.title} — ${hypothesis.rationale}\nServices in order:\n${[...hypothesis.recommendations]
+            .sort((a, b) => a.order - b.order)
+            .map((r) => `${r.order}. ${r.service}: ${r.reason}`)
+            .join('\n')}`
+        : '',
+      state.concepts.length ? `Business concepts: ${state.concepts.slice(0, 30).map((c) => `${c.type}:${c.name}`).join(', ')}` : '',
+      notes.length
+        ? `Specialist notes:\n${notes
+            .map((n) => `- ${n.service} (${n.fit}): ${n.summary.slice(0, 700)} Constraints: ${n.constraints.slice(0, 3).join('; ')}. Risks: ${n.risks.slice(0, 3).join('; ')}`)
+            .join('\n')}`
+        : '',
+      'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": []}, ' +
+        '"architecture": {"summary": "", "layers": [{"name": "", "description": "", "components": []}], "integrations": [], "security": []}, ' +
+        '"services": [{"service": "<service id>", "role": "what it does in this solution", "capabilities": ["specific features to use"]}], ' +
+        '"workflows": [{"name": "", "actors": [], "steps": ["ordered steps naming the service used"]}], ' +
+        '"dataGovernance": {"dataEntities": [], "accessControl": [], "retention": [], "privacy": [], "audit": [], "compliance": []}, ' +
+        '"delivery": {"phases": [{"name": "", "items": []}], "nonFunctional": [], "openQuestions": []}}. ' +
+        'Keep every list to at most 8 items, and every item to one sentence.',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    const json = await this.completeJson([
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ]);
+    const obj = (value: unknown): Record<string, unknown> => (value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {});
+    const objs = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? value.filter((v) => v && typeof v === 'object').map(obj) : []);
+    const overview = obj(json.overview);
+    const architecture = obj(json.architecture);
+    const governance = obj(json.dataGovernance);
+    const delivery = obj(json.delivery);
+    const serviceNames = SPECIALISTS.map((s) => s.service);
+    const core: Partial<BlueprintCore> = {
+      overview: {
+        title: '',
+        summary: asString(overview.summary, 2500),
+        objectives: asStrings(overview.objectives, 8),
+        scope: asStrings(overview.scope, 8),
+        outOfScope: asStrings(overview.outOfScope, 8),
+        stakeholders: asStrings(overview.stakeholders, 8),
+        successMeasures: asStrings(overview.successMeasures, 8),
+        risks: asStrings(overview.risks, 8),
+      },
+      architecture: {
+        summary: asString(architecture.summary, 1500),
+        layers: objs(architecture.layers)
+          .slice(0, 8)
+          .map((l) => ({ name: asString(l.name, 80), description: asString(l.description, 400), components: asStrings(l.components, 10) }))
+          .filter((l) => l.name),
+        integrations: asStrings(architecture.integrations, 8),
+        security: asStrings(architecture.security, 8),
+        diagram: '',
+      },
+      workflows: objs(json.workflows)
+        .slice(0, 6)
+        .map((w) => ({ name: asString(w.name, 120), actors: asStrings(w.actors, 8), steps: asStrings(w.steps, 12) }))
+        .filter((w) => w.name && w.steps.length > 0),
+      dataGovernance: {
+        dataEntities: asStrings(governance.dataEntities, 8),
+        accessControl: asStrings(governance.accessControl, 8),
+        retention: asStrings(governance.retention, 8),
+        privacy: asStrings(governance.privacy, 8),
+        audit: asStrings(governance.audit, 8),
+        compliance: asStrings(governance.compliance, 8),
+      },
+      delivery: {
+        phases: objs(delivery.phases)
+          .slice(0, 8)
+          .map((p) => ({ name: asString(p.name, 100), items: asStrings(p.items, 8) }))
+          .filter((p) => p.name),
+        nonFunctional: asStrings(delivery.nonFunctional, 8),
+        openQuestions: asStrings(delivery.openQuestions, 8),
+      },
+    };
+    const services = objs(json.services)
+      .filter((s) => serviceNames.includes(asString(s.service)))
+      .map((s) => ({ service: asString(s.service), role: asString(s.role, 500), capabilities: asStrings(s.capabilities, 6) }));
+    if (!core.overview?.summary && !core.architecture?.layers.length && !core.workflows?.length) {
+      throw new Error('Model response did not contain a usable blueprint.');
+    }
+    return { core, services, model: this.config.model };
   }
 
   async consult(

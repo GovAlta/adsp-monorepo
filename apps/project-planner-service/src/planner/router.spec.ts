@@ -12,6 +12,7 @@ import { BusinessPattern, Solution, SpecialistChat } from './types';
 import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
 import { DISCOVERY_FACTORS } from './discovery';
+import { BUILT_IN_PATTERNS } from './patterns';
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
@@ -1642,7 +1643,7 @@ describe('planner router routes', () => {
 
   describe('AI-assisted planning', () => {
     const MODEL = 'GOA-Default';
-    const llm = { model: MODEL, analyze: jest.fn(), discover: jest.fn(), consult: jest.fn(), converse: jest.fn() };
+    const llm = { model: MODEL, analyze: jest.fn(), discover: jest.fn(), blueprint: jest.fn(), consult: jest.fn(), converse: jest.fn() };
     const aiText = 'Residents submit grant applications that officers review and approve.';
 
     const aiAnalysis: LlmAnalysis = {
@@ -2460,6 +2461,270 @@ describe('planner router routes', () => {
         await consult(buildApp(owner, true, llm));
 
         expect(chatRepository.save.mock.calls[0][0].messages[1].mode).toBe('rules');
+      });
+    });
+
+    describe('POST /solutions/:id/blueprint', () => {
+      const generated = {
+        core: {
+          overview: { title: '', summary: 'AI blueprint summary.', objectives: [], scope: [], outOfScope: [], stakeholders: [], successMeasures: [], risks: [] },
+        },
+        services: [{ service: 'form-service', role: 'Collects grant applications', capabilities: ['Draft saving'] }],
+        model: MODEL,
+      };
+      const analysed = (patternId = 'case-management'): Solution => {
+        const solution = solutionOwnedBy('owner-1');
+        solution.state.problemStatement = aiText;
+        solution.state.hypotheses = [
+          {
+            ...aiAnalysis.hypotheses[0],
+            patternId,
+            recommendations: [
+              { service: 'file-service', reason: 'Store attachments', order: 2 },
+              { service: 'form-service', reason: 'Collect applications', order: 1 },
+            ],
+          },
+        ];
+        return solution;
+      };
+      const consultMessage = (overrides: object = {}) => ({
+        role: 'assistant' as const,
+        content: 'Saved advice',
+        at: '2026-03-01T10:00:01.000Z',
+        intent: 'consult',
+        consult: { service: 'form-service', fit: 'recommended', reason: 'Saved reason', advice: 'Saved advice', questions: [], dependencies: [], risks: ['Saved risk'] },
+        ...overrides,
+      });
+      const blueprint = (app: express.Express, body: object = {}) =>
+        request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/blueprint`).send(body);
+
+      beforeEach(() => {
+        repository.get.mockResolvedValue(analysed());
+        llm.blueprint.mockResolvedValue(generated);
+        llm.consult.mockResolvedValue(consultation);
+      });
+
+      it('returns 400 when the solution has no hypotheses', async () => {
+        repository.get.mockResolvedValueOnce(solutionOwnedBy('owner-1'));
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(400);
+      });
+
+      it.each([{ mode: 'fast' }, { refreshConsultations: 'sometimes' }])('returns 400 for invalid body %p', async (body) => {
+        const res = await blueprint(buildApp(owner, true, llm), body);
+
+        expect(res.status).toBe(400);
+      });
+
+      it('returns 404 when the solution does not exist', async () => {
+        repository.get.mockResolvedValueOnce(undefined);
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(404);
+      });
+
+      it('generates an ai blueprint by default when an llm is configured', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint).toMatchObject({ mode: 'ai', model: MODEL });
+      });
+
+      it('merges the ai overview into the blueprint', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.overview.summary).toBe('AI blueprint summary.');
+      });
+
+      it('applies the ai service roles to the service mapping', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.serviceMapping[0]).toMatchObject({ service: 'form-service', role: 'Collects grant applications' });
+      });
+
+      it('passes the specialist notes to the llm', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(llm.blueprint).toHaveBeenCalledWith(
+          expect.objectContaining({ problemStatement: aiText }),
+          [expect.objectContaining({ service: 'form-service' }), expect.objectContaining({ service: 'file-service' })],
+        );
+      });
+
+      it('consults each recommended service that has no saved consultation', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(llm.consult).toHaveBeenCalledTimes(2);
+      });
+
+      it('records each new consultation in the user chat', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(chatRepository.save).toHaveBeenCalledTimes(2);
+      });
+
+      it('marks notes from a fresh ai consultation with the ai source', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.specialistNotes[0]).toMatchObject({ service: 'form-service', source: 'ai', summary: consultation.advice });
+      });
+
+      it('marks notes from a failed ai consultation with the rules source', async () => {
+        llm.consult.mockRejectedValue(new Error('Model request failed'));
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.specialistNotes[0].source).toBe('rules');
+      });
+
+      it('marks the specialists as consulted', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.specialists.map((s: { service: string }) => s.service).sort()).toEqual(['file-service', 'form-service']);
+      });
+
+      const savedChats = () => [
+        storedChat({ solutionId: SOLUTION_ID, messages: [consultMessage({ consult: { ...consultMessage().consult, advice: 'Older advice' }, content: 'Older advice' }), consultMessage()] }),
+        storedChat({ id: 'chat-2', service: 'file-service', solutionId: SOLUTION_ID, messages: [consultMessage({ consult: { ...consultMessage().consult, service: 'file-service' } })] }),
+      ];
+
+      it('does not consult again when every service has a saved consultation', async () => {
+        chatRepository.find.mockResolvedValue(savedChats());
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(llm.consult).not.toHaveBeenCalled();
+      });
+
+      it('reuses the latest saved consultation as the specialist note', async () => {
+        chatRepository.find.mockResolvedValue(savedChats());
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.specialistNotes[0]).toMatchObject({ source: 'saved-consultation', summary: 'Saved advice', consultedOn: '2026-03-01T10:00:01.000Z' });
+      });
+
+      it("looks up the user's chats for the solution", async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(chatRepository.find).toHaveBeenCalledWith({ tenantId, createdById: 'owner-1', solutionId: SOLUTION_ID });
+      });
+
+      it('consults again when the saved chat has no consult message', async () => {
+        chatRepository.find.mockResolvedValue([storedChat({ solutionId: SOLUTION_ID })]);
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(llm.consult).toHaveBeenCalledTimes(2);
+      });
+
+      it('consults again for every service when refreshConsultations is true', async () => {
+        chatRepository.find.mockResolvedValue([storedChat({ solutionId: SOLUTION_ID, messages: [consultMessage()] })]);
+
+        await blueprint(buildApp(owner, true, llm), { refreshConsultations: true });
+
+        expect(llm.consult).toHaveBeenCalledTimes(2);
+      });
+
+      it('adds recent non-consult assistant replies as chat highlights', async () => {
+        chatRepository.find.mockResolvedValue([
+          storedChat({ solutionId: SOLUTION_ID, messages: [consultMessage(), { role: 'assistant', content: 'Enable draft saving.', at: '2026-03-02T10:00:00.000Z' }] }),
+        ]);
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.specialistNotes[0].chatHighlights).toEqual(['Enable draft saving.']);
+      });
+
+      it('builds a rule-based blueprint in rules mode', async () => {
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.body.state.blueprint).toMatchObject({ mode: 'rules' });
+      });
+
+      it('does not call the llm blueprint in rules mode', async () => {
+        await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(llm.blueprint).not.toHaveBeenCalled();
+      });
+
+      it('builds a rule-based blueprint when no llm is configured and no mode is given', async () => {
+        const res = await blueprint(buildApp(), {});
+
+        expect(res.body.state.blueprint.warning).toBeUndefined();
+      });
+
+      it('warns that ai is not configured when ai mode is requested without an llm', async () => {
+        const res = await blueprint(buildApp(), { mode: 'ai' });
+
+        expect(res.body.state.blueprint).toMatchObject({ mode: 'rules', warning: 'AI analysis is not configured; used a rule-based blueprint.' });
+      });
+
+      it('falls back to a rule-based blueprint with a warning when the llm fails', async () => {
+        llm.blueprint.mockRejectedValueOnce(new Error('Model request failed'));
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint).toMatchObject({
+          mode: 'rules',
+          warning: 'AI blueprint failed (Model request failed); used a rule-based blueprint.',
+        });
+      });
+
+      it('logs a warning when the llm blueprint fails', async () => {
+        llm.blueprint.mockRejectedValueOnce(new Error('Model request failed'));
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI blueprint failed'));
+      });
+
+      it('uses the matched pattern features for scope when the hypothesis has no pattern', async () => {
+        const solution = analysed('');
+        solution.state.patternMatches = [{ patternId: 'case-management' } as Solution['state']['patternMatches'][number]];
+        repository.get.mockResolvedValue(solution);
+
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.body.state.blueprint.overview.scope).toEqual(BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').commonFeatures.slice(0, 8));
+      });
+
+      it('uses the hypothesis pattern features for scope', async () => {
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.body.state.blueprint.overview.scope).toEqual(BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').commonFeatures.slice(0, 8));
+      });
+
+      it('copes with a solution that has neither a hypothesis pattern nor pattern matches', async () => {
+        repository.get.mockResolvedValue(analysed(''));
+
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.status).toBe(200);
+      });
+
+      it('sends a solution-updated event with the blueprint operation', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(eventService.send).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: expect.objectContaining({ operation: 'blueprint' }) }),
+        );
+      });
+
+      it('saves the blueprint on the solution state', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(repository.save).toHaveBeenCalledWith(
+          expect.objectContaining({ state: expect.objectContaining({ blueprint: expect.objectContaining({ mode: 'ai' }) }) }),
+        );
+      });
+
+      it('returns 403 for a solution owned by another user', async () => {
+        const res = await blueprint(buildApp(stranger, true, llm));
+
+        expect(res.status).toBe(403);
       });
     });
 
