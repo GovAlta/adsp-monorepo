@@ -254,15 +254,15 @@
         if (sec === 'problem') {
           return `<div class="stack">
             <goa-textarea id="problem" name="problem" rows="6" width="100%" value="${esc(draftText)}" aria-label="Problem statement"></goa-textarea>
-            <div class="row" role="group" aria-label="Analysis mode">
+            <div class="row" role="group" aria-label="Analysis mode" style="flex-wrap:nowrap">
               <span><strong>Analysis mode:</strong></span>
-              <goa-button type="${mode === 'ai' ? 'primary' : 'secondary'}" size="compact" data-mode="ai" ${options.modes.includes('ai') ? '' : 'disabled="true"'}>AI analysis${options.model ? ` (${esc(options.model)})` : ''}</goa-button>
+              <goa-button type="${mode === 'ai' ? 'primary' : 'secondary'}" size="compact" data-mode="ai" ${options.modes.includes('ai') ? '' : 'disabled="true"'}>AI analysis</goa-button>
               <goa-button type="${mode === 'rules' ? 'primary' : 'secondary'}" size="compact" data-mode="rules">Rule-based</goa-button>
             </div>
             <div class="row"><goa-button id="analyzeBtn" type="primary">${busy ? 'Analyzing…' : 'Save &amp; analyze'}</goa-button>
             <goa-button id="deleteBtn" type="tertiary" variant="destructive">Delete solution</goa-button></div>
             ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
-            ${st.analysis ? `<goa-callout type="${st.analysis.warning ? 'important' : 'success'}" heading="${st.analysis.mode === 'ai' ? `AI analysis${st.analysis.model ? ` · ${esc(st.analysis.model)}` : ''}` : 'Rule-based analysis'}">${st.analysis.warning ? esc(st.analysis.warning) : `Completed ${esc(new Date(st.analysis.analyzedOn).toLocaleString())}`}</goa-callout>` : ''}
+            ${st.analysis ? `<goa-callout type="${st.analysis.warning ? 'important' : 'success'}" heading="${st.analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'}">${st.analysis.warning ? esc(st.analysis.warning) : `Completed ${esc(new Date(st.analysis.analyzedOn).toLocaleString())}`}</goa-callout>` : ''}
             <h3>Pattern matches</h3>
             ${st.patternMatches.length ? `<goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Score</th><th>Confidence</th><th>Why</th></tr></thead><tbody>
               ${st.patternMatches.map((m) => `<tr><td>${esc(m.patternName)}</td><td>${m.score}</td><td><goa-badge type="${levelType(m.level)}" content="${esc(m.level)}"></goa-badge></td><td>${esc(m.explanation)}</td></tr>`).join('')}
@@ -384,7 +384,7 @@
       function toMarkdown(s) {
         const st = s.state;
         const lines = [`# ${s.name}`, '', `Status: ${s.status} · Exported ${new Date().toLocaleString()}`, '', '## Problem statement', '', st.problemStatement || '_None_', ''];
-        if (st.analysis) lines.push(`_Analysis: ${st.analysis.mode === 'ai' ? `AI (${st.analysis.model || 'model'})` : 'rule-based'}${st.analysis.warning ? ` — ${st.analysis.warning}` : ''}_`, '');
+        if (st.analysis) lines.push(`_Analysis: ${st.analysis.mode === 'ai' ? 'AI' : 'rule-based'}${st.analysis.warning ? ` — ${st.analysis.warning}` : ''}_`, '');
         lines.push('## Pattern matches', '');
         st.patternMatches.forEach((m) => lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`));
         lines.push('', '## Hypotheses', '');
