@@ -197,7 +197,7 @@
       async function loadChatCounts() {
         chatCounts = {};
         if (!current) return;
-        for (const c of (await api('GET', `/specialists/chats?solutionId=${current.id}`)).results) chatCounts[c.service] = (chatCounts[c.service] || 0) + 1;
+        for (const c of (await api('GET', '/specialists/chats')).results) chatCounts[c.service] = (chatCounts[c.service] || 0) + 1;
       }
       async function loadChats() {
         spec.chats = (await api('GET', `/specialists/chats?service=${spec.service}`)).results;
