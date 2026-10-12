@@ -71,6 +71,7 @@
       let current = null;
       let section = 'problem';
       let view = 'default';
+      let chatCounts = {};
       let refineLabel = 'Refine analysis with my answers';
       let altReply = '';
       const SOL_MODES = [['mode1', 'Mode 1: Initial solution, I refine'], ['mode2', 'Mode 2: AI asks, final solution'], ['mode3', 'Mode 3: Alternative workflows']];
@@ -135,6 +136,7 @@
         draftText = current.state.problemStatement || '';
         consultResult = null;
         spec = newSpec();
+        await loadChatCounts();
         altReply = '';
         cvFocus = 'solution';
         renaming = false;
@@ -180,8 +182,14 @@
           <div class="row"><goa-button id="specSend">Send</goa-button></div></div>`;
       }
 
+      async function loadChatCounts() {
+        chatCounts = {};
+        if (!current) return;
+        for (const c of (await api('GET', `/specialists/chats?solutionId=${current.id}`)).results) chatCounts[c.service] = (chatCounts[c.service] || 0) + 1;
+      }
       async function loadChats() {
         spec.chats = (await api('GET', `/specialists/chats?service=${spec.service}`)).results;
+        await loadChatCounts();
       }
       async function openChat(id) {
         const chat = await api('GET', `/specialists/chats/${id}`);
@@ -382,7 +390,7 @@
         const rail = `<nav class="cv-rail" aria-label="Navigation">
           <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution</goa-button>
           <h4>Specialists</h4>
-          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
+          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${chatCounts[s.service] ? `<strong>${esc(s.displayName.replace(/ service$/i, ''))} (${chatCounts[s.service]})</strong>` : esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
           <h4>Reference</h4>
           <goa-button type="${cvFocus === 'patterns' ? 'primary' : 'tertiary'}" size="compact" data-cv="patterns">Patterns</goa-button>
         </nav>`;
@@ -666,6 +674,7 @@
           consultResult = await api('POST', `/solutions/${current.id}/consult/${b.dataset.consult}`, { mode });
           current = await api('GET', `/solutions/${current.id}`);
           if (spec.service === b.dataset.consult) await loadChats();
+          else await loadChatCounts();
           renderWorkspace();
         })));
       }
