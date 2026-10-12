@@ -8,7 +8,7 @@ import * as path from 'path';
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler, createLogger } from '@core-services/core-common';
-import { BusinessPattern, createLlmFromEnv, PatternRepository, PlannerServiceRoles, Solution, SolutionRepository } from './planner';
+import { BusinessPattern, createLlmFromEnv, PatternRepository, PlannerServiceRoles, Solution, SolutionRepository, SpecialistChat, SpecialistChatRepository } from './planner';
 import { createPlannerRouter } from './planner/router';
 
 const port = Number(process.env.PORT || 3381);
@@ -67,6 +67,31 @@ const patternRepository: PatternRepository = {
   },
 };
 
+const chatStore = new Map<string, SpecialistChat>();
+const specialistChatRepository: SpecialistChatRepository = {
+  async find(criteria) {
+    return [...chatStore.values()]
+      .filter(
+        (c) =>
+          c.tenantId.toString() === criteria.tenantId.toString() &&
+          c.createdById === criteria.createdById &&
+          (!criteria.service || c.service === criteria.service) &&
+          (!criteria.solutionId || c.solutionId === criteria.solutionId),
+      )
+      .sort((a, b) => b.updatedOn.getTime() - a.updatedOn.getTime());
+  },
+  async get(tenant, id) {
+    return chatStore.get(key(tenant.toString(), id)) || null;
+  },
+  async save(chat) {
+    chatStore.set(key(chat.tenantId.toString(), chat.id), chat);
+    return chat;
+  },
+  async delete(tenant, id) {
+    return chatStore.delete(key(tenant.toString(), id));
+  },
+};
+
 const eventService = {
   send: (event: unknown) => logger.debug(`event: ${JSON.stringify(event, (_k, v) => (typeof v === 'object' && v?.constructor?.name === 'AdspId' ? v.toString() : v))}`),
 } as unknown as EventService;
@@ -96,6 +121,7 @@ app.use(
     logger,
     solutionRepository: repository,
     patternRepository,
+    specialistChatRepository,
     eventService,
     llm: createLlmFromEnv(process.env, logger),
   }),

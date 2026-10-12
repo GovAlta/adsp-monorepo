@@ -67,7 +67,7 @@
       let busy = false;
       let chatDraft = '';
       let patternEdit = null;
-      let spec = { service: null, intent: 'ask', messages: [], draft: '' };
+      let spec = { service: null, chatId: null, intent: 'ask', messages: [], draft: '', chats: [] };
       const INTENTS = [['ask', 'Ask'], ['recommend', 'Recommend'], ['design', 'Refine design'], ['validate', 'Validate'], ['sample', 'Sample code']];
       const answerDrafts = {};
 
@@ -110,46 +110,83 @@
         current = await api('GET', `/solutions/${id}`);
         draftText = current.state.problemStatement || '';
         consultResult = null;
-        spec = { service: null, intent: 'ask', messages: [], draft: '' };
+        spec = newSpec();
         renderList();
         renderWorkspace();
       }
 
       const list = (items, empty = 'None') => (items?.length ? `<ul class="plain">${items.map((i) => `<li>${i}</li>`).join('')}</ul>` : `<p class="muted">${empty}</p>`);
 
+      const newSpec = (service = null) => ({ service, chatId: null, intent: 'ask', messages: [], draft: '', chats: [] });
+      const fmtDate = (d) => new Date(d).toLocaleString();
+
       function renderSpecialistChat() {
-        if (!spec.service) return '<p class="muted">Choose Chat on a service to talk with its specialist directly: ask questions, get recommendations, refine a design, validate a plan or get sample code.</p>';
+        if (!spec.service) return '<p class="muted">Choose Chat on a service to talk with its specialist directly: ask questions, get recommendations, refine a design, validate a plan or get sample code. Your conversations are saved and can be reopened or downloaded.</p>';
         const def = (specialists || []).find((s) => s.service === spec.service);
+        const list = (items, title) => items?.length ? `<p><strong>${title}</strong></p><ul>${items.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : '';
         const sample = (x) => `<goa-details heading="${esc(x.title || x.language)}"><pre style="white-space:pre-wrap;overflow:auto">${esc(x.code)}</pre></goa-details>`;
         const turn = (m) => m.role === 'user'
           ? `<goa-callout type="important" heading="You">${esc(m.content)}</goa-callout>`
           : `<goa-callout type="information" heading="${esc(def?.displayName || spec.service)}${m.mode === 'rules' ? ' (rule-based)' : ''}">
               <div style="white-space:pre-wrap">${esc(m.content)}</div>
               ${m.warning ? `<p class="muted">${esc(m.warning)}</p>` : ''}
-              ${m.validation ? `<p><strong>Verdict:</strong> ${esc(m.validation.verdict)}</p><ul>${m.validation.findings.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-              ${m.suggestions?.length ? `<p><strong>Recommendations</strong></p><ul>${m.suggestions.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+              ${m.consult ? `<p><strong>Fit:</strong> ${esc(m.consult.fit)}</p>${list(m.consult.supports, 'Can support')}${list(m.consult.constraints, 'Constraints')}${list(m.consult.risks, 'Risks')}` : ''}
+              ${m.validation ? `<p><strong>Verdict:</strong> ${esc(m.validation.verdict)}</p>${list(m.validation.findings, 'Findings')}` : ''}
+              ${list(m.suggestions, 'Recommendations')}
               ${(m.samples || []).map(sample).join('')}
               ${m.followUps?.length ? `<div class="row">${m.followUps.map((f) => `<goa-button type="tertiary" size="compact" data-followup="${esc(f)}">${esc(f)}</goa-button>`).join('')}</div>` : ''}
             </goa-callout>`;
+        const history = spec.chats.length
+          ? `<goa-details heading="Saved chats (${spec.chats.length})" open="true"><ul>${spec.chats.map((c) => `<li><div class="row"><span>${esc(c.title)} <span class="muted">· ${c.messageCount} messages · ${esc(fmtDate(c.updatedOn))}</span></span>
+              <goa-button type="tertiary" size="compact" data-chat-open="${c.id}">${spec.chatId === c.id ? 'Open (current)' : 'Open'}</goa-button>
+              <goa-button type="tertiary" size="compact" data-chat-delete="${c.id}">Delete</goa-button></div></li>`).join('')}</ul></goa-details>`
+          : '<p class="muted">No saved chats with this specialist yet.</p>';
         return `<div class="stack"><h3>Specialist chat: ${esc(def?.displayName || spec.service)}</h3>
+          ${history}
+          <div class="row"><goa-button type="secondary" size="compact" id="newChat">New chat</goa-button>
+            <goa-button type="secondary" size="compact" id="dlAllMd">Download all chats (Markdown)</goa-button>
+            <goa-button type="secondary" size="compact" id="dlAllJson">Download all chats (JSON)</goa-button>
+            ${spec.chatId ? '<goa-button type="secondary" size="compact" id="dlChatMd">Download this chat (Markdown)</goa-button><goa-button type="secondary" size="compact" id="dlChatJson">Download this chat (JSON)</goa-button>' : ''}</div>
           <div class="row">${INTENTS.map(([k, label]) => `<goa-button type="${spec.intent === k ? 'primary' : 'secondary'}" size="compact" data-intent="${k}">${label}</goa-button>`).join('')}</div>
           ${spec.messages.map(turn).join('')}
           <goa-textarea id="specInput" name="spec" rows="3" width="100%" value="${esc(spec.draft)}" aria-label="Message to the specialist"></goa-textarea>
           <div class="row"><goa-button id="specSend">Send</goa-button></div></div>`;
       }
+
+      async function loadChats() {
+        spec.chats = (await api('GET', `/specialists/chats?service=${spec.service}`)).results;
+      }
+      async function openChat(id) {
+        const chat = await api('GET', `/specialists/chats/${id}`);
+        spec.chatId = chat.id;
+        spec.messages = chat.messages;
+        renderWorkspace();
+      }
       async function sendSpecialist(text) {
         if (busy || !text.trim()) return;
-        spec.messages.push({ role: 'user', content: text.trim() });
+        const message = text.trim();
         spec.draft = '';
-        const res = await api('POST', `/specialists/${spec.service}/chat`, {
-          messages: spec.messages.map((m) => ({ role: m.role, content: m.content })),
-          intent: spec.intent,
-          solutionId: current?.id,
-          mode,
-        });
-        spec.messages.push({ role: 'assistant', content: res.reply, mode: res.mode, warning: res.warning, validation: res.validation, suggestions: res.suggestions, samples: res.samples, followUps: res.followUps });
+        const res = await api('POST', `/specialists/${spec.service}/chat`, { message, chatId: spec.chatId || undefined, intent: spec.intent, solutionId: current?.id, mode });
+        spec.chatId = res.chatId;
+        const at = new Date().toISOString();
+        spec.messages.push({ role: 'user', content: message, at }, { role: 'assistant', content: res.reply, at, mode: res.mode, warning: res.warning, validation: res.validation, suggestions: res.suggestions, samples: res.samples, followUps: res.followUps });
+        await loadChats();
         renderWorkspace();
-      }      const PATTERN_FIELDS = [
+      }
+
+      function chatToMarkdown(chat) {
+        const bullets = (title, items) => (items?.length ? ['', `**${title}**`, ...items.map((i) => `- ${i}`)] : []);
+        const out = [`## ${chat.title}`, '', `Specialist: ${chat.service} · Started ${fmtDate(chat.createdOn)} · Last updated ${fmtDate(chat.updatedOn)}`];
+        for (const m of chat.messages) {
+          out.push('', m.role === 'user' ? `### You (${fmtDate(m.at)})` : `### ${chat.service} (${fmtDate(m.at)}${m.mode === 'rules' ? ', rule-based' : ''})`, '', m.content);
+          if (m.consult) out.push(`Fit: ${m.consult.fit}`, ...bullets('Can support', m.consult.supports), ...bullets('Constraints', m.consult.constraints), ...bullets('Risks', m.consult.risks));
+          if (m.validation) out.push('', `**Verdict:** ${m.validation.verdict}`, ...bullets('Findings', m.validation.findings));
+          out.push(...bullets('Recommendations', m.suggestions));
+          for (const s of m.samples || []) out.push('', `**${s.title || 'Sample'}**`, '', '```' + s.language, s.code, '```');
+        }
+        return out.join('\n');
+      }
+      const PATTERN_FIELDS = [
         ['name', 'Business pattern (name)', 1],
         ['description', 'Purpose', 3],
         ['domainLanguage', 'Common domain language (one per line)', 4],
@@ -424,9 +461,26 @@
           await reloadPatterns();
           renderWorkspace();
         })));
-        $('workspace').querySelectorAll('[data-spec]').forEach((b) => b.addEventListener('_click', () => {
-          spec = { service: b.dataset.spec, intent: 'ask', messages: [], draft: '' };
+        $('workspace').querySelectorAll('[data-spec]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          spec = newSpec(b.dataset.spec);
+          await loadChats();
           renderWorkspace();
+        })));
+        $('newChat')?.addEventListener('_click', () => { spec.chatId = null; spec.messages = []; renderWorkspace(); });
+        $('workspace').querySelectorAll('[data-chat-open]').forEach((b) => b.addEventListener('_click', () => run(() => openChat(b.dataset.chatOpen))));
+        $('workspace').querySelectorAll('[data-chat-delete]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          await api('DELETE', `/specialists/chats/${b.dataset.chatDelete}`);
+          if (spec.chatId === b.dataset.chatDelete) { spec.chatId = null; spec.messages = []; }
+          await loadChats();
+          renderWorkspace();
+        })));
+        $('dlChatJson')?.addEventListener('_click', () => run(async () => download(`planner-chat-${spec.chatId}.json`, JSON.stringify(await api('GET', `/specialists/chats/${spec.chatId}/export`), null, 2), 'application/json')));
+        $('dlChatMd')?.addEventListener('_click', () => run(async () => download(`planner-chat-${spec.chatId}.md`, chatToMarkdown(await api('GET', `/specialists/chats/${spec.chatId}`)), 'text/markdown')));
+        $('dlAllJson')?.addEventListener('_click', () => run(async () => download('planner-specialist-chats.json', JSON.stringify(await api('GET', '/specialists/chats/export'), null, 2), 'application/json')));
+        $('dlAllMd')?.addEventListener('_click', () => run(async () => {
+          const { chats } = await api('GET', '/specialists/chats/export');
+          if (!chats.length) throw new Error('There is no chat history to download.');
+          download('planner-specialist-chats.md', ['# ADSP Planner specialist chat history', '', `Exported ${fmtDate(new Date())}`, '', ...chats.map(chatToMarkdown)].join('\n\n'), 'text/markdown');
         }));
         $('workspace').querySelectorAll('[data-intent]').forEach((b) => b.addEventListener('_click', () => { spec.intent = b.dataset.intent; renderWorkspace(); }));
         $('specInput')?.addEventListener('_change', (e) => (spec.draft = e.detail.value));
@@ -435,6 +489,7 @@
         $('workspace').querySelectorAll('[data-consult]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           consultResult = await api('POST', `/solutions/${current.id}/consult/${b.dataset.consult}`, { mode });
           current = await api('GET', `/solutions/${current.id}`);
+          if (spec.service === b.dataset.consult) await loadChats();
           renderWorkspace();
         })));
       }

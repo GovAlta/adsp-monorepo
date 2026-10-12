@@ -137,14 +137,53 @@ paths:
           application/json:
             schema:
               type: object
-              required: [messages]
+              required: [message]
               properties:
-                messages: { type: array, items: { type: object, required: [role, content], properties: { role: { type: string, enum: [user, assistant] }, content: { type: string } } } }
+                message: { type: string, maxLength: 5000 }
+                chatId: { type: string, format: uuid, description: Continue a saved chat; omit to start a new one. }
                 intent: { type: string, enum: [ask, recommend, design, validate, sample] }
                 solutionId: { type: string, format: uuid }
                 mode: { type: string, enum: [ai, rules] }
       responses:
-        200: { description: Specialist reply with suggestions, samples, validation and follow-ups. }
+        200: { description: Specialist reply (includes chatId). The exchange is saved to the user's chat history. }
+  /planner/v1/specialists/chats:
+    get:
+      tags: [Specialist]
+      summary: Lists the caller's saved specialist chats.
+      parameters:
+        - { name: service, in: query, schema: { type: string } }
+        - { name: solutionId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Chat summaries. }
+  /planner/v1/specialists/chats/export:
+    get:
+      tags: [Specialist]
+      summary: Downloads all of the caller's saved chats as JSON.
+      responses:
+        200: { description: JSON attachment. }
+  /planner/v1/specialists/chats/{chatId}:
+    get:
+      tags: [Specialist]
+      summary: Gets a saved chat with its full history.
+      parameters:
+        - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: The chat. }
+    delete:
+      tags: [Specialist]
+      summary: Deletes a saved chat.
+      parameters:
+        - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        204: { description: Deleted. }
+  /planner/v1/specialists/chats/{chatId}/export:
+    get:
+      tags: [Specialist]
+      summary: Downloads one saved chat as JSON.
+      parameters:
+        - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: JSON attachment. }
   /planner/v1/solutions/{id}/handoff/{service}:
     post:
       tags: [Solution, Specialist]

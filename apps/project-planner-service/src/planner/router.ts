@@ -7,9 +7,9 @@ import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { buildHypotheses, buildNextSteps, ConsultResult, consultSpecialist, extractConcepts, matchPatterns } from './analysis';
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
-import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent } from './llm';
+import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
-import { PatternRepository, SolutionRepository } from './repository';
+import { PatternRepository, SolutionRepository, SpecialistChatRepository } from './repository';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
@@ -22,7 +22,9 @@ import {
   PlannerConfiguration,
   Solution,
   SolutionState,
+  SpecialistChat,
   SpecialistStatus,
+  StoredChatMessage,
 } from './types';
 
 interface PlannerRouterProps {
@@ -30,12 +32,14 @@ interface PlannerRouterProps {
   logger: Logger;
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
+  specialistChatRepository: SpecialistChatRepository;
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
 }
 
 const SOLUTION_KEY = 'solution';
+const MAX_CHAT_MESSAGES = 200;
 const SPECIALIST_INTENTS: SpecialistIntent[] = ['ask', 'recommend', 'design', 'validate', 'sample'];
 const SPECIALIST_STATUSES: SpecialistStatus[] = ['not-started', 'consulted', 'in-workspace', 'completed'];
 const SOLUTION_STATUSES = ['draft', 'analyzed', 'in-progress', 'completed', 'archived'];
@@ -219,7 +223,7 @@ async function persist(
   return saved;
 }
 
-export function createPlannerRouter({ logger, solutionRepository, patternRepository, eventService, llm }: PlannerRouterProps): Router {
+export function createPlannerRouter({ logger, solutionRepository, patternRepository, specialistChatRepository, eventService, llm }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
 
@@ -690,6 +694,21 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           },
         ];
         await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists } }, 'consult');
+        const [existingChat] = await specialistChatRepository.find({ ...userChatCriteria(req), service: result.service, solutionId: solution.id });
+        const at = new Date().toISOString();
+        const question: string = req.body.question || 'Consult on this solution';
+        await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: question }, [
+          { role: 'user', content: req.body.proposal ? `${question}\n\nPlan to validate:\n${req.body.proposal}` : question, at, intent: 'consult' },
+          {
+            role: 'assistant',
+            content: result.advice || result.reason,
+            at,
+            intent: 'consult',
+            mode: result.advice ? 'ai' : 'rules',
+            validation: result.validation,
+            consult: { ...result },
+          },
+        ]);
         res.send(result);
       } catch (err) {
         next(err);
@@ -697,14 +716,154 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     },
   );
 
-  // Direct access to a specialist, without requiring a planner session.
+  const userChatCriteria = (req: Request) => ({
+    tenantId: getTenantId(req),
+    createdById: req.user.id,
+  });
+
+  // Chats are private to the user who had the conversation.
+  const loadChat = async (req: Request, id: string): Promise<SpecialistChat> => {
+    const chat = await specialistChatRepository.get(getTenantId(req), id);
+    if (!chat || chat.createdById !== req.user.id) {
+      throw new NotFoundError('chat', id);
+    }
+    return chat;
+  };
+
+  const recordExchange = (
+    req: Request,
+    chat: SpecialistChat | undefined,
+    init: { service: string; solutionId?: string; title: string },
+    exchange: StoredChatMessage[],
+  ): Promise<SpecialistChat> => {
+    const now = new Date();
+    const existing = chat || {
+      id: randomUUID(),
+      tenantId: getTenantId(req),
+      service: init.service,
+      solutionId: init.solutionId,
+      title: init.title.slice(0, 100),
+      createdById: req.user.id,
+      createdByName: req.user.name,
+      createdOn: now,
+      updatedOn: now,
+      messages: [],
+    };
+    if (existing.messages.length + exchange.length > MAX_CHAT_MESSAGES) {
+      throw new InvalidOperationError('This chat is full; start a new chat.');
+    }
+    return specialistChatRepository.save({ ...existing, updatedOn: now, messages: [...existing.messages, ...exchange] });
+  };
+
+  const chatSummary = (chat: SpecialistChat) => ({
+    id: chat.id,
+    service: chat.service,
+    solutionId: chat.solutionId,
+    title: chat.title,
+    createdOn: chat.createdOn,
+    updatedOn: chat.updatedOn,
+    messageCount: chat.messages.length,
+  });
+
+  const exportChat = (chat: SpecialistChat) => ({
+    id: chat.id,
+    service: chat.service,
+    solutionId: chat.solutionId,
+    title: chat.title,
+    createdByName: chat.createdByName,
+    createdOn: chat.createdOn,
+    updatedOn: chat.updatedOn,
+    messages: chat.messages,
+  });
+
+  router.get(
+    '/specialists/chats',
+    requirePlannerUser,
+    createValidationHandler(query('service').optional().isString(), query('solutionId').optional().isUUID()),
+    async (req, res, next) => {
+      try {
+        const chats = await specialistChatRepository.find({
+          ...userChatCriteria(req),
+          service: req.query.service as string,
+          solutionId: req.query.solutionId as string,
+        });
+        res.send({ results: chats.map(chatSummary) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // Full history of all of the user's specialist chats, for download.
+  router.get(
+    '/specialists/chats/export',
+    requirePlannerUser,
+    createValidationHandler(query('service').optional().isString(), query('solutionId').optional().isUUID()),
+    async (req, res, next) => {
+      try {
+        const chats = await specialistChatRepository.find({
+          ...userChatCriteria(req),
+          service: req.query.service as string,
+          solutionId: req.query.solutionId as string,
+        });
+        res.setHeader('Content-Disposition', 'attachment; filename="planner-specialist-chats.json"');
+        res.send({ exportedAt: new Date().toISOString(), chats: chats.map(exportChat) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/specialists/chats/:chatId',
+    requirePlannerUser,
+    createValidationHandler(param('chatId').isUUID()),
+    async (req, res, next) => {
+      try {
+        res.send(exportChat(await loadChat(req, req.params.chatId)));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/specialists/chats/:chatId/export',
+    requirePlannerUser,
+    createValidationHandler(param('chatId').isUUID()),
+    async (req, res, next) => {
+      try {
+        const chat = await loadChat(req, req.params.chatId);
+        res.setHeader('Content-Disposition', `attachment; filename="planner-chat-${chat.id}.json"`);
+        res.send({ exportedAt: new Date().toISOString(), ...exportChat(chat) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.delete(
+    '/specialists/chats/:chatId',
+    requirePlannerUser,
+    createValidationHandler(param('chatId').isUUID()),
+    async (req, res, next) => {
+      try {
+        const chat = await loadChat(req, req.params.chatId);
+        await specialistChatRepository.delete(getTenantId(req), chat.id);
+        res.sendStatus(204);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // Direct access to a specialist, without requiring a planner session. History is kept per chat.
   router.post(
     '/specialists/:service/chat',
     requirePlannerUser,
     createValidationHandler(
-      body('messages').isArray({ min: 1, max: 40 }),
-      body('messages.*.role').isIn(['user', 'assistant']),
-      body('messages.*.content').isString().isLength({ min: 1, max: 5000 }),
+      body('message').isString().trim().isLength({ min: 1, max: 5000 }),
+      body('chatId').optional().isUUID(),
       body('intent').optional().isIn(SPECIALIST_INTENTS),
       body('solutionId').optional().isUUID(),
       body('mode').optional().isIn(['ai', 'rules']),
@@ -715,18 +874,24 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         if (!specialist) {
           throw new NotFoundError('specialist', req.params.service);
         }
-        const messages: SpecialistChatMessage[] = req.body.messages;
-        if (messages[messages.length - 1].role !== 'user') {
-          throw new InvalidOperationError('The last message must be from the user.');
-        }
+        const message: string = req.body.message.trim();
         const intent: SpecialistIntent = req.body.intent || 'ask';
 
+        let chat: SpecialistChat | undefined;
+        if (req.body.chatId) {
+          chat = await loadChat(req, req.body.chatId);
+          if (chat.service !== specialist.service) {
+            throw new InvalidOperationError('The chat belongs to a different specialist.');
+          }
+        }
+
+        const solutionId: string = chat?.solutionId || req.body.solutionId;
         let state: SolutionState | undefined;
-        if (req.body.solutionId) {
+        if (solutionId) {
           const tenantId = getTenantId(req);
-          const solution = await solutionRepository.get(tenantId, req.body.solutionId);
+          const solution = await solutionRepository.get(tenantId, solutionId);
           if (!solution) {
-            throw new NotFoundError('solution', req.body.solutionId);
+            throw new NotFoundError('solution', solutionId);
           }
           if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
             throw new UnauthorizedUserError('access solution', req.user);
@@ -734,12 +899,18 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           state = solution.state;
         }
 
+        const history: SpecialistChatMessage[] = [
+          ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
+          { role: 'user', content: message },
+        ];
         const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
+        let reply: Omit<SpecialistReply, 'model'> & { model?: string };
+        let replyMode: AnalysisMode = 'rules';
         let warning: string;
         if (mode === 'ai' && llm) {
           try {
-            res.send({ service: specialist.service, mode: 'ai', ...(await llm.converse(specialist, messages, intent, state)) });
-            return;
+            reply = await llm.converse(specialist, history, intent, state);
+            replyMode = 'ai';
           } catch (err) {
             logger.warn(`AI specialist chat failed, using rule-based guidance: ${(err as Error).message}`);
             warning = 'AI specialist was unavailable; showing rule-based guidance.';
@@ -747,18 +918,31 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         } else if (mode === 'ai') {
           warning = 'AI is not configured; showing rule-based guidance.';
         }
-        res.send({
-          service: specialist.service,
-          mode: 'rules',
-          warning,
-          ...ruleBasedSpecialistReply(specialist, intent),
-        });
+        reply = reply || ruleBasedSpecialistReply(specialist, intent);
+
+        const at = new Date().toISOString();
+        const saved = await recordExchange(req, chat, { service: specialist.service, solutionId, title: message }, [
+          { role: 'user', content: message, at, intent },
+          {
+            role: 'assistant',
+            content: reply.reply,
+            at,
+            intent,
+            mode: replyMode,
+            model: reply.model,
+            warning,
+            suggestions: reply.suggestions,
+            samples: reply.samples,
+            validation: reply.validation,
+            followUps: reply.followUps,
+          },
+        ]);
+        res.send({ chatId: saved.id, service: specialist.service, mode: replyMode, warning, ...reply });
       } catch (err) {
         next(err);
       }
     },
   );
-
   router.post(
     '/solutions/:id/handoff/:service',
     requirePlannerUser,

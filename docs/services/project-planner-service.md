@@ -33,7 +33,7 @@ Each ADSP service has a specialist definition with questions, dependencies, risk
 Specialists have two responsibilities:
 
 1. **Guide the planner.** When the planner consults a specialist (`POST /solutions/{id}/consult/{service}`), the result states whether the service is a good fit (`fit`), which parts of the solution it can support (`supports`), constraints, dependencies and risks the planner may not have considered, and, when a plan is supplied in `proposal`, a `validation` verdict (`sound`, `needs-changes` or `not-a-fit`) with findings.
-2. **Guide a user directly.** `POST /specialists/{service}/chat` is a multi-turn conversation with a single service specialist and needs no planner session. The `intent` selects the task: `ask` (answer questions), `recommend` (service-specific solutions), `design` (refine a service-specific design), `validate` (verdict and findings) or `sample` (sample code or configuration). The response contains `reply`, `suggestions`, `samples`, `validation` and `followUps`. An optional `solutionId` gives the specialist the solution context. Without AI, a rule-based reply with the service's questions and pitfalls is returned.
+2. **Guide a user directly.** `POST /specialists/{service}/chat` is a multi-turn conversation with a single service specialist and needs no planner session. The `intent` selects the task: `ask` (answer questions), `recommend` (service-specific solutions), `design` (refine a service-specific design), `validate` (verdict and findings) or `sample` (sample code or configuration). The response contains `chatId`, `reply`, `suggestions`, `samples`, `validation` and `followUps`. An optional `solutionId` gives the specialist the solution context. Without AI, a rule-based reply with the service's questions and pitfalls is returned.
 
 ## API
 Base path `/planner/v1`. See the service swagger docs for details.
@@ -50,7 +50,12 @@ Base path `/planner/v1`. See the service swagger docs for details.
 | GET, PATCH, DELETE | /solutions/{id} | Retrieve, update, or delete a solution. |
 | POST | /solutions/{id}/analyze | Extract concepts, match patterns, generate hypotheses and next steps. Body `mode` is `ai` (default when a model is configured) or `rules`. |
 | POST | /solutions/{id}/consult/{service} | Consult a service specialist. Optional body `question`, `proposal` and `mode`. |
-| POST | /specialists/{service}/chat | Converse directly with a service specialist. Body `messages` (required), `intent`, `solutionId`, `mode`. |
+| POST | /specialists/{service}/chat | Converse directly with a service specialist. Body `message` (required), `chatId` (continues a saved chat), `intent`, `solutionId`, `mode`. The server keeps the history. |
+| GET | /specialists/chats | List your saved specialist chats (filters service, solutionId). |
+| GET | /specialists/chats/export | Download all your chats as JSON. |
+| GET | /specialists/chats/{chatId} | Load a saved chat. |
+| GET | /specialists/chats/{chatId}/export | Download one chat as JSON. |
+| DELETE | /specialists/chats/{chatId} | Delete a saved chat. |
 | POST | /solutions/{id}/handoff/{service} | Hand off to a service workspace with context. |
 | POST | /solutions/{id}/chat | Send a message (`{message, mode}`); the analysis is refined using the answers and conversation and the reply is appended to `state.conversation`. |
 | PUT | /solutions/{id}/questions/{questionId} | Answer a clarifying question (`{answer}`); an empty answer reopens it. |

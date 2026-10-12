@@ -192,6 +192,43 @@ export interface SpecialistDefinition {
   order: number;
 }
 
+export interface StoredChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  at: string;
+  // User messages: the task requested. Assistant messages: how the reply was produced.
+  intent?: string;
+  mode?: AnalysisMode;
+  model?: string;
+  warning?: string;
+  suggestions?: string[];
+  samples?: { language: string; title: string; code: string }[];
+  validation?: { verdict: string; findings: string[] };
+  followUps?: string[];
+  // Present when the message records a planner consultation about a solution.
+  consult?: Record<string, unknown>;
+}
+
+export interface SpecialistChat {
+  id: string;
+  tenantId: AdspId;
+  service: string;
+  solutionId?: string;
+  title: string;
+  createdById: string;
+  createdByName: string;
+  createdOn: Date;
+  updatedOn: Date;
+  messages: StoredChatMessage[];
+}
+
+export interface SpecialistChatCriteria {
+  tenantId: AdspId;
+  createdById: string;
+  service?: string;
+  solutionId?: string;
+}
+
 export interface PlannerConfiguration {
   patterns?: Record<string, BusinessPattern>;
 }
