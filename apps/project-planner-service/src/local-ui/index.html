@@ -410,12 +410,14 @@
       function renderWorkspace() {
         if (!current) return;
         $('workspace').innerHTML = `<goa-container accent="thick">
-          <h2 style="margin-top:0">${esc(current.name)} <goa-badge type="information" content="${esc(current.status)}"></goa-badge></h2>
-          <div class="row" aria-label="Export">
-            <goa-button id="exportJsonBtn" type="secondary" size="compact" leadingicon="download">Download JSON</goa-button>
-            <goa-button id="exportMdBtn" type="secondary" size="compact" leadingicon="document-text">Download report (.md)</goa-button>
+          <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+            <h2 style="margin:0">${esc(current.name)} <goa-badge type="information" content="${esc(current.status)}"></goa-badge></h2>
+            <div class="row" aria-label="Export">
+              <goa-button id="exportJsonBtn" type="secondary" size="compact" leadingicon="download">Download JSON</goa-button>
+              <goa-button id="exportMdBtn" type="secondary" size="compact" leadingicon="document-text">Download report (.md)</goa-button>
+            </div>
           </div>
-          <goa-spacer vspacing="m"></goa-spacer>
+<goa-spacer vspacing="m"></goa-spacer>
           <div class="row" role="group" aria-label="View"><strong>View:</strong>${VIEWS.map(([id, label]) => `<goa-button type="${view === id ? 'primary' : 'secondary'}" size="compact" data-view="${id}">${label}</goa-button>`).join('')}</div>
           <goa-spacer vspacing="m"></goa-spacer>
           ${view === 'compressed' ? compressedHtml() : `<div class="row" role="toolbar" aria-label="Sections">${tabs.map(([id, label]) => `<goa-button type="${section === id ? 'primary' : 'tertiary'}" size="compact" data-section="${id}">${esc(label)}</goa-button>`).join('')}</div>
