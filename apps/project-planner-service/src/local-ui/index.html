@@ -10,7 +10,9 @@
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <style>
       body { margin: 0; font-family: var(--goa-font-family-sans, 'acumin-pro-semi-condensed', Arial, sans-serif); background: #fff; color: #333; }
-      main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+      main { max-width: 1840px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+      #workspace { overflow-wrap: anywhere; }
+      #workspace pre { max-width: 100%; overflow-x: auto; }
       .layout > * { min-width: 0; }
       .layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start; }
       @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
@@ -55,7 +57,7 @@
           </goa-container>
         </aside>
 
-        <section aria-label="Solution workspace" id="workspace">
+        <section aria-label="Workplace" id="workspace">
           <goa-callout type="information" heading="No solution selected">
             Create a solution or choose one from the list to describe a business problem and get a pattern match.
           </goa-callout>
@@ -434,7 +436,7 @@
       function compressedHtml() {
         const st = current.state;
         const rail = `<nav class="cv-rail" aria-label="Navigation">
-          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Solution workspace</goa-button>
+          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Workplace</goa-button>
           <h4>Specialists</h4>
           ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${chatCounts[s.service] ? `<strong>${esc(s.displayName.replace(/ service$/i, ''))} (${chatCounts[s.service]})</strong>` : esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
           <h4>Reference</h4>
