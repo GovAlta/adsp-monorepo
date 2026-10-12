@@ -1969,6 +1969,25 @@ describe('planner router routes', () => {
         expect(res.body.state.discovery.messages).toHaveLength(3);
       });
 
+      it('keeps the solution presented when a later reply scores below the threshold', async () => {
+        storeSolution(vagueProblem, {
+          discovery: {
+            messages: [],
+            confidence: 70,
+            threshold: 50,
+            factors: [],
+            ready: true,
+            mode: 'ai',
+            updatedOn: '2026-03-01T10:00:00.000Z',
+          },
+        });
+        llm.discover.mockResolvedValueOnce({ reply: 'Noted.', factors: lowFactors, model: MODEL });
+
+        const res = await discovery(buildApp(owner, true, llm), { message: 'One more detail.' });
+
+        expect(res.body.state.discovery.ready).toBe(true);
+      });
+
       it('discards earlier discovery messages when restart is true', async () => {
         storeSolution(vagueProblem, {
           discovery: {

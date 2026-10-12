@@ -636,7 +636,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         }
 
         const confidence = computeConfidence(factors);
-        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
+        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true || (!req.body.restart && solution.state.discovery?.ready === true);
         reply = reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;

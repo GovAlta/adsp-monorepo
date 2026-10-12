@@ -423,8 +423,8 @@
             const recs = (st.hypotheses[0]?.recommendations || []).slice().sort((a, b) => a.order - b.order);
             const thread = (dsc?.messages || []).map((m) => `<goa-callout type="${m.role === 'user' ? 'information' : 'important'}" heading="${m.role === 'user' ? 'You' : 'Planner'}" size="medium"><div style="white-space:pre-wrap">${esc(m.content)}</div></goa-callout>`).join('');
             const discoveryControls = dsc
-              ? `${ready ? '' : `<goa-textarea id="discoverInput" name="discoverInput" rows="4" width="100%" value="${esc(discoverDraft)}" aria-label="Your reply"></goa-textarea>`}
-                <div class="row">${ready ? '' : `<goa-button id="discoverSend" type="primary">${busy ? 'Thinking…' : 'Send reply'}</goa-button><goa-button id="discoverForce" type="secondary">Show solution now</goa-button>`}
+              ? `<goa-textarea id="discoverInput" name="discoverInput" rows="4" width="100%" placeholder="${ready ? 'Add details or answer further questions to refine the solution' : 'Type your answers here'}" value="${esc(discoverDraft)}" aria-label="Your reply"></goa-textarea>
+                <div class="row"><goa-button id="discoverSend" type="primary">${busy ? 'Thinking…' : ready ? 'Send & refine solution' : 'Send reply'}</goa-button>${ready ? '' : '<goa-button id="discoverForce" type="secondary">Show solution now</goa-button>'}
                 <goa-button id="discoverRestart" type="tertiary">Start over</goa-button></div>`
               : `<div class="row"><goa-button id="discoverStart" type="primary">${busy ? 'Thinking…' : 'Start discovery'}</goa-button></div>`;
             panes = `<div class="cv-panes">
