@@ -139,33 +139,14 @@ components:
     tags:
       - Event
     description: >
-      Count logged events matching the supplied criteria. Requires the event-reader role and a tenant context.
+      Count logged events matching the supplied criteria. Requires the event-reader or value service reader role and a tenant context.
       Namespace and event name are each optional and independent of one another; other supplied criteria
-      (timestamp range, correlation ID) are combined with namespace and name when determining the count. The
+      (timestamp range, correlation ID) are combined with namespace and name from the context when determining the count. The
       count represents all events accessible to the tenant that match the supplied criteria.
-
 
       Event logging is provided via the value service, but consumers of this API do not need to call the value
       service directly.
     parameters:
-      - name: namespace
-        description: Namespace of the events to count. If omitted, events of all namespaces are counted.
-        in: query
-        required: false
-        schema:
-          type: string
-          minLength: 1
-          maxLength: 50
-        example: application-events
-      - name: name
-        description: Name of the events to count. If omitted, events of all names are counted.
-        in: query
-        required: false
-        schema:
-          type: string
-          minLength: 1
-          maxLength: 50
-        example: user-registration
       - name: timestampMin
         description: Inclusive minimum value of the event timestamp.
         in: query
