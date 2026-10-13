@@ -13,11 +13,13 @@ export function createBuilderPreviewClient(builderAppUrl: string) {
       name: 'Builder preview',
       description: 'Used by the preview of an application in the builder app to make platform API requests.',
       redirectUris: [`${origin}/token-handler/clients/${BUILDER_PREVIEW_CLIENT_ID}/callback`],
-      successRedirectUrl: '/',
-      failureRedirectUrl: '/',
+      // The preview signs in with a separate window, which this page closes.
+      successRedirectUrl: '/preview-sign-in-complete.html',
+      failureRedirectUrl: '/preview-sign-in-complete.html',
+      // The services are the upstreams, so the preview's requests use the same paths as for the services directly.
       targets: {
-        'form-service': { upstream: adspId`urn:ads:platform:form-service:v1`.toString() },
-        'file-service': { upstream: adspId`urn:ads:platform:file-service:v1`.toString() },
+        'form-service': { upstream: adspId`urn:ads:platform:form-service`.toString() },
+        'file-service': { upstream: adspId`urn:ads:platform:file-service`.toString() },
       },
     },
   };
