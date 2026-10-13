@@ -177,7 +177,7 @@ export async function loadAdspFormDefinition(
     throw new Error('Missing ADSP formServiceBaseUrl or definitionId in src/config/adspForm.ts.');
   }
 
-  const response = await apiFetch(`${baseUrl}/form/v1/form-definitions/${definitionId}`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/definitions/${definitionId}`, {
     method: 'GET',
     headers: buildHeaders(config),
   });
