@@ -1,7 +1,7 @@
 import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { type AdspFormStarterConfig } from '../config/adspForm';
-import { getCsrfHeaders } from './tokenHandler';
+import { apiFetch } from './tokenHandler';
 
 export interface AdspFormDefinition {
   id: string;
@@ -85,7 +85,7 @@ function checkSignIn(config: AdspFormStarterConfig, response: Response) {
   }
 }
 
-function buildHeaders(config: AdspFormStarterConfig, method = 'GET'): HeadersInit {
+function buildHeaders(config: AdspFormStarterConfig): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
@@ -93,11 +93,6 @@ function buildHeaders(config: AdspFormStarterConfig, method = 'GET'): HeadersIni
   const token = config.accessToken?.trim();
   if (token) {
     headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-  }
-
-  // The token handler adds the access token, and needs the CSRF header for requests other than GET.
-  if (config.tokenHandler && method !== 'GET') {
-    Object.assign(headers, getCsrfHeaders());
   }
 
   return headers;
@@ -182,7 +177,7 @@ export async function loadAdspFormDefinition(
     throw new Error('Missing ADSP formServiceBaseUrl or definitionId in src/config/adspForm.ts.');
   }
 
-  const response = await fetch(`${baseUrl}/form/v1/form-definitions/${definitionId}`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/form-definitions/${definitionId}`, {
     method: 'GET',
     headers: buildHeaders(config),
   });
@@ -214,9 +209,9 @@ export async function submitAdspForm(
     throw new Error('Missing ADSP formServiceBaseUrl in src/config/adspForm.ts.');
   }
 
-  const response = await fetch(`${baseUrl}/form/v1/forms`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/forms`, {
     method: 'POST',
-    headers: buildHeaders(config, 'POST'),
+    headers: buildHeaders(config),
     body: JSON.stringify({
       definitionId,
       data,
