@@ -234,21 +234,44 @@ Then('the user clicks Cancel button in notification type modal', function () {
   cy.wait(1000);
 });
 
+When('the user clicks back to notification types link on notification type details pane', function () {
+  notificationsObj
+    .notificationTypeDetailsPaneBackToNotificationTypesLink()
+    .shadow()
+    .find('button')
+    .click({ force: true });
+  cy.wait(1000);
+});
+
 Then(
-  'the user {string} the notification type card of {string}, {string}, {string}, {string}, {string}',
-  function (viewOrNot, name, desc, roles: string, publicOrNot, selfService) {
-    roles = roles.replace('public', '');
+  'the user {string} the notification type of {string}, {string}, {string}, {string}',
+  function (viewOrNot, name, typeId, publicOrNot: string, selfServiceOrNot: string) {
+    const capitalizedPublicOrNot = publicOrNot.charAt(0).toUpperCase() + publicOrNot.slice(1);
+    const capitalizedSelfServiceOrNot = selfServiceOrNot.charAt(0).toUpperCase() + selfServiceOrNot.slice(1);
+
     if (viewOrNot == 'views') {
-      notificationsObj.notificationTypeCardTitle(name).should('exist');
-      notificationsObj.notificationTypeCardDesc(name).invoke('text').should('contain', desc);
-      notificationsObj.notificationTypeSubscriberRoles(name).invoke('text').should('contain', roles);
-      notificationsObj.notificationTypePublicSubscription(name).invoke('text').should('contain', publicOrNot);
-      notificationsObj.notificationTypeSelfService(name).invoke('text').should('contain', selfService);
+      notificationsObj
+        .notificationTypeRows(name, typeId, capitalizedPublicOrNot, capitalizedSelfServiceOrNot)
+        .should('exist');
     } else if (viewOrNot == 'should not view') {
-      notificationsObj.notificationTypeCardTitle(name).should('not.exist');
+      notificationsObj
+        .notificationTypeRows(name, typeId, capitalizedPublicOrNot, capitalizedSelfServiceOrNot)
+        .should('not.exist');
     } else {
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
+  }
+);
+
+Then(
+  'the user clicks the notification type of {string}, {string}, {string}, {string}',
+  function (name, typeId, publicOrNot: string, selfServiceOrNot: string) {
+    const capitalizedPublicOrNot = publicOrNot.charAt(0).toUpperCase() + publicOrNot.slice(1);
+    const capitalizedSelfServiceOrNot = selfServiceOrNot.charAt(0).toUpperCase() + selfServiceOrNot.slice(1);
+
+    notificationsObj
+      .notificationTypeRows(name, typeId, capitalizedPublicOrNot, capitalizedSelfServiceOrNot)
+      .click({ force: true });
   }
 );
 
@@ -256,14 +279,14 @@ Then('the user views Add notification type button on Notification types page', f
   notificationsObj.addANotificationTypeButtonOnNotificationTypesPage().should('exist');
 });
 
-When('the user clicks {string} button for the notification type card of {string}', function (buttonType, cardTitle) {
+When('the user clicks {string} button on {string} notification type details pane', function (buttonType, typeName) {
+  notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
   switch (buttonType) {
     case 'edit':
-      notificationsObj.notificationTypeEditBtn(cardTitle).shadow().find('button').click({ force: true });
-      cy.wait(2000); // wait for roles to show up for editing
+      notificationsObj.notificationTypeEditBtn().shadow().find('button').click({ force: true });
       break;
     case 'delete':
-      notificationsObj.notificationTypeDeleteBtn(cardTitle).shadow().find('button').click({ force: true });
+      notificationsObj.notificationTypeDeleteBtn().shadow().find('button').click({ force: true });
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -287,13 +310,9 @@ Given('a tenant admin user is on notification types page', function () {
   cy.wait(2000);
 });
 
-When('the user clicks Select event button for {string}', function (cardTitle) {
-  notificationsObj
-    .notificationTypeSelectAnEventBtn(cardTitle)
-    .shadow()
-    .find('button')
-    .scrollIntoView()
-    .click({ force: true });
+When('the user clicks Add event button on {string} notification type details pane', function (typeName) {
+  notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
+  notificationsObj.notificationTypeSelectAnEventBtn().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -345,60 +364,53 @@ When('the user clicks Add button in Add an email template page', function () {
   cy.wait(2000);
 });
 
-Then('the user {string} the event of {string} in {string}', function (viewOrNot, event, cardTitle) {
-  cy.wait(2000); // To wait for the record to show up in the grid before validating the record existence
-  let numOfMatch = 0;
-  if (viewOrNot == 'views') {
-    notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
-      }
-      expect(numOfMatch).equals(1);
-    });
-  } else if (viewOrNot == 'should not view') {
-    notificationsObj.notificationTypeCardFooterItems(cardTitle).then((footerItems) => {
-      if (footerItems.length == 1) {
-        cy.log('No event for the notification type');
-      } else {
-        notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
-          for (let i = 0; i < elements.length; i++) {
-            if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
-          }
-          expect(numOfMatch).equals(0);
-        });
-      }
-    });
-  } else {
-    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+Then(
+  'the user {string} the event of {string} on {string} notification type details pane',
+  function (viewOrNot, eventName: string, typeName: string) {
+    cy.wait(2000); // To wait for the record to show up in the grid before validating the record existence
+    if (viewOrNot == 'views') {
+      notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
+      notificationsObj.notificaitonTypeDetailsPaneEventTitles().then((elements) => {
+        const matchingEventTitles = Array.from(elements).filter(
+          (element) => element.innerText.trim() === eventName.trim()
+        );
+        expect(matchingEventTitles.length).equals(1);
+      });
+    } else if (viewOrNot == 'should not view') {
+      notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
+      notificationsObj.notificaitonTypeDetailsPaneEventTitles().then((elements) => {
+        const eventFound = Array.from(elements).some((element) => element.innerText.trim() === eventName.trim());
+        expect(eventFound).equals(false);
+      });
+    } else {
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
   }
-});
+);
 
-When('the user clicks {string} button for {string} in {string}', function (buttonName: string, event, cardTitle) {
-  switch (buttonName.toLowerCase()) {
-    case 'edit':
-      notificationsObj.notificationTypeEventEditButton(cardTitle, event).click({ force: true });
-      cy.wait(2000);
-      break;
-    case 'delete':
-      notificationsObj.eventDeleteIcon(cardTitle, event).shadow().find('button').click({ force: true });
-      break;
-    case 'reset':
-      notificationsObj.notificationTypeEventResetBtn(cardTitle, event).click({ force: true });
-      break;
-    default:
-      expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'reset']);
+When(
+  'the user clicks {string} button for {string} on {string} notification type details pane',
+  function (buttonName: string, event, typeName) {
+    switch (buttonName.toLowerCase()) {
+      case 'edit':
+        notificationsObj.notificationTypeEventEditButton(typeName, event).click({ force: true });
+        cy.wait(2000);
+        break;
+      case 'delete':
+        notificationsObj
+          .notificationTypeDetailsPaneEventDeleteIcon(event)
+          .shadow()
+          .find('button')
+          .click({ force: true });
+        break;
+      case 'reset':
+        notificationsObj.notificationTypeEventResetBtn(typeName, event).click({ force: true });
+        break;
+      default:
+        expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'reset']);
+    }
   }
-});
-
-Then('the user {string} the notification type card of {string}', function (viewOrNot, name) {
-  if (viewOrNot == 'views') {
-    notificationsObj.notificationTypeCardTitle(name).should('exist');
-  } else if (viewOrNot == 'should not view') {
-    notificationsObj.notificationTypeCardTitle(name).should('not.exist');
-  } else {
-    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-  }
-});
+);
 
 Then(
   'the user views {string} has self-service-allowed attribute is {string}',
