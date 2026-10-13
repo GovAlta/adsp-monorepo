@@ -1,9 +1,25 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { Logger } from 'winston';
 import { ServiceRegistrar, ServiceRegistration, ServiceRole } from './index';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
 import { AdspId, adspId, retry } from '../utils';
+
+const MAX_RESPONSE_LENGTH = 1000;
+
+/**
+ * Describes an error, including the response of a failed request so that the reason for the failure (e.g. which
+ * property failed validation) is in the log; the message of the error only has the status code.
+ */
+export function describeError(err: unknown): string {
+  let description = `${err}`;
+  const data = isAxiosError(err) ? err.response?.data : undefined;
+  if (data !== undefined && data !== '') {
+    const body = typeof data === 'string' ? data : JSON.stringify(data);
+    description += ` Response: ${body.length > MAX_RESPONSE_LENGTH ? `${body.substring(0, MAX_RESPONSE_LENGTH)}...` : body}`;
+  }
+  return description;
+}
 
 export class ServiceRegistrarImpl implements ServiceRegistrar {
   private readonly LOG_CONTEXT = { context: 'ServiceRegistration' };
@@ -175,14 +191,14 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
         try {
           await this.#tryUpdateConfiguration(serviceUrl, attempt, serviceId, update, name);
         } catch (err) {
-          this.logger.debug(`Try ${attempt} failed with error. ${err}`, this.LOG_CONTEXT);
+          this.logger.debug(`Try ${attempt} failed with error. ${describeError(err)}`, this.LOG_CONTEXT);
           throw err;
         }
       });
 
       this.logger.info(`Updated registration configuration of ${serviceId}.`, this.LOG_CONTEXT);
     } catch (err) {
-      this.logger.error(`Error encountered registering configuration. ${err}`);
+      this.logger.error(`Error encountered registering configuration of ${serviceId}. ${describeError(err)}`, this.LOG_CONTEXT);
       throw err;
     }
   }

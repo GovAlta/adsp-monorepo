@@ -1,9 +1,18 @@
 import axios from 'axios';
 import { Logger } from 'winston';
 import { adspId } from '../utils';
-import { ServiceRegistrarImpl } from './registration';
+import { ServiceRegistrarImpl, describeError } from './registration';
 
-jest.mock('axios');
+// The registration is not retried, so that a failure is reported without waiting for the retries.
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+  retry: { execute: (fn: (context: { attempt: number }) => Promise<unknown>) => fn({ attempt: 1 }) },
+}));
+
+jest.mock('axios', () => ({
+  ...jest.createMockFromModule<typeof import('axios')>('axios'),
+  isAxiosError: (err: unknown) => !!(err as { isAxiosError?: boolean })?.isAxiosError,
+}));
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('ServiceRegistrar', () => {
@@ -232,5 +241,47 @@ describe('ServiceRegistrar', () => {
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('test-service');
     expect(axiosMock.patch.mock.calls[0][1]).toMatchObject({ update: configuration });
+  });
+
+  it('can log the response of a failed registration', async () => {
+    const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
+    (logger.error as jest.Mock).mockClear();
+
+    axiosMock.patch.mockRejectedValue(
+      Object.assign(new Error('Request failed with status code 400'), {
+        isAxiosError: true,
+        response: { status: 400, data: { errorMessage: "must have required property 'id'" } },
+      })
+    );
+
+    await expect(
+      registrar.register({
+        serviceId: adspId`urn:ads:platform:test-service`,
+        displayName: 'Test service',
+        description: 'This is a test service.',
+        serviceConfigurations: [{ serviceId: adspId`urn:ads:platform:test-service`, configuration: {} }],
+      })
+    ).rejects.toThrow('status code 400');
+
+    const message = (logger.error as jest.Mock).mock.calls[0][0];
+    expect(message).toContain('urn:ads:platform:test-service');
+    expect(message).toContain("must have required property 'id'");
+  });
+
+  describe('describeError', () => {
+    it('can describe an error without a response', () => {
+      expect(describeError(new Error('failed'))).toBe('Error: failed');
+    });
+
+    it('can describe an error with a text response', () => {
+      const err = Object.assign(new Error('failed'), { isAxiosError: true, response: { data: 'Bad input' } });
+      expect(describeError(err)).toBe('Error: failed Response: Bad input');
+    });
+
+    it('can truncate a long response', () => {
+      const err = Object.assign(new Error('failed'), { isAxiosError: true, response: { data: 'x'.repeat(2000) } });
+      expect(describeError(err).length).toBeLessThan(1100);
+      expect(describeError(err)).toMatch(/\.\.\.$/);
+    });
   });
 });
