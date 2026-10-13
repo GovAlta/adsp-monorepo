@@ -14,6 +14,7 @@ import {
   DeleteTokenHandlerClientAction,
   GetClientRegistrationAction,
   RegisterTokenHandlerClientAction,
+  FetchCoreTokenHandlerClientsSuccess,
   FetchTokenHandlerClientsSuccess,
   SaveTokenHandlerClientSuccess,
   DeleteTokenHandlerClientFailed,
@@ -23,6 +24,7 @@ import {
   RegisterTokenHandlerClientSuccess,
   GetClientRegistration,
 } from './actions';
+import { TokenHandlerClient, TokenHandlerTarget } from './models';
 
 export function* fetchTokenHandlerClients(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -42,6 +44,48 @@ export function* fetchTokenHandlerClients(): SagaIterator {
       yield put(ErrorNotification({ error: err }));
     }
   }
+}
+
+interface CoreClientResponse extends Omit<TokenHandlerClient, 'targets' | 'core'> {
+  targets?: TokenHandlerTarget[];
+}
+
+// Core clients are provided by the token handler service, because they come from the core configuration which
+// tenant administrators cannot read.
+export function* fetchCoreTokenHandlerClients(): SagaIterator {
+  const tokenHandlerApiUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.tokenHandlerApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+
+  let clients: Record<string, TokenHandlerClient> = {};
+  if (tokenHandlerApiUrl && token) {
+    try {
+      const { data } = yield call(axios.get, `${tokenHandlerApiUrl}/token-handler/v1/clients`, {
+        params: { core: true },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      clients = ((data as CoreClientResponse[]) || []).reduce(
+        (result, { targets, ...client }) => ({
+          ...result,
+          [client.id]: {
+            ...client,
+            core: true,
+            targets: (targets || []).reduce((result, target) => ({ ...result, [target.id]: target }), {}),
+          },
+        }),
+        {}
+      );
+    } catch (err) {
+      // Token handler versions without core clients do not have the resource.
+      if (!(axios.isAxiosError(err) && err.response?.status === 404)) {
+        yield put(ErrorNotification({ error: err }));
+      }
+    }
+  }
+
+  // Core clients are optional, so loading is complete whether or not there are any.
+  yield put(FetchCoreTokenHandlerClientsSuccess(clients));
 }
 
 export function* saveTokenHandlerClient({ payload: client }: SaveTokenHandlerClientAction): SagaIterator {
@@ -186,6 +230,7 @@ export function* registerTokenHandlerClient({
 
 export function* watchTokenHandlerSagas(): Generator {
   yield takeEvery(FETCH_TOKEN_HANDLER_CLIENTS, fetchTokenHandlerClients);
+  yield takeLatest(FETCH_TOKEN_HANDLER_CLIENTS, fetchCoreTokenHandlerClients);
   yield takeEvery(SAVE_TOKEN_HANDLER_CLIENT, saveTokenHandlerClient);
   yield takeEvery(DELETE_TOKEN_HANDLER_CLIENT, deleteTokenHandlerClient);
   yield takeLatest(GET_CLIENT_REGISTRATION, getClientRegistration);

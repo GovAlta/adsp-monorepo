@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoabButton, GoabTable } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabTable } from '@abgov/react-components';
 import { ExternalLink } from '@components/icons/ExternalLink';
-import { RootState } from '@store/index';
 import { FetchTokenHandlerClients, SaveTokenHandlerClient } from '@store/tokenHandler/actions';
+import { selectTokenHandlerClients } from '@store/tokenHandler/selectors';
 import { TokenHandlerClient } from '@store/tokenHandler/models';
 import { TokenHandlerClientModal } from './TokenHandlerClientModal';
 import styled from 'styled-components';
@@ -14,7 +14,7 @@ interface Props {
 
 export const TokenHandlerClientList: FunctionComponent<Props> = ({ onSelect }) => {
   const dispatch = useDispatch();
-  const clients = useSelector((state: RootState) => state.tokenHandler.clients);
+  const clients = useSelector(selectTokenHandlerClients);
   const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
@@ -72,7 +72,15 @@ export const TokenHandlerClientList: FunctionComponent<Props> = ({ onSelect }) =
                 style={{ cursor: 'pointer' }}
                 data-testid={`client-row-${client.id}`}
               >
-                <td>{client.name}</td>
+                <td>
+                  {client.name}
+                  {client.core && (
+                    <>
+                      {' '}
+                      <GoabBadge type="information" content="Platform" icon={false} testId={`core-badge-${client.id}`} />
+                    </>
+                  )}
+                </td>
                 <td>{client.id}</td>
                 <td>{Object.keys(client.targets || {}).length}</td>
               </tr>

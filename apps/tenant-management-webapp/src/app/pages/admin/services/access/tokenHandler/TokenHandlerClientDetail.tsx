@@ -6,6 +6,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import { RootState } from '@store/index';
+import { selectTokenHandlerClients } from '@store/tokenHandler/selectors';
 import {
   DeleteTokenHandlerClient,
   FetchTokenHandlerClients,
@@ -27,8 +28,9 @@ interface Props {
 export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, onBack }) => {
   const dispatch = useDispatch();
 
-  const clientsLoaded = useSelector((state: RootState) => !!state.tokenHandler.clients);
-  const client = useSelector((state: RootState) => state.tokenHandler.clients?.[clientId]);
+  const clients = useSelector(selectTokenHandlerClients);
+  const clientsLoaded = !!clients;
+  const client = clients?.[clientId];
   const keycloakClientId = useSelector((state: RootState) => state.tokenHandler.registrations?.[clientId]);
   const registrationFailed = useSelector((state: RootState) => !!state.tokenHandler.registrationErrors?.[clientId]);
   // Links to the specific client when its Keycloak ID is known, otherwise to the realm's clients.
@@ -106,6 +108,7 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
   }
 
   const targets = Object.values(client.targets || {});
+  const isCore = !!client.core;
   const isRegistered = typeof keycloakClientId === 'string';
   const registrationChecked = keycloakClientId !== undefined;
 
@@ -116,50 +119,89 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
       </GoabButton>
 
       <TitleRow>
-        <h2>{client.name}</h2>
-        <GoabButton
-          type="tertiary"
-          variant="destructive"
-          size="compact"
-          onClick={() => setDeleteOpen(true)}
-          testId="delete-client-btn"
-        >
-          Delete client
-        </GoabButton>
+        <h2>
+          {client.name}
+          {isCore && (
+            <>
+              {' '}
+              <GoabBadge type="information" content="Platform" icon={false} testId="core-client-badge" />
+            </>
+          )}
+        </h2>
+        {!isCore && (
+          <GoabButton
+            type="tertiary"
+            variant="destructive"
+            size="compact"
+            onClick={() => setDeleteOpen(true)}
+            testId="delete-client-btn"
+          >
+            Delete client
+          </GoabButton>
+        )}
       </TitleRow>
+      {isCore && (
+        <p data-testid="core-client-description">
+          {client.description ? `${client.description} ` : ''}
+          This client is provided by the platform for all tenants. Its settings and targets cannot be changed; register
+          it for your tenant to use it.
+        </p>
+      )}
 
       <SectionHeader>
         <h3>Settings</h3>
-        <GoabButton type="secondary" size="compact" onClick={() => setEditClientOpen(true)} testId="edit-client-btn">
-          Edit
-        </GoabButton>
+        {!isCore && (
+          <GoabButton type="secondary" size="compact" onClick={() => setEditClientOpen(true)} testId="edit-client-btn">
+            Edit
+          </GoabButton>
+        )}
       </SectionHeader>
       <GoabTable width="100%" testId="client-settings-table">
         <tbody>
           <tr>
-            <td><strong>Name</strong></td>
+            <td>
+              <strong>Name</strong>
+            </td>
             <td>{client.name}</td>
           </tr>
           <tr>
-            <td><strong>ID</strong></td>
+            <td>
+              <strong>ID</strong>
+            </td>
             <td>{client.id}</td>
           </tr>
           <tr>
-            <td><strong>Success redirect URL</strong></td>
+            <td>
+              <strong>Success redirect URL</strong>
+            </td>
             <td>{client.successRedirectUrl || '/'}</td>
           </tr>
           <tr>
-            <td><strong>Failure redirect URL</strong></td>
+            <td>
+              <strong>Failure redirect URL</strong>
+            </td>
             <td>{client.failureRedirectUrl || '/'}</td>
           </tr>
           {client.idpHint && (
             <tr>
-              <td><strong>IDP hint</strong></td>
+              <td>
+                <strong>IDP hint</strong>
+              </td>
               <td>{client.idpHint}</td>
             </tr>
           )}
+          {isCore && client.redirectUris && client.redirectUris.length > 0 && (
+            <tr>
+              <td>
+                <strong>Redirect URIs</strong>
+              </td>
+              <td>{client.redirectUris.join(', ')}</td>
+            </tr>
+          )}
           <tr>
-            <td><strong>Keycloak logout</strong></td>
+            <td>
+              <strong>Keycloak logout</strong>
+            </td>
             <td>{client.keycloakLogout ? 'Ends the Keycloak session' : 'Token handler session only'}</td>
           </tr>
         </tbody>
@@ -176,13 +218,7 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
           />
         )}
         {registrationChecked && !isRegistered && (
-          <GoabButton
-            type="primary"
-            size="compact"
-            onClick={handleRegister}
-            disabled={busy}
-            testId="register-btn"
-          >
+          <GoabButton type="primary" size="compact" onClick={handleRegister} disabled={busy} testId="register-btn">
             {busy ? 'Registering...' : 'Register'}
           </GoabButton>
         )}
@@ -216,19 +252,16 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
 
       <SectionHeader>
         <h3>Targets</h3>
-        <GoabButton
-          type="secondary"
-          size="compact"
-          onClick={() => setEditTarget(null)}
-          testId="add-target-btn"
-        >
-          Add target
-        </GoabButton>
+        {!isCore && (
+          <GoabButton type="secondary" size="compact" onClick={() => setEditTarget(null)} testId="add-target-btn">
+            Add target
+          </GoabButton>
+        )}
       </SectionHeader>
       <p data-testid="targets-description">
-        Targets are the services and APIs that the application can call through the token handler, which adds the
-        user's access token to the requests. Requests other than <code>GET</code> need the <code>X-XSRF-TOKEN</code>{' '}
-        header, set to the value of the <code>XSRF-TOKEN</code> cookie.
+        Targets are the services and APIs that the application can call through the token handler, which adds the user's
+        access token to the requests. Requests other than <code>GET</code> need the <code>X-XSRF-TOKEN</code> header,
+        set to the value of the <code>XSRF-TOKEN</code> cookie.
       </p>
       {targets.length > 0 ? (
         <GoabTable width="100%" testId="targets-table">
@@ -236,7 +269,7 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
             <tr>
               <th>Target ID</th>
               <th>Upstream URN</th>
-              <th>Actions</th>
+              {!isCore && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -244,22 +277,24 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
               <tr key={t.id}>
                 <td>{t.id}</td>
                 <td>{t.upstream}</td>
-                <td>
-                  <GoAContextMenu>
-                    <GoAContextMenuIcon
-                      type="create"
-                      title="Edit target"
-                      onClick={() => setEditTarget(t)}
-                      testId={`edit-target-${t.id}`}
-                    />
-                    <GoAContextMenuIcon
-                      type="trash"
-                      title="Delete target"
-                      onClick={() => handleDeleteTarget(t.id)}
-                      testId={`delete-target-${t.id}`}
-                    />
-                  </GoAContextMenu>
-                </td>
+                {!isCore && (
+                  <td>
+                    <GoAContextMenu>
+                      <GoAContextMenuIcon
+                        type="create"
+                        title="Edit target"
+                        onClick={() => setEditTarget(t)}
+                        testId={`edit-target-${t.id}`}
+                      />
+                      <GoAContextMenuIcon
+                        type="trash"
+                        title="Delete target"
+                        onClick={() => handleDeleteTarget(t.id)}
+                        testId={`delete-target-${t.id}`}
+                      />
+                    </GoAContextMenu>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -295,8 +330,6 @@ export const TokenHandlerClientDetail: FunctionComponent<Props> = ({ clientId, o
           onClose={() => setEditTarget(undefined)}
         />
       )}
-
-
     </DetailLayout>
   );
 };
