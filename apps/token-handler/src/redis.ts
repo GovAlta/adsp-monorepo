@@ -68,7 +68,9 @@ class RedisClientRegistrationRepository implements ClientCredentialRepository {
   }
 
   private getKey(client: Client) {
-    return `${this.prefix}${client.tenantId.resource}${client.id}`;
+    // Core clients are registered by each tenant separately from the clients of the tenant, and have their own
+    // credentials even if a tenant has a client with the same ID.
+    return `${this.prefix}${client.core ? 'core:' : ''}${client.tenantId.resource}${client.id}`;
   }
 }
 

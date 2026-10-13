@@ -100,6 +100,39 @@ describe('AuthenticationClient', () => {
       expect(result).toBeTruthy();
     });
 
+    it('can register client with the redirect URIs of the client configuration', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        directoryMock,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          name: 'test',
+          redirectUris: ['https://frontend/preview', 'https://frontend/callback'],
+          targets: {},
+        }
+      );
+
+      axiosMock.post.mockResolvedValueOnce({
+        data: {
+          client_id: 'test-123',
+          client_secret: 'secret secret',
+          registration_client_uri: 'http://access-service/registration/clients/test-123',
+          registration_access_token: 'reg token 123',
+        },
+      });
+      repositoryMock.get.mockResolvedValueOnce(null);
+
+      await client.register(tenant, 'abc-123', 'https://frontend/callback');
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ redirect_uris: ['https://frontend/preview', 'https://frontend/callback'] }),
+        expect.anything()
+      );
+    });
+
     it('can register client without redirect URI', async () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),

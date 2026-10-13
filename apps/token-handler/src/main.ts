@@ -15,6 +15,7 @@ import {
   ServiceRoles,
   TokenHandlerConfiguration,
   applyTokenHandlerMiddleware,
+  combineClients,
   configurationSchema,
   createRestrictedDirectory,
 } from './token';
@@ -101,12 +102,7 @@ const initializeApp = async (): Promise<express.Application> => {
           repository,
           tenantId,
           tenantId
-            ? {
-                clients: {
-                  ...tenant?.['clients'],
-                  ...core?.['clients'],
-                },
-              }
+            ? { clients: combineClients(tenant?.['clients'], core?.['clients']) }
             : {}
         );
       },
