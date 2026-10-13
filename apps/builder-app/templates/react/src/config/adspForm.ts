@@ -7,6 +7,10 @@ export interface AdspFormStarterConfig {
   definitionId: string;
   formServiceBaseUrl: string;
   accessToken?: string;
+  // Make live requests through the token handler, which signs the user in and adds their access token, instead of
+  // using an access token: set formServiceBaseUrl to '/token-handler/targets/form-service'. Builder preview signs
+  // the user in when the builder loads.
+  tokenHandler?: boolean;
   submitOnCreate: boolean;
 }
 
@@ -20,5 +24,7 @@ export const adspFormConfig: AdspFormStarterConfig = {
   definitionId: 'replace-with-form-definition-id',
   formServiceBaseUrl: 'https://your-tenant.example.adsp.gov.ab.ca',
   accessToken: '',
+  // true: make live requests as the signed in user through the token handler (see AGENTS.md).
+  tokenHandler: false,
   submitOnCreate: true,
 };

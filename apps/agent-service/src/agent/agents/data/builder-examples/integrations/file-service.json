@@ -23,14 +23,15 @@
   },
   "directUploadPattern": {
     "description": "For custom upload UI outside of forms",
-    "codeExample": "// Upload file to File Service\nconst uploadFile = async (file: File, accessToken: string) => {\n  const formData = new FormData();\n  formData.append('file', file);\n  formData.append('type', 'application-document');\n\n  const response = await fetch(`${fileServiceUrl}/file/v1/files`, {\n    method: 'POST',\n    headers: { 'Authorization': `Bearer ${accessToken}` },\n    body: formData\n  });\n\n  const { urn } = await response.json();\n  return urn; // e.g., 'urn:ads:platform:file-service:v1:/files/abc123'\n};"
+    "codeExample": "// Upload a file through the token handler (src/lib/tokenHandler.ts adds the CSRF header)\nimport { apiFetch } from '../lib/tokenHandler';\n\nconst uploadFile = async (file: File) => {\n  const formData = new FormData();\n  formData.append('file', file);\n  formData.append('type', 'application-document');\n\n  // No Content-Type header: the browser sets the multipart boundary.\n  const response = await apiFetch('/token-handler/targets/file-service/file/v1/files', {\n    method: 'POST',\n    body: formData,\n  });\n  if (!response.ok) throw new Error(`Upload failed (${response.status})`);\n\n  const { urn } = await response.json();\n  return urn; // e.g., 'urn:ads:platform:file-service:v1:/files/abc123'\n};"
   },
   "downloadPattern": {
     "description": "Retrieve uploaded files",
-    "codeExample": "// Download file by URN\nconst downloadFile = async (fileUrn: string, accessToken: string) => {\n  const fileId = fileUrn.split('/files/')[1];\n  const response = await fetch(`${fileServiceUrl}/file/v1/files/${fileId}/download`, {\n    headers: { 'Authorization': `Bearer ${accessToken}` }\n  });\n  return response.blob();\n};"
+    "codeExample": "// Download a file by URN\nimport { apiFetch } from '../lib/tokenHandler';\n\nconst downloadFile = async (fileUrn: string) => {\n  const fileId = fileUrn.split('/files/')[1];\n  const response = await apiFetch(`/token-handler/targets/file-service/file/v1/files/${fileId}/download`);\n  if (!response.ok) throw new Error(`Download failed (${response.status})`);\n  return response.blob();\n};"
   },
   "notes": [
-    "File uploads require authentication",
+    "File service requests in Builder preview go through the token handler target 'file-service'; never put a token in the code",
+    "The file type ('type') must exist for the tenant, and the user's role must allow it; show a plain-language message for 403",
     "Validate file types and sizes on client before upload",
     "Store the returned URN, not the file content",
     "Consider showing upload progress for large files"

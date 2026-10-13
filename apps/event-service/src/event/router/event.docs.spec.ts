@@ -9,7 +9,10 @@ import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
 import { EventServiceRoles } from '../role';
 import { DomainEventService } from '../service';
+import { countEvents } from '../valueServiceClient';
 import { createEventRouter } from './event';
+
+jest.mock('../valueServiceClient');
 
 // Verifies the request validation, roles, and error responses documented in event.swagger.yml by sending
 // requests through the router with the real error handler.
@@ -46,20 +49,31 @@ describe('event router documented behaviour', () => {
   const user = (roles: string[], overrides: Partial<User> = {}) =>
     ({ id: 'tester', name: 'Tester', tenantId, isCore: false, roles, ...overrides }) as User;
   const sender = user([EventServiceRoles.sender]);
+  const reader = user([EventServiceRoles.reader]);
 
-  function createApp(currentUser: User | null): Express {
+  const directoryMock = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
+  const tokenProviderMock = { getAccessToken: jest.fn() };
+  const countEventsMock = countEvents as jest.Mock;
+
+  function createApp(currentUser: User | null, withTenant = false): Express {
     const app = express();
     app.use(documented.middleware);
     app.use(express.json());
     app.use((req, _res, next) => {
       req.user = currentUser;
+      req.tenant = withTenant ? ({ id: tenantId } as typeof req.tenant) : undefined;
       req.isAuthenticated = (() => !!currentUser) as typeof req.isAuthenticated;
       req.getConfiguration = jest.fn().mockResolvedValue({ 'application-events': namespace });
       next();
     });
     app.use(
       '/event/v1',
-      createEventRouter({ logger: loggerMock, eventService: eventServiceMock as unknown as DomainEventService }),
+      createEventRouter({
+        logger: loggerMock,
+        eventService: eventServiceMock as unknown as DomainEventService,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+      }),
     );
     app.use(createErrorHandler(loggerMock));
     return app;
@@ -174,5 +188,59 @@ describe('event router documented behaviour', () => {
       .send({ ...validEvent(), tenantId: otherTenantId.toString() });
     expect(res.status).toBe(200);
     expect(eventServiceMock.send.mock.calls[0][0].tenantId.toString()).toBe(otherTenantId.toString());
+  });
+
+  describe('GET /event/v1/events/count', () => {
+    it('responds with the documented example count', async () => {
+      countEventsMock.mockResolvedValueOnce(1024);
+      const res = await request(createApp(reader, true)).get(
+        `/event/v1/events/count?context=${JSON.stringify({ namespace: 'application-events', name: 'user-registration' })}`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ count: 1024 });
+    });
+
+    it('counts events without context, timestamps, or correlationId', async () => {
+      countEventsMock.mockResolvedValueOnce(5);
+      const res = await request(createApp(reader, true)).get('/event/v1/events/count');
+      expect(res.status).toBe(200);
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
+        tenantId,
+        expect.objectContaining({ context: null, correlationId: undefined }),
+      );
+    });
+
+    it('responds 400 when context is not valid JSON', async () => {
+      const res = await request(createApp(reader, true)).get('/event/v1/events/count?context=not-json');
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toMatch(/^Validation failed with error\(s\)/);
+      expect(countEventsMock).not.toHaveBeenCalled();
+    });
+
+    it('responds with the documented error message for an invalid timestampMin', async () => {
+      const res = await request(createApp(reader, true)).get('/event/v1/events/count?timestampMin=yesterday');
+      expect(res.body).toEqual({
+        errorMessage: 'Validation failed with error(s): timestampMin (query) - Invalid value',
+      });
+    });
+
+    it('responds 400 when there is no tenant context', async () => {
+      const coreReader = user([EventServiceRoles.reader], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreReader, false)).get('/event/v1/events/count');
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 401 when there is no authenticated user', async () => {
+      const res = await request(createApp(null)).get('/event/v1/events/count');
+      expect(res.status).toBe(401);
+    });
+
+    it('responds 403 without the event-reader role', async () => {
+      const res = await request(createApp(user([]), true)).get('/event/v1/events/count');
+      expect(res.status).toBe(403);
+      expect(res.body).toEqual({ errorMessage: 'User Tester (ID: tester) not permitted to count events.' });
+    });
   });
 });

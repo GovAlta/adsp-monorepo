@@ -32,6 +32,9 @@ Value definitions are managed through the value service definitions API (`/value
 - Creating a definition adds its namespace if it does not exist, and fails with a 409 if a tenant or core definition with the same namespace and name already exists.
 - Deleting the last definition in a namespace removes the namespace.
 
+> Counting events in the event log is exposed by the [event service](event-service.md#count-events-in-the-event-log).
+> Consumers of the event log count should use that API rather than calling value service directly.
+
 ### Value
 
 A value represents a particular time series stream. Each write results in a new record with a timestamp. It differs from a typical transactional record in that the record has no unique identity; instead it represents another entry in the set of entries for the value. Consumers can write scalars or json objects to values.

@@ -1,6 +1,7 @@
 import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { type AdspFormStarterConfig } from '../config/adspForm';
+import { apiFetch } from './tokenHandler';
 
 export interface AdspFormDefinition {
   id: string;
@@ -77,6 +78,12 @@ const mockDefinition: AdspFormDefinition = {
     ],
   },
 };
+
+function checkSignIn(config: AdspFormStarterConfig, response: Response) {
+  if (config.tokenHandler && response.status === 401) {
+    throw new Error('Your session has ended. Reload the page to sign in again.');
+  }
+}
 
 function buildHeaders(config: AdspFormStarterConfig): HeadersInit {
   const headers: HeadersInit = {
@@ -170,11 +177,12 @@ export async function loadAdspFormDefinition(
     throw new Error('Missing ADSP formServiceBaseUrl or definitionId in src/config/adspForm.ts.');
   }
 
-  const response = await fetch(`${baseUrl}/form/v1/form-definitions/${definitionId}`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/definitions/${definitionId}`, {
     method: 'GET',
     headers: buildHeaders(config),
   });
 
+  checkSignIn(config, response);
   if (!response.ok) {
     throw new Error(`Form definition request failed with status ${response.status}.`);
   }
@@ -201,7 +209,7 @@ export async function submitAdspForm(
     throw new Error('Missing ADSP formServiceBaseUrl in src/config/adspForm.ts.');
   }
 
-  const response = await fetch(`${baseUrl}/form/v1/forms`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/forms`, {
     method: 'POST',
     headers: buildHeaders(config),
     body: JSON.stringify({
@@ -211,6 +219,7 @@ export async function submitAdspForm(
     }),
   });
 
+  checkSignIn(config, response);
   if (!response.ok) {
     throw new Error(`Form submission failed with status ${response.status}.`);
   }

@@ -14,6 +14,67 @@ components:
         failureRedirectUrl:
           type: string
 
+    ClientSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        core:
+          type: boolean
+        idpHint:
+          type: string
+        successRedirectUrl:
+          type: string
+        failureRedirectUrl:
+          type: string
+        redirectUris:
+          type: array
+          items:
+            type: string
+        targets:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              upstream:
+                type: string
+        registered:
+          type: boolean
+        clientId:
+          type: string
+
+/token-handler/v1/clients:
+  get:
+    tags:
+      - Client
+    description: Retrieves the clients available to the tenant, including the clients of the core configuration that are available to all tenants.
+    parameters:
+      - name: core
+        description: Set to true to only retrieve the clients of the core configuration.
+        in: query
+        required: false
+        schema:
+          type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ClientSummary"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+
 /token-handler/v1/clients/{clientId}:
   parameters:
     - name: clientId
@@ -107,10 +168,28 @@ components:
       required: true
       schema:
         type: string
+    - name: tenant
+      description: >-
+        Name or URN of the tenant. The tenant is kept in the session for the callback. Required unless the
+        X-ADSP-TENANT header is provided, which is used instead if both are provided.
+      in: query
+      required: false
+      schema:
+        type: string
+    - name: callbackUrl
+      description: >-
+        URL of the callback of the application, which is a valid redirect URI of the client in access service. Required
+        unless the client has the deprecated authCallbackUrl configuration.
+      in: query
+      required: false
+      schema:
+        type: string
     - name: X-ADSP-TENANT
-      description: ID or name of the tenant.
+      description: >-
+        Name or URN of the tenant, for example set by the reverse proxy of an application to restrict it to one tenant.
+        Used instead of the tenant query parameter.
       in: header
-      required: true
+      required: false
       schema:
         type: string
   get:
@@ -135,9 +214,11 @@ components:
       schema:
         type: string
     - name: X-ADSP-TENANT
-      description: ID or name of the tenant.
+      description: >-
+        Name or URN of the tenant. If it is not provided, the tenant that was provided to sign in on the same session
+        is used.
       in: header
-      required: true
+      required: false
       schema:
         type: string
   get:
@@ -160,9 +241,14 @@ components:
   get:
     tags:
       - Client
-    description: Completes authentication via the client.
+    description: >-
+      Logs the user out by ending their session in the token handler, and redirects to the root of the site. If the
+      client is configured with keycloakLogout, redirects to the access service end session endpoint instead, which
+      ends the user's session there and returns to the root of the site.
     security:
       - sessionCookie: []
     responses:
-      200:
-        description: Request completed successfully.
+      302:
+        description: User logged out and redirected.
+      400:
+        description: No user is logged in, or the user was not authenticated by the client.

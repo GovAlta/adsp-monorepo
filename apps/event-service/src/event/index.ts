@@ -19,7 +19,7 @@ export const applyEventMiddleware = (
   app: Application,
   { serviceId, logger, eventService, directory, tokenProvider, configurationService }: EventMiddlewareProps,
 ): Application => {
-  const eventRouter = createEventRouter({ eventService, logger });
+  const eventRouter = createEventRouter({ eventService, logger, directory, tokenProvider });
   const definitionRouter = createDefinitionRouter({
     client: new ConfigurationClient<EventConfiguration>(directory, tokenProvider, 'platform', 'event-service'),
     validationService: new AjvValidationService(logger),

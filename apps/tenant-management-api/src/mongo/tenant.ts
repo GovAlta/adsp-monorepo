@@ -5,6 +5,7 @@ import { TenantEntity, Tenant } from '../tenant/models';
 import { TenantRepository } from '../tenant/repository';
 import { TenantCriteria } from '../tenant/types';
 import { tenantSchema } from './schema';
+import { escapeRegExp } from 'lodash';
 
 export class MongoTenantRepository implements TenantRepository {
   private tenantModel: Model<Doc<Tenant> & Document>;
@@ -64,7 +65,8 @@ export class MongoTenantRepository implements TenantRepository {
       }
 
       if (criteria.nameEquals) {
-        query.name = { $regex: `^${criteria.nameEquals}$`, $options: 'i' };
+        // The name is matched as a whole, ignoring case, and is not a pattern.
+        query.name = { $regex: `^${escapeRegExp(criteria.nameEquals)}$`, $options: 'i' };
       }
 
       if (criteria.activeOnly) {

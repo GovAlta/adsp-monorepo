@@ -17,11 +17,17 @@ export interface TokenHandlerClient {
   authCallbackUrl?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  keycloakLogout?: boolean;
+  // Redirect URIs registered with the client in the core configuration.
+  redirectUris?: string[];
+  // Core clients are defined in the core configuration for all tenants, so they cannot be changed by the tenant.
+  core?: boolean;
   targets?: Record<string, TokenHandlerTarget>;
 }
 
 export interface TokenHandlerState {
   clients: Record<string, TokenHandlerClient> | null;
+  coreClients: Record<string, TokenHandlerClient> | null;
   // Keycloak client ID by client: undefined when unknown (not loaded), null when not registered.
   registrations: Partial<Record<string, string | null>>;
   registrationErrors: Partial<Record<string, boolean>>;
@@ -32,6 +38,7 @@ export interface TokenHandlerState {
 
 export const TOKEN_HANDLER_INIT: TokenHandlerState = {
   clients: null,
+  coreClients: null,
   registrations: {},
   registrationErrors: {},
   keycloakUuids: {},

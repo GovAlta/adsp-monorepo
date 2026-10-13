@@ -3,6 +3,8 @@ import { TokenHandlerClient } from './models';
 export const FETCH_TOKEN_HANDLER_CLIENTS = 'tokenHandler/FETCH_CLIENTS';
 export const FETCH_TOKEN_HANDLER_CLIENTS_SUCCESS = 'tokenHandler/FETCH_CLIENTS_SUCCESS';
 
+export const FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS = 'tokenHandler/FETCH_CORE_CLIENTS_SUCCESS';
+
 export const SAVE_TOKEN_HANDLER_CLIENT = 'tokenHandler/SAVE_CLIENT';
 export const SAVE_TOKEN_HANDLER_CLIENT_SUCCESS = 'tokenHandler/SAVE_CLIENT_SUCCESS';
 
@@ -24,6 +26,11 @@ export interface FetchTokenHandlerClientsAction {
 
 export interface FetchTokenHandlerClientsSuccessAction {
   type: typeof FETCH_TOKEN_HANDLER_CLIENTS_SUCCESS;
+  payload: Record<string, TokenHandlerClient>;
+}
+
+export interface FetchCoreTokenHandlerClientsSuccessAction {
+  type: typeof FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS;
   payload: Record<string, TokenHandlerClient>;
 }
 
@@ -80,6 +87,7 @@ export interface RegisterTokenHandlerClientSuccessAction {
 export type ActionTypes =
   | FetchTokenHandlerClientsAction
   | FetchTokenHandlerClientsSuccessAction
+  | FetchCoreTokenHandlerClientsSuccessAction
   | SaveTokenHandlerClientAction
   | SaveTokenHandlerClientSuccessAction
   | DeleteTokenHandlerClientAction
@@ -99,6 +107,13 @@ export const FetchTokenHandlerClientsSuccess = (
   clients: Record<string, TokenHandlerClient>
 ): FetchTokenHandlerClientsSuccessAction => ({
   type: FETCH_TOKEN_HANDLER_CLIENTS_SUCCESS,
+  payload: clients,
+});
+
+export const FetchCoreTokenHandlerClientsSuccess = (
+  clients: Record<string, TokenHandlerClient>
+): FetchCoreTokenHandlerClientsSuccessAction => ({
+  type: FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS,
   payload: clients,
 });
 

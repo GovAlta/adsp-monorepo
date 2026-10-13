@@ -170,6 +170,11 @@ describe('value router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for a context that is not valid JSON', async () => {
+      const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value?context=not-json');
+      expect(res.status).toBe(400);
+    });
+
     it('responds 400 for a value name longer than 50 characters', async () => {
       const res = await request(createApp(reader)).get(`/value/v1/test-service/values/${'a'.repeat(51)}`);
       expect(res.status).toBe(400);
@@ -243,6 +248,13 @@ describe('value router documented behaviour', () => {
     it('responds 400 for a timestampMax that is not ISO 8601', async () => {
       const res = await request(createApp(reader)).get(
         '/value/v1/test-service/values/test-value/count?timestampMax=tomorrow',
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for a context that is not valid JSON', async () => {
+      const res = await request(createApp(reader)).get(
+        '/value/v1/test-service/values/test-value/count?context=not-json',
       );
       expect(res.status).toBe(400);
     });
