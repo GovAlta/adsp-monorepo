@@ -58,7 +58,7 @@ export const readValues: RequestHandler = async (req, res, next) => {
           name,
           value: result && result.results[0],
         };
-      })
+      }),
     );
 
     results = results.filter((name) => {
@@ -316,7 +316,7 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
             context: 'value-router',
             tenantId: tenantId?.toString(),
             user: `${user.name} (ID: ${user.id})`,
-          }
+          },
         );
       }
 
@@ -375,7 +375,7 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
           context: 'value-router',
           tenantId: tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
 
       // Return an array if the original write is an array.
@@ -393,7 +393,7 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
 export function runServiceMetricRollup(
   logger: Logger,
   repository: ServiceMetricRollupRepository,
-  trailingDays: number
+  trailingDays: number,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -458,17 +458,17 @@ export const createValueRouter = ({
         namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
         name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
       },
-      ['params']
-    )
+      ['params'],
+    ),
   );
 
   valueRouter.get(
     '/:namespace/values',
     createValidationHandler(
       param('namespace').isString().isLength({ min: 1, max: 50 }),
-      query('names').optional().isString()
+      query('names').optional().isString(),
     ),
-    readValues
+    readValues,
   );
 
   valueRouter.post(
@@ -480,10 +480,10 @@ export const createValueRouter = ({
           end: { optional: true, isISO8601: true },
           tenantId: { optional: true, isString: true },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
-    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays)
+    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays),
   );
 
   valueRouter.get(
@@ -495,13 +495,14 @@ export const createValueRouter = ({
           top: { optional: true, isInt: { options: { min: 1, max: 5000 } } },
           after: { optional: true, isString: true },
           correlationId: { optional: true, isString: true },
+          context: { optional: true, isJSON: true },
           timestampMin: { optional: true, isISO8601: true },
           timestampMax: { optional: true, isISO8601: true },
         },
-        ['query']
-      )
+        ['query'],
+      ),
     ),
-    readValue(repository)
+    readValue(repository),
   );
 
   valueRouter.get(
@@ -511,13 +512,14 @@ export const createValueRouter = ({
       ...checkSchema(
         {
           correlationId: { optional: true, isString: true },
+          context: { optional: true, isJSON: true },
           timestampMin: { optional: true, isISO8601: true },
           timestampMax: { optional: true, isISO8601: true },
         },
-        ['query']
-      )
+        ['query'],
+      ),
     ),
-    countValue(repository)
+    countValue(repository),
   );
 
   valueRouter.get(
@@ -531,19 +533,16 @@ export const createValueRouter = ({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
-    readMetrics(repository)
+    readMetrics(repository),
   );
 
   valueRouter.get(
     '/:namespace/values/:name/platform-metrics',
     validateNamespaceNameHandler,
-    createValidationHandler(
-      query('interval').optional().isString(),
-      query('criteria').optional().isString()
-    ),
-    readPlatformMetrics(repository)
+    createValidationHandler(query('interval').optional().isString(), query('criteria').optional().isString()),
+    readPlatformMetrics(repository),
   );
 
   valueRouter.get(
@@ -555,7 +554,7 @@ export const createValueRouter = ({
           name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
           metric: { isString: true, isLength: { options: { min: 1, max: 100 } } },
         },
-        ['params']
+        ['params'],
       ),
       query('interval').optional().isString(),
       query('top').optional().isInt({ min: 1, max: 5000 }),
@@ -564,9 +563,9 @@ export const createValueRouter = ({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
-    readMetric(repository)
+    readMetric(repository),
   );
 
   valueRouter.post(
@@ -589,10 +588,10 @@ export const createValueRouter = ({
             isString: true,
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
-    writeValue(logger, eventService, repository)
+    writeValue(logger, eventService, repository),
   );
 
   return valueRouter;

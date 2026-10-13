@@ -90,6 +90,9 @@ describe('applyEventMiddleware', () => {
     const jobsProps = { ...slicedProps, events: props.eventService.getItems() };
 
     expect(createEventRouter).toHaveBeenCalledWith(expect.objectContaining(routerProps));
+    expect(createEventRouter).toHaveBeenCalledWith(
+      expect.objectContaining({ directory: props.directory, tokenProvider: props.tokenProvider }),
+    );
     expect(createJobs).toHaveBeenCalledWith(expect.objectContaining(jobsProps));
     expect(result).toBe(mockApp);
   });

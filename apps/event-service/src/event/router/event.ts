@@ -3,14 +3,31 @@ import { RequestHandler, Router } from 'express';
 import { checkSchema } from 'express-validator';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
-import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  EventService,
+  isAllowedUser,
+  ServiceDirectory,
+  startBenchmark,
+  TokenProvider,
+  UnauthorizedUserError,
+  User,
+} from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
-import { EventServiceRoles } from '../role';
+import { EventServiceRoles, EventServiceValueRoles } from '../role';
+import { countEvents } from '../valueServiceClient';
 
 interface EventRouterProps {
   logger: Logger;
   eventService: DomainEventService;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
+const assertUserCanReadValue = (user: User, tenantId: AdspId, operation: string) => {
+  if (!isAllowedUser(user, tenantId, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
+    throw new UnauthorizedUserError(operation, user);
+  }
+};
 
 export const assertUserCanSend: RequestHandler = async (req, _res, next) => {
   try {
@@ -54,7 +71,7 @@ export const sendEvent =
 
     try {
       const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
-        tenantId
+        tenantId,
       );
 
       logger.debug(`Processing sent event: ${namespace}:${name}...`);
@@ -66,7 +83,7 @@ export const sendEvent =
 
       if (!timeValue) {
         throw new InvalidOperationError(
-          'Event must include a timestamp representing the time when the event occurred.'
+          'Event must include a timestamp representing the time when the event occurred.',
         );
       }
       const timestamp = new Date(timeValue);
@@ -96,14 +113,93 @@ export const sendEvent =
           context: 'event-router',
           tenantId: tenantId.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
       next(err);
     }
   };
 
-export const createEventRouter = ({ logger, eventService }: EventRouterProps): Router => {
+export function countEventLogEvents(
+  logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
+  return async (req, res, next) => {
+    const user = req.user;
+    const tenant = req.tenant;
+    const {
+      timestampMin: timestampMinValue,
+      timestampMax: timestampMaxValue,
+      correlationId,
+      context: contextValue,
+    } = req.query;
+
+    try {
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required for operation.');
+      }
+
+      // Need to be backwards compatable with Value service reader role as well as the new role
+      // if the records already exist.
+      assertUserCanReadValue(user, tenant.id, 'count events');
+
+      const end = startBenchmark(req, 'operation-handler-time');
+
+      const count = await countEvents(directory, tokenProvider, tenant.id, {
+        timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
+        timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
+        correlationId: correlationId as string,
+        context: contextValue ? JSON.parse(contextValue as string) : null,
+      });
+
+      end();
+      res.send({ count });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export const createEventRouter = ({ logger, eventService, directory, tokenProvider }: EventRouterProps): Router => {
   const eventRouter = Router();
+
+  eventRouter.get(
+    '/events/count',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          timestampMin: {
+            optional: true,
+            isISO8601: true,
+          },
+          timestampMax: {
+            optional: true,
+            isISO8601: true,
+          },
+          correlationId: {
+            optional: true,
+            isString: true,
+          },
+          context: {
+            optional: true,
+            isString: true,
+            custom: {
+              options: (value: string) => {
+                const parsed = JSON.parse(value);
+                if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+                  throw new Error('Context must be a JSON object.');
+                }
+                return true;
+              },
+            },
+          },
+        },
+        ['query'],
+      ),
+    ),
+    countEventLogEvents(logger, directory, tokenProvider),
+  );
 
   eventRouter.post(
     '/events',
@@ -135,10 +231,10 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
             isObject: true,
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
-    sendEvent(logger, eventService)
+    sendEvent(logger, eventService),
   );
 
   return eventRouter;
