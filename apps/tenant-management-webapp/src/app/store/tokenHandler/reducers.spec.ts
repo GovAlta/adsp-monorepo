@@ -1,6 +1,7 @@
 import reducer from './reducers';
 import {
   DeleteTokenHandlerClient,
+  FetchCoreTokenHandlerClientsSuccess,
   DeleteTokenHandlerClientFailed,
   DeleteTokenHandlerClientSuccess,
   GetClientRegistration,
@@ -65,5 +66,12 @@ describe('tokenHandler reducer', () => {
     expect(reducer(deleting, DeleteTokenHandlerClientSuccess('a')).busyClients.a).toBe(false);
     expect(reducer(deleting, DeleteTokenHandlerClientFailed('a')).busyClients.a).toBe(false);
     expect(reducer(deleting, DeleteTokenHandlerClientFailed('a')).clients.a).toBeDefined();
+  });
+
+  it('stores the core clients separately from the tenant clients', () => {
+    const core = { c: { id: 'c', name: 'C', core: true, targets: {} } };
+    const result = reducer(state, FetchCoreTokenHandlerClientsSuccess(core));
+    expect(result.coreClients).toEqual(core);
+    expect(result.clients).toEqual(state.clients);
   });
 });

@@ -35,6 +35,11 @@
             "output": "./"
           },
           {
+            "glob": "preview-sign-in-complete.html",
+            "input": "apps/builder-app/src/",
+            "output": "./"
+          },
+          {
             "glob": "api.conf",
             "input": "apps/builder-app/",
             "output": "./"
@@ -73,7 +78,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "builder-app:build",
-        "proxyConfig": "apps/builder-app/proxy.conf.json",
+        "proxyConfig": "apps/builder-app/proxy.conf.js",
         "static": {
           "directory": "dist/apps/builder-app",
           "publicPath": "/"

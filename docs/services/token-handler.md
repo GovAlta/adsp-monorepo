@@ -26,6 +26,15 @@ Clients are configured in the [configuration service](configuration-service.md) 
 
 > **Deprecated fallback:** Existing configurations with `authCallbackUrl` set will continue to work — the token handler extracts the path from `authCallbackUrl` and combines it with the incoming request's host and protocol when no `?callbackUrl=` query parameter is provided.
 
+### Core (platform) clients
+Clients defined in the core configuration (the platform's own `platform:token-handler` configuration) are available to every tenant, in addition to the tenant's own clients. This allows a platform application, such as the preview in the builder app, to use the token handler without each tenant defining the client. Core clients can include `description` and `redirectUris`, and a tenant cannot change or replace them: when a tenant client has the same ID as a core client, the core client is used. The tenant administrator app prevents adding a client with the ID of a core client, so a collision can only occur for a tenant client that was added before the core client.
+
+Each tenant still has its own registration of a core client, because registration creates a Keycloak client in the tenant's realm and the client secret is stored per tenant. A tenant administrator registers the client once from the token handler tab (core clients are listed there as platform clients, with their targets and registration status), or by calling the register endpoint. The `redirectUris` of the client configuration are applied as the *Valid Redirect URIs* of the Keycloak client at registration, together with the `callbackUrl` if one is passed. Changing `redirectUris` later does not change clients that are already registered; those are updated in the Keycloak admin console or with the update endpoint.
+
+The builder app's preview uses a core client, `builder-preview`, that token handler registers in the core configuration on startup when the `BUILDER_APP_URL` environment variable (the public URL of the builder app) is set. Its redirect URI is on the builder app's origin (`<BUILDER_APP_URL>/token-handler/clients/builder-preview/callback`), so each environment sets its own value. The client is written on every startup, so changes to it are made in the token handler rather than in the core configuration.
+
+Administrators can list the clients available to their tenant, core and tenant clients together with their registration status, with `GET /token-handler/v1/clients`. The `core` property of each client indicates whether it is from the core configuration, and `?core=true` returns only core clients.
+
 ### Targets
 Targets represent upstream services or APIs that the token handler can proxy requests to. For requests from the frontend to the configured targets, token handler will retrieve a valid access token based on the current user session and include it as a bearer token for the upstream request. Target upstream is configured as an ADSP service or API URN, and the URN must have an entry in the [directory service](directory-service.md). Targets are configured as part of clients in the configuration service under the `platform:token-handler` namespace and name.
 

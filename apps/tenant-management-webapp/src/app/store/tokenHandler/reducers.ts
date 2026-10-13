@@ -1,5 +1,6 @@
 import {
   ActionTypes,
+  FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS,
   FETCH_TOKEN_HANDLER_CLIENTS_SUCCESS,
   SAVE_TOKEN_HANDLER_CLIENT_SUCCESS,
   DELETE_TOKEN_HANDLER_CLIENT,
@@ -27,6 +28,9 @@ export default (state = TOKEN_HANDLER_INIT, action: ActionTypes): TokenHandlerSt
   switch (action.type) {
     case FETCH_TOKEN_HANDLER_CLIENTS_SUCCESS:
       return { ...state, clients: action.payload };
+
+    case FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS:
+      return { ...state, coreClients: action.payload };
 
     case SAVE_TOKEN_HANDLER_CLIENT_SUCCESS:
       return { ...state, clients: action.payload };

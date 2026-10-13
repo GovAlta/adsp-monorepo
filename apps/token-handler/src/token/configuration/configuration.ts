@@ -12,6 +12,20 @@ interface TokenHandlerConfigurationObject {
   >;
 }
 
+type ClientConfigurations = NonNullable<TokenHandlerConfigurationObject['clients']>;
+
+/**
+ * Combines the clients of a tenant with the clients of the core configuration, which are provided to all tenants.
+ * A client of the core configuration is used instead of a tenant client with the same ID, so that a tenant cannot
+ * change or replace it.
+ */
+export function combineClients(tenant?: ClientConfigurations, core?: ClientConfigurations): ClientConfigurations {
+  const mark = (clients: ClientConfigurations, isCore: boolean): ClientConfigurations =>
+    Object.fromEntries(Object.entries(clients || {}).map(([id, client]) => [id, { ...client, core: isCore }]));
+
+  return { ...mark(tenant, false), ...mark(core, true) };
+}
+
 export class TokenHandlerConfiguration {
   private clients: Record<string, AuthenticationClient>;
 
@@ -41,6 +55,10 @@ export class TokenHandlerConfiguration {
         [id]: new AuthenticationClient(accessServiceUrl, logger, directory, repository, clientRecord),
       };
     }, {});
+  }
+
+  public getClients(): AuthenticationClient[] {
+    return Object.values(this.clients);
   }
 
   public getClient(clientId: string): AuthenticationClient {

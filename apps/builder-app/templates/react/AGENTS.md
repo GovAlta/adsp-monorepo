@@ -163,7 +163,7 @@ Prefer GOA components over custom HTML/CSS patterns for UI primitives in both ca
 - Required fields go in the `dataSchema` `required` array. A field with a SHOW/HIDE rule must not be top-level required; use an `if`/`then` block.
 - Show privacy and FOIP text with a `HelpContent` element (`options: { markdown: true, help: '…' }`).
 - Mock mode (the default) cannot use data registers or `file-urn` upload; use plain `enum` lists.
-- Keep integration settings in `src/config/adspForm.ts`, default to `mode: 'mock'`, and in live mode require `formServiceBaseUrl`, `definitionId` and a valid `accessToken`.
+- Keep integration settings in `src/config/adspForm.ts`, default to `mode: 'mock'`, and in live mode require `formServiceBaseUrl`, `definitionId` and either a valid `accessToken` or `tokenHandler: true` (with `formServiceBaseUrl` `/token-handler/targets/form-service`; Builder preview signs the user in, so the app has no sign in of its own).
 - Validate after every change to the definition (`builderFormSchemaValidate`) and fix all reported errors.
 
 **Hand-build a form only when the JSON form cannot express it** (logic the schema cannot describe, or a submit target other than the Form Service). Then use GOA components, not plain HTML:
