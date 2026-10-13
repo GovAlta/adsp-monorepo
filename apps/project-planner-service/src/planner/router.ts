@@ -108,7 +108,7 @@ const slugify = (name: string) =>
   name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/^-|-$/g, '')
     .slice(0, 60);
 
 const text = (value: unknown, max = 2000): string => (typeof value === 'string' ? value.trim().slice(0, max) : '');
