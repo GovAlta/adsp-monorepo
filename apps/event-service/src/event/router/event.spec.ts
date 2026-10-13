@@ -2,15 +2,12 @@ import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { createEventRouter, sendEvent } from '.';
+import { createEventRouter, sendEvent, assertUserCanSend, countEventLogEvents } from './event';
 import { DomainEventService, NamespaceEntity } from '..';
-import { EventLogRepository } from '../repository';
-<<<<<<< HEAD
 import { EventServiceRoles, EventServiceValueRoles } from '../role';
-=======
-import { EventServiceRoles, LEGACY_EVENT_LOG_READER_ROLE } from '../role';
->>>>>>> main
-import { assertUserCanSend, countEvents } from './event';
+import { countEvents } from '../valueServiceClient';
+
+jest.mock('../valueServiceClient');
 
 describe('event router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -24,8 +21,13 @@ describe('event router', () => {
     send: jest.fn(),
   };
 
-  const eventLogRepositoryMock = {
-    countEvents: jest.fn(),
+  const directoryMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(),
   };
 
   const validationServiceMock = {
@@ -33,18 +35,18 @@ describe('event router', () => {
     validate: jest.fn(),
   };
 
-  beforeEach(() => {
-    eventServiceMock.send.mockReset();
-    eventLogRepositoryMock.countEvents.mockReset();
-    validationServiceMock.setSchema.mockReset();
-    validationServiceMock.validate.mockReset();
+  const countEventsMock = countEvents as jest.Mock;
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   it('can create router', () => {
     const router = createEventRouter({
       logger: loggerMock,
       eventService: eventServiceMock as unknown as DomainEventService,
-      eventLogRepository: eventLogRepositoryMock as unknown as EventLogRepository,
+      directory: directoryMock,
+      tokenProvider: tokenProviderMock,
     });
     expect(router).toBeTruthy();
   });
@@ -304,9 +306,9 @@ describe('event router', () => {
     });
   });
 
-  describe('countEvents', () => {
+  describe('countEventLogEvents', () => {
     it('can create handler', () => {
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       expect(handler).toBeTruthy();
     });
 
@@ -319,54 +321,60 @@ describe('event router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(42);
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      countEventsMock.mockResolvedValueOnce(42);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(eventLogRepositoryMock.countEvents).toHaveBeenCalledWith(
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
         tenantId,
-        expect.objectContaining({ namespace: undefined, name: undefined }),
+        expect.objectContaining({ timestampMin: null, timestampMax: null, correlationId: undefined, context: null }),
       );
       expect(res.send).toHaveBeenCalledWith({ count: 42 });
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can count events filtered by namespace only', async () => {
+    it('can count events filtered by correlationId', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceRoles.reader] },
         tenant: { id: tenantId },
-        query: { namespace: 'application-events' },
+        query: { correlationId: 'Bobs-user-id' },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(7);
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      countEventsMock.mockResolvedValueOnce(7);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(eventLogRepositoryMock.countEvents).toHaveBeenCalledWith(
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
         tenantId,
-        expect.objectContaining({ namespace: 'application-events', name: undefined }),
+        expect.objectContaining({ correlationId: 'Bobs-user-id' }),
       );
       expect(res.send).toHaveBeenCalledWith({ count: 7 });
     });
 
-    it('can count events filtered by name only', async () => {
+    it('can count events filtered by context', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceRoles.reader] },
         tenant: { id: tenantId },
-        query: { name: 'user-registration' },
+        query: { context: JSON.stringify({ namespace: 'test', name: 'test' }) },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(3);
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      countEventsMock.mockResolvedValueOnce(3);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(eventLogRepositoryMock.countEvents).toHaveBeenCalledWith(
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
         tenantId,
-        expect.objectContaining({ namespace: undefined, name: 'user-registration' }),
+        expect.objectContaining({ context: { namespace: 'test', name: 'test' } }),
       );
       expect(res.send).toHaveBeenCalledWith({ count: 3 });
     });
@@ -376,26 +384,24 @@ describe('event router', () => {
         user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceRoles.reader] },
         tenant: { id: tenantId },
         query: {
-          namespace: 'application-events',
-          name: 'user-registration',
           timestampMin: '2021-03-23T12:00:00Z',
           timestampMax: '2021-03-24T12:00:00Z',
           correlationId: 'Bobs-user-id',
+          context: JSON.stringify({ namespace: 'application-events', name: 'user-registration' }),
         },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(1);
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      countEventsMock.mockResolvedValueOnce(1);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(eventLogRepositoryMock.countEvents).toHaveBeenCalledWith(tenantId, {
-        namespace: 'application-events',
-        name: 'user-registration',
+      expect(countEventsMock).toHaveBeenCalledWith(directoryMock, tokenProviderMock, tenantId, {
         timestampMin: new Date('2021-03-23T12:00:00Z'),
         timestampMax: new Date('2021-03-24T12:00:00Z'),
         correlationId: 'Bobs-user-id',
+        context: { namespace: 'application-events', name: 'user-registration' },
       });
       expect(res.send).toHaveBeenCalledWith({ count: 1 });
     });
@@ -409,12 +415,12 @@ describe('event router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
-      expect(eventLogRepositoryMock.countEvents).not.toHaveBeenCalled();
+      expect(countEventsMock).not.toHaveBeenCalled();
     });
 
     it('can call next with unauthorized error without the event-reader role', async () => {
@@ -426,38 +432,32 @@ describe('event router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
-      expect(eventLogRepositoryMock.countEvents).not.toHaveBeenCalled();
+      expect(countEventsMock).not.toHaveBeenCalled();
     });
 
-<<<<<<< HEAD
     it('can pass with the value service reader role', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceValueRoles.Reader] },
-=======
-    it('can pass with the legacy value-reader role', async () => {
-      const req = {
-        user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [LEGACY_EVENT_LOG_READER_ROLE] },
->>>>>>> main
         tenant: { id: tenantId },
         query: {},
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(0);
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      countEventsMock.mockResolvedValueOnce(0);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith({ count: 0 });
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can call next with the repository error', async () => {
+    it('can call next with the value service client error', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceRoles.reader] },
         tenant: { id: tenantId },
@@ -467,8 +467,8 @@ describe('event router', () => {
       const next = jest.fn();
       const err = new Error('upstream failure');
 
-      eventLogRepositoryMock.countEvents.mockRejectedValueOnce(err);
-      const handler = countEvents(loggerMock, eventLogRepositoryMock as unknown as EventLogRepository);
+      countEventsMock.mockRejectedValueOnce(err);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();

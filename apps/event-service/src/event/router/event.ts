@@ -133,6 +133,8 @@ export function countEventLogEvents(
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
+      // Need to be backwards compatable with Value service reader role as well as the new role
+      // if the records already exist.
       if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
         throw new UnauthorizedUserError('count events', user);
       }

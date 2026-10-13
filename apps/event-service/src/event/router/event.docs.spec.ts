@@ -9,7 +9,10 @@ import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
 import { EventServiceRoles } from '../role';
 import { DomainEventService } from '../service';
+import { countEvents } from '../valueServiceClient';
 import { createEventRouter } from './event';
+
+jest.mock('../valueServiceClient');
 
 // Verifies the request validation, roles, and error responses documented in event.swagger.yml by sending
 // requests through the router with the real error handler.
@@ -48,7 +51,9 @@ describe('event router documented behaviour', () => {
   const sender = user([EventServiceRoles.sender]);
   const reader = user([EventServiceRoles.reader]);
 
-  const eventLogRepositoryMock = { countEvents: jest.fn() };
+  const directoryMock = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
+  const tokenProviderMock = { getAccessToken: jest.fn() };
+  const countEventsMock = countEvents as jest.Mock;
 
   function createApp(currentUser: User | null, withTenant = false): Express {
     const app = express();
@@ -66,7 +71,8 @@ describe('event router documented behaviour', () => {
       createEventRouter({
         logger: loggerMock,
         eventService: eventServiceMock as unknown as DomainEventService,
-        eventLogRepository: eventLogRepositoryMock,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
       }),
     );
     app.use(createErrorHandler(loggerMock));
@@ -186,29 +192,31 @@ describe('event router documented behaviour', () => {
 
   describe('GET /event/v1/events/count', () => {
     it('responds with the documented example count', async () => {
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(1024);
+      countEventsMock.mockResolvedValueOnce(1024);
       const res = await request(createApp(reader, true)).get(
-        '/event/v1/events/count?namespace=application-events&name=user-registration',
+        `/event/v1/events/count?context=${JSON.stringify({ namespace: 'application-events', name: 'user-registration' })}`,
       );
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ count: 1024 });
     });
 
-    it('counts events without namespace or name', async () => {
-      eventLogRepositoryMock.countEvents.mockResolvedValueOnce(5);
+    it('counts events without context, timestamps, or correlationId', async () => {
+      countEventsMock.mockResolvedValueOnce(5);
       const res = await request(createApp(reader, true)).get('/event/v1/events/count');
       expect(res.status).toBe(200);
-      expect(eventLogRepositoryMock.countEvents).toHaveBeenCalledWith(
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
         tenantId,
-        expect.objectContaining({ namespace: undefined, name: undefined }),
+        expect.objectContaining({ context: null, correlationId: undefined }),
       );
     });
 
-    it('responds 400 for a namespace longer than 50 characters', async () => {
-      const res = await request(createApp(reader, true)).get(`/event/v1/events/count?namespace=${'a'.repeat(51)}`);
+    it('responds 400 when context is not valid JSON', async () => {
+      const res = await request(createApp(reader, true)).get('/event/v1/events/count?context=not-json');
       expect(res.status).toBe(400);
       expect(res.body.errorMessage).toMatch(/^Validation failed with error\(s\)/);
-      expect(eventLogRepositoryMock.countEvents).not.toHaveBeenCalled();
+      expect(countEventsMock).not.toHaveBeenCalled();
     });
 
     it('responds with the documented error message for an invalid timestampMin', async () => {

@@ -91,7 +91,7 @@ describe('applyEventMiddleware', () => {
 
     expect(createEventRouter).toHaveBeenCalledWith(expect.objectContaining(routerProps));
     expect(createEventRouter).toHaveBeenCalledWith(
-      expect.objectContaining({ eventLogRepository: expect.objectContaining({ countEvents: expect.any(Function) }) }),
+      expect.objectContaining({ directory: props.directory, tokenProvider: props.tokenProvider }),
     );
     expect(createJobs).toHaveBeenCalledWith(expect.objectContaining(jobsProps));
     expect(result).toBe(mockApp);
