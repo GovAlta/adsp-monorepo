@@ -106,6 +106,21 @@ const eventSchema = {
     isAllDay: {
       type: 'boolean',
     },
+    recurrence: {
+      type: ['object', 'null'],
+      properties: {
+        frequency: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly'] },
+        interval: { type: 'number' },
+        daysOfWeek: { type: 'array', items: { type: 'string', enum: ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] } },
+        end: {
+          type: 'object',
+          properties: {
+            until: { type: 'string' },
+            count: { type: 'number' },
+          },
+        },
+      },
+    },
   },
 };
 
@@ -137,6 +152,7 @@ export const CalendarEventUpdatedDefinition: DomainEventDefinition = {
             properties: {
               operation: { type: 'string' },
               attendeeId: { type: 'number' },
+              recurrenceId: { type: 'string', format: 'date-time' },
               attendee: {
                 type: 'object',
                 properties: {
@@ -189,6 +205,7 @@ function mapCalendarEvent(entity: CalendarEventEntity) {
     end: entity.end,
     isPublic: entity.isPublic,
     isAllDay: entity.isAllDay,
+    ...(entity.recurrence ? { recurrence: entity.recurrence } : {}),
   };
 }
 
@@ -197,7 +214,7 @@ function calendarDefinitionChanged(
   actor: 'createdBy' | 'updatedBy' | 'deletedBy',
   user: User,
   tenantId: AdspId,
-  calendar: CalendarDefinition
+  calendar: CalendarDefinition,
 ): DomainEvent {
   return {
     tenantId,
@@ -246,8 +263,10 @@ export const calendarEventCreated = (user: User, entity: CalendarEventEntity): D
 
 export const calendarEventUpdated = (
   user: User,
-  update: Update<CalendarEvent> | { operation: string; attendee?: Attendee; attendeeId?: number },
-  entity: CalendarEventEntity
+  update:
+    | Update<CalendarEvent>
+    | { operation: string; attendee?: Attendee; attendeeId?: number; recurrenceId?: string },
+  entity: CalendarEventEntity,
 ): DomainEvent => ({
   tenantId: entity.calendar.tenantId,
   name: CalendarEventUpdatedDefinition.name,

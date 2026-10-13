@@ -34,7 +34,7 @@ components:
       properties:
         name:
           type: string
-          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+          pattern: "^[a-zA-Z0-9-_ ]{1,50}$"
           description: Must not be the reserved __proto__ property.
         displayName:
           type: string
@@ -78,10 +78,59 @@ components:
         end:
           type: string
           format: date-time
+        recurrenceId:
+          type: string
+          format: date-time
+          description: Original start of the occurrence (RFC 5545 RECURRENCE-ID). Only included on occurrences of recurring events returned by range retrieval; id is the recurring event.
+        recurrence:
+          allOf:
+            - $ref: "#/components/schemas/EventRecurrence"
+          description: Only included for recurring events. exclusions is only included when retrieving the recurring event itself.
         attendees:
           type: array
           items:
             $ref: "#/components/schemas/Attendee"
+    EventRecurrence:
+      type: object
+      description: Recurrence of an event based on a subset of the RFC 5545 RRULE. Occurrences are generated in Mountain time (America/Edmonton) and keep the local start time across daylight saving changes.
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+          description: Monthly and yearly recurrence use the day of the event start; months or years without that day are skipped.
+        interval:
+          type: integer
+          minimum: 1
+          maximum: 99
+          default: 1
+          description: Interval of the frequency; e.g. 2 with weekly is every two weeks.
+        daysOfWeek:
+          type: array
+          description: Weekly recurrence only. Must include the day of the event start. Defaults to the day of the event start.
+          items:
+            type: string
+            enum: [MO, TU, WE, TH, FR, SA, SU]
+        end:
+          type: object
+          description: Optional end of the recurrence. Specify until or count, not both.
+          properties:
+            until:
+              type: string
+              format: date
+              description: Last date (inclusive) on which an occurrence can start.
+            count:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Number of occurrences, including the first and any cancelled occurrences.
+        exclusions:
+          type: array
+          readOnly: true
+          description: Recurrence IDs of cancelled occurrences.
+          items:
+            type: string
+            format: date-time
+      required: [frequency]
     Attendee:
       type: object
       properties:
@@ -219,7 +268,7 @@ components:
         required: true
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+          pattern: "^[a-zA-Z0-9-_ ]{1,50}$"
       - name: tenantId
         in: query
         required: false
@@ -259,7 +308,7 @@ components:
         required: true
         schema:
           type: string
-          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+          pattern: "^[a-zA-Z0-9-_ ]{1,50}$"
       - name: tenantId
         in: query
         required: false
@@ -339,7 +388,7 @@ components:
   get:
     tags:
       - Calendar
-    description: Retrieves calendar events. Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on the date). When both from and to are specified, returns the complete set of events that overlap the requested range in a single response; top and after are ignored for range retrieval, but criteria can still be used to filter the results. An event overlaps the range when it occurs at least partially within it, including events that start before from or end after to. Range retrieval supports a maximum range of 366 days.
+    description: Retrieves calendar events. Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on the date). When both from and to are specified, returns the complete set of events that overlap the requested range in a single response; top and after are ignored for range retrieval, but criteria can still be used to filter the results. An event overlaps the range when it occurs at least partially within it, including events that start before from or end after to. Range retrieval supports a maximum range of 366 days. Range retrieval returns each occurrence of a recurring event that overlaps the range, excluding cancelled occurrences; without from and to, recurring events are returned once and time criteria apply to their first occurrence.
     parameters:
       - name: tenant
         description: Name of the tenant.
@@ -437,6 +486,8 @@ components:
                 format: date-time
               isPublic:
                 type: boolean
+              recurrence:
+                $ref: "#/components/schemas/EventRecurrence"
             required: [name, start]
     responses:
       200:
@@ -511,6 +562,11 @@ components:
                 type: boolean
               isAllDay:
                 type: boolean
+              recurrence:
+                allOf:
+                  - $ref: "#/components/schemas/EventRecurrence"
+                nullable: true
+                description: Replaces the whole recurrence. Set to null to make the event a single event.
     responses:
       200:
         description: Request completed successfully.
@@ -521,7 +577,7 @@ components:
   delete:
     tags:
       - Calendar
-    description: Deletes a calendar event.
+    description: Deletes a calendar event. For a recurring event, deletes all occurrences.
     responses:
       200:
         description: Request completed successfully.
@@ -532,6 +588,45 @@ components:
               properties:
                 deleted:
                   type: boolean
+
+/calendar/v1/calendars/{name}/events/{id}/occurrences/{occurrence}:
+  parameters:
+    - name: name
+      description: Name of the calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: id
+      description: ID of the recurring event.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: occurrence
+      description: Mountain time date of the occurrence (e.g. 2026-10-13), or its URL-encoded recurrenceId.
+      in: path
+      required: true
+      schema:
+        type: string
+  delete:
+    tags:
+      - Calendar
+    description: Cancels one occurrence of a recurring event. The rest of the recurring event is unchanged. Cancelled occurrences cannot be restored.
+    responses:
+      200:
+        description: Request completed successfully. deleted is false if the occurrence was already cancelled.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+      400:
+        description: The event is not a recurring event.
+      404:
+        description: The event is not found, or the date is not an occurrence of the event.
 
 /calendar/v1/calendars/{name}/events/{id}/attendees:
   parameters:

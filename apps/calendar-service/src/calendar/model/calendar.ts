@@ -4,7 +4,22 @@ import { DateTime } from 'luxon';
 import { CalendarRepository } from '../repository';
 import { CalendarServiceRoles } from '../roles';
 import { Calendar, CalendarEvent, CalendarEventCriteria } from '../types';
-import { CalendarEventEntity } from './event';
+import { CalendarEventEntity, CalendarEventInstance, CalendarEventOccurrence, isEventOccurrence } from './event';
+
+function matchesTimeCriteria(
+  { start, end }: CalendarEventOccurrence,
+  { startsAfter, endsBefore, activeOn }: CalendarEventCriteria,
+): boolean {
+  return (
+    (!startsAfter || start.valueOf() >= startsAfter.valueOf()) &&
+    (!endsBefore || (!!end && end.valueOf() <= endsBefore.valueOf())) &&
+    (!activeOn || (start.valueOf() <= activeOn.valueOf() && (!end || end.valueOf() >= activeOn.valueOf())))
+  );
+}
+
+function getEventId(instance: CalendarEventInstance): number {
+  return isEventOccurrence(instance) ? instance.event.id : instance.id;
+}
 
 export class CalendarEntity implements Calendar {
   name: string;
@@ -13,7 +28,11 @@ export class CalendarEntity implements Calendar {
   updateRoles: string[] = [];
   readRoles: string[] = [];
 
-  constructor(private repository: CalendarRepository, public tenantId: AdspId, calendar: Calendar) {
+  constructor(
+    private repository: CalendarRepository,
+    public tenantId: AdspId,
+    calendar: Calendar,
+  ) {
     this.name = calendar.name;
     this.displayName = calendar.displayName;
     this.description = calendar.description;
@@ -22,14 +41,19 @@ export class CalendarEntity implements Calendar {
   }
 
   canAccessPrivateEvent(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.readRoles, ...this.updateRoles], true);
+    return isAllowedUser(
+      user,
+      this.tenantId,
+      [CalendarServiceRoles.Admin, ...this.readRoles, ...this.updateRoles],
+      true,
+    );
   }
 
   getEvents(
     user: User,
     top: number,
     after?: string,
-    criteria?: CalendarEventCriteria
+    criteria?: CalendarEventCriteria,
   ): Promise<Results<CalendarEventEntity>> {
     if (!this.canAccessPrivateEvent(user)) {
       criteria = {
@@ -41,12 +65,12 @@ export class CalendarEntity implements Calendar {
     return this.repository.getCalendarEvents(this, top, after, criteria);
   }
 
-  getEventsInRange(
+  async getEventsInRange(
     user: User,
     from: DateTime,
     to: DateTime,
-    criteria: CalendarEventCriteria = {}
-  ): Promise<CalendarEventEntity[]> {
+    criteria: CalendarEventCriteria = {},
+  ): Promise<CalendarEventInstance[]> {
     if (!this.canAccessPrivateEvent(user)) {
       criteria = {
         ...criteria,
@@ -54,7 +78,15 @@ export class CalendarEntity implements Calendar {
       };
     }
 
-    return this.repository.getCalendarEventsInRange(this, from, to, criteria);
+    const events = await this.repository.getCalendarEventsInRange(this, from, to, criteria);
+
+    return events
+      .flatMap((event): CalendarEventInstance[] =>
+        event.recurrence
+          ? event.getOccurrences(from, to).filter((occurrence) => matchesTimeCriteria(occurrence, criteria || {}))
+          : [event],
+      )
+      .sort((a, b) => a.start.valueOf() - b.start.valueOf() || getEventId(a) - getEventId(b));
   }
 
   async getEvent(user: User, id: number): Promise<CalendarEventEntity> {
