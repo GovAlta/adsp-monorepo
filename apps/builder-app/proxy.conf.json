@@ -8,7 +8,7 @@
     "changeOrigin": true
   },
   {
-    "context": ["/token-handler/*"],
+    "context": ["/token-handler"],
     "target": "https://token-handler-adsp-dev.apps.aro.gov.ab.ca",
     "pathRewrite": {
       "^/token-handler": "/token-handler/v1"
