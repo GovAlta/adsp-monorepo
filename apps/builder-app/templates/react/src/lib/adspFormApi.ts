@@ -1,6 +1,7 @@
 import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { type AdspFormStarterConfig } from '../config/adspForm';
+import { getCsrfHeaders } from './tokenHandler';
 
 export interface AdspFormDefinition {
   id: string;
@@ -78,7 +79,19 @@ const mockDefinition: AdspFormDefinition = {
   },
 };
 
-function buildHeaders(config: AdspFormStarterConfig): HeadersInit {
+export class AdspSignInRequiredError extends Error {
+  constructor() {
+    super('Sign in to continue.');
+  }
+}
+
+function checkSignIn(config: AdspFormStarterConfig, response: Response) {
+  if (config.tokenHandler && response.status === 401) {
+    throw new AdspSignInRequiredError();
+  }
+}
+
+function buildHeaders(config: AdspFormStarterConfig, method = 'GET'): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
@@ -86,6 +99,11 @@ function buildHeaders(config: AdspFormStarterConfig): HeadersInit {
   const token = config.accessToken?.trim();
   if (token) {
     headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+  }
+
+  // The token handler adds the access token, and needs the CSRF header for requests other than GET.
+  if (config.tokenHandler && method !== 'GET') {
+    Object.assign(headers, getCsrfHeaders());
   }
 
   return headers;
@@ -175,6 +193,7 @@ export async function loadAdspFormDefinition(
     headers: buildHeaders(config),
   });
 
+  checkSignIn(config, response);
   if (!response.ok) {
     throw new Error(`Form definition request failed with status ${response.status}.`);
   }
@@ -203,7 +222,7 @@ export async function submitAdspForm(
 
   const response = await fetch(`${baseUrl}/form/v1/forms`, {
     method: 'POST',
-    headers: buildHeaders(config),
+    headers: buildHeaders(config, 'POST'),
     body: JSON.stringify({
       definitionId,
       data,
@@ -211,6 +230,7 @@ export async function submitAdspForm(
     }),
   });
 
+  checkSignIn(config, response);
   if (!response.ok) {
     throw new Error(`Form submission failed with status ${response.status}.`);
   }

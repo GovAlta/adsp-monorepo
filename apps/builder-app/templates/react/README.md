@@ -111,7 +111,7 @@ Update [src/config/adspForm.ts](src/config/adspForm.ts) to configure:
 - `serviceName` and `serviceDescription` for your program website content.
 - `definitionId` for the ADSP form definition.
 - `formServiceBaseUrl` for your tenant API base URL.
-- `accessToken` for authenticated live requests.
+- `accessToken` for authenticated live requests, or `tokenHandler` (with `formServiceBaseUrl` set to `/token-handler/targets/form-service`) to sign users in through the token handler. In Builder preview the `builder-preview` client is available: set `tokenHandler` to `{ clientId: 'builder-preview', tenantName: '<tenant name>' }`. The tenant's administrator must register the client first (token handler tab in the tenant management app).
 - `submitOnCreate` to control create-vs-submit behavior.
 
 ## Design and Implementation Conventions

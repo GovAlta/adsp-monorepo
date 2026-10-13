@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Signed in</title>
+  </head>
+  <body>
+    <p>You are signed in. You can close this window.</p>
+    <script>
+      // This page is the sign in window of the preview; the preview checks the session when the window closes.
+      if (window.opener) {
+        window.close();
+      }
+    </script>
+  </body>
+</html>
