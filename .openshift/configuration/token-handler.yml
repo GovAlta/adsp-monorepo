@@ -13,6 +13,8 @@ items:
       DIRECTORY_URL: http://directory-service:3333
       DIR_PLATFORM_CONFIGURATION_SERVICE_V2: http://configuration-service:3333/configuration/v2
       LOG_LEVEL: debug
+      # Public URL of the builder app; registers the builder preview client in the core configuration.
+      # BUILDER_APP_URL: https://builder.example.ca
       # Hosts that target upstreams can use; a comma separated list of host names (optionally with a port), and
       # '*.example.ca' for subdomains.
       # Upstreams are not restricted if it is not set. When set, upstreams in the platform namespace (urn:ads:platform:)

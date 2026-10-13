@@ -56,6 +56,8 @@ export const createEnvironment = (
       TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
       // Domains that target upstreams are allowed to be on; upstreams are not restricted if there are none.
       UPSTREAM_ALLOWED_DOMAINS: domainList({ default: [] }),
+      // Public URL of the builder app; the builder preview client is registered in the core configuration if set.
+      BUILDER_APP_URL: envalid.url({ default: '' }),
     },
     {
       reporter: ({ errors }) => {
