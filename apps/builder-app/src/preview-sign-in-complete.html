@@ -5,12 +5,15 @@
     <title>Signed in</title>
   </head>
   <body>
-    <p>You are signed in. You can close this window.</p>
+    <p>You are signed in. Returning to the builder...</p>
     <script>
-      // This page is the sign in window of the preview; the preview checks the session when the window closes.
-      if (window.opener) {
-        window.close();
+      // The builder stores where the user was before it signed them in to the token handler.
+      var path = sessionStorage.getItem('builder:token-handler-return-to');
+      sessionStorage.removeItem('builder:token-handler-return-to');
+      if (!path || path.charAt(0) !== '/' || path.charAt(1) === '/' || path.charAt(1) === '\\') {
+        path = '/';
       }
+      window.location.replace(path);
     </script>
   </body>
 </html>
