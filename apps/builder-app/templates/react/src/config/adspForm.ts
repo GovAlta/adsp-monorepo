@@ -1,3 +1,5 @@
+import { type TokenHandlerConfig } from '../lib/tokenHandler';
+
 export type AdspFormMode = 'mock' | 'live';
 
 export interface AdspFormStarterConfig {
@@ -7,6 +9,9 @@ export interface AdspFormStarterConfig {
   definitionId: string;
   formServiceBaseUrl: string;
   accessToken?: string;
+  // Use the token handler for live requests instead of an access token: set formServiceBaseUrl to
+  // '/token-handler/targets/form-service'. Users sign in with the 'Sign in' button when a request needs it.
+  tokenHandler?: TokenHandlerConfig;
   submitOnCreate: boolean;
 }
 

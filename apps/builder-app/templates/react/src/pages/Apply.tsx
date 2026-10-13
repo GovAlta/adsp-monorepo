@@ -6,9 +6,11 @@ import { adspFormConfig } from '../config/adspForm';
 import {
   type AdspFormDefinition,
   type AdspSubmissionReceipt,
+  AdspSignInRequiredError,
   loadAdspFormDefinition,
   submitAdspForm,
 } from '../lib/adspFormApi';
+import { signIn } from '../lib/tokenHandler';
 
 export default function Apply() {
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,8 @@ export default function Apply() {
   const [errors, setErrors] = useState<unknown[]>([]);
   const [submission, setSubmission] = useState<AdspSubmissionReceipt | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [signInRequired, setSignInRequired] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -25,6 +29,7 @@ export default function Apply() {
     const load = async () => {
       setLoading(true);
       setErrorMessage(null);
+      setSignInRequired(false);
       try {
         const resolved = await loadAdspFormDefinition(adspFormConfig);
         if (active) {
@@ -32,6 +37,7 @@ export default function Apply() {
         }
       } catch (err) {
         if (active) {
+          setSignInRequired(err instanceof AdspSignInRequiredError);
           setErrorMessage(err instanceof Error ? err.message : 'Unable to load form definition.');
         }
       } finally {
@@ -46,7 +52,7 @@ export default function Apply() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadCount]);
 
   const hasValidationError = useMemo(() => errors.length > 0, [errors]);
 
@@ -74,6 +80,22 @@ export default function Apply() {
             <section className="section-spacing">
               <GoabCallout type="important" heading="Form unavailable">
                 {errorMessage}
+                {signInRequired && adspFormConfig.tokenHandler ? (
+                  <GoabButton
+                    type="primary"
+                    onClick={async () => {
+                      try {
+                        if (await signIn(adspFormConfig.tokenHandler!)) {
+                          setReloadCount((count) => count + 1);
+                        }
+                      } catch (err) {
+                        setErrorMessage(err instanceof Error ? err.message : 'Unable to sign in.');
+                      }
+                    }}
+                  >
+                    Sign in
+                  </GoabButton>
+                ) : null}
               </GoabCallout>
             </section>
           ) : null}
