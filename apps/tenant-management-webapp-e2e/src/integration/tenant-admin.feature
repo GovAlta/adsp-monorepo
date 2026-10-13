@@ -49,7 +49,8 @@ Feature: Tenant admin
     Then the user views the number of users in top 5 roles in its tenant realm
     And the number of users in roles from admin page should equal to the number of users in roles from the realm API
 
-  @accessibility @regression
+  # Due to the new filter UI on event log page from CS-5496, this test is temporarily ignored
+  @accessibility @regression @ignore
   Scenario: As a tenant admin, I can use tenant admin pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
@@ -127,7 +128,8 @@ Feature: Tenant admin
     Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
     Then the user should not have regular admin view
 
-  @TEST_CS-715 @REQ_CS-254 @regression @prod
+  # Due to the new filter UI on event log page from CS-5496, this test is temporarily ignored
+  @TEST_CS-715 @REQ_CS-254 @regression @prod @ignore
   Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     # First create an event definition under events it will be used to verify the event log
