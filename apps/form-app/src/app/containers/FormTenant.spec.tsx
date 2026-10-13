@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // The container reads the store through plain selectors, so feeding them a state object is enough
@@ -25,7 +25,7 @@ const { FormTenant } = require('./FormTenant');
 
 const TOPIC = { resourceId: 'urn:form-1', id: 12, name: 'form-1', commenters: [] };
 
-const stateWith = ({ supportTopic = false, topic = null, unread = 0, show = false } = {}) => ({
+const stateWith = ({ supportTopic = false, topic = null, unread = 0, show = false, form = null } = {}) => ({
   config: { initialized: true },
   user: {
     initialized: true,
@@ -35,7 +35,7 @@ const stateWith = ({ supportTopic = false, topic = null, unread = 0, show = fals
   form: {
     selected: 'abc111232',
     definitions: { abc111232: { id: 'abc111232', name: 'abc111232', supportTopic } },
-    form: null,
+    form,
   },
   comment: {
     topics: topic ? { [topic.resourceId]: topic } : {},
@@ -54,6 +54,7 @@ const renderTenant = () =>
 describe('FormTenant', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
+    mockDispatch.mockReturnValue({ unwrap: jest.fn().mockResolvedValue(undefined) });
   });
 
   it('shows the form name in the header', () => {
@@ -99,5 +100,25 @@ describe('FormTenant', () => {
     fireEvent(container.querySelector('goa-button[testid="form-messages-toggle"]'), new CustomEvent('_click'));
 
     expect(mockDispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves the current draft before signing out', async () => {
+    mockState = stateWith({
+      form: {
+        id: 'form-1',
+        definition: { id: 'abc111232', name: 'abc111232' },
+        status: 'draft',
+        created: '2026-10-01T12:00:00.000Z',
+      },
+    });
+
+    const { getByTestId } = renderTenant();
+    mockDispatch.mockClear();
+
+    fireEvent(getByTestId('form-sign-out'), new CustomEvent('_click'));
+
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledTimes(2));
+    expect(mockDispatch.mock.calls[0][0]).toEqual(expect.any(Function));
+    expect(mockDispatch.mock.calls[1][0]).toEqual(expect.any(Function));
   });
 });

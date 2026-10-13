@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Route, Routes, useNavigate, useParams } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import {
   AppDispatch,
@@ -68,7 +68,16 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
         name={params.name}
       />
       <Routes>
-        <Route path={`/:taskId`} element={<TaskDetailsHost onClose={() => navigate('')} />} />
+        <Route
+          path={`/:taskId`}
+          element={
+            <TaskDetailsHost
+              onClose={() => {
+                navigate(`/${params.tenant}/${params.namespace}/${params.name}`);
+              }}
+            />
+          }
+        />
         <Route
           path="/"
           element={
@@ -112,7 +121,7 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
             setTaskPriority({
               taskId: modal.taskToPrioritize.id,
               priority,
-            })
+            }),
           )
         }
         onClose={() => dispatch(taskActions.setTaskToPrioritize(null))}

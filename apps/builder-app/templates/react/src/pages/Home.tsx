@@ -1,38 +1,25 @@
 import {
   GoabButton,
   GoabCallout,
-  GoabOneColumnLayout,
-  GoabAppHeader,
   GoabHeroBanner,
   GoabPageBlock,
   GoabGrid,
   GoabContainer,
-  GoabAppFooter,
 } from '@abgov/react-components';
-import { Link, useNavigate } from 'react-router-dom';
-import heroBannerImage from '../assets/hero-banner.png';
+import { useNavigate } from 'react-router-dom';
+import PublicLayout from '../layouts/PublicLayout';
 
 export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <GoabOneColumnLayout>
-      <section slot="header" className="app-header-shell">
-        <GoabAppHeader url="/" heading="Alberta service">
-          <Link to="/apply" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Apply
-          </Link>
-          <Link to="/components" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Components
-          </Link>
-          <Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>
-            About
-          </Link>
-        </GoabAppHeader>
-      </section>
-
+    <PublicLayout>
       <div className="hero-banner-wrapper">
-        <GoabHeroBanner heading="Welcome to your Alberta service" backgroundUrl={heroBannerImage}>
+        <GoabHeroBanner
+          heading="Welcome to your Alberta service"
+          backgroundUrl="https://images.unsplash.com/photo-1506104489822-562ca25152fe?w=1280&auto=format&fit=crop&q=80"
+          textColor="#ffffff"
+        >
           <p className="hero-subtitle">
             This starter combines an information-focused service website with an integrated ADSP
             application form so teams can prototype and iterate quickly.
@@ -166,9 +153,6 @@ export default function Home() {
         </div>
       </GoabPageBlock>
 
-      <section slot="footer">
-        <GoabAppFooter></GoabAppFooter>
-      </section>
-    </GoabOneColumnLayout>
+    </PublicLayout>
   );
 }

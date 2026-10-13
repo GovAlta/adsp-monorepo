@@ -1,6 +1,6 @@
 import { GoabAppFooter, GoabCircularProgress, GoabContainer } from '@abgov/react-components';
 import React, { useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom-v7';
 import { CenteredProgress, FlexItem, ServiceContainer } from './styled-components';
 
 import { Band } from '@core-services/app-common';
@@ -8,6 +8,7 @@ import Header from './Header';
 import { useFeedbackWidget } from '../hooks/useFeedbackWidget';
 import { useSelector } from 'react-redux';
 import { authenticatedUserSelector, environmentSelector, userSelector } from '../state';
+import { buildLoginPath } from '../lib/loginReturn';
 
 interface ServiceInfo {
   /**
@@ -37,6 +38,13 @@ interface ServiceInfo {
 
 // This contains the list of services/libraries that we can create exammples for.
 const SERVICES: ServiceInfo[] = [
+  {
+    id: 'AdspComponents',
+    name: 'ADSP components',
+    show: true,
+    description: 'ADSP application components and theming',
+    url: '/adsp-components',
+  },
   {
     id: 'AgentService',
     name: 'Agent service',
@@ -106,6 +114,13 @@ const SERVICES: ServiceInfo[] = [
     show: true,
     description: 'Sharepoint related services',
     url: '/sharepoint',
+  },
+  {
+    id: 'PlanningPoker',
+    name: 'Planning poker',
+    show: true,
+    description: 'Team estimation built on script, value, event and push services',
+    url: '/planning-poker',
   },
   {
     id: 'ScriptService',
@@ -183,9 +198,9 @@ export default function Services() {
 
   useEffect(() => {
     if (!user && userInitialized) {
-      navigate(`/`);
+      navigate(buildLoginPath(environment.tenantName, location.pathname), { replace: true });
     }
-  }, [navigate, user, userInitialized]);
+  }, [navigate, user, userInitialized, environment.tenantName, location.pathname]);
 
   useFeedbackWidget(environment.tenantName);
   return (

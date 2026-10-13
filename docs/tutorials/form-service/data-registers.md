@@ -14,73 +14,62 @@ achieve this.
 
 <h3 id="data-registers">Data registers</h3>
 
-When there is a need to retrieve a list of values that are needed to populate a drop down from an external data source.
-We have two options to accomplish this operation.
+When a drop down needs a list of values, there are two options.
 
   <ol>
     <li>
-      Using ADSP Configuration service by adding a configuration definition to retrieving the list of values.
+      Use an ADSP data register. You manage data registers in the tenant management webapp or through the form service API.
     </li>
     <li>
       Provide a URL REST API endpoint to retrieve the list of values.
     </li>
   </ol>
 
-### Using Configuration service - defining the JSON payload schema
+### Using a data register
 
-#### Example 1:
+A data register is a named list of values. Each value is either a string or an object, for example an object with `label` and `value` properties.
 
-In this example we are only accepting array of string values.
+#### Managing data registers in the tenant management webapp
 
-```
-{
-  "type": "array",
-  "items": {
-    "type": "string"
+Go to Form service &rarr; Register data tab.
+
+- Click **Add register data** and enter a name, an optional description and the values. Names can contain letters, numbers, spaces, hyphens and underscores, can't start or end with a space, can be up to 50 characters long, and must be unique within your tenant. Enter the values separated by commas, new lines or semicolons, or select **Use JSON format** and enter a JSON array.
+- Click the eye icon on a register to view its values and copy its URN.
+- Click the edit icon on a register to change its values as a JSON array.
+- Click the delete icon on a register to delete it. Forms that reference a deleted register lose its options.
+
+#### Managing data registers through the API
+
+You can also manage data registers through the form service API at `/form/v1/registers`. This requires the `form-admin` role or the configuration service `configuration-admin` role. See [Form service](/adsp-monorepo/services/form-service.html#data-registers) for the full API.
+
+```typescript
+const response = await fetch('https://form-service.adsp.alberta.ca/form/v1/registers', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   },
-  "required": [],
-  "additionalProperties": true
-}
+  body: JSON.stringify({
+    name: 'provinces',
+    description: 'Canadian provinces',
+    entries: ['Alberta', 'British Columbia', 'Saskatchewan'],
+  }),
+});
 ```
 
-#### Example 2:
+#### Register values
 
-In this example, we are defining a couple properties called "label" and "value" which is usually part of
-a drop down for array object.
-
-```
-{
-  "type": "array",
-  "items": {
-    "type": "object",
-    "properties": {
-      "value": {
-        "type": "string"
-      },
-      "label": {
-        "type": "string"
-      }
-    }
-  },
-  "properties": {},
-  "required": [],
-  "additionalProperties": true
-}
-```
-
-Once you have defined your schema you will go to the Configuration Service &rarr; Revisions tab and select the configuration definition from the drop down and click on the edit button and enter the data for the list of values.
-
-This example maps to example 1 from the schema above:
+This register holds string values:
 
 ```
 [
   "value1",
   "value2",
-  "value3",
+  "value3"
 ]
 ```
 
-This example maps to example 2 from the schema above that has "label" and "value" as a property.
+This register holds objects with `label` and `value` properties:
 
 ```
 [
@@ -88,14 +77,16 @@ This example maps to example 2 from the schema above that has "label" and "value
     "label": "label 1",
     "value": "value 1"
   },
-    {
+  {
     "label": "label 2",
     "value": "value 2"
   }
 ]
 ```
 
-Once you have configured the configuration service schema for your data registers you are ready to go to the form editor and make modifications to your UI and data schema to include your data registers on the file upload control.
+Each data register has a URN in the form `urn:ads:platform:configuration:v2:/configuration/data-register/<name>`. You use it in the UI schema to reference the register. Names with spaces are not encoded, so the URN is exactly what the Register data tab shows.
+
+Once your data register is set up, go to the form editor and add it to your data and UI schemas for the drop down.
 
 #### Data schema
 
@@ -117,9 +108,9 @@ Once you have configured the configuration service schema for your data register
 
 For the UI schema there are two methods that you use to populate your drop down.
 
-The first method is to use the Configuration service and use the data register configuration service using the URN.
+The first method is to reference a data register by its URN.
 
-The example below shows what the UI schema you would need.
+The example below shows the UI schema you would need.
 
 ```
  {
@@ -128,11 +119,15 @@ The example below shows what the UI schema you would need.
   "label": "Province",
   "options": {
     "register": {
-      "urn": "urn:ads:platform:configuration:v2:/configuration/public-register/public-register-1"
+      "urn": "urn:ads:platform:configuration:v2:/configuration/data-register/provinces"
     }
   }
 }
 ```
+
+You can also reference configuration in other namespaces, for example `urn:ads:platform:configuration:v2:/configuration/public-register/public-register-1`. Its configuration definition schema must be an array of strings or an array of objects. You set up these registers directly in configuration service. They aren't managed by the Register data tab or the form service API.
+
+By default, only signed-in users can read a register. To use a register in a form that allows anonymous applicants, go to Configuration service &rarr; Definitions. Edit the register's definition, which has the namespace `data-register` and the register's name, and select **Allow anonymous access**. The Register data tab and the form service API keep this setting when they update a register, but they never set it.
 
 Please refer to [Configuration service](/adsp-monorepo/services/configuration-service.html) for more details.
 

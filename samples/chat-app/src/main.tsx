@@ -16,15 +16,10 @@ import {
   UserState,
   USER_FOUND,
 } from 'redux-oidc';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom-v7';
 
 import { createUserManager } from './access';
-import {
-  ConfigState,
-  CONFIG_FEATURE_KEY,
-  getConfiguration,
-  configReducer,
-} from './app/config.slice';
+import { ConfigState, CONFIG_FEATURE_KEY, getConfiguration, configReducer } from './app/config.slice';
 import { chatReducer, CHAT_FEATURE_KEY } from './app/chat.slice';
 import App from './app/app';
 
@@ -34,9 +29,7 @@ const store = configureStore({
       if (action.type === USER_FOUND) {
         const userAction = action as Action<User>;
         if (userAction.payload?.access_token) {
-          const result: Record<string, unknown> = decodeJwt(
-            userAction.payload.access_token
-          );
+          const result: Record<string, unknown> = decodeJwt(userAction.payload.access_token);
           const resourceAccess = result.resource_access as Record<string, { roles?: string[] }> | undefined;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (action as any).payload.roles = resourceAccess?.['urn:ads:demo:chat-service']?.roles || [];
@@ -95,9 +88,7 @@ const SignoutCallback: FunctionComponent<{ userManager: UserManager }> = ({ user
 };
 
 const Main: FunctionComponent = () => {
-  const { accessServiceUrl, clientId, realm } = useSelector(
-    (state: { config: ConfigState }) => state.config
-  );
+  const { accessServiceUrl, clientId, realm } = useSelector((state: { config: ConfigState }) => state.config);
 
   let userManager: UserManager | null = null;
   if (accessServiceUrl && realm && clientId) {
@@ -113,14 +104,8 @@ const Main: FunctionComponent = () => {
       <React.StrictMode>
         <Router>
           <Routes>
-            <Route
-              path="/auth/callback"
-              element={<AuthCallback userManager={userManager} />}
-            />
-            <Route
-              path="/signout/callback"
-              element={<SignoutCallback userManager={userManager} />}
-            />
+            <Route path="/auth/callback" element={<AuthCallback userManager={userManager} />} />
+            <Route path="/signout/callback" element={<SignoutCallback userManager={userManager} />} />
             <Route path="/*" element={<App userManager={userManager} />} />
           </Routes>
         </Router>
@@ -131,11 +116,9 @@ const Main: FunctionComponent = () => {
   );
 };
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <Provider store={store}>
     <Main />
-  </Provider>
+  </Provider>,
 );

@@ -37,6 +37,7 @@
     "jsx": "const navigate = useNavigate();\n\nconst handleSubmit = async (data) => {\n  // In live mode, this submits to ADSP Form Service\n  // Generate reference number from response\n  const referenceNumber = `APP-${Date.now()}`;\n  navigate('/confirmation', { state: { referenceNumber } });\n};\n\nreturn (\n  <GoabOneColumnLayout>\n    <GoabPageBlock width=\"704px\">\n      <h1>Apply for child care subsidy</h1>\n      <p>Complete this form to apply. You will need:</p>\n      <ul>\n        <li>Your income information</li>\n        <li>Child care provider details</li>\n        <li>Proof of Alberta residency</li>\n      </ul>\n\n      <GoabCallout type=\"information\" heading=\"Privacy notice\">\n        Information collected is used to assess your eligibility under the Child Care Subsidy Act.\n        For questions, contact the FOIP Coordinator.\n      </GoabCallout>\n\n      <FormComponent onSubmit={handleSubmit} />\n    </GoabPageBlock>\n  </GoabOneColumnLayout>\n);"
   },
   "notes": [
+    "The fields come from the form definition (dataSchema and uiSchema), not from JSX. Edit the definition and validate it with builderFormSchemaValidate; see the form-service integration notes.",
     "Always include a privacy/FOIP notice when collecting personal information",
     "List what users need before starting (reduces abandonment)",
     "Use mock mode for prototyping, switch to live for production",

@@ -1,32 +1,19 @@
-import json
 import logging
 from operator import attrgetter, itemgetter
 from threading import Lock
-from typing import Any, Dict, List, NamedTuple, Optional
-from urllib.error import URLError
-from urllib.request import Request, urlopen
+from typing import Dict, List, NamedTuple, Optional
 
 from cachetools import cachedmethod, keys, TTLCache
 from httpx import RequestError, get
-from jwt import PyJWKClient, PyJWKClientError
+from jwt import PyJWKClient
 
 from .tenant import Tenant, TenantService
 
 
 class _JWKClient(PyJWKClient):
     # This is necessary because the base implementation includes the default User-Agent for Python.
-    def fetch_data(self) -> Any:
-        jwk_set: Any = None
-        try:
-            with urlopen(Request(self.uri, headers={"User-Agent": ""})) as response:
-                jwk_set = json.load(response)
-        except URLError as e:
-            raise PyJWKClientError(f'Fail to fetch data from the url, err: "{e}"')
-        else:
-            return jwk_set
-        finally:
-            if self.jwk_set_cache is not None:
-                self.jwk_set_cache.put(jwk_set)
+    def __init__(self, uri: str) -> None:
+        super().__init__(uri, headers={"User-Agent": ""})
 
 
 class _TokenIssuer(NamedTuple):

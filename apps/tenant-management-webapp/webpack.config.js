@@ -14,7 +14,7 @@ function withSvgr(svgrOptions = {}) {
   return function configure(config) {
     // Remove existing SVG loader if present
     const svgLoaderIdx = config.module.rules.findIndex(
-      (rule) => typeof rule === 'object' && typeof rule.test !== 'undefined' && rule.test.toString().includes('svg|')
+      (rule) => typeof rule === 'object' && typeof rule.test !== 'undefined' && rule.test.toString().includes('svg|'),
     );
 
     if (svgLoaderIdx !== -1) {
@@ -69,7 +69,21 @@ module.exports = composePlugins(withNx(), withReact(), withSvgr(), (config, { op
   // For more information on webpack config and Nx see:
   // https://nx.dev/packages/webpack/documents/webpack-config-setup
 
+  // Manually load proxy config if not already applied by Nx
+  if (!config.devServer?.proxy) {
+    try {
+      const proxyConfig = require('./proxy.conf.json');
+      if (!config.devServer) {
+        config.devServer = {};
+      }
+      config.devServer.proxy = proxyConfig;
+      console.log('[webpack.config.js] Applied proxy configuration manually');
+    } catch (e) {
+      console.warn('[webpack.config.js] Failed to load proxy config:', e.message);
+    }
+  }
+
   return excludeNodeModulesFromSourceMapLoader(
-    aliasReactComponents(require('./webpack.config.old.js')(config, context), '@abgov/react-components')
+    aliasReactComponents(require('./webpack.config.old.js')(config, context), '@abgov/react-components'),
   );
 });

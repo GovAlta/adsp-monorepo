@@ -31,7 +31,8 @@ include = ["pii_service/resources/swagger.yml"]
   pyyaml = "^6.0.1"
   flask-cors = "^6.0.0"
   idna = ">=3.15"
-  urllib3 = ">=2.7.0"
+  urllib3 = ">=2.8.0"
+  werkzeug = ">=3.1.9"
   cryptography = ">=50.0.0"
 
   [tool.poetry.group.dev.dependencies]

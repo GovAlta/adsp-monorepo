@@ -289,4 +289,41 @@ describe('AddEditConfigDefinition', () => {
       expect(nameFormItem?.getAttribute('error')).toContain('Configuration');
     });
   });
+
+  test('does not save configuration definition with invalid JSON schema', async () => {
+    const mockOnSave = jest.fn();
+    const mockOnClose = jest.fn();
+    const store = mockStore(initialState);
+
+    const testValue: ConfigDefinition = {
+      namespace: 'my-namespace',
+      name: 'my-config',
+      description: 'Test description',
+      configurationSchema: {
+        type: 'objectx',
+      },
+      anonymousRead: false,
+    };
+
+    const { baseElement } = render(
+      <Provider store={store}>
+        <AddEditConfigDefinition
+          onSave={mockOnSave}
+          initialValue={testValue}
+          open={true}
+          isEdit={false}
+          onClose={mockOnClose}
+          configurations={{}}
+        />
+      </Provider>
+    );
+
+    const saveButton = baseElement.querySelector("goa-button[testId='form-save']");
+    fireEvent(saveButton, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
 });

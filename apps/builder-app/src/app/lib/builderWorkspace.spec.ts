@@ -1,4 +1,10 @@
-import { applyWorkspaceChange, applyWorkspaceSnapshot, diffWorkspaceFiles, toFileTree } from './builderWorkspace';
+import {
+  applyWorkspaceChange,
+  applyWorkspaceSnapshot,
+  diffWorkspaceFiles,
+  mergeScaffoldFiles,
+  toFileTree,
+} from './builderWorkspace';
 
 describe('builderWorkspace helpers', () => {
   it('applies a workspace snapshot into a file map', () => {
@@ -67,5 +73,24 @@ describe('builderWorkspace helpers', () => {
         },
       },
     });
+  });
+
+  it('adds scaffold files to a workspace without overriding files already present', () => {
+    expect(
+      mergeScaffoldFiles(
+        [
+          { path: 'src/App.tsx', content: 'app' },
+          { path: 'tsconfig.json', content: 'custom' },
+        ],
+        [
+          { path: 'tsconfig.json', content: 'scaffold' },
+          { path: 'index.html', content: '<html />' },
+        ],
+      ),
+    ).toEqual([
+      { path: 'index.html', content: '<html />' },
+      { path: 'src/App.tsx', content: 'app' },
+      { path: 'tsconfig.json', content: 'custom' },
+    ]);
   });
 });

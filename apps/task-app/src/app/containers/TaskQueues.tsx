@@ -1,16 +1,10 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import { QueuesHeader } from '../components/QueuesHeader';
 import { QueueList } from '../components/QueueList';
-import {
-  AppDispatch,
-  loadQueues,
-  metricsLoadingSelector,
-  queueMetricsSelector,
-  queuesSelector,
-} from '../state';
+import { AppDispatch, loadQueues, metricsLoadingSelector, queueMetricsSelector, queuesSelector } from '../state';
 
 interface TaskQueuesProps {
   className?: string;

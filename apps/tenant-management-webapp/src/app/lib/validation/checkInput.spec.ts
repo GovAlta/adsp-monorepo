@@ -1,4 +1,4 @@
-import { characterCheck, checkInput, validationPattern, wordCheck } from './checkInput';
+import { characterCheck, checkInput, validateJsonSchema, validationPattern, wordCheck } from './checkInput';
 
 describe('checkInput', () => {
   describe('character check', () => {
@@ -103,6 +103,55 @@ describe('checkInput', () => {
       };
       checkInput('the-rain-in-spain', [charChecker], action);
       expect(successActionCalled).toEqual(true);
+    });
+  });
+
+  describe('validateJsonSchema', () => {
+    it('returns valid for a valid JSON schema', () => {
+      const result = validateJsonSchema(
+        JSON.stringify({
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+          },
+          required: ['name'],
+        })
+      );
+
+      expect(result).toEqual({ valid: true });
+    });
+
+    it('returns required error for empty schema text', () => {
+      expect(validateJsonSchema('   ')).toEqual({
+        valid: false,
+        error: 'Payload schema is required.',
+      });
+    });
+
+    it('returns JSON error for malformed schema text', () => {
+      expect(validateJsonSchema('{ "type": "object"')).toEqual({
+        valid: false,
+        error: 'Payload schema must be valid JSON.',
+      });
+    });
+
+    it('returns a helpful error for an invalid schema type', () => {
+      expect(validateJsonSchema(JSON.stringify({ type: 'objectx' }))).toEqual({
+        valid: false,
+        error: 'Invalid schema type "objectx". Allowed types are: object, array, string, number, integer, boolean, and null.',
+      });
+    });
+
+    it('returns a schema validation error for other invalid schemas', () => {
+      const result = validateJsonSchema(
+        JSON.stringify({
+          type: 'object',
+          required: 'name',
+        })
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Invalid JSON Schema: /required');
     });
   });
 });

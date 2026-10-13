@@ -3,6 +3,60 @@ import { loadBuilderExamples } from './utils/loadBuilderExamples';
 
 const builderExamplesText = loadBuilderExamples();
 
+// Shared by the supervisor and the coder: sub-agents see only their own instructions, so each needs the rules.
+const formAuthoringInstructions = `
+    ## Forms and Data Collection
+
+    When the user asks for a form, a report, an application, or anything that collects information, build it as an
+    ADSP JSON form. Do NOT hand-build the fields with plain HTML or a custom form page.
+
+    - The form is the \`dataSchema\` (JSON Schema: the shape of the data) and \`uiSchema\` (JSON Forms: the layout) of a
+      form definition. In a project with the ADSP form starter this is the mock definition in
+      src/lib/adspFormApi.ts, rendered by src/components/FormComponent.tsx on the /apply page. Edit the definition;
+      keep the page, config, and submit flow unless the user asks to change them.
+    - Reuse the ADSP common definitions before designing fields: personFullName, personFullNameAndDob,
+      postalAddressAlberta, postalAddressCanada, email, phoneNumber, phoneNumberWithType, personDependents. Use
+      schemaDefinitionTool to see what a definition contains and wire it with
+      { "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/<name>" }.
+    - Use formExamplesTool to load worked examples before writing an unfamiliar control, layout, rule, or validation.
+      Request only the groups you need (at most three).
+    - Use rendererCatalogTool if you are unsure a field shape (object, array, custom format) has a renderer.
+    - After writing or editing a definition, call builderFormSchemaValidate with the dataSchema and uiSchema objects and
+      fix every error it reports before replying.
+    - A field with a SHOW or HIDE rule must not be a top-level required property; make it required with an if/then
+      block so hidden fields do not block submission.
+    - Data registers and file-urn upload need a live Form Service tenant. In mock mode use plain enums and no file fields.
+    - Add a short FOIP notice (HelpContent element or a callout) when the form collects personal information.
+    - Only leave the JSON form for things it cannot express: logic the schema cannot describe, or a submit target other
+      than the Form Service. Then follow the project's AGENTS.md form field guidance (GoabFormItem, one-argument onChange).
+`;
+
+// Shared by the supervisor and the coder, like the form rules.
+const platformServiceInstructions = `
+    ## Platform Services and API Requests
+
+    Apps can call ADSP platform services (Form Service, File Service) as the signed-in user. In Builder preview this
+    works through the token handler: the builder signs the user in and the preview sends requests to
+    /token-handler/targets/<target>/<service path> on its own origin. The token handler adds the user's access token,
+    so the app never holds a token.
+
+    - Targets in Builder preview: form-service (paths under /form/v1) and file-service (paths under /file/v1). For
+      example GET /token-handler/targets/file-service/file/v1/files. No other services are available; use mock data
+      for anything else and say so.
+    - In a project with the ADSP form starter, set tokenHandler: true in src/config/adspForm.ts, together with
+      mode: 'live' and formServiceBaseUrl: '/token-handler/targets/form-service', to load definitions and submit
+      through the Form Service. Default to mode: 'mock' until the user has a real definitionId.
+    - Make every API request with apiFetch from src/lib/tokenHandler.ts, not raw fetch. It adds the CSRF header that
+      the token handler needs for requests other than GET; without it, writes fail with "Request must include valid
+      CSRF token."
+    - Never put access tokens, client secrets or API keys in the code, and do not add sign in code: the builder has
+      already signed the user in. A 401 means the session ended (the user reloads the builder); a 403 means the
+      user's role does not permit the request. Show both as plain-language messages.
+    - The requests run as the builder's user in their tenant, so only call endpoints that the user is allowed to use,
+      and prefer reads. Do not create, change or delete data unless the user asked for it.
+    - See the platform request pattern in the reference material for working code.
+`;
+
 export const builderWorkspaceAnalystAgent: AgentConfiguration = {
   name: 'Builder Workspace Analyst Agent',
   description: `This supporting agent analyzes the current workspace and reports the project stack,
@@ -24,6 +78,10 @@ export const builderWorkspaceAnalystAgent: AgentConfiguration = {
     - Detected stack/framework
     - Relevant instruction files and required constraints
     - Important architectural patterns to preserve
+    - Whether forms are rendered from a form definition (for example a mockDefinition with dataSchema and uiSchema in
+      src/lib/adspFormApi.ts) so implementation edits the definition instead of hand-building fields
+    - Whether the project calls platform services through the token handler (tokenHandler in src/config/adspForm.ts,
+      apiFetch in src/lib/tokenHandler.ts, requests under /token-handler/targets/) so implementation keeps that pattern
     - Risks or unknowns requiring clarification
     - Recommended implementation steps
   `,
@@ -50,6 +108,8 @@ export const builderPrototypeCoderAgent: AgentConfiguration = {
     - Do not add dependencies unless necessary for the request.
     - Ensure runtime imports are appropriate for where code executes.
 
+    ${formAuthoringInstructions}
+    ${platformServiceInstructions}
     ## Tool Invocation Rules (MANDATORY)
     Before every tool call:
     - Re-check required fields and types.
@@ -57,6 +117,7 @@ export const builderPrototypeCoderAgent: AgentConfiguration = {
     - For mastra_workspace_edit_file: old_string must match exactly and uniquely.
   `,
   workspace: { enabled: true },
+  tools: ['builderFormSchemaValidate', 'formExamplesTool', 'rendererCatalogTool', 'schemaDefinitionTool'],
 };
 
 export const builderPreviewReliabilityAgent: AgentConfiguration = {
@@ -69,6 +130,7 @@ export const builderPreviewReliabilityAgent: AgentConfiguration = {
     - Browser runtime compatibility of imports and dependencies
     - Preview latency and avoidable network/dependency overhead
     - Clear loading/error states and actionable diagnostics
+    - Form definitions (dataSchema and uiSchema) that fail to render: check them with builderFormSchemaValidate
 
     ## Workflow
     1. Inspect relevant preview/runtime files and workspace sources.
@@ -82,6 +144,7 @@ export const builderPreviewReliabilityAgent: AgentConfiguration = {
     - Keep user-visible messaging concise and useful.
   `,
   workspace: { enabled: true },
+  tools: ['builderFormSchemaValidate'],
 };
 
 export const builderAgent: AgentConfiguration = {
@@ -90,6 +153,9 @@ export const builderAgent: AgentConfiguration = {
     It generates React/TypeScript source code and persists changes to the workspace so they are immediately
     reflected in the preview.`,
   workspace: { enabled: true },
+  // The builder makes many tool calls per turn; the framework default of 5 steps can end a turn before it replies.
+  maxSteps: 30,
+  tools: ['builderFormSchemaValidate', 'formExamplesTool', 'rendererCatalogTool', 'schemaDefinitionTool'],
   instructions: `You are a builder agent that creates and iterates on React/TypeScript web application prototypes
     for Alberta government digital services. You work in a file-based workspace. Mastra automatically provides
     you with these workspace tools:
@@ -124,10 +190,10 @@ export const builderAgent: AgentConfiguration = {
     ## Workflow
 
     1. At the start of the conversation, use mastra_workspace_list_files ('.') to understand the current workspace state.
-    2. Check for project instruction files and follow them when present:
-       - AGENTS.md (root or relevant subdirectory)
-       - .github/copilot-instructions.md
-       - other instruction files referenced by the project
+    2. If AGENTS.md exists in the workspace root, use mastra_workspace_read_file to READ IT IN FULL before doing anything else.
+       AGENTS.md contains mandatory rules about which components exist, which shells to use, and how to avoid known errors.
+       Do NOT skip this step or defer it — violating AGENTS.md rules causes preview crashes.
+       Also read any other instruction files when present (.github/copilot-instructions.md, etc.).
     3. Inspect key project files to infer stack and structure before making changes
        (for example package.json, tsconfig.json, src/main.*, src/App.*).
     4. Read relevant files with mastra_workspace_read_file before editing them.
@@ -135,6 +201,9 @@ export const builderAgent: AgentConfiguration = {
     6. For targeted changes (e.g. fix a function), prefer mastra_workspace_edit_file to minimise token output.
     7. Confirm briefly what was changed — 2-4 sentences. Do NOT dump raw source code in the reply
        unless the user explicitly asks to see it.
+    8. User messages may end with a [BUILDER_PREVIEW_SNAPSHOT_JSON] block describing what the user is currently previewing.
+       Its route.path is the page they are viewing: treat "this page", "here" or "the current page" as that route
+       and edit the component rendered for it (find it in the router, usually src/App.tsx).
 
     ## Iterative Building
 
@@ -145,6 +214,8 @@ export const builderAgent: AgentConfiguration = {
 
     NEVER build the entire application in one shot. Iterate in visible steps.
 
+    ${formAuthoringInstructions}
+    ${platformServiceInstructions}
     ## Government Service Principles
 
     Apply these principles when building Alberta government services:

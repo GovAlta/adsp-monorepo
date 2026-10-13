@@ -1,5 +1,6 @@
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
 import { Knex } from 'knex';
+import { DateTime } from 'luxon';
 import {
   Attendee,
   CalendarDate,
@@ -14,6 +15,99 @@ import { fromDateAndTimeIds, toDateId, toTimeId } from '../utils';
 
 export class PostgresCalendarRepository implements CalendarRepository {
   constructor(private knex: Knex) {}
+
+  private applyEventCriteria(
+    query: Knex.QueryBuilder<EventRecord, EventRecord[]>,
+    criteria?: CalendarEventCriteria
+  ): Knex.QueryBuilder<EventRecord, EventRecord[]> {
+    if (!criteria) {
+      return query;
+    }
+
+    const queryCriteria: Record<string, unknown> = {};
+
+    if (criteria.isPublic != null) {
+      queryCriteria.is_public = criteria.isPublic;
+    }
+
+    if (criteria.recordId) {
+      queryCriteria.record_id = criteria.recordId;
+    }
+
+    query = query.andWhere(queryCriteria);
+
+    if (criteria.context) {
+      query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
+    }
+
+    if (criteria.startsAfter) {
+      const startsAfterDate = toDateId(criteria.startsAfter);
+      const startsAfterTime = toTimeId(criteria.startsAfter);
+
+      query = query.andWhere((query) => {
+        query.where('e.start_date', '>', startsAfterDate).orWhere((q) => {
+          q.where('e.start_date', '=', startsAfterDate).andWhere('e.start_time', '>=', startsAfterTime);
+        });
+      });
+    }
+
+    if (criteria.endsBefore) {
+      const endsBeforeDate = toDateId(criteria.endsBefore);
+      const endsBeforeTime = toTimeId(criteria.endsBefore);
+
+      query = query.andWhere((query) => {
+        query.where('e.end_date', '<', endsBeforeDate).orWhere((q) => {
+          q.where('e.end_date', '=', endsBeforeDate).andWhere('e.end_time', '<=', endsBeforeTime);
+        });
+      });
+    }
+
+    if (criteria.activeOn) {
+      const activeOnDate = toDateId(criteria.activeOn);
+      const activeOnTime = toTimeId(criteria.activeOn);
+
+      query = query.andWhere((query) =>
+        query
+          .where('e.start_date', '<', activeOnDate)
+          .orWhere((query) =>
+            query
+              .where('e.start_date', '=', activeOnDate)
+              .andWhere((query) => query.where('e.start_time', '<=', activeOnTime).orWhere('e.is_all_day', true))
+          )
+      );
+      query = query.andWhere((query) =>
+        query
+          .andWhere('e.end_date', '>', activeOnDate)
+          .orWhere((query) =>
+            query
+              .where('e.end_date', '=', activeOnDate)
+              .andWhere((query) => query.where('e.end_date', '>=', activeOnTime).orWhere('e.is_all_day', true))
+          )
+          .orWhere((query) => query.whereNull('e.end_date'))
+      );
+    }
+
+    if (criteria.attendeeCriteria) {
+      query.join('attendees AS a', 'e.id', '=', 'a.event_id');
+      if (criteria.attendeeCriteria.emailEquals !== undefined) {
+        if (criteria.attendeeCriteria.emailEquals === null) {
+          query.whereNull('a.email');
+        } else {
+          query.where('a.email', '=', criteria.attendeeCriteria.emailEquals);
+        }
+      }
+
+      if (criteria.attendeeCriteria.nameEquals !== undefined) {
+        if (criteria.attendeeCriteria.nameEquals === null) {
+          query.whereNull('a.name');
+        } else {
+          query.where('a.name', '=', criteria.attendeeCriteria.nameEquals);
+        }
+      }
+    }
+
+    return query;
+  }
 
   private mapDateRecord(record: DateRecord): CalendarDate {
     return record
@@ -122,92 +216,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
       .where('e.tenant', '=', calendar.tenantId.toString())
       .andWhere('e.calendar', '=', calendar.name);
 
-    if (criteria) {
-      const queryCriteria: Record<string, unknown> = {};
-
-      if (criteria.isPublic != null) {
-        queryCriteria.is_public = criteria.isPublic;
-      }
-
-      if (criteria.recordId) {
-        queryCriteria.record_id = criteria.recordId;
-      }
-
-      query = query.andWhere(queryCriteria);
-
-      if (criteria.context) {
-        query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
-      }
-
-      if (criteria.startsAfter) {
-        // Where e.start_date is greater than startsAfterDate and time is greater or equal.
-        const startsAfterDate = toDateId(criteria.startsAfter);
-        const startsAfterTime = toTimeId(criteria.startsAfter);
-
-        query = query.andWhere((query) => {
-          query.where('e.start_date', '>', startsAfterDate).orWhere((q) => {
-            q.where('e.start_date', '=', startsAfterDate).andWhere('e.start_time', '>=', startsAfterTime);
-          });
-        });
-      }
-
-      if (criteria.endsBefore) {
-        // Where e.end_date is less than endsBeforeDate and time is lesser or equal.
-        const endsBeforeDate = toDateId(criteria.endsBefore);
-        const endsBeforeTime = toTimeId(criteria.endsBefore);
-
-        query = query.andWhere((query) => {
-          query.where('e.end_date', '<', endsBeforeDate).orWhere((q) => {
-            q.where('e.end_date', '=', endsBeforeDate).andWhere('e.end_time', '<=', endsBeforeTime);
-          });
-        });
-      }
-
-      if (criteria.activeOn) {
-        // Where date and time is between start and end.
-        const activeOnDate = toDateId(criteria.activeOn);
-        const activeOnTime = toTimeId(criteria.activeOn);
-
-        query = query.andWhere((query) =>
-          query
-            .where('e.start_date', '<', activeOnDate)
-            .orWhere((query) =>
-              query
-                .where('e.start_date', '=', activeOnDate)
-                .andWhere((query) => query.where('e.start_time', '<=', activeOnTime).orWhere('e.is_all_day', true))
-            )
-        );
-        query = query.andWhere((query) =>
-          query
-            .andWhere('e.end_date', '>', activeOnDate)
-            .orWhere((query) =>
-              query
-                .where('e.end_date', '=', activeOnDate)
-                .andWhere((query) => query.where('e.end_date', '>=', activeOnTime).orWhere('e.is_all_day', true))
-            )
-            .orWhere((query) => query.whereNull('e.end_date'))
-        );
-      }
-
-      if (criteria.attendeeCriteria) {
-        query.join('attendees AS a', 'e.id', '=', 'a.event_id');
-        if (criteria.attendeeCriteria.emailEquals !== undefined) {
-          if (criteria.attendeeCriteria.emailEquals === null) {
-            query.whereNull('a.email');
-          } else {
-            query.where('a.email', '=', criteria.attendeeCriteria.emailEquals);
-          }
-        }
-
-        if (criteria.attendeeCriteria.nameEquals !== undefined) {
-          if (criteria.attendeeCriteria.nameEquals === null) {
-            query.whereNull('a.name');
-          } else {
-            query.where('a.name', '=', criteria.attendeeCriteria.nameEquals);
-          }
-        }
-      }
-    }
+    query = this.applyEventCriteria(query, criteria);
 
     if (criteria?.orderBy === 'start') {
       query = query.orderBy('e.start_date', 'asc').orderBy('e.start_time', 'asc');
@@ -225,6 +234,49 @@ export class PostgresCalendarRepository implements CalendarRepository {
         size: rows.length > top ? top : rows.length,
       },
     };
+  }
+
+  async getCalendarEventsInRange(
+    calendar: CalendarEntity,
+    from: DateTime,
+    to: DateTime,
+    criteria?: CalendarEventCriteria
+  ): Promise<CalendarEventEntity[]> {
+    const fromDate = toDateId(from);
+    const fromTime = toTimeId(from);
+    const toDate = toDateId(to);
+    const toTime = toTimeId(to);
+
+    let query = this.knex<EventRecord>('calendar_events AS e')
+      .select('e.*')
+      .distinct()
+      .where('e.tenant', '=', calendar.tenantId.toString())
+      .andWhere('e.calendar', '=', calendar.name);
+
+    query = this.applyEventCriteria(query, criteria);
+
+    query = query.andWhere((query) => {
+      query.where('e.start_date', '<', toDate).orWhere((q) => {
+        q.where('e.start_date', '=', toDate).andWhere((q) => {
+          q.where('e.start_time', '<=', toTime).orWhere('e.is_all_day', true);
+        });
+      });
+    });
+
+    query = query.andWhere((query) => {
+      query
+        .whereNull('e.end_date')
+        .orWhere('e.end_date', '>', fromDate)
+        .orWhere((q) => {
+          q.where('e.end_date', '=', fromDate).andWhere((q) => {
+            q.where('e.end_time', '>=', fromTime).orWhere('e.is_all_day', true);
+          });
+        });
+    });
+
+    const rows = await query.orderBy('e.start_date', 'asc').orderBy('e.start_time', 'asc').orderBy('e.id', 'asc');
+
+    return rows.map((r) => this.mapEventRecord(calendar, r));
   }
 
   async getEventAttendees(event: CalendarEventEntity): Promise<Attendee[]> {

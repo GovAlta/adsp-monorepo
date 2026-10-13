@@ -4,9 +4,12 @@ import {
   adspId,
   AdspId,
   DomainEvent,
+  ConfigurationService,
   EventService,
   isAllowedUser,
+  ServiceDirectory,
   TenantService,
+  TokenProvider,
   UnauthorizedUserError,
   User,
 } from '@abgov/adsp-service-sdk';
@@ -14,7 +17,7 @@ import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAf
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
-import { NotificationConfiguration } from '../configuration';
+import { NotificationConfiguration, NotificationConfigurationWriter } from '../configuration';
 import {
   Channel,
   ServiceUserRoles,
@@ -40,6 +43,16 @@ import {
   subscriptionDeleted,
   subscriptionSet,
 } from '../events';
+import {
+  CONTACT_FIELDS,
+  createNotificationType,
+  deleteNotificationType,
+  getContact,
+  getNotificationTypeDefinitions,
+  TYPE_DEFINITION_SOURCES,
+  updateContact,
+  updateNotificationType,
+} from './configuration';
 
 interface SubscriptionRouterProps {
   serviceId: AdspId;
@@ -48,6 +61,9 @@ interface SubscriptionRouterProps {
   eventService: EventService;
   verifyService: VerifyService;
   tenantService: TenantService;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
 }
 
 export const assertHasTenant: RequestHandler = (req, _res, next) => {
@@ -416,7 +432,11 @@ export function createSubscriber(
 }
 
 const SUBSCRIBER_KEY = 'subscriber';
-export function getSubscriber(repository: SubscriptionRepository): RequestHandler {
+// additionalRoles lets other roles load the subscriber when the next handler applies its own access check.
+export function getSubscriber(
+  repository: SubscriptionRepository,
+  additionalRoles: ServiceUserRoles[] = []
+): RequestHandler {
   return async (req, _res, next) => {
     try {
       const user = req.user;
@@ -428,7 +448,8 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
         throw new NotFoundError('Subscriber', subscriber);
       }
 
-      if (!entity.canUpdate(user)) {
+      const hasAdditionalRole = additionalRoles.length > 0 && isAllowedUser(user, tenantId, additionalRoles, true);
+      if (!entity.canUpdate(user) && !hasAdditionalRole) {
         throw new UnauthorizedUserError('access subscriber', user);
       }
 
@@ -635,6 +656,9 @@ export const getSubscriptionChannels = (repository: SubscriptionRepository): Req
       const { subscriber } = req.params;
       const notification = req[TYPE_KEY] as NotificationTypeEntity;
       const subscription = await repository.getSubscription(notification, subscriber);
+      if (!subscription) {
+        throw new NotFoundError('Subscription', `${notification.id}:${subscriber}`);
+      }
       const channels = await subscription.getSubscriberChannels(notification);
       res.json(channels);
     } catch (err) {
@@ -648,9 +672,18 @@ export const createSubscriptionRouter = ({
   subscriptionRepository,
   eventService,
   verifyService,
+  directory,
+  tokenProvider,
+  configurationService,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
+  const configurationWriter = new NotificationConfigurationWriter(
+    serviceId,
+    directory,
+    tokenProvider,
+    configurationService,
+  );
 
   const validateTypeHandler = createValidationHandler(param('type').isString().isLength({ min: 1, max: 50 }));
   const validateSubscriberHandler = createValidationHandler(param('subscriber').isMongoId());
@@ -659,12 +692,48 @@ export const createSubscriptionRouter = ({
     param('subscriber').isMongoId()
   );
 
-  subscriptionRouter.get('/types', getNotificationTypes);
+  subscriptionRouter.get(
+    '/types',
+    createValidationHandler(query('source').optional().isIn(TYPE_DEFINITION_SOURCES)),
+    getNotificationTypeDefinitions,
+    getNotificationTypes
+  );
+  subscriptionRouter.post(
+    '/types',
+    assertHasTenant,
+    createValidationHandler(body('id').isString()),
+    createNotificationType(configurationWriter)
+  );
   subscriptionRouter.get(
     '/types/:type',
     validateTypeHandler,
     getNotificationType,
     async (req: Request, res: Response) => res.send(mapType(req[TYPE_KEY]))
+  );
+  subscriptionRouter.patch(
+    '/types/:type',
+    assertHasTenant,
+    validateTypeHandler,
+    updateNotificationType(configurationWriter)
+  );
+  subscriptionRouter.delete(
+    '/types/:type',
+    assertHasTenant,
+    validateTypeHandler,
+    deleteNotificationType(configurationWriter)
+  );
+
+  subscriptionRouter.get('/contact', assertHasTenant, getContact);
+  subscriptionRouter.patch(
+    '/contact',
+    assertHasTenant,
+    createValidationHandler(
+      ...CONTACT_FIELDS.map((field) => body(field).optional().isString()),
+      body('contactEmail').optional({ checkFalsy: true }).isEmail(),
+      body('fromEmail').optional().isString(),
+      body('fromEmail').optional({ checkFalsy: true }).isEmail()
+    ),
+    updateContact(configurationWriter)
   );
 
   subscriptionRouter.get(
@@ -810,7 +879,7 @@ export const createSubscriptionRouter = ({
         ['body']
       )
     ),
-    getSubscriber(subscriptionRepository),
+    getSubscriber(subscriptionRepository, [ServiceUserRoles.CodeSender]),
     subscriberOperations(eventService, verifyService)
   );
   subscriptionRouter.delete(
@@ -838,9 +907,11 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/subscribers/:subscriber/types/:type/channels',
+    validateSubscriberHandler,
     validateTypeHandler,
+    getSubscriber(subscriptionRepository),
     getNotificationType,
-    getSubscriptionChannels
+    getSubscriptionChannels(subscriptionRepository)
   );
 
   return subscriptionRouter;

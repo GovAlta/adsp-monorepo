@@ -1,7 +1,7 @@
 import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
-import { Routes } from 'react-router-dom';
+import { Routes } from 'react-router-dom-v7';
 import { ServiceMainProps } from './types';
 import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 

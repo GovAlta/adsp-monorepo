@@ -1,7 +1,7 @@
 import { GoabButton, GoabSideMenu } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import { AppDispatch, definitionSelector, loginUser, logoutUser, tenantSelector, userSelector } from '../state';
 
@@ -76,7 +76,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           <a
             href={`/${tenantName}/definitions`}
             onClick={(e) => {
-              navigate('definitions');
+              navigate(`/${tenantName}/definitions`);
               e.preventDefault();
             }}
           >
@@ -87,7 +87,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
               <a
                 href={`/${tenantName}/definitions/${definition.id}/responses`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/responses`);
+                  navigate(`/${tenantName}/definitions/${definition.id}/responses`);
                   e.preventDefault();
                 }}
               >
@@ -96,7 +96,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
               <a
                 href={`/${tenantName}/definitions/${definition.id}/configuration`}
                 onClick={(e) => {
-                  navigate(`definitions/${definition.id}/configuration`);
+                  navigate(`/${tenantName}/definitions/${definition.id}/configuration`);
                   e.preventDefault();
                 }}
               >

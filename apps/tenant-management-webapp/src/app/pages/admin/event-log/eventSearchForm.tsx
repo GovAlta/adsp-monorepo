@@ -1,13 +1,26 @@
-import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
-import { distance } from 'fastest-levenshtein';
 import { getEventDefinitions } from '@store/event/actions';
-import { useSearchableDropdown } from '@core-services/app-common';
-import { SearchBox, DateTimeInput, SearchActions } from './styled-components';
-import { validateEventKey } from './util';
-import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
+import {
+  SearchActions,
+  FilterControls,
+  FilterDrawerFooterActions,
+  FilterDrawerHeading,
+  FilterPanelGrid,
+  MoreFilters,
+} from './styled-components';
+import {
+  GoabAccordion,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDrawer,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabInput,
+} from '@abgov/react-components';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 const initCriteria: EventSearchCriteria = {
   namespace: '',
@@ -15,6 +28,12 @@ const initCriteria: EventSearchCriteria = {
   timestampMax: '',
   timestampMin: '',
 };
+const ALL_NAMESPACES = 'all-namespaces';
+const ALL_EVENT_NAMES = 'all-event-names';
+const DATE_RANGE_LAST_7_DAYS = 'last-7-days';
+const DATE_RANGE_CUSTOM = 'custom';
+const DATE_RANGE_ALL = 'all-dates';
+
 function toDateTimeLocalValue(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -41,11 +60,8 @@ interface EventSearchFormProps {
 
 export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCancel, onSearch, leftAction }) => {
   const [searchCriteria, setSearchCriteria] = useState(() => defaultWeekCriteria());
-  const [error, setError] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const today = new Date().toLocaleDateString().split('/').reverse().join('-');
-  const defaultMessage = 'Use a colon (:) between namespace and name';
-  const [message, setMessage] = useState<string | undefined>(defaultMessage);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [dateRange, setDateRange] = useState(DATE_RANGE_LAST_7_DAYS);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -54,328 +70,219 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   const events = useSelector((state: RootState) => state.event.definitions);
 
-  const eventKey = Object.keys(events);
-  const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
-  const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
-    const raw = (input ?? '').trim();
-    if (!raw) return { ...searchCriteria, namespace: '', name: '' };
+  const eventDefinitions = Object.values(events);
+  const filterNamespace = searchCriteria.namespace || ALL_NAMESPACES;
+  const filterEventName = searchCriteria.name || ALL_EVENT_NAMES;
+  const filterNamespaces = Array.from(new Set(eventDefinitions.map((event) => event.namespace))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+  const filterEventNames = Array.from(
+    new Set(
+      eventDefinitions
+        .filter((event) => filterNamespace === ALL_NAMESPACES || event.namespace === filterNamespace)
+        .map((event) => event.name),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
 
-    // If user typed namespace:name explicitly
-    if (raw.includes(':')) {
-      const idx = raw.indexOf(':');
-      const ns = raw.slice(0, idx).trim();
-      const nm = raw.slice(idx + 1).trim();
-      if (!ns || !nm) return null;
-      return { ...searchCriteria, namespace: ns, name: nm };
-    }
+  const setEventFilter = (name: 'namespace' | 'name', value: string) => {
+    setSearchCriteria((criteria) => {
+      const next: EventSearchCriteria = {
+        ...criteria,
+        [name]: value === ALL_NAMESPACES || value === ALL_EVENT_NAMES ? '' : value,
+      };
+      if (name === 'namespace') {
+        next.name = '';
+      }
 
-    // Free-text: pick best fuzzy suggestion
-    const best = getSuggestions(autoCompleteList, raw, 1)[0];
-    if (!best) return null;
-
-    const idx = best.indexOf(':');
-    const ns = idx >= 0 ? best.slice(0, idx).trim() : '';
-    const nm = idx >= 0 ? best.slice(idx + 1).trim() : best.trim();
-    if (!ns || !nm) return null;
-
-    return { ...searchCriteria, namespace: ns, name: nm };
+      return next;
+    });
   };
 
-  function normalize(s: string): string {
-    return (
-      s
-        .toLowerCase()
-        // eslint-disable-next-line
-        .replace(/[_:\-]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
-  }
-
-  const setValue = (name: string, value: string) => {
-    setSearchCriteria({ ...searchCriteria, [name]: value });
+  const setDateRangeFilter = (value: string) => {
+    setDateRange(value);
+    if (value === DATE_RANGE_LAST_7_DAYS) {
+      const weekCriteria = defaultWeekCriteria();
+      setSearchCriteria((criteria) => ({
+        ...criteria,
+        timestampMin: weekCriteria.timestampMin,
+        timestampMax: weekCriteria.timestampMax,
+      }));
+    }
+    if (value === DATE_RANGE_ALL) {
+      setSearchCriteria((criteria) => ({ ...criteria, timestampMin: '', timestampMax: '' }));
+    }
   };
 
-  function scoreMatch(queryRaw: string, candidateRaw: string): number {
-    const q = normalize(queryRaw);
-    const c = normalize(candidateRaw);
-    const levenshteinAccuracyThread = 0.4;
-    if (!q) return 0;
-
-    const qTokens = q.split(' ').filter(Boolean);
-    const cTokens = c.split(' ').filter(Boolean);
-
-    // 1) Exact normalized substring (best)
-    if (c.includes(q)) return 100;
-
-    // 2) Prefix match on any token (makes "log" work for "login")
-    // Boost if matches earlier tokens
-    let prefixHits = 0;
-    for (const qt of qTokens) {
-      for (let i = 0; i < cTokens.length; i++) {
-        if (cTokens[i].startsWith(qt)) {
-          prefixHits++;
-          break;
-        }
-      }
-    }
-    if (prefixHits > 0) return 80 + prefixHits * 5;
-
-    // 3) Loose contains match per token (for "train" in "training")
-    let containsHits = 0;
-    for (const qt of qTokens) {
-      if (c.includes(qt)) {
-        containsHits++;
-      }
-    }
-    if (containsHits > 0) return 60 + containsHits * 8;
-
-    // 4) Evaluate the similarity between the words to handle simple typo of search criteria.
-    if (q.length > 3) {
-      const word_distance = distance(q, c.slice(0, q.length));
-      const accuracy = 1 - word_distance / q.length;
-      if (accuracy > levenshteinAccuracyThread) {
-        return accuracy * 100;
-      }
-    }
-
-    return 0;
-  }
-
-  function getSuggestions(list: string[], input: string, limit = 50): string[] {
-    const q = input.trim();
-    if (!q) return list.slice(0, limit);
-
-    return list
-      .map((s) => ({ s, score: scoreMatch(q, s) }))
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((x) => x.s);
-  }
-
-  const renderHighlight = (suggestion: string) => {
-    if (!dd.query) return <span>{suggestion}</span>;
-    const hay = suggestion.toLowerCase();
-    const needle = dd.query.toLowerCase();
-    const i = hay.indexOf(needle);
-    if (i >= 0) {
-      return (
-        <span>
-          {suggestion.substring(0, i)}
-          <strong>{suggestion.substring(i, i + dd.query.length)}</strong>
-          {suggestion.substring(i + dd.query.length)}
-        </span>
-      );
-    }
-    return <span>{suggestion}</span>;
-  };
-  const dd = useSearchableDropdown<string>({
-    debounceMs: 0, // local results are instant
-    minChars: 1, // start suggesting when user types
-    getLocalItems: (q) => getSuggestions(autoCompleteList, q, 80),
-
-    // ✅ show full list when focusing empty input
-    showAllOnFocus: true,
-    allItemsOnEmptyQuery: () => autoCompleteList.slice(0, 80),
-
-    closeOnSelect: true,
-    onSelect: (value) => {
-      // When user hits Enter or clicks a suggestion
-      const resolved = resolveCriteriaFromInput(value);
-      if (!resolved) {
-        setError(true);
-        return;
-      }
-      setError(false);
-      setSearchCriteria(resolved);
-      dd.setOpen(false);
-      dd.setQuery(`${resolved.namespace}:${resolved.name}`);
-      onSearch?.(resolved);
-    },
-  });
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dd.open && searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        dd.setOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dd, dd.open, dd.setOpen]);
-  // -----------------------------------
-  // Input onChange: keep criteria in sync if user types ns:name
-  // -----------------------------------
-  const onInputChange = (value: string) => {
-    dd.setQuery(value);
-    setError(false);
-    // ✅ do not close here
-
-    if (value.includes(':')) {
-      const [ns, nm] = value.split(':');
-      setSearchCriteria({ ...searchCriteria, namespace: (ns ?? '').trim(), name: (nm ?? '').trim() });
-    } else {
-      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-    }
+  const clearFilters = () => {
+    setDateRange(DATE_RANGE_ALL);
+    setSearchCriteria(initCriteria);
   };
 
   return (
     <div>
-      <GoabGrid minChildWidth="30ch" gap="xs">
-        <SearchBox>
-          <GoabFormItem
-            helpText={error ? '' : message}
-            error={error ? message : ''}
-            label="Search event namespace and name"
-          >
-            <div ref={searchRef}>
-              <div
-                className={dd.open ? 'search search-open' : 'search'}
-                onKeyDown={(e) => {
-                  if (e.keyCode === 9) {
-                    dd.setOpen(false);
-                  }
-                }}
-              >
-                <input
-                  ref={dd.inputRef}
-                  type="text"
-                  name="searchBox"
-                  value={dd.query}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  onChange={(e) => onInputChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    dd.onKeyDown(e.key);
-                    if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  aria-label="Search"
-                  onFocus={dd.onFocus}
-                  onClick={() => {
-                    setError(false);
-                    dd.onFocus();
-                  }}
-                />
-
-                <GoabIconButton
-                  icon={dd.open ? 'close-circle' : 'chevron-down'}
-                  title="dropdown"
-                  size="medium"
-                  testId="menu-open-close"
-                  variant="dark"
-                  onClick={() => {
-                    if (dd.open) {
-                      dd.setQuery('');
-                      dd.setOpen(false);
-
-                      setError(false);
-                      setSearchCriteria((prev) => ({ ...prev, namespace: '', name: '' }));
-                      return;
-                    }
-                    dd.inputRef.current?.focus();
-
-                    if (!dd.query.trim()) {
-                      dd.openAll();
-                    } else {
-                      dd.setOpen(true);
-                    }
-                  }}
-                />
-              </div>
-              {dd.open && dd.items.length > 0 && (
-                <ul ref={dd.listRef} className="suggestions">
-                  {dd.items.map((suggestion, index) => {
-                    const className = index === dd.activeIndex ? 'suggestion-active' : undefined;
-                    return (
-                      <li
-                        key={`${suggestion}-${index}`}
-                        data-index={index}
-                        className={className}
-                        onMouseEnter={() => dd.setActiveIndex(index)}
-                        onMouseDown={(e) => {
-                          e.preventDefault(); // keep focus
-                          dd.selectItem(suggestion); // triggers onSelect
-                        }}
-                      >
-                        {renderHighlight(suggestion)}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </GoabFormItem>
-        </SearchBox>
-        <GoabFormItem label="Minimum timestamp">
-          <DateTimeInput
-            type="datetime-local"
-            name="timestampMin"
-            max={today}
-            aria-label="timestampMin"
-            value={searchCriteria.timestampMin}
-            onChange={(e) => setValue('timestampMin', e.target.value)}
-            onClick={() => dd.setOpen(false)}
-          />
-        </GoabFormItem>
-        <GoabFormItem label="Maximum timestamp">
-          <DateTimeInput
-            type="datetime-local"
-            name="timestampMax"
-            max={today}
-            aria-label="timestampMax"
-            value={searchCriteria.timestampMax}
-            onChange={(e) => setValue('timestampMax', e.target.value)}
-            onClick={() => dd.setOpen(false)}
-          />
-        </GoabFormItem>
-      </GoabGrid>
       <SearchActions>
         <div>{leftAction}</div>
-        <GoabButtonGroup alignment="end">
-          <GoabButton
-            size="compact"
-            type="secondary"
-            onClick={() => {
-              dd.reset();
-              setError(false);
-              setSearchCriteria(initCriteria);
-              onCancel?.();
-            }}
-          >
-            Reset
-          </GoabButton>
-          <GoabButton
-            size="compact"
-            disabled={dd.query.indexOf(':') === -1}
-            onClick={() => {
-              dd.setOpen(false);
-              setError(false);
-
-              const resolved = resolveCriteriaFromInput(dd.query);
-              if (!resolved) {
-                setError(true);
-                return;
-              }
-              const validEvent = validateEventKey(dd.query, eventKey);
-              if (!validEvent.ok) {
-                setError(true);
-                setMessage(validEvent.ok ? '' : validEvent.reason);
-              } else {
-                setSearchCriteria(resolved);
-                setMessage(defaultMessage);
-                dd.setQuery(`${resolved.namespace}:${resolved.name}`);
-                onSearch?.(resolved);
-              }
-            }}
-          >
-            Search
-          </GoabButton>
-        </GoabButtonGroup>
+        <FilterControls>
+          <GoabButtonGroup alignment="end">
+            <GoabButton
+              size="compact"
+              type="secondary"
+              leadingIcon="filter"
+              trailingIcon={filtersOpen ? 'chevron-back' : 'chevron-forward'}
+              onClick={() => setFiltersOpen((open) => !open)}
+              testId="event-log-filters-toggle"
+            >
+              Filters
+            </GoabButton>
+            <GoabButton
+              size="compact"
+              leadingIcon="search"
+              testId="event-log-search"
+              onClick={() => {
+                onSearch?.(searchCriteria);
+              }}
+            >
+              Search
+            </GoabButton>
+            <GoabButton
+              size="compact"
+              type="secondary"
+              testId="event-log-reset"
+              onClick={() => {
+                clearFilters();
+                onCancel?.();
+              }}
+            >
+              Reset
+            </GoabButton>
+          </GoabButtonGroup>
+        </FilterControls>
       </SearchActions>
+      <GoabDrawer
+        heading={
+          <FilterDrawerHeading>
+            <div>
+              <h2>Filters</h2>
+              <p>Add one or more filters to narrow the results. All selected filters are applied together.</p>
+              <FilterPanelGrid>
+                <div className="filter-label">Date range</div>
+                <GoabDropdown
+                  name="event-log-date-range-filter"
+                  value={dateRange}
+                  leadingIcon="calendar"
+                  size="compact"
+                  width="100%"
+                  onChange={(detail) => setDateRangeFilter(detail.value as string)}
+                >
+                  <GoabDropdownItem value={DATE_RANGE_LAST_7_DAYS} label="Last 7 days" />
+                  <GoabDropdownItem value={DATE_RANGE_CUSTOM} label="Custom range" />
+                  <GoabDropdownItem value={DATE_RANGE_ALL} label="All dates" />
+                </GoabDropdown>
+                <div>From</div>
+                <GoabInput
+                  name="event-log-from-filter"
+                  value={searchCriteria.timestampMin || ''}
+                  leadingIcon="calendar"
+                  size="compact"
+                  width="100%"
+                  disabled
+                />
+                <div>To</div>
+                <GoabInput
+                  name="event-log-to-filter"
+                  value={searchCriteria.timestampMax || ''}
+                  leadingIcon="calendar"
+                  size="compact"
+                  width="100%"
+                  disabled
+                />
+
+                <div className="filter-label">Namespace</div>
+                <GoabDropdown
+                  name="event-log-namespace-filter"
+                  value={filterNamespace}
+                  size="compact"
+                  width="100%"
+                  onChange={(detail) => {
+                    setEventFilter('namespace', detail.value as string);
+                  }}
+                >
+                  <GoabDropdownItem value={ALL_NAMESPACES} label="All namespaces" />
+                  {filterNamespaces.map((namespace) => (
+                    <GoabDropdownItem key={namespace} value={namespace} label={namespace} />
+                  ))}
+                </GoabDropdown>
+                <div className="filter-label">Event name</div>
+                <GoabDropdown
+                  name="event-log-name-filter"
+                  value={filterEventName}
+                  size="compact"
+                  width="100%"
+                  onChange={(detail) => setEventFilter('name', detail.value as string)}
+                >
+                  <GoabDropdownItem value={ALL_EVENT_NAMES} label="All event names" />
+                  {filterEventNames.map((name) => (
+                    <GoabDropdownItem key={name} value={name} label={name} />
+                  ))}
+                </GoabDropdown>
+                <div className="filter-label">Correlation ID</div>
+                <GoabInput
+                  name="event-log-correlation-filter"
+                  placeholder="Enter correlation ID"
+                  width="100%"
+                  size="compact"
+                  value={searchCriteria.correlationId || ''}
+                  onChange={(detail: GoabInputOnChangeDetail) =>
+                    setSearchCriteria((criteria) => ({ ...criteria, correlationId: detail.value }))
+                  }
+                />
+              </FilterPanelGrid>
+            </div>
+          </FilterDrawerHeading>
+        }
+        position="right"
+        open={filtersOpen}
+        testId="event-log-filter-panel"
+        maxSize="480px"
+        onClose={() => setFiltersOpen(false)}
+        actions={
+          <FilterDrawerFooterActions data-testid="event-log-filter-actions">
+            <GoabButton
+              size="compact"
+              type="text"
+              leadingIcon="reload"
+              testId="event-log-clear-all-filters"
+              onClick={clearFilters}
+            >
+              Clear all filters
+            </GoabButton>
+            <GoabButton
+              size="compact"
+              leadingIcon="search"
+              testId="event-log-filter-search"
+              onClick={() => {
+                onSearch?.(searchCriteria);
+              }}
+            >
+              Search
+            </GoabButton>
+          </FilterDrawerFooterActions>
+        }
+      >
+        {filtersOpen && (
+          <MoreFilters>
+            <GoabAccordion
+              heading="More filters (optional)"
+              headingSize="small"
+              iconPosition="left"
+              maxWidth="none"
+              testId="event-log-more-filters"
+            >
+              <span />
+            </GoabAccordion>
+          </MoreFilters>
+        )}
+      </GoabDrawer>
     </div>
   );
 };

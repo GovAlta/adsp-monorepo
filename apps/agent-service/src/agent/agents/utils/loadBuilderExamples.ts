@@ -5,10 +5,12 @@ import * as eligibilityChecker from '../data/builder-examples/pages/eligibility-
 import * as statusTracker from '../data/builder-examples/pages/status-tracker.json';
 import * as confirmationPage from '../data/builder-examples/pages/confirmation-page.json';
 import * as formPage from '../data/builder-examples/pages/form-page.json';
+import * as workspaceView from '../data/builder-examples/pages/workspace-view.json';
 // ADSP integrations
 import * as formServiceIntegration from '../data/builder-examples/integrations/form-service.json';
 import * as statusServiceIntegration from '../data/builder-examples/integrations/status-service.json';
 import * as fileServiceIntegration from '../data/builder-examples/integrations/file-service.json';
+import * as tokenHandlerIntegration from '../data/builder-examples/integrations/token-handler.json';
 // Best practices and anti-patterns
 import * as bestPractices from '../data/builder-examples/best-practices.json';
 import * as antiPatterns from '../data/builder-examples/anti-patterns.json';
@@ -93,12 +95,14 @@ const pagePatterns: PagePattern[] = [
   statusTracker,
   confirmationPage,
   formPage,
+  workspaceView,
 ] as PagePattern[];
 
 const integrationPatterns: IntegrationPattern[] = [
   formServiceIntegration,
   statusServiceIntegration,
   fileServiceIntegration,
+  tokenHandlerIntegration,
 ] as IntegrationPattern[];
 
 function renderPagePattern(pattern: PagePattern): string {

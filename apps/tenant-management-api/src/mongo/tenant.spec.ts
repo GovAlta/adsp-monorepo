@@ -37,4 +37,76 @@ describe('Mongo: Tenant', () => {
     await expect(repo.get(missingId)).rejects.toThrow(NotFoundError);
     await expect(repo.get(missingId)).rejects.toThrow(missingId);
   });
+
+  describe('find by name', () => {
+    // Tenants have unique names, so the tenants of a test are removed after it.
+    let created: TenantEntity[] = [];
+
+    const createTenants = async (...names: string[]) => {
+      created = await createMockData<TenantEntity>(
+        repo,
+        names.map((name, index) => ({ adminEmail: `admin${index}@example.ca`, realm: `realm-${index}`, name }))
+      );
+      return created;
+    };
+
+    afterEach(async () => {
+      for (const tenant of created) {
+        await repo.delete(tenant.id);
+      }
+      created = [];
+    });
+
+    it('can find a tenant by name, ignoring case', async () => {
+      await createTenants('My Tenant', 'Other Tenant');
+
+      const results = await repo.find({ nameEquals: 'my tenant' });
+
+      expect(results.map((result) => result.name)).toEqual(['My Tenant']);
+    });
+
+    it('can find only a tenant with the whole name', async () => {
+      await createTenants('My Tenant', 'My Tenant Two', 'The My Tenant');
+
+      const results = await repo.find({ nameEquals: 'My Tenant' });
+
+      expect(results.map((result) => result.name)).toEqual(['My Tenant']);
+    });
+
+    it.each(['.*', '.+', '^', '$', 'My.*', '.*Tenant', '[A-Z]+ [A-Z]+', '(My|Other) Tenant', 'My Tenan.'])(
+      'does not treat %s as a pattern',
+      async (name) => {
+        await createTenants('My Tenant', 'Other Tenant');
+
+        expect(await repo.find({ nameEquals: name })).toEqual([]);
+      }
+    );
+
+    // New tenants cannot have these characters in their name, but a name is still matched literally.
+    it.each(['Ministry of Health (Test)', 'Test-Tenant', 'A+B', 'What?', 'Cost $5', 'Dev [UAT]', 'a.b'])(
+      'can find a tenant with the name %s',
+      async (name) => {
+        await createTenants(name, 'Other Tenant');
+
+        const results = await repo.find({ nameEquals: name });
+
+        expect(results.map((result) => result.name)).toEqual([name]);
+      }
+    );
+
+    it('does not find a tenant for a name that differs by a character that a pattern could match', async () => {
+      await createTenants('a.b', 'axb');
+
+      const results = await repo.find({ nameEquals: 'a.b' });
+
+      expect(results.map((result) => result.name)).toEqual(['a.b']);
+    });
+
+    it('can find a tenant by name together with other criteria', async () => {
+      await createTenants('My Tenant');
+
+      expect(await repo.find({ nameEquals: 'my tenant', realmEquals: 'realm-0' })).toHaveLength(1);
+      expect(await repo.find({ nameEquals: 'my tenant', realmEquals: 'other' })).toHaveLength(0);
+    });
+  });
 });

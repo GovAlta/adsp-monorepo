@@ -64,7 +64,7 @@ describe('AgentBroker', () => {
     expect(options.maxSteps).toBeUndefined();
   });
 
-  it('sets form generation maxSteps and abort controller on request context', async () => {
+  it('sets the configured maxSteps and abort controller on request context', async () => {
     const generate = jest.fn().mockResolvedValue({ text: 'ok', object: null });
     const agent = {
       name: 'Form Generation Agent',
@@ -76,7 +76,7 @@ describe('AgentBroker', () => {
       tenantId as never,
       [],
       agent as never,
-      {},
+      { maxSteps: 12 },
       undefined,
       undefined,
       'formGenerationAgent',
@@ -91,9 +91,44 @@ describe('AgentBroker', () => {
       maxSteps?: number;
       requestContext: RequestContext<Record<string, unknown>>;
     };
-    expect(options.maxSteps).toBeDefined();
+    expect(options.maxSteps).toBe(12);
     expect(options.requestContext.get('abortController')).toBeInstanceOf(AbortController);
     expect(options.requestContext.get('agentId')).toBe('formGenerationAgent');
+  });
+
+  describe('step limit', () => {
+    async function getOptions(maxSteps: number) {
+      const generate = jest.fn().mockResolvedValue({ text: 'ok', object: null });
+      const agent = { name: 'Test agent', generate, stream: jest.fn() };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, { maxSteps });
+
+      await broker.generate(user as never, 'thread-456', {
+        role: 'user',
+        content: [{ type: 'text', text: 'Hello' }],
+      });
+
+      return generate.mock.calls[0][1] as {
+        abortSignal: AbortSignal;
+        onStepFinish: (step: { finishReason: string; usage?: unknown }) => void;
+      };
+    }
+
+    it('aborts when the limit is reached while the turn still has tool calls pending', async () => {
+      const options = await getOptions(2);
+
+      options.onStepFinish({ finishReason: 'tool-calls' });
+      expect(options.abortSignal.aborted).toBe(false);
+      options.onStepFinish({ finishReason: 'tool-calls' });
+      expect(options.abortSignal.aborted).toBe(true);
+    });
+
+    it('does not abort when the reply completes on the final allowed step', async () => {
+      const options = await getOptions(2);
+
+      options.onStepFinish({ finishReason: 'tool-calls' });
+      options.onStepFinish({ finishReason: 'stop' });
+      expect(options.abortSignal.aborted).toBe(false);
+    });
   });
 
   it('creates thread metadata with expiresAt when updating expiry for a new thread', async () => {

@@ -300,4 +300,45 @@ describe('EventDefinitionModalForm', () => {
       expect(mockOnClose).toHaveBeenCalled();
     });
   });
+
+  test('does not save event definition with invalid JSON schema', async () => {
+    const mockOnSave = jest.fn();
+    const mockOnClose = jest.fn();
+    const store = mockStore({});
+
+    const invalidValue: EventDefinition = {
+      namespace: 'my-namespace',
+      name: 'my-event',
+      description: 'Test description',
+      payloadSchema: { type: 'objectx' },
+      isCore: false,
+    };
+
+    const { baseElement } = render(
+      <Provider store={store}>
+        <EventDefinitionModalForm
+          initialValue={invalidValue}
+          definitions={{}}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          open={true}
+          isEdit={false}
+          coreNamespaces={[]}
+        />
+      </Provider>
+    );
+
+    const saveButton = baseElement.querySelector("goa-button[testId='form-save']");
+    fireEvent(saveButton, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      const schemaFormItem = baseElement.querySelector("goa-form-item[label='Payload schema']");
+      const schemaError = baseElement.querySelector("[data-testid='event-schema-error']");
+      expect(schemaFormItem?.getAttribute('error')).toBeNull();
+      expect(schemaError).toHaveTextContent('Invalid schema type "objectx"');
+    });
+    expect(mockOnSave).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(store.getActions()).toEqual([]);
+  });
 });

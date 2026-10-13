@@ -128,6 +128,7 @@ const completeServiceVariables = [
 
 export const defaultFeaturesVisible = {
   Access: true,
+  AccessServiceAI: false,
   Calendar: true,
   Comment: true,
   Configuration: true,

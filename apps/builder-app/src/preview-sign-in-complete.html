@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Signed in</title>
+  </head>
+  <body>
+    <p>You are signed in. Returning to the builder...</p>
+    <script>
+      // The builder stores where the user was before it signed them in to the token handler.
+      var path = sessionStorage.getItem('builder:token-handler-return-to');
+      sessionStorage.removeItem('builder:token-handler-return-to');
+      if (!path || path.charAt(0) !== '/' || path.charAt(1) === '/' || path.charAt(1) === '\\') {
+        path = '/';
+      }
+      window.location.replace(path);
+    </script>
+  </body>
+</html>

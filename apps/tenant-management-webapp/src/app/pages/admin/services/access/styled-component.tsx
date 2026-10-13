@@ -85,3 +85,20 @@ export const LoadingIndicatorContainer = styled.div`
   top: -2.5rem;
   left: -3.5rem;
 `;
+
+export const AgentChatContainer = styled.div`
+  height: clamp(20rem, 52vh, 30rem);
+  width: 70%;
+  min-width: min(100%, 20rem);
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: var(--goa-space-s) 0 0;
+  padding: var(--goa-space-s);
+  border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-s);
+
+  @media (max-width: 640px) {
+    width: 100%;
+    min-width: 0;
+  }
+`;

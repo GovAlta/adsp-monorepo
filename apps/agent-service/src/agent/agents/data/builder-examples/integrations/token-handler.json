@@ -1,0 +1,21 @@
+{
+  "id": "platform-requests-token-handler",
+  "name": "Platform API requests through the token handler",
+  "category": "integrations",
+  "summary": "Call ADSP platform services as the signed-in user from the preview, without holding a token in the code.",
+  "service": "token-handler",
+  "codeExample": {
+    "config": "// src/config/adspForm.ts (form starter)\nexport const adspFormConfig = {\n  mode: 'live',\n  formServiceBaseUrl: '/token-handler/targets/form-service',\n  definitionId: 'my-definition-id',\n  tokenHandler: true,\n  // ...\n};",
+    "read": "// A read: GET /token-handler/targets/<target>/<service path>\nimport { apiFetch } from '../lib/tokenHandler';\n\nconst response = await apiFetch('/token-handler/targets/file-service/file/v1/files?top=10');\nif (response.status === 401) throw new Error('Your session has ended. Reload the builder to sign in again.');\nif (response.status === 403) throw new Error('You do not have access to this information.');\nif (!response.ok) throw new Error(`Request failed (${response.status})`);\nconst { results } = await response.json();",
+    "write": "// A write: apiFetch adds the CSRF header for requests other than GET\nimport { apiFetch } from '../lib/tokenHandler';\n\nconst response = await apiFetch('/token-handler/targets/form-service/form/v1/forms', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ definitionId, data, submit: true }),\n});",
+    "hook": "// src/hooks/useApi.ts: keep all HTTP in one hook and use apiFetch inside it\nimport { apiFetch } from '../lib/tokenHandler';\n\nconst API_BASE = '/token-handler/targets/form-service/form/v1';\n\nexport function useApi() {\n  async function get<T>(path: string): Promise<T> {\n    const res = await apiFetch(`${API_BASE}/${path}`);\n    if (!res.ok) throw new Error(`Failed to load (${res.status})`);\n    return res.json();\n  }\n  return { get };\n}"
+  },
+  "notes": [
+    "In Builder preview the targets are form-service (/form/v1/...) and file-service (/file/v1/...); there are no others, so use mock data and say so for any other service",
+    "The builder signs the user in before the preview loads; do not add sign in code, and never put access tokens, secrets or API keys in the code",
+    "Always use apiFetch, not raw fetch: it adds the CSRF header needed for requests other than GET",
+    "401 means the session ended (reload the builder); 403 means the user's role does not allow the request",
+    "Requests run as the builder's user in their tenant: prefer reads and do not change data unless the user asked",
+    "A deployed app needs its own token handler client, a /token-handler proxy and a sign in; see the token handler documentation"
+  ]
+}

@@ -1,9 +1,14 @@
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Thread
 from unittest.mock import Mock, patch
 
+import pytest
 from adsp_py_common.adsp_id import AdspId
-from adsp_py_common.access import IssuerCache
+from adsp_py_common.access import IssuerCache, _JWKClient
 from adsp_py_common.tenant import Tenant, TenantService
 from httpx import Response, RequestError
+from jwt import PyJWKClientError
 
 tenant_id = AdspId.parse("urn:ads:platform:tenant-service:v2:/tenants/test")
 
@@ -85,3 +90,50 @@ def test_get_issuer_request_error():
         issuer = cache.get_issuer(iss)
         assert issuer
         assert issuer.iss == iss
+
+
+class _JwksHandler(BaseHTTPRequestHandler):
+    user_agents = []
+
+    def do_GET(self):
+        _JwksHandler.user_agents.append(self.headers.get("User-Agent"))
+        if self.path == "/redirect":
+            self.send_response(302)
+            self.send_header("Location", "/certs")
+            self.end_headers()
+            return
+        body = json.dumps(
+            {"keys": [{"kty": "oct", "kid": "test", "use": "sig", "k": "c2VjcmV0"}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@pytest.fixture
+def jwks_server():
+    _JwksHandler.user_agents = []
+    server = HTTPServer(("127.0.0.1", 0), _JwksHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}"
+    server.shutdown()
+    server.server_close()
+
+
+def test_jwk_client_sends_blank_user_agent(jwks_server):
+    client = _JWKClient(f"{jwks_server}/certs")
+    key = client.get_signing_key("test")
+    assert key.key_id == "test"
+    assert _JwksHandler.user_agents == [""]
+
+
+def test_jwk_client_does_not_follow_redirects(jwks_server):
+    client = _JWKClient(f"{jwks_server}/redirect")
+    with pytest.raises(PyJWKClientError):
+        client.get_signing_key("test")
+    assert _JwksHandler.user_agents == [""]

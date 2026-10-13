@@ -7,6 +7,7 @@ describe('date router', () => {
     getDate: jest.fn(),
     getDates: jest.fn(),
     getCalendarEvents: jest.fn(),
+    getCalendarEventsInRange: jest.fn(),
     getCalendarEvent: jest.fn(),
     getEventAttendees: jest.fn(),
     save: jest.fn(),

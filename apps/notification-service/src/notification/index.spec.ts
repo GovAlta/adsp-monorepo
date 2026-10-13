@@ -120,6 +120,9 @@ describe('applyNotificationMiddleware', () => {
       eventService,
       verifyService,
       tenantService,
+      directory,
+      tokenProvider,
+      configurationService,
     });
     expect(app.use).toHaveBeenCalledWith('/subscription/v1', assertAuthenticatedHandler, subscriptionRouter);
   });

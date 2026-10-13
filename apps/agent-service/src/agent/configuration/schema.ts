@@ -70,6 +70,40 @@ export const configurationSchema = {
           type: 'array',
           items: { type: 'string' },
         },
+        model: {
+          anyOf: [
+            { type: 'string' },
+            {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                },
+                reasoningEffort: {
+                  type: 'string',
+                },
+                headers: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'string',
+                  },
+                },
+              },
+              additionalProperties: false,
+            },
+          ],
+        },
+        // Upper bounds keep tenant-defined agents from raising per-request cost and duration without limit.
+        maxSteps: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 100,
+        },
+        timeoutMs: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 1800000,
+        },
         tools: {
           type: 'array',
           items: {

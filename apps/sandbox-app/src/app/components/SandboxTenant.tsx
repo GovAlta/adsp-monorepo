@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom-v7';
 import {
   AppDispatch,
   authenticatedUserSelector,
@@ -9,7 +9,6 @@ import {
   initializeTenant,
 } from '../state';
 
-import { Band } from '@core-services/app-common';
 import { SignIn } from './SignIn';
 
 import Header from './Header';
@@ -24,7 +23,7 @@ import { StatusServiceMain } from './services/StatusServiceMain';
 import { ValueServiceMain } from './services/ValueServiceMain';
 import { TaskServiceMain } from './services/TaskServiceMain';
 import { FileServiceMain } from './services/FileServiceMain';
-import { GoabAppFooter, GoabButton, GoabButtonGroup, GoabCircularProgress } from '@abgov/react-components';
+import { GoabAppFooter, GoabButton } from '@abgov/react-components';
 import { ScriptServiceMain } from './services/ScriptServiceMain';
 import { CacheServiceMain } from './services/CacheServiceMain';
 import { DirectoryServiceMain } from './services/DirectoryServiceMain';
@@ -38,7 +37,12 @@ import { JsonformsExternalNavigation } from './services/jsonforms/JsonformsExter
 import { JsonformsReviewNavigation } from './services/jsonforms/JsonformsReviewNavigation';
 import { DesignSystemsMain } from './services/DesignSystemsMain';
 import { DesignSystemsExampleOne } from './services/design-systems/DesignSystemsExampleOne';
+import { PlanningPokerMain } from './services/planning-poker/PlanningPokerMain';
+import { PlanningPokerBoard } from './services/planning-poker/PlanningPokerBoard';
 import { FeedbackNotification } from './FeedbackNotification';
+import { ServicePageBar } from './styled-components';
+import { AdspComponentsMain } from './services/AdspComponentsMain';
+import { AdspThemingExample } from './services/adsp-components/AdspThemingExample';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -73,20 +77,23 @@ export const SandBoxTenant = () => {
         ) : (
           authenticatedUser && (
             <section>
-              <Band title="Sandbox services">Services/libraries available for POC</Band>
-              {authenticatedUser && !location.pathname.endsWith(`${environment.tenantName}`) && (
-                <GoabButtonGroup alignment="end" mr={'xl'} mt="l">
+              {!location.pathname.endsWith(`${environment.tenantName}`) && (
+                <ServicePageBar>
                   <GoabButton
                     type="tertiary"
-                    onClick={() => {
-                      navigate(`/${tenantName}/services`);
-                    }}
+                    size="compact"
+                    leadingIcon="arrow-back"
+                    testId="back-to-services"
+                    onClick={() => navigate(`/${tenantName}/services`)}
                   >
                     Back to services
                   </GoabButton>
-                </GoabButtonGroup>
+                </ServicePageBar>
               )}
               <Routes>
+                <Route path="/services/adsp-components" element={<AdspComponentsMain tenantName={tenantName} />} />
+                <Route path="/services/adsp-components/theming" element={<AdspThemingExample />} />
+
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/cache" element={<CacheServiceMain tenantName={tenantName} />} />
                 <Route path="/services/calendar" element={<CalendarServiceMain tenantName={tenantName} />} />
@@ -110,6 +117,10 @@ export const SandBoxTenant = () => {
 
                 <Route path="/services/notification" element={<NotificationServiceMain tenantName={tenantName} />} />
                 <Route path="/services/pdf" element={<PDFServiceMain tenantName={tenantName} />} />
+
+                <Route path="/services/planning-poker" element={<PlanningPokerMain tenantName={tenantName} />} />
+                <Route path="/services/planning-poker/:sessionId" element={<PlanningPokerBoard />} />
+
                 <Route path="/services/script" element={<ScriptServiceMain tenantName={tenantName} />} />
                 <Route path="/services/sharepoint" element={<SharepointServiceMain tenantName={tenantName} />} />
                 <Route path="/services/status" element={<StatusServiceMain tenantName={tenantName} />} />

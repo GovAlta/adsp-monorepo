@@ -2,7 +2,7 @@ import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Route, Routes, useParams, useNavigate, Navigate } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import {
   AppDispatch,
@@ -73,7 +73,9 @@ export const FormAdminTenant = () => {
               <Routes>
                 <Route path="/definitions/:definitionId/*" element={<FormDefinition />} />
                 <Route path="/definitions" element={<FormsDefinitions />} />
-                <Route path="*" element={<Navigate to="definitions" />} />
+                {/* react-router v7 resolves a relative "to" against the full wildcard match, so "../" is
+                    needed here to land on the stable tenant path instead of growing it indefinitely. */}
+                <Route path="*" element={<Navigate to="../definitions" replace />} />
               </Routes>
             </section>
           </main>

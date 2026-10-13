@@ -11,9 +11,9 @@ import { createValidationHandler, InvalidOperationError, NotFoundError } from '@
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query, Schema } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
-import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
+import { parseCalendarDateTime as parseServiceDateTime } from '../../utils';
 import { calendarEventCreated, calendarEventDeleted, calendarEventUpdated } from '../events';
 import { CalendarEntity, CalendarEventEntity } from '../model';
 import { CalendarRepository } from '../repository';
@@ -65,6 +65,8 @@ function mapEventAttendee(attendee: Attendee) {
 
 const CALENDAR_KEY = 'calendar';
 const { TIME_ZONE } = environment;
+const MAX_EVENT_RANGE_DAYS = 366;
+
 export function getCalendar(tenantService: TenantService): RequestHandler {
   return async (req, _res, next) => {
     try {
@@ -108,10 +110,10 @@ export const exportCalendar =
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
       if (criteria?.startsAfter) {
-        criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
+        criteria.startsAfter = parseServiceDateTime(criteria.startsAfter, 'criteria.startsAfter');
       }
       if (criteria?.endsBefore) {
-        criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
+        criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
       }
 
       const { results } = await calendar.getEvents(user, top, after as string, criteria);
@@ -157,19 +159,60 @@ export function getCalendarEvents(apiId: AdspId): RequestHandler {
     try {
       const user = req.user;
       const calendar: CalendarEntity = req[CALENDAR_KEY];
-      const { top: topValue, after, includeAttendees, criteria: criteriaValue } = req.query;
-      const top = topValue ? parseInt(topValue as string) : 10;
+      const {
+        top: topValue,
+        after,
+        includeAttendees,
+        criteria: criteriaValue,
+        from: fromValue,
+        to: toValue,
+      } = req.query;
+      const hasRange = fromValue != null || toValue != null;
 
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
       if (criteria?.startsAfter) {
-        criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
+        criteria.startsAfter = parseServiceDateTime(criteria.startsAfter, 'criteria.startsAfter');
       }
       if (criteria?.endsBefore) {
-        criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
+        criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
       }
       if (criteria?.activeOn) {
-        criteria.activeOn = DateTime.fromISO(criteria.activeOn);
+        criteria.activeOn = parseServiceDateTime(criteria.activeOn, 'criteria.activeOn');
       }
+
+      if (hasRange) {
+        if (fromValue == null || toValue == null) {
+          throw new InvalidOperationError('Both from and to must be specified for calendar event range retrieval.');
+        }
+
+        const from = parseServiceDateTime(fromValue, 'from');
+        const to = parseServiceDateTime(toValue, 'to');
+
+        if (to.valueOf() < from.valueOf()) {
+          throw new InvalidOperationError('to must be after from for calendar event range retrieval.');
+        }
+
+        if (to.diff(from, 'days').days > MAX_EVENT_RANGE_DAYS) {
+          throw new InvalidOperationError(
+            `Calendar event range retrieval supports a maximum range of ${MAX_EVENT_RANGE_DAYS} days.`
+          );
+        }
+
+        const results = await calendar.getEventsInRange(user, from, to, criteria);
+
+        if (includeAttendees === 'true') {
+          for (const result of results) {
+            await result.loadAttendees(user);
+          }
+        }
+
+        res.send({
+          results: results.map((result) => mapCalendarEvent(apiId, result)),
+        });
+        return;
+      }
+
+      const top = topValue ? parseInt(topValue as string) : 10;
 
       const result = await calendar.getEvents(user, top, after as string, criteria);
 
@@ -195,7 +238,11 @@ export const createCalendarEvent =
     try {
       const user = req.user;
       const { start, end, ...newEvent } = req.body;
-      const event = { ...newEvent, start: DateTime.fromISO(start), end: end ? DateTime.fromISO(end) : null };
+      const event = {
+        ...newEvent,
+        start: parseServiceDateTime(start, 'start'),
+        end: end ? parseServiceDateTime(end, 'end') : null,
+      };
       const calendar: CalendarEntity = req[CALENDAR_KEY];
 
       const entity = await calendar.createEvent(user, event);
@@ -252,8 +299,8 @@ export const updateCalendarEvent =
       const { start, end, ...eventUpdate } = req.body;
       const update = {
         ...eventUpdate,
-        start: start ? DateTime.fromISO(start as string) : null,
-        end: end ? DateTime.fromISO(end as string) : null,
+        start: start ? parseServiceDateTime(start, 'start') : null,
+        end: end ? parseServiceDateTime(end, 'end') : null,
       };
       const event: CalendarEventEntity = req[EVENT_KEY];
       const result = await event.update(user, update);
@@ -451,7 +498,12 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events',
     validateNameHandler,
-    createValidationHandler(query('criteria').optional().isJSON(), query('includeAttendees').optional().isBoolean()),
+    createValidationHandler(
+      query('criteria').optional().isJSON(),
+      query('includeAttendees').optional().isBoolean(),
+      query('from').optional().isISO8601(),
+      query('to').optional().isISO8601()
+    ),
     getCalendar(tenantService),
     getCalendarEvents(apiId)
   );

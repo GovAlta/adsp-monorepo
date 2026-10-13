@@ -443,52 +443,69 @@ export const applyServerFormUpdate = createAsyncThunk(
   },
 );
 
+const saveCurrentFormData = async (
+  formId: string,
+  {
+    getState,
+    dispatch,
+    rejectWithValue,
+  }: {
+    getState: () => unknown;
+    dispatch: (action: unknown) => unknown;
+    rejectWithValue: (value: { status?: number; message: string }) => unknown;
+  },
+) => {
+  try {
+    const { config, form } = getState() as AppState;
+    const formServiceUrl = config.directory[FORM_SERVICE_ID];
+
+    const update = { data: form.data, files: form.files };
+    const digest = await hashData({ id: formId, ...update });
+
+    if (digest === form.saved) {
+      dispatch(formActions.setSaving(false));
+      return digest;
+    } else {
+      const token = await getAccessToken();
+      const { data } = await axios.put<FormDataResponse>(
+        new URL(`/form/v1/forms/${formId}/data`, formServiceUrl).href,
+        update,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      dispatch(formActions.setSaving(false));
+      return await hashData(data);
+    }
+  } catch (err) {
+    dispatch(formActions.setSaving(false));
+    if (axios.isAxiosError(err)) {
+      // A 400 error likely means the data doesn't pass schema validation.
+      // No need to generate a feedback notification since the form itself should show such validation errors.
+      if (err.response?.status !== 400) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      }
+    } else {
+      throw err;
+    }
+  }
+};
+
 export const saveForm = createAsyncThunk(
   'form/save-form',
   debounce(
-    async (formId: string, { getState, dispatch, rejectWithValue }) => {
-      try {
-        const { config, form } = getState() as AppState;
-        const formServiceUrl = config.directory[FORM_SERVICE_ID];
-
-        const update = { data: form.data, files: form.files };
-        const digest = await hashData({ id: formId, ...update });
-
-        if (digest === form.saved) {
-          dispatch(formActions.setSaving(false));
-          return digest;
-        } else {
-          const token = await getAccessToken();
-          const { data } = await axios.put<FormDataResponse>(
-            new URL(`/form/v1/forms/${formId}/data`, formServiceUrl).href,
-            update,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          );
-
-          dispatch(formActions.setSaving(false));
-          return await hashData(data);
-        }
-      } catch (err) {
-        dispatch(formActions.setSaving(false));
-        if (axios.isAxiosError(err)) {
-          // A 400 error likely means the data doesn't pass schema validation.
-          // No need to generate a feedback notification since the form itself should show such validation errors.
-          if (err.response?.status !== 400) {
-            return rejectWithValue({
-              status: err.response?.status,
-              message: err.response?.data?.errorMessage || err.message,
-            });
-          }
-        } else {
-          throw err;
-        }
-      }
-    },
+    async (formId: string, thunkApi) => saveCurrentFormData(formId, thunkApi),
     800,
     { leading: false, trailing: true },
   ),
+);
+
+export const saveFormNow = createAsyncThunk('form/save-form-now', async (formId: string, thunkApi) =>
+  saveCurrentFormData(formId, thunkApi),
 );
 
 export const submitForm = createAsyncThunk(
@@ -706,6 +723,9 @@ export const formSlice = createSlice({
         state.saved = payload.digest;
       })
       .addCase(saveForm.fulfilled, (state, { payload }) => {
+        state.saved = payload;
+      })
+      .addCase(saveFormNow.fulfilled, (state, { payload }) => {
         state.saved = payload;
       })
       .addCase(submitForm.pending, (state) => {

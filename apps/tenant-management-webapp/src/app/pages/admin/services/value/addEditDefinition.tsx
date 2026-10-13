@@ -1,30 +1,31 @@
 // clean-code-ignore: RULE-19
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   GoabButton,
   GoabButtonGroup,
+  GoabCallout,
   GoabInput,
+  GoabIcon,
   GoabModal,
   GoabFormItem,
   GoabTextArea,
   GoabSpacer,
 } from '@abgov/react-components';
 import { ValueDefinition } from '@store/value/models';
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import {
   isNotEmptyCheck,
-  isValidJSONCheck,
   Validator,
   duplicateNameCheck,
   wordMaxLengthCheck,
   badCharsCheck,
   wordCheck,
+  validateJsonSchema,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { ErrorMsg } from '@components/styled-components';
 import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
@@ -35,6 +36,8 @@ interface AddEditValueDefinitionProps {
   isEdit: boolean;
   onClose: () => void;
   values: ValueDefinition[];
+  saving?: boolean;
+  saveError?: string;
 }
 
 export const AddEditValueDefinition = ({
@@ -44,9 +47,12 @@ export const AddEditValueDefinition = ({
   isEdit,
   onClose,
   values,
+  saving = false,
+  saveError = '',
 }: AddEditValueDefinitionProps): JSX.Element => {
   const [definition, setDefinition] = useState<ValueDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.jsonSchema, null, 2));
+  const payloadSchemaErrorRef = useRef<HTMLDivElement>(null);
   const identifiers = values && Object.values(values).map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
 
   const coreNamespaces = values
@@ -66,14 +72,15 @@ export const AddEditValueDefinition = ({
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
 
-  const loadingIndicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
   const descErrMessage = 'Value description can not be over 180 characters';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
+  };
+  const validatePayloadSchema = (schemaText: string): string => {
+    const result = validateJsonSchema(schemaText);
+    return result.valid ? '' : result.error;
   };
 
   const { errors, validators } = useValidators(
@@ -87,7 +94,7 @@ export const AddEditValueDefinition = ({
   )
     .add('name', 'name', badCharsCheck, isNotEmptyCheck('name'), wordMaxLengthCheck(32, 'Name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Value'))
-    .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
+    .add('payloadSchema', 'payloadSchema', validatePayloadSchema)
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
@@ -95,6 +102,12 @@ export const AddEditValueDefinition = ({
     setDefinition({ ...initialValue });
     setPayloadSchema(JSON.stringify(initialValue?.jsonSchema, null, 2));
   }, [initialValue]);
+
+  useEffect(() => {
+    if (errors?.['payloadSchema']) {
+      payloadSchemaErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [errors]);
 
   const validationCheck = () => {
     const validations = {
@@ -116,8 +129,6 @@ export const AddEditValueDefinition = ({
       jsonSchema: payloadSchemaObj,
       description: definition.description,
     });
-    setDefinition(initialValue);
-    onClose();
   };
 
   return (
@@ -132,6 +143,7 @@ export const AddEditValueDefinition = ({
               size="compact"
               testId="value-cancel"
               type="secondary"
+              disabled={saving}
               onClick={() => {
                 setDefinition(initialValue);
                 onClose();
@@ -144,18 +156,23 @@ export const AddEditValueDefinition = ({
               size="compact"
               type="primary"
               testId="value-save"
-              disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
+              disabled={saving || !definition.name || !definition.namespace || Object.entries(errors).length > 0}
               onClick={() => {
-                if (!loadingIndicator.show) {
+                if (!saving) {
                   validationCheck();
                 }
               }}
             >
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </GoabButton>
           </GoabButtonGroup>
         }
       >
+        {saveError && (
+          <GoabCallout type="important" mb="m" testId="value-save-error">
+            {saveError}
+          </GoabCallout>
+        )}
         <GoabFormItem error={errors?.['namespace']} label="Namespace" mb="s">
           <NamespaceDropdown
             value={definition.namespace}
@@ -175,7 +192,7 @@ export const AddEditValueDefinition = ({
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['name']} label="Name" mb="s">
+        <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name" mb="s">
           <GoabInput size="compact"
             type="text"
             name="name"
@@ -217,7 +234,13 @@ export const AddEditValueDefinition = ({
           />
         </GoabFormItem>
         <GoabSpacer vSpacing="xs"></GoabSpacer>
-        <GoabFormItem error={errors?.['payloadSchema']} label="Payload schema">
+        <GoabFormItem label="Payload schema">
+          {errors?.['payloadSchema'] && (
+            <SchemaError data-testid="value-schema-error">
+              <GoabIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
+              {errors?.['payloadSchema']}
+            </SchemaError>
+          )}
           <Editor
             data-testid="value-schema"
             height={200}
@@ -239,6 +262,7 @@ export const AddEditValueDefinition = ({
             }}
           />
         </GoabFormItem>
+        <div ref={payloadSchemaErrorRef} />
       </GoabModal>
     </ModalOverwrite>
   );
@@ -248,4 +272,10 @@ const ModalOverwrite = styled.div`
   .modal {
     max-height: 100% !important;
   }
+`;
+
+const SchemaError = styled(ErrorMsg)`
+  font: var(--goa-typography-body-s);
+  margin-bottom: var(--goa-space-xs);
+  align-items: center;
 `;

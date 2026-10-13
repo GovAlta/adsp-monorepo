@@ -13,15 +13,18 @@ interface InputProcessorProps {
 
 export function createInputProcessors({ requestContext }: InputProcessorProps): InputProcessor[] {
   const agentId = requestContext.get('agentId') as string | undefined;
+  const processors: InputProcessor[] = [];
 
-  return [
+  processors.push(
     new PromptInjectionDetector({
       model: getAgentModelConfiguration(getAgentModelId(agentId)),
       threshold: 0.8,
       strategy: 'block',
       detectionTypes: ['injection', 'jailbreak', 'system-override'],
     }),
-  ];
+  );
+
+  return processors;
 }
 
 interface BrokerInputProcessorProps {

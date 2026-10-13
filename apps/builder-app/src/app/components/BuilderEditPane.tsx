@@ -14,6 +14,7 @@ import {
 } from '@abgov/react-components';
 import { GoabTabsOnChangeDetail } from '@abgov/ui-components-common';
 import { WorkspaceSnapshotFile, isBinaryPath, isImagePath } from '../lib/builderWorkspace';
+import { PREVIEW_COMMANDS } from '../lib/previewRoutes';
 import { type AssetThumbnail } from '../state/agent.slice';
 import {
   Actions,
@@ -24,6 +25,7 @@ import {
   BreadcrumbDivider,
   BreadcrumbLink,
   ChatPane,
+  PreviewErrorNotice,
   Composer,
   EmptyWorkspaceState,
   FileButton,
@@ -154,6 +156,9 @@ interface BuilderEditPaneProps {
   isSocketConnected: boolean;
   connectionStatus: string;
   workspaceStatus: string;
+  hasPendingPreviewError?: boolean;
+  isCollapsed: boolean;
+  onCollapsedChange: (isCollapsed: boolean) => void;
   tenantLabel: string;
   userEmail?: string;
   canSignOut: boolean;
@@ -181,6 +186,9 @@ export const BuilderEditPane = ({
   isSocketConnected,
   connectionStatus,
   workspaceStatus,
+  hasPendingPreviewError = false,
+  isCollapsed,
+  onCollapsedChange,
   tenantLabel,
   userEmail,
   canSignOut,
@@ -204,7 +212,6 @@ export const BuilderEditPane = ({
 }: BuilderEditPaneProps) => {
   const [activePanelTab, setActivePanelTab] = useState<PanelTab>('chat');
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('list');
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [showTarballForm, setShowTarballForm] = useState(false);
   const [tarballUrnInput, setTarballUrnInput] = useState('');
   const [copyLinkLabel, setCopyLinkLabel] = useState('Copy link');
@@ -260,7 +267,7 @@ export const BuilderEditPane = ({
         variant="dark"
         size="medium"
         ariaLabel="Open edit pane"
-        onClick={() => setIsCollapsed(false)}
+        onClick={() => onCollapsedChange(false)}
       />
     </PanelLauncher>
   ) : (
@@ -277,7 +284,7 @@ export const BuilderEditPane = ({
               variant="nocolor"
               size="medium"
               ariaLabel="Hide panel"
-              onClick={() => setIsCollapsed(true)}
+              onClick={() => onCollapsedChange(true)}
             />
           </PanelCollapseButton>
         </PanelHeaderActions>
@@ -302,12 +309,19 @@ export const BuilderEditPane = ({
         <TabContentArea>
           {activePanelTab === 'chat' ? (
             <ChatPane>
+              {hasPendingPreviewError && (
+                <PreviewErrorNotice role="status">
+                  <span>⚠</span>
+                  <span>Preview error captured — will be sent with your next message.</span>
+                </PreviewErrorNotice>
+              )}
               <AgentChat
                 disabled={!threadId || !isSocketConnected}
                 threadId={threadId}
                 context={{ tenant: tenantLabel }}
                 messages={messages}
                 onSend={onSendPrompt}
+                commands={PREVIEW_COMMANDS}
               />
             </ChatPane>
           ) : activePanelTab === 'info' ? (

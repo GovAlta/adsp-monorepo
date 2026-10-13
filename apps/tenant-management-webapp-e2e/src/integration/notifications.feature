@@ -109,21 +109,17 @@ Feature: Notifications
     And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
     And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
 
-  # Ignored due to recent UI change to subscriber page. Need to update the test steps accordingly later
-  @TEST_CS-1097 @REQ_CS-1031 @regression @ignore
+  @TEST_CS-1097 @REQ_CS-1031 @regression
   Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with "address as" containing "auto"
-    Then the user views all the subscribers with "address as" containing "auto"
-    When the user searches subscribers with "email" containing "adsp1.t"
-    Then the user views all the subscribers with "email" containing "adsp1.t"
-    When the user searches subscribers with address as containing "auto", email containing "adsp1.t" and phone number containing "EMPTY"
-    Then the user views subscribers with "address as" containing "auto" and "email" containing "adsp1.t"
-    When the user expands the subscription list for the subscriber of "Auto Test" and "adsp1.t@gov.ab.ca"
-    Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "adsp1.t@gov.ab.ca"
+    When the user searches subscribers containing "auto test"
+    Then the user views all the subscribers containing "auto test"
+    When the user searches subscribers containing "adsp1.t"
+    Then the user views all the subscribers containing "adsp1.t"
+    When the user clicks the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
+    Then the user views the subscription of "Application health check change" for the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
 
-  # Ignored due to recent UI change to subscriber page. Need to update the test steps accordingly later
-  @TEST_CS-1224 @REQ_CS-1183 @regression @ignore
+  @TEST_CS-1224 @REQ_CS-1183 @regression
   Scenario: As a tenant admin, I can delete a subscriber
     # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
     Given a tenant admin user is on status applications page
@@ -131,13 +127,13 @@ Feature: Notifications
     Then the user views the subscribe checkbox is "checked"
     # Test subscriber deletion
     When the user selects the "Notification" menu item
-    And the user selects "Subscribers" tab for "Notification"
-    When the user searches subscribers with address as containing "Auto Test", email containing "adsp1.t@gov.ab.ca" and phone number containing "EMPTY"
+    And the user selects "Recipient registry" tab for "Notification"
+    When the user searches subscribers containing "adsp1.t"
     Then the user "views" the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
-    When the user clicks "delete" button of "Auto Test", "adsp1.t@gov.ab.ca" on subscribers page
+    When the user clicks the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
+    And the user clicks "delete" button on subscriber details pane
     Then the user views Delete subscriber modal
-    # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
-    # And the user views the Delete subscriber confirmation message of "adsp1.t@gov.ab.ca"
+    And the user views the Delete subscriber confirmation message of "Auto Test"
     When the user clicks Delete button on Delete subscriber modal
     Then the user "should not view" the subscriber of "Auto Test", "adsp1.t@gov.ab.ca", "EMPTY"
     When the user selects "Subscriptions" tab for "Notification"
@@ -163,51 +159,56 @@ Feature: Notifications
       | Email              | Phone           | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{7805671456} | rnd{autotest} |
 
-  # Ignored due to recent UI change to subscriber page. Need to update the test steps accordingly later
   # TEST DATA: an existing subscriber with address as of "autotest-DO-NOT-DELETE" and email of "adsp2.t@gov.ab.ca"
-  @TEST_CS-1102 @REQ_CS-1130 @regression @ignore
+  @TEST_CS-1102 @REQ_CS-1130 @regression
   Scenario: As a tenant admin, I can modify a subscriber name and email
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp2.t@gov.ab.ca" and phone number containing "EMPTY"
-    And the user clicks Edit button of "autotest-DO-NOT-DELETE" and "adsp2.t@gov.ab.ca" on subscribers page
+    When the user searches subscribers containing "adsp2.t@gov.ab.ca"
+    And the user clicks the subscriber of "autotest-DO-NOT-DELETE", "adsp2.t@gov.ab.ca", "EMPTY"
+    And the user clicks "edit" button on subscriber details pane
     Then the user views Edit subscriber modal
     When the user modifies the name to "autotest2-DO-NOT-DELETE" and email to "auto.test22@gov.ab.ca" in subscriber modal
     And the user clicks Save button in Edit subscriber modal
-    When the user searches subscribers with address as containing "autotest2-DO-NOT-DELETE", email containing "auto.test22@gov.ab.ca" and phone number containing "EMPTY"
+    When the user searches subscribers containing "autotest2-DO-NOT-DELETE"
     Then the user "views" the subscriber of "autotest2-DO-NOT-DELETE", "auto.test22@gov.ab.ca", "EMPTY"
-    When the user clicks Edit button of "autotest2-DO-NOT-DELETE" and "auto.test22@gov.ab.ca" on subscribers page
+    And the user clicks the subscriber of "autotest2-DO-NOT-DELETE", "auto.test22@gov.ab.ca", "EMPTY"
+    When the user clicks "edit" button on subscriber details pane
     And the user modifies the name to "autotest-DO-NOT-DELETE" and email to "adsp2.t@gov.ab.ca" in subscriber modal
     Then the user clicks Save button in Edit subscriber modal
-    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp2.t@gov.ab.ca" and phone number containing "EMPTY"
+    When the user searches subscribers containing "adsp2.t@gov.ab.ca"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp2.t@gov.ab.ca", "EMPTY"
 
-  # Ignored due to recent UI change to subscriber page. Need to update the test steps accordingly later
-  @TEST_CS-1372 @REQ_CS-1308 @REQ_CS-1309 @regression @ignore
+  @TEST_CS-1372 @REQ_CS-1308 @REQ_CS-1309 @regression
   Scenario: As a tenant admin, I can search, add, edit and delete SMS number of a subscriber
     Given a tenant admin user is on notification subscribers page
     # Add a number
-    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "EMPTY"
+    When the user searches subscribers containing "adsp4.t@gov.ab.ca"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
-    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" on subscribers page
+    When the user clicks the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
+    And the user clicks "edit" button on subscriber details pane
     Then the user views Edit subscriber modal
     When the user enters "7808001234" in Phone number field
     And the user clicks Save button in Edit subscriber modal
-    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "7808001234"
+    And the user searches subscribers containing "7808001234"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808001234"
     # Edit a number
-    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" on subscribers page
+    When the user clicks the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808001234"
+    And the user clicks "edit" button on subscriber details pane
     Then the user views Edit subscriber modal
     When the user enters "7808005678" in Phone number field
     And the user clicks Save button in Edit subscriber modal
-    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "7808005678"
+    And the user searches subscribers containing "7808005678"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808005678"
-    # Delete a number
-    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" on subscribers page
-    Then the user views Edit subscriber modal
-    When the user enters "EMPTY" in Phone number field
-    And the user clicks Save button in Edit subscriber modal
-    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "adsp4.t@gov.ab.ca" and phone number containing "EMPTY"
-    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
+  # CS-5542
+  # # Delete a number
+  # When the user clicks the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808005678"
+  # And the user clicks "edit" button on subscriber details pane
+  # Then the user views Edit subscriber modal
+  # When the user enters "EMPTY" in Phone number field
+  # And the user clicks Save button in Edit subscriber modal
+  # And the user searches subscribers containing "adsp4.t@gov.ab.ca"
+  # Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
+  # And the user "should not view" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808005678"
 
   # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
   @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression @ignore

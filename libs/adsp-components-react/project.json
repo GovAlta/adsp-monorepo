@@ -1,0 +1,47 @@
+{
+  "name": "adsp-components-react",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-components-react/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/adsp-components-react",
+        "tsConfig": "libs/adsp-components-react/tsconfig.lib.json",
+        "project": "libs/adsp-components-react/package.json",
+        "main": "libs/adsp-components-react/src/index.ts",
+        "compiler": "babel",
+        "format": ["esm", "cjs"],
+        "generateExportsField": true,
+        "external": ["react", "react-dom", "react/jsx-runtime", "@abgov/adsp-components-core"],
+        "rollupConfig": "@nx/react/plugins/bundle-rollup",
+        "assets": [
+          {
+            "glob": "README.md",
+            "input": "libs/adsp-components-react",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/adsp-components-react/jest.config.ts"
+      }
+    }
+  }
+}

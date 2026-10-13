@@ -73,7 +73,8 @@ export function* fetchConfig(): SagaIterator {
           formServiceApiUrl: data.serviceUrls.formServiceUrl,
           exportServiceUrl: entryMapping['export-service'],
           formAppApiUrl: entryMapping['form-service'],
-          agentServiceApiUrl: entryMapping['agent-service'],
+          agentServiceApiUrl: getAgentServiceUrl(entryMapping),
+          tokenHandlerApiUrl: entryMapping['token-handler'],
         },
         featureFlags: { ...defaultFeaturesVisible, ...data.featureFlags },
       };
@@ -117,4 +118,10 @@ const getDirectoryServiceUrl = (data): string => {
 // via the .local.env file in the app root.
 const getKeycloakUrl = (data): string => {
   return process.env.NX_KEYCLOAK_URL ? process.env.NX_KEYCLOAK_URL : data.keycloakApi.url;
+};
+
+// Set NX_AGENT_SERVICE_PROXY=true in .local.env to use the local dev-server origin
+// (and proxy.conf.json routes) for agent socket traffic.
+const getAgentServiceUrl = (entryMapping): string => {
+  return process.env.NX_AGENT_SERVICE_PROXY === 'true' ? window.location.origin : entryMapping['agent-service'];
 };

@@ -186,6 +186,21 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         }
       }
 
+      // Scanned PDF: no text layer was found. Send the raw bytes as a file part so
+      // Mastra can route it to a native document block (Anthropic) or file format
+      // (OpenAI-compatible) rather than falling through to the generic file fallback.
+      if (extracted?.scanned) {
+        return [
+          { type: 'file' as const, data: rawData, mediaType, filename },
+          {
+            type: 'text' as const,
+            text:
+              `Provided document '${filename}' is a scanned PDF with no text layer. ` +
+              `The raw document is provided for direct reading. File service URN: ${urn}${storageNote}`,
+          },
+        ];
+      }
+
       return buildExtractedDocumentParts(extracted, filename, urn, storageNote);
     } catch (err) {
       this.logger.warn(

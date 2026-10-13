@@ -15,6 +15,7 @@ communicate over APIs and RabbitMQ, and so deployment into other hosting environ
 ## Prerequisites
 
 <!-- tags: [keycloak] -->
+
 A few prerequisites are needed to set up an ADSP deployment:
 
 1. [Keycloak](https://www.keycloak.org/) is used as an IAM solution. Realms provide tenants with user access management under their own administrative control.
@@ -37,28 +38,29 @@ The tenant service creates realms for new tenants using a service account.
 Platform micro-services make requests under a non-tenant 'core' context. This is handled with a 'core' realm in Keycloak.
 
 1. Create a 'core' realm in Keycloak.
-2. Create public *client* with *Standard Flow* enabled for tenant administration application: `urn:ads:platform:tenant-admin-app`.
-3. Create confidential *clients* with service accounts for `urn:ads:platform:subscriber-gateway` and `urn:ads:platform:api-docs-app`.
-4. Create confidential *clients* with service accounts for backend micro-services including:
+2. Create public _client_ with _Standard Flow_ enabled for tenant administration application: `urn:ads:platform:tenant-admin-app`.
+3. Create confidential _clients_ with service accounts for `urn:ads:platform:subscriber-gateway` and `urn:ads:platform:api-docs-app`.
+4. Create confidential _clients_ with service accounts for backend micro-services including:
    - `urn:ads:platform:tenant-service`
    - `urn:ads:platform:event-service`
    - `urn:ads:platform:value-service`
    - ...
-5. Create service *client roles*:
+5. Create service _client roles_:
    - In `urn:ads:platform:value-service`, create `value-reader` and `value-writer` roles.
    - In `urn:ads:platform:event-service`, create `event-sender` role.
-   - In `urn:ads:platform:configuration-service`, create  `configured-service` role.
+   - In `urn:ads:platform:configuration-service`, create `configured-service` role.
    - In `urn:ads:platform:notification-service`, create `subscription-app` role.
    - In `urn:ads:platform:verify-service`, create `code-generator` and `code-verifier` roles.
-   - In `urn:ads:platform:tenant-service`, create `platform-service` role, enable *composite roles*, and add `event-sender` and `configured-service` client roles from above.
-6. Assign roles to *clients*
+   - In `urn:ads:platform:tenant-service`, create `platform-service` role, enable _composite roles_, and add `event-sender` and `configured-service` client roles from above.
+6. Assign roles to _clients_
    - Grant the service accounts the `platform-service` role.
-   - Grant `urn:ads:platform:event-service` the `value-writer` role.
+   - Grant `urn:ads:platform:event-service` the `value-writer` role, so it can log events, and the `value-reader`
+     role, so it can count events on behalf of event log API consumers.
    - Grant `urn:ads:platform:notification-service` the `code-generator` and `code-verifier` roles.
    - Grant `urn:ads:platform:subscriber-gateway` and `urn:ads:platform:form-service` the `subscription-app` role.
 
-
 ## RabbitMQ configuration
+
 Some platform services communicate over RabbitMQ. The exchange and queue configuration required is contained in the code, but manual configuration is necessary to create the accounts. All accounts should access a common vhost in RabbitMQ.
 
 1. Create accounts for platform services including:
@@ -77,4 +79,3 @@ References for configuration in the form of ConfigMaps and Secrets are included 
 2. Set appropriate values in the ConfigMaps and Secrets and apply to environments.
 3. Create a service account in 'build' with edit permission to other projects for the pipeline.
 4. Process and apply managed templates, and/or set service account token in GitHub for the pipeline.
-

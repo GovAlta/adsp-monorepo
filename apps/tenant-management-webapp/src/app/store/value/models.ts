@@ -30,6 +30,11 @@ export interface ValueState {
     definitions: boolean;
     log: boolean;
   };
+  save: {
+    saving: boolean;
+    error: string;
+    completed: number;
+  };
   metrics: ValueMetrics;
 }
 

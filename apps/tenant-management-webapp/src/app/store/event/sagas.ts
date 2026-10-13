@@ -21,6 +21,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { fetchServiceMetrics } from '@store/common';
+import { EventDefinition } from './models';
 
 export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
@@ -30,43 +31,16 @@ export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): Sa
     }),
   );
 
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
-  );
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
-  if (configBaseUrl && token) {
+  if (baseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/event-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      const tenantDefinitions = Object.getOwnPropertyNames(configuration || {}).reduce((defs, namespace) => {
-        Object.getOwnPropertyNames(configuration[namespace].definitions).forEach((name) => {
-          defs.push({ ...configuration[namespace].definitions[name], namespace, isCore: false });
-        });
-        return defs;
-      }, []);
+      const { data: definitions } = yield call(axios.get, `${baseUrl}/event/v1/definitions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const { data: serviceData = {} } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/event-service/latest?core`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      const serviceDefinitions = Object.getOwnPropertyNames(serviceData).reduce((defs, namespace) => {
-        Object.getOwnPropertyNames(serviceData[namespace].definitions).forEach((name) => {
-          defs.push({ ...serviceData[namespace].definitions[name], namespace, isCore: true });
-        });
-        return defs;
-      }, []);
-
-      yield put(getEventDefinitionsSuccess([...tenantDefinitions, ...serviceDefinitions]));
+      yield put(getEventDefinitionsSuccess(definitions));
       yield put(
         UpdateIndicator({
           show: false,
@@ -84,49 +58,28 @@ export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): Sa
 }
 
 export function* updateEventDefinition({ definition }: UpdateEventDefinitionAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
   const token: string = yield call(getAccessToken);
+  const definitions: Record<string, EventDefinition> = yield select((state: RootState) => state.event.definitions);
 
   if (baseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${baseUrl}/configuration/v2/configuration/platform/event-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const headers = { Authorization: `Bearer ${token}` };
+      const isExisting = !!definitions[`${definition.namespace}:${definition.name}`];
+      const body = { description: definition.description, payloadSchema: definition.payloadSchema };
 
-      const namespaceUpdate = {
-        name: definition.namespace,
-        definitions: {
-          ...(configuration[definition.namespace]?.definitions || {}),
-          [definition.name]: {
-            name: definition.name,
-            description: definition.description,
-            payloadSchema: definition.payloadSchema,
-          },
-        },
-      };
+      const { data } = isExisting
+        ? yield call(axios.patch, `${baseUrl}/event/v1/definitions/${definition.namespace}/${definition.name}`, body, {
+            headers,
+          })
+        : yield call(
+            axios.post,
+            `${baseUrl}/event/v1/definitions`,
+            { ...body, namespace: definition.namespace, name: definition.name },
+            { headers },
+          );
 
-      const {
-        data: { latest },
-      } = yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/platform/event-service`,
-        { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      yield put(
-        updateEventDefinitionSuccess({
-          ...latest.configuration[definition.namespace].definitions[definition.name],
-          namespace: definition.namespace,
-          isCore: false,
-        }),
-      );
+      yield put(updateEventDefinitionSuccess(data));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
@@ -134,44 +87,14 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
 }
 
 export function* deleteEventDefinition({ definition }: UpdateEventDefinitionAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${baseUrl}/configuration/v2/configuration/platform/event-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      const headers = { Authorization: `Bearer ${token}` };
-      const configPatchUrl = `${baseUrl}/configuration/v2/configuration/platform/event-service`;
-
-      const namespaceUpdate = configuration[definition.namespace];
-      delete namespaceUpdate['definitions'][definition.name];
-
-      if (Object.keys(namespaceUpdate['definitions']).length === 0) {
-        yield call(
-          axios.patch,
-          configPatchUrl,
-          { operation: 'DELETE', property: definition.namespace },
-          {
-            headers,
-          },
-        );
-      } else {
-        yield call(
-          axios.patch,
-          configPatchUrl,
-          { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
-          {
-            headers,
-          },
-        );
-      }
+      yield call(axios.delete, `${baseUrl}/event/v1/definitions/${definition.namespace}/${definition.name}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       yield put(deleteEventDefinitionSuccess(definition));
     } catch (err) {

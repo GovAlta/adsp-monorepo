@@ -10,6 +10,7 @@ describe('CalendarEntity', () => {
     getDate: jest.fn(),
     getCalendarEvent: jest.fn(),
     getCalendarEvents: jest.fn(),
+    getCalendarEventsInRange: jest.fn(),
     getEventAttendees: jest.fn(),
     save: jest.fn(),
     delete: jest.fn(),
@@ -19,6 +20,7 @@ describe('CalendarEntity', () => {
 
   beforeEach(() => {
     repositoryMock.getCalendarEvents.mockReset();
+    repositoryMock.getCalendarEventsInRange.mockReset();
     repositoryMock.getCalendarEvent.mockReset();
   });
 
@@ -352,6 +354,91 @@ describe('CalendarEntity', () => {
         undefined,
         expect.objectContaining({ isPublic: true })
       );
+    });
+  });
+
+  describe('getEventsInRange', () => {
+    it('can return range result', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+      const from = DateTime.fromISO('2021-03-01T00:00:00-07:00');
+      const to = DateTime.fromISO('2021-03-31T23:59:59-06:00');
+
+      const values = [];
+      repositoryMock.getCalendarEventsInRange.mockReturnValueOnce(values);
+      const result = await entity.getEventsInRange(
+        {
+          tenantId,
+          id: 'test',
+          roles: ['test-reader'],
+        } as User,
+        from,
+        to
+      );
+
+      expect(result).toBe(values);
+      expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(entity, from, to, {});
+    });
+
+    it('can require public for range retrieval by user without access', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+      const from = DateTime.fromISO('2021-03-01T00:00:00-07:00');
+      const to = DateTime.fromISO('2021-03-31T23:59:59-06:00');
+
+      const values = [];
+      repositoryMock.getCalendarEventsInRange.mockReturnValueOnce(values);
+      const result = await entity.getEventsInRange(
+        {
+          tenantId,
+          id: 'test',
+          roles: [],
+        } as User,
+        from,
+        to
+      );
+
+      expect(result).toBe(values);
+      expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(entity, from, to, { isPublic: true });
+    });
+
+    it('can pass criteria for range retrieval', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+      const from = DateTime.fromISO('2021-03-01T00:00:00-07:00');
+      const to = DateTime.fromISO('2021-03-31T23:59:59-06:00');
+      const criteria = { recordId: 'record-1', isPublic: false };
+
+      const values = [];
+      repositoryMock.getCalendarEventsInRange.mockReturnValueOnce(values);
+      const result = await entity.getEventsInRange(
+        {
+          tenantId,
+          id: 'test',
+          roles: ['test-reader'],
+        } as User,
+        from,
+        to,
+        criteria
+      );
+
+      expect(result).toBe(values);
+      expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(entity, from, to, criteria);
     });
   });
 

@@ -18,7 +18,10 @@ import {
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   FETCH_REGISTER_DATA_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
-  UPDATE_REGISTERS_LOCAL_ACTION,
+  FETCH_REGISTER_DATA_FAILED_ACTION,
+  CREATE_DATA_REGISTER_SUCCESS_ACTION,
+  UPDATE_DATA_REGISTER_SUCCESS_ACTION,
+  DELETE_DATA_REGISTER_SUCCESS_ACTION,
   CLOSE_TEMPLATE_ACTION,
   CONNECT_CONFIGURATION_UPDATES_ACTION,
   DISCONNECT_CONFIGURATION_UPDATES_ACTION,
@@ -39,7 +42,6 @@ const defaultState: ConfigurationDefinitionState = {
   configurationRevisions: {},
   serviceList: [],
   registers: [],
-  nonAnonymous: [],
   openEditor: null,
   connectedForUpdates: false,
 };
@@ -223,14 +225,26 @@ export default function (
         ...state,
         registers: action.payload,
         isFetchingRegisterData: false,
-        nonAnonymous: action.anonymousRead,
-        dataList: action.dataList,
       };
     }
-    case UPDATE_REGISTERS_LOCAL_ACTION:
+    case FETCH_REGISTER_DATA_FAILED_ACTION:
       return {
         ...state,
-        registers: action.payload,
+        isFetchingRegisterData: false,
+      };
+    case CREATE_DATA_REGISTER_SUCCESS_ACTION:
+    case UPDATE_DATA_REGISTER_SUCCESS_ACTION: {
+      const existing = state.registers ?? [];
+      const withoutEntry = existing.filter((register) => register.urn !== action.payload.urn);
+      return {
+        ...state,
+        registers: [...withoutEntry, action.payload],
+      };
+    }
+    case DELETE_DATA_REGISTER_SUCCESS_ACTION:
+      return {
+        ...state,
+        registers: (state.registers ?? []).filter((register) => register.urn !== action.urn),
       };
     case CONNECT_CONFIGURATION_UPDATES_ACTION:
       return {

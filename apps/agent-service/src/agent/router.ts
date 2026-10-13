@@ -15,7 +15,6 @@ import {
   toStreamErrorPayload,
   toStreamTripwirePayload,
 } from './model/streamAbort';
-
 const TOKEN_EXPIRY_THRESHOLD_MS = environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS;
 
 // Track in-progress workspace initializations to prevent concurrent init requests.
@@ -273,6 +272,21 @@ export function onIoConnection(logger: Logger) {
               tenant: tenant?.id?.toString(),
               user: `${user.name} (ID: ${user.id})`,
             });
+
+            // Log agent context hint if provided (for specialist pre-selection debugging)
+            if (context && typeof context === 'object' && 'agentContext' in context) {
+              const agentContext = (context as Record<string, unknown>).agentContext;
+              if (agentContext && typeof agentContext === 'object') {
+                const { context: contextName, subtopic, specialist } = agentContext as Record<string, unknown>;
+                logger.debug(
+                  `Agent context hint provided: context=${contextName}, subtopic=${subtopic}, specialist=${specialist}`,
+                  {
+                    context: 'AgentRouter',
+                    tenant: tenant?.id?.toString(),
+                  },
+                );
+              }
+            }
 
             let userContent: CoreUserMessage['content'];
             if (Array.isArray(content)) {

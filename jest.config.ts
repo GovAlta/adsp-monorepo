@@ -2,6 +2,7 @@ const { getJestProjectsAsync } = require('@nx/jest');
 
 export default async () => ({
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
+  setupFiles: ['<rootDir>/.jest/polyfills.js'],
   transform: {
     '^.+\\.(ts|js|html)$': 'ts-jest',
   },

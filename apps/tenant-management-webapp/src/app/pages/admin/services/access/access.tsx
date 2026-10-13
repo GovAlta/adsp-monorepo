@@ -5,10 +5,15 @@ import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
 import { TenantIdp } from './TenantIDP';
+import { AccessServiceAgent } from './AccessServiceAgent';
+import { TokenHandlerTab } from './tokenHandler/TokenHandlerTab';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const accessServiceAIEnabled = useSelector((state: RootState) => state.config.featureFlags?.AccessServiceAI === true);
 
   return (
     <Page>
@@ -26,6 +31,16 @@ export default function (): JSX.Element {
           <Tab label="Troubleshooting" data-testid="service-ADSP-idp">
             <TenantIdp />
           </Tab>
+
+          <Tab label="Token handler" data-testid="access-token-handler-tab">
+            <TokenHandlerTab />
+          </Tab>
+
+          {accessServiceAIEnabled && (
+            <Tab label="AI agent" testId="access-ai-agent">
+              <AccessServiceAgent />
+            </Tab>
+          )}
         </Tabs>
       </Main>
 

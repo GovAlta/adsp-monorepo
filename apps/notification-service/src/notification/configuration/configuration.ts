@@ -22,6 +22,8 @@ function createTypeEntity(
 export class NotificationConfiguration {
   private types: Record<string, NotificationTypeEntity>;
   private eventTypes: Record<string, NotificationTypeEntity[]>;
+  private tenantDefinitions: Record<string, NotificationType>;
+  private coreDefinitions: Record<string, NotificationType>;
   public contact: SupportContact;
   public email: FromEmail;
 
@@ -48,6 +50,7 @@ export class NotificationConfiguration {
       this.email = tenantTypes?.email;
       delete tenantTypes.contact;
       delete tenantTypes.email;
+      this.tenantDefinitions = { ...tenantTypes };
 
       this.types = Object.entries(tenantTypes).reduce((entities, [typeId, type]: [string, NotificationType]) => {
         const typeEntity = createTypeEntity(logger, templateService, fileService, type, tenantId);
@@ -56,7 +59,9 @@ export class NotificationConfiguration {
       }, coreTypesEntities);
     } else {
       this.types = coreTypesEntities;
+      this.tenantDefinitions = {};
     }
+    this.coreDefinitions = { ...coreTypes };
 
     this.eventTypes = Object.keys(this.types).reduce((eventEntities, key) => {
       const type = this.types[key];
@@ -78,6 +83,24 @@ export class NotificationConfiguration {
 
   getNotificationType(type: string): NotificationTypeEntity {
     return this.types[type];
+  }
+
+  // Tenant definitions are returned as stored, so a tenant customization of a platform type only holds the
+  // customized events; getNotificationType returns the platform type with the customization applied.
+  getTenantDefinitions(): NotificationType[] {
+    return Object.values(this.tenantDefinitions);
+  }
+
+  getTenantDefinition(type: string): NotificationType {
+    return this.tenantDefinitions[type];
+  }
+
+  getCoreDefinitions(): NotificationType[] {
+    return Object.values(this.coreDefinitions);
+  }
+
+  getCoreDefinition(type: string): NotificationType {
+    return this.coreDefinitions[type];
   }
 
   getEventNotificationTypes({ namespace, name }: DomainEvent): NotificationTypeEntity[] {

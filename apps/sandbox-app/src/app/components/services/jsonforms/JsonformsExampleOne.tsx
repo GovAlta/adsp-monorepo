@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppDispatch, busySelector, definitionSelector, selectedDefinition, tenantSelector } from '../../../state';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v7';
 import { LoadingIndicator } from '../../LoadingIndicator';
 import { ServiceContainer } from '../../styled-components';
 import { GoabContainer } from '@abgov/react-components';

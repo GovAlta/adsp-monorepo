@@ -16,6 +16,7 @@ import { TextGoASkeleton } from '@core-services/app-common';
 import { useActionStateCheck } from '@components/Indicator';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { GoabGrid } from '@abgov/react-components';
+import { useCanEditContact } from '../subscription/useHasRole';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -30,9 +31,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const contact = useSelector((state: RootState) => state.notification.supportContact);
-  const hasConfigurationAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin'),
-  );
+  const canEditContact = useCanEditContact();
 
   const [editContactInformation, setEditContactInformation] = useState<boolean>(false);
 
@@ -55,7 +54,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
       <ContactInfoCss>
         <NoPaddingH2>
           <div className="left-float">Contact information </div>
-          {hasConfigurationAdminRole ? (
+          {canEditContact ? (
             <div data-testid="edit-contact-info">
               <GoAContextMenuIcon
                 type="create"
@@ -69,7 +68,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
           ) : (
             <Edit
               className="disabled"
-              title="You require a configuration-admin role to edit this contact information"
+              title="You require the subscription-admin or configuration-admin role to edit this contact information"
               width={'18px'}
             />
           )}

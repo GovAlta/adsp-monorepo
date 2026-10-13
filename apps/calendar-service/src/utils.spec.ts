@@ -1,9 +1,29 @@
 import { InvalidOperationError } from '@core-services/core-common';
 import { DateTime } from 'luxon';
-import { fromDateAndTimeIds, toDateId, toTimeId } from './utils';
+import { fromDateAndTimeIds, parseCalendarDateTime, toDateId, toTimeId } from './utils';
 
 const zone = 'America/Edmonton';
 describe('utils', () => {
+  describe('parseCalendarDateTime', () => {
+    it('can parse offsetless datetime values in the calendar timezone', () => {
+      const result = parseCalendarDateTime('2021-03-03T13:30:00', 'start', zone);
+
+      expect(result.zoneName).toBe(zone);
+      expect(result.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2021-03-03T13:30:00');
+    });
+
+    it('can convert UTC datetime values to the calendar timezone', () => {
+      const result = parseCalendarDateTime('2021-03-03T20:30:00.000Z', 'start', zone);
+
+      expect(result.zoneName).toBe(zone);
+      expect(result.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2021-03-03T13:30:00');
+    });
+
+    it('can throw for invalid datetime values', () => {
+      expect(() => parseCalendarDateTime('not-a-date', 'start', zone)).toThrow(InvalidOperationError);
+    });
+  });
+
   describe('fromDateAndTimeIds', () => {
     it('can convert ids to datetime', () => {
       const result = fromDateAndTimeIds(20200130, 1330, 'America/Edmonton');

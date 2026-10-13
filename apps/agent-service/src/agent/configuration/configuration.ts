@@ -15,7 +15,9 @@ import { createBrokerInputProcessors, createInputProcessors } from '../processor
 import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
-import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
+import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
+import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
+import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
 function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
@@ -115,6 +117,11 @@ export interface AgentConfiguration {
   agents?: string[];
   tools?: ToolConfiguration[];
   mcp?: McpConfiguration;
+  model?: AgentModelConfiguration;
+  /** Maximum steps (model calls, including tool calls) per turn. The framework default is 5. */
+  maxSteps?: number;
+  /** Time limit for a single request in milliseconds. Defaults to AGENT_REQUEST_TIMEOUT_MS. */
+  timeoutMs?: number;
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
@@ -187,7 +194,20 @@ export class AgentServiceConfiguration {
             (agents, [key, configuration]) => {
               const externalTools = mcpToolsByAgent[key] || {};
               const availableToolMap = availableTools as Record<string, unknown>;
-              const modelId = getAgentModelId(key);
+              const modelId = getAgentModelId(key, configuration.model);
+              const defaultOptions = {
+                ...(configuration.outputSchema
+                  ? {
+                      structuredOutput: {
+                        schema: configuration.outputSchema,
+                        errorStrategy: 'warn',
+                      },
+                    }
+                  : {}),
+                ...(key === ACCESS_SERVICE_AGENT_ID
+                  ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
+                  : {}),
+              };
 
               return {
                 ...agents,
@@ -196,15 +216,8 @@ export class AgentServiceConfiguration {
                   name: configuration.name,
                   description: configuration.description,
                   instructions: withContextualInstructions(configuration.instructions),
-                  model: getAgentModelConfiguration(modelId),
-                  defaultOptions: (configuration.outputSchema
-                    ? {
-                        structuredOutput: {
-                          schema: configuration.outputSchema,
-                          errorStrategy: 'warn',
-                        },
-                      }
-                    : undefined) as unknown as never,
+                  model: getAgentModelConfiguration(modelId, configuration.model),
+                  defaultOptions: Object.keys(defaultOptions).length ? (defaultOptions as unknown as never) : undefined,
                   agents: () => {
                     const toolAgents: Record<string, Agent> = {};
                     for (const agent of configuration.agents || []) {
@@ -257,6 +270,7 @@ export class AgentServiceConfiguration {
                       logger: this.logger,
                       requestContext: requestContext as RequestContext<Record<string, unknown>>,
                     }),
+                  outputProcessors: () => [],
                 }) as Agent,
               };
             },
@@ -285,6 +299,7 @@ export class AgentServiceConfiguration {
           fileServiceClient,
           this.eventService,
           key,
+          agentConfiguration.model,
         );
         return {
           ...brokers,

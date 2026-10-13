@@ -18,13 +18,15 @@ src/
 │   └── adspForm.ts         # ADSP form integration config (mock/live)
 ├── components/
 │   └── FormComponent.tsx   # ADSP JSON forms wrapper
+├── layouts/
+│   └── PublicLayout.tsx    # GoabOneColumnLayout + GoabAppHeader (nav lives HERE) + GoabAppFooter
 ├── lib/
 │   └── adspFormApi.ts      # Definition loading and submission helpers
 ├── pages/
-│   ├── Home.tsx            # Landing page with app header + hero banner
-│   ├── Apply.tsx           # Service information + integrated ADSP form
-│   ├── About.tsx           # Template and workflow guidance
-│   └── Examples.tsx        # Component/pattern examples
+│   ├── Home.tsx            # Landing page (uses PublicLayout + GoabHeroBanner)
+│   ├── Apply.tsx           # Service information + integrated ADSP form (uses PublicLayout)
+│   ├── About.tsx           # Template and workflow guidance (uses PublicLayout)
+│   └── Examples.tsx        # Component/pattern examples (uses PublicLayout)
 ├── assets/
 │   └── hero-banner.png     # Hero background image
 ├── styles.css              # Shared page and typography styles
@@ -48,29 +50,199 @@ src/
 5. Ask before adding dependencies.
 6. Keep external dependency changes explicit in `package.json`; preview uses a prebuilt vendor bundle tied to this template.
 
-## Template Conventions to Preserve
+## Choosing a Layout Pattern
 
-- `Home.tsx` is the only page that uses `GoabHeroBanner`.
-- All pages use `GoabOneColumnLayout` with `GoabAppHeader` and `GoabAppFooter`.
-- Header navigation includes `/apply`, `/components`, and `/about`.
+> **Read the user's request first, then `App.tsx`.** The request tells you which shell to use; the existing code tells you how to stay consistent within a section.
+
+There are two distinct layout shells. The user's stated intent determines which one to use — the existing code only tells you whether that shell is already present.
+
+### Step 1 — decide from the request
+
+| User says… | Shell to use — no exceptions |
+|---|---|
+| "workspace", "staff tool", "case management", "admin", "review queue", "internal dashboard", "staff-facing" | **Internal — `GoabWorkSideMenu`** |
+| "citizen portal", "public service", "application form", "Albertans" | **Public — `GoabOneColumnLayout`** |
+
+If the request clearly asks for a staff/workspace feature, use `GoabWorkSideMenu` — even if the app currently only has public pages. An app can have both a public section and an internal workspace section under different routes; they do not conflict.
+
+### Step 2 — match the existing section
+
+Read `App.tsx` and the relevant existing page files to stay consistent *within the section you are adding to*:
+
+| You see in the section you are extending… | All new pages in that section must use |
+|---|---|
+| `GoabWorkSideMenu` / `AppShell` / `WorkspaceShell` | Internal shell |
+| `GoabOneColumnLayout` / `GoabAppHeader` | Public shell |
+
+**Never mix shells on the same page or within the same flow.** But a public `/home` page and a staff `/workspace` page in the same app is fine — they are separate sections.
+
+### Public-facing (citizen services)
+
+Use when the target audience is Albertans accessing a public service.
+
+Shell: `GoabOneColumnLayout` + `GoabAppHeader` + `GoabAppFooter` — already wrapped in `src/layouts/PublicLayout.tsx`.
+
+- **Nav links live only in `src/layouts/PublicLayout.tsx`** — never add `GoabAppHeader` to individual page files.
+- Wrap every public page with `<PublicLayout>{/* page content */}</PublicLayout>`.
+- `Home.tsx` is the only page that adds `GoabHeroBanner` (placed inside `<PublicLayout>` before the `<GoabPageBlock>`).
 - Use sentence casing for headings and card titles.
-- Prefer GOA components over custom HTML/CSS patterns for UI primitives.
 
-## ADSP Form Integration Pattern
+### Internal / staff-facing (workspace tools)
 
-- Keep integration settings centralized in `src/config/adspForm.ts`.
-- Default to `mode: 'mock'` unless the user explicitly asks for live service calls.
-- In live mode, require `formServiceBaseUrl`, `definitionId`, and a valid `accessToken`.
-- Keep submission flow simple: load definition, validate, submit, show confirmation reference.
+Use when the audience is government staff operating a case management, admin, or review tool.
+
+Shell: `GoabWorkSideMenu` + `GoabWorkSideMenuItem` — **no** `GoabOneColumnLayout`, **no** `GoabAppHeader`, **no** `GoabAppFooter`, **no** `GoabHeroBanner`.
+
+```tsx
+import {
+  GoabWorkSideMenu,
+  GoabWorkSideMenuItem,
+  GoabPageBlock,
+} from '@abgov/react-components';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+function AppShell({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  return (
+    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden' }}>
+      <GoabWorkSideMenu
+        heading="Service name"
+        url="/"
+        userName="Staff user"
+        onNavigate={(url) => navigate(url)}
+        primaryContent={
+          <>
+            <GoabWorkSideMenuItem
+              label="Applications"
+              url="/applications"
+              icon="list"
+              current={pathname.startsWith('/applications')}
+            />
+            <GoabWorkSideMenuItem
+              label="Reviews"
+              url="/reviews"
+              icon="checkmark-circle"
+              current={pathname.startsWith('/reviews')}
+            />
+          </>
+        }
+      />
+      <main id="main-content" style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+        <GoabPageBlock width="1200px">
+          <div style={{ paddingBlock: '2.5rem' }}>
+            {children}
+          </div>
+        </GoabPageBlock>
+      </main>
+    </div>
+  );
+}
+```
+
+Layout widths (pass as `width` on `GoabPageBlock`):
+- Forms / single-column: `640px`
+- General content: `1000px`
+- Data-heavy / tables: `1200px`
+
+### Which pattern fits new requests
+
+| User says… | Use |
+|------------|-----|
+| "application form", "citizen portal", "public service page" | Public (GoabOneColumnLayout) |
+| "workspace", "case management", "staff tool", "admin view", "review queue", "internal dashboard", "staff-facing" | Internal (GoabWorkSideMenu) |
+
+Prefer GOA components over custom HTML/CSS patterns for UI primitives in both cases.
+
+## Forms and data collection
+
+**Default: build forms as an ADSP JSON form.** A request to collect information (apply, report, register, request, survey) means editing the form definition, not writing a page full of inputs.
+
+- `mockDefinition` in `src/lib/adspFormApi.ts` holds the form's `dataSchema` (JSON Schema: the data shape) and `uiSchema` (JSON Forms: layout and controls). Edit those. `src/pages/Apply.tsx` renders it through `FormComponent` and already handles loading, validation, submit and the confirmation reference.
+- Reuse the ADSP common definitions before designing fields, wired with `{ "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/<name>" }`: `personFullName`, `personFullNameAndDob`, `postalAddressAlberta`, `postalAddressCanada`, `email`, `phoneNumber`, `phoneNumberWithType`, `personDependents`.
+- Required fields go in the `dataSchema` `required` array. A field with a SHOW/HIDE rule must not be top-level required; use an `if`/`then` block.
+- Show privacy and FOIP text with a `HelpContent` element (`options: { markdown: true, help: '…' }`).
+- Mock mode (the default) cannot use data registers or `file-urn` upload; use plain `enum` lists.
+- Keep integration settings in `src/config/adspForm.ts`, default to `mode: 'mock'`, and in live mode require `formServiceBaseUrl`, `definitionId` and either a valid `accessToken` or `tokenHandler: true` (with `formServiceBaseUrl` `/token-handler/targets/form-service`; make every API request with `apiFetch` from `src/lib/tokenHandler.ts`, not raw `fetch`, because it adds the CSRF header that the token handler needs for requests other than GET; Builder preview signs the user in, so the app has no sign in of its own).
+- Validate after every change to the definition (`builderFormSchemaValidate`) and fix all reported errors.
+
+**Hand-build a form only when the JSON form cannot express it** (logic the schema cannot describe, or a submit target other than the Form Service). Then use GOA components, not plain HTML:
+
+```tsx
+<GoabFormItem
+  label="Where did the collision happen?"
+  requirement="required"
+  helpText="For example, near 100 Street and 106 Avenue."
+  error={errors.where}
+  id="field-where"
+>
+  <GoabInput name="where" value={where} error={!!errors.where} onChange={({ value }) => setWhere(value)} />
+</GoabFormItem>
+```
+
+- Do NOT use `<label>`, `<fieldset>`/`<legend>`, `<p className="form-hint">` or `<p className="error-message">`. `GoabFormItem` supplies the label, help text, error and required/optional marker (`requirement="required" | "optional"`). Put radio groups and checkbox lists in a `GoabFormItem` with `type="radio-group"` or `type="checkbox-list"`.
+- `onChange` takes **one** object argument, not `(name, value)`:
+
+| Component | `onChange` receives |
+|-----------|---------------------|
+| `GoabInput`, `GoabTextArea`, `GoabRadioGroup` | `{ name, value, event }` |
+| `GoabDropdown` | `{ name, value, values, event }` (`values` for `multiselect`) |
+| `GoabDatePicker` | `{ name, valueStr, value, event }`; use `valueStr` |
+| `GoabCheckbox` | `{ name, value, checked, event }` |
+
+## Platform services (token handler)
+
+The app can call ADSP platform services as the signed-in user. Builder preview does this through the token handler, which the builder proxies on the preview's own origin. The builder signs the user in before the preview loads, and the token handler adds the user's access token to each request, so the app never holds a token.
+
+- **URL shape:** `/token-handler/targets/<target>/<service path>`. Available targets in Builder preview: `form-service` (paths under `/form/v1`) and `file-service` (paths under `/file/v1`). Example: `GET /token-handler/targets/file-service/file/v1/files?top=10`. There are no other targets; use mock data for other services and tell the user.
+- **Form starter:** set `mode: 'live'`, `tokenHandler: true` and `formServiceBaseUrl: '/token-handler/targets/form-service'` in `src/config/adspForm.ts`, with a real `definitionId`. Keep `mode: 'mock'` until the user has one.
+- **Always use `apiFetch`** from `src/lib/tokenHandler.ts`, never raw `fetch`. It adds the `X-XSRF-TOKEN` CSRF header that the token handler requires for requests other than GET; without it, writes fail with `Request must include valid CSRF token.`
+- **No tokens, secrets or sign in code in the app.** `401` means the session ended (the user reloads the builder); `403` means the user's role does not allow the request. Show both as plain-language messages.
+- Requests run as the builder's user in their tenant. Prefer reads, and do not create, change or delete data unless the user asked for it.
+- For API hooks (see `src/hooks/useApi.ts` under Service UI Patterns), set `API_BASE` to the target, e.g. `/token-handler/targets/form-service/form/v1`.
+- A deployed app (outside Builder preview) needs its own token handler client, a `/token-handler` proxy on its origin and a sign in; see the token handler documentation.
+
+```ts
+import { apiFetch } from '../lib/tokenHandler';
+
+const response = await apiFetch('/token-handler/targets/file-service/file/v1/files?top=10');
+if (response.status === 401) throw new Error('Your session has ended. Reload the builder to sign in again.');
+if (response.status === 403) throw new Error('You do not have access to this information.');
+if (!response.ok) throw new Error(`Request failed (${response.status})`);
+const { results } = await response.json();
+```
 
 ## Routing Pattern
 
-When adding a page:
+Adding a page has **four mandatory steps**. The task is not done until all four are complete.
 
 1. Create `src/pages/NewPage.tsx`.
-2. Add a route in `src/App.tsx`.
-3. Add navigation links in each page header where appropriate.
-4. Verify route reachability in preview.
+2. Add a `<Route>` in `src/App.tsx`.
+3. **Wire navigation — non-negotiable, do this in the same edit batch:**
+   - **Internal shell** (`GoabWorkSideMenu`): add a `<GoabWorkSideMenuItem url="/new-route" label="…" icon="…" current={pathname.startsWith('/new-route')} />` inside `primaryContent` of the `AppShell` / `WorkspaceShell` component. Navigation fires through `onNavigate` on `GoabWorkSideMenu` — never add `onClick` to the item. Pick `icon` names per [Icons](#icons).
+   - **Public shell** (`GoabOneColumnLayout`): add a `<Link to="/new-route">New Page</Link>` inside the `navigation={…}` prop of `GoabAppHeader` in **`src/layouts/PublicLayout.tsx`** — that single file is the only place nav links live; all pages share it automatically.
+4. Self-check before finishing:
+   - Internal: open the `AppShell` / `WorkspaceShell` component and confirm the new `GoabWorkSideMenuItem` is in `primaryContent`.
+   - Public: open `src/layouts/PublicLayout.tsx` and confirm the new `<Link>` is in the `navigation` prop.
+
+**Common mistakes that leave pages unreachable:**
+- Creating the page file and the `<Route>` but forgetting step 3 entirely.
+- Internal: adding `onClick` to `GoabWorkSideMenuItem` — the prop is silently ignored; use `onNavigate` on the parent `GoabWorkSideMenu`.
+- Public: editing a page file's header instead of `src/layouts/PublicLayout.tsx` — individual page files no longer contain `GoabAppHeader`.
+
+## Icons
+
+`GoabIcon` (and any `icon="…"` / `leadingIcon="…"` prop, including `GoabWorkSideMenuItem`) accepts two kinds of names:
+
+1. **Built-in GOA icons** — inline SVG, render instantly with no network request. Prefer these when one fits:
+   `add`, `add-circle`, `alert-circle`, `arrow-back`, `arrow-bottom`, `arrow-down`, `arrow-end`, `arrow-forward`, `arrow-start`, `arrow-top`, `arrow-up`, `bookmark`, `calendar`, `call`, `caret-back`, `caret-down`, `caret-forward`, `caret-up`, `checkmark`, `checkmark-circle`, `chevron-back`, `chevron-down`, `chevron-expand`, `chevron-forward`, `chevron-up`, `close`, `close-circle`, `cloud-upload`, `column-sort`, `documents`, `download`, `ellipsis-vertical`, `eye`, `eye-off`, `filter`, `filter-lines`, `flag`, `help-circle`, `information-circle`, `mail`, `menu`, `notifications`, `notifications-off`, `open`, `pencil`, `person-circle`, `reload`, `remove`, `remove-circle`, `scroll-to`, `search`, `settings`, `trash`, `warning`.
+2. **Any [Ionicons v8](https://ionic.io/ionicons) name** — fetched at runtime as `svg/<name>.svg`. Examples that exist: `list`, `home`, `people`, `person`, `document`, `document-text`, `folder`, `clipboard`, `bar-chart`, `stats-chart`, `time`, `card`, `cash`, `briefcase`, `business`, `school`, `medkit`, `map`, `location`, `star`, `heart`, `lock-closed`, `key`, `shield-checkmark`, `create`, `reader`, `receipt`, `grid`, `apps`, `layers`, `chatbubbles`.
+
+Rules:
+- Use exact Ionicons names (kebab-case, e.g. `document-text`). Do not invent names or use other icon sets (Material, Font Awesome, Heroicons). An unknown name fails silently as a blank icon and a 404 for `svg/<name>.svg` in the browser console.
+- Suffixed Ionicons variants (`-outline`, `-sharp`) only work if that exact file exists in Ionicons; prefer the plain name.
+- If an icon is blank and the console shows a 404 for `svg/<name>.svg`, the name is wrong — switch to a built-in icon or a name from the list above.
+- Never add `<ion-icon>` elements, icon font CSS, or inline icon libraries; use `GoabIcon` or the component's `icon` prop.
 
 ## Builder Preview vs Local Development
 
@@ -90,6 +262,19 @@ When adding a page:
   1.  local template run (`npm run dev`)
   2.  Builder preview rendering
 
+## Error Recovery Rules
+
+When the preview throws a render error, fix the actual cause — do not change the shell layout or remove working features as a workaround.
+
+| Error message | Likely cause | Fix |
+|---|---|---|
+| "invalid element type" / "element type is invalid" | Component name doesn't exist (e.g. `GoabTag`, `GoabSelect`) | Replace with the correct component from the table above |
+| "X is not a function" | Wrong import or missing prop | Check the import and required props |
+| "Cannot read properties of undefined" | Accessing a field on null data before it loads | Add a loading guard (`if (!data) return null`) |
+| White blank page | Entry file error or missing default export | Check `src/main.tsx` and the page's `export default` |
+
+**Never switch from `GoabWorkSideMenu` to `GoabOneColumnLayout` (or vice versa) as a response to a runtime error.** Shell choice and component errors are independent; fixing one does not require changing the other.
+
 ## Preview QA Checklist
 
 After UI or routing changes, verify:
@@ -107,6 +292,306 @@ After UI or routing changes, verify:
 - Keep file and dependency footprint reasonable for preview performance.
 - Prefer deterministic, low-risk changes over broad rewrites.
 - Only known Builder templates are supported in preview; avoid assumptions that unknown package imports will resolve dynamically.
+
+## Service UI Patterns
+
+These patterns mirror the established GOA service architecture used across ADSP projects (codified in the `@nx-adsp` Vue generators). Apply them when the user asks for list pages, detail views, intake forms, or any service data interaction.
+
+**List / workspace views, detail views, and action bars are for internal tools — use the `GoabWorkSideMenu` shell for them, not `GoabOneColumnLayout`. Intake forms and confirmation pages can appear in either context.**
+
+### API hook — the glue layer
+
+Centralise all HTTP in a `src/hooks/useApi.ts` hook. Views call `list`, `get`, `save`, `action` in domain terms; wire details (base path, query param names, response envelope shape) live only in the hook.
+
+```ts
+// src/hooks/useApi.ts
+import { apiFetch } from '../lib/tokenHandler';
+// Through the token handler in Builder preview, e.g. '/token-handler/targets/form-service/form/v1'.
+const API_BASE = '/api/v1';
+
+function path(resource: string, id?: string | number, action?: string) {
+  const base = `${API_BASE}/${resource}`;
+  if (id === undefined || id === null) return base;
+  return action ? `${base}/${id}/${action}` : `${base}/${id}`;
+}
+
+export function useApi() {
+  // apiFetch (src/lib/tokenHandler.ts) adds the CSRF header that the token handler needs for requests other than GET.
+  // Add a Bearer token here only if the API is called directly, not through the token handler.
+  async function request<T>(url: string, init: RequestInit, verb: string): Promise<T> {
+    const res = await apiFetch(url, init);
+    if (!res.ok) throw new Error(`Failed to ${verb} (${res.status})`);
+    if (res.status === 204) return undefined as T;
+    const body = await res.text();
+    return (body ? JSON.parse(body) : undefined) as T;
+  }
+
+  function list<T = Record<string, unknown>>(
+    resource: string,
+    query: { page?: number; pageSize?: number; search?: string; sortBy?: string; sortDir?: 'asc' | 'desc'; filters?: Record<string, string> } = {}
+  ): Promise<{ rows: T[]; total: number }> {
+    const params = new URLSearchParams();
+    if (query.page !== undefined) params.set('page', String(query.page));
+    if (query.pageSize !== undefined) params.set('limit', String(query.pageSize));
+    if (query.search) params.set('search', query.search);
+    if (query.sortBy) { params.set('sortBy', query.sortBy); params.set('sortDir', query.sortDir ?? 'asc'); }
+    for (const [k, v] of Object.entries(query.filters ?? {})) { if (v) params.set(k, v); }
+    const url = path(resource) + (params.toString() ? `?${params}` : '');
+    return request<unknown>(url, {}, 'load').then((data) => {
+      if (Array.isArray(data)) return { rows: data as T[], total: data.length };
+      const env = (data ?? {}) as Record<string, unknown>;
+      const rows = (env.results ?? []) as T[];
+      return { rows, total: (env.total as number) ?? rows.length };
+    });
+  }
+
+  function get<T = Record<string, unknown>>(resource: string, id: string | number) {
+    return request<T>(path(resource, id), {}, 'load');
+  }
+
+  function save<T = Record<string, unknown>>(resource: string, id: string | number | null, body: unknown) {
+    const isNew = id === null || id === undefined;
+    return request<T>(isNew ? path(resource) : path(resource, id), {
+      method: isNew ? 'POST' : 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }, 'save');
+  }
+
+  function action<T = Record<string, unknown>>(resource: string, id: string | number, name: string, body?: unknown) {
+    return request<T>(path(resource, id, name), {
+      method: 'POST',
+      ...(body !== undefined ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+    }, name);
+  }
+
+  return { list, get, save, action };
+}
+```
+
+### List / workspace view
+
+Paginated, sortable, searchable list. Guard against out-of-order responses with a sequence counter.
+
+```tsx
+const PAGE_SIZE = 10;
+const { list } = useApi();
+
+const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+const [total, setTotal] = useState(0);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+const [page, setPage] = useState(1);
+const [sortBy, setSortBy] = useState<string>();
+const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+const [search, setSearch] = useState('');
+const loadSeq = useRef(0);
+
+async function load(overrides?: { page?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; search?: string }) {
+  const seq = ++loadSeq.current;
+  setLoading(true);
+  setError(null);
+  try {
+    const result = await list('my-resource', { page: overrides?.page ?? page, pageSize: PAGE_SIZE, sortBy: overrides?.sortBy ?? sortBy, sortDir: overrides?.sortDir ?? sortDir, search: overrides?.search ?? search });
+    if (seq !== loadSeq.current) return; // superseded
+    setRows(result.rows);
+    setTotal(result.total);
+  } catch (e) {
+    if (seq !== loadSeq.current) return;
+    setError(e instanceof Error ? e.message : 'Failed to load.');
+  } finally {
+    if (seq === loadSeq.current) setLoading(false);
+  }
+}
+
+useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+```
+
+Display:
+- Loading state: `<goa-skeleton type="text" size="3" />`
+- Error state: `<GoabCallout type="emergency" heading="Unable to load"><p>{error}</p></GoabCallout>`
+- Paginate with `<goa-block>` + `<goa-pagination>`
+- Search with debounce (300 ms), reset `page` to 1 on change
+
+### Detail view
+
+Fetch record on mount; re-fetch when the route `id` param changes (React Router v6 re-uses the component).
+
+```tsx
+const { id } = useParams();
+const navigate = useNavigate();
+const { get } = useApi();
+
+const [record, setRecord] = useState<Record<string, unknown> | null>(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+
+useEffect(() => {
+  let cancelled = false;
+  setLoading(true);
+  setError(null);
+  get('my-resource', id!).then((data) => {
+    if (!cancelled) { setRecord(data); setLoading(false); }
+  }).catch((e) => {
+    if (!cancelled) { setError(e instanceof Error ? e.message : 'Failed to load.'); setLoading(false); }
+  });
+  return () => { cancelled = true; };
+}, [id]);
+```
+
+Render label/value pairs with a two-column `<dl>`:
+
+```tsx
+<dl className="detail-fields">
+  <dt>Status</dt>
+  <dd>{record?.status ?? '—'}</dd>
+</dl>
+```
+
+```css
+.detail-fields { display: grid; grid-template-columns: auto 1fr; gap: var(--goa-space-xs) var(--goa-space-l); margin: 0; }
+.detail-fields dt { font-weight: 600; }
+```
+
+### Multi-step intake form
+
+Each step is a separate route: `/{resource}/:id/:step`. The record carries `completedSteps: string[]` which drives the stepper's status.
+
+Step structure:
+1. Load record on mount (or start fresh if `id === 'new'`).
+2. Validate on "Save and continue" — produce `{ message: string; anchor: string }[]`.
+3. Show all errors above the form via `<GoabCallout type="emergency">` with anchor links.
+4. `save()` includes `completedSteps: [...new Set([...completedSteps, currentStep])]` in the body.
+5. On create, redirect to `/{resource}/{newId}/{nextStep}`.
+6. Step navigation: allow clicking completed steps and the review step only.
+
+```tsx
+function validate(): { message: string; anchor: string }[] {
+  const errors: { message: string; anchor: string }[] = [];
+  if (!form.name?.trim()) errors.push({ message: 'Name is required.', anchor: '#field-name' });
+  return errors;
+}
+```
+
+Bind `id="field-{key}"` to each `<goa-form-item>` so error anchors scroll to the right field.
+
+### Review (check-your-answers)
+
+Show every field from every step in `<GoabContainer accent="thin">` sections, each with an Edit button routing to that step. Below all sections:
+
+1. A declaration checkbox: "I confirm the information above is accurate and complete."
+2. Disable Submit until declared.
+3. On submit: call `action('my-resource', id, 'submit')`, then navigate to confirmation.
+
+Coded fields (stored as codes, displayed as labels) — define option arrays once:
+
+```ts
+const STATUS_OPTIONS = [{ value: 'draft', label: 'Draft' }, { value: 'submitted', label: 'Submitted' }];
+function optionLabel(options: { value: string; label: string }[], value: unknown) {
+  return options.find((o) => o.value === value)?.label ?? String(value ?? '—');
+}
+```
+
+### Confirmation
+
+Fetch the record to display its **business reference field** (e.g. `referenceNumber`), not the database `id`. Fall back to the route id only if the reference field is missing.
+
+```tsx
+const { id } = useParams();
+const { get } = useApi();
+const [reference, setReference] = useState(id ?? '');
+
+useEffect(() => {
+  get('my-resource', id!).then((data) => {
+    const ref = data?.referenceNumber;
+    if (ref !== null && ref !== undefined && ref !== '') setReference(String(ref));
+  }).catch(() => { /* keep route id fallback */ });
+}, [id]);
+```
+
+```tsx
+<GoabCallout type="success" heading="Application submitted">
+  <p>Your reference number is <strong>{reference}</strong></p>
+  <p>Keep this for your records.</p>
+</GoabCallout>
+<goa-spacer vspacing="m" />
+<h2>What happens next</h2>
+<ol>
+  <li>We'll review what you submitted.</li>
+  <li>We'll contact you if we need more information.</li>
+  <li>We'll let you know the outcome.</li>
+</ol>
+```
+
+### Accessibility rules
+
+- Every `<goa-form-item>` that is mandatory: add `requirement="required"`.
+- Loading regions: add `aria-label="Loading"` to the skeleton container.
+- Error summaries: link each error message to its field via `anchor` (href = `#field-{key}`).
+- Sentence case for all headings, button labels, and callout headings.
+- Use `<goa-spacer vspacing="m|l">` between major sections; avoid raw margin in CSS for spacing that should flex with the design system.
+
+### GOA component quick reference
+
+| Need | Component |
+|------|-----------|
+| Public page shell | `<GoabOneColumnLayout>` + `<GoabAppHeader>` + `<GoabAppFooter>` |
+| Internal page shell | `<GoabWorkSideMenu>` + `<GoabWorkSideMenuItem>` + `<GoabPageBlock>` |
+| Data table (internal) | `<GoabTable version="2" width="100%">` + `<GoabTableSortHeader version="2">` |
+| Pagination | `<GoabPagination version="2" pageNumber={page} itemCount={total} perPageCount={pageSize}>` |
+| Filter chips | `<GoabFilterChip content="…">` |
+| Loading placeholder | `<GoabSkeleton type="text" size="3" />` |
+| Errors / alerts | `<GoabCallout type="emergency|information|success">` |
+| Form field wrapper | `<GoabFormItem label="…" mb="l" id="field-{key}">` |
+| Text input | `<GoabInput name="…" value={…} onChange={…}>` |
+| Multiline | `<GoabTextArea name="…" value={…} onChange={…}>` |
+| Date | `<GoabDatePicker name="…" value={…} onChange={…}>` |
+| Dropdown / select | `<GoabDropdown name="…" value={…} onChange={…}>` + `<GoabDropdownItem value="…" label="…" />` |
+| Status colour / label | `<GoabBadge type="success|warning|emergency|information" content="…">` |
+| Inline tag / chip | `<GoabChip content="…">` or `<GoabFilterChip content="…">` |
+| Button group | `<GoabButtonGroup alignment="start|end">` |
+| Cards / sections | `<GoabContainer accent="thin">` |
+| Grid layout | `<GoabGrid minChildWidth="30ch">` |
+| Tooltip | `<GoabTooltip content="…">` |
+| Modal | `<GoabModal heading="…" open={…} onClose={…}>` |
+| Accordion | `<GoabAccordion heading="…">` |
+
+### Components that do NOT exist — use these instead
+
+| You might try… | Does not exist — use this instead |
+|---|---|
+| `GoabTableHead` / `GoabThead` | Plain `<thead>` — table internals are standard HTML |
+| `GoabTableBody` / `GoabTbody` | Plain `<tbody>` — table internals are standard HTML |
+| `GoabTableRow` / `GoabTr` | Plain `<tr>` — table internals are standard HTML |
+| `GoabTableCell` / `GoabTd` / `GoabTh` | Plain `<td>` / `<th>` — table internals are standard HTML |
+| `GoabTag` | `<GoabBadge>` (status label) or `<GoabChip>` (inline tag) |
+| `GoabSelect` | `<GoabDropdown>` + `<GoabDropdownItem>` |
+| `GoabTextInput` / `GoabTextField` | `<GoabInput>` |
+| `GoabAlert` | `<GoabCallout>` |
+| `GoabList` / `GoabListItem` | Plain `<ul>` / `<li>` |
+
+**Only `GoabTable` and `GoabTableSortHeader` are GOA components. Everything inside them (`<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>`) is plain HTML.**
+
+```tsx
+<GoabTable version="2" width="100%">
+  <thead>
+    <tr>
+      <th>Reference</th>
+      <GoabTableSortHeader name="status" direction="asc" onClick={handleSort}>Status</GoabTableSortHeader>
+    </tr>
+  </thead>
+  <tbody>
+    {rows.map((row) => (
+      <tr key={row.id}>
+        <td>{row.reference}</td>
+        <td><GoabBadge type="information" content={row.status} /></td>
+      </tr>
+    ))}
+  </tbody>
+</GoabTable>
+```
+
+**If a component renders as `undefined` or throws "invalid element type" or "Can't find variable": the component name is wrong — check this table. Do NOT change the shell layout to fix a component naming error.**
 
 ## Useful References
 

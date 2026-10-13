@@ -159,6 +159,23 @@ describe('FormSubmission', () => {
     expect(result.updatedBy).toMatchObject({ id: user.id, name: user.name });
   });
 
+  it('form submission can update disposition by state ID and stores the state name', async () => {
+    const definition = {
+      ...aDefinition,
+      dispositionStates: [{ id: 'approved-state', name: 'approved', description: 'Approved' }],
+    } as typeof aDefinition;
+    const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, definition, {
+      id: '242',
+      definition,
+    } as FormEntity);
+    repositoryMock.save.mockResolvedValueOnce(entity);
+
+    const user = { tenantId, id: 'tester', name: 'Tester', roles: [FormServiceRoles.Admin] } as User;
+    const result = await entity.dispositionSubmission(user, 'approved-state', 'meets criteria');
+
+    expect(result.disposition).toMatchObject({ status: 'approved', reason: 'meets criteria' });
+  });
+
   it('form submission cannot update disposition - invalid status', async () => {
     const entity = new FormSubmissionEntity(repositoryMock, tenantId, formSubmissionInfo, aDefinition, {
       id: '242',

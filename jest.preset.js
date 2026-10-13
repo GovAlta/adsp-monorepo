@@ -1,6 +1,9 @@
 const nxPreset = require('@nx/jest/preset').default;
+const path = require('path');
+
 module.exports = {
   ...nxPreset,
+  setupFiles: [path.join(__dirname, '.jest', 'polyfills.js')],
   coverageReporters: ['html', 'text', 'cobertura'],
   coverageThreshold: {
     global: {

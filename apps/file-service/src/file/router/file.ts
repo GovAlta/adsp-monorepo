@@ -48,7 +48,7 @@ export const getTypes: RequestHandler = async (req, res, next) => {
         .map(mapFileType),
     );
   } catch (err) {
-    next(res);
+    next(err);
   }
 };
 

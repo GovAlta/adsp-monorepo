@@ -60,7 +60,7 @@ export class SubscriptionEntity implements Subscription {
   }
 
   getSubscriberChannels(type: NotificationType): SubscriberChannel[] {
-    if (type.events) {
+    if (type.events?.length) {
       const channels = this.subscriber?.channels.filter(({ channel }) => {
         // all events shall have same available templates
         return type.channels?.includes(channel) && type.events[0].templates[channel];

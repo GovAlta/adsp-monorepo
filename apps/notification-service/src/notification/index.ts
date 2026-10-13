@@ -77,6 +77,9 @@ export const applyNotificationMiddleware = (
     eventService,
     verifyService,
     tenantService,
+    directory,
+    tokenProvider,
+    configurationService,
   };
   const subscriptionRouter = createSubscriptionRouter(routerProps);
 

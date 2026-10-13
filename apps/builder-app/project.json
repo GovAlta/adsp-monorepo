@@ -7,7 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
-      "dependsOn": ["build-react-template-vendors"],
+      "dependsOn": ["build-react-template-vendors", "generate-react-template-seed"],
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
@@ -25,7 +25,17 @@
             "output": "assets/template-bundles"
           },
           {
+            "glob": "**/*",
+            "input": "apps/builder-app/.generated/template-seed",
+            "output": "assets/template-seed"
+          },
+          {
             "glob": "silent-check-sso.html",
+            "input": "apps/builder-app/src/",
+            "output": "./"
+          },
+          {
+            "glob": "preview-sign-in-complete.html",
             "input": "apps/builder-app/src/",
             "output": "./"
           },
@@ -68,7 +78,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "builder-app:build",
-        "proxyConfig": "apps/builder-app/proxy.conf.json",
+        "proxyConfig": "apps/builder-app/proxy.conf.js",
         "static": {
           "directory": "dist/apps/builder-app",
           "publicPath": "/"
@@ -109,12 +119,26 @@
     },
     "build-react-template-vendors": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/.generated/template-bundles/react"],
+      "outputs": [
+        "{projectRoot}/.generated/template-bundles/react",
+        "{projectRoot}/.generated/template-bundle-manifest.json"
+      ],
       "options": {
         "commands": [
-          "npm ci --prefix apps/builder-app/templates/react",
+          "npm ci --prefix apps/builder-app/templates/react --legacy-peer-deps",
           "node apps/builder-app/scripts/build-template-react-vendors.js"
         ],
+        "parallel": false
+      }
+    },
+    "generate-react-template-seed": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{projectRoot}/.generated/template-seed/react.json",
+        "{projectRoot}/.generated/template-seed/react-scaffold.json"
+      ],
+      "options": {
+        "commands": ["node apps/builder-app/scripts/generate-template-seed.js"],
         "parallel": false
       }
     }

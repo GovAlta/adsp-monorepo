@@ -87,7 +87,7 @@ START: New feature endpoint needed
 **Implementation:**
 ```typescript
 // Service CRUD over resources that delegate to configuration-service
-POST /form/v1/data-registers
+POST /form/v1/registers
   → Calls configuration-service PATCH to store definition
   → Returns created register
 
@@ -156,7 +156,7 @@ POST /api/tenant/v1/export-jobs
 - ✅ The endpoint affects only form-service resources
 - ✅ Form-service should expose the management API for its own resources
 
-**Decision:** Build in **form-service** at `/form/v1/data-registers`
+**Decision:** Build in **form-service** at `/form/v1/registers`
 
 **Why not gateway?**
 - Data registers are not multi-service orchestration

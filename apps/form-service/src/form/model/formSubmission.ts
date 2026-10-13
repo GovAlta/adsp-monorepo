@@ -123,8 +123,10 @@ export class FormSubmissionEntity implements FormSubmission {
       throw new UnauthorizedUserError('updated form disposition', user);
     }
 
-    const hasStateToUpdate = this.definition?.dispositionStates?.find((states) => states.name === status);
-    if (!hasStateToUpdate) {
+    // Match by name first so existing callers keep their behaviour; the state's name is always what gets stored.
+    const states = this.definition?.dispositionStates ?? [];
+    const state = states.find(({ name }) => name === status) ?? states.find(({ id }) => id === status);
+    if (!state) {
       throw new InvalidValueError('Status', `Invalid Form Disposition Status for Form Submission ID: ${this.id}`);
     }
 
@@ -132,7 +134,7 @@ export class FormSubmissionEntity implements FormSubmission {
     this.disposition = {
       id: uuidv4(),
       reason,
-      status,
+      status: state.name,
       date: dispositionedOn,
     };
     this.updated = dispositionedOn;

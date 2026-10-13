@@ -1,4 +1,7 @@
+import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
+import { tryResolveRefs } from '@abgov/jsonforms-components';
 import { type AdspFormStarterConfig } from '../config/adspForm';
+import { apiFetch } from './tokenHandler';
 
 export interface AdspFormDefinition {
   id: string;
@@ -76,6 +79,12 @@ const mockDefinition: AdspFormDefinition = {
   },
 };
 
+function checkSignIn(config: AdspFormStarterConfig, response: Response) {
+  if (config.tokenHandler && response.status === 401) {
+    throw new Error('Your session has ended. Reload the page to sign in again.');
+  }
+}
+
 function buildHeaders(config: AdspFormStarterConfig): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -134,14 +143,32 @@ function resolveDefinition(payload: unknown, fallbackId: string): AdspFormDefini
   throw new Error('Unable to parse ADSP form definition response.');
 }
 
+// JsonForms does not resolve remote $refs, so inline the ADSP standard and common definitions before rendering. An
+// unresolvable ref (for example a definition that does not exist in common.v1.schema.json) is reported, since
+// rendering the unresolved schema fails in a less obvious way.
+async function withResolvedRefs(definition: AdspFormDefinition): Promise<AdspFormDefinition> {
+  const [dataSchema, error] = await tryResolveRefs(
+    definition.dataSchema,
+    standardV1JsonSchema,
+    commonV1JsonSchema
+  );
+  if (error) {
+    const reason =
+      error instanceof Error ? error.message.replace(/\s+/g, ' ').slice(0, 300) : String(error);
+    throw new Error(`Form definition has a schema reference that cannot be resolved: ${reason}`);
+  }
+
+  return { ...definition, dataSchema };
+}
+
 export async function loadAdspFormDefinition(
   config: AdspFormStarterConfig
 ): Promise<AdspFormDefinition> {
   if (config.mode === 'mock') {
-    return {
+    return withResolvedRefs({
       ...mockDefinition,
       name: `${config.serviceName} application`,
-    };
+    });
   }
 
   const baseUrl = config.formServiceBaseUrl.trim();
@@ -150,17 +177,18 @@ export async function loadAdspFormDefinition(
     throw new Error('Missing ADSP formServiceBaseUrl or definitionId in src/config/adspForm.ts.');
   }
 
-  const response = await fetch(`${baseUrl}/form/v1/form-definitions/${definitionId}`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/definitions/${definitionId}`, {
     method: 'GET',
     headers: buildHeaders(config),
   });
 
+  checkSignIn(config, response);
   if (!response.ok) {
     throw new Error(`Form definition request failed with status ${response.status}.`);
   }
 
   const payload = (await response.json()) as unknown;
-  return resolveDefinition(payload, definitionId);
+  return withResolvedRefs(resolveDefinition(payload, definitionId));
 }
 
 export async function submitAdspForm(
@@ -181,7 +209,7 @@ export async function submitAdspForm(
     throw new Error('Missing ADSP formServiceBaseUrl in src/config/adspForm.ts.');
   }
 
-  const response = await fetch(`${baseUrl}/form/v1/forms`, {
+  const response = await apiFetch(`${baseUrl}/form/v1/forms`, {
     method: 'POST',
     headers: buildHeaders(config),
     body: JSON.stringify({
@@ -191,6 +219,7 @@ export async function submitAdspForm(
     }),
   });
 
+  checkSignIn(config, response);
   if (!response.ok) {
     throw new Error(`Form submission failed with status ${response.status}.`);
   }

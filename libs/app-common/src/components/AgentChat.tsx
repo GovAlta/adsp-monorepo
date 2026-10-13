@@ -2,6 +2,7 @@ import { GoabDetails, GoabFormItem, GoabSkeleton, GoabTextArea, GoabIconButton }
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 import { FunctionComponent, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styled from 'styled-components';
 import { useAutoScroll } from '../hooks';
 import {
@@ -21,14 +22,25 @@ import {
 // Type Definitions
 // ========================================
 
+export interface ChatCommand {
+  /** Command name without the leading slash, e.g. 'go'. */
+  name: string;
+  description: string;
+  /** Optional usage hint shown next to the command, e.g. '/go <route>'. */
+  usage?: string;
+}
+
 interface AgentChatProps {
   disabled?: boolean;
   threadId: string;
   context: Record<string, unknown>;
   messages: Message[];
+  welcomeMessage?: string;
   draft?: string;
   onDraftChange?: (value: string) => void;
   onSend: (threadId: string, context: Record<string, unknown>, content: UserContent) => void;
+  /** Slash commands handled by the host app; suggested while the user types a leading '/'. */
+  commands?: ChatCommand[];
   onAttachmentUpload?: (file: File) => Promise<Attachment>;
   renderToolCall?: (toolCall: ToolCall) => ReactNode;
   maxJsonChars?: number;
@@ -74,6 +86,27 @@ function isFailedToolResult(toolCall: ToolCall): boolean {
   return result?.success === false;
 }
 
+function outputToDisplayText(output: unknown, maxChars: number): string {
+  if (typeof output === 'string') {
+    return output;
+  }
+
+  if (output && typeof output === 'object') {
+    const candidate = output as Record<string, unknown>;
+    for (const key of ['text', 'answer', 'response', 'message', 'content']) {
+      if (typeof candidate[key] === 'string') {
+        return candidate[key] as string;
+      }
+    }
+  }
+
+  try {
+    return stringifyTruncated(output, maxChars);
+  } catch {
+    return '';
+  }
+}
+
 interface AgentReasoningProps {
   className?: string;
   reasoning: Reasoning;
@@ -88,13 +121,13 @@ interface AgentErrorProps {
 // Helpers
 // ========================================
 
-const createWelcomeMessage = (threadId: string): AgentMessage => ({
+const createWelcomeMessage = (threadId: string, content: string): AgentMessage => ({
   id: null,
   threadId,
   streaming: false,
   toolCalls: [],
   from: 'agent',
-  content: 'How can I help you?',
+  content,
   reasoning: null,
 });
 
@@ -158,6 +191,49 @@ const ContainerDiv = styled.div`
     overflow-x: auto;
     font-size: var(--goa-font-size-2);
   }
+
+  & .content :is(h1, h2, h3, h4, h5, h6) {
+    margin: var(--goa-space-m) 0 var(--goa-space-s) 0;
+  }
+
+  & .content :is(ul, ol) {
+    margin: var(--goa-space-s) 0;
+    padding-left: var(--goa-space-l);
+  }
+
+  & .content p {
+    margin: 0 0 var(--goa-space-s) 0;
+  }
+
+  & .content p:last-child {
+    margin-bottom: 0;
+  }
+
+  & .content blockquote {
+    margin: var(--goa-space-s) 0;
+    padding-left: var(--goa-space-m);
+    border-left: 3px solid var(--goa-color-greyscale-200);
+    color: var(--goa-color-text-secondary);
+  }
+
+  & .content table {
+    border-collapse: collapse;
+    margin: var(--goa-space-s) 0;
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+
+  & .content th,
+  & .content td {
+    border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
+    padding: var(--goa-space-xs) var(--goa-space-s);
+    text-align: left;
+  }
+
+  & .content th {
+    background: var(--goa-color-greyscale-100);
+  }
 `;
 
 const FormDiv = styled.div`
@@ -165,6 +241,41 @@ const FormDiv = styled.div`
   flex-direction: column;
   gap: var(--goa-space-m);
   padding: var(--goa-space-m);
+`;
+
+const CommandListDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin: 0 var(--goa-space-xs);
+  border: 1px solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-m);
+  background: var(--goa-color-greyscale-white);
+  overflow: hidden;
+
+  button {
+    display: flex;
+    gap: var(--goa-space-m);
+    align-items: baseline;
+    padding: var(--goa-space-xs) var(--goa-space-m);
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  button[aria-selected='true'],
+  button:hover {
+    background: var(--goa-color-greyscale-100);
+  }
+
+  .command-usage {
+    font-weight: var(--goa-font-weight-bold);
+  }
+
+  .command-description {
+    color: var(--goa-color-text-secondary);
+  }
 `;
 
 const AttachmentItemDiv = styled.div`
@@ -201,11 +312,11 @@ const AttachmentListDiv = styled.div`
 
 const UserMessageItem = memo(styled(({ className, message }: UserMessageItemProps) => {
   return (
-    <div className={className} data-from={message.from}>
+    <div className={className} data-from={message.from} data-local={message.local ? 'true' : undefined}>
       {message.content.map((part, index) => {
         if (part.type === 'text') {
           return (
-            <Markdown key={index} className="content" data-from={message.from}>
+            <Markdown key={index} className="content" data-from={message.from} remarkPlugins={[remarkGfm]}>
               {part.text}
             </Markdown>
           );
@@ -238,6 +349,12 @@ const UserMessageItem = memo(styled(({ className, message }: UserMessageItemProp
 
   & .content {
     margin: var(--goa-space-xs) var(--goa-space-xs) var(--goa-space-xs) var(--goa-space-l);
+  }
+
+  &[data-local='true'] .content {
+    font-family: var(--goa-font-family-monospace, monospace);
+    font-size: var(--goa-font-size-2);
+    color: var(--goa-color-text-secondary);
   }
 `);
 
@@ -396,24 +513,36 @@ const AgentToolCall = memo(styled(AgentToolCallBase)`
 `);
 
 const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJsonChars }: AgentMessageItemProps) => {
+  const jsonLimit = maxJsonChars ?? DEFAULT_MAX_JSON_CHARS;
   const hasText = message.content?.trim().length > 0;
   const hasReasoning = Boolean(message.reasoning?.content?.trim());
   const hasToolCalls = message.toolCalls.length > 0;
   const hasErrors = Boolean(message.errors?.length);
   const hasPendingToolCall = message.toolCalls.some((toolCall) => !toolCall.result && !toolCall.error);
+  const hasOutput = message.output !== undefined && message.output !== null;
+  const outputFallback = !hasText && hasOutput ? outputToDisplayText(message.output, jsonLimit) : '';
+  const hasOutputFallback = outputFallback.trim().length > 0;
+  const hasRenderableResponse = hasText || hasReasoning || hasToolCalls || hasErrors || hasOutputFallback;
 
-  // Show explicit feedback if the stream has started but no visible output has arrived yet.
-  const isThinking = message.streaming && !hasText && !hasReasoning && !hasToolCalls && !hasErrors;
-
-  // Show a subtle continuation hint for quiet streaming gaps between visible updates.
-  const showStreamingContinuation = message.streaming && !isThinking && !hasPendingToolCall;
+  let statusLabel = '';
+  if (message.streaming) {
+    if (!hasRenderableResponse) {
+      statusLabel = 'Receiving response...';
+    } else if (hasPendingToolCall) {
+      statusLabel = 'Processing tool results...';
+    } else if (!hasText) {
+      statusLabel = 'Finalizing response...';
+    } else {
+      statusLabel = 'Generating response...';
+    }
+  }
 
   return (
-    <div className={className} data-from={message.from}>
-      {isThinking && (
+    <div className={className} data-from={message.from} data-local={message.local ? 'true' : undefined}>
+      {statusLabel && (
         <div className="activity-indicator" data-kind="thinking">
           <GoabSkeleton type="text" />
-          <span>Agent is thinking...</span>
+          <span>{statusLabel}</span>
         </div>
       )}
       {message.reasoning && <AgentReasoning reasoning={message.reasoning} />}
@@ -425,14 +554,14 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
         return <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} maxJsonChars={maxJsonChars} />;
       })}
       {hasText && (
-        <Markdown className="content" data-from={message.from}>
-          {message.content}
+        <Markdown className="content" data-from={message.from} remarkPlugins={[remarkGfm]}>
+          {message.content.trim()}
         </Markdown>
       )}
-      {showStreamingContinuation && (
-        <div className="activity-indicator" data-kind="continuing">
-          <span>Generating response...</span>
-        </div>
+      {!hasText && hasOutputFallback && (
+        <Markdown className="content output-fallback" data-from={message.from} remarkPlugins={[remarkGfm]}>
+          {outputFallback.trim()}
+        </Markdown>
       )}
       {message.errors && message.errors.map((error, index) => <AgentError key={index} error={error} />)}
     </div>
@@ -456,6 +585,20 @@ const AgentMessageItem = memo(styled(({ className, message, renderToolCall, maxJ
   & .activity-indicator[data-kind='continuing'] {
     margin-top: 0;
   }
+
+  &[data-local='true'] .content {
+    margin-top: var(--goa-space-xs);
+    padding: var(--goa-space-s) var(--goa-space-m);
+    border-left: var(--goa-border-width-xl, 4px) solid var(--goa-color-info-default);
+    border-radius: 0 var(--goa-border-radius-m) var(--goa-border-radius-m) 0;
+    background: var(--goa-color-greyscale-100);
+    font-size: var(--goa-font-size-3);
+  }
+
+  & .output-fallback {
+    border-left: var(--goa-border-width-l, 3px) solid var(--goa-color-greyscale-300);
+    padding-left: var(--goa-space-m);
+  }
 `);
 
 // ========================================
@@ -467,9 +610,11 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   threadId,
   context,
   messages,
+  welcomeMessage: welcomeMessageText = 'How can I help you?',
   draft: draftProp,
   onDraftChange,
   onSend,
+  commands,
   onAttachmentUpload,
   renderToolCall,
   maxJsonChars,
@@ -498,7 +643,10 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   const { scrollContainerRef, targetElementRef, onScroll, resetScroll } = useAutoScroll([messages]);
 
   // Computed values
-  const welcomeMessage = useMemo(() => createWelcomeMessage(threadId), [threadId]);
+  const welcomeMessage = useMemo(
+    () => createWelcomeMessage(threadId, welcomeMessageText),
+    [threadId, welcomeMessageText],
+  );
   const isWaitingForResponse = useMemo(() => messages[messages.length - 1]?.from === 'user', [messages]);
   const lastAgentMessage = [...messages].reverse().find((message): message is AgentMessage => message.from === 'agent');
   const isStreaming = Boolean(lastAgentMessage?.streaming) || isWaitingForResponse;
@@ -614,7 +762,27 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
     setAttachments((prev) => prev.filter((a) => a.urn !== urn));
   };
 
+  // Suggest commands while the user is typing the command name (a leading '/' with no space yet).
+  const commandQuery = /^\/(\S*)$/.exec(draft)?.[1]?.toLowerCase();
+  const commandSuggestions =
+    commandQuery !== undefined && commands
+      ? commands.filter((command) => command.name.toLowerCase().startsWith(commandQuery))
+      : [];
+  const hasExactCommand = commandSuggestions.some((command) => command.name.toLowerCase() === commandQuery);
+
+  const completeCommand = (command: ChatCommand) => setDraft(`/${command.name} `);
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (
+      commandSuggestions.length > 0 &&
+      (event.key === 'Tab' || (event.key === 'Enter' && !event.shiftKey && !hasExactCommand))
+    ) {
+      // Complete a partially typed command instead of sending it (Enter) or moving focus (Tab).
+      completeCommand(commandSuggestions[0]);
+      event.preventDefault();
+      return;
+    }
+
     if (event.key === 'Enter' && !event.shiftKey) {
       handleSend();
       event.preventDefault();
@@ -627,7 +795,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
       {/* Message list */}
       <div ref={scrollContainerRef} onScroll={onScroll}>
         <div className="message-list">
-          <AgentMessageItem message={welcomeMessage} />
+          {welcomeMessageText.trim().length > 0 && <AgentMessageItem message={welcomeMessage} />}
           {messages.map((message) =>
             message.from === 'user' ? (
               <UserMessageItem key={message.id} message={message} />
@@ -642,7 +810,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
           )}
           {isWaitingForResponse && !timedOut && (
             <div className="activity-indicator" data-kind="thinking">
-              <span>Thinking...</span>
+              <span>Sending message to agent...</span>
               <GoabSkeleton type="text" mb="l" mr="4xl" />
             </div>
           )}
@@ -695,6 +863,25 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
               title="Attach file"
             />
           </AttachmentListDiv>
+        )}
+
+        {commandSuggestions.length > 0 && (
+          <CommandListDiv role="listbox" aria-label="Available commands">
+            {commandSuggestions.map((command, index) => (
+              <button
+                key={command.name}
+                type="button"
+                role="option"
+                aria-selected={index === 0}
+                // Keep focus in the textarea while picking a command.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => completeCommand(command)}
+              >
+                <span className="command-usage">{command.usage ?? `/${command.name}`}</span>
+                <span className="command-description">{command.description}</span>
+              </button>
+            ))}
+          </CommandListDiv>
         )}
 
         <form onKeyDown={handleKeyDown}>

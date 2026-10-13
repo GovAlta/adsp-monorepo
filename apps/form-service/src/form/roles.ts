@@ -16,3 +16,7 @@ export enum DirectoryServiceRoles {
 export enum ExportServiceRoles {
   ExportJob = 'urn:ads:platform:export-service:export-job',
 }
+
+export enum ConfigurationServiceRoles {
+  ConfigurationAdmin = 'urn:ads:platform:configuration-service:configuration-admin',
+}

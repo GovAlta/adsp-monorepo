@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { AgentConfiguration } from '../../../../configuration';
 import { loadFormExamples } from '../../../utils/loadFormExamples';
 
@@ -33,6 +34,10 @@ export const formGenerationAgent: AgentConfiguration = {
     It generates configuration compatible with the service based on user descriptions of
     the form's purpose, the information it needs to collect, and specifics around fields,
     help content, and layout.`,
+
+  // Deployments can still tune the limits with AGENT_FORM_GENERATION_MAX_STEPS and AGENT_FORM_GENERATION_TIMEOUT_MS.
+  maxSteps: environment.AGENT_FORM_GENERATION_MAX_STEPS,
+  timeoutMs: environment.AGENT_FORM_GENERATION_TIMEOUT_MS,
 
   instructions: `
 // ─────────────────────────────────────────────────────────────────────────────

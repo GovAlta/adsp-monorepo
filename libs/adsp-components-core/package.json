@@ -1,0 +1,13 @@
+{
+  "name": "@abgov/adsp-components-core",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "Government of Alberta - Framework-independent theme contract and themes for ADSP application components.",
+  "repository": "https://github.com/GovAlta/adsp-monorepo",
+  "sideEffects": [
+    "*.css"
+  ],
+  "peerDependencies": {
+    "@abgov/design-tokens": "^2.8.1"
+  }
+}

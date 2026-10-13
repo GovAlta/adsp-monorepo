@@ -26,6 +26,8 @@ describe('ConfigurationClient', () => {
   beforeEach(() => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
+    axiosMock.post.mockReset();
+    axiosMock.delete.mockReset();
     client = new ConfigurationClient(directoryMock, tokenProviderMock, 'platform', 'test-service');
   });
 
@@ -86,5 +88,77 @@ describe('ConfigurationClient', () => {
       { operation: 'DELETE', property: 'test' },
       { headers, params: { tenantId: tenantId.toString() } },
     );
+  });
+
+  describe('document methods', () => {
+    const registerUrl = 'https://configuration/configuration/v2/configuration/data-register/weekdays';
+    const tenantParams = { tenantId: tenantId.toString() };
+    let registerClient: ConfigurationClient<string[]>;
+
+    beforeEach(() => {
+      registerClient = new ConfigurationClient<string[]>(directoryMock, tokenProviderMock, 'data-register', 'weekdays');
+    });
+
+    it('gets the latest and active revisions of the document', async () => {
+      const latest = { revision: 2, configuration: ['Monday', 'Tuesday'] };
+      const active = { revision: 1, configuration: ['Monday'] };
+      axiosMock.get.mockResolvedValueOnce({ data: { urn: 'urn:test', latest, active } });
+
+      const result = await registerClient.getDocument(tenantId);
+
+      expect(result).toEqual({ latest, active });
+      expect(axiosMock.get).toHaveBeenCalledWith(registerUrl, { headers, params: tenantParams });
+    });
+
+    it('returns no revisions for a document that has never been written', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: '' });
+
+      const result = await registerClient.getDocument(tenantId);
+
+      expect(result).toEqual({ latest: undefined, active: undefined });
+    });
+
+    it('replaces the document and returns the latest revision', async () => {
+      const latest = { revision: 3, configuration: ['Wednesday'] };
+      axiosMock.patch.mockResolvedValueOnce({ data: { latest } });
+
+      const result = await registerClient.replaceConfiguration(tenantId, ['Wednesday']);
+
+      expect(result).toEqual(latest);
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        registerUrl,
+        { operation: 'REPLACE', configuration: ['Wednesday'] },
+        { headers, params: tenantParams },
+      );
+    });
+
+    it('sets the active revision', async () => {
+      axiosMock.post.mockResolvedValueOnce({ data: {} });
+
+      await registerClient.setActiveRevision(tenantId, 3);
+
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        registerUrl,
+        { operation: 'SET-ACTIVE-REVISION', revision: 3 },
+        { headers, params: tenantParams },
+      );
+    });
+
+    it('deletes the document', async () => {
+      axiosMock.delete.mockResolvedValueOnce({ data: { deleted: true } });
+
+      const result = await registerClient.deleteConfiguration(tenantId);
+
+      expect(result).toBe(true);
+      expect(axiosMock.delete).toHaveBeenCalledWith(registerUrl, { headers, params: tenantParams });
+    });
+
+    it('reports false when there was no document to delete', async () => {
+      axiosMock.delete.mockResolvedValueOnce({ data: { deleted: false } });
+
+      const result = await registerClient.deleteConfiguration(tenantId);
+
+      expect(result).toBe(false);
+    });
   });
 });

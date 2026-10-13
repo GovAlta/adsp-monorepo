@@ -2,14 +2,17 @@ import { TenantService, UnauthorizedUserError, adspId } from '@abgov/adsp-servic
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import * as passport from 'passport';
+import { Logger } from 'winston';
 import {
   completeAuthenticate,
   createClientRouter,
   getAuthenticationClient,
   getClient,
+  getClients,
   logout,
   registerClient,
   startAuthenticate,
+  updateClient,
 } from './client';
 import { ServiceRoles } from '../roles';
 
@@ -17,6 +20,7 @@ describe('client router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const configurationMock = {
     getClient: jest.fn(),
+    getClients: jest.fn(),
   };
   const configurationHandlerMock = jest.fn();
 
@@ -32,6 +36,7 @@ describe('client router', () => {
 
   beforeEach(() => {
     configurationMock.getClient.mockClear();
+    configurationMock.getClients.mockReset();
     eventServiceMock.send.mockClear();
   });
 
@@ -114,6 +119,7 @@ describe('client router', () => {
         },
         body: {
           registrationToken: 'reg-token',
+          authCallbackUrl: 'https://frontend/auth/callback',
         },
         ['tk_client']: client,
       };
@@ -126,7 +132,31 @@ describe('client router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ registered: true }));
+      expect(client.register).toHaveBeenCalledWith(req.tenant, 'reg-token', 'https://frontend/auth/callback');
       expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can register client without callback URL', async () => {
+      const client = {
+        id: 'test',
+        credentials: { clientId: 'test-client' },
+        register: jest.fn().mockResolvedValueOnce({ clientId: 'test-client' }),
+      };
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.Admin] },
+        body: { registrationToken: 'reg-token' },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = registerClient(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ registered: true }));
+      expect(client.register).toHaveBeenCalledWith(req.tenant, 'reg-token', undefined);
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -150,6 +180,7 @@ describe('client router', () => {
         },
         body: {
           registrationToken: 'reg-token',
+          authCallbackUrl: 'https://frontend/auth/callback',
         },
         ['tk_client']: client,
       };
@@ -163,19 +194,95 @@ describe('client router', () => {
     });
   });
 
-  describe('getClient', () => {
+  describe('updateClient', () => {
     it('can create handler', () => {
-      const handler = getClient();
+      const handler = updateClient(eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
-    it('can get client', () => {
+    it('can update client registration', async () => {
       const client = {
         id: 'test',
         authCallbackUrl: 'https://frontend/auth/callback',
         successRedirectUrl: '/success',
         failureRedirectUrl: '/fail',
         credentials: { clientId: 'test-client' },
+        updateRegistration: jest.fn(),
+      };
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: [ServiceRoles.Admin],
+        },
+        body: {
+          redirectUris: ['https://frontend/auth/callback', 'http://localhost:4200/auth/callback'],
+        },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      client.updateRegistration.mockResolvedValueOnce({ clientId: 'test-client' });
+
+      const handler = updateClient(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ updated: true }));
+      expect(client.updateRegistration).toHaveBeenCalledWith(req.body.redirectUris);
+      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const client = {
+        id: 'test',
+        authCallbackUrl: 'https://frontend/auth/callback',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        credentials: { clientId: 'test-client' },
+        updateRegistration: jest.fn(),
+      };
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: [],
+        },
+        body: {
+          redirectUris: ['https://frontend/auth/callback'],
+        },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = updateClient(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('getClient', () => {
+    it('can create handler', () => {
+      const handler = getClient();
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get client', async () => {
+      const client = {
+        id: 'test',
+        authCallbackUrl: 'https://frontend/auth/callback',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        getCredentials: jest.fn().mockResolvedValue({ clientId: 'test-client' }),
       };
       const req = {
         tenant: {
@@ -192,7 +299,7 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = getClient();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -206,13 +313,36 @@ describe('client router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can call next with unauthorized for non-admin', () => {
+    it('can get unregistered client', async () => {
       const client = {
         id: 'test',
         authCallbackUrl: 'https://frontend/auth/callback',
         successRedirectUrl: '/success',
         failureRedirectUrl: '/fail',
-        credentials: { clientId: 'test-client' },
+        getCredentials: jest.fn().mockResolvedValue(undefined),
+      };
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.Admin] },
+        ['tk_client']: client,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getClient();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', clientId: undefined }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can call next with unauthorized for non-admin', async () => {
+      const client = {
+        id: 'test',
+        authCallbackUrl: 'https://frontend/auth/callback',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        getCredentials: jest.fn().mockResolvedValue({ clientId: 'test-client' }),
       };
       const req = {
         tenant: {
@@ -229,9 +359,93 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = getClient();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('getClients', () => {
+    const createReq = (roles: string[], query: Record<string, string> = {}) => ({
+      query,
+      tenant: { id: tenantId },
+      user: { tenantId, id: 'tester', roles },
+      getConfiguration: jest.fn().mockResolvedValue(configurationMock),
+    });
+
+    it('can get clients with registration', async () => {
+      configurationMock.getClients.mockReturnValueOnce([
+        {
+          id: 'core-client',
+          name: 'Core client',
+          description: 'A core client',
+          core: true,
+          redirectUris: ['https://builder/cb'],
+          successRedirectUrl: '/',
+          failureRedirectUrl: '/',
+          targets: { api: { id: 'api', upstream: adspId`urn:ads:platform:form-service:v1` } },
+          getCredentials: jest.fn().mockResolvedValue({ clientId: 'kc-1' }),
+        },
+        {
+          id: 'unregistered',
+          name: 'Unregistered',
+          core: true,
+          redirectUris: [],
+          targets: {},
+          getCredentials: jest.fn().mockResolvedValue(null),
+        },
+        {
+          id: 'tenant-client',
+          name: 'Tenant client',
+          core: false,
+          redirectUris: [],
+          targets: {},
+          getCredentials: jest.fn().mockResolvedValue(null),
+        },
+      ]);
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      await getClients()(createReq([ServiceRoles.Admin]) as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      const [result] = res.send.mock.calls[0];
+      expect(result).toHaveLength(3);
+      expect(result[0]).toMatchObject({
+        id: 'core-client',
+        core: true,
+        name: 'Core client',
+        description: 'A core client',
+        redirectUris: ['https://builder/cb'],
+        targets: [{ id: 'api', upstream: 'urn:ads:platform:form-service:v1' }],
+        registered: true,
+        clientId: 'kc-1',
+      });
+      expect(result[1]).toMatchObject({ id: 'unregistered', registered: false });
+      expect(result[2]).toMatchObject({ id: 'tenant-client', core: false });
+    });
+
+    it('can get only core clients', async () => {
+      configurationMock.getClients.mockReturnValueOnce([
+        { id: 'core-client', core: true, redirectUris: [], targets: {}, getCredentials: jest.fn() },
+        { id: 'tenant-client', core: false, redirectUris: [], targets: {}, getCredentials: jest.fn() },
+      ]);
+      const res = { send: jest.fn() };
+
+      await getClients()(
+        createReq([ServiceRoles.Admin], { core: 'true' }) as unknown as Request,
+        res as unknown as Response,
+        jest.fn()
+      );
+      expect(res.send.mock.calls[0][0].map(({ id }: { id: string }) => id)).toEqual(['core-client']);
+    });
+
+    it('can call next with unauthorized user error for non-admin', async () => {
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      await getClients()(createReq([]) as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(res.send).not.toHaveBeenCalled();
     });
   });
 
@@ -313,7 +527,7 @@ describe('client router', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('can logout user', () => {
+    it('can logout user', async () => {
       const req = {
         params: { id: 'test' },
         tenant: {
@@ -328,12 +542,181 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = logout();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.logout).toHaveBeenCalled();
+      expect(res.redirect).toHaveBeenCalledWith('/');
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('can call next with invalid operation for no user', () => {
+    describe('access service logout', () => {
+      const user = { id: 'tester', tenantId, authenticatedBy: 'test', idToken: 'id-token' };
+      const loggerMock = { warn: jest.fn(), info: jest.fn() };
+
+      const createRequest = (headers: Record<string, string> = {}, overrides: Record<string, unknown> = {}) => ({
+        params: { id: 'test' },
+        get: jest.fn((name: string) => headers[name]),
+        session: { postLogoutRedirectUri: 'https://app.example.ca/' },
+        user,
+        logout: jest.fn((cb) => cb()),
+        getConfiguration: jest.fn().mockResolvedValue(configurationMock),
+        ...overrides,
+      });
+
+      const createClient = (logoutUrl: string | null = 'https://access/logout?id_token_hint=id-token') => ({
+        id: 'test',
+        keycloakLogout: true,
+        getLogoutUrl: jest.fn().mockResolvedValue(logoutUrl),
+      });
+
+      const run = async (req: unknown, logger = loggerMock) => {
+        const res = { redirect: jest.fn() };
+        const next = jest.fn();
+        await logout(logger as unknown as Logger)(req as Request, res as unknown as Response, next);
+        return { res, next };
+      };
+
+      beforeEach(() => {
+        loggerMock.warn.mockClear();
+        loggerMock.info.mockClear();
+        configurationMock.getClient.mockReset();
+      });
+
+      it('can redirect to access service to end the session', async () => {
+        const client = createClient();
+        configurationMock.getClient.mockReturnValueOnce(client);
+        const req = createRequest();
+
+        const { res, next } = await run(req);
+
+        expect(configurationMock.getClient).toHaveBeenCalledWith('test');
+        expect(client.getLogoutUrl).toHaveBeenCalledWith('id-token', 'https://app.example.ca/');
+        expect(req.logout).toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('https://access/logout?id_token_hint=id-token');
+        expect(next).not.toHaveBeenCalled();
+        expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('tester'), expect.anything());
+      });
+
+      it.each(['same-origin', 'same-site', 'none', undefined])(
+        'can end the access service session for a request with fetch site %s',
+        async (site) => {
+          configurationMock.getClient.mockReturnValueOnce(createClient());
+
+          const { res } = await run(createRequest(site ? { 'sec-fetch-site': site } : {}));
+
+          expect(res.redirect).toHaveBeenCalledWith('https://access/logout?id_token_hint=id-token');
+        }
+      );
+
+      it('can read the access service logout URL before the user is logged out', async () => {
+        const order: string[] = [];
+        const client = {
+          id: 'test',
+          keycloakLogout: true,
+          getLogoutUrl: jest.fn(async () => {
+            order.push('url');
+            return 'https://access/logout';
+          }),
+        };
+        configurationMock.getClient.mockReturnValueOnce(client);
+        const req = createRequest(
+          {},
+          {
+            logout: jest.fn((cb) => {
+              order.push('logout');
+              cb();
+            }),
+          }
+        );
+
+        await run(req);
+
+        expect(order).toEqual(['url', 'logout']);
+      });
+
+      it('can logout locally without ending the access service session for a cross-site request', async () => {
+        const client = createClient();
+        configurationMock.getClient.mockReturnValueOnce(client);
+        const req = createRequest({ 'sec-fetch-site': 'cross-site' });
+
+        const { res, next } = await run(req);
+
+        expect(client.getLogoutUrl).not.toHaveBeenCalled();
+        expect(req.logout).toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('/');
+        expect(next).not.toHaveBeenCalled();
+        expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('cross-site'), expect.anything());
+      });
+
+      it('can logout locally when the client is not configured for access service logout', async () => {
+        const client = { ...createClient(), keycloakLogout: false };
+        configurationMock.getClient.mockReturnValueOnce(client);
+        const req = createRequest();
+
+        const { res } = await run(req);
+
+        expect(client.getLogoutUrl).not.toHaveBeenCalled();
+        expect(req.logout).toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('/');
+        expect(loggerMock.warn).not.toHaveBeenCalled();
+      });
+
+      it('can logout locally when the client is not in the configuration', async () => {
+        configurationMock.getClient.mockReturnValueOnce(undefined);
+        const req = createRequest();
+
+        const { res } = await run(req);
+
+        expect(req.logout).toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('/');
+      });
+
+      it('can logout locally and log when the session has nowhere to return the user to', async () => {
+        const client = createClient();
+        configurationMock.getClient.mockReturnValueOnce(client);
+        const req = createRequest({}, { session: {} });
+
+        const { res } = await run(req);
+
+        expect(client.getLogoutUrl).not.toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('/');
+        expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('token handler session only'), expect.anything());
+      });
+
+      it('can logout locally and log when access service logout is not available for the session', async () => {
+        configurationMock.getClient.mockReturnValueOnce(createClient(null));
+        const req = createRequest();
+
+        const { res } = await run(req);
+
+        expect(req.logout).toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('/');
+        expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('token handler session only'), expect.anything());
+      });
+
+      it('can logout locally when the configuration cannot be retrieved', async () => {
+        const req = createRequest({}, { getConfiguration: jest.fn().mockRejectedValue(new Error('unavailable')) });
+
+        const { res, next } = await run(req);
+
+        expect(req.logout).toHaveBeenCalled();
+        expect(res.redirect).toHaveBeenCalledWith('/');
+        expect(next).not.toHaveBeenCalled();
+        expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('unavailable'), expect.anything());
+      });
+
+      it('can call next with the error if logout fails', async () => {
+        const error = new Error('failed');
+        configurationMock.getClient.mockReturnValueOnce(createClient('https://a/b'));
+        const req = createRequest({}, { logout: jest.fn((cb) => cb(error)) });
+
+        const { res, next } = await run(req);
+
+        expect(next).toHaveBeenCalledWith(error);
+        expect(res.redirect).not.toHaveBeenCalled();
+      });
+    });
+
+    it('can call next with invalid operation for no user', async () => {
       const req = {
         params: { id: 'test' },
         tenant: {
@@ -345,13 +728,13 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = logout();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.logout).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
-    it('can call next with invalid operation for wrong client', () => {
+    it('can call next with invalid operation for wrong client', async () => {
       const req = {
         params: { id: 'test' },
         tenant: {
@@ -366,7 +749,7 @@ describe('client router', () => {
       const next = jest.fn();
 
       const handler = logout();
-      handler(req as unknown as Request, res as unknown as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.logout).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));

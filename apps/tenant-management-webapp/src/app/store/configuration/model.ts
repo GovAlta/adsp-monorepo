@@ -23,8 +23,6 @@ export interface ConfigurationDefinitionState {
   };
   registers?: RegisterData;
   isFetchingRegisterData?: boolean;
-  nonAnonymous?: string[];
-  dataList?: string[];
   serviceList: string[];
   openEditor: string;
   connectedForUpdates: boolean;

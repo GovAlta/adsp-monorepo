@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom-v7';
 import styled from 'styled-components';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { AppDispatch, connectStream, definitionSelector, formBusySelector, selectDefinition } from '../state';
@@ -78,7 +78,9 @@ export const FormDefinition: FunctionComponent = () => {
           <Route path="/forms" element={<RedirectToResponse />} />
           <Route path="/submissions/*" element={<RedirectToResponse />} />
           <Route path="/overview" element={<Navigate to="../configuration" replace />} />
-          <Route path="*" element={<Navigate to="responses" />} />
+          {/* react-router v7 resolves a relative "to" against the full wildcard match, so "../" is
+              needed here to land on the stable definition path instead of growing it indefinitely. */}
+          <Route path="*" element={<Navigate to="../responses" replace />} />
         </Routes>
       </DefinitionContent>
     </DefinitionLayout>

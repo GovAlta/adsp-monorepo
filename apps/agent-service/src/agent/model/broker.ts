@@ -18,8 +18,8 @@ import {
   WorkspaceUpdateRequest,
   WorkspaceUpdateResult,
 } from '../workspace';
-import { FORM_GENERATION_AGENT_ID, getAgentExecutionLimits } from './executionLimits';
-import { getFormGenerationProviderOptions } from './modelConfiguration';
+import { getAgentExecutionLimits } from './executionLimits';
+import { AgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
 import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
 
 type ThreadMetadataRecord = {
@@ -55,6 +55,7 @@ type AgentWithOptionalMemory<TAgentId extends string = string, TTools extends To
 
 export class AgentBroker<TAgentId extends string = string, TTools extends ToolsInput = ToolsInput> {
   private userRoles: string[];
+  private limits: { timeoutMs?: number; maxSteps?: number };
   private readonly threadTtlMs = Math.max(environment.AGENT_THREAD_TTL_MINUTES, 1) * 60 * 1000;
   public get Agent() {
     return this.agent;
@@ -65,16 +66,18 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     private tenantId: AdspId,
     private inputProcessors: BrokerInputProcessor[],
     private agent: AgentWithOptionalMemory<TAgentId, TTools>,
-    { userRoles }: Partial<AgentConfiguration>,
+    { userRoles, maxSteps, timeoutMs }: Partial<AgentConfiguration>,
     private fileServiceClient?: IFileServiceClient,
     private eventService?: EventService,
     private agentId?: string,
+    private modelConfig?: AgentModelConfiguration,
   ) {
     this.userRoles = userRoles || [];
+    this.limits = { maxSteps, timeoutMs };
   }
 
-  private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string) {
-    const limits = getAgentExecutionLimits(this.agentId);
+  private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string, streaming = false) {
+    const limits = getAgentExecutionLimits(this.limits);
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       abortExecution(
@@ -89,20 +92,23 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     requestContext.set('agentId', this.agentId);
     requestContext.set('abortController', controller);
 
+    const providerOptions = getAgentProviderOptions(this.agentId, this.modelConfig);
     let stepCount = 0;
-    const options: AgentExecutionOptions = {
+    const baseOptions = {
       requestContext,
       memory: { thread: threadId, resource: user.id },
       abortSignal: controller.signal,
       ...(limits.maxSteps !== undefined ? { maxSteps: limits.maxSteps } : {}),
-      ...(this.agentId === FORM_GENERATION_AGENT_ID ? { providerOptions: getFormGenerationProviderOptions() } : {}),
-      onStepFinish: ({ finishReason, usage }) => {
+      ...(providerOptions != null ? { providerOptions } : {}),
+      onStepFinish: ({ finishReason, usage }: Parameters<NonNullable<AgentExecutionOptions['onStepFinish']>>[0]) => {
         stepCount += 1;
         this.logger.debug(
           `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
           { context: 'AgentBroker', tenant: this.tenantId?.toString() },
         );
-        if (limits.maxSteps !== undefined && stepCount >= limits.maxSteps) {
+        // Only abort when the turn would have continued (pending tool calls); a reply that completes on the
+        // final allowed step is a normal finish.
+        if (limits.maxSteps !== undefined && stepCount >= limits.maxSteps && finishReason === 'tool-calls') {
           abortExecution(
             controller,
             STREAM_ERROR_CODES.MAX_STEPS,
@@ -112,10 +118,11 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       },
       onFinish: clearAbortTimeout,
       onAbort: clearAbortTimeout,
-      structuredOutput: undefined,
     };
 
-    return options;
+    // Streaming suppresses structuredOutput so defaultOptions on the Agent don't apply;
+    // generate() leaves it unset so a configured outputSchema takes effect via defaultOptions.
+    return (streaming ? { ...baseOptions, structuredOutput: undefined } : baseOptions) as AgentExecutionOptions;
   }
 
   private buildRequestContext(
@@ -347,7 +354,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
-    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId));
+    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId, true));
   }
 
   public async generate(

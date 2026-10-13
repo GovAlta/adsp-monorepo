@@ -121,12 +121,17 @@ components:
                 type: string
                 description: Name of the topic type.
                 example: Case
-              readRoles:
+              adminRoles:
+                type: array
+                description: Optional roles allowed to read/write topics of this type.
+                items:
+                  type: string
+              readerRoles:
                 type: array
                 description: Optional roles allowed to read topics of this type.
                 items:
                   type: string
-              writeRoles:
+              commenterRoles:
                 type: array
                 description: Optional roles allowed to write comments on topics of this type.
                 items:
@@ -196,6 +201,11 @@ components:
                 type: string
                 description: Name of the topic type.
                 example: Case
+              adminRoles:
+                type: array
+                description: Optional roles allowed to read/write topics of this type.
+                items:
+                  type: string
               readRoles:
                 type: array
                 description: Optional roles allowed to read topics of this type.

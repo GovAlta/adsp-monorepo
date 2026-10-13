@@ -3,7 +3,7 @@ import { GoabCallout } from '@abgov/react-components';
 import { FunctionComponent, ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom-v7';
 import {
   userSelector,
   configInitializedSelector,

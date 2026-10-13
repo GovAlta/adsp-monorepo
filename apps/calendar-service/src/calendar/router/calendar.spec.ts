@@ -56,11 +56,13 @@ describe('calendar router', () => {
     info: jest.fn(),
     warn: jest.fn(),
   } as unknown as Logger;
+  const calendarTimeZone = 'America/Edmonton';
 
   const repositoryMock = {
     getDate: jest.fn(),
     getDates: jest.fn(),
     getCalendarEvents: jest.fn(),
+    getCalendarEventsInRange: jest.fn(),
     getCalendarEvent: jest.fn(),
     getEventAttendees: jest.fn(),
     save: jest.fn(),
@@ -110,6 +112,7 @@ describe('calendar router', () => {
     }));
     directoryMock.getServiceUrl.mockResolvedValue(new URL('https://calendar-service'));
     repositoryMock.getCalendarEvents.mockReset();
+    repositoryMock.getCalendarEventsInRange.mockReset();
     repositoryMock.getCalendarEvent.mockReset();
     repositoryMock.getEventAttendees.mockReset();
     repositoryMock.save.mockReset();
@@ -440,10 +443,10 @@ describe('calendar router', () => {
         expect.objectContaining({ isPublic: false })
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsAfter.valueOf()).toBe(
-        DateTime.fromObject({ year: 2020, month: 3, day: 5 }).valueOf()
+        DateTime.fromISO('2020-03-05T00:00:00', { zone: calendarTimeZone }).valueOf()
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
-        DateTime.fromObject({ year: 2020, month: 5, day: 1 }).valueOf()
+        DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf()
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
     });
@@ -532,6 +535,216 @@ describe('calendar router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
+    it('can get all events overlapping a date range without pagination', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const results = Array.from(
+        { length: 11 },
+        (_, index) =>
+          new CalendarEventEntity(repositoryMock, entity, {
+            ...calendarEvent,
+            id: index + 1,
+            name: `test-${index + 1}`,
+          })
+      );
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {
+          from: '2021-03-01T00:00:00-07:00',
+          to: '2021-03-31T23:59:59-06:00',
+          top: '1',
+          after: '123',
+          criteria: JSON.stringify({ isPublic: false }),
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce(results);
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.getCalendarEvents).not.toHaveBeenCalled();
+      expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(
+        entity,
+        expect.any(DateTime),
+        expect.any(DateTime),
+        expect.objectContaining({ isPublic: false })
+      );
+      expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][1].valueOf()).toBe(
+        DateTime.fromISO('2021-03-01T00:00:00-07:00').valueOf()
+      );
+      expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][2].valueOf()).toBe(
+        DateTime.fromISO('2021-03-31T23:59:59-06:00').valueOf()
+      );
+      expect(res.send).toHaveBeenCalledWith({
+        results: expect.arrayContaining([expect.objectContaining({ id: 11, name: 'test-11' })]),
+      });
+      expect(res.send.mock.calls[0][0].results).toHaveLength(11);
+      expect(res.send.mock.calls[0][0]).not.toHaveProperty('page');
+    });
+
+    it('can get events overlapping a date range with query criteria', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {
+          from: '2021-03-01T00:00:00-07:00',
+          to: '2021-03-31T23:59:59-06:00',
+          criteria: JSON.stringify({
+            isPublic: false,
+            recordId: 'record-1',
+            startsAfter: '2021-03-05',
+            endsBefore: '2021-03-20',
+          }),
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([]);
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.getCalendarEvents).not.toHaveBeenCalled();
+      expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(
+        entity,
+        expect.any(DateTime),
+        expect.any(DateTime),
+        expect.objectContaining({ isPublic: false, recordId: 'record-1' })
+      );
+      expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][3].startsAfter.valueOf()).toBe(
+        DateTime.fromISO('2021-03-05T00:00:00', { zone: calendarTimeZone }).valueOf()
+      );
+      expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][3].endsBefore.valueOf()).toBe(
+        DateTime.fromISO('2021-03-20T00:00:00', { zone: calendarTimeZone }).valueOf()
+      );
+      expect(res.send).toHaveBeenCalledWith({ results: [] });
+    });
+
+    it('can parse offsetless date range values in the calendar timezone', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {
+          from: '2021-03-01T00:00:00',
+          to: '2021-03-31T23:59:59',
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([]);
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      const [, from, to] = repositoryMock.getCalendarEventsInRange.mock.calls[0];
+      expect(from.zoneName).toBe(calendarTimeZone);
+      expect(from.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2021-03-01T00:00:00');
+      expect(to.zoneName).toBe(calendarTimeZone);
+      expect(to.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2021-03-31T23:59:59');
+    });
+
+    it('can get public events overlapping a date range for anonymous', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        params: { name: 'test' },
+        query: {
+          from: '2021-03-01T00:00:00-07:00',
+          to: '2021-03-31T23:59:59-06:00',
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([]);
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(
+        entity,
+        expect.any(DateTime),
+        expect.any(DateTime),
+        { isPublic: true }
+      );
+      expect(res.send).toHaveBeenCalledWith({ results: [] });
+    });
+
+    it('can call next with invalid operation for partial range', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: { from: '2021-03-01T00:00:00-07:00' },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(repositoryMock.getCalendarEventsInRange).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
+    it('can call next with invalid operation for oversized range', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {
+          from: '2021-01-01T00:00:00-07:00',
+          to: '2022-01-03T00:00:00-07:00',
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(repositoryMock.getCalendarEventsInRange).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     it('can get events with query criteria', async () => {
       const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
       const req = {
@@ -566,10 +779,10 @@ describe('calendar router', () => {
         expect.objectContaining({ isPublic: false })
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsAfter.valueOf()).toBe(
-        DateTime.fromObject({ year: 2020, month: 3, day: 5 }).valueOf()
+        DateTime.fromISO('2020-03-05T00:00:00', { zone: calendarTimeZone }).valueOf()
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
-        DateTime.fromObject({ year: 2020, month: 5, day: 1 }).valueOf()
+        DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf()
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
@@ -688,6 +901,40 @@ describe('calendar router', () => {
       expect(res.send.mock.calls[0][0]).toMatchSnapshot({
         start: expect.any(DateTime),
       });
+    });
+
+    it('can create event from UTC input in the calendar timezone', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        body: {
+          start: '2020-03-05T20:30:45.000Z',
+          end: '2020-03-05T21:30:45.000Z',
+          name: 'test',
+          description: 'Test 1 2 3',
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve({ ...entity, id: 1 }));
+
+      const handler = createCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      const created = res.send.mock.calls[0][0];
+      expect(created.start.zoneName).toBe(calendarTimeZone);
+      expect(created.start.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2020-03-05T13:30:45');
+      expect(created.end.zoneName).toBe(calendarTimeZone);
+      expect(created.end.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2020-03-05T14:30:45');
     });
 
     it('can call next with unauthorized', async () => {
@@ -811,6 +1058,35 @@ describe('calendar router', () => {
         start: expect.any(DateTime),
         end: expect.any(DateTime),
       });
+    });
+
+    it('can update event from offsetless input in the calendar timezone', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const entity = new CalendarEventEntity(repositoryMock, calendarEntity, calendarEvent);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        event: entity,
+        body: { start: '2020-03-05T11:00:00' },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      const updated = res.send.mock.calls[0][0];
+      expect(updated.start.zoneName).toBe(calendarTimeZone);
+      expect(updated.start.toFormat("yyyy-LL-dd'T'HH:mm:ss")).toBe('2020-03-05T11:00:00');
     });
 
     it('can call next with unauthorized', async () => {

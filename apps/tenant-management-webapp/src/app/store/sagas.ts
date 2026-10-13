@@ -63,6 +63,7 @@ import { watchScriptSagas } from './script/sagas';
 import { watchValueSagas } from './value/sagas';
 import { watchDirectorySagas } from './directory/sagas';
 import { watchSharepointSagas } from './sharePoint/sagas';
+import { watchTokenHandlerSagas } from './tokenHandler/sagas';
 
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
@@ -132,5 +133,7 @@ export function* watchSagas() {
     watchCacheSagas(),
     //sharepoint
     watchSharepointSagas(),
+    //token handler
+    watchTokenHandlerSagas(),
   ]);
 }

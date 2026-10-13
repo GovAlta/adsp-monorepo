@@ -2,7 +2,7 @@ import React from 'react';
 import { render, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom-v7';
 import { Login } from './Login';
 import {
   initializeConfig,
@@ -18,7 +18,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router-dom-v7', () => ({
   useLocation: jest.fn(),
   useNavigate: jest.fn(),
   useParams: jest.fn(),
@@ -134,5 +134,45 @@ describe('Login Component', () => {
 
     // Assert
     expect(mockDispatch).not.toHaveBeenCalledWith(initializeConfig());
+  });
+
+  test('sends the user back to the page they were trying to open after login', async () => {
+    // Arrange
+    (getRealm as jest.Mock).mockResolvedValue('updated-realm');
+    (useLocation as jest.Mock).mockReturnValue({
+      pathname: '/test-tenant/login',
+      search: `?returnTo=${encodeURIComponent('/test-tenant/services/planning-poker/8b0f6a52')}`,
+    });
+
+    // Act
+    await act(async () => {
+      render(<Login />);
+    });
+
+    // Assert
+    expect(loginUserWithIDP).toHaveBeenCalledWith({
+      idpFromUrl: 'core',
+      realm: 'updated-realm',
+      from: `${window.location.origin}/test-tenant/services/planning-poker/8b0f6a52`,
+    });
+  });
+
+  test('ignores a return page outside the tenant', async () => {
+    // Arrange
+    (getRealm as jest.Mock).mockResolvedValue('updated-realm');
+    (useLocation as jest.Mock).mockReturnValue({
+      pathname: '/test-tenant/login',
+      search: `?returnTo=${encodeURIComponent('https://evil.example.com')}`,
+    });
+
+    // Act
+    await act(async () => {
+      render(<Login />);
+    });
+
+    // Assert
+    expect(loginUserWithIDP).toHaveBeenCalledWith(
+      expect.objectContaining({ from: `${window.location.origin}/test-tenant/services` }),
+    );
   });
 });

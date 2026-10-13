@@ -1,10 +1,14 @@
 import styled from 'styled-components';
 
 export const ServiceContainer = styled.div`
-  margin: var(--goa-space-xl);
+  margin: var(--goa-space-m) var(--goa-space-xl) var(--goa-space-xl);
   display: flex;
   flex-wrap: wrap;
   gap: var(--goa-space-m);
+`;
+
+export const ServicePageBar = styled.div`
+  padding: var(--goa-space-s) var(--goa-space-xl) 0;
 `;
 
 export const FlexItem = styled.div`

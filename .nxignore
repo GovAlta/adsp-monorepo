@@ -1,1 +1,6 @@
-apps/builder-app/templates
+# The builder React template is a standalone, copyable project, so its package.json would register as an Nx
+# project (builder-prototype) and trigger phantom CI builds. Hide only that file from Nx. The rest of the template
+# stays visible so that changes to it affect builder-app, which builds the preview vendor bundle and seed from it.
+# (Changing only the template's package.json does not affect builder-app; its package-lock.json, which dependency
+# updates change as well, does.)
+apps/builder-app/templates/react/package.json
