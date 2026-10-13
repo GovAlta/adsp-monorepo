@@ -1,12 +1,18 @@
 import axios from 'axios';
 import { runSaga } from 'redux-saga';
 import { getAccessToken } from '@store/tenant/sagas';
-import { deleteTokenHandlerClient, getClientRegistration, registerTokenHandlerClient } from './sagas';
+import {
+  deleteTokenHandlerClient,
+  fetchCoreTokenHandlerClients,
+  getClientRegistration,
+  registerTokenHandlerClient,
+} from './sagas';
 import {
   DeleteTokenHandlerClient,
   GetClientRegistration,
   DELETE_TOKEN_HANDLER_CLIENT_FAILED,
   DELETE_TOKEN_HANDLER_CLIENT_SUCCESS,
+  FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS,
   RegisterTokenHandlerClient,
   GET_CLIENT_REGISTRATION,
   GET_CLIENT_REGISTRATION_FAILED,
@@ -176,5 +182,69 @@ describe('deleteTokenHandlerClient', () => {
 
     expect(types).toContain(DELETE_TOKEN_HANDLER_CLIENT_FAILED);
     expect(types).not.toContain(DELETE_TOKEN_HANDLER_CLIENT_SUCCESS);
+  });
+});
+
+describe('fetchCoreTokenHandlerClients', () => {
+  const state = { config: { serviceUrls: { tokenHandlerApiUrl: 'https://token-handler' } } };
+
+  const run = async () => {
+    const dispatched: { type: string; payload?: unknown }[] = [];
+    await runSaga({ dispatch: (action) => dispatched.push(action), getState: () => state }, fetchCoreTokenHandlerClients).toPromise();
+    return dispatched;
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    (getAccessToken as jest.Mock).mockReturnValue('token');
+    axiosMock.isAxiosError.mockImplementation((err: unknown): err is import('axios').AxiosError => !!(err as { isAxiosError?: boolean })?.isAxiosError);
+  });
+
+  it('records the core clients with their targets by ID', async () => {
+    axiosMock.get.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'builder',
+          name: 'Builder',
+          redirectUris: ['https://builder/cb'],
+          targets: [{ id: 'api', upstream: 'urn:ads:platform:form-service:v1' }],
+          registered: false,
+        },
+      ],
+    });
+
+    const dispatched = await run();
+
+    expect(axiosMock.get).toHaveBeenCalledWith(
+      'https://token-handler/token-handler/v1/clients',
+      expect.objectContaining({ params: { core: true }, headers: { Authorization: 'Bearer token' } }),
+    );
+    expect(dispatched).toContainEqual({
+      type: FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS,
+      payload: {
+        builder: expect.objectContaining({
+          id: 'builder',
+          core: true,
+          targets: { api: { id: 'api', upstream: 'urn:ads:platform:form-service:v1' } },
+        }),
+      },
+    });
+  });
+
+  it('records no core clients when the token handler does not provide them', async () => {
+    axiosMock.get.mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } });
+
+    const dispatched = await run();
+
+    expect(dispatched).toEqual([{ type: FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS, payload: {} }]);
+  });
+
+  it('reports other errors and still completes loading', async () => {
+    axiosMock.get.mockRejectedValueOnce(new Error('boom'));
+
+    const dispatched = await run();
+
+    expect(dispatched.map((action) => action.type)).toContain(FETCH_CORE_TOKEN_HANDLER_CLIENTS_SUCCESS);
+    expect(dispatched.length).toBe(2);
   });
 });

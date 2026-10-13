@@ -5,12 +5,16 @@ import { render, screen } from '@testing-library/react';
 
 import { TokenHandlerClientDetail } from './TokenHandlerClientDetail';
 
+// Web component test IDs are rendered as the testid attribute.
+const goaElement = (testId: string) => document.querySelector(`[testid="${testId}"]`);
+
 describe('TokenHandlerClientDetail', () => {
   const mockStore = configureStore([]);
 
-  const createState = (targets: Record<string, unknown> = {}) => ({
+  const createState = (targets: Record<string, unknown> = {}, coreClients: Record<string, unknown> = {}) => ({
     tokenHandler: {
       clients: { 'my-client': { id: 'my-client', name: 'My client', targets } },
+      coreClients,
       registrations: { 'my-client': 'keycloak-client' },
       registrationErrors: {},
       keycloakUuids: {},
@@ -58,5 +62,37 @@ describe('TokenHandlerClientDetail', () => {
     renderDetail();
 
     expect(screen.getByTestId('token-handler-proxy-info').textContent).not.toContain('XSRF');
+  });
+
+  describe('core client', () => {
+    const coreClient = {
+      id: 'my-client',
+      name: 'Core client',
+      description: 'Used by the builder preview.',
+      core: true,
+      redirectUris: ['https://builder.example.ca/cb'],
+      targets: { api: { id: 'api', upstream: 'urn:ads:platform:form-service:v1' } },
+    };
+
+    it('shows the client as provided by the platform and read-only', () => {
+      renderDetail(createState({}, { 'my-client': coreClient }));
+
+      expect(goaElement('core-client-badge')).toBeTruthy();
+      expect(screen.getByTestId('core-client-description').textContent).toContain('Used by the builder preview.');
+      expect(screen.getByText('https://builder.example.ca/cb')).toBeTruthy();
+      expect(screen.getByText('urn:ads:platform:form-service:v1')).toBeTruthy();
+      expect(goaElement('edit-client-btn')).toBeNull();
+      expect(goaElement('delete-client-btn')).toBeNull();
+      expect(goaElement('add-target-btn')).toBeNull();
+      expect(goaElement('edit-target-api')).toBeNull();
+    });
+
+    it('does not mark tenant clients as provided by the platform', () => {
+      renderDetail();
+
+      expect(goaElement('core-client-badge')).toBeNull();
+      expect(goaElement('edit-client-btn')).toBeTruthy();
+      expect(goaElement('delete-client-btn')).toBeTruthy();
+    });
   });
 });

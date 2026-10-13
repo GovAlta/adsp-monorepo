@@ -5,12 +5,15 @@ import { render, screen } from '@testing-library/react';
 
 import { TokenHandlerClientList } from './TokenHandlerClientList';
 
+// Web component test IDs are rendered as the testid attribute.
+const goaElement = (testId: string) => document.querySelector(`[testid="${testId}"]`);
+
 describe('TokenHandlerClientList', () => {
   const mockStore = configureStore([]);
 
-  const renderList = (clients: Record<string, unknown> | null) =>
+  const renderList = (clients: Record<string, unknown> | null, coreClients: Record<string, unknown> | null = {}) =>
     render(
-      <Provider store={mockStore({ tokenHandler: { clients, registrations: {}, busyClients: {} } })}>
+      <Provider store={mockStore({ tokenHandler: { clients, coreClients, registrations: {}, busyClients: {} } })}>
         <TokenHandlerClientList onSelect={jest.fn()} />
       </Provider>,
     );
@@ -49,5 +52,27 @@ describe('TokenHandlerClientList', () => {
     renderList({ 'my-app': { id: 'my-app', name: 'My app', targets: { a: { id: 'a', upstream: 'urn:x' } } } });
 
     expect(screen.getByTestId('client-row-my-app').textContent).toContain('My app');
+  });
+
+  it('lists core clients with a platform badge', () => {
+    renderList(
+      { mine: { id: 'mine', name: 'Mine', targets: {} } },
+      { core: { id: 'core', name: 'Core', core: true, targets: {} } },
+    );
+
+    expect(screen.getByTestId('client-row-mine')).toBeTruthy();
+    expect(screen.getByTestId('client-row-core')).toBeTruthy();
+    expect(goaElement('core-badge-core')).toBeTruthy();
+    expect(goaElement('core-badge-mine')).toBeNull();
+  });
+
+  it('shows the core client when a tenant client has the same ID', () => {
+    renderList(
+      { same: { id: 'same', name: 'Tenant', targets: {} } },
+      { same: { id: 'same', name: 'Core', core: true, targets: {} } },
+    );
+
+    expect(screen.getByTestId('client-row-same').textContent).toContain('Core');
+    expect(screen.queryByText('Tenant')).toBeNull();
   });
 });

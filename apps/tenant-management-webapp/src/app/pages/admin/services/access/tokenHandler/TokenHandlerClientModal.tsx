@@ -10,7 +10,7 @@ import {
 import type { GoabCheckboxOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { useSelector } from 'react-redux';
 import { toKebabName } from '@lib/kebabName';
-import { RootState } from '@store/index';
+import { selectTokenHandlerClients } from '@store/tokenHandler/selectors';
 import { TOKEN_HANDLER_ID_MAX_LENGTH, TokenHandlerClient } from '@store/tokenHandler/models';
 import styled from 'styled-components';
 
@@ -22,7 +22,7 @@ interface Props {
 
 export const TokenHandlerClientModal: FunctionComponent<Props> = ({ client, onSave, onClose }) => {
   const isNew = !client;
-  const existingClients = useSelector((state: RootState) => state.tokenHandler.clients);
+  const existingClients = useSelector(selectTokenHandlerClients);
   const [name, setName] = useState(client?.name || '');
   const [successRedirectUrl, setSuccessRedirectUrl] = useState(client?.successRedirectUrl || '');
   const [failureRedirectUrl, setFailureRedirectUrl] = useState(client?.failureRedirectUrl || '');
