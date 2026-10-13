@@ -163,7 +163,7 @@ Prefer GOA components over custom HTML/CSS patterns for UI primitives in both ca
 - Required fields go in the `dataSchema` `required` array. A field with a SHOW/HIDE rule must not be top-level required; use an `if`/`then` block.
 - Show privacy and FOIP text with a `HelpContent` element (`options: { markdown: true, help: '…' }`).
 - Mock mode (the default) cannot use data registers or `file-urn` upload; use plain `enum` lists.
-- Keep integration settings in `src/config/adspForm.ts`, default to `mode: 'mock'`, and in live mode require `formServiceBaseUrl`, `definitionId` and either a valid `accessToken` or `tokenHandler: true` (with `formServiceBaseUrl` `/token-handler/targets/form-service`; Builder preview signs the user in, so the app has no sign in of its own).
+- Keep integration settings in `src/config/adspForm.ts`, default to `mode: 'mock'`, and in live mode require `formServiceBaseUrl`, `definitionId` and either a valid `accessToken` or `tokenHandler: true` (with `formServiceBaseUrl` `/token-handler/targets/form-service`; make every API request with `apiFetch` from `src/lib/tokenHandler.ts`, not raw `fetch`, because it adds the CSRF header that the token handler needs for requests other than GET; Builder preview signs the user in, so the app has no sign in of its own).
 - Validate after every change to the definition (`builderFormSchemaValidate`) and fix all reported errors.
 
 **Hand-build a form only when the JSON form cannot express it** (logic the schema cannot describe, or a submit target other than the Form Service). Then use GOA components, not plain HTML:
@@ -283,6 +283,7 @@ Centralise all HTTP in a `src/hooks/useApi.ts` hook. Views call `list`, `get`, `
 
 ```ts
 // src/hooks/useApi.ts
+import { apiFetch } from '../lib/tokenHandler';
 const API_BASE = '/api/v1';
 
 function path(resource: string, id?: string | number, action?: string) {
@@ -292,11 +293,8 @@ function path(resource: string, id?: string | number, action?: string) {
 }
 
 export function useApi() {
-  async function apiFetch(url: string, init: RequestInit = {}) {
-    // Add Bearer token here when ADSP auth is wired up.
-    return fetch(url, init);
-  }
-
+  // apiFetch (src/lib/tokenHandler.ts) adds the CSRF header that the token handler needs for requests other than GET.
+  // Add a Bearer token here only if the API is called directly, not through the token handler.
   async function request<T>(url: string, init: RequestInit, verb: string): Promise<T> {
     const res = await apiFetch(url, init);
     if (!res.ok) throw new Error(`Failed to ${verb} (${res.status})`);
