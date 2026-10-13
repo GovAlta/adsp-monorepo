@@ -218,4 +218,133 @@ describe('usePlannerApi', () => {
 
     expect(result.current).toBe(first);
   });
+
+  describe('planner endpoints', () => {
+    const url = (path: string) => `${baseUrl}/planner/v1${path}`;
+    const expectCall = (method: string, path: string, data?: unknown) =>
+      expect(axiosRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ method, url: url(path), ...(data !== undefined ? { data } : {}) }),
+      );
+
+    beforeEach(() => {
+      axiosRequest.mockResolvedValueOnce({ data: { results: [{ id: 'r1' }], id: 'x' } });
+    });
+
+    it('updates a solution', async () => {
+      await renderApi().updateSolution('s1', { name: 'New' });
+      expectCall('patch', '/solutions/s1', { name: 'New' });
+    });
+
+    it('analyzes with options', async () => {
+      await renderApi().analyze('s1', { text: 'abc', mode: 'rules' });
+      expectCall('post', '/solutions/s1/analyze', { text: 'abc', mode: 'rules' });
+    });
+
+    it('gets analysis options', async () => {
+      await renderApi().getAnalysisOptions();
+      expectCall('get', '/analysis/options');
+    });
+
+    it('sends a chat message', async () => {
+      await renderApi().chat('s1', 'hello', 'ai');
+      expectCall('post', '/solutions/s1/chat', { message: 'hello', mode: 'ai' });
+    });
+
+    it('answers a question', async () => {
+      await renderApi().answerQuestion('s1', 'q1', 'Yes');
+      expectCall('put', '/solutions/s1/questions/q1', { answer: 'Yes' });
+    });
+
+    it('runs discovery', async () => {
+      await renderApi().discovery('s1', { message: 'hi', mode: 'ai', force: true, restart: false });
+      expectCall('post', '/solutions/s1/discovery', { message: 'hi', mode: 'ai', force: true, restart: false });
+    });
+
+    it('defaults discovery options to an empty body', async () => {
+      await renderApi().discovery('s1');
+      expectCall('post', '/solutions/s1/discovery', {});
+    });
+
+    it('generates a blueprint', async () => {
+      await renderApi().blueprint('s1', { mode: 'rules', refreshConsultations: true });
+      expectCall('post', '/solutions/s1/blueprint', { mode: 'rules', refreshConsultations: true });
+    });
+
+    it('consults with options', async () => {
+      await renderApi().consult('s1', 'form-service', { mode: 'ai', question: 'Why?' });
+      expectCall('post', '/solutions/s1/consult/form-service', { mode: 'ai', question: 'Why?' });
+    });
+
+    it('exports a solution', async () => {
+      await renderApi().exportSolution('s1');
+      expectCall('get', '/solutions/s1/export');
+    });
+
+    it('lists specialists', async () => {
+      const result = await renderApi().listSpecialists();
+      expect(result).toEqual([{ id: 'r1' }]);
+      expectCall('get', '/specialists');
+    });
+
+    it('chats with a specialist', async () => {
+      const body = { message: 'hi', chatId: 'c1', intent: 'ask' as const, solutionId: 's1', mode: 'ai' as const };
+      await renderApi().specialistChat('form-service', body);
+      expectCall('post', '/specialists/form-service/chat', body);
+    });
+
+    it('lists chats filtered by service and solution', async () => {
+      const result = await renderApi().listChats({ service: 'form-service', solutionId: 's1' });
+      expect(result).toEqual([{ id: 'r1' }]);
+      expectCall('get', '/specialists/chats?service=form-service&solutionId=s1');
+    });
+
+    it('lists chats without a filter', async () => {
+      await renderApi().listChats();
+      expectCall('get', '/specialists/chats');
+    });
+
+    it('gets a chat', async () => {
+      await renderApi().getChat('c1');
+      expectCall('get', '/specialists/chats/c1');
+    });
+
+    it('exports a chat', async () => {
+      await renderApi().exportChat('c1');
+      expectCall('get', '/specialists/chats/c1/export');
+    });
+
+    it('exports all chats', async () => {
+      await renderApi().exportAllChats();
+      expectCall('get', '/specialists/chats/export');
+    });
+
+    it('deletes a chat', async () => {
+      const result = await renderApi().deleteChat('c1');
+      expect(result).toBeUndefined();
+      expectCall('delete', '/specialists/chats/c1');
+    });
+
+    it('creates a pattern', async () => {
+      const pattern = { name: 'P', description: 'd', domainLanguage: [], serviceMappings: [], clarifyingQuestions: [] };
+      await renderApi().createPattern(pattern);
+      expectCall('post', '/patterns', pattern);
+    });
+
+    it('updates a pattern', async () => {
+      const pattern = { name: 'P', description: 'd', domainLanguage: [], serviceMappings: [], clarifyingQuestions: [] };
+      await renderApi().updatePattern('p1', pattern);
+      expectCall('put', '/patterns/p1', pattern);
+    });
+
+    it('deletes a pattern', async () => {
+      const result = await renderApi().deletePattern('p1');
+      expect(result).toBeUndefined();
+      expectCall('delete', '/patterns/p1');
+    });
+
+    it('matches patterns against text', async () => {
+      await renderApi().matchPatterns('some text');
+      expectCall('post', '/patterns/match', { text: 'some text' });
+    });
+  });
 });

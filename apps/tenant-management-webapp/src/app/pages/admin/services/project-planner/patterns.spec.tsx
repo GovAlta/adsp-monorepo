@@ -1,10 +1,12 @@
 import React from 'react';
 import { render } from '@testing-library/react';
+import { useSelector } from 'react-redux';
 import { Patterns } from './patterns';
 import { usePlannerApi } from './api';
 import { BusinessPattern } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
+jest.mock('react-redux', () => ({ useSelector: jest.fn() }));
 
 describe('Patterns', () => {
   const api = { listPatterns: jest.fn() };
@@ -29,7 +31,13 @@ describe('Patterns', () => {
     clarifyingQuestions: [],
   };
 
+  const withRoles = (roles?: string[]) =>
+    (useSelector as jest.Mock).mockImplementation((selector) =>
+      selector({ session: { resourceAccess: roles ? { 'urn:ads:platform:project-planner-service': { roles } } : undefined } })
+    );
+
   beforeEach(() => {
+    withRoles();
     (usePlannerApi as jest.Mock).mockReturnValue(api);
     api.listPatterns.mockResolvedValue([caseManagement, permitting]);
   });
@@ -99,4 +107,21 @@ describe('Patterns', () => {
 
     expect(container.querySelectorAll('tbody tr')).toHaveLength(0);
   });
-});
+
+  it('does not offer editing to users without the planner-admin role', async () => {
+    withRoles(['planner-user']);
+
+    const { container, findByText } = render(<Patterns />);
+    await findByText('Permitting');
+
+    expect(container.querySelector('goa-button[testid="pattern-new"]')).toBeNull();
+  });
+
+  it('offers editing to planner admins', async () => {
+    withRoles(['planner-admin']);
+
+    const { container, findByText } = render(<Patterns />);
+    await findByText('Permitting');
+
+    expect(container.querySelector('goa-button[testid="pattern-new"]')).not.toBeNull();
+  });});
