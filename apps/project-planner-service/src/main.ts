@@ -151,11 +151,16 @@ const initializeApp = async (): Promise<express.Application> => {
   return app;
 };
 
-initializeApp().then((app) => {
-  const port = environment.PORT || 3381;
+initializeApp()
+  .then((app) => {
+    const port = environment.PORT || 3381;
 
-  const server = app.listen(port, () => {
-    logger.info(`Listening at http://localhost:${port}`);
+    const server = app.listen(port, () => {
+      logger.info(`Listening at http://localhost:${port}`);
+    });
+    server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+  })
+  .catch((err) => {
+    logger.error(`Failed to start service: ${err}`);
+    process.exit(1);
   });
-  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
-});

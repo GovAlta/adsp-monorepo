@@ -410,4 +410,16 @@ describe('main', () => {
 
     expect(mockLogger.error).toHaveBeenCalledWith('Error encountered in server: Error: EADDRINUSE');
   });
+
+  it('logs and exits with code 1 when startup fails', async () => {
+    const exit = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+    mockInitializePlatform.mockRejectedValue(new Error('platform down'));
+
+    await startMain();
+
+    expect(mockLogger.error).toHaveBeenCalledWith('Failed to start service: Error: platform down');
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(mockApp.listen).not.toHaveBeenCalled();
+    exit.mockRestore();
+  });
 });
