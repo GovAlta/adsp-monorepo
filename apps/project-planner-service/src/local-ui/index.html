@@ -9,33 +9,39 @@
     <script type="module" src="/ds/index.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <style>
-      body { margin: 0; font-family: var(--goa-font-family-sans, 'acumin-pro-semi-condensed', Arial, sans-serif); background: #fff; color: #333; }
-      main { max-width: 1840px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+      body { margin: 0; font-family: var(--goa-font-family-sans, 'acumin-pro-semi-condensed', Arial, sans-serif); background: var(--goa-color-greyscale-white); color: var(--goa-color-greyscale-800); }
+      main { max-width: 1840px; margin: 0 auto; padding: var(--goa-space-l) var(--goa-space-m) var(--goa-space-2xl); }
       #workspace { overflow-wrap: anywhere; }
       #workspace pre { max-width: 100%; overflow-x: auto; }
       .layout > * { min-width: 0; }
-      .layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start; }
+      .layout { display: grid; grid-template-columns: 320px 1fr; gap: var(--goa-space-l); align-items: stretch; }
       @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-      .sol-item { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #dcdcdc; border-radius: 4px; padding: .75rem; margin-bottom: .5rem; cursor: pointer; font: inherit; }
-      .sol-item:hover { background: #f1f1f1; }
-      .sol-item[aria-current='true'] { border: 2px solid #0081a2; padding: calc(.75rem - 1px); }
-      .sol-item small { color: #666; display: block; margin-top: .25rem; }
-      .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
-      .stack > * + * { margin-top: 1rem; }
-      .muted { color: #666; }
-      ul.plain { margin: .25rem 0; padding-left: 1.25rem; }
+      aside[aria-label='Solutions'] { position: sticky; top: var(--goa-space-m); align-self: start; }
+      #solutions { max-height: calc(100vh - 475px); min-height: 160px; overflow-y: auto; padding-right: var(--goa-space-2xs); contain: layout inline-size; }
+      .sol-item { display: block; width: 100%; text-align: left; background: var(--goa-color-greyscale-white); border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200); border-radius: var(--goa-border-radius-s); padding: var(--goa-space-s); margin-bottom: var(--goa-space-xs); cursor: pointer; font: inherit; }
+      .sol-item:hover { background: var(--goa-color-surface-item-hover); }
+      .sol-item[aria-current='true'] { border: var(--goa-border-width-l) solid var(--goa-color-brand-default); padding: calc(var(--goa-space-s) - 1px); }
+      .sol-item small { color: var(--goa-color-greyscale-600); display: block; margin-top: var(--goa-space-2xs); }
+      .sol-item strong { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .row { display: flex; gap: var(--goa-space-xs); flex-wrap: wrap; align-items: center; }
+      .stack > * + * { margin-top: var(--goa-space-l); }
+      .muted { color: var(--goa-color-greyscale-600); }
+      ul.plain { margin: var(--goa-space-2xs) 0; padding-left: 1.25rem; }
       main.wide { max-width: 1840px; }
-      .cv-rail { gap: .2rem; padding-right: .5rem; }
-      .cv { display: grid; grid-template-columns: 205px 1fr; gap: 1rem; align-items: start; }
+      .cv-rail { gap: .2rem; padding-right: var(--goa-space-xs); }
+      .cv { display: grid; grid-template-columns: 205px 1fr; gap: var(--goa-space-m); align-items: start; }
       @media (max-width: 1100px) { .cv { grid-template-columns: 1fr; } }
-      .cv-rail { display: flex; flex-direction: column; gap: .35rem; border-right: 1px solid #dcdcdc; padding-right: .75rem; }
+      .cv-rail { display: flex; flex-direction: column; gap: .35rem; border-right: var(--goa-border-width-s) solid var(--goa-color-greyscale-200); padding-right: var(--goa-space-s); }
       .cv-rail goa-button { display: block; }
-      .cv-rail h4 { margin: .75rem 0 .25rem; color: #666; text-transform: uppercase; font-size: .75rem; letter-spacing: .04em; }
-      .cv-panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1rem; align-items: start; }
-      .cv-panes h3 { margin: 0; font-size: 1.1rem; }
-      .pane { max-height: calc(100vh - 250px); min-height: 320px; overflow: auto; padding-right: .5rem; }
-      .pane > * + * { margin-top: .6rem; }
+      .cv-rail h4 { margin: var(--goa-space-s) 0 var(--goa-space-2xs); color: var(--goa-color-greyscale-600); text-transform: uppercase; font-size: var(--goa-font-size-1); letter-spacing: .04em; }
+      .cv-panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: var(--goa-space-m); align-items: start; }
+      .cv-panes h3 { margin: 0; font-size: var(--goa-font-size-4); }
+      .pane { max-height: calc(100vh - 250px); min-height: 320px; overflow: auto; padding-right: var(--goa-space-xs); }
+      .pane > * + * { margin-top: var(--goa-space-xs); }
       .cv-panes goa-container { min-width: 0; }
+      #specChatPanel ul li + li { margin-top: var(--goa-space-s); }
+      .confidence-factors { display: grid; grid-template-columns: minmax(140px, 220px) minmax(120px, 1fr) 3rem minmax(0, 2fr); gap: var(--goa-space-xs) var(--goa-space-m); align-items: center; }
+      @media (max-width: 700px) { .confidence-factors { grid-template-columns: minmax(140px, 220px) minmax(90px, 1fr) 2.5rem; } .confidence-factors span.muted { grid-column: 1 / -1; } }
     </style>
   </head>
   <body>
@@ -50,7 +56,8 @@
             <h2 style="margin-top: 0">Solutions</h2>
             <div class="stack">
               <goa-input id="newName" name="newName" placeholder="Name for a new solution" width="100%" aria-label="New solution name"></goa-input>
-              <goa-button id="createBtn" type="primary">Create solution</goa-button>
+              <goa-spacer vspacing="s"></goa-spacer>
+              <goa-button id="createBtn" type="primary" width="100%">Create solution</goa-button>
             </div>
             <goa-spacer vspacing="m"></goa-spacer>
             <div id="solutions" role="list"></div>
@@ -65,6 +72,30 @@
       </div>
     </main>
 
+    <goa-modal id="deleteSolutionModal" heading="Delete this solution?" calloutvariant="emergency" version="2">
+      <p>This action cannot be undone. The solution and its saved specialist chats will be permanently removed.</p>
+      <goa-button-group alignment="end" mt="l">
+        <goa-button type="secondary" size="compact" id="deleteSolutionCancel">Cancel</goa-button>
+        <goa-button variant="destructive" size="compact" id="deleteSolutionConfirm">Delete</goa-button>
+      </goa-button-group>
+    </goa-modal>
+
+    <goa-modal id="deleteChatModal" heading="Delete this chat?" calloutvariant="emergency" version="2">
+      <p>This action cannot be undone. The saved chat and its messages will be permanently removed.</p>
+      <goa-button-group alignment="end" mt="l">
+        <goa-button type="secondary" size="compact" id="deleteChatCancel">Cancel</goa-button>
+        <goa-button variant="destructive" size="compact" id="deleteChatConfirm">Delete</goa-button>
+      </goa-button-group>
+    </goa-modal>
+
+    <goa-modal id="deletePatternModal" calloutvariant="emergency" version="2">
+      <p id="deletePatternModalBody"></p>
+      <goa-button-group alignment="end" mt="l">
+        <goa-button type="secondary" size="compact" id="deletePatternCancel">Cancel</goa-button>
+        <goa-button variant="destructive" size="compact" id="deletePatternConfirm">Delete</goa-button>
+      </goa-button-group>
+    </goa-modal>
+
     <script type="module">
       const API = '/planner/v1';
       const $ = (id) => document.getElementById(id);
@@ -77,6 +108,8 @@
       let refineLabel = 'Refine analysis with my answers';
       let altReply = '';
       let discoverDraft = '';
+      let chatToDelete = null;
+      let patternToDelete = null;
       const SOL_MODES = [['mode2', 'Guided Discovery'], ['mode1', 'Rapid Recommend'], ['mode3', 'Option Explorer']];
       const solModeKey = (id) => `planner-solmode-${id}`;
       const LAYOUTS = [['one', 'One column'], ['two', 'Two columns']];
@@ -135,7 +168,7 @@
       function renderList() {
         $('solutions').innerHTML = solutions.length
           ? solutions.map((s) => `<button class="sol-item" role="listitem" data-id="${s.id}" ${current?.id === s.id ? 'aria-current="true"' : ''}>
-              <strong>${esc(s.name)}</strong>
+              <strong title="${esc(s.name)}">${esc(s.name)}</strong>
               <small>${esc(s.status)} · rev ${s.revision}</small></button>`).join('')
           : '<p class="muted">No solutions yet.</p>';
         $('solutions').querySelectorAll('.sol-item').forEach((b) => b.addEventListener('click', () => run(() => select(b.dataset.id))));
@@ -175,11 +208,13 @@
               ${m.followUps?.length ? `<div class="row">${m.followUps.map((f) => `<goa-button type="tertiary" size="compact" data-followup="${esc(f)}">${esc(f)}</goa-button>`).join('')}</div>` : ''}
             </goa-callout>`;
         const history = spec.chats.length
-          ? `<goa-details heading="Saved chats (${spec.chats.length})" open="true"><ul>${spec.chats.map((c) => `<li><div class="row"><span>${esc(c.title)} <span class="muted">· ${c.messageCount} messages · ${esc(fmtDate(c.updatedOn))}</span></span>
-              <goa-button type="tertiary" size="compact" data-chat-open="${c.id}">${spec.chatId === c.id ? 'Open (current)' : 'Open'}</goa-button>
-              <goa-button type="tertiary" size="compact" data-chat-delete="${c.id}">Delete</goa-button></div></li>`).join('')}</ul></goa-details>`
+          ? `<goa-details heading="Saved chats (${spec.chats.length})" open="true"><ul>${spec.chats.map((c) => `<li><div class="row" style="justify-content:space-between"><span style="min-width:0">${esc(c.title)} <span class="muted">· ${c.messageCount} messages · ${esc(fmtDate(c.updatedOn))}</span></span>
+              <div class="row" style="flex-wrap:nowrap;flex-shrink:0">
+                <goa-button type="tertiary" size="compact" data-chat-open="${c.id}">${spec.chatId === c.id ? 'Close' : 'Open'}</goa-button>
+                <goa-button type="tertiary" size="compact" variant="destructive" data-chat-delete="${c.id}">Delete</goa-button>
+              </div></li>`).join('')}</ul></goa-details>`
           : '<p class="muted">No saved chats with this specialist yet.</p>';
-        return `<div class="stack"><h3>Specialist chat: ${esc(def?.displayName || spec.service)}</h3>
+        return `<div class="stack" id="specChatPanel"><h3>Specialist chat: ${esc(def?.displayName || spec.service)}</h3>
           ${history}
           <div class="row"><goa-button type="secondary" size="compact" id="newChat">New chat</goa-button></div>
           <div class="row" role="group" aria-label="Download all chats"><strong>All chats:</strong>
@@ -189,6 +224,7 @@
             <goa-button type="tertiary" size="compact" leadingicon="download" id="dlChatMd">Markdown</goa-button>
             <goa-button type="tertiary" size="compact" leadingicon="download" id="dlChatJson">JSON</goa-button></div>` : ''}
           <div class="row">${INTENTS.map(([k, label]) => `<goa-button type="${spec.intent === k ? 'primary' : 'secondary'}" size="compact" data-intent="${k}">${label}</goa-button>`).join('')}</div>
+          <goa-spacer vspacing="m"></goa-spacer>
           ${spec.messages.map(turn).join('')}
           <goa-textarea id="specInput" name="spec" rows="3" width="100%" value="${esc(spec.draft)}" aria-label="Message to the specialist"></goa-textarea>
           <div class="row"><goa-button id="specSend">Send</goa-button></div></div>`;
@@ -234,21 +270,31 @@
         return out.join('\n');
       }
       const PATTERN_FIELDS = [
-        ['name', 'Business pattern (name)', 1],
-        ['description', 'Purpose', 3],
-        ['domainLanguage', 'Common domain language (one per line)', 4],
-        ['commonFeatures', 'Common features (one per line)', 4],
-        ['strongSignals', 'Strong confidence signals (one per line: description | keyword, keyword)', 5],
-        ['weakSignals', 'Weak or misleading signals (one per line: description | keyword, keyword)', 4],
-        ['serviceMappings', 'Likely ADSP service mappings (one per line: service-name: reason)', 5],
-        ['clarifyingQuestions', 'Clarifying questions (one per line)', 4],
-        ['assumptions', 'Assumptions (one per line)', 3],
-        ['knownUnknowns', 'Known unknowns (one per line)', 3],
+        ['name', 'Business pattern (name)', 1, true],
+        ['description', 'Purpose', 3, false],
+        ['domainLanguage', 'Common domain language (one per line)', 4, true],
+        ['commonFeatures', 'Common features (one per line)', 4, false],
+        ['strongSignals', 'Strong confidence signals (one per line: description | keyword, keyword)', 5, true],
+        ['weakSignals', 'Weak or misleading signals (one per line: description | keyword, keyword)', 4, false],
+        ['serviceMappings', 'Likely ADSP service mappings (one per line: service-name: reason)', 5, true],
+        ['clarifyingQuestions', 'Clarifying questions (one per line)', 4, false],
+        ['assumptions', 'Assumptions (one per line)', 3, false],
+        ['knownUnknowns', 'Known unknowns (one per line)', 3, false],
       ];
       const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
       const signalText = (list) => (list || []).map((s) => `${s.description} | ${s.keywords.join(', ')}`).join('\n');
       const toSignals = (s) => lines(s).map((l) => { const [d, k = ''] = l.split('|'); return { description: d.trim(), keywords: k.split(',').map((x) => x.trim()).filter(Boolean) }; });
       const toMappings = (s) => lines(s).map((l) => { const i = l.indexOf(':'); return { service: (i < 0 ? l : l.slice(0, i)).trim(), reason: i < 0 ? '' : l.slice(i + 1).trim() }; });
+      function isPatternValid(f) {
+        if (!f.name.trim()) return false;
+        if (!lines(f.domainLanguage).length) return false;
+        const signalsList = toSignals(f.strongSignals);
+        if (!signalsList.length || signalsList.some((s) => !s.description || !s.keywords.length)) return false;
+        const validServices = new Set((specialists || []).map((s) => s.service));
+        const mappings = toMappings(f.serviceMappings);
+        if (!mappings.length || mappings.some((m) => !m.service || !m.reason || (validServices.size && !validServices.has(m.service)))) return false;
+        return true;
+      }
       function patternToFields(p) {
         return {
           name: p.name || '', description: p.description || '',
@@ -267,9 +313,9 @@
       }
       function renderPatternEditor() {
         return `<div class="stack"><h3>${patternEdit.id ? `Edit pattern: ${esc(patternEdit.id)}` : 'New pattern'}</h3>
-          ${PATTERN_FIELDS.map(([k, label, rows]) => `<goa-form-item label="${esc(label)}"><goa-textarea data-pf="${k}" name="pf-${k}" rows="${rows}" width="100%" value="${esc(patternEdit.fields[k])}" aria-label="${esc(label)}"></goa-textarea></goa-form-item>`).join('')}
+          ${PATTERN_FIELDS.map(([k, label, rows, required]) => `<goa-form-item label="${esc(label)}" ${required ? 'requirement="required"' : ''}><goa-textarea data-pf="${k}" name="pf-${k}" rows="${rows}" width="100%" value="${esc(patternEdit.fields[k])}" aria-label="${esc(label)}"></goa-textarea></goa-form-item>`).join('')}
           <p class="muted">Valid services: ${(specialists || []).map((s) => esc(s.service)).join(', ')}</p>
-          <div class="row"><goa-button id="savePattern">Save pattern</goa-button><goa-button type="tertiary" id="cancelPattern">Cancel</goa-button></div></div>`;
+          <div class="row"><goa-button id="savePattern" ${isPatternValid(patternEdit.fields) ? '' : 'disabled'}>Save pattern</goa-button><goa-button type="tertiary" id="cancelPattern">Cancel</goa-button></div></div>`;
       }
       async function reloadPatterns() {
         patterns = (await api('GET', '/patterns')).results;
@@ -361,8 +407,8 @@
             items && items.length ? `<goa-details heading="${esc(heading)}"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></goa-details>` : '';
           if (patternEdit) return renderPatternEditor();
           const sourceBadge = (s) => `<goa-badge type="${s === 'built-in' ? 'information' : s === 'custom' ? 'success' : 'important'}" content="${esc(s)}"></goa-badge>`;
-          const actions = (p) => `<div class="row"><goa-button type="secondary" size="compact" data-pedit="${esc(p.id)}">Edit</goa-button>${p.source === 'built-in' ? '' : `<goa-button type="tertiary" size="compact" data-pdelete="${esc(p.id)}">${p.source === 'custom' ? 'Delete' : 'Reset to built-in'}</goa-button>`}</div>`;
-          return `<div class="stack"><div class="row"><goa-button id="newPattern">New pattern</goa-button></div><goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Description</th><th>Services</th><th></th></tr></thead><tbody>
+          const actions = (p) => `<div class="row"><goa-button type="secondary" size="compact" data-pedit="${esc(p.id)}">Edit</goa-button>${p.source === 'built-in' ? '' : `<goa-button type="tertiary" size="compact" variant="destructive" data-pdelete="${esc(p.id)}" data-presource="${p.source}">${p.source === 'custom' ? 'Delete' : 'Reset to built-in'}</goa-button>`}</div>`;
+          return `<div class="stack"><div class="row"><goa-button id="newPattern">New pattern</goa-button></div><goa-spacer vspacing="m"></goa-spacer><goa-table width="100%"><table><thead><tr><th>Pattern</th><th>Description</th><th>Services</th><th></th></tr></thead><tbody>
             ${(patterns || []).map((p) => `<tr><td>${esc(p.name)}<br>${sourceBadge(p.source)}</td><td>${esc(p.description)}${block('Common domain language', p.domainLanguage)}${block('Common features', p.commonFeatures)}${block('Strong confidence signals', (p.strongSignals || []).map((s) => s.description))}${block('Weak or misleading signals', (p.weakSignals || []).map((s) => s.description))}${block('Clarifying questions', p.clarifyingQuestions)}${block('Assumptions', p.assumptions)}${block('Known unknowns', p.knownUnknowns)}</td><td>${p.serviceMappings.map((m) => `<div><b>${esc(m.service)}</b>: ${esc(m.reason)}</div>`).join('')}</td><td>${actions(p)}</td></tr>`).join('')}</tbody></table></goa-table></div>`;        }
         return '';
       }
@@ -391,8 +437,8 @@
         return `<div class="stack">
           ${controls}
           <p class="muted" style="margin:0">Generated ${esc(new Date(bp.generatedOn).toLocaleString())} · ${bp.mode === 'ai' ? 'AI' : 'rule-based'}</p>
-          ${bp.warning ? `<goa-callout type="important" heading="Note" size="medium">${esc(bp.warning)}</goa-callout>` : ''}
-          ${stale ? '<goa-callout type="important" heading="Out of date" size="medium">The solution was re-analyzed after this blueprint was generated. Regenerate it to include the latest answers.</goa-callout>' : ''}
+          ${bp.warning ? `<goa-callout type="important" heading="Note">${esc(bp.warning)}</goa-callout>` : ''}
+          ${stale ? '<goa-callout type="important" heading="Out of date">The solution was re-analyzed after this blueprint was generated. Regenerate it to include the latest answers.</goa-callout>' : ''}
           ${cdet('1. Project blueprint', `<h3 style="margin-top:0">${esc(o.title)}</h3><p>${esc(o.summary)}</p>${sub('Objectives', o.objectives)}${sub('Scope', o.scope)}${sub('Out of scope', o.outOfScope)}${sub('Stakeholders', o.stakeholders)}${sub('Success measures', o.successMeasures)}${sub('Key risks', o.risks)}`, true)}
           ${cdet('2. Technical architecture', `<p>${esc(a.summary)}</p>
             <goa-table width="100%"><table><thead><tr><th>Layer</th><th>Purpose</th><th>Components</th></tr></thead><tbody>${a.layers.map((l) => `<tr><td><strong>${esc(l.name)}</strong></td><td>${esc(l.description)}</td><td>${esc(l.components.join(', '))}</td></tr>`).join('')}</tbody></table></goa-table>
@@ -409,9 +455,13 @@
         const c = current.state.confidence;
         if (!c) return '<p class="muted" style="margin:0">Confidence: not assessed yet — analyze the problem to see how well it is understood.</p>';
         const ok = c.score >= c.threshold;
-        const bar = `<div role="progressbar" aria-valuenow="${c.score}" aria-valuemin="0" aria-valuemax="100" aria-label="Confidence" style="background:#dcdcdc;border-radius:4px;height:14px;flex:1;min-width:160px;max-width:420px;position:relative"><div style="width:${c.score}%;background:${ok ? '#006f4c' : '#feba35'};height:100%;border-radius:4px"></div><div style="position:absolute;left:${c.threshold}%;top:-2px;bottom:-2px;border-left:2px solid #333" title="Threshold ${c.threshold}%"></div></div>`;
-        const factors = c.factors.map((f) => `<div class="row" style="flex-wrap:nowrap"><span style="min-width:190px">${esc(f.label)}</span><div style="background:#dcdcdc;height:8px;width:140px;border-radius:4px"><div style="width:${f.score}%;background:${f.score >= c.threshold ? '#006f4c' : '#feba35'};height:100%;border-radius:4px"></div></div><span>${f.score}%</span>${f.note ? `<span class="muted">${esc(f.note)}</span>` : ''}</div>`).join('');
-        return `<div class="stack" style="gap:.25rem"><div class="row" style="flex-wrap:nowrap"><strong>Confidence: ${c.score}%</strong>${bar}<goa-badge type="${ok ? 'success' : 'important'}" content="${ok ? 'Sufficient to propose a solution' : 'Below ' + c.threshold + '% — more detail needed'}"></goa-badge></div>${cdet('Confidence breakdown', factors, false)}</div>`;
+        const bar = `<div role="progressbar" aria-valuenow="${c.score}" aria-valuemin="0" aria-valuemax="100" aria-label="Confidence" style="background:var(--goa-color-greyscale-200);border-radius:var(--goa-border-radius-xs);height:14px;flex:1;min-width:160px;max-width:420px;position:relative"><div style="width:${c.score}%;background:${ok ? 'var(--goa-color-success-default)' : 'var(--goa-color-warning-default)'};height:100%;border-radius:var(--goa-border-radius-xs)"></div><div style="position:absolute;left:${c.threshold}%;top:-2px;bottom:-2px;border-left:var(--goa-border-width-l) solid var(--goa-color-greyscale-800)" title="Threshold ${c.threshold}%"></div></div>`;
+        const factors = c.factors.map((f) => `
+          <span>${esc(f.label)}</span>
+          <div style="background:var(--goa-color-greyscale-200);height:8px;border-radius:var(--goa-border-radius-xs)"><div style="width:${f.score}%;background:${f.score >= c.threshold ? 'var(--goa-color-success-default)' : 'var(--goa-color-warning-default)'};height:100%;border-radius:var(--goa-border-radius-xs)"></div></div>
+          <span>${f.score}%</span>
+          <span class="muted">${f.note ? esc(f.note) : ''}</span>`).join('');
+        return `<div class="stack" style="gap:.25rem"><div class="row" style="flex-wrap:nowrap"><strong>Confidence: ${c.score}%</strong>${bar}<goa-badge type="${ok ? 'success' : 'important'}" content="${ok ? 'Sufficient to propose a solution' : 'Below ' + c.threshold + '% — more detail needed'}"></goa-badge></div>${cdet('Confidence breakdown', `<div class="confidence-factors">${factors}</div>`, false)}</div>`;
       }
 
       const cdet = (title, html, open = false) => `<goa-details heading="${esc(title)}" ${open ? 'open="true"' : ''}>${html}</goa-details>`;
@@ -425,7 +475,7 @@
             <p>${esc(m.explanation)}</p>
             ${p ? `<p><strong>Typical workflow</strong></p>${list((p.commonFeatures || []).slice(0, 5).map(esc))}<p><strong>Services</strong></p>${list(p.serviceMappings.map((x) => `<b>${esc(x.service)}</b>: ${esc(x.reason)}`))}` : ''}</goa-container>`;
         });
-        const otherHyp = st.hypotheses.slice(1).map((h) => `<goa-container type="non-interactive" accent="thin"><strong>${esc(h.title)}</strong> <goa-badge type="information" content="${esc(h.confidence)} confidence"></goa-badge><p>${esc(h.rationale)}</p>${list([...h.recommendations].sort((a, b) => a.order - b.order).map((r) => `<b>${esc(r.service)}</b> — ${esc(r.reason)}`))}</goa-container>`);
+        const otherHyp = st.hypotheses.slice(1).map((h) => `<goa-container type="non-interactive" accent="thin"><div class="row"><strong>${esc(h.title)}</strong> <goa-badge type="information" content="${esc(h.confidence)} confidence"></goa-badge></div><p>${esc(h.rationale)}</p>${list([...h.recommendations].sort((a, b) => a.order - b.order).map((r) => `<b>${esc(r.service)}</b> — ${esc(r.reason)}`))}</goa-container>`);
         const aiOk = options.modes.includes('ai');
         return layoutPanes(`
             <h3>Current approach</h3>
@@ -441,11 +491,11 @@
       function compressedHtml() {
         const st = current.state;
         const rail = `<nav class="cv-rail" aria-label="Navigation">
-          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" data-cv="solution">Workplace</goa-button>
+          <goa-button type="${cvFocus === 'solution' ? 'primary' : 'tertiary'}" size="compact" width="100%" data-cv="solution">Workplace</goa-button>
           <h4>Specialists</h4>
-          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" data-cv-spec="${s.service}">${chatCounts[s.service] ? `<strong>${esc(s.displayName.replace(/ service$/i, ''))} (${chatCounts[s.service]})</strong>` : esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
+          ${(specialists || []).map((s) => `<goa-button type="${cvFocus === s.service ? 'primary' : 'tertiary'}" size="compact" width="100%" data-cv-spec="${s.service}">${chatCounts[s.service] ? `<strong>${esc(s.displayName.replace(/ service$/i, ''))} (${chatCounts[s.service]})</strong>` : esc(s.displayName.replace(/ service$/i, ''))}</goa-button>`).join('')}
           <h4>Reference</h4>
-          <goa-button type="${cvFocus === 'patterns' ? 'primary' : 'tertiary'}" size="compact" data-cv="patterns">Patterns</goa-button>
+          <goa-button type="${cvFocus === 'patterns' ? 'primary' : 'tertiary'}" size="compact" width="100%" data-cv="patterns">Patterns</goa-button>
         </nav>`;
         let main;
         if (cvFocus === 'patterns') main = sectionHtml('patterns');
@@ -464,7 +514,7 @@
             const dsc = st.discovery;
             const ready = !!dsc?.ready;
             const recs = (st.hypotheses[0]?.recommendations || []).slice().sort((a, b) => a.order - b.order);
-            const thread = (dsc?.messages || []).map((m) => `<goa-callout type="${m.role === 'user' ? 'information' : 'important'}" heading="${m.role === 'user' ? 'You' : 'Planner'}" size="medium"><div style="white-space:pre-wrap">${esc(m.content)}</div></goa-callout>`).join('');
+            const thread = (dsc?.messages || []).map((m) => `<goa-callout type="${m.role === 'user' ? 'information' : 'important'}" heading="${m.role === 'user' ? 'You' : 'Planner'}"><div style="white-space:pre-wrap">${esc(m.content)}</div></goa-callout>`).join('');
             const discoveryControls = dsc
               ? `<goa-textarea id="discoverInput" name="discoverInput" rows="4" width="100%" placeholder="${ready ? 'Add details or answer further questions to refine the solution' : 'Type your answers here'}" value="${esc(discoverDraft)}" aria-label="Your reply"></goa-textarea>
                 <div class="row"><goa-button id="discoverSend" type="primary">${busy ? 'Thinking…' : ready ? 'Send & refine solution' : 'Send reply'}</goa-button>${ready ? '' : '<goa-button id="discoverForce" type="secondary">Show solution now</goa-button>'}
@@ -476,12 +526,12 @@
                   <goa-button type="${mode === 'ai' ? 'primary' : 'secondary'}" size="compact" data-mode="ai" ${options.modes.includes('ai') ? '' : 'disabled="true"'}>AI analysis</goa-button>
                   <goa-button type="${mode === 'rules' ? 'primary' : 'secondary'}" size="compact" data-mode="rules">Rule-based</goa-button></div>`;
             const p2 = `<h3>2. Discovery conversation</h3>
-                ${dsc?.warning ? `<goa-callout type="important" heading="Note" size="medium">${esc(dsc.warning)}</goa-callout>` : ''}
+                ${dsc?.warning ? `<goa-callout type="important" heading="Note">${esc(dsc.warning)}</goa-callout>` : ''}
                 ${thread || '<p class="muted">Start discovery and the Planner will ask clarifying questions in one message. Answer them; once confidence passes 50% the solution is presented.</p>'}
                 ${busy ? '<goa-circular-progress visible="true" message="Asking the model — this can take up to a minute"></goa-circular-progress>' : ''}
                 ${discoveryControls}`;
             const p3 = `<h3>3. ${ready ? 'Proposed solution' : 'Proposed solution (after discovery)'}</h3>
-                ${ready ? '<goa-callout type="success" heading="Solution presented" size="medium">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Not yet" size="medium">The solution is presented once confidence reaches 50%, or when you choose Show solution now.</goa-callout>'}
+                ${ready ? '<goa-callout type="success" heading="Solution presented">Refine it in the conversation or consult a specialist.</goa-callout>' : '<goa-callout type="important" heading="Not yet">The solution is presented once confidence reaches 50%, or when you choose Show solution now.</goa-callout>'}
                 ${ready && st.analysis ? `${cdet('Hypotheses', sectionHtml('hypotheses'), false)}${cdet('Concepts', sectionHtml('concepts'), false)}${cdet('Next steps', sectionHtml('steps'), false)}<h3>Project blueprint</h3>${blueprintHtml()}`.replace(/ open="true"/g, '') : ''}`;
             const p4 = ready ? `<h3>4. Refine by conversation</h3>${sectionHtml('conversation')}` : '';
             const p5 = ready ? `<h3>5. Consult a specialist</h3><div class="row">${recs.map((r) => `<goa-button type="secondary" size="compact" data-cv-spec="${esc(r.service)}">${esc(r.service)}</goa-button>`).join('') || '<span class="muted">No recommended services yet.</span>'}</div>` : '';
@@ -581,8 +631,8 @@
           <div class="row" style="justify-content:space-between;flex-wrap:wrap">
             ${renaming
               ? `<div class="row"><goa-input id="renameInput" name="rename" value="${esc(nameDraft)}" width="320px" aria-label="Solution name"></goa-input>
-                  <goa-button id="renameSave" type="primary" size="compact">Save</goa-button><goa-button id="renameCancel" type="tertiary" size="compact">Cancel</goa-button></div>`
-              : `<h2 style="margin:0">${esc(current.name)} <goa-icon-button id="renameBtn" icon="pencil" size="medium" title="Edit solution name" aria-label="Edit solution name"></goa-icon-button> <goa-badge type="information" content="${esc(current.status)}"></goa-badge></h2>`}
+                  <goa-button id="renameSave" type="primary" size="compact" ${nameDraft.trim() ? '' : 'disabled'}>Save</goa-button><goa-button id="renameCancel" type="tertiary" size="compact">Cancel</goa-button></div>`
+              : `<h2 class="row" style="margin:0">${esc(current.name)}<goa-icon-button id="renameBtn" icon="pencil" size="medium" title="Edit solution name" aria-label="Edit solution name"></goa-icon-button><goa-badge type="information" content="${esc(current.status)}"></goa-badge></h2>`}
             <div class="row" aria-label="Export">
               <goa-button id="exportJsonBtn" type="secondary" size="compact" leadingicon="download">Download JSON</goa-button>
               <goa-button id="exportMdBtn" type="secondary" size="compact" leadingicon="document-text">Download report (.md)</goa-button>
@@ -675,8 +725,10 @@
           spec = newSpec(cvFocus);
           await loadChats();
           renderWorkspace();
-          $('specInput')?.scrollIntoView?.({ block: 'center' });
-          $('specInput')?.focus?.();
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            $('specChatPanel')?.scrollIntoView?.({ block: 'start' });
+            $('specInput')?.focus?.();
+          }));
         })));
         $('workspace').querySelectorAll('[data-section]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           section = b.dataset.section;
@@ -690,7 +742,10 @@
           download(`planner-${safeName(current)}.json`, JSON.stringify(data, null, 2), 'application/json');
         }));
         $('renameBtn')?.addEventListener('_click', () => { renaming = true; nameDraft = current.name; renderWorkspace(); $('renameInput')?.focus?.(); });
-        $('renameInput')?.addEventListener('_change', (e) => (nameDraft = e.detail.value));
+        $('renameInput')?.addEventListener('_change', (e) => {
+          nameDraft = e.detail.value;
+          nameDraft.trim() ? $('renameSave')?.removeAttribute('disabled') : $('renameSave')?.setAttribute('disabled', 'true');
+        });
         $('renameCancel')?.addEventListener('_click', () => { renaming = false; renderWorkspace(); });
         $('renameSave')?.addEventListener('_click', () => run(async () => {
           const name = nameDraft.trim();
@@ -755,15 +810,13 @@
             renderWorkspace();
           }
         }));
-        $('deleteBtn')?.addEventListener('_click', () => run(async () => {
-          await api('DELETE', `/solutions/${current.id}`);
-          current = null;
-          $('workspace').innerHTML = '<goa-callout type="information" heading="Solution deleted">Choose or create another solution.</goa-callout>';
-          await loadSolutions();
-        }));
+        $('deleteBtn')?.addEventListener('_click', () => $('deleteSolutionModal').setAttribute('open', 'true'));
         $('newPattern')?.addEventListener('_click', () => { patternEdit = { id: null, fields: patternToFields({}) }; renderWorkspace(); });
         $('cancelPattern')?.addEventListener('_click', () => { patternEdit = null; renderWorkspace(); });
-        $('workspace').querySelectorAll('[data-pf]').forEach((t) => t.addEventListener('_change', (e) => (patternEdit.fields[t.dataset.pf] = e.detail.value)));
+        $('workspace').querySelectorAll('[data-pf]').forEach((t) => t.addEventListener('_change', (e) => {
+          patternEdit.fields[t.dataset.pf] = e.detail.value;
+          isPatternValid(patternEdit.fields) ? $('savePattern')?.removeAttribute('disabled') : $('savePattern')?.setAttribute('disabled', 'true');
+        }));
         $('savePattern')?.addEventListener('_click', () => run(async () => {
           const body = fieldsToPattern(patternEdit.fields);
           if (patternEdit.id) await api('PUT', `/patterns/${patternEdit.id}`, body);
@@ -777,24 +830,34 @@
           patternEdit = { id: p.id, fields: patternToFields(p) };
           renderWorkspace();
         }));
-        $('workspace').querySelectorAll('[data-pdelete]').forEach((b) => b.addEventListener('_click', () => run(async () => {
-          await api('DELETE', `/patterns/${b.dataset.pdelete}`);
-          await reloadPatterns();
-          renderWorkspace();
-        })));
+        $('workspace').querySelectorAll('[data-pdelete]').forEach((b) => b.addEventListener('_click', () => {
+          patternToDelete = b.dataset.pdelete;
+          const isReset = b.dataset.presource !== 'custom';
+          $('deletePatternModal').setAttribute('heading', isReset ? 'Reset this pattern?' : 'Delete this pattern?');
+          $('deletePatternModalBody').textContent = isReset
+            ? 'This will discard your customization and revert the pattern to its built-in version. This action cannot be undone.'
+            : 'This action cannot be undone. The custom pattern will be permanently removed.';
+          $('deletePatternConfirm').textContent = isReset ? 'Reset' : 'Delete';
+          $('deletePatternModal').setAttribute('open', 'true');
+        }));
         $('workspace').querySelectorAll('[data-spec]').forEach((b) => b.addEventListener('_click', () => run(async () => {
           spec = newSpec(b.dataset.spec);
           await loadChats();
           renderWorkspace();
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            $('specChatPanel')?.scrollIntoView?.({ block: 'start' });
+            $('specInput')?.focus?.();
+          }));
         })));
         $('newChat')?.addEventListener('_click', () => { spec.chatId = null; spec.messages = []; renderWorkspace(); });
-        $('workspace').querySelectorAll('[data-chat-open]').forEach((b) => b.addEventListener('_click', () => run(() => openChat(b.dataset.chatOpen))));
-        $('workspace').querySelectorAll('[data-chat-delete]').forEach((b) => b.addEventListener('_click', () => run(async () => {
-          await api('DELETE', `/specialists/chats/${b.dataset.chatDelete}`);
-          if (spec.chatId === b.dataset.chatDelete) { spec.chatId = null; spec.messages = []; }
-          await loadChats();
-          renderWorkspace();
+        $('workspace').querySelectorAll('[data-chat-open]').forEach((b) => b.addEventListener('_click', () => run(async () => {
+          if (spec.chatId === b.dataset.chatOpen) { spec.chatId = null; spec.messages = []; renderWorkspace(); }
+          else await openChat(b.dataset.chatOpen);
         })));
+        $('workspace').querySelectorAll('[data-chat-delete]').forEach((b) => b.addEventListener('_click', () => {
+          chatToDelete = b.dataset.chatDelete;
+          $('deleteChatModal').setAttribute('open', 'true');
+        }));
         $('dlChatJson')?.addEventListener('_click', () => run(async () => download(`planner-chat-${spec.chatId}.json`, JSON.stringify(await api('GET', `/specialists/chats/${spec.chatId}/export`), null, 2), 'application/json')));
         $('dlChatMd')?.addEventListener('_click', () => run(async () => download(`planner-chat-${spec.chatId}.md`, chatToMarkdown(await api('GET', `/specialists/chats/${spec.chatId}`)), 'text/markdown')));
         $('dlAllJson')?.addEventListener('_click', () => run(async () => download('planner-specialist-chats.json', JSON.stringify(await api('GET', '/specialists/chats/export'), null, 2), 'application/json')));
@@ -816,12 +879,52 @@
         })));
       }
 
-      $('newName').addEventListener('_change', (e) => (newName = e.detail.value));
+      const deleteSolutionModal = $('deleteSolutionModal');
+      deleteSolutionModal.addEventListener('_close', () => deleteSolutionModal.removeAttribute('open'));
+      $('deleteSolutionCancel').addEventListener('_click', () => deleteSolutionModal.removeAttribute('open'));
+      $('deleteSolutionConfirm').addEventListener('_click', () => run(async () => {
+        deleteSolutionModal.removeAttribute('open');
+        await api('DELETE', `/solutions/${current.id}`);
+        current = null;
+        $('workspace').innerHTML = '<goa-callout type="information" heading="Solution deleted">Choose or create another solution.</goa-callout>';
+        await loadSolutions();
+      }));
+
+      const deleteChatModal = $('deleteChatModal');
+      deleteChatModal.addEventListener('_close', () => deleteChatModal.removeAttribute('open'));
+      $('deleteChatCancel').addEventListener('_click', () => deleteChatModal.removeAttribute('open'));
+      $('deleteChatConfirm').addEventListener('_click', () => run(async () => {
+        deleteChatModal.removeAttribute('open');
+        await api('DELETE', `/specialists/chats/${chatToDelete}`);
+        if (spec.chatId === chatToDelete) { spec.chatId = null; spec.messages = []; }
+        chatToDelete = null;
+        await loadChats();
+        renderWorkspace();
+      }));
+
+      const deletePatternModal = $('deletePatternModal');
+      deletePatternModal.addEventListener('_close', () => deletePatternModal.removeAttribute('open'));
+      $('deletePatternCancel').addEventListener('_click', () => deletePatternModal.removeAttribute('open'));
+      $('deletePatternConfirm').addEventListener('_click', () => run(async () => {
+        deletePatternModal.removeAttribute('open');
+        await api('DELETE', `/patterns/${patternToDelete}`);
+        patternToDelete = null;
+        await reloadPatterns();
+        renderWorkspace();
+      }));
+
+      const setCreateBtnDisabled = (disabled) => disabled ? $('createBtn').setAttribute('disabled', 'true') : $('createBtn').removeAttribute('disabled');
+      setCreateBtnDisabled(true);
+      $('newName').addEventListener('_change', (e) => {
+        newName = e.detail.value;
+        setCreateBtnDisabled(!newName.trim());
+      });
       $('createBtn').addEventListener('_click', () => run(async () => {
         if (!newName.trim()) throw new Error('Enter a name for the solution.');
         const created = await api('POST', '/solutions', { name: newName.trim() });
         newName = '';
         $('newName').setAttribute('value', '');
+        setCreateBtnDisabled(true);
         await loadSolutions();
         section = 'problem';
         await select(created.id);
