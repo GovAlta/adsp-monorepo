@@ -79,15 +79,9 @@ const mockDefinition: AdspFormDefinition = {
   },
 };
 
-export class AdspSignInRequiredError extends Error {
-  constructor() {
-    super('Sign in to continue.');
-  }
-}
-
 function checkSignIn(config: AdspFormStarterConfig, response: Response) {
   if (config.tokenHandler && response.status === 401) {
-    throw new AdspSignInRequiredError();
+    throw new Error('Your session has ended. Reload the page to sign in again.');
   }
 }
 

@@ -48,6 +48,7 @@ import {
   type PreviewCommand,
 } from '../lib/previewRoutes';
 import { isAgentBusy } from '../lib/previewErrors';
+import { ensureTokenHandlerSession, type TokenHandlerSessionStatus } from '../lib/tokenHandlerSession';
 import { BuilderEditPane } from '../components/BuilderEditPane';
 import {
   EmptyState,
@@ -363,6 +364,26 @@ export const BuilderTenant = () => {
   const tenant = useSelector(tenantSelector);
   const user = useSelector(userSelector);
   const userInitialized = useSelector((state: AppState) => state.user.initialized);
+
+  // The preview makes platform API requests through the token handler, so the user needs a session on it.
+  const [tokenHandlerStatus, setTokenHandlerStatus] = useState<TokenHandlerSessionStatus | 'checking'>('checking');
+  const signedInTenantName = user && tenant ? tenantName ?? tenant.name : undefined;
+  useEffect(() => {
+    if (!signedInTenantName) {
+      return;
+    }
+
+    let active = true;
+    ensureTokenHandlerSession(signedInTenantName, `${location.pathname}${location.search}`).then((status) => {
+      if (active) {
+        setTokenHandlerStatus(status);
+      }
+    });
+    return () => {
+      active = false;
+    };
+    // Sign in is checked when the user and tenant are known, not on each navigation within the builder.
+  }, [signedInTenantName]);
 
   const [threadId, setThreadId] = useState('');
   const [isEditPaneCollapsed, setIsEditPaneCollapsed] = useState(false);
@@ -1165,6 +1186,35 @@ export const BuilderTenant = () => {
                       Sign in
                     </GoabButton>
                   </GoabButtonGroup>
+                </EmptyState>
+              </SignInPanel>
+            </GridItem>
+            <GridItem md={1} />
+          </Grid>
+        </Container>
+      </Page>
+    );
+  }
+
+  if (tokenHandlerStatus === 'checking' || tokenHandlerStatus === 'redirecting') {
+    return null;
+  }
+
+  if (tokenHandlerStatus === 'unavailable') {
+    return (
+      <Page>
+        <Band title="Builder setup required">The builder cannot make platform requests for your tenant yet.</Band>
+        <Container vs={3} hs={1}>
+          <Grid>
+            <GridItem md={1} />
+            <GridItem md={10}>
+              <SignInPanel>
+                <EmptyState>
+                  <GoabCallout type="important" heading="Token handler client not registered">
+                    The builder needs the "Builder preview" token handler client to be registered for the tenant{' '}
+                    <strong>{tenant?.name ?? tenantName}</strong>. A tenant administrator can register it in the
+                    tenant management app under Access, Token handler. Reload this page after it is registered.
+                  </GoabCallout>
                 </EmptyState>
               </SignInPanel>
             </GridItem>

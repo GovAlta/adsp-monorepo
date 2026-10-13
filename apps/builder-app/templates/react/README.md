@@ -111,7 +111,7 @@ Update [src/config/adspForm.ts](src/config/adspForm.ts) to configure:
 - `serviceName` and `serviceDescription` for your program website content.
 - `definitionId` for the ADSP form definition.
 - `formServiceBaseUrl` for your tenant API base URL.
-- `accessToken` for authenticated live requests, or `tokenHandler` (with `formServiceBaseUrl` set to `/token-handler/targets/form-service`) to sign users in through the token handler. In Builder preview the `builder-preview` client is available: set `tokenHandler` to `{ clientId: 'builder-preview', tenantName: '<tenant name>' }`. The tenant's administrator must register the client first (token handler tab in the tenant management app). When running the builder locally, its dev server proxies `/token-handler` to the dev token handler, and `http://localhost:4200/token-handler/clients/builder-preview/callback` must be added to the client's valid redirect URIs in Keycloak.
+- `accessToken` for authenticated live requests, or `tokenHandler: true` (with `formServiceBaseUrl` set to `/token-handler/targets/form-service`) to make requests as the signed in user through the token handler. Builder preview signs the user in when the builder loads, which needs the `builder-preview` client to be registered for the tenant by a tenant administrator (token handler tab in the tenant management app). When running the builder locally, its dev server proxies `/token-handler` to the dev token handler, and `http://localhost:4200/token-handler/clients/builder-preview/callback` must be added to the client's valid redirect URIs in Keycloak.
 - `submitOnCreate` to control create-vs-submit behavior.
 
 ## Design and Implementation Conventions
