@@ -25,6 +25,7 @@
     "action-required": { "calloutType": "important", "icon": "alert-circle", "label": "Action required" }
   },
   "notes": [
+    "The status service is not a token handler target in Builder preview, so this pattern only works against a configured baseUrl; in preview use mock data and say so",
     "Consider caching status to reduce API calls",
     "Show loading state while fetching",
     "Handle 'not found' gracefully with helpful message",

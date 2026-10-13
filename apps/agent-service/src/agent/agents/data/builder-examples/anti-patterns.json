@@ -114,6 +114,34 @@
         "description": "Large, highlighted reference number",
         "pattern": "<div className=\"reference-box\"><span className=\"label\">Your reference number</span><span className=\"number\">APP-123</span></div>"
       }
+    },
+    {
+      "id": "tokens-in-code",
+      "name": "Access tokens or secrets in application code",
+      "severity": "critical",
+      "description": "Putting an access token, client secret or API key in the app, or writing sign in code. In Builder preview the builder has already signed the user in and the token handler adds their token to requests.",
+      "bad": {
+        "description": "A hardcoded or pasted bearer token",
+        "pattern": "headers: { Authorization: 'Bearer eyJhbGciOi...' }"
+      },
+      "good": {
+        "description": "Use the token handler through apiFetch; no token in the code",
+        "pattern": "apiFetch('/token-handler/targets/file-service/file/v1/files')"
+      }
+    },
+    {
+      "id": "raw-fetch-for-platform-requests",
+      "name": "Raw fetch for platform requests",
+      "severity": "high",
+      "description": "Using fetch for requests through the token handler. Requests other than GET are rejected without the CSRF header, which apiFetch adds.",
+      "bad": {
+        "description": "POST with raw fetch",
+        "pattern": "fetch('/token-handler/targets/form-service/form/v1/forms', { method: 'POST', body })"
+      },
+      "good": {
+        "description": "POST with apiFetch from src/lib/tokenHandler.ts",
+        "pattern": "apiFetch('/token-handler/targets/form-service/form/v1/forms', { method: 'POST', body })"
+      }
     }
   ]
 }

@@ -31,6 +31,32 @@ const formAuthoringInstructions = `
       than the Form Service. Then follow the project's AGENTS.md form field guidance (GoabFormItem, one-argument onChange).
 `;
 
+// Shared by the supervisor and the coder, like the form rules.
+const platformServiceInstructions = `
+    ## Platform Services and API Requests
+
+    Apps can call ADSP platform services (Form Service, File Service) as the signed-in user. In Builder preview this
+    works through the token handler: the builder signs the user in and the preview sends requests to
+    /token-handler/targets/<target>/<service path> on its own origin. The token handler adds the user's access token,
+    so the app never holds a token.
+
+    - Targets in Builder preview: form-service (paths under /form/v1) and file-service (paths under /file/v1). For
+      example GET /token-handler/targets/file-service/file/v1/files. No other services are available; use mock data
+      for anything else and say so.
+    - In a project with the ADSP form starter, set tokenHandler: true in src/config/adspForm.ts, together with
+      mode: 'live' and formServiceBaseUrl: '/token-handler/targets/form-service', to load definitions and submit
+      through the Form Service. Default to mode: 'mock' until the user has a real definitionId.
+    - Make every API request with apiFetch from src/lib/tokenHandler.ts, not raw fetch. It adds the CSRF header that
+      the token handler needs for requests other than GET; without it, writes fail with "Request must include valid
+      CSRF token."
+    - Never put access tokens, client secrets or API keys in the code, and do not add sign in code: the builder has
+      already signed the user in. A 401 means the session ended (the user reloads the builder); a 403 means the
+      user's role does not permit the request. Show both as plain-language messages.
+    - The requests run as the builder's user in their tenant, so only call endpoints that the user is allowed to use,
+      and prefer reads. Do not create, change or delete data unless the user asked for it.
+    - See the platform request pattern in the reference material for working code.
+`;
+
 export const builderWorkspaceAnalystAgent: AgentConfiguration = {
   name: 'Builder Workspace Analyst Agent',
   description: `This supporting agent analyzes the current workspace and reports the project stack,
@@ -54,6 +80,8 @@ export const builderWorkspaceAnalystAgent: AgentConfiguration = {
     - Important architectural patterns to preserve
     - Whether forms are rendered from a form definition (for example a mockDefinition with dataSchema and uiSchema in
       src/lib/adspFormApi.ts) so implementation edits the definition instead of hand-building fields
+    - Whether the project calls platform services through the token handler (tokenHandler in src/config/adspForm.ts,
+      apiFetch in src/lib/tokenHandler.ts, requests under /token-handler/targets/) so implementation keeps that pattern
     - Risks or unknowns requiring clarification
     - Recommended implementation steps
   `,
@@ -81,7 +109,7 @@ export const builderPrototypeCoderAgent: AgentConfiguration = {
     - Ensure runtime imports are appropriate for where code executes.
 
     ${formAuthoringInstructions}
-
+    ${platformServiceInstructions}
     ## Tool Invocation Rules (MANDATORY)
     Before every tool call:
     - Re-check required fields and types.
@@ -187,7 +215,7 @@ export const builderAgent: AgentConfiguration = {
     NEVER build the entire application in one shot. Iterate in visible steps.
 
     ${formAuthoringInstructions}
-
+    ${platformServiceInstructions}
     ## Government Service Principles
 
     Apply these principles when building Alberta government services:

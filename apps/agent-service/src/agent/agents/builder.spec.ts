@@ -30,4 +30,21 @@ describe('builder agents', () => {
   it('asks the analyst to report how forms are rendered', () => {
     expect(builderWorkspaceAnalystAgent.instructions).toContain('form definition');
   });
+
+  // Sub-agents see only their own instructions, so each agent that writes code needs the platform request rules.
+  it.each([
+    ['builderAgent', builderAgent],
+    ['builderPrototypeCoderAgent', builderPrototypeCoderAgent],
+  ])('%s knows how to make platform requests through the token handler', (_name, agent) => {
+    expect(agent.instructions).toContain('## Platform Services and API Requests');
+    expect(agent.instructions).toContain('/token-handler/targets/');
+    expect(agent.instructions).toContain('apiFetch');
+    expect(agent.instructions).toContain('CSRF');
+    expect(agent.instructions).toContain('form-service');
+    expect(agent.instructions).toContain('file-service');
+  });
+
+  it('asks the analyst to report whether the project uses the token handler', () => {
+    expect(builderWorkspaceAnalystAgent.instructions).toContain('token handler');
+  });
 });

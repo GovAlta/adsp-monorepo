@@ -10,6 +10,7 @@ import * as workspaceView from '../data/builder-examples/pages/workspace-view.js
 import * as formServiceIntegration from '../data/builder-examples/integrations/form-service.json';
 import * as statusServiceIntegration from '../data/builder-examples/integrations/status-service.json';
 import * as fileServiceIntegration from '../data/builder-examples/integrations/file-service.json';
+import * as tokenHandlerIntegration from '../data/builder-examples/integrations/token-handler.json';
 // Best practices and anti-patterns
 import * as bestPractices from '../data/builder-examples/best-practices.json';
 import * as antiPatterns from '../data/builder-examples/anti-patterns.json';
@@ -101,6 +102,7 @@ const integrationPatterns: IntegrationPattern[] = [
   formServiceIntegration,
   statusServiceIntegration,
   fileServiceIntegration,
+  tokenHandlerIntegration,
 ] as IntegrationPattern[];
 
 function renderPagePattern(pattern: PagePattern): string {

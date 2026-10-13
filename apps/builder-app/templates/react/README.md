@@ -114,6 +114,10 @@ Update [src/config/adspForm.ts](src/config/adspForm.ts) to configure:
 - `accessToken` for authenticated live requests, or `tokenHandler: true` (with `formServiceBaseUrl` set to `/token-handler/targets/form-service`) to make requests as the signed in user through the token handler. Builder preview signs the user in when the builder loads, which needs the `builder-preview` client to be registered for the tenant by a tenant administrator (token handler tab in the tenant management app). When running the builder locally, its dev server proxies `/token-handler` to the dev token handler, and `http://localhost:4200/token-handler/clients/builder-preview/callback` must be added to the client's valid redirect URIs in Keycloak.
 - `submitOnCreate` to control create-vs-submit behavior.
 
+## Platform API requests
+
+In Builder preview, apps can call platform services as the signed-in user through the token handler: requests to `/token-handler/targets/<target>/<path>` are proxied with the user's access token. Targets available in preview are `form-service` and `file-service`. Use `apiFetch` from [src/lib/tokenHandler.ts](src/lib/tokenHandler.ts) for all requests; it adds the CSRF header that requests other than GET need. See `AGENTS.md` for details.
+
 ## Design and Implementation Conventions
 
 - Use `@abgov/react-components` as the primary UI library.
