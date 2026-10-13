@@ -57,6 +57,7 @@ export const EventLog: FunctionComponent = () => {
   const onSearchCancel = () => {
     setSearched(false);
     setSearchCriteria(null);
+    dispatch(clearEventLogEntries());
     dispatch(getEventLogEntries());
   };
   const onNext = () => {
