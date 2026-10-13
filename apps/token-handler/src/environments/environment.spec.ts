@@ -67,6 +67,16 @@ describe('environment', () => {
     expect(environment.UPSTREAM_ALLOWED_DOMAINS).toEqual([]);
   });
 
+  it('can read the builder app URL', () => {
+    expect(createEnvironment(valid, onInvalid).BUILDER_APP_URL).toBe('');
+    expect(
+      createEnvironment({ ...valid, BUILDER_APP_URL: 'https://builder.example.ca' }, onInvalid).BUILDER_APP_URL
+    ).toBe('https://builder.example.ca');
+
+    createEnvironment({ ...valid, BUILDER_APP_URL: 'not a url' }, onInvalid);
+    expect(Object.keys(onInvalid.mock.calls[0][0])).toEqual(['BUILDER_APP_URL']);
+  });
+
   it('can parse allowed upstream domains', () => {
     const environment = createEnvironment(
       { ...valid, UPSTREAM_ALLOWED_DOMAINS: 'form-service, *.apps.example.ca' },

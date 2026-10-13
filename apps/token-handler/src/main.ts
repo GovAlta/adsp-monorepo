@@ -19,6 +19,7 @@ import {
   configurationSchema,
   createRestrictedDirectory,
 } from './token';
+import { createBuilderPreviewClient } from './builder';
 import { createRedisRepository } from './redis';
 
 const logger = createLogger('token-handler', environment.LOG_LEVEL);
@@ -106,6 +107,15 @@ const initializeApp = async (): Promise<express.Application> => {
             : {}
         );
       },
+      // Register core clients that are provided to all tenants.
+      serviceConfigurations: environment.BUILDER_APP_URL
+        ? [
+            {
+              serviceId,
+              configuration: { clients: createBuilderPreviewClient(environment.BUILDER_APP_URL) },
+            },
+          ]
+        : [],
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
       events: [ClientRegisteredEventDefinition],
