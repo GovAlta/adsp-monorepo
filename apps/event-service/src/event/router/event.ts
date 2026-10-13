@@ -11,6 +11,7 @@ import {
   startBenchmark,
   TokenProvider,
   UnauthorizedUserError,
+  User,
 } from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
 import { EventServiceRoles, EventServiceValueRoles } from '../role';
@@ -22,6 +23,11 @@ interface EventRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
 }
+const assertUserCanReadValue = (user: User, tenantId: AdspId, operation: string) => {
+  if (!isAllowedUser(user, tenantId, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
+    throw new UnauthorizedUserError(operation, user);
+  }
+};
 
 export const assertUserCanSend: RequestHandler = async (req, _res, next) => {
   try {
@@ -135,9 +141,7 @@ export function countEventLogEvents(
 
       // Need to be backwards compatable with Value service reader role as well as the new role
       // if the records already exist.
-      if (!isAllowedUser(user, tenant.id, [EventServiceRoles.reader, EventServiceValueRoles.Reader], true)) {
-        throw new UnauthorizedUserError('count events', user);
-      }
+      assertUserCanReadValue(user, tenant.id, 'count events');
 
       const end = startBenchmark(req, 'operation-handler-time');
 

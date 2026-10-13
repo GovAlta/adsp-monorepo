@@ -12,6 +12,7 @@ export const countEvents = async (
   const valueServiceCountUrl = new URL('v1/event-service/values/event/count', valueServiceUrl);
 
   // Event namespace and name are stored in the logged value's context, not its namespace/name.
+  // The namespace and name that we want to search for is contained in the context object.
   const context: Record<string, string> = { ...criteria.context };
 
   const token = await tokenProvider.getAccessToken();
