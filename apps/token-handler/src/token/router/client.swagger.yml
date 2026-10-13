@@ -14,6 +14,67 @@ components:
         failureRedirectUrl:
           type: string
 
+    ClientSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        core:
+          type: boolean
+        idpHint:
+          type: string
+        successRedirectUrl:
+          type: string
+        failureRedirectUrl:
+          type: string
+        redirectUris:
+          type: array
+          items:
+            type: string
+        targets:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              upstream:
+                type: string
+        registered:
+          type: boolean
+        clientId:
+          type: string
+
+/token-handler/v1/clients:
+  get:
+    tags:
+      - Client
+    description: Retrieves the clients available to the tenant, including the clients of the core configuration that are available to all tenants.
+    parameters:
+      - name: core
+        description: Set to true to only retrieve the clients of the core configuration.
+        in: query
+        required: false
+        schema:
+          type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ClientSummary"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+
 /token-handler/v1/clients/{clientId}:
   parameters:
     - name: clientId

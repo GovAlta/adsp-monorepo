@@ -111,6 +111,45 @@ export function getClient(): RequestHandler {
   };
 }
 
+export function getClients(): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const user = req.user;
+
+      if (!isAllowedUser(user, req.tenant?.id, ServiceRoles.Admin)) {
+        throw new UnauthorizedUserError('get clients', user);
+      }
+
+      const config = await req.getConfiguration<TokenHandlerConfiguration, TokenHandlerConfiguration>();
+      // Only the clients of the core configuration are returned when requested.
+      const clients = config.getClients().filter(({ core }) => req.query.core !== 'true' || core);
+      const result = await Promise.all(
+        clients.map(async (client) => {
+          // Credentials are lazy loaded, so they must be requested to know if the client is registered.
+          const credentials = await client.getCredentials();
+          return {
+            id: client.id,
+            name: client.name,
+            description: client.description,
+            core: client.core,
+            idpHint: client.idpHint,
+            successRedirectUrl: client.successRedirectUrl,
+            failureRedirectUrl: client.failureRedirectUrl,
+            redirectUris: client.redirectUris,
+            targets: Object.values(client.targets).map(({ id, upstream }) => ({ id, upstream: upstream.toString() })),
+            registered: !!credentials?.clientId,
+            clientId: credentials?.clientId,
+          };
+        })
+      );
+
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function startAuthenticate(passport: PassportStatic) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
@@ -217,7 +256,18 @@ export function createClientRouter({
 }: RouterOptions) {
   const router = Router();
 
+  router.options('/clients', cors());
   router.options('/clients/:id', cors());
+
+  router.get(
+    '/clients',
+    cors(),
+    createValidationHandler(query('core').optional().isBoolean()),
+    passport.authenticate('tenant', { session: false }),
+    tenantHandler,
+    configurationHandler,
+    getClients()
+  );
 
   router.post(
     '/clients/:id',

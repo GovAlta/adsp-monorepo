@@ -37,6 +37,7 @@ export class AuthenticationClient {
   tenantId: AdspId;
   id: string;
   name: string;
+  description?: string;
   prompt: Prompt;
   scope: string | string[];
   idpHint: string;
@@ -44,6 +45,8 @@ export class AuthenticationClient {
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
   keycloakLogout: boolean;
+  redirectUris: string[];
+  core: boolean;
   targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
   private strategy: Strategy;
@@ -58,6 +61,7 @@ export class AuthenticationClient {
     this.tenantId = client.tenantId;
     this.id = client.id;
     this.name = client.name;
+    this.description = client.description;
     this.prompt = client.prompt;
     this.scope = client.scope;
     this.idpHint = client.idpHint;
@@ -65,6 +69,8 @@ export class AuthenticationClient {
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
     this.keycloakLogout = !!client.keycloakLogout;
+    this.redirectUris = client.redirectUris || [];
+    this.core = !!client.core;
     this.targets = Object.entries(client.targets).reduce(
       (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(logger, this, directory, target) }),
       {}
@@ -84,7 +90,8 @@ export class AuthenticationClient {
           client_name: this.id,
           token_endpoint_auth_method: 'client_secret_basic',
           grant_types: ['authorization_code', 'refresh_token'],
-          redirect_uris: authCallbackUrl ? [authCallbackUrl] : [],
+          // The redirect URIs of the client configuration, and the callback URL if it is provided.
+          redirect_uris: Array.from(new Set([...this.redirectUris, ...(authCallbackUrl ? [authCallbackUrl] : [])])),
         },
         { headers: { Authorization: `Bearer ${registrationToken}` } }
       );

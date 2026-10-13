@@ -24,6 +24,7 @@ export const configurationSchema = {
             successRedirectUrl: { type: ['string', 'null'] },
             failureRedirectUrl: { type: ['string', 'null'] },
             keycloakLogout: { type: ['boolean', 'null'] },
+            redirectUris: { type: ['array', 'null'], items: { type: 'string' } },
             targets: {
               type: 'object',
               patternProperties: {
