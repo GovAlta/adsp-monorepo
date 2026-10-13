@@ -190,6 +190,28 @@ Prefer GOA components over custom HTML/CSS patterns for UI primitives in both ca
 | `GoabDatePicker` | `{ name, valueStr, value, event }`; use `valueStr` |
 | `GoabCheckbox` | `{ name, value, checked, event }` |
 
+## Platform services (token handler)
+
+The app can call ADSP platform services as the signed-in user. Builder preview does this through the token handler, which the builder proxies on the preview's own origin. The builder signs the user in before the preview loads, and the token handler adds the user's access token to each request, so the app never holds a token.
+
+- **URL shape:** `/token-handler/targets/<target>/<service path>`. Available targets in Builder preview: `form-service` (paths under `/form/v1`) and `file-service` (paths under `/file/v1`). Example: `GET /token-handler/targets/file-service/file/v1/files?top=10`. There are no other targets; use mock data for other services and tell the user.
+- **Form starter:** set `mode: 'live'`, `tokenHandler: true` and `formServiceBaseUrl: '/token-handler/targets/form-service'` in `src/config/adspForm.ts`, with a real `definitionId`. Keep `mode: 'mock'` until the user has one.
+- **Always use `apiFetch`** from `src/lib/tokenHandler.ts`, never raw `fetch`. It adds the `X-XSRF-TOKEN` CSRF header that the token handler requires for requests other than GET; without it, writes fail with `Request must include valid CSRF token.`
+- **No tokens, secrets or sign in code in the app.** `401` means the session ended (the user reloads the builder); `403` means the user's role does not allow the request. Show both as plain-language messages.
+- Requests run as the builder's user in their tenant. Prefer reads, and do not create, change or delete data unless the user asked for it.
+- For API hooks (see `src/hooks/useApi.ts` under Service UI Patterns), set `API_BASE` to the target, e.g. `/token-handler/targets/form-service/form/v1`.
+- A deployed app (outside Builder preview) needs its own token handler client, a `/token-handler` proxy on its origin and a sign in; see the token handler documentation.
+
+```ts
+import { apiFetch } from '../lib/tokenHandler';
+
+const response = await apiFetch('/token-handler/targets/file-service/file/v1/files?top=10');
+if (response.status === 401) throw new Error('Your session has ended. Reload the builder to sign in again.');
+if (response.status === 403) throw new Error('You do not have access to this information.');
+if (!response.ok) throw new Error(`Request failed (${response.status})`);
+const { results } = await response.json();
+```
+
 ## Routing Pattern
 
 Adding a page has **four mandatory steps**. The task is not done until all four are complete.
@@ -284,6 +306,7 @@ Centralise all HTTP in a `src/hooks/useApi.ts` hook. Views call `list`, `get`, `
 ```ts
 // src/hooks/useApi.ts
 import { apiFetch } from '../lib/tokenHandler';
+// Through the token handler in Builder preview, e.g. '/token-handler/targets/form-service/form/v1'.
 const API_BASE = '/api/v1';
 
 function path(resource: string, id?: string | number, action?: string) {

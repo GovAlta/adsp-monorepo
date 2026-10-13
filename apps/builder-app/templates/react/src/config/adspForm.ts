@@ -24,5 +24,7 @@ export const adspFormConfig: AdspFormStarterConfig = {
   definitionId: 'replace-with-form-definition-id',
   formServiceBaseUrl: 'https://your-tenant.example.adsp.gov.ab.ca',
   accessToken: '',
+  // true: make live requests as the signed in user through the token handler (see AGENTS.md).
+  tokenHandler: false,
   submitOnCreate: true,
 };

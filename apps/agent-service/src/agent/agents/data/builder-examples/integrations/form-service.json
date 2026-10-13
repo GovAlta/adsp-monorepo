@@ -4,18 +4,23 @@
   "category": "integrations",
   "summary": "Embed an ADSP form with live definition loading, validation, and submission.",
   "service": "form-service",
-  "dependencies": ["@abgov/jsonforms-components", "@jsonforms/core", "@jsonforms/react"],
+  "dependencies": [
+    "@abgov/jsonforms-components",
+    "@jsonforms/core",
+    "@jsonforms/react"
+  ],
   "configPattern": {
     "description": "Centralize form config in src/config/adspForm.ts",
     "properties": {
       "mode": "'mock' for prototyping without backend, 'live' for real submissions",
-      "formServiceBaseUrl": "Base URL of Form Service API (required for live mode)",
+      "formServiceBaseUrl": "Base URL of the Form Service API; in Builder preview '/token-handler/targets/form-service' (required for live mode)",
       "definitionId": "Form definition ID from Form Service (required for live mode)",
-      "accessToken": "Bearer token for authenticated requests (required for live mode)"
+      "accessToken": "Do not use in Builder preview; use tokenHandler instead",
+      "tokenHandler": "true in Builder preview: requests go through the token handler, which signs the user in and adds their access token"
     }
   },
   "codeExample": {
-    "config": "// src/config/adspForm.ts\nexport const adspFormConfig = {\n  mode: 'mock' as 'mock' | 'live',\n  formServiceBaseUrl: 'https://form-service.alberta.ca',\n  definitionId: 'child-care-subsidy-application',\n  // accessToken: obtained from auth flow\n};",
+    "config": "// src/config/adspForm.ts\nexport const adspFormConfig = {\n  mode: 'mock' as 'mock' | 'live', // switch to 'live' when there is a real definitionId\n  formServiceBaseUrl: '/token-handler/targets/form-service',\n  definitionId: 'child-care-subsidy-application',\n  tokenHandler: true, // the builder signs the user in; no token in the code\n  // ...other settings unchanged\n};",
     "component": "// src/components/FormComponent.tsx\nimport { JsonForms } from '@jsonforms/react';\nimport { GoARenderers } from '@abgov/jsonforms-components';\nimport { adspFormConfig } from '../config/adspForm';\n\nexport default function FormComponent({ onSubmit }) {\n  const [schema, setSchema] = useState(null);\n  const [uiSchema, setUiSchema] = useState(null);\n  const [data, setData] = useState({});\n\n  useEffect(() => {\n    if (adspFormConfig.mode === 'mock') {\n      // Use mock schemas for prototyping\n      setSchema({ type: 'object', properties: { name: { type: 'string' } } });\n      setUiSchema({ type: 'VerticalLayout', elements: [] });\n    } else {\n      // Fetch from Form Service\n      loadFormDefinition(adspFormConfig.definitionId);\n    }\n  }, []);\n\n  return (\n    <JsonForms\n      schema={schema}\n      uischema={uiSchema}\n      data={data}\n      renderers={GoARenderers}\n      onChange={({ data }) => setData(data)}\n    />\n  );\n}",
     "definition": "// src/lib/adspFormApi.ts — edit mockDefinition to change the form. Do not hand-build the fields in the page.\nconst mockDefinition = {\n  id: 'mock-collision-report',\n  name: 'Collision report',\n  dataSchema: {\n    type: 'object',\n    required: ['when', 'where', 'contact'],\n    properties: {\n      when: { type: 'string', format: 'date', title: 'When did the collision happen?' },\n      where: { type: 'string', title: 'Where did it happen?' },\n      what: { type: 'string', title: 'What happened?' },\n      contactMethod: { type: 'string', title: 'Preferred contact method', enum: ['Email', 'Phone'] },\n      contact: { $ref: 'https://adsp.alberta.ca/common.v1.schema.json#/definitions/email' },\n    },\n  },\n  uiSchema: {\n    type: 'VerticalLayout',\n    elements: [\n      { type: 'HelpContent', options: { markdown: true, help: 'Your information is collected under FOIP to review this report.' } },\n      { type: 'Control', scope: '#/properties/when' },\n      { type: 'Control', scope: '#/properties/where' },\n      { type: 'Control', scope: '#/properties/what', options: { multi: true } },\n      { type: 'Control', scope: '#/properties/contactMethod', options: { format: 'radio' } },\n      { type: 'Control', scope: '#/properties/contact' },\n    ],\n  },\n};"
   },
@@ -25,8 +30,10 @@
     "Switch to live mode when ready to connect to real backend"
   ],
   "liveModeNotes": [
-    "Requires authentication (Keycloak/OIDC)",
-    "Form definition must exist in Form Service",
+    "Requires the user to be signed in, which the builder does for the preview; no token is stored in the code",
+    "Set tokenHandler: true and formServiceBaseUrl: '/token-handler/targets/form-service'",
+    "Requests go through apiFetch (src/lib/tokenHandler.ts), which adds the CSRF header for submissions",
+    "Form definition must exist in Form Service for the user's tenant",
     "Submissions are persisted and can trigger workflows"
   ],
   "notes": [
