@@ -78,7 +78,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "builder-app:build",
-        "proxyConfig": "apps/builder-app/proxy.conf.json",
+        "proxyConfig": "apps/builder-app/proxy.conf.js",
         "static": {
           "directory": "dist/apps/builder-app",
           "publicPath": "/"
