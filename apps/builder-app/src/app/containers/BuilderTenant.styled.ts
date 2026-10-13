@@ -39,10 +39,14 @@ export const Page = styled.main<{ $previewFullWidth?: boolean }>`
     --builder-preview-right-gutter: 0;
   }
 
+  /* The collapsed gutter uses a doubled selector so it wins over the media queries above: styled-components emits
+     nested media queries after the component's own declarations, so a plain override is undone below 1200px. */
   ${({ $previewFullWidth }) =>
     $previewFullWidth &&
     css`
-      --builder-preview-right-gutter: 0;
+      && {
+        --builder-preview-right-gutter: 0;
+      }
     `}
 `;
 
@@ -57,21 +61,12 @@ export const Shell = styled.section`
     var(--goa-color-greyscale-100, #f7f8f9) calc(100% - var(--builder-preview-right-gutter)) 100%
   );
 
-  @media (max-width: 900px) {
-    position: static;
-    inset: auto;
-  }
 `;
 
 export const PrimaryPreviewViewport = styled.section`
   position: absolute;
   inset: 0 var(--builder-preview-right-gutter) 0 0;
   background: #ffffff;
-
-  @media (max-width: 900px) {
-    position: static;
-    min-height: 60vh;
-  }
 `;
 
 export const PreviewViewportFrame = styled.iframe`
@@ -80,10 +75,6 @@ export const PreviewViewportFrame = styled.iframe`
   border: 0;
   background: #ffffff;
   display: block;
-
-  @media (max-width: 900px) {
-    min-height: 60vh;
-  }
 `;
 
 export const SignInPanel = styled.section`

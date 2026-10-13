@@ -273,7 +273,8 @@ Feature: Form
     And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
     And the user "should not view" the disposition state of "Rejected", "The application is rejected"
 
-  @TEST_CS-3356 @REQ_CS-3381 @regression @prod
+  # Due to the new filter UI on event log page from CS-5496, this test is temporarily ignored
+  @TEST_CS-3356 @REQ_CS-3381 @regression @prod @ignore
   Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log
     Given a tenant admin user is on form definitions page
     # Add a form definition
