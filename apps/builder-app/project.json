@@ -33,11 +33,6 @@
             "glob": "silent-check-sso.html",
             "input": "apps/builder-app/src/",
             "output": "./"
-          },
-          {
-            "glob": "api.conf",
-            "input": "apps/builder-app/",
-            "output": "./"
           }
         ],
         "styles": [],
