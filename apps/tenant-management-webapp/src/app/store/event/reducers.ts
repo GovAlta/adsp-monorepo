@@ -4,6 +4,7 @@ import {
   FETCH_EVENT_DEFINITIONS_ACTION,
   FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION,
   FETCH_EVENT_LOG_ENTRIES_ACTION,
+  FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION,
   FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
   UPDATE_EVENT_DEFINITION_SUCCESS_ACTION,
   CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
@@ -77,6 +78,11 @@ export default function (state: EventState = defaultState, action: EventActionTy
         ...state,
         entries: action.after ? [...state.entries, ...action.entries] : [...action.entries],
         nextEntries: action.next,
+        isLoading: { ...state.isLoading, log: false },
+      };
+    case FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION:
+      return {
+        ...state,
         isLoading: { ...state.isLoading, log: false },
       };
     case CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION:

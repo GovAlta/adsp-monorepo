@@ -13,6 +13,7 @@ import {
   FETCH_EVENT_METRICS_ACTION,
   getEventDefinitionsSuccess,
   getEventLogEntriesSucceeded,
+  getEventLogEntriesFailed,
   UpdateEventDefinitionAction,
   updateEventDefinitionSuccess,
   UPDATE_EVENT_DEFINITION_ACTION,
@@ -167,6 +168,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
         }),
       );
     } catch {
+      yield put(getEventLogEntriesFailed());
       yield put(
         ErrorNotification({
           error: {

@@ -116,6 +116,7 @@ export const EventLog: FunctionComponent = () => {
           {hasReaderRole ? (
             <>
               <EventSearchForm
+                disabled={isLoading}
                 onSearch={(criteria) => onSearch(criteria)}
                 onCancel={onSearchCancel}
                 leftAction={
