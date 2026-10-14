@@ -87,7 +87,7 @@ export const LoadingIndicatorContainer = styled.div`
 `;
 
 export const AgentChatContainer = styled.div`
-  height: clamp(20rem, 52vh, 30rem);
+  height: clamp(21rem, 55vh, 31rem);
   width: 70%;
   min-width: min(100%, 20rem);
   max-width: 100%;
