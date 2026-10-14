@@ -15,6 +15,8 @@ export * from './components/resizable';
 
 export * from './formTemplates/defaultMultiPageForm';
 
+export * from './calendar';
+
 export * from './types/agent';
 export * from './utils';
 export * from './useScripts';

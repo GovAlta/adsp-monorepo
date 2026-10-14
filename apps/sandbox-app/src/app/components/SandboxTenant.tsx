@@ -28,6 +28,7 @@ import { ScriptServiceMain } from './services/ScriptServiceMain';
 import { CacheServiceMain } from './services/CacheServiceMain';
 import { DirectoryServiceMain } from './services/DirectoryServiceMain';
 import { CalendarServiceMain } from './services/CalendarServiceMain';
+import { CalendarClientExample } from './services/calendar/CalendarClientExample';
 import { SharepointServiceMain } from './services/SharepointServiceMain';
 import { EventServiceMain } from './services/EventServiceMain';
 import { ConfigurationServiceMain } from './services/ConfigurationServiceMain';
@@ -97,6 +98,7 @@ export const SandBoxTenant = () => {
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/cache" element={<CacheServiceMain tenantName={tenantName} />} />
                 <Route path="/services/calendar" element={<CalendarServiceMain tenantName={tenantName} />} />
+                <Route path="/services/calendar/client" element={<CalendarClientExample />} />
                 <Route path="/services/configuration" element={<ConfigurationServiceMain tenantName={tenantName} />} />
                 <Route path="/services/directory" element={<DirectoryServiceMain tenantName={tenantName} />} />
 

@@ -65,6 +65,7 @@ jest.mock('./services/ScriptServiceMain', () => ({ ScriptServiceMain: () => null
 jest.mock('./services/CacheServiceMain', () => ({ CacheServiceMain: () => null }));
 jest.mock('./services/DirectoryServiceMain', () => ({ DirectoryServiceMain: () => null }));
 jest.mock('./services/CalendarServiceMain', () => ({ CalendarServiceMain: () => null }));
+jest.mock('./services/calendar/CalendarClientExample', () => ({ CalendarClientExample: () => null }));
 jest.mock('./services/SharepointServiceMain', () => ({ SharepointServiceMain: () => null }));
 jest.mock('./services/EventServiceMain', () => ({ EventServiceMain: () => null }));
 jest.mock('./services/ConfigurationServiceMain', () => ({ ConfigurationServiceMain: () => null }));
