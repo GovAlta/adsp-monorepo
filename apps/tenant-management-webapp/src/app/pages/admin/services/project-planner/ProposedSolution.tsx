@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { GoabAccordion, GoabBadge, GoabDetails, GoabTable } from '@abgov/react-components';
+import styled from 'styled-components';
 import BlueprintViewer from './BlueprintViewer';
 import { ConfidenceLevel, Hypothesis, Solution } from './model';
 import { PaneProps } from './workplaceTypes';
@@ -10,19 +11,31 @@ const levelType: Record<ConfidenceLevel, 'success' | 'important' | 'information'
   low: 'information',
 };
 
+const ItemList = styled.ul`
+  li + li {
+    margin-top: 0.5rem;
+  }
+`;
+
 const List: FunctionComponent<{ items: React.ReactNode[]; empty?: string }> = ({ items, empty = 'None' }) =>
   items.length ? (
-    <ul>
+    <ItemList>
       {items.map((item, i) => (
         <li key={i}>{item}</li>
       ))}
-    </ul>
+    </ItemList>
   ) : (
     <p>{empty}</p>
   );
 
 const HypothesisView: FunctionComponent<{ hypothesis: Hypothesis; open: boolean }> = ({ hypothesis: h, open }) => (
-  <GoabAccordion heading={h.title} secondaryText={`${h.confidence} confidence`} open={open} headingSize="small" testId={`hypothesis-${h.id}`}>
+  <GoabAccordion
+    heading={h.title}
+    secondaryText={`${h.confidence} confidence`}
+    open={open}
+    headingSize="small"
+    testId={`hypothesis-${h.id}`}
+  >
     <p>{h.rationale}</p>
     <h3>Recommended services</h3>
     <List
@@ -44,7 +57,7 @@ const HypothesisView: FunctionComponent<{ hypothesis: Hypothesis; open: boolean 
   </GoabAccordion>
 );
 
-const Hypotheses: FunctionComponent<{ solution: Solution; open: boolean }> = ({ solution, open }) =>
+export const Hypotheses: FunctionComponent<{ solution: Solution; open: boolean }> = ({ solution, open }) =>
   solution.state.hypotheses.length ? (
     <>
       {solution.state.hypotheses.map((h, i) => (
@@ -55,7 +68,7 @@ const Hypotheses: FunctionComponent<{ solution: Solution; open: boolean }> = ({ 
     <p>Run an analysis to see solution hypotheses.</p>
   );
 
-const Concepts: FunctionComponent<{ solution: Solution }> = ({ solution }) =>
+export const Concepts: FunctionComponent<{ solution: Solution }> = ({ solution }) =>
   solution.state.concepts.length ? (
     <GoabTable width="100%" testId="concepts-table">
       <thead>
@@ -81,18 +94,22 @@ const Concepts: FunctionComponent<{ solution: Solution }> = ({ solution }) =>
     <p>No concepts yet.</p>
   );
 
-const NextSteps: FunctionComponent<{ solution: Solution }> = ({ solution }) => (
+export const NextSteps: FunctionComponent<{ solution: Solution }> = ({ solution }) => (
   <List
     empty="Run an analysis to get next steps."
     items={solution.state.nextSteps.map((n) => (
       <>
-        <strong>{n.title}</strong> {n.service && <GoabBadge type="information" content={n.service} />} — {n.reason}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+          <strong>{n.title}</strong>
+          {n.service && <GoabBadge type="information" content={n.service} />}
+        </span>{' '}
+        — {n.reason}
       </>
     ))}
   />
 );
 
-const PatternMatches: FunctionComponent<{ solution: Solution }> = ({ solution }) => {
+export const PatternMatches: FunctionComponent<{ solution: Solution }> = ({ solution }) => {
   const matches = solution.state.patternMatches || [];
   return matches.length ? (
     <GoabTable width="100%" testId="pattern-matches-table">

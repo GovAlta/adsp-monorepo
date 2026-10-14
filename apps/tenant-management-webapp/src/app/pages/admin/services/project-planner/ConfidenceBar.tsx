@@ -26,7 +26,15 @@ const Bar: FunctionComponent<{
     aria-valuemax={100}
     aria-label={label}
     data-testid={testId}
-    style={{ background: '#dcdcdc', borderRadius: 4, height, flex: 1, minWidth: 140, maxWidth: 420, position: 'relative' }}
+    style={{
+      background: '#dcdcdc',
+      borderRadius: 4,
+      height,
+      flex: 1,
+      minWidth: 140,
+      maxWidth: 420,
+      position: 'relative',
+    }}
   >
     <div style={{ width: `${score}%`, background: color, height: '100%', borderRadius: 4 }} />
     {threshold !== undefined && (
@@ -69,15 +77,22 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
           content={sufficient ? 'Sufficient to propose a solution' : `Below ${threshold}% — more detail needed`}
         />
       </div>
-      <GoabDetails heading="Confidence breakdown" testId="confidence-breakdown">
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <GoabDetails heading="Confidence breakdown" testId="confidence-breakdown" mt="m">
+        <div
+          role="list"
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'grid',
+            gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem minmax(0, 2fr)',
+            gap: '8px 12px',
+            alignItems: 'center',
+          }}
+        >
           {factors.map((factor) => (
-            <li
-              key={factor.id}
-              data-testid={`confidence-factor-${factor.id}`}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}
-            >
-              <span style={{ minWidth: 190 }}>{factor.label}</span>
+            <div role="listitem" key={factor.id} style={{ display: 'contents' }}>
+              <span data-testid={`confidence-factor-${factor.id}`}>{factor.label}</span>
               <Bar
                 score={factor.score}
                 color={factor.score >= threshold ? SUCCESS_COLOR : WARNING_COLOR}
@@ -86,10 +101,10 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
                 testId={`confidence-factor-bar-${factor.id}`}
               />
               <span>{factor.score}%</span>
-              {factor.note && <span>{factor.note}</span>}
-            </li>
+              <span>{factor.note || ''}</span>
+            </div>
           ))}
-        </ul>
+        </div>
       </GoabDetails>
     </div>
   );

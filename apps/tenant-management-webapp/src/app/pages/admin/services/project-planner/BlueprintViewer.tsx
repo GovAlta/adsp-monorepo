@@ -1,5 +1,13 @@
 import React, { FunctionComponent, ReactNode, useState } from 'react';
-import { GoabBadge, GoabButton, GoabCallout, GoabCircularProgress, GoabContainer, GoabDetails, GoabTable } from '@abgov/react-components';
+import {
+  GoabBadge,
+  GoabButton,
+  GoabCallout,
+  GoabCircularProgress,
+  GoabContainer,
+  GoabDetails,
+  GoabTable,
+} from '@abgov/react-components';
 import { PlannerApi } from './api';
 import { AnalysisMode, Solution } from './model';
 
@@ -52,7 +60,11 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
   };
 
   if (!hypotheses.length) {
-    return <p data-testid="blueprint-unavailable">Analyze the problem first; the blueprint is built from the proposed solution.</p>;
+    return (
+      <p data-testid="blueprint-unavailable">
+        Analyze the problem first; the blueprint is built from the proposed solution.
+      </p>
+    );
   }
 
   const controls = (
@@ -68,7 +80,13 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
           {running ? 'Generating…' : blueprint ? 'Regenerate blueprint' : 'Generate blueprint'}
         </GoabButton>
         {blueprint && (
-          <GoabButton type="tertiary" size="compact" testId="blueprint-refresh" disabled={working} onClick={() => generate(true)}>
+          <GoabButton
+            type="tertiary"
+            size="compact"
+            testId="blueprint-refresh"
+            disabled={working}
+            onClick={() => generate(true)}
+          >
             Regenerate with fresh specialist consultations
           </GoabButton>
         )}
@@ -87,8 +105,9 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
     return (
       <div data-testid="blueprint-viewer">
         <p>
-          The blueprint turns the proposed solution into a complete plan: project overview, technical architecture, ADSP service
-          mapping, consolidated specialist consultation notes, core workflows, data and governance, and a delivery plan.
+          The blueprint turns the proposed solution into a complete plan: project overview, technical architecture, ADSP
+          service mapping, consolidated specialist consultation notes, core workflows, data and governance, and a
+          delivery plan.
         </p>
         {controls}
       </div>
@@ -111,12 +130,12 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
         Generated {formatDate(blueprint.generatedOn)} · {blueprint.mode === 'ai' ? 'AI' : 'rule-based'}
       </p>
       {blueprint.warning && (
-        <GoabCallout type="important" heading="Note" testId="blueprint-warning">
+        <GoabCallout type="important" heading="Note" mt="m" testId="blueprint-warning">
           {blueprint.warning}
         </GoabCallout>
       )}
       {stale && (
-        <GoabCallout type="important" heading="Out of date" testId="blueprint-stale">
+        <GoabCallout type="important" heading="Out of date" mt="m" testId="blueprint-stale">
           The solution was re-analyzed after this blueprint was generated. Regenerate it to include the latest answers.
         </GoabCallout>
       )}

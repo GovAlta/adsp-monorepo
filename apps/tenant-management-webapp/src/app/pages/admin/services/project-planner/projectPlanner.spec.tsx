@@ -17,6 +17,7 @@ jest.mock('./overview', () => ({
   ),
 }));
 jest.mock('./solutions', () => ({ Solutions: () => <div data-testid="solutions-content" /> }));
+jest.mock('./SolutionsWorkspace', () => ({ SolutionsWorkspace: () => <div data-testid="solutions-content" /> }));
 jest.mock('./patterns', () => ({ Patterns: () => <div data-testid="patterns-content" /> }));
 
 describe('ProjectPlanner', () => {
@@ -66,6 +67,14 @@ describe('ProjectPlanner', () => {
     expect(getByTestId('solutions-content')).toBeTruthy();
   });
 
+  it('shows the solutions tab when the route has a solution id', () => {
+    useParamsMock.mockReturnValue({ id: 'solution-1' });
+
+    const { getByTestId } = render(<ProjectPlanner />);
+
+    expect(getByTestId('solutions-content')).toBeTruthy();
+  });
+
   it('shows the patterns tab when the route tab is patterns', () => {
     useParamsMock.mockReturnValue({ tab: 'patterns' });
 
@@ -97,5 +106,23 @@ describe('ProjectPlanner', () => {
     fireEvent.click(getByTestId('overview-content'));
 
     expect(mockNavigate).toHaveBeenCalledWith('../solutions');
+  });
+
+  it('navigates when switching tabs by clicking, keeping the URL in sync', () => {
+    useParamsMock.mockReturnValue({ tab: 'solutions' });
+    const { getByTestId } = render(<ProjectPlanner />);
+
+    fireEvent.click(getByTestId('tab-btn-0'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('../overview');
+  });
+
+  it('navigates one level deeper when switching tabs from an open solution', () => {
+    useParamsMock.mockReturnValue({ id: 'solution-1' });
+    const { getByTestId } = render(<ProjectPlanner />);
+
+    fireEvent.click(getByTestId('tab-btn-0'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('../../overview');
   });
 });

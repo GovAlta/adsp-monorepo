@@ -20,8 +20,8 @@ const Stack = styled.div`
   gap: 0.5rem;
 `;
 
-const sourceBadge: Record<PatternSource, { type: 'light' | 'information' | 'success'; label: string }> = {
-  'built-in': { type: 'light', label: 'Built-in' },
+const sourceBadge: Record<PatternSource, { type: 'default' | 'information' | 'success'; label: string }> = {
+  'built-in': { type: 'default', label: 'Built-in' },
   customized: { type: 'information', label: 'Customized' },
   custom: { type: 'success', label: 'Custom' },
 };
@@ -164,7 +164,8 @@ const validate = (input: PatternInput): FieldErrors => {
     if (signals.length > LIMITS.signals) {
       errors[key] = `Add no more than ${LIMITS.signals} signals.`;
     } else if (signals.some((s) => s.keywords.length < 1 || s.description.length > LIMITS.signalText)) {
-      errors[key] = `Each signal needs a description (up to ${LIMITS.signalText} characters) and at least one keyword after "|".`;
+      errors[key] =
+        `Each signal needs a description (up to ${LIMITS.signalText} characters) and at least one keyword after "|".`;
     }
   }
   if (input.serviceMappings.length < 1) {
@@ -215,7 +216,7 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
         .listPatterns()
         .then(setPatterns)
         .catch(() => setPatterns([])),
-    [api]
+    [api],
   );
 
   useEffect(() => {
@@ -305,7 +306,7 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
     <section>
       <p>Business patterns the planner uses to recognise your problem.</p>
       {canEdit && (
-        <GoabButton size="compact" testId="pattern-new" onClick={() => startEdit()}>
+        <GoabButton size="compact" mb="m" testId="pattern-new" onClick={() => startEdit()}>
           New pattern
         </GoabButton>
       )}
@@ -326,7 +327,13 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
                 <td>
                   {pattern.name}
                   <br />
-                  <GoabBadge type={source.type} content={source.label} icon={false} testId={`pattern-source-${pattern.id}`} />
+                  <GoabBadge
+                    type={source.type}
+                    content={source.label}
+                    icon={false}
+                    emphasis="subtle"
+                    testId={`pattern-source-${pattern.id}`}
+                  />
                 </td>
                 <td>
                   {pattern.description}
@@ -340,7 +347,7 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
                             ))}
                           </ul>
                         </GoabDetails>
-                      )
+                      ),
                   )}
                 </td>
                 <td>
@@ -354,11 +361,21 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
                 </td>
                 {canEdit && (
                   <td>
-                    <GoabButton size="compact" type="tertiary" testId={`pattern-edit-${pattern.id}`} onClick={() => startEdit(pattern)}>
+                    <GoabButton
+                      size="compact"
+                      type="tertiary"
+                      testId={`pattern-edit-${pattern.id}`}
+                      onClick={() => startEdit(pattern)}
+                    >
                       Edit
                     </GoabButton>
                     {pattern.source !== 'built-in' && (
-                      <GoabButton size="compact" type="tertiary" testId={`pattern-delete-${pattern.id}`} onClick={() => setDeleting(pattern)}>
+                      <GoabButton
+                        size="compact"
+                        type="tertiary"
+                        testId={`pattern-delete-${pattern.id}`}
+                        onClick={() => setDeleting(pattern)}
+                      >
                         {pattern.source === 'customized' ? 'Revert' : 'Delete'}
                       </GoabButton>
                     )}
@@ -377,10 +394,21 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
           onClose={() => setDeleting(undefined)}
           actions={
             <GoabButtonGroup alignment="end">
-              <GoabButton type="secondary" disabled={busy} testId="pattern-delete-cancel" onClick={() => setDeleting(undefined)}>
+              <GoabButton
+                type="secondary"
+                disabled={busy}
+                testId="pattern-delete-cancel"
+                onClick={() => setDeleting(undefined)}
+              >
                 Cancel
               </GoabButton>
-              <GoabButton type="primary" variant="destructive" disabled={busy} testId="pattern-delete-confirm" onClick={confirmDelete}>
+              <GoabButton
+                type="primary"
+                variant="destructive"
+                disabled={busy}
+                testId="pattern-delete-confirm"
+                onClick={confirmDelete}
+              >
                 {deleting.source === 'customized' ? 'Revert' : 'Delete'}
               </GoabButton>
             </GoabButtonGroup>

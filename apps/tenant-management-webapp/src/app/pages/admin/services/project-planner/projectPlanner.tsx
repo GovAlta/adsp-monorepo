@@ -6,15 +6,17 @@ import { Tab, Tabs } from '@components/Tabs';
 import BetaBadge from '@icons/beta-badge.svg';
 import { HeadingDiv } from '../styled-components';
 import { PlannerOverview } from './overview';
-import { Solutions } from './solutions';
+import { SolutionsWorkspace } from './SolutionsWorkspace';
 import { Patterns } from './patterns';
 
 const TABS = ['overview', 'solutions', 'patterns'];
 
 export const ProjectPlanner: FunctionComponent = () => {
-  const { tab } = useParams();
+  const { tab, id } = useParams<{ tab?: string; id?: string }>();
   const navigate = useNavigate();
-  const activeIndex = Math.max(TABS.indexOf(tab), 0);
+  const activeTab = id ? 'solutions' : tab;
+  const activeIndex = Math.max(TABS.indexOf(activeTab), 0);
+  const changeTab = (index: number) => navigate(id ? `../../${TABS[index]}` : `../${TABS[index]}`);
 
   return (
     <Page>
@@ -23,12 +25,12 @@ export const ProjectPlanner: FunctionComponent = () => {
           <h1 data-testid="project-planner-title">Project planner service</h1>
           <img src={BetaBadge} alt="Beta" />
         </HeadingDiv>
-        <Tabs activeIndex={activeIndex}>
+        <Tabs activeIndex={activeIndex} changeTabCallback={changeTab}>
           <Tab label="Overview" data-testid="project-planner-overview-tab">
             <PlannerOverview onStart={() => navigate('../solutions')} />
           </Tab>
           <Tab label="Solutions" data-testid="project-planner-solutions-tab">
-            <Solutions />
+            <SolutionsWorkspace />
           </Tab>
           <Tab label="Patterns" data-testid="project-planner-patterns-tab">
             <Patterns />

@@ -1,14 +1,16 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
+import { useSelector } from 'react-redux';
 import { SolutionWorkplace } from './SolutionWorkplace';
 import { usePlannerApi } from './api';
-import { layoutPanes, LAYOUT_KEY, solutionModeKey } from './workplaceLayout';
+import { layoutPanes, solutionModeKey } from './workplaceLayout';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi, MockPlannerApi } from './testing/createMockApi';
 import { download } from './utils';
 import { ChatSummary, Solution, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
+jest.mock('react-redux', () => ({ useSelector: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
 
 const goa = (container: HTMLElement, testId: string) => container.querySelector(`[testid="${testId}"]`) as Element;
@@ -16,7 +18,9 @@ const click = (container: HTMLElement, testId: string) => fireEvent(goa(containe
 const type = (container: HTMLElement, testId: string, value: string) =>
   fireEvent(goa(container, testId), new CustomEvent('_change', { detail: { name: 'x', value } }));
 const paneIds = (container: HTMLElement, column: number) =>
-  Array.from(container.querySelectorAll(`[data-testid="pane-column-${column}"] > section`)).map((s) => s.getAttribute('data-testid'));
+  Array.from(container.querySelectorAll(`[data-testid="pane-column-${column}"] > section`)).map((s) =>
+    s.getAttribute('data-testid'),
+  );
 
 const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit intake'): Solution => ({
   id: 'solution-1',
@@ -47,8 +51,24 @@ const analyzed = (extra: Partial<Solution['state']> = {}): Solution =>
       { id: 'q2', question: 'Is a fee collected?', raisedBy: 'planner', status: 'answered', answer: 'No' },
     ],
     patternMatches: [
-      { patternId: 'p1', patternName: 'Permitting', score: 9, level: 'high', matchedLanguage: [], matchedSignals: [], explanation: 'Looks like permitting.' },
-      { patternId: 'p2', patternName: 'Case management', score: 4, level: 'medium', matchedLanguage: [], matchedSignals: [], explanation: 'Could be cases.' },
+      {
+        patternId: 'p1',
+        patternName: 'Permitting',
+        score: 9,
+        level: 'high',
+        matchedLanguage: [],
+        matchedSignals: [],
+        explanation: 'Looks like permitting.',
+      },
+      {
+        patternId: 'p2',
+        patternName: 'Case management',
+        score: 4,
+        level: 'medium',
+        matchedLanguage: [],
+        matchedSignals: [],
+        explanation: 'Could be cases.',
+      },
     ],
     hypotheses: [
       {
@@ -95,8 +115,26 @@ const readyDiscovery = {
 };
 
 const specialists = [
-  { service: 'form-service', displayName: 'Form service', purpose: 'Forms', order: 1, questions: [], dependsOn: [], risks: [], workspacePath: '' },
-  { service: 'file-service', displayName: 'File service', purpose: 'Files', order: 2, questions: [], dependsOn: [], risks: [], workspacePath: '' },
+  {
+    service: 'form-service',
+    displayName: 'Form service',
+    purpose: 'Forms',
+    order: 1,
+    questions: [],
+    dependsOn: [],
+    risks: [],
+    workspacePath: '',
+  },
+  {
+    service: 'file-service',
+    displayName: 'File service',
+    purpose: 'Files',
+    order: 2,
+    questions: [],
+    dependsOn: [],
+    risks: [],
+    workspacePath: '',
+  },
 ] as SpecialistDefinition[];
 
 const chat = (id: string, service: string): ChatSummary => ({
@@ -137,9 +175,19 @@ describe('SolutionWorkplace', () => {
       getSolution: jest.fn().mockResolvedValue(solution),
       getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['ai', 'rules'], defaultMode: 'ai' }),
       listSpecialists: jest.fn().mockResolvedValue(specialists),
-      listChats: jest.fn().mockResolvedValue([chat('c1', 'form-service'), chat('c2', 'form-service'), chat('c3', 'form-service')]),
+      listChats: jest
+        .fn()
+        .mockResolvedValue([chat('c1', 'form-service'), chat('c2', 'form-service'), chat('c3', 'form-service')]),
       listPatterns: jest.fn().mockResolvedValue([
-        { id: 'p2', name: 'Case management', description: '', domainLanguage: [], commonFeatures: ['Intake'], serviceMappings: [{ service: 'task-service', reason: 'Tasks' }], clarifyingQuestions: [] },
+        {
+          id: 'p2',
+          name: 'Case management',
+          description: '',
+          domainLanguage: [],
+          commonFeatures: ['Intake'],
+          serviceMappings: [{ service: 'task-service', reason: 'Tasks' }],
+          clarifyingQuestions: [],
+        },
       ]),
       ...overrides,
     });
@@ -153,39 +201,52 @@ describe('SolutionWorkplace', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    (useSelector as jest.Mock).mockImplementation((selector) => selector({ session: { resourceAccess: undefined } }));
   });
 
   it('shows a progress indicator while loading', () => {
-    (usePlannerApi as jest.Mock).mockReturnValue(createMockApi({ getSolution: jest.fn().mockReturnValue(new Promise(() => undefined)) }));
+    (usePlannerApi as jest.Mock).mockReturnValue(
+      createMockApi({ getSolution: jest.fn().mockReturnValue(new Promise(() => undefined)) }),
+    );
     const { container } = render(<SolutionWorkplace solutionId="solution-1" />);
 
     expect(container.querySelector('goa-circular-progress')).not.toBeNull();
   });
 
   it('returns to the list when the solution cannot be loaded', async () => {
-    (usePlannerApi as jest.Mock).mockReturnValue(createMockApi({ getSolution: jest.fn().mockRejectedValue(new Error('missing')) }));
+    (usePlannerApi as jest.Mock).mockReturnValue(
+      createMockApi({ getSolution: jest.fn().mockRejectedValue(new Error('missing')) }),
+    );
     render(<SolutionWorkplace solutionId="solution-1" onBack={onBack} />);
 
     await waitFor(() => expect(onBack).toHaveBeenCalled());
   });
 
-  it('defaults to Guided Discovery, one column and AI analysis with ordered panes', async () => {
+  it('defaults to the workplace tabs with AI analysis', async () => {
     const { container, getByTestId } = await setup();
 
     expect(getByTestId('solution-title').textContent).toBe('Permit intake');
-    expect(goa(container, 'solution-mode-mode2').getAttribute('type')).toBe('primary');
-    expect(goa(container, 'layout-one').getAttribute('type')).toBe('primary');
+    expect(goa(container, 'focus-workplace').getAttribute('type')).toBe('primary');
     expect(goa(container, 'analysis-mode-ai').getAttribute('type')).toBe('primary');
-    const modes = Array.from(container.querySelectorAll('goa-button[testid^="solution-mode-"]')).map((b) => b.textContent);
-    expect(modes).toEqual(['Guided Discovery', 'Rapid Recommend', 'Option Explorer']);
+    const tabs = Array.from(container.querySelectorAll('[data-testid^="tab-"][data-testid$="-tab-btn"]')).map(
+      (b) => b.textContent,
+    );
+    expect(tabs).toEqual([
+      'Problem & analysis',
+      'Conversation',
+      'Hypotheses',
+      'Concepts',
+      'Questions',
+      'Next steps',
+      'Blueprint',
+    ]);
     expect(container.querySelector('[role="progressbar"]')).not.toBeNull();
-    expect(paneIds(container, 0)).toEqual(['pane-1', 'pane-2', 'pane-3', 'pane-4', 'pane-5']);
-    expect(container.querySelector('[data-testid="pane-column-1"]')).toBeNull();
-    expect(getByTestId('mode-hint').textContent).toContain('answer the AI follow-up questions');
   });
 
   it('uses rule-based analysis when AI is unavailable', async () => {
-    const { container } = await setup(undefined, { getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['rules'], defaultMode: 'rules' }) });
+    const { container } = await setup(undefined, {
+      getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['rules'], defaultMode: 'rules' }),
+    });
 
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
     expect(goa(container, 'analysis-mode-ai').getAttribute('disabled')).toBe('true');
@@ -199,7 +260,9 @@ describe('SolutionWorkplace', () => {
     });
 
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
-    expect(container.querySelector('[data-testid="specialist-rail"]')?.textContent).toContain('No specialists available');
+    expect(container.querySelector('[data-testid="rail-no-specialists"]')?.textContent).toContain(
+      'No specialists available',
+    );
   });
 
   it('switches analysis mode', async () => {
@@ -210,61 +273,12 @@ describe('SolutionWorkplace', () => {
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
   });
 
-  it('lays out two columns with 1,2,4 left and 3,5 right and persists the choice', async () => {
-    const { container } = await setup();
-
-    click(container, 'layout-two');
-
-    expect(paneIds(container, 0)).toEqual(['pane-1', 'pane-2', 'pane-4']);
-    expect(paneIds(container, 1)).toEqual(['pane-3', 'pane-5']);
-    expect(localStorage.getItem(LAYOUT_KEY)).toBe('two');
-  });
-
-  it('restores the stored layout and mode', async () => {
-    localStorage.setItem(LAYOUT_KEY, 'two');
-    localStorage.setItem(solutionModeKey('solution-1'), 'mode1');
-    const { container } = await setup();
-
-    expect(goa(container, 'solution-mode-mode1').getAttribute('type')).toBe('primary');
-    expect(goa(container, 'layout-two').getAttribute('type')).toBe('primary');
-    expect(paneIds(container, 0)).toEqual(['pane-1', 'pane-2', 'pane-4']);
-  });
-
-  it('ignores invalid stored values', async () => {
-    localStorage.setItem(LAYOUT_KEY, 'bogus');
-    localStorage.setItem(solutionModeKey('solution-1'), 'bogus');
-    const { container } = await setup();
-
-    expect(goa(container, 'solution-mode-mode2').getAttribute('type')).toBe('primary');
-    expect(goa(container, 'layout-one').getAttribute('type')).toBe('primary');
-  });
-
-  describe('Guided Discovery', () => {
-    it('hides refine and specialist panes until discovery is ready', async () => {
-      const { container } = await setup(analyzed({ discovery: { ...readyDiscovery, ready: false } }));
-
-      expect(paneIds(container, 0)).toEqual(['pane-1', 'pane-2', 'pane-3']);
-      expect(goa(container, 'solution-not-ready')).not.toBeNull();
-    });
-
-    it('shows the not-yet message without discovery state', async () => {
-      const { container } = await setup(baseSolution());
-
-      expect(goa(container, 'solution-not-ready').textContent).toContain('50%');
-      expect(goa(container, 'discovery-start')).not.toBeNull();
-    });
-
-    it('shows the proposed solution sections closed by default', async () => {
+  describe('Problem & analysis tab', () => {
+    it('shows the pattern matches below the problem statement', async () => {
       const { container } = await setup();
 
-      for (const id of ['hypotheses', 'concepts', 'steps', 'patterns']) {
-        expect(goa(container, `section-${id}`).hasAttribute('open')).toBe(false);
-      }
-      expect(goa(container, 'hypothesis-h1').hasAttribute('open')).toBe(false);
-      expect(container.textContent).toContain('1. form-service');
-      expect(container.textContent).toContain('Define forms');
       expect(container.textContent).toContain('Looks like permitting.');
-      expect(container.textContent).toContain('Project blueprint');
+      expect(container.querySelector('[testid="pattern-matches-table"]')).not.toBeNull();
     });
 
     it('saves and analyzes the problem statement with the analysis mode', async () => {
@@ -282,13 +296,17 @@ describe('SolutionWorkplace', () => {
     });
 
     it('saves the problem statement without analyzing', async () => {
-      const { container } = await setup(undefined, { updateSolution: jest.fn().mockResolvedValue(analyzed({ discovery: readyDiscovery })) });
+      const { container } = await setup(undefined, {
+        updateSolution: jest.fn().mockResolvedValue(analyzed({ discovery: readyDiscovery })),
+      });
 
       expect(goa(container, 'problem-save').getAttribute('disabled')).toBe('true');
       type(container, 'problem-input', 'Edited');
       click(container, 'problem-save');
 
-      await waitFor(() => expect(api.updateSolution).toHaveBeenCalledWith('solution-1', { problemStatement: 'Edited' }));
+      await waitFor(() =>
+        expect(api.updateSolution).toHaveBeenCalledWith('solution-1', { problemStatement: 'Edited' }),
+      );
       expect(api.analyze).not.toHaveBeenCalled();
     });
 
@@ -306,10 +324,17 @@ describe('SolutionWorkplace', () => {
       await waitFor(() => expect(container.querySelector('goa-circular-progress')).toBeNull());
       expect(goa(container, 'problem-analyze').getAttribute('disabled')).toBeNull();
     });
+  });
 
+  const openTab = (container: HTMLElement, testId: string) =>
+    fireEvent.click(container.querySelector(`[data-testid="${testId}-tab-btn"]`) as Element);
+
+  describe('Conversation tab', () => {
     it('sends a refine message', async () => {
+      localStorage.setItem(solutionModeKey('solution-1'), 'mode1');
       const updated = analyzed({ discovery: readyDiscovery });
       const { container } = await setup(undefined, { chat: jest.fn().mockResolvedValue(updated) });
+      openTab(container, 'tab-conversation');
 
       expect(goa(container, 'refine-send').getAttribute('disabled')).toBe('true');
       type(container, 'refine-input', '  More detail ');
@@ -320,75 +345,64 @@ describe('SolutionWorkplace', () => {
       expect(goa(container, 'refine-message-0').getAttribute('heading')).toBe('You');
     });
 
-    it('shows specialist counts and opens a specialist chat', async () => {
-      const { container } = await setup();
+    it('defaults to Guided Discovery and shows the discovery conversation', async () => {
+      const { container } = await setup(baseSolution());
+      openTab(container, 'tab-conversation');
 
-      expect(goa(container, 'specialist-form-service').textContent).toBe('Form (3)');
-      expect(goa(container, 'specialist-form-service').querySelector('strong')).not.toBeNull();
-      expect(goa(container, 'specialist-file-service').textContent).toBe('File');
-      expect(goa(container, 'specialist-file-service').querySelector('strong')).toBeNull();
-      expect(container.querySelector('[data-testid="specialist-hint"]')).not.toBeNull();
-
-      click(container, 'specialist-file-service');
-
-      await waitFor(() => expect(container.querySelector('[data-testid="chat-heading"]')?.textContent).toContain('File service'));
-      expect(api.listChats).toHaveBeenCalledWith({ service: 'file-service', solutionId: 'solution-1' });
-      expect(goa(container, 'specialist-file-service').getAttribute('type')).toBe('primary');
+      expect(goa(container, 'solution-mode-mode2').getAttribute('type')).toBe('primary');
+      expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
+      expect(goa(container, 'discovery-start')).not.toBeNull();
     });
 
-    it('refreshes counts when chats change', async () => {
-      const { container } = await setup(undefined, {
-        specialistChat: jest.fn().mockResolvedValue({ chatId: 'c9', service: 'file-service', mode: 'ai', reply: 'Hi', suggestions: [], samples: [], followUps: [] }),
-      });
-      click(container, 'specialist-file-service');
-      await waitFor(() => expect(container.querySelector('[data-testid="chat-heading"]')).not.toBeNull());
-      const before = api.listChats.mock.calls.length;
-
-      type(container, 'chat-input', 'Hello');
-      await waitFor(() => expect(goa(container, 'chat-send').getAttribute('disabled')).toBeNull());
-      click(container, 'chat-send');
-
-      await waitFor(() => expect(api.specialistChat).toHaveBeenCalled());
-      await waitFor(() => expect(api.listChats.mock.calls.length).toBeGreaterThan(before + 1));
-    });
-
-    it('has no accessibility violations', async () => {
+    it('switches to Rapid Recommend and persists the choice per solution', async () => {
       const { container } = await setup();
+      openTab(container, 'tab-conversation');
 
-      await expectNoA11yViolations(container);
+      click(container, 'solution-mode-mode1');
+
+      expect(container.querySelector('[data-testid="discovery-panel"]')).toBeNull();
+      expect(container.querySelector('[data-testid="refine-chat"]')).not.toBeNull();
+      expect(localStorage.getItem(solutionModeKey('solution-1'))).toBe('mode1');
     });
   });
 
-  describe('Rapid Recommend', () => {
-    beforeEach(() => localStorage.setItem(solutionModeKey('solution-1'), 'mode1'));
-
-    it('renders the compressed view with sections open and all five panes', async () => {
+  describe('Hypotheses, Concepts and Next steps tabs', () => {
+    it('shows hypotheses, concepts and next steps for an analyzed solution', async () => {
       const { container } = await setup();
 
-      expect(paneIds(container, 0)).toEqual(['pane-1', 'pane-2', 'pane-3', 'pane-4', 'pane-5']);
-      expect(goa(container, 'section-hypotheses').hasAttribute('open')).toBe(true);
+      openTab(container, 'tab-hypotheses');
       expect(goa(container, 'hypothesis-h1').hasAttribute('open')).toBe(true);
-      expect(goa(container, 'hypothesis-h2').hasAttribute('open')).toBe(false);
-      expect(container.querySelector('[data-testid="questions-pane"]')).not.toBeNull();
+      expect(container.textContent).toContain('1. form-service');
+
+      openTab(container, 'tab-concepts');
+      expect(container.querySelector('[testid="concepts-table"]')).not.toBeNull();
+
+      openTab(container, 'tab-steps');
+      expect(container.textContent).toContain('Define forms');
     });
 
+    it('shows empty states for an analysis without results', async () => {
+      const { container } = await setup(
+        baseSolution({ analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' } }),
+      );
+
+      openTab(container, 'tab-hypotheses');
+      expect(container.textContent).toContain('Run an analysis to see solution hypotheses.');
+      openTab(container, 'tab-concepts');
+      expect(container.textContent).toContain('No concepts yet.');
+      openTab(container, 'tab-steps');
+      expect(container.textContent).toContain('Run an analysis to get next steps.');
+    });
+  });
+
+  describe('Questions tab', () => {
     it('prompts for analysis when nothing has been analyzed', async () => {
       const { container } = await setup(baseSolution());
+      openTab(container, 'tab-questions');
 
-      expect(container.querySelector('[data-testid="proposed-solution"]')?.textContent).toContain('Analyze the problem');
-      expect(container.querySelector('[data-testid="questions-pane"]')?.textContent).toContain('Save and analyze the problem first');
-      expect(container.querySelector('[data-testid="refine-empty"]')?.textContent).toContain('AI will answer');
-    });
-
-    it('shows empty hypotheses, concepts and steps for an analysis without results', async () => {
-      const { container } = await setup(baseSolution({ analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' } }));
-
-      const text = container.querySelector('[data-testid="proposed-solution"]')?.textContent;
-      expect(text).toContain('Run an analysis to see solution hypotheses.');
-      expect(text).toContain('No concepts yet.');
-      expect(text).toContain('Run an analysis to get next steps.');
-      expect(text).toContain('Not analyzed yet.');
-      expect(goa(container, 'analysis-info').textContent).toContain('Fell back');
+      expect(container.querySelector('[data-testid="questions-pane"]')?.textContent).toContain(
+        'Save and analyze the problem first',
+      );
     });
 
     it('answers a question and refines the analysis', async () => {
@@ -397,6 +411,7 @@ describe('SolutionWorkplace', () => {
         answerQuestion: jest.fn().mockResolvedValue(updated),
         analyze: jest.fn().mockResolvedValue(updated),
       });
+      openTab(container, 'tab-questions');
 
       type(container, 'answer-q1', 'Yes, by staff');
       click(container, 'save-answer-q1');
@@ -409,85 +424,99 @@ describe('SolutionWorkplace', () => {
       click(container, 'refine-analysis');
       await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
     });
+  });
 
-    it('has no accessibility violations', async () => {
+  describe('Blueprint tab', () => {
+    it('shows the blueprint for an analyzed solution', async () => {
       const { container } = await setup();
+      openTab(container, 'tab-blueprint');
 
-      await expectNoA11yViolations(container);
+      expect(container.textContent).toContain('Generate blueprint');
     });
   });
 
-  describe('Option Explorer', () => {
-    beforeEach(() => localStorage.setItem(solutionModeKey('solution-1'), 'mode3'));
-
-    it('compares alternatives with the current approach in two columns', async () => {
-      localStorage.setItem(LAYOUT_KEY, 'two');
+  describe('Specialists rail', () => {
+    it('shows specialist counts and opens a specialist chat', async () => {
       const { container } = await setup();
 
-      expect(paneIds(container, 0)).toEqual(['pane-1', 'pane-2']);
-      expect(paneIds(container, 1)).toEqual(['pane-3', 'pane-5']);
-      expect(container.querySelector('[data-testid="current-approach"]')?.textContent).toContain('Permitting solution');
-      expect(goa(container, 'alternative-p2').textContent).toContain('Case management');
-      await waitFor(() => expect(goa(container, 'alternative-p2').textContent).toContain('Typical workflow'));
-      expect(goa(container, 'alt-hypothesis-h2').textContent).toContain('Alternative approach');
-    });
+      expect(goa(container, 'focus-specialist-form-service').textContent).toBe('Form (3)');
+      expect(goa(container, 'focus-specialist-form-service').querySelector('strong')).toBeNull();
+      expect(goa(container, 'focus-specialist-file-service').textContent).toBe('File');
 
-    it('handles missing patterns and unanalyzed solutions', async () => {
-      const { container } = await setup(baseSolution(), { listPatterns: jest.fn().mockRejectedValue(new Error('x')) });
+      click(container, 'focus-specialist-file-service');
 
-      expect(container.querySelector('[data-testid="current-approach"]')?.textContent).toContain('Analyze the problem first');
-      expect(goa(container, 'alternatives-ai').getAttribute('disabled')).toBe('true');
-    });
-
-    it('reports when no other patterns matched', async () => {
-      const { container } = await setup(
-        analyzed({ patternMatches: [], hypotheses: [] }),
-        { listPatterns: jest.fn().mockResolvedValue(undefined) }
+      await waitFor(() =>
+        expect(container.querySelector('[data-testid="chat-heading"]')?.textContent).toContain('File service'),
       );
-
-      expect(container.querySelector('[data-testid="alternatives"]')?.textContent).toContain('No other strong patterns matched.');
-      expect(container.querySelector('[data-testid="current-approach"]')?.textContent).toContain('Initial solution');
+      expect(api.listChats).toHaveBeenCalledWith({ service: 'file-service', solutionId: 'solution-1' });
+      expect(goa(container, 'focus-specialist-file-service').getAttribute('type')).toBe('primary');
     });
 
-    it('asks the AI for more alternatives', async () => {
-      const updated = analyzed({
-        conversation: [
-          { role: 'user', content: 'ask', at: '2026-03-01T10:00:00.000Z' },
-          { role: 'assistant', content: 'Try option B', at: '2026-03-01T10:00:00.000Z' },
-        ],
+    it('refreshes counts when chats change', async () => {
+      const { container } = await setup(undefined, {
+        specialistChat: jest.fn().mockResolvedValue({
+          chatId: 'c9',
+          service: 'file-service',
+          mode: 'ai',
+          reply: 'Hi',
+          suggestions: [],
+          samples: [],
+          followUps: [],
+        }),
       });
-      const { container } = await setup(undefined, { chat: jest.fn().mockResolvedValue(updated) });
+      click(container, 'focus-specialist-file-service');
+      await waitFor(() => expect(container.querySelector('[data-testid="chat-heading"]')).not.toBeNull());
+      const before = api.listChats.mock.calls.length;
 
-      click(container, 'alternatives-ai');
+      type(container, 'chat-input', 'Hello');
+      await waitFor(() => expect(goa(container, 'chat-send').getAttribute('disabled')).toBeNull());
+      click(container, 'chat-send');
 
-      await waitFor(() => expect(goa(container, 'alternatives-reply').textContent).toContain('Try option B'));
-      expect(api.chat).toHaveBeenCalledWith('solution-1', expect.stringContaining('alternative workflows'), 'ai');
+      await waitFor(() => expect(api.specialistChat).toHaveBeenCalled());
+      await waitFor(() => expect(api.listChats.mock.calls.length).toBeGreaterThan(before + 1));
     });
 
-    it('disables AI alternatives in rule-based only deployments', async () => {
-      const { container } = await setup(undefined, { getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['rules'], defaultMode: 'rules' }) });
-
-      expect(goa(container, 'alternatives-ai').getAttribute('disabled')).toBe('true');
-    });
-
-    it('has no accessibility violations', async () => {
+    it('returns to the workplace tabs', async () => {
       const { container } = await setup();
 
-      await expectNoA11yViolations(container);
+      click(container, 'focus-specialist-file-service');
+      await waitFor(() => expect(container.querySelector('[data-testid="chat-heading"]')).not.toBeNull());
+      click(container, 'focus-workplace');
+
+      expect(container.querySelector('[data-testid="tab-problem-tab-btn"]')).not.toBeNull();
     });
+  });
+
+  describe('Patterns rail', () => {
+    it('shows the pattern catalog', async () => {
+      const { container } = await setup(undefined, {
+        listPatterns: jest.fn().mockResolvedValue([
+          {
+            id: 'p2',
+            name: 'Case management',
+            description: '',
+            domainLanguage: [],
+            commonFeatures: ['Intake'],
+            serviceMappings: [{ service: 'task-service', reason: 'Tasks' }],
+            clarifyingQuestions: [],
+          },
+        ]),
+      });
+
+      click(container, 'focus-patterns');
+
+      await waitFor(() => expect(container.querySelector('[testid="patterns-table"]')).not.toBeNull());
+      expect(container.textContent).toContain('Case management');
+    });
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = await setup();
+
+    await expectNoA11yViolations(container);
   });
 
   describe('header', () => {
-    it('switches modes and persists the choice per solution', async () => {
-      const { container } = await setup();
-
-      click(container, 'solution-mode-mode3');
-
-      expect(localStorage.getItem(solutionModeKey('solution-1'))).toBe('mode3');
-      expect(container.querySelector('[data-testid="current-approach"]')).not.toBeNull();
-      expect(container.querySelector('[data-testid="mode-hint"]')?.textContent).toContain('Compare other ways');
-    });
-
     it('renames the solution', async () => {
       const { container, getByTestId } = await setup(undefined, {
         updateSolution: jest.fn().mockResolvedValue(baseSolution({}, 'Renamed')),
@@ -525,13 +554,25 @@ describe('SolutionWorkplace', () => {
     });
 
     it('downloads JSON and the markdown report', async () => {
-      const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue({ id: 'solution-1' }) });
+      const { container } = await setup(undefined, {
+        exportSolution: jest.fn().mockResolvedValue({ id: 'solution-1' }),
+      });
 
       click(container, 'download-json');
-      await waitFor(() => expect(download).toHaveBeenCalledWith('planner-permit-intake.json', JSON.stringify({ id: 'solution-1' }, null, 2), 'application/json'));
+      await waitFor(() =>
+        expect(download).toHaveBeenCalledWith(
+          'planner-permit-intake.json',
+          JSON.stringify({ id: 'solution-1' }, null, 2),
+          'application/json',
+        ),
+      );
 
       click(container, 'download-report');
-      expect(download).toHaveBeenCalledWith('planner-permit-intake.md', expect.stringContaining('# Permit intake'), 'text/markdown');
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.md',
+        expect.stringContaining('# Permit intake'),
+        'text/markdown',
+      );
     });
 
     it('confirms before deleting then goes back', async () => {
@@ -569,7 +610,9 @@ describe('SolutionWorkplace', () => {
     });
 
     it('omits the back button when no handler is supplied', async () => {
-      (usePlannerApi as jest.Mock).mockReturnValue(createMockApi({ getSolution: jest.fn().mockResolvedValue(baseSolution()) }));
+      (usePlannerApi as jest.Mock).mockReturnValue(
+        createMockApi({ getSolution: jest.fn().mockResolvedValue(baseSolution()) }),
+      );
       const { container } = render(<SolutionWorkplace solutionId="solution-1" />);
       await waitFor(() => expect(goa(container, 'delete-solution')).not.toBeNull());
 

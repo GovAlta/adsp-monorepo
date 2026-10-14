@@ -1,26 +1,69 @@
 import React, { FunctionComponent, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  GoabBadge,
-  GoabButton,
-  GoabButtonGroup,
-  GoabCircularProgress,
-  GoabFormItem,
-  GoabInput,
-  GoabModal,
-  GoabTable,
-  GoabTextArea,
-} from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabCircularProgress, GoabFormItem, GoabInput } from '@abgov/react-components';
+import styled from 'styled-components';
 import { usePlannerApi } from './api';
 import { Solution } from './model';
 
-export const Solutions: FunctionComponent = () => {
+const List = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: calc(100vh - 420px);
+  min-height: 160px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+`;
+
+const Item = styled.button<{ selected: boolean }>`
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  background: var(--goa-color-greyscale-white, #fff);
+  border-radius: var(--goa-border-radius-s, 0.375rem);
+  border: ${({ selected }) =>
+    selected
+      ? '2px solid var(--goa-color-brand-default, #0081a2)'
+      : '1px solid var(--goa-color-greyscale-200, #cdcdcd)'};
+  padding: ${({ selected }) => (selected ? 'calc(0.75rem - 1px)' : '0.75rem')};
+
+  &:hover {
+    background: var(--goa-color-surface-item-hover, #f2f0f0);
+  }
+`;
+
+const ItemName = styled.div`
+  display: block;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--fw-bold, 700);
+`;
+
+const ItemMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  color: var(--goa-color-greyscale-600, #6f6f6f);
+  font-size: 0.875rem;
+`;
+
+interface SolutionsProps {
+  selectedId?: string;
+  onSelect: (id?: string) => void;
+  refreshToken?: number;
+}
+
+export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSelect, refreshToken }) => {
   const api = usePlannerApi();
-  const navigate = useNavigate();
   const [solutions, setSolutions] = useState<Solution[]>();
-  const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
-  const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -30,17 +73,15 @@ export const Solutions: FunctionComponent = () => {
       .catch(() => setSolutions([]));
   }, [api]);
 
-  useEffect(load, [load]);
+  useEffect(load, [load, refreshToken]);
 
   const create = async () => {
     setBusy(true);
     try {
-      const solution = await api.createSolution(name.trim(), problem.trim());
-      const analyzed = problem.trim() ? await api.analyze(solution.id) : solution;
-      setCreating(false);
+      const solution = await api.createSolution(name.trim(), '');
       setName('');
-      setProblem('');
-      navigate(`../solution/${analyzed.id}`);
+      await load();
+      onSelect(solution.id);
     } catch {
       // Error is surfaced through the notification handled in the api hook.
     } finally {
@@ -49,98 +90,52 @@ export const Solutions: FunctionComponent = () => {
   };
 
   return (
-    <section>
-      <GoabButton size="compact" testId="new-solution" onClick={() => setCreating(true)}>
-        New solution
+    <section aria-label="Solutions">
+      <GoabFormItem label="Name for a new solution" mb="s">
+        <GoabInput
+          size="compact"
+          name="newSolutionName"
+          value={name}
+          width="100%"
+          testId="new-solution-name"
+          aria-label="Name for a new solution"
+          onChange={(detail) => setName(detail.value)}
+        />
+      </GoabFormItem>
+      <GoabButton
+        size="compact"
+        width="100%"
+        mb="m"
+        testId="new-solution"
+        disabled={!name.trim() || busy}
+        onClick={create}
+      >
+        Create solution
       </GoabButton>
 
       {!solutions && <GoabCircularProgress visible message="Loading solutions..." size="small" />}
       {solutions?.length === 0 && <p data-testid="no-solutions">No solutions yet. Create one to get started.</p>}
       {solutions && solutions.length > 0 && (
-        <GoabTable width="100%" testId="solutions-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Created by</th>
-              <th>Updated</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {solutions.map((solution) => (
-              <tr key={solution.id}>
-                <td>{solution.name}</td>
-                <td>
-                  <GoabBadge type="information" content={solution.status} icon={false} emphasis="subtle" />
-                </td>
-                <td>{solution.createdByName}</td>
-                <td>{new Date(solution.updatedOn).toLocaleString()}</td>
-                <td>
-                  <GoabButtonGroup alignment="end">
-                    <GoabButton
-                      size="compact"
-                      type="tertiary"
-                      testId={`open-solution-${solution.id}`}
-                      onClick={() => navigate(`../solution/${solution.id}`)}
-                    >
-                      Open
-                    </GoabButton>
-                    <GoabButton
-                      size="compact"
-                      type="tertiary"
-                      variant="destructive"
-                      testId={`delete-solution-${solution.id}`}
-                      onClick={() => api.deleteSolution(solution.id).then(load)}
-                    >
-                      Delete
-                    </GoabButton>
-                  </GoabButtonGroup>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </GoabTable>
+        <List role="list" data-testid="solutions-list">
+          {solutions.map((solution) => (
+            <Item
+              key={solution.id}
+              type="button"
+              role="listitem"
+              selected={solution.id === selectedId}
+              aria-current={solution.id === selectedId}
+              data-testid={`select-solution-${solution.id}`}
+              onClick={() => onSelect(solution.id)}
+            >
+              <ItemName title={solution.name}>{solution.name}</ItemName>
+              <ItemMeta>
+                <GoabBadge type="information" content={solution.status} icon={false} emphasis="subtle" />
+                <span>{new Date(solution.updatedOn).toLocaleString()}</span>
+              </ItemMeta>
+            </Item>
+          ))}
+        </List>
       )}
-
-      <GoabModal
-        testId="new-solution-modal"
-        open={creating}
-        heading="New solution"
-        actions={
-          <GoabButtonGroup alignment="end" mt="m">
-            <GoabButton size="compact" type="secondary" testId="new-solution-cancel" onClick={() => setCreating(false)}>
-              Cancel
-            </GoabButton>
-            <GoabButton size="compact" testId="new-solution-save" disabled={!name.trim() || busy} onClick={create}>
-              Create and analyze
-            </GoabButton>
-          </GoabButtonGroup>
-        }
-      >
-        <GoabFormItem label="Name" mb="l">
-          <GoabInput
-            size="compact"
-            name="name"
-            value={name}
-            width="100%"
-            testId="new-solution-name"
-            aria-label="name"
-            onChange={(detail) => setName(detail.value)}
-          />
-        </GoabFormItem>
-        <GoabFormItem label="Describe the problem you are solving" helpText="Who is involved, what happens, and what outcome you need." mb="m">
-          <GoabTextArea
-            name="problem"
-            value={problem}
-            width="100%"
-            rows={6}
-            testId="new-solution-problem"
-            aria-label="problem statement"
-            onChange={(detail) => setProblem(detail.value)}
-          />
-        </GoabFormItem>
-      </GoabModal>
     </section>
   );
 };

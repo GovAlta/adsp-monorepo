@@ -1,5 +1,13 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoabBadge, GoabButton, GoabButtonGroup, GoabFormItem, GoabIconButton, GoabInput, GoabModal } from '@abgov/react-components';
+import {
+  GoabBadge,
+  GoabButton,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabIconButton,
+  GoabInput,
+  GoabModal,
+} from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
 import { Solution } from './model';
@@ -18,6 +26,14 @@ const Row = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+`;
+
+const RenameRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 0.5rem;
 `;
 
@@ -59,7 +75,8 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
       const data = await api.exportSolution(solution.id);
       download(`planner-${safeName(solution)}.json`, JSON.stringify(data, null, 2), 'application/json');
     });
-  const exportReport = () => download(`planner-${safeName(solution)}.md`, solutionToMarkdown(solution), 'text/markdown');
+  const exportReport = () =>
+    download(`planner-${safeName(solution)}.md`, solutionToMarkdown(solution), 'text/markdown');
   const remove = () =>
     attempt(async () => {
       await api.deleteSolution(solution.id);
@@ -76,7 +93,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
       )}
       <Bar>
         {renaming ? (
-          <Row>
+          <RenameRow>
             <GoabFormItem label="Solution name">
               <GoabInput
                 name="solutionName"
@@ -92,24 +109,49 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
             <GoabButton size="compact" type="tertiary" testId="rename-cancel" onClick={() => setRenaming(false)}>
               Cancel
             </GoabButton>
-          </Row>
+          </RenameRow>
         ) : (
           <Row>
-            <h1 style={{ margin: 0 }} data-testid="solution-title">
+            <h1 style={{ margin: 0, overflowWrap: 'anywhere', minWidth: 0 }} data-testid="solution-title">
               {solution.name}
             </h1>
-            <GoabIconButton icon="pencil" title="Edit solution name" ariaLabel="Edit solution name" testId="rename-solution" onClick={startRename} />
+            <GoabIconButton
+              icon="pencil"
+              title="Edit solution name"
+              ariaLabel="Edit solution name"
+              testId="rename-solution"
+              onClick={startRename}
+            />
             <GoabBadge type="information" content={solution.status} icon={false} />
           </Row>
         )}
         <Row role="group" aria-label="Export and delete">
-          <GoabButton size="compact" type="secondary" leadingIcon="download" testId="download-json" disabled={working} onClick={exportJson}>
+          <GoabButton
+            size="compact"
+            type="secondary"
+            leadingIcon="download"
+            testId="download-json"
+            disabled={working}
+            onClick={exportJson}
+          >
             Download JSON
           </GoabButton>
-          <GoabButton size="compact" type="secondary" leadingIcon="document-text" testId="download-report" onClick={exportReport}>
+          <GoabButton
+            size="compact"
+            type="secondary"
+            leadingIcon="document-text"
+            testId="download-report"
+            onClick={exportReport}
+          >
             Download report (.md)
           </GoabButton>
-          <GoabButton size="compact" type="tertiary" variant="destructive" testId="delete-solution" onClick={() => setConfirmDelete(true)}>
+          <GoabButton
+            size="compact"
+            type="tertiary"
+            variant="destructive"
+            testId="delete-solution"
+            onClick={() => setConfirmDelete(true)}
+          >
             Delete solution
           </GoabButton>
         </Row>
@@ -124,7 +166,13 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
             <GoabButton size="compact" type="secondary" testId="delete-cancel" onClick={() => setConfirmDelete(false)}>
               Cancel
             </GoabButton>
-            <GoabButton size="compact" variant="destructive" testId="delete-confirm" disabled={working} onClick={remove}>
+            <GoabButton
+              size="compact"
+              variant="destructive"
+              testId="delete-confirm"
+              disabled={working}
+              onClick={remove}
+            >
               Delete
             </GoabButton>
           </GoabButtonGroup>

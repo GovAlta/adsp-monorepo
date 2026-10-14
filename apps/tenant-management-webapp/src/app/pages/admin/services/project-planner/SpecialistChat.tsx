@@ -2,10 +2,12 @@ import React, { FunctionComponent, useCallback, useEffect, useRef, useState } fr
 import {
   GoabBadge,
   GoabButton,
+  GoabButtonGroup,
   GoabCallout,
   GoabCircularProgress,
   GoabDetails,
   GoabFormItem,
+  GoabModal,
   GoabTextArea,
 } from '@abgov/react-components';
 import styled from 'styled-components';
@@ -167,6 +169,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [consult, setConsult] = useState<ConsultResult>();
+  const [deletingChatId, setDeletingChatId] = useState<string>();
   const onChatsChangedRef = useRef(onChatsChanged);
   onChatsChangedRef.current = onChatsChanged;
 
@@ -220,6 +223,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
         setChatId(undefined);
         setMessages([]);
       }
+      setDeletingChatId(undefined);
       await refreshChats();
     });
 
@@ -320,7 +324,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
                 <Row>
                   <span>
                     {chat.title}{' '}
-                    <GoabBadge type="light" icon={false} content={`${chat.messageCount} messages`} />{' '}
+                    <GoabBadge type="default" emphasis="subtle" icon={false} content={`${chat.messageCount} messages`} />{' '}
                     {fmtDate(chat.updatedOn)}
                   </span>
                   <GoabButton
@@ -328,16 +332,16 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
                     size="compact"
                     disabled={busy}
                     testId={`chat-open-${chat.id}`}
-                    onClick={() => openChat(chat.id)}
+                    onClick={() => (chat.id === chatId ? newChat() : openChat(chat.id))}
                   >
-                    {chat.id === chatId ? 'Open (current)' : 'Open'}
+                    {chat.id === chatId ? 'Close' : 'Open'}
                   </GoabButton>
                   <GoabButton
                     type="tertiary"
                     size="compact"
                     disabled={busy}
                     testId={`chat-delete-${chat.id}`}
-                    onClick={() => deleteChat(chat.id)}
+                    onClick={() => setDeletingChatId(chat.id)}
                   >
                     Delete
                   </GoabButton>
@@ -412,6 +416,27 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
       <GoabButton disabled={busy || !draft.trim()} testId="chat-send" onClick={() => send(draft)}>
         Send
       </GoabButton>
+
+      {deletingChatId && (
+        <GoabModal
+          open
+          testId="delete-chat-modal"
+          heading="Delete chat"
+          onClose={() => setDeletingChatId(undefined)}
+          actions={
+            <GoabButtonGroup alignment="end" mt="m">
+              <GoabButton type="secondary" size="compact" disabled={busy} testId="delete-chat-cancel" onClick={() => setDeletingChatId(undefined)}>
+                Cancel
+              </GoabButton>
+              <GoabButton variant="destructive" size="compact" disabled={busy} testId="delete-chat-confirm" onClick={() => deleteChat(deletingChatId)}>
+                Delete
+              </GoabButton>
+            </GoabButtonGroup>
+          }
+        >
+          This cannot be undone. The saved chat and its messages will be permanently removed.
+        </GoabModal>
+      )}
     </section>
   );
 };

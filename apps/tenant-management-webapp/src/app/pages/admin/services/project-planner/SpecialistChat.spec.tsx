@@ -194,7 +194,7 @@ describe('SpecialistChat', () => {
     expect(container.textContent).toContain('Use drafts');
     expect(container.querySelector('goa-details[heading="Example"] pre')?.textContent).toBe('const a = 1;');
     expect(container.querySelectorAll('goa-callout[testid="chat-user-message"]')).toHaveLength(1);
-    expect(container.querySelector('goa-button[testid="chat-open-chat-1"]')?.textContent).toBe('Open (current)');
+    expect(container.querySelector('goa-button[testid="chat-open-chat-1"]')?.textContent).toBe('Close');
   });
 
   it('uses the sample language when it has no title', async () => {
@@ -304,7 +304,7 @@ describe('SpecialistChat', () => {
     expect(container.querySelectorAll('goa-callout[testid="chat-user-message"]')).toHaveLength(0);
   });
 
-  it('deletes a chat and clears it when it is open', async () => {
+  it('confirms before deleting a chat and clears it when it is open', async () => {
     api.listChats.mockResolvedValueOnce([summary]).mockResolvedValue([]);
     const { container, findByTestId } = renderChat();
     await loaded(container);
@@ -312,11 +312,26 @@ describe('SpecialistChat', () => {
     await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull());
 
     click(container, 'chat-delete-chat-1');
+    expect(container.querySelector('goa-modal[testid="delete-chat-modal"]')).not.toBeNull();
+    expect(api.deleteChat).not.toHaveBeenCalled();
+
+    click(container, 'delete-chat-confirm');
 
     expect(await findByTestId('chat-no-history')).toBeTruthy();
     expect(api.deleteChat).toHaveBeenCalledWith('chat-1');
     expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).toBeNull();
     expect(onChatsChanged).toHaveBeenCalled();
+  });
+
+  it('cancels a chat delete without calling the api', async () => {
+    const { container } = renderChat();
+    await loaded(container);
+
+    click(container, 'chat-delete-chat-1');
+    click(container, 'delete-chat-cancel');
+
+    expect(container.querySelector('goa-modal')).toBeNull();
+    expect(api.deleteChat).not.toHaveBeenCalled();
   });
 
   it('keeps the open chat when deleting a different chat', async () => {
@@ -327,6 +342,7 @@ describe('SpecialistChat', () => {
     await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull());
 
     click(container, 'chat-delete-chat-9');
+    click(container, 'delete-chat-confirm');
 
     await waitFor(() => expect(api.deleteChat).toHaveBeenCalledWith('chat-9'));
     expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull();
