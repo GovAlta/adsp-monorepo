@@ -134,27 +134,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             >
               Filters
             </GoabButton>
-            <GoabButton
-              size="compact"
-              leadingIcon="search"
-              testId="event-log-search"
-              onClick={() => {
-                onSearch?.(searchCriteria);
-              }}
-            >
-              Search
-            </GoabButton>
-            <GoabButton
-              size="compact"
-              type="secondary"
-              testId="event-log-reset"
-              onClick={() => {
-                clearFilters();
-                onCancel?.();
-              }}
-            >
-              Reset
-            </GoabButton>
           </GoabButtonGroup>
         </FilterControls>
       </SearchActions>
@@ -249,12 +228,24 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           <FilterDrawerFooterActions data-testid="event-log-filter-actions">
             <GoabButton
               size="compact"
-              type="text"
+              type="secondary"
               leadingIcon="reload"
-              testId="event-log-clear-all-filters"
-              onClick={clearFilters}
+              testId="event-log-filter-reset"
+              onClick={() => {
+                clearFilters();
+                onCancel?.();
+              }}
             >
-              Clear all filters
+              Reset
+            </GoabButton>
+            <GoabButton
+              size="compact"
+              type="secondary"
+              leadingIcon="close"
+              testId="event-log-filter-close"
+              onClick={() => setFiltersOpen(false)}
+            >
+              Close
             </GoabButton>
             <GoabButton
               size="compact"
