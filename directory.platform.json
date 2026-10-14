@@ -40,6 +40,14 @@
     {
       "service": "value-service:v1",
       "host": "http://value-service:3336/value/v1"
+    },
+    {
+      "service": "audit-service",
+      "host": "http://audit-service:3352"
+    },
+    {
+      "service": "audit-service:v1",
+      "host": "http://audit-service:3352/audit/v1"
     }
   ]
 }

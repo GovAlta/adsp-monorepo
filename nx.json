@@ -78,6 +78,7 @@
       "include": [
         "apps/agent-service/**/*",
         "apps/api-docs-app/**/*",
+        "apps/audit-service/**/*",
         "apps/builder-app/**/*",
         "apps/cache-service/**/*",
         "apps/calendar-service/**/*",
