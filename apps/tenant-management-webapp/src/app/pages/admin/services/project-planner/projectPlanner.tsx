@@ -16,7 +16,7 @@ export const ProjectPlanner: FunctionComponent = () => {
   const navigate = useNavigate();
   const activeTab = id ? 'solutions' : tab;
   const activeIndex = Math.max(TABS.indexOf(activeTab), 0);
-  const changeTab = (index: number) => navigate(id ? `../../${TABS[index]}` : `../${TABS[index]}`);
+  const changeTab = (index: number) => navigate(`../${TABS[index]}`);
 
   return (
     <Page>

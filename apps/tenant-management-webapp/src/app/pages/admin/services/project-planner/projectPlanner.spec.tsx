@@ -117,12 +117,12 @@ describe('ProjectPlanner', () => {
     expect(mockNavigate).toHaveBeenCalledWith('../overview');
   });
 
-  it('navigates one level deeper when switching tabs from an open solution', () => {
+  it('navigates one level up when switching tabs from an open solution', () => {
     useParamsMock.mockReturnValue({ id: 'solution-1' });
     const { getByTestId } = render(<ProjectPlanner />);
 
     fireEvent.click(getByTestId('tab-btn-0'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('../../overview');
+    expect(mockNavigate).toHaveBeenCalledWith('../overview');
   });
 });
