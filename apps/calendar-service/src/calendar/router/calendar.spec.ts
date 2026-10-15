@@ -493,7 +493,13 @@ describe('calendar router', () => {
       expect(exported.repeating).toEqual(
         expect.objectContaining({ freq: 'WEEKLY', interval: 1, byDay: ['TU'], startOfWeek: 'MO' }),
       );
-      expect(exported.repeating.until.toISO()).toBe('2026-12-15T23:59:59.999-07:00');
+      // Compare local wall time and instant rather than a hard-coded offset, since the UTC offset of
+      // America/Edmonton after Nov 1, 2026 depends on the tzdata version in the runtime.
+      expect(exported.repeating.until.zoneName).toBe(calendarTimeZone);
+      expect(exported.repeating.until.toISO({ includeOffset: false })).toBe('2026-12-15T23:59:59.999');
+      expect(exported.repeating.until.valueOf()).toBe(
+        DateTime.fromISO('2026-12-15', { zone: calendarTimeZone }).endOf('day').valueOf(),
+      );
       expect(exported.repeating.exclude.map((value) => value.toISO())).toEqual(['2026-10-13T10:00:00.000-06:00']);
     });
   });

@@ -12,7 +12,9 @@ import {
 import { EventRecurrence } from './types';
 
 describe('recurrence', () => {
-  const zone = 'America/Edmonton';
+  // Use a Mountain zone that still observes DST so the DST cases keep their coverage regardless of the
+  // tzdata version; newer tzdata has America/Edmonton on permanent UTC-6 from Nov 2026.
+  const zone = 'America/Denver';
   const at = (value: string) => DateTime.fromISO(value, { zone });
   const toIso = (value: DateTime) => value?.toISO({ suppressMilliseconds: true });
   const starts = (instances: RecurrenceInstance[]) => instances.map(({ start }) => toIso(start));
