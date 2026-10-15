@@ -4,11 +4,12 @@ title: Audit service
 parent: Services
 ---
 
-# Audit service action catalogs
+# Audit service
 
 The action catalog registers the classification of audit actions. Registering an action does not
-generate audit records. Event ingestion, metadata validation of individual events, history storage,
-SIEM forwarding, and retention execution are separate capabilities, not implemented by this catalog.
+generate audit records. The write endpoint validates and enriches events, but PostgreSQL persistence
+and the write buffer are not wired yet. Valid write submissions currently return 503, not a successful
+acknowledgment. History queries, SIEM forwarding, and retention execution are separate capabilities.
 
 ## Configuration contract
 
@@ -56,8 +57,10 @@ no action-specific metadata constraint. The listing returns any supplied schema 
 Unknown document and definition fields are rejected. Action keys omit the event outcome suffix.
 
 The namespace schema also preserves `retentionSettings` and `applicationRetentionSettings` document
-shapes, with positive integer `classes.<class>.days`. No default periods are created here.
-Resolving or validating cross-document retention class references belongs to the retention work.
+shapes, with positive integer `classes.<class>.days`. Catalog registration creates no retention periods.
+At write time the service resolves configured periods over the design defaults: standard 90 days,
+security and compliance 365 days. See [write-time retention](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#retention-at-write-time)
+for configuration names and precedence. Missing custom classes fail writes with a retryable 503.
 
 ### Registering through the SDK
 
@@ -130,18 +133,19 @@ no measured end-to-end notification latency guarantee yet. Register actions befo
 that emits them.
 
 Audit Service uses the SDK's existing error handling. Configuration HTTP or converter failures are
-logged and returned as `null`, so the catalog API cannot reliably distinguish those failures from
-missing configuration. If neither scope supplies a catalog, it returns 404; if one scope succeeds,
-it can return a partial catalog without the failed scope. A registered empty catalog retains its
-`actions: {}`. Errors that still propagate, such as token acquisition failures, and application-name
-consistency failures are returned as 503.
+logged and returned as `null`, so the catalog API cannot reliably distinguish these failures from
+missing configuration. If neither scope supplies a catalog, listing returns 404; if only one scope
+succeeds, it can return a partial catalog. A registered empty catalog retains its `actions: {}`.
+Errors that still propagate, such as token acquisition failures, and application-name consistency
+failures return 503. On writes, SDK-handled failures can produce unknown-action rejections or
+fallback retention periods; reliable failure-versus-absence distinction is not provided.
 
 **Deferred by the MVP scope decision:** stale-on-error after invalidation/expiry, explicit cache
 capacity limits, and stronger invalidation/in-flight refresh guarantees. Existing unexpired
 configuration cache entries avoid configuration HTTP reads, but token retrieval remains an SDK
 dependency. Once an entry expires or is invalidated, a configuration HTTP failure resolves to null;
-the SDK does not retain the old value for fallback. Reliable failure-versus-absence distinction is
-also deferred. These OSP-730 acceptance criteria are not claimed complete.
+the SDK does not retain the old value for fallback. These remaining OSP-730 cache guarantees
+are not claimed complete.
 
 ## Listing definitions
 
@@ -159,8 +163,8 @@ Returns a JSON array, with each action's `name` plus its definition fields. Opti
 | 400    | Invalid application/namespace or tenant ID format.                                |
 | 401    | Not authenticated.                                                                |
 | 403    | No `audit-reader`, or a tenant caller attempted to select a different tenant.     |
-| 404    | Neither scope supplied a catalog; this can also result from SDK-handled failures. |
-| 503    | A propagated SDK error or application-name consistency failure; retry.            |
+| 404    | Neither scope supplied a catalog; SDK-handled failures can also produce this response. |
+| 503    | A propagated SDK error or application-name consistency failure; retry.           |
 
 `audit-reader` is tenant-wide: callers can read any namespace in their tenant, not only their own.
 A Core caller with the role can select a tenant via
@@ -171,3 +175,47 @@ still need their normal role provisioning/assignment process.
 The catalog governs future write classification, not history access. Removing a definition performs
 no audit-record deletion. History readability after deregistration must also be verified when the
 history endpoint/storage work is integrated; this scaffold has no history API.
+
+## Writing events
+
+```http
+POST /audit/v1/case-service/events
+Content-Type: application/json
+```
+
+Supply an authenticated bearer token with `audit-writer` and a body
+`{ "events": [ ... ] }` containing 1 to 500 events. Configure the Audit Service
+audience on the application client and explicitly grant the role to its service
+account; `audit-writer` is not automatically assigned to tenant administrators.
+
+The verified token's `azp` must be a service URN. Tenant writers may write only
+its service component's namespace. Core writers with the role follow the existing
+platform exemption and can select another namespace and tenant through `?tenantId=...`.
+Core must supply a tenant. Role provisioning, not an additional claim check,
+limits this permission to service accounts.
+
+Events require a UUID `eventId`, `occurredAt`, `action`, `status`, and `actor.id/type`.
+Occurrence time must be within the past seven days or next five minutes. Actions
+may have a terminal `.succeeded` or `.failed` suffix. An omitted `actionVersion`
+uses the current catalog version; an explicit mismatch is rejected.
+Resource type and metadata are validated against the resolved action.
+Metadata and change sets each have a 16 KiB UTF-8 JSON limit; the whole body has a
+20 MiB limit. A non-capturing action drops change sets from the trusted row.
+
+Malformed batch envelopes return 400, oversized bodies return 413, and malformed
+individual events produce individual rejections. Classification, identity and
+retention columns are server-set, never copied from caller-supplied row fields.
+
+Once a durable submitter is connected, 202 returns:
+
+```json
+{ "accepted": 1, "duplicates": 0, "rejected": [] }
+```
+
+Each rejection includes a zero-based input `index`, `code`, `reason`, and an
+`eventId` when available. Counts and rejection length account for every input.
+Duplicates are determined by PostgreSQL, not an in-memory router check.
+Until that integration exists, valid submissions return **503 with Retry-After**.
+
+See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
+for the boundary with OSP-708.

@@ -13,9 +13,11 @@ import {
   AuditServiceRoles,
   CatalogService,
   configurationSchema,
-  createCatalogConverter,
-  combineCatalogs,
+  createAuditConfigurationConverter,
+  combineAuditConfiguration,
   createAuditRouter,
+  createAuditJsonParser,
+  RetentionService,
   validateTenantContext,
   assertTenantContext,
 } from './audit';
@@ -27,7 +29,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.use(compression());
   app.use(helmet());
-  app.use(express.json({ limit: '1mb' }));
+  app.use(createAuditJsonParser());
   app.use(cors());
 
   if (environment.TRUSTED_PROXY) {
@@ -43,12 +45,16 @@ const initializeApp = async (): Promise<express.Application> => {
       {
         serviceId,
         displayName: 'Audit service',
-        description: 'Tenant-scoped audit action catalogs.',
+        description: 'Tenant-scoped audit action catalogs and event ingestion.',
         roles: [
           {
             role: AuditServiceRoles.Reader,
             description: 'Read action catalogs and audit history within a tenant.',
             inTenantAdmin: true,
+          },
+          {
+            role: AuditServiceRoles.Writer,
+            description: 'Write audit events. Assign to application service accounts.',
           },
         ],
         configuration: {
@@ -56,8 +62,8 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
           schema: configurationSchema,
         },
-        configurationConverter: createCatalogConverter(logger),
-        combineConfiguration: combineCatalogs,
+        configurationConverter: createAuditConfigurationConverter(logger),
+        combineConfiguration: combineAuditConfiguration,
         enableConfigurationInvalidation: true,
         useLongConfigurationCacheTTL: false,
         events: [],
@@ -90,7 +96,14 @@ const initializeApp = async (): Promise<express.Application> => {
     assertTenantContext,
     tenantHandler,
   );
-  app.use('/audit/v1', createAuditRouter(new CatalogService(configurationService, logger)));
+  app.use(
+    '/audit/v1',
+    createAuditRouter({
+      catalogs: new CatalogService(configurationService, logger),
+      retention: new RetentionService(configurationService, logger),
+      logger,
+    }),
+  );
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -106,7 +119,7 @@ const initializeApp = async (): Promise<express.Application> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       name: 'Audit service',
-      description: 'Tenant-scoped audit action catalogs.',
+      description: 'Tenant-scoped audit action catalogs and event ingestion.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

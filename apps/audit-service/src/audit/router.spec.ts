@@ -6,6 +6,7 @@ import { createLogger, transports } from 'winston';
 import { CatalogService } from './catalog';
 import { createAuditRouter, assertTenantContext, validateTenantContext } from './router';
 import { AuditServiceRoles } from './roles';
+import { RetentionService } from './retention';
 
 describe('GET /audit/v1/:namespace/actions', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -50,7 +51,10 @@ describe('GET /audit/v1/:namespace/actions', () => {
       req.tenant = { id, name: 'Catalog tenant', realm: 'catalog-tenant' };
       next();
     });
-    app.use('/audit/v1', createAuditRouter(catalogs));
+    app.use(
+      '/audit/v1',
+      createAuditRouter({ catalogs, retention: new RetentionService(configuration, logger), logger }),
+    );
     app.use(createErrorHandler(logger));
     return app;
   }

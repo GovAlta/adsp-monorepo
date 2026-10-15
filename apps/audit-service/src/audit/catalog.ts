@@ -1,7 +1,7 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
-import { ActionCatalog } from './configuration';
+import { ActionCatalog, AuditConfiguration } from './configuration';
 
 export class CatalogUnavailableError extends InvalidOperationError {
   constructor() {
@@ -20,11 +20,12 @@ export class CatalogService {
 
   async getCatalog(namespace: string, tenantId?: AdspId): Promise<ActionCatalog | null> {
     try {
-      const catalog = await this.configuration.getServiceConfiguration<ActionCatalog, ActionCatalog | null>(
+      const catalog = await this.configuration.getServiceConfiguration<AuditConfiguration, AuditConfiguration | null>(
         `actions-${namespace}`,
         tenantId,
       );
-      if (catalog && catalog.application !== namespace) {
+      if (!catalog) return null;
+      if (catalog.kind !== 'actionCatalog' || catalog.application !== namespace) {
         throw new Error('Action catalog application does not match its configuration name.');
       }
       return catalog;
