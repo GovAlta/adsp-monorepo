@@ -218,3 +218,57 @@ describe('RenderPages arriving from a navigation target', () => {
     expect(cityError()).toBeFalsy();
   });
 });
+
+// The Next button on the last step doubles as the summary's Submit button when the summary itself
+// is hidden, so it has to save rather than advance to a review page nothing will ever show.
+describe('RenderPages Next button with hideSummary', () => {
+  const ContextProvider = ContextProviderFactory();
+
+  beforeEach(() => {
+    (Element.prototype as unknown as { scrollIntoView: unknown }).scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
+  });
+
+  const renderStepper = (pagesUischema: typeof uischema, saveForm: jest.Mock) =>
+    render(
+      <ContextProvider submit={{ saveForm }}>
+        <JsonForms
+          schema={dataSchema}
+          uischema={pagesUischema}
+          data={{}}
+          renderers={GoARenderers}
+          cells={GoACells}
+          ajv={new Ajv({ allErrors: true, verbose: true, strict: false })}
+          onChange={() => undefined}
+        />
+      </ContextProvider>,
+    );
+
+  it('saves instead of advancing to the review page on the last step', () => {
+    const saveForm = jest.fn();
+    const hideSummaryUischema = { ...uischema, options: { ...uischema.options, hideSummary: true } };
+    renderStepper(hideSummaryUischema, saveForm);
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+
+    clickNavButton('pages-save-continue-btn');
+    clickNavButton('pages-save-continue-btn');
+
+    expect(saveForm).toHaveBeenCalled();
+    expect(screen.getByTestId('step_1-content-pages')).toBeInTheDocument();
+    expect(screen.queryByTestId('stepper-pages-review-page')).not.toBeInTheDocument();
+  });
+
+  it('advances to the review page on the last step when hideSummary is not set', () => {
+    const saveForm = jest.fn();
+    renderStepper(uischema, saveForm);
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+
+    clickNavButton('pages-save-continue-btn');
+    clickNavButton('pages-save-continue-btn');
+
+    expect(screen.getByTestId('stepper-pages-review-page')).toBeInTheDocument();
+  });
+});

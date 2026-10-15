@@ -347,6 +347,50 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     seeAlso: ['ServiceRegistration'],
   },
 
+  // audit
+  {
+    name: 'auditDefinitions',
+    kind: 'function',
+    module: 'audit',
+    summary: 'Converts named audit action constants into definitions keyed by action name for catalog registration.',
+    details:
+      'auditDefinitions(actions: Record<string, AuditAction>): Record<string, AuditActionDefinition>\n\n' +
+      'Removes name from each definition and uses it as the catalog key. Throws for invalid or duplicate action names. ' +
+      'Does not register the catalog or emit audit records; pass the result through ServiceRegistration.serviceConfigurations.',
+    example:
+      "auditDefinitions({\n" +
+      "  UPDATE_CASE: {\n" +
+      "    name: 'case.update', version: 1, category: 'administrative',\n" +
+      "    severity: 'info', retentionClass: 'compliance',\n" +
+      "  },\n" +
+      "});",
+    seeAlso: ['AuditAction', 'AuditActionDefinition', 'ServiceRegistration'],
+  },
+  {
+    name: 'AuditAction',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Named audit action constant accepted by auditDefinitions.',
+    details: 'interface AuditAction extends AuditActionDefinition { name: string; }',
+    seeAlso: ['AuditActionDefinition', 'auditDefinitions'],
+  },
+  {
+    name: 'AuditActionDefinition',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Classification and optional metadata schema for an action in an audit catalog.',
+    details:
+      'interface AuditActionDefinition {\n' +
+      '  version: number;\n' +
+      "  category: 'administrative' | 'runtime' | 'security' | 'data-access';\n" +
+      "  severity: 'info' | 'warning' | 'critical';\n" +
+      '  retentionClass: string; description?: string; resourceType?: string;\n' +
+      '  captureChangeSet?: boolean; forwardToSiem?: boolean;\n' +
+      '  metadataSchema?: Record<string, unknown>;\n' +
+      '}',
+    seeAlso: ['AuditAction', 'auditDefinitions'],
+  },
+
   // event
   {
     name: 'EventService',

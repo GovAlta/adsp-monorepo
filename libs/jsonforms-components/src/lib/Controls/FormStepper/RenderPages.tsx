@@ -139,15 +139,17 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                         <GoabButton
                           type="submit"
                           onClick={() => {
+                            if (currentStep === totalSteps && hideSummary) {
+                              handleSave();
+                              return;
+                            }
                             handleSave();
                             let nextId = activeId + 1;
                             while (nextId < categories.length && categories[nextId].visible === false) {
                               nextId = nextId + 1;
                             }
-                            if (!(currentStep === totalSteps && hideSummary)) {
-                              goToPage(nextId);
-                              setVisited(activeId);
-                            }
+                            goToPage(nextId);
+                            setVisited(activeId);
                           }}
                           disabled={!enabled}
                           testId="pages-save-continue-btn"

@@ -186,6 +186,8 @@ export interface ServiceRegistration {
 interface NamedConfiguration {
   name: string;
   configuration: Record<string, unknown>;
+  /** Replace only this named document when registering a complete catalog; UPDATE remains the default. */
+  operation?: 'UPDATE' | 'REPLACE';
 }
 
 interface ServiceRegistrarOptions {
