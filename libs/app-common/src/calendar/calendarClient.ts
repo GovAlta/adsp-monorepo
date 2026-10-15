@@ -1,3 +1,4 @@
+import axios, { AxiosInstance } from 'axios';
 import { getDateIdRange, isEventInRange, mapEvent, mapHoliday } from './mapper';
 import type { CalendarServiceDate, CalendarServiceEvent } from './mapper';
 import { CalendarEvent, CalendarEvents, CalendarHoliday, DateRange, ICalendarClient } from './types';
@@ -8,7 +9,7 @@ export interface CalendarClientOptions {
   /** Tenant name for access to public events without a tenant token. */
   tenant?: string;
   getAccessToken?: () => Promise<string | undefined>;
-  fetch?: typeof fetch;
+  http?: AxiosInstance;
   pageSize?: number;
 }
 
@@ -23,14 +24,14 @@ export class CalendarClient implements ICalendarClient {
   private readonly apiUrl: string;
   private readonly tenant?: string;
   private readonly getAccessToken?: () => Promise<string | undefined>;
-  private readonly fetchFn: typeof fetch;
+  private readonly http: AxiosInstance;
   private readonly pageSize: number;
 
-  constructor({ serviceUrl, tenant, getAccessToken, fetch: fetchFn, pageSize }: CalendarClientOptions) {
+  constructor({ serviceUrl, tenant, getAccessToken, http, pageSize }: CalendarClientOptions) {
     this.apiUrl = `${serviceUrl.replace(/\/+$/, '')}/calendar/v1`;
     this.tenant = tenant;
     this.getAccessToken = getAccessToken;
-    this.fetchFn = fetchFn ?? ((input, init) => globalThis.fetch(input, init));
+    this.http = http ?? axios;
     this.pageSize = pageSize ?? DEFAULT_PAGE_SIZE;
   }
 
@@ -40,19 +41,13 @@ export class CalendarClient implements ICalendarClient {
   }
 
   private async getPage<T>(path: string, query: Record<string, string>): Promise<PagedResults<T>> {
-    const url = new URL(`${this.apiUrl}${path}`);
-    Object.entries(query).forEach(([key, value]) => url.searchParams.set(key, value));
-
     const token = await this.getAccessToken?.();
-    const response = await this.fetchFn(
-      url.href,
-      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
-    );
-    if (!response.ok) {
-      throw new Error(`Calendar request failed with status ${response.status}.`);
-    }
+    const { data } = await this.http.get<PagedResults<T>>(`${this.apiUrl}${path}`, {
+      params: query,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
 
-    return response.json();
+    return data;
   }
 
   // Returns false from onPage to stop paging early.

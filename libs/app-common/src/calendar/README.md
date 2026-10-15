@@ -1,6 +1,6 @@
 # CalendarClient
 
-Framework-independent client that retrieves the events and statutory holidays needed to display a calendar for a visible date range. It depends only on `fetch` and has no React, Angular, Vue or FullCalendar dependency.
+Framework-independent client that retrieves the events and statutory holidays needed to display a calendar for a visible date range. It uses `axios` for requests and has no React, Angular, Vue or FullCalendar dependency.
 
 ## Usage
 
@@ -26,7 +26,7 @@ const { events, holidays } = await client.getCalendarEvents('my-calendar', {
 | `serviceUrl`     | Yes      | Root URL of the Calendar Service. The client appends `/calendar/v1`.        |
 | `tenant`         | No       | Tenant name, sent as the `tenant` query parameter to read public events.    |
 | `getAccessToken` | No       | Returns a bearer token for each request. Requests are anonymous if omitted. |
-| `fetch`          | No       | Custom `fetch` implementation. Defaults to `globalThis.fetch`.              |
+| `http`           | No       | Axios instance used for requests. Defaults to the global `axios`.           |
 | `pageSize`       | No       | Page size for service requests. Defaults to 100.                            |
 
 ## Interface
@@ -46,7 +46,7 @@ Depend on `ICalendarClient` in consumers so the client can be substituted in tes
 - **Holidays:** statutory holidays whose Alberta calendar day falls within the range.
 - **Pagination:** all pages are followed automatically.
 - **Dates:** event times are `Date` values. Holiday `date` is the start of that day in the `America/Edmonton` time zone.
-- **Errors:** a non-successful response from the service throws an `Error` containing the status code.
+- **Errors:** a non-successful response from the service rejects with the `AxiosError` from the request.
 
 ## Models
 

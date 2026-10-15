@@ -1,14 +1,21 @@
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { CalendarClient } from './calendarClient';
 
 type Handler = (url: URL) => unknown;
+type Request = jest.Mock<Promise<{ data: unknown }>, [string, { headers: Record<string, string> }?]>;
 
-function mockFetch(handler: Handler) {
-  return jest.fn(async (input: string) => ({
-    ok: true,
-    status: 200,
-    json: async () => handler(new URL(input)),
-  })) as unknown as jest.Mock & typeof fetch;
+// Records each request as the resolved URL and the request headers, if any.
+function mockFetch(handler: Handler): Request {
+  return jest.fn(async (href: string) => ({ data: handler(new URL(href)) }));
 }
+
+const toHttp = (request: Request) =>
+  ({
+    get: (url: string, config?: AxiosRequestConfig) =>
+      request(axios.getUri({ url, params: config?.params }), config?.headers ? { headers: config.headers } : undefined),
+  }) as unknown as AxiosInstance;
+
+const httpError = (status: number) => new AxiosError(`Request failed with status code ${status}`);
 
 const serviceEvent = (id: number, start: string, end: string | null, extra = {}) => ({
   id,
@@ -24,8 +31,8 @@ describe('CalendarClient', () => {
   const range = { start: new Date('2026-05-01T06:00:00Z'), end: new Date('2026-06-01T06:00:00Z') };
   const serviceUrl = 'https://calendar.test/';
 
-  const createClient = (fetchFn: typeof fetch, options = {}) =>
-    new CalendarClient({ serviceUrl, fetch: fetchFn, ...options });
+  const createClient = (request: Request, options = {}) =>
+    new CalendarClient({ serviceUrl, http: toHttp(request), ...options });
 
   it('returns events and holidays as domain models', async () => {
     const fetchFn = mockFetch((url) =>
@@ -314,35 +321,34 @@ describe('CalendarClient', () => {
     });
 
     it('throws when the service responds with an error', async () => {
-      const fetchFn = jest.fn(async () => ({ ok: false, status: 500 })) as unknown as typeof fetch;
+      const fetchFn: Request = jest.fn(async () => {
+        throw httpError(500);
+      });
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 500');
+      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status code 500');
     });
 
     it('throws when only the dates request fails', async () => {
-      const fetchFn = jest.fn(async (input: string) => {
-        const isEvents = new URL(input).pathname.endsWith('/events');
-        return { ok: isEvents, status: isEvents ? 200 : 503, json: async () => ({ results: [] }) };
-      }) as unknown as typeof fetch;
+      const fetchFn: Request = jest.fn(async (href: string) => {
+        if (!new URL(href).pathname.endsWith('/events')) {
+          throw httpError(503);
+        }
+        return { data: { results: [] } };
+      });
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 503');
+      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status code 503');
     });
 
     it('throws when a later events page fails', async () => {
-      const fetchFn = jest.fn(async (input: string) => {
-        const url = new URL(input);
-        const isLaterPage = url.searchParams.has('after');
-        return {
-          ok: !isLaterPage,
-          status: isLaterPage ? 502 : 200,
-          json: async () => ({
-            results: [],
-            page: url.pathname.endsWith('/events') ? { next: 'more' } : {},
-          }),
-        };
-      }) as unknown as typeof fetch;
+      const fetchFn: Request = jest.fn(async (href: string) => {
+        const url = new URL(href);
+        if (url.searchParams.has('after')) {
+          throw httpError(502);
+        }
+        return { data: { results: [], page: url.pathname.endsWith('/events') ? { next: 'more' } : {} } };
+      });
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 502');
+      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status code 502');
     });
   });
 });
