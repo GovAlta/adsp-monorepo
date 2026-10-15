@@ -17,6 +17,7 @@ export * from './events';
 export * from './model';
 export * from './repository';
 export * from './configuration';
+export * from './recurrence';
 
 interface CalendarMiddlewareProps {
   serviceId: AdspId;
@@ -31,7 +32,7 @@ interface CalendarMiddlewareProps {
 
 export const applyCalendarMiddleware = (
   app: Application,
-  { calendarRepository: repository, ...props }: CalendarMiddlewareProps
+  { calendarRepository: repository, ...props }: CalendarMiddlewareProps,
 ): Application => {
   const dateRouter = createDateRouter({ repository });
   const calendarRouter = createCalendarRouter({ repository, ...props });
