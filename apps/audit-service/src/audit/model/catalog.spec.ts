@@ -1,5 +1,6 @@
 import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { createLogger, transports } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, CatalogUnavailableError } from './catalog';
 
 describe('CatalogService', () => {
@@ -38,7 +39,9 @@ describe('CatalogService', () => {
   it('reports a propagated SDK failure as unavailable', async () => {
     configuration.getServiceConfiguration.mockRejectedValue(new Error('Token provider unavailable'));
 
-    await expect(service.getCatalog('case-service', tenantId)).rejects.toMatchObject({ extra: { statusCode: 503 } });
+    await expect(service.getCatalog('case-service', tenantId)).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
   });
 
   it('refuses a document stored under the wrong application name', async () => {

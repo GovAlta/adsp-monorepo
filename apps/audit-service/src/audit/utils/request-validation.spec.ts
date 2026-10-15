@@ -2,6 +2,7 @@ import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { createAuditJsonParser, validateWriteRequest } from './request-validation';
 
 describe('audit request validation', () => {
@@ -10,7 +11,7 @@ describe('audit request validation', () => {
   function createApp() {
     const app = express();
     app.use(createAuditJsonParser());
-    app.post('/events', validateWriteRequest, (_req, res) => res.sendStatus(204));
+    app.post('/events', validateWriteRequest, (_req, res) => res.sendStatus(HttpStatusCodes.NO_CONTENT));
     app.use(createErrorHandler(logger));
     return app;
   }
@@ -20,7 +21,7 @@ describe('audit request validation', () => {
 
     const response = await request(createApp()).post('/events').send(payload);
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(HttpStatusCodes.NO_CONTENT);
   });
 
   it.each([
@@ -33,7 +34,7 @@ describe('audit request validation', () => {
   ])('rejects an invalid batch envelope %#', async (payload) => {
     const response = await request(createApp()).post('/events').send(payload);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(HttpStatusCodes.BAD_REQUEST);
   });
 
   it('returns a clear error for malformed JSON', async () => {
@@ -43,6 +44,6 @@ describe('audit request validation', () => {
       .send('{"events": [');
 
     expect(response.body).toEqual({ errorMessage: 'Malformed JSON request body.' });
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(HttpStatusCodes.BAD_REQUEST);
   });
 });

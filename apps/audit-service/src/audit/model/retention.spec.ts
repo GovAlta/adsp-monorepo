@@ -1,5 +1,6 @@
 import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { createLogger, transports } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { calculateRetentionUntil, DEFAULT_RETENTION_CLASSES, RetentionService } from './retention';
 
 describe('write-time retention', () => {
@@ -57,7 +58,9 @@ describe('write-time retention', () => {
   it('returns 503 when a retention configuration error propagates from the SDK', async () => {
     configuration.getServiceConfiguration.mockRejectedValue(new Error('Configuration unavailable'));
 
-    await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({ extra: { statusCode: 503 } });
+    await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
   });
 
   it.each([
@@ -67,7 +70,9 @@ describe('write-time retention', () => {
   ])('refuses mismatched configuration documents %#', async (settings, application) => {
     configuration.getServiceConfiguration.mockResolvedValueOnce(settings).mockResolvedValueOnce(application);
 
-    await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({ extra: { statusCode: 503 } });
+    await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
   });
 
   it.each([
@@ -86,7 +91,7 @@ describe('write-time retention', () => {
     'refuses missing or unusable custom periods %#',
     (classes) => {
       expect(() => calculateRetentionUntil(new Date('2026-10-15'), 'custom', classes)).toThrow(
-        expect.objectContaining({ extra: { statusCode: 503 } }),
+        expect.objectContaining({ extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE } }),
       );
     },
   );

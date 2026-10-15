@@ -2,6 +2,7 @@ import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import Ajv, { ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
+import * as HttpStatusCodes from 'http-status-codes';
 import { AuditEvent } from '../types';
 
 export const MAX_JSON_FIELD_BYTES = 16 * 1024;
@@ -124,7 +125,7 @@ export class ActionValidator {
         validate = createAjv().compile(definition.metadataSchema);
       } catch {
         throw new InvalidOperationError('The action metadata schema cannot be compiled. Contact the catalog owner.', {
-          statusCode: 503,
+          statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
         });
       }
       this.metadataValidators.set(definition, validate);

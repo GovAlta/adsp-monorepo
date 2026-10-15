@@ -1,4 +1,5 @@
 import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import * as HttpStatusCodes from 'http-status-codes';
 import {
   ActionValidator,
   EventRejectedError,
@@ -175,7 +176,7 @@ describe('catalog event validation', () => {
     { type: 'object', properties: { reference: { type: 'string', format: 'unrecognized-format' } } },
   ])('treats an unusable metadata schema as a service failure, not an event rejection', (metadataSchema) => {
     expect(() => new ActionValidator().validate(event, { ...definition, metadataSchema })).toThrow(
-      expect.objectContaining({ extra: { statusCode: 503 } }),
+      expect.objectContaining({ extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE } }),
     );
   });
 });

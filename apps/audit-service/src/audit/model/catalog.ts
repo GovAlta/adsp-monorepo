@@ -1,12 +1,13 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { ActionCatalog, AuditConfiguration } from '../configuration';
 
 export class CatalogUnavailableError extends InvalidOperationError {
   constructor() {
     super('Action catalog is temporarily unavailable. Retry the request; do not re-register actions.', {
-      statusCode: 503,
+      statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
     });
     Object.setPrototypeOf(this, CatalogUnavailableError.prototype);
   }

@@ -1,6 +1,7 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { AuditConfiguration, RetentionSettings } from '../configuration';
 
 export const DEFAULT_RETENTION_CLASSES: RetentionSettings['classes'] = {
@@ -47,7 +48,9 @@ export class RetentionService {
         context: 'AuditRetention',
         tenant: tenantId.toString(),
       });
-      throw new InvalidOperationError('Audit retention settings are temporarily unavailable.', { statusCode: 503 });
+      throw new InvalidOperationError('Audit retention settings are temporarily unavailable.', {
+        statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+      });
     }
   }
 }
@@ -61,7 +64,7 @@ export function calculateRetentionUntil(
   const until = occurredAt.getTime() + period?.days * MILLISECONDS_PER_DAY;
   if (!Number.isSafeInteger(period?.days) || period.days < 1 || !Number.isFinite(new Date(until).getTime())) {
     throw new InvalidOperationError(`Retention class '${retentionClass}' has no valid write-time period.`, {
-      statusCode: 503,
+      statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
     });
   }
   return new Date(until);

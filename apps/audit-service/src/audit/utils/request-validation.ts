@@ -1,6 +1,7 @@
 import { createValidationHandler, InvalidOperationError } from '@core-services/core-common';
 import { json, RequestHandler } from 'express';
 import { body, checkSchema } from 'express-validator';
+import * as HttpStatusCodes from 'http-status-codes';
 
 export const MAX_BATCH_EVENTS = 500;
 export const MAX_REQUEST_BYTES = 20 * 1024 * 1024;
@@ -10,7 +11,11 @@ export function createAuditJsonParser(): RequestHandler {
   return (req, res, next) => {
     parse(req, res, (err) => {
       if (err?.type === 'entity.too.large') {
-        next(new InvalidOperationError('Audit request exceeds the 20 MB body limit.', { statusCode: 413 }));
+        next(
+          new InvalidOperationError('Audit request exceeds the 20 MB body limit.', {
+            statusCode: HttpStatusCodes.REQUEST_TOO_LONG,
+          }),
+        );
       } else if (err?.type === 'entity.parse.failed') {
         next(new InvalidOperationError('Malformed JSON request body.'));
       } else {

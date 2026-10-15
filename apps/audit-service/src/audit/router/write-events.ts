@@ -3,9 +3,15 @@ import { InvalidOperationError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
 import { RequestHandler } from 'express';
 import type { Logger } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, RetentionService } from '../model';
 import { ActionCatalog, RetentionSettings } from '../configuration';
-import { ActionValidator, EventRejectedError, getCapturedChangeSet, validateEventEnvelope } from '../utils/event-validation';
+import {
+  ActionValidator,
+  EventRejectedError,
+  getCapturedChangeSet,
+  validateEventEnvelope,
+} from '../utils/event-validation';
 import { calculateRetentionUntil } from '../model/retention';
 import { AuditEvent, EnrichedEvent, EventSubmitter, RejectedEvent, WriteEventsResponse } from '../types';
 import { getWriterClientId } from '../utils/write-access';
@@ -90,11 +96,15 @@ async function submitEvents(
 ): Promise<void> {
   if (!prepared.length) return;
   if (!submitter) {
-    throw new InvalidOperationError('Audit event storage is not configured.', { statusCode: 503 });
+    throw new InvalidOperationError('Audit event storage is not configured.', {
+      statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+    });
   }
   const outcomes = await submitter.submit(prepared.map(({ event }) => event));
   if (!(outcomes instanceof Map) || outcomes.size !== prepared.length) {
-    throw new InvalidOperationError('Audit storage returned an incomplete submission result.', { statusCode: 503 });
+    throw new InvalidOperationError('Audit storage returned an incomplete submission result.', {
+      statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+    });
   }
   for (const { event, index } of prepared) {
     const outcome = outcomes.get(event.id);
@@ -107,12 +117,16 @@ async function submitEvents(
         break;
       case 'rejected':
         if (outcome.code !== 'storage_failed' || typeof outcome.reason !== 'string' || !outcome.reason.trim()) {
-          throw new InvalidOperationError('Audit storage returned an invalid rejection.', { statusCode: 503 });
+          throw new InvalidOperationError('Audit storage returned an invalid rejection.', {
+            statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+          });
         }
         response.rejected.push(rejectedEvent(event.originalEvent, index, outcome.code, outcome.reason));
         break;
       default:
-        throw new InvalidOperationError('Audit storage did not account for every event.', { statusCode: 503 });
+        throw new InvalidOperationError('Audit storage did not account for every event.', {
+          statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+        });
     }
   }
 }
@@ -147,13 +161,14 @@ export function writeEvents({ catalogs, retention, submitter, logger }: WriteEve
       });
       await submitEvents(submitter, prepared, response);
       response.rejected.sort((left, right) => left.index - right.index);
-      res.status(202).send(response);
+      res.status(HttpStatusCodes.ACCEPTED).send(response);
     } catch (err) {
       logger.warn(`Unable to submit audit events: ${err}`, {
         context: 'AuditWrite',
         tenant: req.tenant?.id.toString(),
       });
-      if (err instanceof InvalidOperationError && err.extra?.statusCode === 503) res.setHeader('Retry-After', '1');
+      if (err instanceof InvalidOperationError && err.extra?.statusCode === HttpStatusCodes.SERVICE_UNAVAILABLE)
+        res.setHeader('Retry-After', '1');
       next(err);
     }
   };

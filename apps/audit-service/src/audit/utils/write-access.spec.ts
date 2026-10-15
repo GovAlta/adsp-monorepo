@@ -3,6 +3,7 @@ import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { AuditServiceRoles } from '../roles';
 import { assertCanWriteEvents, getWriterClientId } from './write-access';
 
@@ -34,7 +35,7 @@ describe('audit write access', () => {
       if (tenantId) req.tenant = { id: tenantId, name: 'Audit tenant', realm: 'audit-tenant' };
       next();
     });
-    app.post('/:namespace/events', assertCanWriteEvents, (_req, res) => res.sendStatus(204));
+    app.post('/:namespace/events', assertCanWriteEvents, (_req, res) => res.sendStatus(HttpStatusCodes.NO_CONTENT));
     app.use(createErrorHandler(logger));
     return app;
   }
@@ -57,36 +58,36 @@ describe('audit write access', () => {
   it('permits a writer in its own tenant and namespace', async () => {
     const response = await request(createApp(user, tenantA)).post('/case-service/events');
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(HttpStatusCodes.NO_CONTENT);
   });
 
   it('refuses another resolved tenant even when the caller has the writer role', async () => {
     const response = await request(createApp(user, tenantB)).post('/case-service/events');
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(HttpStatusCodes.FORBIDDEN);
   });
 
   it('refuses another namespace for a tenant writer', async () => {
     const response = await request(createApp(user, tenantA)).post('/payment-service/events');
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(HttpStatusCodes.FORBIDDEN);
   });
 
   it.each([user, coreUser])('refuses a caller without the writer role in a resolved tenant %#', async (caller) => {
     const response = await request(createApp({ ...caller, roles: [] }, tenantA)).post('/case-service/events');
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(HttpStatusCodes.FORBIDDEN);
   });
 
   it('permits a Core writer in another namespace and tenant', async () => {
     const response = await request(createApp(coreUser, tenantB)).post('/payment-service/events');
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(HttpStatusCodes.NO_CONTENT);
   });
 
   it('requires a resolved tenant for a Core writer', async () => {
     const response = await request(createApp(coreUser)).post('/case-service/events');
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(HttpStatusCodes.BAD_REQUEST);
   });
 });

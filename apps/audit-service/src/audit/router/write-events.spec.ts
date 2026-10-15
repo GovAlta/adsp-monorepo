@@ -3,6 +3,7 @@ import { assertAuthenticatedHandler, createErrorHandler, InvalidOperationError }
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
+import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, RetentionService } from '../model';
 import { ActionCatalog } from '../configuration';
 import { MAX_JSON_FIELD_BYTES } from '../utils/event-validation';
@@ -115,7 +116,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       .post('/audit/v1/case-service/events')
       .send({ events: [event] });
 
-    expect(result.status).toBe(202);
+    expect(result.status).toBe(HttpStatusCodes.ACCEPTED);
     expect(result.body).toEqual({ accepted: 1, duplicates: 0, rejected: [] });
   });
 
@@ -137,7 +138,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [forged] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(submitter.submit.mock.calls[0][0][0]).toEqual({
       id: expect.stringMatching(/^[0-9a-f-]{36}$/),
@@ -173,11 +174,15 @@ describe('POST /audit/v1/:namespace/events', () => {
   });
 
   it.each([
-    ['unauthenticated', null, 401],
-    ['missing role', { ...user, roles: [] }, 403],
-    ['Core without role', { ...coreUser, roles: [] }, 403],
-    ['another namespace', { ...user, token: { ...user.token, azp: 'urn:ads:case-team:payment-service' } }, 403],
-    ['no tenant', { ...user, tenantId: undefined }, 403],
+    ['unauthenticated', null, HttpStatusCodes.UNAUTHORIZED],
+    ['missing role', { ...user, roles: [] }, HttpStatusCodes.FORBIDDEN],
+    ['Core without role', { ...coreUser, roles: [] }, HttpStatusCodes.FORBIDDEN],
+    [
+      'another namespace',
+      { ...user, token: { ...user.token, azp: 'urn:ads:case-team:payment-service' } },
+      HttpStatusCodes.FORBIDDEN,
+    ],
+    ['no tenant', { ...user, tenantId: undefined }, HttpStatusCodes.FORBIDDEN],
   ])('refuses %s callers before loading configuration', async (_label, caller, status) => {
     await request(createApp(caller))
       .post('/audit/v1/case-service/events')
@@ -199,7 +204,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       .post('/audit/v1/case-service/events')
       .query({ tenantId: tenantB.toString() })
       .send({ events: [event] })
-      .expect(403);
+      .expect(HttpStatusCodes.FORBIDDEN);
 
     expect(submitter.submit).not.toHaveBeenCalled();
   });
@@ -209,7 +214,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       .post('/audit/v1/case-service/events')
       .query({ tenantId: tenantB.toString() })
       .send({ events: [event] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(submitter.submit.mock.calls[0][0][0]).toMatchObject({
       tenant_id: tenantB.toString(),
@@ -223,7 +228,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp(coreUser))
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(400);
+      .expect(HttpStatusCodes.BAD_REQUEST);
 
     expect(submitter.submit).not.toHaveBeenCalled();
   });
@@ -233,7 +238,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       .post('/audit/v1/case-service/events')
       .query({ tenantId: tenantB.toString() })
       .send({ events: [event] })
-      .expect(403);
+      .expect(HttpStatusCodes.FORBIDDEN);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
   });
@@ -243,7 +248,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       .post(`/audit/v1/${namespace}/events`)
       .query({ tenantId: tenantB.toString() })
       .send({ events: [event] })
-      .expect(400);
+      .expect(HttpStatusCodes.BAD_REQUEST);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
   });
@@ -257,7 +262,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     { events: null },
     { events: [event], tenantId: tenantB.toString() },
   ])('refuses invalid batch envelopes before any catalog processing', async (payload) => {
-    await request(createApp()).post('/audit/v1/case-service/events').send(payload).expect(400);
+    await request(createApp()).post('/audit/v1/case-service/events').send(payload).expect(HttpStatusCodes.BAD_REQUEST);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
     expect(submitter.submit).not.toHaveBeenCalled();
@@ -267,7 +272,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: Array(500).fill(event) })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(result.body.accepted).toBe(500);
     expect(submitter.submit).toHaveBeenCalledTimes(1);
@@ -285,7 +290,10 @@ describe('POST /audit/v1/:namespace/events', () => {
     };
     const payload = { events: Array(500).fill({ ...event, metadata, changeSet }) };
 
-    const result = await request(createApp()).post('/audit/v1/case-service/events').send(payload).expect(202);
+    const result = await request(createApp())
+      .post('/audit/v1/case-service/events')
+      .send(payload)
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(result.body).toEqual({ accepted: 500, duplicates: 0, rejected: [] });
   });
@@ -295,7 +303,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       .post('/audit/v1/case-service/events')
       .set('Content-Type', 'application/json')
       .send('{"events": [private raw data')
-      .expect(400);
+      .expect(HttpStatusCodes.BAD_REQUEST);
 
     expect(result.body.errorMessage).toBe('Malformed JSON request body.');
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
@@ -305,7 +313,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [{ ...event, metadata: { value: 'a'.repeat(MAX_REQUEST_BYTES) } }] })
-      .expect(413);
+      .expect(HttpStatusCodes.REQUEST_TOO_LONG);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
   });
@@ -326,7 +334,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [null, event, event, event, { ...event, action: 'case.remove.failed' }] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(result.body).toMatchObject({
       accepted: 1,
@@ -351,7 +359,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(result.body.rejected[0]).toMatchObject({
       code: 'unknown_action',
@@ -366,7 +374,7 @@ describe('POST /audit/v1/:namespace/events', () => {
       await request(createApp())
         .post('/audit/v1/case-service/events')
         .send({ events: [{ ...event, action }] })
-        .expect(202);
+        .expect(HttpStatusCodes.ACCEPTED);
 
       expect(submitter.submit.mock.calls[0][0][0].action).toBe(action);
     },
@@ -379,7 +387,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [input] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(submitter.submit.mock.calls[0][0][0]).toMatchObject({
       change_set_before: null,
@@ -392,7 +400,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event, { ...event, actionVersion: 2 }, { ...event, actionVersion: 1 }] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(result.body).toMatchObject({
       accepted: 2,
@@ -414,7 +422,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [minimal] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(submitter.submit.mock.calls[0][0][0]).toMatchObject({
       actor_name: null,
@@ -436,7 +444,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [{ ...event, eventId: event.eventId.toUpperCase() }] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(submitter.submit.mock.calls[0][0][0].event_id).toBe(event.eventId);
   });
@@ -445,7 +453,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp(user, null))
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(503);
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
 
     expect(result.headers['retry-after']).toBe('1');
     expect(result.body.errorMessage).toContain('not configured');
@@ -455,7 +463,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp(user, null))
       .post('/audit/v1/case-service/events')
       .send({ events: [null] })
-      .expect(202);
+      .expect(HttpStatusCodes.ACCEPTED);
 
     expect(result.body).toMatchObject({ accepted: 0, duplicates: 0, rejected: [{ index: 0 }] });
   });
@@ -466,19 +474,21 @@ describe('POST /audit/v1/:namespace/events', () => {
     const result = await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(503);
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
 
     expect(result.headers['retry-after']).toBe('1');
     expect(submitter.submit).not.toHaveBeenCalled();
   });
 
   it('returns retryable 503 for buffer backpressure', async () => {
-    submitter.submit.mockRejectedValue(new InvalidOperationError('Buffer is full.', { statusCode: 503 }));
+    submitter.submit.mockRejectedValue(
+      new InvalidOperationError('Buffer is full.', { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE }),
+    );
 
     const result = await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(503);
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
 
     expect(result.headers['retry-after']).toBe('1');
   });
@@ -492,7 +502,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(503);
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
   });
 
   it('refuses unknown retention classes without submitting other events in the batch', async () => {
@@ -501,7 +511,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(503);
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
 
     expect(submitter.submit).not.toHaveBeenCalled();
   });
@@ -540,7 +550,7 @@ describe('POST /audit/v1/:namespace/events', () => {
     await request(createApp())
       .post('/audit/v1/case-service/events')
       .send({ events: [event] })
-      .expect(503);
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
   });
 
   it('waits for submit to finish before returning accepted', async () => {
@@ -569,6 +579,6 @@ describe('POST /audit/v1/:namespace/events', () => {
     expect(responded).toBe(false);
     complete();
 
-    expect((await response).status).toBe(202);
+    expect((await response).status).toBe(HttpStatusCodes.ACCEPTED);
   });
 });
