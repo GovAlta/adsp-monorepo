@@ -20,8 +20,24 @@ The `apps/audit-service/src/audit` module follows the Calendar Service layout:
 - `types/`: event payloads and the submission contract.
 - `utils/`: event/request validation and write authorization.
 
-Configuration registration and role declarations remain at the module root. Tests are colocated
-with their implementations.
+`app.ts` initializes the application and registers configuration and roles; `main.ts` starts the
+HTTP listener. Tests are colocated with their implementations.
+
+## Authorization
+
+`initializePlatform` registers three roles on `urn:ads:platform:audit-service`:
+
+- `audit-reader`: read access; included in `tenant-admin` via `inTenantAdmin: true`.
+- `audit-writer`: event writes; explicitly assigned to application service accounts.
+- `audit-admin`: reserved for failed-event administration and protected actor identity access
+  in upcoming APIs; does not replace reader/writer permissions.
+
+Every audit route uses `requireAuditRole` to check both the role and resolved tenant.
+Core callers may cross tenants but still need the role. Missing/invalid tokens return 401;
+insufficient permissions return 403. Discovery, health and Swagger remain public.
+
+New tenants receive the registered roles during provisioning. Existing tenants and Core still
+require role provisioning; redeploying this service alone does not synchronize their Keycloak roles.
 
 ## Configuration contract
 

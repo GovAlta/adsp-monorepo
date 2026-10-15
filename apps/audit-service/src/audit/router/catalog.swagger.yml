@@ -5,7 +5,7 @@ paths:
         - Action catalogs
       summary: List a namespace's action definitions.
       description: |
-        Requires audit-reader. Returns a JSON array of action definitions from the caller's
+        Requires audit-reader, including for Core callers. Returns a JSON array of action definitions from the caller's
         tenant merged with Core, with Core winning on duplicate action names.
         The namespace is the application identifier in audit-service:actions-<application>.
         This endpoint does not require ownership of the namespace.
@@ -34,7 +34,7 @@ paths:
         '400':
           description: Invalid namespace or tenant identifier.
         '401':
-          description: Authentication required.
+          description: Missing or invalid bearer token.
         '403':
           description: Missing audit-reader or an attempt to access another tenant.
         '404':
