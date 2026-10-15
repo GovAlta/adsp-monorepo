@@ -157,14 +157,14 @@ Authorization: Bearer <token with audit-reader>
 Returns a JSON array, with each action's `name` plus its definition fields. Optional absent
 `resourceType`, `description`, and `metadataSchema` remain omitted.
 
-| Status | Meaning                                                                           |
-| ------ | --------------------------------------------------------------------------------- |
-| 200    | Resolved definitions; `[]` means registered but empty.                            |
-| 400    | Invalid application/namespace or tenant ID format.                                |
-| 401    | Not authenticated.                                                                |
-| 403    | No `audit-reader`, or a tenant caller attempted to select a different tenant.     |
+| Status | Meaning                                                                                |
+| ------ | -------------------------------------------------------------------------------------- |
+| 200    | Resolved definitions; `[]` means registered but empty.                                 |
+| 400    | Invalid application/namespace or tenant ID format.                                     |
+| 401    | Not authenticated.                                                                     |
+| 403    | No `audit-reader`, or a tenant caller attempted to select a different tenant.          |
 | 404    | Neither scope supplied a catalog; SDK-handled failures can also produce this response. |
-| 503    | A propagated SDK error or application-name consistency failure; retry.           |
+| 503    | A propagated SDK error or application-name consistency failure; retry.                 |
 
 `audit-reader` is tenant-wide: callers can read any namespace in their tenant, not only their own.
 A Core caller with the role can select a tenant via
