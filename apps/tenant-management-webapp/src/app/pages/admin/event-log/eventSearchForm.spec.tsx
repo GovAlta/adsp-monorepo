@@ -44,17 +44,53 @@ describe('EventSearchForm', () => {
     fireEvent(input as Element, new CustomEvent('_change', { detail: { value } }));
   };
 
-  it('places the Filters button immediately before Search', () => {
+  it.each(['event-log-date-range-filter', 'event-log-namespace-filter', 'event-log-name-filter'])(
+    'uses the native dropdown for %s to avoid nested interactive controls',
+    (name) => {
+      const { container } = renderComponent();
+
+      expect(container.querySelector(`goa-dropdown[name="${name}"]`)).toHaveAttribute('native', 'true');
+    },
+  );
+
+  it.each([
+    'goa-button[testid="event-log-filters-toggle"]',
+    'goa-dropdown[name="event-log-date-range-filter"]',
+    'goa-dropdown[name="event-log-namespace-filter"]',
+    'goa-dropdown[name="event-log-name-filter"]',
+    'goa-input[name="event-log-correlation-filter"]',
+    'goa-button[testid="event-log-filter-search"]',
+    'goa-button[testid="event-log-filter-reset"]',
+  ])('disables %s during loading and re-enables it afterward', (selector) => {
+    const store = createStore();
+    const { container, rerender } = render(
+      <Provider store={store}>
+        <EventSearchForm disabled />
+      </Provider>,
+    );
+
+    expect(container.querySelector(selector)).toHaveAttribute('disabled');
+
+    rerender(
+      <Provider store={store}>
+        <EventSearchForm disabled={false} />
+      </Provider>,
+    );
+
+    expect(container.querySelector(selector)).not.toHaveAttribute('disabled');
+  });
+
+  it('shows only the Filters button in the top filter controls', () => {
     const { container } = renderComponent();
 
     const buttons = Array.from(container.querySelectorAll('goa-button-group goa-button')).map((button) =>
       button.textContent?.trim(),
     );
 
-    expect(buttons).toEqual(['Filters', 'Search', 'Reset']);
+    expect(buttons).toEqual(['Filters']);
   });
 
-  it('places Filters, Search, and Reset immediately after the left action', () => {
+  it('places Filters immediately after the left action', () => {
     const { container } = renderComponent({
       leftAction: (
         <GoabButton size="compact" type="tertiary" testId="export-event-log-csv">
@@ -67,19 +103,15 @@ describe('EventSearchForm', () => {
       container.querySelectorAll('goa-button[testid="export-event-log-csv"], goa-button-group goa-button'),
     ).map((button) => button.textContent?.trim());
 
-    expect(buttons).toEqual(['Download CSV', 'Filters', 'Search', 'Reset']);
+    expect(buttons).toEqual(['Download CSV', 'Filters']);
     expect(container.querySelector('goa-button[testid="event-log-filters-toggle"]')).toHaveAttribute('size', 'compact');
-    expect(container.querySelector('goa-button[testid="event-log-search"]')).toHaveAttribute('size', 'compact');
-    expect(container.querySelector('goa-button[testid="event-log-reset"]')).toHaveAttribute('size', 'compact');
   });
 
-  it('keeps the Search button enabled with a leading search icon', () => {
+  it('does not show top-level Search or Reset buttons', () => {
     const { container } = renderComponent();
 
-    const searchButton = container.querySelector('goa-button[testid="event-log-search"]');
-
-    expect(searchButton).not.toHaveAttribute('disabled');
-    expect(searchButton).toHaveAttribute('leadingicon', 'search');
+    expect(container.querySelector('goa-button[testid="event-log-search"]')).not.toBeInTheDocument();
+    expect(container.querySelector('goa-button[testid="event-log-reset"]')).not.toBeInTheDocument();
   });
 
   it('keeps the additional filter panel collapsed by default and toggles it without searching', () => {
@@ -102,19 +134,23 @@ describe('EventSearchForm', () => {
       'chevron-back',
     );
     expect(container.querySelector('goa-drawer[testid="event-log-filter-panel"]')).toHaveAttribute('maxsize', '480px');
-    expect(container.querySelector('goa-button[testid="event-log-clear-all-filters"]')).toBeInTheDocument();
+    expect(container.querySelector('goa-button[testid="event-log-filter-reset"]')).toBeInTheDocument();
     expect(container.querySelector('goa-dropdown[name="event-log-date-range-filter"]')).toBeInTheDocument();
     expect(container.querySelector('goa-dropdown[name="event-log-namespace-filter"]')).toBeInTheDocument();
     expect(container.querySelector('goa-dropdown[name="event-log-name-filter"]')).toBeInTheDocument();
     expect(container.querySelector('goa-input[name="event-log-correlation-filter"]')).toBeInTheDocument();
+    expect(container.querySelector('goa-button[testid="event-log-filter-close"]')).toBeInTheDocument();
     expect(container.querySelector('goa-button[testid="event-log-filter-search"]')).toBeInTheDocument();
     expect(container.querySelector('goa-button[testid="event-log-filter-search"]')).toHaveAttribute('size', 'compact');
-    expect(container.querySelector('goa-button[testid="event-log-clear-all-filters"]')).toHaveAttribute(
-      'size',
-      'compact',
+    expect(container.querySelector('goa-button[testid="event-log-filter-reset"]')).toHaveAttribute('size', 'compact');
+    expect(container.querySelector('goa-button[testid="event-log-filter-reset"]')).toHaveAttribute('type', 'secondary');
+    expect(container.querySelector('goa-button[testid="event-log-filter-close"]')).toHaveAttribute('size', 'compact');
+    expect(container.querySelector('goa-button[testid="event-log-filter-close"]')).toHaveAttribute('type', 'secondary');
+    expect(container.querySelector('[data-testid="event-log-filter-actions"]')).toContainElement(
+      container.querySelector('goa-button[testid="event-log-filter-reset"]'),
     );
     expect(container.querySelector('[data-testid="event-log-filter-actions"]')).toContainElement(
-      container.querySelector('goa-button[testid="event-log-clear-all-filters"]'),
+      container.querySelector('goa-button[testid="event-log-filter-close"]'),
     );
     expect(container.querySelector('[data-testid="event-log-filter-actions"]')).toContainElement(
       container.querySelector('goa-button[testid="event-log-filter-search"]'),
@@ -142,6 +178,32 @@ describe('EventSearchForm', () => {
     );
     expect(queryByLabelText('Search')).not.toBeInTheDocument();
     expect(onSearch).not.toHaveBeenCalled();
+  });
+
+  it('closes the filter panel without changing filters or searching', () => {
+    const onSearch = jest.fn();
+    const onCancel = jest.fn();
+    const { container } = renderComponent({ onSearch, onCancel });
+
+    clickGoaButton(container.querySelector('goa-button[testid="event-log-filters-toggle"]'));
+    changeGoaDropdown(container.querySelector('goa-dropdown[name="event-log-namespace-filter"]'), 'script-service');
+    changeGoaInput(container.querySelector('goa-input[name="event-log-correlation-filter"]'), 'corr-123');
+
+    clickGoaButton(container.querySelector('goa-button[testid="event-log-filter-close"]'));
+
+    expect(container.querySelector('goa-drawer[testid="event-log-filter-panel"]')).not.toHaveAttribute('open');
+    expect(onSearch).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+
+    clickGoaButton(container.querySelector('goa-button[testid="event-log-filters-toggle"]'));
+    expect(container.querySelector('goa-dropdown[name="event-log-namespace-filter"]')).toHaveAttribute(
+      'value',
+      'script-service',
+    );
+    expect(container.querySelector('goa-input[name="event-log-correlation-filter"]')).toHaveAttribute(
+      'value',
+      'corr-123',
+    );
   });
 
   it('keeps panel filter values when the additional filter panel is toggled', () => {
@@ -240,7 +302,7 @@ describe('EventSearchForm', () => {
     changeGoaDropdown(container.querySelector('goa-dropdown[name="event-log-name-filter"]'), 'script-executed');
     changeGoaInput(container.querySelector('goa-input[name="event-log-correlation-filter"]'), 'corr-456');
 
-    clickGoaButton(container.querySelector('goa-button[testid="event-log-search"]'));
+    clickGoaButton(container.querySelector('goa-button[testid="event-log-filter-search"]'));
 
     expect(onSearch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -287,7 +349,7 @@ describe('EventSearchForm', () => {
     expect(queryByLabelText('Search')).not.toBeInTheDocument();
     expect(container.querySelector('.suggestions')).not.toBeInTheDocument();
 
-    clickGoaButton(container.querySelector('goa-button[testid="event-log-search"]'));
+    clickGoaButton(container.querySelector('goa-button[testid="event-log-filter-search"]'));
 
     expect(onSearch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -297,16 +359,17 @@ describe('EventSearchForm', () => {
     );
   });
 
-  it('clears and closes the additional filter panel without searching', () => {
+  it('resets the filter panel and table without searching', () => {
     const onSearch = jest.fn();
-    const { container } = renderComponent({ onSearch });
+    const onCancel = jest.fn();
+    const { container } = renderComponent({ onSearch, onCancel });
 
     clickGoaButton(container.querySelector('goa-button[testid="event-log-filters-toggle"]'));
     changeGoaDropdown(container.querySelector('goa-dropdown[name="event-log-namespace-filter"]'), 'script-service');
     changeGoaDropdown(container.querySelector('goa-dropdown[name="event-log-name-filter"]'), 'script-executed');
     changeGoaInput(container.querySelector('goa-input[name="event-log-correlation-filter"]'), 'corr-789');
 
-    clickGoaButton(container.querySelector('goa-button[testid="event-log-clear-all-filters"]'));
+    clickGoaButton(container.querySelector('goa-button[testid="event-log-filter-reset"]'));
 
     expect(container.querySelector('goa-dropdown[name="event-log-namespace-filter"]')).toHaveAttribute(
       'value',
@@ -318,6 +381,7 @@ describe('EventSearchForm', () => {
     );
     expect(container.querySelector('goa-input[name="event-log-correlation-filter"]')).toHaveAttribute('value', '');
     expect(onSearch).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalled();
 
     fireEvent(
       container.querySelector('goa-drawer[testid="event-log-filter-panel"]') as Element,
