@@ -11,7 +11,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
   constructor(
     private readonly logger: Logger,
     private readonly directory: ServiceDirectory,
-    private readonly tokenProvider: TokenProvider
+    private readonly tokenProvider: TokenProvider,
   ) {}
 
   async register(registration: ServiceRegistration): Promise<void> {
@@ -66,7 +66,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
                 log: def.log,
               },
             }),
-            {}
+            {},
           ),
         },
       };
@@ -86,7 +86,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
             publicSubscribe: stream.publicSubscribe,
           },
         }),
-        {}
+        {},
       );
       await this.updateConfiguration(adspId`urn:ads:platform:push-service`, update);
     }
@@ -105,7 +105,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
             rules: type?.rules,
           },
         }),
-        {}
+        {},
       );
       await this.updateConfiguration(adspId`urn:ads:platform:file-service`, update);
     }
@@ -121,7 +121,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
             events: type.events,
           },
         }),
-        {}
+        {},
       );
 
       await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);
@@ -142,7 +142,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
                 jsonSchema: def.jsonSchema,
               },
             }),
-            {}
+            {},
           ),
         },
       };

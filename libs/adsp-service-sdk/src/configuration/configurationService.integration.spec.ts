@@ -158,5 +158,4 @@ describe('configuration retrieval with the existing SDK cache', () => {
     expect(results[0]).toEqual(results[1]);
     expect(http.get).toHaveBeenCalledTimes(2);
   });
-
 });
