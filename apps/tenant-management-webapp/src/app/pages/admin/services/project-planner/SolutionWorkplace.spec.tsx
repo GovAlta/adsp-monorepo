@@ -2,7 +2,6 @@ import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { SolutionWorkplace } from './SolutionWorkplace';
 import { usePlannerApi } from './api';
-import { layoutPanes } from './workplaceLayout';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi, MockPlannerApi } from './testing/createMockApi';
 import { download } from './utils';
@@ -138,26 +137,6 @@ const chat = (id: string, service: string): ChatSummary => ({
   createdOn: '2026-03-01T10:00:00.000Z',
   updatedOn: '2026-03-01T10:00:00.000Z',
   messageCount: 2,
-});
-
-describe('layoutPanes', () => {
-  const panes = [5, 3, 1, 4, 2].map((id) => ({ id, node: `pane ${id}` }));
-
-  it('stacks the panes in numeric order in one column', () => {
-    expect(layoutPanes('one', panes).map((c) => c.map((p) => p.id))).toEqual([[1, 2, 3, 4, 5]]);
-  });
-
-  it('splits 1,2,4 left and 3,5 right in two columns', () => {
-    expect(layoutPanes('two', panes).map((c) => c.map((p) => p.id))).toEqual([
-      [1, 2, 4],
-      [3, 5],
-    ]);
-  });
-
-  it('supports custom right panes and skips empty panes', () => {
-    const result = layoutPanes('two', [...panes, { id: 6, node: null }], [2]);
-    expect(result.map((c) => c.map((p) => p.id))).toEqual([[1, 3, 4, 5], [2]]);
-  });
 });
 
 describe('SolutionWorkplace', () => {

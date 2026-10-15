@@ -2,7 +2,6 @@ import React, { FunctionComponent } from 'react';
 import { GoabButton } from '@abgov/react-components';
 import styled from 'styled-components';
 import { AnalysisMode } from './model';
-import { Layout, LAYOUTS, SOLUTION_MODES, SolutionMode } from './workplaceLayout';
 
 const Row = styled.div`
   display: flex;
@@ -20,7 +19,14 @@ interface ToggleGroupProps<T extends string> {
   testIdPrefix: string;
 }
 
-function ToggleGroup<T extends string>({ label, items, value, onChange, isDisabled, testIdPrefix }: ToggleGroupProps<T>) {
+function ToggleGroup<T extends string>({
+  label,
+  items,
+  value,
+  onChange,
+  isDisabled,
+  testIdPrefix,
+}: ToggleGroupProps<T>) {
   return (
     <Row role="group" aria-label={label}>
       <strong>{label}:</strong>
@@ -39,25 +45,6 @@ function ToggleGroup<T extends string>({ label, items, value, onChange, isDisabl
     </Row>
   );
 }
-
-interface ModeLayoutToggleProps {
-  solutionMode: SolutionMode;
-  onSolutionModeChange: (mode: SolutionMode) => void;
-  layout: Layout;
-  onLayoutChange: (layout: Layout) => void;
-}
-
-export const ModeLayoutToggle: FunctionComponent<ModeLayoutToggleProps> = ({
-  solutionMode,
-  onSolutionModeChange,
-  layout,
-  onLayoutChange,
-}) => (
-  <Row style={{ gap: '2rem' }}>
-    <ToggleGroup label="Mode" items={SOLUTION_MODES} value={solutionMode} onChange={onSolutionModeChange} testIdPrefix="solution-mode" />
-    <ToggleGroup label="Layout" items={LAYOUTS} value={layout} onChange={onLayoutChange} testIdPrefix="layout" />
-  </Row>
-);
 
 interface AnalysisModeToggleProps {
   mode: AnalysisMode;
