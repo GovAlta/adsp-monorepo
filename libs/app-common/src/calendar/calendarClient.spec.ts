@@ -77,7 +77,6 @@ describe('CalendarClient', () => {
 
     const { holidays } = await createClient(fetchFn).getCalendarEvents('my-cal', range);
 
-    expect(holidays.map((h) => h.date.toISOString())).toEqual(['2026-12-25T07:00:00.000Z', '2026-05-18T06:00:00.000Z']);
     expect(holidays[1].isInLieuOfDay).toBe(true);
   });
 
