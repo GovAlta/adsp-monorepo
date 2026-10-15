@@ -70,47 +70,29 @@ class NotificationsPage {
     return cy.get('[testid="form-cancel"]');
   }
 
-  notificationTypeEditBtn(notificationTypeTitle) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@testid="edit-notification-type"]`
-    );
+  notificationTypeEditBtn() {
+    return cy.xpath('//goa-button[@testid="edit-notification-type"]');
   }
 
-  notificationTypeDeleteBtn(notificationTypeTitle) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@testid="delete-notification-type"]`
-    );
+  notificationTypeDeleteBtn() {
+    return cy.xpath('//goa-button[@testid="delete-notification-type"]');
+  }
+
+  notificationTypeDetailsPaneBackToNotificationTypesLink() {
+    return cy.xpath('//goa-button[@testid="back-to-notification-types"]');
   }
 
   addANotificationTypeButtonOnNotificationTypesPage() {
     return cy.get('[testid="add-notification"]');
   }
 
-  notificationTypeCardTitle(notificationTypeTitle) {
-    return cy.xpath(`//goa-container//h2[contains(text(), "${notificationTypeTitle}")]`);
+  notificationTypeRowsWithName(name) {
+    return cy.xpath(`//goa-table[@testid="notification-types-table"]//tbody/tr[td[contains(text(), "${name}")]]`);
   }
 
-  notificationTypeCardDesc(notificationTypeTitle) {
+  notificationTypeRows(name, typeId, publicOrNot, selfServiceOrNot) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*/following-sibling::*[contains(text(), "Description:")]`
-    );
-  }
-
-  notificationTypeSubscriberRoles(notificationTypeTitle) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-subscriber-roles"]`
-    );
-  }
-
-  notificationTypePublicSubscription(notificationTypeTitle) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-public-subscription"]`
-    );
-  }
-
-  notificationTypeSelfService(notificationTypeTitle) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-self-service"]`
+      `//goa-table[@testid="notification-types-table"]//tbody/tr[td[1][contains(., "${name}")] and td[2][contains(., "${typeId}")] and td[3][contains(., "${publicOrNot}")] and td[4][contains(., "${selfServiceOrNot}")]]`
     );
   }
 
@@ -120,9 +102,17 @@ class NotificationsPage {
     );
   }
 
-  notificationTypeSelectAnEventBtn(cardTitle) {
+  notificationTypeSelectAnEventBtn() {
+    return cy.xpath(`//goa-button[contains(text(), "Add event")]`);
+  }
+
+  notificationTypeDetailsPaneSectionTitleNumberOne() {
+    return cy.xpath('//div[@data-testid="notification-types-tab"]//section//h2[1]');
+  }
+
+  notificaitonTypeDetailsPaneEventTitles() {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]/ancestor::goa-container//goa-button[contains(text(), "Select an event")]`
+      '//div[div[h2[text()="Events"]]]/following-sibling::div//goa-icon-button[@testid="delete-event"]/preceding-sibling::span'
     );
   }
 
@@ -174,9 +164,9 @@ class NotificationsPage {
     );
   }
 
-  eventDeleteIcon(cardTitle, eventName) {
+  notificationTypeDetailsPaneEventDeleteIcon(eventName) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@testid="delete-event"]`
+      `//span[normalize-space(.)='${eventName}']/following-sibling::goa-icon-button[@title='Delete event']`
     );
   }
 

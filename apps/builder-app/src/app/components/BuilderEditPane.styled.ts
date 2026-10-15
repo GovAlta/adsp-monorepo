@@ -16,12 +16,6 @@ export const PanelLauncher = styled.div`
   bottom: 1rem;
   z-index: 90;
   display: inline-flex;
-
-  @media (max-width: 900px) {
-    position: static;
-    margin: 0 1rem 1rem;
-    width: fit-content;
-  }
 `;
 
 export const Panel = styled.section`
@@ -47,13 +41,18 @@ export const Panel = styled.section`
     max-height: 78vh;
   }
 
+  /* When narrow there is no room for the preview and the chat together, so the pane covers the viewport and the
+     collapse and open buttons switch between them. */
   @media (max-width: 900px) {
-    position: static;
+    inset: 0;
     width: auto;
-    height: auto;
+    height: 100dvh;
     min-height: 0;
     max-height: none;
-    margin: 0 1rem 1rem;
+    border: 0;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: none;
   }
 `;
 

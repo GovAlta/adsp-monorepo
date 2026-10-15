@@ -22,12 +22,12 @@ jest.mock('./eventSearchForm', () => ({
     <div>
       {leftAction}
       <button
-        data-testid="event-log-search"
+        data-testid="event-log-filter-search"
         onClick={() => onSearch?.({ namespace: 'form-service', name: 'form-created' })}
       >
         Search
       </button>
-      <button data-testid="event-log-reset" onClick={() => onCancel?.()}>
+      <button data-testid="event-log-filter-reset" onClick={() => onCancel?.()}>
         Reset
       </button>
     </div>
@@ -96,10 +96,10 @@ describe('EventLog', () => {
     const csvButton = container.querySelector('goa-button[testid="export-event-log-csv"]');
     expect(csvButton).toHaveAttribute('disabled');
 
-    fireEvent.click(getByTestId('event-log-search'));
+    fireEvent.click(getByTestId('event-log-filter-search'));
     expect(csvButton).not.toHaveAttribute('disabled');
 
-    fireEvent.click(getByTestId('event-log-reset'));
+    fireEvent.click(getByTestId('event-log-filter-reset'));
     expect(csvButton).toHaveAttribute('disabled');
   });
 });

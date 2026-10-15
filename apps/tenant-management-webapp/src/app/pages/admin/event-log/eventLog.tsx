@@ -57,6 +57,7 @@ export const EventLog: FunctionComponent = () => {
   const onSearchCancel = () => {
     setSearched(false);
     setSearchCriteria(null);
+    dispatch(clearEventLogEntries());
     dispatch(getEventLogEntries());
   };
   const onNext = () => {
@@ -115,6 +116,7 @@ export const EventLog: FunctionComponent = () => {
           {hasReaderRole ? (
             <>
               <EventSearchForm
+                disabled={isLoading}
                 onSearch={(criteria) => onSearch(criteria)}
                 onCancel={onSearchCancel}
                 leftAction={

@@ -52,13 +52,19 @@ function defaultWeekCriteria(): EventSearchCriteria {
   };
 }
 interface EventSearchFormProps {
+  disabled?: boolean;
   initialValue?: EventSearchCriteria;
   onCancel?: () => void;
   onSearch?: (searchCriteria: EventSearchCriteria) => void;
   leftAction?: React.ReactNode;
 }
 
-export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCancel, onSearch, leftAction }) => {
+export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
+  disabled = false,
+  onCancel,
+  onSearch,
+  leftAction,
+}) => {
   const [searchCriteria, setSearchCriteria] = useState(() => defaultWeekCriteria());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dateRange, setDateRange] = useState(DATE_RANGE_LAST_7_DAYS);
@@ -128,32 +134,12 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
               size="compact"
               type="secondary"
               leadingIcon="filter"
+              disabled={disabled}
               trailingIcon={filtersOpen ? 'chevron-back' : 'chevron-forward'}
               onClick={() => setFiltersOpen((open) => !open)}
               testId="event-log-filters-toggle"
             >
               Filters
-            </GoabButton>
-            <GoabButton
-              size="compact"
-              leadingIcon="search"
-              testId="event-log-search"
-              onClick={() => {
-                onSearch?.(searchCriteria);
-              }}
-            >
-              Search
-            </GoabButton>
-            <GoabButton
-              size="compact"
-              type="secondary"
-              testId="event-log-reset"
-              onClick={() => {
-                clearFilters();
-                onCancel?.();
-              }}
-            >
-              Reset
             </GoabButton>
           </GoabButtonGroup>
         </FilterControls>
@@ -168,6 +154,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 <div className="filter-label">Date range</div>
                 <GoabDropdown
                   name="event-log-date-range-filter"
+                  native
+                  disabled={disabled}
                   value={dateRange}
                   leadingIcon="calendar"
                   size="compact"
@@ -181,6 +169,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 <div>From</div>
                 <GoabInput
                   name="event-log-from-filter"
+                  ariaLabel="From"
                   value={searchCriteria.timestampMin || ''}
                   leadingIcon="calendar"
                   size="compact"
@@ -190,6 +179,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 <div>To</div>
                 <GoabInput
                   name="event-log-to-filter"
+                  ariaLabel="To"
                   value={searchCriteria.timestampMax || ''}
                   leadingIcon="calendar"
                   size="compact"
@@ -200,6 +190,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 <div className="filter-label">Namespace</div>
                 <GoabDropdown
                   name="event-log-namespace-filter"
+                  native
+                  disabled={disabled}
                   value={filterNamespace}
                   size="compact"
                   width="100%"
@@ -215,6 +207,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 <div className="filter-label">Event name</div>
                 <GoabDropdown
                   name="event-log-name-filter"
+                  native
+                  disabled={disabled}
                   value={filterEventName}
                   size="compact"
                   width="100%"
@@ -228,6 +222,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 <div className="filter-label">Correlation ID</div>
                 <GoabInput
                   name="event-log-correlation-filter"
+                  ariaLabel="Correlation ID"
+                  disabled={disabled}
                   placeholder="Enter correlation ID"
                   width="100%"
                   size="compact"
@@ -249,17 +245,31 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           <FilterDrawerFooterActions data-testid="event-log-filter-actions">
             <GoabButton
               size="compact"
-              type="text"
+              type="secondary"
               leadingIcon="reload"
-              testId="event-log-clear-all-filters"
-              onClick={clearFilters}
+              testId="event-log-filter-reset"
+              disabled={disabled}
+              onClick={() => {
+                clearFilters();
+                onCancel?.();
+              }}
             >
-              Clear all filters
+              Reset
+            </GoabButton>
+            <GoabButton
+              size="compact"
+              type="secondary"
+              leadingIcon="close"
+              testId="event-log-filter-close"
+              onClick={() => setFiltersOpen(false)}
+            >
+              Close
             </GoabButton>
             <GoabButton
               size="compact"
               leadingIcon="search"
               testId="event-log-filter-search"
+              disabled={disabled}
               onClick={() => {
                 onSearch?.(searchCriteria);
               }}
