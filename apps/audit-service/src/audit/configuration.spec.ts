@@ -1,7 +1,15 @@
 import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import { createLogger, transports } from 'winston';
-import { ActionCatalog, combineCatalogs, configurationSchema, createCatalogConverter } from './configuration';
+import {
+  ActionCatalog,
+  combineCatalogs,
+  configurationSchema,
+  createCatalogConverter,
+  AuditConfiguration,
+  combineAuditConfiguration,
+  createAuditConfigurationConverter,
+} from './configuration';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
 const definition: AuditActionDefinition = {
@@ -31,6 +39,58 @@ describe('audit configuration schema', () => {
     };
 
     expect(() => validate({ ...catalog, actions: { 'case.update': action } })).not.toThrow();
+  });
+
+  describe('combined audit configuration', () => {
+    const convert = createAuditConfigurationConverter(logger);
+
+    it.each<AuditConfiguration>([
+      { kind: 'retentionSettings', classes: { standard: { days: 120 } } },
+      { kind: 'applicationRetentionSettings', application: 'case-service', classes: { compliance: { days: 730 } } },
+    ])('converts retention document $kind', (value) => {
+      expect(convert(value)).toEqual(value);
+    });
+
+    it('keeps Core precedence for action definitions', () => {
+      const core: ActionCatalog = { ...catalog, actions: { 'case.update': { ...definition, version: 2 } } };
+
+      expect(combineAuditConfiguration(catalog, core)).toEqual(core);
+    });
+
+    it('overrides Core retention periods by class with tenant settings', () => {
+      const result = combineAuditConfiguration(
+        { kind: 'retentionSettings', classes: { standard: { days: 120 } } },
+        { kind: 'retentionSettings', classes: { standard: { days: 90 }, security: { days: 365 } } },
+      );
+
+      expect(result).toEqual({
+        kind: 'retentionSettings',
+        classes: { standard: { days: 120 }, security: { days: 365 } },
+      });
+    });
+
+    it.each<[AuditConfiguration | null, AuditConfiguration | null]>([
+      [null, null],
+      [null, { kind: 'retentionSettings', classes: {} }],
+      [{ kind: 'retentionSettings', classes: {} }, null],
+    ])('preserves missing scopes %#', (tenant, core) => {
+      expect(combineAuditConfiguration(tenant, core)).toEqual(tenant || core);
+    });
+
+    it('rejects documents with different kinds', () => {
+      expect(() => combineAuditConfiguration(catalog, { kind: 'retentionSettings', classes: {} })).toThrow(
+        'different kinds',
+      );
+    });
+
+    it('rejects application overrides belonging to different namespaces', () => {
+      expect(() =>
+        combineAuditConfiguration(
+          { kind: 'applicationRetentionSettings', application: 'case-service', classes: {} },
+          { kind: 'applicationRetentionSettings', application: 'payment-service', classes: {} },
+        ),
+      ).toThrow('different applications');
+    });
   });
 
   it.each(['version', 'category', 'severity', 'retentionClass'])('rejects missing %s', (field) => {

@@ -2,9 +2,21 @@ import { AdspId, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-servic
 import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { param, query } from 'express-validator';
-import { CatalogService } from './catalog';
-import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from './configuration';
-import { AuditServiceRoles } from './roles';
+import { CatalogService, RetentionService } from '../model';
+import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
+import { AuditServiceRoles } from '../roles';
+import { EventSubmitter } from '../types';
+import { assertCanWriteEvents } from '../utils/write-access';
+import { validateWriteRequest } from '../utils/request-validation';
+import { writeEvents } from './write-events';
+import type { Logger } from 'winston';
+
+interface AuditRouterOptions {
+  catalogs: CatalogService;
+  retention: RetentionService;
+  logger: Logger;
+  submitter?: EventSubmitter;
+}
 
 export const validateTenantContext = createValidationHandler(
   query('tenantId')
@@ -25,7 +37,7 @@ export const validateTenantContext = createValidationHandler(
 export const assertTenantContext: RequestHandler = (req, _res, next) => {
   const requestedTenant = req.query.tenantId;
   if (!req.user?.isCore && requestedTenant && requestedTenant !== req.user?.tenantId?.toString()) {
-    next(new UnauthorizedUserError('read another tenant action catalog', req.user));
+    next(new UnauthorizedUserError('access another tenant audit data', req.user));
     return;
   }
   next();
@@ -50,15 +62,19 @@ export const readActions =
     }
   };
 
-export function createAuditRouter(catalogs: CatalogService): Router {
+export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
-  router.get(
-    '/:namespace/actions',
+  const validateNamespace = createValidationHandler(
+    param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
+  );
+  router.get('/:namespace/actions', assertAuthenticatedHandler, validateNamespace, readActions(options.catalogs));
+  router.post(
+    '/:namespace/events',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
-    ),
-    readActions(catalogs),
+    validateNamespace,
+    assertCanWriteEvents,
+    validateWriteRequest,
+    writeEvents(options),
   );
   return router;
 }

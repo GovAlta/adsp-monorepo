@@ -3,9 +3,10 @@ import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/c
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
-import { CatalogService } from './catalog';
-import { createAuditRouter, assertTenantContext, validateTenantContext } from './router';
-import { AuditServiceRoles } from './roles';
+import * as HttpStatusCodes from 'http-status-codes';
+import { CatalogService, RetentionService } from '../model';
+import { createAuditRouter, assertTenantContext, validateTenantContext } from './index';
+import { AuditServiceRoles } from '../roles';
 
 describe('GET /audit/v1/:namespace/actions', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -50,7 +51,10 @@ describe('GET /audit/v1/:namespace/actions', () => {
       req.tenant = { id, name: 'Catalog tenant', realm: 'catalog-tenant' };
       next();
     });
-    app.use('/audit/v1', createAuditRouter(catalogs));
+    app.use(
+      '/audit/v1',
+      createAuditRouter({ catalogs, retention: new RetentionService(configuration, logger), logger }),
+    );
     app.use(createErrorHandler(logger));
     return app;
   }
@@ -65,7 +69,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
   });
 
   it('returns named definitions with intact metadata schema', async () => {
-    const result = await request(createApp()).get('/audit/v1/case-service/actions').expect(200);
+    const result = await request(createApp()).get('/audit/v1/case-service/actions').expect(HttpStatusCodes.OK);
 
     expect(result.body).toEqual([{ ...definition, name: 'case.update' }]);
   });
@@ -73,11 +77,11 @@ describe('GET /audit/v1/:namespace/actions', () => {
   it('allows a reader from another namespace in the same tenant', async () => {
     const caller = { ...user, token: { ...user.token, azp: 'another-service' } };
 
-    await request(createApp(caller)).get('/audit/v1/case-service/actions').expect(200);
+    await request(createApp(caller)).get('/audit/v1/case-service/actions').expect(HttpStatusCodes.OK);
   });
 
   it('rejects unauthenticated requests', async () => {
-    await request(createApp(null)).get('/audit/v1/case-service/actions').expect(401);
+    await request(createApp(null)).get('/audit/v1/case-service/actions').expect(HttpStatusCodes.UNAUTHORIZED);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
   });
@@ -85,7 +89,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
   it('rejects callers without audit-reader before accessing catalogs', async () => {
     await request(createApp({ ...user, roles: [] }))
       .get('/audit/v1/case-service/actions')
-      .expect(403);
+      .expect(HttpStatusCodes.FORBIDDEN);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
   });
@@ -93,7 +97,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
   it('returns 404 for unregistered namespaces', async () => {
     configuration.getServiceConfiguration.mockResolvedValue(null);
 
-    await request(createApp()).get('/audit/v1/case-service/actions').expect(404);
+    await request(createApp()).get('/audit/v1/case-service/actions').expect(HttpStatusCodes.NOT_FOUND);
   });
 
   it('returns an empty collection for a registered empty catalog', async () => {
@@ -103,7 +107,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
       actions: {},
     });
 
-    const result = await request(createApp()).get('/audit/v1/case-service/actions').expect(200);
+    const result = await request(createApp()).get('/audit/v1/case-service/actions').expect(HttpStatusCodes.OK);
 
     expect(result.body).toEqual([]);
   });
@@ -112,13 +116,13 @@ describe('GET /audit/v1/:namespace/actions', () => {
     await request(createApp())
       .get('/audit/v1/case-service/actions')
       .query({ tenantId: tenantB.toString() })
-      .expect(403);
+      .expect(HttpStatusCodes.FORBIDDEN);
 
     expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
   });
 
   it('passes the caller tenant to catalog resolution', async () => {
-    await request(createApp()).get('/audit/v1/case-service/actions').expect(200);
+    await request(createApp()).get('/audit/v1/case-service/actions').expect(HttpStatusCodes.OK);
 
     expect(configuration.getServiceConfiguration).toHaveBeenCalledWith('actions-case-service', tenantA);
   });
@@ -129,7 +133,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
     await request(createApp(caller))
       .get('/audit/v1/case-service/actions')
       .query({ tenantId: tenantB.toString() })
-      .expect(200);
+      .expect(HttpStatusCodes.OK);
 
     expect(configuration.getServiceConfiguration).toHaveBeenCalledWith('actions-case-service', tenantB);
   });
@@ -140,18 +144,20 @@ describe('GET /audit/v1/:namespace/actions', () => {
       await request(createApp({ ...user, isCore: true }))
         .get('/audit/v1/case-service/actions')
         .query({ tenantId })
-        .expect(400);
+        .expect(HttpStatusCodes.BAD_REQUEST);
     },
   );
 
   it.each(['a'.repeat(41), 'case.service'])('rejects invalid namespace %s', async (namespace) => {
-    await request(createApp()).get(`/audit/v1/${namespace}/actions`).expect(400);
+    await request(createApp()).get(`/audit/v1/${namespace}/actions`).expect(HttpStatusCodes.BAD_REQUEST);
   });
 
   it('returns 503 for a propagated SDK failure', async () => {
     configuration.getServiceConfiguration.mockRejectedValue(new Error('Token provider unavailable'));
 
-    const result = await request(createApp()).get('/audit/v1/case-service/actions').expect(503);
+    const result = await request(createApp())
+      .get('/audit/v1/case-service/actions')
+      .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
 
     expect(result.body.errorMessage).toContain('temporarily unavailable');
   });

@@ -11,6 +11,19 @@ export interface ActionCatalog {
   actions: Record<string, AuditActionDefinition>;
 }
 
+export interface RetentionSettings {
+  kind: 'retentionSettings';
+  classes: Record<string, { days: number }>;
+}
+
+export interface ApplicationRetentionSettings {
+  kind: 'applicationRetentionSettings';
+  application: string;
+  classes: Record<string, { days: number }>;
+}
+
+export type AuditConfiguration = ActionCatalog | RetentionSettings | ApplicationRetentionSettings;
+
 const applicationSchema = {
   type: 'string',
   minLength: 1,
@@ -82,12 +95,12 @@ export const configurationSchema = {
   oneOf: [actionCatalogSchema, retentionSettingsSchema, applicationRetentionSettingsSchema],
 };
 
-export function createCatalogConverter(logger: Logger): (value: unknown) => ActionCatalog | null {
+export function createAuditConfigurationConverter(logger: Logger): (value: unknown) => AuditConfiguration | null {
   const validation = new AjvValidationService(logger);
-  validation.setSchema('audit-action-catalog', actionCatalogSchema);
+  validation.setSchema('audit-configuration', configurationSchema);
 
-  function assertCatalog(value: unknown): asserts value is ActionCatalog {
-    validation.validate('audit action catalog', 'audit-action-catalog', value);
+  function assertConfiguration(value: unknown): asserts value is AuditConfiguration {
+    validation.validate('audit configuration', 'audit-configuration', value);
   }
 
   return (value) => {
@@ -99,7 +112,10 @@ export function createCatalogConverter(logger: Logger): (value: unknown) => Acti
     ) {
       return null;
     }
-    assertCatalog(value);
+    assertConfiguration(value);
+    if (value.kind !== 'actionCatalog') {
+      return value;
+    }
     return {
       ...value,
       actions: Object.fromEntries(
@@ -112,10 +128,51 @@ export function createCatalogConverter(logger: Logger): (value: unknown) => Acti
   };
 }
 
+export function createCatalogConverter(logger: Logger): (value: unknown) => ActionCatalog | null {
+  const convert = createAuditConfigurationConverter(logger);
+  return (value) => {
+    const configuration = convert(value);
+    if (!configuration) return null;
+    if (configuration.kind !== 'actionCatalog') {
+      throw new Error('Expected an action catalog.');
+    }
+    return configuration;
+  };
+}
+
 export function combineCatalogs(tenant: ActionCatalog | null, core: ActionCatalog | null): ActionCatalog | null {
   if (tenant && core && tenant.application !== core.application) {
     throw new Error('Core and tenant action catalogs have different applications.');
   }
   const catalog = core || tenant;
   return catalog ? { ...catalog, actions: { ...tenant?.actions, ...core?.actions } } : null;
+}
+
+export function combineAuditConfiguration(
+  tenant: AuditConfiguration | null,
+  core: AuditConfiguration | null,
+): AuditConfiguration | null {
+  const configuration = tenant || core;
+  if (!configuration) return null;
+  if (tenant && core && tenant.kind !== core.kind) {
+    throw new Error('Core and tenant configuration documents have different kinds.');
+  }
+  if (configuration.kind === 'actionCatalog') {
+    return combineCatalogs(
+      tenant?.kind === 'actionCatalog' ? tenant : null,
+      core?.kind === 'actionCatalog' ? core : null,
+    );
+  }
+  if (tenant?.kind === 'applicationRetentionSettings' && core?.kind === 'applicationRetentionSettings') {
+    if (tenant.application !== core.application) {
+      throw new Error('Core and tenant retention settings have different applications.');
+    }
+  }
+  return {
+    ...configuration,
+    classes: {
+      ...(core && core.kind !== 'actionCatalog' ? core.classes : {}),
+      ...(tenant && tenant.kind !== 'actionCatalog' ? tenant.classes : {}),
+    },
+  };
 }
