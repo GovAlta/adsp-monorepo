@@ -3,14 +3,20 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { Solutions } from './solutions';
 import { usePlannerApi } from './api';
 import { Solution } from './model';
+import { download } from './utils';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  download: jest.fn(),
+}));
 
 describe('Solutions', () => {
   const api = {
     listSolutions: jest.fn(),
     createSolution: jest.fn(),
     deleteSolution: jest.fn(),
+    exportSolution: jest.fn(),
     analyze: jest.fn(),
   };
 
@@ -208,6 +214,115 @@ describe('Solutions', () => {
 
       await waitFor(() => expect(api.deleteSolution).toHaveBeenCalled());
       expect(container.querySelector('goa-modal')?.hasAttribute('open')).toBe(true);
+    });
+  });
+
+  describe('search', () => {
+    it('filters the list by name', async () => {
+      api.listSolutions.mockResolvedValue([permitIntake, makeSolution('solution-2', 'Grant application')]);
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      type(container, 'goa-input[testid="solutions-search"]', 'grant');
+
+      await waitFor(() => expect(container.querySelector('[data-testid="select-solution-solution-2"]')).not.toBeNull());
+      expect(container.querySelector('[data-testid="select-solution-solution-1"]')).toBeNull();
+    });
+
+    it('shows a no-match message when nothing matches the search', async () => {
+      const { container, findByText, findByTestId } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      type(container, 'goa-input[testid="solutions-search"]', 'nothing matches this');
+
+      expect(await findByTestId('no-solutions-match')).toBeTruthy();
+      expect(container.querySelector('goa-table')).toBeNull();
+    });
+  });
+
+  describe('sorting', () => {
+    it('does not sort by default', async () => {
+      api.listSolutions.mockResolvedValue([makeSolution('solution-2', 'Zebra'), makeSolution('solution-3', 'Alpha')]);
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Zebra');
+
+      const names = Array.from(container.querySelectorAll('[data-testid^="select-solution-"]')).map(
+        (n) => n.textContent,
+      );
+      expect(names).toEqual(['Zebra', 'Alpha']);
+    });
+
+    it('sorts by name when the header is clicked', async () => {
+      api.listSolutions.mockResolvedValue([makeSolution('solution-2', 'Zebra'), makeSolution('solution-3', 'Alpha')]);
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Zebra');
+
+      fireEvent(
+        container.querySelector('goa-table[testid="solutions-list"]') as Element,
+        new CustomEvent('_sort', { detail: { sortBy: 'name', sortDir: 1 } }),
+      );
+
+      const names = Array.from(container.querySelectorAll('[data-testid^="select-solution-"]')).map(
+        (n) => n.textContent,
+      );
+      expect(names).toEqual(['Alpha', 'Zebra']);
+    });
+  });
+
+  describe('pagination', () => {
+    const many = Array.from({ length: 7 }, (_, i) => makeSolution(`solution-${i}`, `Solution ${i}`));
+
+    it('shows only a page of results and disables previous on the first page', async () => {
+      api.listSolutions.mockResolvedValue(many);
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Solution 0');
+
+      expect(container.querySelector('[testid="solutions-prev-page"]')?.getAttribute('disabled')).toBe('true');
+      expect(container.querySelector('[data-testid="solutions-page-label"]')?.textContent).toContain('Page 1 of');
+    });
+
+    it('moves to the next page and back', async () => {
+      api.listSolutions.mockResolvedValue(many);
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Solution 0');
+
+      click(container, 'solutions-next-page');
+
+      await waitFor(() =>
+        expect(container.querySelector('[data-testid="solutions-page-label"]')?.textContent).toContain('Page 2 of'),
+      );
+
+      click(container, 'solutions-prev-page');
+
+      await waitFor(() =>
+        expect(container.querySelector('[data-testid="solutions-page-label"]')?.textContent).toContain('Page 1 of'),
+      );
+    });
+  });
+
+  describe('row exports', () => {
+    it('downloads the solution as JSON', async () => {
+      api.exportSolution.mockResolvedValue({ id: 'solution-1' });
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      click(container, 'export-json-solution-solution-1');
+
+      await waitFor(() => expect(api.exportSolution).toHaveBeenCalledWith('solution-1'));
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.json',
+        JSON.stringify({ id: 'solution-1' }, null, 2),
+        'application/json',
+      );
+    });
+
+    it('downloads the solution as a markdown report', async () => {
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      click(container, 'export-report-solution-solution-1');
+
+      expect(download).toHaveBeenCalledWith('planner-permit-intake.md', expect.any(String), 'text/markdown');
     });
   });
 });
