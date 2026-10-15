@@ -11,6 +11,18 @@ generate audit records. The write endpoint validates and enriches events, but Po
 and the write buffer are not wired yet. Valid write submissions currently return 503, not a successful
 acknowledgment. History queries, SIEM forwarding, and retention execution are separate capabilities.
 
+## Source layout
+
+The `apps/audit-service/src/audit` module follows the Calendar Service layout:
+
+- `model/`: catalog loading and retention configuration resolution.
+- `router/`: HTTP routes, write handlers, and OpenAPI definitions.
+- `types/`: event payloads and the submission contract.
+- `utils/`: event/request validation and write authorization.
+
+Configuration registration and role declarations remain at the module root. Tests are colocated
+with their implementations.
+
 ## Configuration contract
 
 Audit Service registers a namespace-level schema at startup through `initializePlatform` with

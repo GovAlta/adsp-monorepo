@@ -6,7 +6,7 @@ import {
   MAX_JSON_FIELD_BYTES,
   validateEventEnvelope,
 } from './event-validation';
-import { AuditEvent } from './types';
+import { AuditEvent } from '../types';
 
 const receivedAt = new Date('2026-10-15T18:00:00.000Z');
 const event: AuditEvent = {

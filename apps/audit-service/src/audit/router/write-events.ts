@@ -3,12 +3,12 @@ import { InvalidOperationError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
 import { RequestHandler } from 'express';
 import type { Logger } from 'winston';
-import { CatalogService } from './catalog';
-import { ActionCatalog, RetentionSettings } from './configuration';
-import { ActionValidator, EventRejectedError, getCapturedChangeSet, validateEventEnvelope } from './event-validation';
-import { calculateRetentionUntil, RetentionService } from './retention';
-import { AuditEvent, EnrichedEvent, EventSubmitter, RejectedEvent, WriteEventsResponse } from './types';
-import { getWriterClientId } from './write-access';
+import { CatalogService, RetentionService } from '../model';
+import { ActionCatalog, RetentionSettings } from '../configuration';
+import { ActionValidator, EventRejectedError, getCapturedChangeSet, validateEventEnvelope } from '../utils/event-validation';
+import { calculateRetentionUntil } from '../model/retention';
+import { AuditEvent, EnrichedEvent, EventSubmitter, RejectedEvent, WriteEventsResponse } from '../types';
+import { getWriterClientId } from '../utils/write-access';
 
 interface WriteEventsDependencies {
   catalogs: CatalogService;

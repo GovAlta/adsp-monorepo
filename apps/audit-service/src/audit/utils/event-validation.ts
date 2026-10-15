@@ -2,7 +2,7 @@ import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import Ajv, { ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import { AuditEvent } from './types';
+import { AuditEvent } from '../types';
 
 export const MAX_JSON_FIELD_BYTES = 16 * 1024;
 const MAX_EVENT_AGE_MS = 7 * 24 * 60 * 60 * 1000;

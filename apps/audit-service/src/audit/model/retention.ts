@@ -1,7 +1,7 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
-import { AuditConfiguration, RetentionSettings } from './configuration';
+import { AuditConfiguration, RetentionSettings } from '../configuration';
 
 export const DEFAULT_RETENTION_CLASSES: RetentionSettings['classes'] = {
   standard: { days: 90 },

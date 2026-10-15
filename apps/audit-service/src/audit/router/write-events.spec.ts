@@ -3,14 +3,13 @@ import { assertAuthenticatedHandler, createErrorHandler, InvalidOperationError }
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
-import { CatalogService } from './catalog';
-import { ActionCatalog } from './configuration';
-import { MAX_JSON_FIELD_BYTES } from './event-validation';
-import { createAuditJsonParser, MAX_REQUEST_BYTES } from './request-validation';
-import { RetentionService } from './retention';
-import { AuditServiceRoles } from './roles';
-import { assertTenantContext, createAuditRouter, validateTenantContext } from './router';
-import { AuditEvent, EventOutcome, EventSubmitter } from './types';
+import { CatalogService, RetentionService } from '../model';
+import { ActionCatalog } from '../configuration';
+import { MAX_JSON_FIELD_BYTES } from '../utils/event-validation';
+import { createAuditJsonParser, MAX_REQUEST_BYTES } from '../utils/request-validation';
+import { AuditServiceRoles } from '../roles';
+import { assertTenantContext, createAuditRouter, validateTenantContext } from './index';
+import { AuditEvent, EventOutcome, EventSubmitter } from '../types';
 
 describe('POST /audit/v1/:namespace/events', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });

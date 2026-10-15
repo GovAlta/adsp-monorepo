@@ -3,10 +3,9 @@ import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/c
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
-import { CatalogService } from './catalog';
-import { createAuditRouter, assertTenantContext, validateTenantContext } from './router';
-import { AuditServiceRoles } from './roles';
-import { RetentionService } from './retention';
+import { CatalogService, RetentionService } from '../model';
+import { createAuditRouter, assertTenantContext, validateTenantContext } from './index';
+import { AuditServiceRoles } from '../roles';
 
 describe('GET /audit/v1/:namespace/actions', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });

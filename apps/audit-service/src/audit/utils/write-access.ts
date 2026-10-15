@@ -2,7 +2,7 @@ import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-
 import { InvalidOperationError } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 
-import { AuditServiceRoles } from './roles';
+import { AuditServiceRoles } from '../roles';
 
 export function getWriterClientId(user: User): AdspId {
   const clientId = user?.token?.azp;

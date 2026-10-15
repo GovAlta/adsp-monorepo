@@ -1,7 +1,7 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
-import { ActionCatalog, AuditConfiguration } from './configuration';
+import { ActionCatalog, AuditConfiguration } from '../configuration';
 
 export class CatalogUnavailableError extends InvalidOperationError {
   constructor() {

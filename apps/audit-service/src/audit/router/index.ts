@@ -2,13 +2,12 @@ import { AdspId, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-servic
 import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { param, query } from 'express-validator';
-import { CatalogService } from './catalog';
-import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from './configuration';
-import { AuditServiceRoles } from './roles';
-import { RetentionService } from './retention';
-import { EventSubmitter } from './types';
-import { assertCanWriteEvents } from './write-access';
-import { validateWriteRequest } from './request-validation';
+import { CatalogService, RetentionService } from '../model';
+import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
+import { AuditServiceRoles } from '../roles';
+import { EventSubmitter } from '../types';
+import { assertCanWriteEvents } from '../utils/write-access';
+import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
 import type { Logger } from 'winston';
 
