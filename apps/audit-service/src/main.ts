@@ -1,6 +1,6 @@
 import { AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, createLogger, createErrorHandler } from '@core-services/core-common';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as express from 'express';
@@ -9,6 +9,16 @@ import * as helmet from 'helmet';
 import * as passport from 'passport';
 import { promisify } from 'util';
 import { environment } from './environments/environment';
+import {
+  AuditServiceRoles,
+  CatalogService,
+  configurationSchema,
+  createCatalogConverter,
+  combineCatalogs,
+  createAuditRouter,
+  validateTenantContext,
+  assertTenantContext,
+} from './audit';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
@@ -28,19 +38,35 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, healthCheck, traceHandler } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Audit service',
-      description: 'Put a description of the service here.',
-      roles: [],
-      events: [],
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-    },
-    { logger },
-  );
+  const { coreStrategy, tenantStrategy, tenantHandler, configurationService, healthCheck, traceHandler } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Audit service',
+        description: 'Tenant-scoped audit action catalogs.',
+        roles: [
+          {
+            role: AuditServiceRoles.Reader,
+            description: 'Read action catalogs and audit history within a tenant.',
+            inTenantAdmin: true,
+          },
+        ],
+        configuration: {
+          useNamespace: true,
+          description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
+          schema: configurationSchema,
+        },
+        configurationConverter: createCatalogConverter(logger),
+        combineConfiguration: combineCatalogs,
+        enableConfigurationInvalidation: true,
+        useLongConfigurationCacheTTL: false,
+        events: [],
+        clientSecret: environment.CLIENT_SECRET,
+        accessServiceUrl,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+      },
+      { logger },
+    );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -56,9 +82,15 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(traceHandler);
 
-  app.use('/audit', passport.authenticate(['core', 'tenant'], { session: false }));
-
-  // TODO: Add your API router here.
+  app.use(
+    '/audit',
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    assertAuthenticatedHandler,
+    validateTenantContext,
+    assertTenantContext,
+    tenantHandler,
+  );
+  app.use('/audit/v1', createAuditRouter(new CatalogService(configurationService, logger)));
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -74,7 +106,7 @@ const initializeApp = async (): Promise<express.Application> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       name: 'Audit service',
-      description: 'Put a description of the service here.',
+      description: 'Tenant-scoped audit action catalogs.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

@@ -152,8 +152,8 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     if (registration.serviceConfigurations) {
       for (const { serviceId, configuration: configurationValue } of registration.serviceConfigurations) {
         if (Array.isArray(configurationValue)) {
-          for (const { name, configuration } of configurationValue) {
-            await this.updateConfiguration(serviceId, configuration, name);
+          for (const { name, configuration, operation } of configurationValue) {
+            await this.updateConfiguration(serviceId, configuration, name, operation);
           }
         } else {
           await this.updateConfiguration(serviceId, configurationValue);
@@ -165,7 +165,8 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
   private async updateConfiguration<C extends Record<string, unknown>>(
     serviceId: AdspId,
     update: C,
-    name?: string
+    name?: string,
+    operation: 'UPDATE' | 'REPLACE' = 'UPDATE',
   ): Promise<void> {
     const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
     const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
@@ -173,7 +174,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     try {
       await retry.execute(async ({ attempt }) => {
         try {
-          await this.#tryUpdateConfiguration(serviceUrl, attempt, serviceId, update, name);
+          await this.#tryUpdateConfiguration(serviceUrl, attempt, serviceId, update, name, operation);
         } catch (err) {
           this.logger.debug(`Try ${attempt} failed with error. ${err}`, this.LOG_CONTEXT);
           throw err;
@@ -192,7 +193,8 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     count: number,
     serviceId: AdspId,
     update: Record<string, unknown>,
-    name?: string
+    name?: string,
+    operation: 'UPDATE' | 'REPLACE' = 'UPDATE',
   ): Promise<void> => {
     this.logger.debug(`Try ${count}: updating configuration for service ${serviceId}...`, this.LOG_CONTEXT);
 
@@ -204,11 +206,8 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     const token = await this.tokenProvider.getAccessToken();
     await axios.patch(
       configurationUrl.href,
-      {
-        operation: 'UPDATE',
-        update,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
+      operation === 'REPLACE' ? { operation, configuration: update } : { operation, update },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
   };
 }
