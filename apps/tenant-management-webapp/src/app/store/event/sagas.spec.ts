@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { expectSaga } from 'redux-saga-test-plan';
+import { call } from 'redux-saga-test-plan/matchers';
+import { throwError } from 'redux-saga-test-plan/providers';
+import reducer from './reducers';
 import { getAccessToken } from '../tenant/sagas';
 import { ERROR_NOTIFICATION } from '../notifications/actions';
 import {
@@ -8,11 +11,13 @@ import {
   FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION,
   getEventDefinitions,
   getEventDefinitionsSuccess,
+  getEventLogEntries,
+  getEventLogEntriesFailed,
   updateEventDefinition as updateEventDefinitionAction,
   updateEventDefinitionSuccess,
 } from './actions';
 import { EventDefinition } from './models';
-import { deleteEventDefinition, fetchEventDefinitions, updateEventDefinition } from './sagas';
+import { deleteEventDefinition, fetchEventDefinitions, fetchEventLogEntries, updateEventDefinition } from './sagas';
 
 const eventServiceUrl = 'https://event-service.example';
 
@@ -37,6 +42,20 @@ const state = {
 };
 
 describe('event definition sagas', () => {
+  it('clears log loading when a search fails so filters can be used again', async () => {
+    const loadingState = reducer(undefined, getEventLogEntries());
+
+    await expectSaga(fetchEventLogEntries, getEventLogEntries())
+      .withState({ config: { serviceUrls: { valueServiceApiUrl: 'https://value-service.example' } } })
+      .provide([
+        [call.fn(getAccessToken), 'test-token'],
+        [call.fn(axios.get), throwError(new Error('request failed'))],
+      ])
+      .put(getEventLogEntriesFailed())
+      .run();
+
+    expect(reducer(loadingState, getEventLogEntriesFailed()).isLoading.log).toBe(false);
+  });
   it('fetches tenant and core definitions from the event service', async () => {
     await expectSaga(fetchEventDefinitions, getEventDefinitions())
       .withState(state)

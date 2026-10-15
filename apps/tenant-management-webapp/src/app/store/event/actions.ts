@@ -10,6 +10,7 @@ export const UPDATE_EVENT_DEFINITION_SUCCESS_ACTION = 'event/UPDATE_EVENT_DEFINI
 
 export const FETCH_EVENT_LOG_ENTRIES_ACTION = 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION';
 export const FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION = 'eventLog/FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION';
+export const FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION = 'eventLog/FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION';
 
 export const CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION = 'eventLog/CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION';
 
@@ -62,6 +63,10 @@ export interface ClearEventLogEntriesSuccessAction {
   type: typeof CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION;
 }
 
+export interface FetchEventLogEntriesFailureAction {
+  type: typeof FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION;
+}
+
 export interface FetchEventMetricsAction {
   type: typeof FETCH_EVENT_METRICS_ACTION;
 }
@@ -80,6 +85,7 @@ export type EventActionTypes =
   | UpdateEventDefinitionSuccessAction
   | FetchEventLogEntriesAction
   | FetchEventLogEntriesSuccessAction
+  | FetchEventLogEntriesFailureAction
   | ClearEventLogEntriesSuccessAction
   | FetchEventMetricsAction
   | FetchEventMetricsSuccessAction;
@@ -120,6 +126,10 @@ export const getEventLogEntries = (
   type: FETCH_EVENT_LOG_ENTRIES_ACTION,
   after,
   searchCriteria,
+});
+
+export const getEventLogEntriesFailed = (): FetchEventLogEntriesFailureAction => ({
+  type: FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION,
 });
 
 export const getEventLogEntriesSucceeded = (

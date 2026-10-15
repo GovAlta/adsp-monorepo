@@ -44,6 +44,42 @@ describe('EventSearchForm', () => {
     fireEvent(input as Element, new CustomEvent('_change', { detail: { value } }));
   };
 
+  it.each(['event-log-date-range-filter', 'event-log-namespace-filter', 'event-log-name-filter'])(
+    'uses the native dropdown for %s to avoid nested interactive controls',
+    (name) => {
+      const { container } = renderComponent();
+
+      expect(container.querySelector(`goa-dropdown[name="${name}"]`)).toHaveAttribute('native', 'true');
+    },
+  );
+
+  it.each([
+    'goa-button[testid="event-log-filters-toggle"]',
+    'goa-dropdown[name="event-log-date-range-filter"]',
+    'goa-dropdown[name="event-log-namespace-filter"]',
+    'goa-dropdown[name="event-log-name-filter"]',
+    'goa-input[name="event-log-correlation-filter"]',
+    'goa-button[testid="event-log-filter-search"]',
+    'goa-button[testid="event-log-filter-reset"]',
+  ])('disables %s during loading and re-enables it afterward', (selector) => {
+    const store = createStore();
+    const { container, rerender } = render(
+      <Provider store={store}>
+        <EventSearchForm disabled />
+      </Provider>,
+    );
+
+    expect(container.querySelector(selector)).toHaveAttribute('disabled');
+
+    rerender(
+      <Provider store={store}>
+        <EventSearchForm disabled={false} />
+      </Provider>,
+    );
+
+    expect(container.querySelector(selector)).not.toHaveAttribute('disabled');
+  });
+
   it('shows only the Filters button in the top filter controls', () => {
     const { container } = renderComponent();
 
