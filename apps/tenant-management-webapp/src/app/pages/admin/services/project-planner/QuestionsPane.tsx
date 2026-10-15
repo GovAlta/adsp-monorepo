@@ -1,12 +1,27 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoabBadge, GoabButton, GoabCircularProgress, GoabContainer, GoabFormItem, GoabTextArea } from '@abgov/react-components';
+import {
+  GoabBadge,
+  GoabButton,
+  GoabCircularProgress,
+  GoabContainer,
+  GoabFormItem,
+  GoabTextArea,
+} from '@abgov/react-components';
 import { PaneProps } from './workplaceTypes';
 
 interface QuestionsPaneProps extends PaneProps {
   title: string;
 }
 
-export const QuestionsPane: FunctionComponent<QuestionsPaneProps> = ({ solution, api, mode, busy, run, onSolutionChange, title }) => {
+export const QuestionsPane: FunctionComponent<QuestionsPaneProps> = ({
+  solution,
+  api,
+  mode,
+  busy,
+  run,
+  onSolutionChange,
+  title,
+}) => {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const { questions, analysis } = solution.state;
   const open = questions.filter((q) => q.status === 'open').length;
@@ -31,7 +46,8 @@ export const QuestionsPane: FunctionComponent<QuestionsPaneProps> = ({ solution,
       {questions.map((q) => (
         <GoabContainer key={q.id} type="non-interactive" accent="thin" mb="m" testId={`question-${q.id}`}>
           <p>
-            <strong>{q.question}</strong> <GoabBadge type={q.status === 'open' ? 'important' : 'success'} content={q.status} /> ({q.raisedBy})
+            <strong>{q.question}</strong>{' '}
+            <GoabBadge type={q.status === 'open' ? 'important' : 'success'} content={q.status} /> ({q.raisedBy})
           </p>
           <GoabFormItem label={`Answer to: ${q.question}`} mb="s">
             <GoabTextArea
@@ -39,12 +55,19 @@ export const QuestionsPane: FunctionComponent<QuestionsPaneProps> = ({ solution,
               value={drafts[q.id] ?? q.answer ?? ''}
               rows={2}
               width="100%"
+              maxWidth="100%"
               testId={`answer-${q.id}`}
               disabled={busy}
               onChange={(detail) => setDrafts((d) => ({ ...d, [q.id]: detail.value }))}
             />
           </GoabFormItem>
-          <GoabButton type="secondary" size="compact" testId={`save-answer-${q.id}`} disabled={busy} onClick={() => saveAnswer(q.id, q.answer ?? '')}>
+          <GoabButton
+            type="secondary"
+            size="compact"
+            testId={`save-answer-${q.id}`}
+            disabled={busy}
+            onClick={() => saveAnswer(q.id, q.answer ?? '')}
+          >
             {q.status === 'answered' ? 'Update answer' : 'Save answer'}
           </GoabButton>
         </GoabContainer>

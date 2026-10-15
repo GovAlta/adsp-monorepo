@@ -295,7 +295,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
       {solution && (
         <>
-          <GoabButton size="compact" type="secondary" disabled={busy} testId="chat-consult" onClick={runConsult}>
+          <GoabButton size="compact" type="secondary" disabled={busy} mb="m" testId="chat-consult" onClick={runConsult}>
             Consult on this solution
           </GoabButton>
           {consult && (
@@ -324,7 +324,12 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
                 <Row>
                   <span>
                     {chat.title}{' '}
-                    <GoabBadge type="default" emphasis="subtle" icon={false} content={`${chat.messageCount} messages`} />{' '}
+                    <GoabBadge
+                      type="default"
+                      emphasis="subtle"
+                      icon={false}
+                      content={`${chat.messageCount} messages`}
+                    />{' '}
                     {fmtDate(chat.updatedOn)}
                   </span>
                   <GoabButton
@@ -361,20 +366,48 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
       </Row>
       <Row role="group" aria-label="Download all chats">
         <strong>All chats:</strong>
-        <GoabButton type="tertiary" size="compact" leadingIcon="download" disabled={busy} testId="chat-download-all-md" onClick={() => downloadAll('md')}>
+        <GoabButton
+          type="tertiary"
+          size="compact"
+          leadingIcon="download"
+          disabled={busy}
+          testId="chat-download-all-md"
+          onClick={() => downloadAll('md')}
+        >
           Markdown
         </GoabButton>
-        <GoabButton type="tertiary" size="compact" leadingIcon="download" disabled={busy} testId="chat-download-all-json" onClick={() => downloadAll('json')}>
+        <GoabButton
+          type="tertiary"
+          size="compact"
+          leadingIcon="download"
+          disabled={busy}
+          testId="chat-download-all-json"
+          onClick={() => downloadAll('json')}
+        >
           JSON
         </GoabButton>
       </Row>
       {chatId && (
         <Row role="group" aria-label="Download this chat">
           <strong>This chat:</strong>
-          <GoabButton type="tertiary" size="compact" leadingIcon="download" disabled={busy} testId="chat-download-current-md" onClick={() => downloadCurrent('md')}>
+          <GoabButton
+            type="tertiary"
+            size="compact"
+            leadingIcon="download"
+            disabled={busy}
+            testId="chat-download-current-md"
+            onClick={() => downloadCurrent('md')}
+          >
             Markdown
           </GoabButton>
-          <GoabButton type="tertiary" size="compact" leadingIcon="download" disabled={busy} testId="chat-download-current-json" onClick={() => downloadCurrent('json')}>
+          <GoabButton
+            type="tertiary"
+            size="compact"
+            leadingIcon="download"
+            disabled={busy}
+            testId="chat-download-current-json"
+            onClick={() => downloadCurrent('json')}
+          >
             JSON
           </GoabButton>
         </Row>
@@ -396,7 +429,13 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
       <Turns>
         {messages.map((message, i) => (
-          <Message key={`${i}-${message.at}`} message={message} specialistName={displayName} disabled={busy} onFollowUp={send} />
+          <Message
+            key={`${i}-${message.at}`}
+            message={message}
+            specialistName={displayName}
+            disabled={busy}
+            onFollowUp={send}
+          />
         ))}
       </Turns>
 
@@ -425,10 +464,22 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           onClose={() => setDeletingChatId(undefined)}
           actions={
             <GoabButtonGroup alignment="end" mt="m">
-              <GoabButton type="secondary" size="compact" disabled={busy} testId="delete-chat-cancel" onClick={() => setDeletingChatId(undefined)}>
+              <GoabButton
+                type="secondary"
+                size="compact"
+                disabled={busy}
+                testId="delete-chat-cancel"
+                onClick={() => setDeletingChatId(undefined)}
+              >
                 Cancel
               </GoabButton>
-              <GoabButton variant="destructive" size="compact" disabled={busy} testId="delete-chat-confirm" onClick={() => deleteChat(deletingChatId)}>
+              <GoabButton
+                variant="destructive"
+                size="compact"
+                disabled={busy}
+                testId="delete-chat-confirm"
+                onClick={() => deleteChat(deletingChatId)}
+              >
                 Delete
               </GoabButton>
             </GoabButtonGroup>

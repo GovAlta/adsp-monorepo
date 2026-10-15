@@ -1,14 +1,11 @@
 import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { GoabButton, GoabCircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabCircularProgress, GoabDetails } from '@abgov/react-components';
 import styled from 'styled-components';
-import { RootState } from '@store/index';
 import { Tab, Tabs } from '@components/Tabs';
 import { usePlannerApi } from './api';
 import BlueprintViewer from './BlueprintViewer';
 import ConfidenceBar from './ConfidenceBar';
 import DiscoveryPanel from './DiscoveryPanel';
-import { PatternManager } from './PatternManager';
 import ProblemStatement from './ProblemStatement';
 import { Concepts, Hypotheses, NextSteps, PatternMatches } from './ProposedSolution';
 import QuestionsPane from './QuestionsPane';
@@ -17,10 +14,6 @@ import SolutionHeader from './SolutionHeader';
 import { countChatsByService, SpecialistChat } from './SpecialistChat';
 import { AnalysisMode, Solution, SpecialistDefinition } from './model';
 import { RunAction } from './workplaceTypes';
-import { SOLUTION_MODES, usePersistedSolutionMode } from './workplaceLayout';
-
-const PLANNER_CLIENT = 'urn:ads:platform:project-planner-service';
-const PLANNER_ADMIN_ROLE = 'planner-admin';
 
 interface SolutionWorkplaceProps {
   solutionId: string;
@@ -30,6 +23,7 @@ interface SolutionWorkplaceProps {
 
 const Layout = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: flex-start;
   margin-top: 1rem;
@@ -41,16 +35,25 @@ const Rail = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+
+  @media (max-width: 1400px) {
+    flex-basis: 160px;
+  }
 `;
 
 const Main = styled.div`
   flex: 1;
-  min-width: 0;
+  min-width: 280px;
+  overflow: hidden;
 `;
 
 const TabsSpacing = styled.div`
   > div:first-child {
     margin-bottom: 1rem;
+
+    > div {
+      flex: 1;
+    }
   }
 `;
 
@@ -59,16 +62,7 @@ const RailLabel = styled.p`
   font-weight: bold;
 `;
 
-const ModeRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-`;
-
-const CONVERSATION_MODES = SOLUTION_MODES.filter(([id]) => id !== 'mode3');
-
-type Focus = 'workplace' | 'patterns' | string;
+type Focus = 'workplace' | string;
 
 export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   solutionId,
@@ -76,9 +70,6 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   onSolutionChanged,
 }) => {
   const api = usePlannerApi();
-  const canEditPatterns = useSelector(
-    (state: RootState) => !!state.session?.resourceAccess?.[PLANNER_CLIENT]?.roles?.includes(PLANNER_ADMIN_ROLE),
-  );
   const [solution, setSolution] = useState<Solution>();
   const [analysisModes, setAnalysisModes] = useState<AnalysisMode[]>(['rules']);
   const [mode, setMode] = useState<AnalysisMode>('rules');
@@ -87,7 +78,6 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const [busy, setBusy] = useState(false);
   const [focus, setFocus] = useState<Focus>('workplace');
   const [tabIndex, setTabIndex] = useState(0);
-  const [solutionMode, setSolutionMode] = usePersistedSolutionMode(solutionId);
   const busyRef = useRef(false);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -167,6 +157,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const paneProps = { solution, api, mode, busy, run, onSolutionChange: updateSolution };
   const selectedSpecialist = specialists.find((s) => s.service === focus);
   const railName = (specialist: SpecialistDefinition) => specialist.displayName.replace(/ service$/i, '');
+  const confidence = solution.state.confidence;
+  const ready = !!confidence && confidence.score >= confidence.threshold;
+  const hasAnalysis = solution.state.hypotheses.length > 0 || !!solution.state.analysis;
 
   return (
     <div data-testid="solution-workplace">
@@ -200,20 +193,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
               </GoabButton>
             );
           })}
-          <RailLabel>Reference</RailLabel>
-          <GoabButton
-            type={focus === 'patterns' ? 'primary' : 'secondary'}
-            size="compact"
-            width="100%"
-            testId="focus-patterns"
-            onClick={() => setFocus('patterns')}
-          >
-            Patterns
-          </GoabButton>
         </Rail>
         <Main>
-          {focus === 'patterns' && <PatternManager api={api} canEdit={canEditPatterns} />}
-          {focus !== 'workplace' && focus !== 'patterns' && (
+          {focus !== 'workplace' && (
             <SpecialistChat
               key={focus}
               service={focus}
@@ -227,10 +209,10 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
           {focus === 'workplace' && (
             <TabsSpacing>
               <Tabs activeIndex={tabIndex} changeTabCallback={setTabIndex}>
-                <Tab label="Problem & analysis" testId="tab-problem">
+                <Tab label="Problem & Analysis" testId="tab-problem">
                   <ProblemStatement
                     {...paneProps}
-                    title="Problem & analysis"
+                    title="Problem & Analysis"
                     analysisModes={analysisModes}
                     onAnalysisModeChange={setMode}
                   />
@@ -238,37 +220,27 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <PatternMatches solution={solution} />
                 </Tab>
                 <Tab label="Conversation" testId="tab-conversation">
-                  <ModeRow role="group" aria-label="Mode">
-                    <strong>Mode:</strong>
-                    {CONVERSATION_MODES.map(([id, label]) => (
-                      <GoabButton
-                        key={id}
-                        type={solutionMode === id ? 'primary' : 'secondary'}
-                        size="compact"
-                        testId={`solution-mode-${id}`}
-                        onClick={() => setSolutionMode(id)}
-                      >
-                        {label}
-                      </GoabButton>
-                    ))}
-                  </ModeRow>
-                  {solutionMode === 'mode2' ? (
-                    <DiscoveryPanel solution={solution} api={api} mode={mode} onSolutionChange={updateSolution} />
-                  ) : (
+                  {ready ? (
                     <RefineChat {...paneProps} title="Conversation" />
+                  ) : (
+                    <DiscoveryPanel solution={solution} api={api} mode={mode} onSolutionChange={updateSolution} />
+                  )}
+                  {hasAnalysis && (
+                    <>
+                      <GoabDetails heading="Concepts" testId="section-concepts" maxWidth="100%" mt="l">
+                        <Concepts solution={solution} />
+                      </GoabDetails>
+                      <GoabDetails heading="Questions" testId="section-questions" maxWidth="100%" mt="m">
+                        <QuestionsPane {...paneProps} title="Questions" />
+                      </GoabDetails>
+                      <GoabDetails heading="Next steps" testId="section-steps" maxWidth="100%" mt="m">
+                        <NextSteps solution={solution} />
+                      </GoabDetails>
+                    </>
                   )}
                 </Tab>
-                <Tab label="Hypotheses" testId="tab-hypotheses">
+                <Tab label="Proposed Solutions" testId="tab-hypotheses">
                   <Hypotheses solution={solution} open />
-                </Tab>
-                <Tab label="Concepts" testId="tab-concepts">
-                  <Concepts solution={solution} />
-                </Tab>
-                <Tab label="Questions" testId="tab-questions">
-                  <QuestionsPane {...paneProps} title="Questions" />
-                </Tab>
-                <Tab label="Next steps" testId="tab-steps">
-                  <NextSteps solution={solution} />
                 </Tab>
                 <Tab label="Blueprint" testId="tab-blueprint">
                   <h2>Blueprint</h2>

@@ -5,10 +5,6 @@ import { ProjectPlanner } from './projectPlanner';
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate, useParams: jest.fn() }));
-jest.mock('@components/AsideLinks', () => ({
-  __esModule: true,
-  default: ({ serviceName }: { serviceName: string }) => <div data-testid="aside-links">{serviceName}</div>,
-}));
 jest.mock('./overview', () => ({
   PlannerOverview: ({ onStart }: { onStart: () => void }) => (
     <button data-testid="overview-content" onClick={onStart}>
@@ -41,14 +37,6 @@ describe('ProjectPlanner', () => {
     const { getByAltText } = render(<ProjectPlanner />);
 
     expect(getByAltText('Beta')).toBeTruthy();
-  });
-
-  it('shows aside links for the project planner service', () => {
-    useParamsMock.mockReturnValue({ tab: 'overview' });
-
-    const { getByTestId } = render(<ProjectPlanner />);
-
-    expect(getByTestId('aside-links').textContent).toBe('project-planner');
   });
 
   it('shows the overview tab when the route tab is overview', () => {

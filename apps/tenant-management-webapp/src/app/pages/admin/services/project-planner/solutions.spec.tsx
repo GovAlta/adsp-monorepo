@@ -10,6 +10,7 @@ describe('Solutions', () => {
   const api = {
     listSolutions: jest.fn(),
     createSolution: jest.fn(),
+    deleteSolution: jest.fn(),
     analyze: jest.fn(),
   };
 
@@ -34,7 +35,7 @@ describe('Solutions', () => {
   const permitIntake = makeSolution('solution-1', 'Permit intake');
 
   const click = (container: HTMLElement, testId: string) =>
-    fireEvent(container.querySelector(`goa-button[testid="${testId}"]`) as Element, new CustomEvent('_click'));
+    fireEvent(container.querySelector(`[testid="${testId}"]`) as Element, new CustomEvent('_click'));
   const type = (container: HTMLElement, selector: string, value: string) =>
     fireEvent(container.querySelector(selector) as Element, new CustomEvent('_change', { detail: { value } }));
 
@@ -152,6 +153,61 @@ describe('Solutions', () => {
 
       await waitFor(() => expect(api.createSolution).toHaveBeenCalled());
       expect(onSelect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('delete solution', () => {
+    it('is closed initially', async () => {
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      expect(container.querySelector('goa-modal')?.hasAttribute('open')).toBe(false);
+    });
+
+    it('opens the confirm modal when delete is clicked', async () => {
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      click(container, 'delete-solution-solution-1');
+
+      expect(container.querySelector('goa-modal')?.hasAttribute('open')).toBe(true);
+      expect(container.querySelector('goa-modal')?.textContent).toContain('Permit intake');
+    });
+
+    it('closes without deleting when cancelled', async () => {
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+      click(container, 'delete-solution-solution-1');
+
+      click(container, 'delete-solution-cancel');
+
+      expect(container.querySelector('goa-modal')?.hasAttribute('open')).toBe(false);
+      expect(api.deleteSolution).not.toHaveBeenCalled();
+    });
+
+    it('deletes the solution and reloads the list', async () => {
+      api.deleteSolution.mockResolvedValue(undefined);
+      api.listSolutions.mockResolvedValueOnce([permitIntake]).mockResolvedValueOnce([]);
+      const { container, findByText, findByTestId } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+      click(container, 'delete-solution-solution-1');
+
+      click(container, 'delete-solution-confirm');
+
+      await waitFor(() => expect(api.deleteSolution).toHaveBeenCalledWith('solution-1'));
+      expect(await findByTestId('no-solutions')).toBeTruthy();
+    });
+
+    it('stays open when deletion fails', async () => {
+      api.deleteSolution.mockRejectedValue(new Error('Network Error'));
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+      click(container, 'delete-solution-solution-1');
+
+      click(container, 'delete-solution-confirm');
+
+      await waitFor(() => expect(api.deleteSolution).toHaveBeenCalled());
+      expect(container.querySelector('goa-modal')?.hasAttribute('open')).toBe(true);
     });
   });
 });

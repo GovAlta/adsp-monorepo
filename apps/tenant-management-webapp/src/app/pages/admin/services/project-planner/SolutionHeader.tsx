@@ -1,13 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
-import {
-  GoabBadge,
-  GoabButton,
-  GoabButtonGroup,
-  GoabFormItem,
-  GoabIconButton,
-  GoabInput,
-  GoabModal,
-} from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabButtonGroup, GoabIconButton, GoabInput, GoabModal } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
 import { Solution } from './model';
@@ -33,7 +25,7 @@ const Row = styled.div`
 const RenameRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.5rem;
 `;
 
@@ -87,22 +79,28 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
   return (
     <>
       {onBack && (
-        <GoabButton size="compact" type="tertiary" leadingIcon="arrow-back" testId="back-to-solutions" onClick={onBack}>
+        <GoabButton
+          size="compact"
+          type="tertiary"
+          leadingIcon="arrow-back"
+          testId="back-to-solutions"
+          mb="m"
+          onClick={onBack}
+        >
           Back to solutions
         </GoabButton>
       )}
       <Bar>
         {renaming ? (
           <RenameRow>
-            <GoabFormItem label="Solution name">
-              <GoabInput
-                name="solutionName"
-                value={name}
-                width="320px"
-                testId="rename-input"
-                onChange={(detail) => setName(detail.value)}
-              />
-            </GoabFormItem>
+            <GoabInput
+              name="solutionName"
+              value={name}
+              width="320px"
+              testId="rename-input"
+              aria-label="Solution name"
+              onChange={(detail) => setName(detail.value)}
+            />
             <GoabButton size="compact" testId="rename-save" disabled={working || !name.trim()} onClick={saveName}>
               Save
             </GoabButton>
@@ -126,40 +124,36 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
           </Row>
         )}
         <Row role="group" aria-label="Export and delete">
-          <GoabButton
-            size="compact"
-            type="secondary"
-            leadingIcon="download"
+          <GoabIconButton
+            icon="download"
+            title="Download JSON"
+            ariaLabel="Download JSON"
             testId="download-json"
             disabled={working}
             onClick={exportJson}
-          >
-            Download JSON
-          </GoabButton>
-          <GoabButton
-            size="compact"
-            type="secondary"
-            leadingIcon="document-text"
+          />
+          <GoabIconButton
+            icon="document-text"
+            title="Download report (.md)"
+            ariaLabel="Download report (.md)"
             testId="download-report"
             onClick={exportReport}
-          >
-            Download report (.md)
-          </GoabButton>
-          <GoabButton
-            size="compact"
-            type="tertiary"
+          />
+          <GoabIconButton
+            icon="trash"
             variant="destructive"
+            title="Delete solution"
+            ariaLabel="Delete solution"
             testId="delete-solution"
             onClick={() => setConfirmDelete(true)}
-          >
-            Delete solution
-          </GoabButton>
+          />
         </Row>
       </Bar>
       <GoabModal
         testId="delete-solution-modal"
         open={confirmDelete}
-        heading="Delete solution"
+        heading="Delete this solution?"
+        calloutVariant="emergency"
         onClose={() => setConfirmDelete(false)}
         actions={
           <GoabButtonGroup alignment="end" mt="m">
@@ -178,7 +172,8 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
           </GoabButtonGroup>
         }
       >
-        Delete <strong>{solution.name}</strong>? This cannot be undone.
+        This action cannot be undone. <strong>{solution.name}</strong> and its saved specialist chats will be
+        permanently removed.
       </GoabModal>
     </>
   );

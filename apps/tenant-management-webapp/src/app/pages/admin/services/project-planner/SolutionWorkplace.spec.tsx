@@ -1,26 +1,20 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
-import { useSelector } from 'react-redux';
 import { SolutionWorkplace } from './SolutionWorkplace';
 import { usePlannerApi } from './api';
-import { layoutPanes, solutionModeKey } from './workplaceLayout';
+import { layoutPanes } from './workplaceLayout';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi, MockPlannerApi } from './testing/createMockApi';
 import { download } from './utils';
 import { ChatSummary, Solution, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
-jest.mock('react-redux', () => ({ useSelector: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
 
 const goa = (container: HTMLElement, testId: string) => container.querySelector(`[testid="${testId}"]`) as Element;
 const click = (container: HTMLElement, testId: string) => fireEvent(goa(container, testId), new CustomEvent('_click'));
 const type = (container: HTMLElement, testId: string, value: string) =>
   fireEvent(goa(container, testId), new CustomEvent('_change', { detail: { name: 'x', value } }));
-const paneIds = (container: HTMLElement, column: number) =>
-  Array.from(container.querySelectorAll(`[data-testid="pane-column-${column}"] > section`)).map((s) =>
-    s.getAttribute('data-testid'),
-  );
 
 const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit intake'): Solution => ({
   id: 'solution-1',
@@ -178,17 +172,6 @@ describe('SolutionWorkplace', () => {
       listChats: jest
         .fn()
         .mockResolvedValue([chat('c1', 'form-service'), chat('c2', 'form-service'), chat('c3', 'form-service')]),
-      listPatterns: jest.fn().mockResolvedValue([
-        {
-          id: 'p2',
-          name: 'Case management',
-          description: '',
-          domainLanguage: [],
-          commonFeatures: ['Intake'],
-          serviceMappings: [{ service: 'task-service', reason: 'Tasks' }],
-          clarifyingQuestions: [],
-        },
-      ]),
       ...overrides,
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
@@ -201,7 +184,6 @@ describe('SolutionWorkplace', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
-    (useSelector as jest.Mock).mockImplementation((selector) => selector({ session: { resourceAccess: undefined } }));
   });
 
   it('shows a progress indicator while loading', () => {
@@ -231,15 +213,7 @@ describe('SolutionWorkplace', () => {
     const tabs = Array.from(container.querySelectorAll('[data-testid^="tab-"][data-testid$="-tab-btn"]')).map(
       (b) => b.textContent,
     );
-    expect(tabs).toEqual([
-      'Problem & analysis',
-      'Conversation',
-      'Hypotheses',
-      'Concepts',
-      'Questions',
-      'Next steps',
-      'Blueprint',
-    ]);
+    expect(tabs).toEqual(['Problem & analysis', 'Conversation', 'Proposed solutions', 'Blueprint']);
     expect(container.querySelector('[role="progressbar"]')).not.toBeNull();
   });
 
@@ -330,12 +304,12 @@ describe('SolutionWorkplace', () => {
     fireEvent.click(container.querySelector(`[data-testid="${testId}-tab-btn"]`) as Element);
 
   describe('Conversation tab', () => {
-    it('sends a refine message', async () => {
-      localStorage.setItem(solutionModeKey('solution-1'), 'mode1');
+    it('sends a refine message once confidence is already at the threshold', async () => {
       const updated = analyzed({ discovery: readyDiscovery });
       const { container } = await setup(undefined, { chat: jest.fn().mockResolvedValue(updated) });
       openTab(container, 'tab-conversation');
 
+      expect(container.querySelector('[data-testid="discovery-panel"]')).toBeNull();
       expect(goa(container, 'refine-send').getAttribute('disabled')).toBe('true');
       type(container, 'refine-input', '  More detail ');
       click(container, 'refine-send');
@@ -345,64 +319,42 @@ describe('SolutionWorkplace', () => {
       expect(goa(container, 'refine-message-0').getAttribute('heading')).toBe('You');
     });
 
-    it('defaults to Guided Discovery and shows the discovery conversation', async () => {
+    it('shows the discovery conversation when confidence is below the threshold', async () => {
       const { container } = await setup(baseSolution());
       openTab(container, 'tab-conversation');
 
-      expect(goa(container, 'solution-mode-mode2').getAttribute('type')).toBe('primary');
+      expect(container.querySelector('[data-testid="refine-chat"]')).toBeNull();
       expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
       expect(goa(container, 'discovery-start')).not.toBeNull();
     });
 
-    it('switches to Rapid Recommend and persists the choice per solution', async () => {
+    it('hides the concepts, questions and next steps sections until an analysis exists', async () => {
+      const { container } = await setup(baseSolution());
+      openTab(container, 'tab-conversation');
+
+      expect(container.querySelector('[testid="section-concepts"]')).toBeNull();
+    });
+
+    it('shows concepts, questions and next steps once analyzed', async () => {
       const { container } = await setup();
       openTab(container, 'tab-conversation');
 
-      click(container, 'solution-mode-mode1');
-
-      expect(container.querySelector('[data-testid="discovery-panel"]')).toBeNull();
-      expect(container.querySelector('[data-testid="refine-chat"]')).not.toBeNull();
-      expect(localStorage.getItem(solutionModeKey('solution-1'))).toBe('mode1');
-    });
-  });
-
-  describe('Hypotheses, Concepts and Next steps tabs', () => {
-    it('shows hypotheses, concepts and next steps for an analyzed solution', async () => {
-      const { container } = await setup();
-
-      openTab(container, 'tab-hypotheses');
-      expect(goa(container, 'hypothesis-h1').hasAttribute('open')).toBe(true);
-      expect(container.textContent).toContain('1. form-service');
-
-      openTab(container, 'tab-concepts');
       expect(container.querySelector('[testid="concepts-table"]')).not.toBeNull();
-
-      openTab(container, 'tab-steps');
+      expect(container.querySelector('[data-testid="questions-pane"]')).not.toBeNull();
       expect(container.textContent).toContain('Define forms');
     });
 
     it('shows empty states for an analysis without results', async () => {
       const { container } = await setup(
-        baseSolution({ analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' } }),
+        baseSolution({
+          analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' },
+          confidence: { score: 60, threshold: 50, factors: [] },
+        }),
       );
+      openTab(container, 'tab-conversation');
 
-      openTab(container, 'tab-hypotheses');
-      expect(container.textContent).toContain('Run an analysis to see solution hypotheses.');
-      openTab(container, 'tab-concepts');
       expect(container.textContent).toContain('No concepts yet.');
-      openTab(container, 'tab-steps');
       expect(container.textContent).toContain('Run an analysis to get next steps.');
-    });
-  });
-
-  describe('Questions tab', () => {
-    it('prompts for analysis when nothing has been analyzed', async () => {
-      const { container } = await setup(baseSolution());
-      openTab(container, 'tab-questions');
-
-      expect(container.querySelector('[data-testid="questions-pane"]')?.textContent).toContain(
-        'Save and analyze the problem first',
-      );
     });
 
     it('answers a question and refines the analysis', async () => {
@@ -411,7 +363,7 @@ describe('SolutionWorkplace', () => {
         answerQuestion: jest.fn().mockResolvedValue(updated),
         analyze: jest.fn().mockResolvedValue(updated),
       });
-      openTab(container, 'tab-questions');
+      openTab(container, 'tab-conversation');
 
       type(container, 'answer-q1', 'Yes, by staff');
       click(container, 'save-answer-q1');
@@ -423,6 +375,25 @@ describe('SolutionWorkplace', () => {
 
       click(container, 'refine-analysis');
       await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    });
+  });
+
+  describe('Proposed solutions tab', () => {
+    it('shows hypotheses for an analyzed solution', async () => {
+      const { container } = await setup();
+      openTab(container, 'tab-hypotheses');
+
+      expect(goa(container, 'hypothesis-h1').hasAttribute('open')).toBe(true);
+      expect(container.textContent).toContain('1. form-service');
+    });
+
+    it('shows an empty state for an analysis without hypotheses', async () => {
+      const { container } = await setup(
+        baseSolution({ analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' } }),
+      );
+      openTab(container, 'tab-hypotheses');
+
+      expect(container.textContent).toContain('Run an analysis to see solution hypotheses.');
     });
   });
 
@@ -484,29 +455,6 @@ describe('SolutionWorkplace', () => {
       click(container, 'focus-workplace');
 
       expect(container.querySelector('[data-testid="tab-problem-tab-btn"]')).not.toBeNull();
-    });
-  });
-
-  describe('Patterns rail', () => {
-    it('shows the pattern catalog', async () => {
-      const { container } = await setup(undefined, {
-        listPatterns: jest.fn().mockResolvedValue([
-          {
-            id: 'p2',
-            name: 'Case management',
-            description: '',
-            domainLanguage: [],
-            commonFeatures: ['Intake'],
-            serviceMappings: [{ service: 'task-service', reason: 'Tasks' }],
-            clarifyingQuestions: [],
-          },
-        ]),
-      });
-
-      click(container, 'focus-patterns');
-
-      await waitFor(() => expect(container.querySelector('[testid="patterns-table"]')).not.toBeNull());
-      expect(container.textContent).toContain('Case management');
     });
   });
 

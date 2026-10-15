@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import AsideLinks from '@components/AsideLinks';
-import { Page, Main, Aside, AsidePadding } from '@components/Html';
+import styled from 'styled-components';
+import { Page, Main } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import BetaBadge from '@icons/beta-badge.svg';
 import { HeadingDiv } from '../styled-components';
@@ -10,6 +10,12 @@ import { SolutionsWorkspace } from './SolutionsWorkspace';
 import { Patterns } from './patterns';
 
 const TABS = ['overview', 'solutions', 'patterns'];
+
+const TabsSpacing = styled.div`
+  > div:first-child {
+    margin-bottom: 1rem;
+  }
+`;
 
 export const ProjectPlanner: FunctionComponent = () => {
   const { tab, id } = useParams<{ tab?: string; id?: string }>();
@@ -25,24 +31,20 @@ export const ProjectPlanner: FunctionComponent = () => {
           <h1 data-testid="project-planner-title">Project planner service</h1>
           <img src={BetaBadge} alt="Beta" />
         </HeadingDiv>
-        <Tabs activeIndex={activeIndex} changeTabCallback={changeTab}>
-          <Tab label="Overview" data-testid="project-planner-overview-tab">
-            <PlannerOverview onStart={() => navigate('../solutions')} />
-          </Tab>
-          <Tab label="Solutions" data-testid="project-planner-solutions-tab">
-            <SolutionsWorkspace />
-          </Tab>
-          <Tab label="Patterns" data-testid="project-planner-patterns-tab">
-            <Patterns />
-          </Tab>
-        </Tabs>
+        <TabsSpacing>
+          <Tabs activeIndex={activeIndex} changeTabCallback={changeTab}>
+            <Tab label="Overview" data-testid="project-planner-overview-tab">
+              <PlannerOverview onStart={() => navigate('../solutions')} />
+            </Tab>
+            <Tab label="Solutions" data-testid="project-planner-solutions-tab">
+              <SolutionsWorkspace />
+            </Tab>
+            <Tab label="Patterns" data-testid="project-planner-patterns-tab">
+              <Patterns />
+            </Tab>
+          </Tabs>
+        </TabsSpacing>
       </Main>
-
-      <Aside>
-        <AsidePadding>
-          <AsideLinks serviceName="project-planner" noDocsLink />
-        </AsidePadding>
-      </Aside>
     </Page>
   );
 };

@@ -28,7 +28,8 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
 
   useEffect(() => setDraft(saved), [saved]);
 
-  const save = () => run(async () => onSolutionChange(await api.updateSolution(solution.id, { problemStatement: draft })));
+  const save = () =>
+    run(async () => onSolutionChange(await api.updateSolution(solution.id, { problemStatement: draft })));
   const analyze = () =>
     run(async () => {
       await api.updateSolution(solution.id, { problemStatement: draft });
@@ -38,12 +39,13 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
   return (
     <div data-testid="problem-statement">
       <h2>{title}</h2>
-      <GoabFormItem label="Problem statement" mb="m">
+      <GoabFormItem label="Problem statement" maxWidth="100%" mb="m">
         <GoabTextArea
           name="problemStatement"
           value={draft}
           rows={5}
           width="100%"
+          maxWidth="100%"
           testId="problem-input"
           disabled={busy}
           onChange={(detail) => setDraft(detail.value)}

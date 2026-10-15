@@ -69,7 +69,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
   const controls = (
     <>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: '0.75rem' }}>
         <GoabButton
           type={blueprint ? 'secondary' : 'primary'}
           size="compact"
@@ -118,7 +118,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
   const { overview: o, architecture: a, dataGovernance: d, delivery: dl } = blueprint;
 
   const section = (id: string, heading: string, children: ReactNode) => (
-    <GoabDetails heading={heading} open={allOpen} testId={`blueprint-section-${id}`}>
+    <GoabDetails heading={heading} open={allOpen} maxWidth="100%" testId={`blueprint-section-${id}`}>
       {children}
     </GoabDetails>
   );

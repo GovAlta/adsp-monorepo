@@ -31,12 +31,12 @@ describe('SolutionsWorkspace', () => {
     jest.resetAllMocks();
   });
 
-  it('shows a placeholder when no solution is selected', () => {
+  it('shows the solutions list when no solution is selected', () => {
     useParamsMock.mockReturnValue({});
 
-    const { container } = render(<SolutionsWorkspace />);
+    const { getByTestId } = render(<SolutionsWorkspace />);
 
-    expect(container.querySelector('goa-callout[testid="no-solution-selected"]')).toBeTruthy();
+    expect(getByTestId('solutions-sidebar')).toBeTruthy();
   });
 
   it('shows the workplace for the routed solution id', () => {
@@ -47,12 +47,12 @@ describe('SolutionsWorkspace', () => {
     expect(getByTestId('workplace').textContent).toBe('solution-1');
   });
 
-  it('passes the selected id down to the sidebar', () => {
+  it('hides the sidebar once a solution is selected, to give the workplace full width', () => {
     useParamsMock.mockReturnValue({ id: 'solution-1' });
 
-    const { getByTestId } = render(<SolutionsWorkspace />);
+    const { queryByTestId } = render(<SolutionsWorkspace />);
 
-    expect(getByTestId('solutions-sidebar').textContent).toContain('solution-1');
+    expect(queryByTestId('solutions-sidebar')).toBeNull();
   });
 
   it('navigates to the selected solution', () => {
