@@ -9,6 +9,7 @@ import * as helmet from 'helmet';
 import * as passport from 'passport';
 import { promisify } from 'util';
 import { environment } from './environments/environment';
+import { createDatabase } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
@@ -25,6 +26,8 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   instrumentAxios(logger);
+
+  const { isConnected } = await createDatabase({ logger, ...environment });
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -67,7 +70,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json(platform);
+    res.json({ ...platform, db: await isConnected() });
   });
 
   app.get('/', async (req, res) => {
