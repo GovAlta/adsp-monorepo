@@ -77,18 +77,25 @@ describe('SpecialistChat', () => {
         mode="ai"
         onChatsChanged={onChatsChanged}
         {...props}
-      />
+      />,
     );
   const click = (container: HTMLElement, testId: string) =>
-    fireEvent(container.querySelector(`goa-button[testid="${testId}"]`) as Element, new CustomEvent('_click'));
+    fireEvent(container.querySelector(`[testid="${testId}"]`) as Element, new CustomEvent('_click'));
   const type = (container: HTMLElement, value: string) =>
     fireEvent(
       container.querySelector('goa-textarea[testid="chat-input"]') as Element,
-      new CustomEvent('_change', { detail: { name: 'specialist-message', value } })
+      new CustomEvent('_change', { detail: { name: 'specialist-message', value } }),
+    );
+  const toggle = (container: HTMLElement, chatId: string, open: boolean) =>
+    fireEvent(
+      container.querySelector(`goa-accordion[testid="chat-accordion-${chatId}"]`) as Element,
+      new CustomEvent('_change', { detail: { open } }),
     );
   const loaded = async (container: HTMLElement) => {
     await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-    await waitFor(() => expect(container.querySelector('goa-details[testid="chat-history"]')).not.toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('goa-accordion[testid="chat-accordion-chat-1"]')).not.toBeNull(),
+    );
   };
 
   beforeEach(() => {
@@ -149,15 +156,17 @@ describe('SpecialistChat', () => {
     await loaded(container);
 
     expect(api.listChats).toHaveBeenCalledWith({ service: 'form-service', solutionId: 'sol-1' });
-    expect(container.querySelector('goa-details[heading="Saved chats (1)"]')).not.toBeNull();
+    expect(container.textContent).toContain('Saved chats (1)');
   });
 
-  it('shows an empty message when listing chats fails', async () => {
+  it('shows no saved chats section when listing chats fails', async () => {
     api.listChats.mockRejectedValue(new Error('x'));
 
-    const { findByTestId } = renderChat();
+    const { container } = renderChat();
 
-    expect(await findByTestId('chat-no-history')).toBeTruthy();
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+    expect(container.querySelector('goa-accordion')).toBeNull();
+    expect(container.textContent).not.toContain('Saved chats');
   });
 
   it('hides the consult button without a solution', async () => {
@@ -173,7 +182,7 @@ describe('SpecialistChat', () => {
 
     click(container, 'chat-consult');
 
-    await waitFor(() => expect(container.querySelector('goa-callout[testid="chat-consult-result"]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-testid="chat-draft-turns"]')).not.toBeNull());
     expect(api.consult).toHaveBeenCalledWith('sol-1', 'form-service', { mode: 'ai' });
     await waitFor(() => expect(onChatsChanged).toHaveBeenCalled());
     expect(container.textContent).toContain('Start simple');
@@ -184,9 +193,11 @@ describe('SpecialistChat', () => {
     const { container } = renderChat();
     await loaded(container);
 
-    click(container, 'chat-open-chat-1');
+    toggle(container, 'chat-1', true);
 
-    await waitFor(() => expect(container.querySelectorAll('goa-callout[testid="chat-assistant-message"]')).toHaveLength(1));
+    await waitFor(() =>
+      expect(container.querySelectorAll('goa-callout[testid="chat-assistant-message"]')).toHaveLength(1),
+    );
     expect(container.querySelector('goa-callout[heading="Form (rule-based)"]')).not.toBeNull();
     expect(container.textContent).toContain('AI unavailable');
     expect(container.textContent).toContain('Fit: recommended');
@@ -194,7 +205,7 @@ describe('SpecialistChat', () => {
     expect(container.textContent).toContain('Use drafts');
     expect(container.querySelector('goa-details[heading="Example"] pre')?.textContent).toBe('const a = 1;');
     expect(container.querySelectorAll('goa-callout[testid="chat-user-message"]')).toHaveLength(1);
-    expect(container.querySelector('goa-button[testid="chat-open-chat-1"]')?.textContent).toBe('Close');
+    expect(container.querySelector('goa-accordion[testid="chat-accordion-chat-1"]')?.getAttribute('open')).toBe('true');
   });
 
   it('uses the sample language when it has no title', async () => {
@@ -205,7 +216,7 @@ describe('SpecialistChat', () => {
     const { container } = renderChat();
     await loaded(container);
 
-    click(container, 'chat-open-chat-1');
+    toggle(container, 'chat-1', true);
 
     await waitFor(() => expect(container.querySelector('goa-details[heading="json"]')).not.toBeNull());
   });
@@ -213,8 +224,8 @@ describe('SpecialistChat', () => {
   it('sends a follow-up from an assistant message', async () => {
     const { container } = renderChat();
     await loaded(container);
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-follow-up"]')).not.toBeNull());
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-follow-up"]')).not.toBeNull());
 
     click(container, 'chat-follow-up');
 
@@ -225,7 +236,7 @@ describe('SpecialistChat', () => {
         intent: 'ask',
         solutionId: 'sol-1',
         mode: 'ai',
-      })
+      }),
     );
   });
 
@@ -237,7 +248,9 @@ describe('SpecialistChat', () => {
     type(container, '  Is this ok?  ');
     click(container, 'chat-send');
 
-    await waitFor(() => expect(container.querySelectorAll('goa-callout[testid="chat-assistant-message"]')).toHaveLength(1));
+    await waitFor(() =>
+      expect(container.querySelectorAll('goa-callout[testid="chat-assistant-message"]')).toHaveLength(1),
+    );
     expect(api.specialistChat).toHaveBeenCalledWith('form-service', {
       message: 'Is this ok?',
       chatId: undefined,
@@ -248,7 +261,7 @@ describe('SpecialistChat', () => {
     expect(container.textContent).toContain('An answer');
     expect(container.querySelector('goa-callout[testid="chat-user-message"]')?.textContent).toBe('Is this ok?');
     expect(container.querySelector('goa-textarea[testid="chat-input"]')?.getAttribute('value')).toBe('');
-    expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull();
+    expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull();
   });
 
   it('does not send blank messages', async () => {
@@ -271,9 +284,11 @@ describe('SpecialistChat', () => {
     click(container, 'chat-send');
 
     await waitFor(() =>
-      expect(container.querySelector('goa-circular-progress[testid="chat-progress"]')?.getAttribute('visible')).toBe('true')
+      expect(container.querySelector('goa-circular-progress[testid="chat-progress"]')?.getAttribute('visible')).toBe(
+        'true',
+      ),
     );
-    expect(container.querySelector('goa-button[testid="chat-new"]')?.getAttribute('disabled')).toBe('true');
+    expect(container.querySelector('[testid="chat-download-all-md"]')?.getAttribute('disabled')).toBe('true');
     click(container, 'chat-send');
     expect(api.specialistChat).toHaveBeenCalledTimes(1);
   });
@@ -287,7 +302,9 @@ describe('SpecialistChat', () => {
     click(container, 'chat-send');
 
     await waitFor(() =>
-      expect(container.querySelector('goa-circular-progress[testid="chat-progress"]')?.getAttribute('visible')).toBeNull()
+      expect(
+        container.querySelector('goa-circular-progress[testid="chat-progress"]')?.getAttribute('visible'),
+      ).toBeNull(),
     );
     expect(container.querySelectorAll('goa-callout[testid="chat-user-message"]')).toHaveLength(0);
   });
@@ -295,21 +312,21 @@ describe('SpecialistChat', () => {
   it('starts a new chat', async () => {
     const { container } = renderChat();
     await loaded(container);
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull());
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull());
 
-    click(container, 'chat-new');
+    toggle(container, 'chat-1', false);
 
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).toBeNull());
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).toBeNull());
     expect(container.querySelectorAll('goa-callout[testid="chat-user-message"]')).toHaveLength(0);
   });
 
   it('confirms before deleting a chat and clears it when it is open', async () => {
     api.listChats.mockResolvedValueOnce([summary]).mockResolvedValue([]);
-    const { container, findByTestId } = renderChat();
+    const { container } = renderChat();
     await loaded(container);
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull());
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull());
 
     click(container, 'chat-delete-chat-1');
     expect(container.querySelector('goa-modal[testid="delete-chat-modal"]')).not.toBeNull();
@@ -317,9 +334,9 @@ describe('SpecialistChat', () => {
 
     click(container, 'delete-chat-confirm');
 
-    expect(await findByTestId('chat-no-history')).toBeTruthy();
-    expect(api.deleteChat).toHaveBeenCalledWith('chat-1');
-    expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).toBeNull();
+    await waitFor(() => expect(api.deleteChat).toHaveBeenCalledWith('chat-1'));
+    await waitFor(() => expect(container.querySelector('goa-accordion')).toBeNull());
+    expect(container.querySelector('[testid="chat-download-current-md"]')).toBeNull();
     expect(onChatsChanged).toHaveBeenCalled();
   });
 
@@ -337,15 +354,17 @@ describe('SpecialistChat', () => {
   it('keeps the open chat when deleting a different chat', async () => {
     api.listChats.mockResolvedValue([summary, { ...summary, id: 'chat-9' }]);
     const { container } = renderChat();
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-open-chat-9"]')).not.toBeNull());
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('goa-accordion[testid="chat-accordion-chat-9"]')).not.toBeNull(),
+    );
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull());
 
     click(container, 'chat-delete-chat-9');
     click(container, 'delete-chat-confirm');
 
     await waitFor(() => expect(api.deleteChat).toHaveBeenCalledWith('chat-9'));
-    expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull();
+    expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull();
   });
 
   it('downloads all chats as markdown and JSON', async () => {
@@ -368,10 +387,10 @@ describe('SpecialistChat', () => {
     const { container } = renderChat();
     await loaded(container);
 
-    expect(container.querySelector('[aria-label="Download this chat"]')).toBeNull();
+    expect(container.querySelector('[testid="chat-download-current-md"]')).toBeNull();
 
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('[aria-label="Download this chat"]')).not.toBeNull());
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull());
     click(container, 'chat-download-current-md');
     await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
     click(container, 'chat-download-current-json');
@@ -395,22 +414,24 @@ describe('SpecialistChat', () => {
   it('resets the conversation when the service changes', async () => {
     const { container, rerender } = renderChat();
     await loaded(container);
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).not.toBeNull());
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull());
 
     await act(async () => {
       rerender(<SpecialistChat service="file-service" solution={solution} api={api} mode="rules" />);
     });
 
-    await waitFor(() => expect(api.listChats).toHaveBeenLastCalledWith({ service: 'file-service', solutionId: 'sol-1' }));
-    expect(container.querySelector('goa-button[testid="chat-download-current-md"]')).toBeNull();
+    await waitFor(() =>
+      expect(api.listChats).toHaveBeenLastCalledWith({ service: 'file-service', solutionId: 'sol-1' }),
+    );
+    expect(container.querySelector('[testid="chat-download-current-md"]')).toBeNull();
   });
 
   it('has no accessibility violations', async () => {
     const { container } = renderChat();
     await loaded(container);
-    click(container, 'chat-open-chat-1');
-    await waitFor(() => expect(container.querySelector('goa-button[testid="chat-follow-up"]')).not.toBeNull());
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-follow-up"]')).not.toBeNull());
 
     await expectNoA11yViolations(container);
   });

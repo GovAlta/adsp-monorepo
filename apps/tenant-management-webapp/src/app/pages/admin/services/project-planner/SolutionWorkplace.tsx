@@ -239,7 +239,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                     </>
                   )}
                 </Tab>
-                <Tab label="Proposed Solutions" testId="tab-hypotheses">
+                <Tab label="Proposal" testId="tab-hypotheses">
                   <Hypotheses solution={solution} open />
                 </Tab>
                 <Tab label="Blueprint" testId="tab-blueprint">

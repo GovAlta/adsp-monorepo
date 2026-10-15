@@ -27,9 +27,9 @@ const ActionRow = styled.div`
 `;
 
 const sourceBadge: Record<PatternSource, { type: 'information' | 'important' | 'success'; label: string }> = {
-  'built-in': { type: 'information', label: 'built-in' },
-  customized: { type: 'important', label: 'customized' },
-  custom: { type: 'success', label: 'custom' },
+  'built-in': { type: 'information', label: 'Built-in' },
+  customized: { type: 'important', label: 'Customized' },
+  custom: { type: 'success', label: 'Custom' },
 };
 
 // Limits mirror the planner service validation.

@@ -38,7 +38,7 @@ describe('PatternManager', () => {
   const setField = (container: HTMLElement, key: string, value: string) =>
     fireEvent(
       container.querySelector(`goa-textarea[testid="pattern-field-${key}"]`) as Element,
-      new CustomEvent('_change', { detail: { name: `pattern-${key}`, value } })
+      new CustomEvent('_change', { detail: { name: `pattern-${key}`, value } }),
     );
   const fillValid = (container: HTMLElement) => {
     setField(container, 'name', ' New one ');
@@ -82,9 +82,15 @@ describe('PatternManager', () => {
 
     expect(container.querySelectorAll('tbody tr')).toHaveLength(3);
     expect(container.textContent).toContain('form-service: Intake forms.');
-    expect(container.querySelector('goa-badge[testid="pattern-source-case-management"]')?.getAttribute('content')).toBe('Built-in');
-    expect(container.querySelector('goa-badge[testid="pattern-source-permitting"]')?.getAttribute('content')).toBe('Customized');
-    expect(container.querySelector('goa-badge[testid="pattern-source-my-pattern"]')?.getAttribute('content')).toBe('Custom');
+    expect(container.querySelector('goa-badge[testid="pattern-source-case-management"]')?.getAttribute('content')).toBe(
+      'Built-in',
+    );
+    expect(container.querySelector('goa-badge[testid="pattern-source-permitting"]')?.getAttribute('content')).toBe(
+      'Customized',
+    );
+    expect(container.querySelector('goa-badge[testid="pattern-source-my-pattern"]')?.getAttribute('content')).toBe(
+      'Custom',
+    );
     expect(container.querySelectorAll('goa-details[heading="Known unknowns"]')).toHaveLength(2);
     expect(container.querySelectorAll('goa-details[heading="Clarifying questions"]')).toHaveLength(2);
   });
@@ -94,7 +100,9 @@ describe('PatternManager', () => {
 
     const { container } = await renderList();
 
-    expect(container.querySelector('goa-badge[testid="pattern-source-case-management"]')?.getAttribute('content')).toBe('Built-in');
+    expect(container.querySelector('goa-badge[testid="pattern-source-case-management"]')?.getAttribute('content')).toBe(
+      'Built-in',
+    );
   });
 
   it('shows an empty table when loading fails', async () => {
@@ -203,7 +211,9 @@ describe('PatternManager', () => {
     click(container, 'pattern-save');
 
     await waitFor(() => expect(api.createPattern).toHaveBeenCalled());
-    await waitFor(() => expect(container.querySelector('goa-button[testid="pattern-save"]')?.getAttribute('disabled')).toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('goa-button[testid="pattern-save"]')?.getAttribute('disabled')).toBeNull(),
+    );
     expect(container.querySelector('goa-textarea[testid="pattern-field-name"]')).not.toBeNull();
   });
 
@@ -213,7 +223,8 @@ describe('PatternManager', () => {
     click(container, 'pattern-edit-case-management');
 
     expect(getByTestId('pattern-editor-heading').textContent).toBe('Edit pattern: case-management');
-    const value = (key: string) => container.querySelector(`goa-textarea[testid="pattern-field-${key}"]`)?.getAttribute('value');
+    const value = (key: string) =>
+      container.querySelector(`goa-textarea[testid="pattern-field-${key}"]`)?.getAttribute('value');
     expect(value('name')).toBe('Case Management');
     expect(value('strongSignals')).toBe('Cases are assigned | case, assign');
     expect(value('serviceMappings')).toBe('form-service: Intake forms.');
@@ -251,8 +262,8 @@ describe('PatternManager', () => {
     click(container, 'pattern-delete-my-pattern');
 
     const modal = container.querySelector('goa-modal[testid="pattern-delete-modal"]');
-    expect(modal?.getAttribute('heading')).toBe('Delete pattern');
-    expect(modal?.textContent).toContain("Delete the pattern 'My pattern'?");
+    expect(modal?.getAttribute('heading')).toBe('Delete this pattern?');
+    expect(modal?.textContent).toContain('My pattern');
     expect(api.deletePattern).not.toHaveBeenCalled();
 
     click(container, 'pattern-delete-confirm');
@@ -268,7 +279,7 @@ describe('PatternManager', () => {
     click(container, 'pattern-delete-permitting');
 
     const modal = container.querySelector('goa-modal[testid="pattern-delete-modal"]');
-    expect(modal?.getAttribute('heading')).toBe('Revert pattern');
+    expect(modal?.getAttribute('heading')).toBe('Revert this pattern?');
     expect(modal?.textContent).toContain('built-in definition');
     click(container, 'pattern-delete-confirm');
     await waitFor(() => expect(api.deletePattern).toHaveBeenCalledWith('permitting'));

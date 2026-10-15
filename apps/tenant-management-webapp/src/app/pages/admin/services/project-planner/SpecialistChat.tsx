@@ -407,6 +407,20 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
       <GoabCircularProgress visible={busy} message="Working..." size="small" testId="chat-progress" />
 
+      {messages.length > 0 && !chats.some((chat) => chat.id === chatId) && (
+        <Turns data-testid="chat-draft-turns">
+          {messages.map((message, i) => (
+            <Message
+              key={`${i}-${message.at}`}
+              message={message}
+              specialistName={displayName}
+              disabled={busy}
+              onFollowUp={send}
+            />
+          ))}
+        </Turns>
+      )}
+
       <Row role="group" aria-label="Message intent">
         <strong>Response type:</strong>
         {INTENTS.map(([key, label]) => (

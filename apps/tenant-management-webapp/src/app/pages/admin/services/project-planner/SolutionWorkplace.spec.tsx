@@ -213,7 +213,7 @@ describe('SolutionWorkplace', () => {
     const tabs = Array.from(container.querySelectorAll('[data-testid^="tab-"][data-testid$="-tab-btn"]')).map(
       (b) => b.textContent,
     );
-    expect(tabs).toEqual(['Problem & analysis', 'Conversation', 'Proposed solutions', 'Blueprint']);
+    expect(tabs).toEqual(['Problem & Analysis', 'Conversation', 'Proposal', 'Blueprint']);
     expect(container.querySelector('[role="progressbar"]')).not.toBeNull();
   });
 
