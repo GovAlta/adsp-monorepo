@@ -1,26 +1,19 @@
 import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  GoabBadge,
+  GoabAccordion,
   GoabButton,
   GoabButtonGroup,
   GoabCallout,
   GoabCircularProgress,
   GoabDetails,
   GoabFormItem,
+  GoabIconButton,
   GoabModal,
   GoabTextArea,
 } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
-import {
-  AnalysisMode,
-  ChatMessage,
-  ChatSummary,
-  ConsultResult,
-  Solution,
-  SpecialistDefinition,
-  SpecialistIntent,
-} from './model';
+import { AnalysisMode, ChatMessage, ChatSummary, Solution, SpecialistDefinition, SpecialistIntent } from './model';
 import { chatToMarkdown, download, fmtDate, safeName } from './utils';
 
 export const INTENTS: [SpecialistIntent, string][] = [
@@ -37,6 +30,14 @@ const Row = styled.div`
   align-items: center;
   gap: 0.5rem;
   margin: 0.5rem 0;
+`;
+
+const HeaderRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 `;
 
 const Pre = styled.pre`
@@ -108,7 +109,14 @@ const Message: FunctionComponent<MessageProps> = ({ message, specialistName, dis
           </p>
           <BulletList title="Can support" items={message.consult.supports} />
           <BulletList title="Constraints" items={message.consult.constraints} />
+          <BulletList title="Questions" items={message.consult.questions} />
           <BulletList title="Risks" items={message.consult.risks} />
+          {message.consult.advice && <Text>{message.consult.advice}</Text>}
+          {message.consult.validation && (
+            <p>
+              <strong>Verdict:</strong> {message.consult.validation.verdict}
+            </p>
+          )}
         </>
       )}
       {message.validation && (
@@ -168,7 +176,6 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   const [intent, setIntent] = useState<SpecialistIntent>('ask');
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [consult, setConsult] = useState<ConsultResult>();
   const [deletingChatId, setDeletingChatId] = useState<string>();
   const onChatsChangedRef = useRef(onChatsChanged);
   onChatsChangedRef.current = onChatsChanged;
@@ -192,7 +199,6 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   useEffect(() => {
     setChatId(undefined);
     setMessages([]);
-    setConsult(undefined);
     setDraft('');
     void loadChats();
   }, [loadChats]);
@@ -263,7 +269,26 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
   const runConsult = () =>
     run(async () => {
-      setConsult(await api.consult(solution.id, service, { mode }));
+      const result = await api.consult(solution.id, service, { mode });
+      const at = new Date().toISOString();
+      setMessages((current) => [
+        ...current,
+        { role: 'user', content: 'Consult on this solution', at },
+        {
+          role: 'assistant',
+          content: result.reason,
+          at,
+          consult: {
+            fit: result.fit,
+            supports: result.supports,
+            constraints: result.constraints,
+            risks: result.risks,
+            questions: result.questions,
+            advice: result.advice,
+            validation: result.validation,
+          },
+        },
+      ]);
       await refreshChats();
     });
 
@@ -294,126 +319,96 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
       <h2 data-testid="chat-heading">Specialist chat: {displayName}</h2>
 
       {solution && (
+        <GoabButton size="compact" type="secondary" disabled={busy} mb="m" testId="chat-consult" onClick={runConsult}>
+          Consult on this solution
+        </GoabButton>
+      )}
+
+      {chats.length > 0 && (
         <>
-          <GoabButton size="compact" type="secondary" disabled={busy} mb="m" testId="chat-consult" onClick={runConsult}>
-            Consult on this solution
-          </GoabButton>
-          {consult && (
-            <GoabCallout type="information" heading={`Consultation: ${consult.fit}`} testId="chat-consult-result">
-              <p>{consult.reason}</p>
-              <BulletList title="Can support" items={consult.supports} />
-              <BulletList title="Constraints" items={consult.constraints} />
-              <BulletList title="Questions" items={consult.questions} />
-              <BulletList title="Risks" items={consult.risks} />
-              {consult.advice && <Text>{consult.advice}</Text>}
-              {consult.validation && (
-                <p>
-                  <strong>Verdict:</strong> {consult.validation.verdict}
-                </p>
+          <HeaderRow>
+            <h3 style={{ margin: 0 }}>Saved chats ({chats.length})</h3>
+            <Row role="group" aria-label="Export chats">
+              <GoabIconButton
+                icon="document-text"
+                title="Export all chats as Markdown"
+                ariaLabel="Export all chats as Markdown"
+                disabled={busy}
+                testId="chat-download-all-md"
+                onClick={() => downloadAll('md')}
+              />
+              <GoabIconButton
+                icon="code-download"
+                title="Export all chats as JSON"
+                ariaLabel="Export all chats as JSON"
+                disabled={busy}
+                testId="chat-download-all-json"
+                onClick={() => downloadAll('json')}
+              />
+              {chatId && (
+                <>
+                  <GoabIconButton
+                    icon="document-text"
+                    title="Export this chat as Markdown"
+                    ariaLabel="Export this chat as Markdown"
+                    disabled={busy}
+                    testId="chat-download-current-md"
+                    onClick={() => downloadCurrent('md')}
+                  />
+                  <GoabIconButton
+                    icon="code-download"
+                    title="Export this chat as JSON"
+                    ariaLabel="Export this chat as JSON"
+                    disabled={busy}
+                    testId="chat-download-current-json"
+                    onClick={() => downloadCurrent('json')}
+                  />
+                </>
               )}
-            </GoabCallout>
-          )}
+            </Row>
+          </HeaderRow>
+          {chats.map((chat) => (
+            <GoabAccordion
+              key={chat.id}
+              heading={chat.title}
+              secondaryText={`${chat.messageCount} messages \u00b7 ${fmtDate(chat.updatedOn)}`}
+              open={chat.id === chatId}
+              mb="s"
+              testId={`chat-accordion-${chat.id}`}
+              onChange={(open) => (open ? openChat(chat.id) : newChat())}
+              actions={
+                <GoabIconButton
+                  icon="trash"
+                  variant="destructive"
+                  title="Delete this chat"
+                  ariaLabel={`Delete chat ${chat.title}`}
+                  testId={`chat-delete-${chat.id}`}
+                  onClick={() => setDeletingChatId(chat.id)}
+                />
+              }
+            >
+              {chat.id === chatId && (
+                <Turns>
+                  {messages.map((message, i) => (
+                    <Message
+                      key={`${i}-${message.at}`}
+                      message={message}
+                      specialistName={displayName}
+                      disabled={busy}
+                      onFollowUp={send}
+                    />
+                  ))}
+                </Turns>
+              )}
+            </GoabAccordion>
+          ))}
         </>
       )}
 
-      {chats.length > 0 ? (
-        <GoabDetails heading={`Saved chats (${chats.length})`} open testId="chat-history">
-          <ul>
-            {chats.map((chat) => (
-              <li key={chat.id}>
-                <Row>
-                  <span>
-                    {chat.title}{' '}
-                    <GoabBadge
-                      type="default"
-                      emphasis="subtle"
-                      icon={false}
-                      content={`${chat.messageCount} messages`}
-                    />{' '}
-                    {fmtDate(chat.updatedOn)}
-                  </span>
-                  <GoabButton
-                    type="tertiary"
-                    size="compact"
-                    disabled={busy}
-                    testId={`chat-open-${chat.id}`}
-                    onClick={() => (chat.id === chatId ? newChat() : openChat(chat.id))}
-                  >
-                    {chat.id === chatId ? 'Close' : 'Open'}
-                  </GoabButton>
-                  <GoabButton
-                    type="tertiary"
-                    size="compact"
-                    disabled={busy}
-                    testId={`chat-delete-${chat.id}`}
-                    onClick={() => setDeletingChatId(chat.id)}
-                  >
-                    Delete
-                  </GoabButton>
-                </Row>
-              </li>
-            ))}
-          </ul>
-        </GoabDetails>
-      ) : (
-        <p data-testid="chat-no-history">No saved chats with this specialist yet.</p>
-      )}
-
-      <Row>
-        <GoabButton type="secondary" size="compact" disabled={busy} testId="chat-new" onClick={newChat}>
-          New chat
-        </GoabButton>
-      </Row>
-      <Row role="group" aria-label="Download all chats">
-        <strong>All chats:</strong>
-        <GoabButton
-          type="tertiary"
-          size="compact"
-          leadingIcon="download"
-          disabled={busy}
-          testId="chat-download-all-md"
-          onClick={() => downloadAll('md')}
-        >
-          Markdown
-        </GoabButton>
-        <GoabButton
-          type="tertiary"
-          size="compact"
-          leadingIcon="download"
-          disabled={busy}
-          testId="chat-download-all-json"
-          onClick={() => downloadAll('json')}
-        >
-          JSON
-        </GoabButton>
-      </Row>
-      {chatId && (
-        <Row role="group" aria-label="Download this chat">
-          <strong>This chat:</strong>
-          <GoabButton
-            type="tertiary"
-            size="compact"
-            leadingIcon="download"
-            disabled={busy}
-            testId="chat-download-current-md"
-            onClick={() => downloadCurrent('md')}
-          >
-            Markdown
-          </GoabButton>
-          <GoabButton
-            type="tertiary"
-            size="compact"
-            leadingIcon="download"
-            disabled={busy}
-            testId="chat-download-current-json"
-            onClick={() => downloadCurrent('json')}
-          >
-            JSON
-          </GoabButton>
-        </Row>
-      )}
+      <GoabCircularProgress visible={busy} message="Working..." size="small" testId="chat-progress" />
 
       <Row role="group" aria-label="Message intent">
+        <strong>Response type:</strong>
         {INTENTS.map(([key, label]) => (
           <GoabButton
             key={key}
@@ -426,20 +421,6 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           </GoabButton>
         ))}
       </Row>
-
-      <Turns>
-        {messages.map((message, i) => (
-          <Message
-            key={`${i}-${message.at}`}
-            message={message}
-            specialistName={displayName}
-            disabled={busy}
-            onFollowUp={send}
-          />
-        ))}
-      </Turns>
-
-      <GoabCircularProgress visible={busy} message="Working..." size="small" testId="chat-progress" />
 
       <GoabFormItem label="Message to the specialist" mb="m">
         <GoabTextArea
@@ -460,7 +441,8 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
         <GoabModal
           open
           testId="delete-chat-modal"
-          heading="Delete chat"
+          heading="Delete this chat?"
+          calloutVariant="emergency"
           onClose={() => setDeletingChatId(undefined)}
           actions={
             <GoabButtonGroup alignment="end" mt="m">
@@ -485,7 +467,9 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
             </GoabButtonGroup>
           }
         >
-          This cannot be undone. The saved chat and its messages will be permanently removed.
+          This action cannot be undone.{' '}
+          <strong>{chats.find((c) => c.id === deletingChatId)?.title ?? 'This chat'}</strong> and its messages will be
+          permanently removed.
         </GoabModal>
       )}
     </section>

@@ -304,6 +304,9 @@ export interface ChatMessage {
     supports?: string[];
     constraints?: string[];
     risks?: string[];
+    questions?: string[];
+    advice?: string;
+    validation?: SpecialistValidation;
     [key: string]: unknown;
   };
 }
