@@ -1,0 +1,85 @@
+paths:
+  /audit/v1/{namespace}/actions:
+    get:
+      tags:
+        - Action catalogs
+      summary: List a namespace's action definitions.
+      description: |
+        Requires audit-reader. Returns a JSON array of action definitions from the caller's
+        tenant merged with Core, with Core winning on duplicate action names.
+        The namespace is the application identifier in audit-service:actions-<application>.
+        This endpoint does not require ownership of the namespace.
+      parameters:
+        - in: path
+          name: namespace
+          required: true
+          schema:
+            type: string
+            maxLength: 40
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        - in: query
+          name: tenantId
+          description: Tenant URN. Only a Core caller may select another tenant.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resolved definitions; an empty array means the catalog is registered but empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditAction'
+        '400':
+          description: Invalid namespace or tenant identifier.
+        '401':
+          description: Authentication required.
+        '403':
+          description: Missing audit-reader or an attempt to access another tenant.
+        '404':
+          description: Neither Core nor the tenant supplied a catalog. Configuration HTTP or converter failures handled by the SDK can also produce this response.
+        '503':
+          description: A propagated SDK error or application-name consistency failure. Retry; do not re-register actions.
+components:
+  schemas:
+    AuditAction:
+      type: object
+      required:
+        - name
+        - version
+        - category
+        - severity
+        - retentionClass
+        - captureChangeSet
+        - forwardToSiem
+      properties:
+        name:
+          type: string
+          example: case.update
+        version:
+          type: integer
+          minimum: 1
+        category:
+          type: string
+          enum: [administrative, runtime, security, data-access]
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        retentionClass:
+          type: string
+          description: Named retention class; custom classes are allowed. Never a duration.
+        description:
+          type: string
+        resourceType:
+          type: string
+        captureChangeSet:
+          type: boolean
+          default: false
+        forwardToSiem:
+          type: boolean
+          default: false
+        metadataSchema:
+          type: object
+          additionalProperties: true
+          description: Optional JSON Schema draft-07 for metadata; omitted means no action-specific metadata constraint.
