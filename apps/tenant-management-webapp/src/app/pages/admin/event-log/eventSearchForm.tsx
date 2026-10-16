@@ -134,7 +134,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
               size="compact"
               type="secondary"
               leadingIcon="filter"
-              disabled={disabled}
               trailingIcon={filtersOpen ? 'chevron-back' : 'chevron-forward'}
               onClick={() => setFiltersOpen((open) => !open)}
               testId="event-log-filters-toggle"
