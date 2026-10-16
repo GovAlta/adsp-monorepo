@@ -86,7 +86,7 @@ describe('JsonformsReviewNavigation', () => {
     render(<JsonformsReviewNavigation />);
 
     expect(screen.getByTestId('navigation-target-page-1')).toHaveTextContent('What is your dispute about?');
-    expect(screen.getByTestId('navigation-target-page-13')).toHaveTextContent('Add optional supporting documents');
+    expect(screen.getByTestId('navigation-target-page-12')).toHaveTextContent('What is the desired outcome?');
   });
 
   it('turns a reported step into a page target for the form', () => {
