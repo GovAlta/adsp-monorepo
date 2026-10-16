@@ -236,6 +236,14 @@ async function persist(
   return saved;
 }
 
+function refreshConfidence(state: SolutionState): void {
+  if (state.discovery) {
+    const factors = ruleAssess(userEvidence(state.problemStatement, state.discovery.messages));
+    state.discovery = { ...state.discovery, factors, confidence: computeConfidence(factors) };
+  }
+  state.confidence = assessConfidence(state);
+}
+
 export function createPlannerRouter({ logger, solutionRepository, patternRepository, specialistChatRepository, eventService, llm }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
@@ -321,7 +329,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
-    state.confidence = assessConfidence(state);
+    refreshConfidence(state);
     return persist(
       req,
       solutionRepository,
@@ -550,6 +558,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
               }))
             : solution.state.questions,
         };
+        if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
+          refreshConfidence(state);
+        }
         res.send(
           await persist(
             req,

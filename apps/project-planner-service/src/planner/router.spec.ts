@@ -1017,6 +1017,47 @@ describe('planner router routes', () => {
       expect(res.body.state.problemStatement).toBe('Inspectors record findings.');
     });
 
+    it('recomputes confidence when the problem statement changes', async () => {
+      const res = await patch({
+        problemStatement:
+          'Applicants submit permits. Staff review and approve applications. Notifications are sent on decisions.',
+      });
+
+      expect(res.body.state.confidence.score).toBeGreaterThan(0);
+    });
+
+    it('does not recompute confidence when the problem statement is unchanged', async () => {
+      const res = await patch({ name: 'Renamed' });
+
+      expect(res.body.state.confidence).toBeUndefined();
+    });
+
+    it('refreshes stale discovery factors when the problem statement changes', async () => {
+      repository.get.mockResolvedValue({
+        ...solutionOwnedBy('owner-1'),
+        state: {
+          ...solutionOwnedBy('owner-1').state,
+          discovery: {
+            messages: [],
+            confidence: 0,
+            threshold: 50,
+            factors: [{ id: 'problem', label: 'Problem and goals', score: 0, note: 'Not described yet.' }],
+            ready: false,
+            mode: 'rules',
+            updatedOn: '2026-01-01T00:00:00Z',
+          },
+        },
+      });
+
+      const res = await patch({
+        problemStatement:
+          'Applicants submit permits. Staff review and approve applications. Notifications are sent on decisions.',
+      });
+
+      expect(res.body.state.discovery.factors[0].score).toBeGreaterThan(0);
+      expect(res.body.state.confidence.score).toBeGreaterThan(0);
+    });
+
     it('assigns an id and user source to concepts that lack them', async () => {
       const res = await patch({ concepts: [{ type: 'actor', name: 'inspector' }] });
 
@@ -1242,6 +1283,29 @@ describe('planner router routes', () => {
       const res = await analyze({ text: caseText });
 
       expect(res.body.status).toBe('in-progress');
+    });
+
+    it('refreshes stale discovery confidence instead of keeping the old score', async () => {
+      repository.get.mockResolvedValueOnce({
+        ...solutionOwnedBy('owner-1'),
+        state: {
+          ...solutionOwnedBy('owner-1').state,
+          discovery: {
+            messages: [],
+            confidence: 0,
+            threshold: 50,
+            factors: [{ id: 'problem', label: 'Problem and goals', score: 0, note: 'Not described yet.' }],
+            ready: false,
+            mode: 'rules',
+            updatedOn: '2026-01-01T00:00:00Z',
+          },
+        },
+      });
+
+      const res = await analyze({ text: caseText });
+
+      expect(res.body.state.discovery.factors[0].score).toBeGreaterThan(0);
+      expect(res.body.state.confidence.score).toBeGreaterThan(0);
     });
 
     it('sends a solution-updated event with the analyze operation', async () => {
@@ -2825,7 +2889,8 @@ describe('planner router routes', () => {
         expect(res.body.warning).toBeUndefined();
       });
 
-      it('skips the llm when rules mode is requested', async () => {
+      it('skips the llm when rules mode is requested', async () => {
+
         await chat(buildApp(owner, true, llm), { message: userMessage, mode: 'rules' });
 
         expect(llm.converse).not.toHaveBeenCalled();
