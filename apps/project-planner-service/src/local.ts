@@ -56,12 +56,6 @@ app.use(
   }),
 );
 app.use('/planner/v1', createErrorHandler(logger));
-// Paths resolve from the repo root, where the local runner is started.
-const root = process.cwd();
-app.use('/ds', express.static(path.resolve(root, 'node_modules/@abgov/web-components')));
-app.use('/tokens', express.static(path.resolve(root, 'node_modules/@abgov/design-tokens/dist')));
-app.use('/ui', express.static(path.resolve(root, 'apps/project-planner-service/src/local-ui')));
 app.get('/health', (_req, res) => res.json({ status: 'ok', mode: 'local' }));
-app.get('/', (_req, res) => res.redirect('/ui'));
 
 app.listen(port, () => logger.info(`Project planner local mode on http://localhost:${port}`));

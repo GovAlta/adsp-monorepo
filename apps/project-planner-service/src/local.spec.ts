@@ -127,16 +127,6 @@ describe('local', () => {
       expect(options.specialistChatRepository).toBeInstanceOf(memory.MemorySpecialistChatRepository);
     });
 
-    it.each([
-      ['/ds', /node_modules[\\/]@abgov[\\/]web-components$/],
-      ['/tokens', /node_modules[\\/]@abgov[\\/]design-tokens[\\/]dist$/],
-      ['/ui', /apps[\\/]project-planner-service[\\/]src[\\/]local-ui$/],
-    ])('serves static assets at %s', (path, directory) => {
-      startLocal();
-
-      expect(findUse(path)[0][1]).toMatch(directory);
-    });
-
     it('serves a local health endpoint', () => {
       startLocal();
       const res = { json: jest.fn() };
@@ -144,15 +134,6 @@ describe('local', () => {
       mockApp.get.mock.calls.find(([path]) => path === '/health')[1]({}, res);
 
       expect(res.json).toHaveBeenCalledWith({ status: 'ok', mode: 'local' });
-    });
-
-    it('redirects the root to the UI', () => {
-      startLocal();
-      const res = { redirect: jest.fn() };
-
-      mockApp.get.mock.calls.find(([path]) => path === '/')[1]({}, res);
-
-      expect(res.redirect).toHaveBeenCalledWith('/ui');
     });
   });
 
