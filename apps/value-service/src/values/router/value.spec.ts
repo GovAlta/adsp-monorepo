@@ -582,7 +582,8 @@ describe('event router', () => {
           timestampMin: expect.any(Date),
           timestampMax: expect.any(Date),
           context: expect.objectContaining({ a: 123 }),
-        })
+        }),
+        'desc'
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -610,6 +611,20 @@ describe('event router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+    it('reads oldest first when asc order is requested', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test-reader', roles: [ServiceUserRoles.Reader] },
+        params: { namespace: 'event-service', name: 'event' },
+        query: { order: 'asc' },
+      };
+      const res = { send: jest.fn() };
+      repositoryMock.readValues.mockResolvedValueOnce({ results: [], page: { size: 0 } });
+
+      await readValue(repositoryMock)(req as unknown as Request, res as unknown as Response, jest.fn());
+
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(10, undefined, expect.any(Object), 'asc');
     });
     it('can call next with unauthorized user', async () => {
       const req = {

@@ -147,7 +147,19 @@ describe('value router documented behaviour', () => {
     it('defaults top to 10', async () => {
       const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value');
       expect(res.status).toBe(200);
-      expect(repositoryMock.readValues).toHaveBeenCalledWith(10, undefined, expect.any(Object));
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(10, undefined, expect.any(Object), 'desc');
+    });
+
+    it('accepts order=asc', async () => {
+      const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value?order=asc');
+      expect(res.status).toBe(200);
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(10, undefined, expect.any(Object), 'asc');
+    });
+
+    it('responds 400 for an order other than asc or desc', async () => {
+      const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value?order=newest');
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readValues).not.toHaveBeenCalled();
     });
 
     it.each(['0', '5001', 'abc'])('responds 400 for top=%s', async (top) => {
@@ -160,7 +172,7 @@ describe('value router documented behaviour', () => {
     it.each(['1', '5000'])('accepts top=%s', async (top) => {
       const res = await request(createApp(reader)).get(`/value/v1/test-service/values/test-value?top=${top}`);
       expect(res.status).toBe(200);
-      expect(repositoryMock.readValues).toHaveBeenCalledWith(parseInt(top), undefined, expect.any(Object));
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(parseInt(top), undefined, expect.any(Object), 'desc');
     });
 
     it('responds 400 for a timestampMin that is not ISO 8601', async () => {
@@ -186,6 +198,7 @@ describe('value router documented behaviour', () => {
         10,
         undefined,
         expect.objectContaining({ value: 'target-1', url: '/api' }),
+        'desc',
       );
     });
 

@@ -221,8 +221,8 @@ components:
     tags:
       - Value
     description: >
-      Reads records of a namespace value, newest first. Requires the value-reader role, or the export-service
-      export-job role. Core users can read without a tenant context.
+      Reads records of a namespace value, newest first unless order is asc. Requires the value-reader role, or the
+      export-service export-job role. Core users can read without a tenant context.
     parameters:
       - name: top
         description: Number of results to read. Defaults to 10.
@@ -238,6 +238,16 @@ components:
         required: false
         schema:
           type: string
+      - name: order
+        description: >
+          Timestamp order of the results; asc reads oldest first. Defaults to desc. Reading the oldest end of a
+          large result set in asc order avoids skipping over the newer records.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
       - name: correlationId
         description: Correlation ID associated with the values.
         in: query
