@@ -54,20 +54,6 @@ export const addDesignSystemPages = (tenantName: string) => {
   return jsonformsPages;
 };
 
-export const addCalendarServicePages = (tenantName: string) => {
-  const prefix = `/${tenantName}/services/calendar`;
-  const calendarPages: ServicePage[] = [
-    {
-      id: 'calendarClient',
-      name: 'Calendar client',
-      url: `${prefix}/client`,
-      testId: 'calendarClient',
-    },
-  ];
-
-  return calendarPages;
-};
-
 export const addAdspComponentsPages = (tenantName: string) => {
   const prefix = `/${tenantName}/services/adsp-components`;
   const adspComponentsPages: ServicePage[] = [

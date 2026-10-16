@@ -2,12 +2,9 @@ import React from 'react';
 import { ServiceContainer } from '../styled-components';
 import { GoabContainer, GoabText } from '@abgov/react-components';
 import { ServiceMainProps } from './types';
-import { ServiceListTemplate } from './ServiceListTemplate';
-import { addCalendarServicePages } from '../../utils/servicePageUtils';
+import { DefaultServiceListTemplate } from './DefaultServiceListTemplate';
 
 export const CalendarServiceMain = ({ tenantName }: ServiceMainProps) => {
-  const pages = addCalendarServicePages(tenantName);
-
   return (
     <ServiceContainer>
       <GoabContainer
@@ -20,7 +17,7 @@ export const CalendarServiceMain = ({ tenantName }: ServiceMainProps) => {
         <GoabText size="body-m" mb="none">
           The following contains POC or samples for the Calendar service.
         </GoabText>
-        <ServiceListTemplate servicePages={pages} />
+        <DefaultServiceListTemplate prefix="Calendar service item " />
       </GoabContainer>
     </ServiceContainer>
   );
