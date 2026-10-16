@@ -4,3 +4,5 @@ export { AuditServiceRoles } from './roles';
 export { createAuditRouter, validateTenantContext, assertTenantContext } from './router';
 export { createAuditJsonParser } from './utils/request-validation';
 export type { AuditEvent, EnrichedEvent, EventOutcome, EventSubmitter, WriteEventsResponse } from './types';
+export { AuditWriteBuffer, AuditStoreError, AuditStorageUnavailableError } from './buffer';
+export type { AuditEventStore, AuditStoreContext, FailedAuditEvent, WriteBufferOptions } from './buffer';
