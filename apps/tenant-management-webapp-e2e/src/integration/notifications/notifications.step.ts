@@ -367,7 +367,7 @@ When('the user clicks Add button in Add an email template page', function () {
 Then(
   'the user {string} the event of {string} on {string} notification type details pane',
   function (viewOrNot, eventName: string, typeName: string) {
-    cy.wait(2000); // To wait for the record to show up in the grid before validating the record existence
+    cy.wait(4000); // To wait for the record to show up in the grid before validating the record existence
     if (viewOrNot == 'views') {
       notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
       notificationsObj.notificaitonTypeDetailsPaneEventTitles().then((elements) => {

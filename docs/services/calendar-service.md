@@ -65,6 +65,24 @@ Successful changes signal `calendar-definition-created`, `calendar-definition-up
 ### Calendar event
 Calendar events represent a scheduled activity. Each event has some basic name and description information as well as start and end time. Events can be made public so that anonymous users can read their fields; their attendees remain accessible only to authorized users.
 
+### Recurring event
+An event can optionally repeat by including a `recurrence`. The model is a subset of the iCalendar (RFC 5545) recurrence rule:
+
+| Property | Description |
+|---|---|
+| `frequency` | `daily`, `weekly`, `monthly`, or `yearly`. Monthly and yearly use the day of the event start; months or years without that day (e.g. the 31st, Feb 29) are skipped. |
+| `interval` | Optional, defaults to 1. For example, `weekly` with `interval: 2` is every two weeks. |
+| `daysOfWeek` | Optional, weekly only. Values from `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`. Must include the day of the event start. |
+| `end.until` | Optional. Last date (inclusive) that an occurrence can start. |
+| `end.count` | Optional. Number of occurrences, including the first. Can't be used with `until`. |
+
+The event `start` and `end` are the first occurrence. Occurrences are generated in Mountain time and keep the same local time across daylight saving changes.
+
+- Retrieving events with `from` and `to` returns each occurrence in the range. Occurrences have the `id` of the recurring event and a `recurrenceId` with the original start of the occurrence.
+- Retrieving events without `from` and `to` returns each recurring event once.
+- Updating or deleting the event applies to all occurrences.
+- `DELETE /calendar/v1/calendars/{name}/events/{id}/occurrences/{date}` cancels one occurrence. Cancelled occurrences are listed in `recurrence.exclusions` of the event and can't be restored.
+
 ### Attendee
 Attendees represent people attending a particular *event*. Blank attendees (no name or email) can be created to represent available appointment slots.
 
@@ -150,4 +168,41 @@ Requires the `calendar-admin` role.
     end,
     isPublic,
   } = await response.json();
+```
+
+### Creating a recurring calendar event
+```typescript
+  const calendarEvent = {
+    name: 'Team meeting',
+    start: '2026-09-29T10:00:00-06:00',
+    end: '2026-09-29T11:00:00-06:00',
+    recurrence: {
+      frequency: 'weekly',
+      daysOfWeek: ['TU'],
+      end: { until: '2026-12-15' },
+    },
+  }
+
+  const response = await fetch(
+    `https://calendar-service.adsp.alberta.ca/calendar/v1/calendars/${calendar}/events`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(calendarEvent),
+    }
+  );
+
+  const { id } = await response.json();
+
+  // Cancel the October 13 occurrence only.
+  await fetch(
+    `https://calendar-service.adsp.alberta.ca/calendar/v1/calendars/${calendar}/events/${id}/occurrences/2026-10-13`,
+    {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    }
+  );
 ```

@@ -12,6 +12,7 @@ describe('date router', () => {
     getEventAttendees: jest.fn(),
     save: jest.fn(),
     saveAttendee: jest.fn(),
+    saveExclusion: jest.fn(),
     delete: jest.fn(),
     deleteAttendee: jest.fn(),
   };

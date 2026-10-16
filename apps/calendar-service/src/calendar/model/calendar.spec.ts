@@ -2,6 +2,7 @@ import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { DateTime } from 'luxon';
 import { CalendarServiceRoles } from '../roles';
 import { CalendarEntity } from './calendar';
+import { CalendarEventEntity } from './event';
 
 describe('CalendarEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -15,6 +16,7 @@ describe('CalendarEntity', () => {
     save: jest.fn(),
     delete: jest.fn(),
     saveAttendee: jest.fn(),
+    saveExclusion: jest.fn(),
     deleteAttendee: jest.fn(),
   };
 
@@ -320,7 +322,7 @@ describe('CalendarEntity', () => {
           id: 'test',
           roles: ['test-reader'],
         } as User,
-        10
+        10,
       );
 
       expect(result).toBe(values);
@@ -344,7 +346,7 @@ describe('CalendarEntity', () => {
           id: 'test',
           roles: [],
         } as User,
-        10
+        10,
       );
 
       expect(result).toBe(values);
@@ -352,7 +354,7 @@ describe('CalendarEntity', () => {
         entity,
         10,
         undefined,
-        expect.objectContaining({ isPublic: true })
+        expect.objectContaining({ isPublic: true }),
       );
     });
   });
@@ -378,10 +380,10 @@ describe('CalendarEntity', () => {
           roles: ['test-reader'],
         } as User,
         from,
-        to
+        to,
       );
 
-      expect(result).toBe(values);
+      expect(result).toEqual(values);
       expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(entity, from, to, {});
     });
 
@@ -405,10 +407,10 @@ describe('CalendarEntity', () => {
           roles: [],
         } as User,
         from,
-        to
+        to,
       );
 
-      expect(result).toBe(values);
+      expect(result).toEqual(values);
       expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(entity, from, to, { isPublic: true });
     });
 
@@ -434,11 +436,93 @@ describe('CalendarEntity', () => {
         } as User,
         from,
         to,
-        criteria
+        criteria,
       );
 
-      expect(result).toBe(values);
+      expect(result).toEqual(values);
       expect(repositoryMock.getCalendarEventsInRange).toHaveBeenCalledWith(entity, from, to, criteria);
+    });
+
+    describe('with recurring events', () => {
+      const zone = 'America/Edmonton';
+      const reader = { tenantId, id: 'test', roles: ['test-reader'] } as User;
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, {
+        name: 'test',
+        displayName: 'Test',
+        description: 'test',
+        updateRoles: ['test-updater'],
+        readRoles: ['test-reader'],
+      });
+      const from = DateTime.fromISO('2026-10-01T00:00', { zone });
+      const to = DateTime.fromISO('2026-10-31T23:59', { zone });
+
+      const createSeries = () => {
+        const series = new CalendarEventEntity(repositoryMock, calendarEntity, {
+          id: 42,
+          name: 'Team meeting',
+          description: null,
+          isPublic: false,
+          isAllDay: false,
+          start: DateTime.fromISO('2026-09-29T10:00', { zone }),
+          end: DateTime.fromISO('2026-09-29T11:00', { zone }),
+          recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: ['TU'], end: { until: '2026-12-15' } },
+        });
+        series.exclusions = [20261013];
+        return series;
+      };
+
+      const createSingle = () =>
+        new CalendarEventEntity(repositoryMock, calendarEntity, {
+          id: 7,
+          name: 'One-off',
+          description: null,
+          isPublic: false,
+          isAllDay: false,
+          start: DateTime.fromISO('2026-10-15T09:00', { zone }),
+          end: DateTime.fromISO('2026-10-15T10:00', { zone }),
+        });
+
+      it('can expand occurrences and merge them with single events by start', async () => {
+        const series = createSeries();
+        const single = createSingle();
+        repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([series, single]);
+
+        const result = await calendarEntity.getEventsInRange(reader, from, to);
+
+        expect(result.map((r) => r.start.toISO({ suppressMilliseconds: true }))).toEqual([
+          '2026-10-06T10:00:00-06:00',
+          '2026-10-15T09:00:00-06:00',
+          '2026-10-20T10:00:00-06:00',
+          '2026-10-27T10:00:00-06:00',
+        ]);
+        expect(result[1]).toBe(single);
+        expect(result[0]).toEqual(expect.objectContaining({ event: series, recurrenceId: expect.any(DateTime) }));
+      });
+
+      it('can apply time criteria to occurrences', async () => {
+        const series = createSeries();
+        repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([series]);
+        const startsAfter = DateTime.fromISO('2026-10-19T00:00', { zone });
+
+        const result = await calendarEntity.getEventsInRange(reader, from, to, { startsAfter });
+
+        expect(result.map((r) => r.start.toISODate())).toEqual(['2026-10-20', '2026-10-27']);
+      });
+
+      it('can apply end and active criteria to occurrences', async () => {
+        const series = createSeries();
+        repositoryMock.getCalendarEventsInRange.mockResolvedValue([series]);
+
+        const endsBefore = await calendarEntity.getEventsInRange(reader, from, to, {
+          endsBefore: DateTime.fromISO('2026-10-20T11:00', { zone }),
+        });
+        const activeOn = await calendarEntity.getEventsInRange(reader, from, to, {
+          activeOn: DateTime.fromISO('2026-10-27T10:30', { zone }),
+        });
+
+        expect(endsBefore.map((r) => r.start.toISODate())).toEqual(['2026-10-06', '2026-10-20']);
+        expect(activeOn.map((r) => r.start.toISODate())).toEqual(['2026-10-27']);
+      });
     });
   });
 
@@ -460,7 +544,7 @@ describe('CalendarEntity', () => {
           id: 'test',
           roles: ['test-reader'],
         } as User,
-        1
+        1,
       );
 
       expect(result).toBe(value);
@@ -486,8 +570,8 @@ describe('CalendarEntity', () => {
             id: 'test',
             roles: [],
           } as User,
-          1
-        )
+          1,
+        ),
       ).rejects.toThrow(UnauthorizedUserError);
     });
 
@@ -508,7 +592,7 @@ describe('CalendarEntity', () => {
           id: 'test',
           roles: [],
         } as User,
-        1
+        1,
       );
 
       expect(result).toBe(value);
@@ -542,7 +626,7 @@ describe('CalendarEntity', () => {
           id: 'test',
           roles: ['test-updater'],
         } as User,
-        newEvent
+        newEvent,
       );
 
       expect(result).toMatchObject(newEvent);
@@ -573,8 +657,8 @@ describe('CalendarEntity', () => {
             id: 'test',
             roles: [],
           } as User,
-          newEvent
-        )
+          newEvent,
+        ),
       ).toThrow(UnauthorizedUserError);
     });
   });
