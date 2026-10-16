@@ -5,10 +5,11 @@ import { param, query } from 'express-validator';
 import { CatalogService, RetentionService } from '../model';
 import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
 import { AuditServiceRoles } from '../roles';
-import { EventSubmitter } from '../types';
+import { EventReader, EventSubmitter } from '../types';
 import { assertCanWriteEvents } from '../utils/write-access';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
+import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
 import type { Logger } from 'winston';
 
 interface AuditRouterOptions {
@@ -16,6 +17,7 @@ interface AuditRouterOptions {
   retention: RetentionService;
   logger: Logger;
   submitter?: EventSubmitter;
+  reader?: EventReader;
 }
 
 export const validateTenantContext = createValidationHandler(
@@ -68,6 +70,21 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
   );
   router.get('/:namespace/actions', assertAuthenticatedHandler, validateNamespace, readActions(options.catalogs));
+  router.get('/events', assertAuthenticatedHandler, validateEventQuery, readEvents(options.reader));
+  router.get(
+    '/:namespace/events',
+    assertAuthenticatedHandler,
+    validateNamespace,
+    validateEventQuery,
+    readEvents(options.reader),
+  );
+  router.get(
+    '/:namespace/events/:id',
+    assertAuthenticatedHandler,
+    validateNamespace,
+    validateEventId,
+    readEvent(options.reader),
+  );
   router.post(
     '/:namespace/events',
     assertAuthenticatedHandler,
