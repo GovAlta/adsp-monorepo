@@ -22,7 +22,10 @@ const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/local`;
 const logger = createLogger('project-planner-local', 'debug');
 
 const eventService = {
-  send: (event: unknown) => logger.debug(`event: ${JSON.stringify(event, (_k, v) => (typeof v === 'object' && v?.constructor?.name === 'AdspId' ? v.toString() : v))}`),
+  send: (event: unknown) =>
+    logger.debug(
+      `event: ${JSON.stringify(event, (_k, v) => (typeof v === 'object' && v?.constructor?.name === 'AdspId' ? v.toString() : v))}`,
+    ),
 } as unknown as EventService;
 
 const devUser = {
