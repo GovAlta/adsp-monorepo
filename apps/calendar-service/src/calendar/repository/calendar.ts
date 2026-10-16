@@ -10,13 +10,13 @@ export interface CalendarRepository {
     calendar: CalendarEntity,
     top: number,
     after?: string,
-    criteria?: CalendarEventCriteria
+    criteria?: CalendarEventCriteria,
   ): Promise<Results<CalendarEventEntity>>;
   getCalendarEventsInRange(
     calendar: CalendarEntity,
     from: DateTime,
     to: DateTime,
-    criteria?: CalendarEventCriteria
+    criteria?: CalendarEventCriteria,
   ): Promise<CalendarEventEntity[]>;
   getCalendarEvent(calendar: CalendarEntity, id: number): Promise<CalendarEventEntity>;
 
@@ -24,6 +24,7 @@ export interface CalendarRepository {
 
   save(entity: CalendarEventEntity): Promise<CalendarEventEntity>;
   saveAttendee(event: CalendarEventEntity, attendee: Attendee): Promise<Attendee>;
+  saveExclusion(event: CalendarEventEntity, occurrenceDate: number): Promise<boolean>;
   delete(entity: CalendarEventEntity): Promise<boolean>;
   deleteAttendee(event: CalendarEventEntity, attendeeId: number): Promise<boolean>;
 }

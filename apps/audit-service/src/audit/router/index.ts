@@ -1,10 +1,23 @@
-import { AdspId, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { param, query } from 'express-validator';
-import { CatalogService } from './catalog';
-import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from './configuration';
-import { AuditServiceRoles } from './roles';
+import { CatalogService, RetentionService } from '../model';
+import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
+import { AuditServiceRoles } from '../roles';
+import { EventSubmitter } from '../types';
+import { assertWriteScope } from '../utils/write-access';
+import { requireAuditRole } from '../utils/authorization';
+import { validateWriteRequest } from '../utils/request-validation';
+import { writeEvents } from './write-events';
+import type { Logger } from 'winston';
+
+interface AuditRouterOptions {
+  catalogs: CatalogService;
+  retention: RetentionService;
+  logger: Logger;
+  submitter?: EventSubmitter;
+}
 
 export const validateTenantContext = createValidationHandler(
   query('tenantId')
@@ -25,7 +38,7 @@ export const validateTenantContext = createValidationHandler(
 export const assertTenantContext: RequestHandler = (req, _res, next) => {
   const requestedTenant = req.query.tenantId;
   if (!req.user?.isCore && requestedTenant && requestedTenant !== req.user?.tenantId?.toString()) {
-    next(new UnauthorizedUserError('read another tenant action catalog', req.user));
+    next(new UnauthorizedUserError('access another tenant audit data', req.user));
     return;
   }
   next();
@@ -36,9 +49,6 @@ export const readActions =
   async (req, res, next) => {
     try {
       const tenantId = req.tenant?.id;
-      if ((!req.user.isCore && !tenantId) || !isAllowedUser(req.user, tenantId, AuditServiceRoles.Reader, true)) {
-        throw new UnauthorizedUserError('read action catalog', req.user);
-      }
       const { namespace } = req.params;
       const catalog = await catalogs.getCatalog(namespace, tenantId);
       if (!catalog) {
@@ -50,15 +60,26 @@ export const readActions =
     }
   };
 
-export function createAuditRouter(catalogs: CatalogService): Router {
+export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
+  const validateNamespace = createValidationHandler(
+    param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
+  );
   router.get(
     '/:namespace/actions',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
-    ),
-    readActions(catalogs),
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateNamespace,
+    readActions(options.catalogs),
+  );
+  router.post(
+    '/:namespace/events',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Writer),
+    validateNamespace,
+    assertWriteScope,
+    validateWriteRequest,
+    writeEvents(options),
   );
   return router;
 }

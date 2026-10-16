@@ -203,7 +203,8 @@ describe('RenderPages arriving from a navigation target', () => {
       </ContextProvider>,
     );
 
-  const cityError = (): string | null => document.querySelector('goa-form-item[testid="city"]')?.getAttribute('error');
+  const cityError = (): string | null =>
+    document.querySelector('goa-form-item[testid="city"]')?.getAttribute('error') || null;
 
   it('shows the error on the empty required field it was sent to fix', () => {
     renderWithTarget({ scope: '#/properties/city' });
@@ -270,5 +271,149 @@ describe('RenderPages Next button with hideSummary', () => {
     clickNavButton('pages-save-continue-btn');
 
     expect(screen.getByTestId('stepper-pages-review-page')).toBeInTheDocument();
+  });
+});
+
+describe('RenderPages handleSave', () => {
+  const ContextProvider = ContextProviderFactory();
+  const initialData = { firstName: 'Alex' };
+  // Unchanged data is only skipped on steps before the last one while the summary page is hidden.
+  const hideSummaryUischema = { ...uischema, options: { ...uischema.options, hideSummary: true } };
+
+  // The text control commits to the form data after a 300ms debounce.
+  const enterCity = async (value: string): Promise<void> => {
+    const input = document.querySelector('goa-input');
+    fireEvent(input as Element, new CustomEvent('_change', { detail: { name: 'city', value } }));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+  };
+
+  beforeEach(() => {
+    (Element.prototype as unknown as { scrollIntoView: unknown }).scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
+  });
+
+  const stepper = (data: Record<string, string>, saveForm?: jest.Mock, pagesUischema: typeof uischema = uischema) => (
+    <ContextProvider submit={saveForm ? { saveForm } : undefined}>
+      <JsonForms
+        schema={dataSchema}
+        uischema={pagesUischema}
+        data={data}
+        renderers={GoARenderers}
+        cells={GoACells}
+        ajv={new Ajv({ allErrors: true, verbose: true, strict: false })}
+        onChange={() => undefined}
+      />
+    </ContextProvider>
+  );
+
+  it('saves the current data when moving to the next step', () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+
+    clickNavButton('pages-save-continue-btn');
+
+    expect(saveForm).toHaveBeenCalledWith(initialData);
+  });
+
+  it('saves the current data when moving to the previous step', async () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm, hideSummaryUischema));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+    clickNavButton('pages-save-continue-btn');
+    await enterCity('Calgary');
+
+    clickNavButton('pages-prev-btn');
+
+    expect(saveForm).toHaveBeenLastCalledWith(expect.objectContaining({ city: 'Calgary' }));
+  });
+
+  it('saves the current data when returning to the task list', () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+
+    fireEvent.click(screen.getByTestId('back-to-tasks'));
+
+    expect(saveForm).toHaveBeenCalledWith(initialData);
+  });
+
+  // Previous must be pressed on a step before the last for the unchanged-data skip to apply.
+  const threeStepUischema = {
+    ...uischema,
+    elements: [...uischema.elements, { ...uischema.elements[1], label: 'Review details' }],
+  };
+
+  it('does not save again on a step before the last when the data has not changed and the summary is hidden', () => {
+    const saveForm = jest.fn();
+    const pagesUischema = { ...threeStepUischema, options: { ...threeStepUischema.options, hideSummary: true } };
+    render(stepper(initialData, saveForm, pagesUischema));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+    clickNavButton('pages-save-continue-btn');
+
+    clickNavButton('pages-prev-btn');
+
+    expect(saveForm).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves again when the data has not changed but the summary page is shown', () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm, threeStepUischema));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+    clickNavButton('pages-save-continue-btn');
+
+    clickNavButton('pages-prev-btn');
+
+    expect(saveForm).toHaveBeenCalledTimes(2);
+  });
+
+  it('saves again when the data has changed since the last save', async () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm, hideSummaryUischema));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+    clickNavButton('pages-save-continue-btn');
+    await enterCity('Calgary');
+
+    clickNavButton('pages-prev-btn');
+
+    expect(saveForm).toHaveBeenCalledTimes(2);
+  });
+
+  it('saves on the last step when the summary page is shown', () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+    clickNavButton('pages-save-continue-btn');
+    saveForm.mockClear();
+
+    clickNavButton('pages-save-continue-btn');
+
+    expect(saveForm).toHaveBeenCalledWith(initialData);
+  });
+
+  it('saves on the last step when the summary page is hidden', async () => {
+    const saveForm = jest.fn();
+    render(stepper(initialData, saveForm, hideSummaryUischema));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+    clickNavButton('pages-save-continue-btn');
+    await enterCity('Calgary');
+
+    clickNavButton('pages-save-continue-btn');
+
+    expect(saveForm).toHaveBeenLastCalledWith(expect.objectContaining({ city: 'Calgary' }));
+  });
+
+  it('still navigates to the next step when no save handler is provided', () => {
+    render(stepper(initialData));
+    fireEvent.click(screen.getByTestId('page-ref-0'));
+
+    clickNavButton('pages-save-continue-btn');
+
+    expect(screen.getByTestId('step_1-content-pages')).toBeInTheDocument();
   });
 });

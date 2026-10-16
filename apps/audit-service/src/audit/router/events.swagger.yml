@@ -1,0 +1,218 @@
+paths:
+  /audit/v1/{namespace}/events:
+    post:
+      tags:
+        - Audit events
+      summary: Validate and submit a batch of audit events.
+      description: |
+        Requires audit-writer, including for Core callers. The verified token's azp must
+        be a service URN. Non-Core callers may write only the URN's service namespace and
+        their own tenant. Core callers with the role may select another namespace and
+        must provide tenantId. Grant the writer role only to authorized service accounts;
+        the platform Core check does not distinguish service accounts from human users.
+
+        Malformed envelopes fail the request; invalid events are rejected individually.
+        Metadata and changeSet each have a 16 KiB UTF-8 JSON limit, including JSON syntax.
+        The complete request body is limited to 20 MiB. Server-owned row fields are
+        always derived from the verified caller, path, clock and resolved action/policy;
+        additional event fields are not copied into trusted row columns.
+
+        Configuration uses the SDK's existing error handling: HTTP and conversion
+        failures can resolve to null. Such failures cannot reliably be distinguished
+        from missing documents and may produce unknown-action rejections, partial
+        catalogs or fallback retention periods. Only errors that propagate reach
+        the endpoint's 503 handling.
+
+        A 202 waits for the submitter to commit valid events or durably park storage
+        failures. No PostgreSQL submitter is wired yet: requests with valid events
+        currently return 503 rather than claiming successful storage. Requests with
+        only rejected events can return 202 without storage.
+      parameters:
+        - in: path
+          name: namespace
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 40
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        - in: query
+          name: tenantId
+          description: Tenant URN; required for Core writers. Tenant callers cannot select a different tenant.
+          schema:
+            type: string
+          example: urn:ads:platform:tenant-service:v2:/tenants/case-team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [events]
+              properties:
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/AuditEventInput'
+      responses:
+        '202':
+          description: Every input is accepted, duplicate, or rejected; accepted + duplicates + rejected.length equals the input count.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditWriteResponse'
+              example:
+                accepted: 1
+                duplicates: 0
+                rejected:
+                  - index: 1
+                    eventId: 0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11
+                    code: unknown_action
+                    reason: "Action 'case.remove.failed' is not registered."
+        '400':
+          description: Malformed JSON/envelope, invalid namespace or tenant ID, or missing Core tenant context.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing audit-writer, invalid client service URN, or forbidden namespace/tenant.
+        '413':
+          description: Request body exceeds 20 MiB.
+        '503':
+          description: Configuration, retention policy or durable storage is unavailable; retry without re-registering actions.
+          headers:
+            Retry-After:
+              description: Minimum suggested retry delay in seconds.
+              schema:
+                type: integer
+                example: 1
+components:
+  schemas:
+    AuditEventInput:
+      type: object
+      required: [eventId, occurredAt, action, status, actor]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Caller UUID; database uniqueness is scoped to tenant and namespace.
+        occurredAt:
+          type: string
+          format: date-time
+          description: No more than 7 days old or 5 minutes in the future, inclusive.
+        action:
+          type: string
+          pattern: '^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$'
+          example: case.update.succeeded
+          description: Registered base action with an optional terminal .succeeded or .failed suffix.
+        actionVersion:
+          type: integer
+          minimum: 1
+          description: Omitted means the current catalog version; an explicit mismatch is rejected individually.
+        status:
+          type: string
+          enum: [success, failure, blocked, error]
+        actor:
+          type: object
+          required: [id, type]
+          properties:
+            id:
+              type: string
+              minLength: 1
+            type:
+              type: string
+              enum: [user, service, system]
+            name:
+              type: string
+            email:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+                minLength: 1
+              default: []
+        resource:
+          type: object
+          description: Required if the action declares resourceType; type must match.
+          required: [type, id]
+          properties:
+            type:
+              type: string
+              minLength: 1
+            id:
+              type: string
+              minLength: 1
+            name:
+              type: string
+        scopeIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          default: []
+        correlationId:
+          type: string
+          minLength: 1
+        sessionId:
+          type: string
+          maxLength: 128
+        metadata:
+          type: object
+          additionalProperties: true
+          default: {}
+          description: At most 16 KiB serialized UTF-8 JSON. Validated against metadataSchema without coercion or adding defaults.
+        changeSet:
+          type: object
+          additionalProperties: false
+          description: |
+            At most 16 KiB serialized UTF-8 JSON. Shape is validated only when the
+            action captures change sets; otherwise the value is dropped from row
+            columns rather than rejected for its shape. The byte limit still applies.
+          properties:
+            before:
+              type: object
+              nullable: true
+              additionalProperties: true
+            after:
+              type: object
+              nullable: true
+              additionalProperties: true
+    AuditWriteResponse:
+      type: object
+      required: [accepted, duplicates, rejected]
+      properties:
+        accepted:
+          type: integer
+          minimum: 0
+        duplicates:
+          type: integer
+          minimum: 0
+        rejected:
+          type: array
+          items:
+            type: object
+            required: [index, code, reason]
+            properties:
+              index:
+                type: integer
+                minimum: 0
+                description: Zero-based index in the original request; results are sorted by index.
+              eventId:
+                type: string
+                description: Caller-provided event identifier when available.
+              code:
+                type: string
+                enum:
+                  [
+                    invalid_event,
+                    unknown_action,
+                    action_version_mismatch,
+                    invalid_resource,
+                    invalid_metadata,
+                    storage_failed,
+                  ]
+              reason:
+                type: string
