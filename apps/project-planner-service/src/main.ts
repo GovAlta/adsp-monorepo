@@ -18,6 +18,7 @@ import {
   SolutionDeletedDefinition,
   SolutionUpdatedDefinition,
 } from './planner';
+import { createMemoryRepositories } from './memory';
 import { createRepositories } from './postgres';
 
 const logger = createLogger('project-planner-service', environment.LOG_LEVEL);
@@ -101,7 +102,10 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler,
   );
 
-  const repositories = await createRepositories({ logger, ...environment });
+  const repositories =
+    environment.PLANNER_STORAGE === 'memory'
+      ? createMemoryRepositories(logger)
+      : await createRepositories({ logger, ...environment });
   applyPlannerMiddleware(app, {
     serviceId,
     logger,

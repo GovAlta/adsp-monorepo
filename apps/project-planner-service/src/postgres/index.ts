@@ -1,7 +1,7 @@
 import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-import { PatternRepository, SolutionRepository, SpecialistChatRepository } from '../planner';
+import { Repositories } from '../planner';
 import { PostgresPatternRepository } from './pattern';
 import { PostgresSolutionRepository } from './solution';
 import { PostgresSpecialistChatRepository } from './specialist-chat';
@@ -14,13 +14,6 @@ interface PostgresRepositoryProps {
   DB_USER: string;
   DB_PASSWORD: string;
   DB_TLS: boolean;
-}
-
-interface Repositories {
-  isConnected: () => Promise<boolean>;
-  solutionRepository: SolutionRepository;
-  patternRepository: PatternRepository;
-  specialistChatRepository: SpecialistChatRepository;
 }
 
 export const createRepositories = async ({

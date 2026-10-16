@@ -32,10 +32,15 @@ const entries = [
   { service: 'token-handler', url: 'https://token-handler.example' },
 ];
 
-const mockDirectory = (directoryEntries: { service: string; url: string }[]) => {
+const plannerConfigJson = {
+  ...configJson,
+  serviceUrls: { ...configJson.serviceUrls, projectPlannerServiceUrl: 'https://planner-from-config.example' },
+};
+
+const mockDirectory = (directoryEntries: { service: string; url: string }[], config: unknown = configJson) => {
   axiosGet.mockImplementation(async (url: string) => {
     if (url === '/config/config.json?v=2') {
-      return { data: configJson };
+      return { data: config };
     }
     if (url.endsWith('/directory/v2/namespaces/platform/entries')) {
       return { data: directoryEntries };
@@ -54,6 +59,7 @@ describe('config sagas', () => {
     delete process.env.NX_DIRECTORY_URL;
     delete process.env.NX_KEYCLOAK_URL;
     delete process.env.NX_AGENT_SERVICE_PROXY;
+    delete process.env.NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL;
   });
 
   afterEach(() => {
@@ -62,7 +68,7 @@ describe('config sagas', () => {
   });
 
   describe('fetchConfig', () => {
-    it('maps the project planner service directory entry to projectPlannerServiceApiUrl', async () => {
+    it('falls back to the project planner service directory entry when config.json has no planner url', async () => {
       mockDirectory(entries);
 
       const { effects } = await runSaga().run();
@@ -79,6 +85,25 @@ describe('config sagas', () => {
 
       const [action] = effects.put.map((e) => e.payload.action);
       expect(action.payload.serviceUrls.projectPlannerServiceApiUrl).toBeUndefined();
+    });
+
+    it('uses serviceUrls.projectPlannerServiceUrl from config.json over the directory entry', async () => {
+      mockDirectory(entries, plannerConfigJson);
+
+      const { effects } = await runSaga().run();
+
+      const [action] = effects.put.map((e) => e.payload.action);
+      expect(action.payload.serviceUrls.projectPlannerServiceApiUrl).toBe('https://planner-from-config.example');
+    });
+
+    it('uses NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL override when set', async () => {
+      process.env.NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL = 'http://localhost:3381';
+      mockDirectory(entries, plannerConfigJson);
+
+      const { effects } = await runSaga().run();
+
+      const [action] = effects.put.map((e) => e.payload.action);
+      expect(action.payload.serviceUrls.projectPlannerServiceApiUrl).toBe('http://localhost:3381');
     });
 
     it('maps the token handler directory entry to tokenHandlerApiUrl', async () => {
