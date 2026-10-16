@@ -295,7 +295,19 @@ describe('SolutionWorkplace', () => {
 
       await waitFor(() => expect(api.chat).toHaveBeenCalledWith('solution-1', 'More detail', 'ai'));
       await waitFor(() => expect(goa(container, 'refine-input').getAttribute('value')).toBe(''));
+      expect(goa(container, 'refine-conversation')).not.toBeNull();
       expect(goa(container, 'refine-message-0').getAttribute('heading')).toBe('You');
+      expect(goa(container, 'refine-message-0').getAttribute('type')).toBe('important');
+      expect(goa(container, 'refine-message-1').getAttribute('heading')).toBe('Planner');
+      expect(goa(container, 'refine-message-1').getAttribute('type')).toBe('information');
+    });
+
+    it('does not wrap the conversation in a panel when there are no refine messages yet', async () => {
+      const { container } = await setup(analyzed({ discovery: readyDiscovery, conversation: [] }));
+      openTab(container, 'tab-conversation');
+
+      expect(container.querySelector('[data-testid="refine-empty"]')).not.toBeNull();
+      expect(container.querySelector('goa-accordion[testid="refine-conversation"]')).toBeNull();
     });
 
     it('shows the discovery conversation when confidence is below the threshold', async () => {
@@ -344,6 +356,7 @@ describe('SolutionWorkplace', () => {
       });
       openTab(container, 'tab-conversation');
 
+      expect(container.textContent).not.toContain('Answer to:');
       type(container, 'answer-q1', 'Yes, by staff');
       click(container, 'save-answer-q1');
       await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Yes, by staff'));

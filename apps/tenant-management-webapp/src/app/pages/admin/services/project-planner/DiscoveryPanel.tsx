@@ -1,5 +1,12 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoabButton, GoabCallout, GoabCircularProgress, GoabFormItem, GoabTextArea } from '@abgov/react-components';
+import {
+  GoabAccordion,
+  GoabButton,
+  GoabCallout,
+  GoabCircularProgress,
+  GoabFormItem,
+  GoabTextArea,
+} from '@abgov/react-components';
 import { PlannerApi } from './api';
 import { AnalysisMode, DiscoveryOptions, Solution } from './model';
 
@@ -37,28 +44,33 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({ solutio
 
   return (
     <div data-testid="discovery-panel">
-      <h3>Discovery conversation</h3>
       {discovery?.warning && (
         <GoabCallout type="important" heading="Note" testId="discovery-warning">
           {discovery.warning}
         </GoabCallout>
       )}
       {discovery?.messages.length ? (
-        discovery.messages.map((m, i) => (
-          <GoabCallout
-            key={i}
-            type={m.role === 'user' ? 'information' : 'important'}
-            heading={m.role === 'user' ? 'You' : 'Planner'}
-            testId={`discovery-message-${i}`}
-          >
-            <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
-          </GoabCallout>
-        ))
+        <GoabAccordion heading="Discovery conversation" open testId="discovery-conversation">
+          {discovery.messages.map((m, i) => (
+            <GoabCallout
+              key={i}
+              type={m.role === 'user' ? 'important' : 'information'}
+              heading={m.role === 'user' ? 'You' : 'Planner'}
+              testId={`discovery-message-${i}`}
+              mb="s"
+            >
+              <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+            </GoabCallout>
+          ))}
+        </GoabAccordion>
       ) : (
-        <p data-testid="discovery-empty">
-          Start discovery and the Planner will ask clarifying questions in one message. Answer them; once confidence passes{' '}
-          {discovery?.threshold ?? 50}% the solution is presented.
-        </p>
+        <>
+          <h3>Discovery conversation</h3>
+          <p data-testid="discovery-empty">
+            Start discovery and the Planner will ask clarifying questions in one message. Answer them; once confidence
+            passes {discovery?.threshold ?? 50}% the solution is presented.
+          </p>
+        </>
       )}
       {busy && <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />}
       {discovery ? (
@@ -72,7 +84,9 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({ solutio
               testId="discovery-input"
               ariaLabel="Your reply"
               disabled={busy}
-              placeholder={ready ? 'Add details or answer further questions to refine the solution' : 'Type your answers here'}
+              placeholder={
+                ready ? 'Add details or answer further questions to refine the solution' : 'Type your answers here'
+              }
               onChange={(detail) => setDraft(detail.value)}
             />
           </GoabFormItem>
@@ -83,7 +97,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({ solutio
               disabled={busy || !message}
               onClick={() => discover({ message })}
             >
-              {busy ? 'Thinking…' : ready ? 'Send & refine solution' : 'Send reply'}
+              {ready ? 'Send & refine solution' : 'Send reply'}
             </GoabButton>
             {!ready && (
               <GoabButton
@@ -95,14 +109,19 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({ solutio
                 Show solution now
               </GoabButton>
             )}
-            <GoabButton type="tertiary" testId="discovery-restart" disabled={busy} onClick={() => discover({ restart: true })}>
+            <GoabButton
+              type="tertiary"
+              testId="discovery-restart"
+              disabled={busy}
+              onClick={() => discover({ restart: true })}
+            >
               Start over
             </GoabButton>
           </div>
         </>
       ) : (
         <GoabButton type="primary" testId="discovery-start" disabled={busy} onClick={() => discover({ restart: true })}>
-          {busy ? 'Thinking…' : 'Start discovery'}
+          Start discovery
         </GoabButton>
       )}
     </div>

@@ -1,12 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
-import {
-  GoabBadge,
-  GoabButton,
-  GoabCircularProgress,
-  GoabContainer,
-  GoabFormItem,
-  GoabTextArea,
-} from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabCircularProgress, GoabContainer, GoabTextArea } from '@abgov/react-components';
 import { PaneProps } from './workplaceTypes';
 
 interface QuestionsPaneProps extends PaneProps {
@@ -49,21 +42,21 @@ export const QuestionsPane: FunctionComponent<QuestionsPaneProps> = ({
             <strong>{q.question}</strong>{' '}
             <GoabBadge type={q.status === 'open' ? 'important' : 'success'} content={q.status} /> ({q.raisedBy})
           </p>
-          <GoabFormItem label={`Answer to: ${q.question}`} mb="s">
-            <GoabTextArea
-              name={`answer-${q.id}`}
-              value={drafts[q.id] ?? q.answer ?? ''}
-              rows={2}
-              width="100%"
-              maxWidth="100%"
-              testId={`answer-${q.id}`}
-              disabled={busy}
-              onChange={(detail) => setDrafts((d) => ({ ...d, [q.id]: detail.value }))}
-            />
-          </GoabFormItem>
+          <GoabTextArea
+            name={`answer-${q.id}`}
+            value={drafts[q.id] ?? q.answer ?? ''}
+            rows={2}
+            width="100%"
+            maxWidth="100%"
+            ariaLabel={`Answer to: ${q.question}`}
+            testId={`answer-${q.id}`}
+            disabled={busy}
+            onChange={(detail) => setDrafts((d) => ({ ...d, [q.id]: detail.value }))}
+          />
           <GoabButton
             type="secondary"
             size="compact"
+            mt="s"
             testId={`save-answer-${q.id}`}
             disabled={busy}
             onClick={() => saveAnswer(q.id, q.answer ?? '')}
