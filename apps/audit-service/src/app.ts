@@ -21,6 +21,7 @@ import {
   validateTenantContext,
   assertTenantContext,
 } from './audit';
+import { createDatabase } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
@@ -37,6 +38,8 @@ export const initializeApp = async (): Promise<express.Application> => {
   }
 
   instrumentAxios(logger);
+
+  const { isConnected } = await createDatabase({ logger, ...environment });
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -116,7 +119,7 @@ export const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json(platform);
+    res.json({ ...platform, db: await isConnected() });
   });
 
   app.get('/', async (req, res) => {
