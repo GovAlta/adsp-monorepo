@@ -21,11 +21,20 @@ export interface EventMetrics {
   avgPerDay?: number;
 }
 
+export const EVENT_LOG_PAGE_SIZE = 10;
+
+export interface EventLogPage {
+  // One based.
+  page: number;
+  total: number;
+}
+
 export interface EventState {
   definitions: Record<string, EventDefinition>;
   results: string[];
   entries: EventLogEntry[];
   nextEntries: string;
+  logPage: EventLogPage | null;
   isLoading: {
     definitions: boolean;
     log: boolean;

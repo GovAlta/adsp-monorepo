@@ -9,6 +9,8 @@ import {
   UPDATE_EVENT_DEFINITION_SUCCESS_ACTION,
   CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
   FETCH_EVENT_METRICS_SUCCESS_ACTION,
+  FETCH_EVENT_LOG_PAGE_ACTION,
+  FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION,
 } from './actions';
 import { EventState } from './models';
 
@@ -17,6 +19,7 @@ const defaultState: EventState = {
   entries: null,
   results: [],
   nextEntries: null,
+  logPage: null,
   metrics: {},
   isLoading: { definitions: false, log: false },
 };
@@ -69,6 +72,7 @@ export default function (state: EventState = defaultState, action: EventActionTy
       return newState;
     }
     case FETCH_EVENT_LOG_ENTRIES_ACTION:
+    case FETCH_EVENT_LOG_PAGE_ACTION:
       return {
         ...state,
         isLoading: { ...state.isLoading, log: true },
@@ -78,6 +82,13 @@ export default function (state: EventState = defaultState, action: EventActionTy
         ...state,
         entries: action.after ? [...state.entries, ...action.entries] : [...action.entries],
         nextEntries: action.next,
+        isLoading: { ...state.isLoading, log: false },
+      };
+    case FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION:
+      return {
+        ...state,
+        entries: action.entries,
+        logPage: { page: action.page, total: action.total ?? state.logPage?.total ?? action.entries.length },
         isLoading: { ...state.isLoading, log: false },
       };
     case FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION:
@@ -90,6 +101,7 @@ export default function (state: EventState = defaultState, action: EventActionTy
         ...state,
         entries: null,
         nextEntries: null,
+        logPage: null,
         isLoading: { ...state.isLoading, log: true },
       };
     case FETCH_EVENT_METRICS_SUCCESS_ACTION:
