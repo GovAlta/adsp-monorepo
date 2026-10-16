@@ -133,4 +133,27 @@ describe('useCalendarEvents', () => {
     await Promise.resolve();
     expect(result.current.calendarEvents).toEqual(calendarEvents);
   });
+
+  test('ignores a failure that arrives after the range changed', async () => {
+    // Arrange
+    let rejectStale: (reason: Error) => void = () => undefined;
+    const getCalendarEvents = jest
+      .fn()
+      .mockReturnValueOnce(new Promise<CalendarEvents>((_resolve, reject) => (rejectStale = reject)))
+      .mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarEvents);
+    const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
+      initialProps: { r: range },
+    });
+
+    // Act
+    rerender({ r: { start: range.end, end: new Date('2026-07-01T06:00:00Z') } });
+    await waitFor(() => expect(result.current.calendarEvents).toEqual(calendarEvents));
+    rejectStale(new Error('Request failed'));
+
+    // Assert
+    await Promise.resolve();
+    expect(result.current.error).toBeNull();
+    expect(result.current.calendarEvents).toEqual(calendarEvents);
+  });
 });

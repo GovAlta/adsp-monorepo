@@ -27,7 +27,7 @@ export class CalendarClient implements ICalendarClient {
   private readonly pageSize: number;
 
   constructor({ serviceUrl, tenant, getAccessToken, fetch: fetchFn, pageSize }: CalendarClientOptions) {
-    this.apiUrl = `${serviceUrl.replace(/\/+$/, '')}/calendar/v1`;
+    this.apiUrl = new URL('/calendar/v1', serviceUrl).href;
     this.tenant = tenant;
     this.getAccessToken = getAccessToken;
     this.fetchFn = fetchFn ?? ((input, init) => globalThis.fetch(input, init));
