@@ -7,6 +7,9 @@ jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   readFile: jest.fn((_path, _options, callback) => callback(null, '{}')),
 }));
+jest.mock('./postgres', () => ({
+  createDatabase: jest.fn().mockResolvedValue({ knex: {}, isConnected: jest.fn().mockResolvedValue(true) }),
+}));
 jest.mock('./environments/environment', () => ({
   environment: {
     CLIENT_ID: 'urn:ads:platform:audit-service',

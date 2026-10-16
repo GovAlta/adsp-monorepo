@@ -3,4 +3,13 @@ export { CatalogService, RetentionService } from './model';
 export { AuditServiceRoles } from './roles';
 export { createAuditRouter, validateTenantContext, assertTenantContext } from './router';
 export { createAuditJsonParser } from './utils/request-validation';
-export type { AuditEvent, EnrichedEvent, EventOutcome, EventSubmitter, WriteEventsResponse } from './types';
+export type {
+  AuditEvent,
+  EnrichedEvent,
+  EventCriteria,
+  EventOutcome,
+  EventReader,
+  EventSubmitter,
+  StoredEvent,
+  WriteEventsResponse,
+} from './types';

@@ -15,7 +15,13 @@
         "outputPath": "dist/apps/audit-service",
         "main": "apps/audit-service/src/main.ts",
         "tsConfig": "apps/audit-service/tsconfig.app.json",
-        "assets": [],
+        "assets": [
+          {
+            "glob": "apps/audit-service/migrations",
+            "input": ".",
+            "output": "migrations"
+          }
+        ],
         "webpackConfig": "apps/audit-service/webpack.config.js",
         "generatePackageJson": true
       },

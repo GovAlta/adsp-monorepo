@@ -1,0 +1,178 @@
+import { isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  createValidationHandler,
+  decodeAfter,
+  encodeNext,
+  InvalidOperationError,
+  NotFoundError,
+  Results,
+} from '@core-services/core-common';
+import { RequestHandler } from 'express';
+import { query, param } from 'express-validator';
+import * as HttpStatusCodes from 'http-status-codes';
+import { AuditServiceRoles } from '../roles';
+import { AuditEvent, EventCriteria, EventReader, StoredEvent } from '../types';
+
+const DEFAULT_TOP = 10;
+const MAX_TOP = 5000;
+
+// Typed against the domain unions so a value that is not a valid status or category fails to compile.
+const EVENT_STATUSES: AuditEvent['status'][] = ['success', 'failure', 'blocked', 'error'];
+const EVENT_CATEGORIES: NonNullable<EventCriteria['category']>[] = [
+  'administrative',
+  'runtime',
+  'security',
+  'data-access',
+];
+
+export interface SerializeOptions {
+  // Ordinary reads do not redact; redaction exists for responses that must hide identity from non-admins.
+  redactActor?: boolean;
+}
+
+// The single point where stored rows become API responses. tenant_id never leaves here.
+export function serializeEvent(event: StoredEvent, { redactActor = false }: SerializeOptions = {}) {
+  return {
+    id: event.id,
+    eventId: event.event_id,
+    namespace: event.namespace,
+    writtenBy: event.written_by,
+    occurredAt: event.occurred_at,
+    receivedAt: event.received_at,
+    action: event.action,
+    actionVersion: event.action_version,
+    category: event.category,
+    status: event.status,
+    severity: event.severity,
+    actor: {
+      id: event.actor_id,
+      type: event.actor_type,
+      ...(redactActor ? {} : { name: event.actor_name ?? undefined, email: event.actor_email ?? undefined }),
+      roles: event.actor_roles,
+    },
+    resource: event.resource_type
+      ? { type: event.resource_type, id: event.resource_id, name: event.resource_name ?? undefined }
+      : undefined,
+    scopeIds: event.scope_ids,
+    correlationId: event.correlation_id ?? undefined,
+    sessionId: event.session_id ?? undefined,
+    changeSet:
+      event.change_set_before || event.change_set_after
+        ? { before: event.change_set_before, after: event.change_set_after }
+        : undefined,
+    metadata: event.metadata,
+    retentionClass: event.retention_class,
+    retentionUntil: event.retention_until,
+  };
+}
+
+function assertCanReadEvents(req: Parameters<RequestHandler>[0]) {
+  const tenantId = req.tenant?.id;
+  if (!tenantId || !isAllowedUser(req.user, tenantId, AuditServiceRoles.Reader, true)) {
+    throw new UnauthorizedUserError('read audit events', req.user);
+  }
+  return tenantId.toString();
+}
+
+function assertReader(reader?: EventReader): EventReader {
+  if (!reader) {
+    throw new InvalidOperationError('Audit event storage is not configured.', {
+      statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+    });
+  }
+  return reader;
+}
+
+function str(value: unknown): string | undefined {
+  return typeof value === 'string' && value ? value : undefined;
+}
+
+function parseTop(value: unknown): number {
+  const top = typeof value === 'string' ? parseInt(value, 10) : NaN;
+  return Number.isInteger(top) && top >= 1 && top <= MAX_TOP ? top : DEFAULT_TOP;
+}
+
+function toDate(value: unknown): Date | undefined {
+  const text = str(value);
+  return text ? new Date(text) : undefined;
+}
+
+function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): EventCriteria {
+  const q = req.query;
+  return {
+    tenantId,
+    namespace: req.params.namespace,
+    actor: str(q.actor),
+    resourceType: str(q.resourceType),
+    resourceId: str(q.resourceId),
+    action: str(q.action),
+    status: str(q.status) as EventCriteria['status'],
+    category: str(q.category) as EventCriteria['category'],
+    scope: str(q.scope),
+    occurredFrom: toDate(q.occurredFrom),
+    occurredTo: toDate(q.occurredTo),
+  };
+}
+
+export function readEvents(reader?: EventReader): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = assertCanReadEvents(req);
+      const top = parseTop(req.query.top);
+      const after = str(req.query.after);
+      const skip = after ? decodeAfter(after) : 0;
+
+      const events = await assertReader(reader).find(toCriteria(req, tenantId), top, skip);
+      const results: Results<ReturnType<typeof serializeEvent>> = {
+        results: events.map((event) => serializeEvent(event)),
+        page: { after, size: events.length, next: encodeNext(events.length, top, skip) },
+      };
+      res.send(results);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function readEvent(reader?: EventReader): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = assertCanReadEvents(req);
+      const { namespace, id } = req.params;
+      const event = await assertReader(reader).get(tenantId, namespace, id);
+      if (!event || event.tenant_id !== tenantId) {
+        throw new NotFoundError('audit event', id);
+      }
+      res.send(serializeEvent(event));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export const validateEventId = createValidationHandler(param('id').isUUID());
+
+export const validateEventQuery = createValidationHandler(
+  query('top').optional().isInt({ min: 1, max: MAX_TOP }),
+  query('after')
+    .optional()
+    .isString()
+    .custom((value: string) => {
+      const skip = decodeAfter(value);
+      return !isNaN(skip) && skip >= 0;
+    }),
+  query(['actor', 'resourceType', 'resourceId', 'action', 'scope'])
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 256 }),
+  query('status').optional().isIn(EVENT_STATUSES),
+  query('category').optional().isIn(EVENT_CATEGORIES),
+  query(['occurredFrom', 'occurredTo']).optional().isISO8601(),
+  query('occurredTo')
+    .optional()
+    .custom((value: string, { req }) => {
+      const from = req.query?.occurredFrom;
+      return !from || new Date(from as string) <= new Date(value);
+    })
+    .withMessage('occurredTo must not be before occurredFrom'),
+);
