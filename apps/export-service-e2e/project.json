@@ -1,0 +1,25 @@
+{
+  "name": "export-service-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/export-service-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["export-service"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/export-service-e2e/cypress.json",
+        "devServerTarget": "export-service:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": { "devServerTarget": "export-service:serve:production" },
+        "ci": { "devServerTarget": "export-service:serve-static" }
+      }
+    },
+    "lint": {
+      "inputs": ["default","^default","!{projectRoot}/Dockerfile","{workspaceRoot}/eslint.config.mjs","{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  }
+}

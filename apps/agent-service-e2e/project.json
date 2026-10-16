@@ -1,0 +1,27 @@
+{
+  "name": "agent-service-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/agent-service-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["agent-service"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/agent-service-e2e/cypress.json",
+        "devServerTarget": "",
+        "testingType": "e2e"
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    }
+  }
+}

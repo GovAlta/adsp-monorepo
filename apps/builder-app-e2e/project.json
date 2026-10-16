@@ -1,0 +1,35 @@
+{
+  "name": "builder-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/builder-app-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["builder-app"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/builder-app-e2e/cypress.json",
+        "devServerTarget": "builder-app:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": {
+          "devServerTarget": "builder-app:serve:production"
+        },
+        "ci": {
+          "devServerTarget": "builder-app:serve-static"
+        }
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    }
+  }
+}

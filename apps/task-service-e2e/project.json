@@ -1,0 +1,25 @@
+{
+  "name": "task-service-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/task-service-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["task-service"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/task-service-e2e/cypress.json",
+        "devServerTarget": "",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": { "devServerTarget": "" },
+        "ci": { "devServerTarget": "" }
+      }
+    },
+    "lint": {
+      "inputs": ["default","^default","!{projectRoot}/Dockerfile","{workspaceRoot}/eslint.config.mjs","{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  }
+}
