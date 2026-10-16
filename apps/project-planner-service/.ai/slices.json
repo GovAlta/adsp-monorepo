@@ -1,0 +1,10 @@
+{
+  "slices": [
+    { "id": "S1", "title": "Service skeleton", "branch": "feature/project-planner-service", "touch": ["apps/project-planner-service/*", "apps/project-planner-service/migrations/**", "apps/project-planner-service/src/main.ts", "apps/project-planner-service/src/environments/**"], "done": "Service builds and registers with the platform", "status": "done" },
+    { "id": "S2", "title": "Planner engine", "touch": ["apps/project-planner-service/src/planner/{analysis,patterns,specialists,types}.ts"], "done": "FR-4..FR-12 covered by unit tests", "status": "done" },
+    { "id": "S3", "title": "Solution API", "touch": ["apps/project-planner-service/src/planner/{router,events,roles,configuration,repository}.ts", "apps/project-planner-service/src/postgres/**"], "done": "FR-1..FR-3, FR-13, FR-15, NFR-1, NFR-2", "status": "done" },
+    { "id": "S4", "title": "Platform integration", "touch": ["nx.json", ".openshift/**/project-planner-service.yml", "docs/services/project-planner-service.md"], "done": "Manifests and docs exist", "status": "done" },
+    { "id": "S5", "title": "Web UI (DS 2.0)", "touch": ["apps/tenant-management-webapp/src/app/pages/admin/services/project-planner/**", "apps/tenant-management-webapp/src/featureFlag.ts", "apps/tenant-management-webapp/src/app/pages/admin/index.tsx", "apps/tenant-management-webapp/src/app/store/config/*"], "done": "FR-14 pages type-check", "status": "done" },
+    { "id": "S6", "title": "Agent-service integration and e2e", "touch": ["apps/agent-service/**"], "done": "FR-16", "status": "deferred" }
+  ]
+}

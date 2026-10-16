@@ -1,0 +1,60 @@
+{
+  "name": "project-planner-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/project-planner-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/project-planner-service",
+        "main": "apps/project-planner-service/src/main.ts",
+        "tsConfig": "apps/project-planner-service/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "apps/project-planner-service/migrations",
+            "input": ".",
+            "output": "migrations"
+          }
+        ],
+        "webpackConfig": "apps/project-planner-service/webpack.config.js",
+        "target": "node",
+        "compiler": "tsc",
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "project-planner-service:build",
+        "port": 7791
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/project-planner-service"],
+      "options": {
+        "jestConfig": "apps/project-planner-service/jest.config.ts"
+      }
+    }
+  }
+}
