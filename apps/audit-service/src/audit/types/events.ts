@@ -54,6 +54,29 @@ export interface EnrichedEvent {
   originalEvent: unknown;
 }
 
+export type StoredEvent = Omit<EnrichedEvent, 'originalEvent'>;
+
+export interface EventCriteria {
+  tenantId: string;
+  namespace?: string;
+  actor?: string;
+  resourceType?: string;
+  resourceId?: string;
+  action?: string;
+  status?: AuditEvent['status'];
+  category?: AuditActionDefinition['category'];
+  scope?: string;
+  occurredFrom?: Date;
+  occurredTo?: Date;
+}
+
+export interface EventReader {
+  // Newest first by occurred_at; implementations must break ties deterministically so paging is stable.
+  find(criteria: EventCriteria, top: number, skip: number): Promise<StoredEvent[]>;
+  // Must match tenant and namespace, so an id from another tenant is never returned.
+  get(tenantId: string, namespace: string, id: string): Promise<StoredEvent | null>;
+}
+
 export type EventOutcome =
   | { status: 'accepted' }
   | { status: 'duplicate' }
