@@ -1,0 +1,122 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: adsp-sdk-mcp-server
+  labels:
+    app: adsp-sdk-mcp-server
+spec: {}
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: adsp-sdk-mcp-server
+  labels:
+    app: adsp-sdk-mcp-server
+    apply-build: "true"
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: adsp-sdk-mcp-server:latest
+  resources:
+    limits:
+      cpu: "300m"
+      memory: "1Gi"
+    requests:
+      cpu: "100m"
+      memory: "200Mi"
+  runPolicy: Serial
+  source:
+    binary: {}
+    type: Binary
+  strategy:
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+    type: Docker
+  triggers: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adsp-sdk-mcp-server
+  labels:
+    app: adsp-sdk-mcp-server
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"adsp-sdk-mcp-server:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"adsp-sdk-mcp-server\")].image"}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: adsp-sdk-mcp-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: "25%"
+      maxUnavailable: "25%"
+  template:
+    metadata:
+      labels:
+        name: adsp-sdk-mcp-server
+    spec:
+      containers:
+        - name: adsp-sdk-mcp-server
+          image: adsp-sdk-mcp-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3333
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3333"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3333
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3333
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+            requests:
+              cpu: "20m"
+              memory: "64Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adsp-sdk-mcp-server
+  labels:
+    app: adsp-sdk-mcp-server
+spec:
+  ports:
+    - name: http
+      port: 3333
+      protocol: TCP
+      targetPort: 3333
+  selector:
+    name: adsp-sdk-mcp-server
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: adsp-sdk-mcp-server
+  labels:
+    app: adsp-sdk-mcp-server
+spec:
+  to:
+    kind: Service
+    name: adsp-sdk-mcp-server
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
