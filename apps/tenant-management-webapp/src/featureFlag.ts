@@ -156,7 +156,7 @@ export const defaultFeaturesVisible = {
   Value: true,
   Cache: true,
   Agent: false,
-  'Project Planner': true,
+  'Project Planner': false,
 };
 
 export const serviceVariables = (featuresVisible = {}) => {

@@ -38,6 +38,7 @@ describe('environment', () => {
     ['DB_USER', 'postgres'],
     ['DB_PASSWORD', 'guest'],
     ['DB_TLS', false],
+    ['PLANNER_STORAGE', 'postgres'],
     ['OTEL_EXPORTER_OTLP_ENDPOINT', ''],
     ['LOG_LEVEL', 'debug'],
     ['PORT', 3381],
@@ -75,6 +76,18 @@ describe('environment', () => {
     const environment = loadEnvironment({ DB_TLS: 'true' });
 
     expect(environment.DB_TLS).toBe(true);
+  });
+
+  it('accepts memory as the planner storage', () => {
+    const environment = loadEnvironment({ PLANNER_STORAGE: 'memory' });
+
+    expect(environment.PLANNER_STORAGE).toBe('memory');
+  });
+
+  it('reports an invalid planner storage', () => {
+    loadEnvironment({ PLANNER_STORAGE: 'mongo' });
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('PLANNER_STORAGE'));
   });
 
   it('parses MAAS_INSECURE_TLS as a boolean', () => {

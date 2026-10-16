@@ -20,6 +20,7 @@ const mockCreateErrorHandler = jest.fn();
 const mockApplyPlannerMiddleware = jest.fn();
 const mockCreateLlmFromEnv = jest.fn();
 const mockCreateRepositories = jest.fn();
+const mockCreateMemoryRepositories = jest.fn();
 const mockEnvironment: Record<string, unknown> = {};
 
 jest.mock('express', () => mockExpress);
@@ -49,6 +50,7 @@ jest.mock('./planner', () => ({
   SolutionDeletedDefinition: { name: 'solution-deleted' },
 }));
 jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
+jest.mock('./memory', () => ({ createMemoryRepositories: mockCreateMemoryRepositories }));
 
 describe('main', () => {
   const serviceId = { toString: () => 'urn:ads:platform:project-planner-service' };
@@ -101,6 +103,7 @@ describe('main', () => {
       MAAS_TIMEOUT_MS: 120000,
       MAAS_INSECURE_TLS: false,
       DB_HOST: 'localhost',
+      PLANNER_STORAGE: 'postgres',
     });
     mockExpress.mockReturnValue(mockApp);
     mockExpress.json.mockReturnValue('json-middleware');
@@ -282,6 +285,26 @@ describe('main', () => {
     await startMain();
 
     expect(mockCreateRepositories).toHaveBeenCalledWith(expect.objectContaining({ logger: mockLogger, DB_HOST: 'localhost' }));
+  });
+
+  it('does not create memory repositories when storage is postgres', async () => {
+    await startMain();
+
+    expect(mockCreateMemoryRepositories).not.toHaveBeenCalled();
+  });
+
+  it('creates memory repositories without connecting to postgres when storage is memory', async () => {
+    mockEnvironment.PLANNER_STORAGE = 'memory';
+    mockCreateMemoryRepositories.mockReturnValue(repositories);
+
+    await startMain();
+
+    expect(mockCreateMemoryRepositories).toHaveBeenCalledWith(mockLogger);
+    expect(mockCreateRepositories).not.toHaveBeenCalled();
+    expect(mockApplyPlannerMiddleware).toHaveBeenCalledWith(
+      mockApp,
+      expect.objectContaining({ solutionRepository: repositories.solutionRepository }),
+    );
   });
 
   it('mounts the planner router with repositories, event service and llm', async () => {

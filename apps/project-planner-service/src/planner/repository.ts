@@ -24,3 +24,10 @@ export interface SpecialistChatRepository {
   save(chat: SpecialistChat): Promise<SpecialistChat>;
   delete(tenantId: AdspId, id: string): Promise<boolean>;
 }
+
+export interface Repositories {
+  isConnected: () => Promise<boolean>;
+  solutionRepository: SolutionRepository;
+  patternRepository: PatternRepository;
+  specialistChatRepository: SpecialistChatRepository;
+}

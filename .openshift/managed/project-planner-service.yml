@@ -85,7 +85,7 @@ objects:
             }
           ]
     spec:
-      replicas: 3
+      replicas: 1
       selector:
         matchLabels:
           app: ${APP_NAME}
@@ -114,31 +114,40 @@ objects:
                     secretKeyRef:
                       key: database-host
                       name: ${APP_NAME}-postgres
+                      optional: true
                 - name: DB_PORT
                   valueFrom:
                     secretKeyRef:
                       key: database-port
                       name: ${APP_NAME}-postgres
+                      optional: true
                 - name: DB_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
                       name: ${APP_NAME}-postgres
+                      optional: true
                 - name: DB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
                       name: ${APP_NAME}-postgres
+                      optional: true
                 - name: DB_NAME
                   valueFrom:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-postgres
+                      optional: true
                 - name: DB_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
                       name: ${APP_NAME}-postgres
+                      optional: true
+                # MaaS is signed by the GoA root CA; Node still starts if the optional secret is absent.
+                - name: NODE_EXTRA_CA_CERTS
+                  value: /etc/certs/goa-root.pem
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
@@ -147,11 +156,15 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 100m
-                  memory: 200Mi
+                  cpu: "1"
+                  memory: 2Gi
                 requests:
-                  cpu: 20m
-                  memory: 50Mi
+                  cpu: 250m
+                  memory: 512Mi
+              volumeMounts:
+                - name: cert-volume
+                  mountPath: /etc/certs
+                  readOnly: true
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               readinessProbe:
@@ -174,6 +187,14 @@ objects:
                 periodSeconds: 60
                 successThreshold: 1
                 failureThreshold: 5
+          volumes:
+            - secret:
+                items:
+                  - key: certificate
+                    path: goa-root.pem
+                secretName: ${APP_NAME}-ca
+                optional: true
+              name: cert-volume
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
@@ -221,6 +242,9 @@ objects:
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
+      annotations:
+        # Planner requests wait on model completions and run well past the 30s router default.
+        haproxy.router.openshift.io/timeout: 960s
     spec:
       host: ${ROUTE_HOST}
       port:
