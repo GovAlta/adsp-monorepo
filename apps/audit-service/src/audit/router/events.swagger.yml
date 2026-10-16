@@ -108,7 +108,7 @@ paths:
         '400':
           description: Malformed JSON/envelope, invalid namespace or tenant ID, or missing Core tenant context.
         '401':
-          description: Authentication required.
+          description: Missing or invalid bearer token.
         '403':
           description: Missing audit-writer, invalid client service URN, or forbidden namespace/tenant.
         '413':

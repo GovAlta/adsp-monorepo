@@ -1,4 +1,4 @@
-import { AdspId, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { param, query } from 'express-validator';
@@ -6,7 +6,8 @@ import { CatalogService, RetentionService } from '../model';
 import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
 import { AuditServiceRoles } from '../roles';
 import { EventReader, EventSubmitter } from '../types';
-import { assertCanWriteEvents } from '../utils/write-access';
+import { assertWriteScope } from '../utils/write-access';
+import { requireAuditRole } from '../utils/authorization';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
 import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
@@ -50,9 +51,6 @@ export const readActions =
   async (req, res, next) => {
     try {
       const tenantId = req.tenant?.id;
-      if ((!req.user.isCore && !tenantId) || !isAllowedUser(req.user, tenantId, AuditServiceRoles.Reader, true)) {
-        throw new UnauthorizedUserError('read action catalog', req.user);
-      }
       const { namespace } = req.params;
       const catalog = await catalogs.getCatalog(namespace, tenantId);
       if (!catalog) {
@@ -69,11 +67,24 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
   const validateNamespace = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
   );
-  router.get('/:namespace/actions', assertAuthenticatedHandler, validateNamespace, readActions(options.catalogs));
-  router.get('/events', assertAuthenticatedHandler, validateEventQuery, readEvents(options.reader));
+  router.get(
+    '/:namespace/actions',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateNamespace,
+    readActions(options.catalogs),
+  );
+  router.get(
+    '/events',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateEventQuery,
+    readEvents(options.reader),
+  );
   router.get(
     '/:namespace/events',
     assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     validateEventQuery,
     readEvents(options.reader),
@@ -81,6 +92,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
   router.get(
     '/:namespace/events/:id',
     assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     validateEventId,
     readEvent(options.reader),
@@ -88,8 +100,9 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
   router.post(
     '/:namespace/events',
     assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Writer),
     validateNamespace,
-    assertCanWriteEvents,
+    assertWriteScope,
     validateWriteRequest,
     writeEvents(options),
   );

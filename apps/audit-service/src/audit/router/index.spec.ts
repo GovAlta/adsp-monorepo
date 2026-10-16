@@ -7,6 +7,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, RetentionService } from '../model';
 import { createAuditRouter, assertTenantContext, validateTenantContext } from './index';
 import { AuditServiceRoles } from '../roles';
+import * as authorization from '../utils/authorization';
 
 describe('GET /audit/v1/:namespace/actions', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -136,6 +137,38 @@ describe('GET /audit/v1/:namespace/actions', () => {
       .expect(HttpStatusCodes.OK);
 
     expect(configuration.getServiceConfiguration).toHaveBeenCalledWith('actions-case-service', tenantB);
+  });
+
+  it('refuses a Core caller without audit-reader even when naming a tenant', async () => {
+    const caller = { ...user, isCore: true, tenantId: undefined, roles: [] };
+
+    await request(createApp(caller))
+      .get('/audit/v1/case-service/actions')
+      .query({ tenantId: tenantB.toString() })
+      .expect(HttpStatusCodes.FORBIDDEN);
+
+    expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+  });
+
+  it('declares the required role on every registered audit route', () => {
+    const guardFactory = jest.spyOn(authorization, 'requireAuditRole');
+    const router = createAuditRouter({ catalogs, retention: new RetentionService(configuration, logger), logger });
+    const guards = new Map<express.RequestHandler, AuditServiceRoles>(
+      guardFactory.mock.results.map((result, index) => [result.value, guardFactory.mock.calls[index][0]]),
+    );
+    guardFactory.mockRestore();
+    const routes = router.stack.map(({ route }) => ({
+      path: route.path,
+      roles: route.stack.map(({ handle }) => guards.get(handle)).filter(Boolean),
+    }));
+
+    expect(routes).toEqual([
+      { path: '/:namespace/actions', roles: [AuditServiceRoles.Reader] },
+      { path: '/events', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/events', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/events/:id', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/events', roles: [AuditServiceRoles.Writer] },
+    ]);
   });
 
   it.each(['invalid tenant', 'urn:ads:platform:file-service:v1:/files/one'])(

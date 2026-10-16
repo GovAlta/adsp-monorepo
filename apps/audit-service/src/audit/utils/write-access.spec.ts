@@ -5,7 +5,8 @@ import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { AuditServiceRoles } from '../roles';
-import { assertCanWriteEvents, getWriterClientId } from './write-access';
+import { assertWriteScope, getWriterClientId } from './write-access';
+import { requireAuditRole } from './authorization';
 
 describe('audit write access', () => {
   const tenantA = adspId`urn:ads:platform:tenant-service:v2:/tenants/case-team`;
@@ -35,7 +36,9 @@ describe('audit write access', () => {
       if (tenantId) req.tenant = { id: tenantId, name: 'Audit tenant', realm: 'audit-tenant' };
       next();
     });
-    app.post('/:namespace/events', assertCanWriteEvents, (_req, res) => res.sendStatus(HttpStatusCodes.NO_CONTENT));
+    app.post('/:namespace/events', requireAuditRole(AuditServiceRoles.Writer), assertWriteScope, (_req, res) =>
+      res.sendStatus(HttpStatusCodes.NO_CONTENT),
+    );
     app.use(createErrorHandler(logger));
     return app;
   }
