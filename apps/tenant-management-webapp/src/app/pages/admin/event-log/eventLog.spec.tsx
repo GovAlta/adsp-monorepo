@@ -27,6 +27,15 @@ jest.mock('./eventSearchForm', () => ({
       >
         Search
       </button>
+      {[
+        { id: 'namespace', namespace: 'form-service', name: '' },
+        { id: 'name', namespace: '', name: 'form-created' },
+        { id: 'unfiltered', namespace: '', name: '' },
+      ].map(({ id, namespace, name }) => (
+        <button key={id} data-testid={`search-${id}`} onClick={() => onSearch?.({ namespace, name })}>
+          Search {id}
+        </button>
+      ))}
       <button data-testid="event-log-filter-reset" onClick={() => onCancel?.()}>
         Reset
       </button>
@@ -85,7 +94,12 @@ describe('EventLog', () => {
     expect(fetchActions[0].searchCriteria).toBeUndefined();
   });
 
-  it('disables CSV download after reset', () => {
+  it.each([
+    ['event-log-filter-search', false],
+    ['search-namespace', false],
+    ['search-name', false],
+    ['search-unfiltered', true],
+  ])('sets CSV download availability for %s and disables it after reset', (searchButton, disabled) => {
     const store = createStore();
     const { getByTestId, container } = render(
       <Provider store={store}>
@@ -96,8 +110,12 @@ describe('EventLog', () => {
     const csvButton = container.querySelector('goa-button[testid="export-event-log-csv"]');
     expect(csvButton).toHaveAttribute('disabled');
 
-    fireEvent.click(getByTestId('event-log-filter-search'));
-    expect(csvButton).not.toHaveAttribute('disabled');
+    fireEvent.click(getByTestId(searchButton));
+    if (disabled) {
+      expect(csvButton).toHaveAttribute('disabled');
+    } else {
+      expect(csvButton).not.toHaveAttribute('disabled');
+    }
 
     fireEvent.click(getByTestId('event-log-filter-reset'));
     expect(csvButton).toHaveAttribute('disabled');
