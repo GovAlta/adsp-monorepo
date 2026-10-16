@@ -1,0 +1,27 @@
+{
+  "name": "api-docs-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api-docs-app-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["api-docs-app"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/api-docs-app-e2e/cypress.json",
+        "devServerTarget": "",
+        "testingType": "e2e"
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    }
+  }
+}

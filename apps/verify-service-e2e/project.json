@@ -1,0 +1,25 @@
+{
+  "name": "verify-service-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/verify-service-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["verify-service"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/verify-service-e2e/cypress.json",
+        "devServerTarget": "verify-service:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": { "devServerTarget": "verify-service:serve:production" },
+        "ci": { "devServerTarget": "verify-service:serve-static" }
+      }
+    },
+    "lint": {
+      "inputs": ["default","^default","!{projectRoot}/Dockerfile","{workspaceRoot}/eslint.config.mjs","{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  }
+}

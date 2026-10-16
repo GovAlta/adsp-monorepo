@@ -1,0 +1,25 @@
+{
+  "name": "pii-service-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/pii-service-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["pii-service"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/pii-service-e2e/cypress.json",
+        "devServerTarget": "pii-service:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": { "devServerTarget": "pii-service:serve:production" },
+        "ci": { "devServerTarget": "pii-service:serve-static" }
+      }
+    },
+    "lint": {
+      "inputs": ["default","^default","!{projectRoot}/Dockerfile","{workspaceRoot}/eslint.config.mjs","{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  }
+}

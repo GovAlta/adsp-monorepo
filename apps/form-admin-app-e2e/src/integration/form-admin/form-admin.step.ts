@@ -39,3 +39,27 @@ Given('an authenticated user is logged into form admin app site', function () {
 Then('the user views the form administration page', function () {
   formsObj.formAdminLandingPageTitle().invoke('attr', 'heading').should('contain', 'Form administration');
 });
+
+When('the user navigates to the form definitions list', function () {
+  cy.visit('/' + Cypress.env('tenantName') + '/definitions');
+  cy.wait(2000);
+});
+
+Then('the user views the form definitions table with at least one definition', function () {
+  formsObj.definitionsTableHeader().should('exist');
+  formsObj.definitionsTableFirstRow().should('exist');
+});
+
+When('the user selects the first form definition from the list', function () {
+  formsObj.selectFirstDefinitionButton().click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views the form definition detail page', function () {
+  formsObj.definitionDetailHeading().should('exist');
+  formsObj.definitionDetailHeading().invoke('text').should('contain', 'Form Definition:');
+});
+
+Then('the user views the responses page for the form definition', function () {
+  formsObj.responsesPageContent().should('exist');
+});
