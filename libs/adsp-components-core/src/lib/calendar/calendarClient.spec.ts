@@ -1,21 +1,14 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { CalendarClient } from './calendarClient';
 
 type Handler = (url: URL) => unknown;
-type Request = jest.Mock<Promise<{ data: unknown }>, [string, { headers: Record<string, string> }?]>;
 
-// Records each request as the resolved URL and the request headers, if any.
-function mockFetch(handler: Handler): Request {
-  return jest.fn(async (href: string) => ({ data: handler(new URL(href)) }));
+function mockFetch(handler: Handler) {
+  return jest.fn(async (input: string) => ({
+    ok: true,
+    status: 200,
+    json: async () => handler(new URL(input)),
+  })) as unknown as jest.Mock & typeof fetch;
 }
-
-const toHttp = (request: Request) =>
-  ({
-    get: (url: string, config?: AxiosRequestConfig) =>
-      request(axios.getUri({ url, params: config?.params }), config?.headers ? { headers: config.headers } : undefined),
-  }) as unknown as AxiosInstance;
-
-const httpError = (status: number) => new AxiosError(`Request failed with status code ${status}`);
 
 const serviceEvent = (id: number, start: string, end: string | null, extra = {}) => ({
   id,
@@ -31,8 +24,8 @@ describe('CalendarClient', () => {
   const range = { start: new Date('2026-05-01T06:00:00Z'), end: new Date('2026-06-01T06:00:00Z') };
   const serviceUrl = 'https://calendar.test/';
 
-  const createClient = (request: Request, options = {}) =>
-    new CalendarClient({ serviceUrl, http: toHttp(request), ...options });
+  const createClient = (fetchFn: typeof fetch, options = {}) =>
+    new CalendarClient({ serviceUrl, fetch: fetchFn, ...options });
 
   it('returns events and holidays as domain models', async () => {
     const fetchFn = mockFetch((url) =>
@@ -249,11 +242,15 @@ describe('CalendarClient', () => {
 
       const urls = fetchFn.mock.calls.map(([url]) => new URL(url));
       const dates = urls.find((u) => u.pathname === '/calendar/v1/dates');
-      expect(JSON.parse(dates.searchParams.get('criteria'))).toEqual({ isHoliday: true, min: 20260501, max: 20260531 });
-      expect(dates.searchParams.get('top')).toBe('100');
+      expect(JSON.parse(dates!.searchParams.get('criteria')!)).toEqual({
+        isHoliday: true,
+        min: 20260501,
+        max: 20260531,
+      });
+      expect(dates!.searchParams.get('top')).toBe('100');
 
       const events = urls.find((u) => u.pathname === '/calendar/v1/calendars/my-cal/events');
-      expect(JSON.parse(events.searchParams.get('criteria'))).toEqual({ orderBy: 'start' });
+      expect(JSON.parse(events!.searchParams.get('criteria')!)).toEqual({ orderBy: 'start' });
     });
 
     it('queries a multi-month range using the first and last Alberta day', async () => {
@@ -265,7 +262,11 @@ describe('CalendarClient', () => {
       });
 
       const dates = fetchFn.mock.calls.map(([url]) => new URL(url)).find((u) => u.pathname === '/calendar/v1/dates');
-      expect(JSON.parse(dates.searchParams.get('criteria'))).toEqual({ isHoliday: true, min: 20260501, max: 20260731 });
+      expect(JSON.parse(dates!.searchParams.get('criteria')!)).toEqual({
+        isHoliday: true,
+        min: 20260501,
+        max: 20260731,
+      });
     });
 
     it('uses the Alberta calendar day rather than the UTC day for date ids', async () => {
@@ -278,7 +279,11 @@ describe('CalendarClient', () => {
       });
 
       const dates = fetchFn.mock.calls.map(([url]) => new URL(url)).find((u) => u.pathname === '/calendar/v1/dates');
-      expect(JSON.parse(dates.searchParams.get('criteria'))).toEqual({ isHoliday: true, min: 20260501, max: 20260501 });
+      expect(JSON.parse(dates!.searchParams.get('criteria')!)).toEqual({
+        isHoliday: true,
+        min: 20260501,
+        max: 20260501,
+      });
     });
 
     it('requests events for the named calendar, encoding the name', async () => {
@@ -287,7 +292,7 @@ describe('CalendarClient', () => {
       await createClient(fetchFn).getCalendarEvents('my cal/1', range);
 
       const events = fetchFn.mock.calls.map(([url]) => new URL(url)).find((u) => u.pathname.includes('/events'));
-      expect(events.pathname).toBe('/calendar/v1/calendars/my%20cal%2F1/events');
+      expect(events!.pathname).toBe('/calendar/v1/calendars/my%20cal%2F1/events');
     });
 
     it('does not send the tenant parameter when retrieving dates', async () => {
@@ -296,7 +301,7 @@ describe('CalendarClient', () => {
       await createClient(fetchFn, { tenant: 'my-tenant' }).getCalendarEvents('my-cal', range);
 
       const dates = fetchFn.mock.calls.map(([url]) => new URL(url)).find((u) => u.pathname === '/calendar/v1/dates');
-      expect(dates.searchParams.has('tenant')).toBe(false);
+      expect(dates!.searchParams.has('tenant')).toBe(false);
     });
 
     it('sends anonymous requests when no token is provided', async () => {
@@ -321,34 +326,35 @@ describe('CalendarClient', () => {
     });
 
     it('throws when the service responds with an error', async () => {
-      const fetchFn: Request = jest.fn(async () => {
-        throw httpError(500);
-      });
+      const fetchFn = jest.fn(async () => ({ ok: false, status: 500 })) as unknown as typeof fetch;
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status code 500');
+      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 500');
     });
 
     it('throws when only the dates request fails', async () => {
-      const fetchFn: Request = jest.fn(async (href: string) => {
-        if (!new URL(href).pathname.endsWith('/events')) {
-          throw httpError(503);
-        }
-        return { data: { results: [] } };
-      });
+      const fetchFn = jest.fn(async (input: string) => {
+        const isEvents = new URL(input).pathname.endsWith('/events');
+        return { ok: isEvents, status: isEvents ? 200 : 503, json: async () => ({ results: [] }) };
+      }) as unknown as typeof fetch;
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status code 503');
+      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 503');
     });
 
     it('throws when a later events page fails', async () => {
-      const fetchFn: Request = jest.fn(async (href: string) => {
-        const url = new URL(href);
-        if (url.searchParams.has('after')) {
-          throw httpError(502);
-        }
-        return { data: { results: [], page: url.pathname.endsWith('/events') ? { next: 'more' } : {} } };
-      });
+      const fetchFn = jest.fn(async (input: string) => {
+        const url = new URL(input);
+        const isLaterPage = url.searchParams.has('after');
+        return {
+          ok: !isLaterPage,
+          status: isLaterPage ? 502 : 200,
+          json: async () => ({
+            results: [],
+            page: url.pathname.endsWith('/events') ? { next: 'more' } : {},
+          }),
+        };
+      }) as unknown as typeof fetch;
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status code 502');
+      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 502');
     });
   });
 });
