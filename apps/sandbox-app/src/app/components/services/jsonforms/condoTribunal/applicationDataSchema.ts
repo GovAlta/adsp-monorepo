@@ -1,10 +1,21 @@
-// clean-code-ignore: RULE-19 — a verbatim copy, exercised through the page it feeds. Asserting its
-// contents here would only restate the copy.
-// Copied from libs/condo-tribunal-common/src/schemas/versions/v1/applicationDataSchema.ts in
-// GovAlta-EMU/adsp-applications. Kept verbatim so the sandbox reproduces the real CDRT form rather
-// than a simplified stand-in; see ./locations.ts for the one part that had to be recreated.
 import { countries, provinceStates, mailingCountries, mailingProvinceStates } from './locations';
 import { JsonSchema7 } from '@jsonforms/core';
+
+const emailProperty: JsonSchema7 = {
+  type: 'string',
+  pattern: '^(?:[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})?$',
+  errorMessage: {
+    pattern: 'Email is in an incorrect format',
+  },
+};
+
+const telephoneProperty: JsonSchema7 = {
+  type: 'string',
+  pattern: '^(?:[+\\-0-9]+)?$',
+  errorMessage: {
+    pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
+  },
+};
 
 export const dataSchema: JsonSchema7 = {
   type: 'object',
@@ -12,13 +23,14 @@ export const dataSchema: JsonSchema7 = {
     whichOfThemApplies: {
       type: 'array',
       default: [],
+      uniqueItems: true,
       items: {
         type: 'string',
         oneOf: [
           {
             const: 'Monetary sanctions imposed by a corporation, including the process in applying that sanction',
             title: 'Monetary sanctions imposed by a corporation, including the process in applying that sanction',
-            description: 'For example: Receiving a monetary sanction for not following a rule in the bylaws',
+            description: 'For example: Receiving a fine for not following a rule in the bylaws',
           },
           {
             const: 'Access to condominium documents',
@@ -31,7 +43,6 @@ export const dataSchema: JsonSchema7 = {
             description: 'For example: The AGM was not held within 15 months of the previous AGM',
           },
         ],
-        uniqueItems: true,
       },
       minItems: 1,
       errorMessage: {
@@ -51,33 +62,16 @@ export const dataSchema: JsonSchema7 = {
       type: 'string',
       enum: ['No', 'Yes - lawyer', 'Yes - I have a personal representative'],
     },
-    whichOfThemAppliesOther: {
-      type: 'string',
-      title: 'Describe your dispute in a few words',
-    },
-    readyToApply: {
-      type: 'object',
-      properties: {
-        hasDisputeTakenCareOff: {
-          type: 'string',
-          title: 'Has this dispute already been taken to court?',
-          enum: [
-            'No, there are no other applications',
-            'Yes, I have filed an application with the courts',
-            'Yes, I have been served with an application from the courts',
-            "I'm not sure",
-          ],
-        },
-      },
-    },
     representativeContactInformation: {
       type: 'object',
       properties: {
         primaryFirstName: {
           type: 'string',
+          minLength: 1,
         },
         primaryLastName: {
           type: 'string',
+          minLength: 1,
         },
         primaryOrganizationBusinessName: {
           type: 'string',
@@ -85,20 +79,8 @@ export const dataSchema: JsonSchema7 = {
         primaryTitle: {
           type: 'string',
         },
-        primaryEmail: {
-          type: 'string',
-          pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-          errorMessage: {
-            pattern: 'Email is in a incorrect format',
-          },
-        },
-        primaryPhone: {
-          type: 'string',
-          pattern: '^[+\\-0-9]+$',
-          errorMessage: {
-            pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
-          },
-        },
+        primaryEmail: { ...emailProperty },
+        primaryPhone: { ...telephoneProperty },
         alternateFirstName: {
           type: 'string',
         },
@@ -116,9 +98,11 @@ export const dataSchema: JsonSchema7 = {
             properties: {
               alternateFirstName: {
                 type: 'string',
+                minLength: 1,
               },
               alternateLastName: {
                 type: 'string',
+                minLength: 1,
               },
               alternateOrganizationBusinessName: {
                 type: 'string',
@@ -126,41 +110,16 @@ export const dataSchema: JsonSchema7 = {
               alternateTitle: {
                 type: 'string',
               },
-              alternateEmail: {
-                type: 'string',
-                pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-                errorMessage: {
-                  pattern: 'Email is in a incorrect format',
-                },
-              },
-              alternateTelephone: {
-                type: 'string',
-                pattern: '^[+\\-0-9]+$',
-                errorMessage: {
-                  pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
-                },
-              },
+              alternateEmail: { ...emailProperty },
+              alternateTelephone: { ...telephoneProperty },
               makePrimaryContact: {
                 type: 'boolean',
-                allOf: [
-                  {
-                    enum: [true],
-                  },
-                ],
               },
             },
-            required: [
-              'alternateFirstName',
-              'alternateLastName',
-              'alternateOrganizationBusinessName',
-              'alternateTitle',
-              'alternateTelephone',
-              'alternateEmail',
-            ],
+            required: ['alternateFirstName', 'alternateLastName', 'alternateTelephone', 'alternateEmail'],
           },
         },
       },
-      required: ['primaryFirstName', 'primaryLastName', 'primaryEmail', 'primaryPhone'],
     },
 
     representatitiveMailAddress: {
@@ -177,29 +136,30 @@ export const dataSchema: JsonSchema7 = {
         },
         provinceState: {
           type: 'string',
-          enum: provinceStates,
+          enum: mailingProvinceStates,
         },
         country: {
           type: 'string',
-          enum: countries,
+          enum: mailingCountries,
         },
         postalCodeZip: {
           type: 'string',
         },
       },
-      required: ['addressLine1', 'city', 'provinceState', 'country', 'postalCodeZip'],
     },
     primaryDetailMailingAddress: {
       type: 'object',
       properties: {
         primaryMailingAddressLine1: {
           type: 'string',
+          minLength: 1,
         },
         primaryMailingAddressLine2: {
           type: 'string',
         },
         primaryMailingCityTown: {
           type: 'string',
+          minLength: 1,
         },
         primaryMailingProvinceState: {
           type: 'string',
@@ -207,9 +167,11 @@ export const dataSchema: JsonSchema7 = {
         },
         primaryMailingCountry: {
           type: 'string',
+          enum: mailingCountries,
         },
         primaryMailingPostalCodeZip: {
           type: 'string',
+          minLength: 1,
         },
       },
       required: [
@@ -226,28 +188,18 @@ export const dataSchema: JsonSchema7 = {
       properties: {
         firstName: {
           type: 'string',
+          minLength: 1,
         },
         middleName: {
           type: 'string',
         },
         lastName: {
           type: 'string',
+          minLength: 1,
         },
         condoCorporationName: { type: 'string' },
-        email: {
-          type: 'string',
-          pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-          errorMessage: {
-            pattern: 'Email is in a incorrect format',
-          },
-        },
-        telephone: {
-          type: 'string',
-          pattern: '^[+\\-0-9]+$',
-          errorMessage: {
-            pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
-          },
-        },
+        email: { ...emailProperty },
+        telephone: { ...telephoneProperty },
         additionalApplicants: {
           type: 'array',
           items: {
@@ -255,35 +207,17 @@ export const dataSchema: JsonSchema7 = {
             properties: {
               alternateFirstName: {
                 type: 'string',
+                minLength: 1,
               },
               alternateLastName: {
                 type: 'string',
+                minLength: 1,
               },
               alternateOrganizationBusinessName: {
                 type: 'string',
               },
-              alternateEmail: {
-                type: 'string',
-                pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-                errorMessage: {
-                  pattern: 'Email is in a incorrect format',
-                },
-              },
-              alternateTelephone: {
-                type: 'string',
-                pattern: '^[+\\-0-9]+$',
-                errorMessage: {
-                  pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
-                },
-              },
-              confirmPrimaryContact: {
-                type: 'boolean',
-                allOf: [
-                  {
-                    enum: [true],
-                  },
-                ],
-              },
+              alternateEmail: { ...emailProperty },
+              alternateTelephone: { ...telephoneProperty },
             },
             required: ['alternateFirstName', 'alternateLastName', 'alternateEmail', 'alternateTelephone'],
           },
@@ -295,12 +229,14 @@ export const dataSchema: JsonSchema7 = {
             properties: {
               addressLine1: {
                 type: 'string',
+                minLength: 1,
               },
               addressLine2: {
                 type: 'string',
               },
               city: {
                 type: 'string',
+                minLength: 1,
               },
               provinceState: {
                 type: 'string',
@@ -312,6 +248,7 @@ export const dataSchema: JsonSchema7 = {
               },
               postalCodeZip: {
                 type: 'string',
+                minLength: 1,
               },
             },
             required: ['addressLine1', 'city', 'provinceState', 'country', 'postalCodeZip'],
@@ -319,23 +256,20 @@ export const dataSchema: JsonSchema7 = {
         },
         fillingMailingAddress: {
           type: 'boolean',
-          allOf: [
-            {
-              enum: [true],
-            },
-          ],
         },
         applicantPhysicalAddress: {
           type: 'object',
           properties: {
             addressLine1: {
               type: 'string',
+              minLength: 1,
             },
             addressLine2: {
               type: 'string',
             },
             city: {
               type: 'string',
+              minLength: 1,
             },
             provinceState: {
               type: 'string',
@@ -348,18 +282,20 @@ export const dataSchema: JsonSchema7 = {
             },
             postalCodeZip: {
               type: 'string',
+              minLength: 6,
             },
           },
           required: ['addressLine1', 'city', 'provinceState', 'country', 'postalCodeZip'],
         },
       },
-      required: ['firstName', 'lastName', 'email', 'telephone'],
+      required: ['firstName', 'lastName', 'email', 'telephone', 'applicantPhysicalAddress'],
     },
     otherPartyDisputeDetails: {
       type: 'object',
       properties: {
         otherPartyPrimaryFirstName: {
           type: 'string',
+          minLength: 1,
         },
         otherPartyPrimaryLastName: {
           type: 'string',
@@ -367,16 +303,8 @@ export const dataSchema: JsonSchema7 = {
         otherPartyPrimaryCondoCorporationName: {
           type: 'string',
         },
-        otherPartyPrimaryEmail: {
-          type: 'string',
-        },
-        otherPartyPrimaryTelephone: {
-          type: 'string',
-          pattern: '^[+\\-0-9]+$',
-          errorMessage: {
-            pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
-          },
-        },
+        otherPartyPrimaryEmail: { ...emailProperty },
+        otherPartyPrimaryTelephone: { ...telephoneProperty },
 
         additionalRespondents: {
           type: 'array',
@@ -385,6 +313,7 @@ export const dataSchema: JsonSchema7 = {
             properties: {
               respondentFirstName: {
                 type: 'string',
+                minLength: 1,
               },
               respondentLastName: {
                 type: 'string',
@@ -392,20 +321,8 @@ export const dataSchema: JsonSchema7 = {
               respondentCondoCorpName: {
                 type: 'string',
               },
-              respondentEmail: {
-                type: 'string',
-                pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-                errorMessage: {
-                  pattern: 'Email is in a incorrect format',
-                },
-              },
-              respondentTelephone: {
-                type: 'string',
-                pattern: '^[+\\-0-9]+$',
-                errorMessage: {
-                  pattern: 'Telephone can only contain digits, hyphens and/or plus symbol',
-                },
-              },
+              respondentEmail: { ...emailProperty },
+              respondentTelephone: { ...telephoneProperty },
             },
             required: ['respondentFirstName'],
           },
@@ -438,7 +355,6 @@ export const dataSchema: JsonSchema7 = {
           type: 'string',
         },
       },
-      required: [],
     },
     whenDidIssueHappen: {
       type: 'object',
@@ -459,30 +375,45 @@ export const dataSchema: JsonSchema7 = {
       properties: {
         disputeDescription: {
           type: 'string',
+          minLength: 1,
+          maxLength: 5000,
+          errorMessage: {
+            maxLength: 'Dispute description must be 5000 characters or less',
+          },
         },
         resultOfApplication: {
           type: 'string',
+          minLength: 1,
+          maxLength: 2000,
+          errorMessage: {
+            maxLength: 'Desired outcome must be 2000 characters or less',
+          },
         },
       },
       required: ['disputeDescription', 'resultOfApplication'],
-    },
-    addSupportingDocuments: {
-      type: 'string',
-      enum: ['Yes, I would like to add optional supporting documents', 'No, not right now'],
     },
   },
   allOf: [
     {
       if: {
+        type: 'object',
         properties: {
           fillingApplicationOnbehalf: {
+            type: 'string',
             enum: ['Yes - lawyer', 'Yes - I have a personal representative'],
           },
         },
         required: ['fillingApplicationOnbehalf'],
       },
       then: {
-        required: ['representativeContactInformation', 'representatitiveMailAddress'],
+        type: 'object',
+        properties: {
+          representativeContactInformation: {
+            type: 'object',
+            required: ['primaryFirstName', 'primaryLastName', 'primaryEmail', 'primaryPhone'],
+          },
+        },
+        required: ['representativeContactInformation'],
       },
     },
   ],
@@ -492,6 +423,6 @@ export const dataSchema: JsonSchema7 = {
     'describeDispute',
     'disputeAlreadyTakenToCourt',
     'fillingApplicationOnbehalf',
-    'addSupportingDocuments',
+    'applicantContactDetails',
   ],
 };

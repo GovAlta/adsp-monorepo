@@ -28,7 +28,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
   const toAppOverviewLabel = props.categoryProps.uischema.options?.toAppOverviewLabel ?? 'Back to application overview';
   const submissionLabel = props.categoryProps.uischema.options?.submissionLabel ?? 'Next';
-  const hideSummary = props.categoryProps.uischema.options?.hideSummary;
+  const hideSummary = props.categoryProps.uischema.options?.hideSummary as boolean;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -62,7 +62,10 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   };
 
   const handleSave = () => {
-    if (!saveForm || lastSavedDataRef.current === data) {
+    // Ignore if we have the summary page hidden and are on the last step to allow the save form event handler
+    // to fire to allow the consuming app to handle what actions needs to be done
+    // as it will cause the step/page to not navigate anywhere if we dont.
+    if (!saveForm || (lastSavedDataRef.current === data && hideSummary === true && currentStep !== totalSteps)) {
       return;
     }
     lastSavedDataRef.current = data;
