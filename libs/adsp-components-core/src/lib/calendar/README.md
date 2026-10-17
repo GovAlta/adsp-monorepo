@@ -77,4 +77,4 @@ interface CalendarHoliday {
 
 ## Limitations
 
-The Calendar Service cannot query events that overlap a range, so the client retrieves a calendar's events ordered by start and filters them. It stops once events start after the range end, but it still reads every earlier event, which can be slow for calendars with a long history.
+The client asks the Calendar Service for events using the `from` and `to` query parameters, which the service limits to a range of 366 days. A service that ignores those parameters returns every event in pages, which the client follows and filters, so it can be slow for calendars with a long history.

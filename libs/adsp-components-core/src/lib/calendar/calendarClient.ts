@@ -55,11 +55,11 @@ export class CalendarClient implements ICalendarClient {
     return response.json();
   }
 
-  // Returns false from onPage to stop paging early.
+  // Pages through the results; a response without a next cursor is the last page.
   private async forEachPage<T>(
     path: string,
     query: Record<string, string>,
-    onPage: (results: T[]) => boolean | void,
+    onPage: (results: T[]) => void,
   ): Promise<void> {
     let after: string | undefined;
     do {
@@ -68,9 +68,7 @@ export class CalendarClient implements ICalendarClient {
         top: `${this.pageSize}`,
         ...(after ? { after } : {}),
       });
-      if (onPage(results) === false) {
-        return;
-      }
+      onPage(results);
       after = page?.next;
     } while (after);
   }
@@ -78,24 +76,17 @@ export class CalendarClient implements ICalendarClient {
   private async getEvents(calendar: string, range: DateRange): Promise<CalendarEvent[]> {
     const events: CalendarEvent[] = [];
 
-    // The service has no overlap query: startsAfter/endsBefore would drop events crossing the range boundaries.
-    // Retrieve all events ordered by start, then filter; ordering allows stopping once starts pass the range end.
+    // The service returns events overlapping from/to inclusively; filter again for the exclusive range end.
+    // A service that ignores from/to responds with pages of every event, which the filter and paging also handle.
     await this.forEachPage<CalendarServiceEvent>(
       `/calendars/${encodeURIComponent(calendar)}/events`,
       {
-        criteria: JSON.stringify({ orderBy: 'start' }),
+        from: range.start.toISOString(),
+        to: range.end.toISOString(),
         ...(this.tenant ? { tenant: this.tenant } : {}),
       },
       (results) => {
-        for (const result of results) {
-          const event = mapEvent(result);
-          if (event.start.getTime() >= range.end.getTime()) {
-            return false;
-          }
-          if (isEventInRange(event, range)) {
-            events.push(event);
-          }
-        }
+        events.push(...results.map(mapEvent).filter((event) => isEventInRange(event, range)));
       },
     );
 

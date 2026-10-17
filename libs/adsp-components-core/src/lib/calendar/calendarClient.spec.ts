@@ -126,7 +126,7 @@ describe('CalendarClient', () => {
     expect(result).toEqual({ events: [], holidays: [] });
   });
 
-  it('includes boundary-crossing events found on later pages and stops once events start after the range', async () => {
+  it('includes boundary-crossing events found on later pages', async () => {
     const fetchFn = mockFetch((url) => {
       if (!url.pathname.endsWith('/events')) {
         return { results: [] };
@@ -141,9 +141,7 @@ describe('CalendarClient', () => {
             page: { next: 'p3' },
           };
         case 'p3':
-          return { results: [serviceEvent(4, '2026-06-05T00:00:00Z', null)], page: { next: 'p4' } };
-        case 'p4':
-          throw new Error('Page after the range should not be requested.');
+          return { results: [serviceEvent(4, '2026-06-05T00:00:00Z', null)], page: {} };
         default:
           return {
             results: [serviceEvent(1, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z')],
@@ -221,15 +219,16 @@ describe('CalendarClient', () => {
       ).toEqual([1, 2]);
     });
 
-    it('stops retrieving pages once events start after the range', async () => {
+    it('retrieves only the events within the range from the service in a single request', async () => {
       const fetchFn = mockFetch((url) =>
         url.pathname.endsWith('/events')
-          ? { results: [serviceEvent(1, '2026-07-01T00:00:00Z', null)], page: { next: 'more' } }
+          ? { results: [serviceEvent(1, '2026-05-10T00:00:00Z', null)] }
           : { results: [] },
       );
 
-      await createClient(fetchFn).getCalendarEvents('my-cal', range);
+      const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
 
+      expect(result.events.map((e) => e.id)).toEqual([1]);
       expect(fetchFn).toHaveBeenCalledTimes(2);
     });
   });
@@ -250,7 +249,9 @@ describe('CalendarClient', () => {
       expect(dates!.searchParams.get('top')).toBe('100');
 
       const events = urls.find((u) => u.pathname === '/calendar/v1/calendars/my-cal/events');
-      expect(JSON.parse(events!.searchParams.get('criteria')!)).toEqual({ orderBy: 'start' });
+      expect(events!.searchParams.get('from')).toBe('2026-05-01T06:00:00.000Z');
+      expect(events!.searchParams.get('to')).toBe('2026-06-01T06:00:00.000Z');
+      expect(events!.searchParams.has('criteria')).toBe(false);
     });
 
     it('queries a multi-month range using the first and last Alberta day', async () => {
