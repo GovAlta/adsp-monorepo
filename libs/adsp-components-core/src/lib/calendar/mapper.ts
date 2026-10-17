@@ -57,10 +57,11 @@ function fromDateId(id: number): Date {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
-export function getDateIdRange({ start, end }: DateRange): { min: number; max: number } {
-  const min = toDateId(start);
+export function getDateIdRange({ start, end }: DateRange): { min?: number; max?: number } {
+  const min = start ? toDateId(start) : undefined;
   // The range end is exclusive, so the last included day is the one containing the instant before it.
-  const max = Math.max(min, toDateId(new Date(end.getTime() - 1)));
+  const lastDay = end ? toDateId(new Date(end.getTime() - 1)) : undefined;
+  const max = lastDay !== undefined && min !== undefined ? Math.max(min, lastDay) : lastDay;
   return { min, max };
 }
 
@@ -86,12 +87,12 @@ export function mapHoliday(date: CalendarServiceDate): CalendarHoliday {
   };
 }
 
-/** Events overlap the range if they are active at any point in (start, end); events without a duration are points. */
+/** Events overlap the range if they are active at any point in (start, end); a missing start or end is unbounded. */
 export function isEventInRange(event: CalendarEvent, range: DateRange): boolean {
   const start = event.start.getTime();
   const end = event.end?.getTime();
+  const rangeStart = range.start?.getTime() ?? -Infinity;
+  const rangeEnd = range.end?.getTime() ?? Infinity;
 
-  return end == null || end <= start
-    ? start >= range.start.getTime() && start < range.end.getTime()
-    : start < range.end.getTime() && end > range.start.getTime();
+  return end == null || end <= start ? start >= rangeStart && start < rangeEnd : start < rangeEnd && end > rangeStart;
 }

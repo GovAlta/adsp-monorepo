@@ -18,8 +18,8 @@ export function useCalendarEvents(
   const [error, setError] = useState<Error | null>(null);
 
   // Date objects change identity on every render, so depend on their time values instead.
-  const start = range.start.getTime();
-  const end = range.end.getTime();
+  const start = range.start?.getTime();
+  const end = range.end?.getTime();
 
   useEffect(() => {
     let current = true;
@@ -27,7 +27,10 @@ export function useCalendarEvents(
     setError(null);
 
     client
-      .getCalendarEvents(calendar, { start: new Date(start), end: new Date(end) })
+      .getCalendarEvents(calendar, {
+        start: start === undefined ? undefined : new Date(start),
+        end: end === undefined ? undefined : new Date(end),
+      })
       .then((result) => {
         if (current) {
           setCalendarEvents(result);

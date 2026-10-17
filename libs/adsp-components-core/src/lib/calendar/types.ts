@@ -1,7 +1,7 @@
 export interface DateRange {
-  start: Date;
+  start?: Date;
   /** Exclusive end of the range. */
-  end: Date;
+  end?: Date;
 }
 
 export interface CalendarEvent {

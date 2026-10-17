@@ -81,8 +81,8 @@ export class CalendarClient implements ICalendarClient {
     await this.forEachPage<CalendarServiceEvent>(
       `/calendars/${encodeURIComponent(calendar)}/events`,
       {
-        from: range.start.toISOString(),
-        to: range.end.toISOString(),
+        ...(range.start ? { from: range.start.toISOString() } : {}),
+        ...(range.end ? { to: range.end.toISOString() } : {}),
         ...(this.tenant ? { tenant: this.tenant } : {}),
       },
       (results) => {
