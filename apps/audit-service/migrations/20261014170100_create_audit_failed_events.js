@@ -11,7 +11,8 @@ exports.up = async function (knex) {
     table.integer('attempts').notNullable();
     table.timestamp('failed_at', { useTz: true }).notNullable();
     table.text('status').notNullable();
-    table.uuid('replayed_as').references('id').inTable('audit_events');
+    // Cascade so the retention job can delete a replayed audit event; unreplayed failures have no event to delete.
+    table.uuid('replayed_as').references('id').inTable('audit_events').onDelete('CASCADE');
   });
 
   // Partial index: the alert's "any open rows?" query only ever looks at open rows.
