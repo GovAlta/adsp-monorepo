@@ -9,8 +9,9 @@ import {
   CalendarRepository,
   CalendarEntity,
   CalendarEventEntity,
+  getRecurrenceEndDate,
 } from '../calendar';
-import { AttendeeRecord, DateRecord, EventRecord } from './types';
+import { AttendeeRecord, DateRecord, EventRecord, ExclusionRecord } from './types';
 import { fromDateAndTimeIds, toDateId, toTimeId } from '../utils';
 
 export class PostgresCalendarRepository implements CalendarRepository {
@@ -18,7 +19,8 @@ export class PostgresCalendarRepository implements CalendarRepository {
 
   private applyEventCriteria(
     query: Knex.QueryBuilder<EventRecord, EventRecord[]>,
-    criteria?: CalendarEventCriteria
+    criteria?: CalendarEventCriteria,
+    skipTimeCriteriaForRecurring = false,
   ): Knex.QueryBuilder<EventRecord, EventRecord[]> {
     if (!criteria) {
       return query;
@@ -40,51 +42,17 @@ export class PostgresCalendarRepository implements CalendarRepository {
       query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
     }
 
-    if (criteria.startsAfter) {
-      const startsAfterDate = toDateId(criteria.startsAfter);
-      const startsAfterTime = toTimeId(criteria.startsAfter);
-
-      query = query.andWhere((query) => {
-        query.where('e.start_date', '>', startsAfterDate).orWhere((q) => {
-          q.where('e.start_date', '=', startsAfterDate).andWhere('e.start_time', '>=', startsAfterTime);
+    if (criteria.startsAfter || criteria.endsBefore || criteria.activeOn) {
+      if (skipTimeCriteriaForRecurring) {
+        // Time criteria are applied to the expanded occurrences of recurring events instead.
+        query = query.andWhere((query) => {
+          query.whereNotNull('e.recurrence').orWhere((query) => {
+            this.applyTimeCriteria(query, criteria);
+          });
         });
-      });
-    }
-
-    if (criteria.endsBefore) {
-      const endsBeforeDate = toDateId(criteria.endsBefore);
-      const endsBeforeTime = toTimeId(criteria.endsBefore);
-
-      query = query.andWhere((query) => {
-        query.where('e.end_date', '<', endsBeforeDate).orWhere((q) => {
-          q.where('e.end_date', '=', endsBeforeDate).andWhere('e.end_time', '<=', endsBeforeTime);
-        });
-      });
-    }
-
-    if (criteria.activeOn) {
-      const activeOnDate = toDateId(criteria.activeOn);
-      const activeOnTime = toTimeId(criteria.activeOn);
-
-      query = query.andWhere((query) =>
-        query
-          .where('e.start_date', '<', activeOnDate)
-          .orWhere((query) =>
-            query
-              .where('e.start_date', '=', activeOnDate)
-              .andWhere((query) => query.where('e.start_time', '<=', activeOnTime).orWhere('e.is_all_day', true))
-          )
-      );
-      query = query.andWhere((query) =>
-        query
-          .andWhere('e.end_date', '>', activeOnDate)
-          .orWhere((query) =>
-            query
-              .where('e.end_date', '=', activeOnDate)
-              .andWhere((query) => query.where('e.end_date', '>=', activeOnTime).orWhere('e.is_all_day', true))
-          )
-          .orWhere((query) => query.whereNull('e.end_date'))
-      );
+      } else {
+        this.applyTimeCriteria(query, criteria);
+      }
     }
 
     if (criteria.attendeeCriteria) {
@@ -107,6 +75,74 @@ export class PostgresCalendarRepository implements CalendarRepository {
     }
 
     return query;
+  }
+
+  private applyTimeCriteria(query: Knex.QueryBuilder, criteria: CalendarEventCriteria): void {
+    if (criteria.startsAfter) {
+      const startsAfterDate = toDateId(criteria.startsAfter);
+      const startsAfterTime = toTimeId(criteria.startsAfter);
+
+      query.andWhere((query) => {
+        query.where('e.start_date', '>', startsAfterDate).orWhere((q) => {
+          q.where('e.start_date', '=', startsAfterDate).andWhere('e.start_time', '>=', startsAfterTime);
+        });
+      });
+    }
+
+    if (criteria.endsBefore) {
+      const endsBeforeDate = toDateId(criteria.endsBefore);
+      const endsBeforeTime = toTimeId(criteria.endsBefore);
+
+      query.andWhere((query) => {
+        query.where('e.end_date', '<', endsBeforeDate).orWhere((q) => {
+          q.where('e.end_date', '=', endsBeforeDate).andWhere('e.end_time', '<=', endsBeforeTime);
+        });
+      });
+    }
+
+    if (criteria.activeOn) {
+      const activeOnDate = toDateId(criteria.activeOn);
+      const activeOnTime = toTimeId(criteria.activeOn);
+
+      query.andWhere((query) =>
+        query
+          .where('e.start_date', '<', activeOnDate)
+          .orWhere((query) =>
+            query
+              .where('e.start_date', '=', activeOnDate)
+              .andWhere((query) => query.where('e.start_time', '<=', activeOnTime).orWhere('e.is_all_day', true)),
+          ),
+      );
+      query.andWhere((query) =>
+        query
+          .andWhere('e.end_date', '>', activeOnDate)
+          .orWhere((query) =>
+            query
+              .where('e.end_date', '=', activeOnDate)
+              .andWhere((query) => query.where('e.end_date', '>=', activeOnTime).orWhere('e.is_all_day', true)),
+          )
+          .orWhere((query) => query.whereNull('e.end_date')),
+      );
+    }
+  }
+
+  private async loadExclusions(calendar: CalendarEntity, entities: CalendarEventEntity[]): Promise<void> {
+    const recurring = entities.filter((entity) => entity?.recurrence);
+    if (recurring.length < 1) {
+      return;
+    }
+
+    const rows = await this.knex<ExclusionRecord>('calendar_event_exclusions')
+      .where('tenant', '=', calendar.tenantId.toString())
+      .whereIn(
+        'event_id',
+        recurring.map((entity) => entity.id),
+      )
+      .orderBy('occurrence_date', 'asc');
+
+    for (const entity of recurring) {
+      entity.exclusions = rows.filter((row) => row.event_id === entity.id).map((row) => row.occurrence_date);
+    }
   }
 
   private mapDateRecord(record: DateRecord): CalendarDate {
@@ -136,6 +172,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
           isAllDay: record.is_all_day,
           start: fromDateAndTimeIds(record.start_date, record.start_time),
           end: fromDateAndTimeIds(record.end_date, record.end_time),
+          recurrence: record.recurrence || null,
         })
       : null;
   }
@@ -202,7 +239,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
     calendar: CalendarEntity,
     top: number,
     after?: string,
-    criteria?: CalendarEventCriteria
+    criteria?: CalendarEventCriteria,
   ): Promise<Results<CalendarEventEntity>> {
     const skip = decodeAfter(after);
     // to determine whether there is next page, we need to query one more.
@@ -225,9 +262,11 @@ export class PostgresCalendarRepository implements CalendarRepository {
     }
 
     const rows = await query;
+    const results = rows.map((r) => this.mapEventRecord(calendar, r)).slice(0, top);
+    await this.loadExclusions(calendar, results);
 
     return {
-      results: rows.map((r) => this.mapEventRecord(calendar, r)).slice(0, top),
+      results,
       page: {
         after,
         next: encodeNext(rows.length, topChecked, skip - 1),
@@ -240,7 +279,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
     calendar: CalendarEntity,
     from: DateTime,
     to: DateTime,
-    criteria?: CalendarEventCriteria
+    criteria?: CalendarEventCriteria,
   ): Promise<CalendarEventEntity[]> {
     const fromDate = toDateId(from);
     const fromTime = toTimeId(from);
@@ -253,7 +292,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
       .where('e.tenant', '=', calendar.tenantId.toString())
       .andWhere('e.calendar', '=', calendar.name);
 
-    query = this.applyEventCriteria(query, criteria);
+    query = this.applyEventCriteria(query, criteria, true);
 
     query = query.andWhere((query) => {
       query.where('e.start_date', '<', toDate).orWhere((q) => {
@@ -263,20 +302,32 @@ export class PostgresCalendarRepository implements CalendarRepository {
       });
     });
 
+    // Recurring events are candidates until their last occurrence; expansion then filters each occurrence.
     query = query.andWhere((query) => {
       query
-        .whereNull('e.end_date')
-        .orWhere('e.end_date', '>', fromDate)
+        .where((q) => {
+          q.whereNull('e.recurrence').andWhere((q) => {
+            q.whereNull('e.end_date')
+              .orWhere('e.end_date', '>', fromDate)
+              .orWhere((q) => {
+                q.where('e.end_date', '=', fromDate).andWhere((q) => {
+                  q.where('e.end_time', '>=', fromTime).orWhere('e.is_all_day', true);
+                });
+              });
+          });
+        })
         .orWhere((q) => {
-          q.where('e.end_date', '=', fromDate).andWhere((q) => {
-            q.where('e.end_time', '>=', fromTime).orWhere('e.is_all_day', true);
+          q.whereNotNull('e.recurrence').andWhere((q) => {
+            q.whereNull('e.recurrence_end_date').orWhere('e.recurrence_end_date', '>=', fromDate);
           });
         });
     });
 
     const rows = await query.orderBy('e.start_date', 'asc').orderBy('e.start_time', 'asc').orderBy('e.id', 'asc');
+    const results = rows.map((r) => this.mapEventRecord(calendar, r));
+    await this.loadExclusions(calendar, results);
 
-    return rows.map((r) => this.mapEventRecord(calendar, r));
+    return results;
   }
 
   async getEventAttendees(event: CalendarEventEntity): Promise<Attendee[]> {
@@ -298,7 +349,10 @@ export class PostgresCalendarRepository implements CalendarRepository {
       calendar: calendar.name,
     });
 
-    return this.mapEventRecord(calendar, record);
+    const result = this.mapEventRecord(calendar, record);
+    await this.loadExclusions(calendar, [result]);
+
+    return result;
   }
 
   async save(entity: CalendarEventEntity): Promise<CalendarEventEntity> {
@@ -319,15 +373,24 @@ export class PostgresCalendarRepository implements CalendarRepository {
           start_time: toTimeId(entity.start),
           end_date: toDateId(entity.end),
           end_time: toTimeId(entity.end),
+          recurrence: entity.recurrence || null,
+          recurrence_end_date: getRecurrenceEndDate(entity),
         })
         .onConflict(['tenant', 'id'])
         .merge()
         .returning('*');
 
+      if (!entity.recurrence && entity.exclusions?.length) {
+        await ts<ExclusionRecord>('calendar_event_exclusions').where({ tenant, event_id: entity.id }).delete();
+      }
+
       return row;
     });
 
-    return this.mapEventRecord(entity.calendar, record);
+    const result = this.mapEventRecord(entity.calendar, record);
+    await this.loadExclusions(entity.calendar, [result]);
+
+    return result;
   }
 
   async saveAttendee(event: CalendarEventEntity, attendee: Attendee): Promise<Attendee> {
@@ -349,6 +412,20 @@ export class PostgresCalendarRepository implements CalendarRepository {
     });
 
     return this.mapAttendeeRecord(record);
+  }
+
+  async saveExclusion(event: CalendarEventEntity, occurrenceDate: number): Promise<boolean> {
+    const rows = await this.knex<ExclusionRecord>('calendar_event_exclusions')
+      .insert({
+        tenant: event.calendar.tenantId.toString(),
+        event_id: event.id,
+        occurrence_date: occurrenceDate,
+      })
+      .onConflict(['tenant', 'event_id', 'occurrence_date'])
+      .ignore()
+      .returning('event_id');
+
+    return rows.length > 0;
   }
 
   async delete(entity: CalendarEventEntity): Promise<boolean> {

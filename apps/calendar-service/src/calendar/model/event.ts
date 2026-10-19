@@ -1,9 +1,27 @@
 import { UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, New, Update } from '@core-services/core-common';
+import { InvalidOperationError, New, NotFoundError, Update } from '@core-services/core-common';
 import { DateTime } from 'luxon';
+import { toDateId } from '../../utils';
 import { CalendarEntity } from './calendar';
 import { CalendarRepository } from '../repository';
-import { Attendee, CalendarEvent } from '../types';
+import {
+  expandOccurrences,
+  findOccurrence,
+  normalizeRecurrence,
+  RecurrenceInstance,
+  toRecurrenceId,
+} from '../recurrence';
+import { Attendee, CalendarEvent, EventRecurrence } from '../types';
+
+export interface CalendarEventOccurrence extends RecurrenceInstance {
+  event: CalendarEventEntity;
+}
+
+export type CalendarEventInstance = CalendarEventEntity | CalendarEventOccurrence;
+
+export function isEventOccurrence(value: CalendarEventInstance): value is CalendarEventOccurrence {
+  return 'recurrenceId' in value;
+}
 
 export class CalendarEventEntity implements CalendarEvent {
   id: number;
@@ -15,12 +33,15 @@ export class CalendarEventEntity implements CalendarEvent {
   end?: DateTime;
   isPublic: boolean;
   isAllDay: boolean;
+  recurrence?: EventRecurrence;
+  // Local dates (yyyyMMdd) of cancelled occurrences.
+  exclusions: number[] = [];
   attendees: Attendee[];
 
   constructor(
     private repository: CalendarRepository,
     public calendar: CalendarEntity,
-    event: CalendarEvent | New<CalendarEvent>
+    event: CalendarEvent | New<CalendarEvent>,
   ) {
     this.recordId = event.recordId;
     this.context = event.context;
@@ -34,10 +55,12 @@ export class CalendarEventEntity implements CalendarEvent {
     const record = event as CalendarEvent;
     if (record.id) {
       this.id = record.id;
+      this.recurrence = event.recurrence || null;
     } else {
       if (this.end && this.end.valueOf() < this.start.valueOf()) {
         throw new InvalidOperationError('End of event must be after start of event.');
       }
+      this.recurrence = event.recurrence ? normalizeRecurrence(this.start, event.recurrence) : null;
     }
   }
 
@@ -74,11 +97,51 @@ export class CalendarEventEntity implements CalendarEvent {
       this.end = update.end;
     }
 
+    if ('recurrence' in update) {
+      this.recurrence = update.recurrence || null;
+    }
+
     if (this.end && this.end.valueOf() < this.start.valueOf()) {
       throw new InvalidOperationError('End of event must be after start of event.');
     }
 
+    // Re-validate against the (possibly changed) start, e.g. weekly days must include the start day.
+    if (this.recurrence) {
+      this.recurrence = normalizeRecurrence(this.start, this.recurrence);
+    }
+
     return this.repository.save(this);
+  }
+
+  getOccurrences(from: DateTime, to: DateTime): CalendarEventOccurrence[] {
+    return expandOccurrences(this, from, to).map((instance) => ({ ...instance, event: this }));
+  }
+
+  getExcludedRecurrenceIds(): DateTime[] {
+    return this.exclusions.map((occurrenceDate) => toRecurrenceId(this.start, occurrenceDate));
+  }
+
+  async excludeOccurrence(user: User, occurrence: DateTime): Promise<{ deleted: boolean; recurrenceId: DateTime }> {
+    if (!this.calendar.canUpdateEvent(user)) {
+      throw new UnauthorizedUserError('cancel calendar event occurrence', user);
+    }
+
+    if (!this.recurrence) {
+      throw new InvalidOperationError('Calendar event is not recurring.');
+    }
+
+    const recurrenceId = findOccurrence(this, occurrence);
+    if (!recurrenceId) {
+      throw new NotFoundError('Calendar event occurrence', occurrence.toISODate());
+    }
+
+    const occurrenceDate = toDateId(recurrenceId);
+    const deleted = await this.repository.saveExclusion(this, occurrenceDate);
+    if (deleted) {
+      this.exclusions = [...this.exclusions, occurrenceDate].sort((a, b) => a - b);
+    }
+
+    return { deleted, recurrenceId };
   }
 
   delete(user: User): Promise<boolean> {

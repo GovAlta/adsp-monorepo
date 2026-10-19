@@ -1,4 +1,4 @@
-import { Attendee } from '../calendar';
+import { Attendee, EventRecurrence } from '../calendar';
 
 export interface DateRecord {
   id: number;
@@ -16,7 +16,7 @@ export interface EventRecord {
   calendar: string;
   id: number;
   record_id: string;
-  context: Record<string, boolean | string | number>
+  context: Record<string, boolean | string | number>;
   name: string;
   description: string;
   is_public: boolean;
@@ -25,6 +25,14 @@ export interface EventRecord {
   start_time: number;
   end_date: number;
   end_time: number;
+  recurrence: EventRecurrence;
+  recurrence_end_date: number;
+}
+
+export interface ExclusionRecord {
+  tenant: string;
+  event_id: number;
+  occurrence_date: number;
 }
 
 export interface AttendeeRecord extends Attendee {

@@ -16,6 +16,7 @@ import {
   createCalendarEvent,
   createCalendarRouter,
   deleteCalendarEvent,
+  deleteCalendarEventOccurrence,
   deleteEventAttendee,
   exportCalendar,
   getCalendar,
@@ -67,6 +68,7 @@ describe('calendar router', () => {
     getEventAttendees: jest.fn(),
     save: jest.fn(),
     saveAttendee: jest.fn(),
+    saveExclusion: jest.fn(),
     delete: jest.fn(),
     deleteAttendee: jest.fn(),
   };
@@ -103,6 +105,17 @@ describe('calendar router', () => {
     isAllDay: false,
     start: DateTime.fromISO('2021-03-03T13:30:00-07:00'),
     end: DateTime.fromISO('2021-03-03T15:30:00-07:00'),
+  };
+
+  const recurringEvent: CalendarEvent = {
+    id: 42,
+    name: 'Team meeting',
+    description: 'Weekly team meeting',
+    isPublic: false,
+    isAllDay: false,
+    start: DateTime.fromISO('2026-09-29T10:00', { zone: calendarTimeZone }),
+    end: DateTime.fromISO('2026-09-29T11:00', { zone: calendarTimeZone }),
+    recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: ['TU'], end: { until: '2026-12-15' } },
   };
 
   beforeEach(() => {
@@ -351,7 +364,7 @@ describe('calendar router', () => {
         entity,
         10,
         undefined,
-        expect.objectContaining({ isPublic: true })
+        expect.objectContaining({ isPublic: true }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
     });
@@ -440,15 +453,54 @@ describe('calendar router', () => {
         entity,
         10,
         undefined,
-        expect.objectContaining({ isPublic: false })
+        expect.objectContaining({ isPublic: false }),
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsAfter.valueOf()).toBe(
-        DateTime.fromISO('2020-03-05T00:00:00', { zone: calendarTimeZone }).valueOf()
+        DateTime.fromISO('2020-03-05T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
-        DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf()
+        DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
+    });
+  });
+
+  describe('exportCalendar with recurring events', () => {
+    it('can export recurring event with repeating rule and exclusions', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const series = new CalendarEventEntity(repositoryMock, calendarEntity, recurringEvent);
+      series.exclusions = [20261013];
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEvents.mockResolvedValueOnce({ results: [series], page: {} });
+
+      const handler = exportCalendar(serviceId, directoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      const [exported] = res.send.mock.calls[0][0].events;
+      expect(exported.repeating).toEqual(
+        expect.objectContaining({ freq: 'WEEKLY', interval: 1, byDay: ['TU'], startOfWeek: 'MO' }),
+      );
+      // Compare local wall time and instant rather than a hard-coded offset, since the UTC offset of
+      // America/Edmonton after Nov 1, 2026 depends on the tzdata version in the runtime.
+      expect(exported.repeating.until.zoneName).toBe(calendarTimeZone);
+      expect(exported.repeating.until.toISO({ includeOffset: false })).toBe('2026-12-15T23:59:59.999');
+      expect(exported.repeating.until.valueOf()).toBe(
+        DateTime.fromISO('2026-12-15', { zone: calendarTimeZone }).endOf('day').valueOf(),
+      );
+      expect(exported.repeating.exclude.map((value) => value.toISO())).toEqual(['2026-10-13T10:00:00.000-06:00']);
     });
   });
 
@@ -505,7 +557,7 @@ describe('calendar router', () => {
         entity,
         10,
         undefined,
-        expect.objectContaining({ isPublic: true })
+        expect.objectContaining({ isPublic: true }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
@@ -544,7 +596,7 @@ describe('calendar router', () => {
             ...calendarEvent,
             id: index + 1,
             name: `test-${index + 1}`,
-          })
+          }),
       );
       const req = {
         user: {
@@ -576,13 +628,13 @@ describe('calendar router', () => {
         entity,
         expect.any(DateTime),
         expect.any(DateTime),
-        expect.objectContaining({ isPublic: false })
+        expect.objectContaining({ isPublic: false }),
       );
       expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][1].valueOf()).toBe(
-        DateTime.fromISO('2021-03-01T00:00:00-07:00').valueOf()
+        DateTime.fromISO('2021-03-01T00:00:00-07:00').valueOf(),
       );
       expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][2].valueOf()).toBe(
-        DateTime.fromISO('2021-03-31T23:59:59-06:00').valueOf()
+        DateTime.fromISO('2021-03-31T23:59:59-06:00').valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith({
         results: expect.arrayContaining([expect.objectContaining({ id: 11, name: 'test-11' })]),
@@ -626,13 +678,13 @@ describe('calendar router', () => {
         entity,
         expect.any(DateTime),
         expect.any(DateTime),
-        expect.objectContaining({ isPublic: false, recordId: 'record-1' })
+        expect.objectContaining({ isPublic: false, recordId: 'record-1' }),
       );
       expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][3].startsAfter.valueOf()).toBe(
-        DateTime.fromISO('2021-03-05T00:00:00', { zone: calendarTimeZone }).valueOf()
+        DateTime.fromISO('2021-03-05T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(repositoryMock.getCalendarEventsInRange.mock.calls[0][3].endsBefore.valueOf()).toBe(
-        DateTime.fromISO('2021-03-20T00:00:00', { zone: calendarTimeZone }).valueOf()
+        DateTime.fromISO('2021-03-20T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith({ results: [] });
     });
@@ -691,9 +743,100 @@ describe('calendar router', () => {
         entity,
         expect.any(DateTime),
         expect.any(DateTime),
-        { isPublic: true }
+        { isPublic: true },
       );
       expect(res.send).toHaveBeenCalledWith({ results: [] });
+    });
+
+    it('can expand recurring events in a date range', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const series = new CalendarEventEntity(repositoryMock, entity, recurringEvent);
+      series.exclusions = [20261013];
+      const single = new CalendarEventEntity(repositoryMock, entity, {
+        ...calendarEvent,
+        start: DateTime.fromISO('2026-10-15T09:00', { zone: calendarTimeZone }),
+        end: DateTime.fromISO('2026-10-15T10:00', { zone: calendarTimeZone }),
+      });
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {
+          from: '2026-10-01T00:00:00-06:00',
+          to: '2026-10-31T23:59:59-06:00',
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([series, single]);
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).not.toHaveBeenCalled();
+      const { results } = res.send.mock.calls[0][0];
+      expect(results.map((result) => result.start.toISO())).toEqual([
+        '2026-10-06T10:00:00.000-06:00',
+        '2026-10-15T09:00:00.000-06:00',
+        '2026-10-20T10:00:00.000-06:00',
+        '2026-10-27T10:00:00.000-06:00',
+      ]);
+      expect(results[0]).toEqual(
+        expect.objectContaining({
+          urn: 'urn:ads:platform:calendar-service:v1:/calendars/test/events/42/occurrences/2026-10-06',
+          id: 42,
+          name: 'Team meeting',
+          recurrence: recurringEvent.recurrence,
+        }),
+      );
+      expect(results[0].recurrenceId.toISO()).toBe('2026-10-06T10:00:00.000-06:00');
+      expect(results[0].end.toISO()).toBe('2026-10-06T11:00:00.000-06:00');
+      expect(results[0].recurrence).not.toHaveProperty('exclusions');
+      expect(results[1]).toEqual(
+        expect.objectContaining({ urn: 'urn:ads:platform:calendar-service:v1:/calendars/test/events/12', id: 12 }),
+      );
+      expect(results[1]).not.toHaveProperty('recurrenceId');
+      expect(results[1]).not.toHaveProperty('recurrence');
+    });
+
+    it('can load attendees once per recurring event in a date range', async () => {
+      const entity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const series = new CalendarEventEntity(repositoryMock, entity, recurringEvent);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-reader'],
+        },
+        params: { name: 'test' },
+        query: {
+          from: '2026-10-01T00:00:00-06:00',
+          to: '2026-10-31T23:59:59-06:00',
+          includeAttendees: 'true',
+        },
+        calendar: entity,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([series]);
+      repositoryMock.getEventAttendees.mockResolvedValueOnce([{ id: 1, name: 'Tester', email: 'tester@test.co' }]);
+
+      const handler = getCalendarEvents(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).not.toHaveBeenCalled();
+      const { results } = res.send.mock.calls[0][0];
+      expect(repositoryMock.getEventAttendees).toHaveBeenCalledTimes(1);
+      expect(results).toHaveLength(4);
+      expect(results.every((result) => result.attendees?.length === 1)).toBe(true);
     });
 
     it('can call next with invalid operation for partial range', async () => {
@@ -776,13 +919,13 @@ describe('calendar router', () => {
         entity,
         10,
         undefined,
-        expect.objectContaining({ isPublic: false })
+        expect.objectContaining({ isPublic: false }),
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsAfter.valueOf()).toBe(
-        DateTime.fromISO('2020-03-05T00:00:00', { zone: calendarTimeZone }).valueOf()
+        DateTime.fromISO('2020-03-05T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
-        DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf()
+        DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
@@ -866,6 +1009,31 @@ describe('calendar router', () => {
     it('update schema still validates supplied fields', async () => {
       const result = await validateBody(calendarEventUpdateBodySchema, { isPublic: 'not-a-boolean' });
       expect(result.isEmpty()).toBe(false);
+    });
+
+    it('create schema rejects recurrence that is not an object', async () => {
+      const result = await validateBody(calendarEventBodySchema, {
+        name: 'test',
+        start: '2026-09-29T10:00:00-06:00',
+        end: '2026-09-29T11:00:00-06:00',
+        recurrence: 'weekly',
+      });
+      expect(result.isEmpty()).toBe(false);
+    });
+
+    it('create schema passes with recurrence', async () => {
+      const result = await validateBody(calendarEventBodySchema, {
+        name: 'test',
+        start: '2026-09-29T10:00:00-06:00',
+        end: '2026-09-29T11:00:00-06:00',
+        recurrence: { frequency: 'weekly' },
+      });
+      expect(result.isEmpty()).toBe(true);
+    });
+
+    it('update schema allows null recurrence', async () => {
+      const result = await validateBody(calendarEventUpdateBodySchema, { recurrence: null });
+      expect(result.isEmpty()).toBe(true);
     });
   });
 
@@ -963,6 +1131,73 @@ describe('calendar router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('createCalendarEvent with recurrence', () => {
+    it('can create recurring event', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        body: {
+          name: 'Team meeting',
+          start: '2026-09-29T10:00:00-06:00',
+          end: '2026-09-29T11:00:00-06:00',
+          recurrence: { frequency: 'weekly', end: { until: '2026-12-15' } },
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const handler = createCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      const recurrence = { frequency: 'weekly', interval: 1, daysOfWeek: ['TU'], end: { until: '2026-12-15' } };
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ recurrence: { ...recurrence, exclusions: [] } }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'calendar-event-created',
+          payload: expect.objectContaining({ event: expect.objectContaining({ recurrence }) }),
+        }),
+      );
+    });
+
+    it('can call next with invalid operation for invalid recurrence', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        body: {
+          name: 'Team meeting',
+          start: '2026-09-29T10:00:00-06:00',
+          recurrence: { frequency: 'daily', daysOfWeek: ['TU'] },
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = createCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 
@@ -1138,12 +1373,10 @@ describe('calendar router', () => {
       const handler = updateCalendarEvent(apiId, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ name: calendarEvent.name, description: calendarEvent.description })
+        expect.objectContaining({ name: calendarEvent.name, description: calendarEvent.description }),
       );
       expect(res.send.mock.calls[0][0].start.valueOf()).toBe(calendarEvent.start.valueOf());
-      expect(res.send.mock.calls[0][0].end.valueOf()).toBe(
-        DateTime.fromISO('2021-03-03T16:30:00-07:00').valueOf()
-      );
+      expect(res.send.mock.calls[0][0].end.valueOf()).toBe(DateTime.fromISO('2021-03-03T16:30:00-07:00').valueOf());
     });
   });
 
@@ -1202,6 +1435,192 @@ describe('calendar router', () => {
       const handler = deleteCalendarEvent(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.delete).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('updateCalendarEvent with recurrence', () => {
+    it('can replace recurrence of event', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const entity = new CalendarEventEntity(repositoryMock, calendarEntity, recurringEvent);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        event: entity,
+        body: { recurrence: { frequency: 'weekly', daysOfWeek: ['TU'], end: { until: '2026-11-10' } } },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recurrence: {
+            frequency: 'weekly',
+            interval: 1,
+            daysOfWeek: ['TU'],
+            end: { until: '2026-11-10' },
+            exclusions: [],
+          },
+        }),
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'calendar-event-updated' }));
+    });
+
+    it('can remove recurrence of event', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const entity = new CalendarEventEntity(repositoryMock, calendarEntity, recurringEvent);
+      const req = {
+        user: {
+          tenantId,
+          roles: ['test-updater'],
+        },
+        params: { name: 'test' },
+        query: {},
+        calendar: calendarEntity,
+        event: entity,
+        body: { recurrence: null },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send.mock.calls[0][0]).not.toHaveProperty('recurrence');
+    });
+  });
+
+  describe('deleteCalendarEventOccurrence', () => {
+    const createRequest = (occurrence: string, roles = ['test-updater'], event: CalendarEvent = recurringEvent) => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const entity = new CalendarEventEntity(repositoryMock, calendarEntity, event);
+      return {
+        user: {
+          tenantId,
+          roles,
+        },
+        params: { name: 'test', id: `${event.id}`, occurrence },
+        query: {},
+        calendar: calendarEntity,
+        event: entity,
+      };
+    };
+
+    it('can create handler', () => {
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can cancel occurrence by date', async () => {
+      const req = createRequest('2026-10-13');
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.saveExclusion.mockResolvedValueOnce(true);
+
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.saveExclusion).toHaveBeenCalledWith(req.event, 20261013);
+      expect(res.send).toHaveBeenCalledWith({ deleted: true });
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'calendar-event-updated',
+          payload: expect.objectContaining({
+            update: { operation: 'exclude-occurrence', recurrenceId: '2026-10-13T10:00:00.000-06:00' },
+          }),
+        }),
+      );
+    });
+
+    it('can cancel occurrence by recurrence ID in another offset', async () => {
+      const req = createRequest('2026-11-03T17:00:00.000Z');
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.saveExclusion.mockResolvedValueOnce(true);
+
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.saveExclusion).toHaveBeenCalledWith(req.event, 20261103);
+      expect(res.send).toHaveBeenCalledWith({ deleted: true });
+    });
+
+    it('can return not deleted without signalling for already cancelled occurrence', async () => {
+      const req = createRequest('2026-10-13');
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.saveExclusion.mockResolvedValueOnce(false);
+
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith({ deleted: false });
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found for date that is not an occurrence', async () => {
+      const req = createRequest('2026-10-14');
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can call next with invalid operation for non-recurring event', async () => {
+      const req = createRequest('2021-03-03', ['test-updater'], calendarEvent);
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = createRequest('2026-10-13', ['test-reader']);
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.saveExclusion).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });

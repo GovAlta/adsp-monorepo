@@ -11,11 +11,13 @@ import { createValidationHandler, InvalidOperationError, NotFoundError } from '@
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query, Schema } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
+import type { ICalEventRepeatingFreq, ICalRepeatingOptions, ICalWeekday } from 'ical-generator';
+import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import { parseCalendarDateTime as parseServiceDateTime } from '../../utils';
 import { calendarEventCreated, calendarEventDeleted, calendarEventUpdated } from '../events';
-import { CalendarEntity, CalendarEventEntity } from '../model';
+import { CalendarEntity, CalendarEventEntity, CalendarEventOccurrence, isEventOccurrence } from '../model';
 import { CalendarRepository } from '../repository';
 import { Attendee, CalendarServiceConfiguration } from '../types';
 import { registerCalendarDefinitionRoutes } from './definition';
@@ -52,7 +54,35 @@ function mapCalendarEvent(apiId: AdspId, entity: CalendarEventEntity) {
     dto['attendees'] = entity.attendees.map(mapEventAttendee);
   }
 
+  if (entity.recurrence) {
+    dto['recurrence'] = { ...entity.recurrence, exclusions: entity.getExcludedRecurrenceIds() };
+  }
+
   return dto;
+}
+
+function mapCalendarEventOccurrence(apiId: AdspId, { event, recurrenceId, start, end }: CalendarEventOccurrence) {
+  return {
+    ...mapCalendarEvent(apiId, event),
+    urn: `${apiId}:/calendars/${event.calendar.name}/events/${event.id}/occurrences/${recurrenceId.toISODate()}`,
+    recurrenceId,
+    start,
+    end: end ?? null,
+    recurrence: event.recurrence,
+  };
+}
+
+function mapICalRepeating(event: CalendarEventEntity): ICalRepeatingOptions {
+  const { frequency, interval, daysOfWeek, end } = event.recurrence;
+  return {
+    freq: frequency.toUpperCase() as ICalEventRepeatingFreq,
+    interval,
+    byDay: daysOfWeek as ICalWeekday[],
+    count: end?.count,
+    until: end?.until ? DateTime.fromISO(end.until, { zone: TIME_ZONE }).endOf('day') : undefined,
+    exclude: event.getExcludedRecurrenceIds(),
+    startOfWeek: 'MO' as ICalWeekday,
+  };
 }
 
 function mapEventAttendee(attendee: Attendee) {
@@ -84,7 +114,7 @@ export function getCalendar(tenantService: TenantService): RequestHandler {
       }
 
       const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>(
-        tenantId
+        tenantId,
       );
 
       const calendar = calendars?.[name];
@@ -145,6 +175,7 @@ export const exportCalendar =
                   email: a.email,
                 }))
             : null,
+          ...(r.recurrence ? { repeating: mapICalRepeating(r) } : {}),
         })),
       });
 
@@ -194,20 +225,24 @@ export function getCalendarEvents(apiId: AdspId): RequestHandler {
 
         if (to.diff(from, 'days').days > MAX_EVENT_RANGE_DAYS) {
           throw new InvalidOperationError(
-            `Calendar event range retrieval supports a maximum range of ${MAX_EVENT_RANGE_DAYS} days.`
+            `Calendar event range retrieval supports a maximum range of ${MAX_EVENT_RANGE_DAYS} days.`,
           );
         }
 
         const results = await calendar.getEventsInRange(user, from, to, criteria);
 
         if (includeAttendees === 'true') {
-          for (const result of results) {
-            await result.loadAttendees(user);
+          // Occurrences share the attendees of their recurring event.
+          const events = new Set(results.map((result) => (isEventOccurrence(result) ? result.event : result)));
+          for (const event of events) {
+            await event.loadAttendees(user);
           }
         }
 
         res.send({
-          results: results.map((result) => mapCalendarEvent(apiId, result)),
+          results: results.map((result) =>
+            isEventOccurrence(result) ? mapCalendarEventOccurrence(apiId, result) : mapCalendarEvent(apiId, result),
+          ),
         });
         return;
       }
@@ -327,6 +362,30 @@ export const deleteCalendarEvent =
     }
   };
 
+export const deleteCalendarEventOccurrence =
+  (eventService: EventService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user;
+      const { occurrence } = req.params;
+      const event: CalendarEventEntity = req[EVENT_KEY];
+
+      const { deleted, recurrenceId } = await event.excludeOccurrence(
+        user,
+        parseServiceDateTime(occurrence, 'occurrence'),
+      );
+
+      res.send({ deleted });
+      if (deleted) {
+        eventService.send(
+          calendarEventUpdated(user, { operation: 'exclude-occurrence', recurrenceId: recurrenceId.toISO() }, event),
+        );
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export const getEventAttendees: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
@@ -420,6 +479,8 @@ export const calendarEventBodySchema: Schema = {
   isAllDay: { optional: true, isBoolean: true },
   recordId: { optional: { options: { nullable: true } }, isString: true },
   context: { optional: { options: { nullable: true } }, isObject: true },
+  // Recurrence rules are validated against the event start by the entity.
+  recurrence: { optional: { options: { nullable: true } }, isObject: true },
 };
 
 // Partial update: every mutable event property is optional, but supplied values are still validated.
@@ -432,6 +493,7 @@ export const calendarEventUpdateBodySchema: Schema = {
   isAllDay: { optional: true, isBoolean: true },
   recordId: { optional: { options: { nullable: true } }, isString: true },
   context: { optional: { options: { nullable: true } }, isObject: true },
+  recurrence: { optional: { options: { nullable: true } }, isObject: true },
 };
 
 export const createCalendarRouter = ({
@@ -451,18 +513,18 @@ export const createCalendarRouter = ({
   const validateNameHandler = createValidationHandler(param('name').isString().isLength({ min: 1, max: 50 }));
   const validateNameAndEventIdHandler = createValidationHandler(
     param('name').isString().isLength({ min: 1, max: 50 }),
-    param('id').isInt()
+    param('id').isInt(),
   );
   const validateNameEventIdAndAttendeeIdHandler = createValidationHandler(
     param('name').isString().isLength({ min: 1, max: 50 }),
     param('id').isInt(),
-    param('attendeeId').isInt()
+    param('attendeeId').isInt(),
   );
 
   const validateCalendarEventHandler = createValidationHandler(...checkSchema(calendarEventBodySchema, ['body']));
 
   const validateCalendarEventUpdateHandler = createValidationHandler(
-    ...checkSchema(calendarEventUpdateBodySchema, ['body'])
+    ...checkSchema(calendarEventUpdateBodySchema, ['body']),
   );
 
   const validateAttendeeHandler = createValidationHandler(
@@ -471,8 +533,8 @@ export const createCalendarRouter = ({
         name: { isString: true },
         email: { isEmail: true },
       },
-      ['body']
-    )
+      ['body'],
+    ),
   );
 
   registerCalendarDefinitionRoutes(router, {
@@ -485,14 +547,14 @@ export const createCalendarRouter = ({
     configurationService,
   });
   router.get('/calendars/:name', validateNameHandler, getCalendar(tenantService), (req, res) =>
-    res.send(mapCalendar(apiId, req[CALENDAR_KEY]))
+    res.send(mapCalendar(apiId, req[CALENDAR_KEY])),
   );
 
   router.get(
     '/calendars/:name/export',
     validateNameHandler,
     getCalendar(tenantService),
-    exportCalendar(serviceId, directory)
+    exportCalendar(serviceId, directory),
   );
 
   router.get(
@@ -502,17 +564,17 @@ export const createCalendarRouter = ({
       query('criteria').optional().isJSON(),
       query('includeAttendees').optional().isBoolean(),
       query('from').optional().isISO8601(),
-      query('to').optional().isISO8601()
+      query('to').optional().isISO8601(),
     ),
     getCalendar(tenantService),
-    getCalendarEvents(apiId)
+    getCalendarEvents(apiId),
   );
   router.post(
     '/calendars/:name/events',
     validateNameHandler,
     validateCalendarEventHandler,
     getCalendar(tenantService),
-    createCalendarEvent(apiId, eventService)
+    createCalendarEvent(apiId, eventService),
   );
 
   router.get(
@@ -521,7 +583,7 @@ export const createCalendarRouter = ({
     createValidationHandler(query('includeAttendees').optional().isBoolean()),
     getCalendar(tenantService),
     getCalendarEvent,
-    retrieveCalendarEvent(apiId)
+    retrieveCalendarEvent(apiId),
   );
   router.patch(
     '/calendars/:name/events/:id',
@@ -529,14 +591,23 @@ export const createCalendarRouter = ({
     validateCalendarEventUpdateHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    updateCalendarEvent(apiId, eventService)
+    updateCalendarEvent(apiId, eventService),
   );
   router.delete(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    deleteCalendarEvent(eventService)
+    deleteCalendarEvent(eventService),
+  );
+
+  router.delete(
+    '/calendars/:name/events/:id/occurrences/:occurrence',
+    validateNameAndEventIdHandler,
+    createValidationHandler(param('occurrence').isISO8601()),
+    getCalendar(tenantService),
+    getCalendarEvent,
+    deleteCalendarEventOccurrence(eventService),
   );
 
   router.get(
@@ -544,7 +615,7 @@ export const createCalendarRouter = ({
     validateNameAndEventIdHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    getEventAttendees
+    getEventAttendees,
   );
   router.post(
     '/calendars/:name/events/:id/attendees',
@@ -552,7 +623,7 @@ export const createCalendarRouter = ({
     validateAttendeeHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    addEventAttendee(eventService)
+    addEventAttendee(eventService),
   );
 
   router.get(
@@ -560,7 +631,7 @@ export const createCalendarRouter = ({
     validateNameEventIdAndAttendeeIdHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    getEventAttendee
+    getEventAttendee,
   );
   router.put(
     '/calendars/:name/events/:id/attendees/:attendeeId',
@@ -568,14 +639,14 @@ export const createCalendarRouter = ({
     validateAttendeeHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    setEventAttendee(eventService)
+    setEventAttendee(eventService),
   );
   router.delete(
     '/calendars/:name/events/:id/attendees/:attendeeId',
     validateNameEventIdAndAttendeeIdHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    deleteEventAttendee(eventService)
+    deleteEventAttendee(eventService),
   );
 
   return router;

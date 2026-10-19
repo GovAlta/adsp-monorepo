@@ -127,6 +127,10 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
     setLog([]);
   }, []);
 
+  const handleSaveAndContinueClick = useCallback(() => {
+    //stub handleSave event handler
+  }, []);
+
   return (
     <ServiceContainer>
       <GoabContainer
@@ -158,6 +162,9 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
           showChangeButtons={true}
           navigationTarget={navigationTarget}
           onNavigationChange={handleNavigationChange}
+          submit={{
+            saveForm: handleSaveAndContinueClick,
+          }}
         >
           <JsonForms
             ajv={ajv}
