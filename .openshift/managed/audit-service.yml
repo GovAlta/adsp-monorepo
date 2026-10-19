@@ -138,6 +138,8 @@ objects:
                     secretKeyRef:
                       key: database-tls
                       name: ${APP_NAME}-postgres
+                - name: DB_POOL_MAX
+                  value: '5'
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:

@@ -1,20 +1,13 @@
 /* eslint-disable no-undef */
 
-// Roles are created only when missing. Whether the deployed migration user may CREATE ROLE is an open
-// question (OSP-693); if not, a DBA creates the roles first and this migration only applies the grants.
+// Roles are cluster-wide and the database is shared with other services, so this migration does not create
+// them. A DBA creates audit_app and audit_retention first; the migration only applies grants on audit tables.
 exports.up = async function (knex) {
-  await knex.raw(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'audit_app') THEN
-        CREATE ROLE audit_app LOGIN;
-      END IF;
-      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'audit_retention') THEN
-        CREATE ROLE audit_retention LOGIN;
-      END IF;
-    END
-    $$;
-  `);
+  const { rows } = await knex.raw("SELECT rolname FROM pg_roles WHERE rolname IN ('audit_app', 'audit_retention')");
+  const missing = ['audit_app', 'audit_retention'].filter((role) => !rows.some((row) => row.rolname === role));
+  if (missing.length > 0) {
+    throw new Error(`Database roles must be created before running audit migrations: ${missing.join(', ')}.`);
+  }
 
   await knex.raw('GRANT INSERT, SELECT ON audit_events, audit_failed_events TO audit_app');
   await knex.raw('GRANT SELECT, DELETE ON audit_events TO audit_retention');
