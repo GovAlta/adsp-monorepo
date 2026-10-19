@@ -63,7 +63,7 @@ export const EventLog: FunctionComponent = () => {
   const onNext = () => {
     searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
   };
-  const hasSelectedEvent = Boolean(searchCriteria?.namespace && searchCriteria?.name);
+  const hasSelectedEvent = Boolean(searchCriteria?.namespace || searchCriteria?.name);
   const hasEntries = Boolean(entries?.length);
   const closeExportModal = () => {
     setExportOpen(false);
@@ -84,7 +84,7 @@ export const EventLog: FunctionComponent = () => {
     setExportOpen(true);
     setExportRowCount(0);
     try {
-      const fileName = `${searchCriteria.namespace}-${searchCriteria.name}`;
+      const fileName = [searchCriteria.namespace, searchCriteria.name].filter(Boolean).join('-');
       const count = await exportEventLogEntries(
         valueServiceApiUrl,
         token,
