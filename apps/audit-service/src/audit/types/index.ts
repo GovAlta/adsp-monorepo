@@ -6,3 +6,9 @@ export type {
   RejectedEvent,
   WriteEventsResponse,
 } from './events';
+export type {
+  FailedAuditEvent,
+  FailedEventReplayTransaction,
+  FailedEventRepository,
+  ReplayAuditRecord,
+} from './failed-events';

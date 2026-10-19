@@ -20,11 +20,16 @@ import {
   RetentionService,
   validateTenantContext,
   assertTenantContext,
+  createAuditMetrics,
+  FailedEventRepository,
+  FailedEventService,
 } from './audit';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
-export const initializeApp = async (): Promise<express.Application> => {
+export const initializeApp = async ({
+  failedEventRepository,
+}: { failedEventRepository?: FailedEventRepository } = {}): Promise<express.Application> => {
   const app = express();
 
   app.use(compression());
@@ -40,43 +45,53 @@ export const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantHandler, configurationService, healthCheck, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Audit service',
-        description: 'Tenant-scoped audit action catalogs and event ingestion.',
-        roles: [
-          {
-            role: AuditServiceRoles.Reader,
-            description: 'Read action catalogs and audit history within a tenant.',
-            inTenantAdmin: true,
-          },
-          {
-            role: AuditServiceRoles.Writer,
-            description: 'Write audit events. Assign to application service accounts.',
-          },
-          {
-            role: AuditServiceRoles.Admin,
-            description: 'Administer failed audit events and access protected actor identity.',
-          },
-        ],
-        configuration: {
-          useNamespace: true,
-          description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
-          schema: configurationSchema,
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    configurationService,
+    healthCheck,
+    traceHandler,
+    metricsHandler,
+    meterProvider,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Audit service',
+      description: 'Tenant-scoped audit action catalogs and event ingestion.',
+      roles: [
+        {
+          role: AuditServiceRoles.Reader,
+          description: 'Read action catalogs and audit history within a tenant.',
+          inTenantAdmin: true,
         },
-        configurationConverter: createAuditConfigurationConverter(logger),
-        combineConfiguration: combineAuditConfiguration,
-        enableConfigurationInvalidation: true,
-        useLongConfigurationCacheTTL: false,
-        events: [],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
+        {
+          role: AuditServiceRoles.Writer,
+          description: 'Write audit events. Assign to application service accounts.',
+        },
+        {
+          role: AuditServiceRoles.Admin,
+          description: 'Administer failed audit events and access protected actor identity.',
+        },
+      ],
+      configuration: {
+        useNamespace: true,
+        description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
+        schema: configurationSchema,
       },
-      { logger },
-    );
+      configurationConverter: createAuditConfigurationConverter(logger),
+      combineConfiguration: combineAuditConfiguration,
+      enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: false,
+      events: [],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+    },
+    { logger },
+  );
+  const auditMetrics = createAuditMetrics(meterProvider?.getMeter('audit-service'), failedEventRepository, logger);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -94,6 +109,7 @@ export const initializeApp = async (): Promise<express.Application> => {
 
   app.use(
     '/audit',
+    metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     validateTenantContext,
@@ -106,6 +122,7 @@ export const initializeApp = async (): Promise<express.Application> => {
       catalogs: new CatalogService(configurationService, logger),
       retention: new RetentionService(configurationService, logger),
       logger,
+      failedEvents: new FailedEventService(failedEventRepository, serviceId.toString(), auditMetrics),
     }),
   );
 

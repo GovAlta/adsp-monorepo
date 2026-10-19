@@ -29,8 +29,8 @@ HTTP listener. Tests are colocated with their implementations.
 
 - `audit-reader`: read access; included in `tenant-admin` via `inTenantAdmin: true`.
 - `audit-writer`: event writes; explicitly assigned to application service accounts.
-- `audit-admin`: reserved for failed-event administration and protected actor identity access
-  in upcoming APIs; does not replace reader/writer permissions.
+- `audit-admin`: failed-event administration and protected actor identity access;
+  does not replace reader/writer permissions.
 
 Every audit route uses `requireAuditRole` to check both the role and resolved tenant.
 Core callers may cross tenants but still need the role. Missing/invalid tokens return 401;
@@ -247,3 +247,85 @@ Until that integration exists, valid submissions return **503 with Retry-After**
 
 See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
 for the boundary with OSP-708.
+
+## Failed-event administration (OSP-709)
+
+**Integration status:** the API, replay orchestration, metrics and repository contracts are
+implemented against main. OSP-705 (PostgreSQL), OSP-708 (durability) and OSP-711 (self-auditing)
+are not integrated. The application deliberately returns **503 with `Retry-After: 1`** for
+authorized administration requests until a `FailedEventRepository` is injected into
+`initializeApp`. Neither durable recovery nor concurrency/rollback guarantees have been
+verified against PostgreSQL. There is no in-memory substitute and no successful empty fallback.
+
+Both endpoints require `audit-admin`; `audit-reader` and `audit-writer` alone are refused.
+Normal callers use their resolved tenant. Core administrators must supply `tenantId`;
+the existing Core cross-tenant exemption still requires the admin role.
+
+| Endpoint                                   | Contract once persistence is connected                                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `GET /audit/v1/failed-events`              | All tenant parked rows, including open/replayed/discarded, ordered by `failed_at DESC, id DESC`.     |
+| `POST /audit/v1/failed-events/{id}/replay` | Replay an open row and return its updated failed-event record after commit. No request body is used. |
+
+Listing uses `top` (default 20, maximum 100) and `after` with the shared `Results<T>` shape:
+`{ results, page: { after?, size, next? } }`. Cursors use `decodeAfter`/`encodeNext`; invalid,
+negative or unsafe offsets return 400. A full page may point to an empty final page.
+Offset paging is not a snapshot; new failures can shift rows between requests.
+Records contain the original JSON input and storage error, so access is admin-only.
+
+Replay returns 404 for IDs absent from the resolved tenant and 409 for replayed or discarded
+rows. The recovered event keeps the original actor; its `written_by` is the Audit Service client
+URN. `replayed_as` is the stored row's `id`, not the original `event_id`. The accompanying
+self-audit uses namespace `audit-service`, action `failed-event.replay.succeeded`, the requesting
+administrator as actor, and `{ replayedAs }` metadata. The self-audit is distinct from the
+recovered original event and is not sent through the Event Service.
+
+### Persistence integration contract
+
+`FailedEventRepository` and `FailedEventReplayTransaction` are in
+`apps/audit-service/src/audit/types/failed-events.ts`. The adapter must:
+
+- Filter every list/lookup/update by the trusted tenant and set PostgreSQL RLS context.
+- Lock the failed row inside `withReplayTransaction`, before checking its status; concurrent
+  requests must serialize. Never rely on the handler's status check without a database lock.
+- Validate and enrich stored input in `insertReplayedEvent`, preserving its actor, namespace
+  and event ID and using the supplied service writer. Do not reapply the ingestion age window
+  to an old parked event. Apply the catalog, retention and idempotency rules from the storage
+  implementation; do not trust identity/classification fields embedded in raw JSON.
+- Atomically insert the recovered row, mark/link the failed row and insert the self-audit.
+  Register/resolve the self-audit action through OSP-711. Any failure, including self-audit or
+  commit failure, must reject and roll back all changes. Do not inject a partially implemented
+  adapter or defer self-auditing as fire-and-forget work.
+- Resolve the transaction only after commit and return the actual stored audit row ID.
+- Provide a privileged `countOpen()` aggregate across tenants without exposing event payloads.
+
+The transaction tests exercise orchestration and failure propagation with mocks; real RLS,
+idempotency, actor preservation during enrichment, concurrent replays and rollback remain
+integration acceptance work for those dependencies. Writing parked rows, retry policy,
+discard operations and expiry of closed rows are not implemented by this change.
+
+### Metrics and alerting
+
+Set `OTEL_EXPORTER_OTLP_ENDPOINT` to the collector's base HTTP URL (for example
+`http://otel-collector:4318`). The SDK's `initializePlatform.metrics` exports OTLP metrics.
+The environment ConfigMap includes this setting; no exporter runs when it is empty.
+
+| Prometheus series                                            | Meaning                                                                                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `audit_failed_events_open`                                   | Durable count of all open rows, refreshed from storage each collection.                                                  |
+| `audit_failed_events_available`                              | 1 when the count was read successfully, 0 if integration is missing or collection fails.                                 |
+| `audit_events_parked_total`                                  | Durably parked events, via `recordParkedEvent()` after a successful parking commit.                                      |
+| `audit_write_failures_total{operation="ingest" \| "replay"}` | Failed durable saves. Replay transaction failures are wired; OSP-708 must call the ingest hook for failed durable saves. |
+
+These metrics carry no actor, event ID, error text or tenant labels. A missing/failed count is
+logged and reported as `NaN` (unknown), not zero. This replaces any previously observed count
+that the SDK could otherwise retain. Until storage is connected, availability is 0 and the
+open count is unknown. Buffer parking and ingest failure counters are hooks only until
+OSP-708 connects them; they must not count validation errors or every retry attempt.
+
+The observability template loads `audit-alerts.yml` in Prometheus. `AuditOpenFailedEvents`
+fires at **`max by (deployment_environment) (audit_failed_events_open) > 0`**, with no `for` delay.
+`max`, not `sum`, avoids counting the shared database once per replica. The first single
+open row is sufficient, subject to metric export, scrape and evaluation intervals.
+`AuditFailedEventCountUnavailable` flags failed count collection. Rules do not by themselves
+configure notification delivery or detect an entirely absent exporter; see the
+[observability setup](https://github.com/GovAlta/adsp-monorepo/blob/main/.openshift/observability/README.md).

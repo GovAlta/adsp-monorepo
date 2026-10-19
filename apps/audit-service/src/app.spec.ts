@@ -15,6 +15,7 @@ jest.mock('./environments/environment', () => ({
     DIRECTORY_URL: 'https://directory.example.test',
     LOG_LEVEL: 'error',
     TRUSTED_PROXY: false,
+    OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.example.test:4318',
   },
 }));
 
@@ -126,7 +127,7 @@ describe('audit application authorization', () => {
       configurationHandler: jest.fn(),
       healthCheck: jest.fn().mockResolvedValue({}),
       clearCached: jest.fn(),
-      metricsHandler: jest.fn(),
+      metricsHandler: (_req, _res, next) => next(),
       traceHandler: (_req, _res, next) => next(),
       shutdownTelemetry: jest.fn(),
       logger,
@@ -148,9 +149,32 @@ describe('audit application authorization', () => {
     });
   });
 
+  it('passes the configured OTLP endpoint to the SDK metrics exporter', () => {
+    const registration = jest.mocked(initializePlatform).mock.calls[0][0];
+
+    expect(registration.metrics).toBe('http://collector.example.test:4318');
+  });
+
+  it.each([
+    { method: 'get' as const, path: '/audit/v1/failed-events' },
+    { method: 'post' as const, path: '/audit/v1/failed-events/54862935-e55b-4bc4-8cd0-9e64b193bbd2/replay' },
+  ])('returns 503 for authorized $method $path before storage integration', async ({ method, path }) => {
+    await request(app)
+      [method](path)
+      .auth(token([AuditServiceRoles.Admin]), { type: 'bearer' })
+      .expect('Retry-After', '1')
+      .expect(503);
+  });
+
   describe.each([
     { method: 'get' as const, path: '/audit/v1/case-service/actions', role: AuditServiceRoles.Reader },
     { method: 'post' as const, path: '/audit/v1/case-service/events', role: AuditServiceRoles.Writer },
+    { method: 'get' as const, path: '/audit/v1/failed-events', role: AuditServiceRoles.Admin },
+    {
+      method: 'post' as const,
+      path: '/audit/v1/failed-events/54862935-e55b-4bc4-8cd0-9e64b193bbd2/replay',
+      role: AuditServiceRoles.Admin,
+    },
   ])('$method $path', ({ method, path, role }) => {
     it('returns 401 for a missing token', async () => {
       const response = await request(app)[method](path);
