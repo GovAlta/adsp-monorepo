@@ -79,7 +79,7 @@ export interface Solution {
   status: string;
   createdByName: string;
   updatedOn: string;
-  formatVersion: string;
+  revision: number;
   state: SolutionState;
 }
 

@@ -8,9 +8,6 @@ Migration `20261010000000_create_planner_tables.js` creates three tables:
 
 `PLANNER_STORAGE` selects `postgres` (default) or `memory`. Deployed environments use `memory` until the database is provisioned.
 
-## Export format version
-`PLAN_FORMAT_VERSION` (`planner/types.ts`) is a static schema version for the `/solutions/:id/export` JSON and the Markdown report built from it in the TMW - bumped only when a section is added, removed, renamed, reordered, or its meaning changes, not when a solution's data changes.
-
 ## Surface inventory (API, base `/planner/v1`)
 | Route | Roles | Notes |
 |---|---|---|

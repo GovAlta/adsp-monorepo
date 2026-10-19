@@ -18,6 +18,7 @@ describe('MemorySolutionRepository', () => {
       createdByName: 'Pat Planner',
       createdOn: new Date('2026-10-01T00:00:00Z'),
       updatedOn: new Date('2026-10-01T00:00:00Z'),
+      revision: 1,
       ...overrides,
     }) as Solution;
 
@@ -50,18 +51,25 @@ describe('MemorySolutionRepository', () => {
     expect(result).toBeNull();
   });
 
-  it('saves an update to an existing solution', async () => {
-    await repository.save(createSolution());
+  it('saves an update that carries the stored revision + 1', async () => {
+    await repository.save(createSolution({ revision: 1 }));
 
-    const result = await repository.save(createSolution({ name: 'Renamed' }));
+    const result = await repository.save(createSolution({ name: 'Renamed', revision: 2 }));
 
     expect(result.name).toBe('Renamed');
   });
 
-  it('rejects saving over a solution id owned by another tenant', async () => {
-    await repository.save(createSolution({ tenantId: otherTenantId }));
+  it('rejects an update that does not carry the stored revision + 1', async () => {
+    await repository.save(createSolution({ revision: 1 }));
+    await repository.save(createSolution({ revision: 2 }));
 
-    await expect(repository.save(createSolution())).rejects.toThrow(InvalidOperationError);
+    await expect(repository.save(createSolution({ revision: 2 }))).rejects.toThrow(InvalidOperationError);
+  });
+
+  it('rejects saving over a solution id owned by another tenant', async () => {
+    await repository.save(createSolution({ tenantId: otherTenantId, revision: 1 }));
+
+    await expect(repository.save(createSolution({ revision: 2 }))).rejects.toThrow(InvalidOperationError);
   });
 
   it('deletes a saved solution', async () => {

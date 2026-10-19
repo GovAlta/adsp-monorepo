@@ -30,7 +30,6 @@ import {
   CONCEPT_TYPES,
   Hypothesis,
   PatternMatch,
-  PLAN_FORMAT_VERSION,
   PlannerConfiguration,
   Solution,
   SolutionState,
@@ -252,9 +251,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
   const validateId = createValidationHandler(param('id').isUUID());
 
   async function persist(req: Request, solution: Solution, operation: string) {
-    const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
+    const saved = await solutionRepository.save({ ...solution, updatedOn: new Date(), revision: solution.revision + 1 });
     eventService.send(solutionUpdated(req.user, saved, operation));
-    return { ...saved, formatVersion: PLAN_FORMAT_VERSION };
+    return saved;
   }
 
   // An undefined result means the caller should fall back to rule-based output.
@@ -514,9 +513,10 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           createdByName: req.user.name,
           createdOn: now,
           updatedOn: now,
+          revision: 1,
           state: emptyState(req.body.problemStatement),
         });
-        res.status(201).send({ ...solution, formatVersion: PLAN_FORMAT_VERSION });
+        res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
           context: 'PlannerRouter',
@@ -530,7 +530,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
   );
 
   router.get('/solutions/:id', requirePlannerUser, validateId, getSolution(solutionRepository), (req, res) => {
-    res.send({ ...loaded(req), formatVersion: PLAN_FORMAT_VERSION });
+    res.send(loaded(req));
   });
 
   router.patch(
@@ -763,7 +763,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       createdByName: solution.createdByName,
       createdOn: solution.createdOn,
       updatedOn: solution.updatedOn,
-      formatVersion: PLAN_FORMAT_VERSION,
+      revision: solution.revision,
       state: solution.state,
     });
   });

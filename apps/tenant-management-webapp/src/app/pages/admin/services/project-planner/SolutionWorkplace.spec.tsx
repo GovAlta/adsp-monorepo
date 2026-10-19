@@ -22,7 +22,7 @@ const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit int
   status: 'draft',
   createdByName: 'Pat',
   updatedOn: '2026-03-01T10:00:00.000Z',
-  formatVersion: '1.0',
+  revision: 1,
   state: {
     problemStatement: 'Applicants submit permits.',
     concepts: [],

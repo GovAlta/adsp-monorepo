@@ -15,6 +15,7 @@ interface SolutionRecord {
   createdOn: Date;
   updatedOn: Date;
   state: SolutionState;
+  revision: number;
 }
 
 const mapRecord = (record: SolutionRecord): Solution => ({
@@ -29,6 +30,7 @@ const mapRecord = (record: SolutionRecord): Solution => ({
   createdOn: record.createdOn,
   updatedOn: record.updatedOn,
   state: record.state,
+  revision: record.revision,
 });
 
 const mapSolution = (solution: Solution): SolutionRecord => ({
@@ -43,6 +45,7 @@ const mapSolution = (solution: Solution): SolutionRecord => ({
   createdOn: solution.createdOn,
   updatedOn: solution.updatedOn,
   state: solution.state,
+  revision: solution.revision,
 });
 
 export class PostgresSolutionRepository implements SolutionRepository {
@@ -86,11 +89,12 @@ export class PostgresSolutionRepository implements SolutionRepository {
       .insert({ ...record, state: JSON.stringify(record.state) as unknown as SolutionState })
       .onConflict('id')
       .merge()
+      .where('solutions.revision', record.revision - 1)
       .where('solutions.tenant', record.tenant)
       .returning('*');
 
     if (rows.length < 1) {
-      throw new InvalidOperationError('Solution belongs to a different tenant.');
+      throw new InvalidOperationError('Solution was modified by another request; reload and retry.');
     }
     return mapRecord(rows[0]);
   }
