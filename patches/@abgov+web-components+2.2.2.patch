@@ -1,0 +1,39 @@
+diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/web-components/index.js
+--- a/node_modules/@abgov/web-components/index.js
++++ b/node_modules/@abgov/web-components/index.js
+@@ -6572,7 +6572,7 @@
+   let e, o;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "id", "leading-icon"), m(e, "size", o = /*version*/
++      e = C("goa-icon"), m(e, "id", "leading-icon"), m(e, "aria-hidden", "true"), m(e, "size", o = /*version*/
+       t[7] === "2" && /*size*/
+       t[1] === "normal" ? "4" : "3"), m(
+         e,
+@@ -6616,7 +6616,7 @@
+   let e, o;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "id", "trailing-icon"), m(e, "size", o = /*version*/
++      e = C("goa-icon"), m(e, "id", "trailing-icon"), m(e, "aria-hidden", "true"), m(e, "size", o = /*version*/
+       t[7] === "2" && /*size*/
+       t[1] === "normal" ? "4" : "3"), m(
+         e,
+@@ -12941,7 +12941,7 @@
+   );
+   return {
+     c() {
+-      e = C("div"), a && a.c(), o = Y(), i = C("goa-icon-button"), m(i, "size", "medium"), m(i, "data-ignore-focus", "true"), m(i, "data-testid", "drawer-close-button"), m(i, "arialabel", "Close the drawer"), m(i, "variant", "dark"), m(i, "icon", "close"), m(i, "theme", "filled"), m(i, "class", "svelte-rjwx0r"), f(e, "class", "header svelte-rjwx0r"), f(e, "id", "goa-drawer-heading");
++      e = C("div"), a && a.c(), o = Y(), i = C("goa-icon-button"), m(i, "size", "medium"), m(i, "data-ignore-focus", "true"), m(i, "data-testid", "drawer-close-button"), m(i, "arialabel", "Close the drawer"), m(i, "title", "Close the drawer"), m(i, "variant", "dark"), m(i, "icon", "close"), m(i, "theme", "filled"), m(i, "class", "svelte-rjwx0r"), f(e, "class", "header svelte-rjwx0r"), f(e, "id", "goa-drawer-heading");
+     },
+     m(c, d) {
+       T(c, e, d), a && a.m(e, null), _(e, o), _(e, i), n = !0, r || (l = re(
+@@ -23292,7 +23292,7 @@
+   let e;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "class", "leading-icon svelte-1o0u67z"), m(e, "data-testid", "leading-icon"), m(
++      e = C("goa-icon"), m(e, "class", "leading-icon svelte-1o0u67z"), m(e, "data-testid", "leading-icon"), m(e, "aria-hidden", "true"), m(
+         e,
+         "type",
+         /*leadingicon*/

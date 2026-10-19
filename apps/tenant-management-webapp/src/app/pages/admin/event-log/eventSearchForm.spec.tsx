@@ -54,7 +54,6 @@ describe('EventSearchForm', () => {
   );
 
   it.each([
-    'goa-button[testid="event-log-filters-toggle"]',
     'goa-dropdown[name="event-log-date-range-filter"]',
     'goa-dropdown[name="event-log-namespace-filter"]',
     'goa-dropdown[name="event-log-name-filter"]',
@@ -114,9 +113,11 @@ describe('EventSearchForm', () => {
     expect(container.querySelector('goa-button[testid="event-log-reset"]')).not.toBeInTheDocument();
   });
 
-  it('keeps the additional filter panel collapsed by default and toggles it without searching', () => {
+  it('keeps the additional filter panel collapsed by default and allows toggling during loading without searching', () => {
     const onSearch = jest.fn();
-    const { container, queryByLabelText } = renderComponent({ onSearch });
+    const { container, queryByLabelText } = renderComponent({ onSearch, disabled: true });
+
+    expect(container.querySelector('goa-button[testid="event-log-filters-toggle"]')).not.toHaveAttribute('disabled');
 
     expect(container.querySelector('goa-drawer[testid="event-log-filter-panel"]')).not.toHaveAttribute('open');
     expect(container.querySelector('goa-button[testid="event-log-filters-toggle"]')).toHaveAttribute(

@@ -226,7 +226,7 @@ When(
 
 Then('the user clicks Save button in notification type modal', function () {
   notificationsObj.notificationTypeModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user clicks Cancel button in notification type modal', function () {
@@ -361,7 +361,7 @@ Then('the user views Add an email template page', function () {
 When('the user clicks Add button in Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalAddBtn().shadow().find('button').should('be.enabled');
   notificationsObj.addAnEmailTemplateModalAddBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then(
