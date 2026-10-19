@@ -9,6 +9,7 @@ import {
 } from '@abgov/react-components';
 import { PlannerApi } from './api';
 import { AnalysisMode, DiscoveryOptions, Solution } from './model';
+import { useBusy } from './useBusy';
 
 interface DiscoveryPanelProps {
   solution: Solution;
@@ -19,14 +20,13 @@ interface DiscoveryPanelProps {
 
 export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({ solution, api, mode, onSolutionChange }) => {
   const [draft, setDraft] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
   const discovery = solution.state.discovery;
   const ready = !!discovery?.ready;
   const message = draft.trim();
 
-  const discover = async (options: DiscoveryOptions) => {
-    setBusy(true);
-    try {
+  const discover = (options: DiscoveryOptions) =>
+    run(async () => {
       let result = await api.discovery(solution.id, { mode, ...options });
       setDraft('');
       // The proposed solution includes the blueprint: build it when first presented and rebuild it after each refinement.
@@ -35,12 +35,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({ solutio
         result = await api.blueprint(solution.id, { mode });
       }
       onSolutionChange(result);
-    } catch {
-      // The api reports the error to the user.
-    } finally {
-      setBusy(false);
-    }
-  };
+    });
 
   return (
     <div data-testid="discovery-panel">

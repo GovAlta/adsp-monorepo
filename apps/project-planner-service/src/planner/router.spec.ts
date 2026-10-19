@@ -1,11 +1,11 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import * as express from 'express';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import * as request from 'supertest';
 import { Logger } from 'winston';
-import { createPlannerRouter, getSolution, requirePlannerAdmin, requirePlannerUser } from './router';
+import { createPlannerRouter } from './router';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist } from './specialists';
 import { BusinessPattern, Solution, SpecialistChat } from './types';
@@ -42,97 +42,7 @@ const makeSolution = (createdById: string): Solution => ({
 const makeUser = (id: string, roles: string[]): User =>
   ({ id, name: id, tenantId, roles, isCore: false } as unknown as User);
 
-describe('planner router handlers', () => {
-  const next = jest.fn();
-  const repository = { get: jest.fn(), find: jest.fn(), save: jest.fn(), delete: jest.fn() };
-
-  beforeEach(() => {
-    next.mockReset();
-    repository.get.mockReset();
-  });
-
-  it('requirePlannerUser allows planner users', () => {
-    const req = { tenant: { id: tenantId }, user: makeUser('u', [PlannerServiceRoles.User]) } as unknown as Request;
-    requirePlannerUser(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it('requirePlannerUser rejects users without planner role', () => {
-    const req = { tenant: { id: tenantId }, user: makeUser('u', []) } as unknown as Request;
-    requirePlannerUser(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it('requirePlannerUser rejects missing tenant', () => {
-    const req = { user: makeUser('u', [PlannerServiceRoles.User]) } as unknown as Request;
-    requirePlannerUser(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it('requirePlannerAdmin allows planner admins', () => {
-    const req = { tenant: { id: tenantId }, user: makeUser('a', [PlannerServiceRoles.Admin]) } as unknown as Request;
-    requirePlannerAdmin(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it('requirePlannerAdmin rejects planner users who are not admins', () => {
-    const req = { tenant: { id: tenantId }, user: makeUser('u', [PlannerServiceRoles.User]) } as unknown as Request;
-    requirePlannerAdmin(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it('requirePlannerAdmin rejects missing tenant', () => {
-    const req = { user: makeUser('a', [PlannerServiceRoles.Admin]) } as unknown as Request;
-    requirePlannerAdmin(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
-  });
-
-  it('getSolution loads owner solution', async () => {
-    repository.get.mockResolvedValueOnce(makeSolution('u'));
-    const req = {
-      tenant: { id: tenantId },
-      params: { id: 'id-1' },
-      user: makeUser('u', [PlannerServiceRoles.User]),
-    } as unknown as Request;
-    await getSolution(repository)(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith();
-    expect(req['solution']).toBeTruthy();
-  });
-
-  it('getSolution rejects non-owner', async () => {
-    repository.get.mockResolvedValueOnce(makeSolution('other'));
-    const req = {
-      tenant: { id: tenantId },
-      params: { id: 'id-1' },
-      user: makeUser('u', [PlannerServiceRoles.User]),
-    } as unknown as Request;
-    await getSolution(repository)(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
-    expect(req['solution']).toBeUndefined();
-  });
-
-  it('getSolution allows admin on others', async () => {
-    repository.get.mockResolvedValueOnce(makeSolution('other'));
-    const req = {
-      tenant: { id: tenantId },
-      params: { id: 'id-1' },
-      user: makeUser('a', [PlannerServiceRoles.Admin]),
-    } as unknown as Request;
-    await getSolution(repository)(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it('getSolution 404s when missing', async () => {
-    repository.get.mockResolvedValueOnce(null);
-    const req = {
-      tenant: { id: tenantId },
-      params: { id: 'x' },
-      user: makeUser('u', [PlannerServiceRoles.User]),
-    } as unknown as Request;
-    await getSolution(repository)(req, {} as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
-  });
-});
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 describe('planner router routes', () => {
   const SOLUTION_ID = '5f0a1c52-7d0e-4c1b-9a8e-3b6f2d1e4a70';
@@ -179,7 +89,6 @@ describe('planner router routes', () => {
     app.use(
       '/planner/v1',
       createPlannerRouter({
-        apiId: adspId`urn:ads:platform:project-planner-service:v1`,
         logger: logger as unknown as Logger,
         solutionRepository: repository,
         patternRepository,
@@ -1406,34 +1315,25 @@ describe('planner router routes', () => {
         });
       });
 
-      it('creates a new chat for the consulting user when none exists', async () => {
+      it('creates a new chat for the consulting user titled with the default question', async () => {
         await consultWith();
 
         expect(savedChat()).toMatchObject({
+          id: expect.stringMatching(UUID),
           tenantId,
           service: 'form-service',
           solutionId: SOLUTION_ID,
+          title: 'Consult on this solution',
           createdById: 'owner-1',
           createdByName: 'owner-1',
         });
       });
 
-      it('assigns a uuid to a new chat', async () => {
-        await consultWith();
-
-        expect(savedChat().id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
-      });
-
-      it('titles a new chat with the default question when none is given', async () => {
-        await consultWith();
-
-        expect(savedChat().title).toBe('Consult on this solution');
-      });
-
-      it('titles a new chat with the question', async () => {
+      it('titles a new chat and records the user message with the question', async () => {
         await consultWith({ question: 'Can applicants save drafts?' });
 
         expect(savedChat().title).toBe('Can applicants save drafts?');
+        expect(savedChat().messages[0].content).toBe('Can applicants save drafts?');
       });
 
       it('truncates the title of a new chat to 100 characters', async () => {
@@ -1442,20 +1342,14 @@ describe('planner router routes', () => {
         expect(savedChat().title).toHaveLength(100);
       });
 
-      it('records the default question as the user message when none is given', async () => {
-        await consultWith();
+      it('records the default question and the rule-based consultation as the only messages', async () => {
+        const res = await consultWith();
 
-        expect(savedChat().messages[0]).toMatchObject({
-          role: 'user',
-          content: 'Consult on this solution',
-          intent: 'consult',
-        });
-      });
-
-      it('records the question as the user message', async () => {
-        await consultWith({ question: 'Can applicants save drafts?' });
-
-        expect(savedChat().messages[0].content).toBe('Can applicants save drafts?');
+        expect(savedChat().messages).toEqual([
+          expect.objectContaining({ role: 'user', content: 'Consult on this solution', intent: 'consult' }),
+          expect.objectContaining({ role: 'assistant', content: res.body.reason, intent: 'consult', mode: 'rules' }),
+        ]);
+        expect(JSON.parse(JSON.stringify(savedChat().messages[1].consult))).toEqual(res.body);
       });
 
       it('appends the proposal to the user message', async () => {
@@ -1474,29 +1368,6 @@ describe('planner router routes', () => {
         );
       });
 
-      it('records the rule-based reason as the assistant message in rules mode', async () => {
-        const res = await consultWith();
-
-        expect(savedChat().messages[1]).toMatchObject({
-          role: 'assistant',
-          content: res.body.reason,
-          intent: 'consult',
-          mode: 'rules',
-        });
-      });
-
-      it('records the consultation result on the assistant message', async () => {
-        const res = await consultWith();
-
-        expect(JSON.parse(JSON.stringify(savedChat().messages[1].consult))).toEqual(res.body);
-      });
-
-      it('records exactly the user and assistant messages for a new chat', async () => {
-        await consultWith();
-
-        expect(savedChat().messages).toHaveLength(2);
-      });
-
       it('appends the exchange to the existing chat instead of creating another', async () => {
         const existing = storedChat({ solutionId: SOLUTION_ID });
         chatRepository.find.mockResolvedValueOnce([existing]);
@@ -1504,26 +1375,12 @@ describe('planner router routes', () => {
         await consultWith({ question: 'Anything else?' });
 
         expect(savedChat()).toMatchObject({ id: CHAT_ID, title: 'Earlier question' });
-      });
-
-      it('keeps earlier messages when appending to an existing chat', async () => {
-        const existing = storedChat({ solutionId: SOLUTION_ID });
-        chatRepository.find.mockResolvedValueOnce([existing]);
-
-        await consultWith({ question: 'Anything else?' });
-
         expect(savedChat().messages.map((m) => m.content)).toEqual([
           'Earlier question',
           'Earlier answer',
           'Anything else?',
           expect.any(String),
         ]);
-      });
-
-      it('returns the consultation result unchanged', async () => {
-        const res = await consultWith();
-
-        expect(res.body).toMatchObject({ service: 'form-service', fit: 'optional' });
       });
 
       it('returns 400 when the existing chat is full', async () => {
@@ -2888,11 +2745,11 @@ describe('planner router routes', () => {
         expect(res.body.warning).toBeUndefined();
       });
 
-      it('skips the llm when rules mode is requested', async () => {
-
-        await chat(buildApp(owner, true, llm), { message: userMessage, mode: 'rules' });
+      it('skips the llm and omits the warning when rules mode is requested', async () => {
+        const res = await chat(buildApp(owner, true, llm), { message: userMessage, mode: 'rules' });
 
         expect(llm.converse).not.toHaveBeenCalled();
+        expect(res.body.warning).toBeUndefined();
       });
 
       it('returns rule-based guidance without a warning when rules mode is requested', async () => {
@@ -2901,22 +2758,10 @@ describe('planner router routes', () => {
         expect(res.body).toMatchObject({ service: 'form-service', mode: 'rules', followUps: getSpecialist('form-service').questions });
       });
 
-      it('omits the warning when rules mode is requested explicitly', async () => {
-        const res = await chat(buildApp(owner, true, llm), { message: userMessage, mode: 'rules' });
-
-        expect(res.body.warning).toBeUndefined();
-      });
-
       it('returns 404 for an unknown specialist', async () => {
         const res = await chat(buildApp(owner, true, llm), { message: userMessage }, 'payments');
 
         expect(res.status).toBe(404);
-      });
-
-      it('rejects the legacy messages array because a message is required', async () => {
-        const res = await chat(buildApp(owner, true, llm), { messages });
-
-        expect(res.status).toBe(400);
       });
 
       it.each([
@@ -2956,11 +2801,20 @@ describe('planner router routes', () => {
       });
 
       describe('with a new chat', () => {
-        it('returns the id of the saved chat', async () => {
+        it('saves the chat for the requesting user and specialist titled with the message and returns its id', async () => {
           llm.converse.mockResolvedValueOnce(specialistReply);
 
           const res = await chat(buildApp(owner, true, llm));
 
+          expect(savedChat()).toMatchObject({
+            id: expect.stringMatching(UUID),
+            tenantId,
+            service: 'form-service',
+            title: userMessage,
+            createdById: 'owner-1',
+            createdByName: 'owner-1',
+            solutionId: undefined,
+          });
           expect(res.body.chatId).toBe(savedChat().id);
         });
 
@@ -2968,30 +2822,6 @@ describe('planner router routes', () => {
           await chat(buildApp(owner, true, llm));
 
           expect(chatRepository.get).not.toHaveBeenCalled();
-        });
-
-        it('saves the chat for the requesting user and specialist', async () => {
-          await chat(buildApp(owner, true, llm));
-
-          expect(savedChat()).toMatchObject({
-            tenantId,
-            service: 'form-service',
-            createdById: 'owner-1',
-            createdByName: 'owner-1',
-            solutionId: undefined,
-          });
-        });
-
-        it('assigns a uuid to the chat', async () => {
-          await chat(buildApp(owner, true, llm));
-
-          expect(savedChat().id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
-        });
-
-        it('titles the chat with the first message', async () => {
-          await chat(buildApp(owner, true, llm));
-
-          expect(savedChat().title).toBe(userMessage);
         });
 
         it('truncates the title to 100 characters', async () => {
@@ -3012,21 +2842,24 @@ describe('planner router routes', () => {
           expect(savedChat().messages[0]).toMatchObject({ role: 'user', content: userMessage, intent: 'design' });
         });
 
-        it('records the llm reply as the assistant message', async () => {
+        it('records the user message and the llm reply as the only messages', async () => {
           llm.converse.mockResolvedValueOnce(specialistReply);
 
           await chat(buildApp(owner, true, llm));
 
-          expect(savedChat().messages[1]).toMatchObject({
-            role: 'assistant',
-            content: specialistReply.reply,
-            intent: 'ask',
-            mode: 'ai',
-            model: MODEL,
-            suggestions: specialistReply.suggestions,
-            samples: specialistReply.samples,
-            followUps: specialistReply.followUps,
-          });
+          expect(savedChat().messages).toEqual([
+            expect.objectContaining({ role: 'user', content: userMessage }),
+            expect.objectContaining({
+              role: 'assistant',
+              content: specialistReply.reply,
+              intent: 'ask',
+              mode: 'ai',
+              model: MODEL,
+              suggestions: specialistReply.suggestions,
+              samples: specialistReply.samples,
+              followUps: specialistReply.followUps,
+            }),
+          ]);
         });
 
         it('records the warning on the assistant message when falling back to rules', async () => {
@@ -3038,12 +2871,6 @@ describe('planner router routes', () => {
             mode: 'rules',
             warning: 'AI specialist was unavailable; showing rule-based guidance.',
           });
-        });
-
-        it('records exactly the user and assistant messages', async () => {
-          await chat(buildApp(owner, true, llm));
-
-          expect(savedChat().messages).toHaveLength(2);
         });
 
         it('stores the solution the chat is about', async () => {
@@ -3094,26 +2921,10 @@ describe('planner router routes', () => {
           );
         });
 
-        it('returns the id of the existing chat', async () => {
+        it('returns and keeps the original chat id, title, creator and creation date', async () => {
           const res = await continueChat();
 
           expect(res.body.chatId).toBe(CHAT_ID);
-        });
-
-        it('appends the exchange to the stored messages', async () => {
-          await continueChat();
-
-          expect(savedChat().messages.map((m) => m.content)).toEqual([
-            'Earlier question',
-            'Earlier answer',
-            followUp,
-            specialistReply.reply,
-          ]);
-        });
-
-        it('keeps the original title, creator and creation date', async () => {
-          await continueChat();
-
           expect(savedChat()).toMatchObject({
             id: CHAT_ID,
             title: 'Earlier question',
@@ -3122,9 +2933,15 @@ describe('planner router routes', () => {
           });
         });
 
-        it('advances the updated timestamp', async () => {
+        it('appends the exchange to the stored messages and advances the updated timestamp', async () => {
           await continueChat();
 
+          expect(savedChat().messages.map((m) => m.content)).toEqual([
+            'Earlier question',
+            'Earlier answer',
+            followUp,
+            specialistReply.reply,
+          ]);
           expect(new Date(savedChat().updatedOn).getTime()).toBeGreaterThan(
             new Date('2026-03-01T10:05:00.000Z').getTime(),
           );
@@ -3138,15 +2955,10 @@ describe('planner router routes', () => {
           expect(res.status).toBe(404);
         });
 
-        it("returns 404 when the chat belongs to another user", async () => {
+        it('returns 404 without calling the llm or saving when the chat belongs to another user', async () => {
           const res = await continueChat({}, stranger);
 
           expect(res.status).toBe(404);
-        });
-
-        it("does not call the llm or save when the chat belongs to another user", async () => {
-          await continueChat({}, stranger);
-
           expect([llm.converse.mock.calls.length, chatRepository.save.mock.calls.length]).toEqual([0, 0]);
         });
 
@@ -3156,19 +2968,12 @@ describe('planner router routes', () => {
           expect(res.status).toBe(404);
         });
 
-        it('returns 400 when the chat belongs to a different specialist', async () => {
+        it('returns 400 without saving when the chat belongs to a different specialist', async () => {
           chatRepository.get.mockResolvedValue(storedChat({ service: 'file-service' }));
 
           const res = await continueChat();
 
           expect(res.body.error).toBe('The chat belongs to a different specialist.');
-        });
-
-        it('does not save when the chat belongs to a different specialist', async () => {
-          chatRepository.get.mockResolvedValue(storedChat({ service: 'file-service' }));
-
-          await continueChat();
-
           expect(chatRepository.save).not.toHaveBeenCalled();
         });
 
@@ -3183,7 +2988,7 @@ describe('planner router routes', () => {
           expect(repository.get).toHaveBeenCalledWith(tenantId, SOLUTION_ID);
         });
 
-        it('passes the stored solution state to the llm', async () => {
+        it('passes the stored solution state to the llm and keeps the solution on the saved chat', async () => {
           const solution = solutionOwnedBy('owner-1');
           chatRepository.get.mockResolvedValue(storedChat({ solutionId: SOLUTION_ID }));
           repository.get.mockResolvedValueOnce(solution);
@@ -3191,14 +2996,6 @@ describe('planner router routes', () => {
           await continueChat();
 
           expect(llm.converse).toHaveBeenCalledWith(expect.anything(), expect.anything(), 'ask', solution.state);
-        });
-
-        it('keeps the stored solution on the saved chat', async () => {
-          chatRepository.get.mockResolvedValue(storedChat({ solutionId: SOLUTION_ID }));
-          repository.get.mockResolvedValueOnce(solutionOwnedBy('owner-1'));
-
-          await continueChat();
-
           expect(savedChat().solutionId).toBe(SOLUTION_ID);
         });
 
@@ -3314,26 +3111,54 @@ describe('planner router routes', () => {
         ['GET /specialists/chats/:chatId', () => get(`/${CHAT_ID}`, noRole)],
         ['GET /specialists/chats/:chatId/export', () => get(`/${CHAT_ID}/export`, noRole)],
         ['DELETE /specialists/chats/:chatId', () => remove(`/${CHAT_ID}`, noRole)],
-      ])('%s returns 403 for a user without a planner role', async (_name, call) => {
+      ])('%s returns 403 without touching the repository for a user without a planner role', async (_name, call) => {
         const res = await call();
 
         expect(res.status).toBe(403);
-      });
-
-      it.each([
-        ['GET /specialists/chats', () => get('', noRole)],
-        ['GET /specialists/chats/export', () => get('/export', noRole)],
-        ['GET /specialists/chats/:chatId', () => get(`/${CHAT_ID}`, noRole)],
-        ['GET /specialists/chats/:chatId/export', () => get(`/${CHAT_ID}/export`, noRole)],
-        ['DELETE /specialists/chats/:chatId', () => remove(`/${CHAT_ID}`, noRole)],
-      ])('%s does not touch the repository for a user without a planner role', async (_name, call) => {
-        await call();
-
         expect(
           chatRepository.find.mock.calls.length +
             chatRepository.get.mock.calls.length +
             chatRepository.delete.mock.calls.length,
         ).toBe(0);
+      });
+    });
+
+    describe.each<[string, (chatId: string, user?: User) => ReturnType<typeof get>]>([
+      ['GET /specialists/chats/:chatId', (chatId, user) => get(`/${chatId}`, user)],
+      ['GET /specialists/chats/:chatId/export', (chatId, user) => get(`/${chatId}/export`, user)],
+      ['DELETE /specialists/chats/:chatId', (chatId, user) => remove(`/${chatId}`, user)],
+    ])('%s errors', (_route, call) => {
+      it('returns 404 when the chat does not exist', async () => {
+        chatRepository.get.mockResolvedValueOnce(null);
+
+        const res = await call(CHAT_ID);
+
+        expect(res.status).toBe(404);
+      });
+
+      it.each([
+        ['another user', stranger],
+        ['a planner admin', admin],
+      ])('returns 404 when %s requests the chat', async (_name, user) => {
+        chatRepository.get.mockResolvedValueOnce(storedChat());
+
+        const res = await call(CHAT_ID, user);
+
+        expect(res.status).toBe(404);
+      });
+
+      it('returns 400 when the chat id is not a UUID', async () => {
+        const res = await call('not-a-uuid');
+
+        expect(res.status).toBe(400);
+      });
+
+      it('returns 500 when loading the chat fails', async () => {
+        chatRepository.get.mockRejectedValueOnce(new Error('connection lost'));
+
+        const res = await call(CHAT_ID);
+
+        expect(res.status).toBe(500);
       });
     });
 
@@ -3527,44 +3352,6 @@ describe('planner router routes', () => {
           messages: storedChat().messages,
         });
       });
-
-      it('returns 404 when the chat does not exist', async () => {
-        chatRepository.get.mockResolvedValueOnce(null);
-
-        const res = await get(`/${CHAT_ID}`);
-
-        expect(res.status).toBe(404);
-      });
-
-      it('returns 404 when the chat belongs to another user', async () => {
-        chatRepository.get.mockResolvedValueOnce(storedChat());
-
-        const res = await get(`/${CHAT_ID}`, stranger);
-
-        expect(res.status).toBe(404);
-      });
-
-      it('returns 404 when a planner admin requests another user\'s chat', async () => {
-        chatRepository.get.mockResolvedValueOnce(storedChat());
-
-        const res = await get(`/${CHAT_ID}`, admin);
-
-        expect(res.status).toBe(404);
-      });
-
-      it('returns 400 when the chat id is not a UUID', async () => {
-        const res = await get('/not-a-uuid');
-
-        expect(res.status).toBe(400);
-      });
-
-      it('returns 500 when the repository fails', async () => {
-        chatRepository.get.mockRejectedValueOnce(new Error('connection lost'));
-
-        const res = await get(`/${CHAT_ID}`);
-
-        expect(res.status).toBe(500);
-      });
     });
 
     describe('GET /specialists/chats/:chatId/export', () => {
@@ -3593,42 +3380,12 @@ describe('planner router routes', () => {
         });
       });
 
-      it('returns 404 when the chat does not exist', async () => {
-        chatRepository.get.mockResolvedValueOnce(null);
-
-        const res = await get(`/${CHAT_ID}/export`);
-
-        expect(res.status).toBe(404);
-      });
-
-      it('returns 404 when the chat belongs to another user', async () => {
-        chatRepository.get.mockResolvedValueOnce(storedChat());
-
-        const res = await get(`/${CHAT_ID}/export`, stranger);
-
-        expect(res.status).toBe(404);
-      });
-
       it('does not set a download header when the chat belongs to another user', async () => {
         chatRepository.get.mockResolvedValueOnce(storedChat());
 
         const res = await get(`/${CHAT_ID}/export`, stranger);
 
         expect(res.headers['content-disposition']).toBeUndefined();
-      });
-
-      it('returns 400 when the chat id is not a UUID', async () => {
-        const res = await get('/not-a-uuid/export');
-
-        expect(res.status).toBe(400);
-      });
-
-      it('returns 500 when the repository fails', async () => {
-        chatRepository.get.mockRejectedValueOnce(new Error('connection lost'));
-
-        const res = await get(`/${CHAT_ID}/export`);
-
-        expect(res.status).toBe(500);
       });
     });
 
@@ -3649,42 +3406,12 @@ describe('planner router routes', () => {
         expect(chatRepository.delete).toHaveBeenCalledWith(tenantId, CHAT_ID);
       });
 
-      it('returns 404 when the chat does not exist', async () => {
-        chatRepository.get.mockResolvedValueOnce(null);
-
-        const res = await remove(`/${CHAT_ID}`);
-
-        expect(res.status).toBe(404);
-      });
-
-      it('returns 404 when the chat belongs to another user', async () => {
-        chatRepository.get.mockResolvedValueOnce(storedChat());
-
-        const res = await remove(`/${CHAT_ID}`, stranger);
-
-        expect(res.status).toBe(404);
-      });
-
       it('does not delete a chat that belongs to another user', async () => {
         chatRepository.get.mockResolvedValueOnce(storedChat());
 
         await remove(`/${CHAT_ID}`, admin);
 
         expect(chatRepository.delete).not.toHaveBeenCalled();
-      });
-
-      it('returns 400 when the chat id is not a UUID', async () => {
-        const res = await remove('/not-a-uuid');
-
-        expect(res.status).toBe(400);
-      });
-
-      it('returns 500 when loading the chat fails', async () => {
-        chatRepository.get.mockRejectedValueOnce(new Error('connection lost'));
-
-        const res = await remove(`/${CHAT_ID}`);
-
-        expect(res.status).toBe(500);
       });
 
       it('returns 500 when deleting the chat fails', async () => {
@@ -3695,96 +3422,6 @@ describe('planner router routes', () => {
 
         expect(res.status).toBe(500);
       });
-    });
-  });
-
-  describe('POST /solutions/:id/handoff/:service', () => {
-    const handoff = (service: string, body: object = {}) =>
-      request(buildApp(owner)).post(`/planner/v1/solutions/${SOLUTION_ID}/handoff/${service}`).send(body);
-
-    beforeEach(() => {
-      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
-    });
-
-    it('returns the specialist workspace path', async () => {
-      const res = await handoff('form');
-
-      expect(res.body.workspacePath).toBe('/admin/services/form');
-    });
-
-    it('defaults the specialist status to in-workspace', async () => {
-      const res = await handoff('form');
-
-      expect(res.body.solution.state.specialists[0]).toMatchObject({ service: 'form-service', status: 'in-workspace' });
-    });
-
-    it('records the supplied status and notes', async () => {
-      const res = await handoff('form-service', { status: 'completed', notes: 'Form published.' });
-
-      expect(res.body.solution.state.specialists[0]).toMatchObject({ status: 'completed', notes: 'Form published.' });
-    });
-
-    it('moves the solution to in-progress', async () => {
-      const res = await handoff('form');
-
-      expect(res.body.solution.status).toBe('in-progress');
-    });
-
-    it('includes the solution id in the handoff context', async () => {
-      const res = await handoff('form');
-
-      expect(res.body.context.solutionId).toBe(SOLUTION_ID);
-    });
-
-    it('includes the matching recommendation in the handoff context', async () => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.hypotheses = [
-        {
-          id: 'h-1',
-          title: 'Case Management solution',
-          patternId: 'case-management',
-          confidence: 'high',
-          rationale: '',
-          recommendations: [{ service: 'form-service', reason: 'Intake forms.', order: 3 }],
-          assumptions: [],
-          unknowns: [],
-        },
-      ];
-      repository.get.mockResolvedValueOnce(stored);
-
-      const res = await handoff('form');
-
-      expect(res.body.context.recommendation).toEqual({ service: 'form-service', reason: 'Intake forms.', order: 3 });
-    });
-
-    it('replaces earlier progress for the same specialist', async () => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.specialists = [{ service: 'form-service', status: 'consulted', updatedOn: '2026-01-01' }];
-      repository.get.mockResolvedValueOnce(stored);
-
-      const res = await handoff('form');
-
-      expect(res.body.solution.state.specialists).toHaveLength(1);
-    });
-
-    it('sends a solution-updated event with the handoff operation', async () => {
-      await handoff('form');
-
-      expect(eventService.send).toHaveBeenCalledWith(
-        expect.objectContaining({ payload: expect.objectContaining({ operation: 'handoff' }) }),
-      );
-    });
-
-    it('returns 404 for an unknown specialist', async () => {
-      const res = await handoff('unknown');
-
-      expect(res.status).toBe(404);
-    });
-
-    it('returns 400 for an invalid specialist status', async () => {
-      const res = await handoff('form', { status: 'bogus' });
-
-      expect(res.status).toBe(400);
     });
   });
 });

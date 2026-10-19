@@ -1,8 +1,10 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoabBadge, GoabButton, GoabButtonGroup, GoabIconButton, GoabInput, GoabModal } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabIconButton, GoabInput } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
+import { ConfirmDelete } from './ConfirmDelete';
 import { Solution } from './model';
+import { useBusy } from './useBusy';
 import { download, safeName, solutionToMarkdown } from './utils';
 
 const Bar = styled.div`
@@ -40,18 +42,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(solution.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [working, setWorking] = useState(false);
-
-  const attempt = async (action: () => Promise<void>) => {
-    setWorking(true);
-    try {
-      await action();
-    } catch {
-      // The api reports the error to the user.
-    } finally {
-      setWorking(false);
-    }
-  };
+  const [working, attempt] = useBusy();
 
   const startRename = () => {
     setName(solution.name);
@@ -149,32 +140,18 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
           />
         </Row>
       </Bar>
-      <GoabModal
-        testId="delete-solution-modal"
+      <ConfirmDelete
         open={confirmDelete}
+        testIdPrefix="delete"
+        modalTestId="delete-solution-modal"
         heading="Delete this solution?"
-        calloutVariant="emergency"
-        onClose={() => setConfirmDelete(false)}
-        actions={
-          <GoabButtonGroup alignment="end" mt="m">
-            <GoabButton size="compact" type="secondary" testId="delete-cancel" onClick={() => setConfirmDelete(false)}>
-              Cancel
-            </GoabButton>
-            <GoabButton
-              size="compact"
-              variant="destructive"
-              testId="delete-confirm"
-              disabled={working}
-              onClick={remove}
-            >
-              Delete
-            </GoabButton>
-          </GoabButtonGroup>
-        }
+        busy={working}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={remove}
       >
         This action cannot be undone. <strong>{solution.name}</strong> and its saved specialist chats will be
         permanently removed.
-      </GoabModal>
+      </ConfirmDelete>
     </>
   );
 };

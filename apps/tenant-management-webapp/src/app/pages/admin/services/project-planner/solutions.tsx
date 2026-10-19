@@ -2,18 +2,18 @@ import React, { FunctionComponent, useCallback, useEffect, useState } from 'reac
 import {
   GoabBadge,
   GoabButton,
-  GoabButtonGroup,
   GoabCircularProgress,
   GoabFormItem,
   GoabIconButton,
   GoabInput,
-  GoabModal,
   GoabTable,
   GoabTableSortHeader,
 } from '@abgov/react-components';
 import styled from 'styled-components';
 import { usePlannerApi } from './api';
+import { ConfirmDelete } from './ConfirmDelete';
 import { Solution } from './model';
+import { useBusy } from './useBusy';
 import { download, safeName, solutionToMarkdown } from './utils';
 
 const NewSolution = styled.div`
@@ -83,7 +83,7 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
   const api = usePlannerApi();
   const [solutions, setSolutions] = useState<Solution[]>();
   const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
   const [deleting, setDeleting] = useState<Solution>();
   const [search, setSearch] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | 'none'>('none');
@@ -122,34 +122,23 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
   const currentPage = Math.min(page, totalPages - 1);
   const paged = sorted.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
 
-  const create = async () => {
-    setBusy(true);
-    try {
+  const create = () =>
+    run(async () => {
       const solution = await api.createSolution(name.trim(), '');
       setName('');
       await load();
       onSelect(solution.id);
-    } catch {
-      // Error is surfaced through the notification handled in the api hook.
-    } finally {
-      setBusy(false);
-    }
-  };
+    });
 
-  const remove = async () => {
+  const remove = () => {
     if (!deleting) {
       return;
     }
-    setBusy(true);
-    try {
+    return run(async () => {
       await api.deleteSolution(deleting.id);
       setDeleting(undefined);
       await load();
-    } catch {
-      // Error is surfaced through the notification handled in the api hook.
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   const exportJson = async (solution: Solution) => {
@@ -298,37 +287,17 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
           </GoabTable>
         ))}
 
-      <GoabModal
-        testId="delete-solution-modal"
+      <ConfirmDelete
         open={!!deleting}
+        testIdPrefix="delete-solution"
         heading="Delete this solution?"
-        calloutVariant="emergency"
-        onClose={() => setDeleting(undefined)}
-        actions={
-          <GoabButtonGroup alignment="end" mt="m">
-            <GoabButton
-              size="compact"
-              type="secondary"
-              testId="delete-solution-cancel"
-              onClick={() => setDeleting(undefined)}
-            >
-              Cancel
-            </GoabButton>
-            <GoabButton
-              size="compact"
-              variant="destructive"
-              testId="delete-solution-confirm"
-              disabled={busy}
-              onClick={remove}
-            >
-              Delete
-            </GoabButton>
-          </GoabButtonGroup>
-        }
+        busy={busy}
+        onCancel={() => setDeleting(undefined)}
+        onConfirm={remove}
       >
         This action cannot be undone. <strong>{deleting?.name}</strong> and its saved specialist chats will be
         permanently removed.
-      </GoabModal>
+      </ConfirmDelete>
     </section>
   );
 };

@@ -9,8 +9,7 @@ turn it into a plan for using ADSP services.
 The planner builds a structured _business model_ of the problem (actors, goals, workflows, rules, constraints,
 assumptions, unknowns, etc.), matches it against known GoA _business patterns_, and derives one or more
 _solution hypotheses_ that recommend ADSP services. Each recommended service has a _specialist_ that can be consulted
-for service-specific questions and dependencies, and the user can be handed off to a service workspace with the
-solution context.
+for service-specific questions and dependencies, and links to its service workspace.
 
 A _solution_ is the persistent, structured state of this work: decisions made (and why), open questions,
 specialist progress, artifacts, and recommended next steps. It survives across sessions so the user does not need

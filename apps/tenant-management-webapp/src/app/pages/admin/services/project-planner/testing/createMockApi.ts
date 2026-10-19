@@ -15,7 +15,6 @@ const METHODS: (keyof PlannerApi)[] = [
   'discovery',
   'blueprint',
   'consult',
-  'handoff',
   'exportSolution',
   'listSpecialists',
   'specialistChat',
@@ -28,7 +27,6 @@ const METHODS: (keyof PlannerApi)[] = [
   'createPattern',
   'updatePattern',
   'deletePattern',
-  'matchPatterns',
 ];
 
 /** Creates a PlannerApi where every method is a jest.fn() resolving to undefined unless overridden. */

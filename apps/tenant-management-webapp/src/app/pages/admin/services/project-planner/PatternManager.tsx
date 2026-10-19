@@ -6,13 +6,14 @@ import {
   GoabCircularProgress,
   GoabDetails,
   GoabFormItem,
-  GoabModal,
   GoabTable,
   GoabTextArea,
 } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
+import { ConfirmDelete } from './ConfirmDelete';
 import { BusinessPattern, PatternInput, PatternSource } from './model';
+import { useBusy } from './useBusy';
 
 const Stack = styled.div`
   display: flex;
@@ -222,7 +223,7 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
   const [editing, setEditing] = useState<EditState>();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [deleting, setDeleting] = useState<BusinessPattern>();
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
 
   const load = useCallback(
     () =>
@@ -242,15 +243,15 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
     setEditing({ id: pattern?.id, fields: toFields(pattern) });
   };
 
-  const save = async () => {
+  const save = () => {
     const input = toInput(editing.fields);
     const found = validate(input);
     setErrors(found);
     if (Object.keys(found).length > 0) {
       return;
     }
-    setBusy(true);
-    try {
+    // On failure the form stays open so the input is not lost.
+    return run(async () => {
       if (editing.id) {
         await api.updatePattern(editing.id, input);
       } else {
@@ -258,33 +259,24 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
       }
       setEditing(undefined);
       await load();
-    } catch {
-      // The api reports the server error; keep the form open so the input is not lost.
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
-  const confirmDelete = async () => {
-    const pattern = deleting;
-    setBusy(true);
-    try {
-      await api.deletePattern(pattern.id);
-      setDeleting(undefined);
+  const confirmDelete = () =>
+    run(async () => {
+      try {
+        await api.deletePattern(deleting.id);
+      } finally {
+        setDeleting(undefined);
+      }
       await load();
-    } catch {
-      setDeleting(undefined);
-    } finally {
-      setBusy(false);
-    }
-  };
+    });
 
   if (!patterns) {
     return <GoabCircularProgress visible message="Loading patterns..." size="small" />;
   }
 
   if (editing) {
-    const isEditingValid = Object.keys(validate(toInput(editing.fields))).length === 0;
     return (
       <section aria-labelledby="pattern-editor-heading">
         <h2 id="pattern-editor-heading" data-testid="pattern-editor-heading">
@@ -312,7 +304,7 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
             </GoabFormItem>
           ))}
           <GoabButtonGroup alignment="start">
-            <GoabButton disabled={busy || !isEditingValid} testId="pattern-save" onClick={save}>
+            <GoabButton disabled={busy} testId="pattern-save" onClick={save}>
               Save pattern
             </GoabButton>
             <GoabButton type="tertiary" disabled={busy} testId="pattern-cancel" onClick={() => setEditing(undefined)}>
@@ -411,34 +403,14 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
         </tbody>
       </GoabTable>
       {deleting && (
-        <GoabModal
+        <ConfirmDelete
           open
-          testId="pattern-delete-modal"
+          testIdPrefix="pattern-delete"
           heading={deleting.source === 'customized' ? 'Revert this pattern?' : 'Delete this pattern?'}
-          calloutVariant="emergency"
-          onClose={() => setDeleting(undefined)}
-          actions={
-            <GoabButtonGroup alignment="end" mt="m">
-              <GoabButton
-                size="compact"
-                type="secondary"
-                disabled={busy}
-                testId="pattern-delete-cancel"
-                onClick={() => setDeleting(undefined)}
-              >
-                Cancel
-              </GoabButton>
-              <GoabButton
-                size="compact"
-                variant="destructive"
-                disabled={busy}
-                testId="pattern-delete-confirm"
-                onClick={confirmDelete}
-              >
-                {deleting.source === 'customized' ? 'Revert' : 'Delete'}
-              </GoabButton>
-            </GoabButtonGroup>
-          }
+          confirmLabel={deleting.source === 'customized' ? 'Revert' : 'Delete'}
+          busy={busy}
+          onCancel={() => setDeleting(undefined)}
+          onConfirm={confirmDelete}
         >
           {deleting.source === 'customized' ? (
             <>
@@ -450,7 +422,7 @@ export const PatternManager: FunctionComponent<PatternManagerProps> = ({ api, ca
               This action cannot be undone. <strong>{deleting.name}</strong> will be permanently removed.
             </>
           )}
-        </GoabModal>
+        </ConfirmDelete>
       )}
     </section>
   );

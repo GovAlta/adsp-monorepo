@@ -24,7 +24,6 @@ const config: LlmConfig = {
   apiKey: 'test-api-key',
   model: 'GOA-Default',
   timeoutMs: 5000,
-  insecureTls: false,
 };
 
 const completion = (content: unknown) => ({ data: { choices: [{ message: { content } }] } });
@@ -37,7 +36,9 @@ const validAnalysis = {
     { type: 'actor', name: 'Grant officer', description: 'Reviews applications' },
     { type: 'document', name: 'Grant application' },
   ],
-  matches: [{ patternId: 'case-management', score: 8, level: 'high', explanation: 'Officers work each application as a case.' }],
+  matches: [
+    { patternId: 'case-management', score: 8, level: 'high', explanation: 'Officers work each application as a case.' },
+  ],
   hypotheses: [
     {
       title: 'Grant case workflow',
@@ -135,10 +136,22 @@ describe('MaasLlm', () => {
   });
 
   describe('analyze', () => {
-    it('maps a valid response to concepts, matches, hypotheses and questions', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+    const problem = 'Residents apply for grants.';
+    type AnalyzeArgs = Parameters<MaasLlm['analyze']>;
+    const analyze = (concepts: AnalyzeArgs[2] = [], context?: AnalyzeArgs[3]) =>
+      buildLlm().analyze(problem, patterns, concepts, context);
+    const analyzeWith = (
+      overrides: Record<string, unknown> = {},
+      concepts?: AnalyzeArgs[2],
+      context?: AnalyzeArgs[3],
+    ) => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, ...overrides })));
+      return analyze(concepts, context);
+    };
+    const userPrompt = () => post.mock.calls[0][1].messages[1].content as string;
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+    it('maps a valid response to concepts, matches, hypotheses and questions', async () => {
+      const result = await analyzeWith();
 
       expect(result).toMatchObject({
         model: 'GOA-Default',
@@ -149,9 +162,7 @@ describe('MaasLlm', () => {
     });
 
     it('marks mapped concepts as extracted with a generated id', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith();
 
       expect(result.concepts[0]).toEqual({
         id: expect.any(String),
@@ -164,9 +175,7 @@ describe('MaasLlm', () => {
     });
 
     it('posts the chat completion request to the completions endpoint', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-
-      await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      await analyzeWith();
 
       expect(post).toHaveBeenCalledWith(
         '/chat/completions',
@@ -175,22 +184,15 @@ describe('MaasLlm', () => {
     });
 
     it('includes the problem text in the user prompt', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+      await analyzeWith();
 
-      await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      const messages = post.mock.calls[0][1].messages;
-      expect(messages[1].content).toContain('Residents apply for grants.');
+      expect(userPrompt()).toContain(problem);
     });
 
     it('includes already confirmed concepts in the user prompt', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+      await analyzeWith({}, [{ id: 'c-1', type: 'actor', name: 'Resident', source: 'user' }]);
 
-      await buildLlm().analyze('Residents apply for grants.', patterns, [
-        { id: 'c-1', type: 'actor', name: 'Resident', source: 'user' },
-      ]);
-
-      expect(post.mock.calls[0][1].messages[1].content).toContain('actor:Resident');
+      expect(userPrompt()).toContain('actor:Resident');
     });
 
     describe('conversation context', () => {
@@ -202,83 +204,53 @@ describe('MaasLlm', () => {
         ],
         message: 'Can officers reassign cases?',
       };
-      const userPrompt = () => post.mock.calls[0][1].messages[1].content as string;
+      const contextSections = /already answered these questions|Conversation so far|The user's latest message/;
 
-      it('includes answered questions and answers in the prompt', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+      it.each([
+        ['answered questions and answers', 'Q: Who approves large grants?\nA: The deputy minister'],
+        ['the conversation history', 'user: We also handle appeals.\nassistant: Noted, appeals are cases too.'],
+        ['the latest user message', '"""Can officers reassign cases?"""'],
+      ])('includes %s in the prompt', async (_name, expected) => {
+        await analyzeWith({}, [], context);
 
-        await buildLlm().analyze('Residents apply for grants.', patterns, [], context);
-
-        expect(userPrompt()).toContain('Q: Who approves large grants?\nA: The deputy minister');
-      });
-
-      it('includes the conversation history in the prompt', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-
-        await buildLlm().analyze('Residents apply for grants.', patterns, [], context);
-
-        expect(userPrompt()).toContain('user: We also handle appeals.\nassistant: Noted, appeals are cases too.');
+        expect(userPrompt()).toContain(expected);
       });
 
       it('limits the conversation history to the last 12 messages', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-        const conversation = Array.from({ length: 14 }, (_v, i) => ({ role: 'user' as const, content: `message-${i}-end` }));
+        const conversation = Array.from({ length: 14 }, (_v, i) => ({
+          role: 'user' as const,
+          content: `message-${i}-end`,
+        }));
 
-        await buildLlm().analyze('Residents apply for grants.', patterns, [], { answers: [], conversation });
+        await analyzeWith({}, [], { answers: [], conversation });
 
         expect(userPrompt()).not.toContain('message-1-end');
         expect(userPrompt()).toContain('message-2-end');
       });
 
-      it('includes the latest user message in the prompt', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+      it.each([
+        ['the context is empty', { answers: [], conversation: [] }],
+        ['no context is provided', undefined],
+      ])('omits context sections when %s', async (_name, emptyContext) => {
+        await analyzeWith({}, [], emptyContext);
 
-        await buildLlm().analyze('Residents apply for grants.', patterns, [], context);
-
-        expect(userPrompt()).toContain('"""Can officers reassign cases?"""');
-      });
-
-      it('omits context sections when the context is empty', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-
-        await buildLlm().analyze('Residents apply for grants.', patterns, [], { answers: [], conversation: [] });
-
-        expect(userPrompt()).not.toMatch(/already answered these questions|Conversation so far|The user\u0027s latest message/);
-      });
-
-      it('omits context sections when no context is provided', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-
-        await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-        expect(userPrompt()).not.toMatch(/already answered these questions|Conversation so far|The user\u0027s latest message/);
+        expect(userPrompt()).not.toMatch(contextSections);
       });
     });
 
     describe('reply', () => {
-      it('returns the trimmed reply from the model', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, reply: '  Officers can reassign cases.  ' })));
-
-        const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-        expect(result.reply).toBe('Officers can reassign cases.');
-      });
-
       it.each([
-        ['missing', undefined],
-        ['not a string', 42],
-      ])('returns an empty reply when the reply is %s', async (_name, reply) => {
-        post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, reply })));
+        ['the trimmed reply', '  Officers can reassign cases.  ', 'Officers can reassign cases.'],
+        ['an empty reply when the reply is missing', undefined, ''],
+        ['an empty reply when the reply is not a string', 42, ''],
+      ])('returns %s', async (_name, reply, expected) => {
+        const result = await analyzeWith({ reply });
 
-        const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-        expect(result.reply).toBe('');
+        expect(result.reply).toBe(expected);
       });
 
       it('truncates a reply longer than 2000 characters', async () => {
-        post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, reply: 'a'.repeat(2500) })));
-
-        const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+        const result = await analyzeWith({ reply: 'a'.repeat(2500) });
 
         expect(result.reply).toHaveLength(2000);
       });
@@ -287,267 +259,153 @@ describe('MaasLlm', () => {
     it('parses JSON returned inside a markdown code fence', async () => {
       post.mockResolvedValueOnce(completion('```json\n' + JSON.stringify(validAnalysis) + '\n```'));
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyze();
 
       expect(result.matches).toHaveLength(1);
     });
 
-    it('requests a corrected response when the first reply is not valid JSON', async () => {
-      post
-        .mockResolvedValueOnce(completion('Sorry, I cannot do that.'))
-        .mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
+    it('repairs an invalid JSON reply by sending it back to the model once', async () => {
+      post.mockResolvedValueOnce(completion('Sorry, I cannot do that.'));
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith();
 
       expect(result.matches).toHaveLength(1);
-    });
-
-    it('sends the invalid reply back to the model when repairing', async () => {
-      post
-        .mockResolvedValueOnce(completion('Sorry, I cannot do that.'))
-        .mockResolvedValueOnce(completion(JSON.stringify(validAnalysis)));
-
-      await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
       expect(post.mock.calls[1][1].messages.slice(-2)).toEqual([
         { role: 'assistant', content: 'Sorry, I cannot do that.' },
         { role: 'user', content: expect.stringContaining('not valid JSON') },
       ]);
     });
 
-    it('throws when the repaired reply is also not valid JSON', async () => {
+    it('throws after one repair attempt when the repaired reply is also not valid JSON', async () => {
       post.mockResolvedValue(completion('still not json'));
 
-      await expect(buildLlm().analyze('Residents apply for grants.', patterns, [])).rejects.toThrow(
-        'Model response did not contain a JSON object.',
-      );
-    });
-
-    it('only makes one repair attempt for invalid JSON', async () => {
-      post.mockResolvedValue(completion('still not json'));
-
-      await buildLlm()
-        .analyze('Residents apply for grants.', patterns, [])
-        .catch(() => undefined);
-
+      await expect(analyze()).rejects.toThrow('Model response did not contain a JSON object.');
       expect(post).toHaveBeenCalledTimes(2);
     });
 
     it.each([
-      ['an empty string', ''],
-      ['whitespace', '   '],
-      ['a non-string', null],
-    ])('throws when the model returns %s as content', async (_name, content) => {
-      post.mockResolvedValueOnce(completion(content));
+      ['an empty string', completion('')],
+      ['whitespace', completion('   ')],
+      ['a non-string', completion(null)],
+      ['no choices', { data: {} }],
+    ])('throws when the model returns %s', async (_name, response) => {
+      post.mockResolvedValueOnce(response);
 
-      await expect(buildLlm().analyze('Residents apply for grants.', patterns, [])).rejects.toThrow(
-        'Model returned an empty response.',
-      );
-    });
-
-    it('throws when the response has no choices', async () => {
-      post.mockResolvedValueOnce({ data: {} });
-
-      await expect(buildLlm().analyze('Residents apply for grants.', patterns, [])).rejects.toThrow(
-        'Model returned an empty response.',
-      );
+      await expect(analyze()).rejects.toThrow('Model returned an empty response.');
     });
 
     it('drops matches that reference unknown pattern ids', async () => {
-      post.mockResolvedValueOnce(
-        completion(
-          JSON.stringify({
-            ...validAnalysis,
-            matches: [{ patternId: 'made-up-pattern', score: 9 }, ...validAnalysis.matches],
-          }),
-        ),
-      );
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith({
+        matches: [{ patternId: 'made-up-pattern', score: 9 }, ...validAnalysis.matches],
+      });
 
       expect(result.matches.map((m) => m.patternId)).toEqual(['case-management']);
     });
 
-    it('clamps match scores to the 0-10 range', async () => {
-      post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...validAnalysis, matches: [{ patternId: 'case-management', score: 42 }] })),
-      );
+    it.each([
+      ['clamps match scores to the 0-10 range', { score: 42 }, { score: 10 }],
+      ['treats a non-numeric match score as zero', { score: 'high' }, { score: 0 }],
+      ['normalizes an invalid confidence level to low', { score: 5, level: 'certain' }, { level: 'low' }],
+    ])('%s', async (_name, match, expected) => {
+      const result = await analyzeWith({ matches: [{ patternId: 'case-management', ...match }] });
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.matches[0].score).toBe(10);
+      expect(result.matches[0]).toMatchObject(expected);
     });
 
-    it('treats a non-numeric match score as zero', async () => {
-      post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...validAnalysis, matches: [{ patternId: 'case-management', score: 'high' }] })),
-      );
+    it.each<[string, number, Record<string, unknown[]>]>([
+      ['matches', 6, { matches: patterns.slice(0, 8).map((p) => ({ patternId: p.id, score: 5, level: 'medium' })) }],
+      ['concepts', 20, { concepts: Array.from({ length: 25 }, (_v, i) => ({ type: 'actor', name: `Actor ${i}` })) }],
+      ['hypotheses', 3, { hypotheses: Array.from({ length: 5 }, () => validAnalysis.hypotheses[0]) }],
+      ['questions', 6, { questions: Array.from({ length: 9 }, (_v, i) => `Question ${i}?`) }],
+    ])('limits %s to %i entries', async (field, limit, overrides) => {
+      const result = await analyzeWith(overrides);
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.matches[0].score).toBe(0);
-    });
-
-    it('normalizes an invalid confidence level to low', async () => {
-      post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...validAnalysis, matches: [{ patternId: 'case-management', score: 5, level: 'certain' }] })),
-      );
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.matches[0].level).toBe('low');
-    });
-
-    it('limits matches to six entries', async () => {
-      const matches = patterns.slice(0, 8).map((p) => ({ patternId: p.id, score: 5, level: 'medium' }));
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, matches })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.matches).toHaveLength(6);
+      expect(result[field as keyof typeof result]).toHaveLength(limit);
     });
 
     it('normalizes unknown concept types to unknown', async () => {
-      post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...validAnalysis, concepts: [{ type: 'spaceship', name: 'Grant' }] })),
-      );
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith({ concepts: [{ type: 'spaceship', name: 'Grant' }] });
 
       expect(result.concepts[0].type).toBe('unknown');
     });
 
     it('drops concepts without a name', async () => {
-      post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...validAnalysis, concepts: [{ type: 'actor', name: '  ' }, { type: 'actor' }, 'text'] })),
-      );
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith({ concepts: [{ type: 'actor', name: '  ' }, { type: 'actor' }, 'text'] });
 
       expect(result.concepts).toEqual([]);
     });
 
     it('omits the description when the model gives none', async () => {
-      post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...validAnalysis, concepts: [{ type: 'actor', name: 'Grant officer' }] })),
-      );
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith({ concepts: [{ type: 'actor', name: 'Grant officer' }] });
 
       expect(result.concepts[0].description).toBeUndefined();
     });
 
-    it('limits concepts to twenty entries', async () => {
-      const concepts = Array.from({ length: 25 }, (_v, i) => ({ type: 'actor', name: `Actor ${i}` }));
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, concepts })));
+    describe('hypotheses', () => {
+      const analyzeHypothesis = (overrides: Record<string, unknown>) =>
+        analyzeWith({ hypotheses: [{ ...validAnalysis.hypotheses[0], ...overrides }] });
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      it('drops recommendations for unknown services', async () => {
+        const result = await analyzeHypothesis({
+          recommendations: [
+            { service: 'teleport-service', reason: 'Not real', order: 1 },
+            { service: 'form-service', reason: 'Collect applications', order: 2 },
+          ],
+        });
 
-      expect(result.concepts).toHaveLength(20);
-    });
+        expect(result.hypotheses[0].recommendations.map((r) => r.service)).toEqual(['form-service']);
+      });
 
-    it('drops recommendations for unknown services', async () => {
-      const hypothesis = {
-        ...validAnalysis.hypotheses[0],
-        recommendations: [
-          { service: 'teleport-service', reason: 'Not real', order: 1 },
-          { service: 'form-service', reason: 'Collect applications', order: 2 },
+      it('drops hypotheses that have no valid recommendations', async () => {
+        const result = await analyzeHypothesis({
+          recommendations: [{ service: 'teleport-service', reason: 'Not real', order: 1 }],
+        });
+
+        expect(result.hypotheses).toEqual([]);
+      });
+
+      it('sorts recommendations by their suggested order', async () => {
+        const result = await analyzeHypothesis({
+          recommendations: [
+            { service: 'form-service', reason: 'Second', order: 2 },
+            { service: 'file-service', reason: 'First', order: 1 },
+          ],
+        });
+
+        expect(result.hypotheses[0].recommendations.map((r) => r.reason)).toEqual(['First', 'Second']);
+      });
+
+      it('numbers recommendations by position when the model gives no order', async () => {
+        const result = await analyzeHypothesis({
+          recommendations: [{ service: 'form-service', reason: 'Collect applications' }],
+        });
+
+        expect(result.hypotheses[0].recommendations[0].order).toBe(1);
+      });
+
+      it.each([
+        [
+          'clears the pattern id when it references an unknown pattern',
+          { patternId: 'made-up-pattern' },
+          'patternId',
+          '',
         ],
-      };
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses: [hypothesis] })));
+        ['applies a default title when there is none', { title: undefined }, 'title', 'Proposed solution'],
+      ])('%s', async (_name, overrides, field, expected) => {
+        const result = await analyzeHypothesis(overrides);
 
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses[0].recommendations.map((r) => r.service)).toEqual(['form-service']);
-    });
-
-    it('drops hypotheses that have no valid recommendations', async () => {
-      const hypothesis = {
-        ...validAnalysis.hypotheses[0],
-        recommendations: [{ service: 'teleport-service', reason: 'Not real', order: 1 }],
-      };
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses: [hypothesis] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses).toEqual([]);
-    });
-
-    it('sorts recommendations by their suggested order', async () => {
-      const hypothesis = {
-        ...validAnalysis.hypotheses[0],
-        recommendations: [
-          { service: 'form-service', reason: 'Second', order: 2 },
-          { service: 'file-service', reason: 'First', order: 1 },
-        ],
-      };
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses: [hypothesis] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses[0].recommendations.map((r) => r.reason)).toEqual(['First', 'Second']);
-    });
-
-    it('numbers recommendations by position when the model gives no order', async () => {
-      const hypothesis = {
-        ...validAnalysis.hypotheses[0],
-        recommendations: [{ service: 'form-service', reason: 'Collect applications' }],
-      };
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses: [hypothesis] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses[0].recommendations[0].order).toBe(1);
-    });
-
-    it('clears the pattern id of a hypothesis that references an unknown pattern', async () => {
-      const hypothesis = { ...validAnalysis.hypotheses[0], patternId: 'made-up-pattern' };
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses: [hypothesis] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses[0].patternId).toBe('');
-    });
-
-    it('applies a default title when the hypothesis has none', async () => {
-      const hypothesis = { ...validAnalysis.hypotheses[0], title: undefined };
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses: [hypothesis] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses[0].title).toBe('Proposed solution');
-    });
-
-    it('limits hypotheses to three entries', async () => {
-      const hypotheses = Array.from({ length: 5 }, () => validAnalysis.hypotheses[0]);
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, hypotheses })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.hypotheses).toHaveLength(3);
-    });
-
-    it('limits questions to six entries', async () => {
-      const questions = Array.from({ length: 9 }, (_v, i) => `Question ${i}?`);
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, questions })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
-
-      expect(result.questions).toHaveLength(6);
+        expect(result.hypotheses[0][field as 'patternId' | 'title']).toBe(expected);
+      });
     });
 
     it('ignores questions that are not strings', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, questions: [42, '', 'Who approves?'] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith({ questions: [42, '', 'Who approves?'] });
 
       expect(result.questions).toEqual(['Who approves?']);
     });
 
     it('accepts a response that has hypotheses but no usable matches', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify({ ...validAnalysis, matches: [] })));
-
-      const result = await buildLlm().analyze('Residents apply for grants.', patterns, []);
+      const result = await analyzeWith({ matches: [] });
 
       expect(result.hypotheses).toHaveLength(1);
     });
@@ -557,9 +415,7 @@ describe('MaasLlm', () => {
         completion(JSON.stringify({ concepts: [], matches: [{ patternId: 'made-up-pattern' }], hypotheses: 'none' })),
       );
 
-      await expect(buildLlm().analyze('Residents apply for grants.', patterns, [])).rejects.toThrow(
-        'Model response did not contain usable matches or hypotheses.',
-      );
+      await expect(analyze()).rejects.toThrow('Model response did not contain usable matches or hypotheses.');
     });
   });
 
@@ -714,9 +570,7 @@ describe('MaasLlm', () => {
     });
 
     it('repairs invalid JSON with a second request', async () => {
-      post
-        .mockResolvedValueOnce(completion('not json'))
-        .mockResolvedValueOnce(completion(JSON.stringify(consultJson)));
+      post.mockResolvedValueOnce(completion('not json')).mockResolvedValueOnce(completion(JSON.stringify(consultJson)));
 
       const result = await buildLlm().consult(emptyState(), specialist);
 
@@ -726,7 +580,11 @@ describe('MaasLlm', () => {
 
   describe('blueprint', () => {
     const blueprintJson = {
-      overview: { summary: 'Officers review grant applications as cases.', objectives: ['Faster decisions', ' '], risks: ['Approval limits'] },
+      overview: {
+        summary: 'Officers review grant applications as cases.',
+        objectives: ['Faster decisions', ' '],
+        risks: ['Approval limits'],
+      },
       architecture: {
         summary: 'Tenant-scoped services.',
         layers: [
@@ -746,12 +604,17 @@ describe('MaasLlm', () => {
         { name: 'No steps', actors: [], steps: [] },
       ],
       dataGovernance: { retention: ['7 years'] },
-      delivery: { phases: [{ name: 'Foundation', items: ['Set up tenant'] }, { name: '' }], nonFunctional: ['Accessibility'] },
+      delivery: {
+        phases: [{ name: 'Foundation', items: ['Set up tenant'] }, { name: '' }],
+        nonFunctional: ['Accessibility'],
+      },
     };
     const state = (): SolutionState => ({
       ...emptyState(),
       concepts: [{ id: 'c-1', type: 'actor', name: 'Grant officer', source: 'extracted' }],
-      discovery: { messages: [{ role: 'user', content: 'Officers review grants.', at: '2026-03-01' }] } as unknown as SolutionState['discovery'],
+      discovery: {
+        messages: [{ role: 'user', content: 'Officers review grants.', at: '2026-03-01' }],
+      } as unknown as SolutionState['discovery'],
       hypotheses: [
         {
           id: 'h-1',
@@ -796,7 +659,11 @@ describe('MaasLlm', () => {
 
       const { core } = await buildLlm().blueprint(state(), [note]);
 
-      expect(core.overview).toMatchObject({ summary: blueprintJson.overview.summary, objectives: ['Faster decisions'], risks: ['Approval limits'] });
+      expect(core.overview).toMatchObject({
+        summary: blueprintJson.overview.summary,
+        objectives: ['Faster decisions'],
+        risks: ['Approval limits'],
+      });
     });
 
     it('drops layers without a name', async () => {
@@ -804,7 +671,9 @@ describe('MaasLlm', () => {
 
       const { core } = await buildLlm().blueprint(state(), [note]);
 
-      expect(core.architecture?.layers).toEqual([{ name: 'Experience', description: 'Web app', components: ['Officer view'] }]);
+      expect(core.architecture?.layers).toEqual([
+        { name: 'Experience', description: 'Web app', components: ['Officer view'] },
+      ]);
     });
 
     it('drops workflows without steps', async () => {
@@ -812,7 +681,9 @@ describe('MaasLlm', () => {
 
       const { core } = await buildLlm().blueprint(state(), [note]);
 
-      expect(core.workflows).toEqual([{ name: 'Review', actors: ['Grant officer'], steps: ['Open file in form-service'] }]);
+      expect(core.workflows).toEqual([
+        { name: 'Review', actors: ['Grant officer'], steps: ['Open file in form-service'] },
+      ]);
     });
 
     it('drops delivery phases without a name', async () => {
@@ -828,7 +699,9 @@ describe('MaasLlm', () => {
 
       const { services } = await buildLlm().blueprint(state(), [note]);
 
-      expect(services).toEqual([{ service: 'form-service', role: 'Collects applications', capabilities: ['Draft saving'] }]);
+      expect(services).toEqual([
+        { service: 'form-service', role: 'Collects applications', capabilities: ['Draft saving'] },
+      ]);
     });
 
     it('includes the problem, discovery, services in order, concepts and specialist notes in the prompt', async () => {
@@ -837,7 +710,9 @@ describe('MaasLlm', () => {
       await buildLlm().blueprint(state(), [note]);
 
       expect(userPrompt()).toEqual(
-        expect.stringMatching(/Residents apply for grants\.[\s\S]*user: Officers review grants\.[\s\S]*1\. form-service: Collect applications\n2\. file-service[\s\S]*actor:Grant officer[\s\S]*- form-service \(recommended\): Use one intake form\. Constraints: One form\. Risks: Duplicate submissions/),
+        expect.stringMatching(
+          /Residents apply for grants\.[\s\S]*user: Officers review grants\.[\s\S]*1\. form-service: Collect applications\n2\. file-service[\s\S]*actor:Grant officer[\s\S]*- form-service \(recommended\): Use one intake form\. Constraints: One form\. Risks: Duplicate submissions/,
+        ),
       );
     });
 
@@ -872,7 +747,9 @@ describe('MaasLlm', () => {
     ])('throws when the response is %s', async (_label, json) => {
       post.mockResolvedValueOnce(completion(JSON.stringify(json)));
 
-      await expect(buildLlm().blueprint(emptyState(), [])).rejects.toThrow('Model response did not contain a usable blueprint.');
+      await expect(buildLlm().blueprint(emptyState(), [])).rejects.toThrow(
+        'Model response did not contain a usable blueprint.',
+      );
     });
   });
 
@@ -903,7 +780,9 @@ describe('MaasLlm', () => {
 
     it('drops factors with ids that are not discovery factors', async () => {
       post.mockResolvedValueOnce(
-        completion(JSON.stringify({ ...discoverJson, factors: [...discoverJson.factors, { id: 'budget', score: 90 }] })),
+        completion(
+          JSON.stringify({ ...discoverJson, factors: [...discoverJson.factors, { id: 'budget', score: 90 }] }),
+        ),
       );
 
       const result = await buildLlm().discover(problem, [], patterns);
@@ -981,7 +860,9 @@ describe('MaasLlm', () => {
     });
 
     it('throws when no valid factors are returned', async () => {
-      post.mockResolvedValueOnce(completion(JSON.stringify({ reply: 'Tell me more.', factors: [{ id: 'budget', score: 5 }] })));
+      post.mockResolvedValueOnce(
+        completion(JSON.stringify({ reply: 'Tell me more.', factors: [{ id: 'budget', score: 5 }] })),
+      );
 
       await expect(buildLlm().discover(problem, [], patterns)).rejects.toThrow(
         'Model response did not contain a discovery message and factor scores.',
@@ -1133,10 +1014,10 @@ describe('MaasLlm', () => {
     });
 
     it.each([
-      ['ask', 'answer the user\'s question about this service.'],
+      ['ask', "answer the user's question about this service."],
       ['recommend', 'recommend a service-specific solution'],
-      ['design', 'help refine the user\'s service-specific design'],
-      ['validate', 'validate the user\'s proposed solution'],
+      ['design', "help refine the user's service-specific design"],
+      ['validate', "validate the user's proposed solution"],
       ['sample', 'provide concise, realistic sample code'],
     ] as const)('includes the %s intent guidance in the system prompt', async (intent, guidance) => {
       post.mockResolvedValueOnce(completion(JSON.stringify(converseJson)));
@@ -1379,7 +1260,10 @@ describe('createLlmFromEnv', () => {
   });
 
   it('uses the model from MAAS_MODEL', () => {
-    const llm = createLlmFromEnv({ MAAS_API_KEY: 'test-api-key', MAAS_MODEL: 'GOA-Large' }, logger as unknown as Logger);
+    const llm = createLlmFromEnv(
+      { MAAS_API_KEY: 'test-api-key', MAAS_MODEL: 'GOA-Large' },
+      logger as unknown as Logger,
+    );
 
     expect(llm.model).toBe('GOA-Large');
   });
@@ -1407,16 +1291,5 @@ describe('createLlmFromEnv', () => {
     createLlmFromEnv({ MAAS_API_KEY: 'test-api-key', MAAS_TIMEOUT_MS: 'soon' }, logger as unknown as Logger);
 
     expect(axios.create).toHaveBeenCalledWith(expect.objectContaining({ timeout: 120000 }));
-  });
-
-  it.each([
-    ['true', false],
-    ['false', true],
-    [undefined, true],
-  ])('sets certificate verification for MAAS_INSECURE_TLS=%s', (value, rejectUnauthorized) => {
-    createLlmFromEnv({ MAAS_API_KEY: 'test-api-key', MAAS_INSECURE_TLS: value }, logger as unknown as Logger);
-
-    const options = (axios.create as jest.Mock).mock.calls[0][0];
-    expect(options.httpsAgent.options.rejectUnauthorized).toBe(rejectUnauthorized);
   });
 });

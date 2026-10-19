@@ -47,7 +47,6 @@ describe('environment', () => {
     ['MAAS_BASE_URL', 'https://maas.int.gov.ab.ca/v1'],
     ['MAAS_MODEL', 'GOA-Default'],
     ['MAAS_TIMEOUT_MS', 120000],
-    ['MAAS_INSECURE_TLS', false],
   ])('defaults %s to %p when not set', (name, expected) => {
     const environment = loadEnvironment();
 
@@ -88,12 +87,6 @@ describe('environment', () => {
     loadEnvironment({ PLANNER_STORAGE: 'mongo' });
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('PLANNER_STORAGE'));
-  });
-
-  it('parses MAAS_INSECURE_TLS as a boolean', () => {
-    const environment = loadEnvironment({ MAAS_INSECURE_TLS: 'true' });
-
-    expect(environment.MAAS_INSECURE_TLS).toBe(true);
   });
 
   it('overrides string defaults from the environment', () => {

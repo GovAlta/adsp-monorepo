@@ -107,7 +107,6 @@ const initializeApp = async (): Promise<express.Application> => {
       ? createMemoryRepositories(logger)
       : await createRepositories({ logger, ...environment });
   applyPlannerMiddleware(app, {
-    serviceId,
     logger,
     solutionRepository: repositories.solutionRepository,
     patternRepository: repositories.patternRepository,
@@ -119,7 +118,6 @@ const initializeApp = async (): Promise<express.Application> => {
         MAAS_BASE_URL: environment.MAAS_BASE_URL,
         MAAS_MODEL: environment.MAAS_MODEL,
         MAAS_TIMEOUT_MS: String(environment.MAAS_TIMEOUT_MS),
-        MAAS_INSECURE_TLS: String(environment.MAAS_INSECURE_TLS),
       },
       logger,
     ),

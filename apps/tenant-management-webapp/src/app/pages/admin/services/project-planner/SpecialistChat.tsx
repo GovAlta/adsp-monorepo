@@ -2,18 +2,18 @@ import React, { FunctionComponent, useCallback, useEffect, useRef, useState } fr
 import {
   GoabAccordion,
   GoabButton,
-  GoabButtonGroup,
   GoabCallout,
   GoabCircularProgress,
   GoabDetails,
   GoabFormItem,
   GoabIconButton,
-  GoabModal,
   GoabTextArea,
 } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
+import { ConfirmDelete } from './ConfirmDelete';
 import { AnalysisMode, ChatMessage, ChatSummary, Solution, SpecialistDefinition, SpecialistIntent } from './model';
+import { useBusy } from './useBusy';
 import { chatToMarkdown, download, fmtDate, safeName } from './utils';
 
 export const INTENTS: [SpecialistIntent, string][] = [
@@ -175,7 +175,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [intent, setIntent] = useState<SpecialistIntent>('ask');
   const [draft, setDraft] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
   const [deletingChatId, setDeletingChatId] = useState<string>();
   const onChatsChangedRef = useRef(onChatsChanged);
   onChatsChangedRef.current = onChatsChanged;
@@ -202,18 +202,6 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
     setDraft('');
     void loadChats();
   }, [loadChats]);
-
-  // Runs an action with the busy indicator; failures are reported by the api layer.
-  const run = async (action: () => Promise<void>) => {
-    setBusy(true);
-    try {
-      await action();
-    } catch {
-      // Error notification is raised by the api.
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const openChat = (id: string) =>
     run(async () => {
@@ -452,39 +440,18 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
       </GoabButton>
 
       {deletingChatId && (
-        <GoabModal
+        <ConfirmDelete
           open
-          testId="delete-chat-modal"
+          testIdPrefix="delete-chat"
           heading="Delete this chat?"
-          calloutVariant="emergency"
-          onClose={() => setDeletingChatId(undefined)}
-          actions={
-            <GoabButtonGroup alignment="end" mt="m">
-              <GoabButton
-                type="secondary"
-                size="compact"
-                disabled={busy}
-                testId="delete-chat-cancel"
-                onClick={() => setDeletingChatId(undefined)}
-              >
-                Cancel
-              </GoabButton>
-              <GoabButton
-                variant="destructive"
-                size="compact"
-                disabled={busy}
-                testId="delete-chat-confirm"
-                onClick={() => deleteChat(deletingChatId)}
-              >
-                Delete
-              </GoabButton>
-            </GoabButtonGroup>
-          }
+          busy={busy}
+          onCancel={() => setDeletingChatId(undefined)}
+          onConfirm={() => deleteChat(deletingChatId)}
         >
           This action cannot be undone.{' '}
           <strong>{chats.find((c) => c.id === deletingChatId)?.title ?? 'This chat'}</strong> and its messages will be
           permanently removed.
-        </GoabModal>
+        </ConfirmDelete>
       )}
     </section>
   );

@@ -26,7 +26,6 @@ export const environment = envalid.cleanEnv(
     MAAS_BASE_URL: envalid.str({ default: 'https://maas.int.gov.ab.ca/v1' }),
     MAAS_MODEL: envalid.str({ default: 'GOA-Default' }),
     MAAS_TIMEOUT_MS: envalid.num({ default: 120000 }),
-    MAAS_INSECURE_TLS: envalid.bool({ default: false }),
   },
   {
     reporter: ({ errors }) => {

@@ -51,15 +51,16 @@ describe('PostgresSpecialistChatRepository', () => {
   });
 
   describe('find', () => {
-    const queryMock = { where: jest.fn(), orderBy: jest.fn() };
+    const queryMock = { where: jest.fn(), orderBy: jest.fn(), limit: jest.fn() };
 
     beforeEach(() => {
       queryMock.where.mockReturnValue(queryMock);
+      queryMock.orderBy.mockReturnValue(queryMock);
       knexMock.mockReturnValueOnce(queryMock);
     });
 
     it('queries the specialist_chats table', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       await repository.find({ tenantId, createdById: 'planner-1' });
 
@@ -67,7 +68,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('filters by tenant and creator', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       await repository.find({ tenantId, createdById: 'planner-1' });
 
@@ -75,7 +76,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('filters by service when provided', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       await repository.find({ tenantId, createdById: 'planner-1', service: 'form-service' });
 
@@ -87,7 +88,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('filters by solution when provided', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       await repository.find({ tenantId, createdById: 'planner-1', solutionId: record.solutionId });
 
@@ -99,7 +100,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('filters by both service and solution when provided', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       await repository.find({
         tenantId,
@@ -117,15 +118,23 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('orders by most recently updated', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       await repository.find({ tenantId, createdById: 'planner-1' });
 
       expect(queryMock.orderBy).toHaveBeenCalledWith('updatedOn', 'desc');
     });
 
+    it('caps the result at 100 chats', async () => {
+      queryMock.limit.mockResolvedValueOnce([record]);
+
+      await repository.find({ tenantId, createdById: 'planner-1' });
+
+      expect(queryMock.limit).toHaveBeenCalledWith(100);
+    });
+
     it('maps records to chats', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       const result = await repository.find({ tenantId, createdById: 'planner-1' });
 
@@ -133,7 +142,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('returns an empty list when the user has no chats', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([]);
+      queryMock.limit.mockResolvedValueOnce([]);
 
       const result = await repository.find({ tenantId, createdById: 'planner-1' });
 
@@ -141,7 +150,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('maps a missing solution id to undefined', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([{ ...record, solutionId: null }]);
+      queryMock.limit.mockResolvedValueOnce([{ ...record, solutionId: null }]);
 
       const [result] = await repository.find({ tenantId, createdById: 'planner-1' });
 
@@ -149,7 +158,7 @@ describe('PostgresSpecialistChatRepository', () => {
     });
 
     it('parses the tenant id into an AdspId', async () => {
-      queryMock.orderBy.mockResolvedValueOnce([record]);
+      queryMock.limit.mockResolvedValueOnce([record]);
 
       const [result] = await repository.find({ tenantId, createdById: 'planner-1' });
 

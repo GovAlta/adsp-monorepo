@@ -6,7 +6,7 @@ Help someone new to ADSP go from "here is my problem" to "here is which ADSP ser
 ## Architecture pattern
 Standard ADSP Express service (modelled on task-service): `initializePlatform`, passport core/tenant strategies, Postgres via knex, domain events, swagger, OpenShift manifests. UI is a service page in the Tenant Management Webapp.
 
-Simplicity: deterministic matching and in-code specialist catalog; one table with JSONB state (no per-concept tables); no new redux slice (server owns state, components hold view state).
+Simplicity: deterministic matching and in-code specialist catalog; three tables (`solutions`, `patterns`, `specialist_chats`) with JSONB payloads, no per-concept tables; in-memory repositories (`PLANNER_STORAGE=memory`) until the database is provisioned; no new redux slice (server owns state, components hold view state).
 
 ## Slices (risk-ordered)
 1. **S1 Service skeleton** — Nx project, config, environment, migration, health, platform registration. Risk: platform wiring.
@@ -14,7 +14,7 @@ Simplicity: deterministic matching and in-code specialist catalog; one table wit
 3. **S3 Solution API** — Postgres repository, router, auth, events, swagger.
 4. **S4 Platform integration** — nx.json, OpenShift manifests, service docs.
 5. **S5 Web UI** — TMW feature flag, config url, router, pages (DS 2.0).
-6. **S6 Deferred** — agent-service LLM planner/specialist agents, existing-config awareness, e2e.
+6. **S6 Deferred** — agent-service planner/specialist agents, existing-config awareness, e2e. (Optional AI mode via GoA MaaS shipped ahead of this, with rule-based fallback.)
 
 ## Verification
-`tsc` for the service and TMW, jest for service (20 tests). Prototype run against a live Postgres/platform is not part of this build.
+`tsc` and eslint for the service and TMW; jest for the service (21 suites) and the TMW planner pages (23 suites), coverage threshold 80%. Deployed environments run with in-memory storage; Postgres is exercised locally only.

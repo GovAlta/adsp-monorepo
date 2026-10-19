@@ -1,5 +1,4 @@
 import axios, { AxiosError } from 'axios';
-import { Agent } from 'https';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
 import { BlueprintCore, BlueprintServiceDetail } from './blueprint';
@@ -24,8 +23,6 @@ export interface LlmConfig {
   apiKey: string;
   model: string;
   timeoutMs: number;
-  // Internal MaaS endpoints may present a certificate from a private CA.
-  insecureTls: boolean;
 }
 
 export interface AnalysisContext {
@@ -181,7 +178,6 @@ export class MaasLlm implements PlannerLlm {
       baseURL: config.baseUrl,
       timeout: config.timeoutMs,
       headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      httpsAgent: new Agent({ rejectUnauthorized: !config.insecureTls }),
     });
   }
 
@@ -595,7 +591,6 @@ export function createLlmFromEnv(env: Record<string, string | undefined>, logger
       apiKey: env.MAAS_API_KEY,
       model: env.MAAS_MODEL || 'GOA-Default',
       timeoutMs: Number(env.MAAS_TIMEOUT_MS) || 120000,
-      insecureTls: env.MAAS_INSECURE_TLS === 'true',
     },
     logger,
   );

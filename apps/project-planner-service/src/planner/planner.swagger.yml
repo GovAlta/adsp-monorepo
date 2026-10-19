@@ -219,12 +219,3 @@ paths:
         - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         200: { description: JSON attachment. }
-  /planner/v1/solutions/{id}/handoff/{service}:
-    post:
-      tags: [Solution, Specialist]
-      summary: Records a hand-off to a service workspace and returns the context package.
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-        - { name: service, in: path, required: true, schema: { type: string } }
-      responses:
-        200: { description: Workspace path and solution context. }

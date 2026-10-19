@@ -14,9 +14,7 @@ import {
   ConsultOptions,
   ConsultResult,
   DiscoveryOptions,
-  HandoffResult,
   PatternInput,
-  PatternMatchResult,
   Solution,
   SolutionUpdate,
   SpecialistChat,
@@ -41,7 +39,6 @@ export interface PlannerApi {
   discovery: (id: string, options?: DiscoveryOptions) => Promise<Solution>;
   blueprint: (id: string, options?: BlueprintOptions) => Promise<Solution>;
   consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult>;
-  handoff: (id: string, service: string) => Promise<HandoffResult>;
   exportSolution: (id: string) => Promise<unknown>;
   listSpecialists: () => Promise<SpecialistDefinition[]>;
   specialistChat: (service: string, request: SpecialistChatRequest) => Promise<SpecialistChatResponse>;
@@ -54,7 +51,6 @@ export interface PlannerApi {
   createPattern: (pattern: PatternInput) => Promise<BusinessPattern>;
   updatePattern: (id: string, pattern: PatternInput) => Promise<BusinessPattern>;
   deletePattern: (id: string) => Promise<void>;
-  matchPatterns: (text: string) => Promise<PatternMatchResult>;
 }
 
 const chatQuery = (criteria?: ChatCriteria) => {
@@ -125,14 +121,12 @@ export function usePlannerApi(): PlannerApi {
       deleteChat: async (id) => {
         await request('delete', `/specialists/chats/${id}`);
       },
-      handoff: (id, service) => request<HandoffResult>('post', `/solutions/${id}/handoff/${service}`),
       listPatterns: async () => (await request<{ results: BusinessPattern[] }>('get', '/patterns')).results,
       createPattern: (pattern) => request<BusinessPattern>('post', '/patterns', pattern),
       updatePattern: (id, pattern) => request<BusinessPattern>('put', `/patterns/${id}`, pattern),
       deletePattern: async (id) => {
         await request('delete', `/patterns/${id}`);
       },
-      matchPatterns: (text) => request<PatternMatchResult>('post', '/patterns/match', { text }),
     };
   }, [dispatch, baseUrl]);
 }

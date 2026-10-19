@@ -6,7 +6,7 @@ parent: Services
 ---
 
 # Project planner service
-Project planner service helps people new to ADSP describe a business problem and turn it into a plan for using ADSP services. It builds a structured *business model* of the problem, matches it to known GoA *business patterns*, proposes *solution hypotheses* with recommended services, and hands the user off to service workspaces with the gathered context.
+Project planner service helps people new to ADSP describe a business problem and turn it into a plan for using ADSP services. It builds a structured *business model* of the problem, matches it to known GoA *business patterns*, proposes *solution hypotheses* with recommended services, and points the user to each service's workspace.
 
 Recommendations are hypotheses for the user to refine; the planner is not a replacement for early discovery or business analysis.
 
@@ -28,7 +28,7 @@ A template describing a typical GoA application type: domain language, strong an
 Matching is deterministic: each domain term counts 1 and each strong signal counts 2. Weak signals never add to the score. A score of 8 or more is high confidence, 4 or more is medium, otherwise low; low confidence results include the pattern's clarifying questions.
 
 ### Specialist
-Each ADSP service has a specialist definition with questions, dependencies, risks and a workspace path. Consulting a specialist reports fit for the solution, questions to ask, dependency status and risks. Handing off records the specialist as `in-workspace` and returns a context package for the service workspace.
+Each ADSP service has a specialist definition with questions, dependencies, risks and a workspace path. Consulting a specialist reports fit for the solution, questions to ask, dependency status and risks.
 
 Specialists have two responsibilities:
 
@@ -56,7 +56,6 @@ Base path `/planner/v1`. See the service swagger docs for details.
 | GET | /specialists/chats/{chatId} | Load a saved chat. |
 | GET | /specialists/chats/{chatId}/export | Download one chat as JSON. |
 | DELETE | /specialists/chats/{chatId} | Delete a saved chat. |
-| POST | /solutions/{id}/handoff/{service} | Hand off to a service workspace with context. |
 | POST | /solutions/{id}/chat | Send a message (`{message, mode}`); the analysis is refined using the answers and conversation and the reply is appended to `state.conversation`. |
 | POST | /solutions/{id}/blueprint | Generates the complete project blueprint (`state.blueprint`): overview, technical architecture (layers and diagram), ADSP service mapping, notes from specialist consultations of every recommended service, core workflows, data and governance, and delivery plan. Saved consultations are reused; body `{mode?, refreshConsultations?}`. Requires an analyzed solution (400 otherwise). |
 | POST | /solutions/{id}/discovery | Discovery conversation (Compressed View Mode 2). Body `{message?, mode?, force?, restart?}`. The planner replies with one message of clarifying questions and scores six factors (problem, users, process, information, communication, constraints). When the average (`state.confidence.score`) reaches 50, or `force` is true, the solution is analyzed and presented (`state.discovery.ready`). `restart` clears the discovery thread. Replies keep working after the solution is presented: each one re-runs the analysis, so the solution is refined from the discovery answers. |
@@ -73,13 +72,12 @@ AI analysis calls an OpenAI-compatible chat completions endpoint (the GoA Model 
 | MAAS_BASE_URL | https://maas.int.gov.ab.ca/v1 | Model service base URL. |
 | MAAS_MODEL | GOA-Default | Model name. |
 | MAAS_TIMEOUT_MS | 120000 | Per-request timeout. |
-| MAAS_INSECURE_TLS | false | Skip TLS certificate validation (internal endpoints with a private CA only). |
 
 ## Events
 | name | description |
 |:-|:-|
 | solution-created | Signalled when a solution is created. |
-| solution-updated | Signalled when a solution is updated, analyzed, consulted or handed off. |
+| solution-updated | Signalled when a solution is updated, analyzed or consulted. |
 | solution-deleted | Signalled when a solution is deleted. |
 
 ## Business pattern library
@@ -89,4 +87,4 @@ The service ships 19 built-in business patterns (case management, grant applicat
 - `POST /patterns` creates a custom pattern. The `id` is optional and defaults to a slug of the name.
 - `PUT /patterns/{id}` updates a pattern. Updating a built-in pattern stores a tenant copy that overrides it.
 - `DELETE /patterns/{id}` deletes a custom pattern. Deleting a customized built-in pattern restores the built-in version. Built-in patterns themselves cannot be deleted.
- pattern returned by the API has a `source` of `built-in`, `customized` or `custom`. The effective catalogue is built-in patterns, overridden by configuration (`patterns`), overridden by tenant patterns stored through the API, and it feeds both rule-based matching and AI analysis. Service mappings must reference a known specialist service.
+Each pattern returned by the API has a `source` of `built-in`, `customized` or `custom`. The effective catalogue is built-in patterns, overridden by configuration (`patterns`), overridden by tenant patterns stored through the API, and it feeds both rule-based matching and AI analysis. Service mappings must reference a known specialist service.

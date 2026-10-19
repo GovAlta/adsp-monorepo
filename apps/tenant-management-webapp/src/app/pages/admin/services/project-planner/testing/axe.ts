@@ -1,10 +1,5 @@
 import axe from 'axe-core';
 
-export interface A11yOptions {
-  /** Additional axe rule ids to disable. */
-  disableRules?: string[];
-}
-
 /**
  * Runs axe-core against a rendered container and throws a readable error listing violations.
  *
@@ -12,14 +7,11 @@ export interface A11yOptions {
  * fragments, not full pages) are disabled. The shadow DOM of GoA web components (goa-*) is not
  * inspected under jsdom; Cypress with cypress-axe covers the fully rendered pages.
  */
-export async function expectNoA11yViolations(container: HTMLElement, options: A11yOptions = {}): Promise<void> {
+export async function expectNoA11yViolations(container: HTMLElement): Promise<void> {
   const rules: Record<string, { enabled: boolean }> = {
     'color-contrast': { enabled: false },
     region: { enabled: false },
   };
-  for (const id of options.disableRules || []) {
-    rules[id] = { enabled: false };
-  }
 
   const { violations } = await axe.run(container, { rules });
   if (violations.length > 0) {

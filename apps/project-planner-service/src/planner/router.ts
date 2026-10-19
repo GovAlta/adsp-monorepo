@@ -42,7 +42,6 @@ import {
 } from './types';
 
 interface PlannerRouterProps {
-  apiId: AdspId;
   logger: Logger;
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
@@ -55,7 +54,6 @@ interface PlannerRouterProps {
 const SOLUTION_KEY = 'solution';
 const MAX_CHAT_MESSAGES = 200;
 const SPECIALIST_INTENTS: SpecialistIntent[] = ['ask', 'recommend', 'design', 'validate', 'sample'];
-const SPECIALIST_STATUSES: SpecialistStatus[] = ['not-started', 'consulted', 'in-workspace', 'completed'];
 const SOLUTION_STATUSES = ['draft', 'analyzed', 'in-progress', 'completed', 'archived'];
 const ALL_ROLES = [PlannerServiceRoles.Admin, PlannerServiceRoles.User];
 
@@ -159,7 +157,7 @@ const patternValidation = () => [
   body('knownUnknowns').optional().isArray({ max: 50 }),
 ];
 
-export const requirePlannerUser: RequestHandler = (req, _res, next) => {
+const requirePlannerUser: RequestHandler = (req, _res, next) => {
   try {
     const tenantId = getTenantId(req);
     if (!isAllowedUser(req.user, tenantId, ALL_ROLES)) {
@@ -171,7 +169,7 @@ export const requirePlannerUser: RequestHandler = (req, _res, next) => {
   }
 };
 
-export const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
+const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
   try {
     if (!isPlannerAdmin(req.user, getTenantId(req))) {
       throw new UnauthorizedUserError('manage patterns', req.user);
@@ -182,19 +180,23 @@ export const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
   }
 };
 
-export const getSolution =
+async function loadSolution(repository: SolutionRepository, req: Request, id: string): Promise<Solution> {
+  const tenantId = getTenantId(req);
+  const solution = await repository.get(tenantId, id);
+  if (!solution) {
+    throw new NotFoundError('solution', id);
+  }
+  if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
+    throw new UnauthorizedUserError('access solution', req.user);
+  }
+  return solution;
+}
+
+const getSolution =
   (repository: SolutionRepository): RequestHandler =>
   async (req, _res, next) => {
     try {
-      const tenantId = getTenantId(req);
-      const solution = await repository.get(tenantId, req.params.id);
-      if (!solution) {
-        throw new NotFoundError('solution', req.params.id);
-      }
-      if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
-        throw new UnauthorizedUserError('access solution', req.user);
-      }
-      req[SOLUTION_KEY] = solution;
+      req[SOLUTION_KEY] = await loadSolution(repository, req, req.params.id);
       next();
     } catch (err) {
       next(err);
@@ -225,18 +227,6 @@ const dedupeConcepts = (existing: BusinessConcept[], incoming: BusinessConcept[]
   });
 };
 
-async function persist(
-  req: Request,
-  repository: SolutionRepository,
-  eventService: EventService,
-  solution: Solution,
-  operation: string,
-) {
-  const saved = await repository.save({ ...solution, updatedOn: new Date() });
-  eventService.send(solutionUpdated(req.user, saved, operation));
-  return { ...saved, formatVersion: PLAN_FORMAT_VERSION };
-}
-
 function refreshConfidence(state: SolutionState): void {
   if (state.discovery) {
     const factors = ruleAssess(userEvidence(state.problemStatement, state.discovery.messages));
@@ -245,9 +235,48 @@ function refreshConfidence(state: SolutionState): void {
   state.confidence = assessConfidence(state);
 }
 
+interface AiFallbackWording {
+  notConfigured: string;
+  logFailure: string;
+  warning: (reason: string) => string;
+}
+
+const ruleFallbackWording = (task: string, fallback: string): AiFallbackWording => ({
+  notConfigured: `AI analysis is not configured; used ${fallback}.`,
+  logFailure: `AI ${task} failed, falling back to rules`,
+  warning: (reason) => `AI ${task} failed (${reason}); used ${fallback}.`,
+});
+
 export function createPlannerRouter({ logger, solutionRepository, patternRepository, specialistChatRepository, eventService, llm }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+
+  async function persist(req: Request, solution: Solution, operation: string) {
+    const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
+    eventService.send(solutionUpdated(req.user, saved, operation));
+    return { ...saved, formatVersion: PLAN_FORMAT_VERSION };
+  }
+
+  // An undefined result means the caller should fall back to rule-based output.
+  async function tryAi<T>(
+    requestedMode: AnalysisMode,
+    run: (llm: PlannerLlm) => Promise<T>,
+    wording: AiFallbackWording,
+  ): Promise<{ result?: T; warning?: string }> {
+    if (requestedMode !== 'ai') {
+      return {};
+    }
+    if (!llm) {
+      return { warning: wording.notConfigured };
+    }
+    try {
+      return { result: await run(llm) };
+    } catch (err) {
+      const reason = (err as Error).message;
+      logger.warn(`${wording.logFailure}: ${reason}`);
+      return { warning: wording.warning(reason) };
+    }
+  }
 
   async function runAnalysis(
     req: Request,
@@ -257,33 +286,28 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
     const now = new Date().toISOString();
-    let result: AnalysisResult | undefined;
-    let warning: string | undefined;
-    if (requestedMode === 'ai') {
-      if (!llm) {
-        warning = 'AI analysis is not configured; used rule-based analysis.';
-      } else {
-        try {
-          const analysis = await llm.analyze(text, patterns, solution.state.concepts, {
-            answers: solution.state.questions.filter((q) => q.status === 'answered' && q.answer).map((q) => ({ question: q.question, answer: q.answer })),
-            conversation: [...(solution.state.discovery?.messages || []), ...(solution.state.conversation || [])].map(({ role, content }) => ({ role, content })),
-            message,
-          });
-          result = {
-            mode: 'ai',
-            model: analysis.model,
-            matches: analysis.matches,
-            hypotheses: analysis.hypotheses,
-            concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
-            questionTexts: analysis.questions,
-            reply: analysis.reply,
-          };
-        } catch (err) {
-          logger.warn(`AI analysis failed, falling back to rules: ${(err as Error).message}`);
-          warning = `AI analysis failed (${(err as Error).message}); used rule-based analysis.`;
-        }
-      }
-    }
+    const ai = await tryAi(
+      requestedMode,
+      async (llm): Promise<AnalysisResult> => {
+        const analysis = await llm.analyze(text, patterns, solution.state.concepts, {
+          answers: solution.state.questions.filter((q) => q.status === 'answered' && q.answer).map((q) => ({ question: q.question, answer: q.answer })),
+          conversation: [...(solution.state.discovery?.messages || []), ...(solution.state.conversation || [])].map(({ role, content }) => ({ role, content })),
+          message,
+        });
+        return {
+          mode: 'ai',
+          model: analysis.model,
+          matches: analysis.matches,
+          hypotheses: analysis.hypotheses,
+          concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
+          questionTexts: analysis.questions,
+          reply: analysis.reply,
+        };
+      },
+      ruleFallbackWording('analysis', 'rule-based analysis'),
+    );
+    const { warning } = ai;
+    let result = ai.result;
 
     // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
     const ruleText = message ? `${text}\n${message}` : text;
@@ -331,13 +355,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     };
     state.nextSteps = buildNextSteps(state);
     refreshConfidence(state);
-    return persist(
-      req,
-      solutionRepository,
-      eventService,
-      { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
-      message ? 'chat' : 'analyze',
-    );
+    return persist(req, { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state }, message ? 'chat' : 'analyze');
   }
 
   router.get('/analysis/options', requirePlannerUser, (_req, res) => {
@@ -564,8 +582,6 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         res.send(
           await persist(
             req,
-            solutionRepository,
-            eventService,
             { ...solution, name: name ?? solution.name, description: description ?? solution.description, status: status ?? solution.status, state },
             'update',
           ),
@@ -635,32 +651,22 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         const messages = req.body.message ? [...prior, { role: 'user' as const, content: req.body.message.trim(), at: now }] : prior;
         const requestedMode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
 
-        let reply: string | undefined;
-        let factors = ruleAssess(userEvidence(problem, messages));
-        let model: string | undefined;
-        let warning: string | undefined;
-        let mode: AnalysisMode = 'rules';
-        if (requestedMode === 'ai') {
-          if (!llm) {
-            warning = 'AI analysis is not configured; used rule-based discovery.';
-          } else {
-            try {
-              const patterns = await getPatterns(req, patternRepository);
-              const result = await llm.discover(problem, messages.map(({ role, content }) => ({ role, content })), patterns);
-              factors = normalizeFactors(result.factors, userEvidence(problem, messages));
-              reply = result.reply;
-              model = result.model;
-              mode = 'ai';
-            } catch (err) {
-              logger.warn(`AI discovery failed, falling back to rules: ${(err as Error).message}`);
-              warning = `AI discovery failed (${(err as Error).message}); used rule-based discovery.`;
-            }
-          }
-        }
+        const { result: aiDiscovery, warning } = await tryAi(
+          requestedMode,
+          async (llm) => {
+            const patterns = await getPatterns(req, patternRepository);
+            const result = await llm.discover(problem, messages.map(({ role, content }) => ({ role, content })), patterns);
+            return { ...result, factors: normalizeFactors(result.factors, userEvidence(problem, messages)) };
+          },
+          ruleFallbackWording('discovery', 'rule-based discovery'),
+        );
+        const factors = aiDiscovery ? aiDiscovery.factors : ruleAssess(userEvidence(problem, messages));
+        const model = aiDiscovery?.model;
+        const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
         const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true || (!req.body.restart && solution.state.discovery?.ready === true);
-        reply = reply || ruleDiscoveryReply(factors, confidence, ready);
+        let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
         }
@@ -683,7 +689,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         res.send(
           ready
             ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode })
-            : await persist(req, solutionRepository, eventService, withDiscovery, 'discovery'),
+            : await persist(req, withDiscovery, 'discovery'),
         );
       } catch (err) {
         next(err);
@@ -737,7 +743,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         );
         const state = { ...solution.state, questions };
         state.nextSteps = buildNextSteps(state);
-        res.send(await persist(req, solutionRepository, eventService, { ...solution, state }, 'answer'));
+        res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);
       }
@@ -780,7 +786,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           proposal: req.body.proposal,
           mode: req.body.mode,
         });
-        await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists } }, 'consult');
+        await persist(req, { ...solution, state: { ...solution.state, specialists } }, 'consult');
         res.send(result);
       } catch (err) {
         next(err);
@@ -870,32 +876,22 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
 
         const patterns = await getPatterns(req, patternRepository);
         const patternId = hypothesis.patternId || solution.state.patternMatches[0]?.patternId;
-        let core = buildRuleBlueprint(solution.state, patterns.find((p) => p.id === patternId));
-        let details: BlueprintServiceDetail[] = [];
-        let mode: AnalysisMode = 'rules';
-        let model: string | undefined;
-        let warning: string | undefined;
-        if (requestedMode === 'ai') {
-          if (!llm) {
-            warning = 'AI analysis is not configured; used a rule-based blueprint.';
-          } else {
-            try {
-              const generated = await llm.blueprint(solution.state, notes);
-              core = mergeBlueprintCore(core, generated.core);
-              details = generated.services;
-              mode = 'ai';
-              model = generated.model;
-            } catch (err) {
-              logger.warn(`AI blueprint failed, falling back to rules: ${(err as Error).message}`);
-              warning = `AI blueprint failed (${(err as Error).message}); used a rule-based blueprint.`;
-            }
-          }
-        }
+        const ruleCore = buildRuleBlueprint(solution.state, patterns.find((p) => p.id === patternId));
+        const { result: generated, warning } = await tryAi(
+          requestedMode,
+          async (llm) => {
+            const draft = await llm.blueprint(solution.state, notes);
+            return { core: mergeBlueprintCore(ruleCore, draft.core), services: draft.services, model: draft.model };
+          },
+          ruleFallbackWording('blueprint', 'a rule-based blueprint'),
+        );
+        const core = generated ? generated.core : ruleCore;
+        const details: BlueprintServiceDetail[] = generated ? generated.services : [];
+        const mode: AnalysisMode = generated ? 'ai' : 'rules';
+        const model = generated?.model;
 
         const blueprint = assembleBlueprint(solution.state, core, notes, { generatedOn: new Date().toISOString(), mode, model, warning }, details);
-        res.send(
-          await persist(req, solutionRepository, eventService, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),
-        );
+        res.send(await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'));
       } catch (err) {
         next(err);
       }
@@ -1072,39 +1068,20 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         }
 
         const solutionId: string = chat?.solutionId || req.body.solutionId;
-        let state: SolutionState | undefined;
-        if (solutionId) {
-          const tenantId = getTenantId(req);
-          const solution = await solutionRepository.get(tenantId, solutionId);
-          if (!solution) {
-            throw new NotFoundError('solution', solutionId);
-          }
-          if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
-            throw new UnauthorizedUserError('access solution', req.user);
-          }
-          state = solution.state;
-        }
+        const state = solutionId ? (await loadSolution(solutionRepository, req, solutionId)).state : undefined;
 
         const history: SpecialistChatMessage[] = [
           ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
           { role: 'user', content: message },
         ];
         const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
-        let reply: Omit<SpecialistReply, 'model'> & { model?: string };
-        let replyMode: AnalysisMode = 'rules';
-        let warning: string;
-        if (mode === 'ai' && llm) {
-          try {
-            reply = await llm.converse(specialist, history, intent, state);
-            replyMode = 'ai';
-          } catch (err) {
-            logger.warn(`AI specialist chat failed, using rule-based guidance: ${(err as Error).message}`);
-            warning = 'AI specialist was unavailable; showing rule-based guidance.';
-          }
-        } else if (mode === 'ai') {
-          warning = 'AI is not configured; showing rule-based guidance.';
-        }
-        reply = reply || ruleBasedSpecialistReply(specialist, intent);
+        const { result: aiReply, warning } = await tryAi(mode, (llm) => llm.converse(specialist, history, intent, state), {
+          notConfigured: 'AI is not configured; showing rule-based guidance.',
+          logFailure: 'AI specialist chat failed, using rule-based guidance',
+          warning: () => 'AI specialist was unavailable; showing rule-based guidance.',
+        });
+        const replyMode: AnalysisMode = aiReply ? 'ai' : 'rules';
+        const reply: Omit<SpecialistReply, 'model'> & { model?: string } = aiReply || ruleBasedSpecialistReply(specialist, intent);
 
         const at = new Date().toISOString();
         const saved = await recordExchange(req, chat, { service: specialist.service, solutionId, title: message }, [
@@ -1124,57 +1101,6 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           },
         ]);
         res.send({ chatId: saved.id, service: specialist.service, mode: replyMode, warning, ...reply });
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-  router.post(
-    '/solutions/:id/handoff/:service',
-    requirePlannerUser,
-    validateId,
-    createValidationHandler(
-      body('status').optional().isIn(SPECIALIST_STATUSES),
-      body('notes').optional().isString(),
-    ),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const solution = loaded(req);
-        const specialist = getSpecialist(req.params.service);
-        if (!specialist) {
-          throw new NotFoundError('specialist', req.params.service);
-        }
-        const specialists = [
-          ...solution.state.specialists.filter((s) => s.service !== specialist.service),
-          {
-            service: specialist.service,
-            status: (req.body.status || 'in-workspace') as SpecialistStatus,
-            notes: req.body.notes,
-            updatedOn: new Date().toISOString(),
-          },
-        ];
-        const state = { ...solution.state, specialists };
-        const saved = await persist(
-          req,
-          solutionRepository,
-          eventService,
-          { ...solution, status: 'in-progress', state },
-          'handoff',
-        );
-        res.send({
-          workspacePath: specialist.workspacePath,
-          context: {
-            solutionId: saved.id,
-            problemStatement: state.problemStatement,
-            decisions: state.decisions,
-            concepts: state.concepts,
-            recommendation: state.hypotheses
-              .flatMap((h) => h.recommendations)
-              .find((r) => r.service === specialist.service),
-          },
-          solution: saved,
-        });
       } catch (err) {
         next(err);
       }

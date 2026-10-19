@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactNode, useState } from 'react';
+import React, { FunctionComponent, ReactNode } from 'react';
 import {
   GoabBadge,
   GoabButton,
@@ -10,6 +10,7 @@ import {
 } from '@abgov/react-components';
 import { PlannerApi } from './api';
 import { AnalysisMode, Solution } from './model';
+import { useBusy } from './useBusy';
 
 interface BlueprintViewerProps {
   solution: Solution;
@@ -44,20 +45,12 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
   onSolutionChange,
   allOpen = false,
 }) => {
-  const [running, setRunning] = useState(false);
+  const [running, run] = useBusy();
   const { blueprint, analysis, hypotheses } = solution.state;
   const working = running || !!busy;
 
-  const generate = async (refreshConsultations: boolean) => {
-    setRunning(true);
-    try {
-      onSolutionChange(await api.blueprint(solution.id, { mode, refreshConsultations }));
-    } catch {
-      // The api reports the error to the user.
-    } finally {
-      setRunning(false);
-    }
-  };
+  const generate = (refreshConsultations: boolean) =>
+    run(async () => onSolutionChange(await api.blueprint(solution.id, { mode, refreshConsultations })));
 
   if (!hypotheses.length) {
     return (

@@ -17,7 +17,6 @@ import { MemoryPatternRepository, MemorySolutionRepository, MemorySpecialistChat
 loadEnv({ path: path.resolve(process.cwd(), 'apps/project-planner-service/.env') });
 
 const port = Number(process.env.PORT || 3381);
-const serviceId = adspId`urn:ads:platform:project-planner-service`;
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/local`;
 const logger = createLogger('project-planner-local', 'debug');
 
@@ -49,7 +48,6 @@ app.use('/planner/v1', (req, _res, next) => {
 app.use(
   '/planner/v1',
   createPlannerRouter({
-    apiId: adspId`${serviceId}:v1`,
     logger,
     solutionRepository: new MemorySolutionRepository(),
     patternRepository: new MemoryPatternRepository(),

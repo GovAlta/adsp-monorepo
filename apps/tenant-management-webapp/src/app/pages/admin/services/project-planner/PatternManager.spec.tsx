@@ -33,8 +33,11 @@ describe('PatternManager', () => {
 
   let api: MockPlannerApi;
 
-  const click = (container: HTMLElement, testId: string) =>
-    fireEvent(container.querySelector(`goa-button[testid="${testId}"]`) as Element, new CustomEvent('_click'));
+  const click = (container: HTMLElement, testId: string) => {
+    const button = container.querySelector(`goa-button[testid="${testId}"]`) as Element;
+    expect(button.getAttribute('disabled')).toBeNull();
+    fireEvent(button, new CustomEvent('_click'));
+  };
   const setField = (container: HTMLElement, key: string, value: string) =>
     fireEvent(
       container.querySelector(`goa-textarea[testid="pattern-field-${key}"]`) as Element,
@@ -141,6 +144,19 @@ describe('PatternManager', () => {
     expect(fieldError(container, 'Common domain language')).toBe('Add at least one domain term.');
     expect(fieldError(container, 'Strong confidence signals')).toBe('Add at least one strong signal.');
     expect(fieldError(container, 'Likely ADSP service mappings')).toBe('Add at least one service mapping.');
+    expect(api.createPattern).not.toHaveBeenCalled();
+  });
+
+  it('shows the error for a partly filled pattern when the user saves', async () => {
+    const { container } = await renderList();
+    click(container, 'pattern-new');
+    fillValid(container);
+    setField(container, 'description', '');
+
+    click(container, 'pattern-save');
+
+    await waitFor(() => expect(fieldError(container, 'Purpose')).toBe('Purpose is required.'));
+    expect(fieldError(container, 'Business pattern (name)')).toBeFalsy();
     expect(api.createPattern).not.toHaveBeenCalled();
   });
 

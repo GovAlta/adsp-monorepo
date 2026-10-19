@@ -3,16 +3,17 @@ import { GoabButton, GoabCircularProgress, GoabDetails } from '@abgov/react-comp
 import styled from 'styled-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { usePlannerApi } from './api';
+import { Concepts, Hypotheses, NextSteps, PatternMatches } from './AnalysisSections';
 import BlueprintViewer from './BlueprintViewer';
 import ConfidenceBar from './ConfidenceBar';
 import DiscoveryPanel from './DiscoveryPanel';
 import ProblemStatement from './ProblemStatement';
-import { Concepts, Hypotheses, NextSteps, PatternMatches } from './ProposedSolution';
 import QuestionsPane from './QuestionsPane';
 import RefineChat from './RefineChat';
 import SolutionHeader from './SolutionHeader';
 import { countChatsByService, SpecialistChat } from './SpecialistChat';
 import { AnalysisMode, Solution, SpecialistDefinition } from './model';
+import { useBusy } from './useBusy';
 import { RunAction } from './workplaceTypes';
 
 interface SolutionWorkplaceProps {
@@ -75,7 +76,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const [mode, setMode] = useState<AnalysisMode>('rules');
   const [specialists, setSpecialists] = useState<SpecialistDefinition[]>([]);
   const [chatCounts, setChatCounts] = useState<Record<string, number>>({});
-  const [busy, setBusy] = useState(false);
+  const [busy, runBusy] = useBusy();
   const [focus, setFocus] = useState<Focus>('workplace');
   const [tabIndex, setTabIndex] = useState(0);
   const busyRef = useRef(false);
@@ -129,15 +130,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       return;
     }
     busyRef.current = true;
-    setBusy(true);
-    try {
-      await action();
-    } catch {
-      // The api reports the error to the user.
-    } finally {
-      busyRef.current = false;
-      setBusy(false);
-    }
+    await runBusy(action);
+    busyRef.current = false;
   };
 
   if (!solution) {

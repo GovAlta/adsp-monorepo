@@ -1,9 +1,7 @@
 import React, { FunctionComponent } from 'react';
-import { GoabAccordion, GoabBadge, GoabDetails, GoabTable } from '@abgov/react-components';
+import { GoabAccordion, GoabBadge, GoabTable } from '@abgov/react-components';
 import styled from 'styled-components';
-import BlueprintViewer from './BlueprintViewer';
 import { ConfidenceLevel, Hypothesis, Solution } from './model';
-import { PaneProps } from './workplaceTypes';
 
 const levelType: Record<ConfidenceLevel, 'success' | 'important' | 'information'> = {
   high: 'success',
@@ -138,45 +136,3 @@ export const PatternMatches: FunctionComponent<{ solution: Solution }> = ({ solu
     <p>Not analyzed yet.</p>
   );
 };
-
-interface ProposedSolutionProps extends PaneProps {
-  title: string;
-  /** Open the detail sections by default (compressed view). Closed by default otherwise. */
-  open?: boolean;
-}
-
-export const ProposedSolution: FunctionComponent<ProposedSolutionProps> = ({
-  solution,
-  api,
-  mode,
-  busy,
-  onSolutionChange,
-  title,
-  open = false,
-}) => (
-  <div data-testid="proposed-solution">
-    <h2>{title}</h2>
-    {solution.state.hypotheses.length > 0 || solution.state.analysis ? (
-      <>
-        <GoabDetails heading="Hypotheses" open={open} testId="section-hypotheses">
-          <Hypotheses solution={solution} open={open} />
-        </GoabDetails>
-        <GoabDetails heading="Concepts" open={open} testId="section-concepts">
-          <Concepts solution={solution} />
-        </GoabDetails>
-        <GoabDetails heading="Next steps" open={open} testId="section-steps">
-          <NextSteps solution={solution} />
-        </GoabDetails>
-        <GoabDetails heading="Pattern matches" open={open} testId="section-patterns">
-          <PatternMatches solution={solution} />
-        </GoabDetails>
-        <h3>Project blueprint</h3>
-        <BlueprintViewer solution={solution} api={api} mode={mode} busy={busy} onSolutionChange={onSolutionChange} />
-      </>
-    ) : (
-      <p>Analyze the problem to see the proposed solution.</p>
-    )}
-  </div>
-);
-
-export default ProposedSolution;

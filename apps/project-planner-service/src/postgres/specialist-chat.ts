@@ -15,6 +15,9 @@ interface SpecialistChatRecord {
   messages: StoredChatMessage[];
 }
 
+// Same ceiling as the largest solution list page the router accepts.
+const MAX_CHATS = 100;
+
 const mapRecord = (record: SpecialistChatRecord): SpecialistChat => ({
   id: record.id,
   tenantId: AdspId.parse(record.tenant),
@@ -39,7 +42,10 @@ export class PostgresSpecialistChatRepository implements SpecialistChatRepositor
     if (criteria.solutionId) {
       where.solutionId = criteria.solutionId;
     }
-    const rows = await this.knex<SpecialistChatRecord>('specialist_chats').where(where).orderBy('updatedOn', 'desc');
+    const rows = await this.knex<SpecialistChatRecord>('specialist_chats')
+      .where(where)
+      .orderBy('updatedOn', 'desc')
+      .limit(MAX_CHATS);
     return rows.map(mapRecord);
   }
 

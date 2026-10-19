@@ -98,11 +98,6 @@ export interface BusinessPattern {
   knownUnknowns?: string[];
 }
 
-export interface HandoffResult {
-  workspacePath: string;
-  solution: Solution;
-}
-
 export interface ConsultResult {
   service: string;
   fit: string;
@@ -142,11 +137,6 @@ export interface PatternMatch {
   matchedLanguage: string[];
   matchedSignals: string[];
   explanation: string;
-}
-
-export interface PatternMatchResult {
-  matches: PatternMatch[];
-  questions?: string[];
 }
 
 export interface SolutionArtifact {

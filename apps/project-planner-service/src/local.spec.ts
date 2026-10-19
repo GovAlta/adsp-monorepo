@@ -1,7 +1,7 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 
 const mockApp = { use: jest.fn(), get: jest.fn(), listen: jest.fn() };
-const mockExpress = Object.assign(jest.fn(), { json: jest.fn(), static: jest.fn() });
+const mockExpress = Object.assign(jest.fn(), { json: jest.fn() });
 const mockCors = jest.fn();
 const mockLoadEnv = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn() };
@@ -42,7 +42,6 @@ describe('local', () => {
   beforeEach(() => {
     mockExpress.mockReturnValue(mockApp);
     mockExpress.json.mockReturnValue('json-middleware');
-    mockExpress.static.mockImplementation((dir: string) => `static:${dir}`);
     mockCors.mockReturnValue('cors-middleware');
     mockCreateLogger.mockReturnValue(mockLogger);
     mockCreateErrorHandler.mockReturnValue(errorHandler);
@@ -104,12 +103,6 @@ describe('local', () => {
       startLocal();
 
       expect(findUse('/planner/v1')[2]).toEqual(['/planner/v1', errorHandler]);
-    });
-
-    it('creates the planner router with the v1 api id', () => {
-      const options = startLocal();
-
-      expect(options.apiId.toString()).toBe('urn:ads:platform:project-planner-service:v1');
     });
 
     it('creates the planner router with the llm', () => {
