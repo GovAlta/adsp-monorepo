@@ -146,28 +146,6 @@ Confirm anything surprising against the raw counter delta before believing it.
 
 No dashboard covers `adsp_cache_lookups_total` or `adsp_job_duration_milliseconds` yet.
 
-### Audit durability alerts
-
-The Prometheus ConfigMap in `observability-stack.yml` includes `audit-alerts.yml`, loaded by
-`rule_files` from the same mounted directory. Reapply the template and restart the Prometheus
-deployment (or use your established configuration reload process) to load updated rules.
-
-`AuditOpenFailedEvents` evaluates `max by (deployment_environment) (audit_failed_events_open) > 0`
-with no `for` duration: one open row is enough. Audit replicas observe the same database count,
-so summing would multiply it. Detection still waits for SDK export, Prometheus scrape and
-rule evaluation. `AuditFailedEventCountUnavailable` warns when the repository count is
-unavailable; a failed read must not become a healthy zero.
-
-The Audit Service API/metrics contracts exist, but its PostgreSQL/self-auditing adapter is
-not connected on main yet. Until that integration is provided, it exports availability 0
-and an unknown (`NaN`) open-row count. Failed collection also replaces any previously healthy
-count with `NaN`. OSP-708 must wire the parked and failed-ingest counter hooks.
-These rules are evaluated by the bundled Prometheus, not the OpenShift cluster Prometheus.
-They expose firing alerts in Prometheus; this template has no Alertmanager notification
-routing. Configure the environment's notification integration separately. An absent
-exporter emits neither gauge and requires platform-level service/telemetry availability
-monitoring; this rule is not a substitute for it.
-
 ## Dashboards
 
 `dashboards/` holds the Grafana dashboards as JSON, and they are provisioned rather than imported by
