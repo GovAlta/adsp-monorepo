@@ -162,6 +162,21 @@ describe('read events', () => {
     'category=bogus',
     'occurredFrom=yesterday',
     'occurredFrom=2026-10-02T00:00:00Z&occurredTo=2026-10-01T00:00:00Z',
+    'status[]=success',
+    'status=success&status=failure',
+    'category[]=administrative',
+    'top[]=5',
+    'after[]=MjA=',
+    'actor[]=user-1',
+    'occurredFrom[]=2026-10-01T00:00:00Z',
+    'occurredTo[]=2026-10-01T00:00:00Z',
+    'occurredFrom=2026-W42',
+    'occurredFrom=2026-274',
+    'occurredFrom=2026-02-30',
+    'occurredTo=2026-13-01T00:00:00Z',
+    `after=${Buffer.from('9'.repeat(400)).toString('base64')}`,
+    `after=${Buffer.from('-5').toString('base64')}`,
+    `after=${Buffer.from('1.5e3').toString('base64')}`,
   ])('rejects invalid query %s', async (qs) => {
     const res = await request(createApp()).get(`/audit/v1/events?${qs}`);
     expect(res.status).toBe(400);

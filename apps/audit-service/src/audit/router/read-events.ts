@@ -9,6 +9,7 @@ import {
 } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 import { query, param } from 'express-validator';
+import isISO8601 from 'validator/lib/isISO8601';
 import * as HttpStatusCodes from 'http-status-codes';
 import { AuditServiceRoles } from '../roles';
 import { AuditEvent, EventCriteria, EventReader, StoredEvent } from '../types';
@@ -152,27 +153,67 @@ export function readEvent(reader?: EventReader): RequestHandler {
 
 export const validateEventId = createValidationHandler(param('id').isUUID());
 
+const ISO_DATE_PREFIX = /^\d{4}-\d{2}-\d{2}/;
+
+// Rejects week/ordinal dates and impossible dates (e.g. 2026-02-30) that Date would silently roll over or reject.
+function parseIsoDate(value: unknown): Date | undefined {
+  if (typeof value !== 'string' || !ISO_DATE_PREFIX.test(value)) {
+    return undefined;
+  }
+  if (!isISO8601(value, { strict: true, strictSeparator: true })) {
+    return undefined;
+  }
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? undefined : date;
+}
+
+function isValidCursor(value: unknown): boolean {
+  if (typeof value !== 'string') {
+    return false;
+  }
+  const decoded = Buffer.from(value, 'base64').toString('ascii');
+  const skip = decodeAfter(value);
+  return /^\d+$/.test(decoded) && Number.isSafeInteger(skip);
+}
+
+const SCALAR_PARAMS = [
+  'top',
+  'after',
+  'actor',
+  'resourceType',
+  'resourceId',
+  'action',
+  'scope',
+  'status',
+  'category',
+  'occurredFrom',
+  'occurredTo',
+];
+
 export const validateEventQuery = createValidationHandler(
-  query('top').optional().isInt({ min: 1, max: MAX_TOP }),
-  query('after')
+  // Repeated or bracketed params (e.g. status[]=a) parse to arrays, which validators check per element and parsing drops.
+  query(SCALAR_PARAMS)
     .optional()
-    .isString()
-    .custom((value: string) => {
-      const skip = decodeAfter(value);
-      return !isNaN(skip) && skip >= 0;
-    }),
+    .custom((value) => typeof value === 'string')
+    .withMessage('must be a single value'),
+  query('top').optional().isInt({ min: 1, max: MAX_TOP }),
+  query('after').optional().custom(isValidCursor).withMessage('after is not a valid cursor'),
   query(['actor', 'resourceType', 'resourceId', 'action', 'scope'])
     .optional()
     .isString()
     .isLength({ min: 1, max: 256 }),
   query('status').optional().isIn(EVENT_STATUSES),
   query('category').optional().isIn(EVENT_CATEGORIES),
-  query(['occurredFrom', 'occurredTo']).optional().isISO8601(),
+  query(['occurredFrom', 'occurredTo'])
+    .optional()
+    .custom((value) => parseIsoDate(value) !== undefined)
+    .withMessage('must be a valid ISO 8601 date'),
   query('occurredTo')
     .optional()
     .custom((value: string, { req }) => {
-      const from = req.query?.occurredFrom;
-      return !from || new Date(from as string) <= new Date(value);
+      const from = parseIsoDate(req.query?.occurredFrom);
+      const to = parseIsoDate(value);
+      return !from || !to || from <= to;
     })
     .withMessage('occurredTo must not be before occurredFrom'),
 );
