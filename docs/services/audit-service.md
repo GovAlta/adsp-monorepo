@@ -7,8 +7,9 @@ parent: Services
 # Audit service
 
 The action catalog registers the classification of audit actions. Registering an action does not
-generate audit records. The write endpoint validates and enriches events, but PostgreSQL persistence
-and the write buffer are not wired yet. Valid write submissions currently return 503, not a successful
+generate audit records. The write endpoint validates and enriches events. A standalone write buffer
+is implemented, but database persistence and runtime integration are not wired yet.
+Valid write submissions currently return 503, not a successful
 acknowledgment. History queries, SIEM forwarding, and retention execution are separate capabilities.
 
 ## Source layout
@@ -16,6 +17,7 @@ acknowledgment. History queries, SIEM forwarding, and retention execution are se
 The `apps/audit-service/src/audit` module follows the Calendar Service layout:
 
 - `model/`: catalog loading and retention configuration resolution.
+- `buffer/`: write scheduling, durability handling and the pending database adapter contract.
 - `router/`: HTTP routes, write handlers, and OpenAPI definitions.
 - `types/`: event payloads and the submission contract.
 - `utils/`: event/request validation and write authorization.
@@ -87,8 +89,9 @@ Unknown document and definition fields are rejected. Action keys omit the event 
 The namespace schema also preserves `retentionSettings` and `applicationRetentionSettings` document
 shapes, with positive integer `classes.<class>.days`. Catalog registration creates no retention periods.
 At write time the service resolves configured periods over the design defaults: standard 90 days,
-security and compliance 365 days. See [write-time retention](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#retention-at-write-time)
-for configuration names and precedence. Missing custom classes fail writes with a retryable 503.
+security and compliance 365 days. Application settings in `audit-service:retention-<application>`
+override `audit-service:retention`, which overrides those defaults. Expiry is calculated from
+`occurred_at` in UTC days. Missing custom classes fail writes with a retryable 503.
 
 ### Registering through the SDK
 
@@ -245,14 +248,35 @@ Each rejection includes a zero-based input `index`, `code`, `reason`, and an
 Duplicates are determined by PostgreSQL, not an in-memory router check.
 Until that integration exists, valid submissions return **503 with Retry-After**.
 
-See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
-for the boundary with OSP-708.
+## Write buffer
+
+The router submits enriched events through
+`submit(events: EnrichedEvent[]): Promise<Map<string, EventOutcome>>`.
+Results use the service-generated `id`, never client `event_id`, to keep concurrent requests
+and tenants separate. Inputs must remain unchanged until the promise settles.
+
+The buffer batches at 200 events or 200 ms, with default limits of 5,000 retained events and
+32 MiB of serialized payload per pod. Capacity is reserved for the whole request before enqueueing;
+over-capacity requests return 503 without storing any of their events. The byte limit is not a
+measurement of process memory.
+
+Transient failures retry after 200 ms, 1 s and 3 s; constraint failures are retried individually.
+`accepted` requires a committed audit row. `storage_failed` requires the original event to be
+committed to failed-event storage and is counted as rejected, not accepted. If neither write
+succeeds, the request returns 503. The future database adapter must use
+`ON CONFLICT (tenant_id, namespace, event_id) DO NOTHING RETURNING id`, resolve only after commit,
+and honour cancellation.
+
+`close()` refuses new submissions and drains within a configurable 25-second default budget,
+reserving the final 5 seconds for failed-event storage. Database integration, process signal and
+readiness wiring, and real persistence, memory and rolling-deployment acceptance remain pending.
 
 ## Failed-event administration (OSP-709)
 
 **Integration status:** the API, replay orchestration, metrics and repository contracts are
-implemented against main. OSP-705 (PostgreSQL), OSP-708 (durability) and OSP-711 (self-auditing)
-are not integrated. The application deliberately returns **503 with `Retry-After: 1`** for
+implemented against main. OSP-708's buffer is present, but its database/application wiring,
+OSP-705 (PostgreSQL) and OSP-711 (self-auditing) are not integrated.
+The application deliberately returns **503 with `Retry-After: 1`** for
 authorized administration requests until a `FailedEventRepository` is injected into
 `initializeApp`. Neither durable recovery nor concurrency/rollback guarantees have been
 verified against PostgreSQL. There is no in-memory substitute and no successful empty fallback.
@@ -282,7 +306,11 @@ recovered original event and is not sent through the Event Service.
 ### Persistence integration contract
 
 `FailedEventRepository` and `FailedEventReplayTransaction` are in
-`apps/audit-service/src/audit/types/failed-events.ts`. The adapter must:
+`apps/audit-service/src/audit/types/failed-events.ts`. The root barrel exports the administration
+row as `FailedAuditEventRecord`, preserving the buffer's existing `FailedAuditEvent` export.
+The buffer's parking input uses `attempt_count` and only `status: 'open'`; the administration
+adapter must map that count to `attempts` and return the stored status and nullable `replayed_as`.
+The adapter must:
 
 - Filter every list/lookup/update by the trusted tenant and set PostgreSQL RLS context.
 - Lock the failed row inside `withReplayTransaction`, before checking its status; concurrent
