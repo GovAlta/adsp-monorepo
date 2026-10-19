@@ -33,14 +33,14 @@ export function chatToMarkdown(chat: SpecialistChat): string {
         ? `### You (${fmtDate(m.at)})`
         : `### ${chat.service} (${fmtDate(m.at)}${m.mode === 'rules' ? ', rule-based' : ''})`,
       '',
-      m.content
+      m.content,
     );
     if (m.consult) {
       out.push(
         `Fit: ${m.consult.fit}`,
         ...bulletLines('Can support', m.consult.supports),
         ...bulletLines('Constraints', m.consult.constraints),
-        ...bulletLines('Risks', m.consult.risks)
+        ...bulletLines('Risks', m.consult.risks),
       );
     }
     if (m.validation) {
@@ -54,12 +54,34 @@ export function chatToMarkdown(chat: SpecialistChat): string {
   return out.join('\n') + '\n';
 }
 
+export const EXPORT_SECTIONS = [
+  'Problem statement',
+  'Confidence',
+  'Discovery conversation',
+  'Pattern matches',
+  'Hypotheses',
+  'Concepts',
+  'Questions and answers',
+  'Next steps',
+  'Conversation',
+  'Project blueprint',
+  'Overview',
+  'Technical architecture',
+  'ADSP service mapping',
+  'Specialist consultation notes',
+  'Core workflows',
+  'Data & governance',
+  'Delivery plan & other considerations',
+];
+
 export function solutionToMarkdown(solution: Solution): string {
   const st = solution.state;
   const lines: string[] = [
     `# ${solution.name}`,
     '',
     `Status: ${solution.status} · Exported ${new Date().toLocaleString()}`,
+    '',
+    `Plan format version: ${solution.formatVersion}`,
     '',
     '## Problem statement',
     '',
@@ -69,7 +91,7 @@ export function solutionToMarkdown(solution: Solution): string {
   if (st.analysis) {
     lines.push(
       `_Analysis: ${st.analysis.mode === 'ai' ? 'AI' : 'rule-based'}${st.analysis.warning ? ` — ${st.analysis.warning}` : ''}_`,
-      ''
+      '',
     );
   }
   if (st.confidence) {
@@ -77,7 +99,7 @@ export function solutionToMarkdown(solution: Solution): string {
       `## Confidence: ${st.confidence.score}% (threshold ${st.confidence.threshold}%)`,
       '',
       ...st.confidence.factors.map((f) => `- ${f.label}: ${f.score}%${f.note ? ` — ${f.note}` : ''}`),
-      ''
+      '',
     );
   }
   if (st.discovery?.messages?.length) {
@@ -85,18 +107,25 @@ export function solutionToMarkdown(solution: Solution): string {
       '## Discovery conversation',
       '',
       ...st.discovery.messages.map(
-        (m) => `- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content.replace(/\n+/g, ' ')}`
+        (m) => `- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content.replace(/\n+/g, ' ')}`,
       ),
-      ''
+      '',
     );
   }
   lines.push('## Pattern matches', '');
   (st.patternMatches || []).forEach((m) =>
-    lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`)
+    lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`),
   );
   lines.push('', '## Hypotheses', '');
   st.hypotheses.forEach((h) => {
-    lines.push(`### ${h.title} (${h.confidence} confidence)`, '', h.rationale, '', '**Recommended services (in order)**', '');
+    lines.push(
+      `### ${h.title} (${h.confidence} confidence)`,
+      '',
+      h.rationale,
+      '',
+      '**Recommended services (in order)**',
+      '',
+    );
     [...h.recommendations]
       .sort((a, b) => a.order - b.order)
       .forEach((r) => lines.push(`${r.order}. **${r.service}** — ${r.reason}`));
@@ -107,7 +136,9 @@ export function solutionToMarkdown(solution: Solution): string {
   lines.push('## Concepts', '');
   st.concepts.forEach((c) => lines.push(`- ${c.type}: ${c.name}`));
   lines.push('', '## Questions and answers', '');
-  st.questions.forEach((q) => lines.push(`- **${q.question}** (${q.status})${q.answer ? `\n  - Answer: ${q.answer}` : ''}`));
+  st.questions.forEach((q) =>
+    lines.push(`- **${q.question}** (${q.status})${q.answer ? `\n  - Answer: ${q.answer}` : ''}`),
+  );
   lines.push('', '## Next steps', '');
   st.nextSteps.forEach((n) => lines.push(`- **${n.title}** — ${n.reason}`));
   if (st.conversation?.length) {
@@ -128,7 +159,7 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       `## 1. ${bp.overview.title}`,
       '',
-      bp.overview.summary
+      bp.overview.summary,
     );
     bullets('Objectives', bp.overview.objectives);
     bullets('Scope', bp.overview.scope);
@@ -146,7 +177,7 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       '```',
       bp.architecture.diagram,
-      '```'
+      '```',
     );
     bullets('Integrations', bp.architecture.integrations);
     bullets('Security', bp.architecture.security);
@@ -156,8 +187,8 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       ...bp.serviceMapping.map(
         (s) =>
-          `${s.order}. **${s.service}** — ${s.role}. _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`
-      )
+          `${s.order}. **${s.service}** — ${s.role}. _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`,
+      ),
     );
     lines.push('', '## 4. Specialist consultation notes');
     bp.specialistNotes.forEach((n) => {
@@ -176,8 +207,8 @@ export function solutionToMarkdown(solution: Solution): string {
         `### ${w.name}`,
         '',
         ...(w.actors.length ? [`Actors: ${w.actors.join(', ')}`, ''] : []),
-        ...w.steps.map((s, i) => `${i + 1}. ${s}`)
-      )
+        ...w.steps.map((s, i) => `${i + 1}. ${s}`),
+      ),
     );
     lines.push('', '## 6. Data & governance');
     const g = bp.dataGovernance;

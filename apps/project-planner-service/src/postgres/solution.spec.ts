@@ -32,7 +32,6 @@ describe('PostgresSolutionRepository', () => {
     createdOn: new Date('2026-01-01'),
     updatedOn: new Date('2026-01-02'),
     state,
-    revision: 1,
   };
   const solution: Solution = {
     id: record.id,
@@ -46,7 +45,6 @@ describe('PostgresSolutionRepository', () => {
     createdOn: record.createdOn,
     updatedOn: record.updatedOn,
     state,
-    revision: 1,
   };
 
   const plain = (s: Solution) => ({ ...s, tenantId: s.tenantId.toString() });
@@ -208,14 +206,6 @@ describe('PostgresSolutionRepository', () => {
       expect(queryMock.onConflict).toHaveBeenCalledWith('id');
     });
 
-    it('only merges when the stored revision is the previous revision', async () => {
-      queryMock.returning.mockResolvedValueOnce([record]);
-
-      await repository.save({ ...solution, revision: 3 });
-
-      expect(queryMock.where).toHaveBeenCalledWith('solutions.revision', 2);
-    });
-
     it('only merges within the same tenant', async () => {
       queryMock.returning.mockResolvedValueOnce([record]);
 
@@ -232,7 +222,7 @@ describe('PostgresSolutionRepository', () => {
       expect(plain(result)).toEqual(plain(solution));
     });
 
-    it('throws InvalidOperationError when no row was written due to a revision conflict', async () => {
+    it('throws InvalidOperationError when no row was written (tenant mismatch)', async () => {
       queryMock.returning.mockResolvedValueOnce([]);
 
       await expect(repository.save(solution)).rejects.toThrow(InvalidOperationError);

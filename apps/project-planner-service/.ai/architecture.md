@@ -1,7 +1,10 @@
 # Project Planner Service — Architecture (Phase 3)
 
 ## Data model
-Table `solutions` (migration `20261010000000_create_solution_tables.js`): id uuid PK, tenant, name, description, scenario, status, createdById, createdByName, createdOn, updatedOn, `state` jsonb, revision int. Index `(tenant, createdById)`. `state` = problemStatement, concepts, decisions, questions, patternMatches, hypotheses, specialists, artifacts, nextSteps.
+Table `solutions` (migration `20261010000000_create_solution_tables.js`, revision column dropped by `20261019000000_drop_solution_revision.js`): id uuid PK, tenant, name, description, scenario, status, createdById, createdByName, createdOn, updatedOn, `state` jsonb. Index `(tenant, createdById)`. `state` = problemStatement, concepts, decisions, questions, patternMatches, hypotheses, specialists, artifacts, nextSteps.
+
+## Export format version
+`PLAN_FORMAT_VERSION` (`planner/types.ts`) is a static schema version for the `/solutions/:id/export` JSON and the Markdown report built from it in the TMW - bumped only when a section is added, removed, renamed, reordered, or its meaning changes, not when a solution's data changes.
 
 ## Surface inventory (API, base `/planner/v1`)
 | Route | Roles | Notes |
@@ -10,7 +13,7 @@ Table `solutions` (migration `20261010000000_create_solution_tables.js`): id uui
 | POST /patterns/match | same | text ≤ 20k |
 | GET /specialists | same | |
 | GET, POST /solutions | same | list scoped to owner unless admin |
-| GET, PATCH, DELETE /solutions/:id | owner or admin | optimistic revision |
+| GET, PATCH, DELETE /solutions/:id | owner or admin | |
 | POST /solutions/:id/analyze | owner or admin | extract, match, hypothesize |
 | POST /solutions/:id/consult/:service | owner or admin | |
 | POST /solutions/:id/handoff/:service | owner or admin | returns context + workspacePath |

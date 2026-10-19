@@ -1,4 +1,4 @@
-import { chatToMarkdown, download, fmtDate, safeName, solutionToMarkdown } from './utils';
+import { chatToMarkdown, download, EXPORT_SECTIONS, fmtDate, safeName, solutionToMarkdown } from './utils';
 import { Solution, SpecialistChat } from './model';
 
 const solution = (state: Partial<Solution['state']> = {}): Solution => ({
@@ -8,7 +8,7 @@ const solution = (state: Partial<Solution['state']> = {}): Solution => ({
   status: 'analyzed',
   createdByName: 'tester',
   updatedOn: '2026-01-01T00:00:00Z',
-  revision: 1,
+  formatVersion: '1.0',
   state: {
     problemStatement: 'Applicants submit permits.',
     concepts: [{ id: 'c1', type: 'actor', name: 'Applicant', source: 'user' }],
@@ -108,6 +108,7 @@ describe('utils', () => {
       const md = solutionToMarkdown(solution());
 
       expect(md).toContain('# Permit Intake!');
+      expect(md).toContain('Plan format version: 1.0');
       expect(md).toContain('Applicants submit permits.');
       expect(md.indexOf('1. **form-service**')).toBeLessThan(md.indexOf('2. **file-service**'));
       expect(md).toContain('- A1');
@@ -201,6 +202,58 @@ describe('utils', () => {
       expect(md).toContain('**Data entities**');
       expect(md).toContain('**Phase 1**');
       expect(md).toContain('**Open questions**');
+    });
+
+    it('matches EXPORT_SECTIONS - a change here means the format version must be bumped', () => {
+      const md = solutionToMarkdown(
+        solution({
+          analysis: { mode: 'rules', analyzedOn: 'x' },
+          confidence: { score: 80, threshold: 70, factors: [] },
+          discovery: {
+            messages: [{ role: 'assistant', content: 'Hi', at: 'x' }],
+            confidence: 80,
+            threshold: 70,
+            factors: [],
+            ready: true,
+            mode: 'rules',
+            updatedOn: 'x',
+          },
+          conversation: [{ role: 'user', content: 'Hi', at: 'x' }],
+          blueprint: {
+            generatedOn: '2026-01-01',
+            mode: 'ai',
+            overview: {
+              title: 'Overview',
+              summary: 'Sum',
+              objectives: [],
+              scope: [],
+              outOfScope: [],
+              stakeholders: [],
+              successMeasures: [],
+              risks: [],
+            },
+            architecture: { summary: 'Arch', layers: [], integrations: [], security: [], diagram: 'A-->B' },
+            serviceMapping: [],
+            specialistNotes: [],
+            workflows: [],
+            dataGovernance: { dataEntities: [], accessControl: [], retention: [], privacy: [], audit: [], compliance: [] },
+            delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+          },
+        })
+      );
+
+      const sections = md
+        .split('\n')
+        .slice(1) // the first line is the solution's own title, not a section
+        .filter((line) => /^#{1,2} /.test(line))
+        .map((line) => {
+          const text = line.replace(/^#+\s*/, '');
+          const numbered = text.match(/^(\d+)\.\s*(.*)$/);
+          if (numbered) return numbered[1] === '1' ? 'Overview' : numbered[2];
+          return text.replace(/^Confidence:.*/, 'Confidence');
+        });
+
+      expect(sections).toEqual(EXPORT_SECTIONS);
     });
   });
 });

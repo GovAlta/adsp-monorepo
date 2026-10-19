@@ -246,7 +246,6 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                 <th>Status</th>
                 <th>Created by</th>
                 <th>Updated</th>
-                <th>Revision</th>
                 <th></th>
               </tr>
             </thead>
@@ -269,7 +268,6 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                   </td>
                   <td>{solution.createdByName}</td>
                   <td>{new Date(solution.updatedOn).toLocaleString()}</td>
-                  <td>{solution.revision}</td>
                   <td>
                     <GoabIconButton
                       icon="download"

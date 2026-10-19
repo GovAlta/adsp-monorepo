@@ -30,6 +30,7 @@ import {
   CONCEPT_TYPES,
   Hypothesis,
   PatternMatch,
+  PLAN_FORMAT_VERSION,
   PlannerConfiguration,
   Solution,
   SolutionState,
@@ -231,9 +232,9 @@ async function persist(
   solution: Solution,
   operation: string,
 ) {
-  const saved = await repository.save({ ...solution, updatedOn: new Date(), revision: solution.revision + 1 });
+  const saved = await repository.save({ ...solution, updatedOn: new Date() });
   eventService.send(solutionUpdated(req.user, saved, operation));
-  return saved;
+  return { ...saved, formatVersion: PLAN_FORMAT_VERSION };
 }
 
 function refreshConfidence(state: SolutionState): void {
@@ -495,10 +496,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           createdByName: req.user.name,
           createdOn: now,
           updatedOn: now,
-          revision: 1,
           state: emptyState(req.body.problemStatement),
         });
-        res.status(201).send(solution);
+        res.status(201).send({ ...solution, formatVersion: PLAN_FORMAT_VERSION });
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
           context: 'PlannerRouter',
@@ -512,7 +512,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
   );
 
   router.get('/solutions/:id', requirePlannerUser, validateId, getSolution(solutionRepository), (req, res) => {
-    res.send(loaded(req));
+    res.send({ ...loaded(req), formatVersion: PLAN_FORMAT_VERSION });
   });
 
   router.patch(
@@ -757,7 +757,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       createdByName: solution.createdByName,
       createdOn: solution.createdOn,
       updatedOn: solution.updatedOn,
-      revision: solution.revision,
+      formatVersion: PLAN_FORMAT_VERSION,
       state: solution.state,
     });
   });

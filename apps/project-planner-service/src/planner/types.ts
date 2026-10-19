@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+export const PLAN_FORMAT_VERSION = '1.0';
 
 export const CONCEPT_TYPES = [
   'actor',
@@ -278,7 +279,6 @@ export interface Solution {
   createdByName: string;
   createdOn: Date;
   updatedOn: Date;
-  revision: number;
   state: SolutionState;
 }
 

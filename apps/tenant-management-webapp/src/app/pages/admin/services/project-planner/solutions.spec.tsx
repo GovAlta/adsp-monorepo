@@ -27,7 +27,7 @@ describe('Solutions', () => {
     status: 'draft',
     createdByName: 'Pat Planner',
     updatedOn: '2026-03-01T10:00:00.000Z',
-    revision: 1,
+    formatVersion: '1.0',
     state: {
       problemStatement: '',
       concepts: [],

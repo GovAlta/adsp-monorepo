@@ -26,7 +26,6 @@ const makeSolution = (createdById: string): Solution => ({
   createdByName: 'n',
   createdOn: new Date(),
   updatedOn: new Date(),
-  revision: 1,
   state: {
     problemStatement: '',
     concepts: [],
@@ -893,7 +892,7 @@ describe('planner router routes', () => {
         status: 'draft',
         scenario: 'new',
         createdById: 'owner-1',
-        revision: 1,
+        formatVersion: '1.0',
       });
     });
 
@@ -999,10 +998,10 @@ describe('planner router routes', () => {
       expect(res.body).toMatchObject({ name: 'Renamed', description: 'Updated', status: 'in-progress' });
     });
 
-    it('increments the revision', async () => {
+    it('includes the plan format version', async () => {
       const res = await patch({ name: 'Renamed' });
 
-      expect(res.body.revision).toBe(2);
+      expect(res.body.formatVersion).toBe('1.0');
     });
 
     it('keeps existing values for omitted fields', async () => {
@@ -1141,7 +1140,7 @@ describe('planner router routes', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 400 when the revision conflicts', async () => {
+    it('returns 400 when the repository rejects the save', async () => {
       repository.save.mockRejectedValueOnce(new InvalidOperationError('Solution was modified by another request'));
 
       const res = await patch({ name: 'Renamed' });
@@ -1615,10 +1614,10 @@ describe('planner router routes', () => {
       );
     });
 
-    it('increments the revision', async () => {
+    it('includes the plan format version', async () => {
       const res = await answerQuestion();
 
-      expect(res.body.revision).toBe(2);
+      expect(res.body.formatVersion).toBe('1.0');
     });
 
     it('returns 404 for an unknown question', async () => {
@@ -1672,7 +1671,7 @@ describe('planner router routes', () => {
         name: 'S',
         scenario: 'new',
         status: 'draft',
-        revision: 1,
+        formatVersion: '1.0',
         exportedAt: expect.any(String),
         state: expect.objectContaining({ questions: [] }),
       });
