@@ -151,7 +151,6 @@ export const EventLog: FunctionComponent = () => {
                   pageSize={EVENT_LOG_PAGE_SIZE}
                   shownCount={entries?.length ?? 0}
                   total={logPage.total}
-                  disabled={isLoading}
                   onPage={onPage}
                 />
               )}

@@ -180,7 +180,7 @@ describe('event log page saga', () => {
   const valueServiceUrl = 'https://value-service.example';
   const eventsUrl = `${valueServiceUrl}/value/v1/event-service/values/event`;
   const pageState = {
-    config: { serviceUrls: { valueServiceApiUrl: valueServiceUrl } },
+    config: { serviceUrls: { valueServiceApiUrl: valueServiceUrl, eventServiceApiUrl: eventServiceUrl } },
     event: { logPage: { page: 1, total: 347 } },
   };
   const loggedEvent = {
@@ -203,7 +203,7 @@ describe('event log page saga', () => {
     correlationId: 'urn:ads:platform:form-service:v1:/forms/a1b2c3',
   };
   const pageResponse = { data: { 'event-service': { event: [loggedEvent] }, page: { size: 1 } } };
-  const countResponse = { data: { namespace: 'event-service', name: 'event', count: 347 } };
+  const countResponse = { data: { count: 347 } };
   const axiosGet = jest.fn();
   const providers: StaticProvider[] = [
     [call.fn(getAccessToken), 'test-token'],
@@ -278,7 +278,7 @@ describe('event log page saga', () => {
     expect(axiosGet).toHaveBeenCalledTimes(1);
   });
 
-  it('counts the matching events with the same filters when a search starts', async () => {
+  it('counts the matching events through the event service with the same filters when a search starts', async () => {
     axiosGet.mockReturnValueOnce(pageResponse).mockReturnValueOnce(countResponse);
 
     await expectSaga(fetchEventLogPage, getEventLogPage(1, searchCriteria, true))
@@ -286,7 +286,10 @@ describe('event log page saga', () => {
       .provide(providers)
       .run();
 
-    expect(axiosGet).toHaveBeenCalledWith(`${eventsUrl}/count`, expect.objectContaining({ params: filterParams }));
+    expect(axiosGet).toHaveBeenCalledWith(
+      `${eventServiceUrl}/event/v1/events/count`,
+      expect.objectContaining({ params: filterParams }),
+    );
   });
 
   it('stores the page of events with the total number of matching events', async () => {

@@ -190,7 +190,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
 
 const EVENT_LOG_REQUEST_TIMEOUT_MS = 30000;
 
-// Only the filters the value service count endpoint supports, so the total always matches the pages.
+// Only the filters the event service count endpoint supports, so the total always matches the pages.
 const toEventLogQuery = (criteria: EventSearchCriteria): Record<string, string> => {
   const query: Record<string, string> = {};
   const context: Record<string, unknown> = {
@@ -229,10 +229,11 @@ const toEventLogPageWindow = (page: number, total?: number) => {
 
 export function* fetchEventLogPage({ page, searchCriteria, includeTotal }: FetchEventLogPageAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const eventServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const total: number = includeTotal ? undefined : yield select((state: RootState) => state.event.logPage?.total);
 
-  if (baseUrl && token) {
+  if (baseUrl && eventServiceUrl && token) {
     const eventsUrl = `${baseUrl}/value/v1/event-service/values/event`;
     const query = toEventLogQuery(searchCriteria);
     const headers = { Authorization: `Bearer ${token}` };
@@ -247,7 +248,11 @@ export function* fetchEventLogPage({ page, searchCriteria, includeTotal }: Fetch
           timeout: EVENT_LOG_REQUEST_TIMEOUT_MS,
         }),
         includeTotal
-          ? call(axios.get, `${eventsUrl}/count`, { headers, params: query, timeout: EVENT_LOG_REQUEST_TIMEOUT_MS })
+          ? call(axios.get, `${eventServiceUrl}/event/v1/events/count`, {
+              headers,
+              params: query,
+              timeout: EVENT_LOG_REQUEST_TIMEOUT_MS,
+            })
           : null,
       ]);
 

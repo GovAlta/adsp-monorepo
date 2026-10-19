@@ -129,7 +129,7 @@ describe('EventLog', () => {
     fireEvent.click(getByTestId('event-log-filter-search'));
     const searchCriteria = fetchPageActions(store).pop().searchCriteria;
 
-    fireEvent.click(getByTestId('event-log-page-next'));
+    fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '2' } });
 
     expect(fetchPageActions(store).pop()).toEqual(
       expect.objectContaining({ page: 2, includeTotal: false, searchCriteria }),
