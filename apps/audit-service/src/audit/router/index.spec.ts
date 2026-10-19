@@ -164,6 +164,9 @@ describe('GET /audit/v1/:namespace/actions', () => {
 
     expect(routes).toEqual([
       { path: '/:namespace/actions', roles: [AuditServiceRoles.Reader] },
+      { path: '/events', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/events', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/events/:id', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events', roles: [AuditServiceRoles.Writer] },
       { path: '/failed-events', roles: [AuditServiceRoles.Admin] },
       { path: '/failed-events/:id/replay', roles: [AuditServiceRoles.Admin] },

@@ -5,12 +5,13 @@ import { param, query } from 'express-validator';
 import { CatalogService, FailedEventService, RetentionService } from '../model';
 import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
 import { AuditServiceRoles } from '../roles';
-import { EventSubmitter } from '../types';
+import { EventReader, EventSubmitter } from '../types';
 import { assertWriteScope } from '../utils/write-access';
 import { requireAuditRole } from '../utils/authorization';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
 import { failedEventHandler, validateFailedEventId, validateFailedEventPage } from './failed-events';
+import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
 import type { Logger } from 'winston';
 
 interface AuditRouterOptions {
@@ -19,6 +20,7 @@ interface AuditRouterOptions {
   logger: Logger;
   submitter?: EventSubmitter;
   failedEvents?: FailedEventService;
+  reader?: EventReader;
 }
 
 export const validateTenantContext = createValidationHandler(
@@ -73,6 +75,29 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     readActions(options.catalogs),
+  );
+  router.get(
+    '/events',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateEventQuery,
+    readEvents(options.reader),
+  );
+  router.get(
+    '/:namespace/events',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateNamespace,
+    validateEventQuery,
+    readEvents(options.reader),
+  );
+  router.get(
+    '/:namespace/events/:id',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateNamespace,
+    validateEventId,
+    readEvent(options.reader),
   );
   router.post(
     '/:namespace/events',
