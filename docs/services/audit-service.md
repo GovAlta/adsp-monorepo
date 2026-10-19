@@ -247,3 +247,26 @@ Until that integration exists, valid submissions return **503 with Retry-After**
 
 See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
 for the boundary with OSP-708.
+
+## Self-auditing
+
+Reading the audit trail is itself recorded. Each successful read writes one event to the
+`audit-service` namespace of the tenant that was queried. The namespace's action catalog is
+built in and applies to every tenant; it is not configured per tenant.
+
+| Action | Category | Recorded when |
+| --- | --- | --- |
+| `events.list` | `data-access` | A namespace listing succeeds. |
+| `events.list-all` | `data-access` | A cross-namespace listing succeeds. |
+| `events.read` | `data-access` | A single event read succeeds. |
+| `failed-events.list` | `data-access` | A failed-events listing succeeds (pending OSP-739). |
+| `failed-events.replay` | `administrative` | A replay runs (pending OSP-739). |
+
+All actions use the `security` retention class (365 days by default).
+
+The event's actor is the caller, `written_by` is the Audit Service's own client, and `metadata`
+holds the `endpoint`, the `filters` supplied and the `resultCount`. `correlationId` is taken from the
+`x-correlation-id` request header when present. A paged read records one event per request.
+
+Events go through the normal validation, enrichment and buffer. A failure to record is logged and
+counted and never fails the read. Failed or unauthorized reads are not recorded.

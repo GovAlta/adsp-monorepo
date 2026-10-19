@@ -3,6 +3,7 @@ import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { ActionCatalog, AuditConfiguration } from '../configuration';
+import { AUDIT_SERVICE_CATALOG, AUDIT_SERVICE_NAMESPACE } from './self-audit-catalog';
 
 export class CatalogUnavailableError extends InvalidOperationError {
   constructor() {
@@ -20,6 +21,9 @@ export class CatalogService {
   ) {}
 
   async getCatalog(namespace: string, tenantId?: AdspId): Promise<ActionCatalog | null> {
+    // The service's own namespace is built in, so it applies to every tenant without per-tenant registration.
+    if (namespace === AUDIT_SERVICE_NAMESPACE) return AUDIT_SERVICE_CATALOG;
+
     try {
       const catalog = await this.configuration.getServiceConfiguration<AuditConfiguration, AuditConfiguration | null>(
         `actions-${namespace}`,

@@ -11,7 +11,9 @@ import { RequestHandler } from 'express';
 import { query, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { AuditServiceRoles } from '../roles';
+import { SelfAuditActions } from '../model';
 import { AuditEvent, EventCriteria, EventReader, StoredEvent } from '../types';
+import type { SelfAuditor } from '../utils/self-audit';
 
 const DEFAULT_TOP = 10;
 const MAX_TOP = 5000;
@@ -114,7 +116,19 @@ function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): Event
   };
 }
 
-export function readEvents(reader?: EventReader): RequestHandler {
+function toFilters({ tenantId: _tenantId, ...criteria }: EventCriteria): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(criteria)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, value instanceof Date ? value.toISOString() : value]),
+  );
+}
+
+function getEndpoint(req: Parameters<RequestHandler>[0]): string {
+  return `${req.method} ${req.baseUrl}${req.route.path}`;
+}
+
+export function readEvents(reader?: EventReader, auditor?: SelfAuditor): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = assertCanReadEvents(req);
@@ -122,19 +136,26 @@ export function readEvents(reader?: EventReader): RequestHandler {
       const after = str(req.query.after);
       const skip = after ? decodeAfter(after) : 0;
 
-      const events = await assertReader(reader).find(toCriteria(req, tenantId), top, skip);
+      const criteria = toCriteria(req, tenantId);
+      const events = await assertReader(reader).find(criteria, top, skip);
       const results: Results<ReturnType<typeof serializeEvent>> = {
         results: events.map((event) => serializeEvent(event)),
         page: { after, size: events.length, next: encodeNext(events.length, top, skip) },
       };
       res.send(results);
+      await auditor?.record(req, {
+        action: criteria.namespace ? SelfAuditActions.ListNamespaceEvents : SelfAuditActions.ListAllEvents,
+        endpoint: getEndpoint(req),
+        filters: toFilters(criteria),
+        resultCount: events.length,
+      });
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function readEvent(reader?: EventReader): RequestHandler {
+export function readEvent(reader?: EventReader, auditor?: SelfAuditor): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = assertCanReadEvents(req);
@@ -144,6 +165,12 @@ export function readEvent(reader?: EventReader): RequestHandler {
         throw new NotFoundError('audit event', id);
       }
       res.send(serializeEvent(event));
+      await auditor?.record(req, {
+        action: SelfAuditActions.ReadEvent,
+        endpoint: getEndpoint(req),
+        filters: { namespace, id },
+        resultCount: 1,
+      });
     } catch (err) {
       next(err);
     }

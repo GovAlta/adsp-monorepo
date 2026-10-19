@@ -8,6 +8,7 @@ import { AuditServiceRoles } from '../roles';
 import { EventReader, EventSubmitter } from '../types';
 import { assertWriteScope } from '../utils/write-access';
 import { requireAuditRole } from '../utils/authorization';
+import { SelfAuditor } from '../utils/self-audit';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
 import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
@@ -19,6 +20,8 @@ interface AuditRouterOptions {
   logger: Logger;
   submitter?: EventSubmitter;
   reader?: EventReader;
+  // The service's own client ID; enables recording of reads as audit events.
+  serviceId?: AdspId;
 }
 
 export const validateTenantContext = createValidationHandler(
@@ -64,6 +67,8 @@ export const readActions =
 
 export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
+  // Without a submitter the auditor still exists, so unrecorded reads are logged and counted rather than silently skipped.
+  const auditor = options.serviceId ? new SelfAuditor({ ...options, serviceId: options.serviceId }) : undefined;
   const validateNamespace = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
   );
@@ -79,7 +84,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     assertAuthenticatedHandler,
     requireAuditRole(AuditServiceRoles.Reader),
     validateEventQuery,
-    readEvents(options.reader),
+    readEvents(options.reader, auditor),
   );
   router.get(
     '/:namespace/events',
@@ -87,7 +92,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     validateEventQuery,
-    readEvents(options.reader),
+    readEvents(options.reader, auditor),
   );
   router.get(
     '/:namespace/events/:id',
@@ -95,7 +100,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     validateEventId,
-    readEvent(options.reader),
+    readEvent(options.reader, auditor),
   );
   router.post(
     '/:namespace/events',

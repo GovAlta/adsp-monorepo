@@ -109,6 +109,7 @@ export const initializeApp = async (): Promise<express.Application> => {
       catalogs: new CatalogService(configurationService, logger),
       retention: new RetentionService(configurationService, logger),
       logger,
+      serviceId,
     }),
   );
 
