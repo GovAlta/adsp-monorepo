@@ -88,7 +88,11 @@ export default function (state: EventState = defaultState, action: EventActionTy
       return {
         ...state,
         entries: action.entries,
-        logPage: { page: action.page, total: action.total ?? state.logPage?.total ?? action.entries.length },
+        logPage: {
+          page: action.page,
+          pageSize: action.pageSize,
+          total: action.total ?? state.logPage?.total ?? action.entries.length,
+        },
         isLoading: { ...state.isLoading, log: false },
       };
     case FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION:

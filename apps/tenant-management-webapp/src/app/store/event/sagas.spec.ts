@@ -217,7 +217,7 @@ describe('event log page saga', () => {
   it('requests only the events on the selected page', async () => {
     axiosGet.mockReturnValueOnce(pageResponse);
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(3, searchCriteria))
+    await expectSaga(fetchEventLogPage, getEventLogPage(3, 10, searchCriteria))
       .withState(pageState)
       .provide(providers)
       .run();
@@ -231,7 +231,7 @@ describe('event log page saga', () => {
   it('reads a page in the older half oldest first from the mirrored offset', async () => {
     axiosGet.mockReturnValueOnce(pageResponse);
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(19, searchCriteria))
+    await expectSaga(fetchEventLogPage, getEventLogPage(19, 10, searchCriteria))
       .withState(pageState)
       .provide(providers)
       .run();
@@ -245,7 +245,7 @@ describe('event log page saga', () => {
   it('reads only the remaining events for a partial last page', async () => {
     axiosGet.mockReturnValueOnce(pageResponse);
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(35, searchCriteria))
+    await expectSaga(fetchEventLogPage, getEventLogPage(35, 10, searchCriteria))
       .withState(pageState)
       .provide(providers)
       .run();
@@ -256,21 +256,59 @@ describe('event log page saga', () => {
     );
   });
 
+  it('requests the selected number of events per page', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(3, 20, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 20, after: btoa('40'), order: 'desc' } }),
+    );
+  });
+
+  it('sizes a partial last page from the selected number of events per page', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(12, 30, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 17, after: btoa('0'), order: 'asc' } }),
+    );
+  });
+
+  it('stores the page with the number of events per page it was read with', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(2, 20, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .put(getEventLogPageSucceeded([loggedEvent], 2, 20))
+      .run();
+  });
+
   it('shows an oldest-first page newest first', async () => {
     const olderEvent = { ...loggedEvent, timestamp: '2026-09-01T15:30:00.000Z' };
     axiosGet.mockReturnValueOnce({ data: { 'event-service': { event: [olderEvent, loggedEvent] }, page: {} } });
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(35, searchCriteria))
+    await expectSaga(fetchEventLogPage, getEventLogPage(35, 10, searchCriteria))
       .withState(pageState)
       .provide(providers)
-      .put(getEventLogPageSucceeded([loggedEvent, olderEvent], 35))
+      .put(getEventLogPageSucceeded([loggedEvent, olderEvent], 35, 10))
       .run();
   });
 
   it('does not recount the matching events when moving between pages', async () => {
     axiosGet.mockReturnValueOnce(pageResponse);
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(3, searchCriteria))
+    await expectSaga(fetchEventLogPage, getEventLogPage(3, 10, searchCriteria))
       .withState(pageState)
       .provide(providers)
       .run();
@@ -281,7 +319,7 @@ describe('event log page saga', () => {
   it('counts the matching events through the event service with the same filters when a search starts', async () => {
     axiosGet.mockReturnValueOnce(pageResponse).mockReturnValueOnce(countResponse);
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(1, searchCriteria, true))
+    await expectSaga(fetchEventLogPage, getEventLogPage(1, 10, searchCriteria, true))
       .withState(pageState)
       .provide(providers)
       .run();
@@ -295,15 +333,15 @@ describe('event log page saga', () => {
   it('stores the page of events with the total number of matching events', async () => {
     axiosGet.mockReturnValueOnce(pageResponse).mockReturnValueOnce(countResponse);
 
-    await expectSaga(fetchEventLogPage, getEventLogPage(1, searchCriteria, true))
+    await expectSaga(fetchEventLogPage, getEventLogPage(1, 10, searchCriteria, true))
       .withState(pageState)
       .provide(providers)
-      .put(getEventLogPageSucceeded([loggedEvent], 1, 347))
+      .put(getEventLogPageSucceeded([loggedEvent], 1, 10, 347))
       .run();
   });
 
   it('stops loading and reports an error when the event log cannot be retrieved', async () => {
-    await expectSaga(fetchEventLogPage, getEventLogPage(2, searchCriteria))
+    await expectSaga(fetchEventLogPage, getEventLogPage(2, 10, searchCriteria))
       .withState(pageState)
       .provide([
         [call.fn(getAccessToken), 'test-token'],

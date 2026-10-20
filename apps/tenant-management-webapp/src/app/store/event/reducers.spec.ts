@@ -9,30 +9,42 @@ const loggedEvent = (correlationId: string) => ({
 });
 
 describe('event reducer: event log pages', () => {
-  const firstPageState = reducer(undefined, getEventLogPageSucceeded([loggedEvent('form-a')], 1, 347));
+  const firstPageState = reducer(undefined, getEventLogPageSucceeded([loggedEvent('form-a')], 1, 10, 347));
 
   it('replaces the displayed events with the requested page', () => {
-    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 2));
+    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 2, 10));
 
     expect(state.entries.map(({ correlationId }) => correlationId)).toEqual(['form-b']);
   });
 
   it('records the page being displayed', () => {
-    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 2));
+    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 2, 10));
 
     expect(state.logPage.page).toBe(2);
   });
 
+  it('records the number of events per page being displayed', () => {
+    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 1, 20));
+
+    expect(state.logPage.pageSize).toBe(20);
+  });
+
   it('keeps the search total when moving between pages', () => {
-    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 2));
+    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 2, 10));
+
+    expect(state.logPage.total).toBe(347);
+  });
+
+  it('keeps the search total when changing the number of events per page', () => {
+    const state = reducer(firstPageState, getEventLogPageSucceeded([loggedEvent('form-b')], 1, 30));
 
     expect(state.logPage.total).toBe(347);
   });
 
   it('stops loading once the page arrives', () => {
-    const loadingState = reducer(firstPageState, getEventLogPage(2, { namespace: 'form-service' }));
+    const loadingState = reducer(firstPageState, getEventLogPage(2, 10, { namespace: 'form-service' }));
 
-    const state = reducer(loadingState, getEventLogPageSucceeded([loggedEvent('form-b')], 2));
+    const state = reducer(loadingState, getEventLogPageSucceeded([loggedEvent('form-b')], 2, 10));
 
     expect(state.isLoading.log).toBe(false);
   });

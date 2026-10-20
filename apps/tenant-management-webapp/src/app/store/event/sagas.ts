@@ -25,7 +25,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { fetchServiceMetrics } from '@store/common';
-import { EventDefinition, EventSearchCriteria, EVENT_LOG_PAGE_SIZE } from './models';
+import { EventDefinition, EventSearchCriteria } from './models';
 
 export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
@@ -218,16 +218,21 @@ const toEventLogQuery = (criteria: EventSearchCriteria): Record<string, string> 
 const toOffsetCursor = (offset: number): string => btoa(`${offset}`);
 
 // Pages in the older half are read oldest first, so no request skips more than half of the matching events.
-const toEventLogPageWindow = (page: number, total?: number) => {
-  const start = (page - 1) * EVENT_LOG_PAGE_SIZE;
+const toEventLogPageWindow = (page: number, pageSize: number, total?: number) => {
+  const start = (page - 1) * pageSize;
   if (!total || start < total / 2) {
-    return { order: 'desc', offset: start, top: EVENT_LOG_PAGE_SIZE };
+    return { order: 'desc', offset: start, top: pageSize };
   }
-  const end = Math.min(start + EVENT_LOG_PAGE_SIZE, total);
+  const end = Math.min(start + pageSize, total);
   return { order: 'asc', offset: total - end, top: end - start };
 };
 
-export function* fetchEventLogPage({ page, searchCriteria, includeTotal }: FetchEventLogPageAction): SagaIterator {
+export function* fetchEventLogPage({
+  page,
+  pageSize,
+  searchCriteria,
+  includeTotal,
+}: FetchEventLogPageAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const eventServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -237,7 +242,7 @@ export function* fetchEventLogPage({ page, searchCriteria, includeTotal }: Fetch
     const eventsUrl = `${baseUrl}/value/v1/event-service/values/event`;
     const query = toEventLogQuery(searchCriteria);
     const headers = { Authorization: `Bearer ${token}` };
-    const { order, offset, top } = toEventLogPageWindow(page, total);
+    const { order, offset, top } = toEventLogPageWindow(page, pageSize, total);
 
     try {
       yield put(UpdateIndicator({ show: true, message: 'Loading...' }));
@@ -258,7 +263,12 @@ export function* fetchEventLogPage({ page, searchCriteria, includeTotal }: Fetch
 
       const events = data['event-service']['event'];
       yield put(
-        getEventLogPageSucceeded(order === 'asc' ? [...events].reverse() : events, page, countResponse?.data.count),
+        getEventLogPageSucceeded(
+          order === 'asc' ? [...events].reverse() : events,
+          page,
+          pageSize,
+          countResponse?.data.count,
+        ),
       );
       yield put(UpdateIndicator({ show: false }));
     } catch (error) {

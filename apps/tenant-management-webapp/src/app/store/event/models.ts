@@ -21,11 +21,13 @@ export interface EventMetrics {
   avgPerDay?: number;
 }
 
-export const EVENT_LOG_PAGE_SIZE = 10;
+export const EVENT_LOG_PAGE_SIZES = [10, 20, 30];
+export const DEFAULT_EVENT_LOG_PAGE_SIZE = EVENT_LOG_PAGE_SIZES[0];
 
 export interface EventLogPage {
   // One based.
   page: number;
+  pageSize: number;
   total: number;
 }
 

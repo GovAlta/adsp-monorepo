@@ -5,10 +5,14 @@ import { EventLogPagination } from './eventLogPagination';
 
 describe('EventLogPagination', () => {
   const onPage = jest.fn();
-  const props = { page: 1, pageSize: 10, shownCount: 10, total: 347, onPage };
+  const onPageSize = jest.fn();
+  const props = { page: 1, pageSize: 10, shownCount: 10, total: 347, onPage, onPageSize };
+  const pageSizeDropdown = (container: HTMLElement) =>
+    container.querySelector('goa-dropdown[name="event-log-page-size"]');
 
   afterEach(() => {
     onPage.mockReset();
+    onPageSize.mockReset();
   });
 
   it('shows the range being displayed and the total number of matching events', () => {
@@ -49,5 +53,52 @@ describe('EventLogPagination', () => {
     fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '35' } });
 
     expect(onPage).toHaveBeenCalledWith(35);
+  });
+
+  it('offers 10, 20 or 30 events per page with the current page size selected', () => {
+    const { container } = render(<EventLogPagination {...props} pageSize={20} />);
+
+    const dropdown = pageSizeDropdown(container);
+    expect(dropdown).toHaveAttribute('value', '20');
+    expect(
+      Array.from(dropdown.querySelectorAll('goa-dropdown-item')).map((item) => item.getAttribute('value')),
+    ).toEqual(['10', '20', '30']);
+  });
+
+  it('labels the page size dropdown as show per page', () => {
+    const { getByText } = render(<EventLogPagination {...props} />);
+
+    expect(getByText('Show')).toBeInTheDocument();
+    expect(getByText('per page')).toBeInTheDocument();
+  });
+
+  it('changes the number of events per page to the size chosen', () => {
+    const { container } = render(<EventLogPagination {...props} />);
+
+    fireEvent(pageSizeDropdown(container), new CustomEvent('_change', { detail: { value: '30' } }));
+
+    expect(onPageSize).toHaveBeenCalledWith(30);
+  });
+
+  it('counts the shown range and pages using the selected page size', () => {
+    const { getByTestId, getByText } = render(<EventLogPagination {...props} page={2} pageSize={30} shownCount={30} />);
+
+    expect(getByTestId('event-log-result-count')).toHaveTextContent('Showing 31–60 of 347 events');
+    expect(getByText('of 12')).toBeInTheDocument();
+  });
+
+  it('does not offer a page size when every event fits on the smallest page', () => {
+    const { container } = render(<EventLogPagination {...props} shownCount={10} total={10} />);
+
+    expect(pageSizeDropdown(container)).not.toBeInTheDocument();
+  });
+
+  it('keeps offering a page size when every event fits on a larger selected page', () => {
+    const { container, queryByTestId } = render(
+      <EventLogPagination {...props} pageSize={30} shownCount={15} total={15} />,
+    );
+
+    expect(pageSizeDropdown(container)).toBeInTheDocument();
+    expect(queryByTestId('event-log-pagination')).not.toBeInTheDocument();
   });
 });

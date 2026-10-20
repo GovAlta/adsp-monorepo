@@ -73,6 +73,7 @@ export interface FetchEventLogEntriesFailureAction {
 export interface FetchEventLogPageAction {
   type: typeof FETCH_EVENT_LOG_PAGE_ACTION;
   page: number;
+  pageSize: number;
   searchCriteria: EventSearchCriteria;
   includeTotal: boolean;
 }
@@ -81,6 +82,7 @@ export interface FetchEventLogPageSuccessAction {
   type: typeof FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION;
   entries: EventLogEntry[];
   page: number;
+  pageSize: number;
   total?: number;
 }
 
@@ -179,11 +181,13 @@ export const getEventLogEntriesSucceeded = (
 
 export const getEventLogPage = (
   page: number,
+  pageSize: number,
   searchCriteria: EventSearchCriteria,
   includeTotal = false
 ): FetchEventLogPageAction => ({
   type: FETCH_EVENT_LOG_PAGE_ACTION,
   page,
+  pageSize,
   searchCriteria,
   includeTotal,
 });
@@ -191,11 +195,13 @@ export const getEventLogPage = (
 export const getEventLogPageSucceeded = (
   results: RawEventLogValue[],
   page: number,
+  pageSize: number,
   total?: number
 ): FetchEventLogPageSuccessAction => ({
   type: FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION,
   entries: results.map(toEventLogEntry),
   page,
+  pageSize,
   total,
 });
 

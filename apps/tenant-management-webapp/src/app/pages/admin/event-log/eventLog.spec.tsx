@@ -42,7 +42,9 @@ describe('EventLog', () => {
   const mockStore = configureStore([]);
   const fetchPageType = 'eventLog/FETCH_EVENT_LOG_PAGE_ACTION';
 
-  const createStore = (logPage: { page: number; total: number } | null = { page: 1, total: 1 }) =>
+  const createStore = (
+    logPage: { page: number; pageSize: number; total: number } | null = { page: 1, pageSize: 10, total: 1 },
+  ) =>
     mockStore({
       event: {
         entries: [
@@ -82,6 +84,12 @@ describe('EventLog', () => {
   const fetchPageActions = (store: ReturnType<typeof createStore>) =>
     store.getActions().filter((action) => action.type === fetchPageType);
 
+  const changePageSize = (container: HTMLElement, value: string) =>
+    fireEvent(
+      container.querySelector('goa-dropdown[name="event-log-page-size"]'),
+      new CustomEvent('_change', { detail: { value } }),
+    );
+
   it('loads the first page of the event log with its total and without a lower time bound', () => {
     const store = createStore();
 
@@ -90,6 +98,7 @@ describe('EventLog', () => {
     expect(fetchPageActions(store)).toEqual([
       expect.objectContaining({
         page: 1,
+        pageSize: 10,
         includeTotal: true,
         searchCriteria: { timestampMax: expect.any(String) },
       }),
@@ -97,7 +106,7 @@ describe('EventLog', () => {
   });
 
   it('returns to the first page with the new filters when a search is executed', () => {
-    const store = createStore({ page: 3, total: 347 });
+    const store = createStore({ page: 3, pageSize: 10, total: 347 });
     const { getByTestId } = renderEventLog(store);
 
     fireEvent.click(getByTestId('event-log-filter-search'));
@@ -112,7 +121,7 @@ describe('EventLog', () => {
   });
 
   it('returns to the first page without filters when the filters are reset', () => {
-    const store = createStore({ page: 3, total: 347 });
+    const store = createStore({ page: 3, pageSize: 10, total: 347 });
     const { getByTestId } = renderEventLog(store);
     fireEvent.click(getByTestId('event-log-filter-search'));
 
@@ -124,7 +133,7 @@ describe('EventLog', () => {
   });
 
   it('keeps the applied filters and pinned upper bound when moving to another page', () => {
-    const store = createStore({ page: 1, total: 347 });
+    const store = createStore({ page: 1, pageSize: 10, total: 347 });
     const { getByTestId } = renderEventLog(store);
     fireEvent.click(getByTestId('event-log-filter-search'));
     const searchCriteria = fetchPageActions(store).pop().searchCriteria;
@@ -137,19 +146,54 @@ describe('EventLog', () => {
   });
 
   it('shows pagination controls when the results span more than one page', () => {
-    const { getByTestId } = renderEventLog(createStore({ page: 1, total: 347 }));
+    const { getByTestId } = renderEventLog(createStore({ page: 1, pageSize: 10, total: 347 }));
 
     expect(getByTestId('event-log-pagination')).toBeInTheDocument();
   });
 
+  it('returns to the first page at the chosen size with the applied filters when the page size changes', () => {
+    const store = createStore({ page: 3, pageSize: 10, total: 347 });
+    const { container, getByTestId } = renderEventLog(store);
+    fireEvent.click(getByTestId('event-log-filter-search'));
+    const searchCriteria = fetchPageActions(store).pop().searchCriteria;
+
+    changePageSize(container, '30');
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({ page: 1, pageSize: 30, includeTotal: false, searchCriteria }),
+    );
+  });
+
+  it('keeps the chosen page size when moving to another page', () => {
+    const store = createStore({ page: 1, pageSize: 10, total: 347 });
+    const { container, getByTestId } = renderEventLog(store);
+    changePageSize(container, '20');
+
+    fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '2' } });
+
+    expect(fetchPageActions(store).pop()).toEqual(expect.objectContaining({ page: 2, pageSize: 20 }));
+  });
+
+  it('keeps the chosen page size when a new search is executed', () => {
+    const store = createStore({ page: 1, pageSize: 10, total: 347 });
+    const { container, getByTestId } = renderEventLog(store);
+    changePageSize(container, '20');
+
+    fireEvent.click(getByTestId('event-log-filter-search'));
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({ page: 1, pageSize: 20, includeTotal: true }),
+    );
+  });
+
   it('hides pagination controls when every result fits on one page', () => {
-    const { queryByTestId } = renderEventLog(createStore({ page: 1, total: 1 }));
+    const { queryByTestId } = renderEventLog(createStore({ page: 1, pageSize: 10, total: 1 }));
 
     expect(queryByTestId('event-log-pagination')).not.toBeInTheDocument();
   });
 
   it('no longer offers a Load more control', () => {
-    const { queryByText } = renderEventLog(createStore({ page: 1, total: 347 }));
+    const { queryByText } = renderEventLog(createStore({ page: 1, pageSize: 10, total: 347 }));
 
     expect(queryByText('Load more')).not.toBeInTheDocument();
   });
