@@ -1,7 +1,7 @@
 // clean-code-ignore: RULE-19 — interface only, no logic; implementation is covered in timescale/value.spec.ts.
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
-import { Metric, MetricValue, PlatformMetric, Value, ValueCriteria, MetricCriteria } from '../types';
+import { Metric, MetricValue, PlatformMetric, Value, ValueCriteria, MetricCriteria, ValueOrder } from '../types';
 
 export interface Page {
   after?: string;
@@ -16,7 +16,7 @@ export interface Page {
 
 export interface ValuesRepository {
   writeValues(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>[]): Promise<Value[]>;
-  readValues(top?: number, after?: string, criteria?: ValueCriteria): Promise<Results<Value>>;
+  readValues(top?: number, after?: string, criteria?: ValueCriteria, order?: ValueOrder): Promise<Results<Value>>;
 
   readMetrics(
     tenantId: AdspId,

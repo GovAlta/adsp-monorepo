@@ -7,6 +7,13 @@ jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   readFile: jest.fn((_path, _options, callback) => callback(null, '{}')),
 }));
+jest.mock('./postgres', () => ({
+  ...jest.requireActual('./postgres'),
+  createDatabase: jest.fn().mockResolvedValue({
+    knex: { destroy: jest.fn().mockResolvedValue(undefined) },
+    isConnected: jest.fn().mockResolvedValue(true),
+  }),
+}));
 jest.mock('./environments/environment', () => ({
   environment: {
     CLIENT_ID: 'urn:ads:platform:audit-service',
@@ -21,13 +28,15 @@ jest.mock('./environments/environment', () => ({
 
 import { adspId, ConfigurationService, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import { generateKeyPairSync } from 'crypto';
-import { Application } from 'express';
 import { sign, SignOptions } from 'jsonwebtoken';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
-import { initializeApp } from './app';
+import { AuditApplication, initializeApp } from './app';
 import { AuditServiceRoles } from './audit';
+import { createDatabase, PostgresEventRepository } from './postgres';
+import { AuditStoreError } from './audit/buffer';
+import { randomUUID } from 'crypto';
 
 describe('audit application authorization', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -59,7 +68,7 @@ describe('audit application authorization', () => {
     privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
   });
   const wrongKey = generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey;
-  let app: Application;
+  let app: AuditApplication;
 
   function createStrategy(realm: string, isCore: boolean) {
     return new JwtStrategy(
@@ -106,6 +115,12 @@ describe('audit application authorization', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest
+      .spyOn(PostgresEventRepository.prototype, 'insert')
+      .mockImplementation(async (events) => events.map(({ id }) => id));
+    jest.spyOn(PostgresEventRepository.prototype, 'park').mockResolvedValue(undefined);
+    jest.spyOn(PostgresEventRepository.prototype, 'find').mockResolvedValue([]);
+    jest.spyOn(PostgresEventRepository.prototype, 'get').mockResolvedValue(null);
     configuration.getServiceConfiguration.mockResolvedValue({
       kind: 'actionCatalog',
       application: 'case-service',
@@ -134,6 +149,11 @@ describe('audit application authorization', () => {
     });
 
     app = await initializeApp();
+  });
+
+  afterEach(async () => {
+    await app.shutdown();
+    jest.restoreAllMocks();
   });
 
   it('registers all three roles with only the reader included in tenant-admin', () => {
@@ -174,6 +194,13 @@ describe('audit application authorization', () => {
       method: 'post' as const,
       path: '/audit/v1/failed-events/54862935-e55b-4bc4-8cd0-9e64b193bbd2/replay',
       role: AuditServiceRoles.Admin,
+    },
+    { method: 'get' as const, path: '/audit/v1/events', role: AuditServiceRoles.Reader },
+    { method: 'get' as const, path: '/audit/v1/case-service/events', role: AuditServiceRoles.Reader },
+    {
+      method: 'get' as const,
+      path: '/audit/v1/case-service/events/54603ec0-b54a-4ebf-a283-87bc0f47dfed',
+      role: AuditServiceRoles.Reader,
     },
   ])('$method $path', ({ method, path, role }) => {
     it('returns 401 for a missing token', async () => {
@@ -257,5 +284,207 @@ describe('audit application authorization', () => {
     const response = await request(app).get(path);
 
     expect(response.status).toBe(200);
+  });
+
+  function eventInput() {
+    return {
+      eventId: randomUUID(),
+      occurredAt: new Date().toISOString(),
+      action: 'case.update',
+      status: 'success',
+      actor: { id: 'case-worker', type: 'user' },
+    };
+  }
+
+  function configureAction() {
+    configuration.getServiceConfiguration
+      .mockResolvedValueOnce({
+        kind: 'actionCatalog',
+        application: 'case-service',
+        actions: {
+          'case.update': { version: 1, category: 'administrative', severity: 'info', retentionClass: 'standard' },
+        },
+      })
+      .mockResolvedValue(null);
+  }
+
+  it('writes validated events through the runtime buffer and PostgreSQL adapter', async () => {
+    configureAction();
+    const input = eventInput();
+
+    const response = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [input] });
+
+    expect(response.status).toBe(202);
+    expect(response.body).toEqual({ accepted: 1, duplicates: 0, rejected: [] });
+    expect(PostgresEventRepository.prototype.insert).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          tenant_id: tenantA.id.toString(),
+          namespace: 'case-service',
+          event_id: input.eventId,
+        }),
+      ],
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
+  it('counts database conflicts as duplicates rather than accepted events', async () => {
+    configureAction();
+    jest.mocked(PostgresEventRepository.prototype.insert).mockResolvedValue([]);
+
+    const response = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [eventInput()] });
+
+    expect(response.body).toEqual({ accepted: 0, duplicates: 1, rejected: [] });
+  });
+
+  it('reads stored history with the API shape after its action catalog is removed', async () => {
+    configureAction();
+    const input = eventInput();
+    await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [input] })
+      .expect(202);
+    const stored = jest.mocked(PostgresEventRepository.prototype.insert).mock.calls[0][0][0];
+    jest.mocked(PostgresEventRepository.prototype.get).mockResolvedValue(stored);
+    configuration.getServiceConfiguration.mockClear().mockResolvedValue(null);
+
+    const response = await request(app)
+      .get(`/audit/v1/case-service/events/${stored.id}`)
+      .auth(token([AuditServiceRoles.Reader]), { type: 'bearer' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: stored.id,
+      eventId: input.eventId,
+      namespace: 'case-service',
+      action: input.action,
+      occurredAt: input.occurredAt,
+      actor: input.actor,
+      retentionClass: 'standard',
+    });
+    expect(response.body).not.toHaveProperty('tenant_id');
+    expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+  });
+
+  it('durably parks storage failures before returning a per-event rejection', async () => {
+    configureAction();
+    const input = eventInput();
+    jest
+      .mocked(PostgresEventRepository.prototype.insert)
+      .mockRejectedValue(new AuditStoreError('Write failed', 'permanent'));
+
+    const response = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [input] });
+
+    expect(response.status).toBe(202);
+    expect(response.body.rejected).toEqual([expect.objectContaining({ index: 0, code: 'storage_failed' })]);
+    expect(PostgresEventRepository.prototype.park).toHaveBeenCalledWith(
+      [expect.objectContaining({ event: input, tenant_id: tenantA.id.toString() })],
+      expect.anything(),
+    );
+  });
+
+  it.each(['/audit/v1/events', '/audit/v1/case-service/events'])(
+    'connects %s to database reads without loading catalogs',
+    async (path) => {
+      const response = await request(app)
+        .get(path)
+        .auth(token([AuditServiceRoles.Reader]), { type: 'bearer' });
+
+      expect(response.status).toBe(200);
+      expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: tenantA.id.toString() }),
+        10,
+        0,
+      );
+      expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+    },
+  );
+
+  it('connects event details to tenant-scoped database reads', async () => {
+    const id = randomUUID();
+
+    await request(app)
+      .get(`/audit/v1/case-service/events/${id}`)
+      .auth(token([AuditServiceRoles.Reader]), { type: 'bearer' })
+      .expect(404);
+
+    expect(PostgresEventRepository.prototype.get).toHaveBeenCalledWith(tenantA.id.toString(), 'case-service', id);
+  });
+
+  it('scopes Core history queries to the explicitly selected tenant', async () => {
+    await request(app)
+      .get('/audit/v1/events')
+      .auth(token([AuditServiceRoles.Reader], 'core'), { type: 'bearer' })
+      .query({ tenantId: tenantB.id.toString() })
+      .expect(200);
+
+    expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: tenantB.id.toString() }),
+      10,
+      0,
+    );
+  });
+
+  it('returns a retryable failure if neither audit nor failed-event storage succeeds', async () => {
+    configureAction();
+    jest
+      .mocked(PostgresEventRepository.prototype.insert)
+      .mockRejectedValue(new AuditStoreError('Write failed', 'permanent'));
+    jest
+      .mocked(PostgresEventRepository.prototype.park)
+      .mockRejectedValue(new AuditStoreError('Parking failed', 'permanent'));
+
+    const response = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [eventInput()] });
+
+    expect(response.status).toBe(503);
+    expect(response.headers['retry-after']).toBe('1');
+  });
+
+  it('reports unavailable readiness when the database is disconnected', async () => {
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    database.isConnected.mockResolvedValueOnce(false);
+
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(503);
+    expect(response.body).toMatchObject({ db: false, ready: false });
+  });
+
+  it('stops accepting writes and reports unavailable readiness while draining', async () => {
+    configureAction();
+    await app.drain();
+
+    const response = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [eventInput()] });
+
+    expect(response.status).toBe(503);
+    expect(response.headers['retry-after']).toBe('1');
+    expect(PostgresEventRepository.prototype.insert).not.toHaveBeenCalled();
+    await request(app).get('/health').expect(503);
+  });
+
+  it('releases the connection pool and telemetry once on repeated shutdown', async () => {
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    const platform = await jest.mocked(initializePlatform).mock.results[0].value;
+
+    await Promise.all([app.shutdown(), app.shutdown()]);
+
+    expect(database.knex.destroy).toHaveBeenCalledTimes(1);
+    expect(platform.shutdownTelemetry).toHaveBeenCalledTimes(1);
   });
 });

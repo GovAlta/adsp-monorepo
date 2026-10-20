@@ -631,6 +631,22 @@ describe('TimescaleValuesRepository readValues', () => {
     expect(results.page.size).toBe(1);
     expect(results.results[0].tenantId).toBeNull();
   });
+
+  it('orders newest first by default', async () => {
+    const { knex } = createKnex({ tableRows: { values: [row] } });
+
+    await new TimescaleValuesRepository(knex).readValues(10);
+
+    expect(knex('values').orderBy).toHaveBeenCalledWith('timestamp', 'desc');
+  });
+
+  it('orders oldest first when asc is requested', async () => {
+    const { knex } = createKnex({ tableRows: { values: [row] } });
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, undefined, 'asc');
+
+    expect(knex('values').orderBy).toHaveBeenCalledWith('timestamp', 'asc');
+  });
 });
 
 describe('TimescaleValuesRepository countValues', () => {

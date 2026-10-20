@@ -14,6 +14,9 @@ export const FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION = 'eventLog/FETCH_EVENT_LOG_
 
 export const CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION = 'eventLog/CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION';
 
+export const FETCH_EVENT_LOG_PAGE_ACTION = 'eventLog/FETCH_EVENT_LOG_PAGE_ACTION';
+export const FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION = 'eventLog/FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION';
+
 export const FETCH_EVENT_METRICS_ACTION = 'event/FETCH_EVENT_METRICS_ACTION';
 export const FETCH_EVENT_METRICS_SUCCESS_ACTION = 'event/FETCH_EVENT_METRICS_SUCCESS_ACTION';
 
@@ -67,6 +70,22 @@ export interface FetchEventLogEntriesFailureAction {
   type: typeof FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION;
 }
 
+export interface FetchEventLogPageAction {
+  type: typeof FETCH_EVENT_LOG_PAGE_ACTION;
+  page: number;
+  pageSize: number;
+  searchCriteria: EventSearchCriteria;
+  includeTotal: boolean;
+}
+
+export interface FetchEventLogPageSuccessAction {
+  type: typeof FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION;
+  entries: EventLogEntry[];
+  page: number;
+  pageSize: number;
+  total?: number;
+}
+
 export interface FetchEventMetricsAction {
   type: typeof FETCH_EVENT_METRICS_ACTION;
 }
@@ -87,6 +106,8 @@ export type EventActionTypes =
   | FetchEventLogEntriesSuccessAction
   | FetchEventLogEntriesFailureAction
   | ClearEventLogEntriesSuccessAction
+  | FetchEventLogPageAction
+  | FetchEventLogPageSuccessAction
   | FetchEventMetricsAction
   | FetchEventMetricsSuccessAction;
 
@@ -132,26 +153,56 @@ export const getEventLogEntriesFailed = (): FetchEventLogEntriesFailureAction =>
   type: FETCH_EVENT_LOG_ENTRIES_FAILURE_ACTION,
 });
 
+interface RawEventLogValue {
+  context: Record<string, string>;
+  timestamp: string;
+  correlationId: string;
+  value: { payload: Record<string, unknown> };
+}
+
+const toEventLogEntry = ({ context, timestamp, correlationId, value }: RawEventLogValue): EventLogEntry => ({
+  namespace: context.namespace,
+  name: context.name,
+  timestamp: new Date(timestamp),
+  correlationId,
+  details: value.payload,
+});
+
 export const getEventLogEntriesSucceeded = (
-  results: {
-    context: Record<string, string>;
-    timestamp: string;
-    correlationId: string;
-    value: { payload: Record<string, unknown> };
-  }[],
+  results: RawEventLogValue[],
   after: string,
   next: string
 ): FetchEventLogEntriesSuccessAction => ({
   type: FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
-  entries: results.map(({ context, timestamp, correlationId, value }) => ({
-    namespace: context.namespace,
-    name: context.name,
-    timestamp: new Date(timestamp),
-    correlationId,
-    details: value.payload,
-  })),
+  entries: results.map(toEventLogEntry),
   after,
   next,
+});
+
+export const getEventLogPage = (
+  page: number,
+  pageSize: number,
+  searchCriteria: EventSearchCriteria,
+  includeTotal = false
+): FetchEventLogPageAction => ({
+  type: FETCH_EVENT_LOG_PAGE_ACTION,
+  page,
+  pageSize,
+  searchCriteria,
+  includeTotal,
+});
+
+export const getEventLogPageSucceeded = (
+  results: RawEventLogValue[],
+  page: number,
+  pageSize: number,
+  total?: number
+): FetchEventLogPageSuccessAction => ({
+  type: FETCH_EVENT_LOG_PAGE_SUCCESS_ACTION,
+  entries: results.map(toEventLogEntry),
+  page,
+  pageSize,
+  total,
 });
 
 export const clearEventLogEntries = (): ClearEventLogEntriesSuccessAction => ({

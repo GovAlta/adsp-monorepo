@@ -24,12 +24,19 @@ import {
   FailedEventRepository,
   FailedEventService,
 } from './audit';
+import { AuditWriteBuffer } from './audit/buffer';
+import { createDatabase, PostgresEventRepository } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
+export interface AuditApplication extends express.Application {
+  drain: () => Promise<void>;
+  shutdown: () => Promise<void>;
+}
+
 export const initializeApp = async ({
   failedEventRepository,
-}: { failedEventRepository?: FailedEventRepository } = {}): Promise<express.Application> => {
+}: { failedEventRepository?: FailedEventRepository } = {}): Promise<AuditApplication> => {
   const app = express();
 
   app.use(compression());
@@ -54,6 +61,7 @@ export const initializeApp = async ({
     traceHandler,
     metricsHandler,
     meterProvider,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -92,6 +100,10 @@ export const initializeApp = async ({
     { logger },
   );
   const auditMetrics = createAuditMetrics(meterProvider?.getMeter('audit-service'), failedEventRepository, logger);
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  const { knex, isConnected } = await createDatabase({ logger, ...environment });
+  const repository = new PostgresEventRepository(knex, logger);
+  const buffer = new AuditWriteBuffer(repository, logger);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -121,19 +133,22 @@ export const initializeApp = async ({
     createAuditRouter({
       catalogs: new CatalogService(configurationService, logger),
       retention: new RetentionService(configurationService, logger),
+      submitter: buffer,
+      reader: repository,
       logger,
       failedEvents: new FailedEventService(failedEventRepository, serviceId.toString(), auditMetrics),
     }),
   );
 
-  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
     res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json(platform);
+    const db = await isConnected();
+    const ready = db && buffer.isReady;
+    res.status(ready ? 200 : 503).json({ ...platform, db, ready });
   });
 
   app.get('/', async (req, res) => {
@@ -153,5 +168,22 @@ export const initializeApp = async ({
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  let shutdown: Promise<void>;
+  return Object.assign(app, {
+    drain: () => buffer.close(),
+    shutdown: () => {
+      shutdown ??= (async () => {
+        try {
+          await buffer.close();
+        } finally {
+          try {
+            await knex.destroy();
+          } finally {
+            await shutdownTelemetry();
+          }
+        }
+      })();
+      return shutdown;
+    },
+  });
 };
