@@ -1,8 +1,10 @@
 import { metrics, Meter, Counter, UpDownCounter } from '@opentelemetry/api';
 import type { Logger } from 'winston';
 import type { EnrichedEvent, EventOutcome, EventSubmitter } from '../types';
+import { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE } from '../types';
 import { DurableEventWriter, PARK_TIMEOUT_MS } from './durable-writer';
 import { AuditEventStore, AuditStorageUnavailableError } from './store';
+import type { AuditMetrics } from '../metrics';
 
 export const WRITE_BATCH_SIZE = 200;
 export const WRITE_BATCH_WINDOW_MS = 200;
@@ -66,6 +68,7 @@ export class AuditWriteBuffer implements EventSubmitter {
     private readonly logger: Logger,
     options: WriteBufferOptions = {},
     meter: Meter = metrics.getMeter('audit-service'),
+    private readonly auditMetrics?: AuditMetrics,
   ) {
     this.options = {
       maxEvents: options.maxEvents ?? MAX_BUFFERED_EVENTS,
@@ -76,10 +79,12 @@ export class AuditWriteBuffer implements EventSubmitter {
     this.writer = new DurableEventWriter(store, logger);
     this.depthMetric = meter.createUpDownCounter('audit_buffer_depth', { unit: '{event}' });
     this.bytesMetric = meter.createUpDownCounter('audit_buffer_bytes', { unit: 'By' });
-    this.failuresMetric = meter.createCounter('audit_write_failures_total', {
-      description: 'Events whose batch outcome could not be durably confirmed.',
-      unit: '{event}',
-    });
+    this.failuresMetric = auditMetrics
+      ? undefined
+      : meter.createCounter('audit_write_failures_total', {
+          description: 'Events whose batch outcome could not be durably confirmed.',
+          unit: '{event}',
+        });
   }
 
   get depth(): number {
@@ -241,11 +246,14 @@ export class AuditWriteBuffer implements EventSubmitter {
   private complete(entry: QueuedEvent, outcome?: EventOutcome, error?: Error): void {
     const { submission, event } = entry;
     if (!this.pending.has(submission)) return;
-    if (outcome) submission.outcomes.set(event.id, outcome);
-    else {
+    if (outcome) {
+      submission.outcomes.set(event.id, outcome);
+      if (outcome.status === EVENT_OUTCOME_STATUS.REJECTED && outcome.code === EVENT_OUTCOME_CODE.STORAGE_FAILED)
+        this.auditMetrics?.recordParkedEvent();
+    } else {
       submission.error = error || new AuditStorageUnavailableError('Audit storage returned an incomplete result.');
       if (this.state === BUFFER_STATE.DRAINING) this.shutdownError = submission.error;
-      this.failuresMetric.add(1);
+      this.recordFailure(1);
     }
     submission.remaining--;
     if (submission.remaining) return;
@@ -271,7 +279,7 @@ export class AuditWriteBuffer implements EventSubmitter {
     this.writeController.abort();
     this.queue = [];
     for (const submission of this.pending) {
-      this.failuresMetric.add(submission.remaining);
+      this.recordFailure(submission.remaining);
       this.release(submission);
       submission.reject(this.shutdownError);
     }
@@ -280,5 +288,10 @@ export class AuditWriteBuffer implements EventSubmitter {
 
   private finishIfDrained(): void {
     if (this.state === BUFFER_STATE.DRAINING && !this.running && !this.queue.length) this.finishShutdown();
+  }
+
+  private recordFailure(count: number): void {
+    if (this.auditMetrics) this.auditMetrics.recordWriteFailure('ingest', count);
+    else this.failuresMetric.add(count);
   }
 }

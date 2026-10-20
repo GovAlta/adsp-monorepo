@@ -119,6 +119,42 @@ describe('AuditWriteBuffer', () => {
     await expect(secondResult).resolves.toEqual(new Map([[second.id, { status: 'accepted' }]]));
   });
 
+  it('counts parked events only after parking commits and uses one failure counter', async () => {
+    await buffer.close();
+    const auditMetrics = { recordParkedEvent: jest.fn(), recordWriteFailure: jest.fn() };
+    jest.mocked(meter.createCounter).mockClear();
+    buffer = new AuditWriteBuffer(store, logger, {}, meter, auditMetrics);
+    store.insert.mockRejectedValue(new AuditStoreError('Database rejected the event.', 'permanent'));
+    const parking = deferred<void>();
+    store.park.mockReturnValue(parking.promise);
+
+    const result = buffer.submit([createEvent()]);
+    await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
+    expect(auditMetrics.recordParkedEvent).not.toHaveBeenCalled();
+    parking.resolve(undefined);
+    await result;
+
+    expect(auditMetrics.recordParkedEvent).toHaveBeenCalledTimes(1);
+    expect(auditMetrics.recordWriteFailure).not.toHaveBeenCalled();
+    expect(meter.createCounter).not.toHaveBeenCalled();
+  });
+
+  it('counts unconfirmed ingest failures without claiming that parking succeeded', async () => {
+    await buffer.close();
+    const auditMetrics = { recordParkedEvent: jest.fn(), recordWriteFailure: jest.fn() };
+    buffer = new AuditWriteBuffer(store, logger, {}, meter, auditMetrics);
+    store.insert.mockRejectedValue(new AuditStoreError('Database unavailable.', 'permanent'));
+    store.park.mockRejectedValue(new Error('Parking unavailable.'));
+
+    const result = expect(buffer.submit([createEvent()])).rejects.toBeInstanceOf(AuditStorageUnavailableError);
+    await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
+    await result;
+
+    expect(auditMetrics.recordParkedEvent).not.toHaveBeenCalled();
+    expect(auditMetrics.recordWriteFailure).toHaveBeenCalledTimes(1);
+    expect(auditMetrics.recordWriteFailure).toHaveBeenCalledWith('ingest', 1);
+  });
+
   it('flushes exactly 200 events without waiting for the 200 ms window', async () => {
     const events = createEvents(WRITE_BATCH_SIZE);
 

@@ -21,6 +21,7 @@ export const environment = envalid.cleanEnv(
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3352 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
   },
   {
     reporter: ({ errors }) => {

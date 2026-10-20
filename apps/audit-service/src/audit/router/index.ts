@@ -2,7 +2,7 @@ import { AdspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { param, query } from 'express-validator';
-import { CatalogService, RetentionService } from '../model';
+import { CatalogService, FailedEventService, RetentionService } from '../model';
 import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
 import { AuditServiceRoles } from '../roles';
 import { EventReader, EventSubmitter } from '../types';
@@ -10,6 +10,7 @@ import { assertWriteScope } from '../utils/write-access';
 import { requireAuditRole } from '../utils/authorization';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
+import { failedEventHandler, validateFailedEventId, validateFailedEventPage } from './failed-events';
 import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
 import type { Logger } from 'winston';
 
@@ -18,6 +19,7 @@ interface AuditRouterOptions {
   retention: RetentionService;
   logger: Logger;
   submitter?: EventSubmitter;
+  failedEvents?: FailedEventService;
   reader?: EventReader;
 }
 
@@ -105,6 +107,20 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     assertWriteScope,
     validateWriteRequest,
     writeEvents(options),
+  );
+  router.get(
+    '/failed-events',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Admin),
+    validateFailedEventPage,
+    failedEventHandler(options.failedEvents, options.logger, 'list'),
+  );
+  router.post(
+    '/failed-events/:id/replay',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Admin),
+    validateFailedEventId,
+    failedEventHandler(options.failedEvents, options.logger, 'replay'),
   );
   return router;
 }
