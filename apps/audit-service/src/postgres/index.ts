@@ -2,6 +2,8 @@ import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex, Knex } from 'knex';
 import { Logger } from 'winston';
 
+export { PostgresEventRepository } from './event';
+
 export interface PostgresProps {
   logger: Logger;
   DB_HOST: string;
@@ -63,7 +65,12 @@ const runMigrations = async (knex: Knex, logger: Logger) => {
 export const createDatabase = async (props: PostgresProps): Promise<Database> => {
   // MVP: one database user both runs migrations and serves requests, as in the other services.
   const knex = createKnex(props);
-  await runMigrations(knex, props.logger);
+  try {
+    await runMigrations(knex, props.logger);
+  } catch (error) {
+    await knex.destroy();
+    throw error;
+  }
 
   return {
     knex,
