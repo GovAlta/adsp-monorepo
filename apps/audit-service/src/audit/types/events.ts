@@ -70,9 +70,15 @@ export interface EventCriteria {
   occurredTo?: Date;
 }
 
+export interface EventCursor {
+  occurredAt: Date;
+  id: string;
+}
+
 export interface EventReader {
-  // Newest first by occurred_at; implementations must break ties deterministically so paging is stable.
-  find(criteria: EventCriteria, top: number, skip: number): Promise<StoredEvent[]>;
+  // Newest first by (occurred_at, id). `after` is the last event of the previous page; only events
+  // strictly older in that ordering are returned, so paging is stable while new events arrive.
+  find(criteria: EventCriteria, top: number, after?: EventCursor): Promise<StoredEvent[]>;
   // Must match tenant and namespace, so an id from another tenant is never returned.
   get(tenantId: string, namespace: string, id: string): Promise<StoredEvent | null>;
 }

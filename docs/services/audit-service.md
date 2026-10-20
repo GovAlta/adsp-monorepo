@@ -260,8 +260,9 @@ All three require `audit-reader` and tenant context. Core readers can select a t
 Lists accept `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`, `scope`,
 `occurredFrom` and `occurredTo`. Filters combine with AND; time bounds are inclusive, and `scope`
 matches an element of `scopeIds`. Results are ordered by `occurred_at DESC, id DESC`, with `top`
-and the existing `after` cursor controlling offset pagination. Equal timestamps have deterministic
-ordering; concurrent inserts can still shift offsets between requests.
+and an opaque `after` keyset cursor (the last event's `occurred_at` and `id`, returned as `page.next`)
+controlling pagination. Paging is stable while new events arrive, including the events recorded by
+the reads themselves.
 
 Responses retain the existing camelCase event shape and never expose `tenant_id`.
 Database read failures return 503 rather than an empty result or a false 404.

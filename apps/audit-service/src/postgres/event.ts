@@ -7,7 +7,7 @@ import {
   AuditStoreError,
   FailedAuditEvent,
 } from '../audit/buffer';
-import { EnrichedEvent, EventCriteria, EventReader, StoredEvent } from '../audit/types';
+import { EnrichedEvent, EventCriteria, EventCursor, EventReader, StoredEvent } from '../audit/types';
 import { databaseError, STATEMENT_TIMEOUT_MS } from './operation';
 
 export async function insertAuditEvents(
@@ -50,7 +50,7 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
     });
   }
 
-  async find(criteria: EventCriteria, top: number, skip: number): Promise<StoredEvent[]> {
+  async find(criteria: EventCriteria, top: number, after?: EventCursor): Promise<StoredEvent[]> {
     const query = this.knex<StoredEvent>('audit_events').where({ tenant_id: criteria.tenantId });
     const filters = {
       namespace: criteria.namespace,
@@ -67,12 +67,12 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
     if (criteria.scope !== undefined) query.whereRaw('scope_ids @> ?::text[]', [[criteria.scope]]);
     if (criteria.occurredFrom) query.where('occurred_at', '>=', criteria.occurredFrom);
     if (criteria.occurredTo) query.where('occurred_at', '<=', criteria.occurredTo);
+    if (after) query.whereRaw('(occurred_at, id) < (?, ?)', [after.occurredAt, after.id]);
     return this.read(async () =>
       query
         .orderBy('occurred_at', 'desc')
         .orderBy('id', 'desc')
         .limit(top)
-        .offset(skip)
         .timeout(STATEMENT_TIMEOUT_MS, { cancel: true }),
     );
   }

@@ -1,12 +1,5 @@
 import { isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import {
-  createValidationHandler,
-  decodeAfter,
-  encodeNext,
-  InvalidOperationError,
-  NotFoundError,
-  Results,
-} from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 import { query, param } from 'express-validator';
 import isISO8601 from 'validator/lib/isISO8601';
@@ -15,6 +8,7 @@ import { AuditServiceRoles } from '../roles';
 import { SelfAuditActions } from '../model';
 import { AuditEvent, EventCriteria, EventReader, StoredEvent } from '../types';
 import type { SelfAuditor } from '../utils/self-audit';
+import { decodeEventCursor, encodeEventCursor } from '../utils/event-cursor';
 
 const DEFAULT_TOP = 10;
 const MAX_TOP = 5000;
@@ -135,13 +129,17 @@ export function readEvents(reader?: EventReader, auditor?: SelfAuditor): Request
       const tenantId = assertCanReadEvents(req);
       const top = parseTop(req.query.top);
       const after = str(req.query.after);
-      const skip = after ? decodeAfter(after) : 0;
+      const cursor = after ? (decodeEventCursor(after) ?? undefined) : undefined;
 
       const criteria = toCriteria(req, tenantId);
-      const events = await assertReader(reader).find(criteria, top, skip);
+      const events = await assertReader(reader).find(criteria, top, cursor);
       const results: Results<ReturnType<typeof serializeEvent>> = {
         results: events.map((event) => serializeEvent(event)),
-        page: { after, size: events.length, next: encodeNext(events.length, top, skip) },
+        page: {
+          after,
+          size: events.length,
+          next: events.length === top ? encodeEventCursor(events[events.length - 1]) : undefined,
+        },
       };
       res.send(results);
       await auditor?.record(req, {
@@ -195,12 +193,7 @@ function parseIsoDate(value: unknown): Date | undefined {
 }
 
 function isValidCursor(value: unknown): boolean {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  const decoded = Buffer.from(value, 'base64').toString('ascii');
-  const skip = decodeAfter(value);
-  return /^\d+$/.test(decoded) && Number.isSafeInteger(skip);
+  return typeof value === 'string' && decodeEventCursor(value) !== null;
 }
 
 const SCALAR_PARAMS = [

@@ -474,7 +474,7 @@ describe('audit application authorization', () => {
       expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId: tenantA.id.toString() }),
         10,
-        0,
+        undefined,
       );
       expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
         expect.stringMatching(/^actions-(?!audit-service$)/),
@@ -504,7 +504,7 @@ describe('audit application authorization', () => {
     expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: tenantB.id.toString() }),
       10,
-      0,
+      undefined,
     );
   });
 

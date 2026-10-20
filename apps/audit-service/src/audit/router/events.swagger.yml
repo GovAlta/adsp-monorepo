@@ -193,7 +193,7 @@ components:
     After:
       in: query
       name: after
-      description: Opaque cursor from page.next of the previous response.
+      description: Opaque keyset cursor from page.next of the previous response. Stable while new events arrive.
       schema: { type: string }
     Actor:
       in: query

@@ -15,6 +15,7 @@ import { DEFAULT_RETENTION_CLASSES } from '../model/retention';
 import { createAuditRouter } from '../router';
 import { AuditServiceRoles } from '../roles';
 import { EnrichedEvent, EventOutcome, EventReader, EventSubmitter, StoredEvent } from '../types';
+import { encodeEventCursor } from './event-cursor';
 import { SelfAuditor } from './self-audit';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -22,7 +23,12 @@ const tenant = adspId`urn:ads:platform:tenant-service:v2:/tenants/case-team`;
 const serviceId = adspId`urn:ads:platform:audit-service`;
 const eventId = '0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11';
 
-const stored = { id: eventId, tenant_id: tenant.toString(), namespace: 'case-service' } as StoredEvent;
+const stored = {
+  id: eventId,
+  tenant_id: tenant.toString(),
+  namespace: 'case-service',
+  occurred_at: new Date('2026-10-01T10:00:00Z'),
+} as StoredEvent;
 
 const AUDIT_SERVICE_CATALOG = {
   kind: 'actionCatalog',
@@ -149,7 +155,7 @@ describe('self-auditing reads', () => {
   });
 
   it('records one event per paged request', async () => {
-    const cursor = Buffer.from('2').toString('base64');
+    const cursor = encodeEventCursor({ id: eventId, occurred_at: new Date('2026-10-01T10:00:00Z') });
     await request(createApp()).get(`/audit/v1/case-service/events?top=2&after=${cursor}`);
     expect(submitter.submit).toHaveBeenCalledTimes(1);
     expect(submitter.submit.mock.calls[0][0]).toHaveLength(1);

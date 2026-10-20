@@ -4,6 +4,7 @@ export type {
   EnrichedEvent,
   EventCriteria,
   EventOutcome,
+  EventCursor,
   EventReader,
   EventSubmitter,
   RejectedEvent,
