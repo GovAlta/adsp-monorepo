@@ -45,4 +45,34 @@ describe('EventLogEntries', () => {
 
     expect(queryByText('No Events Found')).not.toBeInTheDocument();
   });
+
+  const entry = {
+    timestamp: new Date('2026-10-19T19:56:49.000Z'),
+    namespace: 'access-service',
+    name: 'LOGIN',
+    correlationId: 'corr-1',
+    details: {},
+  };
+
+  it.each([
+    [true, false],
+    [false, true],
+  ])('keeps the current page under an overlay while loading (%s, %s)', (loading, show) => {
+    const { getByTestId, getByText } = renderEntries([entry], loading, show);
+
+    expect(getByText('LOGIN')).toBeInTheDocument();
+    expect(getByTestId('event-log-loading-overlay')).toBeInTheDocument();
+  });
+
+  it('does not overlay the table when nothing is loading', () => {
+    const { queryByTestId } = renderEntries([entry]);
+
+    expect(queryByTestId('event-log-loading-overlay')).not.toBeInTheDocument();
+  });
+
+  it('does not overlay an empty table while the first page loads', () => {
+    const { queryByTestId } = renderEntries(null, true, true);
+
+    expect(queryByTestId('event-log-loading-overlay')).not.toBeInTheDocument();
+  });
 });

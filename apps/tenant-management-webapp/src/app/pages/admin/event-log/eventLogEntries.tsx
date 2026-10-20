@@ -25,7 +25,21 @@ interface VisibleProps {
 }
 
 const Visible = styled.div<VisibleProps>`
-  visibility: ${(props) => `${props.visible ? 'visible' : 'hidden'}`};
+  visibility: ${(props) => `${props.visible ? 'visible' : 'hide'}`};
+`;
+
+const TableArea = styled.div`
+  position: relative;
+`;
+
+// Covers the current page while the next one loads, so the pagination below it does not move.
+const LoadingOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
 `;
 
 interface EventLogEntryComponentProps {
@@ -97,10 +111,12 @@ interface EventLogEntriesComponentProps {
 const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps> = ({ className, onSearch }) => {
   const entries = useSelector((state: RootState) => state.event.entries);
   const [colors, setColors] = useState({});
-  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
+  const loading = isLoading || indicator.show;
+  const hasEntries = entries !== null && entries.length > 0;
   useEffect(() => {
     entries?.filter((item) => {
       if (!Object.prototype.hasOwnProperty.call(colors, item.correlationId)) {
@@ -118,49 +134,54 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
 
   return (
     <>
-      <Visible visible={!isLoading && !indicator.show && entries !== null && entries.length > 0}>
-        <div className={className}>
-          <DataTable>
-            <colgroup>
-              <col className="correlation-col" />
-              <col className="data-col" />
-              <col className="data-col" />
-              <col className="data-col" />
-              <col className="action-col" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th id="correlation"></th>
-                <th id="timestamp">Timestamp</th>
-                <th id="namespace">Namespace</th>
-                <th id="name">Name</th>
-                <th id="action">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries !== null &&
-                entries.map((entry, index) => (
-                  <EventLogEntryComponent
-                    key={`${entry.timestamp}-${entry.namespace}-${entry.name}-${index}`}
-                    entry={entry}
-                    correlationColors={colors}
-                    addCorrelationColor={(id) => {
-                      const randomColor = `#${Math.floor(Math.random() * 16777215)
-                        .toString(16)
-                        .padStart(6, '0')}`;
-                      return randomColor;
-                    }}
-                    onSearchRelated={(correlationId) => onSearch({ correlationId })}
-                  />
-                ))}
-            </tbody>
-          </DataTable>
-        </div>
-      </Visible>
-      {!isLoading && !indicator.show && entries !== null && entries.length === 0 && (
-        <h2 role="status">No Events Found</h2>
-      )}
-      {indicator.show && <PageIndicator />}
+      <TableArea>
+        <Visible visible={!loading && hasEntries}>
+          <div className={className}>
+            <DataTable>
+              <colgroup>
+                <col className="correlation-col" />
+                <col className="data-col" />
+                <col className="data-col" />
+                <col className="data-col" />
+                <col className="action-col" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th id="correlation"></th>
+                  <th id="timestamp">Timestamp</th>
+                  <th id="namespace">Namespace</th>
+                  <th id="name">Name</th>
+                  <th id="action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries !== null &&
+                  entries.map((entry, index) => (
+                    <EventLogEntryComponent
+                      key={`${entry.timestamp}-${entry.namespace}-${entry.name}-${index}`}
+                      entry={entry}
+                      correlationColors={colors}
+                      addCorrelationColor={(id) => {
+                        const randomColor = `#${Math.floor(Math.random() * 16777215)
+                          .toString(16)
+                          .padStart(6, '0')}`;
+                        return randomColor;
+                      }}
+                      onSearchRelated={(correlationId) => onSearch({ correlationId })}
+                    />
+                  ))}
+              </tbody>
+            </DataTable>
+          </div>
+        </Visible>
+        {loading && hasEntries && (
+          <LoadingOverlay data-testid="event-log-loading-overlay">
+            <PageIndicator />
+          </LoadingOverlay>
+        )}
+      </TableArea>
+      {!loading && entries !== null && entries.length === 0 && <h2 role="status">No Events Found</h2>}
+      {loading && !hasEntries && <PageIndicator />}
     </>
   );
 };

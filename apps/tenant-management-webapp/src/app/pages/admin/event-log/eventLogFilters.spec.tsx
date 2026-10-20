@@ -5,8 +5,8 @@ import { runSaga } from 'redux-saga';
 import configureStore from 'redux-mock-store';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { FETCH_EVENT_LOG_ENTRIES_ACTION } from '@store/event/actions';
-import { fetchEventLogEntries } from '@store/event/sagas';
+import { FETCH_EVENT_LOG_PAGE_ACTION } from '@store/event/actions';
+import { fetchEventLogPage } from '@store/event/sagas';
 import { EventLog } from './eventLog';
 
 jest.mock('@lib/dynamicPlaceHolder', () => ({ dynamicGeneratePayload: jest.fn() }));
@@ -17,13 +17,18 @@ const createStore = () =>
   configureStore([])({
     event: {
       entries: [],
-      nextEntries: 'next-page',
+      logPage: { page: 1, pageSize: 10, total: 347 },
       isLoading: { log: false, definitions: false },
       definitions: {
         'form-service:form-created': { namespace: 'form-service', name: 'form-created' },
       },
     },
-    config: { serviceUrls: { valueServiceApiUrl: 'https://value-service.example' } },
+    config: {
+      serviceUrls: {
+        valueServiceApiUrl: 'https://value-service.example',
+        eventServiceApiUrl: 'https://event-service.example',
+      },
+    },
     session: {
       resourceAccess: { 'urn:ads:platform:value-service': { roles: ['value-reader'] } },
     },
@@ -48,17 +53,21 @@ const changeDropdown = (container: HTMLElement, name: string, value: string) =>
 const requestLatestSearch = async (store: ReturnType<typeof createStore>) => {
   const action = store
     .getActions()
-    .filter(({ type }) => type === FETCH_EVENT_LOG_ENTRIES_ACTION)
+    .filter(({ type }) => type === FETCH_EVENT_LOG_PAGE_ACTION)
     .pop();
-  await runSaga({ getState: store.getState, dispatch: store.dispatch }, fetchEventLogEntries, action).toPromise();
-  return new URL(jest.mocked(axios.get).mock.calls.slice(-1)[0][0] as string).searchParams;
+  await runSaga({ getState: store.getState, dispatch: store.dispatch }, fetchEventLogPage, action).toPromise();
+  const [, config] = jest
+    .mocked(axios.get)
+    .mock.calls.filter(([url]) => url.includes('/value/v1/'))
+    .slice(-1)[0];
+  return new URLSearchParams(config.params);
 };
 
 describe('Event log applied date filters', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-10-19T18:30:45.123Z'));
-    jest.spyOn(axios, 'get').mockResolvedValue({ data: { 'event-service': { event: [] }, page: {} } });
+    jest.spyOn(axios, 'get').mockResolvedValue({ data: { 'event-service': { event: [] }, page: {}, count: 347 } });
   });
 
   afterEach(() => {
@@ -71,9 +80,18 @@ describe('Event log applied date filters', () => {
 
     const params = await requestLatestSearch(store);
 
-    expect(store.getActions().filter(({ type }) => type === FETCH_EVENT_LOG_ENTRIES_ACTION)).toHaveLength(1);
+    expect(store.getActions().filter(({ type }) => type === FETCH_EVENT_LOG_PAGE_ACTION)).toHaveLength(1);
     expect(params.get('timestampMin')).toBe('2026-10-12T18:30:45.123Z');
     expect(params.get('timestampMax')).toBe('2026-10-19T18:30:45.123Z');
+    expect(axios.get).toHaveBeenCalledWith(
+      'https://event-service.example/event/v1/events/count',
+      expect.objectContaining({
+        params: {
+          timestampMin: '2026-10-12T18:30:45.123Z',
+          timestampMax: '2026-10-19T18:30:45.123Z',
+        },
+      }),
+    );
     expect(container.querySelector('goa-dropdown[name="event-log-date-range-filter"]')).toHaveAttribute(
       'value',
       'last-7-days',
@@ -97,7 +115,7 @@ describe('Event log applied date filters', () => {
     expect(container.querySelector('goa-filter-chip')).toHaveAttribute('content', 'Date range: Last hour');
   });
 
-  it('removes both API boundaries when the applied date chip is cleared', async () => {
+  it('clears the selected period while pinning the pagination cutoff when the date chip is removed', async () => {
     const { container, store } = renderPage();
     const chip = container.querySelector('goa-filter-chip[testid="event-log-filter-badge-dateRange"]');
 
@@ -105,7 +123,7 @@ describe('Event log applied date filters', () => {
     const params = await requestLatestSearch(store);
 
     expect(params.has('timestampMin')).toBe(false);
-    expect(params.has('timestampMax')).toBe(false);
+    expect(params.get('timestampMax')).toBe('2026-10-19T18:30:45.123Z');
     expect(container.querySelector('goa-filter-chip')).not.toBeInTheDocument();
     expect(container.querySelector('goa-dropdown[name="event-log-date-range-filter"]')).toHaveAttribute('value', '');
   });
@@ -126,8 +144,24 @@ describe('Event log applied date filters', () => {
     expect(container.querySelector('goa-filter-chip')).toHaveAttribute('content', 'Date range: Last 7 days');
   });
 
+  it('keeps the cutoff across pages after the user clears the selected period', async () => {
+    const { container, store, getByTestId } = renderPage();
+    fireEvent(
+      container.querySelector('goa-filter-chip[testid="event-log-filter-badge-dateRange"]'),
+      new CustomEvent('_click'),
+    );
+    jest.setSystemTime(new Date('2026-10-20T20:00:00.000Z'));
+
+    fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '2' } });
+    const params = await requestLatestSearch(store);
+
+    expect(params.has('timestampMin')).toBe(false);
+    expect(params.get('timestampMax')).toBe('2026-10-19T18:30:45.123Z');
+    expect(container.querySelector('goa-filter-chip')).not.toBeInTheDocument();
+  });
+
   it('keeps applied boundaries and other filters when loading the next page', async () => {
-    const { container, store } = renderPage();
+    const { container, store, getByTestId } = renderPage();
     changeDropdown(container, 'event-log-namespace-filter', 'form-service');
     changeDropdown(container, 'event-log-name-filter', 'form-created');
     fireEvent(
@@ -137,10 +171,11 @@ describe('Event log applied date filters', () => {
     clickButton(container, 'event-log-filter-search');
     jest.setSystemTime(new Date('2026-10-20T20:00:00.000Z'));
 
-    fireEvent(container.querySelector('goa-button[type="text"]'), new CustomEvent('_click'));
+    fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '2' } });
     const params = await requestLatestSearch(store);
 
-    expect(params.get('after')).toBe('next-page');
+    expect(params.get('after')).toBe(btoa('10'));
+    expect(params.get('order')).toBe('desc');
     expect(params.get('timestampMin')).toBe('2026-10-12T18:30:45.123Z');
     expect(params.get('timestampMax')).toBe('2026-10-19T18:30:45.123Z');
     expect(JSON.parse(params.get('context'))).toEqual({ namespace: 'form-service', name: 'form-created' });

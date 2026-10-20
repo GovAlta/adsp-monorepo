@@ -1,17 +1,17 @@
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
-import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import { getEventLogPage, clearEventLogEntries } from '@store/event/actions';
+import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
 import { EventSearchForm } from './eventSearchForm';
 import { GoabButton, GoabCallout } from '@abgov/react-components';
 
-import { EventSearchCriteria } from '@store/event/models';
-import { LoadMoreWrapper } from '@components/styled-components';
+import { EventSearchCriteria, DEFAULT_EVENT_LOG_PAGE_SIZE } from '@store/event/models';
 import { ServiceColumnLayoutWithMargin } from '../../admin';
 import { exportEventLogEntries, isExportCanceled } from './exportEventLog';
 import { EventLogExportModal } from './eventLogExportModal';
+import { EventLogPagination } from './eventLogPagination';
 import { SmallButton } from './styled-components';
 import { defaultEventLogCriteria } from './util';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -23,22 +23,37 @@ export const EventLog: FunctionComponent = () => {
   );
   const [initialCriteria] = useState(defaultEventLogCriteria);
   const [searchCriteria, setSearchCriteria] = useState<EventSearchCriteria>(initialCriteria);
+  // Clearing the date filter must not display pagination's pinned cutoff as a Custom filter.
+  const [pageCriteria, setPageCriteria] = useState<EventSearchCriteria>(initialCriteria);
+  const [pageSize, setPageSize] = useState(DEFAULT_EVENT_LOG_PAGE_SIZE);
   const [isExporting, setIsExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportRowCount, setExportRowCount] = useState(0);
   const exportAbortRef = useRef<AbortController | null>(null);
-  const next = useSelector((state: RootState) => state.event.nextEntries);
+  const logPage = useSelector((state: RootState) => state.event.logPage);
   const entries = useSelector((state: RootState) => state.event.entries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const valueServiceApiUrl = useSelector((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token = useSelector((state: RootState) => state.session?.credentials?.token);
   const dispatch = useDispatch();
 
+  const search = useCallback(
+    (criteria: EventSearchCriteria, size: number) => {
+      // Pin the upper bound so newly logged events do not shift page offsets or the total while paging.
+      const pinnedCriteria = { ...criteria, timestampMax: criteria.timestampMax || new Date().toISOString() };
+      setSearchCriteria(criteria);
+      setPageCriteria(pinnedCriteria);
+      dispatch(clearEventLogEntries());
+      dispatch(getEventLogPage(1, size, pinnedCriteria, true));
+    },
+    [dispatch],
+  );
+
   useEffect(() => {
     if (hasReaderRole) {
-      dispatch(getEventLogEntries('', initialCriteria));
+      search(initialCriteria, DEFAULT_EVENT_LOG_PAGE_SIZE);
     }
-  }, [dispatch, hasReaderRole, initialCriteria]);
+  }, [search, hasReaderRole, initialCriteria]);
 
   useEffect(() => {
     return function clean() {
@@ -49,18 +64,23 @@ export const EventLog: FunctionComponent = () => {
 
   const onSearch = (criteria: EventSearchCriteria) => {
     if (hasReaderRole) {
-      const appliedCriteria = {
-        ...criteria,
-        timestampMin: criteria.timestampMin ?? searchCriteria.timestampMin,
-        timestampMax: criteria.timestampMax ?? searchCriteria.timestampMax,
-      };
-      dispatch(clearEventLogEntries());
-      dispatch(getEventLogEntries('', appliedCriteria));
-      setSearchCriteria(appliedCriteria);
+      search(
+        {
+          ...criteria,
+          timestampMin: criteria.timestampMin ?? searchCriteria.timestampMin,
+          timestampMax: criteria.timestampMax ?? searchCriteria.timestampMax,
+        },
+        pageSize,
+      );
     }
   };
-  const onNext = () => {
-    dispatch(getEventLogEntries(next, searchCriteria));
+  const onPage = (page: number) => {
+    dispatch(getEventLogPage(page, pageSize, pageCriteria));
+  };
+  const onPageSize = (size: number) => {
+    setPageSize(size);
+    // The total is unchanged, so only the first page at the new size is needed.
+    dispatch(getEventLogPage(1, size, pageCriteria));
   };
   const hasSelectedEvent = Boolean(searchCriteria?.namespace || searchCriteria?.name);
   const hasEntries = Boolean(entries?.length);
@@ -84,13 +104,7 @@ export const EventLog: FunctionComponent = () => {
     setExportRowCount(0);
     try {
       const fileName = [searchCriteria.namespace, searchCriteria.name].filter(Boolean).join('-');
-      const count = await exportEventLogEntries(
-        valueServiceApiUrl,
-        token,
-        fileName,
-        searchCriteria || {},
-        controller.signal,
-      );
+      const count = await exportEventLogEntries(valueServiceApiUrl, token, fileName, pageCriteria, controller.signal);
       setExportRowCount(count);
     } catch (error) {
       if (isExportCanceled(error)) {
@@ -140,12 +154,15 @@ export const EventLog: FunctionComponent = () => {
                 onClose={closeExportModal}
               />
               <EventLogEntries onSearch={onSearch} />
-              {next && (
-                <LoadMoreWrapper>
-                  <GoabButton size="compact" disabled={isLoading} type="text" onClick={onNext} mt="m">
-                    Load more
-                  </GoabButton>
-                </LoadMoreWrapper>
+              {logPage && (
+                <EventLogPagination
+                  page={logPage.page}
+                  pageSize={logPage.pageSize}
+                  shownCount={entries?.length ?? 0}
+                  total={logPage.total}
+                  onPage={onPage}
+                  onPageSize={onPageSize}
+                />
               )}
             </>
           ) : (

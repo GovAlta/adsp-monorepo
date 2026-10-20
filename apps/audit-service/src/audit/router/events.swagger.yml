@@ -1,5 +1,38 @@
 paths:
   /audit/v1/{namespace}/events:
+    get:
+      tags:
+        - Audit events
+      summary: List events in a namespace for the caller's tenant, newest first.
+      description: Requires audit-reader. Filters combine; paginate with top and after.
+      parameters:
+        - in: path
+          name: namespace
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Top'
+        - $ref: '#/components/parameters/After'
+        - $ref: '#/components/parameters/Actor'
+        - $ref: '#/components/parameters/ResourceType'
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/Action'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Scope'
+        - $ref: '#/components/parameters/OccurredFrom'
+        - $ref: '#/components/parameters/OccurredTo'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuditEventPage'
+        '400':
+          description: Invalid namespace or query parameter.
+        '401':
+          description: Authentication required.
+        '403':
+          description: Missing audit-reader.
+        '503':
+          description: Audit event storage is not configured or unavailable.
     post:
       tags:
         - Audit events
@@ -24,9 +57,10 @@ paths:
         the endpoint's 503 handling.
 
         A 202 waits for the submitter to commit valid events or durably park storage
-        failures. No PostgreSQL submitter is wired yet: requests with valid events
-        currently return 503 rather than claiming successful storage. Requests with
-        only rejected events can return 202 without storage.
+        failures in PostgreSQL. Duplicate eventId values within the same tenant and
+        namespace do not overwrite existing events. If neither event nor failed-event
+        storage succeeds, the request returns 503. Requests with only validation
+        rejections can return 202 without storage.
       parameters:
         - in: path
           name: namespace
@@ -88,8 +122,176 @@ paths:
               schema:
                 type: integer
                 example: 1
+  /audit/v1/events:
+    get:
+      tags:
+        - Audit events
+      summary: List events across every namespace in the caller's tenant, newest first.
+      description: Requires audit-reader. Returns only the caller's tenant's events; accepts the same filters as the namespace listing.
+      parameters:
+        - $ref: '#/components/parameters/Top'
+        - $ref: '#/components/parameters/After'
+        - $ref: '#/components/parameters/Actor'
+        - $ref: '#/components/parameters/ResourceType'
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/Action'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Scope'
+        - $ref: '#/components/parameters/OccurredFrom'
+        - $ref: '#/components/parameters/OccurredTo'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuditEventPage'
+        '400':
+          description: Invalid query parameter.
+        '401':
+          description: Authentication required.
+        '403':
+          description: Missing audit-reader.
+        '503':
+          description: Audit event storage is not configured or unavailable.
+  /audit/v1/{namespace}/events/{id}:
+    get:
+      tags:
+        - Audit events
+      summary: Read one event by its service-generated id.
+      description: Requires audit-reader. An id belonging to another tenant returns 404.
+      parameters:
+        - in: path
+          name: namespace
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEvent'
+        '400':
+          description: Invalid namespace or id.
+        '403':
+          description: Missing audit-reader.
+        '404':
+          description: Event not found in the caller's tenant.
+        '503':
+          description: Audit event storage is unavailable.
 components:
+  parameters:
+    Top:
+      in: query
+      name: top
+      schema: { type: integer, minimum: 1, maximum: 5000, default: 10 }
+    After:
+      in: query
+      name: after
+      description: Opaque cursor from page.next of the previous response.
+      schema: { type: string }
+    Actor:
+      in: query
+      name: actor
+      description: Actor id.
+      schema: { type: string }
+    ResourceType:
+      in: query
+      name: resourceType
+      schema: { type: string }
+    ResourceId:
+      in: query
+      name: resourceId
+      schema: { type: string }
+    Action:
+      in: query
+      name: action
+      schema: { type: string }
+    Status:
+      in: query
+      name: status
+      schema: { type: string, enum: [success, failure, blocked, error] }
+    Category:
+      in: query
+      name: category
+      schema: { type: string, enum: [administrative, runtime, security, data-access] }
+    Scope:
+      in: query
+      name: scope
+      description: Matches events whose scopeIds contain this value.
+      schema: { type: string }
+    OccurredFrom:
+      in: query
+      name: occurredFrom
+      schema: { type: string, format: date-time }
+    OccurredTo:
+      in: query
+      name: occurredTo
+      schema: { type: string, format: date-time }
+  responses:
+    AuditEventPage:
+      description: A page of events, newest first by occurredAt.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              results:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+              page:
+                type: object
+                properties:
+                  after: { type: string }
+                  size: { type: integer }
+                  next: { type: string, description: Present when more results may exist. }
   schemas:
+    AuditEvent:
+      type: object
+      description: A stored event. tenant_id is never returned.
+      properties:
+        id: { type: string, format: uuid }
+        eventId: { type: string, format: uuid }
+        namespace: { type: string }
+        writtenBy: { type: string }
+        occurredAt: { type: string, format: date-time }
+        receivedAt: { type: string, format: date-time }
+        action: { type: string }
+        actionVersion: { type: integer }
+        category: { type: string }
+        status: { type: string }
+        severity: { type: string }
+        actor:
+          type: object
+          properties:
+            id: { type: string }
+            type: { type: string }
+            name: { type: string }
+            email: { type: string }
+            roles: { type: array, items: { type: string } }
+        resource:
+          type: object
+          properties:
+            type: { type: string }
+            id: { type: string }
+            name: { type: string }
+        scopeIds: { type: array, items: { type: string } }
+        correlationId: { type: string }
+        sessionId: { type: string }
+        changeSet:
+          type: object
+          properties:
+            before: { type: object, nullable: true }
+            after: { type: object, nullable: true }
+        metadata: { type: object }
+        retentionClass: { type: string }
+        retentionUntil: { type: string, format: date-time }
     AuditEventInput:
       type: object
       required: [eventId, occurredAt, action, status, actor]

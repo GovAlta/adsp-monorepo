@@ -14,7 +14,15 @@ import { Logger } from 'winston';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
 import { ServiceMetricRollupRepository, ValuesRepository } from '../repository';
-import { ExportServiceRoles, MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria } from '../types';
+import {
+  ExportServiceRoles,
+  MetricCriteria,
+  MetricInterval,
+  ServiceUserRoles,
+  Value,
+  ValueCriteria,
+  ValueOrder,
+} from '../types';
 import { createServiceMetricRollupJob, getTrailingCompletedDayRange } from '../jobs/serviceMetricRollup';
 
 interface ValueRouterProps {
@@ -92,6 +100,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         correlationId,
         value,
         url,
+        order,
       } = req.query;
 
       if (!tenant && !user.isCore) {
@@ -115,7 +124,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         url: url as string,
       };
 
-      const result = await repository.readValues(top, after as string, criteria);
+      const result = await repository.readValues(top, after as string, criteria, (order as ValueOrder) || 'desc');
       res.send({
         [namespace]: {
           [name]: result.results.map(mapValue),
@@ -494,6 +503,7 @@ export const createValueRouter = ({
         {
           top: { optional: true, isInt: { options: { min: 1, max: 5000 } } },
           after: { optional: true, isString: true },
+          order: { optional: true, isIn: { options: [['asc', 'desc']] } },
           correlationId: { optional: true, isString: true },
           context: { optional: true, isJSON: true },
           timestampMin: { optional: true, isISO8601: true },

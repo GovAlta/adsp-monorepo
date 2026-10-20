@@ -14,15 +14,19 @@ jest.mock('@lib/dynamicPlaceHolder', () => ({
 jest.mock('./eventSearchForm', () => ({
   EventSearchForm: ({
     onSearch,
-
     leftAction,
   }: {
     onSearch?: (criteria: EventSearchCriteria) => void;
-
     leftAction?: React.ReactNode;
   }) => (
     <div>
       {leftAction}
+      <button
+        data-testid="remove-date-range"
+        onClick={() => onSearch?.({ namespace: '', name: '', timestampMin: '', timestampMax: '' })}
+      >
+        Remove date range
+      </button>
       <button
         data-testid="event-log-filter-search"
         onClick={() => onSearch?.({ namespace: 'form-service', name: 'form-created' })}
@@ -38,12 +42,6 @@ jest.mock('./eventSearchForm', () => ({
           Search {id}
         </button>
       ))}
-      <button
-        data-testid="remove-date-range"
-        onClick={() => onSearch?.({ namespace: '', name: '', timestampMin: '', timestampMax: '' })}
-      >
-        Remove date range
-      </button>
       <button
         data-testid="event-log-filter-reset"
         onClick={() => onSearch?.(jest.requireActual('./util').defaultEventLogCriteria())}
@@ -73,8 +71,11 @@ describe('EventLog', () => {
   });
 
   const mockStore = configureStore([]);
+  const fetchPageType = 'eventLog/FETCH_EVENT_LOG_PAGE_ACTION';
 
-  const createStore = (nextEntries: string | null = null) =>
+  const createStore = (
+    logPage: { page: number; pageSize: number; total: number } | null = { page: 1, pageSize: 10, total: 1 },
+  ) =>
     mockStore({
       event: {
         entries: [
@@ -86,7 +87,8 @@ describe('EventLog', () => {
             details: {},
           },
         ],
-        nextEntries,
+        nextEntries: null,
+        logPage,
         isLoading: { definitions: false, log: false },
         definitions: {},
       },
@@ -103,19 +105,129 @@ describe('EventLog', () => {
       },
     });
 
-  it('loads the initial event log for Last 7 days', () => {
-    const store = createStore();
+  const renderEventLog = (store = createStore()) =>
     render(
       <Provider store={store}>
         <EventLog />
       </Provider>,
     );
 
-    const fetchActions = store
-      .getActions()
-      .filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
-    expect(fetchActions).toHaveLength(1);
-    expect(fetchActions[0].searchCriteria).toEqual(defaultEventLogCriteria());
+  const fetchPageActions = (store: ReturnType<typeof createStore>) =>
+    store.getActions().filter((action) => action.type === fetchPageType);
+
+  const changePageSize = (container: HTMLElement, value: string) =>
+    fireEvent(
+      container.querySelector('goa-dropdown[name="event-log-page-size"]'),
+      new CustomEvent('_change', { detail: { value } }),
+    );
+
+  it('loads exactly one first page with the Last 7 days bounds and total', () => {
+    const store = createStore();
+
+    renderEventLog(store);
+
+    expect(fetchPageActions(store)).toEqual([
+      expect.objectContaining({
+        page: 1,
+        pageSize: 10,
+        includeTotal: true,
+        searchCriteria: defaultEventLogCriteria(),
+      }),
+    ]);
+  });
+
+  it('returns to the first page with the new filters when a search is executed', () => {
+    const store = createStore({ page: 3, pageSize: 10, total: 347 });
+    const { getByTestId } = renderEventLog(store);
+
+    fireEvent.click(getByTestId('event-log-filter-search'));
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({
+        page: 1,
+        includeTotal: true,
+        searchCriteria: expect.objectContaining({ namespace: 'form-service', name: 'form-created' }),
+      }),
+    );
+  });
+
+  it('returns to the first page with a fresh Last 7 days range when filters are reset', () => {
+    const store = createStore({ page: 3, pageSize: 10, total: 347 });
+    const { getByTestId } = renderEventLog(store);
+    fireEvent.click(getByTestId('event-log-filter-search'));
+
+    jest.setSystemTime(new Date('2026-10-20T20:00:00Z'));
+    fireEvent.click(getByTestId('event-log-filter-reset'));
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({ page: 1, includeTotal: true, searchCriteria: defaultEventLogCriteria() }),
+    );
+  });
+
+  it('keeps the applied filters and pinned upper bound when moving to another page', () => {
+    const store = createStore({ page: 1, pageSize: 10, total: 347 });
+    const { getByTestId } = renderEventLog(store);
+    fireEvent.click(getByTestId('event-log-filter-search'));
+    const searchCriteria = fetchPageActions(store).pop().searchCriteria;
+
+    fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '2' } });
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({ page: 2, includeTotal: false, searchCriteria }),
+    );
+  });
+
+  it('shows pagination controls when the results span more than one page', () => {
+    const { getByTestId } = renderEventLog(createStore({ page: 1, pageSize: 10, total: 347 }));
+
+    expect(getByTestId('event-log-pagination')).toBeInTheDocument();
+  });
+
+  it('returns to the first page at the chosen size with the applied filters when the page size changes', () => {
+    const store = createStore({ page: 3, pageSize: 10, total: 347 });
+    const { container, getByTestId } = renderEventLog(store);
+    fireEvent.click(getByTestId('event-log-filter-search'));
+    const searchCriteria = fetchPageActions(store).pop().searchCriteria;
+
+    changePageSize(container, '30');
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({ page: 1, pageSize: 30, includeTotal: false, searchCriteria }),
+    );
+  });
+
+  it('keeps the chosen page size when moving to another page', () => {
+    const store = createStore({ page: 1, pageSize: 10, total: 347 });
+    const { container, getByTestId } = renderEventLog(store);
+    changePageSize(container, '20');
+
+    fireEvent.change(getByTestId('event-log-pagination-page'), { target: { value: '2' } });
+
+    expect(fetchPageActions(store).pop()).toEqual(expect.objectContaining({ page: 2, pageSize: 20 }));
+  });
+
+  it('keeps the chosen page size when a new search is executed', () => {
+    const store = createStore({ page: 1, pageSize: 10, total: 347 });
+    const { container, getByTestId } = renderEventLog(store);
+    changePageSize(container, '20');
+
+    fireEvent.click(getByTestId('event-log-filter-search'));
+
+    expect(fetchPageActions(store).pop()).toEqual(
+      expect.objectContaining({ page: 1, pageSize: 20, includeTotal: true }),
+    );
+  });
+
+  it('hides pagination controls when every result fits on one page', () => {
+    const { queryByTestId } = renderEventLog(createStore({ page: 1, pageSize: 10, total: 1 }));
+
+    expect(queryByTestId('event-log-pagination')).not.toBeInTheDocument();
+  });
+
+  it('no longer offers a Load more control', () => {
+    const { queryByText } = renderEventLog(createStore({ page: 1, pageSize: 10, total: 347 }));
+
+    expect(queryByText('Load more')).not.toBeInTheDocument();
   });
 
   it.each([
@@ -147,69 +259,28 @@ describe('EventLog', () => {
 
   it('keeps the applied date constraint when searching related events', () => {
     const store = createStore();
-    const { getByTestId } = render(
-      <Provider store={store}>
-        <EventLog />
-      </Provider>,
-    );
+    const { getByTestId } = renderEventLog(store);
 
     fireEvent.click(getByTestId('search-related'));
 
-    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
-    expect(searches[searches.length - 1].searchCriteria).toEqual({
+    expect(fetchPageActions(store).pop().searchCriteria).toEqual({
       correlationId: 'corr-related',
       timestampMin: defaultEventLogCriteria().timestampMin,
       timestampMax: defaultEventLogCriteria().timestampMax,
     });
   });
 
-  it('executes a fresh Last 7 days search when filters are reset', () => {
+  it('clears the selected period while retaining the pagination upper bound', () => {
     const store = createStore();
-    const { getByTestId } = render(
-      <Provider store={store}>
-        <EventLog />
-      </Provider>,
-    );
-    jest.setSystemTime(new Date('2026-10-20T20:00:00Z'));
-
-    fireEvent.click(getByTestId('event-log-filter-reset'));
-
-    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
-    expect(searches).toHaveLength(2);
-    expect(searches[1].searchCriteria).toEqual(defaultEventLogCriteria());
-  });
-
-  it('keeps the applied time boundaries when loading the next page', () => {
-    const store = createStore('next-page');
-    const { container } = render(
-      <Provider store={store}>
-        <EventLog />
-      </Provider>,
-    );
-    const initialSearch = store
-      .getActions()
-      .find((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
-    jest.setSystemTime(new Date('2026-10-20T20:00:00Z'));
-
-    fireEvent(container.querySelector('goa-button[type="text"]'), new CustomEvent('_click'));
-
-    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
-    expect(searches[1]).toEqual(
-      expect.objectContaining({ after: 'next-page', searchCriteria: initialSearch.searchCriteria }),
-    );
-  });
-
-  it('does not reapply Last 7 days when the date constraint is explicitly cleared', () => {
-    const store = createStore();
-    const { getByTestId } = render(
-      <Provider store={store}>
-        <EventLog />
-      </Provider>,
-    );
+    const { getByTestId } = renderEventLog(store);
 
     fireEvent.click(getByTestId('remove-date-range'));
 
-    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
-    expect(searches[1].searchCriteria).toEqual({ namespace: '', name: '', timestampMin: '', timestampMax: '' });
+    expect(fetchPageActions(store).pop().searchCriteria).toEqual({
+      namespace: '',
+      name: '',
+      timestampMin: '',
+      timestampMax: '2026-10-19T18:30:45.123Z',
+    });
   });
 });
