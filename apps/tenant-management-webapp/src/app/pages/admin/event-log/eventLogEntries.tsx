@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
-import { renderNoItem } from '@components/NoItem';
 interface CorrelationIndicatorProps {
   color: string;
 }
@@ -26,7 +25,7 @@ interface VisibleProps {
 }
 
 const Visible = styled.div<VisibleProps>`
-  visibility: ${(props) => `${props.visible ? 'visible' : 'hide'}`};
+  visibility: ${(props) => `${props.visible ? 'visible' : 'hidden'}`};
 `;
 
 interface EventLogEntryComponentProps {
@@ -98,6 +97,7 @@ interface EventLogEntriesComponentProps {
 const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps> = ({ className, onSearch }) => {
   const entries = useSelector((state: RootState) => state.event.entries);
   const [colors, setColors] = useState({});
+  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -118,7 +118,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
 
   return (
     <>
-      <Visible visible={!indicator.show && entries !== null && entries.length > 0}>
+      <Visible visible={!isLoading && !indicator.show && entries !== null && entries.length > 0}>
         <div className={className}>
           <DataTable>
             <colgroup>
@@ -157,7 +157,9 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
           </DataTable>
         </div>
       </Visible>
-      {!indicator.show && entries !== null && entries.length === 0 && renderNoItem('event log')}
+      {!isLoading && !indicator.show && entries !== null && entries.length === 0 && (
+        <h2 role="status">No Events Found</h2>
+      )}
       {indicator.show && <PageIndicator />}
     </>
   );

@@ -28,6 +28,33 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
      },
      m(c, d) {
        T(c, e, d), a && a.m(e, null), _(e, o), _(e, i), n = !0, r || (l = re(
+@@ -16257,7 +16257,7 @@
+       e = C("div"), o = C("div"), i = ae(
+         /*content*/
+         t[4]
+-      ), n = Y(), r = C("goa-icon"), f(o, "class", "text svelte-1bvk1wh"), m(r, "class", "delete-icon svelte-1bvk1wh"), m(r, "size", "medium"), m(r, "theme", l = /*_error*/
++      ), n = Y(), r = C("goa-icon"), f(o, "class", "text svelte-1bvk1wh"), m(r, "class", "delete-icon svelte-1bvk1wh"), m(r, "aria-hidden", "true"), m(r, "size", "medium"), m(r, "theme", l = /*_error*/
+       t[12] || /*_hovering*/
+       t[10] || /*_focused*/
+       t[11] ? "filled" : "outline"), m(r, "type", "close-circle"), m(r, "fillcolor", a = /*_error*/
+@@ -16398,7 +16398,7 @@
+       e = C("div"), o = C("div"), v && v.c(), i = Y(), h && h.c(), n = Y(), r = C("div"), l = ae(
+         /*content*/
+         t[4]
+-      ), a = Y(), c = C("goa-icon-button"), f(r, "class", "text svelte-1bvk1wh"), f(o, "class", "label-container svelte-1bvk1wh"), m(c, "size", "3"), m(c, "icon", "close"), m(c, "arialabel", "Remove filter"), m(c, "variant", d = /*_error*/
++      ), a = Y(), c = C("goa-icon-button"), f(r, "class", "text svelte-1bvk1wh"), f(o, "class", "label-container svelte-1bvk1wh"), m(c, "size", "3"), m(c, "icon", "close"), m(c, "arialabel", "Remove filter"), m(c, "title", "Remove filter"), m(c, "variant", d = /*_error*/
+       t[12] ? "destructive" : "dark"), m(c, "testid", "delete-button"), f(
+         e,
+         "data-testid",
+@@ -16482,7 +16482,7 @@
+   let e, o;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "class", "leading-icon svelte-1bvk1wh"), m(e, "size", "small"), m(
++      e = C("goa-icon"), m(e, "class", "leading-icon svelte-1bvk1wh"), m(e, "aria-hidden", "true"), m(e, "size", "small"), m(
+         e,
+         "type",
+         /*leadingicon*/
 @@ -23292,7 +23292,7 @@
    let e;
    return {

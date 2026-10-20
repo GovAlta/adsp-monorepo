@@ -4,6 +4,8 @@ import configureStore from 'redux-mock-store';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EventLog } from './eventLog';
+import { defaultEventLogCriteria } from './util';
+import type { EventSearchCriteria } from '@store/event/models';
 
 jest.mock('@lib/dynamicPlaceHolder', () => ({
   dynamicGeneratePayload: jest.fn(),
@@ -12,11 +14,11 @@ jest.mock('@lib/dynamicPlaceHolder', () => ({
 jest.mock('./eventSearchForm', () => ({
   EventSearchForm: ({
     onSearch,
-    onCancel,
+
     leftAction,
   }: {
-    onSearch?: (criteria: { namespace: string; name: string }) => void;
-    onCancel?: () => void;
+    onSearch?: (criteria: EventSearchCriteria) => void;
+
     leftAction?: React.ReactNode;
   }) => (
     <div>
@@ -36,7 +38,16 @@ jest.mock('./eventSearchForm', () => ({
           Search {id}
         </button>
       ))}
-      <button data-testid="event-log-filter-reset" onClick={() => onCancel?.()}>
+      <button
+        data-testid="remove-date-range"
+        onClick={() => onSearch?.({ namespace: '', name: '', timestampMin: '', timestampMax: '' })}
+      >
+        Remove date range
+      </button>
+      <button
+        data-testid="event-log-filter-reset"
+        onClick={() => onSearch?.(jest.requireActual('./util').defaultEventLogCriteria())}
+      >
         Reset
       </button>
     </div>
@@ -44,13 +55,26 @@ jest.mock('./eventSearchForm', () => ({
 }));
 
 jest.mock('./eventLogEntries', () => ({
-  EventLogEntries: () => <div data-testid="event-log-entries" />,
+  EventLogEntries: ({ onSearch }) => (
+    <button data-testid="search-related" onClick={() => onSearch({ correlationId: 'corr-related' })}>
+      Related events
+    </button>
+  ),
 }));
 
 describe('EventLog', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-10-19T18:30:45.123Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   const mockStore = configureStore([]);
 
-  const createStore = () =>
+  const createStore = (nextEntries: string | null = null) =>
     mockStore({
       event: {
         entries: [
@@ -62,7 +86,7 @@ describe('EventLog', () => {
             details: {},
           },
         ],
-        nextEntries: null,
+        nextEntries,
         isLoading: { definitions: false, log: false },
         definitions: {},
       },
@@ -79,7 +103,7 @@ describe('EventLog', () => {
       },
     });
 
-  it('loads the initial event log without a time range', () => {
+  it('loads the initial event log for Last 7 days', () => {
     const store = createStore();
     render(
       <Provider store={store}>
@@ -91,7 +115,7 @@ describe('EventLog', () => {
       .getActions()
       .filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
     expect(fetchActions).toHaveLength(1);
-    expect(fetchActions[0].searchCriteria).toBeUndefined();
+    expect(fetchActions[0].searchCriteria).toEqual(defaultEventLogCriteria());
   });
 
   it.each([
@@ -119,5 +143,73 @@ describe('EventLog', () => {
 
     fireEvent.click(getByTestId('event-log-filter-reset'));
     expect(csvButton).toHaveAttribute('disabled');
+  });
+
+  it('keeps the applied date constraint when searching related events', () => {
+    const store = createStore();
+    const { getByTestId } = render(
+      <Provider store={store}>
+        <EventLog />
+      </Provider>,
+    );
+
+    fireEvent.click(getByTestId('search-related'));
+
+    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
+    expect(searches[searches.length - 1].searchCriteria).toEqual({
+      correlationId: 'corr-related',
+      timestampMin: defaultEventLogCriteria().timestampMin,
+      timestampMax: defaultEventLogCriteria().timestampMax,
+    });
+  });
+
+  it('executes a fresh Last 7 days search when filters are reset', () => {
+    const store = createStore();
+    const { getByTestId } = render(
+      <Provider store={store}>
+        <EventLog />
+      </Provider>,
+    );
+    jest.setSystemTime(new Date('2026-10-20T20:00:00Z'));
+
+    fireEvent.click(getByTestId('event-log-filter-reset'));
+
+    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
+    expect(searches).toHaveLength(2);
+    expect(searches[1].searchCriteria).toEqual(defaultEventLogCriteria());
+  });
+
+  it('keeps the applied time boundaries when loading the next page', () => {
+    const store = createStore('next-page');
+    const { container } = render(
+      <Provider store={store}>
+        <EventLog />
+      </Provider>,
+    );
+    const initialSearch = store
+      .getActions()
+      .find((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
+    jest.setSystemTime(new Date('2026-10-20T20:00:00Z'));
+
+    fireEvent(container.querySelector('goa-button[type="text"]'), new CustomEvent('_click'));
+
+    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
+    expect(searches[1]).toEqual(
+      expect.objectContaining({ after: 'next-page', searchCriteria: initialSearch.searchCriteria }),
+    );
+  });
+
+  it('does not reapply Last 7 days when the date constraint is explicitly cleared', () => {
+    const store = createStore();
+    const { getByTestId } = render(
+      <Provider store={store}>
+        <EventLog />
+      </Provider>,
+    );
+
+    fireEvent.click(getByTestId('remove-date-range'));
+
+    const searches = store.getActions().filter((action) => action.type === 'eventLog/FETCH_EVENT_LOG_ENTRIES_ACTION');
+    expect(searches[1].searchCriteria).toEqual({ namespace: '', name: '', timestampMin: '', timestampMax: '' });
   });
 });

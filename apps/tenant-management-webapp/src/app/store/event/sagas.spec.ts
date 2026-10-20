@@ -17,6 +17,7 @@ import {
   updateEventDefinitionSuccess,
 } from './actions';
 import { EventDefinition } from './models';
+import { dateRangeCriteria } from '../../pages/admin/event-log/util';
 import { deleteEventDefinition, fetchEventDefinitions, fetchEventLogEntries, updateEventDefinition } from './sagas';
 
 const eventServiceUrl = 'https://event-service.example';
@@ -166,4 +167,25 @@ describe('event definition sagas', () => {
       .put(deleteEventDefinitionSuccess(tenantDefinition))
       .run();
   });
+});
+
+describe('event log period queries', () => {
+  it.each(['last-hour', 'today', 'last-24-hours', 'last-7-days', 'last-30-days'] as const)(
+    'sends both exact %s boundaries to the value service',
+    async (preset) => {
+      const criteria = dateRangeCriteria(preset, new Date('2026-10-19T18:30:45.123Z'));
+      const valueUrl = 'https://value-service.example';
+      const url = `${valueUrl}/value/v1/event-service/values/event?top=10&after=&timestampMax=${criteria.timestampMax}&timestampMin=${criteria.timestampMin}`;
+      const response = { data: { 'event-service': { event: [] }, page: {} } };
+
+      await expectSaga(fetchEventLogEntries, getEventLogEntries('', criteria))
+        .withState({ config: { serviceUrls: { valueServiceApiUrl: valueUrl } } })
+        .provide([
+          [call.fn(getAccessToken), 'test-token'],
+          [call.fn(axios.get), response],
+        ])
+        .call(axios.get, url, { headers: { Authorization: 'Bearer test-token' }, timeout: 30000 })
+        .run();
+    },
+  );
 });

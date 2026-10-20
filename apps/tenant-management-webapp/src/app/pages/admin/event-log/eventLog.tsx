@@ -13,6 +13,7 @@ import { ServiceColumnLayoutWithMargin } from '../../admin';
 import { exportEventLogEntries, isExportCanceled } from './exportEventLog';
 import { EventLogExportModal } from './eventLogExportModal';
 import { SmallButton } from './styled-components';
+import { defaultEventLogCriteria } from './util';
 import { ErrorNotification } from '@store/notifications/actions';
 
 export const EventLog: FunctionComponent = () => {
@@ -20,8 +21,8 @@ export const EventLog: FunctionComponent = () => {
   const hasReaderRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole),
   );
-  const [searched, setSearched] = useState(false);
-  const [searchCriteria, setSearchCriteria] = useState(null);
+  const [initialCriteria] = useState(defaultEventLogCriteria);
+  const [searchCriteria, setSearchCriteria] = useState<EventSearchCriteria>(initialCriteria);
   const [isExporting, setIsExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportRowCount, setExportRowCount] = useState(0);
@@ -35,9 +36,9 @@ export const EventLog: FunctionComponent = () => {
 
   useEffect(() => {
     if (hasReaderRole) {
-      dispatch(getEventLogEntries());
+      dispatch(getEventLogEntries('', initialCriteria));
     }
-  }, [dispatch, hasReaderRole]);
+  }, [dispatch, hasReaderRole, initialCriteria]);
 
   useEffect(() => {
     return function clean() {
@@ -48,20 +49,18 @@ export const EventLog: FunctionComponent = () => {
 
   const onSearch = (criteria: EventSearchCriteria) => {
     if (hasReaderRole) {
+      const appliedCriteria = {
+        ...criteria,
+        timestampMin: criteria.timestampMin ?? searchCriteria.timestampMin,
+        timestampMax: criteria.timestampMax ?? searchCriteria.timestampMax,
+      };
       dispatch(clearEventLogEntries());
-      dispatch(getEventLogEntries('', criteria));
-      setSearched(true);
-      setSearchCriteria(criteria);
+      dispatch(getEventLogEntries('', appliedCriteria));
+      setSearchCriteria(appliedCriteria);
     }
   };
-  const onSearchCancel = () => {
-    setSearched(false);
-    setSearchCriteria(null);
-    dispatch(clearEventLogEntries());
-    dispatch(getEventLogEntries());
-  };
   const onNext = () => {
-    searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
+    dispatch(getEventLogEntries(next, searchCriteria));
   };
   const hasSelectedEvent = Boolean(searchCriteria?.namespace || searchCriteria?.name);
   const hasEntries = Boolean(entries?.length);
@@ -118,7 +117,7 @@ export const EventLog: FunctionComponent = () => {
               <EventSearchForm
                 disabled={isLoading}
                 onSearch={(criteria) => onSearch(criteria)}
-                onCancel={onSearchCancel}
+                initialValue={searchCriteria}
                 leftAction={
                   <SmallButton>
                     <GoabButton
