@@ -1,5 +1,6 @@
 import type { AdspBadgeTheme } from '../components/badge';
 import type { AdspButtonTheme } from '../components/button';
+import type { AdspConversationTheme } from '../components/conversation';
 import type { AdspCardTheme } from '../components/card';
 
 export interface AdspThemeColor {
@@ -34,6 +35,7 @@ export interface AdspThemeComponents {
   badge: AdspBadgeTheme;
   button: AdspButtonTheme;
   card: AdspCardTheme;
+  conversation: AdspConversationTheme;
 }
 
 // A theme controls presentation, never behaviour. Start from AdspThemes; adjust with createAdspTheme.

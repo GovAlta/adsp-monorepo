@@ -43,6 +43,7 @@ import { FeedbackNotification } from './FeedbackNotification';
 import { ServicePageBar } from './styled-components';
 import { AdspComponentsMain } from './services/AdspComponentsMain';
 import { AdspThemingExample } from './services/adsp-components/AdspThemingExample';
+import { AdspConversationExample } from './services/adsp-components/AdspConversationExample';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -93,6 +94,7 @@ export const SandBoxTenant = () => {
               <Routes>
                 <Route path="/services/adsp-components" element={<AdspComponentsMain tenantName={tenantName} />} />
                 <Route path="/services/adsp-components/theming" element={<AdspThemingExample />} />
+                <Route path="/services/adsp-components/conversation" element={<AdspConversationExample />} />
 
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/cache" element={<CacheServiceMain tenantName={tenantName} />} />

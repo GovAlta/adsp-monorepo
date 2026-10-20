@@ -15,5 +15,9 @@ describe('AdspComponentsMain', () => {
 
     // Assert
     expect(screen.getByTestId('adspTheming')).toHaveAttribute('href', '/autotest/services/adsp-components/theming');
+    expect(screen.getByTestId('adspConversation')).toHaveAttribute(
+      'href',
+      '/autotest/services/adsp-components/conversation',
+    );
   });
 });

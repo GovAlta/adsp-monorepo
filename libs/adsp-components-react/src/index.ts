@@ -3,3 +3,4 @@ export * from './lib/card/adsp-card';
 export * from './lib/badge/adsp-badge';
 export * from './lib/button/adsp-button';
 export * from './lib/calendar/useCalendarEvents';
+export * from './lib/conversation';
