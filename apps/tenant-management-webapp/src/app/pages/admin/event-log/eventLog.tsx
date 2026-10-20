@@ -1,17 +1,17 @@
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
-import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import { getEventLogPage, clearEventLogEntries } from '@store/event/actions';
+import React, { FunctionComponent, useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
 import { EventSearchForm } from './eventSearchForm';
 import { GoabButton, GoabCallout } from '@abgov/react-components';
 
-import { EventSearchCriteria } from '@store/event/models';
-import { LoadMoreWrapper } from '@components/styled-components';
+import { EventSearchCriteria, DEFAULT_EVENT_LOG_PAGE_SIZE } from '@store/event/models';
 import { ServiceColumnLayoutWithMargin } from '../../admin';
 import { exportEventLogEntries, isExportCanceled } from './exportEventLog';
 import { EventLogExportModal } from './eventLogExportModal';
+import { EventLogPagination } from './eventLogPagination';
 import { SmallButton } from './styled-components';
 import { ErrorNotification } from '@store/notifications/actions';
 
@@ -20,24 +20,35 @@ export const EventLog: FunctionComponent = () => {
   const hasReaderRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole),
   );
-  const [searched, setSearched] = useState(false);
-  const [searchCriteria, setSearchCriteria] = useState(null);
+  const [searchCriteria, setSearchCriteria] = useState<EventSearchCriteria>(null);
+  const [pageSize, setPageSize] = useState(DEFAULT_EVENT_LOG_PAGE_SIZE);
   const [isExporting, setIsExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportRowCount, setExportRowCount] = useState(0);
   const exportAbortRef = useRef<AbortController | null>(null);
-  const next = useSelector((state: RootState) => state.event.nextEntries);
+  const logPage = useSelector((state: RootState) => state.event.logPage);
   const entries = useSelector((state: RootState) => state.event.entries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const valueServiceApiUrl = useSelector((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token = useSelector((state: RootState) => state.session?.credentials?.token);
   const dispatch = useDispatch();
 
+  const search = useCallback(
+    (criteria: EventSearchCriteria, size: number) => {
+      // Pin the upper bound so newly logged events do not shift page offsets or the total while paging.
+      const pinnedCriteria = { ...criteria, timestampMax: criteria.timestampMax || new Date().toISOString() };
+      setSearchCriteria(pinnedCriteria);
+      dispatch(clearEventLogEntries());
+      dispatch(getEventLogPage(1, size, pinnedCriteria, true));
+    },
+    [dispatch],
+  );
+
   useEffect(() => {
     if (hasReaderRole) {
-      dispatch(getEventLogEntries());
+      search({}, DEFAULT_EVENT_LOG_PAGE_SIZE);
     }
-  }, [dispatch, hasReaderRole]);
+  }, [search, hasReaderRole]);
 
   useEffect(() => {
     return function clean() {
@@ -48,20 +59,19 @@ export const EventLog: FunctionComponent = () => {
 
   const onSearch = (criteria: EventSearchCriteria) => {
     if (hasReaderRole) {
-      dispatch(clearEventLogEntries());
-      dispatch(getEventLogEntries('', criteria));
-      setSearched(true);
-      setSearchCriteria(criteria);
+      search(criteria, pageSize);
     }
   };
   const onSearchCancel = () => {
-    setSearched(false);
-    setSearchCriteria(null);
-    dispatch(clearEventLogEntries());
-    dispatch(getEventLogEntries());
+    search({}, pageSize);
   };
-  const onNext = () => {
-    searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
+  const onPage = (page: number) => {
+    dispatch(getEventLogPage(page, pageSize, searchCriteria));
+  };
+  const onPageSize = (size: number) => {
+    setPageSize(size);
+    // The total is unchanged, so only the first page at the new size is needed.
+    dispatch(getEventLogPage(1, size, searchCriteria));
   };
   const hasSelectedEvent = Boolean(searchCriteria?.namespace || searchCriteria?.name);
   const hasEntries = Boolean(entries?.length);
@@ -141,12 +151,15 @@ export const EventLog: FunctionComponent = () => {
                 onClose={closeExportModal}
               />
               <EventLogEntries onSearch={onSearch} />
-              {next && (
-                <LoadMoreWrapper>
-                  <GoabButton size="compact" disabled={isLoading} type="text" onClick={onNext} mt="m">
-                    Load more
-                  </GoabButton>
-                </LoadMoreWrapper>
+              {logPage && (
+                <EventLogPagination
+                  page={logPage.page}
+                  pageSize={logPage.pageSize}
+                  shownCount={entries?.length ?? 0}
+                  total={logPage.total}
+                  onPage={onPage}
+                  onPageSize={onPageSize}
+                />
               )}
             </>
           ) : (

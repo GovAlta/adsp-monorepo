@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { select, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, select, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { RootState } from '..';
 import {
@@ -7,13 +7,16 @@ import {
   DELETE_EVENT_DEFINITION_ACTION,
   FetchEventDefinitionsAction,
   FetchEventLogEntriesAction,
+  FetchEventLogPageAction,
   fetchEventMetricsSucceeded,
   FETCH_EVENT_DEFINITIONS_ACTION,
   FETCH_EVENT_LOG_ENTRIES_ACTION,
+  FETCH_EVENT_LOG_PAGE_ACTION,
   FETCH_EVENT_METRICS_ACTION,
   getEventDefinitionsSuccess,
   getEventLogEntriesSucceeded,
   getEventLogEntriesFailed,
+  getEventLogPageSucceeded,
   UpdateEventDefinitionAction,
   updateEventDefinitionSuccess,
   UPDATE_EVENT_DEFINITION_ACTION,
@@ -22,7 +25,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { fetchServiceMetrics } from '@store/common';
-import { EventDefinition } from './models';
+import { EventDefinition, EventSearchCriteria } from './models';
 
 export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
@@ -185,6 +188,102 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
   }
 }
 
+const EVENT_LOG_REQUEST_TIMEOUT_MS = 30000;
+
+// Only the filters the event service count endpoint supports, so the total always matches the pages.
+const toEventLogQuery = (criteria: EventSearchCriteria): Record<string, string> => {
+  const query: Record<string, string> = {};
+  const context: Record<string, unknown> = {
+    ...(criteria?.namespace && { namespace: criteria.namespace }),
+    ...(criteria?.name && { name: criteria.name }),
+    ...criteria?.context,
+  };
+  if (Object.keys(context).length > 0) {
+    query.context = JSON.stringify(context);
+  }
+  if (criteria?.timestampMin) {
+    query.timestampMin = new Date(criteria.timestampMin).toISOString();
+  }
+  if (criteria?.timestampMax) {
+    query.timestampMax = new Date(criteria.timestampMax).toISOString();
+  }
+  if (criteria?.correlationId) {
+    query.correlationId = criteria.correlationId;
+  }
+
+  return query;
+};
+
+// Mirrors the value service cursor (core-common encodeNext): a base64 encoded row offset.
+const toOffsetCursor = (offset: number): string => btoa(`${offset}`);
+
+// Pages in the older half are read oldest first, so no request skips more than half of the matching events.
+const toEventLogPageWindow = (page: number, pageSize: number, total?: number) => {
+  const start = (page - 1) * pageSize;
+  if (!total || start < total / 2) {
+    return { order: 'desc', offset: start, top: pageSize };
+  }
+  const end = Math.min(start + pageSize, total);
+  return { order: 'asc', offset: total - end, top: end - start };
+};
+
+export function* fetchEventLogPage({
+  page,
+  pageSize,
+  searchCriteria,
+  includeTotal,
+}: FetchEventLogPageAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const eventServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  const total: number = includeTotal ? undefined : yield select((state: RootState) => state.event.logPage?.total);
+
+  if (baseUrl && eventServiceUrl && token) {
+    const eventsUrl = `${baseUrl}/value/v1/event-service/values/event`;
+    const query = toEventLogQuery(searchCriteria);
+    const headers = { Authorization: `Bearer ${token}` };
+    const { order, offset, top } = toEventLogPageWindow(page, pageSize, total);
+
+    try {
+      yield put(UpdateIndicator({ show: true, message: 'Loading...' }));
+      const [{ data }, countResponse] = yield all([
+        call(axios.get, eventsUrl, {
+          headers,
+          params: { ...query, top, after: toOffsetCursor(offset), order },
+          timeout: EVENT_LOG_REQUEST_TIMEOUT_MS,
+        }),
+        includeTotal
+          ? call(axios.get, `${eventServiceUrl}/event/v1/events/count`, {
+              headers,
+              params: query,
+              timeout: EVENT_LOG_REQUEST_TIMEOUT_MS,
+            })
+          : null,
+      ]);
+
+      const events = data['event-service']['event'];
+      yield put(
+        getEventLogPageSucceeded(
+          order === 'asc' ? [...events].reverse() : events,
+          page,
+          pageSize,
+          countResponse?.data.count,
+        ),
+      );
+      yield put(UpdateIndicator({ show: false }));
+    } catch (error) {
+      yield put(getEventLogEntriesFailed());
+      yield put(
+        ErrorNotification({
+          message: 'Failed to load the event log. Try narrowing your search criteria or using a different time range.',
+          error,
+        }),
+      );
+      yield put(UpdateIndicator({ show: false }));
+    }
+  }
+}
+
 export function* fetchEventMetrics(): SagaIterator {
   const metric = 'total:count';
   yield* fetchServiceMetrics(
@@ -207,6 +306,7 @@ export function* fetchEventMetrics(): SagaIterator {
 export function* watchEventSagas(): Generator {
   yield takeEvery(FETCH_EVENT_DEFINITIONS_ACTION, fetchEventDefinitions);
   yield takeEvery(FETCH_EVENT_LOG_ENTRIES_ACTION, fetchEventLogEntries);
+  yield takeLatest(FETCH_EVENT_LOG_PAGE_ACTION, fetchEventLogPage);
   yield takeEvery(UPDATE_EVENT_DEFINITION_ACTION, updateEventDefinition);
   yield takeEvery(DELETE_EVENT_DEFINITION_ACTION, deleteEventDefinition);
   yield takeLatest(FETCH_EVENT_METRICS_ACTION, fetchEventMetrics);

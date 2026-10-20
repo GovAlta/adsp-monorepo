@@ -21,6 +21,8 @@ export interface ValueCriteria {
   url?: string;
 }
 
+export type ValueOrder = 'asc' | 'desc';
+
 export const VALUES_READ = 'READ';
 export interface ValuesReadRequest {
   op: typeof VALUES_READ;
