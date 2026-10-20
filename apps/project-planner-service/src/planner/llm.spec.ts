@@ -704,6 +704,56 @@ describe('MaasLlm', () => {
       ]);
     });
 
+    it('parses notCoveredByAdsp items the model flags', async () => {
+      post.mockResolvedValueOnce(
+        completion(
+          JSON.stringify({
+            ...blueprintJson,
+            notCoveredByAdsp: [
+              {
+                requirement: 'Payment processing',
+                reason: 'No payment service exists.',
+                suggestedApproach: 'Integrate a gateway.',
+              },
+            ],
+          }),
+        ),
+      );
+
+      const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
+
+      expect(notCoveredByAdsp).toEqual([
+        {
+          requirement: 'Payment processing',
+          reason: 'No payment service exists.',
+          suggestedApproach: 'Integrate a gateway.',
+        },
+      ]);
+    });
+
+    it('defaults notCoveredByAdsp to an empty list when the model gives none', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
+
+      expect(notCoveredByAdsp).toEqual([]);
+    });
+
+    it('drops a notCoveredByAdsp item that duplicates a recommended service', async () => {
+      post.mockResolvedValueOnce(
+        completion(
+          JSON.stringify({
+            ...blueprintJson,
+            notCoveredByAdsp: [{ requirement: 'form-service', reason: 'wrong', suggestedApproach: 'n/a' }],
+          }),
+        ),
+      );
+
+      const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
+
+      expect(notCoveredByAdsp).toEqual([]);
+    });
+
     it('includes the problem, discovery, services in order, concepts and specialist notes in the prompt', async () => {
       post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
 

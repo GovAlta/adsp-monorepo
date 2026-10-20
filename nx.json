@@ -68,7 +68,6 @@
     }
   },
   "plugins": [
-    "@nx/dotnet",
     "@nxlv/python",
     {
       "plugin": "@nx/eslint/plugin",

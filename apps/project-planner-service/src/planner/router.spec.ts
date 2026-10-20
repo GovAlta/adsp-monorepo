@@ -45,7 +45,7 @@ const makeSolution = (createdById: string): Solution => ({
 });
 
 const makeUser = (id: string, roles: string[]): User =>
-  ({ id, name: id, tenantId, roles, isCore: false } as unknown as User);
+  ({ id, name: id, tenantId, roles, isCore: false }) as unknown as User;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -316,7 +316,9 @@ describe('planner router routes', () => {
     });
 
     it('lets stored patterns override configuration patterns with the same id', async () => {
-      getConfiguration.mockResolvedValueOnce([{ patterns: { 'land-title': { ...landTitlePattern, name: 'Configured' } } }]);
+      getConfiguration.mockResolvedValueOnce([
+        { patterns: { 'land-title': { ...landTitlePattern, name: 'Configured' } } },
+      ]);
       patternRepository.find.mockResolvedValueOnce([{ ...landTitlePattern, name: 'Stored' }]);
 
       const res = await request(buildApp()).get('/planner/v1/patterns/land-title');
@@ -360,7 +362,9 @@ describe('planner router routes', () => {
 
   describe('POST /patterns', () => {
     const post = (body: unknown, user: User | null = admin, withTenant = true) =>
-      request(buildApp(user, withTenant)).post('/planner/v1/patterns').send(body as object);
+      request(buildApp(user, withTenant))
+        .post('/planner/v1/patterns')
+        .send(body as object);
 
     it('returns 403 for a planner user who is not an admin', async () => {
       const res = await post(validBody, owner);
@@ -550,7 +554,9 @@ describe('planner router routes', () => {
 
   describe('PUT /patterns/:patternId', () => {
     const put = (patternId: string, body: unknown = validBody, user: User | null = admin) =>
-      request(buildApp(user)).put(`/planner/v1/patterns/${patternId}`).send(body as object);
+      request(buildApp(user))
+        .put(`/planner/v1/patterns/${patternId}`)
+        .send(body as object);
 
     it('returns 403 for a planner user who is not an admin', async () => {
       const res = await put('case-management', validBody, owner);
@@ -991,7 +997,9 @@ describe('planner router routes', () => {
     });
 
     it('defaults decision id, date and decider', async () => {
-      const res = await patch({ decisions: [{ title: 'Auth', decision: 'Use Alberta.ca account', reason: 'Citizens' }] });
+      const res = await patch({
+        decisions: [{ title: 'Auth', decision: 'Use Alberta.ca account', reason: 'Citizens' }],
+      });
 
       expect(res.body.state.decisions[0]).toMatchObject({
         id: expect.any(String),
@@ -1026,7 +1034,10 @@ describe('planner router routes', () => {
       await patch({ name: 'Renamed' });
 
       expect(eventService.send).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'solution-updated', payload: expect.objectContaining({ operation: 'update' }) }),
+        expect.objectContaining({
+          name: 'solution-updated',
+          payload: expect.objectContaining({ operation: 'update' }),
+        }),
       );
     });
 
@@ -1464,10 +1475,18 @@ describe('planner router routes', () => {
       });
     });
 
-    it.each([['empty', ''], ['whitespace only', '   ']])('reopens the question when the answer is %s', async (_name, answer) => {
+    it.each([
+      ['empty', ''],
+      ['whitespace only', '   '],
+    ])('reopens the question when the answer is %s', async (_name, answer) => {
       const res = await answerQuestion({ answer });
 
-      expect(res.body.state.questions[0]).toEqual({ id: QUESTION_ID, question: 'Who approves?', raisedBy: 'ai', status: 'open' });
+      expect(res.body.state.questions[0]).toEqual({
+        id: QUESTION_ID,
+        question: 'Who approves?',
+        raisedBy: 'ai',
+        status: 'open',
+      });
     });
 
     it('sends a solution-updated event with the answer operation', async () => {
@@ -1548,7 +1567,7 @@ describe('planner router routes', () => {
       expect(res.body.tenantId).toBeUndefined();
     });
 
-    it('allows an admin to export another user\'s solution', async () => {
+    it("allows an admin to export another user's solution", async () => {
       const res = await exportSolution(admin);
 
       expect(res.status).toBe(200);
@@ -1657,6 +1676,46 @@ describe('planner router routes', () => {
       const res = await exportSolution();
 
       expect(res.body.version).toBe('2.0');
+    });
+
+    it('bumps major when the notCoveredByAdsp section is regenerated with content', async () => {
+      const base = solutionOwnedBy('owner-1');
+      repository.get.mockResolvedValueOnce({
+        ...base,
+        exportedOnce: true,
+        state: {
+          ...base.state,
+          blueprint: {
+            generatedOn: 'x',
+            mode: 'rules',
+            notCoveredByAdsp: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+          } as Solution['state']['blueprint'],
+        },
+        lastExportHashes: {},
+      });
+
+      const res = await exportSolution();
+
+      expect(res.body.version).toBe('2.0');
+      expect(res.body.changedSections).toContain('Not covered by ADSP');
+    });
+
+    it('does not bump a solution whose blueprint predates notCoveredByAdsp', async () => {
+      const base = solutionOwnedBy('owner-1');
+      const state = {
+        ...base.state,
+        blueprint: { generatedOn: 'x', mode: 'rules' } as Solution['state']['blueprint'],
+      };
+      repository.get.mockResolvedValueOnce({
+        ...base,
+        exportedOnce: true,
+        state,
+        lastExportHashes: sectionHashes({ ...base, state }),
+      });
+
+      const res = await exportSolution();
+
+      expect(res.body.changedSections).toEqual([]);
     });
 
     it('does not bump when a specialist note is regenerated with identical advice', async () => {
@@ -1788,8 +1847,13 @@ describe('planner router routes', () => {
     });
 
     it('defaults a legacy solution with no recorded version to 1.0', async () => {
-      const { version: _version, versionHistory: _versionHistory, lastExportHashes: _lastExportHashes, exportedOnce: _exportedOnce, ...legacy } =
-        solutionOwnedBy('owner-1');
+      const {
+        version: _version,
+        versionHistory: _versionHistory,
+        lastExportHashes: _lastExportHashes,
+        exportedOnce: _exportedOnce,
+        ...legacy
+      } = solutionOwnedBy('owner-1');
       repository.get.mockResolvedValueOnce(legacy as Solution);
 
       const res = await exportSolution();
@@ -1800,7 +1864,14 @@ describe('planner router routes', () => {
 
   describe('AI-assisted planning', () => {
     const MODEL = 'GOA-Default';
-    const llm = { model: MODEL, analyze: jest.fn(), discover: jest.fn(), blueprint: jest.fn(), consult: jest.fn(), converse: jest.fn() };
+    const llm = {
+      model: MODEL,
+      analyze: jest.fn(),
+      discover: jest.fn(),
+      blueprint: jest.fn(),
+      consult: jest.fn(),
+      converse: jest.fn(),
+    };
     const aiText = 'Residents submit grant applications that officers review and approve.';
 
     const aiAnalysis: LlmAnalysis = {
@@ -1890,7 +1961,11 @@ describe('planner router routes', () => {
 
         await chat(buildApp(owner, true, llm));
 
-        expect(llm.analyze).toHaveBeenCalledWith(aiText, expect.any(Array), [], { answers: [], conversation: [], message });
+        expect(llm.analyze).toHaveBeenCalledWith(aiText, expect.any(Array), [], {
+          answers: [],
+          conversation: [],
+          message,
+        });
       });
 
       it('appends the user message and assistant reply to the conversation', async () => {
@@ -2391,7 +2466,11 @@ describe('planner router routes', () => {
         const res = await analyze(buildApp(owner, true, llm));
 
         expect(res.body.state.questions).toEqual([
-          expect.objectContaining({ question: 'Who approves grants above the delegated limit?', raisedBy: 'ai', status: 'open' }),
+          expect.objectContaining({
+            question: 'Who approves grants above the delegated limit?',
+            raisedBy: 'ai',
+            status: 'open',
+          }),
         ]);
       });
 
@@ -2513,7 +2592,9 @@ describe('planner router routes', () => {
 
         const res = await consult(buildApp(owner, true, llm));
 
-        expect(res.body.questions).toEqual(expect.arrayContaining(['Which fields are mandatory?', ...getSpecialist('form-service').questions]));
+        expect(res.body.questions).toEqual(
+          expect.arrayContaining(['Which fields are mandatory?', ...getSpecialist('form-service').questions]),
+        );
       });
 
       it('passes the user question to the llm', async () => {
@@ -2624,11 +2705,23 @@ describe('planner router routes', () => {
     describe('POST /solutions/:id/blueprint', () => {
       const generated = {
         core: {
-          overview: { title: '', summary: 'AI blueprint summary.', objectives: [], scope: [], outOfScope: [], stakeholders: [], successMeasures: [], risks: [] },
+          overview: {
+            title: '',
+            summary: 'AI blueprint summary.',
+            objectives: [],
+            scope: [],
+            outOfScope: [],
+            stakeholders: [],
+            successMeasures: [],
+            risks: [],
+          },
         },
         services: [{ service: 'form-service', role: 'Collects grant applications', capabilities: ['Draft saving'] }],
         model: MODEL,
       };
+      // The saved blueprint strips a pattern's matching keywords; comparisons against the raw pattern must do the same.
+      const withoutKeywords = (items: { requirement: string; reason: string; suggestedApproach: string }[]) =>
+        items.map(({ requirement, reason, suggestedApproach }) => ({ requirement, reason, suggestedApproach }));
       const analysed = (patternId = 'case-management'): Solution => {
         const solution = solutionOwnedBy('owner-1');
         solution.state.problemStatement = aiText;
@@ -2649,7 +2742,15 @@ describe('planner router routes', () => {
         content: 'Saved advice',
         at: '2026-03-01T10:00:01.000Z',
         intent: 'consult',
-        consult: { service: 'form-service', fit: 'recommended', reason: 'Saved reason', advice: 'Saved advice', questions: [], dependencies: [], risks: ['Saved risk'] },
+        consult: {
+          service: 'form-service',
+          fit: 'recommended',
+          reason: 'Saved reason',
+          advice: 'Saved advice',
+          questions: [],
+          dependencies: [],
+          risks: ['Saved risk'],
+        },
         ...overrides,
       });
       const blueprint = (app: express.Express, body: object = {}) =>
@@ -2669,11 +2770,14 @@ describe('planner router routes', () => {
         expect(res.status).toBe(400);
       });
 
-      it.each([{ mode: 'fast' }, { refreshConsultations: 'sometimes' }])('returns 400 for invalid body %p', async (body) => {
-        const res = await blueprint(buildApp(owner, true, llm), body);
+      it.each([{ mode: 'fast' }, { refreshConsultations: 'sometimes' }])(
+        'returns 400 for invalid body %p',
+        async (body) => {
+          const res = await blueprint(buildApp(owner, true, llm), body);
 
-        expect(res.status).toBe(400);
-      });
+          expect(res.status).toBe(400);
+        },
+      );
 
       it('returns 404 when the solution does not exist', async () => {
         repository.get.mockResolvedValueOnce(undefined);
@@ -2698,16 +2802,19 @@ describe('planner router routes', () => {
       it('applies the ai service roles to the service mapping', async () => {
         const res = await blueprint(buildApp(owner, true, llm));
 
-        expect(res.body.state.blueprint.serviceMapping[0]).toMatchObject({ service: 'form-service', role: 'Collects grant applications' });
+        expect(res.body.state.blueprint.serviceMapping[0]).toMatchObject({
+          service: 'form-service',
+          role: 'Collects grant applications',
+        });
       });
 
       it('passes the specialist notes to the llm', async () => {
         await blueprint(buildApp(owner, true, llm));
 
-        expect(llm.blueprint).toHaveBeenCalledWith(
-          expect.objectContaining({ problemStatement: aiText }),
-          [expect.objectContaining({ service: 'form-service' }), expect.objectContaining({ service: 'file-service' })],
-        );
+        expect(llm.blueprint).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: aiText }), [
+          expect.objectContaining({ service: 'form-service' }),
+          expect.objectContaining({ service: 'file-service' }),
+        ]);
       });
 
       it('consults each recommended service that has no saved consultation', async () => {
@@ -2725,7 +2832,11 @@ describe('planner router routes', () => {
       it('marks notes from a fresh ai consultation with the ai source', async () => {
         const res = await blueprint(buildApp(owner, true, llm));
 
-        expect(res.body.state.blueprint.specialistNotes[0]).toMatchObject({ service: 'form-service', source: 'ai', summary: consultation.advice });
+        expect(res.body.state.blueprint.specialistNotes[0]).toMatchObject({
+          service: 'form-service',
+          source: 'ai',
+          summary: consultation.advice,
+        });
       });
 
       it('marks notes from a failed ai consultation with the rules source', async () => {
@@ -2739,12 +2850,29 @@ describe('planner router routes', () => {
       it('marks the specialists as consulted', async () => {
         const res = await blueprint(buildApp(owner, true, llm));
 
-        expect(res.body.state.specialists.map((s: { service: string }) => s.service).sort()).toEqual(['file-service', 'form-service']);
+        expect(res.body.state.specialists.map((s: { service: string }) => s.service).sort()).toEqual([
+          'file-service',
+          'form-service',
+        ]);
       });
 
       const savedChats = () => [
-        storedChat({ solutionId: SOLUTION_ID, messages: [consultMessage({ consult: { ...consultMessage().consult, advice: 'Older advice' }, content: 'Older advice' }), consultMessage()] }),
-        storedChat({ id: 'chat-2', service: 'file-service', solutionId: SOLUTION_ID, messages: [consultMessage({ consult: { ...consultMessage().consult, service: 'file-service' } })] }),
+        storedChat({
+          solutionId: SOLUTION_ID,
+          messages: [
+            consultMessage({
+              consult: { ...consultMessage().consult, advice: 'Older advice' },
+              content: 'Older advice',
+            }),
+            consultMessage(),
+          ],
+        }),
+        storedChat({
+          id: 'chat-2',
+          service: 'file-service',
+          solutionId: SOLUTION_ID,
+          messages: [consultMessage({ consult: { ...consultMessage().consult, service: 'file-service' } })],
+        }),
       ];
 
       it('does not consult again when every service has a saved consultation', async () => {
@@ -2760,7 +2888,11 @@ describe('planner router routes', () => {
 
         const res = await blueprint(buildApp(owner, true, llm));
 
-        expect(res.body.state.blueprint.specialistNotes[0]).toMatchObject({ source: 'saved-consultation', summary: 'Saved advice', consultedOn: '2026-03-01T10:00:01.000Z' });
+        expect(res.body.state.blueprint.specialistNotes[0]).toMatchObject({
+          source: 'saved-consultation',
+          summary: 'Saved advice',
+          consultedOn: '2026-03-01T10:00:01.000Z',
+        });
       });
 
       it("looks up the user's chats for the solution", async () => {
@@ -2787,7 +2919,13 @@ describe('planner router routes', () => {
 
       it('adds recent non-consult assistant replies as chat highlights', async () => {
         chatRepository.find.mockResolvedValue([
-          storedChat({ solutionId: SOLUTION_ID, messages: [consultMessage(), { role: 'assistant', content: 'Enable draft saving.', at: '2026-03-02T10:00:00.000Z' }] }),
+          storedChat({
+            solutionId: SOLUTION_ID,
+            messages: [
+              consultMessage(),
+              { role: 'assistant', content: 'Enable draft saving.', at: '2026-03-02T10:00:00.000Z' },
+            ],
+          }),
         ]);
 
         const res = await blueprint(buildApp(owner, true, llm));
@@ -2807,6 +2945,94 @@ describe('planner router routes', () => {
         expect(llm.blueprint).not.toHaveBeenCalled();
       });
 
+      it('fills notCoveredByAdsp from the matched pattern when the problem statement mentions a relevant keyword', async () => {
+        const solution = analysed();
+        solution.state.problemStatement = 'Applicants pay a fee and undergo a background check before approval.';
+        repository.get.mockResolvedValue(solution);
+
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.body.state.blueprint.notCoveredByAdsp).toEqual(
+          withoutKeywords(BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').unsupportedCapabilities),
+        );
+      });
+
+      it('omits a pattern item whose keywords are not mentioned anywhere in the solution', async () => {
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.body.state.blueprint.notCoveredByAdsp).toEqual([]);
+      });
+
+      it('end-to-end: analyzing a Case Management problem statement with payment and background-check wording saves a non-empty notCoveredByAdsp', async () => {
+        const app = buildApp(owner, true, llm);
+        const caseText =
+          'Staff review each application, assign cases, add notes and attachments, and escalate. Applicants pay a fee and undergo a background check. Status moves through stages with audit history.';
+        repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+
+        const analyzed = await request(app)
+          .post(`/planner/v1/solutions/${SOLUTION_ID}/analyze`)
+          .send({ text: caseText });
+        expect(analyzed.body.state.hypotheses[0].patternId).toBe('case-management');
+
+        repository.get.mockResolvedValueOnce(analyzed.body);
+        const res = await request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/blueprint`).send({ mode: 'rules' });
+
+        expect(res.body.state.blueprint.notCoveredByAdsp.length).toBeGreaterThan(0);
+        expect(res.body.state.blueprint.notCoveredByAdsp).toEqual(
+          withoutKeywords(BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').unsupportedCapabilities),
+        );
+      });
+
+      it('end-to-end: a Case Management problem statement with no payment wording does not list Fee or payment processing', async () => {
+        const app = buildApp(owner, true, llm);
+        const caseText =
+          'Staff review each application, assign cases, add notes and attachments, and escalate. Status moves through stages with audit history.';
+        repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+
+        const analyzed = await request(app)
+          .post(`/planner/v1/solutions/${SOLUTION_ID}/analyze`)
+          .send({ text: caseText });
+        expect(analyzed.body.state.hypotheses[0].patternId).toBe('case-management');
+
+        repository.get.mockResolvedValueOnce(analyzed.body);
+        const res = await request(app).post(`/planner/v1/solutions/${SOLUTION_ID}/blueprint`).send({ mode: 'rules' });
+
+        expect(
+          res.body.state.blueprint.notCoveredByAdsp.map((n: { requirement: string }) => n.requirement),
+        ).not.toContain('Fee or payment processing');
+        expect(res.body.state.blueprint.notCoveredByAdsp).toEqual([]);
+      });
+
+      it('merges the llm notCoveredByAdsp with the matched pattern items in ai mode', async () => {
+        const solution = analysed();
+        solution.state.problemStatement = 'Applicants pay a fee and undergo a background check before approval.';
+        repository.get.mockResolvedValue(solution);
+        llm.blueprint.mockResolvedValue({
+          ...generated,
+          notCoveredByAdsp: [
+            { requirement: 'On-site check-in', reason: 'No kiosk service', suggestedApproach: 'Build a kiosk app.' },
+          ],
+        });
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        const patternItems = withoutKeywords(
+          BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').unsupportedCapabilities,
+        );
+        expect(res.body.state.blueprint.notCoveredByAdsp).toEqual([
+          ...patternItems,
+          { requirement: 'On-site check-in', reason: 'No kiosk service', suggestedApproach: 'Build a kiosk app.' },
+        ]);
+      });
+
+      it('shows the all-covered empty state when the matched pattern has no unsupported capabilities', async () => {
+        repository.get.mockResolvedValue(analysed('permit-licence'));
+
+        const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+        expect(res.body.state.blueprint.notCoveredByAdsp).toEqual([]);
+      });
+
       it('builds a rule-based blueprint when no llm is configured and no mode is given', async () => {
         const res = await blueprint(buildApp(), {});
 
@@ -2816,7 +3042,10 @@ describe('planner router routes', () => {
       it('warns that ai is not configured when ai mode is requested without an llm', async () => {
         const res = await blueprint(buildApp(), { mode: 'ai' });
 
-        expect(res.body.state.blueprint).toMatchObject({ mode: 'rules', warning: 'AI analysis is not configured; used a rule-based blueprint.' });
+        expect(res.body.state.blueprint).toMatchObject({
+          mode: 'rules',
+          warning: 'AI analysis is not configured; used a rule-based blueprint.',
+        });
       });
 
       it('falls back to a rule-based blueprint with a warning when the llm fails', async () => {
@@ -2840,18 +3069,24 @@ describe('planner router routes', () => {
 
       it('uses the matched pattern features for scope when the hypothesis has no pattern', async () => {
         const solution = analysed('');
-        solution.state.patternMatches = [{ patternId: 'case-management' } as Solution['state']['patternMatches'][number]];
+        solution.state.patternMatches = [
+          { patternId: 'case-management' } as Solution['state']['patternMatches'][number],
+        ];
         repository.get.mockResolvedValue(solution);
 
         const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
 
-        expect(res.body.state.blueprint.overview.scope).toEqual(BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').commonFeatures.slice(0, 8));
+        expect(res.body.state.blueprint.overview.scope).toEqual(
+          BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').commonFeatures.slice(0, 8),
+        );
       });
 
       it('uses the hypothesis pattern features for scope', async () => {
         const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
 
-        expect(res.body.state.blueprint.overview.scope).toEqual(BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').commonFeatures.slice(0, 8));
+        expect(res.body.state.blueprint.overview.scope).toEqual(
+          BUILT_IN_PATTERNS.find((p) => p.id === 'case-management').commonFeatures.slice(0, 8),
+        );
       });
 
       it('copes with a solution that has neither a hypothesis pattern nor pattern matches', async () => {
@@ -2874,7 +3109,9 @@ describe('planner router routes', () => {
         await blueprint(buildApp(owner, true, llm));
 
         expect(repository.save).toHaveBeenCalledWith(
-          expect.objectContaining({ state: expect.objectContaining({ blueprint: expect.objectContaining({ mode: 'ai' }) }) }),
+          expect.objectContaining({
+            state: expect.objectContaining({ blueprint: expect.objectContaining({ mode: 'ai' }) }),
+          }),
         );
       });
 
@@ -2973,7 +3210,10 @@ describe('planner router routes', () => {
       it('warns that ai is not configured when ai mode is requested without an llm', async () => {
         const res = await chat(buildApp(), { message: userMessage, mode: 'ai' });
 
-        expect(res.body).toMatchObject({ mode: 'rules', warning: 'AI is not configured; showing rule-based guidance.' });
+        expect(res.body).toMatchObject({
+          mode: 'rules',
+          warning: 'AI is not configured; showing rule-based guidance.',
+        });
       });
 
       it('returns rule-based guidance without a warning when no llm is configured and no mode is requested', async () => {
@@ -2990,9 +3230,17 @@ describe('planner router routes', () => {
       });
 
       it('returns rule-based guidance without a warning when rules mode is requested', async () => {
-        const res = await chat(buildApp(owner, true, llm), { message: userMessage, mode: 'rules', intent: 'recommend' });
+        const res = await chat(buildApp(owner, true, llm), {
+          message: userMessage,
+          mode: 'rules',
+          intent: 'recommend',
+        });
 
-        expect(res.body).toMatchObject({ service: 'form-service', mode: 'rules', followUps: getSpecialist('form-service').questions });
+        expect(res.body).toMatchObject({
+          service: 'form-service',
+          mode: 'rules',
+          followUps: getSpecialist('form-service').questions,
+        });
       });
 
       it('returns 404 for an unknown specialist', async () => {
@@ -3199,7 +3447,7 @@ describe('planner router routes', () => {
           expect([llm.converse.mock.calls.length, chatRepository.save.mock.calls.length]).toEqual([0, 0]);
         });
 
-        it('does not let a planner admin continue another user\'s chat', async () => {
+        it("does not let a planner admin continue another user's chat", async () => {
           const res = await continueChat({}, admin);
 
           expect(res.status).toBe(404);
@@ -3400,7 +3648,7 @@ describe('planner router routes', () => {
     });
 
     describe('GET /specialists/chats', () => {
-      it('searches only the requesting user\'s chats in the tenant', async () => {
+      it("searches only the requesting user's chats in the tenant", async () => {
         await get('');
 
         expect(chatRepository.find).toHaveBeenCalledWith({
@@ -3491,7 +3739,7 @@ describe('planner router routes', () => {
     });
 
     describe('GET /specialists/chats/export', () => {
-      it('searches only the requesting user\'s chats', async () => {
+      it("searches only the requesting user's chats", async () => {
         await get('/export', stranger);
 
         expect(chatRepository.find).toHaveBeenCalledWith(

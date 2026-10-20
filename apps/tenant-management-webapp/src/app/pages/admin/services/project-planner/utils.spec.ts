@@ -136,7 +136,13 @@ describe('utils', () => {
     });
 
     it('shows "Initial version" on the first export instead of "No changes"', () => {
-      const md = solutionToMarkdown({ ...solution(), version: '1.0', versionHistory: [], initial: true, changedSections: [] });
+      const md = solutionToMarkdown({
+        ...solution(),
+        version: '1.0',
+        versionHistory: [],
+        initial: true,
+        changedSections: [],
+      });
 
       expect(md).toContain('Initial version.');
       expect(md).not.toContain('No changes since the previous version.');
@@ -169,7 +175,7 @@ describe('utils', () => {
             updatedOn: 'x',
           },
           conversation: [{ role: 'user', content: 'Hi', at: 'x' }],
-        })
+        }),
       );
 
       expect(md).toContain('_Analysis: rule-based — fallback_');
@@ -203,7 +209,15 @@ describe('utils', () => {
               diagram: 'A-->B',
             },
             serviceMapping: [
-              { order: 1, service: 'form-service', displayName: 'Form', role: 'Forms', reason: 'why', dependsOn: ['x'], capabilities: [] },
+              {
+                order: 1,
+                service: 'form-service',
+                displayName: 'Form',
+                role: 'Forms',
+                reason: 'why',
+                dependsOn: ['x'],
+                capabilities: [],
+              },
             ],
             specialistNotes: [
               {
@@ -222,10 +236,17 @@ describe('utils', () => {
               },
             ],
             workflows: [{ name: 'Apply', actors: ['Citizen'], steps: ['Submit'] }],
-            dataGovernance: { dataEntities: ['DE'], accessControl: [], retention: [], privacy: [], audit: [], compliance: ['C'] },
+            dataGovernance: {
+              dataEntities: ['DE'],
+              accessControl: [],
+              retention: [],
+              privacy: [],
+              audit: [],
+              compliance: ['C'],
+            },
             delivery: { phases: [{ name: 'Phase 1', items: ['I1'] }], nonFunctional: ['NF'], openQuestions: ['OQ'] },
           },
-        })
+        }),
       );
 
       expect(md).toContain('# Project blueprint');
@@ -233,6 +254,7 @@ describe('utils', () => {
       expect(md).toContain('- Obj');
       expect(md).toContain('A-->B');
       expect(md).toContain('1. **form-service** — Forms. _Why:_ why _Depends on:_ x');
+      expect(md).not.toContain('Not covered by ADSP');
       expect(md).toContain('### Form (recommended, ai)');
       expect(md).toContain('**Validation: sound**');
       expect(md).toContain('Actors: Citizen');
@@ -240,6 +262,183 @@ describe('utils', () => {
       expect(md).toContain('**Data entities**');
       expect(md).toContain('**Phase 1**');
       expect(md).toContain('**Open questions**');
+    });
+
+    it('lists not-covered requirements right after the service mapping', () => {
+      const md = solutionToMarkdown(
+        solution({
+          blueprint: {
+            generatedOn: '2026-01-01',
+            mode: 'ai',
+            overview: {
+              title: 'Overview',
+              summary: 'Sum',
+              objectives: [],
+              scope: [],
+              outOfScope: [],
+              stakeholders: [],
+              successMeasures: [],
+              risks: [],
+            },
+            architecture: { summary: 'Arch', layers: [], integrations: [], security: [], diagram: '' },
+            serviceMapping: [],
+            notCoveredByAdsp: [
+              {
+                requirement: 'Payment processing',
+                reason: 'No ADSP service exists',
+                suggestedApproach: 'Integrate a third-party gateway.',
+              },
+            ],
+            specialistNotes: [],
+            workflows: [],
+            dataGovernance: {
+              dataEntities: [],
+              accessControl: [],
+              retention: [],
+              privacy: [],
+              audit: [],
+              compliance: [],
+            },
+            delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+          },
+        }),
+      );
+
+      expect(md.indexOf('## 3. ADSP service mapping')).toBeLessThan(md.indexOf('## 4. Not covered by ADSP'));
+      expect(md).toContain(
+        '- **Payment processing** — No ADSP service exists. _Suggested approach:_ Integrate a third-party gateway.',
+      );
+      expect(md).not.toContain('_All requirements map to ADSP services._');
+    });
+
+    it('does not double up the period when the reason or role already ends with one', () => {
+      const md = solutionToMarkdown(
+        solution({
+          blueprint: {
+            generatedOn: '2026-01-01',
+            mode: 'ai',
+            overview: {
+              title: 'Overview',
+              summary: 'Sum',
+              objectives: [],
+              scope: [],
+              outOfScope: [],
+              stakeholders: [],
+              successMeasures: [],
+              risks: [],
+            },
+            architecture: { summary: 'Arch', layers: [], integrations: [], security: [], diagram: '' },
+            serviceMapping: [
+              {
+                order: 1,
+                service: 'configuration-service',
+                displayName: 'Configuration',
+                role: 'Status values.',
+                reason: 'why',
+                dependsOn: [],
+                capabilities: [],
+              },
+            ],
+            notCoveredByAdsp: [
+              {
+                requirement: 'Payment processing',
+                reason: 'No ADSP service reconciles payments.',
+                suggestedApproach: 'Integrate a gateway.',
+              },
+            ],
+            specialistNotes: [],
+            workflows: [],
+            dataGovernance: {
+              dataEntities: [],
+              accessControl: [],
+              retention: [],
+              privacy: [],
+              audit: [],
+              compliance: [],
+            },
+            delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+          },
+        }),
+      );
+
+      expect(md).toContain('Status values. _Why:_ why');
+      expect(md).toContain('No ADSP service reconciles payments. _Suggested approach:_ Integrate a gateway.');
+      expect(md).not.toContain('..');
+    });
+
+    it('shows the empty state when notCoveredByAdsp is an empty array', () => {
+      const md = solutionToMarkdown(
+        solution({
+          blueprint: {
+            generatedOn: '2026-01-01',
+            mode: 'rules',
+            overview: {
+              title: 'Overview',
+              summary: 'Sum',
+              objectives: [],
+              scope: [],
+              outOfScope: [],
+              stakeholders: [],
+              successMeasures: [],
+              risks: [],
+            },
+            architecture: { summary: 'Arch', layers: [], integrations: [], security: [], diagram: '' },
+            serviceMapping: [],
+            notCoveredByAdsp: [],
+            specialistNotes: [],
+            workflows: [],
+            dataGovernance: {
+              dataEntities: [],
+              accessControl: [],
+              retention: [],
+              privacy: [],
+              audit: [],
+              compliance: [],
+            },
+            delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+          },
+        }),
+      );
+
+      expect(md).toContain('## 4. Not covered by ADSP');
+      expect(md).toContain('_All requirements map to ADSP services._');
+    });
+
+    it('omits the section for a blueprint that predates notCoveredByAdsp', () => {
+      const md = solutionToMarkdown(
+        solution({
+          blueprint: {
+            generatedOn: '2026-01-01',
+            mode: 'rules',
+            overview: {
+              title: 'Overview',
+              summary: 'Sum',
+              objectives: [],
+              scope: [],
+              outOfScope: [],
+              stakeholders: [],
+              successMeasures: [],
+              risks: [],
+            },
+            architecture: { summary: 'Arch', layers: [], integrations: [], security: [], diagram: '' },
+            serviceMapping: [],
+            specialistNotes: [],
+            workflows: [],
+            dataGovernance: {
+              dataEntities: [],
+              accessControl: [],
+              retention: [],
+              privacy: [],
+              audit: [],
+              compliance: [],
+            },
+            delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+          },
+        }),
+      );
+
+      expect(md).not.toContain('Not covered by ADSP');
+      expect(md).toContain('## 4. Specialist consultation notes');
     });
   });
 });

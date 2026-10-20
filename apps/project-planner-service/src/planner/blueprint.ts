@@ -6,6 +6,8 @@ import {
   BusinessConcept,
   BusinessPattern,
   ConceptType,
+  NotCoveredItem,
+  PatternUnsupportedCapability,
   SolutionBlueprint,
   SolutionState,
   SpecialistNote,
@@ -13,7 +15,10 @@ import {
 } from './types';
 
 // The parts of a blueprint that are authored (by the model or by rules); the rest is assembled from the solution.
-export type BlueprintCore = Pick<SolutionBlueprint, 'overview' | 'architecture' | 'workflows' | 'dataGovernance' | 'delivery'>;
+export type BlueprintCore = Pick<
+  SolutionBlueprint,
+  'overview' | 'architecture' | 'workflows' | 'dataGovernance' | 'delivery'
+>;
 
 export interface BlueprintServiceDetail {
   service: string;
@@ -46,12 +51,53 @@ export function buildDiagram(layers: BlueprintLayer[]): string {
     return [...rows, row];
   };
   const line = `+${'-'.repeat(width)}+`;
-  const boxes = layers.map((l) => wrap(`${l.name}: ${l.components.join(', ')}`).map((r) => `| ${r.padEnd(width - 2)} |`));
+  const boxes = layers.map((l) =>
+    wrap(`${l.name}: ${l.components.join(', ')}`).map((r) => `| ${r.padEnd(width - 2)} |`),
+  );
   const arrow = `${' '.repeat(Math.floor(width / 2))}v`;
   return boxes.flatMap((rows, i) => [line, ...rows, ...(i < boxes.length - 1 ? [arrow] : [line])]).join('\n');
 }
 
-export function buildServiceMapping(state: SolutionState, details: BlueprintServiceDetail[] = []): BlueprintServiceRole[] {
+// Problem statement, answers and discovery turns — the text rule-based mode checks a pattern's unsupported-capability keywords against.
+const solutionText = (state: SolutionState): string =>
+  [
+    state.problemStatement,
+    ...state.questions.filter((q) => q.answer).map((q) => q.answer),
+    ...(state.discovery?.messages || []).map((m) => m.content),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+// Merges unsupported capabilities from the matched pattern with any the AI flagged, deduped and excluding anything already in serviceMapping.
+// A pattern item with keywords is only included when one of them appears in the solution's text, so generic gaps aren't shown unprompted.
+export function buildNotCoveredByAdsp(
+  state: SolutionState,
+  pattern: BusinessPattern | undefined,
+  aiItems: NotCoveredItem[] = [],
+  serviceMapping: BlueprintServiceRole[] = [],
+): NotCoveredItem[] {
+  const text = solutionText(state);
+  const isRelevant = (item: PatternUnsupportedCapability) =>
+    !item.keywords?.length || item.keywords.some((k) => text.includes(k.toLowerCase()));
+  const patternItems = (pattern?.unsupportedCapabilities || [])
+    .filter(isRelevant)
+    .map(({ requirement, reason, suggestedApproach }) => ({ requirement, reason, suggestedApproach }));
+  const covered = new Set(serviceMapping.flatMap((s) => [s.service.toLowerCase(), s.displayName.toLowerCase()]));
+  const seen = new Set<string>();
+  return [...patternItems, ...aiItems].filter((item) => {
+    const key = item.requirement.trim().toLowerCase();
+    if (!key || seen.has(key) || covered.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+export function buildServiceMapping(
+  state: SolutionState,
+  details: BlueprintServiceDetail[] = [],
+): BlueprintServiceRole[] {
   return recommendedServices(state).map((rec) => {
     const specialist = getSpecialist(rec.service);
     const detail = details.find((d) => d.service === rec.service);
@@ -89,12 +135,21 @@ export function buildRuleBlueprint(state: SolutionState, pattern?: BusinessPatte
     {
       name: 'Events & notification',
       description: 'Domain events record what happened and drive notices and live updates.',
-      components: unique(['Event service', ...(has('notification-service') ? ['Notification service'] : []), ...(has('push-service') ? ['Push service'] : [])]),
+      components: unique([
+        'Event service',
+        ...(has('notification-service') ? ['Notification service'] : []),
+        ...(has('push-service') ? ['Push service'] : []),
+      ]),
     },
     {
       name: 'Data & files',
       description: 'Records are stored by the services that own them; each is tenant-scoped.',
-      components: unique([has('form-service') ? 'Form submissions' : '', has('file-service') ? 'Files and documents' : '', has('value-service') ? 'Metrics values' : '', 'Service-owned records']),
+      components: unique([
+        has('form-service') ? 'Form submissions' : '',
+        has('file-service') ? 'Files and documents' : '',
+        has('value-service') ? 'Metrics values' : '',
+        'Service-owned records',
+      ]),
     },
     {
       name: 'Identity & access',
@@ -121,12 +176,23 @@ export function buildRuleBlueprint(state: SolutionState, pattern?: BusinessPatte
     overview: {
       title: hypothesis?.title || 'Proposed solution',
       summary: hypothesis?.rationale || state.problemStatement,
-      objectives: nonEmpty(names(state.concepts, 'goal', 'outcome'), [state.problemStatement.slice(0, 200)].filter(Boolean)),
+      objectives: nonEmpty(
+        names(state.concepts, 'goal', 'outcome'),
+        [state.problemStatement.slice(0, 200)].filter(Boolean),
+      ),
       scope: nonEmpty((pattern?.commonFeatures || []).slice(0, 8), names(state.concepts, 'activity')),
-      outOfScope: ['Systems and processes not named in the problem statement', 'Custom code where an ADSP service already fits'],
+      outOfScope: [
+        'Systems and processes not named in the problem statement',
+        'Custom code where an ADSP service already fits',
+      ],
       stakeholders: actors,
-      successMeasures: nonEmpty(names(state.concepts, 'evaluation-criterion', 'outcome'), ['Agree measurable success criteria with the business owner']),
-      risks: unique([...(hypothesis?.unknowns || []), ...services.flatMap((s) => getSpecialist(s.service)?.risks.slice(0, 1) || [])]),
+      successMeasures: nonEmpty(names(state.concepts, 'evaluation-criterion', 'outcome'), [
+        'Agree measurable success criteria with the business owner',
+      ]),
+      risks: unique([
+        ...(hypothesis?.unknowns || []),
+        ...services.flatMap((s) => getSpecialist(s.service)?.risks.slice(0, 1) || []),
+      ]),
     },
     architecture: {
       summary: serviceList.length
@@ -143,22 +209,59 @@ export function buildRuleBlueprint(state: SolutionState, pattern?: BusinessPatte
     },
     workflows,
     dataGovernance: {
-      dataEntities: nonEmpty(names(state.concepts, 'document', 'evidence', 'outcome', 'decision'), ['Define the main records the solution creates']),
-      accessControl: actors.length ? actors.map((a) => `${a}: define view and edit rights`) : ['Define roles per user group'],
+      dataEntities: nonEmpty(names(state.concepts, 'document', 'evidence', 'outcome', 'decision'), [
+        'Define the main records the solution creates',
+      ]),
+      accessControl: actors.length
+        ? actors.map((a) => `${a}: define view and edit rights`)
+        : ['Define roles per user group'],
       retention: ['Set a retention period for each record type', 'Define archive and deletion triggers'],
-      privacy: ['Complete a privacy impact assessment where personal information is collected', 'Collect only what the process needs'],
+      privacy: [
+        'Complete a privacy impact assessment where personal information is collected',
+        'Collect only what the process needs',
+      ],
       audit: ['Signal domain events for each significant state change', 'Keep the event log as the audit trail'],
-      compliance: unique(['FOIP and applicable program legislation', 'WCAG 2.1 AA accessibility', 'GoA Design System 2.0', ...names(state.concepts, 'business-rule', 'constraint').slice(0, 4)]),
+      compliance: unique([
+        'FOIP and applicable program legislation',
+        'WCAG 2.1 AA accessibility',
+        'GoA Design System 2.0',
+        ...names(state.concepts, 'business-rule', 'constraint').slice(0, 4),
+      ]),
     },
     delivery: {
       phases: [
-        { name: 'Discover & design', items: ['Confirm scope and success measures', 'Resolve open questions', 'Consult each recommended service specialist'] },
-        { name: 'Foundation', items: ['Create the tenant configuration and roles', ...serviceList.slice(0, 2).map((s) => `Set up ${s}`)] },
+        {
+          name: 'Discover & design',
+          items: [
+            'Confirm scope and success measures',
+            'Resolve open questions',
+            'Consult each recommended service specialist',
+          ],
+        },
+        {
+          name: 'Foundation',
+          items: ['Create the tenant configuration and roles', ...serviceList.slice(0, 2).map((s) => `Set up ${s}`)],
+        },
         { name: 'Build the core workflow', items: services.map((s) => `Configure ${s.service}`) },
-        { name: 'Test & accept', items: ['Unit and end-to-end tests', 'Accessibility review', 'User acceptance testing'] },
-        { name: 'Release & operate', items: ['Promote through dev, test and production', 'Monitor with the Status service', 'Review metrics and iterate'] },
+        {
+          name: 'Test & accept',
+          items: ['Unit and end-to-end tests', 'Accessibility review', 'User acceptance testing'],
+        },
+        {
+          name: 'Release & operate',
+          items: [
+            'Promote through dev, test and production',
+            'Monitor with the Status service',
+            'Review metrics and iterate',
+          ],
+        },
       ],
-      nonFunctional: ['Accessibility (WCAG 2.1 AA)', 'Availability and monitoring', 'Performance at expected volumes', 'Security and privacy'],
+      nonFunctional: [
+        'Accessibility (WCAG 2.1 AA)',
+        'Availability and monitoring',
+        'Performance at expected volumes',
+        'Security and privacy',
+      ],
       openQuestions: unique(state.questions.filter((q) => q.status === 'open').map((q) => q.question)),
     },
   };
@@ -183,7 +286,9 @@ export function mergeBlueprintCore(base: BlueprintCore, ai: Partial<BlueprintCor
 
 function stripEmpty<T extends object>(value: T | undefined): Partial<T> {
   return Object.fromEntries(
-    Object.entries(value || {}).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : typeof v === 'string' ? v.length > 0 : v !== undefined)),
+    Object.entries(value || {}).filter(([, v]) =>
+      Array.isArray(v) ? v.length > 0 : typeof v === 'string' ? v.length > 0 : v !== undefined,
+    ),
   ) as Partial<T>;
 }
 
@@ -231,17 +336,25 @@ export function assembleBlueprint(
   notes: SpecialistNote[],
   meta: Pick<SolutionBlueprint, 'generatedOn' | 'mode' | 'model' | 'warning'>,
   details: BlueprintServiceDetail[] = [],
+  pattern?: BusinessPattern,
+  aiNotCoveredByAdsp: NotCoveredItem[] = [],
 ): SolutionBlueprint {
   const risks = unique([...core.overview.risks, ...notes.flatMap((n) => n.risks.slice(0, 2))]);
+  const serviceMapping = buildServiceMapping(state, details);
   return {
     ...meta,
     ...core,
     overview: { ...core.overview, risks },
-    serviceMapping: buildServiceMapping(state, details),
+    serviceMapping,
+    notCoveredByAdsp: buildNotCoveredByAdsp(state, pattern, aiNotCoveredByAdsp, serviceMapping),
     specialistNotes: notes,
   };
 }
 
 export function isBlueprintOutOfDate(state: SolutionState): boolean {
-  return !!(state.blueprint && state.problemStatementUpdatedOn && state.problemStatementUpdatedOn > state.blueprint.generatedOn);
+  return !!(
+    state.blueprint &&
+    state.problemStatementUpdatedOn &&
+    state.problemStatementUpdatedOn > state.blueprint.generatedOn
+  );
 }

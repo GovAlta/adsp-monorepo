@@ -26,8 +26,24 @@ const blueprint: SolutionBlueprint = {
     diagram: '[UI] -> [API]',
   },
   serviceMapping: [
-    { order: 1, service: 'form-service', displayName: 'Form', role: 'Intake', reason: 'Forms', dependsOn: [], capabilities: ['Drafts'] },
-    { order: 2, service: 'file-service', displayName: 'File', role: 'Docs', reason: 'Files', dependsOn: ['form-service'], capabilities: [] },
+    {
+      order: 1,
+      service: 'form-service',
+      displayName: 'Form',
+      role: 'Intake',
+      reason: 'Forms',
+      dependsOn: [],
+      capabilities: ['Drafts'],
+    },
+    {
+      order: 2,
+      service: 'file-service',
+      displayName: 'File',
+      role: 'Docs',
+      reason: 'Files',
+      dependsOn: ['form-service'],
+      capabilities: [],
+    },
   ],
   specialistNotes: [
     {
@@ -46,11 +62,20 @@ const blueprint: SolutionBlueprint = {
     },
   ],
   workflows: [{ name: 'Apply', actors: ['Applicant'], steps: ['Fill', 'Submit'] }],
-  dataGovernance: { dataEntities: ['Permit'], accessControl: ['Roles'], retention: [], privacy: ['PII'], audit: ['Log'], compliance: ['FOIP'] },
+  dataGovernance: {
+    dataEntities: ['Permit'],
+    accessControl: ['Roles'],
+    retention: [],
+    privacy: ['PII'],
+    audit: ['Log'],
+    compliance: ['FOIP'],
+  },
   delivery: { phases: [{ name: 'Phase 1', items: ['MVP'] }], nonFunctional: ['Fast'], openQuestions: ['Budget?'] },
 };
 
-const makeSolution = (opts: { hypotheses?: boolean; blueprint?: SolutionBlueprint; analyzedOn?: string } = {}): Solution => ({
+const makeSolution = (
+  opts: { hypotheses?: boolean; blueprint?: SolutionBlueprint; analyzedOn?: string } = {},
+): Solution => ({
   id: 'solution-1',
   name: 'Permit intake',
   scenario: 'new',
@@ -64,7 +89,21 @@ const makeSolution = (opts: { hypotheses?: boolean; blueprint?: SolutionBlueprin
     concepts: [],
     decisions: [],
     questions: [],
-    hypotheses: opts.hypotheses === false ? [] : [{ id: 'h1', title: 'H', patternId: 'p', confidence: 'high', rationale: '', recommendations: [], assumptions: [], unknowns: [] }],
+    hypotheses:
+      opts.hypotheses === false
+        ? []
+        : [
+            {
+              id: 'h1',
+              title: 'H',
+              patternId: 'p',
+              confidence: 'high',
+              rationale: '',
+              recommendations: [],
+              assumptions: [],
+              unknowns: [],
+            },
+          ],
     specialists: [],
     nextSteps: [],
     analysis: opts.analyzedOn ? { mode: 'ai', analyzedOn: opts.analyzedOn } : undefined,
@@ -80,7 +119,12 @@ const click = (container: HTMLElement, testId: string) =>
 describe('BlueprintViewer', () => {
   it('asks to analyze first when there are no hypotheses', () => {
     const { getByTestId } = render(
-      <BlueprintViewer solution={makeSolution({ hypotheses: false })} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+      <BlueprintViewer
+        solution={makeSolution({ hypotheses: false })}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
     );
     expect(getByTestId('blueprint-unavailable')).toBeTruthy();
   });
@@ -89,7 +133,9 @@ describe('BlueprintViewer', () => {
     const result = makeSolution({ blueprint });
     const api = createMockApi({ blueprint: jest.fn().mockResolvedValue(result) });
     const onSolutionChange = jest.fn();
-    const { container } = render(<BlueprintViewer solution={makeSolution()} api={api} mode="rules" onSolutionChange={onSolutionChange} />);
+    const { container } = render(
+      <BlueprintViewer solution={makeSolution()} api={api} mode="rules" onSolutionChange={onSolutionChange} />,
+    );
     expect(container.querySelector('goa-button[testid="blueprint-refresh"]')).toBeNull();
 
     click(container, 'blueprint-generate');
@@ -102,27 +148,42 @@ describe('BlueprintViewer', () => {
   it('regenerates with fresh consultations', async () => {
     const solution = makeSolution({ blueprint });
     const api = createMockApi({ blueprint: jest.fn().mockResolvedValue(solution) });
-    const { container } = render(<BlueprintViewer solution={solution} api={api} mode="ai" onSolutionChange={jest.fn()} />);
-    expect(container.querySelector('goa-button[testid="blueprint-generate"]')?.textContent).toBe('Regenerate blueprint');
+    const { container } = render(
+      <BlueprintViewer solution={solution} api={api} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+    expect(container.querySelector('goa-button[testid="blueprint-generate"]')?.textContent).toBe(
+      'Regenerate blueprint',
+    );
     click(container, 'blueprint-refresh');
-    await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai', refreshConsultations: true }));
+    await waitFor(() =>
+      expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai', refreshConsultations: true }),
+    );
   });
 
   it('recovers when generation fails and disables buttons while busy', async () => {
     const api = createMockApi({ blueprint: jest.fn().mockRejectedValue(new Error('x')) });
     const onSolutionChange = jest.fn();
-    const { container, rerender } = render(<BlueprintViewer solution={makeSolution()} api={api} mode="ai" onSolutionChange={onSolutionChange} />);
+    const { container, rerender } = render(
+      <BlueprintViewer solution={makeSolution()} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
+    );
     click(container, 'blueprint-generate');
     await waitFor(() => expect(container.querySelector('goa-circular-progress')).toBeNull());
     expect(onSolutionChange).not.toHaveBeenCalled();
 
-    rerender(<BlueprintViewer solution={makeSolution()} api={api} mode="ai" busy onSolutionChange={onSolutionChange} />);
+    rerender(
+      <BlueprintViewer solution={makeSolution()} api={api} mode="ai" busy onSolutionChange={onSolutionChange} />,
+    );
     expect(container.querySelector('goa-button[testid="blueprint-generate"]')?.getAttribute('disabled')).toBe('true');
   });
 
   it('renders all seven sections closed by default', () => {
     const { container, getByText } = render(
-      <BlueprintViewer solution={makeSolution({ blueprint })} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+      <BlueprintViewer
+        solution={makeSolution({ blueprint })}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
     );
     const details = container.querySelectorAll('goa-details');
     expect(details).toHaveLength(7);
@@ -139,40 +200,112 @@ describe('BlueprintViewer', () => {
 
   it('opens all sections when allOpen', () => {
     const { container } = render(
-      <BlueprintViewer solution={makeSolution({ blueprint })} api={createMockApi()} mode="ai" allOpen onSolutionChange={jest.fn()} />,
+      <BlueprintViewer
+        solution={makeSolution({ blueprint })}
+        api={createMockApi()}
+        mode="ai"
+        allOpen
+        onSolutionChange={jest.fn()}
+      />,
     );
     container.querySelectorAll('goa-details').forEach((d) => expect(d.getAttribute('open')).toBe('true'));
   });
 
+  it('omits the not-covered panel for a blueprint that predates it', () => {
+    const { container } = render(
+      <BlueprintViewer
+        solution={makeSolution({ blueprint })}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+    expect(goa(container, 'blueprint-section-not-covered')).toBeNull();
+  });
+
+  it('shows the not-covered panel with its items after Service mapping', () => {
+    const withGaps = {
+      ...blueprint,
+      notCoveredByAdsp: [
+        {
+          requirement: 'Payment processing',
+          reason: 'No ADSP service exists',
+          suggestedApproach: 'Integrate a gateway.',
+        },
+      ],
+    };
+    const { container, getByText } = render(
+      <BlueprintViewer
+        solution={makeSolution({ blueprint: withGaps })}
+        api={createMockApi()}
+        mode="ai"
+        allOpen
+        onSolutionChange={jest.fn()}
+      />,
+    );
+    const details = [...container.querySelectorAll('goa-details')];
+    const servicesIndex = details.findIndex((d) => d.getAttribute('testid') === 'blueprint-section-services');
+    const notCoveredIndex = details.findIndex((d) => d.getAttribute('testid') === 'blueprint-section-not-covered');
+
+    expect(notCoveredIndex).toBe(servicesIndex + 1);
+    expect(getByText('Payment processing')).toBeTruthy();
+    expect(getByText('Integrate a gateway.')).toBeTruthy();
+  });
+
+  it('shows the all-covered empty state when notCoveredByAdsp is empty', () => {
+    const solution = makeSolution({ blueprint: { ...blueprint, notCoveredByAdsp: [] } });
+    const { getByText } = render(
+      <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+    expect(getByText('All requirements map to ADSP services.')).toBeTruthy();
+  });
+
   it('shows no recommended services note when there are none', () => {
     const solution = makeSolution({ blueprint: { ...blueprint, specialistNotes: [] } });
-    const { getByText } = render(<BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />);
+    const { getByText } = render(
+      <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
     expect(getByText('No recommended services.')).toBeTruthy();
   });
 
   it('shows stale notice and warnings', () => {
-    const solution = makeSolution({ blueprint: { ...blueprint, warning: 'Rules fallback' }, analyzedOn: '2026-03-02T10:00:00.000Z' });
-    const { container } = render(<BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />);
+    const solution = makeSolution({
+      blueprint: { ...blueprint, warning: 'Rules fallback' },
+      analyzedOn: '2026-03-02T10:00:00.000Z',
+    });
+    const { container } = render(
+      <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
     expect(goa(container, 'blueprint-stale')).toBeTruthy();
     expect(goa(container, 'blueprint-warning').textContent).toContain('Rules fallback');
   });
 
   it('does not show stale notice when blueprint is current', () => {
     const solution = makeSolution({ blueprint, analyzedOn: '2026-02-28T10:00:00.000Z' });
-    const { container } = render(<BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />);
+    const { container } = render(
+      <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
     expect(goa(container, 'blueprint-stale')).toBeNull();
     expect(goa(container, 'blueprint-warning')).toBeNull();
   });
 
   it('has no accessibility violations', async () => {
     const { container } = render(
-      <BlueprintViewer solution={makeSolution({ blueprint })} api={createMockApi()} mode="ai" allOpen onSolutionChange={jest.fn()} />,
+      <BlueprintViewer
+        solution={makeSolution({ blueprint })}
+        api={createMockApi()}
+        mode="ai"
+        allOpen
+        onSolutionChange={jest.fn()}
+      />,
     );
     await expectNoA11yViolations(container);
   });
 
   it('has no accessibility violations before generation', async () => {
-    const { container } = render(<BlueprintViewer solution={makeSolution()} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />);
+    const { container } = render(
+      <BlueprintViewer solution={makeSolution()} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
     await expectNoA11yViolations(container);
   });
 });
