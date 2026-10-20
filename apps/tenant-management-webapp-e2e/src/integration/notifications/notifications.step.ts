@@ -8,6 +8,7 @@ const notificationsObj = new NotificationsPage();
 let emailInput;
 let phoneInput;
 let instructionsInput;
+let replacementString = '';
 
 // The Subject/Title/Subtitle editors sit inside a properties accordion that is collapsed by
 // default (CS-5126), giving the body editor more room. Collapsed content has no layout box, so
@@ -45,13 +46,24 @@ Then('the user views Add notification type modal', function () {
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
   function (name: string, description: string, role: string, bot, sms, selfService) {
+    if (name.includes('<$ph>') && replacementString === '') {
+      const currentTime = new Date();
+      replacementString =
+        '-' +
+        ('0' + currentTime.getMonth()).substr(-2) +
+        ('0' + currentTime.getDate()).substr(-2) +
+        ('0' + currentTime.getHours()).substr(-2) +
+        ('0' + currentTime.getHours()).substr(-2) +
+        ('0' + currentTime.getSeconds()).substr(-2);
+    }
+    name = commonlib.stringReplacement(name, replacementString);
     const roles = role.split(',');
     notificationsObj
       .notificationTypeModalNameField()
       .shadow()
       .find('input')
       .clear()
-      .type(name, { delay: 200, force: true });
+      .type(name, { delay: 100, force: true });
     notificationsObj
       .notificationTypeModalDescriptionField()
       .shadow()
@@ -72,6 +84,7 @@ When(
               .shadow()
               .find('[class^="container"]')
               .click({ force: true });
+            cy.wait(1000);
           }
         } else {
           if (publicCheckboxClassName?.includes('selected')) {
@@ -80,6 +93,7 @@ When(
               .shadow()
               .find('[class^="container"]')
               .click({ force: true });
+            cy.wait(1000);
           }
           // Deselect all previously selected roles and then select new roles
           notificationsObj
@@ -200,6 +214,7 @@ When(
                   .find('[class^="container"]')
                   .click({ force: true });
                 notificationsObj.notificationTypeModalSelfServiceCalloutContent().scrollIntoView().should('be.visible');
+                cy.wait(1000);
               }
               break;
             case 'no':
@@ -213,6 +228,7 @@ When(
                     .find('[class^="container"]')
                     .click();
                   notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('not.exist');
+                  cy.wait(1000);
                 }
               }
               break;
@@ -240,12 +256,14 @@ When('the user clicks back to notification types link on notification type detai
     .shadow()
     .find('button')
     .click({ force: true });
-  cy.wait(1000);
+  cy.wait(4000);
 });
 
 Then(
   'the user {string} the notification type of {string}, {string}, {string}, {string}',
   function (viewOrNot, name, typeId, publicOrNot: string, selfServiceOrNot: string) {
+    name = commonlib.stringReplacement(name, replacementString);
+    typeId = commonlib.stringReplacement(typeId, replacementString);
     const capitalizedPublicOrNot = publicOrNot.charAt(0).toUpperCase() + publicOrNot.slice(1);
     const capitalizedSelfServiceOrNot = selfServiceOrNot.charAt(0).toUpperCase() + selfServiceOrNot.slice(1);
 
@@ -266,6 +284,8 @@ Then(
 Then(
   'the user clicks the notification type of {string}, {string}, {string}, {string}',
   function (name, typeId, publicOrNot: string, selfServiceOrNot: string) {
+    name = commonlib.stringReplacement(name, replacementString);
+    typeId = commonlib.stringReplacement(typeId, replacementString);
     const capitalizedPublicOrNot = publicOrNot.charAt(0).toUpperCase() + publicOrNot.slice(1);
     const capitalizedSelfServiceOrNot = selfServiceOrNot.charAt(0).toUpperCase() + selfServiceOrNot.slice(1);
 
@@ -280,6 +300,7 @@ Then('the user views Add notification type button on Notification types page', f
 });
 
 When('the user clicks {string} button on {string} notification type details pane', function (buttonType, typeName) {
+  typeName = commonlib.stringReplacement(typeName, replacementString);
   notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
   switch (buttonType) {
     case 'edit':
@@ -294,8 +315,16 @@ When('the user clicks {string} button on {string} notification type details pane
 });
 
 Then('the user views Edit notification type modal for {string}', function (cardTitle) {
+  cardTitle = commonlib.stringReplacement(cardTitle, replacementString);
   notificationsObj.notificationTypeModalTitle().invoke('text').should('eq', 'Edit notification type');
   notificationsObj.notificationTypeModalNameField().invoke('attr', 'value').should('eq', cardTitle);
+});
+
+Then('the user views delete notification type confirmation modal for {string}', function (deleteItemName: string) {
+  deleteItemName = commonlib.stringReplacement(deleteItemName, replacementString);
+  cy.wait(2000);
+  commonObj.deleteConfirmationModalTitle().invoke('text').should('eq', 'Delete notification type');
+  commonObj.deleteConfirmationModalContent().invoke('text').should('contains', deleteItemName);
 });
 
 Given('a tenant admin user is on notification types page', function () {
