@@ -150,11 +150,11 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: "1"
-                  memory: 2Gi
-                requests:
-                  cpu: 250m
+                  cpu: 300m
                   memory: 512Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
               volumeMounts:
                 - name: cert-volume
                   mountPath: /etc/certs
