@@ -3,6 +3,7 @@ import { Logger } from 'winston';
 import { IEventService } from '../services/event.service';
 import { ILLMService } from '../services/llm.service';
 import { AuditService } from '../middleware/audit.middleware';
+import { requireAuth } from '../middleware/auth.middleware';
 import { createSessionsRouter } from './sessions.routes';
 import { createMessagesRouter } from './messages.routes';
 import { createBusinessModelRouter } from './business-model.routes';
@@ -14,6 +15,25 @@ import { createAuditRouter } from './audit.routes';
 import { createHealthRouter } from './health.routes';
 import { createMetricsRouter } from './metrics.routes';
 import { createUserManagementRouter } from './user-management.router';
+
+// Static catalogue of available ADSP specialist types.
+// Returned by GET /specialists/types — used by the UI to populate the specialist panel.
+// Adding a new ADSP service here automatically surfaces it in the UI.
+const SPECIALIST_TYPES_CATALOGUE = [
+  { id: 'configuration-service', label: 'Configuration service', description: 'Tenant-scoped configuration such as workflow definitions and status values.', suggestions: [] },
+  { id: 'file-service',          label: 'File service',          description: 'Secure file upload, storage, and retrieval with file types and role-based access.', suggestions: [] },
+  { id: 'form-service',          label: 'Form service',          description: 'Form definitions, drafts, submissions, and review dispositions.', suggestions: [] },
+  { id: 'value-service',         label: 'Value service',         description: 'Store and query business values and metrics over time.', suggestions: [] },
+  { id: 'event-service',         label: 'Event service',         description: 'Domain events, event log, and audit trail.', suggestions: [] },
+  { id: 'notification-service',  label: 'Notification service',  description: 'Templated notifications to subscribers across email, SMS and bot channels.', suggestions: [] },
+  { id: 'comment-service',       label: 'Comment service',       description: 'Topics and comments for notes and discussion.', suggestions: [] },
+  { id: 'task-service',          label: 'Task service',          description: 'Task queues and assignment of work to staff.', suggestions: [] },
+  { id: 'calendar-service',      label: 'Calendar service',      description: 'Calendars and scheduled events.', suggestions: [] },
+  { id: 'pdf-service',           label: 'PDF service',           description: 'Template-driven PDF generation.', suggestions: [] },
+  { id: 'status-service',        label: 'Status service',        description: 'Application status and public notices.', suggestions: [] },
+  { id: 'feedback-service',      label: 'Feedback service',      description: 'Collect user feedback on applications.', suggestions: [] },
+  { id: 'push-service',          label: 'Push service',          description: 'WebSocket gateway for real-time event streams.', suggestions: [] },
+];
 
 // Route registry — Phase C resource routes registered here as each batch is generated.
 // ✓ ASVS:V4.1.3 — all routes registered through this central registry;
@@ -101,6 +121,13 @@ export function createRouter(options: RouteRegistryOptions): Router {
   // -----------------------------------------------------------------------
   // Phase C Batch 3 — specialists + patterns
   // -----------------------------------------------------------------------
+
+  // GET /specialists/types — static catalogue of available ADSP specialist types.
+  // Requires auth (Protected B service); no session or tenant scope needed.
+  // ✓ ASVS:V3.5.2 — requireAuth applied; no public access to platform metadata
+  router.get('/specialists/types', requireAuth, (_req, res) => {
+    res.json(SPECIALIST_TYPES_CATALOGUE);
+  });
 
   // Specialist delegation routes (nested under /sessions/:sessionId/specialists)
   // mergeParams on the specialists router handles :sessionId from parent

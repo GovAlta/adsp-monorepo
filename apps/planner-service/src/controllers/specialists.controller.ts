@@ -186,4 +186,76 @@ export class SpecialistsController {
       next(err);
     }
   };
+
+  /**
+   * POST /api/v1/sessions/:sessionId/specialists/:type/messages
+   * operationId: sendSpecialistMessage — UC-005 direct chat
+   *
+   * Persists the user message and returns a stub assistant reply synchronously.
+   * [IMPL-DEFERRED: INT-003..006] — assistant reply is a static stub until live agents are enabled.
+   *
+   * ✓ ASVS:V4.1.1 — tenantId enforced from JWT
+   * ✓ CAS:RULE-028 — content never logged; IDs + lengths only
+   * ✓ ASVS:V4.2.1 — messagingRateLimit applied at route layer
+   */
+  sendDirectMessage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const { tenantId } = req.user!;
+      const { sessionId, type } = req.params;
+      const { content } = req.body as { content: string };
+
+      const { userMessage, assistantMessage } =
+        await this.specialistsService.sendDirectMessage(sessionId, tenantId, type, content);
+
+      this.logger.info('Specialist direct message exchange completed', {
+        sessionId,
+        tenantId,
+        specialistType: type,
+        userMessageId: userMessage.messageId,
+        assistantMessageId: assistantMessage.messageId,
+      });
+
+      // X-Integration-Stubbed: assistant reply is a stub until INT-003..006 are live
+      res.setHeader('X-Integration-Stubbed', 'INT-003,INT-004,INT-005,INT-006');
+      res.status(201).json({ userMessage, assistantMessage });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * GET /api/v1/sessions/:sessionId/specialists/:type/messages
+   * operationId: getSpecialistMessages — UC-005 direct chat history
+   *
+   * Returns the full message history for a specialist type in this session, oldest-first.
+   *
+   * ✓ ASVS:V4.1.1 — three-key predicate (tenantId+sessionId+specialistType)
+   */
+  getDirectMessages = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const { tenantId } = req.user!;
+      const { sessionId, type } = req.params;
+
+      const messages = await this.specialistsService.getDirectMessages(tenantId, sessionId, type);
+
+      this.logger.info('Specialist direct messages retrieved', {
+        sessionId,
+        tenantId,
+        specialistType: type,
+        count: messages.length,
+      });
+
+      res.json(messages);
+    } catch (err) {
+      next(err);
+    }
+  };
 }

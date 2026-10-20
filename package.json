@@ -34,7 +34,8 @@
     "tmw-e2e:html-report": "node .\\apps\\tenant-management-webapp-e2e\\src\\support\\multiple-cucumber-html-reporter.js",
     "workspace-generator": "nx workspace-generator",
     "postinstall": "patch-package",
-    "prepare": "dotnet restore"
+    "prepare": "dotnet restore",
+    "test:system": "vitest run --config apps/system-tests/vitest.config.ts"
   },
   "private": true,
   "dependencies": {

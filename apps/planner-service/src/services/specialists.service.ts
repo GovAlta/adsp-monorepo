@@ -20,6 +20,27 @@ import {
   SpecialistResponseModel,
   ISpecialistResponseDocument,
 } from '../mongo/schemas/specialist-response.schema';
+import {
+  SpecialistDirectMessageModel,
+  ISpecialistDirectMessageDocument,
+} from '../mongo/schemas/specialist-message.schema';
+
+// Stub reply descriptions keyed by specialist type — used until INT-003..006 are live.
+const SPECIALIST_STUB_DESCRIPTIONS: Record<string, string> = {
+  'configuration-service': 'tenant-scoped configuration, workflow definitions, and status values',
+  'file-service':          'secure file upload, storage, and retrieval with role-based access control',
+  'form-service':          'form definitions, draft management, submissions, and review dispositions',
+  'value-service':         'storing and querying business values and metrics over time',
+  'event-service':         'domain events, event log management, and audit trails',
+  'notification-service':  'templated notifications to subscribers across email, SMS, and bot channels',
+  'comment-service':       'topics and threaded comments for notes and team discussion',
+  'task-service':          'task queues and assignment of work items to staff',
+  'calendar-service':      'calendars and scheduled event management',
+  'pdf-service':           'template-driven PDF generation from structured data',
+  'status-service':        'application status pages and public notices',
+  'feedback-service':      'collecting and managing user feedback on applications',
+  'push-service':          'WebSocket gateway for real-time event streams',
+};
 
 // ✓ ASVS:V1.6.1 — specialist agent stubs INT-003..006 are fail-closed
 // ✓ CAS:RULE-028 — specialist delegation tracked in specialist_request entity
@@ -215,6 +236,102 @@ export class SpecialistsService {
       result.response = response.toObject() as ISpecialistResponseDocument;
     }
     return result;
+  }
+
+  /**
+   * sendDirectMessage — persists a user message and generates a stub assistant reply.
+   *
+   * [IMPL-DEFERRED: INT-003..006] — assistant reply is a static stub until live agents are wired.
+   * Both messages are persisted so history survives page reloads.
+   *
+   * ✓ ASVS:V4.1.1 — tenantId + sessionId in all writes
+   * ✓ CAS:RULE-028 — content never logged; IDs only in log context
+   */
+  async sendDirectMessage(
+    sessionId: string,
+    tenantId: string,
+    specialistType: string,
+    content: string,
+  ): Promise<{
+    userMessage: ISpecialistDirectMessageDocument;
+    assistantMessage: ISpecialistDirectMessageDocument;
+  }> {
+    // Persist user message
+    // ✓ CAS:RULE-028 — content is Protected B; not logged
+    const userMessage = new SpecialistDirectMessageModel({
+      messageId: crypto.randomUUID(),
+      sessionId,
+      tenantId,
+      specialistType,
+      role: 'user',
+      content,
+    });
+    await userMessage.save();
+
+    this.logger.info('Specialist direct message persisted', {
+      messageId: userMessage.messageId,
+      sessionId,
+      tenantId,
+      specialistType,
+      role: 'user',
+      contentLength: content.length,
+    });
+
+    // Build stub assistant reply
+    // [IMPL-DEFERRED: INT-003..006] — replace with live agent SDK call when enabled
+    const serviceDesc = SPECIALIST_STUB_DESCRIPTIONS[specialistType]
+      ?? `the ${specialistType} platform service`;
+
+    const stubContent =
+      `**[${specialistType} Specialist — Integration Pending]**\n\n` +
+      `Thank you for your question. The **${specialistType}** specialist covers ${serviceDesc}.\n\n` +
+      `> *Note: The live specialist agent (INT-003..006) is pending activation pending governance ` +
+      `approval. The guidance below reflects documented ADSP service capabilities.*\n\n` +
+      `Based on your question, here are some starting points for working with **${specialistType}**:\n\n` +
+      `- Review the [ADSP service documentation](https://adsp.alberta.ca/docs) for ` +
+      `${specialistType} integration patterns.\n` +
+      `- Consider how ${serviceDesc} aligns with your session's identified business concepts.\n` +
+      `- When this integration is live, you will receive interactive, context-aware guidance ` +
+      `tailored to your specific planning session.\n\n` +
+      `If you have follow-up questions, continue the conversation and they will be available ` +
+      `for the specialist agent when the integration is enabled.`;
+
+    const assistantMessage = new SpecialistDirectMessageModel({
+      messageId: crypto.randomUUID(),
+      sessionId,
+      tenantId,
+      specialistType,
+      role: 'assistant',
+      content: stubContent,
+    });
+    await assistantMessage.save();
+
+    this.logger.info('Specialist stub reply persisted', {
+      messageId: assistantMessage.messageId,
+      sessionId,
+      tenantId,
+      specialistType,
+      role: 'assistant',
+    });
+
+    return { userMessage, assistantMessage };
+  }
+
+  /**
+   * getDirectMessages — returns the full message history for a specialist type in this session.
+   * Results are ordered oldest-first for chronological display.
+   *
+   * ✓ ASVS:V4.1.1 — three-key predicate (tenantId+sessionId+specialistType)
+   */
+  async getDirectMessages(
+    tenantId: string,
+    sessionId: string,
+    specialistType: string,
+  ): Promise<ISpecialistDirectMessageDocument[]> {
+    return SpecialistDirectMessageModel
+      .find({ tenantId, sessionId, specialistType })
+      .sort({ createdAt: 1 })
+      .exec();
   }
 
   /**

@@ -65,10 +65,10 @@ const SpecialistChat: React.FC = () => {
       setLoadingHistory(false);
     }
     // Load specialist metadata separately so a missing /types endpoint never breaks the chat page
-    api.getSpecialistTypes().then((types) => {
+    api.getSpecialistTypes().then(({ types }) => {
       const found = types.find((t) => t.id === specialistType);
       if (found) setMeta(found);
-    }).catch(() => {});
+    });
   }, [sessionId, specialistType]);
 
   useEffect(() => {

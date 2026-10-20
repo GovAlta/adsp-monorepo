@@ -67,6 +67,7 @@ const PlanningSession: React.FC = () => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [businessModel, setBusinessModel] = useState<BusinessModel | null>(null);
   const [specialistTypes, setSpecialistTypes] = useState<SpecialistType[]>([]);
+  const [specialistsFallback, setSpecialistsFallback] = useState(false);
   const [specialists, setSpecialists] = useState<Record<string, SpecialistState>>({});
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -106,11 +107,10 @@ const PlanningSession: React.FC = () => {
       setMessages(msgResult.items);
       setBusinessModel(model);
       // Non-blocking: fetch specialist catalogue after core session data loads
-      api.getSpecialistTypes().then((types) => {
+      api.getSpecialistTypes().then(({ types, usingFallback }) => {
         setSpecialistTypes(types);
+        setSpecialistsFallback(usingFallback);
         setSpecialists(Object.fromEntries(types.map((t) => [t.id, { status: 'available' as SpecialistStatus }])));
-      }).catch(() => {
-        // Server may not support this endpoint yet — silently ignore, panel shows "Loading…"
       });
     } catch (err: unknown) {
       const status = (err as { status?: number }).status;
@@ -564,7 +564,16 @@ const PlanningSession: React.FC = () => {
 
           {/* Specialist consultation panel — list loaded dynamically from server */}
           <GoAContainer>
-            <h3>Specialist Consultation</h3>
+            <h3>
+              Specialist Consultation{specialistsFallback && (
+                <span
+                  title="Using default service list — live catalogue unavailable"
+                  style={{ color: 'var(--goa-color-text-secondary)', fontWeight: 400, fontSize: '0.85em', marginLeft: 4 }}
+                >
+                  *
+                </span>
+              )}
+            </h3>
             <p>
               Consult specialist agents for deep technical guidance on each ADSP service.
             </p>

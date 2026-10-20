@@ -31,6 +31,16 @@ const SpecialistRequestParamSchema = z.object({
   requestId: z.string().min(1, 'requestId is required'),
 });
 
+const SpecialistTypeParamSchema = z.object({
+  sessionId: z.string().min(1, 'sessionId is required'),
+  type: z.string().min(1, 'specialist type is required'),
+});
+
+// ✓ ASVS:V5.1.1 — content validated before handler; max 10 000 chars matches schema
+const DirectMessageBodySchema = z.object({
+  content: z.string().min(1, 'content is required').max(10000, 'content must be 10 000 characters or fewer'),
+});
+
 // ✓ ASVS:V5.1.4 — specialistType constrained to known enum values; free-form strings rejected
 const ConsultSpecialistBodySchema = z.object({
   specialistType: z.enum(
@@ -123,6 +133,40 @@ export function createSpecialistsRouter(options: SpecialistsRouterOptions): Rout
     requirePlannerUser,
     validateParams(SpecialistRequestParamSchema),
     specialistsController.getSpecialistRequest,
+  );
+
+  // -----------------------------------------------------------------------
+  // POST /api/v1/sessions/:sessionId/specialists/:type/messages
+  // operationId: sendSpecialistMessage — UC-005 direct chat
+  // Persists user message + returns stub assistant reply synchronously.
+  // [IMPL-DEFERRED: INT-003..006] — reply is a stub until agents are live.
+  // ✓ ASVS:V4.2.1 — messagingRateLimit applied (BR-003: 50 req/hour per tenant)
+  // ✓ ASVS:V5.1.1 — content validated by DirectMessageBodySchema
+  // -----------------------------------------------------------------------
+  router.post(
+    '/:type/messages',
+    requireAuth,
+    tenantMiddleware,
+    requirePlannerUser,
+    messagingRateLimit,
+    validateParams(SpecialistTypeParamSchema),
+    validateBody(DirectMessageBodySchema),
+    specialistsController.sendDirectMessage,
+  );
+
+  // -----------------------------------------------------------------------
+  // GET /api/v1/sessions/:sessionId/specialists/:type/messages
+  // operationId: getSpecialistMessages — UC-005 direct chat history
+  // Returns full message history for the specialist type, oldest-first.
+  // ✓ ASVS:V4.1.1 — three-key predicate (tenantId+sessionId+specialistType)
+  // -----------------------------------------------------------------------
+  router.get(
+    '/:type/messages',
+    requireAuth,
+    tenantMiddleware,
+    requirePlannerUser,
+    validateParams(SpecialistTypeParamSchema),
+    specialistsController.getDirectMessages,
   );
 
   return router;
