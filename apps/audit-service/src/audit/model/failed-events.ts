@@ -4,12 +4,15 @@ import { randomUUID } from 'crypto';
 import { CONFLICT, SERVICE_UNAVAILABLE } from 'http-status-codes';
 import { AuditMetrics } from '../metrics';
 import { FailedAuditEvent, FailedEventRepository, ReplayAuditRecord } from '../types';
+import { ReplayEventPreparer } from './replay-events';
+import { REPLAY_ACTION } from '../actions';
 
 export class FailedEventService {
   constructor(
     private readonly repository: FailedEventRepository | undefined,
     private readonly writtenBy: string,
     private readonly metrics: AuditMetrics,
+    private readonly preparer: Pick<ReplayEventPreparer, 'prepare' | 'prepareAudit'>,
   ) {}
 
   private requireRepository(): FailedEventRepository {
@@ -42,11 +45,16 @@ export class FailedEventService {
         if (failed.status !== 'open') {
           throw new InvalidOperationError('Only open failed events can be replayed.', { statusCode: CONFLICT });
         }
+        const event = await this.preparer.prepare(failed, this.writtenBy);
         saving = true;
-        const replayedAs = await transaction.insertReplayedEvent(failed, this.writtenBy);
+        const replayedAs = await transaction.insertReplayedEvent(event);
         if (!replayedAs) throw new Error('Replay storage did not return an audit row ID.');
         await transaction.markReplayed(id, replayedAs);
-        await transaction.insertReplayAudit(this.replayRecord(id, replayedAs, administrator));
+        const replayAudit = await this.preparer.prepareAudit(
+          this.replayRecord(id, replayedAs, administrator),
+          tenantId,
+        );
+        await transaction.insertReplayAudit(replayAudit);
         return { ...failed, status: 'replayed', replayed_as: replayedAs };
       });
     } catch (err) {
@@ -62,7 +70,7 @@ export class FailedEventService {
       event: {
         eventId: randomUUID(),
         occurredAt: new Date().toISOString(),
-        action: 'failed-event.replay.succeeded',
+        action: `${REPLAY_ACTION}.succeeded`,
         status: 'success',
         actor: { id: administrator.id, type: 'user', roles: administrator.roles },
         resource: { type: 'failed-event', id },

@@ -8,20 +8,20 @@ import {
   FailedAuditEvent,
 } from '../audit/buffer';
 import { EnrichedEvent, EventCriteria, EventReader, StoredEvent } from '../audit/types';
+import { databaseError, STATEMENT_TIMEOUT_MS } from './operation';
 
-// Bound statements on the server too, including lock waits, within the five-second parking budget.
-const STATEMENT_TIMEOUT_MS = 4000;
-
-function databaseError(error: unknown): AuditStoreError {
-  const code =
-    error && typeof error === 'object' && 'code' in error && typeof error.code === 'string' ? error.code : '';
-  const transient =
-    /^(08|40|53)/.test(code) ||
-    ['57014', '57P01', '57P02', '57P03', '55P03', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE'].includes(code) ||
-    (error instanceof Error && error.name === 'KnexTimeoutError');
-  const kind = transient ? 'transient' : /^(22|23)/.test(code) ? 'constraint' : 'permanent';
-  // PostgreSQL/Knex messages can include SQL bindings and actor data; do not park or log those messages.
-  return new AuditStoreError(`Audit database operation failed${code ? ` (${code})` : ''}.`, kind);
+export async function insertAuditEvents(
+  transaction: Knex.Transaction,
+  events: readonly EnrichedEvent[],
+): Promise<string[]> {
+  if (!events.length) return [];
+  const rows = events.map(({ originalEvent: _originalEvent, ...event }) => event);
+  const inserted = await transaction<StoredEvent>('audit_events')
+    .insert(rows)
+    .onConflict(['tenant_id', 'namespace', 'event_id'])
+    .ignore()
+    .returning('id');
+  return inserted.map(({ id }) => id);
 }
 
 function assertActive(signal: AbortSignal): void {
@@ -35,16 +35,7 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
   ) {}
 
   async insert(events: readonly EnrichedEvent[], context: AuditStoreContext): Promise<readonly string[]> {
-    return this.write(context, async (transaction) => {
-      if (!events.length) return [];
-      const rows = events.map(({ originalEvent: _originalEvent, ...event }) => event);
-      const inserted = await transaction<StoredEvent>('audit_events')
-        .insert(rows)
-        .onConflict(['tenant_id', 'namespace', 'event_id'])
-        .ignore()
-        .returning('id');
-      return inserted.map(({ id }) => id);
-    });
+    return this.write(context, (transaction) => insertAuditEvents(transaction, events));
   }
 
   async park(events: readonly FailedAuditEvent[], context: AuditStoreContext): Promise<void> {

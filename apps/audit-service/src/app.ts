@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
+import { AdspId, auditDefinitions, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createLogger, createErrorHandler } from '@core-services/core-common';
 import * as compression from 'compression';
@@ -21,11 +21,12 @@ import {
   validateTenantContext,
   assertTenantContext,
   createAuditMetrics,
-  FailedEventRepository,
   FailedEventService,
+  ReplayEventPreparer,
 } from './audit';
 import { AuditWriteBuffer } from './audit/buffer';
-import { createDatabase, PostgresEventRepository } from './postgres';
+import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
+import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
@@ -34,9 +35,7 @@ export interface AuditApplication extends express.Application {
   shutdown: () => Promise<void>;
 }
 
-export const initializeApp = async ({
-  failedEventRepository,
-}: { failedEventRepository?: FailedEventRepository } = {}): Promise<AuditApplication> => {
+export const initializeApp = async (): Promise<AuditApplication> => {
   const app = express();
 
   app.use(compression());
@@ -87,6 +86,22 @@ export const initializeApp = async ({
         description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
         schema: configurationSchema,
       },
+      serviceConfigurations: [
+        {
+          serviceId,
+          configuration: [
+            {
+              name: `actions-${serviceId.service}`,
+              operation: 'REPLACE',
+              configuration: {
+                kind: 'actionCatalog',
+                application: serviceId.service,
+                actions: auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),
+              },
+            },
+          ],
+        },
+      ],
       configurationConverter: createAuditConfigurationConverter(logger),
       combineConfiguration: combineAuditConfiguration,
       enableConfigurationInvalidation: true,
@@ -99,11 +114,15 @@ export const initializeApp = async ({
     },
     { logger },
   );
-  const auditMetrics = createAuditMetrics(meterProvider?.getMeter('audit-service'), failedEventRepository, logger);
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   const { knex, isConnected } = await createDatabase({ logger, ...environment });
+  const failedEventRepository = new PostgresFailedEventRepository(knex, logger);
+  const meter = meterProvider?.getMeter('audit-service');
+  const auditMetrics = createAuditMetrics(meter, failedEventRepository, logger);
   const repository = new PostgresEventRepository(knex, logger);
-  const buffer = new AuditWriteBuffer(repository, logger);
+  const buffer = new AuditWriteBuffer(repository, logger, {}, meter, auditMetrics);
+  const catalogs = new CatalogService(configurationService, logger);
+  const retention = new RetentionService(configurationService, logger);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -131,12 +150,17 @@ export const initializeApp = async ({
   app.use(
     '/audit/v1',
     createAuditRouter({
-      catalogs: new CatalogService(configurationService, logger),
-      retention: new RetentionService(configurationService, logger),
+      catalogs,
+      retention,
       submitter: buffer,
       reader: repository,
       logger,
-      failedEvents: new FailedEventService(failedEventRepository, serviceId.toString(), auditMetrics),
+      failedEvents: new FailedEventService(
+        failedEventRepository,
+        serviceId.toString(),
+        auditMetrics,
+        new ReplayEventPreparer(catalogs, retention),
+      ),
     }),
   );
 

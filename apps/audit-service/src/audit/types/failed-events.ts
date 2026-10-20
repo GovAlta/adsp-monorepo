@@ -1,4 +1,4 @@
-import { AuditEvent } from './events';
+import { AuditEvent, EnrichedEvent } from './events';
 
 export interface FailedAuditEvent {
   id: string;
@@ -19,14 +19,13 @@ export interface ReplayAuditRecord {
   event: AuditEvent;
 }
 
-// All methods use the transaction's tenant/RLS context, never a tenant from the stored payload.
+// All methods use the trusted transaction tenant, never a tenant from the stored payload.
 export interface FailedEventReplayTransaction {
   getForUpdate(id: string): Promise<FailedAuditEvent | null>;
-  // Validate/enrich the stored input without the ingestion age limit; preserve its original actor.
   // Insert idempotently and return the stored audit_events row ID, not the caller's event_id.
-  insertReplayedEvent(failedEvent: FailedAuditEvent, writtenBy: string): Promise<string>;
+  insertReplayedEvent(event: EnrichedEvent): Promise<string>;
   markReplayed(id: string, replayedAs: string): Promise<void>;
-  insertReplayAudit(record: ReplayAuditRecord): Promise<void>;
+  insertReplayAudit(event: EnrichedEvent): Promise<void>;
 }
 
 export interface FailedEventRepository {

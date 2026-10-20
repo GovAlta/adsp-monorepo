@@ -23,7 +23,7 @@ The `apps/audit-service/src/audit` module follows the Calendar Service layout:
 - `utils/`: event/request validation and write authorization.
 
 `app.ts` initializes the application and registers configuration and roles; `main.ts` starts the
-HTTP listener and handles shutdown. `src/postgres/` connects the event reader and write buffer
+HTTP listener and handles shutdown. `src/postgres/` connects history, the write buffer and failed-event administration
 to the migrated `audit_events` and `audit_failed_events` tables. Tests are colocated with their implementations.
 
 ## Authorization
@@ -302,36 +302,41 @@ or the buffer is draining.
 
 ## Failed-event administration
 
-**Not connected to storage yet:** authorized requests return **503 with `Retry-After: 1`**
-until database and self-auditing integration is complete. The OSP-708 write buffer is present,
-but real event recovery is not available.
-
 Both endpoints require `audit-admin` and use the caller's tenant. Core administrators must
 provide `tenantId`. Reader or writer permissions alone are not enough.
 
-| Endpoint                                   | Purpose once storage is connected                                     |
-| ------------------------------------------ | --------------------------------------------------------------------- |
+| Endpoint                                 | Purpose                                                             |
+| ---------------------------------------- | ------------------------------------------------------------------- |
 | `GET /audit/v1/failed-events`              | List the tenant's open, replayed and discarded events, newest first.  |
 | `POST /audit/v1/failed-events/{id}/replay` | Retry an open event using its stored data. No request body is needed. |
 
 Listing accepts `top` (default 20, maximum 100) and the previous response's `page.next` as
 `after`. It returns `{ results, page: { after?, size, next? } }`.
 
-Replay returns 404 if the event is not found in the tenant, or 409 if already replayed or
-discarded. The original actor is preserved; `written_by` identifies the Audit Service.
-`replayed_as` links to the recovered audit row. A separate audit event records who requested
-the replay.
+Both endpoints use the same PostgreSQL connection as normal event writes and history reads.
+Replay saves the recovered event, failed-row update and replay audit record in one transaction:
+either all succeed or none do. Concurrent replay attempts cannot recover the same failed row twice.
 
-### Remaining integration
+The recovered event keeps its original actor; `written_by` identifies Audit Service.
+`replayed_as` links to its database row ID. If that event already exists, replay links to it
+without changing it. The `audit-service` action `failed-event.replay.succeeded` records the
+requesting administrator. Startup registers its definition through the SDK into the Core
+`audit-service:actions-audit-service` catalog using `REPLACE`; replay reads the effective catalog
+like other event writes. Registration is asynchronous: a missing or incompatible replay action
+returns 503 and rolls back the replay, rather than using a hardcoded fallback.
 
-Implement `FailedEventRepository` in `apps/audit-service/src/audit/types/failed-events.ts`
-and pass it to `initializeApp`. The database adapter must enforce tenant isolation, prevent
-concurrent duplicate replays, and save the recovered event, status update and replay audit
-record in one transaction: either all succeed or none do. Old parked events must not be
-rejected by the normal seven-day submission limit.
+Replay checks the stored input against the current action catalog and retention settings, but
+allows events older than seven days. Invalid input returns 400 and leaves the failed row open.
+A missing tenant row returns 404; replayed or discarded rows return 409. Unavailable storage
+or configuration returns 503 with `Retry-After: 1`.
 
-Map the buffer's `attempt_count` to the API's `attempts`, and provide `countOpen()` for monitoring.
-Real database recovery and rollback still need integration testing.
+The replay migration grants `audit_app` permission to update only `status` and `replayed_as`
+on failed rows. Audit history remains append-only. As with existing migrations, the role must
+already exist; if absent, the DBA must apply this grant when creating it.
+
+For real database tests, point `AUDIT_TEST_DATABASE_URL` at a **disposable localhost** PostgreSQL
+database named `audit_replay_test`, then run `npx nx test audit-service --runInBand --skipNxCache`.
+The integration suite runs migrations and deletes test rows; never use a shared database.
 
 ### Monitoring
 
@@ -343,5 +348,5 @@ failed event is still open**, or when the count cannot be read. An unavailable c
 unknown, not zero. Detection follows the monitoring update cycle; email or message delivery
 needs separate configuration.
 
-Open-event counts still require database integration. The parked-event and failed-ingest
-counter hooks also need to be connected to the write buffer.
+Open-event counts come from PostgreSQL. The write buffer counts confirmed parked events and
+unconfirmed saves; failed replay saves use the same failure counter with `operation=replay`.

@@ -4,7 +4,7 @@ import { FailedEventRepository } from './types';
 
 export interface AuditMetrics {
   recordParkedEvent(): void;
-  recordWriteFailure(operation: 'ingest' | 'replay'): void;
+  recordWriteFailure(operation: 'ingest' | 'replay', count?: number): void;
 }
 
 export function createAuditMetrics(
@@ -46,6 +46,6 @@ export function createAuditMetrics(
   );
   return {
     recordParkedEvent: () => parked?.add(1),
-    recordWriteFailure: (operation) => failures?.add(1, { operation }),
+    recordWriteFailure: (operation, count = 1) => failures?.add(count, { operation }),
   };
 }

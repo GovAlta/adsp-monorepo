@@ -64,17 +64,26 @@ export class EventRejectedError extends Error {
   }
 }
 
-export function validateEventEnvelope(input: unknown, receivedAt: Date): AuditEvent {
+export function validateEventEnvelope(
+  input: unknown,
+  receivedAt: Date,
+  { allowHistorical = false }: { allowHistorical?: boolean } = {},
+): AuditEvent {
   if (!validateEnvelope(input)) {
     throw new EventRejectedError('invalid_event', ajv.errorsText(validateEnvelope.errors));
   }
   const occurredAt = Date.parse(input.occurredAt);
   if (
     !Number.isFinite(occurredAt) ||
-    occurredAt < receivedAt.getTime() - MAX_EVENT_AGE_MS ||
+    (!allowHistorical && occurredAt < receivedAt.getTime() - MAX_EVENT_AGE_MS) ||
     occurredAt > receivedAt.getTime() + MAX_CLOCK_SKEW_MS
   ) {
-    throw new EventRejectedError('invalid_event', 'occurredAt must be within the past 7 days or next 5 minutes.');
+    throw new EventRejectedError(
+      'invalid_event',
+      allowHistorical
+        ? 'occurredAt must not exceed the next 5 minutes.'
+        : 'occurredAt must be within the past 7 days or next 5 minutes.',
+    );
   }
   for (const field of ['metadata', 'changeSet'] as const) {
     if (input[field] !== undefined && Buffer.byteLength(JSON.stringify(input[field]), 'utf8') > MAX_JSON_FIELD_BYTES) {

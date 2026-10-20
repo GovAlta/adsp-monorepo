@@ -134,7 +134,14 @@ describe('PostgresEventRepository', () => {
     ['53300', 'transient'],
     ['57014', 'transient'],
     ['57P01', 'transient'],
+    ['57P02', 'transient'],
+    ['57P03', 'transient'],
+    ['55P03', 'transient'],
+    ['ECONNREFUSED', 'transient'],
     ['ECONNRESET', 'transient'],
+    ['ETIMEDOUT', 'transient'],
+    ['EPIPE', 'transient'],
+    ['57000', 'permanent'],
     ['42501', 'permanent'],
   ])('classifies database error %s as %s and rolls back the batch', async (code, kind) => {
     rows.mockRejectedValue({ code, message: 'SQL with private actor data' });

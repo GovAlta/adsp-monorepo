@@ -8,9 +8,8 @@ paths:
         ordered by failed_at descending and id descending. Tenant callers cannot select
         another tenant. Core administrators must explicitly select a tenant.
 
-        The persistence adapter is not connected yet. Authorized requests currently return
-        503, never an empty success. Offset pagination is not a snapshot: concurrent new
-        failures may shift pages.
+        Reads persisted PostgreSQL rows. Offset pagination is not a snapshot:
+        concurrent new failures may shift pages.
       parameters:
         - $ref: '#/components/parameters/FailedEventsTenant'
         - in: query
@@ -68,15 +67,16 @@ paths:
         the original actor and namespace. The Audit Service is written_by on the recovered
         audit row, and replayed_as links to that row's id (not its event_id).
 
-        The repository contract requires a tenant-scoped row lock and one transaction for
+        PostgreSQL uses a tenant-scoped row lock and one transaction for
         the recovered row, status/link update and self-audit in namespace audit-service.
         Closed rows return 409, including a second concurrent replay after the first commits.
-        A failure must roll back all three writes. Replay does not reapply ingestion's
-        seven-day age limit to the original event.
+        A failure rolls back all three writes. Replay validates the stored input against the
+        current action catalog and retention settings, without ingestion's seven-day age limit.
 
-        PostgreSQL persistence and transactional self-auditing are not connected yet:
-        authorized requests currently return 503. This endpoint is not an end-to-end
-        recovery capability until those dependencies are implemented.
+        If the same tenant, namespace and event_id already exist, replay links to that row
+        without changing it. The operation is recorded as failed-event.replay.succeeded.
+        Startup registers its definition through the SDK into actions-audit-service.
+        A missing or incompatible registered replay action returns 503 and rolls back the replay.
       parameters:
         - $ref: '#/components/parameters/FailedEventsTenant'
         - in: path
@@ -93,7 +93,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/FailedAuditEvent'
         '400':
-          description: Invalid UUID, invalid tenant ID or missing Core tenant context.
+          description: Invalid UUID, tenant context or stored event; the failed row remains open.
         '401':
           description: Missing or invalid bearer token.
         '403':
@@ -115,7 +115,7 @@ components:
       example: urn:ads:platform:tenant-service:v2:/tenants/case-team
   responses:
     FailedEventsUnavailable:
-      description: Failed-event storage or transactional self-auditing is unavailable or not configured.
+      description: Database, action configuration or transactional self-auditing is unavailable; retry.
       headers:
         Retry-After:
           schema:

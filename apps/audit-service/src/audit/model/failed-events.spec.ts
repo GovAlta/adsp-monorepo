@@ -2,6 +2,9 @@ import { adspId, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { FailedAuditEvent, FailedEventReplayTransaction, FailedEventRepository } from '../types';
 import { FailedEventService } from './failed-events';
+import { enrichEvent } from '../utils/event-preparation';
+import { REPLAY_DEFINITION } from '../actions';
+import { DEFAULT_RETENTION_CLASSES } from './retention';
 
 describe('FailedEventService', () => {
   const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/case-team';
@@ -41,7 +44,20 @@ describe('FailedEventService', () => {
     withReplayTransaction: jest.fn(),
   };
   const metrics = { recordParkedEvent: jest.fn(), recordWriteFailure: jest.fn() };
-  const service = new FailedEventService(repository, writtenBy, metrics);
+  const preparer = { prepare: jest.fn(), prepareAudit: jest.fn() };
+  const prepared = enrichEvent(
+    {
+      eventId: failed.event_id,
+      occurredAt: '2020-01-01T00:00:00Z',
+      action: 'case.update',
+      status: 'success',
+      actor: { id: 'original-case-worker', type: 'user' },
+    },
+    REPLAY_DEFINITION,
+    { tenantId, namespace: failed.namespace, writtenBy, receivedAt: new Date() },
+    DEFAULT_RETENTION_CLASSES,
+  );
+  const service = new FailedEventService(repository, writtenBy, metrics, preparer);
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -49,6 +65,8 @@ describe('FailedEventService', () => {
     repository.withReplayTransaction.mockImplementation(async (_tenantId, work) => work(transaction));
     transaction.getForUpdate.mockResolvedValue(failed);
     transaction.insertReplayedEvent.mockResolvedValue(replayedAs);
+    preparer.prepare.mockResolvedValue(prepared);
+    preparer.prepareAudit.mockResolvedValue({ ...prepared, namespace: 'audit-service' });
   });
 
   it('passes a decoded cursor and tenant to the repository', async () => {
@@ -92,7 +110,8 @@ describe('FailedEventService', () => {
   it('passes original input and the Audit Service writer to storage, including old events', async () => {
     await service.replay(tenantId, id, administrator);
 
-    expect(transaction.insertReplayedEvent).toHaveBeenCalledWith(failed, writtenBy);
+    expect(preparer.prepare).toHaveBeenCalledWith(failed, writtenBy);
+    expect(transaction.insertReplayedEvent).toHaveBeenCalledWith(prepared);
   });
 
   it('starts the transaction in the caller tenant', async () => {
@@ -110,19 +129,23 @@ describe('FailedEventService', () => {
   it('records the administrator separately from the original actor', async () => {
     await service.replay(tenantId, id, administrator);
 
-    expect(transaction.insertReplayAudit).toHaveBeenCalledWith({
-      namespace: 'audit-service',
-      writtenBy,
-      event: {
-        eventId: expect.any(String),
-        occurredAt: expect.any(String),
-        action: 'failed-event.replay.succeeded',
-        status: 'success',
-        actor: { id: administrator.id, type: 'user', roles: ['audit-admin'] },
-        resource: { type: 'failed-event', id },
-        metadata: { replayedAs },
+    expect(preparer.prepareAudit).toHaveBeenCalledWith(
+      {
+        namespace: 'audit-service',
+        writtenBy,
+        event: {
+          eventId: expect.any(String),
+          occurredAt: expect.any(String),
+          action: 'failed-event.replay.succeeded',
+          status: 'success',
+          actor: { id: administrator.id, type: 'user', roles: ['audit-admin'] },
+          resource: { type: 'failed-event', id },
+          metadata: { replayedAs },
+        },
       },
-    });
+      tenantId,
+    );
+    expect(transaction.insertReplayAudit).toHaveBeenCalledWith({ ...prepared, namespace: 'audit-service' });
   });
 
   it('returns a replayed record without mutating the locked input', async () => {
@@ -199,13 +222,13 @@ describe('FailedEventService', () => {
   });
 
   it('fails closed when listing without a repository', async () => {
-    const unavailable = new FailedEventService(undefined, writtenBy, metrics);
+    const unavailable = new FailedEventService(undefined, writtenBy, metrics, preparer);
 
     await expect(unavailable.list(tenantId, 20)).rejects.toMatchObject({ extra: { statusCode: 503 } });
   });
 
   it('fails closed when replaying without a repository', async () => {
-    const unavailable = new FailedEventService(undefined, writtenBy, metrics);
+    const unavailable = new FailedEventService(undefined, writtenBy, metrics, preparer);
 
     await expect(unavailable.replay(tenantId, id, administrator)).rejects.toMatchObject({ extra: { statusCode: 503 } });
   });

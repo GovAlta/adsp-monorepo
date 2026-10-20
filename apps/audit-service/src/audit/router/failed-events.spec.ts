@@ -32,7 +32,8 @@ describe('failed-event administration routes', () => {
     getServiceConfigurationRevision: jest.fn(),
   };
   const metrics = { recordParkedEvent: jest.fn(), recordWriteFailure: jest.fn() };
-  const service = new FailedEventService(undefined, 'urn:ads:platform:audit-service', metrics);
+  const preparer = { prepare: jest.fn(), prepareAudit: jest.fn() };
+  const service = new FailedEventService(undefined, 'urn:ads:platform:audit-service', metrics, preparer);
   const list = jest.spyOn(service, 'list');
   const replay = jest.spyOn(service, 'replay');
 
@@ -169,7 +170,7 @@ describe('failed-event administration routes', () => {
   });
 
   it('does not return an empty success when no repository is connected', async () => {
-    const unavailable = new FailedEventService(undefined, 'urn:ads:platform:audit-service', metrics);
+    const unavailable = new FailedEventService(undefined, 'urn:ads:platform:audit-service', metrics, preparer);
 
     await request(createApp(user, unavailable)).get(basePath).expect('Retry-After', '1').expect(503);
   });

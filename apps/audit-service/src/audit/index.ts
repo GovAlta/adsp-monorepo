@@ -1,8 +1,9 @@
 export { configurationSchema, createAuditConfigurationConverter, combineAuditConfiguration } from './configuration';
-export { CatalogService, FailedEventService, RetentionService } from './model';
+export { CatalogService, FailedEventService, ReplayEventPreparer, RetentionService } from './model';
 export { AuditServiceRoles } from './roles';
 export { createAuditRouter, validateTenantContext, assertTenantContext } from './router';
 export { createAuditJsonParser } from './utils/request-validation';
+export { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE } from './types';
 export type {
   AuditEvent,
   EnrichedEvent,
