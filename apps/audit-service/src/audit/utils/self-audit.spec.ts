@@ -3,7 +3,14 @@ import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
-import { AUDIT_SERVICE_CATALOG, CatalogService, RetentionService, SelfAuditActions } from '../model';
+import {
+  SELF_AUDIT_DEFINITIONS,
+  CatalogService,
+  FailedEventService,
+  RetentionService,
+  SelfAuditActions,
+} from '../model';
+import { REPLAY_ACTION, REPLAY_DEFINITION } from '../actions';
 import { DEFAULT_RETENTION_CLASSES } from '../model/retention';
 import { createAuditRouter } from '../router';
 import { AuditServiceRoles } from '../roles';
@@ -17,31 +24,30 @@ const eventId = '0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11';
 
 const stored = { id: eventId, tenant_id: tenant.toString(), namespace: 'case-service' } as StoredEvent;
 
-describe('audit-service catalog', () => {
-  it('is returned for any tenant with security retention', async () => {
-    const getServiceConfiguration = jest.fn();
-    const catalogs = new CatalogService({ getServiceConfiguration } as never, logger);
-    await expect(catalogs.getCatalog('audit-service', tenant)).resolves.toBe(AUDIT_SERVICE_CATALOG);
-    expect(getServiceConfiguration).not.toHaveBeenCalled();
-    for (const definition of Object.values(AUDIT_SERVICE_CATALOG.actions)) {
-      expect(definition.retentionClass).toBe('security');
-    }
-  });
+const AUDIT_SERVICE_CATALOG = {
+  kind: 'actionCatalog',
+  application: 'audit-service',
+  actions: { ...SELF_AUDIT_DEFINITIONS, [REPLAY_ACTION]: REPLAY_DEFINITION },
+};
 
-  it('records replay as administrative and every other action as data-access', () => {
-    const { actions } = AUDIT_SERVICE_CATALOG;
-    expect(actions[SelfAuditActions.ReplayFailedEvents].category).toBe('administrative');
-    const others = Object.entries(actions).filter(([name]) => name !== SelfAuditActions.ReplayFailedEvents);
-    expect(others).toHaveLength(4);
-    others.forEach(([, definition]) => expect(definition.category).toBe('data-access'));
+describe('audit-service read actions', () => {
+  it('are all data-access with security retention', () => {
+    const definitions = Object.values(SELF_AUDIT_DEFINITIONS);
+    expect(definitions).toHaveLength(4);
+    definitions.forEach((definition) => {
+      expect(definition.category).toBe('data-access');
+      expect(definition.retentionClass).toBe('security');
+    });
   });
 });
 
 describe('self-auditing reads', () => {
   const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn() };
   const submitter: jest.Mocked<EventSubmitter> = { submit: jest.fn() };
+  const failedEvents = { list: jest.fn() };
   const retention = { getClasses: jest.fn() } as unknown as jest.Mocked<RetentionService>;
-  const catalogs = new CatalogService({} as never, logger);
+  const getServiceConfiguration = jest.fn();
+  const catalogs = new CatalogService({ getServiceConfiguration } as never, logger);
   const user: User = {
     id: 'reader-1',
     name: 'Reader',
@@ -52,10 +58,10 @@ describe('self-auditing reads', () => {
     token: { azp: 'ui', aud: 'audit-service', iss: 'tenant-issuer', bearer: 'test', email_verified: true },
   };
 
-  function createApp(withAuditing = true) {
+  function createApp(withAuditing = true, caller: User = user) {
     const app = express();
     app.use((req, _res, next) => {
-      req.user = user;
+      req.user = caller;
       req.tenant = { id: tenant, name: 'Tenant', realm: 'tenant' };
       req.isAuthenticated = (): this is Express.AuthenticatedRequest => true;
       next();
@@ -67,6 +73,7 @@ describe('self-auditing reads', () => {
         retention,
         logger,
         reader,
+        failedEvents: failedEvents as unknown as FailedEventService,
         submitter: withAuditing ? submitter : undefined,
         serviceId,
       }),
@@ -79,6 +86,7 @@ describe('self-auditing reads', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    getServiceConfiguration.mockResolvedValue(AUDIT_SERVICE_CATALOG);
     reader.find.mockResolvedValue([stored, stored]);
     reader.get.mockResolvedValue(stored);
     retention.getClasses.mockResolvedValue(DEFAULT_RETENTION_CLASSES);
@@ -122,6 +130,21 @@ describe('self-auditing reads', () => {
     expect(submitted()).toMatchObject({
       action: SelfAuditActions.ReadEvent,
       metadata: { resultCount: 1, filters: { namespace: 'case-service', id: eventId } },
+    });
+  });
+
+  it('records a failed-events listing attributed to the administrator', async () => {
+    const admin = { ...user, id: 'admin-1', roles: [AuditServiceRoles.Admin] };
+    failedEvents.list.mockResolvedValue({ results: [{}, {}, {}], page: { size: 3 } });
+
+    const res = await request(createApp(true, admin)).get('/audit/v1/failed-events?top=5');
+
+    expect(res.status).toBe(200);
+    expect(submitted()).toMatchObject({
+      namespace: 'audit-service',
+      action: SelfAuditActions.ListFailedEvents,
+      actor_id: 'admin-1',
+      metadata: { endpoint: 'GET /audit/v1/failed-events', resultCount: 3, filters: { top: 5 } },
     });
   });
 
@@ -177,7 +200,10 @@ describe('SelfAuditor failures', () => {
     });
     const auditor = new SelfAuditor({
       serviceId,
-      catalogs: new CatalogService({} as never, logger),
+      catalogs: new CatalogService(
+        { getServiceConfiguration: jest.fn().mockResolvedValue(AUDIT_SERVICE_CATALOG) } as never,
+        logger,
+      ),
       retention,
       submitter: { submit },
       logger,

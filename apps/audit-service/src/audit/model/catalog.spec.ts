@@ -2,6 +2,7 @@ import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { createLogger, transports } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, CatalogUnavailableError } from './catalog';
+import { REPLAY_ACTION, REPLAY_DEFINITION } from '../actions';
 
 describe('CatalogService', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -34,6 +35,24 @@ describe('CatalogService', () => {
     configuration.getServiceConfiguration.mockResolvedValue(catalog);
 
     expect(await service.getCatalog('case-service', tenantId)).toEqual(catalog);
+  });
+
+  it('does not supply a built-in replay action when the registered catalog is missing', async () => {
+    configuration.getServiceConfiguration.mockResolvedValue(null);
+    expect(await service.getCatalog('audit-service', tenantId)).toBeNull();
+    expect(configuration.getServiceConfiguration).toHaveBeenCalledWith('actions-audit-service', tenantId);
+  });
+
+  it('uses the configured replay definition without overriding it with local constants', async () => {
+    configuration.getServiceConfiguration.mockResolvedValue({
+      kind: 'actionCatalog',
+      application: 'audit-service',
+      actions: { custom: REPLAY_DEFINITION, [REPLAY_ACTION]: { ...REPLAY_DEFINITION, version: 99 } },
+    });
+    expect((await service.getCatalog('audit-service', tenantId)).actions).toEqual({
+      custom: REPLAY_DEFINITION,
+      [REPLAY_ACTION]: { ...REPLAY_DEFINITION, version: 99 },
+    });
   });
 
   it('reports a propagated SDK failure as unavailable', async () => {

@@ -77,10 +77,24 @@ export interface EventReader {
   get(tenantId: string, namespace: string, id: string): Promise<StoredEvent | null>;
 }
 
+export const EVENT_OUTCOME_STATUS = {
+  ACCEPTED: 'accepted',
+  DUPLICATE: 'duplicate',
+  REJECTED: 'rejected',
+} as const;
+
+export const EVENT_OUTCOME_CODE = {
+  STORAGE_FAILED: 'storage_failed',
+} as const;
+
 export type EventOutcome =
-  | { status: 'accepted' }
-  | { status: 'duplicate' }
-  | { status: 'rejected'; code: 'storage_failed'; reason: string };
+  | { status: typeof EVENT_OUTCOME_STATUS.ACCEPTED }
+  | { status: typeof EVENT_OUTCOME_STATUS.DUPLICATE }
+  | {
+      status: typeof EVENT_OUTCOME_STATUS.REJECTED;
+      code: typeof EVENT_OUTCOME_CODE.STORAGE_FAILED;
+      reason: string;
+    };
 
 export interface EventSubmitter {
   submit(events: EnrichedEvent[]): Promise<Map<string, EventOutcome>>;

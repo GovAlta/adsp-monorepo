@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import type { Logger } from 'winston';
 import { AUDIT_SERVICE_NAMESPACE, CatalogService, RetentionService, SelfAuditAction } from '../model';
 import { EnrichedEvent, EventSubmitter } from '../types';
-import { enrichEvent, getActionDefinition } from './enrich-event';
+import { enrichEvent, getActionDefinition } from './event-preparation';
 import { ActionValidator, EventRejectedError } from './event-validation';
 
 export interface SelfAuditRecord {

@@ -3,6 +3,7 @@ import { knex as initKnex, Knex } from 'knex';
 import { Logger } from 'winston';
 
 export { PostgresEventRepository } from './event';
+export { PostgresFailedEventRepository } from './failed-events';
 
 export interface PostgresProps {
   logger: Logger;

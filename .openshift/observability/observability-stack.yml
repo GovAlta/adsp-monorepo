@@ -722,6 +722,9 @@ objects:
           scrape_interval: 30s
           evaluation_interval: 30s
 
+        rule_files:
+          - /etc/prometheus/audit-alerts.yml
+
         scrape_configs:
           - job_name: otel-collector
             # Guardrail. A misbehaving service can otherwise grow the collector's exported series
@@ -756,6 +759,24 @@ objects:
               - names: ['event-service-rabbitmq']
                 type: A
                 port: 15692
+      audit-alerts.yml: |
+        groups:
+          - name: audit-durability
+            rules:
+              - alert: AuditOpenFailedEvents
+                expr: max by (deployment_environment) (audit_failed_events_open) > 0
+                labels:
+                  severity: critical
+                annotations:
+                  summary: Audit events are missing from the trail.
+                  description: At least one parked audit event is open. An audit-admin must investigate and replay it.
+              - alert: AuditFailedEventCountUnavailable
+                expr: min by (deployment_environment) (audit_failed_events_available) == 0
+                labels:
+                  severity: warning
+                annotations:
+                  summary: Open failed audit events cannot be counted.
+                  description: Check the Audit Service repository integration and database access; missing counts are not zero.
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:

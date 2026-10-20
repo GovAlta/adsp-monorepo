@@ -4,9 +4,16 @@ import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, RetentionService } from '../model';
 import { ActionValidator, EventRejectedError, validateEventEnvelope } from '../utils/event-validation';
-import { enrichEvent, getActionDefinition, WriteContext } from '../utils/enrich-event';
-import { EnrichedEvent, EventSubmitter, RejectedEvent, WriteEventsResponse } from '../types';
+import {
+  EnrichedEvent,
+  EVENT_OUTCOME_STATUS,
+  EVENT_OUTCOME_CODE,
+  EventSubmitter,
+  RejectedEvent,
+  WriteEventsResponse,
+} from '../types';
 import { getWriterClientId } from '../utils/write-access';
+import { enrichEvent, getActionDefinition, WriteContext } from '../utils/event-preparation';
 
 interface WriteEventsDependencies {
   catalogs: CatalogService;
@@ -45,14 +52,18 @@ async function submitEvents(
   for (const { event, index } of prepared) {
     const outcome = outcomes.get(event.id);
     switch (outcome?.status) {
-      case 'accepted':
+      case EVENT_OUTCOME_STATUS.ACCEPTED:
         response.accepted++;
         break;
-      case 'duplicate':
+      case EVENT_OUTCOME_STATUS.DUPLICATE:
         response.duplicates++;
         break;
-      case 'rejected':
-        if (outcome.code !== 'storage_failed' || typeof outcome.reason !== 'string' || !outcome.reason.trim()) {
+      case EVENT_OUTCOME_STATUS.REJECTED:
+        if (
+          outcome.code !== EVENT_OUTCOME_CODE.STORAGE_FAILED ||
+          typeof outcome.reason !== 'string' ||
+          !outcome.reason.trim()
+        ) {
           throw new InvalidOperationError('Audit storage returned an invalid rejection.', {
             statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
           });

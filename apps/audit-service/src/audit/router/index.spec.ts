@@ -75,22 +75,6 @@ describe('GET /audit/v1/:namespace/actions', () => {
     expect(result.body).toEqual([{ ...definition, name: 'case.update' }]);
   });
 
-  it('returns the built-in audit-service catalog without tenant configuration', async () => {
-    const result = await request(createApp()).get('/audit/v1/audit-service/actions').expect(HttpStatusCodes.OK);
-
-    expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
-    expect(result.body.map((action: { name: string }) => action.name).sort()).toEqual(
-      [
-        'events.list',
-        'events.list-all',
-        'events.read',
-        'failed-events.list',
-        'failed-events.replay',
-      ].sort(),
-    );
-    expect(result.body.find((action: { name: string }) => action.name === 'events.read').category).toBe('data-access');
-  });
-
   it('allows a reader from another namespace in the same tenant', async () => {
     const caller = { ...user, token: { ...user.token, azp: 'another-service' } };
 
@@ -184,6 +168,8 @@ describe('GET /audit/v1/:namespace/actions', () => {
       { path: '/:namespace/events', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events/:id', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events', roles: [AuditServiceRoles.Writer] },
+      { path: '/failed-events', roles: [AuditServiceRoles.Admin] },
+      { path: '/failed-events/:id/replay', roles: [AuditServiceRoles.Admin] },
     ]);
   });
 

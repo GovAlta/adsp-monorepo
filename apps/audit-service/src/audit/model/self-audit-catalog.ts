@@ -1,5 +1,4 @@
 import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
-import { ActionCatalog } from '../configuration';
 
 export const AUDIT_SERVICE_NAMESPACE = 'audit-service';
 
@@ -8,7 +7,6 @@ export const SelfAuditActions = {
   ListAllEvents: 'events.list-all',
   ReadEvent: 'events.read',
   ListFailedEvents: 'failed-events.list',
-  ReplayFailedEvents: 'failed-events.replay',
 } as const;
 
 export type SelfAuditAction = (typeof SelfAuditActions)[keyof typeof SelfAuditActions];
@@ -35,18 +33,10 @@ const readAction = (description: string): AuditActionDefinition => ({
   metadataSchema,
 });
 
-export const AUDIT_SERVICE_CATALOG: ActionCatalog = {
-  kind: 'actionCatalog',
-  application: AUDIT_SERVICE_NAMESPACE,
-  actions: {
-    [SelfAuditActions.ListNamespaceEvents]: readAction('Listed the audit events of one namespace.'),
-    [SelfAuditActions.ListAllEvents]: readAction('Listed audit events across all namespaces.'),
-    [SelfAuditActions.ReadEvent]: readAction('Read a single audit event.'),
-    [SelfAuditActions.ListFailedEvents]: readAction('Listed failed audit events.'),
-    // Replay writes events back into the trail rather than reading it.
-    [SelfAuditActions.ReplayFailedEvents]: {
-      ...readAction('Replayed failed audit events into the trail.'),
-      category: 'administrative',
-    },
-  },
+// Registered with the Core configuration at startup, next to the replay action, as the audit-service catalog.
+export const SELF_AUDIT_DEFINITIONS: Record<SelfAuditAction, AuditActionDefinition> = {
+  [SelfAuditActions.ListNamespaceEvents]: readAction('Listed the audit events of one namespace.'),
+  [SelfAuditActions.ListAllEvents]: readAction('Listed audit events across all namespaces.'),
+  [SelfAuditActions.ReadEvent]: readAction('Read a single audit event.'),
+  [SelfAuditActions.ListFailedEvents]: readAction('Listed failed audit events.'),
 };
