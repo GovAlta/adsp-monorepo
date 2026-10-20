@@ -346,7 +346,10 @@ describe('audit application authorization', () => {
       retentionClass: 'standard',
     });
     expect(response.body).not.toHaveProperty('tenant_id');
-    expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+    expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^actions-/),
+      expect.anything(),
+    );
   });
 
   it('durably parks storage failures before returning a per-event rejection', async () => {
@@ -382,7 +385,10 @@ describe('audit application authorization', () => {
         10,
         0,
       );
-      expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+      expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
+        expect.stringMatching(/^actions-/),
+        expect.anything(),
+      );
     },
   );
 
@@ -437,6 +443,13 @@ describe('audit application authorization', () => {
 
     expect(response.status).toBe(503);
     expect(response.body).toMatchObject({ db: false, ready: false });
+  });
+
+  it('reports the self-audit failure count in health', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ db: true, ready: true, selfAuditFailures: 0 });
   });
 
   it('stops accepting writes and reports unavailable readiness while draining', async () => {

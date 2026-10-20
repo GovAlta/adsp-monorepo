@@ -22,6 +22,7 @@ import {
   assertTenantContext,
 } from './audit';
 import { AuditWriteBuffer } from './audit/buffer';
+import { SelfAuditor } from './audit/utils/self-audit';
 import { createDatabase, PostgresEventRepository } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
@@ -119,16 +120,12 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     assertTenantContext,
     tenantHandler,
   );
+  const catalogs = new CatalogService(configurationService, logger);
+  const retention = new RetentionService(configurationService, logger);
+  const auditor = new SelfAuditor({ serviceId, catalogs, retention, submitter: buffer, logger });
   app.use(
     '/audit/v1',
-    createAuditRouter({
-      catalogs: new CatalogService(configurationService, logger),
-      retention: new RetentionService(configurationService, logger),
-      submitter: buffer,
-      reader: repository,
-      logger,
-      serviceId,
-    }),
+    createAuditRouter({ catalogs, retention, submitter: buffer, reader: repository, logger, serviceId, auditor }),
   );
 
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -139,7 +136,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     const platform = await healthCheck();
     const db = await isConnected();
     const ready = db && buffer.isReady;
-    res.status(ready ? 200 : 503).json({ ...platform, db, ready });
+    res.status(ready ? 200 : 503).json({ ...platform, db, ready, selfAuditFailures: auditor.failureCount });
   });
 
   app.get('/', async (req, res) => {
