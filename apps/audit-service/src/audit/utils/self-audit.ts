@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import type { Logger } from 'winston';
 import { AUDIT_SERVICE_NAMESPACE, CatalogService, RetentionService, SelfAuditAction } from '../model';
-import { EnrichedEvent, EventSubmitter } from '../types';
+import { EnrichedEvent, EVENT_OUTCOME_STATUS, EventSubmitter } from '../types';
 import { enrichEvent, getActionDefinition } from './event-preparation';
 import { ActionValidator, EventRejectedError } from './event-validation';
 
@@ -91,7 +91,7 @@ export class SelfAuditor {
       );
 
       const outcome = (await submitter.submit([enriched])).get(enriched.id);
-      if (outcome?.status === 'rejected') {
+      if (outcome?.status === EVENT_OUTCOME_STATUS.REJECTED) {
         throw new Error(`Event rejected: ${outcome.reason}`);
       }
     } catch (err) {
