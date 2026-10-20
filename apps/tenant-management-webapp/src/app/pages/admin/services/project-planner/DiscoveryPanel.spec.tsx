@@ -27,7 +27,8 @@ const solution = (d?: DiscoveryState, blueprint = false): Solution =>
     status: 'draft',
     createdByName: 'Pat',
     updatedOn: '2026-03-01T10:00:00.000Z',
-    revision: 1,
+    version: '1.0',
+    versionHistory: [],
     state: {
       problemStatement: 'Permits',
       concepts: [],

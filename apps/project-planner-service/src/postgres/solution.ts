@@ -1,7 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Knex } from 'knex';
-import { Solution, SolutionCriteria, SolutionRepository, SolutionState } from '../planner';
+import { Solution, SolutionCriteria, SolutionRepository, SolutionState, SolutionVersionEntry } from '../planner';
 
 interface SolutionRecord {
   id: string;
@@ -15,7 +15,10 @@ interface SolutionRecord {
   createdOn: Date;
   updatedOn: Date;
   state: SolutionState;
-  revision: number;
+  version: string;
+  versionHistory: SolutionVersionEntry[];
+  lastExportHashes: Record<string, string>;
+  exportedOnce: boolean;
 }
 
 const mapRecord = (record: SolutionRecord): Solution => ({
@@ -30,7 +33,10 @@ const mapRecord = (record: SolutionRecord): Solution => ({
   createdOn: record.createdOn,
   updatedOn: record.updatedOn,
   state: record.state,
-  revision: record.revision,
+  version: record.version,
+  versionHistory: record.versionHistory,
+  lastExportHashes: record.lastExportHashes,
+  exportedOnce: record.exportedOnce,
 });
 
 const mapSolution = (solution: Solution): SolutionRecord => ({
@@ -45,7 +51,10 @@ const mapSolution = (solution: Solution): SolutionRecord => ({
   createdOn: solution.createdOn,
   updatedOn: solution.updatedOn,
   state: solution.state,
-  revision: solution.revision,
+  version: solution.version,
+  versionHistory: solution.versionHistory,
+  lastExportHashes: solution.lastExportHashes,
+  exportedOnce: solution.exportedOnce,
 });
 
 export class PostgresSolutionRepository implements SolutionRepository {
@@ -86,15 +95,19 @@ export class PostgresSolutionRepository implements SolutionRepository {
   async save(solution: Solution): Promise<Solution> {
     const record = mapSolution(solution);
     const rows = await this.knex<SolutionRecord>('solutions')
-      .insert({ ...record, state: JSON.stringify(record.state) as unknown as SolutionState })
+      .insert({
+        ...record,
+        state: JSON.stringify(record.state) as unknown as SolutionState,
+        versionHistory: JSON.stringify(record.versionHistory) as unknown as SolutionVersionEntry[],
+        lastExportHashes: JSON.stringify(record.lastExportHashes) as unknown as Record<string, string>,
+      })
       .onConflict('id')
       .merge()
-      .where('solutions.revision', record.revision - 1)
       .where('solutions.tenant', record.tenant)
       .returning('*');
 
     if (rows.length < 1) {
-      throw new InvalidOperationError('Solution was modified by another request; reload and retry.');
+      throw new InvalidOperationError('Solution belongs to a different tenant.');
     }
     return mapRecord(rows[0]);
   }

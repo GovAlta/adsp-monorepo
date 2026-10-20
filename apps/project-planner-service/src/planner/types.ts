@@ -265,6 +265,7 @@ export interface SolutionState {
   blueprint?: SolutionBlueprint;
   // Overall understanding of the problem, shown for every solution regardless of mode.
   confidence?: { score: number; threshold: number; factors: ConfidenceFactor[] };
+  problemStatementUpdatedOn?: string;
 }
 
 export interface Solution {
@@ -278,8 +279,18 @@ export interface Solution {
   createdByName: string;
   createdOn: Date;
   updatedOn: Date;
-  revision: number;
+  version: string;
+  versionHistory: SolutionVersionEntry[];
+  lastExportHashes: Record<string, string>;
+  exportedOnce: boolean;
   state: SolutionState;
+}
+
+export interface SolutionVersionEntry {
+  version: string;
+  changedAt: string;
+  changedBy: string;
+  changedSections: string[];
 }
 
 export interface SolutionCriteria {

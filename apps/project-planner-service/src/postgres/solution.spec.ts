@@ -32,7 +32,10 @@ describe('PostgresSolutionRepository', () => {
     createdOn: new Date('2026-01-01'),
     updatedOn: new Date('2026-01-02'),
     state,
-    revision: 1,
+    version: '1.0',
+    versionHistory: [],
+    lastExportHashes: {},
+    exportedOnce: false,
   };
   const solution: Solution = {
     id: record.id,
@@ -46,7 +49,10 @@ describe('PostgresSolutionRepository', () => {
     createdOn: record.createdOn,
     updatedOn: record.updatedOn,
     state,
-    revision: 1,
+    version: '1.0',
+    versionHistory: [],
+    lastExportHashes: {},
+    exportedOnce: false,
   };
 
   const plain = (s: Solution) => ({ ...s, tenantId: s.tenantId.toString() });
@@ -192,12 +198,17 @@ describe('PostgresSolutionRepository', () => {
       knexMock.mockReturnValueOnce(queryMock);
     });
 
-    it('inserts the record with state serialized as JSON', async () => {
+    it('inserts the record with state, versionHistory and lastExportHashes serialized as JSON', async () => {
       queryMock.returning.mockResolvedValueOnce([record]);
 
       await repository.save(solution);
 
-      expect(queryMock.insert).toHaveBeenCalledWith({ ...record, state: JSON.stringify(state) });
+      expect(queryMock.insert).toHaveBeenCalledWith({
+        ...record,
+        state: JSON.stringify(state),
+        versionHistory: JSON.stringify(record.versionHistory),
+        lastExportHashes: JSON.stringify(record.lastExportHashes),
+      });
     });
 
     it('upserts on id', async () => {
@@ -206,14 +217,6 @@ describe('PostgresSolutionRepository', () => {
       await repository.save(solution);
 
       expect(queryMock.onConflict).toHaveBeenCalledWith('id');
-    });
-
-    it('only merges when the stored revision is the previous revision', async () => {
-      queryMock.returning.mockResolvedValueOnce([record]);
-
-      await repository.save({ ...solution, revision: 3 });
-
-      expect(queryMock.where).toHaveBeenCalledWith('solutions.revision', 2);
     });
 
     it('only merges within the same tenant', async () => {
@@ -232,7 +235,7 @@ describe('PostgresSolutionRepository', () => {
       expect(plain(result)).toEqual(plain(solution));
     });
 
-    it('throws InvalidOperationError when no row was written due to a revision conflict', async () => {
+    it('throws InvalidOperationError when no row was written (tenant mismatch)', async () => {
       queryMock.returning.mockResolvedValueOnce([]);
 
       await expect(repository.save(solution)).rejects.toThrow(InvalidOperationError);

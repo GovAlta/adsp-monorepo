@@ -69,6 +69,7 @@ export interface SolutionState {
   discovery?: DiscoveryState;
   blueprint?: SolutionBlueprint;
   confidence?: SolutionConfidence;
+  problemStatementUpdatedOn?: string;
 }
 
 export interface Solution {
@@ -79,8 +80,20 @@ export interface Solution {
   status: string;
   createdByName: string;
   updatedOn: string;
-  revision: number;
+  version: string;
+  versionHistory: SolutionVersionEntry[];
+  lastUpdated?: string;
+  changedSections?: string[];
+  initial?: boolean;
+  blueprintOutOfDate?: boolean;
   state: SolutionState;
+}
+
+export interface SolutionVersionEntry {
+  version: string;
+  changedAt: string;
+  changedBy: string;
+  changedSections: string[];
 }
 
 export interface BusinessPattern {

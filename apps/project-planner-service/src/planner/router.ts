@@ -11,6 +11,7 @@ import {
   BlueprintServiceDetail,
   buildRuleBlueprint,
   chatHighlights,
+  isBlueprintOutOfDate,
   mergeBlueprintCore,
   recommendedServices,
   storedConsult,
@@ -39,6 +40,7 @@ import {
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
+import { changedSections, classifyBump, nextVersion, sectionHashes, VersionBump } from './versioning';
 
 interface PlannerRouterProps {
   logger: Logger;
@@ -188,7 +190,17 @@ async function loadSolution(repository: SolutionRepository, req: Request, id: st
   if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
     throw new UnauthorizedUserError('access solution', req.user);
   }
-  return solution;
+  const defaulted: Solution = {
+    version: '1.0',
+    versionHistory: [],
+    lastExportHashes: {},
+    exportedOnce: false,
+    ...solution,
+  };
+  if (!defaulted.exportedOnce && defaulted.versionHistory.length > 0) {
+    defaulted.exportedOnce = true;
+  }
+  return defaulted;
 }
 
 const getSolution =
@@ -251,7 +263,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
   const validateId = createValidationHandler(param('id').isUUID());
 
   async function persist(req: Request, solution: Solution, operation: string) {
-    const saved = await solutionRepository.save({ ...solution, updatedOn: new Date(), revision: solution.revision + 1 });
+    const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
     eventService.send(solutionUpdated(req.user, saved, operation));
     return saved;
   }
@@ -342,9 +354,11 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       conversation.push({ role: 'assistant', content: warning ? `${result.reply} (${warning})` : result.reply, at: now });
     }
 
+    const problemStatement = result.mode === 'rules' ? ruleText : text;
     const state: SolutionState = {
       ...solution.state,
-      problemStatement: result.mode === 'rules' ? ruleText : text,
+      problemStatement,
+      problemStatementUpdatedOn: problemStatement === solution.state.problemStatement ? solution.state.problemStatementUpdatedOn : now,
       concepts: [...solution.state.concepts, ...result.concepts],
       patternMatches: result.matches,
       hypotheses: result.hypotheses,
@@ -513,7 +527,10 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           createdByName: req.user.name,
           createdOn: now,
           updatedOn: now,
-          revision: 1,
+          version: '1.0',
+          versionHistory: [],
+          lastExportHashes: {},
+          exportedOnce: false,
           state: emptyState(req.body.problemStatement),
         });
         res.status(201).send(solution);
@@ -577,6 +594,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
             : solution.state.questions,
         };
         if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
+          state.problemStatementUpdatedOn = new Date().toISOString();
           refreshConfidence(state);
         }
         res.send(
@@ -750,22 +768,48 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     },
   );
 
-  router.get('/solutions/:id/export', requirePlannerUser, validateId, getSolution(solutionRepository), (req, res) => {
-    const solution = loaded(req);
-    res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
-    res.send({
-      exportedAt: new Date().toISOString(),
-      id: solution.id,
-      name: solution.name,
-      description: solution.description,
-      scenario: solution.scenario,
-      status: solution.status,
-      createdByName: solution.createdByName,
-      createdOn: solution.createdOn,
-      updatedOn: solution.updatedOn,
-      revision: solution.revision,
-      state: solution.state,
-    });
+  router.get('/solutions/:id/export', requirePlannerUser, validateId, getSolution(solutionRepository), async (req, res, next) => {
+    try {
+      const solution = loaded(req);
+      const currentHashes = sectionHashes(solution);
+      const changed = changedSections(solution.lastExportHashes, currentHashes);
+      const isInitial = !solution.exportedOnce;
+      const bump: VersionBump = isInitial ? 'none' : classifyBump(changed);
+
+      let { version, versionHistory } = solution;
+      let lastUpdated = versionHistory[versionHistory.length - 1]?.changedAt || solution.updatedOn.toISOString();
+      if (bump !== 'none') {
+        version = nextVersion(solution.version, bump);
+        const changedAt = new Date().toISOString();
+        versionHistory = [...versionHistory, { version, changedAt, changedBy: req.user.name, changedSections: changed }];
+        lastUpdated = changedAt;
+      }
+      if (bump !== 'none' || isInitial) {
+        await solutionRepository.save({ ...solution, version, versionHistory, lastExportHashes: currentHashes, exportedOnce: true });
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
+      res.send({
+        exportedAt: new Date().toISOString(),
+        id: solution.id,
+        name: solution.name,
+        description: solution.description,
+        scenario: solution.scenario,
+        status: solution.status,
+        createdByName: solution.createdByName,
+        createdOn: solution.createdOn,
+        updatedOn: solution.updatedOn,
+        version,
+        lastUpdated,
+        changedSections: bump === 'none' ? [] : changed,
+        initial: isInitial,
+        blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
+        versionHistory,
+        state: solution.state,
+      });
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.post(

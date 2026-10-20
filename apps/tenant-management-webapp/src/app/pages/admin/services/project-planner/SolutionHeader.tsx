@@ -55,11 +55,17 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
     });
   const exportJson = () =>
     attempt(async () => {
-      const data = await api.exportSolution(solution.id);
+      const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
+      onSolutionChange({ ...solution, ...data });
       download(`planner-${safeName(solution)}.json`, JSON.stringify(data, null, 2), 'application/json');
     });
   const exportReport = () =>
-    download(`planner-${safeName(solution)}.md`, solutionToMarkdown(solution), 'text/markdown');
+    attempt(async () => {
+      const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
+      const updated = { ...solution, ...data };
+      onSolutionChange(updated);
+      download(`planner-${safeName(solution)}.md`, solutionToMarkdown(updated), 'text/markdown');
+    });
   const remove = () =>
     attempt(async () => {
       await api.deleteSolution(solution.id);
@@ -112,6 +118,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
               onClick={startRename}
             />
             <GoabBadge type="information" content={solution.status} icon={false} />
+            <GoabBadge type="information" content={`v${solution.version}`} icon={false} testId="solution-version" />
           </Row>
         )}
         <Row role="group" aria-label="Export and delete">

@@ -22,7 +22,8 @@ const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit int
   status: 'draft',
   createdByName: 'Pat',
   updatedOn: '2026-03-01T10:00:00.000Z',
-  revision: 1,
+  version: '1.0',
+  versionHistory: [],
   state: {
     problemStatement: 'Applicants submit permits.',
     concepts: [],
@@ -508,10 +509,12 @@ describe('SolutionWorkplace', () => {
       );
 
       click(container, 'download-report');
-      expect(download).toHaveBeenCalledWith(
-        'planner-permit-intake.md',
-        expect.stringContaining('# Permit intake'),
-        'text/markdown',
+      await waitFor(() =>
+        expect(download).toHaveBeenCalledWith(
+          'planner-permit-intake.md',
+          expect.stringContaining('# Permit intake'),
+          'text/markdown',
+        ),
       );
     });
 

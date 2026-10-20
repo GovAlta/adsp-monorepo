@@ -13,6 +13,10 @@ exports.up = function (knex) {
       table.string('createdByName').notNullable();
       table.timestamp('createdOn').notNullable();
       table.timestamp('updatedOn').notNullable();
+      table.string('version').notNullable().defaultTo('1.0');
+      table.jsonb('versionHistory').notNullable().defaultTo('[]');
+      table.jsonb('lastExportHashes').notNullable().defaultTo('{}');
+      table.boolean('exportedOnce').notNullable().defaultTo(false);
       // Structured solution state: business model, hypotheses, decisions, questions, specialists, artifacts.
       table.jsonb('state').notNullable();
 

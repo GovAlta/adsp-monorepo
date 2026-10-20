@@ -56,11 +56,26 @@ export function chatToMarkdown(chat: SpecialistChat): string {
 
 export function solutionToMarkdown(solution: Solution): string {
   const st = solution.state;
+  const latestChange = solution.versionHistory[solution.versionHistory.length - 1];
+  const changedSections = solution.changedSections ?? latestChange?.changedSections ?? [];
+  const lastUpdated = solution.lastUpdated ?? latestChange?.changedAt ?? solution.updatedOn;
   const lines: string[] = [
     `# ${solution.name}`,
     '',
     `Status: ${solution.status} · Exported ${new Date().toLocaleString()}`,
     '',
+    `solution-version: ${solution.version}`,
+    `last-updated: ${fmtDate(lastUpdated)}`,
+    '',
+    "## What's changed",
+    '',
+    ...(solution.initial
+      ? ['Initial version.']
+      : changedSections.length
+      ? changedSections.map((s) => `- ${s}`)
+      : ['No changes since the previous version.']),
+    '',
+    ...(solution.blueprintOutOfDate ? ['> **Blueprint may be out of date. Regenerate it.**', ''] : []),
     '## Problem statement',
     '',
     st.problemStatement || '_None_',

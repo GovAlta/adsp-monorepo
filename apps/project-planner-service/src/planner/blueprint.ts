@@ -241,3 +241,7 @@ export function assembleBlueprint(
     specialistNotes: notes,
   };
 }
+
+export function isBlueprintOutOfDate(state: SolutionState): boolean {
+  return !!(state.blueprint && state.problemStatementUpdatedOn && state.problemStatementUpdatedOn > state.blueprint.generatedOn);
+}

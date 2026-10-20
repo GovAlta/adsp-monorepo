@@ -8,7 +8,10 @@ const solution = (state: Partial<Solution['state']> = {}): Solution => ({
   status: 'analyzed',
   createdByName: 'tester',
   updatedOn: '2026-01-01T00:00:00Z',
-  revision: 1,
+  version: '1.1',
+  versionHistory: [
+    { version: '1.1', changedAt: '2026-01-02T00:00:00Z', changedBy: 'tester', changedSections: ['Problem statement'] },
+  ],
   state: {
     problemStatement: 'Applicants submit permits.',
     concepts: [{ id: 'c1', type: 'actor', name: 'Applicant', source: 'user' }],
@@ -108,11 +111,47 @@ describe('utils', () => {
       const md = solutionToMarkdown(solution());
 
       expect(md).toContain('# Permit Intake!');
+      expect(md).toContain('solution-version: 1.1');
+      expect(md).toContain(`last-updated: ${fmtDate('2026-01-02T00:00:00Z')}`);
+      expect(md).toContain("## What's changed");
+      expect(md).toContain('- Problem statement');
       expect(md).toContain('Applicants submit permits.');
       expect(md.indexOf('1. **form-service**')).toBeLessThan(md.indexOf('2. **file-service**'));
       expect(md).toContain('- A1');
       expect(md).toContain('  - Answer: Officer');
       expect(md).not.toContain('# Project blueprint');
+    });
+
+    it('shows no changes on a re-export that did not bump, instead of repeating the last bump', () => {
+      const md = solutionToMarkdown({
+        ...solution(),
+        version: '1.1',
+        changedSections: [],
+        lastUpdated: '2026-01-03T00:00:00Z',
+      });
+
+      expect(md).toContain(`last-updated: ${fmtDate('2026-01-03T00:00:00Z')}`);
+      expect(md).toContain('No changes since the previous version.');
+      expect(md).not.toContain('- Problem statement');
+    });
+
+    it('shows "Initial version" on the first export instead of "No changes"', () => {
+      const md = solutionToMarkdown({ ...solution(), version: '1.0', versionHistory: [], initial: true, changedSections: [] });
+
+      expect(md).toContain('Initial version.');
+      expect(md).not.toContain('No changes since the previous version.');
+    });
+
+    it('warns when the blueprint may be out of date', () => {
+      const md = solutionToMarkdown({ ...solution(), blueprintOutOfDate: true });
+
+      expect(md).toContain('Blueprint may be out of date. Regenerate it.');
+    });
+
+    it('does not warn when the blueprint is up to date', () => {
+      const md = solutionToMarkdown({ ...solution(), blueprintOutOfDate: false });
+
+      expect(md).not.toContain('Blueprint may be out of date.');
     });
 
     it('includes confidence, discovery and analysis', () => {

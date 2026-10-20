@@ -145,13 +145,21 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
     try {
       const data = await api.exportSolution(solution.id);
       download(`planner-${safeName(solution)}.json`, JSON.stringify(data, null, 2), 'application/json');
+      await load();
     } catch {
       // Error is surfaced through the notification handled in the api hook.
     }
   };
 
-  const exportReport = (solution: Solution) =>
-    download(`planner-${safeName(solution)}.md`, solutionToMarkdown(solution), 'text/markdown');
+  const exportReport = async (solution: Solution) => {
+    try {
+      const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
+      download(`planner-${safeName(solution)}.md`, solutionToMarkdown({ ...solution, ...data }), 'text/markdown');
+      await load();
+    } catch {
+      // Error is surfaced through the notification handled in the api hook.
+    }
+  };
 
   return (
     <section aria-label="Solutions">
@@ -235,7 +243,7 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                 <th>Status</th>
                 <th>Created by</th>
                 <th>Updated</th>
-                <th>Revision</th>
+                <th>Version</th>
                 <th></th>
               </tr>
             </thead>
@@ -258,7 +266,7 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                   </td>
                   <td>{solution.createdByName}</td>
                   <td>{new Date(solution.updatedOn).toLocaleString()}</td>
-                  <td>{solution.revision}</td>
+                  <td>{solution.version}</td>
                   <td>
                     <GoabIconButton
                       icon="download"

@@ -27,7 +27,8 @@ describe('Solutions', () => {
     status: 'draft',
     createdByName: 'Pat Planner',
     updatedOn: '2026-03-01T10:00:00.000Z',
-    revision: 1,
+    version: '1.0',
+    versionHistory: [],
     state: {
       problemStatement: '',
       concepts: [],
@@ -317,11 +318,13 @@ describe('Solutions', () => {
     });
 
     it('downloads the solution as a markdown report', async () => {
+      api.exportSolution.mockResolvedValue({ version: '1.1', versionHistory: [] });
       const { container, findByText } = render(<Solutions onSelect={onSelect} />);
       await findByText('Permit intake');
 
       click(container, 'export-report-solution-solution-1');
 
+      await waitFor(() => expect(api.exportSolution).toHaveBeenCalledWith('solution-1'));
       expect(download).toHaveBeenCalledWith('planner-permit-intake.md', expect.any(String), 'text/markdown');
     });
   });

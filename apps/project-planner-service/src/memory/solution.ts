@@ -35,11 +35,8 @@ export class MemorySolutionRepository implements SolutionRepository {
 
   async save(solution: Solution): Promise<Solution> {
     const existing = this.solutions.get(solution.id);
-    if (
-      existing &&
-      (existing.tenantId.toString() !== solution.tenantId.toString() || existing.revision !== solution.revision - 1)
-    ) {
-      throw new InvalidOperationError('Solution was modified by another request; reload and retry.');
+    if (existing && existing.tenantId.toString() !== solution.tenantId.toString()) {
+      throw new InvalidOperationError('Solution belongs to a different tenant.');
     }
     this.solutions.set(solution.id, solution);
     return solution;

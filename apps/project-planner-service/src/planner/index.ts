@@ -16,6 +16,7 @@ export * from './repository';
 export * from './roles';
 export * from './specialists';
 export * from './types';
+export * from './versioning';
 
 interface PlannerMiddlewareProps {
   logger: Logger;
