@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
-import { renderNoItem } from '@components/NoItem';
 interface CorrelationIndicatorProps {
   color: string;
 }
@@ -115,6 +114,8 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
+  const loading = isLoading || indicator.show;
   const hasEntries = entries !== null && entries.length > 0;
   useEffect(() => {
     entries?.filter((item) => {
@@ -134,7 +135,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
   return (
     <>
       <TableArea>
-        <Visible visible={!indicator.show && hasEntries}>
+        <Visible visible={!loading && hasEntries}>
           <div className={className}>
             <DataTable>
               <colgroup>
@@ -173,14 +174,14 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
             </DataTable>
           </div>
         </Visible>
-        {indicator.show && hasEntries && (
+        {loading && hasEntries && (
           <LoadingOverlay data-testid="event-log-loading-overlay">
             <PageIndicator />
           </LoadingOverlay>
         )}
       </TableArea>
-      {!indicator.show && entries !== null && entries.length === 0 && renderNoItem('event log')}
-      {indicator.show && !hasEntries && <PageIndicator />}
+      {!loading && entries !== null && entries.length === 0 && <h2 role="status">No Events Found</h2>}
+      {loading && !hasEntries && <PageIndicator />}
     </>
   );
 };

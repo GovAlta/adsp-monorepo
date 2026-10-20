@@ -32,6 +32,10 @@ Domain events represent key changes at a domain model level. For example, an int
 
 Event log records all _events_ emitted via the event service and keeps basic metrics including a count of different events. These metrics can represent key domain metrics; in the intake application example, the count of application submitted events represents the volume of applications.
 
+In the tenant management app, the Event log page initially searches **Last 7 days**, covering the preceding 168 hours through the current time, with both UTC timestamp boundaries included in the API request. The date range filter also offers **Last hour**, **Today**, **Last 24 hours**, **Last 30 days**, and **Custom**. Today starts at midnight in Mountain Time (`America/Edmonton`, including daylight saving time). Rolling periods cover the indicated number of elapsed hours or 24-hour days, ending when Search is clicked.
+
+Select a period and click **Search** to apply it along with any other filters. Start and end date/time controls display the selected period in Mountain Time. They are disabled for predefined periods and editable for **Custom**, initially filled with the selected period. The end must be later than the start. **Reset** clears other filters and immediately searches Last 7 days again. Removing the date range chip clears the selected period and searches without a lower date limit, retaining other applied filters. Pagination pins an upper timestamp at search time so new events do not shift the result pages or count. Search is disabled when no criteria are selected. An empty result displays **No Events Found**.
+
 ## Code examples
 
 ### Configure an event definition
