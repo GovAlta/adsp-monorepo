@@ -315,7 +315,8 @@ provide `tenantId`. Reader or writer permissions alone are not enough.
 | `POST /audit/v1/failed-events/{id}/replay` | Retry an open event using its stored data. No request body is needed. |
 
 Listing accepts `top` (default 20, maximum 100) and the previous response's `page.next` as
-`after`. It returns `{ results, page: { after?, size, next? } }`.
+`after`, an opaque keyset cursor (the last row's `failed_at` and `id`), so pages stay stable while
+new failures are parked. It returns `{ results, page: { after?, size, next? } }`.
 
 Both endpoints use the same PostgreSQL connection as normal event writes and history reads.
 Replay saves the recovered event, failed-row update and replay audit record in one transaction:
