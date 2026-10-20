@@ -5,7 +5,6 @@ const mockInitializePlatform = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn() };
 const mockApplyPlannerMiddleware = jest.fn();
 const mockCreateRepositories = jest.fn();
-const mockCreateMemoryRepositories = jest.fn();
 const mockEnvironment: Record<string, unknown> = {};
 
 jest.mock('express', () => mockExpress);
@@ -36,18 +35,15 @@ jest.mock('./planner', () => ({
   PlannerServiceRoles: {},
 }));
 jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
-jest.mock('./memory', () => ({ createMemoryRepositories: mockCreateMemoryRepositories }));
 
 describe('main', () => {
   const healthCheck = jest.fn();
-  const createRepositories = (name: string) => ({
-    solutionRepository: { name },
-    patternRepository: { name },
-    specialistChatRepository: { name },
+  const postgresRepositories = {
+    solutionRepository: { name: 'solutions' },
+    patternRepository: { name: 'patterns' },
+    specialistChatRepository: { name: 'chats' },
     isConnected: jest.fn().mockResolvedValue(true),
-  });
-  const postgresRepositories = createRepositories('postgres');
-  const memoryRepositories = createRepositories('memory');
+  };
 
   const startMain = async () => {
     jest.resetModules();
@@ -60,31 +56,43 @@ describe('main', () => {
     Object.assign(mockEnvironment, {
       KEYCLOAK_ROOT_URL: 'http://keycloak.example',
       DIRECTORY_URL: 'http://directory.example',
-      PLANNER_STORAGE: 'postgres',
+      DB_HOST: 'db.example',
     });
     mockExpress.mockReturnValue(mockApp);
     mockApp.listen.mockReturnValue({ on: jest.fn() });
     mockReadFile.mockImplementation((_path, _encoding, callback) => callback(null, '{}'));
     mockInitializePlatform.mockResolvedValue({ healthCheck });
     mockCreateRepositories.mockResolvedValue(postgresRepositories);
-    mockCreateMemoryRepositories.mockReturnValue(memoryRepositories);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it.each([
-    ['memory', memoryRepositories],
-    ['postgres', postgresRepositories],
-  ])('uses the %s repositories when PLANNER_STORAGE selects them', async (storage, repositories) => {
-    mockEnvironment.PLANNER_STORAGE = storage;
+  it('connects to postgres with the environment DB settings', async () => {
+    await startMain();
 
+    expect(mockCreateRepositories).toHaveBeenCalledWith(expect.objectContaining({ DB_HOST: 'db.example' }));
+  });
+
+  it('reads migrations from next to the bundle', async () => {
+    await startMain();
+
+    expect(mockCreateRepositories).toHaveBeenCalledWith(
+      expect.objectContaining({ migrationsDirectory: expect.stringMatching(/src[\\/]migrations$/) }),
+    );
+  });
+
+  it('uses the postgres repositories', async () => {
     await startMain();
 
     expect(mockApplyPlannerMiddleware).toHaveBeenCalledWith(
       mockApp,
-      expect.objectContaining({ solutionRepository: repositories.solutionRepository }),
+      expect.objectContaining({
+        solutionRepository: postgresRepositories.solutionRepository,
+        patternRepository: postgresRepositories.patternRepository,
+        specialistChatRepository: postgresRepositories.specialistChatRepository,
+      }),
     );
   });
 

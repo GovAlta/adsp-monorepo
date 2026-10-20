@@ -37,7 +37,7 @@ Source: `docs/requirements/Project_Planner_Requirements.md`. Stack: ADSP-native 
 
 ## Assumptions (resolving `[NEEDS CLARIFICATION]`)
 - **A1** Rule-based planning is the baseline and always available. AI mode is optional, needs `MAAS_API_KEY`, and never blocks a request; agent-service agents may drive the same API later.
-- **A2** Persistence is Postgres JSONB (like task-service): one row per solution, stored pattern and specialist chat. Deployed environments use in-memory storage (`PLANNER_STORAGE=memory`) until the database is provisioned.
+- **A2** Persistence is Postgres JSONB (like task-service): one row per solution, stored pattern and specialist chat. Each deployed environment has its own database.
 - **A3** Roles: `planner-user` for authors, `planner-admin` for tenant-wide access.
 - **A4** The UI lives in the Tenant Management Webapp as a beta service page, hidden behind a feature flag (default off).
 - **A5** Only 'Case Management' is fully specified; the other 18 patterns are seeded starting hypotheses to be refined with domain owners.

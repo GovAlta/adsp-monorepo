@@ -114,37 +114,31 @@ objects:
                     secretKeyRef:
                       key: database-host
                       name: ${APP_NAME}-postgres
-                      optional: true
                 - name: DB_PORT
                   valueFrom:
                     secretKeyRef:
                       key: database-port
                       name: ${APP_NAME}-postgres
-                      optional: true
                 - name: DB_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
                       name: ${APP_NAME}-postgres
-                      optional: true
                 - name: DB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
                       name: ${APP_NAME}-postgres
-                      optional: true
                 - name: DB_NAME
                   valueFrom:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-postgres
-                      optional: true
                 - name: DB_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
                       name: ${APP_NAME}-postgres
-                      optional: true
                 # MaaS is signed by the GoA root CA; Node still starts if the optional secret is absent.
                 - name: NODE_EXTRA_CA_CERTS
                   value: /etc/certs/goa-root.pem

@@ -28,6 +28,7 @@ describe('createRepositories', () => {
     DB_USER: 'planner-user',
     DB_PASSWORD: 'planner-password',
     DB_TLS: true,
+    migrationsDirectory: '/app/migrations',
   };
 
   beforeEach(() => {
@@ -61,6 +62,14 @@ describe('createRepositories', () => {
     await createRepositories(props);
 
     expect(knexMock.migrate.latest).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads migrations from the given directory', async () => {
+    await createRepositories(props);
+
+    expect(initKnexMock).toHaveBeenCalledWith(
+      expect.objectContaining({ migrations: expect.objectContaining({ directory: '/app/migrations' }) }),
+    );
   });
 
   it('creates the solution repository with the knex instance', async () => {

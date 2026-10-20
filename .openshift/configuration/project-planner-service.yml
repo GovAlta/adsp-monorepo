@@ -13,7 +13,6 @@ items:
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       LOG_LEVEL: debug
-      PLANNER_STORAGE: memory
   - apiVersion: v1
     kind: Secret
     metadata:

@@ -6,7 +6,7 @@ Migration `20261010000000_create_planner_tables.js` creates three tables:
 - `patterns`: PK `(tenant, id)`, `pattern` jsonb, createdById, createdByName, createdOn, updatedOn. Tenant-authored patterns layered over built-ins and configuration.
 - `specialist_chats`: id uuid PK, tenant, service, solutionId (nullable), title, createdById, createdByName, createdOn, updatedOn, `messages` jsonb. Index `(tenant, createdById)`.
 
-`PLANNER_STORAGE` selects `postgres` (default) or `memory`. Deployed environments use `memory` until the database is provisioned.
+Each environment (dev, UAT/staging, prod) has its own Azure Database for PostgreSQL, connected through the `project-planner-service-postgres` secret. Migrations run on startup. The local runner uses a local Postgres.
 
 ## Surface inventory (API, base `/planner/v1`)
 | Route | Roles | Notes |
