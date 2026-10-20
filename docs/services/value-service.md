@@ -13,10 +13,13 @@ Value service provides an append only time series data store. It serves as the u
 
 client `urn:ads:platform:value-service`
 
-| name         | description                                                                                                                                                                                                                                              |
-| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| value-reader | Reader role for value service. This role is used to allow users to read values and value definitions. It is part of the tenant-admin composite role and allows tenant administrators to read and search the event log.                                   |
-| value-writer | Writer role for value service. This role is used to allow service accounts to write values to the value service. It also allows users to create, update and delete value definitions, and to read them, since a user with the writer role can also read. |
+| name                          | description                                                                                                                                                                                                                                              |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| value-reader                  | Reader role for value service. This role is used to allow users to read values and value definitions. It is part of the tenant-admin composite role and allows tenant administrators to read and search the event log.                                   |
+| value-writer                  | Writer role for value service. This role is used to allow service accounts to write values to the value service. It also allows users to create, update and delete value definitions, and to read them, since a user with the writer role can also read. |
+| value-platform-metrics-reader | Reader role for platform-scoped metrics. Allows core users to read a value's metrics across all tenants. It is not part of the tenant-admin composite role.                                                                                              |
+
+The export service's `urn:ads:platform:export-service:export-job` role can also read values, so that export jobs can read the event log.
 
 ## Concepts
 
@@ -41,7 +44,11 @@ A value represents a particular time series stream. Each write results in a new 
 
 ### Metrics
 
-Metrics are numeric values that can be included in value writes. The are automatically included in time interval aggregations and can be used for basic KPIs.
+Metrics are numeric values that can be included in value writes as a `metrics` object of metric name to number. They are aggregated into time intervals (`one_minute`, `five_minutes`, `hourly`, `daily`, `weekly` and `monthly`) with `sum`, `avg`, `min`, `max` and `count` for each interval, and can be used for basic KPIs.
+
+Read a value's metrics from `/value/v1/{namespace}/values/{name}/metrics`, or a single metric from `/value/v1/{namespace}/values/{name}/metrics/{metric}`. The `interval` defaults to `daily`, and the JSON `criteria` accepts `intervalMin`, `intervalMax` and (for all metrics) `metricLike`. Without a range, the last month is read.
+
+Core users with the `value-platform-metrics-reader` role can read a value's metrics across all tenants, labelled by tenant, from `/value/v1/{namespace}/values/{name}/platform-metrics`. This only reads the materialised rollups described below and is not paginated.
 
 ### Metric interval rollups
 
@@ -73,6 +80,14 @@ ORDER BY "interval";
 
 Rollups store `sum` and `count` rather than an average, because an average of averages is not the average; the read path divides the two.
 
+### Service metric rollups
+
+A daily job summarises tenant activity for `pdf-service`, `form-service` and `notification-service` into the `service_metric_rollups` table: one row per day, tenant and service, with counts of initiated, succeeded and failed operations, duration totals, and the number of distinct resources (for example PDF templates or form definitions). The rows are derived from the event log and the services' metrics.
+
+The job is off by default. Set `SERVICE_METRIC_ROLLUP_JOB_ENABLED=true` to run it daily at 02:00, recomputing the last `SERVICE_METRIC_ROLLUP_TRAILING_DAYS` completed days (default 3). Set `SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP=true` to roll up the full history once when the table is empty.
+
+A rollup can also be run on demand with `POST /value/v1/service-metric-rollups/run` and the `value-writer` role. The body can set `start` and `end` dates, which default to the trailing days. Core users can set `tenantId` or leave it out to roll up all tenants; tenant users always roll up their own tenant. The current partial day and future days are rejected.
+
 ## Code examples
 
 ### Write a value
@@ -86,6 +101,9 @@ const value = {
   timestamp: new Date(),
   value: {
     property: 123,
+  },
+  metrics: {
+    'applications:count': 1,
   },
 };
 
@@ -103,6 +121,8 @@ const { correlationId, context, timestamp, value } = await response.json();
 
 ### Read a value
 
+Records are returned newest first, `top` at a time (default 10, maximum 5000). Pass `page.next` back as `after` to read the next set. Set `order=asc` to read oldest first instead; this reaches the oldest end of a large result set without paging past all of the newer records.
+
 ```typescript
 const namespace = 'support';
 const name = 'application-stats';
@@ -111,7 +131,27 @@ const response = await fetch(`https://value-service.adsp.alberta.ca/value/v1/${n
   headers: { Authorization: `Bearer ${accessToken}` },
 });
 
-const { results, page } = await response.json();
+// Records are keyed by namespace, then name.
+const { page, ...result } = await response.json();
+const records = result[namespace][name];
+```
+
+### Read metrics
+
+```typescript
+const namespace = 'support';
+const name = 'application-stats';
+const criteria = { intervalMin: '2026-09-01T00:00:00Z', intervalMax: '2026-10-01T00:00:00Z' };
+const response = await fetch(
+  `https://value-service.adsp.alberta.ca/value/v1/${namespace}/values/${name}/metrics?interval=daily&criteria=${encodeURIComponent(JSON.stringify(criteria))}`,
+  {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  },
+);
+
+// Keyed by metric name; each has values of { interval, sum, avg, min, max, count }, newest first.
+const { page, ...metrics } = await response.json();
 ```
 
 ### Create a value definition

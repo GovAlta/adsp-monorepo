@@ -4,6 +4,7 @@ import { Logger } from 'winston';
 import {
   Value,
   ValueCriteria,
+  ValueOrder,
   ValuesRepository,
   MetricValue,
   Metric,
@@ -99,7 +100,12 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }));
   }
 
-  async readValues(top = 10, after?: string, criteria?: ValueCriteria): Promise<Results<Value>> {
+  async readValues(
+    top = 10,
+    after?: string,
+    criteria?: ValueCriteria,
+    order: ValueOrder = 'desc',
+  ): Promise<Results<Value>> {
     const skip = decodeAfter(after);
 
     let query = this.knex<ValueRecord>('values');
@@ -146,7 +152,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       }
     }
 
-    const rows = await query.orderBy('timestamp', 'desc');
+    const rows = await query.orderBy('timestamp', order);
     const results: Value[] = rows.map((row) => ({
       timestamp: row.timestamp,
       correlationId: row.correlationId,

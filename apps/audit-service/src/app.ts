@@ -21,11 +21,17 @@ import {
   validateTenantContext,
   assertTenantContext,
 } from './audit';
-import { createDatabase } from './postgres';
+import { AuditWriteBuffer } from './audit/buffer';
+import { createDatabase, PostgresEventRepository } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
-export const initializeApp = async (): Promise<express.Application> => {
+export interface AuditApplication extends express.Application {
+  drain: () => Promise<void>;
+  shutdown: () => Promise<void>;
+}
+
+export const initializeApp = async (): Promise<AuditApplication> => {
   const app = express();
 
   app.use(compression());
@@ -39,47 +45,57 @@ export const initializeApp = async (): Promise<express.Application> => {
 
   instrumentAxios(logger);
 
-  const { isConnected } = await createDatabase({ logger, ...environment });
-
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantHandler, configurationService, healthCheck, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Audit service',
-        description: 'Tenant-scoped audit action catalogs and event ingestion.',
-        roles: [
-          {
-            role: AuditServiceRoles.Reader,
-            description: 'Read action catalogs and audit history within a tenant.',
-            inTenantAdmin: true,
-          },
-          {
-            role: AuditServiceRoles.Writer,
-            description: 'Write audit events. Assign to application service accounts.',
-          },
-          {
-            role: AuditServiceRoles.Admin,
-            description: 'Administer failed audit events and access protected actor identity.',
-          },
-        ],
-        configuration: {
-          useNamespace: true,
-          description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
-          schema: configurationSchema,
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    configurationService,
+    healthCheck,
+    traceHandler,
+    shutdownTelemetry,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Audit service',
+      description: 'Tenant-scoped audit action catalogs and event ingestion.',
+      roles: [
+        {
+          role: AuditServiceRoles.Reader,
+          description: 'Read action catalogs and audit history within a tenant.',
+          inTenantAdmin: true,
         },
-        configurationConverter: createAuditConfigurationConverter(logger),
-        combineConfiguration: combineAuditConfiguration,
-        enableConfigurationInvalidation: true,
-        useLongConfigurationCacheTTL: false,
-        events: [],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
+        {
+          role: AuditServiceRoles.Writer,
+          description: 'Write audit events. Assign to application service accounts.',
+        },
+        {
+          role: AuditServiceRoles.Admin,
+          description: 'Administer failed audit events and access protected actor identity.',
+        },
+      ],
+      configuration: {
+        useNamespace: true,
+        description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
+        schema: configurationSchema,
       },
-      { logger },
-    );
+      configurationConverter: createAuditConfigurationConverter(logger),
+      combineConfiguration: combineAuditConfiguration,
+      enableConfigurationInvalidation: true,
+      useLongConfigurationCacheTTL: false,
+      events: [],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger },
+  );
+
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  const { knex, isConnected } = await createDatabase({ logger, ...environment });
+  const repository = new PostgresEventRepository(knex, logger);
+  const buffer = new AuditWriteBuffer(repository, logger);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -108,19 +124,22 @@ export const initializeApp = async (): Promise<express.Application> => {
     createAuditRouter({
       catalogs: new CatalogService(configurationService, logger),
       retention: new RetentionService(configurationService, logger),
+      submitter: buffer,
+      reader: repository,
       logger,
       serviceId,
     }),
   );
 
-  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
     res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json({ ...platform, db: await isConnected() });
+    const db = await isConnected();
+    const ready = db && buffer.isReady;
+    res.status(ready ? 200 : 503).json({ ...platform, db, ready });
   });
 
   app.get('/', async (req, res) => {
@@ -140,5 +159,22 @@ export const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  let shutdown: Promise<void>;
+  return Object.assign(app, {
+    drain: () => buffer.close(),
+    shutdown: () => {
+      shutdown ??= (async () => {
+        try {
+          await buffer.close();
+        } finally {
+          try {
+            await knex.destroy();
+          } finally {
+            await shutdownTelemetry();
+          }
+        }
+      })();
+      return shutdown;
+    },
+  });
 };

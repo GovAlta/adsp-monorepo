@@ -57,9 +57,10 @@ paths:
         the endpoint's 503 handling.
 
         A 202 waits for the submitter to commit valid events or durably park storage
-        failures. No PostgreSQL submitter is wired yet: requests with valid events
-        currently return 503 rather than claiming successful storage. Requests with
-        only rejected events can return 202 without storage.
+        failures in PostgreSQL. Duplicate eventId values within the same tenant and
+        namespace do not overwrite existing events. If neither event nor failed-event
+        storage succeeds, the request returns 503. Requests with only validation
+        rejections can return 202 without storage.
       parameters:
         - in: path
           name: namespace
@@ -181,6 +182,8 @@ paths:
           description: Missing audit-reader.
         '404':
           description: Event not found in the caller's tenant.
+        '503':
+          description: Audit event storage is unavailable.
 components:
   parameters:
     Top:
