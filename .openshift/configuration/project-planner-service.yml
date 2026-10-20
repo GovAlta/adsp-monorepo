@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: project-planner-service
+        component: api
+      name: project-planner-service
+    data:
+      KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      LOG_LEVEL: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: project-planner-service
+        component: api
+      name: project-planner-service
+    stringData:
+      CLIENT_ID: urn:ads:platform:project-planner-service
+      CLIENT_SECRET:
+      MAAS_API_KEY:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: project-planner-service
+        component: api
+      name: project-planner-service-ca
+    stringData:
+      certificate:

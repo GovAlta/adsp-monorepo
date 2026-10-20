@@ -1,0 +1,221 @@
+paths:
+  /planner/v1/patterns:
+    get:
+      tags: [Pattern]
+      summary: Retrieves business patterns (built-in plus tenant-defined).
+      responses:
+        200: { description: Patterns retrieved. }
+    post:
+      tags: [Pattern]
+      summary: Creates a custom pattern (planner-admin).
+      responses:
+        201: { description: Pattern created. }
+        400: { description: Invalid pattern or the id already exists. }
+  /planner/v1/patterns/{patternId}:
+    put:
+      tags: [Pattern]
+      summary: Updates a pattern, or customizes a built-in pattern with a tenant copy (planner-admin).
+      parameters:
+        - { name: patternId, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Pattern updated. }
+        404: { description: Pattern not found. }
+    delete:
+      tags: [Pattern]
+      summary: Deletes a custom pattern, or restores a customized built-in pattern (planner-admin).
+      parameters:
+        - { name: patternId, in: path, required: true, schema: { type: string } }
+      responses:
+        204: { description: Pattern deleted. }
+        400: { description: Built-in patterns cannot be deleted. }
+        404: { description: Pattern not found. }
+    get:
+      tags: [Pattern]
+      summary: Retrieves a business pattern.
+      parameters:
+        - { name: patternId, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Pattern retrieved. }
+        404: { description: Pattern not found. }
+  /planner/v1/patterns/match:
+    post:
+      tags: [Pattern]
+      summary: Matches free text against patterns and explains the confidence.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text: { type: string }
+              required: [text]
+      responses:
+        200: { description: Ranked pattern matches and clarifying questions when confidence is low. }
+  /planner/v1/specialists:
+    get:
+      tags: [Specialist]
+      summary: Retrieves the service specialists known to the planner.
+      responses:
+        200: { description: Specialists retrieved. }
+  /planner/v1/solutions:
+    get:
+      tags: [Solution]
+      summary: Retrieves solutions. Users see their own; planner-admin sees all in the tenant.
+      parameters:
+        - { name: top, in: query, schema: { type: integer } }
+        - { name: after, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+      responses:
+        200: { description: Solutions retrieved. }
+    post:
+      tags: [Solution]
+      summary: Creates a solution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                scenario: { type: string, enum: [new, prototype, existing-app, reconfigure] }
+                problemStatement: { type: string }
+              required: [name]
+      responses:
+        201: { description: Solution created. }
+  /planner/v1/solutions/{id}:
+    get:
+      tags: [Solution]
+      summary: Retrieves a solution including its structured state.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Solution retrieved. }
+        404: { description: Solution not found. }
+    patch:
+      tags: [Solution]
+      summary: Updates solution details, concepts, decisions (with reasons), and questions.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Solution updated. }
+    delete:
+      tags: [Solution]
+      summary: Deletes a solution.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Deletion result. }
+  /planner/v1/solutions/{id}/analyze:
+    post:
+      tags: [Solution]
+      summary: Extracts concepts, matches patterns, and generates hypotheses and next steps.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Analyzed solution. }
+  /planner/v1/solutions/{id}/consult/{service}:
+    post:
+      tags: [Solution, Specialist]
+      summary: Consults a service specialist about fit, questions, dependencies and risks.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: service, in: path, required: true, schema: { type: string } }
+      responses:
+        200: { description: Consultation result. }
+  /planner/v1/solutions/{id}/discovery:
+    post:
+      tags: [Solution]
+      summary: Advances the discovery conversation; presents the solution once confidence reaches 50% (or force is set).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, maxLength: 5000, description: The user's reply to the planner's questions. }
+                mode: { type: string, enum: [ai, rules] }
+                force: { type: boolean, description: Present the solution regardless of confidence. }
+                restart: { type: boolean, description: Clear the discovery thread and start over. }
+      responses:
+        200: { description: The solution with state.discovery and state.confidence updated. }
+  /planner/v1/solutions/{id}/blueprint:
+    post:
+      tags: [Solution]
+      summary: Generates the complete project blueprint (architecture, ADSP service mapping, specialist notes, workflows, data and governance, delivery).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode: { type: string, enum: [ai, rules] }
+                refreshConsultations: { type: boolean, description: Run fresh specialist consultations instead of reusing saved ones. }
+      responses:
+        200: { description: The solution with state.blueprint populated. }
+        400: { description: The solution has no analysis yet. }
+  /planner/v1/specialists/{service}/chat:
+    post:
+      tags: [Specialist]
+      summary: Converses directly with a service specialist (ask, recommend, design, validate, sample code).
+      parameters:
+        - { name: service, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, maxLength: 5000 }
+                chatId: { type: string, format: uuid, description: Continue a saved chat; omit to start a new one. }
+                intent: { type: string, enum: [ask, recommend, design, validate, sample] }
+                solutionId: { type: string, format: uuid }
+                mode: { type: string, enum: [ai, rules] }
+      responses:
+        200: { description: Specialist reply (includes chatId). The exchange is saved to the user's chat history. }
+  /planner/v1/specialists/chats:
+    get:
+      tags: [Specialist]
+      summary: Lists the caller's saved specialist chats.
+      parameters:
+        - { name: service, in: query, schema: { type: string } }
+        - { name: solutionId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: Chat summaries. }
+  /planner/v1/specialists/chats/export:
+    get:
+      tags: [Specialist]
+      summary: Downloads all of the caller's saved chats as JSON.
+      responses:
+        200: { description: JSON attachment. }
+  /planner/v1/specialists/chats/{chatId}:
+    get:
+      tags: [Specialist]
+      summary: Gets a saved chat with its full history.
+      parameters:
+        - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: The chat. }
+    delete:
+      tags: [Specialist]
+      summary: Deletes a saved chat.
+      parameters:
+        - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        204: { description: Deleted. }
+  /planner/v1/specialists/chats/{chatId}/export:
+    get:
+      tags: [Specialist]
+      summary: Downloads one saved chat as JSON.
+      parameters:
+        - { name: chatId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        200: { description: JSON attachment. }
