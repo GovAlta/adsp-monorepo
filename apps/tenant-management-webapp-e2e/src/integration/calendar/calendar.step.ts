@@ -32,7 +32,7 @@ Then('the user views Add calendar modal', function () {
 
 When('the user clicks Save button in Add calendar modal', function () {
   calendarObj.calendarModalSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(1000);
+  cy.wait(4000);
 });
 
 When('the user clicks Cancel button in Add calendar modal', function () {

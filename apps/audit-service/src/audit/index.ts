@@ -15,4 +15,3 @@ export type {
 } from './types';
 export { AuditWriteBuffer, AuditStoreError, AuditStorageUnavailableError } from './buffer';
 export type { AuditEventStore, AuditStoreContext, FailedAuditEvent, WriteBufferOptions } from './buffer';
-
