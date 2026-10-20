@@ -6,23 +6,23 @@ Feature: Notifications
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
     Then the user views Add notification type modal
-    When the user enters "autotest-aed-notification-type", "autotest notification desc", "public", "no", "no", "yes" on notification type modal
+    When the user enters "autotest-aed-type<$ph>", "autotest notification desc", "public", "no", "no", "yes" on notification type modal
     And the user clicks Save button in notification type modal
-    Then the user "views" the notification type of "autotest-aed-notification-type", "autotest-aed-notification-type", "yes", "yes"
+    Then the user "views" the notification type of "autotest-aed-type<$ph>", "autotest-aed-type<$ph>", "yes", "yes"
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
-    When the user clicks the notification type of "autotest-aed-notification-type", "autotest-aed-notification-type", "yes", "yes"
-    And the user clicks "edit" button on "autotest-aed-notification-type" notification type details pane
-    Then the user views Edit notification type modal for "autotest-aed-notification-type"
-    When the user enters "autotest-edit-notification-type", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
+    When the user clicks the notification type of "autotest-aed-type<$ph>", "autotest-aed-type<$ph>", "yes", "yes"
+    And the user clicks "edit" button on "autotest-aed-type<$ph>" notification type details pane
+    Then the user views Edit notification type modal for "autotest-aed-type<$ph>"
+    When the user enters "autotest-edit-type<$ph>", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
     And the user clicks Save button in notification type modal
     And the user clicks back to notification types link on notification type details pane
-    Then the user "views" the notification type of "autotest-edit-notification-type", "autotest-aed-notification-type", "no", "no"
-    When the user clicks the notification type of "autotest-edit-notification-type", "autotest-aed-notification-type", "no", "no"
-    And the user clicks "delete" button on "autotest-edit-notification-type" notification type details pane
-    Then the user views delete "notification type" confirmation modal for "autotest-edit-notification-type"
+    Then the user "views" the notification type of "autotest-edit-type<$ph>", "autotest-aed-type<$ph>", "no", "no"
+    When the user clicks the notification type of "autotest-edit-type<$ph>", "autotest-aed-type<$ph>", "no", "no"
+    And the user clicks "delete" button on "autotest-edit-type<$ph>" notification type details pane
+    Then the user views delete notification type confirmation modal for "autotest-edit-type<$ph>"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the notification type of "autotest-edit-notification-type", "autotest-aed-notification-type", "no", "no"
+    Then the user "should not view" the notification type of "autotest-edit-type<$ph>", "autotest-aed-type<$ph>", "no", "no"
 
   # TEST DATA: a precreated notification type named "autotest-notification-type"
   @TEST_CS-949 @REQ_CS-277 @regression
