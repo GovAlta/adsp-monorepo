@@ -11,6 +11,7 @@ import { createLogger, transports } from 'winston';
 import { CatalogService, FailedEventService, RetentionService } from '../model';
 import { AuditServiceRoles } from '../roles';
 import { assertTenantContext, createAuditRouter, validateTenantContext } from './index';
+import { encodeKeysetCursor } from '../utils/keyset-cursor';
 
 describe('failed-event administration routes', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -107,9 +108,10 @@ describe('failed-event administration routes', () => {
   });
 
   it('passes explicit pagination', async () => {
-    await request(createApp()).get(basePath).query({ top: 100, after: 'MTAw' }).expect(200);
+    const after = encodeKeysetCursor(new Date('2026-10-01T00:00:00Z'), '54862935-e55b-4bc4-8cd0-9e64b193bbd2');
+    await request(createApp()).get(basePath).query({ top: 100, after }).expect(200);
 
-    expect(list).toHaveBeenCalledWith(tenant.toString(), 100, 'MTAw');
+    expect(list).toHaveBeenCalledWith(tenant.toString(), 100, after);
   });
 
   it('allows Core administrators with an explicit tenant', async () => {
@@ -127,14 +129,11 @@ describe('failed-event administration routes', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
-  it.each(['', 'not-base64', 'LTE=', 'MS4y', 'MDF=', 'OTAwNzE5OTI1NDc0MDk5MQ==', ['MA==', 'MQ==']])(
-    'rejects invalid after %s',
-    async (after) => {
-      await request(createApp()).get(basePath).query({ after }).expect(400);
+  it.each(['', 'not-base64', 'MjA=', 'LTE=', ['MA==', 'MQ==']])('rejects invalid after %s', async (after) => {
+    await request(createApp()).get(basePath).query({ after }).expect(400);
 
-      expect(list).not.toHaveBeenCalled();
-    },
-  );
+    expect(list).not.toHaveBeenCalled();
+  });
 
   it('rejects invalid replay IDs', async () => {
     await request(createApp()).post(`${basePath}/not-a-uuid/replay`).expect(400);

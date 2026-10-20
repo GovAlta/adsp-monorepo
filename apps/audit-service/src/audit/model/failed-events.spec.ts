@@ -5,6 +5,7 @@ import { FailedEventService } from './failed-events';
 import { enrichEvent } from '../utils/event-preparation';
 import { REPLAY_DEFINITION } from '../actions';
 import { DEFAULT_RETENTION_CLASSES } from './retention';
+import { encodeKeysetCursor } from '../utils/keyset-cursor';
 
 describe('FailedEventService', () => {
   const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/case-team';
@@ -70,15 +71,24 @@ describe('FailedEventService', () => {
   });
 
   it('passes a decoded cursor and tenant to the repository', async () => {
-    await service.list(tenantId, 1, 'MjA=');
+    const after = encodeKeysetCursor(failed.failed_at, id);
+    await service.list(tenantId, 1, after);
 
-    expect(repository.list).toHaveBeenCalledWith(tenantId, 1, 20);
+    expect(repository.list).toHaveBeenCalledWith(tenantId, 1, { failedAt: failed.failed_at, id });
   });
 
-  it('returns the shared Results pagination shape', async () => {
-    const result = await service.list(tenantId, 1, 'MjA=');
+  it('rejects a malformed cursor', async () => {
+    await expect(service.list(tenantId, 1, 'MjA=')).rejects.toThrow(InvalidOperationError);
+  });
 
-    expect(result).toEqual({ results: [failed], page: { after: 'MjA=', size: 1, next: 'MjE=' } });
+  it('returns the shared Results pagination shape with a keyset next cursor', async () => {
+    const after = encodeKeysetCursor(failed.failed_at, id);
+    const result = await service.list(tenantId, 1, after);
+
+    expect(result).toEqual({
+      results: [failed],
+      page: { after, size: 1, next: encodeKeysetCursor(failed.failed_at, failed.id) },
+    });
   });
 
   it('omits a next cursor on a short page', async () => {

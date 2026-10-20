@@ -13,6 +13,7 @@ export type {
 } from './events';
 export type {
   FailedAuditEvent,
+  FailedEventCursor,
   FailedEventReplayTransaction,
   FailedEventRepository,
   ReplayAuditRecord,

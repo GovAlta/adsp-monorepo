@@ -1,10 +1,11 @@
-import { createValidationHandler, decodeAfter, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 import { param, query } from 'express-validator';
 import { SERVICE_UNAVAILABLE } from 'http-status-codes';
 import type { Logger } from 'winston';
 import { FailedEventService } from '../model';
 import type { SelfAuditor } from '../utils/self-audit';
+import { decodeKeysetCursor } from '../utils/keyset-cursor';
 import { SelfAuditActions } from '../model/self-audit-catalog';
 
 const MAX_PAGE_SIZE = 100;
@@ -14,17 +15,9 @@ export const validateFailedEventPage = createValidationHandler(
     .optional()
     .isString()
     .bail()
-    .isLength({ min: 1, max: 32 })
+    .isLength({ min: 1, max: 256 })
     .bail()
-    .custom((value: string) => {
-      const skip = decodeAfter(value);
-      return (
-        Number.isSafeInteger(skip) &&
-        skip >= 0 &&
-        skip <= Number.MAX_SAFE_INTEGER - MAX_PAGE_SIZE &&
-        Buffer.from(`${skip}`).toString('base64') === value
-      );
-    }),
+    .custom((value: string) => decodeKeysetCursor(value) !== null),
 );
 export const validateFailedEventId = createValidationHandler(param('id').isUUID());
 
@@ -43,22 +36,20 @@ export function failedEventHandler(
         });
       }
       const tenantId = req.tenant.id.toString();
-      let result;
       if (operation === 'list') {
         const top = req.query.top ? Number(req.query.top) : 20;
         const after = req.query.after as string | undefined;
         const page = await service.list(tenantId, top, after);
+        res.send(page);
         await auditor?.record(req, {
           action: SelfAuditActions.ListFailedEvents,
           endpoint: 'GET /audit/v1/failed-events',
           filters: { top, ...(after ? { after } : {}) },
           resultCount: page.results.length,
         });
-        result = page;
       } else {
-        result = await service.replay(tenantId, req.params.id, req.user);
+        res.send(await service.replay(tenantId, req.params.id, req.user));
       }
-      res.send(result);
     } catch (err) {
       logger.warn(`Unable to ${operation} failed audit events.`, { context: 'AuditFailedEvents', error: String(err) });
       const error =

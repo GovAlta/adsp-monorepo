@@ -226,7 +226,7 @@ describe('audit application authorization', () => {
       .auth(token([AuditServiceRoles.Admin]), { type: 'bearer' })
       .expect(200);
 
-    expect(PostgresFailedEventRepository.prototype.list).toHaveBeenCalledWith(tenantA.id.toString(), 20, 0);
+    expect(PostgresFailedEventRepository.prototype.list).toHaveBeenCalledWith(tenantA.id.toString(), 20, undefined);
     expect(response.body).toEqual({ results: [], page: { size: 0 } });
   });
 

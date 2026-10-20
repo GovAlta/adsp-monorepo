@@ -6,6 +6,7 @@ import { AuditStorageUnavailableError } from '../audit/buffer';
 import {
   EnrichedEvent,
   FailedAuditEvent,
+  FailedEventCursor,
   FailedEventRepository,
   FailedEventReplayTransaction,
   StoredEvent,
@@ -19,16 +20,16 @@ export class PostgresFailedEventRepository implements FailedEventRepository {
     private readonly logger: Logger,
   ) {}
 
-  async list(tenantId: string, top: number, skip: number): Promise<FailedAuditEvent[]> {
-    return this.execute(() =>
-      this.knex<FailedAuditEvent>('audit_failed_events')
-        .where({ tenant_id: tenantId })
+  async list(tenantId: string, top: number, after?: FailedEventCursor): Promise<FailedAuditEvent[]> {
+    return this.execute(() => {
+      const query = this.knex<FailedAuditEvent>('audit_failed_events').where({ tenant_id: tenantId });
+      if (after) query.whereRaw('(failed_at, id) < (?, ?)', [after.failedAt, after.id]);
+      return query
         .orderBy('failed_at', 'desc')
         .orderBy('id', 'desc')
         .limit(top)
-        .offset(skip)
-        .timeout(STATEMENT_TIMEOUT_MS, { cancel: true }),
-    );
+        .timeout(STATEMENT_TIMEOUT_MS, { cancel: true });
+    });
   }
 
   async countOpen(): Promise<number> {
