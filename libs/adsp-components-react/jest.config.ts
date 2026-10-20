@@ -6,4 +6,6 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/libs/adsp-components-react',
+  // The core library is imported from source and has its own tests and coverage.
+  coveragePathIgnorePatterns: ['/node_modules/', '/libs/adsp-components-core/'],
 };

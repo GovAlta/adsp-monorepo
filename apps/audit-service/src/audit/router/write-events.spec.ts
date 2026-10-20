@@ -11,9 +11,13 @@ import { createAuditJsonParser, MAX_REQUEST_BYTES } from '../utils/request-valid
 import { AuditServiceRoles } from '../roles';
 import { assertTenantContext, createAuditRouter, validateTenantContext } from './index';
 import { AuditEvent, EventOutcome, EventSubmitter } from '../types';
+import { AuditEventStore, AuditStoreError, AuditWriteBuffer } from '../buffer';
 
 describe('POST /audit/v1/:namespace/events', () => {
-  const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
+  const logger = createLogger({
+    levels: { critical: 0, error: 1, warn: 2, info: 3 },
+    transports: [new transports.Console({ silent: true })],
+  });
   const tenantA = adspId`urn:ads:platform:tenant-service:v2:/tenants/case-team`;
   const tenantB = adspId`urn:ads:platform:tenant-service:v2:/tenants/payment-team`;
   const user: User = {
@@ -491,6 +495,86 @@ describe('POST /audit/v1/:namespace/events', () => {
       .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
 
     expect(result.headers['retry-after']).toBe('1');
+  });
+
+  describe('with the real write buffer and a test-only storage adapter', () => {
+    const store: jest.Mocked<AuditEventStore> = { insert: jest.fn(), park: jest.fn() };
+    let buffer: AuditWriteBuffer;
+
+    beforeEach(() => {
+      store.insert.mockImplementation(async (events) => events.map(({ id }) => id));
+      store.park.mockResolvedValue(undefined);
+      buffer = new AuditWriteBuffer(store, logger);
+    });
+
+    afterEach(async () => {
+      await buffer.close();
+    });
+
+    it('maps committed buffer outcomes to accepted and duplicate counts', async () => {
+      store.insert.mockImplementationOnce(async (events) => [events[0].id]);
+
+      const result = await request(createApp(user, buffer))
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event, event] })
+        .expect(HttpStatusCodes.ACCEPTED);
+
+      expect(result.body).toEqual({ accepted: 1, duplicates: 1, rejected: [] });
+    });
+
+    it('returns storage_failed only after the original event has been parked', async () => {
+      store.insert.mockRejectedValueOnce(new AuditStoreError('Primary table unavailable', 'permanent'));
+
+      const result = await request(createApp(user, buffer))
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event] })
+        .expect(HttpStatusCodes.ACCEPTED);
+
+      expect(result.body).toEqual({
+        accepted: 0,
+        duplicates: 0,
+        rejected: [{ index: 0, eventId: event.eventId, code: 'storage_failed', reason: expect.any(String) }],
+      });
+      expect(store.park.mock.calls[0][0][0].event).toEqual(event);
+    });
+
+    it('returns 503 with Retry-After when both durable stores fail', async () => {
+      store.insert.mockRejectedValueOnce(new AuditStoreError('Primary table unavailable', 'permanent'));
+      store.park.mockRejectedValueOnce(new AuditStoreError('Failed-events table unavailable', 'permanent'));
+
+      const result = await request(createApp(user, buffer))
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event] })
+        .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
+
+      expect(result.headers['retry-after']).toBe('1');
+      expect(result.body).not.toHaveProperty('accepted');
+    });
+
+    it('refuses an over-capacity request without storing any of its events', async () => {
+      buffer = new AuditWriteBuffer(store, logger, { maxEvents: 1 });
+
+      const result = await request(createApp(user, buffer))
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event, event] })
+        .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
+
+      expect(result.headers['retry-after']).toBe('1');
+      expect(store.insert).not.toHaveBeenCalled();
+      expect(store.park).not.toHaveBeenCalled();
+    });
+
+    it('refuses writes after the buffer has begun shutdown', async () => {
+      await buffer.close();
+
+      const result = await request(createApp(user, buffer))
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event] })
+        .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
+
+      expect(result.headers['retry-after']).toBe('1');
+      expect(store.insert).not.toHaveBeenCalled();
+    });
   });
 
   it('refuses empty storage rejection reasons instead of returning an unexplained loss', async () => {

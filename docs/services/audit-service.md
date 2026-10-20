@@ -7,21 +7,24 @@ parent: Services
 # Audit service
 
 The action catalog registers the classification of audit actions. Registering an action does not
-generate audit records. The write endpoint validates and enriches events, but PostgreSQL persistence
-and the write buffer are not wired yet. Valid write submissions currently return 503, not a successful
-acknowledgment. History queries, SIEM forwarding, and retention execution are separate capabilities.
+generate audit records. The write endpoint validates and enriches events, then submits them through
+the write buffer to PostgreSQL. History endpoints read committed rows from the same database.
+Action catalogs and retention settings remain in Configuration Service, not the audit database.
+SIEM forwarding and retention execution are separate capabilities.
 
 ## Source layout
 
 The `apps/audit-service/src/audit` module follows the Calendar Service layout:
 
 - `model/`: catalog loading and retention configuration resolution.
+- `buffer/`: write scheduling, durability handling and the database adapter contract.
 - `router/`: HTTP routes, write handlers, and OpenAPI definitions.
 - `types/`: event payloads and the submission contract.
 - `utils/`: event/request validation and write authorization.
 
 `app.ts` initializes the application and registers configuration and roles; `main.ts` starts the
-HTTP listener. Tests are colocated with their implementations.
+HTTP listener and handles shutdown. `src/postgres/` connects the event reader and write buffer
+to the migrated `audit_events` and `audit_failed_events` tables. Tests are colocated with their implementations.
 
 ## Authorization
 
@@ -87,8 +90,9 @@ Unknown document and definition fields are rejected. Action keys omit the event 
 The namespace schema also preserves `retentionSettings` and `applicationRetentionSettings` document
 shapes, with positive integer `classes.<class>.days`. Catalog registration creates no retention periods.
 At write time the service resolves configured periods over the design defaults: standard 90 days,
-security and compliance 365 days. See [write-time retention](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#retention-at-write-time)
-for configuration names and precedence. Missing custom classes fail writes with a retryable 503.
+security and compliance 365 days. Application settings in `audit-service:retention-<application>`
+override `audit-service:retention`, which overrides those defaults. Expiry is calculated from
+`occurred_at` in UTC days. Missing custom classes fail writes with a retryable 503.
 
 ### Registering through the SDK
 
@@ -201,8 +205,8 @@ reads Core catalogs only. The service registers this role for tenant provisionin
 still need their normal role provisioning/assignment process.
 
 The catalog governs future write classification, not history access. Removing a definition performs
-no audit-record deletion. History readability after deregistration must also be verified when the
-history endpoint/storage work is integrated; this scaffold has no history API.
+no audit-record deletion. History endpoints query PostgreSQL independently of the catalog, so
+removing an action does not prevent reading its existing records.
 
 ## Writing events
 
@@ -234,7 +238,7 @@ Malformed batch envelopes return 400, oversized bodies return 413, and malformed
 individual events produce individual rejections. Classification, identity and
 retention columns are server-set, never copied from caller-supplied row fields.
 
-Once a durable submitter is connected, 202 returns:
+A 202 response accounts for all inputs after storage outcomes are confirmed:
 
 ```json
 { "accepted": 1, "duplicates": 0, "rejected": [] }
@@ -243,7 +247,55 @@ Once a durable submitter is connected, 202 returns:
 Each rejection includes a zero-based input `index`, `code`, `reason`, and an
 `eventId` when available. Counts and rejection length account for every input.
 Duplicates are determined by PostgreSQL, not an in-memory router check.
-Until that integration exists, valid submissions return **503 with Retry-After**.
+If durable storage is unavailable, valid submissions return **503 with Retry-After**.
 
-See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
-for the boundary with OSP-708.
+## Reading events
+
+`GET /audit/v1/events` lists events across the resolved tenant's namespaces;
+`GET /audit/v1/{namespace}/events` restricts that list to one namespace.
+`GET /audit/v1/{namespace}/events/{id}` retrieves a record by its service-generated UUID,
+returning 404 when it does not exist in that tenant and namespace.
+All three require `audit-reader` and tenant context. Core readers can select a tenant with `tenantId`.
+
+Lists accept `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`, `scope`,
+`occurredFrom` and `occurredTo`. Filters combine with AND; time bounds are inclusive, and `scope`
+matches an element of `scopeIds`. Results are ordered by `occurred_at DESC, id DESC`, with `top`
+and the existing `after` cursor controlling offset pagination. Equal timestamps have deterministic
+ordering; concurrent inserts can still shift offsets between requests.
+
+Responses retain the existing camelCase event shape and never expose `tenant_id`.
+Database read failures return 503 rather than an empty result or a false 404.
+
+## Write buffer
+
+The router submits enriched events through
+`submit(events: EnrichedEvent[]): Promise<Map<string, EventOutcome>>`.
+Results use the service-generated `id`, never client `event_id`, to keep concurrent requests
+and tenants separate. Inputs must remain unchanged until the promise settles.
+
+The buffer batches at 200 events or 200 ms, with default limits of 5,000 retained events and
+32 MiB of serialized payload per pod. Capacity is reserved for the whole request before enqueueing;
+over-capacity requests return 503 without storing any of their events. The byte limit is not a
+measurement of process memory.
+
+Transient failures retry after 200 ms, 1 s and 3 s; constraint failures are retried individually.
+`accepted` requires a committed audit row. `storage_failed` requires the original event to be
+committed to failed-event storage and is counted as rejected, not accepted. If neither write
+succeeds, the request returns 503. The PostgreSQL adapter uses
+`ON CONFLICT (tenant_id, namespace, event_id) DO NOTHING RETURNING id`, resolves only after commit,
+and returns only inserted service IDs. It does not update existing events on conflict.
+Failed-event writes preserve the original payload and map the buffer's `attempt_count` to
+the database's `attempts` column.
+
+Writes use transactions with a four-second server-side statement timeout, including lock waits.
+Cancellation is checked before database work and before commit; cancelled operations roll back
+after the current bounded statement settles. Connection acquisition retains the database pool's
+30-second bound; a cancellation during that wait prevents a late insert. Until an outstanding
+operation settles, the buffer refuses additional writes rather than accumulating abandoned work.
+
+`close()` refuses new submissions and drains within a configurable 25-second default budget,
+reserving the final 5 seconds for failed-event storage. SIGTERM and SIGINT stop new connections,
+drain queued writes and in-flight HTTP requests, then close the database pool and telemetry.
+A 29-second process deadline exits with failure if shutdown cannot finish.
+`GET /health` includes `db` and `ready`; it returns 503 when the database or buffer is unavailable
+or the buffer is draining.

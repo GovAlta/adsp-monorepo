@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { expectSaga } from 'redux-saga-test-plan';
 import { call } from 'redux-saga-test-plan/matchers';
-import { throwError } from 'redux-saga-test-plan/providers';
+import { dynamic, StaticProvider, throwError } from 'redux-saga-test-plan/providers';
 import reducer from './reducers';
 import { getAccessToken } from '../tenant/sagas';
 import { ERROR_NOTIFICATION } from '../notifications/actions';
@@ -13,11 +13,19 @@ import {
   getEventDefinitionsSuccess,
   getEventLogEntries,
   getEventLogEntriesFailed,
+  getEventLogPage,
+  getEventLogPageSucceeded,
   updateEventDefinition as updateEventDefinitionAction,
   updateEventDefinitionSuccess,
 } from './actions';
-import { EventDefinition } from './models';
-import { deleteEventDefinition, fetchEventDefinitions, fetchEventLogEntries, updateEventDefinition } from './sagas';
+import { EventDefinition, EventSearchCriteria } from './models';
+import {
+  deleteEventDefinition,
+  fetchEventDefinitions,
+  fetchEventLogEntries,
+  fetchEventLogPage,
+  updateEventDefinition,
+} from './sagas';
 
 const eventServiceUrl = 'https://event-service.example';
 
@@ -164,6 +172,183 @@ describe('event definition sagas', () => {
         },
       })
       .put(deleteEventDefinitionSuccess(tenantDefinition))
+      .run();
+  });
+});
+
+describe('event log page saga', () => {
+  const valueServiceUrl = 'https://value-service.example';
+  const eventsUrl = `${valueServiceUrl}/value/v1/event-service/values/event`;
+  const pageState = {
+    config: { serviceUrls: { valueServiceApiUrl: valueServiceUrl, eventServiceApiUrl: eventServiceUrl } },
+    event: { logPage: { page: 1, total: 347 } },
+  };
+  const loggedEvent = {
+    context: { namespace: 'form-service', name: 'form-submitted' },
+    timestamp: '2026-10-01T15:30:00.000Z',
+    correlationId: 'urn:ads:platform:form-service:v1:/forms/a1b2c3',
+    value: { payload: { formId: 'a1b2c3' } },
+  };
+  const searchCriteria: EventSearchCriteria = {
+    namespace: 'form-service',
+    name: 'form-submitted',
+    timestampMin: '2026-10-01T00:00:00.000Z',
+    timestampMax: '2026-10-16T12:00:00.000Z',
+    correlationId: 'urn:ads:platform:form-service:v1:/forms/a1b2c3',
+  };
+  const filterParams = {
+    context: JSON.stringify({ namespace: 'form-service', name: 'form-submitted' }),
+    timestampMin: '2026-10-01T00:00:00.000Z',
+    timestampMax: '2026-10-16T12:00:00.000Z',
+    correlationId: 'urn:ads:platform:form-service:v1:/forms/a1b2c3',
+  };
+  const pageResponse = { data: { 'event-service': { event: [loggedEvent] }, page: { size: 1 } } };
+  const countResponse = { data: { count: 347 } };
+  const axiosGet = jest.fn();
+  const providers: StaticProvider[] = [
+    [call.fn(getAccessToken), 'test-token'],
+    [call.fn(axios.get), dynamic((effect) => axiosGet(...effect.args))],
+  ];
+
+  afterEach(() => {
+    axiosGet.mockReset();
+  });
+
+  it('requests only the events on the selected page', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(3, 10, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 10, after: btoa('20'), order: 'desc' } }),
+    );
+  });
+
+  it('reads a page in the older half oldest first from the mirrored offset', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(19, 10, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 10, after: btoa('157'), order: 'asc' } }),
+    );
+  });
+
+  it('reads only the remaining events for a partial last page', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(35, 10, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 7, after: btoa('0'), order: 'asc' } }),
+    );
+  });
+
+  it('requests the selected number of events per page', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(3, 20, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 20, after: btoa('40'), order: 'desc' } }),
+    );
+  });
+
+  it('sizes a partial last page from the selected number of events per page', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(12, 30, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      eventsUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 17, after: btoa('0'), order: 'asc' } }),
+    );
+  });
+
+  it('stores the page with the number of events per page it was read with', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(2, 20, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .put(getEventLogPageSucceeded([loggedEvent], 2, 20))
+      .run();
+  });
+
+  it('shows an oldest-first page newest first', async () => {
+    const olderEvent = { ...loggedEvent, timestamp: '2026-09-01T15:30:00.000Z' };
+    axiosGet.mockReturnValueOnce({ data: { 'event-service': { event: [olderEvent, loggedEvent] }, page: {} } });
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(35, 10, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .put(getEventLogPageSucceeded([loggedEvent, olderEvent], 35, 10))
+      .run();
+  });
+
+  it('does not recount the matching events when moving between pages', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(3, 10, searchCriteria))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts the matching events through the event service with the same filters when a search starts', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse).mockReturnValueOnce(countResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(1, 10, searchCriteria, true))
+      .withState(pageState)
+      .provide(providers)
+      .run();
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      `${eventServiceUrl}/event/v1/events/count`,
+      expect.objectContaining({ params: filterParams }),
+    );
+  });
+
+  it('stores the page of events with the total number of matching events', async () => {
+    axiosGet.mockReturnValueOnce(pageResponse).mockReturnValueOnce(countResponse);
+
+    await expectSaga(fetchEventLogPage, getEventLogPage(1, 10, searchCriteria, true))
+      .withState(pageState)
+      .provide(providers)
+      .put(getEventLogPageSucceeded([loggedEvent], 1, 10, 347))
+      .run();
+  });
+
+  it('stops loading and reports an error when the event log cannot be retrieved', async () => {
+    await expectSaga(fetchEventLogPage, getEventLogPage(2, 10, searchCriteria))
+      .withState(pageState)
+      .provide([
+        [call.fn(getAccessToken), 'test-token'],
+        [call.fn(axios.get), throwError(new Error('timeout of 30000ms exceeded'))],
+      ])
+      .put(getEventLogEntriesFailed())
+      .put.like({ action: { type: ERROR_NOTIFICATION } })
       .run();
   });
 });
