@@ -22,6 +22,7 @@ jest.mock('./environments/environment', () => ({
     DIRECTORY_URL: 'https://directory.example.test',
     LOG_LEVEL: 'error',
     TRUSTED_PROXY: false,
+    OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.example.test:4318',
   },
 }));
 
@@ -33,8 +34,8 @@ import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
 import { AuditApplication, initializeApp } from './app';
 import { AuditServiceRoles } from './audit';
-import { createDatabase, PostgresEventRepository } from './postgres';
-import { AuditStoreError } from './audit/buffer';
+import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
+import { AuditStorageUnavailableError, AuditStoreError } from './audit/buffer';
 import { randomUUID } from 'crypto';
 
 describe('audit application authorization', () => {
@@ -120,6 +121,8 @@ describe('audit application authorization', () => {
     jest.spyOn(PostgresEventRepository.prototype, 'park').mockResolvedValue(undefined);
     jest.spyOn(PostgresEventRepository.prototype, 'find').mockResolvedValue([]);
     jest.spyOn(PostgresEventRepository.prototype, 'get').mockResolvedValue(null);
+    jest.spyOn(PostgresFailedEventRepository.prototype, 'list').mockResolvedValue([]);
+    jest.spyOn(PostgresFailedEventRepository.prototype, 'countOpen').mockResolvedValue(0);
     configuration.getServiceConfiguration.mockResolvedValue({
       kind: 'actionCatalog',
       application: 'case-service',
@@ -141,7 +144,7 @@ describe('audit application authorization', () => {
       configurationHandler: jest.fn(),
       healthCheck: jest.fn().mockResolvedValue({}),
       clearCached: jest.fn(),
-      metricsHandler: jest.fn(),
+      metricsHandler: (_req, _res, next) => next(),
       traceHandler: (_req, _res, next) => next(),
       shutdownTelemetry: jest.fn(),
       logger,
@@ -168,9 +171,97 @@ describe('audit application authorization', () => {
     });
   });
 
+  it('passes the configured OTLP endpoint to the SDK metrics exporter', () => {
+    const registration = jest.mocked(initializePlatform).mock.calls[0][0];
+
+    expect(registration.metrics).toBe('http://collector.example.test:4318');
+  });
+
+  it('registers the service replay action catalog through the SDK', () => {
+    const registration = jest.mocked(initializePlatform).mock.calls[0][0];
+
+    const [{ configuration: registered }] = registration.serviceConfigurations;
+    expect(registered).toHaveLength(1);
+    expect(registered[0]).toMatchObject({
+      name: 'actions-audit-service',
+      operation: 'REPLACE',
+      configuration: { kind: 'actionCatalog', application: 'audit-service' },
+    });
+    const { actions } = registered[0].configuration as { actions: Record<string, unknown> };
+    expect(Object.keys(actions).sort()).toEqual(
+      ['events.list', 'events.list-all', 'events.read', 'failed-event.replay', 'failed-events.list'].sort(),
+    );
+    expect(actions['failed-event.replay']).toEqual({
+      version: 1,
+      category: 'administrative',
+      severity: 'info',
+      retentionClass: 'compliance',
+      resourceType: 'failed-event',
+      captureChangeSet: false,
+      forwardToSiem: false,
+    });
+    expect(registration.serviceConfigurations[0].serviceId.toString()).toBe(serviceId.toString());
+  });
+
+  it.each([
+    { method: 'get' as const, path: '/audit/v1/failed-events' },
+    { method: 'post' as const, path: '/audit/v1/failed-events/54862935-e55b-4bc4-8cd0-9e64b193bbd2/replay' },
+  ])('returns 503 for authorized $method $path when storage fails', async ({ method, path }) => {
+    jest
+      .spyOn(PostgresFailedEventRepository.prototype, 'list')
+      .mockRejectedValue(new AuditStorageUnavailableError('Database unavailable'));
+    jest
+      .spyOn(PostgresFailedEventRepository.prototype, 'withReplayTransaction')
+      .mockRejectedValue(new AuditStorageUnavailableError('Database unavailable'));
+    await request(app)
+      [method](path)
+      .auth(token([AuditServiceRoles.Admin]), { type: 'bearer' })
+      .expect('Retry-After', '1')
+      .expect(503);
+  });
+
+  it('uses PostgreSQL for the administrator failed-event list', async () => {
+    const response = await request(app)
+      .get('/audit/v1/failed-events')
+      .auth(token([AuditServiceRoles.Admin]), { type: 'bearer' })
+      .expect(200);
+
+    expect(PostgresFailedEventRepository.prototype.list).toHaveBeenCalledWith(tenantA.id.toString(), 20, undefined);
+    expect(response.body).toEqual({ results: [], page: { size: 0 } });
+  });
+
+  it('uses a PostgreSQL transaction for replay rather than returning unconfigured storage', async () => {
+    jest
+      .spyOn(PostgresFailedEventRepository.prototype, 'withReplayTransaction')
+      .mockImplementation(async (_tenantId, work) =>
+        work({
+          getForUpdate: jest.fn().mockResolvedValue(null),
+          insertReplayedEvent: jest.fn(),
+          markReplayed: jest.fn(),
+          insertReplayAudit: jest.fn(),
+        }),
+      );
+
+    await request(app)
+      .post('/audit/v1/failed-events/54862935-e55b-4bc4-8cd0-9e64b193bbd2/replay')
+      .auth(token([AuditServiceRoles.Admin]), { type: 'bearer' })
+      .expect(404);
+
+    expect(PostgresFailedEventRepository.prototype.withReplayTransaction).toHaveBeenCalledWith(
+      tenantA.id.toString(),
+      expect.any(Function),
+    );
+  });
+
   describe.each([
     { method: 'get' as const, path: '/audit/v1/case-service/actions', role: AuditServiceRoles.Reader },
     { method: 'post' as const, path: '/audit/v1/case-service/events', role: AuditServiceRoles.Writer },
+    { method: 'get' as const, path: '/audit/v1/failed-events', role: AuditServiceRoles.Admin },
+    {
+      method: 'post' as const,
+      path: '/audit/v1/failed-events/54862935-e55b-4bc4-8cd0-9e64b193bbd2/replay',
+      role: AuditServiceRoles.Admin,
+    },
     { method: 'get' as const, path: '/audit/v1/events', role: AuditServiceRoles.Reader },
     { method: 'get' as const, path: '/audit/v1/case-service/events', role: AuditServiceRoles.Reader },
     {
@@ -346,7 +437,10 @@ describe('audit application authorization', () => {
       retentionClass: 'standard',
     });
     expect(response.body).not.toHaveProperty('tenant_id');
-    expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+    expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^actions-(?!audit-service$)/),
+      expect.anything(),
+    );
   });
 
   it('durably parks storage failures before returning a per-event rejection', async () => {
@@ -380,9 +474,12 @@ describe('audit application authorization', () => {
       expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId: tenantA.id.toString() }),
         10,
-        0,
+        undefined,
       );
-      expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+      expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
+        expect.stringMatching(/^actions-(?!audit-service$)/),
+        expect.anything(),
+      );
     },
   );
 
@@ -407,7 +504,7 @@ describe('audit application authorization', () => {
     expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: tenantB.id.toString() }),
       10,
-      0,
+      undefined,
     );
   });
 
@@ -437,6 +534,13 @@ describe('audit application authorization', () => {
 
     expect(response.status).toBe(503);
     expect(response.body).toMatchObject({ db: false, ready: false });
+  });
+
+  it('reports the self-audit failure count in health', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ db: true, ready: true, selfAuditFailures: 0 });
   });
 
   it('stops accepting writes and reports unavailable readiness while draining', async () => {

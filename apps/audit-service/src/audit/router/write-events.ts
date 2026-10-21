@@ -1,82 +1,25 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
-import { randomUUID } from 'crypto';
 import { RequestHandler } from 'express';
 import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, RetentionService } from '../model';
-import { ActionCatalog, RetentionSettings } from '../configuration';
+import { ActionValidator, EventRejectedError, validateEventEnvelope } from '../utils/event-validation';
 import {
-  ActionValidator,
-  EventRejectedError,
-  getCapturedChangeSet,
-  validateEventEnvelope,
-} from '../utils/event-validation';
-import { calculateRetentionUntil } from '../model/retention';
-import { AuditEvent, EnrichedEvent, EventSubmitter, RejectedEvent, WriteEventsResponse } from '../types';
+  EnrichedEvent,
+  EVENT_OUTCOME_STATUS,
+  EVENT_OUTCOME_CODE,
+  EventSubmitter,
+  RejectedEvent,
+  WriteEventsResponse,
+} from '../types';
 import { getWriterClientId } from '../utils/write-access';
+import { enrichEvent, getActionDefinition, WriteContext } from '../utils/event-preparation';
 
 interface WriteEventsDependencies {
   catalogs: CatalogService;
   retention: RetentionService;
   logger: Logger;
   submitter?: EventSubmitter;
-}
-
-interface WriteContext {
-  tenantId: string;
-  namespace: string;
-  writtenBy: string;
-  receivedAt: Date;
-}
-
-function getActionDefinition(event: AuditEvent, catalog: ActionCatalog | null): AuditActionDefinition {
-  const name = event.action.replace(/\.(succeeded|failed)$/, '');
-  if (!catalog || !Object.prototype.hasOwnProperty.call(catalog.actions, name)) {
-    throw new EventRejectedError('unknown_action', `Action '${event.action}' is not registered.`);
-  }
-  return catalog.actions[name];
-}
-
-function enrichEvent(
-  event: AuditEvent,
-  definition: AuditActionDefinition,
-  context: WriteContext,
-  classes: RetentionSettings['classes'],
-): EnrichedEvent {
-  const changeSet = getCapturedChangeSet(event, definition);
-  const occurredAt = new Date(event.occurredAt);
-  return {
-    id: randomUUID(),
-    event_id: event.eventId.toLowerCase(),
-    tenant_id: context.tenantId,
-    namespace: context.namespace,
-    written_by: context.writtenBy,
-    occurred_at: occurredAt,
-    received_at: context.receivedAt,
-    action: event.action,
-    action_version: definition.version,
-    category: definition.category,
-    status: event.status,
-    severity: definition.severity,
-    actor_id: event.actor.id,
-    actor_type: event.actor.type,
-    actor_name: event.actor.name ?? null,
-    actor_email: event.actor.email ?? null,
-    actor_roles: event.actor.roles ?? [],
-    resource_type: event.resource?.type ?? null,
-    resource_id: event.resource?.id ?? null,
-    resource_name: event.resource?.name ?? null,
-    scope_ids: event.scopeIds ?? [],
-    correlation_id: event.correlationId ?? null,
-    session_id: event.sessionId ?? null,
-    change_set_before: changeSet.before ?? null,
-    change_set_after: changeSet.after ?? null,
-    metadata: event.metadata ?? {},
-    retention_class: definition.retentionClass,
-    retention_until: calculateRetentionUntil(occurredAt, definition.retentionClass, classes),
-    originalEvent: event,
-  };
 }
 
 function rejectedEvent(input: unknown, index: number, code: string, reason: string): RejectedEvent {
@@ -109,14 +52,18 @@ async function submitEvents(
   for (const { event, index } of prepared) {
     const outcome = outcomes.get(event.id);
     switch (outcome?.status) {
-      case 'accepted':
+      case EVENT_OUTCOME_STATUS.ACCEPTED:
         response.accepted++;
         break;
-      case 'duplicate':
+      case EVENT_OUTCOME_STATUS.DUPLICATE:
         response.duplicates++;
         break;
-      case 'rejected':
-        if (outcome.code !== 'storage_failed' || typeof outcome.reason !== 'string' || !outcome.reason.trim()) {
+      case EVENT_OUTCOME_STATUS.REJECTED:
+        if (
+          outcome.code !== EVENT_OUTCOME_CODE.STORAGE_FAILED ||
+          typeof outcome.reason !== 'string' ||
+          !outcome.reason.trim()
+        ) {
           throw new InvalidOperationError('Audit storage returned an invalid rejection.', {
             statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
           });

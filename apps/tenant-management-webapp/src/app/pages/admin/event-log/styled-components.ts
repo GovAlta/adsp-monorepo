@@ -158,3 +158,16 @@ export const SmallButton = styled.span`
   transform: scale(0.85);
   transform-origin: left center;
 `;
+
+export const ActiveFilters = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--goa-space-s);
+  margin-bottom: var(--goa-space-l);
+  min-width: 0;
+
+  goa-filter-chip {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+`;

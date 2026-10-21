@@ -5,8 +5,47 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EventLogEntries } from './eventLogEntries';
 
+jest.mock('@components/Indicator', () => ({ PageIndicator: () => <div>Loading events</div> }));
+jest.mock('@components/ContextMenu', () => ({
+  GoAContextMenu: ({ children }) => <div>{children}</div>,
+  GoAContextMenuIcon: () => null,
+}));
+
 describe('EventLogEntries', () => {
-  const mockStore = configureStore([]);
+  const renderEntries = (entries = [], loading = false, show = false) => {
+    const store = configureStore([])({
+      event: { entries, isLoading: { log: loading } },
+      session: { indicator: { show } },
+    });
+    return render(
+      <Provider store={store}>
+        <EventLogEntries onSearch={jest.fn()} />
+      </Provider>,
+    );
+  };
+
+  it('prominently displays No Events Found when a search returns no events', () => {
+    const { getByRole } = renderEntries();
+
+    expect(getByRole('status')).toHaveTextContent('No Events Found');
+    expect(getByRole('status').tagName).toBe('H2');
+  });
+
+  it.each([
+    [true, false],
+    [false, true],
+  ])('hides the empty message while loading (%s, %s)', (loading, show) => {
+    const { queryByText } = renderEntries([], loading, show);
+
+    expect(queryByText('No Events Found')).not.toBeInTheDocument();
+  });
+
+  it('hides the empty message before results arrive', () => {
+    const { queryByText } = renderEntries(null);
+
+    expect(queryByText('No Events Found')).not.toBeInTheDocument();
+  });
+
   const entry = {
     timestamp: new Date('2026-10-19T19:56:49.000Z'),
     namespace: 'access-service',
@@ -15,28 +54,24 @@ describe('EventLogEntries', () => {
     details: {},
   };
 
-  const renderEntries = (entries: (typeof entry)[] | null, loading: boolean) =>
-    render(
-      <Provider store={mockStore({ event: { entries }, session: { indicator: { show: loading } } })}>
-        <EventLogEntries onSearch={jest.fn()} />
-      </Provider>,
-    );
-
-  it('keeps the current page in place under a loading overlay while the next page loads', () => {
-    const { getByTestId, getByText } = renderEntries([entry], true);
+  it.each([
+    [true, false],
+    [false, true],
+  ])('keeps the current page under an overlay while loading (%s, %s)', (loading, show) => {
+    const { getByTestId, getByText } = renderEntries([entry], loading, show);
 
     expect(getByText('LOGIN')).toBeInTheDocument();
     expect(getByTestId('event-log-loading-overlay')).toBeInTheDocument();
   });
 
   it('does not overlay the table when nothing is loading', () => {
-    const { queryByTestId } = renderEntries([entry], false);
+    const { queryByTestId } = renderEntries([entry]);
 
     expect(queryByTestId('event-log-loading-overlay')).not.toBeInTheDocument();
   });
 
   it('does not overlay an empty table while the first page loads', () => {
-    const { queryByTestId } = renderEntries(null, true);
+    const { queryByTestId } = renderEntries(null, true, true);
 
     expect(queryByTestId('event-log-loading-overlay')).not.toBeInTheDocument();
   });

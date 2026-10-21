@@ -609,6 +609,18 @@ describe('TimescaleValuesRepository readValues', () => {
     expect(wheres).toContainEqual(['timestamp', '>=', timestampMin]);
   });
 
+  it('keeps newest-first ordering for a bounded event log page', async () => {
+    const { knex, builderFor } = createKnex();
+    const bounds = {
+      timestampMin: new Date('2026-10-12T18:30:45.123Z'),
+      timestampMax: new Date('2026-10-19T18:30:45.123Z'),
+    };
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, bounds);
+
+    expect(builderFor('values').orderBy).toHaveBeenCalledWith('timestamp', 'desc');
+  });
+
   it('matches context, value and url through jsonb containment', async () => {
     const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
 

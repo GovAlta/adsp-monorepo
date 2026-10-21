@@ -134,7 +134,14 @@ describe('PostgresEventRepository', () => {
     ['53300', 'transient'],
     ['57014', 'transient'],
     ['57P01', 'transient'],
+    ['57P02', 'transient'],
+    ['57P03', 'transient'],
+    ['55P03', 'transient'],
+    ['ECONNREFUSED', 'transient'],
     ['ECONNRESET', 'transient'],
+    ['ETIMEDOUT', 'transient'],
+    ['EPIPE', 'transient'],
+    ['57000', 'permanent'],
     ['42501', 'permanent'],
   ])('classifies database error %s as %s and rolls back the batch', async (code, kind) => {
     rows.mockRejectedValue({ code, message: 'SQL with private actor data' });
@@ -247,12 +254,12 @@ describe('PostgresEventRepository', () => {
         occurredTo: event.received_at,
       },
       10,
-      20,
+      { occurredAt: event.occurred_at, id: event.id },
     );
 
     expect(result).toEqual([event]);
     expect(execute.mock.calls[0][1]).toMatchObject({
-      sql: 'select * from "audit_events" where "tenant_id" = $1 and "namespace" = $2 and "actor_id" = $3 and "resource_type" = $4 and "resource_id" = $5 and "action" = $6 and "status" = $7 and "category" = $8 and scope_ids @> $9::text[] and "occurred_at" >= $10 and "occurred_at" <= $11 order by "occurred_at" desc, "id" desc limit $12 offset $13',
+      sql: 'select * from "audit_events" where "tenant_id" = $1 and "namespace" = $2 and "actor_id" = $3 and "resource_type" = $4 and "resource_id" = $5 and "action" = $6 and "status" = $7 and "category" = $8 and scope_ids @> $9::text[] and "occurred_at" >= $10 and "occurred_at" <= $11 and (occurred_at, id) < ($12, $13) order by "occurred_at" desc, "id" desc limit $14',
       bindings: [
         event.tenant_id,
         event.namespace,
@@ -265,14 +272,15 @@ describe('PostgresEventRepository', () => {
         ['office:edmonton'],
         event.occurred_at,
         event.received_at,
+        event.occurred_at,
+        event.id,
         10,
-        20,
       ],
     });
   });
 
   it('keeps tenant isolation when listing across all namespaces', async () => {
-    await repository.find({ tenantId: event.tenant_id }, 10, 0);
+    await repository.find({ tenantId: event.tenant_id }, 10);
 
     expect(execute.mock.calls[0][1]).toMatchObject({
       sql: 'select * from "audit_events" where "tenant_id" = $1 order by "occurred_at" desc, "id" desc limit $2',
@@ -302,7 +310,7 @@ describe('PostgresEventRepository', () => {
 
     const result =
       method === 'find'
-        ? repository.find({ tenantId: event.tenant_id }, 10, 0)
+        ? repository.find({ tenantId: event.tenant_id }, 10)
         : repository.get(event.tenant_id, event.namespace, event.id);
 
     await expect(result).rejects.toBeInstanceOf(AuditStorageUnavailableError);

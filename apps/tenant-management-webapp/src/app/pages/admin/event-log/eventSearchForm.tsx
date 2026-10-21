@@ -1,10 +1,11 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
 import { getEventDefinitions } from '@store/event/actions';
 import {
   SearchActions,
+  ActiveFilters,
   FilterControls,
   FilterDrawerFooterActions,
   FilterDrawerHeading,
@@ -19,55 +20,70 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabInput,
+  GoabFormItem,
+  GoabFilterChip,
 } from '@abgov/react-components';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import {
+  DATE_RANGE_OPTIONS,
+  DEFAULT_DATE_RANGE,
+  DateRangePreset,
+  dateRangeCriteria,
+  defaultEventLogCriteria,
+  fromDateTimeLocalValue,
+  getDateRangeLabel,
+  getDateRangePreset,
+  isValidDateRange,
+  toDateTimeLocalValue,
+} from './util';
 
-const initCriteria: EventSearchCriteria = {
-  namespace: '',
-  name: '',
-  timestampMax: '',
-  timestampMin: '',
-};
 const ALL_NAMESPACES = 'all-namespaces';
 const ALL_EVENT_NAMES = 'all-event-names';
-const DATE_RANGE_LAST_7_DAYS = 'last-7-days';
 const DATE_RANGE_CUSTOM = 'custom';
-const DATE_RANGE_ALL = 'all-dates';
 
-function toDateTimeLocalValue(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function defaultWeekCriteria(): EventSearchCriteria {
-  const now = new Date();
-  const weekAgo = new Date(now);
-  weekAgo.setDate(now.getDate() - 7);
-
-  return {
-    namespace: '',
-    name: '',
-    timestampMin: toDateTimeLocalValue(weekAgo),
-    timestampMax: toDateTimeLocalValue(now),
-  };
-}
 interface EventSearchFormProps {
   disabled?: boolean;
   initialValue?: EventSearchCriteria;
-  onCancel?: () => void;
   onSearch?: (searchCriteria: EventSearchCriteria) => void;
   leftAction?: React.ReactNode;
 }
 
 export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
   disabled = false,
-  onCancel,
+  initialValue,
   onSearch,
   leftAction,
 }) => {
-  const [searchCriteria, setSearchCriteria] = useState(() => defaultWeekCriteria());
+  const [appliedCriteria, setAppliedCriteria] = useState(initialValue || defaultEventLogCriteria);
+  const [searchCriteria, setSearchCriteria] = useState(appliedCriteria);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [dateRange, setDateRange] = useState(DATE_RANGE_LAST_7_DAYS);
+  const [dateRange, setDateRange] = useState(() => getDateRangePreset(appliedCriteria));
+  const [appliedDateRange, setAppliedDateRange] = useState(dateRange);
+  const appliedRangeRef = useRef({ criteria: appliedCriteria, preset: dateRange });
+  const [customStart, setCustomStart] = useState(() =>
+    appliedCriteria.timestampMin ? toDateTimeLocalValue(new Date(appliedCriteria.timestampMin)) : '',
+  );
+  const [customEnd, setCustomEnd] = useState(() =>
+    appliedCriteria.timestampMax ? toDateTimeLocalValue(new Date(appliedCriteria.timestampMax)) : '',
+  );
+
+  useEffect(() => {
+    if (initialValue) {
+      setAppliedCriteria(initialValue);
+      setSearchCriteria(initialValue);
+      const previous = appliedRangeRef.current;
+      const preset =
+        initialValue.timestampMin === previous.criteria.timestampMin &&
+        initialValue.timestampMax === previous.criteria.timestampMax
+          ? previous.preset
+          : getDateRangePreset(initialValue);
+      setDateRange(preset);
+      setAppliedDateRange(preset);
+      setCustomStart(initialValue.timestampMin ? toDateTimeLocalValue(new Date(initialValue.timestampMin)) : '');
+      setCustomEnd(initialValue.timestampMax ? toDateTimeLocalValue(new Date(initialValue.timestampMax)) : '');
+      appliedRangeRef.current = { criteria: initialValue, preset };
+    }
+  }, [initialValue]);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -104,25 +120,64 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
     });
   };
 
-  const setDateRangeFilter = (value: string) => {
+  const setDateRangeFilter = (value: DateRangePreset) => {
+    if (disabled || !value || !DATE_RANGE_OPTIONS.some((option) => option.value === value)) return;
+    let dates = searchCriteria;
+    if (value !== DATE_RANGE_CUSTOM) {
+      dates = dateRangeCriteria(value);
+    } else if (dateRange !== DATE_RANGE_CUSTOM) {
+      dates = dateRange ? dateRangeCriteria(dateRange) : defaultEventLogCriteria();
+    }
     setDateRange(value);
-    if (value === DATE_RANGE_LAST_7_DAYS) {
-      const weekCriteria = defaultWeekCriteria();
-      setSearchCriteria((criteria) => ({
-        ...criteria,
-        timestampMin: weekCriteria.timestampMin,
-        timestampMax: weekCriteria.timestampMax,
-      }));
-    }
-    if (value === DATE_RANGE_ALL) {
-      setSearchCriteria((criteria) => ({ ...criteria, timestampMin: '', timestampMax: '' }));
-    }
+    setCustomStart(dates.timestampMin ? toDateTimeLocalValue(new Date(dates.timestampMin)) : '');
+    setCustomEnd(dates.timestampMax ? toDateTimeLocalValue(new Date(dates.timestampMax)) : '');
+    setSearchCriteria((criteria) => ({
+      ...criteria,
+      timestampMin: dates.timestampMin,
+      timestampMax: dates.timestampMax,
+    }));
   };
 
-  const clearFilters = () => {
-    setDateRange(DATE_RANGE_ALL);
-    setSearchCriteria(initCriteria);
+  const applyCriteria = (criteria: EventSearchCriteria, preset = dateRange) => {
+    if (disabled) return;
+    setAppliedCriteria(criteria);
+    setSearchCriteria(criteria);
+    setDateRange(preset);
+    setAppliedDateRange(preset);
+    setCustomStart(criteria.timestampMin ? toDateTimeLocalValue(new Date(criteria.timestampMin)) : '');
+    setCustomEnd(criteria.timestampMax ? toDateTimeLocalValue(new Date(criteria.timestampMax)) : '');
+    appliedRangeRef.current = { criteria, preset };
+    onSearch?.(criteria);
   };
+
+  const getDateRangeError = () => {
+    if (dateRange !== DATE_RANGE_CUSTOM || isValidDateRange(searchCriteria)) return undefined;
+    if (!searchCriteria.timestampMin || !searchCriteria.timestampMax) return 'Enter a valid start and end date/time.';
+    return 'End date/time must be later than start date/time.';
+  };
+  const dateRangeError = getDateRangeError();
+  const hasSearchCriteria = Boolean(
+    dateRange || searchCriteria.namespace || searchCriteria.name || searchCriteria.correlationId,
+  );
+
+  const removeFilter = (key: 'dateRange' | 'namespace' | 'name' | 'correlationId') => {
+    if (disabled) return;
+    const criteria = { ...appliedCriteria };
+    if (key === 'dateRange') {
+      criteria.timestampMin = '';
+      criteria.timestampMax = '';
+    } else {
+      criteria[key] = '';
+    }
+    applyCriteria(criteria, key === 'dateRange' ? '' : appliedDateRange);
+  };
+
+  const badges = [
+    { key: 'dateRange' as const, label: 'Date range', value: getDateRangeLabel(appliedCriteria, appliedDateRange) },
+    { key: 'namespace' as const, label: 'Namespace', value: appliedCriteria.namespace },
+    { key: 'name' as const, label: 'Event name', value: appliedCriteria.name },
+    { key: 'correlationId' as const, label: 'Correlation ID', value: appliedCriteria.correlationId },
+  ].filter((badge) => badge.value);
 
   return (
     <div>
@@ -153,38 +208,61 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
                 <div className="filter-label">Date range</div>
                 <GoabDropdown
                   name="event-log-date-range-filter"
+                  ariaLabel="Date range"
                   native
                   disabled={disabled}
                   value={dateRange}
                   leadingIcon="calendar"
                   size="compact"
                   width="100%"
-                  onChange={(detail) => setDateRangeFilter(detail.value as string)}
+                  onChange={(detail) => setDateRangeFilter(detail.value as DateRangePreset)}
                 >
-                  <GoabDropdownItem value={DATE_RANGE_LAST_7_DAYS} label="Last 7 days" />
-                  <GoabDropdownItem value={DATE_RANGE_CUSTOM} label="Custom range" />
-                  <GoabDropdownItem value={DATE_RANGE_ALL} label="All dates" />
+                  {!dateRange && <GoabDropdownItem value="" label="Select date range" />}
+                  {DATE_RANGE_OPTIONS.map(({ value, label }) => (
+                    <GoabDropdownItem key={value} value={value} label={label} />
+                  ))}
                 </GoabDropdown>
-                <div>From</div>
-                <GoabInput
-                  name="event-log-from-filter"
-                  ariaLabel="From"
-                  value={searchCriteria.timestampMin || ''}
-                  leadingIcon="calendar"
-                  size="compact"
-                  width="100%"
-                  disabled
-                />
-                <div>To</div>
-                <GoabInput
-                  name="event-log-to-filter"
-                  ariaLabel="To"
-                  value={searchCriteria.timestampMax || ''}
-                  leadingIcon="calendar"
-                  size="compact"
-                  width="100%"
-                  disabled
-                />
+                {dateRange && (
+                  <>
+                    <GoabFormItem label="From (Mountain Time)" maxWidth="100%">
+                      <GoabInput
+                        name="event-log-from-filter"
+                        ariaLabel="From (Mountain Time)"
+                        type="datetime-local"
+                        value={customStart}
+                        size="compact"
+                        width="100%"
+                        disabled={disabled || dateRange !== DATE_RANGE_CUSTOM}
+                        onChange={(detail) => {
+                          setCustomStart(detail.value);
+                          setSearchCriteria((criteria) => ({
+                            ...criteria,
+                            timestampMin: fromDateTimeLocalValue(detail.value),
+                          }));
+                        }}
+                      />
+                    </GoabFormItem>
+                    <GoabFormItem label="To (Mountain Time)" error={dateRangeError} maxWidth="100%">
+                      <GoabInput
+                        name="event-log-to-filter"
+                        ariaLabel="To (Mountain Time)"
+                        type="datetime-local"
+                        value={customEnd}
+                        size="compact"
+                        width="100%"
+                        disabled={disabled || dateRange !== DATE_RANGE_CUSTOM}
+                        error={Boolean(dateRangeError)}
+                        onChange={(detail) => {
+                          setCustomEnd(detail.value);
+                          setSearchCriteria((criteria) => ({
+                            ...criteria,
+                            timestampMax: fromDateTimeLocalValue(detail.value),
+                          }));
+                        }}
+                      />
+                    </GoabFormItem>
+                  </>
+                )}
 
                 <div className="filter-label">Namespace</div>
                 <GoabDropdown
@@ -249,8 +327,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
               testId="event-log-filter-reset"
               disabled={disabled}
               onClick={() => {
-                clearFilters();
-                onCancel?.();
+                applyCriteria(defaultEventLogCriteria(), DEFAULT_DATE_RANGE);
               }}
             >
               Reset
@@ -268,9 +345,17 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
               size="compact"
               leadingIcon="search"
               testId="event-log-filter-search"
-              disabled={disabled}
+              disabled={disabled || !hasSearchCriteria || Boolean(dateRangeError)}
               onClick={() => {
-                onSearch?.(searchCriteria);
+                if (!hasSearchCriteria || dateRangeError) return;
+                const dates =
+                  !dateRange || dateRange === DATE_RANGE_CUSTOM ? searchCriteria : dateRangeCriteria(dateRange);
+                const criteria = {
+                  ...searchCriteria,
+                  timestampMin: dates.timestampMin,
+                  timestampMax: dates.timestampMax,
+                };
+                applyCriteria(criteria);
               }}
             >
               Search
@@ -292,6 +377,16 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({
           </MoreFilters>
         )}
       </GoabDrawer>
+      <ActiveFilters role="group" aria-label="Active event log filters" aria-busy={disabled}>
+        {badges.map(({ key, label, value }) => (
+          <GoabFilterChip
+            key={key}
+            content={`${label}: ${value}`}
+            testId={`event-log-filter-badge-${key}`}
+            onClick={() => removeFilter(key)}
+          />
+        ))}
+      </ActiveFilters>
     </div>
   );
 };
