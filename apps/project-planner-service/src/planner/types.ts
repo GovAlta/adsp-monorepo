@@ -60,6 +60,19 @@ export interface ServiceMapping {
   reason: string;
 }
 
+export interface NotCoveredItem {
+  requirement: string;
+  reason: string;
+  suggestedApproach: string;
+}
+
+export interface PatternUnsupportedCapability extends NotCoveredItem {
+  keywords?: string[];
+  category?: string;
+  feeType?: string;
+  recordType?: string;
+}
+
 // built-in: shipped with the service; customized: a built-in overridden by the tenant; custom: created by the tenant.
 export type PatternSource = 'built-in' | 'customized' | 'custom';
 
@@ -76,6 +89,7 @@ export interface BusinessPattern {
   clarifyingQuestions: string[];
   assumptions: string[];
   knownUnknowns: string[];
+  unsupportedCapabilities?: PatternUnsupportedCapability[];
 }
 
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
@@ -232,6 +246,7 @@ export interface SolutionBlueprint {
     diagram: string;
   };
   serviceMapping: BlueprintServiceRole[];
+  notCoveredByAdsp?: NotCoveredItem[];
   specialistNotes: SpecialistNote[];
   workflows: BlueprintWorkflow[];
   dataGovernance: {

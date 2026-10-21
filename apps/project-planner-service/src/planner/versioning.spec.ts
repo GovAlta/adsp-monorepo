@@ -49,9 +49,7 @@ describe('versioning', () => {
     });
 
     it('records a hash for confidence', () => {
-      const hashes = sectionHashes(
-        solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }),
-      );
+      const hashes = sectionHashes(solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }));
 
       expect(Object.keys(hashes)).toEqual(['Confidence']);
     });
@@ -85,7 +83,15 @@ describe('versioning', () => {
         solution({
           ...emptyState,
           conversation: [{ role: 'user', content: 'Hi', at: 'x' }],
-          discovery: { messages: [], confidence: 0, threshold: 50, factors: [], ready: false, mode: 'rules', updatedOn: 'x' },
+          discovery: {
+            messages: [],
+            confidence: 0,
+            threshold: 50,
+            factors: [],
+            ready: false,
+            mode: 'rules',
+            updatedOn: 'x',
+          },
         }),
       );
 
@@ -129,6 +135,37 @@ describe('versioning', () => {
       const padded = sectionHashes(solution({ ...emptyState, problemStatement: 'Applicants submit permits.\n\n' }));
 
       expect(padded['Problem statement']).toBe(trimmed['Problem statement']);
+    });
+
+    it('does not hash notCoveredByAdsp when it is undefined, so a blueprint that predates the feature does not bump', () => {
+      const hashes = sectionHashes(
+        solution({ ...emptyState, blueprint: { generatedOn: 'x', mode: 'rules' } as SolutionState['blueprint'] }),
+      );
+
+      expect(hashes['Not covered by ADSP']).toBeUndefined();
+    });
+
+    it('hashes an empty notCoveredByAdsp array so a regenerate with everything covered is still recorded', () => {
+      const hashes = sectionHashes(
+        solution({
+          ...emptyState,
+          blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: [] } as SolutionState['blueprint'],
+        }),
+      );
+
+      expect(hashes['Not covered by ADSP']).toBeDefined();
+    });
+
+    it('changes the hash when notCoveredByAdsp content changes', () => {
+      const withItems = (items: SolutionState['blueprint']['notCoveredByAdsp']) =>
+        sectionHashes(
+          solution({
+            ...emptyState,
+            blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: items } as SolutionState['blueprint'],
+          }),
+        )['Not covered by ADSP'];
+
+      expect(withItems([{ requirement: 'Fee', reason: 'x', suggestedApproach: 'y' }])).not.toBe(withItems([]));
     });
   });
 

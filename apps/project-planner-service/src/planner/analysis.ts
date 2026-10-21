@@ -17,7 +17,7 @@ const MEDIUM_THRESHOLD = 4;
 
 const normalize = (text: string) => text.toLowerCase();
 
-const containsTerm = (text: string, term: string) => {
+export const containsTerm = (text: string, term: string) => {
   const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`(^|[^a-z0-9])${escaped}(s|es|ed|ing)?([^a-z0-9]|$)`).test(text);
 };
@@ -57,7 +57,10 @@ export function matchPatterns(text: string, patterns: BusinessPattern[]): Patter
 }
 
 const CONCEPT_CUES: { type: ConceptType; cues: RegExp }[] = [
-  { type: 'actor', cues: /\b(applicants?|staff|reviewers?|analysts?|citizens?|public|managers?|inspectors?|administrators?)\b/gi },
+  {
+    type: 'actor',
+    cues: /\b(applicants?|staff|reviewers?|analysts?|citizens?|public|managers?|inspectors?|administrators?)\b/gi,
+  },
   { type: 'document', cues: /\b(forms?|documents?|certificates?|letters?|reports?|attachments?|licen[cs]es?)\b/gi },
   { type: 'event', cues: /\b(submitted|approved|rejected|escalated|assigned|expired|renewed)\b/gi },
   { type: 'external-system', cues: /\b(sap|peoplesoft|salesforce|legacy system|external system|api)\b/gi },
@@ -148,14 +151,19 @@ export function consultSpecialist(state: SolutionState, service: string): Consul
   if (!specialist) {
     return undefined;
   }
-  const recommendation = state.hypotheses.flatMap((h) => h.recommendations).find((r) => r.service === specialist.service);
+  const recommendation = state.hypotheses
+    .flatMap((h) => h.recommendations)
+    .find((r) => r.service === specialist.service);
   const recommended = new Set(state.hypotheses.flatMap((h) => h.recommendations.map((r) => r.service)));
   return {
     service: specialist.service,
     fit: recommendation ? 'recommended' : state.hypotheses.length > 0 ? 'not-indicated' : 'optional',
     reason: recommendation?.reason || specialist.purpose,
     questions: specialist.questions,
-    dependencies: specialist.dependsOn.map((dependency) => ({ service: dependency, satisfied: recommended.has(dependency) })),
+    dependencies: specialist.dependsOn.map((dependency) => ({
+      service: dependency,
+      satisfied: recommended.has(dependency),
+    })),
     risks: specialist.risks,
   };
 }

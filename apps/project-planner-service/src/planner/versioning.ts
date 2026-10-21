@@ -26,6 +26,10 @@ const MAJOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown>
   Overview: (s) => s.state.blueprint?.overview,
   Architecture: (s) => s.state.blueprint?.architecture,
   'Service mapping': (s) => s.state.blueprint?.serviceMapping,
+  'Not covered by ADSP': (s) => {
+    const items = s.state.blueprint?.notCoveredByAdsp;
+    return items === undefined ? undefined : { items };
+  },
   'Specialist notes': (s) => s.state.blueprint?.specialistNotes?.map(omitConsultedOn),
   Workflows: (s) => s.state.blueprint?.workflows,
   'Data & governance': (s) => s.state.blueprint?.dataGovernance,
@@ -47,7 +51,10 @@ const normalize = (value: unknown): unknown => {
   return value;
 };
 
-const hashSection = (value: unknown): string => createHash('sha256').update(JSON.stringify(normalize(value))).digest('hex');
+const hashSection = (value: unknown): string =>
+  createHash('sha256')
+    .update(JSON.stringify(normalize(value)))
+    .digest('hex');
 
 const isEmpty = (value: unknown): boolean => {
   if (value === undefined || value === null) {
