@@ -260,11 +260,15 @@ All three require `audit-reader` and tenant context. Core readers can select a t
 Lists accept `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`, `scope`,
 `occurredFrom` and `occurredTo`. Filters combine with AND; time bounds are inclusive, and `scope`
 matches an element of `scopeIds`. Results are ordered by `occurred_at DESC, id DESC`, with `top`
-and the existing `after` cursor controlling offset pagination. Equal timestamps have deterministic
-ordering; concurrent inserts can still shift offsets between requests.
+and an opaque `after` keyset cursor (the last event's `occurred_at` and `id`, returned as `page.next`)
+controlling pagination. Paging is stable while new events arrive, including the events recorded by
+the reads themselves.
 
 Responses retain the existing camelCase event shape and never expose `tenant_id`.
 Database read failures return 503 rather than an empty result or a false 404.
+
+See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
+for the boundary with OSP-708.
 
 ## Write buffer
 
@@ -311,7 +315,8 @@ provide `tenantId`. Reader or writer permissions alone are not enough.
 | `POST /audit/v1/failed-events/{id}/replay` | Retry an open event using its stored data. No request body is needed. |
 
 Listing accepts `top` (default 20, maximum 100) and the previous response's `page.next` as
-`after`. It returns `{ results, page: { after?, size, next? } }`.
+`after`, an opaque keyset cursor (the last row's `failed_at` and `id`), so pages stay stable while
+new failures are parked. It returns `{ results, page: { after?, size, next? } }`.
 
 Both endpoints use the same PostgreSQL connection as normal event writes and history reads.
 Replay saves the recovered event, failed-row update and replay audit record in one transaction:
@@ -350,3 +355,29 @@ needs separate configuration.
 
 Open-event counts come from PostgreSQL. The write buffer counts confirmed parked events and
 unconfirmed saves; failed replay saves use the same failure counter with `operation=replay`.
+
+## Self-auditing
+
+Reading the audit trail is itself recorded. Each successful read writes one event to the
+`audit-service` namespace of the tenant that was queried. The namespace's action catalog is
+registered by the service at startup in core configuration, alongside `failed-event.replay`, and
+applies to every tenant. If registration has not propagated yet, reads still succeed but recording
+fails and is counted.
+
+| Action | Category | Recorded when |
+| --- | --- | --- |
+| `events.list` | `data-access` | A namespace listing succeeds. |
+| `events.list-all` | `data-access` | A cross-namespace listing succeeds. |
+| `events.read` | `data-access` | A single event read succeeds. |
+| `failed-events.list` | `data-access` | A failed-events listing succeeds. |
+
+Reads use the `security` retention class (365 days by default). Replay is recorded
+transactionally by the replay itself (see above), not by this mechanism.
+
+The event's actor is the caller, `written_by` is the Audit Service's own client, and `metadata`
+holds the `endpoint`, the `filters` supplied and the `resultCount`. `correlationId` is taken from the
+`x-correlation-id` request header when present. A paged read records one event per request.
+
+Events go through the normal validation, enrichment and buffer. A failure to record is logged and
+counted and never fails the read. The count is exposed as `selfAuditFailures` in `GET /health`.
+Failed or unauthorized reads are not recorded.

@@ -26,6 +26,8 @@ import {
 } from './audit';
 import { AuditWriteBuffer } from './audit/buffer';
 import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
+import { SELF_AUDIT_DEFINITIONS } from './audit/model';
+import { SelfAuditor } from './audit/utils/self-audit';
 import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
@@ -96,7 +98,10 @@ export const initializeApp = async (): Promise<AuditApplication> => {
               configuration: {
                 kind: 'actionCatalog',
                 application: serviceId.service,
-                actions: auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),
+                actions: {
+                  ...SELF_AUDIT_DEFINITIONS,
+                  ...auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),
+                },
               },
             },
           ],
@@ -147,6 +152,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     assertTenantContext,
     tenantHandler,
   );
+  const auditor = new SelfAuditor({ serviceId, catalogs, retention, submitter: buffer, logger });
   app.use(
     '/audit/v1',
     createAuditRouter({
@@ -155,6 +161,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
       submitter: buffer,
       reader: repository,
       logger,
+      serviceId,
+      auditor,
       failedEvents: new FailedEventService(
         failedEventRepository,
         serviceId.toString(),
@@ -172,7 +180,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     const platform = await healthCheck();
     const db = await isConnected();
     const ready = db && buffer.isReady;
-    res.status(ready ? 200 : 503).json({ ...platform, db, ready });
+    res.status(ready ? 200 : 503).json({ ...platform, db, ready, selfAuditFailures: auditor.failureCount });
   });
 
   app.get('/', async (req, res) => {

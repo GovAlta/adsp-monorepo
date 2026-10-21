@@ -21,7 +21,7 @@ paths:
             default: 20
         - in: query
           name: after
-          description: Opaque cursor returned as page.next. Canonical base64 of a nonnegative integer offset.
+          description: Opaque keyset cursor (failed_at, id) returned as page.next. Stable while new failures are parked.
           schema:
             type: string
             maxLength: 32

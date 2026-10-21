@@ -4,6 +4,7 @@ export type {
   EnrichedEvent,
   EventCriteria,
   EventOutcome,
+  EventCursor,
   EventReader,
   EventSubmitter,
   RejectedEvent,
@@ -12,6 +13,7 @@ export type {
 } from './events';
 export type {
   FailedAuditEvent,
+  FailedEventCursor,
   FailedEventReplayTransaction,
   FailedEventRepository,
   ReplayAuditRecord,

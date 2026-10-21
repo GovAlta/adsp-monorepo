@@ -180,37 +180,27 @@ describe('audit application authorization', () => {
   it('registers the service replay action catalog through the SDK', () => {
     const registration = jest.mocked(initializePlatform).mock.calls[0][0];
 
-    expect(
-      registration.serviceConfigurations.map(({ serviceId, ...configuration }) => ({
-        ...configuration,
-        serviceId: serviceId.toString(),
-      })),
-    ).toEqual([
-      {
-        serviceId: serviceId.toString(),
-        configuration: [
-          {
-            name: 'actions-audit-service',
-            operation: 'REPLACE',
-            configuration: {
-              kind: 'actionCatalog',
-              application: 'audit-service',
-              actions: {
-                'failed-event.replay': {
-                  version: 1,
-                  category: 'administrative',
-                  severity: 'info',
-                  retentionClass: 'compliance',
-                  resourceType: 'failed-event',
-                  captureChangeSet: false,
-                  forwardToSiem: false,
-                },
-              },
-            },
-          },
-        ],
-      },
-    ]);
+    const [{ configuration: registered }] = registration.serviceConfigurations;
+    expect(registered).toHaveLength(1);
+    expect(registered[0]).toMatchObject({
+      name: 'actions-audit-service',
+      operation: 'REPLACE',
+      configuration: { kind: 'actionCatalog', application: 'audit-service' },
+    });
+    const { actions } = registered[0].configuration as { actions: Record<string, unknown> };
+    expect(Object.keys(actions).sort()).toEqual(
+      ['events.list', 'events.list-all', 'events.read', 'failed-event.replay', 'failed-events.list'].sort(),
+    );
+    expect(actions['failed-event.replay']).toEqual({
+      version: 1,
+      category: 'administrative',
+      severity: 'info',
+      retentionClass: 'compliance',
+      resourceType: 'failed-event',
+      captureChangeSet: false,
+      forwardToSiem: false,
+    });
+    expect(registration.serviceConfigurations[0].serviceId.toString()).toBe(serviceId.toString());
   });
 
   it.each([
@@ -236,7 +226,7 @@ describe('audit application authorization', () => {
       .auth(token([AuditServiceRoles.Admin]), { type: 'bearer' })
       .expect(200);
 
-    expect(PostgresFailedEventRepository.prototype.list).toHaveBeenCalledWith(tenantA.id.toString(), 20, 0);
+    expect(PostgresFailedEventRepository.prototype.list).toHaveBeenCalledWith(tenantA.id.toString(), 20, undefined);
     expect(response.body).toEqual({ results: [], page: { size: 0 } });
   });
 
@@ -447,7 +437,10 @@ describe('audit application authorization', () => {
       retentionClass: 'standard',
     });
     expect(response.body).not.toHaveProperty('tenant_id');
-    expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+    expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^actions-(?!audit-service$)/),
+      expect.anything(),
+    );
   });
 
   it('durably parks storage failures before returning a per-event rejection', async () => {
@@ -481,9 +474,12 @@ describe('audit application authorization', () => {
       expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId: tenantA.id.toString() }),
         10,
-        0,
+        undefined,
       );
-      expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+      expect(configuration.getServiceConfiguration).not.toHaveBeenCalledWith(
+        expect.stringMatching(/^actions-(?!audit-service$)/),
+        expect.anything(),
+      );
     },
   );
 
@@ -508,7 +504,7 @@ describe('audit application authorization', () => {
     expect(PostgresEventRepository.prototype.find).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: tenantB.id.toString() }),
       10,
-      0,
+      undefined,
     );
   });
 
@@ -538,6 +534,13 @@ describe('audit application authorization', () => {
 
     expect(response.status).toBe(503);
     expect(response.body).toMatchObject({ db: false, ready: false });
+  });
+
+  it('reports the self-audit failure count in health', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ db: true, ready: true, selfAuditFailures: 0 });
   });
 
   it('stops accepting writes and reports unavailable readiness while draining', async () => {

@@ -28,9 +28,15 @@ export interface FailedEventReplayTransaction {
   insertReplayAudit(event: EnrichedEvent): Promise<void>;
 }
 
+export interface FailedEventCursor {
+  failedAt: Date;
+  id: string;
+}
+
 export interface FailedEventRepository {
   // Tenant-filtered, ordered by failed_at DESC, id DESC, including all three statuses.
-  list(tenantId: string, top: number, skip: number): Promise<FailedAuditEvent[]>;
+  // `after` is the last row of the previous page; only strictly older rows are returned.
+  list(tenantId: string, top: number, after?: FailedEventCursor): Promise<FailedAuditEvent[]>;
   // Privileged aggregate across tenants; no event data leaves the repository.
   countOpen(): Promise<number>;
   // Resolve only after commit. Lock the failed row and roll back ALL writes on any failure,
