@@ -5,7 +5,14 @@ import { randomUUID } from 'crypto';
 import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
-import { buildHypotheses, buildNextSteps, ConsultResult, consultSpecialist, extractConcepts, matchPatterns } from './analysis';
+import {
+  buildHypotheses,
+  buildNextSteps,
+  ConsultResult,
+  consultSpecialist,
+  extractConcepts,
+  matchPatterns,
+} from './analysis';
 import {
   assembleBlueprint,
   BlueprintServiceDetail,
@@ -17,7 +24,15 @@ import {
   storedConsult,
   toSpecialistNote,
 } from './blueprint';
-import { assessConfidence, computeConfidence, DISCOVERY_THRESHOLD, normalizeFactors, ruleAssess, ruleDiscoveryReply, userEvidence } from './discovery';
+import {
+  assessConfidence,
+  computeConfidence,
+  DISCOVERY_THRESHOLD,
+  normalizeFactors,
+  ruleAssess,
+  ruleDiscoveryReply,
+  userEvidence,
+} from './discovery';
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
@@ -258,7 +273,14 @@ const ruleFallbackWording = (task: string, fallback: string): AiFallbackWording 
   warning: (reason) => `AI ${task} failed (${reason}); used ${fallback}.`,
 });
 
-export function createPlannerRouter({ logger, solutionRepository, patternRepository, specialistChatRepository, eventService, llm }: PlannerRouterProps): Router {
+export function createPlannerRouter({
+  logger,
+  solutionRepository,
+  patternRepository,
+  specialistChatRepository,
+  eventService,
+  llm,
+}: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
 
@@ -301,8 +323,12 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       requestedMode,
       async (llm): Promise<AnalysisResult> => {
         const analysis = await llm.analyze(text, patterns, solution.state.concepts, {
-          answers: solution.state.questions.filter((q) => q.status === 'answered' && q.answer).map((q) => ({ question: q.question, answer: q.answer })),
-          conversation: [...(solution.state.discovery?.messages || []), ...(solution.state.conversation || [])].map(({ role, content }) => ({ role, content })),
+          answers: solution.state.questions
+            .filter((q) => q.status === 'answered' && q.answer)
+            .map((q) => ({ question: q.question, answer: q.answer })),
+          conversation: [...(solution.state.discovery?.messages || []), ...(solution.state.conversation || [])].map(
+            ({ role, content }) => ({ role, content }),
+          ),
           message,
         });
         return {
@@ -322,7 +348,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
 
     // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
     const ruleText = message ? `${text}\n${message}` : text;
-    const matchText = solution.state.discovery ? `${ruleText}\n${userEvidence('', solution.state.discovery.messages)}` : ruleText;
+    const matchText = solution.state.discovery
+      ? `${ruleText}\n${userEvidence('', solution.state.discovery.messages)}`
+      : ruleText;
     if (!result) {
       const matches = matchPatterns(matchText, patterns);
       const hypotheses = buildHypotheses(matches, patterns);
@@ -351,14 +379,19 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     const conversation = [...(solution.state.conversation || [])];
     if (message) {
       conversation.push({ role: 'user', content: message, at: now });
-      conversation.push({ role: 'assistant', content: warning ? `${result.reply} (${warning})` : result.reply, at: now });
+      conversation.push({
+        role: 'assistant',
+        content: warning ? `${result.reply} (${warning})` : result.reply,
+        at: now,
+      });
     }
 
     const problemStatement = result.mode === 'rules' ? ruleText : text;
     const state: SolutionState = {
       ...solution.state,
       problemStatement,
-      problemStatementUpdatedOn: problemStatement === solution.state.problemStatement ? solution.state.problemStatementUpdatedOn : now,
+      problemStatementUpdatedOn:
+        problemStatement === solution.state.problemStatement ? solution.state.problemStatementUpdatedOn : now,
       concepts: [...solution.state.concepts, ...result.concepts],
       patternMatches: result.matches,
       hypotheses: result.hypotheses,
@@ -368,7 +401,11 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     };
     state.nextSteps = buildNextSteps(state);
     refreshConfidence(state);
-    return persist(req, { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state }, message ? 'chat' : 'analyze');
+    return persist(
+      req,
+      { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
+      message ? 'chat' : 'analyze',
+    );
   }
 
   router.get('/analysis/options', requirePlannerUser, (_req, res) => {
@@ -449,7 +486,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         if (!exists) {
           throw new NotFoundError('pattern', patternId);
         }
-        throw new InvalidOperationError('Built-in and configured patterns cannot be deleted; update the pattern to customize it.');
+        throw new InvalidOperationError(
+          'Built-in and configured patterns cannot be deleted; update the pattern to customize it.',
+        );
       }
       res.sendStatus(204);
     } catch (err) {
@@ -468,7 +507,8 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         const best = matches[0];
         res.send({
           matches,
-          questions: best && best.level === 'low' ? patterns.find((p) => p.id === best.patternId)?.clarifyingQuestions : [],
+          questions:
+            best && best.level === 'low' ? patterns.find((p) => p.id === best.patternId)?.clarifyingQuestions : [],
         });
       } catch (err) {
         next(err);
@@ -560,7 +600,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       body('status').optional().isIn(SOLUTION_STATUSES),
       body('problemStatement').optional().isString().isLength({ max: 20000 }),
       body('concepts').optional().isArray(),
-      body('concepts.*.type').optional().isIn([...CONCEPT_TYPES]),
+      body('concepts.*.type')
+        .optional()
+        .isIn([...CONCEPT_TYPES]),
       body('concepts.*.name').optional().isString().notEmpty(),
       body('decisions').optional().isArray(),
       body('questions').optional().isArray(),
@@ -600,7 +642,13 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         res.send(
           await persist(
             req,
-            { ...solution, name: name ?? solution.name, description: description ?? solution.description, status: status ?? solution.status, state },
+            {
+              ...solution,
+              name: name ?? solution.name,
+              description: description ?? solution.description,
+              status: status ?? solution.status,
+              state,
+            },
             'update',
           ),
         );
@@ -610,18 +658,24 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     },
   );
 
-  router.delete('/solutions/:id', requirePlannerUser, validateId, getSolution(solutionRepository), async (req, res, next) => {
-    try {
-      const solution = loaded(req);
-      const deleted = await solutionRepository.delete(solution.tenantId, solution.id);
-      res.send({ deleted });
-      if (deleted) {
-        eventService.send(solutionDeleted(req.user, solution));
+  router.delete(
+    '/solutions/:id',
+    requirePlannerUser,
+    validateId,
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const deleted = await solutionRepository.delete(solution.tenantId, solution.id);
+        res.send({ deleted });
+        if (deleted) {
+          eventService.send(solutionDeleted(req.user, solution));
+        }
+      } catch (err) {
+        next(err);
       }
-    } catch (err) {
-      next(err);
-    }
-  });
+    },
+  );
 
   router.post(
     '/solutions/:id/analyze',
@@ -666,14 +720,20 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         }
         const now = new Date().toISOString();
         const prior = req.body.restart ? [] : solution.state.discovery?.messages || [];
-        const messages = req.body.message ? [...prior, { role: 'user' as const, content: req.body.message.trim(), at: now }] : prior;
+        const messages = req.body.message
+          ? [...prior, { role: 'user' as const, content: req.body.message.trim(), at: now }]
+          : prior;
         const requestedMode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
 
         const { result: aiDiscovery, warning } = await tryAi(
           requestedMode,
           async (llm) => {
             const patterns = await getPatterns(req, patternRepository);
-            const result = await llm.discover(problem, messages.map(({ role, content }) => ({ role, content })), patterns);
+            const result = await llm.discover(
+              problem,
+              messages.map(({ role, content }) => ({ role, content })),
+              patterns,
+            );
             return { ...result, factors: normalizeFactors(result.factors, userEvidence(problem, messages)) };
           },
           ruleFallbackWording('discovery', 'rule-based discovery'),
@@ -683,7 +743,10 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
-        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true || (!req.body.restart && solution.state.discovery?.ready === true);
+        const ready =
+          confidence >= DISCOVERY_THRESHOLD ||
+          req.body.force === true ||
+          (!req.body.restart && solution.state.discovery?.ready === true);
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
@@ -702,7 +765,11 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         };
         const withDiscovery: Solution = {
           ...solution,
-          state: { ...solution.state, discovery, confidence: { score: confidence, threshold: DISCOVERY_THRESHOLD, factors } },
+          state: {
+            ...solution.state,
+            discovery,
+            confidence: { score: confidence, threshold: DISCOVERY_THRESHOLD, factors },
+          },
         };
         res.send(
           ready
@@ -728,7 +795,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       try {
         const solution = loaded(req);
         const message: string = req.body.message.trim();
-        res.send(await runAnalysis(req, solution, { text: solution.state.problemStatement, mode: req.body.mode, message }));
+        res.send(
+          await runAnalysis(req, solution, { text: solution.state.problemStatement, mode: req.body.mode, message }),
+        );
       } catch (err) {
         next(err);
       }
@@ -739,10 +808,7 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     '/solutions/:id/questions/:questionId',
     requirePlannerUser,
     validateId,
-    createValidationHandler(
-      param('questionId').isUUID(),
-      body('answer').isString().isLength({ max: 5000 }),
-    ),
+    createValidationHandler(param('questionId').isUUID(), body('answer').isString().isLength({ max: 5000 })),
     getSolution(solutionRepository),
     async (req, res, next) => {
       try {
@@ -768,49 +834,64 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     },
   );
 
-  router.get('/solutions/:id/export', requirePlannerUser, validateId, getSolution(solutionRepository), async (req, res, next) => {
-    try {
-      const solution = loaded(req);
-      const currentHashes = sectionHashes(solution);
-      const changed = changedSections(solution.lastExportHashes, currentHashes);
-      const isInitial = !solution.exportedOnce;
-      const bump: VersionBump = isInitial ? 'none' : classifyBump(changed);
+  router.get(
+    '/solutions/:id/export',
+    requirePlannerUser,
+    validateId,
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const currentHashes = sectionHashes(solution);
+        const changed = changedSections(solution.lastExportHashes, currentHashes);
+        const isInitial = !solution.exportedOnce;
+        const bump: VersionBump = isInitial ? 'none' : classifyBump(changed);
 
-      let { version, versionHistory } = solution;
-      let lastUpdated = versionHistory[versionHistory.length - 1]?.changedAt || solution.updatedOn.toISOString();
-      if (bump !== 'none') {
-        version = nextVersion(solution.version, bump);
-        const changedAt = new Date().toISOString();
-        versionHistory = [...versionHistory, { version, changedAt, changedBy: req.user.name, changedSections: changed }];
-        lastUpdated = changedAt;
-      }
-      if (bump !== 'none' || isInitial) {
-        await solutionRepository.save({ ...solution, version, versionHistory, lastExportHashes: currentHashes, exportedOnce: true });
-      }
+        let { version, versionHistory } = solution;
+        let lastUpdated = versionHistory[versionHistory.length - 1]?.changedAt || solution.updatedOn.toISOString();
+        if (bump !== 'none') {
+          version = nextVersion(solution.version, bump);
+          const changedAt = new Date().toISOString();
+          versionHistory = [
+            ...versionHistory,
+            { version, changedAt, changedBy: req.user.name, changedSections: changed },
+          ];
+          lastUpdated = changedAt;
+        }
+        if (bump !== 'none' || isInitial) {
+          await solutionRepository.save({
+            ...solution,
+            version,
+            versionHistory,
+            lastExportHashes: currentHashes,
+            exportedOnce: true,
+          });
+        }
 
-      res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
-      res.send({
-        exportedAt: new Date().toISOString(),
-        id: solution.id,
-        name: solution.name,
-        description: solution.description,
-        scenario: solution.scenario,
-        status: solution.status,
-        createdByName: solution.createdByName,
-        createdOn: solution.createdOn,
-        updatedOn: solution.updatedOn,
-        version,
-        lastUpdated,
-        changedSections: bump === 'none' ? [] : changed,
-        initial: isInitial,
-        blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
-        versionHistory,
-        state: solution.state,
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
+        res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
+        res.send({
+          exportedAt: new Date().toISOString(),
+          id: solution.id,
+          name: solution.name,
+          description: solution.description,
+          scenario: solution.scenario,
+          status: solution.status,
+          createdByName: solution.createdByName,
+          createdOn: solution.createdOn,
+          updatedOn: solution.updatedOn,
+          version,
+          lastUpdated,
+          changedSections: bump === 'none' ? [] : changed,
+          initial: isInitial,
+          blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
+          versionHistory,
+          state: solution.state,
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     '/solutions/:id/consult/:service',
@@ -862,11 +943,16 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
       ...solution.state.specialists.filter((s) => s.service !== result.service),
       {
         service: result.service,
-        status: (solution.state.specialists.find((s) => s.service === result.service)?.status || 'consulted') as SpecialistStatus,
+        status: (solution.state.specialists.find((s) => s.service === result.service)?.status ||
+          'consulted') as SpecialistStatus,
         updatedOn: new Date().toISOString(),
       },
     ];
-    const [existingChat] = await specialistChatRepository.find({ ...userChatCriteria(req), service: result.service, solutionId: solution.id });
+    const [existingChat] = await specialistChatRepository.find({
+      ...userChatCriteria(req),
+      service: result.service,
+      solutionId: solution.id,
+    });
     const at = new Date().toISOString();
     const asked: string = question || 'Consult on this solution';
     await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: asked }, [
@@ -888,7 +974,10 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     '/solutions/:id/blueprint',
     requirePlannerUser,
     validateId,
-    createValidationHandler(body('mode').optional().isIn(['ai', 'rules']), body('refreshConsultations').optional().isBoolean()),
+    createValidationHandler(
+      body('mode').optional().isIn(['ai', 'rules']),
+      body('refreshConsultations').optional().isBoolean(),
+    ),
     getSolution(solutionRepository),
     async (req, res, next) => {
       try {
@@ -906,7 +995,9 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         let working = solution;
         for (const { service } of recommendedServices(solution.state)) {
           const chat = chats.find((c) => c.service === service);
-          const saved = req.body.refreshConsultations ? undefined : [...(chat?.messages || [])].reverse().find((m) => storedConsult(m));
+          const saved = req.body.refreshConsultations
+            ? undefined
+            : [...(chat?.messages || [])].reverse().find((m) => storedConsult(m));
           const highlights = chatHighlights(chat?.messages || []);
           if (saved) {
             notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
@@ -920,12 +1011,23 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
 
         const patterns = await getPatterns(req, patternRepository);
         const patternId = hypothesis.patternId || solution.state.patternMatches[0]?.patternId;
-        const ruleCore = buildRuleBlueprint(solution.state, patterns.find((p) => p.id === patternId));
+        const matchedPattern = patterns.find((p) => p.id === patternId);
+        const matchedPatterns = solution.state.patternMatches.length
+          ? solution.state.patternMatches
+              .map((m) => patterns.find((p) => p.id === m.patternId))
+              .filter((p): p is BusinessPattern => !!p)
+          : [matchedPattern].filter((p): p is BusinessPattern => !!p);
+        const ruleCore = buildRuleBlueprint(solution.state, matchedPattern);
         const { result: generated, warning } = await tryAi(
           requestedMode,
           async (llm) => {
             const draft = await llm.blueprint(solution.state, notes);
-            return { core: mergeBlueprintCore(ruleCore, draft.core), services: draft.services, model: draft.model };
+            return {
+              core: mergeBlueprintCore(ruleCore, draft.core),
+              services: draft.services,
+              notCoveredByAdsp: draft.notCoveredByAdsp,
+              model: draft.model,
+            };
           },
           ruleFallbackWording('blueprint', 'a rule-based blueprint'),
         );
@@ -934,8 +1036,18 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
         const mode: AnalysisMode = generated ? 'ai' : 'rules';
         const model = generated?.model;
 
-        const blueprint = assembleBlueprint(solution.state, core, notes, { generatedOn: new Date().toISOString(), mode, model, warning }, details);
-        res.send(await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'));
+        const blueprint = assembleBlueprint(
+          solution.state,
+          core,
+          notes,
+          { generatedOn: new Date().toISOString(), mode, model, warning },
+          details,
+          matchedPatterns,
+          generated?.notCoveredByAdsp,
+        );
+        res.send(
+          await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),
+        );
       } catch (err) {
         next(err);
       }
@@ -978,7 +1090,11 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
     if (existing.messages.length + exchange.length > MAX_CHAT_MESSAGES) {
       throw new InvalidOperationError('This chat is full; start a new chat.');
     }
-    return specialistChatRepository.save({ ...existing, updatedOn: now, messages: [...existing.messages, ...exchange] });
+    return specialistChatRepository.save({
+      ...existing,
+      updatedOn: now,
+      messages: [...existing.messages, ...exchange],
+    });
   };
 
   const chatSummary = (chat: SpecialistChat) => ({
@@ -1119,13 +1235,18 @@ export function createPlannerRouter({ logger, solutionRepository, patternReposit
           { role: 'user', content: message },
         ];
         const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
-        const { result: aiReply, warning } = await tryAi(mode, (llm) => llm.converse(specialist, history, intent, state), {
-          notConfigured: 'AI is not configured; showing rule-based guidance.',
-          logFailure: 'AI specialist chat failed, using rule-based guidance',
-          warning: () => 'AI specialist was unavailable; showing rule-based guidance.',
-        });
+        const { result: aiReply, warning } = await tryAi(
+          mode,
+          (llm) => llm.converse(specialist, history, intent, state),
+          {
+            notConfigured: 'AI is not configured; showing rule-based guidance.',
+            logFailure: 'AI specialist chat failed, using rule-based guidance',
+            warning: () => 'AI specialist was unavailable; showing rule-based guidance.',
+          },
+        );
         const replyMode: AnalysisMode = aiReply ? 'ai' : 'rules';
-        const reply: Omit<SpecialistReply, 'model'> & { model?: string } = aiReply || ruleBasedSpecialistReply(specialist, intent);
+        const reply: Omit<SpecialistReply, 'model'> & { model?: string } =
+          aiReply || ruleBasedSpecialistReply(specialist, intent);
 
         const at = new Date().toISOString();
         const saved = await recordExchange(req, chat, { service: specialist.service, solutionId, title: message }, [

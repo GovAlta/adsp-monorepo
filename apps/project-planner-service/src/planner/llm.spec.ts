@@ -608,6 +608,15 @@ describe('MaasLlm', () => {
         phases: [{ name: 'Foundation', items: ['Set up tenant'] }, { name: '' }],
         nonFunctional: ['Accessibility'],
       },
+      notCoveredByAdsp: [
+        {
+          requirement: 'Fee or payment processing',
+          reason: 'No ADSP service accepts payments.',
+          suggestedApproach: 'Use a payment gateway.',
+        },
+        { requirement: 'Missing reason', suggestedApproach: 'x' },
+        'not an item',
+      ],
     };
     const state = (): SolutionState => ({
       ...emptyState(),
@@ -702,6 +711,54 @@ describe('MaasLlm', () => {
       expect(services).toEqual([
         { service: 'form-service', role: 'Collects applications', capabilities: ['Draft saving'] },
       ]);
+    });
+
+    it('parses notCoveredByAdsp items and drops ones missing a reason', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
+
+      expect(notCoveredByAdsp).toEqual([
+        {
+          requirement: 'Fee or payment processing',
+          reason: 'No ADSP service accepts payments.',
+          suggestedApproach: 'Use a payment gateway.',
+        },
+      ]);
+    });
+
+    it('parses the category on a notCoveredByAdsp item', async () => {
+      post.mockResolvedValueOnce(
+        completion(
+          JSON.stringify({
+            ...blueprintJson,
+            notCoveredByAdsp: [
+              { requirement: 'Deposit intake', reason: 'No ADSP service accepts payments.', suggestedApproach: 'x', category: 'payment-collection' },
+            ],
+          }),
+        ),
+      );
+
+      const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
+
+      expect(notCoveredByAdsp[0].category).toBe('payment-collection');
+    });
+
+    it('truncates a notCoveredByAdsp requirement to a short capability name', async () => {
+      post.mockResolvedValueOnce(
+        completion(
+          JSON.stringify({
+            ...blueprintJson,
+            notCoveredByAdsp: [
+              { requirement: 'a'.repeat(200), reason: 'No ADSP service accepts payments.', suggestedApproach: 'x' },
+            ],
+          }),
+        ),
+      );
+
+      const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
+
+      expect(notCoveredByAdsp[0].requirement).toHaveLength(80);
     });
 
     it('includes the problem, discovery, services in order, concepts and specialist notes in the prompt', async () => {
