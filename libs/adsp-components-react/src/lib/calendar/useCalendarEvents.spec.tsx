@@ -18,8 +18,8 @@ const calendarEvents: CalendarEvents = {
   holidays: [],
 };
 
-const createClient = (getCalendarEvents: ICalendarClient['getCalendarEvents']): ICalendarClient => ({
-  getCalendarEvents,
+const createClient = (getCalendarRange: ICalendarClient['getCalendarRange']): ICalendarClient => ({
+  getCalendarRange,
 });
 
 describe('useCalendarEvents', () => {
@@ -38,15 +38,15 @@ describe('useCalendarEvents', () => {
 
   test('requests the calendar and range from the client', async () => {
     // Arrange
-    const getCalendarEvents = jest.fn().mockResolvedValue(calendarEvents);
-    const client = createClient(getCalendarEvents);
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
 
     // Act
     const { result } = renderHook(() => useCalendarEvents(client, 'my-cal', range));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     // Assert
-    expect(getCalendarEvents).toHaveBeenCalledWith('my-cal', range);
+    expect(getCalendarRange).toHaveBeenCalledWith('my-cal', range);
   });
 
   test('returns the error when the request fails', async () => {
@@ -76,8 +76,8 @@ describe('useCalendarEvents', () => {
 
   test('does not reload when given an equal range with new date objects', async () => {
     // Arrange
-    const getCalendarEvents = jest.fn().mockResolvedValue(calendarEvents);
-    const client = createClient(getCalendarEvents);
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
 
     // Act
     const { result, rerender } = renderHook(() =>
@@ -87,16 +87,16 @@ describe('useCalendarEvents', () => {
     rerender();
 
     // Assert
-    expect(getCalendarEvents).toHaveBeenCalledTimes(1);
+    expect(getCalendarRange).toHaveBeenCalledTimes(1);
   });
 
   test('reloads and clears a previous error when the range changes', async () => {
     // Arrange
-    const getCalendarEvents = jest
+    const getCalendarRange = jest
       .fn()
       .mockRejectedValueOnce(new Error('Request failed'))
       .mockResolvedValue(calendarEvents);
-    const client = createClient(getCalendarEvents);
+    const client = createClient(getCalendarRange);
     const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
       initialProps: { r: range },
     });
@@ -108,18 +108,18 @@ describe('useCalendarEvents', () => {
     // Assert
     await waitFor(() => expect(result.current.calendarEvents).toEqual(calendarEvents));
     expect(result.current.error).toBeNull();
-    expect(getCalendarEvents).toHaveBeenCalledTimes(2);
+    expect(getCalendarRange).toHaveBeenCalledTimes(2);
   });
 
   test('ignores a response that arrives after the range changed', async () => {
     // Arrange
     const stale: CalendarEvents = { events: [], holidays: [] };
     let resolveStale: (value: CalendarEvents) => void = () => undefined;
-    const getCalendarEvents = jest
+    const getCalendarRange = jest
       .fn()
       .mockReturnValueOnce(new Promise<CalendarEvents>((resolve) => (resolveStale = resolve)))
       .mockResolvedValue(calendarEvents);
-    const client = createClient(getCalendarEvents);
+    const client = createClient(getCalendarRange);
     const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
       initialProps: { r: range },
     });
@@ -137,11 +137,11 @@ describe('useCalendarEvents', () => {
   test('ignores a failure that arrives after the range changed', async () => {
     // Arrange
     let rejectStale: (reason: Error) => void = () => undefined;
-    const getCalendarEvents = jest
+    const getCalendarRange = jest
       .fn()
       .mockReturnValueOnce(new Promise<CalendarEvents>((_resolve, reject) => (rejectStale = reject)))
       .mockResolvedValue(calendarEvents);
-    const client = createClient(getCalendarEvents);
+    const client = createClient(getCalendarRange);
     const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
       initialProps: { r: range },
     });

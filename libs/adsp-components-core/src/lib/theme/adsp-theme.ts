@@ -1,5 +1,6 @@
 import type { AdspBadgeTheme } from '../components/badge';
 import type { AdspButtonTheme } from '../components/button';
+import type { AdspCalendarTheme } from '../components/calendar';
 import type { AdspCardTheme } from '../components/card';
 
 export interface AdspThemeColor {
@@ -33,6 +34,7 @@ export type AdspThemeBorderRadius = Record<'none' | 'xs' | 's' | 'm' | 'l' | 'xl
 export interface AdspThemeComponents {
   badge: AdspBadgeTheme;
   button: AdspButtonTheme;
+  calendar: AdspCalendarTheme;
   card: AdspCardTheme;
 }
 

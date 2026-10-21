@@ -34,7 +34,7 @@ export class CalendarClient implements ICalendarClient {
     this.pageSize = pageSize ?? DEFAULT_PAGE_SIZE;
   }
 
-  async getCalendarEvents(calendar: string, range: DateRange): Promise<CalendarEvents> {
+  async getCalendarRange(calendar: string, range: DateRange): Promise<CalendarEvents> {
     const [events, holidays] = await Promise.all([this.getEvents(calendar, range), this.getHolidays(range)]);
     return { events, holidays };
   }

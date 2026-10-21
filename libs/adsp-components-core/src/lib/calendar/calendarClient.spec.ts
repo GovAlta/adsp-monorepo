@@ -43,7 +43,7 @@ describe('CalendarClient', () => {
         : { results: [{ id: 20260518, date: '2026-05-18T00:00:00.000Z', holiday: 'Victoria Day' }], page: {} },
     );
 
-    const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+    const result = await createClient(fetchFn).getCalendarRange('my-cal', range);
 
     expect(result.events).toEqual([
       {
@@ -59,7 +59,7 @@ describe('CalendarClient', () => {
       },
     ]);
     expect(result.holidays).toEqual([
-      { date: new Date('2026-05-18T06:00:00Z'), name: 'Victoria Day', isInLieuOfDay: false },
+      { date: new Date('2026-05-18T06:00:00Z'), day: '2026-05-18', name: 'Victoria Day', isInLieuOfDay: false },
     ]);
   });
 
@@ -75,7 +75,7 @@ describe('CalendarClient', () => {
           },
     );
 
-    const { holidays } = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+    const { holidays } = await createClient(fetchFn).getCalendarRange('my-cal', range);
 
     expect(holidays[1].isInLieuOfDay).toBe(true);
   });
@@ -95,7 +95,7 @@ describe('CalendarClient', () => {
         : { results: [{ id: 20260518, holiday: 'A' }], page: { next: 'd1' } };
     });
 
-    const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+    const result = await createClient(fetchFn).getCalendarRange('my-cal', range);
 
     expect(result.events.map((e) => e.id)).toEqual([1, 2, 3]);
     expect(result.holidays.map((h) => h.name)).toEqual(['A', 'B']);
@@ -109,7 +109,7 @@ describe('CalendarClient', () => {
         : { results: [] },
     );
 
-    await createClient(fetchFn, { pageSize: 25 }).getCalendarEvents('my-cal', range);
+    await createClient(fetchFn, { pageSize: 25 }).getCalendarRange('my-cal', range);
 
     const eventUrls = fetchFn.mock.calls.map(([url]) => new URL(url)).filter((u) => u.pathname.endsWith('/events'));
     expect(eventUrls).toHaveLength(2);
@@ -121,7 +121,7 @@ describe('CalendarClient', () => {
   it('returns empty results when the service has no events or holidays', async () => {
     const fetchFn = mockFetch(() => ({ results: [], page: {} }));
 
-    const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+    const result = await createClient(fetchFn).getCalendarRange('my-cal', range);
 
     expect(result).toEqual({ events: [], holidays: [] });
   });
@@ -150,7 +150,7 @@ describe('CalendarClient', () => {
       }
     });
 
-    const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+    const result = await createClient(fetchFn).getCalendarRange('my-cal', range);
 
     expect(result.events.map((e) => e.id)).toEqual([2, 3]);
     const eventCalls = fetchFn.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/events'));
@@ -160,7 +160,7 @@ describe('CalendarClient', () => {
   describe('range overlap', () => {
     const getIds = async (events: ReturnType<typeof serviceEvent>[]) => {
       const fetchFn = mockFetch((url) => (url.pathname.endsWith('/events') ? { results: events } : { results: [] }));
-      const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+      const result = await createClient(fetchFn).getCalendarRange('my-cal', range);
       return result.events.map((e) => e.id);
     };
 
@@ -226,7 +226,7 @@ describe('CalendarClient', () => {
           : { results: [] },
       );
 
-      const result = await createClient(fetchFn).getCalendarEvents('my-cal', range);
+      const result = await createClient(fetchFn).getCalendarRange('my-cal', range);
 
       expect(result.events.map((e) => e.id)).toEqual([1]);
       expect(fetchFn).toHaveBeenCalledTimes(2);
@@ -237,7 +237,7 @@ describe('CalendarClient', () => {
     it('queries holiday dates by Alberta date id for the range', async () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
-      await createClient(fetchFn).getCalendarEvents('my-cal', range);
+      await createClient(fetchFn).getCalendarRange('my-cal', range);
 
       const urls = fetchFn.mock.calls.map(([url]) => new URL(url));
       const dates = urls.find((u) => u.pathname === '/calendar/v1/dates');
@@ -257,7 +257,7 @@ describe('CalendarClient', () => {
     it('queries a multi-month range using the first and last Alberta day', async () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
-      await createClient(fetchFn).getCalendarEvents('my-cal', {
+      await createClient(fetchFn).getCalendarRange('my-cal', {
         start: new Date('2026-05-01T06:00:00Z'),
         end: new Date('2026-08-01T06:00:00Z'),
       });
@@ -274,7 +274,7 @@ describe('CalendarClient', () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
       // 2026-05-02T03:00Z is still May 1 in Alberta (UTC-6).
-      await createClient(fetchFn).getCalendarEvents('my-cal', {
+      await createClient(fetchFn).getCalendarRange('my-cal', {
         start: new Date('2026-05-01T20:00:00Z'),
         end: new Date('2026-05-02T03:00:00Z'),
       });
@@ -290,7 +290,7 @@ describe('CalendarClient', () => {
     it('requests events for the named calendar, encoding the name', async () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
-      await createClient(fetchFn).getCalendarEvents('my cal/1', range);
+      await createClient(fetchFn).getCalendarRange('my cal/1', range);
 
       const events = fetchFn.mock.calls.map(([url]) => new URL(url)).find((u) => u.pathname.includes('/events'));
       expect(events!.pathname).toBe('/calendar/v1/calendars/my%20cal%2F1/events');
@@ -299,7 +299,7 @@ describe('CalendarClient', () => {
     it('does not send the tenant parameter when retrieving dates', async () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
-      await createClient(fetchFn, { tenant: 'my-tenant' }).getCalendarEvents('my-cal', range);
+      await createClient(fetchFn, { tenant: 'my-tenant' }).getCalendarRange('my-cal', range);
 
       const dates = fetchFn.mock.calls.map(([url]) => new URL(url)).find((u) => u.pathname === '/calendar/v1/dates');
       expect(dates!.searchParams.has('tenant')).toBe(false);
@@ -308,7 +308,7 @@ describe('CalendarClient', () => {
     it('sends anonymous requests when no token is provided', async () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
-      await createClient(fetchFn, { getAccessToken: async () => undefined }).getCalendarEvents('my-cal', range);
+      await createClient(fetchFn, { getAccessToken: async () => undefined }).getCalendarRange('my-cal', range);
 
       expect(fetchFn.mock.calls.every(([, init]) => init === undefined)).toBe(true);
     });
@@ -316,7 +316,7 @@ describe('CalendarClient', () => {
     it('applies tenant and access token', async () => {
       const fetchFn = mockFetch(() => ({ results: [] }));
 
-      await createClient(fetchFn, { tenant: 'my-tenant', getAccessToken: async () => 'token' }).getCalendarEvents(
+      await createClient(fetchFn, { tenant: 'my-tenant', getAccessToken: async () => 'token' }).getCalendarRange(
         'my-cal',
         range,
       );
@@ -329,7 +329,7 @@ describe('CalendarClient', () => {
     it('throws when the service responds with an error', async () => {
       const fetchFn = jest.fn(async () => ({ ok: false, status: 500 })) as unknown as typeof fetch;
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 500');
+      await expect(createClient(fetchFn).getCalendarRange('my-cal', range)).rejects.toThrow('status 500');
     });
 
     it('throws when only the dates request fails', async () => {
@@ -338,7 +338,7 @@ describe('CalendarClient', () => {
         return { ok: isEvents, status: isEvents ? 200 : 503, json: async () => ({ results: [] }) };
       }) as unknown as typeof fetch;
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 503');
+      await expect(createClient(fetchFn).getCalendarRange('my-cal', range)).rejects.toThrow('status 503');
     });
 
     it('throws when a later events page fails', async () => {
@@ -355,7 +355,7 @@ describe('CalendarClient', () => {
         };
       }) as unknown as typeof fetch;
 
-      await expect(createClient(fetchFn).getCalendarEvents('my-cal', range)).rejects.toThrow('status 502');
+      await expect(createClient(fetchFn).getCalendarRange('my-cal', range)).rejects.toThrow('status 502');
     });
   });
 });

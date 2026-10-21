@@ -4,6 +4,9 @@ export interface DateRange {
   end?: Date;
 }
 
+// Views a calendar component can display; kept framework-independent so React, Angular and Vue adapters share it.
+export type CalendarView = 'month' | 'week' | 'day' | 'list';
+
 export interface CalendarEvent {
   id: number;
   name: string;
@@ -20,6 +23,8 @@ export interface CalendarEvent {
 export interface CalendarHoliday {
   /** Start of the holiday in the Alberta time zone. */
   date: Date;
+  /** Alberta calendar day as yyyy-MM-dd; displays on the correct day regardless of the browser's time zone. */
+  day: string;
   name: string;
   isInLieuOfDay: boolean;
 }
@@ -30,7 +35,7 @@ export interface CalendarEvents {
 }
 
 export interface ICalendarClient {
-  getCalendarEvents(calendar: string, range: DateRange): Promise<CalendarEvents>;
+  getCalendarRange(calendar: string, range: DateRange): Promise<CalendarEvents>;
 
   //Add additional methods as required.
 }

@@ -57,6 +57,14 @@ function fromDateId(id: number): Date {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+// The id already encodes the Alberta calendar day, so format it directly rather than through a Date.
+function toDayString(id: number): string {
+  const year = Math.floor(id / 10000);
+  const month = Math.floor(id / 100) % 100;
+  const day = id % 100;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export function getDateIdRange({ start, end }: DateRange): { min?: number; max?: number } {
   const min = start ? toDateId(start) : undefined;
   // The range end is exclusive, so the last included day is the one containing the instant before it.
@@ -82,6 +90,7 @@ export function mapEvent(event: CalendarServiceEvent): CalendarEvent {
 export function mapHoliday(date: CalendarServiceDate): CalendarHoliday {
   return {
     date: fromDateId(date.id),
+    day: toDayString(date.id),
     name: date.holiday || '',
     isInLieuOfDay: !!date.isInLieuOfDay,
   };

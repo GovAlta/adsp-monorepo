@@ -27,7 +27,7 @@ export function useCalendarEvents(
     setError(null);
 
     client
-      .getCalendarEvents(calendar, {
+      .getCalendarRange(calendar, {
         start: start === undefined ? undefined : new Date(start),
         end: end === undefined ? undefined : new Date(end),
       })

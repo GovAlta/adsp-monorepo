@@ -25,7 +25,18 @@
         "compiler": "babel",
         "format": ["esm", "cjs"],
         "generateExportsField": true,
-        "external": ["react", "react-dom", "react/jsx-runtime", "@abgov/adsp-components-core"],
+        "external": [
+          "react",
+          "react-dom",
+          "react/jsx-runtime",
+          "@abgov/adsp-components-core",
+          "@fullcalendar/react",
+          "@fullcalendar/react/daygrid",
+          "@fullcalendar/react/timegrid",
+          "@fullcalendar/react/list",
+          "@fullcalendar/react/themes/classic",
+          "temporal-polyfill"
+        ],
         "rollupConfig": "@nx/react/plugins/bundle-rollup",
         "assets": [
           {

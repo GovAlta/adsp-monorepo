@@ -13,7 +13,7 @@ const client = new CalendarClient({
   getAccessToken: async () => token,
 });
 
-const { events, holidays } = await client.getCalendarEvents('my-calendar', {
+const { events, holidays } = await client.getCalendarRange('my-calendar', {
   start: new Date('2026-05-01T00:00:00-06:00'),
   end: new Date('2026-06-01T00:00:00-06:00'),
 });
@@ -33,7 +33,7 @@ const { events, holidays } = await client.getCalendarEvents('my-calendar', {
 
 ```ts
 interface ICalendarClient {
-  getCalendarEvents(calendar: string, range: DateRange): Promise<CalendarEvents>;
+  getCalendarRange(calendar: string, range: DateRange): Promise<CalendarEvents>;
 }
 ```
 
@@ -45,7 +45,7 @@ Depend on `ICalendarClient` in consumers so the client can be substituted in tes
 - **Events:** all events overlapping the range are returned, including those that start before the range or end after it. Events without an `end` are treated as points in time and included when their `start` is within the range.
 - **Holidays:** statutory holidays whose Alberta calendar day falls within the range.
 - **Pagination:** all pages are followed automatically.
-- **Dates:** event times are `Date` values. Holiday `date` is the start of that day in the `America/Edmonton` time zone.
+- **Dates:** event times are `Date` values. Holiday `date` is the start of that day in the `America/Edmonton` time zone, and `day` is the same calendar day as a `yyyy-MM-dd` string, for display that doesn't depend on the browser's time zone.
 - **Errors:** a non-successful response from the service throws an `Error` containing the status code.
 
 ## Models
@@ -70,6 +70,7 @@ interface CalendarEvent {
 
 interface CalendarHoliday {
   date: Date;
+  day: string;
   name: string;
   isInLieuOfDay: boolean;
 }
