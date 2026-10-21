@@ -2,7 +2,7 @@
 
 ## Data model
 Migration `20261010000000_create_planner_tables.js` creates three tables:
-- `solutions`: id uuid PK, tenant, name, description, scenario, status, createdById, createdByName, createdOn, updatedOn, `state` jsonb. Index `(tenant, createdById)`. `state` = problemStatement, concepts, decisions, questions, patternMatches, hypotheses, specialists, artifacts, nextSteps, plus discovery/blueprint results.
+- `solutions`: id uuid PK, tenant, name, description, scenario, status, createdById, createdByName, createdOn, updatedOn, `state` jsonb. Index `(tenant, createdById)`. `state` = problemStatement, concepts, decisions, questions, patternMatches, hypotheses, specialists, nextSteps, plus discovery/blueprint results.
 - `patterns`: PK `(tenant, id)`, `pattern` jsonb, createdById, createdByName, createdOn, updatedOn. Tenant-authored patterns layered over built-ins and configuration.
 - `specialist_chats`: id uuid PK, tenant, service, solutionId (nullable), title, createdById, createdByName, createdOn, updatedOn, `messages` jsonb. Index `(tenant, createdById)`.
 
@@ -46,3 +46,4 @@ Components used: GoabButton, GoabButtonGroup, GoabTable, GoabModal, GoabFormItem
 - Whole-solution JSONB keeps the model flexible while concept types are still evolving.
 - AI mode is optional (`MAAS_API_KEY`); every AI route falls back to rule-based output with a warning when the model fails or is unconfigured.
 - `crypto.randomUUID` used instead of `uuid` (ESM-only v14 breaks jest).
+- Blueprint components come from a hand-kept map of ADSP services (`src/planner/components/adsp-map.ts`), checked against the live configuration catalog for drift; see "Updating the ADSP component map" in the README.

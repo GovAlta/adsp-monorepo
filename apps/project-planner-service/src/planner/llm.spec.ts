@@ -61,7 +61,6 @@ const emptyState = (): SolutionState => ({
   patternMatches: [],
   hypotheses: [],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
 });
 
@@ -599,6 +598,19 @@ describe('MaasLlm', () => {
         { service: 'form-service', role: 'Collects applications', capabilities: ['Draft saving'] },
         { service: 'made-up-service', role: 'Unknown', capabilities: [] },
       ],
+      components: [
+        {
+          service: 'form-service',
+          type: 'Form definition',
+          name: 'Grant application',
+          purpose: 'Collects applications',
+          dependsOn: ['Grant files'],
+          openDecisions: ['Allow drafts?'],
+        },
+        { service: 'sharepoint-service', name: 'Case library', purpose: 'Stores case files' },
+        { service: 'made-up-service', name: 'Unknown', purpose: 'Unknown' },
+        { service: 'file-service', name: '', purpose: 'Nameless' },
+      ],
       workflows: [
         { name: 'Review', actors: ['Grant officer'], steps: ['Open file in form-service'] },
         { name: 'No steps', actors: [], steps: [] },
@@ -727,6 +739,23 @@ describe('MaasLlm', () => {
       ]);
     });
 
+    it('returns the drafted components for services in the component map', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { components } = await buildLlm().blueprint(state(), [note]);
+
+      expect(components).toEqual([
+        {
+          service: 'form-service',
+          type: 'Form definition',
+          name: 'Grant application',
+          purpose: 'Collects applications',
+          dependsOn: ['Grant files'],
+          openDecisions: ['Allow drafts?'],
+        },
+      ]);
+    });
+
     it('parses the category on a notCoveredByAdsp item', async () => {
       post.mockResolvedValueOnce(
         completion(
@@ -759,6 +788,22 @@ describe('MaasLlm', () => {
       const { notCoveredByAdsp } = await buildLlm().blueprint(state(), [note]);
 
       expect(notCoveredByAdsp[0].requirement).toHaveLength(80);
+    });
+
+    it('keeps drafted components for the candidate services', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      const { components } = await buildLlm().blueprint(state(), [note], ['sharepoint-service']);
+
+      expect(components.map((c) => c.service)).toEqual(['form-service', 'sharepoint-service']);
+    });
+
+    it('asks for components using the mapped and candidate services', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      await buildLlm().blueprint(state(), [note], ['sharepoint-service']);
+
+      expect(userPrompt()).toMatch(/"components": \[[\s\S]*Components may use: [^\n]*form-service[^\n]*sharepoint-service/);
     });
 
     it('includes the problem, discovery, services in order, concepts and specialist notes in the prompt', async () => {

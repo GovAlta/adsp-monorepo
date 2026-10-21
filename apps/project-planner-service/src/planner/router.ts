@@ -24,6 +24,7 @@ import {
   storedConsult,
   toSpecialistNote,
 } from './blueprint';
+import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
 import {
   assessConfidence,
   computeConfidence,
@@ -65,6 +66,8 @@ interface PlannerRouterProps {
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
+  // Reads the keys of the live ADSP configuration catalog, used to find services missing from the component map.
+  readAdspCatalog?: () => Promise<string[]>;
 }
 
 const SOLUTION_KEY = 'solution';
@@ -81,7 +84,6 @@ const emptyState = (problemStatement = ''): SolutionState => ({
   patternMatches: [],
   hypotheses: [],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
 });
 
@@ -280,9 +282,28 @@ export function createPlannerRouter({
   specialistChatRepository,
   eventService,
   llm,
+  readAdspCatalog,
 }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+
+  // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
+  async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
+    if (!readAdspCatalog) {
+      return { candidates: [] };
+    }
+    try {
+      const keys = await readAdspCatalog();
+      const candidates = unmappedServices(catalogServices(keys));
+      if (candidates.length > 0) {
+        logger.warn(driftMessage(candidates));
+      }
+      return { keys, candidates };
+    } catch (err) {
+      logger.warn(`ADSP catalog read failed: ${(err as Error).message}`);
+      return { candidates: [] };
+    }
+  }
 
   async function persist(req: Request, solution: Solution, operation: string) {
     const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
@@ -1018,14 +1039,16 @@ export function createPlannerRouter({
               .filter((p): p is BusinessPattern => !!p)
           : [matchedPattern].filter((p): p is BusinessPattern => !!p);
         const ruleCore = buildRuleBlueprint(solution.state, matchedPattern);
+        const catalog = await readCatalog();
         const { result: generated, warning } = await tryAi(
           requestedMode,
           async (llm) => {
-            const draft = await llm.blueprint(solution.state, notes);
+            const draft = await llm.blueprint(solution.state, notes, catalog.candidates);
             return {
               core: mergeBlueprintCore(ruleCore, draft.core),
               services: draft.services,
               notCoveredByAdsp: draft.notCoveredByAdsp,
+              components: draft.components,
               model: draft.model,
             };
           },
@@ -1035,6 +1058,11 @@ export function createPlannerRouter({
         const details: BlueprintServiceDetail[] = generated ? generated.services : [];
         const mode: AnalysisMode = generated ? 'ai' : 'rules';
         const model = generated?.model;
+        const components = buildComponents(solution.state, {
+          drafts: generated?.components,
+          catalogKeys: catalog.keys,
+          integrations: core.architecture.integrations,
+        });
 
         const blueprint = assembleBlueprint(
           solution.state,
@@ -1044,6 +1072,7 @@ export function createPlannerRouter({
           details,
           matchedPatterns,
           generated?.notCoveredByAdsp,
+          components,
         );
         res.send(
           await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),

@@ -30,12 +30,15 @@ const MAJOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown>
     const items = s.state.blueprint?.notCoveredByAdsp;
     return items === undefined ? undefined : { items };
   },
+  'Components to set up': (s) => s.state.blueprint?.components,
   'Specialist notes': (s) => s.state.blueprint?.specialistNotes?.map(omitConsultedOn),
   Workflows: (s) => s.state.blueprint?.workflows,
   'Data & governance': (s) => s.state.blueprint?.dataGovernance,
   Delivery: (s) => s.state.blueprint?.delivery,
 };
 
+const SECTIONS = { ...MINOR_SECTIONS, ...MAJOR_SECTIONS };
+const SECTION_ORDER = Object.keys(SECTIONS);
 const MAJOR_SECTION_NAMES = new Set(Object.keys(MAJOR_SECTIONS));
 
 const normalize = (value: unknown): unknown => {
@@ -74,7 +77,7 @@ const isEmpty = (value: unknown): boolean => {
 
 export function sectionHashes(solution: VersionableSolution): Record<string, string> {
   const hashes: Record<string, string> = {};
-  for (const [name, select] of Object.entries({ ...MINOR_SECTIONS, ...MAJOR_SECTIONS })) {
+  for (const [name, select] of Object.entries(SECTIONS)) {
     const value = select(solution);
     if (!isEmpty(value)) {
       hashes[name] = hashSection(value);
@@ -83,9 +86,15 @@ export function sectionHashes(solution: VersionableSolution): Record<string, str
   return hashes;
 }
 
+const sectionRank = (name: string): number => {
+  const index = SECTION_ORDER.indexOf(name);
+  return index === -1 ? SECTION_ORDER.length : index;
+};
+
+// Sorted because stored hashes are jsonb, which does not keep key order.
 export function changedSections(previous: Record<string, string>, current: Record<string, string>): string[] {
   const names = new Set([...Object.keys(previous), ...Object.keys(current)]);
-  return [...names].filter((name) => previous[name] !== current[name]);
+  return [...names].filter((name) => previous[name] !== current[name]).sort((a, b) => sectionRank(a) - sectionRank(b));
 }
 
 export function classifyBump(changed: string[]): VersionBump {

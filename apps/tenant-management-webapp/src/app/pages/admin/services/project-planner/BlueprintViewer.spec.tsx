@@ -3,7 +3,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { BlueprintViewer } from './BlueprintViewer';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi } from './testing/createMockApi';
-import { Solution, SolutionBlueprint } from './model';
+import { BlueprintComponent, Solution, SolutionBlueprint } from './model';
 
 const blueprint: SolutionBlueprint = {
   generatedOn: '2026-03-01T10:00:00.000Z',
@@ -71,6 +71,7 @@ const blueprint: SolutionBlueprint = {
     compliance: ['FOIP'],
   },
   delivery: { phases: [{ name: 'Phase 1', items: ['MVP'] }], nonFunctional: ['Fast'], openQuestions: ['Budget?'] },
+  components: [],
 };
 
 const makeSolution = (
@@ -176,7 +177,7 @@ describe('BlueprintViewer', () => {
     expect(container.querySelector('goa-button[testid="blueprint-generate"]')?.getAttribute('disabled')).toBe('true');
   });
 
-  it('renders all seven sections closed by default', () => {
+  it('renders all eight sections closed by default', () => {
     const { container, getByText } = render(
       <BlueprintViewer
         solution={makeSolution({ blueprint })}
@@ -186,7 +187,7 @@ describe('BlueprintViewer', () => {
       />,
     );
     const details = container.querySelectorAll('goa-details');
-    expect(details).toHaveLength(7);
+    expect(details).toHaveLength(8);
     details.forEach((d) => expect(d.getAttribute('open')).not.toBe('true'));
     expect(getByText('Permit platform')).toBeTruthy();
     expect(getByText('[UI] -> [API]').getAttribute('aria-label')).toBe('Architecture diagram');
@@ -196,6 +197,24 @@ describe('BlueprintViewer', () => {
     expect(getByText('From saved chats')).toBeTruthy();
     expect(getByText('Actors: Applicant')).toBeTruthy();
     expect(getByText('Non-functional requirements')).toBeTruthy();
+  });
+
+  it('orders the sections with not covered by ADSP fourth and the components to set up fifth', () => {
+    const solution = makeSolution({ blueprint: { ...blueprint, notCoveredByAdsp: [] } });
+    const { container } = render(
+      <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+    expect([...container.querySelectorAll('goa-details')].map((d) => d.getAttribute('heading'))).toEqual([
+      '1. Project blueprint',
+      '2. Technical architecture',
+      '3. ADSP service mapping',
+      '4. Not covered by ADSP',
+      '5. Components to set up',
+      '6. Specialist consultation notes',
+      '7. Core workflows',
+      '8. Data & governance',
+      '9. Delivery plan & other considerations',
+    ]);
   });
 
   it('opens all sections when allOpen', () => {
@@ -258,6 +277,55 @@ describe('BlueprintViewer', () => {
       <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
     );
     expect(getByText('No recommended services.')).toBeTruthy();
+  });
+
+  describe('components to set up', () => {
+    const component: BlueprintComponent = {
+      order: 1,
+      service: 'form-service',
+      type: 'Form definition',
+      name: 'Permit application',
+      purpose: 'Collects applications',
+      dependsOn: ['Applicant role'],
+      openDecisions: ['Allow drafts?'],
+      target: 'adsp',
+      setup: { where: 'Tenant admin > Form', docs: 'https://docs/form', how: 'Create the definition' },
+    };
+
+    const renderWith = (components?: BlueprintComponent[]) =>
+      render(
+        <BlueprintViewer solution={makeSolution({ blueprint: { ...blueprint, components } })} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+      );
+
+    it('lists each component with where and how to set it up', () => {
+      const { container, getByText } = renderWith([component]);
+      expect(goa(container, 'blueprint-components')).toBeTruthy();
+      expect(getByText('Permit application')).toBeTruthy();
+      expect(getByText('Form definition')).toBeTruthy();
+      expect(getByText('Collects applications')).toBeTruthy();
+      expect(getByText('Tenant admin > Form')).toBeTruthy();
+      expect(getByText('Create the definition')).toBeTruthy();
+      expect(getByText('Applicant role')).toBeTruthy();
+      expect(getByText('Allow drafts?')).toBeTruthy();
+    });
+
+    it('links each component to its docs in a new tab', () => {
+      const { getByRole } = renderWith([component]);
+      const link = getByRole('link', { name: 'Docs' });
+      expect(link.getAttribute('href')).toBe('https://docs/form');
+      expect(link.getAttribute('target')).toBe('_blank');
+    });
+
+    it('shows an empty list for a blueprint saved before components existed', () => {
+      const { container } = renderWith(undefined);
+      expect(goa(container, 'blueprint-components').querySelectorAll('tbody tr')).toHaveLength(0);
+    });
+
+    it('has no accessibility violations', async () => {
+      const solution = makeSolution({ blueprint: { ...blueprint, components: [component] } });
+      const { container } = render(<BlueprintViewer solution={solution} api={createMockApi()} mode="ai" allOpen onSolutionChange={jest.fn()} />);
+      await expectNoA11yViolations(container);
+    });
   });
 
   it('shows stale notice and warnings', () => {
