@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { AppDispatch, RootState } from '../index';
-import { AgentConfiguration } from './model';
+import { AccessScope, AgentConfiguration } from './model';
 import axios from 'axios';
 
 export const CONNECT_AGENT_ACTION = 'agent/CONNECT_AGENT';
@@ -416,6 +416,27 @@ export function messageAgent(threadId: string, context: Record<string, unknown>,
         queuedMessages.push({ threadId, messageId, agent: thread.agent, content, context });
       }
     }
+  };
+}
+
+/**
+ * Reads the Access Service environment and realm the user may inspect. The result is decided by
+ * agent-service from the user's token, without AI, so it can be shown before any chat starts.
+ */
+export function getAccessScope() {
+  return async (dispatch: AppDispatch, getState: () => RootState): Promise<AccessScope> => {
+    const { config } = getState();
+    const scopeUrl = new URL(
+      '/agent/v1/access/scope',
+      config.serviceUrls?.agentServiceApiUrl || 'http://localhost:3380',
+    );
+
+    const token = await dispatch(getAccessToken());
+    const { data } = await axios.get<AccessScope>(scopeUrl.href, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return data;
   };
 }
 
