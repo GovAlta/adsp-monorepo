@@ -96,6 +96,12 @@ export interface SolutionVersionEntry {
   changedSections: string[];
 }
 
+export interface NotCoveredItem {
+  requirement: string;
+  reason: string;
+  suggestedApproach: string;
+}
+
 export interface BusinessPattern {
   id: string;
   source?: PatternSource;
@@ -109,6 +115,7 @@ export interface BusinessPattern {
   clarifyingQuestions: string[];
   assumptions?: string[];
   knownUnknowns?: string[];
+  unsupportedCapabilities?: NotCoveredItem[];
 }
 
 export interface ConsultResult {
@@ -256,6 +263,8 @@ export interface SolutionBlueprint {
     diagram: string;
   };
   serviceMapping: BlueprintServiceRole[];
+  // undefined on blueprints generated before this feature existed; [] once regenerated with everything covered.
+  notCoveredByAdsp?: NotCoveredItem[];
   specialistNotes: SpecialistNote[];
   workflows: BlueprintWorkflow[];
   dataGovernance: {

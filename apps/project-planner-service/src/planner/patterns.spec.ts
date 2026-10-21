@@ -53,9 +53,9 @@ describe('BUILT_IN_PATTERNS', () => {
     });
 
     it('has service mappings with reasons', () => {
-      expect(
-        pattern.serviceMappings.length > 0 && pattern.serviceMappings.every((m) => m.service && m.reason),
-      ).toBe(true);
+      expect(pattern.serviceMappings.length > 0 && pattern.serviceMappings.every((m) => m.service && m.reason)).toBe(
+        true,
+      );
     });
 
     it('maps only to known specialist services', () => {
@@ -68,6 +68,39 @@ describe('BUILT_IN_PATTERNS', () => {
 
     it('defines assumptions and known unknowns as arrays', () => {
       expect([Array.isArray(pattern.assumptions), Array.isArray(pattern.knownUnknowns)]).toEqual([true, true]);
+    });
+  });
+
+  describe('unsupportedCapabilities', () => {
+    const coveredPatternIds = [
+      'case-management',
+      'grant-applications',
+      'registration-enrollment',
+      'appointment-booking',
+    ];
+
+    it.each(coveredPatternIds)('is defined with a reason and suggested approach for %s', (id) => {
+      const pattern = BUILT_IN_PATTERNS.find((p) => p.id === id);
+
+      expect(pattern.unsupportedCapabilities.length).toBeGreaterThan(0);
+      expect(pattern.unsupportedCapabilities.every((c) => c.requirement && c.reason && c.suggestedApproach)).toBe(true);
+    });
+
+    it('is left empty for every other pattern', () => {
+      const others = BUILT_IN_PATTERNS.filter((p) => !coveredPatternIds.includes(p.id));
+
+      expect(others.every((p) => !p.unsupportedCapabilities?.length)).toBe(true);
+    });
+
+    it('does not repeat a requirement already covered by a service mapping, so nothing appears in both sections', () => {
+      for (const id of coveredPatternIds) {
+        const pattern = BUILT_IN_PATTERNS.find((p) => p.id === id);
+        const coveredNames = new Set(pattern.serviceMappings.map((m) => m.service.toLowerCase()));
+
+        expect(pattern.unsupportedCapabilities.some((c) => coveredNames.has(c.requirement.trim().toLowerCase()))).toBe(
+          false,
+        );
+      }
     });
   });
 });

@@ -115,6 +115,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
       {children}
     </GoabDetails>
   );
+  let sectionNumber = 1;
+  const numbered = (title: string) => `${sectionNumber++}. ${title}`;
 
   return (
     <div data-testid="blueprint-viewer">
@@ -135,7 +137,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'overview',
-        '1. Project blueprint',
+        numbered('Project blueprint'),
         <>
           <h3>{o.title}</h3>
           <p>{o.summary}</p>
@@ -150,7 +152,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'architecture',
-        '2. Technical architecture',
+        numbered('Technical architecture'),
         <>
           <p>{a.summary}</p>
           <GoabTable width="100%" testId="blueprint-layers">
@@ -183,7 +185,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'services',
-        '3. ADSP service mapping',
+        numbered('ADSP service mapping'),
         <GoabTable width="100%" testId="blueprint-services">
           <thead>
             <tr>
@@ -219,9 +221,39 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
         </GoabTable>,
       )}
 
+      {blueprint.notCoveredByAdsp !== undefined &&
+        section(
+          'not-covered',
+          numbered('Not covered by ADSP'),
+          blueprint.notCoveredByAdsp.length === 0 ? (
+            <p>All requirements map to ADSP services.</p>
+          ) : (
+            <GoabTable width="100%" testId="blueprint-not-covered">
+              <thead>
+                <tr>
+                  <th>Requirement</th>
+                  <th>Why it's not covered</th>
+                  <th>Suggested approach</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blueprint.notCoveredByAdsp.map((n, i) => (
+                  <tr key={i}>
+                    <td>
+                      <strong>{n.requirement}</strong>
+                    </td>
+                    <td>{n.reason}</td>
+                    <td>{n.suggestedApproach}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </GoabTable>
+          ),
+        )}
+
       {section(
         'notes',
-        '4. Specialist consultation notes',
+        numbered('Specialist consultation notes'),
         blueprint.specialistNotes.length === 0 ? (
           <p>No recommended services.</p>
         ) : (
@@ -239,7 +271,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
               <SubList title="Questions to resolve" items={n.questions} />
               <SubList title="Risks" items={n.risks} />
               {n.validation && <SubList title={`Validation: ${n.validation.verdict}`} items={n.validation.findings} />}
-              <SubList title="From saved chats" items={n.chatHighlights} />
+              <SubList title="From the chat history" items={n.chatHighlights} />
             </GoabContainer>
           ))
         ),
@@ -247,7 +279,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'workflows',
-        '5. Core workflows',
+        numbered('Core workflows'),
         blueprint.workflows.map((w) => (
           <div key={w.name}>
             <h4>{w.name}</h4>
@@ -263,7 +295,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'governance',
-        '6. Data & governance',
+        numbered('Data & governance'),
         <>
           <SubList title="Data entities" items={d.dataEntities} />
           <SubList title="Access control" items={d.accessControl} />
@@ -276,7 +308,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'delivery',
-        '7. Delivery plan & other considerations',
+        numbered('Delivery plan & other considerations'),
         <>
           {dl.phases.map((phase) => (
             <SubList key={phase.name} title={phase.name} items={phase.items} />

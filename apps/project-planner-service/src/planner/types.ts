@@ -63,6 +63,23 @@ export interface ServiceMapping {
 // built-in: shipped with the service; customized: a built-in overridden by the tenant; custom: created by the tenant.
 export type PatternSource = 'built-in' | 'customized' | 'custom';
 
+// A requirement that no known ADSP service covers, kept instead of being silently dropped.
+export interface NotCoveredItem {
+  requirement: string;
+  reason: string;
+  suggestedApproach: string;
+}
+
+// A pattern-authored gap; only surfaced in rule-based mode when one of its keywords appears in the solution's text.
+export interface PatternUnsupportedCapability extends NotCoveredItem {
+  keywords?: string[];
+  // Items sharing a category are merged into one row when more than one is relevant.
+  category?: string;
+  // Short nouns used to build the merged row's wording, e.g. 'application' and 'case'.
+  feeType?: string;
+  recordType?: string;
+}
+
 export interface BusinessPattern {
   id: string;
   source?: PatternSource;
@@ -76,6 +93,7 @@ export interface BusinessPattern {
   clarifyingQuestions: string[];
   assumptions: string[];
   knownUnknowns: string[];
+  unsupportedCapabilities?: PatternUnsupportedCapability[];
 }
 
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
@@ -232,6 +250,8 @@ export interface SolutionBlueprint {
     diagram: string;
   };
   serviceMapping: BlueprintServiceRole[];
+  // undefined on blueprints generated before this feature existed; [] once regenerated with everything covered.
+  notCoveredByAdsp?: NotCoveredItem[];
   specialistNotes: SpecialistNote[];
   workflows: BlueprintWorkflow[];
   dataGovernance: {
@@ -325,6 +345,8 @@ export interface StoredChatMessage {
   followUps?: string[];
   // Present when the message records a planner consultation about a solution.
   consult?: Record<string, unknown>;
+  // True when the consult was auto-run to fill a blueprint gap, not asked for explicitly.
+  auto?: boolean;
 }
 
 export interface SpecialistChat {

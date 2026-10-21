@@ -49,9 +49,7 @@ describe('versioning', () => {
     });
 
     it('records a hash for confidence', () => {
-      const hashes = sectionHashes(
-        solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }),
-      );
+      const hashes = sectionHashes(solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }));
 
       expect(Object.keys(hashes)).toEqual(['Confidence']);
     });
@@ -80,12 +78,57 @@ describe('versioning', () => {
       expect(Object.keys(hashes)).toEqual(['Overview']);
     });
 
+    it('records a hash for a filled-in notCoveredByAdsp section', () => {
+      const hashes = sectionHashes(
+        solution({
+          ...emptyState,
+          blueprint: {
+            generatedOn: 'x',
+            mode: 'rules',
+            notCoveredByAdsp: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+          } as SolutionState['blueprint'],
+        }),
+      );
+
+      expect(Object.keys(hashes)).toEqual(['Not covered by ADSP']);
+    });
+
+    it('hashes an empty notCoveredByAdsp array (regenerated, everything covered)', () => {
+      const hashes = sectionHashes(
+        solution({
+          ...emptyState,
+          blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: [] } as SolutionState['blueprint'],
+        }),
+      );
+
+      expect(Object.keys(hashes)).toEqual(['Not covered by ADSP']);
+    });
+
+    it('does not hash notCoveredByAdsp when undefined (a blueprint that predates this section)', () => {
+      const hashes = sectionHashes(
+        solution({
+          ...emptyState,
+          blueprint: { generatedOn: 'x', mode: 'rules' } as SolutionState['blueprint'],
+        }),
+      );
+
+      expect(hashes['Not covered by ADSP']).toBeUndefined();
+    });
+
     it('does not hash conversation or discovery', () => {
       const hashes = sectionHashes(
         solution({
           ...emptyState,
           conversation: [{ role: 'user', content: 'Hi', at: 'x' }],
-          discovery: { messages: [], confidence: 0, threshold: 50, factors: [], ready: false, mode: 'rules', updatedOn: 'x' },
+          discovery: {
+            messages: [],
+            confidence: 0,
+            threshold: 50,
+            factors: [],
+            ready: false,
+            mode: 'rules',
+            updatedOn: 'x',
+          },
         }),
       );
 
@@ -165,6 +208,10 @@ describe('versioning', () => {
 
     it('is major when any blueprint section changed', () => {
       expect(classifyBump(['Problem statement', 'Service mapping'])).toBe('major');
+    });
+
+    it('is major when the notCoveredByAdsp section changed', () => {
+      expect(classifyBump(['Not covered by ADSP'])).toBe('major');
     });
   });
 

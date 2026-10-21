@@ -3,6 +3,7 @@ import {
   assembleBlueprint,
   BlueprintCore,
   buildDiagram,
+  buildNotCoveredByAdsp,
   buildRuleBlueprint,
   buildServiceMapping,
   chatHighlights,
@@ -12,7 +13,14 @@ import {
   toSpecialistNote,
 } from './blueprint';
 import { getSpecialist } from './specialists';
-import { BlueprintLayer, BusinessConcept, BusinessPattern, SolutionState, SpecialistNote, StoredChatMessage } from './types';
+import {
+  BlueprintLayer,
+  BusinessConcept,
+  BusinessPattern,
+  SolutionState,
+  SpecialistNote,
+  StoredChatMessage,
+} from './types';
 
 const concept = (type: BusinessConcept['type'], name: string, description?: string): BusinessConcept => ({
   id: `${type}-${name}`,
@@ -72,7 +80,10 @@ const bareState = (): SolutionState => ({
   hypotheses: [],
 });
 
-const pattern = { id: 'case-management', commonFeatures: ['Case intake', 'Assignment', 'Status tracking', 'Notes', 'Extra'] } as unknown as BusinessPattern;
+const pattern = {
+  id: 'case-management',
+  commonFeatures: ['Case intake', 'Assignment', 'Status tracking', 'Notes', 'Extra'],
+} as unknown as BusinessPattern;
 
 const layers: BlueprintLayer[] = [
   { name: 'Experience', description: 'Web app', components: ['Officer view'] },
@@ -101,6 +112,312 @@ describe('recommendedServices', () => {
   });
 });
 
+describe('buildNotCoveredByAdsp', () => {
+  const serviceMapping = buildServiceMapping(grantState());
+  const state = grantState();
+
+  it('includes a pattern item with no keywords unconditionally', () => {
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+    } as BusinessPattern;
+
+    expect(buildNotCoveredByAdsp(state, [patternWithGaps], [], serviceMapping)).toEqual([
+      { requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' },
+    ]);
+  });
+
+  it('includes a pattern item with keywords when one of them appears in the problem statement', () => {
+    const relevantState = { ...state, problemStatement: 'Applicants pay a fee to submit their application.' };
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [
+        { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it', keywords: ['pay', 'fee'] },
+      ],
+    } as BusinessPattern;
+
+    expect(buildNotCoveredByAdsp(relevantState, [patternWithGaps], [], serviceMapping)).toEqual([
+      { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it' },
+    ]);
+  });
+
+  it('omits a pattern item with keywords when none of them appear anywhere in the solution', () => {
+    const irrelevantState = {
+      ...state,
+      problemStatement: 'Seniors get free help shovelling snow from their driveway.',
+    };
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [
+        { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it', keywords: ['pay', 'fee'] },
+      ],
+    } as BusinessPattern;
+
+    expect(buildNotCoveredByAdsp(irrelevantState, [patternWithGaps], [], serviceMapping)).toEqual([]);
+  });
+
+  it('matches a keyword found in an answered question instead of the problem statement', () => {
+    const relevantState = {
+      ...state,
+      questions: [
+        {
+          id: 'q-1',
+          question: 'Is there a cost?',
+          raisedBy: 'planner',
+          status: 'answered' as const,
+          answer: 'Yes, there is a small fee.',
+        },
+      ],
+    };
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [
+        { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it', keywords: ['fee'] },
+      ],
+    } as BusinessPattern;
+
+    expect(buildNotCoveredByAdsp(relevantState, [patternWithGaps], [], serviceMapping)).toEqual([
+      { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it' },
+    ]);
+  });
+
+  it('matches a keyword found in a discovery conversation turn', () => {
+    const relevantState = {
+      ...state,
+      discovery: {
+        messages: [{ role: 'user' as const, content: 'We also need a background check.', at: 'x' }],
+      } as SolutionState['discovery'],
+    };
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [
+        {
+          requirement: 'Background check',
+          reason: 'No service',
+          suggestedApproach: 'Build it',
+          keywords: ['background check'],
+        },
+      ],
+    } as BusinessPattern;
+
+    expect(buildNotCoveredByAdsp(relevantState, [patternWithGaps], [], serviceMapping)).toEqual([
+      { requirement: 'Background check', reason: 'No service', suggestedApproach: 'Build it' },
+    ]);
+  });
+
+  it('collects items from every matched pattern, not just the first', () => {
+    const relevantState = { ...state, problemStatement: 'Applicants pay a fee and undergo a background check.' };
+    const patternA = {
+      ...pattern,
+      id: 'a',
+      unsupportedCapabilities: [
+        { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it', keywords: ['fee'] },
+      ],
+    } as BusinessPattern;
+    const patternB = {
+      ...pattern,
+      id: 'b',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Background check',
+          reason: 'No service',
+          suggestedApproach: 'Build it',
+          keywords: ['background check'],
+        },
+      ],
+    } as BusinessPattern;
+
+    const result = buildNotCoveredByAdsp(relevantState, [patternA, patternB], [], serviceMapping);
+
+    expect(result.map((r) => r.requirement)).toEqual(['Fee payment', 'Background check']);
+  });
+
+  it('removes a duplicate item that two matched patterns both contribute', () => {
+    const relevantState = { ...state, problemStatement: 'Applicants pay a fee.' };
+    const item = { requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Build it', keywords: ['fee'] };
+    const patternA = { ...pattern, id: 'a', unsupportedCapabilities: [item] } as BusinessPattern;
+    const patternB = {
+      ...pattern,
+      id: 'b',
+      unsupportedCapabilities: [{ ...item, requirement: 'fee payment' }],
+    } as BusinessPattern;
+
+    const result = buildNotCoveredByAdsp(relevantState, [patternA, patternB], [], serviceMapping);
+
+    expect(result).toHaveLength(1);
+  });
+
+  it('merges items from different patterns that share an unrecognized category by joining their approaches', () => {
+    const relevantState = { ...state, problemStatement: 'Applicants pay an application fee and a booking fee.' };
+    const patternA = {
+      ...pattern,
+      id: 'a',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Fee payment',
+          reason: 'No service',
+          suggestedApproach: 'Collect application fees.',
+          keywords: ['application fee'],
+          category: 'widget-category',
+        },
+      ],
+    } as BusinessPattern;
+    const patternB = {
+      ...pattern,
+      id: 'b',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Booking payment',
+          reason: 'No service',
+          suggestedApproach: 'Collect booking fees.',
+          keywords: ['booking fee'],
+          category: 'widget-category',
+        },
+      ],
+    } as BusinessPattern;
+
+    const result = buildNotCoveredByAdsp(relevantState, [patternA, patternB], [], serviceMapping);
+
+    expect(result).toEqual([
+      {
+        requirement: 'Fee payment',
+        reason: 'No service',
+        suggestedApproach: 'Collect application fees. Collect booking fees.',
+      },
+    ]);
+  });
+
+  it('merges payment-collection items into one canonical sentence naming each fee and record type', () => {
+    const relevantState = {
+      ...state,
+      problemStatement: 'Applicants pay an application fee, a renewal fee, and a booking fee.',
+    };
+    const patternA = {
+      ...pattern,
+      id: 'a',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Fee or payment processing',
+          reason: 'No ADSP service accepts or reconciles payments.',
+          suggestedApproach: 'Integrate a third-party payment gateway and record the outcome as a case note.',
+          keywords: ['application fee'],
+          category: 'payment-collection',
+          feeType: 'application',
+          recordType: 'case',
+        },
+      ],
+    } as BusinessPattern;
+    const patternB = {
+      ...pattern,
+      id: 'b',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Registration or renewal fee payment',
+          reason: 'No ADSP service accepts or reconciles payments.',
+          suggestedApproach: 'Integrate a third-party payment gateway and record the paid status in value-service.',
+          keywords: ['renewal fee'],
+          category: 'payment-collection',
+          feeType: 'renewal',
+          recordType: 'registration',
+        },
+      ],
+    } as BusinessPattern;
+    const patternC = {
+      ...pattern,
+      id: 'c',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Advance payment at time of booking',
+          reason: 'No ADSP service accepts or reconciles payments.',
+          suggestedApproach: 'Integrate a third-party payment gateway and record the paid status against the calendar-service event.',
+          keywords: ['booking fee'],
+          category: 'payment-collection',
+          feeType: 'booking',
+          recordType: 'booking',
+        },
+      ],
+    } as BusinessPattern;
+
+    const result = buildNotCoveredByAdsp(relevantState, [patternA, patternB, patternC], [], serviceMapping);
+
+    expect(result).toEqual([
+      {
+        requirement: 'Fee or payment collection',
+        reason: 'No ADSP service accepts or reconciles payments.',
+        suggestedApproach:
+          'Integrate a third-party payment gateway for application, renewal, and booking fees, and record the paid status against the related record (case, registration, or booking).',
+      },
+    ]);
+  });
+
+  it('does not merge a category item when only one pattern contributes it', () => {
+    const relevantState = { ...state, problemStatement: 'Applicants pay an application fee.' };
+    const patternA = {
+      ...pattern,
+      id: 'a',
+      unsupportedCapabilities: [
+        {
+          requirement: 'Fee payment',
+          reason: 'No service',
+          suggestedApproach: 'Collect application fees.',
+          keywords: ['application fee'],
+          category: 'payment-collection',
+        },
+      ],
+    } as BusinessPattern;
+
+    const result = buildNotCoveredByAdsp(relevantState, [patternA], [], serviceMapping);
+
+    expect(result).toEqual([{ requirement: 'Fee payment', reason: 'No service', suggestedApproach: 'Collect application fees.' }]);
+  });
+
+  it('includes AI-flagged items', () => {
+    const aiItems = [
+      { requirement: 'On-site check-in', reason: 'No kiosk service', suggestedApproach: 'Build a kiosk app' },
+    ];
+
+    expect(buildNotCoveredByAdsp(state, [], aiItems, serviceMapping)).toEqual(aiItems);
+  });
+
+  it('merges pattern and AI items and removes duplicates by requirement text', () => {
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+    } as BusinessPattern;
+    const aiItems = [
+      { requirement: 'payments', reason: 'duplicate', suggestedApproach: 'ignored' },
+      { requirement: 'On-site check-in', reason: 'No kiosk service', suggestedApproach: 'Build a kiosk app' },
+    ];
+
+    const result = buildNotCoveredByAdsp(state, [patternWithGaps], aiItems, serviceMapping);
+
+    expect(result.map((r) => r.requirement)).toEqual(['Payments', 'On-site check-in']);
+  });
+
+  it('excludes an item whose requirement is already a recommended service', () => {
+    const aiItems = [{ requirement: 'form-service', reason: 'wrong', suggestedApproach: 'n/a' }];
+
+    expect(buildNotCoveredByAdsp(state, [], aiItems, serviceMapping)).toEqual([]);
+  });
+
+  it('keeps a genuinely-uncovered item even when a related capability is already covered (partly covered split)', () => {
+    // grantState() recommends notification-service, which covers booking confirmations but not advance payment.
+    const aiItems = [
+      {
+        requirement: 'Advance payment',
+        reason: 'No payment service exists.',
+        suggestedApproach: 'Integrate a payment gateway.',
+      },
+    ];
+
+    expect(buildNotCoveredByAdsp(state, [], aiItems, serviceMapping)).toEqual(aiItems);
+  });
+
+  it('returns an empty list when there is nothing uncovered', () => {
+    expect(buildNotCoveredByAdsp(state, [pattern], [], serviceMapping)).toEqual([]);
+  });
+});
+
 describe('buildDiagram', () => {
   it('joins the layers with a downward arrow between them', () => {
     const diagram = buildDiagram(layers).split('\n');
@@ -125,7 +442,11 @@ describe('buildDiagram', () => {
   });
 
   it('wraps a long layer onto an indented continuation row', () => {
-    const long: BlueprintLayer = { name: 'Experience', description: '', components: ['Officer view '.repeat(8).trim()] };
+    const long: BlueprintLayer = {
+      name: 'Experience',
+      description: '',
+      components: ['Officer view '.repeat(8).trim()],
+    };
 
     const rows = buildDiagram([long]).split('\n');
 
@@ -133,7 +454,11 @@ describe('buildDiagram', () => {
   });
 
   it('keeps wrapped rows the same width as the border', () => {
-    const long: BlueprintLayer = { name: 'Experience', description: '', components: ['Officer view '.repeat(8).trim()] };
+    const long: BlueprintLayer = {
+      name: 'Experience',
+      description: '',
+      components: ['Officer view '.repeat(8).trim()],
+    };
 
     const rows = buildDiagram([long]).split('\n');
 
@@ -152,7 +477,11 @@ describe('buildServiceMapping', () => {
     const [first] = buildServiceMapping(grantState());
     const specialist = getSpecialist('form-service');
 
-    expect(first).toMatchObject({ displayName: specialist.displayName, role: specialist.purpose, reason: 'Collect applications' });
+    expect(first).toMatchObject({
+      displayName: specialist.displayName,
+      role: specialist.purpose,
+      reason: 'Collect applications',
+    });
   });
 
   it('uses the first three specialist questions as default capabilities', () => {
@@ -177,11 +506,21 @@ describe('buildServiceMapping', () => {
 
   it('falls back to the recommendation reason and service id for an unknown specialist', () => {
     const state = bareState();
-    state.hypotheses = [{ ...grantState().hypotheses[0], recommendations: [{ service: 'custom-service', reason: 'Bespoke need', order: 1 }] }];
+    state.hypotheses = [
+      {
+        ...grantState().hypotheses[0],
+        recommendations: [{ service: 'custom-service', reason: 'Bespoke need', order: 1 }],
+      },
+    ];
 
     const [role] = buildServiceMapping(state);
 
-    expect(role).toMatchObject({ displayName: 'custom-service', role: 'Bespoke need', dependsOn: [], capabilities: [] });
+    expect(role).toMatchObject({
+      displayName: 'custom-service',
+      role: 'Bespoke need',
+      dependsOn: [],
+      capabilities: [],
+    });
   });
 });
 
@@ -195,7 +534,10 @@ describe('buildRuleBlueprint', () => {
   });
 
   it('collects goals and outcomes as objectives', () => {
-    expect(buildRuleBlueprint(grantState(), pattern).overview.objectives).toEqual(['Faster decisions', 'Approved grant']);
+    expect(buildRuleBlueprint(grantState(), pattern).overview.objectives).toEqual([
+      'Faster decisions',
+      'Approved grant',
+    ]);
   });
 
   it('limits scope to the first eight pattern features', () => {
@@ -227,11 +569,18 @@ describe('buildRuleBlueprint', () => {
   });
 
   it('creates an experience view for each actor', () => {
-    expect(buildRuleBlueprint(grantState(), pattern).architecture.layers[0].components).toEqual(['Grant officer view', 'Applicant view']);
+    expect(buildRuleBlueprint(grantState(), pattern).architecture.layers[0].components).toEqual([
+      'Grant officer view',
+      'Applicant view',
+    ]);
   });
 
   it('includes notification and push in the events layer when recommended', () => {
-    expect(buildRuleBlueprint(grantState(), pattern).architecture.layers[2].components).toEqual(['Event service', 'Notification service', 'Push service']);
+    expect(buildRuleBlueprint(grantState(), pattern).architecture.layers[2].components).toEqual([
+      'Event service',
+      'Notification service',
+      'Push service',
+    ]);
   });
 
   it('lists data stores for the recommended form, file and value services', () => {
@@ -279,11 +628,16 @@ describe('buildRuleBlueprint', () => {
   });
 
   it('collects document and outcome concepts as data entities', () => {
-    expect(buildRuleBlueprint(grantState(), pattern).dataGovernance.dataEntities).toEqual(['Approved grant', 'Grant application']);
+    expect(buildRuleBlueprint(grantState(), pattern).dataGovernance.dataEntities).toEqual([
+      'Approved grant',
+      'Grant application',
+    ]);
   });
 
   it('defines access control per actor', () => {
-    expect(buildRuleBlueprint(grantState(), pattern).dataGovernance.accessControl[0]).toBe('Grant officer: define view and edit rights');
+    expect(buildRuleBlueprint(grantState(), pattern).dataGovernance.accessControl[0]).toBe(
+      'Grant officer: define view and edit rights',
+    );
   });
 
   it('includes business rules in compliance', () => {
@@ -297,7 +651,11 @@ describe('buildRuleBlueprint', () => {
   it('sets up the first two services in the foundation phase', () => {
     const foundation = buildRuleBlueprint(grantState(), pattern).delivery.phases[1];
 
-    expect(foundation.items).toEqual(['Create the tenant configuration and roles', 'Set up form-service', 'Set up file-service']);
+    expect(foundation.items).toEqual([
+      'Create the tenant configuration and roles',
+      'Set up form-service',
+      'Set up file-service',
+    ]);
   });
 
   describe('without analysis', () => {
@@ -332,7 +690,10 @@ describe('buildRuleBlueprint', () => {
     });
 
     it('lists only workflow concepts that have steps when there is no hypothesis', () => {
-      const state = { ...bareState(), concepts: [concept('workflow', 'Intake', 'Applicant submits the form'), concept('workflow', 'Empty')] };
+      const state = {
+        ...bareState(),
+        concepts: [concept('workflow', 'Intake', 'Applicant submits the form'), concept('workflow', 'Empty')],
+      };
 
       expect(buildRuleBlueprint(state).workflows.map((w) => w.name)).toEqual(['Intake']);
     });
@@ -342,11 +703,15 @@ describe('buildRuleBlueprint', () => {
     });
 
     it('defaults success measures', () => {
-      expect(buildRuleBlueprint(bareState()).overview.successMeasures).toEqual(['Agree measurable success criteria with the business owner']);
+      expect(buildRuleBlueprint(bareState()).overview.successMeasures).toEqual([
+        'Agree measurable success criteria with the business owner',
+      ]);
     });
 
     it('defaults data entities', () => {
-      expect(buildRuleBlueprint(bareState()).dataGovernance.dataEntities).toEqual(['Define the main records the solution creates']);
+      expect(buildRuleBlueprint(bareState()).dataGovernance.dataEntities).toEqual([
+        'Define the main records the solution creates',
+      ]);
     });
   });
 });
@@ -383,7 +748,9 @@ describe('mergeBlueprintCore', () => {
   });
 
   it('ignores undefined ai fields', () => {
-    const result = mergeBlueprintCore(base(), { overview: { ...base().overview, title: undefined } as unknown as BlueprintCore['overview'] });
+    const result = mergeBlueprintCore(base(), {
+      overview: { ...base().overview, title: undefined } as unknown as BlueprintCore['overview'],
+    });
 
     expect(result.overview.title).toBe('Grant case workflow');
   });
@@ -460,6 +827,40 @@ describe('chatHighlights', () => {
 
     expect(highlight).toHaveLength(300);
   });
+
+  it('collapses line breaks so a multi-paragraph reply stays on one line', () => {
+    const [highlight] = chatHighlights([
+      message({ content: 'Here is what this service is for.\n\nNotification service: Templates.\n\nDepends on: event-service.' }),
+    ]);
+
+    expect(highlight).toBe('Here is what this service is for. Notification service: Templates. Depends on: event-service.');
+  });
+
+  it('pairs a reply with the user question that immediately preceded it', () => {
+    const messages: StoredChatMessage[] = [
+      { role: 'user', content: 'Can we send a reminder the evening before forecast snowfall?', at: 'x' },
+      message({ content: 'That needs weather forecast data, which no ADSP service provides.' }),
+    ];
+
+    expect(chatHighlights(messages)).toEqual([
+      'Q: Can we send a reminder the evening before forecast snowfall? — A: That needs weather forecast data, which no ADSP service provides.',
+    ]);
+  });
+
+  it('does not prefix a reply with a question when the previous message is not from the user', () => {
+    const messages: StoredChatMessage[] = [message({ intent: 'consult' }), message({ content: 'Enable draft saving.' })];
+
+    expect(chatHighlights(messages)).toEqual(['Enable draft saving.']);
+  });
+
+  it('truncates both the question and the reply independently', () => {
+    const messages: StoredChatMessage[] = [
+      { role: 'user', content: 'a'.repeat(400), at: 'x' },
+      message({ content: 'b'.repeat(400) }),
+    ];
+
+    expect(chatHighlights(messages)).toEqual([`Q: ${'a'.repeat(300)}… — A: ${'b'.repeat(300)}…`]);
+  });
 });
 
 describe('toSpecialistNote', () => {
@@ -502,7 +903,12 @@ describe('toSpecialistNote', () => {
   it('carries over supports, constraints, validation, source, highlights and date', () => {
     const validation = { verdict: 'sound' as const, findings: [] };
 
-    const note = toSpecialistNote(consultResult({ supports: ['Drafts'], constraints: ['One form'], validation }), 'saved-consultation', ['Earlier'], on);
+    const note = toSpecialistNote(
+      consultResult({ supports: ['Drafts'], constraints: ['One form'], validation }),
+      'saved-consultation',
+      ['Earlier'],
+      on,
+    );
 
     expect(note).toMatchObject({
       supports: ['Drafts'],
@@ -516,7 +922,12 @@ describe('toSpecialistNote', () => {
 });
 
 describe('storedConsult', () => {
-  const message = (consult?: Record<string, unknown>): StoredChatMessage => ({ role: 'assistant', content: 'x', at: '2026-03-01T10:00:00.000Z', consult });
+  const message = (consult?: Record<string, unknown>): StoredChatMessage => ({
+    role: 'assistant',
+    content: 'x',
+    at: '2026-03-01T10:00:00.000Z',
+    consult,
+  });
 
   it('returns the consult result stored on the message', () => {
     const consult = { ...consultResult() } as Record<string, unknown>;
@@ -535,20 +946,31 @@ describe('storedConsult', () => {
 
 describe('assembleBlueprint', () => {
   const meta = { generatedOn: '2026-03-01T10:00:00.000Z', mode: 'rules' as const };
-  const note = (risks: string[]): SpecialistNote => toSpecialistNote(consultResult({ risks }), 'rules', [], meta.generatedOn);
+  const note = (risks: string[]): SpecialistNote =>
+    toSpecialistNote(consultResult({ risks }), 'rules', [], meta.generatedOn);
 
   it('includes the metadata and the core sections', () => {
     const core = buildRuleBlueprint(grantState(), pattern);
 
     const result = assembleBlueprint(grantState(), core, [], { ...meta, warning: 'Fell back' });
 
-    expect(result).toMatchObject({ generatedOn: meta.generatedOn, mode: 'rules', warning: 'Fell back', workflows: core.workflows });
+    expect(result).toMatchObject({
+      generatedOn: meta.generatedOn,
+      mode: 'rules',
+      warning: 'Fell back',
+      workflows: core.workflows,
+    });
   });
 
   it('adds up to two risks from each specialist note without duplicates', () => {
     const core = buildRuleBlueprint(grantState(), pattern);
 
-    const result = assembleBlueprint(grantState(), core, [note(['Duplicate submissions', 'Draft expiry', 'Large uploads']), note(['Draft expiry'])], meta);
+    const result = assembleBlueprint(
+      grantState(),
+      core,
+      [note(['Duplicate submissions', 'Draft expiry', 'Large uploads']), note(['Draft expiry'])],
+      meta,
+    );
 
     expect(result.overview.risks.filter((r) => r === 'Draft expiry')).toHaveLength(1);
   });
@@ -556,7 +978,12 @@ describe('assembleBlueprint', () => {
   it('leaves out specialist risks beyond the first two', () => {
     const core = buildRuleBlueprint(grantState(), pattern);
 
-    const result = assembleBlueprint(grantState(), core, [note(['Duplicate submissions', 'Draft expiry', 'Large uploads'])], meta);
+    const result = assembleBlueprint(
+      grantState(),
+      core,
+      [note(['Duplicate submissions', 'Draft expiry', 'Large uploads'])],
+      meta,
+    );
 
     expect(result.overview.risks).not.toContain('Large uploads');
   });
@@ -567,6 +994,61 @@ describe('assembleBlueprint', () => {
     const result = assembleBlueprint(grantState(), core, [], meta, [{ service: 'form-service', role: 'Intake' }]);
 
     expect(result.serviceMapping[0].role).toBe('Intake');
+  });
+
+  it("keeps the matched pattern's unsupported capabilities as notCoveredByAdsp", () => {
+    const core = buildRuleBlueprint(grantState(), pattern);
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+    } as BusinessPattern;
+
+    const result = assembleBlueprint(grantState(), core, [], meta, [], [patternWithGaps]);
+
+    expect(result.notCoveredByAdsp).toEqual([
+      { requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' },
+    ]);
+  });
+
+  it("merges AI-flagged items with the pattern's unsupported capabilities", () => {
+    const core = buildRuleBlueprint(grantState(), pattern);
+    const patternWithGaps = {
+      ...pattern,
+      unsupportedCapabilities: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+    } as BusinessPattern;
+    const aiItems = [
+      { requirement: 'On-site check-in', reason: 'No kiosk service', suggestedApproach: 'Build a kiosk app' },
+    ];
+
+    const result = assembleBlueprint(grantState(), core, [], meta, [], [patternWithGaps], aiItems);
+
+    expect(result.notCoveredByAdsp.map((r) => r.requirement)).toEqual(['Payments', 'On-site check-in']);
+  });
+
+  it('collects notCoveredByAdsp items from multiple matched patterns', () => {
+    const core = buildRuleBlueprint(grantState(), pattern);
+    const patternA = {
+      ...pattern,
+      unsupportedCapabilities: [{ requirement: 'Payments', reason: 'No service', suggestedApproach: 'Build it' }],
+    } as BusinessPattern;
+    const patternB = {
+      ...pattern,
+      unsupportedCapabilities: [
+        { requirement: 'On-site check-in', reason: 'No kiosk service', suggestedApproach: 'Build a kiosk app' },
+      ],
+    } as BusinessPattern;
+
+    const result = assembleBlueprint(grantState(), core, [], meta, [], [patternA, patternB]);
+
+    expect(result.notCoveredByAdsp.map((r) => r.requirement)).toEqual(['Payments', 'On-site check-in']);
+  });
+
+  it('is an empty list when nothing is uncovered', () => {
+    const core = buildRuleBlueprint(grantState(), pattern);
+
+    const result = assembleBlueprint(grantState(), core, [], meta);
+
+    expect(result.notCoveredByAdsp).toEqual([]);
   });
 
   it('attaches the specialist notes', () => {

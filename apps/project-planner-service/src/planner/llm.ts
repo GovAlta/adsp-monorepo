@@ -11,6 +11,7 @@ import {
   ConceptType,
   ConfidenceLevel,
   Hypothesis,
+  NotCoveredItem,
   PatternMatch,
   SolutionState,
   SpecialistDefinition,
@@ -76,6 +77,7 @@ export interface LlmDiscovery {
 export interface LlmBlueprint {
   core: Partial<BlueprintCore>;
   services: BlueprintServiceDetail[];
+  notCoveredByAdsp: NotCoveredItem[];
   model: string;
 }
 
@@ -134,7 +136,21 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const asString = (value: unknown, max = 1000): string => (typeof value === 'string' ? value.trim().slice(0, max) : '');
 const asStrings = (value: unknown, max = 10): string[] =>
-  Array.isArray(value) ? value.map((v) => asString(v)).filter(Boolean).slice(0, max) : [];
+  Array.isArray(value)
+    ? value
+        .map((v) => asString(v))
+        .filter(Boolean)
+        .slice(0, max)
+    : [];
+const asNotCovered = (value: unknown, max = 10): NotCoveredItem[] =>
+  (Array.isArray(value) ? value.filter((v): v is Record<string, unknown> => !!v && typeof v === 'object') : [])
+    .map((n) => ({
+      requirement: asString(n.requirement, 300),
+      reason: asString(n.reason, 500),
+      suggestedApproach: asString(n.suggestedApproach, 500),
+    }))
+    .filter((n) => n.requirement && n.reason)
+    .slice(0, max);
 
 export function parseJsonObject(content: string): Record<string, unknown> {
   const stripped = content.replace(/```(?:json)?/gi, '');
@@ -151,16 +167,18 @@ const isTransient = (err: unknown): boolean => {
   if (axiosErr?.response) {
     return axiosErr.response.status >= 500 || axiosErr.response.status === 429;
   }
-  return !!axiosErr?.code && ['ECONNABORTED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN'].includes(axiosErr.code);
+  return (
+    !!axiosErr?.code && ['ECONNABORTED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN'].includes(axiosErr.code)
+  );
 };
 
 const FITS = ['recommended', 'optional', 'not-indicated'] as const;
 const VERDICTS = ['sound', 'needs-changes', 'not-a-fit'] as const;
 const INTENT_GUIDANCE: Record<SpecialistIntent, string> = {
-  ask: 'answer the user\'s question about this service.',
+  ask: "answer the user's question about this service.",
   recommend: 'recommend a service-specific solution for what the user describes.',
-  design: 'help refine the user\'s service-specific design, pointing out gaps and better options.',
-  validate: 'validate the user\'s proposed solution and give a verdict with specific findings.',
+  design: "help refine the user's service-specific design, pointing out gaps and better options.",
+  validate: "validate the user's proposed solution and give a verdict with specific findings.",
   sample: 'provide concise, realistic sample code or configuration for what the user describes.',
 };
 
@@ -173,7 +191,10 @@ const parseValidation = (value: unknown): SpecialistValidation | undefined => {
 export class MaasLlm implements PlannerLlm {
   private readonly http;
 
-  constructor(private readonly config: LlmConfig, private readonly logger: Logger) {
+  constructor(
+    private readonly config: LlmConfig,
+    private readonly logger: Logger,
+  ) {
     this.http = axios.create({
       baseURL: config.baseUrl,
       timeout: config.timeoutMs,
@@ -247,14 +268,21 @@ export class MaasLlm implements PlannerLlm {
       'Write for non-technical readers. Reply with a single JSON object only, no commentary.';
     const user = [
       `Business problem:\n"""${text}"""`,
-      existing.length ? `Concepts already confirmed by the user: ${existing.map((c) => `${c.type}:${c.name}`).join(', ')}` : '',
+      existing.length
+        ? `Concepts already confirmed by the user: ${existing.map((c) => `${c.type}:${c.name}`).join(', ')}`
+        : '',
       context?.answers.length
         ? `The user has already answered these questions (treat the answers as facts and do not ask them again):\n${context.answers.map((a) => `Q: ${a.question}\nA: ${a.answer}`).join('\n')}`
         : '',
       context?.conversation.length
-        ? `Conversation so far:\n${context.conversation.slice(-12).map((m) => `${m.role}: ${m.content}`).join('\n')}`
+        ? `Conversation so far:\n${context.conversation
+            .slice(-12)
+            .map((m) => `${m.role}: ${m.content}`)
+            .join('\n')}`
         : '',
-      context?.message ? `The user's latest message (respond to it in "reply" and refine the analysis accordingly): """${context.message}"""` : '',
+      context?.message
+        ? `The user's latest message (respond to it in "reply" and refine the analysis accordingly): """${context.message}"""`
+        : '',
       `Known business patterns (use these ids): ${JSON.stringify(catalog)}`,
       `ADSP services you may recommend (use these exact names): ${JSON.stringify(services)}`,
       `Return JSON with this shape:
@@ -279,7 +307,8 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
 
   private mapAnalysis(json: Record<string, unknown>, patterns: BusinessPattern[], serviceNames: string[]): LlmAnalysis {
     const patternById = new Map(patterns.map((p) => [p.id, p]));
-    const level = (value: unknown): ConfidenceLevel => (LEVELS.includes(value as ConfidenceLevel) ? (value as ConfidenceLevel) : 'low');
+    const level = (value: unknown): ConfidenceLevel =>
+      LEVELS.includes(value as ConfidenceLevel) ? (value as ConfidenceLevel) : 'low';
     const list = (value: unknown): Record<string, unknown>[] =>
       Array.isArray(value) ? value.filter((v): v is Record<string, unknown> => !!v && typeof v === 'object') : [];
 
@@ -316,7 +345,11 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       .map((h): Hypothesis => {
         const recommendations = list(h.recommendations)
           .filter((r) => serviceNames.includes(asString(r.service)))
-          .map((r, i) => ({ service: asString(r.service), reason: asString(r.reason), order: Number(r.order) || i + 1 }))
+          .map((r, i) => ({
+            service: asString(r.service),
+            reason: asString(r.reason),
+            order: Number(r.order) || i + 1,
+          }))
           .sort((a, b) => a.order - b.order);
         return {
           id: randomUUID(),
@@ -357,7 +390,12 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       'Reply with a single JSON object only, no commentary.';
     const user = [
       `Business problem:\n"""${problem}"""`,
-      messages.length ? `Conversation so far:\n${messages.slice(-16).map((m) => `${m.role}: ${m.content.slice(0, 2000)}`).join('\n')}` : 'No conversation yet.',
+      messages.length
+        ? `Conversation so far:\n${messages
+            .slice(-16)
+            .map((m) => `${m.role}: ${m.content.slice(0, 2000)}`)
+            .join('\n')}`
+        : 'No conversation yet.',
       `Business patterns that may apply (for your own context): ${patterns.map((p) => p.name).join(', ')}`,
       `Rate each factor from 0 to 100 for how well the problem and conversation so far define it (0 = unknown, 50 = partly understood, 100 = clear and complete):\n${DISCOVERY_FACTORS.map((f) => `- ${f.id}: ${f.label}`).join('\n')}`,
       `Return JSON: {"factors": [{"id": "<factor id>", "score": 0-100, "note": "what is still unclear, or empty"}], ` +
@@ -388,27 +426,42 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
     const user = [
       `Problem statement:\n"""${state.problemStatement}"""`,
       state.discovery?.messages.length
-        ? `Discovery conversation:\n${state.discovery.messages.slice(-12).map((m) => `${m.role}: ${m.content.slice(0, 1200)}`).join('\n')}`
+        ? `Discovery conversation:\n${state.discovery.messages
+            .slice(-12)
+            .map((m) => `${m.role}: ${m.content.slice(0, 1200)}`)
+            .join('\n')}`
         : '',
       hypothesis
-        ? `Proposed approach: ${hypothesis.title} — ${hypothesis.rationale}\nServices in order:\n${[...hypothesis.recommendations]
+        ? `Proposed approach: ${hypothesis.title} — ${hypothesis.rationale}\nServices in order:\n${[
+            ...hypothesis.recommendations,
+          ]
             .sort((a, b) => a.order - b.order)
             .map((r) => `${r.order}. ${r.service}: ${r.reason}`)
             .join('\n')}`
         : '',
-      state.concepts.length ? `Business concepts: ${state.concepts.slice(0, 30).map((c) => `${c.type}:${c.name}`).join(', ')}` : '',
+      state.concepts.length
+        ? `Business concepts: ${state.concepts
+            .slice(0, 30)
+            .map((c) => `${c.type}:${c.name}`)
+            .join(', ')}`
+        : '',
       notes.length
         ? `Specialist notes:\n${notes
-            .map((n) => `- ${n.service} (${n.fit}): ${n.summary.slice(0, 700)} Constraints: ${n.constraints.slice(0, 3).join('; ')}. Risks: ${n.risks.slice(0, 3).join('; ')}`)
+            .map(
+              (n) =>
+                `- ${n.service} (${n.fit}): ${n.summary.slice(0, 700)} Constraints: ${n.constraints.slice(0, 3).join('; ')}. Risks: ${n.risks.slice(0, 3).join('; ')}`,
+            )
             .join('\n')}`
         : '',
       'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": []}, ' +
         '"architecture": {"summary": "", "layers": [{"name": "", "description": "", "components": []}], "integrations": [], "security": []}, ' +
         '"services": [{"service": "<service id>", "role": "what it does in this solution", "capabilities": ["specific features to use"]}], ' +
+        '"notCoveredByAdsp": [{"requirement": "a need from the problem statement, discovery conversation or specialist notes that no service above satisfies", "reason": "why no ADSP service covers it", "suggestedApproach": "how to address it separately"}], ' +
         '"workflows": [{"name": "", "actors": [], "steps": ["ordered steps naming the service used"]}], ' +
         '"dataGovernance": {"dataEntities": [], "accessControl": [], "retention": [], "privacy": [], "audit": [], "compliance": []}, ' +
         '"delivery": {"phases": [{"name": "", "items": []}], "nonFunctional": [], "openQuestions": []}}. ' +
-        'Keep every list to at most 8 items, and every item to one sentence.',
+        'Keep every list to at most 8 items, and every item to one sentence. List each uncovered need as its own item in "notCoveredByAdsp"; ' +
+        'only omit it if a service above covers that specific need, not merely a related one (e.g. a service that sends booking confirmations does not cover taking payment for the booking).',
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -416,8 +469,10 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       { role: 'system', content: system },
       { role: 'user', content: user },
     ]);
-    const obj = (value: unknown): Record<string, unknown> => (value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {});
-    const objs = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? value.filter((v) => v && typeof v === 'object').map(obj) : []);
+    const obj = (value: unknown): Record<string, unknown> =>
+      value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+    const objs = (value: unknown): Record<string, unknown>[] =>
+      Array.isArray(value) ? value.filter((v) => v && typeof v === 'object').map(obj) : [];
     const overview = obj(json.overview);
     const architecture = obj(json.architecture);
     const governance = obj(json.dataGovernance);
@@ -438,7 +493,11 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         summary: asString(architecture.summary, 1500),
         layers: objs(architecture.layers)
           .slice(0, 8)
-          .map((l) => ({ name: asString(l.name, 80), description: asString(l.description, 400), components: asStrings(l.components, 10) }))
+          .map((l) => ({
+            name: asString(l.name, 80),
+            description: asString(l.description, 400),
+            components: asStrings(l.components, 10),
+          }))
           .filter((l) => l.name),
         integrations: asStrings(architecture.integrations, 8),
         security: asStrings(architecture.security, 8),
@@ -467,11 +526,26 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
     };
     const services = objs(json.services)
       .filter((s) => serviceNames.includes(asString(s.service)))
-      .map((s) => ({ service: asString(s.service), role: asString(s.role, 500), capabilities: asStrings(s.capabilities, 6) }));
+      .map((s) => ({
+        service: asString(s.service),
+        role: asString(s.role, 500),
+        capabilities: asStrings(s.capabilities, 6),
+      }));
+    // Don't repeat a requirement the recommended services above already satisfy.
+    const coveredNames = new Set(
+      services.flatMap((s) =>
+        [s.service.toLowerCase(), SPECIALISTS.find((sp) => sp.service === s.service)?.displayName.toLowerCase()].filter(
+          Boolean,
+        ),
+      ),
+    );
+    const notCoveredByAdsp = asNotCovered(json.notCoveredByAdsp).filter(
+      (n) => !coveredNames.has(n.requirement.trim().toLowerCase()),
+    );
     if (!core.overview?.summary && !core.architecture?.layers.length && !core.workflows?.length) {
       throw new Error('Model response did not contain a usable blueprint.');
     }
-    return { core, services, model: this.config.model };
+    return { core, services, notCoveredByAdsp, model: this.config.model };
   }
 
   async consult(
@@ -491,9 +565,16 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       `Known dependencies: ${specialist.dependsOn.join(', ') || 'none'}`,
       `Problem statement:\n"""${state.problemStatement}"""`,
       `Recommended approach: ${state.hypotheses[0] ? `${state.hypotheses[0].title} — ${state.hypotheses[0].rationale}` : 'not analyzed yet'}`,
-      state.concepts.length ? `Business concepts: ${state.concepts.slice(0, 20).map((c) => `${c.type}:${c.name}`).join(', ')}` : '',
+      state.concepts.length
+        ? `Business concepts: ${state.concepts
+            .slice(0, 20)
+            .map((c) => `${c.type}:${c.name}`)
+            .join(', ')}`
+        : '',
       proposal ? `Plan to validate:\n"""${proposal}"""` : '',
-      question ? `The planner asks: ${question}` : 'Explain how to use this service for this solution and what to decide first.',
+      question
+        ? `The planner asks: ${question}`
+        : 'Explain how to use this service for this solution and what to decide first.',
       'Return JSON: {"fit": "recommended|optional|not-indicated", "advice": "2-5 short paragraphs as one string", ' +
         '"supports": ["parts of the solution this service can support"], "constraints": ["constraints or limits to respect"], ' +
         '"questions": ["questions to resolve before configuring the service"], "risks": ["risks or pitfalls not yet considered"], ' +
