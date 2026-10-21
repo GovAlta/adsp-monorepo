@@ -183,10 +183,10 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       '## 3. ADSP service mapping',
       '',
-      ...bp.serviceMapping.map(
-        (s) =>
-          `${s.order}. **${s.service}** — ${sentence(s.role)} _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`,
-      ),
+      ...bp.serviceMapping.flatMap((s) => [
+        `${s.order}. **${s.service}** — ${sentence(s.role)} _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`,
+        ...s.capabilities.map((c) => `   - ${c}`),
+      ]),
     );
     if (bp.notCoveredByAdsp !== undefined) {
       lines.push('', '## 4. Not covered by ADSP', '');
@@ -198,7 +198,21 @@ export function solutionToMarkdown(solution: Solution): string {
         );
       }
     }
-    lines.push('', '## 5. Specialist consultation notes');
+    lines.push(
+      '',
+      '## 5. Components to set up',
+      '',
+      '_Work through these components in order with the user. For each one, walk them through the Where and How steps and ask them to decide every open decision. The user approves each component before it is set up._',
+      '',
+      ...(bp.components ?? []).flatMap((c) => [
+        `${c.order}. **${c.name}** (${c.type}, ${c.service}) — ${c.purpose}${c.dependsOn.length ? ` _Depends on:_ ${c.dependsOn.join(', ')}` : ''}`,
+        `   - Where: ${c.setup.where}`,
+        `   - How: ${c.setup.how}`,
+        `   - Docs: ${c.setup.docs}`,
+        ...c.openDecisions.map((d) => `   - Open decision: ${d}`),
+      ]),
+    );
+    lines.push('', '## 6. Specialist consultation notes');
     bp.specialistNotes.forEach((n) => {
       lines.push('', `### ${n.displayName} (${n.fit}, ${n.source})`, '', n.summary);
       bullets('Can support', n.supports);
@@ -208,7 +222,7 @@ export function solutionToMarkdown(solution: Solution): string {
       if (n.validation) bullets(`Validation: ${n.validation.verdict}`, n.validation.findings);
       bullets('From saved chats', n.chatHighlights);
     });
-    lines.push('', '## 6. Core workflows');
+    lines.push('', '## 7. Core workflows');
     bp.workflows.forEach((w) =>
       lines.push(
         '',
@@ -218,7 +232,7 @@ export function solutionToMarkdown(solution: Solution): string {
         ...w.steps.map((s, i) => `${i + 1}. ${s}`),
       ),
     );
-    lines.push('', '## 7. Data & governance');
+    lines.push('', '## 8. Data & governance');
     const g = bp.dataGovernance;
     bullets('Data entities', g.dataEntities);
     bullets('Access control', g.accessControl);
@@ -226,7 +240,7 @@ export function solutionToMarkdown(solution: Solution): string {
     bullets('Privacy', g.privacy);
     bullets('Audit', g.audit);
     bullets('Compliance', g.compliance);
-    lines.push('', '## 8. Delivery plan & other considerations');
+    lines.push('', '## 9. Delivery plan & other considerations');
     bp.delivery.phases.forEach((p) => bullets(p.name, p.items));
     bullets('Non-functional requirements', bp.delivery.nonFunctional);
     bullets('Open questions', bp.delivery.openQuestions);

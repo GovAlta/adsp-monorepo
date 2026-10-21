@@ -39,7 +39,6 @@ const makeSolution = (createdById: string): Solution => ({
     patternMatches: [],
     hypotheses: [],
     specialists: [],
-    artifacts: [],
     nextSteps: [],
   },
 });
@@ -61,6 +60,7 @@ describe('planner router routes', () => {
   const eventService = { send: jest.fn() };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
+  const readAdspCatalog = jest.fn();
 
   const CHAT_ID = 'b7e2f6a1-4c3d-4e8f-9a1b-2c3d4e5f6a7b';
   const storedChat = (overrides: Partial<SpecialistChat> = {}): SpecialistChat => ({
@@ -80,7 +80,7 @@ describe('planner router routes', () => {
     ...overrides,
   });
 
-  const buildApp = (user: User | null = owner, withTenant = true, llm?: PlannerLlm) => {
+  const buildApp = (user: User | null = owner, withTenant = true, llm?: PlannerLlm, readCatalog: typeof readAdspCatalog | null = readAdspCatalog) => {
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
@@ -100,6 +100,7 @@ describe('planner router routes', () => {
         specialistChatRepository: chatRepository,
         eventService: eventService as unknown as EventService,
         llm,
+        readAdspCatalog: readCatalog || undefined,
       }),
     );
     app.use((err: { extra?: { statusCode?: number }; message: string }, _req, res, _next) => {
@@ -2717,6 +2718,7 @@ describe('planner router routes', () => {
         repository.get.mockResolvedValue(analysed());
         llm.blueprint.mockResolvedValue(generated);
         llm.consult.mockResolvedValue(consultation);
+        readAdspCatalog.mockResolvedValue(['platform:form-service', 'platform:file-service']);
       });
 
       it('returns 400 when the solution has no hypotheses', async () => {
@@ -2768,10 +2770,11 @@ describe('planner router routes', () => {
       it('passes the specialist notes to the llm', async () => {
         await blueprint(buildApp(owner, true, llm));
 
-        expect(llm.blueprint).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: aiText }), [
-          expect.objectContaining({ service: 'form-service' }),
-          expect.objectContaining({ service: 'file-service' }),
-        ]);
+        expect(llm.blueprint).toHaveBeenCalledWith(
+          expect.objectContaining({ problemStatement: aiText }),
+          [expect.objectContaining({ service: 'form-service' }), expect.objectContaining({ service: 'file-service' })],
+          [],
+        );
       });
 
       it('consults each recommended service that has no saved consultation', async () => {
@@ -2934,6 +2937,61 @@ describe('planner router routes', () => {
         await blueprint(buildApp(owner, true, llm));
 
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI blueprint failed'));
+      });
+
+      it('adds rule-based components when the llm drafts none', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.components.filter((c: { target: string }) => c.target === 'adsp').map((c: { service: string }) => c.service)).toEqual([
+          'form-service',
+          'file-service',
+        ]);
+      });
+
+      it('uses the components the llm drafts', async () => {
+        llm.blueprint.mockResolvedValue({ ...generated, components: [{ service: 'form-service', name: 'Grant application', purpose: 'Collects applications' }] });
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.components[0]).toMatchObject({ service: 'form-service', name: 'Grant application' });
+      });
+
+      it('does not warn when the ADSP catalog cannot be read', async () => {
+        readAdspCatalog.mockRejectedValueOnce(new Error('Forbidden'));
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.warning).toBeUndefined();
+      });
+
+      it('logs why the ADSP catalog could not be read', async () => {
+        readAdspCatalog.mockRejectedValueOnce(new Error('Forbidden'));
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Forbidden'));
+      });
+
+      it('does not warn when there is no catalog reader', async () => {
+        const res = await blueprint(buildApp(owner, true, llm, null));
+
+        expect(res.body.state.blueprint.warning).toBeUndefined();
+      });
+
+      it('logs ADSP services in the live catalog that the component map does not cover', async () => {
+        readAdspCatalog.mockResolvedValue(['platform:form-service', 'platform:sharepoint-service']);
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('ADSP component map is out of date: sharepoint-service.'));
+      });
+
+      it('offers the llm the live services the component map does not cover', async () => {
+        readAdspCatalog.mockResolvedValue(['platform:form-service', 'platform:sharepoint-service']);
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(llm.blueprint).toHaveBeenCalledWith(expect.anything(), expect.anything(), ['sharepoint-service']);
       });
 
       it('uses the matched pattern features for scope when the hypothesis has no pattern', async () => {

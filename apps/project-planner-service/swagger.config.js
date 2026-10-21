@@ -12,11 +12,11 @@ _solution hypotheses_ that recommend ADSP services. Each recommended service has
 for service-specific questions and dependencies, and links to its service workspace.
 
 A _solution_ is the persistent, structured state of this work: decisions made (and why), open questions,
-specialist progress, artifacts, and recommended next steps. It survives across sessions so the user does not need
+specialist progress, and recommended next steps. It survives across sessions so the user does not need
 to repeat information already gathered.
 
 Any recommendation made by the planner is a hypothesis for the user to refine.
-`,
+`, // clean-code-ignore: RULE-19 — swagger metadata; no runtime code to test.
   },
   tags: [
     { name: 'Solution', description: 'Managing solutions and the planner workflow' },
