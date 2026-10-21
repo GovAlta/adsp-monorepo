@@ -37,6 +37,11 @@ describe('Access Page', () => {
 
   const mockStore = configureStore([thunk]);
 
+  // jsdom has no scrollIntoView; the agent chat auto-scrolls after a delay that slow runners can reach.
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+  });
+
   const users = [
     { id: '1', enabled: true, emailVerified: true },
     { id: '2', enabled: true, emailVerified: true },
