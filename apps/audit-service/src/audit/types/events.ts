@@ -83,6 +83,9 @@ export interface EventReader {
   get(tenantId: string, namespace: string, id: string): Promise<StoredEvent | null>;
 }
 
+// Namespace of the events the service records about itself (replays and audited reads).
+export const AUDIT_SERVICE_NAMESPACE = 'audit-service';
+
 export const EVENT_OUTCOME_STATUS = {
   ACCEPTED: 'accepted',
   DUPLICATE: 'duplicate',

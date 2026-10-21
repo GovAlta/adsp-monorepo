@@ -1,7 +1,5 @@
 import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
 
-export const AUDIT_SERVICE_NAMESPACE = 'audit-service';
-
 export const SelfAuditActions = {
   ListNamespaceEvents: 'events.list',
   ListAllEvents: 'events.list-all',

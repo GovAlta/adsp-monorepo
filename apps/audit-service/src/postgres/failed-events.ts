@@ -4,7 +4,9 @@ import { Knex } from 'knex';
 import type { Logger } from 'winston';
 import { AuditStorageUnavailableError } from '../audit/buffer';
 import {
+  AUDIT_SERVICE_NAMESPACE,
   EnrichedEvent,
+  FAILED_EVENT_STATUS,
   FailedAuditEvent,
   FailedEventCursor,
   FailedEventRepository,
@@ -35,7 +37,7 @@ export class PostgresFailedEventRepository implements FailedEventRepository {
   async countOpen(): Promise<number> {
     return this.execute(async () => {
       const [result] = await this.knex('audit_failed_events')
-        .where({ status: 'open' })
+        .where({ status: FAILED_EVENT_STATUS.OPEN })
         .count<{ count: string }[]>('* as count')
         .timeout(STATEMENT_TIMEOUT_MS, { cancel: true });
       const count = Number(result.count);
@@ -63,14 +65,14 @@ export class PostgresFailedEventRepository implements FailedEventRepository {
             insertReplayedEvent: (event) => this.insertReplay(transaction, tenantId, event),
             markReplayed: async (id, replayedAs) => {
               const updated = await transaction('audit_failed_events')
-                .where({ tenant_id: tenantId, id, status: 'open' })
-                .update({ status: 'replayed', replayed_as: replayedAs });
+                .where({ tenant_id: tenantId, id, status: FAILED_EVENT_STATUS.OPEN })
+                .update({ status: FAILED_EVENT_STATUS.REPLAYED, replayed_as: replayedAs });
               if (updated !== 1)
                 throw new InvalidOperationError('Failed event is no longer open.', { statusCode: CONFLICT });
             },
             insertReplayAudit: async (event) => {
               this.assertTenant(event, tenantId);
-              if (event.namespace !== 'audit-service') throw new Error('Invalid replay audit namespace.');
+              if (event.namespace !== AUDIT_SERVICE_NAMESPACE) throw new Error('Invalid replay audit namespace.');
               const inserted = await insertAuditEvents(transaction, [event]);
               if (inserted.length !== 1) throw new Error('Replay audit was not inserted.');
             },

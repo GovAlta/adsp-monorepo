@@ -1,7 +1,7 @@
 import { handleWhen, IterableBackoff, retry } from 'cockatiel';
 import type { Logger } from 'winston';
 import type { EnrichedEvent, EventOutcome } from '../types';
-import { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE } from '../types';
+import { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE, FAILED_EVENT_STATUS } from '../types';
 import { AuditEventStore, AuditStorageUnavailableError, AuditStoreError, FailedAuditEvent } from './store';
 
 export const WRITE_TIMEOUT_MS = 10000;
@@ -101,7 +101,7 @@ export class DurableEventWriter {
       error: error instanceof Error ? error.message : 'Unknown audit storage failure.',
       attempt_count: attempts.get(event.id) || 0,
       failed_at: new Date(),
-      status: 'open',
+      status: FAILED_EVENT_STATUS.OPEN,
     }));
     try {
       await this.executeStore(() => this.store.park(records, { signal: scope.signal }), scope.signal);
