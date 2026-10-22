@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [tenant-management-webapp, status-app, subscriber-app, form-app, form-admin-app]
+        app: [tenant-management-webapp, status-app, subscriber-app, form-app, form-admin-app, task-app, form-management-app, verify-service, pii-service, export-service, push-service, token-handler, agent-service, audit-service, dashboard-metrics, api-docs-app, form-service, task-service, status-service]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
