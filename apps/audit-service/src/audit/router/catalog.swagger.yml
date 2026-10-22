@@ -19,7 +19,7 @@ paths:
             pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
         - in: query
           name: tenantId
-          description: Tenant URN. Only a Core caller may select another tenant.
+          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
           schema:
             type: string
       responses:
@@ -36,9 +36,9 @@ paths:
         '401':
           description: Missing or invalid bearer token.
         '403':
-          description: Missing audit-reader or an attempt to access another tenant.
+          description: Missing `audit-reader` role (have it granted to the caller), or a tenant caller attempting to select another tenant.
         '404':
-          description: Neither Core nor the tenant supplied a catalog. Configuration HTTP or converter failures handled by the SDK can also produce this response.
+          description: No action catalog is registered for this namespace (neither Core nor the tenant supplied one). Register the namespace's actions in the audit-service configuration (actions-<application>) and retry. Configuration HTTP or converter failures handled by the SDK can also produce this response.
         '503':
           description: A propagated SDK error or application-name consistency failure. Retry; do not re-register actions.
 components:
