@@ -2,8 +2,8 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import type { Logger } from 'winston';
-import { AUDIT_SERVICE_NAMESPACE, CatalogService, RetentionService, SelfAuditAction } from '../model';
-import { EnrichedEvent, EVENT_OUTCOME_STATUS, EventSubmitter } from '../types';
+import { CatalogService, RetentionService, SelfAuditAction } from '../model';
+import { AUDIT_SERVICE_NAMESPACE, EnrichedEvent, EVENT_OUTCOME_STATUS, EventSubmitter } from '../types';
 import { enrichEvent, getActionDefinition } from './event-preparation';
 import { ActionValidator, EventRejectedError } from './event-validation';
 

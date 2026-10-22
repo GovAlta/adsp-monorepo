@@ -23,6 +23,7 @@ import {
   createAuditMetrics,
   FailedEventService,
   ReplayEventPreparer,
+  AUDIT_SERVICE_NAMESPACE,
 } from './audit';
 import { AuditWriteBuffer } from './audit/buffer';
 import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
@@ -93,11 +94,11 @@ export const initializeApp = async (): Promise<AuditApplication> => {
           serviceId,
           configuration: [
             {
-              name: `actions-${serviceId.service}`,
+              name: `actions-${AUDIT_SERVICE_NAMESPACE}`,
               operation: 'REPLACE',
               configuration: {
                 kind: 'actionCatalog',
-                application: serviceId.service,
+                application: AUDIT_SERVICE_NAMESPACE,
                 actions: {
                   ...SELF_AUDIT_DEFINITIONS,
                   ...auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),

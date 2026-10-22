@@ -1,4 +1,12 @@
-import { AuditEvent, EnrichedEvent } from './events';
+import { AUDIT_SERVICE_NAMESPACE, AuditEvent, EnrichedEvent } from './events';
+
+export const FAILED_EVENT_STATUS = {
+  OPEN: 'open',
+  REPLAYED: 'replayed',
+  DISCARDED: 'discarded',
+} as const;
+
+export type FailedEventStatus = (typeof FAILED_EVENT_STATUS)[keyof typeof FAILED_EVENT_STATUS];
 
 export interface FailedAuditEvent {
   id: string;
@@ -9,12 +17,12 @@ export interface FailedAuditEvent {
   error: string;
   attempts: number;
   failed_at: Date;
-  status: 'open' | 'replayed' | 'discarded';
+  status: FailedEventStatus;
   replayed_as: string | null;
 }
 
 export interface ReplayAuditRecord {
-  namespace: 'audit-service';
+  namespace: typeof AUDIT_SERVICE_NAMESPACE;
   writtenBy: string;
   event: AuditEvent;
 }

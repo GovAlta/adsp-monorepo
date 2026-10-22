@@ -3,7 +3,13 @@ import { InvalidOperationError, NotFoundError, Results } from '@core-services/co
 import { randomUUID } from 'crypto';
 import { CONFLICT, SERVICE_UNAVAILABLE } from 'http-status-codes';
 import { AuditMetrics } from '../metrics';
-import { FailedAuditEvent, FailedEventRepository, ReplayAuditRecord } from '../types';
+import {
+  AUDIT_SERVICE_NAMESPACE,
+  FAILED_EVENT_STATUS,
+  FailedAuditEvent,
+  FailedEventRepository,
+  ReplayAuditRecord,
+} from '../types';
 import { decodeKeysetCursor, encodeKeysetCursor } from '../utils/keyset-cursor';
 import { ReplayEventPreparer } from './replay-events';
 import { REPLAY_ACTION } from '../actions';
@@ -56,7 +62,7 @@ export class FailedEventService {
       return await repository.withReplayTransaction(tenantId, async (transaction) => {
         const failed = await transaction.getForUpdate(id);
         if (!failed || failed.tenant_id !== tenantId) throw new NotFoundError('failed audit event', id);
-        if (failed.status !== 'open') {
+        if (failed.status !== FAILED_EVENT_STATUS.OPEN) {
           throw new InvalidOperationError('Only open failed events can be replayed.', { statusCode: CONFLICT });
         }
         const event = await this.preparer.prepare(failed, this.writtenBy);
@@ -69,7 +75,7 @@ export class FailedEventService {
           tenantId,
         );
         await transaction.insertReplayAudit(replayAudit);
-        return { ...failed, status: 'replayed', replayed_as: replayedAs };
+        return { ...failed, status: FAILED_EVENT_STATUS.REPLAYED, replayed_as: replayedAs };
       });
     } catch (err) {
       if (saving) this.metrics.recordWriteFailure('replay');
@@ -79,7 +85,7 @@ export class FailedEventService {
 
   private replayRecord(id: string, replayedAs: string, administrator: User): ReplayAuditRecord {
     return {
-      namespace: 'audit-service',
+      namespace: AUDIT_SERVICE_NAMESPACE,
       writtenBy: this.writtenBy,
       event: {
         eventId: randomUUID(),

@@ -1,6 +1,7 @@
 import { InvalidOperationError } from '@core-services/core-common';
 import * as HttpStatusCodes from 'http-status-codes';
 import type { EnrichedEvent } from '../types';
+import { FAILED_EVENT_STATUS } from '../types';
 
 export interface AuditStoreContext {
   signal: AbortSignal;
@@ -15,7 +16,7 @@ export interface FailedAuditEvent {
   error: string;
   attempt_count: number;
   failed_at: Date;
-  status: 'open';
+  status: typeof FAILED_EVENT_STATUS.OPEN;
 }
 
 export interface AuditEventStore {
