@@ -1,5 +1,5 @@
 import { chatToMarkdown, download, fmtDate, safeName, solutionToMarkdown } from './utils';
-import { Solution, SpecialistChat } from './model';
+import { BlueprintComponent, Solution, SolutionBlueprint, SpecialistChat } from './model';
 
 const solution = (state: Partial<Solution['state']> = {}): Solution => ({
   id: 's1',
@@ -185,75 +185,71 @@ describe('utils', () => {
       expect(md).toContain('- **You:** Hi');
     });
 
+    const blueprint: SolutionBlueprint = {
+      generatedOn: '2026-01-01',
+      mode: 'ai',
+      overview: {
+        title: 'Overview',
+        summary: 'Sum',
+        objectives: ['Obj'],
+        scope: [],
+        outOfScope: [],
+        stakeholders: [],
+        successMeasures: [],
+        risks: [],
+      },
+      architecture: {
+        summary: 'Arch',
+        layers: [{ name: 'UI', description: 'front', components: ['web'] }],
+        integrations: ['Int'],
+        security: ['Sec'],
+        diagram: 'A-->B',
+      },
+      serviceMapping: [
+        { order: 1, service: 'form-service', displayName: 'Form', role: 'Forms', reason: 'why', dependsOn: ['x'], capabilities: ['Drafts'] },
+      ],
+      specialistNotes: [
+        {
+          service: 'form-service',
+          displayName: 'Form',
+          fit: 'recommended',
+          source: 'ai',
+          summary: 'Note',
+          supports: ['S'],
+          constraints: [],
+          questions: [],
+          risks: [],
+          validation: { verdict: 'sound', findings: ['F'] },
+          chatHighlights: ['H'],
+          consultedOn: 'x',
+        },
+      ],
+      workflows: [{ name: 'Apply', actors: ['Citizen'], steps: ['Submit'] }],
+      dataGovernance: { dataEntities: ['DE'], accessControl: [], retention: [], privacy: [], audit: [], compliance: ['C'] },
+      delivery: { phases: [{ name: 'Phase 1', items: ['I1'] }], nonFunctional: ['NF'], openQuestions: ['OQ'] },
+      components: [],
+    };
+
+    const component: BlueprintComponent = {
+      order: 1,
+      service: 'form-service',
+      type: 'Form definition',
+      name: 'Permit application',
+      purpose: 'Collects applications',
+      dependsOn: ['Applicant role'],
+      openDecisions: ['Allow drafts?'],
+      target: 'adsp',
+      setup: { where: 'Tenant admin > Form', docs: 'https://docs/form', how: 'Create the definition' },
+    };
+
     it('includes every blueprint section', () => {
-      const md = solutionToMarkdown(
-        solution({
-          blueprint: {
-            generatedOn: '2026-01-01',
-            mode: 'ai',
-            overview: {
-              title: 'Overview',
-              summary: 'Sum',
-              objectives: ['Obj'],
-              scope: [],
-              outOfScope: [],
-              stakeholders: [],
-              successMeasures: [],
-              risks: [],
-            },
-            architecture: {
-              summary: 'Arch',
-              layers: [{ name: 'UI', description: 'front', components: ['web'] }],
-              integrations: ['Int'],
-              security: ['Sec'],
-              diagram: 'A-->B',
-            },
-            serviceMapping: [
-              {
-                order: 1,
-                service: 'form-service',
-                displayName: 'Form',
-                role: 'Forms',
-                reason: 'why',
-                dependsOn: ['x'],
-                capabilities: [],
-              },
-            ],
-            specialistNotes: [
-              {
-                service: 'form-service',
-                displayName: 'Form',
-                fit: 'recommended',
-                source: 'ai',
-                summary: 'Note',
-                supports: ['S'],
-                constraints: [],
-                questions: [],
-                risks: [],
-                validation: { verdict: 'sound', findings: ['F'] },
-                chatHighlights: ['H'],
-                consultedOn: 'x',
-              },
-            ],
-            workflows: [{ name: 'Apply', actors: ['Citizen'], steps: ['Submit'] }],
-            dataGovernance: {
-              dataEntities: ['DE'],
-              accessControl: [],
-              retention: [],
-              privacy: [],
-              audit: [],
-              compliance: ['C'],
-            },
-            delivery: { phases: [{ name: 'Phase 1', items: ['I1'] }], nonFunctional: ['NF'], openQuestions: ['OQ'] },
-          },
-        }),
-      );
+      const md = solutionToMarkdown(solution({ blueprint }));
 
       expect(md).toContain('# Project blueprint');
       expect(md).toContain('## 1. Overview');
       expect(md).toContain('- Obj');
       expect(md).toContain('A-->B');
-      expect(md).toContain('1. **form-service** — Forms. _Why:_ why _Depends on:_ x');
+      expect(md).toContain('1. **form-service** — Forms. _Why:_ why _Depends on:_ x\n   - Drafts');
       expect(md).not.toContain('## 4. Not covered by ADSP');
       expect(md).toContain('### Form (recommended, ai)');
       expect(md).toContain('**Validation: sound**');
@@ -262,6 +258,14 @@ describe('utils', () => {
       expect(md).toContain('**Data entities**');
       expect(md).toContain('**Phase 1**');
       expect(md).toContain('**Open questions**');
+    });
+
+    it('indents service capabilities under two-digit numbers so the list keeps its numbering', () => {
+      const md = solutionToMarkdown(
+        solution({ blueprint: { ...blueprint, serviceMapping: [{ ...blueprint.serviceMapping[0], order: 10 }] } }),
+      );
+
+      expect(md).toContain('10. **form-service** — Forms. _Why:_ why _Depends on:_ x\n    - Drafts');
     });
 
     it('does not double the period when an ai-generated service role already ends with one', () => {
@@ -279,6 +283,7 @@ describe('utils', () => {
             workflows: [],
             dataGovernance: { dataEntities: [], accessControl: [], retention: [], privacy: [], audit: [], compliance: [] },
             delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+            components: [],
           },
         })
       );
@@ -323,14 +328,15 @@ describe('utils', () => {
               compliance: [],
             },
             delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+            components: [],
           },
         }),
       );
 
       expect(md).toContain('## 4. Not covered by ADSP');
       expect(md).toContain('- **Fee processing** — No service accepts payments. _Suggested approach:_ Use a gateway.');
-      expect(md).toContain('## 5. Specialist consultation notes');
-      expect(md.indexOf('## 4. Not covered by ADSP')).toBeLessThan(md.indexOf('## 5. Specialist consultation notes'));
+      expect(md).toContain('## 6. Specialist consultation notes');
+      expect(md.indexOf('## 4. Not covered by ADSP')).toBeLessThan(md.indexOf('## 6. Specialist consultation notes'));
     });
 
     it('shows the all-covered message when notCoveredByAdsp is empty', () => {
@@ -363,11 +369,85 @@ describe('utils', () => {
               compliance: [],
             },
             delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+            components: [],
           },
         }),
       );
 
       expect(md).toContain('_All requirements map to ADSP services._');
+    });
+
+    it('lists the components to set up after the not-covered items', () => {
+      const md = solutionToMarkdown(
+        solution({ blueprint: { ...blueprint, notCoveredByAdsp: [], components: [component] } }),
+      );
+
+      expect(md).toContain(
+        '1. **Permit application** (Form definition, form-service): Not reviewed. Collects applications _Depends on:_ Applicant role\n' +
+          '   - Where: Tenant admin > Form\n' +
+          '   - How: Create the definition\n' +
+          '   - Docs: https://docs/form\n' +
+          '   - Open decision: Allow drafts?'
+      );
+      expect(md.match(/^## \d\. .+$/gm)).toEqual([
+        '## 1. Overview',
+        '## 2. Technical architecture',
+        '## 3. ADSP service mapping',
+        '## 4. Not covered by ADSP',
+        '## 5. Components to set up',
+        '## 6. Specialist consultation notes',
+        '## 7. Core workflows',
+        '## 8. Data & governance',
+        '## 9. Delivery plan & other considerations',
+      ]);
+    });
+
+    it('tells the harness to get approval before it creates any component', () => {
+      const md = solutionToMarkdown(solution({ blueprint: { ...blueprint, components: [component] } }));
+
+      expect(md).toContain(
+        '## 5. Components to set up\n\n' +
+          '_Work through these components in order with the user. Rejected components have been removed from this list. Do not create anything without the user\'s approval._\n\n' +
+          '- **Approved:** check whether it already exists in the tenant; if it does, move on. If you can create it (ADSP configuration), walk the user through creating it one step at a time and get their approval before each step. If you cannot (Keycloak, OpenShift, or anything you lack permission for), walk the user through doing it themselves, one step or command at a time, and wait for them to confirm each step before the next.\n' +
+          '- **Not reviewed:** before you start, list these by number and ask the user which are needed. Set up the needed ones the same way as approved components and skip the rest.\n' +
+          '- **Dependencies:** if a component depends on one that is not reviewed, ask about that one first. If a dependency is not in this list, the user rejected it; raise it with them before continuing.\n' +
+          '- For every component you set up, walk the user through the Where and How steps and ask them to decide every open decision.\n\n' +
+          '1. **Permit application**',
+      );
+    });
+
+    it('shows the review status of each component and leaves rejected ones out', () => {
+      const md = solutionToMarkdown(
+        solution({
+          blueprint: {
+            ...blueprint,
+            components: [
+              { ...component, review: 'approved' },
+              { ...component, order: 2, name: 'Reviewer role', review: 'rejected' },
+              { ...component, order: 3, name: 'Staff role', review: 'not-reviewed' },
+            ],
+          },
+        }),
+      );
+
+      expect(md).toContain('1. **Permit application** (Form definition, form-service): Approved. Collects applications');
+      expect(md).toContain('3. **Staff role** (Form definition, form-service): Not reviewed. Collects applications');
+      expect(md).not.toContain('Reviewer role');
+    });
+
+    it('indents component details under two-digit numbers so the list keeps its numbering', () => {
+      const md = solutionToMarkdown(solution({ blueprint: { ...blueprint, components: [{ ...component, order: 10 }] } }));
+
+      expect(md).toContain('10. **Permit application**');
+      expect(md).toContain('\n    - Where: Tenant admin > Form\n');
+      expect(md).toContain('\n    - Open decision: Allow drafts?');
+    });
+
+    it('renders an empty components section for a blueprint saved before components existed', () => {
+      const md = solutionToMarkdown(solution({ blueprint: { ...blueprint, components: undefined } }));
+
+      expect(md).toContain('## 5. Components to set up');
+      expect(md).toContain('## 6. Specialist consultation notes');
     });
   });
 });

@@ -12,6 +12,7 @@ import {
   storedConsult,
   toSpecialistNote,
 } from './blueprint';
+import { buildComponents } from './components';
 import { getSpecialist } from './specialists';
 import {
   BlueprintLayer,
@@ -68,7 +69,6 @@ const grantState = (): SolutionState => ({
     },
   ],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
 });
 
@@ -178,10 +178,10 @@ describe('buildServiceMapping', () => {
     });
   });
 
-  it('uses the first three specialist questions as default capabilities', () => {
+  it('leaves capabilities empty when none were supplied', () => {
     const [first] = buildServiceMapping(grantState());
 
-    expect(first.capabilities).toEqual(getSpecialist('form-service').questions.slice(0, 3));
+    expect(first.capabilities).toEqual([]);
   });
 
   it('prefers the role and capabilities supplied for the service', () => {
@@ -190,12 +190,6 @@ describe('buildServiceMapping', () => {
     ]);
 
     expect(first).toMatchObject({ role: 'Collects grant applications', capabilities: ['Draft saving'] });
-  });
-
-  it('falls back to defaults when the supplied capabilities are empty', () => {
-    const [first] = buildServiceMapping(grantState(), [{ service: 'form-service', capabilities: [] }]);
-
-    expect(first.capabilities).toEqual(getSpecialist('form-service').questions.slice(0, 3));
   });
 
   it('falls back to the recommendation reason and service id for an unknown specialist', () => {
@@ -693,6 +687,14 @@ describe('assembleBlueprint', () => {
       { requirement: 'Fee or payment processing', reason: 'No service', suggestedApproach: 'Build it' },
       aiItems[0],
     ]);
+  });
+
+  it('attaches the components', () => {
+    const components = buildComponents(grantState());
+
+    expect(
+      assembleBlueprint(grantState(), buildRuleBlueprint(grantState()), [], meta, [], [], [], components).components,
+    ).toBe(components);
   });
 });
 

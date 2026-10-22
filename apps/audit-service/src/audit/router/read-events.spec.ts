@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditCategories, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
@@ -153,6 +153,13 @@ describe('read events', () => {
     expect(res.status).toBe(200);
     expect(reader.find.mock.calls[0][0].namespace).toBeUndefined();
     expect(reader.find.mock.calls[0][0].tenantId).toBe(tenantA.toString());
+  });
+
+  it.each(Object.values(AuditCategories))('accepts SDK category %s as a history filter', async (category) => {
+    const res = await request(createApp()).get(`/audit/v1/events?category=${category}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ category }), 10, undefined);
   });
 
   it.each([

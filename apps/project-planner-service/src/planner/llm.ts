@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
 import { BlueprintCore, BlueprintServiceDetail } from './blueprint';
+import { ADSP_COMPONENT_MAP, ComponentDraft } from './components';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { SPECIALISTS } from './specialists';
 import {
@@ -78,6 +79,7 @@ export interface LlmBlueprint {
   core: Partial<BlueprintCore>;
   services: BlueprintServiceDetail[];
   notCoveredByAdsp: PatternUnsupportedCapability[];
+  components: ComponentDraft[];
   model: string;
 }
 
@@ -108,7 +110,8 @@ export interface PlannerLlm {
     messages: { role: 'user' | 'assistant'; content: string }[],
     patterns: BusinessPattern[],
   ): Promise<LlmDiscovery>;
-  blueprint(state: SolutionState, notes: SpecialistNote[]): Promise<LlmBlueprint>;
+  // Candidates are live ADSP services missing from the component map that may still have components.
+  blueprint(state: SolutionState, notes: SpecialistNote[], candidates?: string[]): Promise<LlmBlueprint>;
   consult(
     state: SolutionState,
     specialist: SpecialistDefinition,
@@ -417,13 +420,15 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
     return { reply, factors, model: this.config.model };
   }
 
-  async blueprint(state: SolutionState, notes: SpecialistNote[]): Promise<LlmBlueprint> {
+  async blueprint(state: SolutionState, notes: SpecialistNote[], candidates: string[] = []): Promise<LlmBlueprint> {
+    const componentServices = [...Object.keys(ADSP_COMPONENT_MAP), ...candidates];
     const system =
       'You are the solution architect for the Government of Alberta Digital Service Platform (ADSP). ' +
       'Turn the proposed solution and the specialist consultation notes into a complete project blueprint. ' +
       'Use only the ADSP services listed. Be specific to this problem, practical and concise; write for a mixed business and technical audience. ' +
       'Reply with a single JSON object only, no commentary.';
     const hypothesis = state.hypotheses[0];
+    const currentComponents = (state.blueprint?.components || []).filter((c) => c.target === 'adsp');
     const user = [
       `Problem statement:\n"""${state.problemStatement}"""`,
       state.discovery?.messages.length
@@ -454,6 +459,11 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
             )
             .join('\n')}`
         : '',
+      currentComponents.length
+        ? `Current components (reviews follow a component by its service and name, so keep the exact service and name of any that still serves the same purpose):\n${currentComponents
+            .map((c) => `- ${c.service}: ${c.name}`)
+            .join('\n')}`
+        : '',
       'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": []}, ' +
         '"architecture": {"summary": "", "layers": [{"name": "", "description": "", "components": []}], "integrations": [], "security": []}, ' +
         '"services": [{"service": "<service id>", "role": "what it does in this solution", "capabilities": ["specific features to use"]}], ' +
@@ -462,11 +472,13 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         '"delivery": {"phases": [{"name": "", "items": []}], "nonFunctional": [], "openQuestions": []}, ' +
         '"notCoveredByAdsp": [{"requirement": "a short capability name, 3-6 words, not copied verbatim from the problem statement", ' +
         '"reason": "why no listed ADSP service covers it", "suggestedApproach": "how to build it outside ADSP", ' +
-        '"category": "payment-collection if this is about collecting a fee, payment, or deposit from the public (omit this field otherwise)"}]}. ' +
+        '"category": "payment-collection if this is about collecting a fee, payment, or deposit from the public (omit this field otherwise)"}], ' +
+        '"components": [{"service": "<service id>", "type": "kind of item, e.g. Form definition", "name": "", "purpose": "", "dependsOn": ["other component names"], "openDecisions": []}]}. ' +
         'For notCoveredByAdsp: if a listed service already covers part of a need, describe only the remaining uncovered capability, not the whole need. ' +
         'Combine gaps that would be solved by the same custom-built capability into a single item instead of listing them separately. ' +
         'If a specialist note says a capability is genuinely unsupported (such as time-based scheduling), list it in notCoveredByAdsp too, not only as a risk. ' +
-        'Keep every list to at most 8 items, and every item to one sentence.',
+        'Keep every list to at most 8 items, and every item to one sentence. ' +
+        `Components are the concrete items to set up in each ADSP service, in setup order. Components may use: ${componentServices.join(', ')}.`,
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -537,10 +549,21 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         capabilities: asStrings(s.capabilities, 6),
       }));
     const notCoveredByAdsp = asNotCovered(json.notCoveredByAdsp);
+    const components = objs(json.components)
+      .slice(0, 30)
+      .map((c) => ({
+        service: asString(c.service),
+        type: asString(c.type, 80) || undefined,
+        name: asString(c.name, 120),
+        purpose: asString(c.purpose, 400),
+        dependsOn: asStrings(c.dependsOn, 6),
+        openDecisions: asStrings(c.openDecisions, 6),
+      }))
+      .filter((c) => c.name && componentServices.includes(c.service));
     if (!core.overview?.summary && !core.architecture?.layers.length && !core.workflows?.length) {
       throw new Error('Model response did not contain a usable blueprint.');
     }
-    return { core, services, notCoveredByAdsp, model: this.config.model };
+    return { core, services, notCoveredByAdsp, components, model: this.config.model };
   }
 
   async consult(

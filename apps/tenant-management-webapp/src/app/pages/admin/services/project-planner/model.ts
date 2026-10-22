@@ -62,7 +62,6 @@ export interface SolutionState {
   patternMatches?: PatternMatch[];
   hypotheses: Hypothesis[];
   specialists: SpecialistProgress[];
-  artifacts?: SolutionArtifact[];
   nextSteps: NextStep[];
   analysis?: AnalysisInfo;
   conversation?: ConversationMessage[];
@@ -159,14 +158,6 @@ export interface PatternMatch {
   explanation: string;
 }
 
-export interface SolutionArtifact {
-  id: string;
-  service: string;
-  name: string;
-  urn?: string;
-  createdOn: string;
-}
-
 export interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -240,6 +231,21 @@ export interface BlueprintWorkflow {
   steps: string[];
 }
 
+export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected';
+
+export interface BlueprintComponent {
+  order: number;
+  service: string;
+  type: string;
+  name: string;
+  purpose: string;
+  dependsOn: string[];
+  openDecisions: string[];
+  target: 'adsp' | 'keycloak' | 'openshift';
+  setup: { where: string; docs: string; schemaKey?: string; how: string };
+  review?: ComponentReview;
+}
+
 export interface SolutionBlueprint {
   generatedOn: string;
   mode: AnalysisMode;
@@ -279,6 +285,8 @@ export interface SolutionBlueprint {
     nonFunctional: string[];
     openQuestions: string[];
   };
+  // Absent on blueprints generated before components were added.
+  components?: BlueprintComponent[];
 }
 
 export interface SpecialistDefinition {

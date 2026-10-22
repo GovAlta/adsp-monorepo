@@ -24,6 +24,7 @@ import {
   storedConsult,
   toSpecialistNote,
 } from './blueprint';
+import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
 import {
   assessConfidence,
   computeConfidence,
@@ -42,8 +43,10 @@ import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './speciali
 import {
   AnalysisMode,
   BusinessConcept,
+  BlueprintComponent,
   BusinessPattern,
   CONCEPT_TYPES,
+  ComponentReview,
   Hypothesis,
   PatternMatch,
   PlannerConfiguration,
@@ -65,6 +68,8 @@ interface PlannerRouterProps {
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
+  // Reads the keys of the live ADSP configuration catalog, used to find services missing from the component map.
+  readAdspCatalog?: () => Promise<string[]>;
 }
 
 const SOLUTION_KEY = 'solution';
@@ -81,7 +86,6 @@ const emptyState = (problemStatement = ''): SolutionState => ({
   patternMatches: [],
   hypotheses: [],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
 });
 
@@ -231,6 +235,22 @@ const getSolution =
 
 const loaded = (req: Request): Solution => req[SOLUTION_KEY];
 
+// The user rejected these, so the harness never sees them; the saved solution keeps them.
+const withoutRejectedComponents = (state: SolutionState): SolutionState =>
+  state.blueprint?.components
+    ? {
+        ...state,
+        blueprint: { ...state.blueprint, components: state.blueprint.components.filter((c) => c.review !== 'rejected') },
+      }
+    : state;
+
+// Regenerating renumbers the components, so a review follows its component by service and name.
+const withPreviousReviews = (components: BlueprintComponent[], previous: BlueprintComponent[] = []): BlueprintComponent[] =>
+  components.map((component) => {
+    const review = previous.find((p) => p.service === component.service && p.name === component.name)?.review;
+    return review ? { ...component, review } : component;
+  });
+
 interface AnalysisResult {
   mode: AnalysisMode;
   model?: string;
@@ -280,9 +300,28 @@ export function createPlannerRouter({
   specialistChatRepository,
   eventService,
   llm,
+  readAdspCatalog,
 }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+
+  // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
+  async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
+    if (!readAdspCatalog) {
+      return { candidates: [] };
+    }
+    try {
+      const keys = await readAdspCatalog();
+      const candidates = unmappedServices(catalogServices(keys));
+      if (candidates.length > 0) {
+        logger.warn(driftMessage(candidates));
+      }
+      return { keys, candidates };
+    } catch (err) {
+      logger.warn(`ADSP catalog read failed: ${(err as Error).message}`);
+      return { candidates: [] };
+    }
+  }
 
   async function persist(req: Request, solution: Solution, operation: string) {
     const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
@@ -834,6 +873,33 @@ export function createPlannerRouter({
     },
   );
 
+  router.put(
+    '/solutions/:id/components/:order/review',
+    requirePlannerUser,
+    validateId,
+    createValidationHandler(
+      param('order').isInt({ min: 1 }),
+      body('review').isIn(['not-reviewed', 'approved', 'rejected']),
+    ),
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const blueprint = solution.state.blueprint;
+        const order = Number(req.params.order);
+        if (!blueprint?.components?.some((c) => c.order === order)) {
+          throw new NotFoundError('component', req.params.order);
+        }
+        const review: ComponentReview = req.body.review;
+        const components = blueprint.components.map((c) => (c.order === order ? { ...c, review } : c));
+        const state = { ...solution.state, blueprint: { ...blueprint, components } };
+        res.send(await persist(req, { ...solution, state }, 'component-review'));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   router.get(
     '/solutions/:id/export',
     requirePlannerUser,
@@ -885,7 +951,7 @@ export function createPlannerRouter({
           initial: isInitial,
           blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
           versionHistory,
-          state: solution.state,
+          state: withoutRejectedComponents(solution.state),
         });
       } catch (err) {
         next(err);
@@ -1018,14 +1084,16 @@ export function createPlannerRouter({
               .filter((p): p is BusinessPattern => !!p)
           : [matchedPattern].filter((p): p is BusinessPattern => !!p);
         const ruleCore = buildRuleBlueprint(solution.state, matchedPattern);
+        const catalog = await readCatalog();
         const { result: generated, warning } = await tryAi(
           requestedMode,
           async (llm) => {
-            const draft = await llm.blueprint(solution.state, notes);
+            const draft = await llm.blueprint(solution.state, notes, catalog.candidates);
             return {
               core: mergeBlueprintCore(ruleCore, draft.core),
               services: draft.services,
               notCoveredByAdsp: draft.notCoveredByAdsp,
+              components: draft.components,
               model: draft.model,
             };
           },
@@ -1035,6 +1103,14 @@ export function createPlannerRouter({
         const details: BlueprintServiceDetail[] = generated ? generated.services : [];
         const mode: AnalysisMode = generated ? 'ai' : 'rules';
         const model = generated?.model;
+        const components = withPreviousReviews(
+          buildComponents(solution.state, {
+            drafts: generated?.components,
+            catalogKeys: catalog.keys,
+            integrations: core.architecture.integrations,
+          }),
+          solution.state.blueprint?.components,
+        );
 
         const blueprint = assembleBlueprint(
           solution.state,
@@ -1044,6 +1120,7 @@ export function createPlannerRouter({
           details,
           matchedPatterns,
           generated?.notCoveredByAdsp,
+          components,
         );
         res.send(
           await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),

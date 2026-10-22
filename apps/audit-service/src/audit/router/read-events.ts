@@ -1,4 +1,4 @@
-import { isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AuditCategories, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 import { query, param } from 'express-validator';
@@ -13,14 +13,9 @@ import { decodeEventCursor, encodeEventCursor } from '../utils/event-cursor';
 const DEFAULT_TOP = 10;
 const MAX_TOP = 5000;
 
-// Typed against the domain unions so a value that is not a valid status or category fails to compile.
+// Typed against the domain union so an invalid status fails to compile.
 const EVENT_STATUSES: AuditEvent['status'][] = ['success', 'failure', 'blocked', 'error'];
-const EVENT_CATEGORIES: NonNullable<EventCriteria['category']>[] = [
-  'administrative',
-  'runtime',
-  'security',
-  'data-access',
-];
+const EVENT_CATEGORIES = Object.values(AuditCategories);
 
 export interface SerializeOptions {
   // Ordinary reads do not redact; redaction exists for responses that must hide identity from non-admins.

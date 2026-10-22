@@ -59,3 +59,14 @@ Then run `npx nx serve tenant-management-webapp` and go to http://localhost:4200
 - The MaaS endpoint is internal, so you need to be on the GoA network or VPN.
 - `.env` is only read at startup, so restart the planner after changing it.
 - If the runner exits with `Failed to start local planner`, check that Postgres is running and the `DB_*` settings match it.
+
+## Updating the ADSP component map
+
+The blueprint's "Components to set up" section comes from `src/planner/components/adsp-map.ts`. The map records, for each ADSP service, the kind of item to create, where it lives in tenant admin, and how to set it up. At startup the planner compares the map with the platform services that register a configuration schema. In a deployed environment it reads the live catalog; the local runner scans `apps/` instead. If a service is missing, the log warns `ADSP component map is out of date: <services>`.
+
+To fix the warning:
+
+1. Find the service's configuration key. It is the `configuration` block in `apps/<service>/src/main.ts` (stored as `platform:<service>`, or `<service>` for services that use their own namespace). The ADSP MCP tool `get_service_configuration_schema` also lists it.
+2. Add an entry to `ADSP_COMPONENT_MAP` with `type`, `schemaKey`, `where` (the tenant admin path) and `how`. If the service has no page under `docs/services`, set `docs` to `docsUrl('services')`.
+3. If no app can be built on the service, add it to `EXCLUDED_SERVICES` instead.
+4. Run the planner tests, then restart the planner.

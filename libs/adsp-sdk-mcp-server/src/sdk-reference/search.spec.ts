@@ -7,6 +7,15 @@ describe('searchSdkReference', () => {
     expect(results[0].name).toBe('initializePlatform');
   });
 
+  it.each(['AuditCategories', 'AuditCategory', 'AuditSeverities', 'AuditSeverity', 'BuiltInRetentionClasses'])(
+    'finds the public audit symbol %s',
+    (name) => {
+      const results = searchSdkReference(name);
+
+      expect(results[0]).toMatchObject({ name, module: 'audit' });
+    },
+  );
+
   it('is case-insensitive on symbol name', () => {
     const results = searchSdkReference('ADSPID');
 

@@ -9,6 +9,7 @@ export * from './analysis';
 export * from './configuration';
 export * from './discovery';
 export * from './blueprint';
+export * from './components';
 export * from './events';
 export * from './llm';
 export * from './patterns';
@@ -25,6 +26,7 @@ interface PlannerMiddlewareProps {
   specialistChatRepository: SpecialistChatRepository;
   eventService: EventService;
   llm?: PlannerLlm;
+  readAdspCatalog?: () => Promise<string[]>;
 }
 
 export function applyPlannerMiddleware(app: Application, props: PlannerMiddlewareProps): Application {

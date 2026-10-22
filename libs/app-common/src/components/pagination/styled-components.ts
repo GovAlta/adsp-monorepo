@@ -1,10 +1,13 @@
 import styled from 'styled-components';
 
+// Never wrap or shrink, so a crowded parent row moves the controls to their own line instead of stacking them.
 export const PaginationControls = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   align-items: center;
-  gap: var(--goa-pagination-gap);
+  gap: var(--goa-pagination-gap, var(--goa-space-m));
+  white-space: nowrap;
 `;
 
 export const PageSelector = styled.div`

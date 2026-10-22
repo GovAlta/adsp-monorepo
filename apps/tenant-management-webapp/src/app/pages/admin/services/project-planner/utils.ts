@@ -1,4 +1,4 @@
-import { SpecialistChat, Solution } from './model';
+import { ComponentReview, SpecialistChat, Solution } from './model';
 
 export const fmtDate = (date: string | Date): string => new Date(date).toLocaleString();
 
@@ -24,6 +24,24 @@ const sentence = (text: string): string => {
   const trimmed = text.trim();
   return trimmed && !trimmed.endsWith('.') ? `${trimmed}.` : trimmed;
 };
+
+// Indents past the item number so two-digit items keep their details and the list keeps counting.
+const detailBullet = (order: number): string => `${' '.repeat(`${order}. `.length)}- `;
+
+export const REVIEW_LABELS: Record<ComponentReview, string> = {
+  'not-reviewed': 'Not reviewed',
+  approved: 'Approved',
+  rejected: 'Rejected',
+};
+
+const COMPONENT_INSTRUCTIONS = [
+  "_Work through these components in order with the user. Rejected components have been removed from this list. Do not create anything without the user's approval._",
+  '',
+  '- **Approved:** check whether it already exists in the tenant; if it does, move on. If you can create it (ADSP configuration), walk the user through creating it one step at a time and get their approval before each step. If you cannot (Keycloak, OpenShift, or anything you lack permission for), walk the user through doing it themselves, one step or command at a time, and wait for them to confirm each step before the next.',
+  '- **Not reviewed:** before you start, list these by number and ask the user which are needed. Set up the needed ones the same way as approved components and skip the rest.',
+  '- **Dependencies:** if a component depends on one that is not reviewed, ask about that one first. If a dependency is not in this list, the user rejected it; raise it with them before continuing.',
+  '- For every component you set up, walk the user through the Where and How steps and ask them to decide every open decision.',
+];
 
 export function chatToMarkdown(chat: SpecialistChat): string {
   const out = [
@@ -183,10 +201,10 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       '## 3. ADSP service mapping',
       '',
-      ...bp.serviceMapping.map(
-        (s) =>
-          `${s.order}. **${s.service}** — ${sentence(s.role)} _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`,
-      ),
+      ...bp.serviceMapping.flatMap((s) => [
+        `${s.order}. **${s.service}** — ${sentence(s.role)} _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`,
+        ...s.capabilities.map((c) => `${detailBullet(s.order)}${c}`),
+      ]),
     );
     if (bp.notCoveredByAdsp !== undefined) {
       lines.push('', '## 4. Not covered by ADSP', '');
@@ -198,7 +216,24 @@ export function solutionToMarkdown(solution: Solution): string {
         );
       }
     }
-    lines.push('', '## 5. Specialist consultation notes');
+    lines.push(
+      '',
+      '## 5. Components to set up',
+      '',
+      ...COMPONENT_INSTRUCTIONS,
+      '',
+      ...(bp.components ?? []).filter((c) => c.review !== 'rejected').flatMap((c) => {
+        const detail = detailBullet(c.order);
+        return [
+          `${c.order}. **${c.name}** (${c.type}, ${c.service}): ${REVIEW_LABELS[c.review ?? 'not-reviewed']}. ${c.purpose}${c.dependsOn.length ? ` _Depends on:_ ${c.dependsOn.join(', ')}` : ''}`,
+          `${detail}Where: ${c.setup.where}`,
+          `${detail}How: ${c.setup.how}`,
+          `${detail}Docs: ${c.setup.docs}`,
+          ...c.openDecisions.map((d) => `${detail}Open decision: ${d}`),
+        ];
+      }),
+    );
+    lines.push('', '## 6. Specialist consultation notes');
     bp.specialistNotes.forEach((n) => {
       lines.push('', `### ${n.displayName} (${n.fit}, ${n.source})`, '', n.summary);
       bullets('Can support', n.supports);
@@ -208,7 +243,7 @@ export function solutionToMarkdown(solution: Solution): string {
       if (n.validation) bullets(`Validation: ${n.validation.verdict}`, n.validation.findings);
       bullets('From saved chats', n.chatHighlights);
     });
-    lines.push('', '## 6. Core workflows');
+    lines.push('', '## 7. Core workflows');
     bp.workflows.forEach((w) =>
       lines.push(
         '',
@@ -218,7 +253,7 @@ export function solutionToMarkdown(solution: Solution): string {
         ...w.steps.map((s, i) => `${i + 1}. ${s}`),
       ),
     );
-    lines.push('', '## 7. Data & governance');
+    lines.push('', '## 8. Data & governance');
     const g = bp.dataGovernance;
     bullets('Data entities', g.dataEntities);
     bullets('Access control', g.accessControl);
@@ -226,7 +261,7 @@ export function solutionToMarkdown(solution: Solution): string {
     bullets('Privacy', g.privacy);
     bullets('Audit', g.audit);
     bullets('Compliance', g.compliance);
-    lines.push('', '## 8. Delivery plan & other considerations');
+    lines.push('', '## 9. Delivery plan & other considerations');
     bp.delivery.phases.forEach((p) => bullets(p.name, p.items));
     bullets('Non-functional requirements', bp.delivery.nonFunctional);
     bullets('Open questions', bp.delivery.openQuestions);

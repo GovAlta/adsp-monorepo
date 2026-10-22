@@ -21,6 +21,7 @@ jest.mock('passport', () => ({
 jest.mock('fs', () => ({ ...jest.requireActual('fs'), readFile: mockReadFile }));
 jest.mock('@abgov/adsp-service-sdk', () => ({
   AdspId: { parse: jest.fn() },
+  adspId: (strings: TemplateStringsArray) => strings.join(''),
   initializePlatform: mockInitializePlatform,
   instrumentAxios: jest.fn(),
 }));
@@ -38,6 +39,8 @@ jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
 
 describe('main', () => {
   const healthCheck = jest.fn();
+  const configurationService = { getConfiguration: jest.fn() };
+  const tokenProvider = { getAccessToken: jest.fn() };
   const postgresRepositories = {
     solutionRepository: { name: 'solutions' },
     patternRepository: { name: 'patterns' },
@@ -61,12 +64,38 @@ describe('main', () => {
     mockExpress.mockReturnValue(mockApp);
     mockApp.listen.mockReturnValue({ on: jest.fn() });
     mockReadFile.mockImplementation((_path, _encoding, callback) => callback(null, '{}'));
-    mockInitializePlatform.mockResolvedValue({ healthCheck });
+    mockInitializePlatform.mockResolvedValue({ healthCheck, configurationService, tokenProvider });
     mockCreateRepositories.mockResolvedValue(postgresRepositories);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  const readAdspCatalog = (): (() => Promise<string[]>) => mockApplyPlannerMiddleware.mock.calls[0][1].readAdspCatalog;
+
+  it('reads the ADSP catalog keys from the core configuration-service configuration', async () => {
+    configurationService.getConfiguration.mockResolvedValue([{}, { 'platform:form-service': {}, 'audit-service': {} }]);
+    await startMain();
+
+    expect(await readAdspCatalog()()).toEqual(['platform:form-service', 'audit-service']);
+  });
+
+  it('reads the ADSP catalog with the service account token', async () => {
+    tokenProvider.getAccessToken.mockResolvedValue('service-token');
+    configurationService.getConfiguration.mockResolvedValue([{}, {}]);
+    await startMain();
+
+    await readAdspCatalog()();
+
+    expect(configurationService.getConfiguration).toHaveBeenCalledWith('urn:ads:platform:configuration-service', 'service-token');
+  });
+
+  it('reads an empty ADSP catalog when there is no core configuration', async () => {
+    configurationService.getConfiguration.mockResolvedValue([{}, undefined]);
+    await startMain();
+
+    expect(await readAdspCatalog()()).toEqual([]);
   });
 
   it('connects to postgres with the environment DB settings', async () => {

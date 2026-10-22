@@ -8,7 +8,7 @@ import { Logger } from 'winston';
 import { createPlannerRouter } from './router';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist } from './specialists';
-import { BusinessPattern, Solution, SpecialistChat } from './types';
+import { BlueprintComponent, BusinessPattern, ComponentReview, Solution, SpecialistChat } from './types';
 import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
 import { DISCOVERY_FACTORS } from './discovery';
@@ -39,7 +39,6 @@ const makeSolution = (createdById: string): Solution => ({
     patternMatches: [],
     hypotheses: [],
     specialists: [],
-    artifacts: [],
     nextSteps: [],
   },
 });
@@ -61,6 +60,7 @@ describe('planner router routes', () => {
   const eventService = { send: jest.fn() };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
+  const readAdspCatalog = jest.fn();
 
   const CHAT_ID = 'b7e2f6a1-4c3d-4e8f-9a1b-2c3d4e5f6a7b';
   const storedChat = (overrides: Partial<SpecialistChat> = {}): SpecialistChat => ({
@@ -80,7 +80,7 @@ describe('planner router routes', () => {
     ...overrides,
   });
 
-  const buildApp = (user: User | null = owner, withTenant = true, llm?: PlannerLlm) => {
+  const buildApp = (user: User | null = owner, withTenant = true, llm?: PlannerLlm, readCatalog: typeof readAdspCatalog | null = readAdspCatalog) => {
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
@@ -100,6 +100,7 @@ describe('planner router routes', () => {
         specialistChatRepository: chatRepository,
         eventService: eventService as unknown as EventService,
         llm,
+        readAdspCatalog: readCatalog || undefined,
       }),
     );
     app.use((err: { extra?: { statusCode?: number }; message: string }, _req, res, _next) => {
@@ -109,6 +110,27 @@ describe('planner router routes', () => {
   };
 
   const solutionOwnedBy = (createdById: string): Solution => ({ ...makeSolution(createdById), id: SOLUTION_ID });
+
+  const blueprintComponent = (order: number, review?: ComponentReview): BlueprintComponent => ({
+    order,
+    service: 'form-service',
+    type: 'Form definition',
+    name: `Component ${order}`,
+    purpose: 'Collects applications',
+    dependsOn: [],
+    openDecisions: [],
+    target: 'adsp',
+    setup: { where: 'Tenant admin', docs: 'https://docs', how: 'Create it' },
+    review,
+  });
+
+  const withComponents = (base: Solution, components: BlueprintComponent[]): Solution => ({
+    ...base,
+    state: {
+      ...base.state,
+      blueprint: { generatedOn: 'x', mode: 'rules', components } as Solution['state']['blueprint'],
+    },
+  });
 
   beforeEach(() => {
     repository.save.mockImplementation(async (s: Solution) => s);
@@ -1533,6 +1555,75 @@ describe('planner router routes', () => {
     });
   });
 
+  describe('PUT /solutions/:id/components/:order/review', () => {
+    const reviewComponent = (body: object = { review: 'approved' }, user: User = owner, order: number | string = 2) =>
+      request(buildApp(user)).put(`/planner/v1/solutions/${SOLUTION_ID}/components/${order}/review`).send(body);
+
+    beforeEach(() => {
+      repository.get.mockResolvedValue(
+        withComponents(solutionOwnedBy('owner-1'), [blueprintComponent(1), blueprintComponent(2)]),
+      );
+    });
+
+    it.each(['approved', 'rejected', 'not-reviewed'])('sets the component review to %s', async (review) => {
+      const res = await reviewComponent({ review });
+
+      expect(res.body.state.blueprint.components[1].review).toBe(review);
+    });
+
+    it('leaves other components untouched', async () => {
+      const res = await reviewComponent();
+
+      expect(res.body.state.blueprint.components[0]).toEqual(blueprintComponent(1));
+    });
+
+    it('sends a solution-updated event with the component-review operation', async () => {
+      await reviewComponent();
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ operation: 'component-review' }) }),
+      );
+    });
+
+    it('returns 404 for an unknown component', async () => {
+      const res = await reviewComponent({ review: 'approved' }, owner, 9);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when the solution has no blueprint', async () => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+
+      const res = await reviewComponent();
+
+      expect(res.status).toBe(404);
+    });
+
+    it.each([
+      ['missing', {}],
+      ['not a known status', { review: 'maybe' }],
+    ])('returns 400 when the review is %s', async (_name, body) => {
+      const res = await reviewComponent(body);
+
+      expect(res.status).toBe(400);
+    });
+
+    it.each([
+      ['zero', 0],
+      ['not a number', 'abc'],
+    ])('returns 400 when the order is %s', async (_name, order) => {
+      const res = await reviewComponent({ review: 'approved' }, owner, order);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await reviewComponent({ review: 'approved' }, stranger);
+
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe('GET /solutions/:id/export', () => {
     const exportSolution = (user: User = owner) =>
       request(buildApp(user)).get(`/planner/v1/solutions/${SOLUTION_ID}/export`);
@@ -1565,6 +1656,36 @@ describe('planner router routes', () => {
       const res = await exportSolution();
 
       expect(res.body.tenantId).toBeUndefined();
+    });
+
+    it('leaves rejected components out of the export but keeps them saved', async () => {
+      const stored = withComponents(solutionOwnedBy('owner-1'), [
+        blueprintComponent(1, 'approved'),
+        blueprintComponent(2, 'rejected'),
+        blueprintComponent(3),
+      ]);
+      repository.get.mockResolvedValueOnce(stored);
+
+      const res = await exportSolution();
+
+      expect(res.body.state.blueprint.components.map((c: BlueprintComponent) => c.order)).toEqual([1, 3]);
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ state: expect.objectContaining({ blueprint: stored.state.blueprint }) }),
+      );
+    });
+
+    it('bumps minor when only a component review changed since the last export', async () => {
+      const exported = withComponents(solutionOwnedBy('owner-1'), [blueprintComponent(1)]);
+      repository.get.mockResolvedValueOnce({
+        ...withComponents(exported, [blueprintComponent(1, 'approved')]),
+        exportedOnce: true,
+        lastExportHashes: sectionHashes(exported),
+      });
+
+      const res = await exportSolution();
+
+      expect(res.body.version).toBe('1.1');
+      expect(res.body.changedSections).toEqual(['Component review']);
     });
 
     it("allows an admin to export another user's solution", async () => {
@@ -2717,6 +2838,7 @@ describe('planner router routes', () => {
         repository.get.mockResolvedValue(analysed());
         llm.blueprint.mockResolvedValue(generated);
         llm.consult.mockResolvedValue(consultation);
+        readAdspCatalog.mockResolvedValue(['platform:form-service', 'platform:file-service']);
       });
 
       it('returns 400 when the solution has no hypotheses', async () => {
@@ -2768,10 +2890,11 @@ describe('planner router routes', () => {
       it('passes the specialist notes to the llm', async () => {
         await blueprint(buildApp(owner, true, llm));
 
-        expect(llm.blueprint).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: aiText }), [
-          expect.objectContaining({ service: 'form-service' }),
-          expect.objectContaining({ service: 'file-service' }),
-        ]);
+        expect(llm.blueprint).toHaveBeenCalledWith(
+          expect.objectContaining({ problemStatement: aiText }),
+          [expect.objectContaining({ service: 'form-service' }), expect.objectContaining({ service: 'file-service' })],
+          [],
+        );
       });
 
       it('consults each recommended service that has no saved consultation', async () => {
@@ -2934,6 +3057,78 @@ describe('planner router routes', () => {
         await blueprint(buildApp(owner, true, llm));
 
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI blueprint failed'));
+      });
+
+      it('adds rule-based components when the llm drafts none', async () => {
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.components.filter((c: { target: string }) => c.target === 'adsp').map((c: { service: string }) => c.service)).toEqual([
+          'form-service',
+          'file-service',
+        ]);
+      });
+
+      it('uses the components the llm drafts', async () => {
+        llm.blueprint.mockResolvedValue({ ...generated, components: [{ service: 'form-service', name: 'Grant application', purpose: 'Collects applications' }] });
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.components[0]).toMatchObject({ service: 'form-service', name: 'Grant application' });
+      });
+
+      it('keeps the review of each regenerated component with the same service and name', async () => {
+        const reviewed = { ...blueprintComponent(5, 'approved'), name: 'Grant application' };
+        repository.get.mockResolvedValue(withComponents(analysed(), [reviewed, blueprintComponent(6, 'rejected')]));
+        llm.blueprint.mockResolvedValue({
+          ...generated,
+          components: [
+            { service: 'form-service', name: 'Grant application', purpose: 'Collects applications' },
+            { service: 'form-service', name: 'Renewal application', purpose: 'Collects renewals' },
+          ],
+        });
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.components[0]).toMatchObject({ order: 1, name: 'Grant application', review: 'approved' });
+        expect(res.body.state.blueprint.components.filter((c: BlueprintComponent) => c.review)).toHaveLength(1);
+      });
+
+      it('does not warn when the ADSP catalog cannot be read', async () => {
+        readAdspCatalog.mockRejectedValueOnce(new Error('Forbidden'));
+
+        const res = await blueprint(buildApp(owner, true, llm));
+
+        expect(res.body.state.blueprint.warning).toBeUndefined();
+      });
+
+      it('logs why the ADSP catalog could not be read', async () => {
+        readAdspCatalog.mockRejectedValueOnce(new Error('Forbidden'));
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Forbidden'));
+      });
+
+      it('does not warn when there is no catalog reader', async () => {
+        const res = await blueprint(buildApp(owner, true, llm, null));
+
+        expect(res.body.state.blueprint.warning).toBeUndefined();
+      });
+
+      it('logs ADSP services in the live catalog that the component map does not cover', async () => {
+        readAdspCatalog.mockResolvedValue(['platform:form-service', 'platform:sharepoint-service']);
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('ADSP component map is out of date: sharepoint-service.'));
+      });
+
+      it('offers the llm the live services the component map does not cover', async () => {
+        readAdspCatalog.mockResolvedValue(['platform:form-service', 'platform:sharepoint-service']);
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(llm.blueprint).toHaveBeenCalledWith(expect.anything(), expect.anything(), ['sharepoint-service']);
       });
 
       it('uses the matched pattern features for scope when the hypothesis has no pattern', async () => {

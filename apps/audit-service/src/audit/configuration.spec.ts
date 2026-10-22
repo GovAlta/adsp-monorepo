@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, AuditCategories, AuditSeverities } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import { createLogger, transports } from 'winston';
 import {
@@ -9,6 +9,7 @@ import {
   AuditConfiguration,
   combineAuditConfiguration,
   createAuditConfigurationConverter,
+  createConfigurationSchema,
 } from './configuration';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -39,6 +40,24 @@ describe('audit configuration schema', () => {
     };
 
     expect(() => validate({ ...catalog, actions: { 'case.update': action } })).not.toThrow();
+  });
+
+  it.each(Object.values(AuditCategories))('accepts SDK category %s', (category) => {
+    expect(() =>
+      validate({
+        ...catalog,
+        actions: { 'case.update': { ...definition, category } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each(Object.values(AuditSeverities))('accepts SDK severity %s', (severity) => {
+    expect(() =>
+      validate({
+        ...catalog,
+        actions: { 'case.update': { ...definition, severity } },
+      }),
+    ).not.toThrow();
   });
 
   describe('combined audit configuration', () => {
@@ -125,6 +144,8 @@ describe('audit configuration schema', () => {
   });
 
   it.each([
+    { kind: 'retentionSettings', classes: { standard: { days: 1 } } },
+    { kind: 'retentionSettings', classes: { standard: { days: 3650 } } },
     { kind: 'retentionSettings', classes: { standard: { days: 365 } } },
     { kind: 'applicationRetentionSettings', application: 'case-service', classes: {} },
     { ...catalog, actions: {} },
@@ -137,10 +158,56 @@ describe('audit configuration schema', () => {
     { ...catalog, application: 'a'.repeat(41) },
     { ...catalog, application: 'case service' },
     { kind: 'retentionSettings', classes: { standard: { days: 0 } } },
+    { kind: 'retentionSettings', classes: { standard: { days: -1 } } },
+    { kind: 'retentionSettings', classes: { standard: { days: 0.5 } } },
     { kind: 'retentionSettings', classes: { standard: { days: '365' } } },
+    { kind: 'retentionSettings', classes: { standard: { days: 3651 } } },
+    { kind: 'applicationRetentionSettings', application: 'case-service', classes: { custom: { days: 3651 } } },
     { ...catalog, extra: true },
   ])('rejects malformed documents %j', (value) => {
     expect(() => validate(value)).toThrow();
+  });
+});
+
+describe('deployment retention bounds', () => {
+  it.each([30, 730])('accepts inclusive configured boundary %i', (days) => {
+    const validation = new AjvValidationService(logger);
+    validation.setSchema('bounded', createConfigurationSchema({ minDays: 30, maxDays: 730 }));
+
+    expect(() =>
+      validation.validate('retention', 'bounded', {
+        kind: 'retentionSettings',
+        classes: { custom: { days } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each([29, 731])('refuses periods outside configured boundaries: %i', (days) => {
+    const validation = new AjvValidationService(logger);
+    validation.setSchema('bounded', createConfigurationSchema({ minDays: 30, maxDays: 730 }));
+
+    expect(() =>
+      validation.validate('retention', 'bounded', {
+        kind: 'applicationRetentionSettings',
+        application: 'case-service',
+        classes: { custom: { days } },
+      }),
+    ).toThrow();
+  });
+
+  it.each([
+    { minDays: 0, maxDays: 3650 },
+    { minDays: 30, maxDays: 29 },
+    { minDays: 1.5, maxDays: 3650 },
+    { minDays: 1, maxDays: Infinity },
+  ])('refuses invalid platform bounds %j', (bounds) => {
+    expect(() => createConfigurationSchema(bounds)).toThrow('Retention bounds');
+  });
+
+  it('preserves old positive periods for explicit runtime rejection instead of SDK missing-config fallback', () => {
+    const value = { kind: 'retentionSettings', classes: { standard: { days: 4000 } } };
+
+    expect(createAuditConfigurationConverter(logger)(value)).toEqual(value);
   });
 });
 

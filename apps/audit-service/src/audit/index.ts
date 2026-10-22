@@ -3,7 +3,7 @@ export { CatalogService, FailedEventService, ReplayEventPreparer, RetentionServi
 export { AuditServiceRoles } from './roles';
 export { createAuditRouter, validateTenantContext, assertTenantContext } from './router';
 export { createAuditJsonParser } from './utils/request-validation';
-export { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE } from './types';
+export { AUDIT_SERVICE_NAMESPACE, EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE, FAILED_EVENT_STATUS } from './types';
 export type {
   AuditEvent,
   EnrichedEvent,

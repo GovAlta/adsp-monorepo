@@ -1,6 +1,9 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
-
-export const AUDIT_SERVICE_NAMESPACE = 'audit-service';
+import {
+  AuditActionDefinition,
+  AuditCategories,
+  AuditSeverities,
+  BuiltInRetentionClasses,
+} from '@abgov/adsp-service-sdk';
 
 export const SelfAuditActions = {
   ListNamespaceEvents: 'events.list',
@@ -26,9 +29,9 @@ const metadataSchema = {
 // Reads of the audit trail are security relevant, so they are retained under the 'security' class.
 const readAction = (description: string): AuditActionDefinition => ({
   version: 1,
-  category: 'data-access',
-  severity: 'info',
-  retentionClass: 'security',
+  category: AuditCategories.DataAccess,
+  severity: AuditSeverities.Info,
+  retentionClass: BuiltInRetentionClasses.Security,
   description,
   metadataSchema,
 });

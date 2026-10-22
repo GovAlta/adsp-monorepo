@@ -17,7 +17,6 @@ describe('PostgresSolutionRepository', () => {
     patternMatches: [],
     hypotheses: [],
     specialists: [],
-    artifacts: [],
     nextSteps: [],
   };
   const record = {

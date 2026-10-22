@@ -1,6 +1,7 @@
 import { ConsultResult, containsTerm } from './analysis';
 import { getSpecialist } from './specialists';
 import {
+  BlueprintComponent,
   BlueprintLayer,
   BlueprintServiceRole,
   BusinessConcept,
@@ -174,7 +175,7 @@ export function buildServiceMapping(
       role: detail?.role || specialist?.purpose || rec.reason,
       reason: rec.reason,
       dependsOn: specialist?.dependsOn || [],
-      capabilities: detail?.capabilities?.length ? detail.capabilities : specialist?.questions.slice(0, 3) || [],
+      capabilities: detail?.capabilities || [],
     };
   });
 }
@@ -404,6 +405,7 @@ export function assembleBlueprint(
   details: BlueprintServiceDetail[] = [],
   patterns: BusinessPattern[] = [],
   aiNotCoveredByAdsp: PatternUnsupportedCapability[] = [],
+  components: BlueprintComponent[] = [],
 ): SolutionBlueprint {
   const risks = unique([...core.overview.risks, ...notes.flatMap((n) => n.risks.slice(0, 2))]);
   const serviceMapping = buildServiceMapping(state, details);
@@ -414,6 +416,7 @@ export function assembleBlueprint(
     serviceMapping,
     notCoveredByAdsp: buildNotCoveredByAdsp(state, patterns, aiNotCoveredByAdsp, serviceMapping),
     specialistNotes: notes,
+    components,
   };
 }
 

@@ -1,16 +1,19 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import {
+  GoabAccordion,
   GoabBadge,
   GoabButton,
   GoabCallout,
   GoabCircularProgress,
   GoabContainer,
-  GoabDetails,
+  GoabDropdown,
+  GoabDropdownItem,
   GoabTable,
 } from '@abgov/react-components';
 import { PlannerApi } from './api';
-import { AnalysisMode, Solution } from './model';
+import { AnalysisMode, ComponentReview, Solution } from './model';
 import { useBusy } from './useBusy';
+import { REVIEW_LABELS } from './utils';
 
 interface BlueprintViewerProps {
   solution: Solution;
@@ -37,6 +40,8 @@ const SubList: FunctionComponent<{ title: string; items?: string[] }> = ({ title
 
 const formatDate = (value: string) => new Date(value).toLocaleString();
 
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
 export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
   solution,
   api,
@@ -51,6 +56,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
   const generate = (refreshConsultations: boolean) =>
     run(async () => onSolutionChange(await api.blueprint(solution.id, { mode, refreshConsultations })));
+  const review = (order: number, value: ComponentReview) =>
+    run(async () => onSolutionChange(await api.reviewComponent(solution.id, order, value)));
 
   if (!hypotheses.length) {
     return (
@@ -99,8 +106,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
       <div data-testid="blueprint-viewer">
         <p>
           The blueprint turns the proposed solution into a complete plan: project overview, technical architecture, ADSP
-          service mapping, requirements not covered by ADSP, consolidated specialist consultation notes, core workflows,
-          data and governance, and a delivery plan.
+          service mapping, requirements not covered by ADSP, the components to set up, consolidated specialist
+          consultation notes, core workflows, data and governance, and a delivery plan.
         </p>
         {controls}
       </div>
@@ -109,11 +116,19 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
   const stale = !!analysis && new Date(analysis.analyzedOn) > new Date(blueprint.generatedOn);
   const { overview: o, architecture: a, dataGovernance: d, delivery: dl } = blueprint;
+  const components = blueprint.components ?? [];
+  const toReview = components.filter((c) => (c.review ?? 'not-reviewed') === 'not-reviewed').length;
 
-  const section = (id: string, heading: string, children: ReactNode) => (
-    <GoabDetails heading={heading} open={allOpen} maxWidth="100%" testId={`blueprint-section-${id}`}>
+  const section = (id: string, heading: string, children: ReactNode, headingContent?: ReactNode) => (
+    <GoabAccordion
+      heading={heading}
+      open={allOpen}
+      maxWidth="100%"
+      headingContent={headingContent}
+      testId={`blueprint-section-${id}`}
+    >
       {children}
-    </GoabDetails>
+    </GoabAccordion>
   );
 
   return (
@@ -250,8 +265,72 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
         )}
 
       {section(
+        'components',
+        '5. Components to set up',
+        <GoabTable width="100%" testId="blueprint-components">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Component</th>
+              <th>Service</th>
+              <th>Purpose</th>
+              <th>Where and how</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {components.map((c) => (
+              <tr key={`${c.service}-${c.name}`}>
+                <td>{c.order}</td>
+                <td>
+                  <strong>{c.name}</strong>
+                  <div>{c.type}</div>
+                </td>
+                <td>{c.service}</td>
+                <td>
+                  {c.purpose}
+                  <SubList title="Open decisions" items={c.openDecisions} />
+                </td>
+                <td>
+                  <div>{c.setup.where}</div>
+                  <div>{c.setup.how}</div>
+                  {c.dependsOn.length > 0 && <div>Depends on: {c.dependsOn.join(', ')}</div>}
+                  <a href={c.setup.docs} rel="noopener noreferrer" target="_blank">
+                    Docs
+                  </a>
+                </td>
+                <td>
+                  <GoabDropdown
+                    name={`component-review-${c.order}`}
+                    value={c.review ?? 'not-reviewed'}
+                    size="compact"
+                    width="9rem"
+                    ariaLabel={`Review status for ${c.name}`}
+                    disabled={working}
+                    testId={`component-review-${c.order}`}
+                    onChange={(detail) => review(c.order, detail.value as ComponentReview)}
+                  >
+                    {Object.entries(REVIEW_LABELS).map(([value, label]) => (
+                      <GoabDropdownItem key={value} value={value} label={label} />
+                    ))}
+                  </GoabDropdown>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </GoabTable>,
+        toReview > 0 && (
+          <GoabBadge
+            type="important"
+            content={`${plural(toReview, 'component')} to review`}
+            testId="blueprint-components-to-review"
+          />
+        ),
+      )}
+
+      {section(
         'notes',
-        '5. Specialist consultation notes',
+        '6. Specialist consultation notes',
         blueprint.specialistNotes.length === 0 ? (
           <p>No recommended services.</p>
         ) : (
@@ -277,7 +356,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'workflows',
-        '6. Core workflows',
+        '7. Core workflows',
         blueprint.workflows.map((w) => (
           <div key={w.name}>
             <h4>{w.name}</h4>
@@ -293,7 +372,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'governance',
-        '7. Data & governance',
+        '8. Data & governance',
         <>
           <SubList title="Data entities" items={d.dataEntities} />
           <SubList title="Access control" items={d.accessControl} />
@@ -306,7 +385,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'delivery',
-        '8. Delivery plan & other considerations',
+        '9. Delivery plan & other considerations',
         <>
           {dl.phases.map((phase) => (
             <SubList key={phase.name} title={phase.name} items={phase.items} />

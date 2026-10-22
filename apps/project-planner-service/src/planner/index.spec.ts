@@ -54,6 +54,21 @@ describe('applyPlannerMiddleware', () => {
     });
   });
 
+  it('passes the ADSP catalog reader to the router', () => {
+    const readAdspCatalog = jest.fn();
+
+    applyPlannerMiddleware(appMock as unknown as Application, {
+      logger,
+      solutionRepository,
+      patternRepository,
+      specialistChatRepository,
+      eventService,
+      readAdspCatalog,
+    });
+
+    expect(createPlannerRouterMock).toHaveBeenCalledWith(expect.objectContaining({ readAdspCatalog }));
+  });
+
   it('returns the application', () => {
     const result = applyPlannerMiddleware(appMock as unknown as Application, {
       logger,

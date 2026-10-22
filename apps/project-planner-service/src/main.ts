@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -41,10 +41,12 @@ const initializeApp = async (): Promise<express.Application> => {
   const {
     coreStrategy,
     configurationHandler,
+    configurationService,
     eventService,
     metricsHandler,
     tenantHandler,
     tenantStrategy,
+    tokenProvider,
     healthCheck,
     traceHandler,
   } = await initializePlatform(
@@ -121,6 +123,12 @@ const initializeApp = async (): Promise<express.Application> => {
       },
       logger,
     ),
+    // The core configuration-service configuration holds one key per platform service's configuration.
+    readAdspCatalog: async () => {
+      const token = await tokenProvider.getAccessToken();
+      const [, core] = await configurationService.getConfiguration<Record<string, unknown>>(adspId`urn:ads:platform:configuration-service`, token);
+      return Object.keys(core || {});
+    },
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

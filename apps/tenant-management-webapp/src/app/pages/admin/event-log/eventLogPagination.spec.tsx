@@ -72,6 +72,14 @@ describe('EventLogPagination', () => {
     expect(getByText('per page')).toBeInTheDocument();
   });
 
+  it('renders the page size as a native select so its chevron is hidden from assistive technology', () => {
+    const { container } = render(<EventLogPagination {...props} />);
+
+    const dropdown = pageSizeDropdown(container);
+    expect(dropdown).toHaveAttribute('native', 'true');
+    expect(dropdown).toHaveAttribute('arialabel', 'Events per page');
+  });
+
   it('changes the number of events per page to the size chosen', () => {
     const { container } = render(<EventLogPagination {...props} />);
 
