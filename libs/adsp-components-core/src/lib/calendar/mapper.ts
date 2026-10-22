@@ -1,4 +1,4 @@
-import { CalendarEvent, CalendarHoliday, DateRange } from './types';
+import { CalendarEvent, CalendarHoliday, DateRange, EventRecurrence } from './types';
 
 const TIME_ZONE = 'America/Edmonton';
 
@@ -12,6 +12,8 @@ export interface CalendarServiceEvent {
   isPublic?: boolean;
   recordId?: string;
   context?: Record<string, unknown>;
+  recurrenceId?: string;
+  recurrence?: EventRecurrence;
 }
 
 export interface CalendarServiceDate {
@@ -84,6 +86,8 @@ export function mapEvent(event: CalendarServiceEvent): CalendarEvent {
     isPublic: !!event.isPublic,
     recordId: event.recordId,
     context: event.context,
+    recurrenceId: event.recurrenceId ? new Date(event.recurrenceId) : undefined,
+    recurrence: event.recurrence,
   };
 }
 

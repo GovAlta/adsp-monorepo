@@ -7,7 +7,18 @@ export interface DateRange {
 // Views a calendar component can display; kept framework-independent so React, Angular and Vue adapters share it.
 export type CalendarView = 'month' | 'week' | 'day' | 'list';
 
+export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type RecurrenceDay = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
+
+export interface EventRecurrence {
+  frequency: RecurrenceFrequency;
+  interval?: number;
+  daysOfWeek?: RecurrenceDay[];
+  end?: { until?: string; count?: number };
+}
+
 export interface CalendarEvent {
+  /** For an occurrence of a recurring event, the id of the recurring event. */
   id: number;
   name: string;
   description?: string;
@@ -18,6 +29,9 @@ export interface CalendarEvent {
   isPublic: boolean;
   recordId?: string;
   context?: Record<string, unknown>;
+  /** Original start of an occurrence of a recurring event; unique per occurrence together with id. */
+  recurrenceId?: Date;
+  recurrence?: EventRecurrence;
 }
 
 export interface CalendarHoliday {

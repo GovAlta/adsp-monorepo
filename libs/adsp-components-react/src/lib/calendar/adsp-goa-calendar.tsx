@@ -52,7 +52,7 @@ export interface AdspGoACalendarProps {
 
   themeOverrides?: AdspComponentThemeOverrides<'calendar'>;
 
-  /** The date range to open the calendar on; events load for the range FullCalendar then displays. */
+  /** The date range to load events for initially, and the date the calendar opens on; defaults to the past 365 days. */
   initialDateRange?: DateRange;
 
   /**
@@ -60,6 +60,15 @@ export interface AdspGoACalendarProps {
    */
   testId?: string;
 }
+
+const DEFAULT_RANGE_DAYS = 365;
+
+const getDefaultDateRange = (): DateRange => {
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - DEFAULT_RANGE_DAYS);
+  return { start, end };
+};
 
 export const AdspGoACalendar = ({
   client,
@@ -71,21 +80,29 @@ export const AdspGoACalendar = ({
 }: AdspGoACalendarProps) => {
   const themeStyle = useAdspThemeStyle('calendar', themeOverrides);
 
-  // The first fetch waits for FullCalendar to report its visible range via datesSet, so it loads once.
-  const [range, setRange] = useState<DateRange>();
+  const [range, setRange] = useState<DateRange>(() => initialDateRange ?? getDefaultDateRange());
   const calendarRef = useRef<CalendarRef>(null);
+  const initialDatesSet = useRef(true);
   const [currentView, setCurrentView] = useState(FULL_CALENDAR_VIEW[defaultView]);
 
   const { calendarEvents } = useCalendarEvents(client, calendar, range);
+
   // FullCalendar calls this on every render of the view, including when the range hasn't actually changed; only
   // update state when it has, so the client isn't asked to reload the same range repeatedly.
   const handleDatesSet = useCallback((info: { start: Date; end: Date; view: { type: string } }) => {
+    setCurrentView(info.view.type);
+
+    // The initial range is already loading; replacing it with the visible range would fetch a second time.
+    if (initialDatesSet.current) {
+      initialDatesSet.current = false;
+      return;
+    }
+
     setRange((current) =>
       current?.start?.getTime() === info.start.getTime() && current?.end?.getTime() === info.end.getTime()
         ? current
         : { start: info.start, end: info.end },
     );
-    setCurrentView(info.view.type);
   }, []);
 
   const events = useMemo<EventInput[]>(() => {
@@ -93,15 +110,28 @@ export const AdspGoACalendar = ({
       return [];
     }
 
-    const eventInputs: EventInput[] = calendarEvents.events.map((event) => ({
-      id: `event-${event.id}`,
-      title: event.name,
-      start: event.start,
-      end: event.end ?? undefined,
-      allDay: event.isAllDay,
-      editable: false,
-    }));
+    //non reocurring events
+    const eventInputs: EventInput[] = calendarEvents.events
+      //  .filter((y) => !y.recurrence)
+      .map((event) => ({
+        id: `event-${event.id}`,
+        title: event.name,
+        start: event.start,
+        end: event.end ?? undefined,
+        allDay: event.isAllDay,
+        editable: false,
+      }));
 
+    const reocurrenceEventInputs: EventInput[] = calendarEvents.events
+      .filter((y) => y.recurrence)
+      .map((event) => ({
+        id: `event-${event.id}`,
+        title: event.name,
+        start: event.start,
+        end: event.end ?? undefined,
+        allDay: event.isAllDay,
+        editable: false,
+      }));
     // Holidays display as non-editable background events, identified by day since they have no numeric id.
     const holidayInputs: EventInput[] = calendarEvents.holidays.map((holiday) => ({
       id: `holiday-${holiday.day}`,
@@ -115,6 +145,7 @@ export const AdspGoACalendar = ({
     return [...eventInputs, ...holidayInputs];
   }, [calendarEvents]);
 
+  console.log('events', events);
   // The names used in headerToolbar must match keys here, or FullCalendar falls back to its own button rendering.
   const toolbarElements = useMemo(() => {
     const getApi = () => calendarRef.current?.getApi();

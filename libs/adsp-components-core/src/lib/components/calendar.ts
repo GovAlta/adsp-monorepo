@@ -8,6 +8,7 @@ export interface AdspCalendarTheme {
   buttonTextColor: string;
   buttonHoverBackground: string;
   todayBackgroundColor: string;
+  todayTextColor: string;
   todayFontWeight: string;
 }
 
@@ -21,5 +22,6 @@ export const defaultCalendarTheme: AdspCalendarTheme = {
   buttonTextColor: 'var(--adsp-color-text-light)',
   buttonHoverBackground: 'var(--adsp-color-interactive-hover)',
   todayBackgroundColor: 'var(--goa-color-interactive-focus)',
+  todayTextColor: 'var(--adsp-color-text-light)',
   todayFontWeight: 'var(--adsp-typography-heading-l-font-weight)',
 };

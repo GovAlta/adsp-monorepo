@@ -140,9 +140,10 @@
 
 /*
  * FullCalendar v7 dropped the old static fc-day-today/fc-daygrid-day-number classes; today's cell is marked only
- * via aria-current="date", and its day-number element via aria-hidden="true" (theme classes are runtime-hashed).
+ * via aria-current="date" (theme classes are runtime-hashed). Day-grid cells hold the aria-hidden day number as a
+ * direct child of their presentation wrapper; other aria-hidden descendants (time slots, header wrapper) must not match.
  */
-.adsp-calendar [aria-current='date'] [aria-hidden='true'] {
+.adsp-calendar [role='cell'][aria-current='date'] > [role='presentation'] > [aria-hidden='true'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -151,5 +152,11 @@
   border-radius: 50%;
   background: var(--adsp-components-calendar-today-background-color);
   color: var(--adsp-components-calendar-today-text-color);
+  font-weight: var(--adsp-components-calendar-today-font-weight);
+}
+
+/* Week and day view column headers have no day-number element, so emphasize the header text instead. */
+.adsp-calendar [role='columnheadettr'][aria-current='date'] {
+  color: var(--adsp-components-calendar-today-background-color);
   font-weight: var(--adsp-components-calendar-today-font-weight);
 }
