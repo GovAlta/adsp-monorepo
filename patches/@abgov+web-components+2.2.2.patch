@@ -19,6 +19,51 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
        t[7] === "2" && /*size*/
        t[1] === "normal" ? "4" : "3"), m(
          e,
+@@ -7994,7 +7994,7 @@
+   );
+   return {
+     c() {
+-      e = C("span"), o = C("goa-icon"), n = Y(), r = C("span"), d && d.c(), l = Y(), u && u.c(), m(
++      e = C("span"), o = C("goa-icon"), n = Y(), r = C("span"), d && d.c(), l = Y(), u && u.c(), m(o, "arialabel", t[4] + " callout"), m(
+         o,
+         "type",
+         /*iconType*/
+@@ -8017,7 +8017,7 @@
+       T(g, e, v), _(e, o), T(g, n, v), T(g, r, v), d && d.m(r, null), _(r, l), u && u.m(r, null), c = !0;
+     },
+     p(g, v) {
+-      (!c || v & /*iconType*/
++      (!c || v & /*type*/ 16) && m(o, "arialabel", g[4] + " callout"), (!c || v & /*iconType*/
+       32768) && m(
+         o,
+         "type",
+@@ -8088,7 +8088,7 @@
+       e = C("div"), o = C("goa-icon"), n = Y(), r = C("h3"), l = ae(
+         /*heading*/
+         t[6]
+-      ), a = Y(), c = C("div"), u && u.c(), m(
++      ), a = Y(), c = C("div"), u && u.c(), m(o, "arialabel", t[4] + " callout"), m(
+         o,
+         "type",
+         /*iconType*/
+@@ -8105,7 +8105,7 @@
+       T(g, e, v), _(e, o), _(e, n), _(e, r), _(r, l), T(g, a, v), T(g, c, v), u && u.m(c, null), d = !0;
+     },
+     p(g, v) {
+-      (!d || v & /*iconType*/
++      (!d || v & /*type*/ 16) && m(o, "arialabel", g[4] + " callout"), (!d || v & /*iconType*/
+       32768) && m(
+         o,
+         "type",
+@@ -12599,7 +12599,7 @@
+       e = C("details"), o = C("summary"), i = C("goa-icon"), r = Y(), l = C("span"), a = ae(
+         /*heading*/
+         t[1]
+-      ), u = Y(), g = C("div"), M && M.c(), m(i, "mt", "1"), m(i, "mr", "2"), m(i, "type", "chevron-forward"), m(i, "fillcolor", n = /*_isMouseOver*/
++      ), u = Y(), g = C("div"), M && M.c(), m(i, "aria-hidden", "true"), m(i, "mt", "1"), m(i, "mr", "2"), m(i, "type", "chevron-forward"), m(i, "fillcolor", n = /*_isMouseOver*/
+       t[8] ? "var(--goa-details-icon-color-hover, var(--goa-color-interactive-hover))" : "var(--goa-details-icon-color, var(--goa-color-interactive-default))"), m(i, "class", "svelte-42rndf"), f(l, "id", c = `${/*_detailsId*/
+       t[10]}-heading`), f(l, "class", "svelte-42rndf"), f(o, "aria-expanded", d = /*open*/
+       t[0] === "true"), f(o, "aria-controls", s = `${/*_detailsId*/
 @@ -12941,7 +12941,7 @@
    );
    return {
@@ -28,6 +73,42 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
      },
      m(c, d) {
        T(c, e, d), a && a.m(e, null), _(e, o), _(e, i), n = !0, r || (l = re(
+@@ -13976,7 +13976,7 @@
+         "disabled",
+         /*disabled*/
+         t[7]
+-      ), m(o, "data-testid", "option-list"), m(o, "width", E = /*_popoverMaxWidth*/
++      ), m(o, "data-testid", "option-list"), m(o, "targettag", "div"), m(o, "width", E = /*_popoverMaxWidth*/
+       t[26] || /*_width*/
+       t[25] || void 0), m(o, "open", L = /*_isMenuVisible*/
+       t[17] ? "true" : "false"), m(o, "padded", "false"), m(o, "tabindex", "-1"), m(o, "filterablecontext", j = Xt(
+@@ -14328,7 +14328,7 @@
+   let e, o;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "class", "dropdown-input--leading-icon svelte-4fk67h"), m(e, "data-testid", "leading-icon"), m(e, "size", o = /*size*/
++      e = C("goa-icon"), m(e, "class", "dropdown-input--leading-icon svelte-4fk67h"), m(e, "aria-hidden", "true"), m(e, "data-testid", "leading-icon"), m(e, "size", o = /*size*/
+       t[8] === "compact" ? "small" : "medium"), m(
+         e,
+         "type",
+@@ -14359,7 +14359,7 @@
+   let e, o, i;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "testid", "chevron"), m(
++      e = C("goa-icon"), m(e, "testid", "chevron"), m(e, "aria-hidden", "true"), m(
+         e,
+         "id",
+         /*name*/
+@@ -15726,7 +15726,7 @@
+   );
+   return {
+     c() {
+-      e = C("div"), o = C("div"), o.innerHTML = '<goa-icon type="cloud-upload" size="large" class="svelte-5u7pbl"></goa-icon> <div>Drag and drop files here</div> <em class="or-text svelte-5u7pbl">or</em> <div class="browse-files svelte-5u7pbl">Browse files</div>', i = Y(), s && s.c(), n = Y(), r = C("input"), f(o, "class", "instructions svelte-5u7pbl"), f(r, "data-testid", "input"), f(r, "tabindex", "0"), f(r, "type", "file"), f(
++      e = C("div"), o = C("div"), o.innerHTML = '<goa-icon type="cloud-upload" size="large" aria-hidden="true" class="svelte-5u7pbl"></goa-icon> <div>Drag and drop files here</div> <em class="or-text svelte-5u7pbl">or</em> <div class="browse-files svelte-5u7pbl">Browse files</div>', i = Y(), s && s.c(), n = Y(), r = C("input"), f(o, "class", "instructions svelte-5u7pbl"), f(r, "data-testid", "input"), f(r, "tabindex", "0"), f(r, "type", "file"), f(
+         r,
+         "accept",
+         /*accept*/
 @@ -16257,7 +16257,7 @@
        e = C("div"), o = C("div"), i = ae(
          /*content*/
@@ -55,6 +136,51 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
          e,
          "type",
          /*leadingicon*/
+@@ -20577,7 +20577,7 @@
+   ), c = a || xf(t);
+   return {
+     c() {
+-      e = C("div"), o = C("goa-icon"), i = Y(), n = C("div"), c && c.c(), m(o, "type", "warning"), m(
++      e = C("div"), o = C("goa-icon"), i = Y(), n = C("div"), c && c.c(), m(o, "aria-hidden", "true"), m(o, "type", "warning"), m(
+         o,
+         "size",
+         /*errorIconSize*/
+@@ -21125,7 +21125,7 @@
+   let e;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "type", "remove"), m(e, "theme", "filled"), m(e, "class", "svelte-1d4fj1l");
++      e = C("goa-icon"), m(e, "aria-hidden", "true"), m(e, "type", "remove"), m(e, "theme", "filled"), m(e, "class", "svelte-1d4fj1l");
+     },
+     m(o, i) {
+       T(o, e, i);
+@@ -21140,7 +21140,7 @@
+   let e;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "type", "checkmark"), m(e, "inverted", ""), m(e, "class", "svelte-1d4fj1l");
++      e = C("goa-icon"), m(e, "aria-hidden", "true"), m(e, "type", "checkmark"), m(e, "inverted", ""), m(e, "class", "svelte-1d4fj1l");
+     },
+     m(o, i) {
+       T(o, e, i);
+@@ -21180,7 +21180,7 @@
+   let e;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "type", "pencil"), m(e, "theme", "filled"), m(e, "class", "svelte-1d4fj1l");
++      e = C("goa-icon"), m(e, "aria-hidden", "true"), m(e, "type", "pencil"), m(e, "theme", "filled"), m(e, "class", "svelte-1d4fj1l");
+     },
+     m(o, i) {
+       T(o, e, i);
+@@ -21194,7 +21194,7 @@
+   let e;
+   return {
+     c() {
+-      e = C("goa-icon"), m(e, "type", "checkmark"), m(e, "inverted", ""), m(e, "class", "svelte-1d4fj1l");
++      e = C("goa-icon"), m(e, "aria-hidden", "true"), m(e, "type", "checkmark"), m(e, "inverted", ""), m(e, "class", "svelte-1d4fj1l");
+     },
+     m(o, i) {
+       T(o, e, i);
 @@ -23292,7 +23292,7 @@
    let e;
    return {
@@ -64,3 +190,97 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
          e,
          "type",
          /*leadingicon*/
+@@ -27111,7 +27111,7 @@
+   );
+   return {
+     c() {
+-      e = C("div"), o = C("div"), i = C("div"), n = C("div"), r = C("goa-icon"), l = Y(), a = C("div"), M && M.c(), c = Y(), d = C("div"), s = C("button"), u = C("goa-icon"), m(
++      e = C("div"), o = C("div"), i = C("div"), n = C("div"), r = C("goa-icon"), l = Y(), a = C("div"), M && M.c(), c = Y(), d = C("div"), s = C("button"), u = C("goa-icon"), f(s, "type", "button"), f(s, "aria-label", "Dismiss notification"), m(u, "aria-hidden", "true"), m(r, "arialabel", t[0] + " notification"), m(
+         r,
+         "type",
+         /*iconType*/
+@@ -27169,7 +27169,7 @@
+     },
+     p(E, L) {
+-      (!w || L & /*iconType*/
++      (!w || L & /*type*/ 1) && m(r, "arialabel", E[0] + " notification"), (!w || L & /*iconType*/
+       1024) && m(
+         r,
+         "type",
+         /*iconType*/
+@@ -28270,16 +28270,16 @@
+   );
+   return {
+     c() {
+-      e = C("div"), o = C("button"), g && g.c(), i = Y(), n = C("section"), r = C("goa-focus-trap"), h && h.c(), f(o, "class", "popover-target svelte-1d099fv"), f(o, "aria-haspopup", "dialog"), f(
++      e = C("div"), o = C(t[38]), g && g.c(), i = Y(), n = C("section"), r = C("goa-focus-trap"), h && h.c(), f(o, "class", "popover-target svelte-1d099fv"), f(o, "aria-haspopup", t[38] === "button" ? "dialog" : null), f(
+         o,
+         "aria-controls",
+         /*_popoverId*/
+-        t[25]
++        t[38] === "button" ? t[25] : null
+       ), f(
+         o,
+         "tabindex",
+         /*tabindex*/
+-        t[6]
++        t[38] === "button" ? t[6] : null
+       ), o.disabled = /*_disabled*/
+       t[21], f(o, "data-testid", "popover-target"), m(
+         r,
+@@ -28442,7 +28442,7 @@
+         o,
+         "tabindex",
+         /*tabindex*/
+-        b[6]
++        b[38] === "button" ? b[6] : null
+       ), (!c || w[0] & /*_disabled*/
+       2097152) && (o.disabled = /*_disabled*/
+       b[21]), h && h.p && (!c || w[1] & /*$$scope*/
+@@ -28607,6 +28607,8 @@
+   t.preventDefault();
+ };
+ function G3(t, e, o) {
++  // Dropdowns supply their own combobox; its popover target must not be another control.
++  const targetTag = e.targettag === "div" ? "div" : "button";
+   let i, n, r, l, { $$slots: a = {}, $$scope: c } = e, { testid: d = "popover" } = e, { position: s = "auto" } = e, { maxwidth: u = "320px" } = e, { minwidth: g = "" } = e, { width: v = "" } = e, { height: h = "wrap-content" } = e, { padded: b = "true" } = e, { tabindex: w = 0 } = e, { relative: p = "" } = e, { mt: k = null } = e, { mr: z = null } = e, { mb: M = null } = e, { ml: E = null } = e, { open: L = "false" } = e, { disabled: j = "false" } = e, { voffset: P = "" } = e, { hoffset: N = "" } = e, { focusborderwidth: W = "var(--goa-border-width-l)" } = e, { borderradius: O = "var(--goa-border-radius-m)" } = e, { filterablecontext: H = "false" } = e, { fitcontent: V = "false" } = e, F, D;
+   const S = typeof document < "u" && !("anchorName" in document.documentElement.style);
+   let B = null, J, Z = !1, A = "below", R = "left";
+@@ -28700,7 +28702,7 @@
+     }
+   }
+   function be(le) {
+-    le.newState === "open" ? o(16, Z = !0) : le.newState === "closed" ? o(16, Z = !1) : o(16, Z = q()), o(27, L = Z ? "true" : "false"), Z ? (xe(F, "_open", {}, { bubbles: !0 }), requestAnimationFrame(me), S && oe()) : ((S || B) && ie(), J == null || J.focus(), xe(F, "_close", {}, { bubbles: !0 }));
++    le.newState === "open" ? o(16, Z = !0) : le.newState === "closed" ? o(16, Z = !1) : o(16, Z = q()), o(27, L = Z ? "true" : "false"), Z ? (xe(F, "_open", {}, { bubbles: !0 }), requestAnimationFrame(me), S && oe()) : ((S || B) && ie(), (targetTag === "div" ? J?.querySelector("slot")?.assignedElements()[0]?.querySelector('[role="combobox"]') : J)?.focus(), xe(F, "_close", {}, { bubbles: !0 }));
+   }
+   function Ye() {
+     if (Z && (D == null || D.hidePopover(), S)) {
+@@ -28798,7 +28800,8 @@
+     a,
+     ce,
+     Ne,
+-    Ie
++    Ie,
++    targetTag
+   ];
+ }
+ class J3 extends je {
+@@ -28830,7 +28833,8 @@
+         focusborderwidth: 13,
+         borderradius: 14,
+         filterablecontext: 31,
+-        fitcontent: 32
++        fitcontent: 32,
++        targettag: 38
+       },
+       F3,
+       [-1, -1]
+@@ -28963,7 +28967,7 @@
+     this.$$set({ fitcontent: e }), y();
+   }
+ }
+-customElements.define("goa-popover", Me(J3, { testid: {}, position: {}, maxwidth: {}, minwidth: {}, width: {}, height: {}, padded: {}, tabindex: {}, relative: {}, mt: {}, mr: {}, mb: {}, ml: {}, open: { reflect: !0, type: "String" }, disabled: {}, voffset: {}, hoffset: {}, focusborderwidth: {}, borderradius: {}, filterablecontext: {}, fitcontent: {} }, ["target", "default"], [], !0));
++customElements.define("goa-popover", Me(J3, { testid: {}, position: {}, maxwidth: {}, minwidth: {}, width: {}, height: {}, padded: {}, tabindex: {}, relative: {}, mt: {}, mr: {}, mb: {}, ml: {}, open: { reflect: !0, type: "String" }, disabled: {}, voffset: {}, hoffset: {}, focusborderwidth: {}, borderradius: {}, filterablecontext: {}, fitcontent: {}, targettag: {} }, ["target", "default"], [], !0));
+ function X3(t) {
+   De(t, "svelte-jm4ny3", `:host .svelte-jm4ny3.svelte-jm4ny3{box-sizing:border-box}@keyframes svelte-jm4ny3-opening{0%{display:flex;transform:translateX(100%)}100%{transform:translateX(0%)}}@keyframes svelte-jm4ny3-closing{0%{transform:translateX(0%)}99%{transform:translateX(99%)}100%{transform:translateX(100%)}}.goa-push-drawer.svelte-jm4ny3.svelte-jm4ny3{display:flex;flex-direction:column;width:var(--goa-push-drawer-width, 492px);padding:var(--goa-space-none);flex-direction:column;align-items:flex-start;align-self:stretch;margin-left:var(--goa-drawer-padding);height:100%;overflow:hidden;border-radius:var(--goa-push-drawer-border-radius);background:var(--goa-color-greyscale-white);border:var(--goa-border-width-s) solid var(--goa-color-greyscale-200)}.goa-push-drawer.v2.svelte-jm4ny3.svelte-jm4ny3{margin:var(--goa-drawer-offset, 16px);height:calc(100% - 2 * var(--goa-drawer-offset, 16px));border-color:var(--goa-color-greyscale-150);transition:margin 0.2s ease,
+       border-radius 0.2s ease,
