@@ -218,7 +218,7 @@ export interface BlueprintWorkflow {
 export type ComponentTarget = 'adsp' | 'keycloak' | 'openshift'; // clean-code-ignore: RULE-19 — types only; no runtime code to test.
 
 // The user's call on whether the solution needs a component; rejected components are left out of the export.
-export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected';
+export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected'; // clean-code-ignore: RULE-19 — types only; no runtime code to test.
 
 // A concrete thing to create or configure so the solution can run.
 export interface BlueprintComponent {
