@@ -1,5 +1,6 @@
 import type { ServiceDirectory, User } from '@abgov/adsp-service-sdk';
 import axios, { isAxiosError } from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { AccessDiscoveryProblem, AccessRealmKind, createProblem } from './types';
 
 const REQUEST_TIMEOUT_MS = 5000;
@@ -33,16 +34,16 @@ export function mapRequestError(err: unknown): AccessDiscoveryProblem {
   }
 
   const status = err.response?.status;
-  if (status === undefined || status >= 500) {
+  if (status === undefined || status >= HttpStatusCodes.INTERNAL_SERVER_ERROR) {
     return createProblem('unreachable', 'ENVIRONMENT_UNREACHABLE');
   }
-  if (status === 401) {
+  if (status === HttpStatusCodes.UNAUTHORIZED) {
     return createProblem('unavailable', 'SESSION_EXPIRED');
   }
-  if (status === 403) {
+  if (status === HttpStatusCodes.FORBIDDEN) {
     return createProblem('unavailable', 'NO_PERMISSION');
   }
-  if (status === 404) {
+  if (status === HttpStatusCodes.NOT_FOUND) {
     return createProblem('not-found', 'REALM_NOT_FOUND');
   }
 

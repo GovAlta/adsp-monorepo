@@ -1,5 +1,6 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { createRealmClient, mapRequestError } from './realmClient';
 import { ACCESS_DISCOVERY_MESSAGES } from './types';
 
@@ -30,11 +31,11 @@ const directory = {
 
 describe('mapRequestError', () => {
   it.each([
-    [401, 'unavailable', 'SESSION_EXPIRED'],
-    [403, 'unavailable', 'NO_PERMISSION'],
-    [404, 'not-found', 'REALM_NOT_FOUND'],
-    [500, 'unreachable', 'ENVIRONMENT_UNREACHABLE'],
-    [503, 'unreachable', 'ENVIRONMENT_UNREACHABLE'],
+    [HttpStatusCodes.UNAUTHORIZED, 'unavailable', 'SESSION_EXPIRED'],
+    [HttpStatusCodes.FORBIDDEN, 'unavailable', 'NO_PERMISSION'],
+    [HttpStatusCodes.NOT_FOUND, 'not-found', 'REALM_NOT_FOUND'],
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR, 'unreachable', 'ENVIRONMENT_UNREACHABLE'],
+    [HttpStatusCodes.SERVICE_UNAVAILABLE, 'unreachable', 'ENVIRONMENT_UNREACHABLE'],
   ])('maps HTTP %s to %s / %s', (status, expectedStatus, reason) => {
     expect(mapRequestError(axiosError(status))).toEqual({
       status: expectedStatus,
@@ -48,7 +49,7 @@ describe('mapRequestError', () => {
   });
 
   it('rethrows unexpected HTTP failures', () => {
-    const error = axiosError(400);
+    const error = axiosError(HttpStatusCodes.BAD_REQUEST);
     expect(() => mapRequestError(error)).toThrow(error);
   });
 
@@ -111,7 +112,7 @@ describe('createRealmClient', () => {
     });
 
     it('reports NO_PERMISSION when tenant-service refuses the user', async () => {
-      mockedGet.mockRejectedValueOnce(axiosError(403));
+      mockedGet.mockRejectedValueOnce(axiosError(HttpStatusCodes.FORBIDDEN));
 
       await expect(client.getTenantRealm(user)).resolves.toMatchObject({
         ok: false,
@@ -166,7 +167,7 @@ describe('createRealmClient', () => {
     });
 
     it('reports REALM_NOT_FOUND when Keycloak has no such realm', async () => {
-      mockedGet.mockRejectedValueOnce(axiosError(404));
+      mockedGet.mockRejectedValueOnce(axiosError(HttpStatusCodes.NOT_FOUND));
 
       await expect(
         client.getRealmOpenIdConfiguration('https://access.adsp-dev.gov.ab.ca', 'missing'),

@@ -1,5 +1,6 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { createAccessDiscoveryTools } from './accessDiscovery';
 
 jest.mock('axios', () => {
@@ -178,8 +179,8 @@ describe('createAccessDiscoveryTools', () => {
       expect(result).toMatchObject({ status: 'unavailable', reason: 'REALM_MISMATCH', realms: [] });
     });
 
-    it('reports NO_PERMISSION, rather than failing, when tenant-service returns 403', async () => {
-      mockedGet.mockRejectedValueOnce(axiosError(403));
+    it('reports NO_PERMISSION, rather than failing, when tenant-service returns forbidden', async () => {
+      mockedGet.mockRejectedValueOnce(axiosError(HttpStatusCodes.FORBIDDEN));
 
       const result = await listAccessRealms.execute({}, contextFor(createUser()));
 
@@ -246,8 +247,8 @@ describe('createAccessDiscoveryTools', () => {
       expect(serialized).not.toContain('grant_types_supported');
     });
 
-    it('reports REALM_NOT_FOUND, rather than inventing details, when Keycloak returns 404', async () => {
-      mockedGet.mockResolvedValueOnce(tenantResponse).mockRejectedValueOnce(axiosError(404));
+    it('reports REALM_NOT_FOUND, rather than inventing details, when Keycloak returns not found', async () => {
+      mockedGet.mockResolvedValueOnce(tenantResponse).mockRejectedValueOnce(axiosError(HttpStatusCodes.NOT_FOUND));
 
       const result = await getAccessRealmInfo.execute({}, contextFor(createUser()));
 
@@ -268,7 +269,7 @@ describe('createAccessDiscoveryTools', () => {
     });
 
     it('reports SESSION_EXPIRED when tenant-service rejects the token', async () => {
-      mockedGet.mockRejectedValueOnce(axiosError(401));
+      mockedGet.mockRejectedValueOnce(axiosError(HttpStatusCodes.UNAUTHORIZED));
 
       const result = await getAccessRealmInfo.execute({}, contextFor(createUser()));
 
@@ -290,7 +291,7 @@ describe('createAccessDiscoveryTools', () => {
     });
 
     it('logs and rethrows unexpected failures', async () => {
-      mockedGet.mockRejectedValueOnce(axiosError(400));
+      mockedGet.mockRejectedValueOnce(axiosError(HttpStatusCodes.BAD_REQUEST));
 
       await expect(getAccessRealmInfo.execute({}, contextFor(createUser()))).rejects.toThrow('Request failed');
       expect(logger.warn).toHaveBeenCalledWith(
