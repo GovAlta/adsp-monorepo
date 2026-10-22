@@ -9,6 +9,7 @@ import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
 import { environment } from '../environments/environment';
+import { resolveAccessScope } from './agents/access/discovery/scope';
 import {
   describeStreamError,
   mapAgentStreamError,
@@ -732,8 +733,20 @@ interface AgentRouterProps {
   tenantService: TenantService;
 }
 
+/**
+ * Returns the Access Service environment and realm the user may inspect. Deterministic and AI-free; it
+ * deliberately does not require the agent-user role so it can tell users which role they are missing.
+ */
+export function getAccessScope(accessServiceUrl: URL): RequestHandler {
+  return (req, res) => {
+    res.send(resolveAccessScope(req.user, accessServiceUrl));
+  };
+}
+
 export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }: AgentRouterProps): Router {
   const router = Router();
+
+  router.get('/access/scope', getAccessScope(new URL(environment.KEYCLOAK_ROOT_URL)));
 
   router.get('/agents', getAgents);
 

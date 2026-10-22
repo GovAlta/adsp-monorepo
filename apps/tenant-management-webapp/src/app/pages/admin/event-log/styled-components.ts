@@ -171,3 +171,28 @@ export const ActiveFilters = styled.div`
     overflow-wrap: anywhere;
   }
 `;
+
+// Groups never shrink, so a crowded row wraps whole groups instead of breaking text or controls apart.
+export const PaginationRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--goa-space-m);
+  margin-top: var(--goa-space-m);
+  width: 100%;
+`;
+
+export const PaginationSummary = styled.div`
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--goa-space-l);
+  white-space: nowrap;
+`;
+
+export const PageSizeSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-s);
+`;

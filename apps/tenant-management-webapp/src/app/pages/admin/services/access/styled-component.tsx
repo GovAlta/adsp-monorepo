@@ -86,19 +86,47 @@ export const LoadingIndicatorContainer = styled.div`
   left: -3.5rem;
 `;
 
+export const AgentLayout = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(16rem, 3fr);
+  grid-template-areas: 'chat side';
+  gap: var(--goa-space-l);
+  align-items: start;
+  margin-top: var(--goa-space-s);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'side'
+      'chat';
+  }
+`;
+
+export const AgentSidePanel = styled.aside`
+  grid-area: side;
+  position: sticky;
+  top: var(--goa-space-m);
+  display: flex;
+  flex-direction: column;
+  gap: var(--goa-space-s);
+  min-width: 0;
+
+  @media (max-width: 1024px) {
+    position: static;
+  }
+`;
+
+// --agent-chat-height is the space left below the chat's top edge, measured at runtime.
 export const AgentChatContainer = styled.div`
-  height: clamp(21rem, 55vh, 31rem);
-  width: 70%;
-  min-width: min(100%, 20rem);
-  max-width: 100%;
+  grid-area: chat;
+  height: max(28rem, var(--agent-chat-height, 72vh));
+  min-width: 0;
   box-sizing: border-box;
-  margin: var(--goa-space-s) 0 0;
   padding: var(--goa-space-s);
   border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
   border-radius: var(--goa-border-radius-s);
 
-  @media (max-width: 640px) {
-    width: 100%;
-    min-width: 0;
+  @media (max-width: 1024px) {
+    height: clamp(28rem, 72vh, 52rem);
   }
 `;
