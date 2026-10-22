@@ -60,6 +60,19 @@ export interface ServiceMapping {
   reason: string;
 }
 
+export interface NotCoveredItem {
+  requirement: string;
+  reason: string;
+  suggestedApproach: string;
+}
+
+export interface PatternUnsupportedCapability extends NotCoveredItem {
+  keywords?: string[];
+  category?: string;
+  feeType?: string;
+  recordType?: string;
+}
+
 // built-in: shipped with the service; customized: a built-in overridden by the tenant; custom: created by the tenant.
 export type PatternSource = 'built-in' | 'customized' | 'custom';
 
@@ -76,6 +89,7 @@ export interface BusinessPattern {
   clarifyingQuestions: string[];
   assumptions: string[];
   knownUnknowns: string[];
+  unsupportedCapabilities?: PatternUnsupportedCapability[];
 }
 
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
@@ -114,14 +128,6 @@ export interface SpecialistProgress {
   status: SpecialistStatus;
   notes?: string;
   updatedOn: string;
-}
-
-export interface SolutionArtifact {
-  id: string;
-  service: string;
-  name: string;
-  urn?: string;
-  createdOn: string;
 }
 
 export interface NextStep {
@@ -208,6 +214,22 @@ export interface BlueprintWorkflow {
   steps: string[];
 }
 
+// adsp: tenant configuration; keycloak and openshift: set up by the team outside ADSP.
+export type ComponentTarget = 'adsp' | 'keycloak' | 'openshift'; // clean-code-ignore: RULE-19 — types only; no runtime code to test.
+
+// A concrete thing to create or configure so the solution can run.
+export interface BlueprintComponent {
+  order: number;
+  service: string;
+  type: string;
+  name: string;
+  purpose: string;
+  dependsOn: string[];
+  openDecisions: string[];
+  target: ComponentTarget;
+  setup: { where: string; docs: string; schemaKey?: string; how: string };
+}
+
 // The complete plan behind a proposed solution.
 export interface SolutionBlueprint {
   generatedOn: string;
@@ -232,7 +254,9 @@ export interface SolutionBlueprint {
     diagram: string;
   };
   serviceMapping: BlueprintServiceRole[];
+  notCoveredByAdsp?: NotCoveredItem[];
   specialistNotes: SpecialistNote[];
+  components: BlueprintComponent[];
   workflows: BlueprintWorkflow[];
   dataGovernance: {
     dataEntities: string[];
@@ -257,7 +281,6 @@ export interface SolutionState {
   patternMatches: PatternMatch[];
   hypotheses: Hypothesis[];
   specialists: SpecialistProgress[];
-  artifacts: SolutionArtifact[];
   nextSteps: NextStep[];
   analysis?: AnalysisInfo;
   conversation?: ConversationMessage[];

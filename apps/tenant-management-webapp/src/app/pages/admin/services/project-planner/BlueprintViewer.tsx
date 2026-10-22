@@ -99,8 +99,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
       <div data-testid="blueprint-viewer">
         <p>
           The blueprint turns the proposed solution into a complete plan: project overview, technical architecture, ADSP
-          service mapping, consolidated specialist consultation notes, core workflows, data and governance, and a
-          delivery plan.
+          service mapping, requirements not covered by ADSP, the components to set up, consolidated specialist
+          consultation notes, core workflows, data and governance, and a delivery plan.
         </p>
         {controls}
       </div>
@@ -219,9 +219,80 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
         </GoabTable>,
       )}
 
+      {blueprint.notCoveredByAdsp !== undefined &&
+        section(
+          'not-covered',
+          '4. Not covered by ADSP',
+          blueprint.notCoveredByAdsp.length === 0 ? (
+            <p>All requirements map to ADSP services.</p>
+          ) : (
+            <GoabTable width="100%" testId="blueprint-not-covered">
+              <thead>
+                <tr>
+                  <th>Requirement</th>
+                  <th>Why it's not covered</th>
+                  <th>Suggested approach</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blueprint.notCoveredByAdsp.map((n, i) => (
+                  <tr key={i}>
+                    <td>
+                      <strong>{n.requirement}</strong>
+                    </td>
+                    <td>{n.reason}</td>
+                    <td>{n.suggestedApproach}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </GoabTable>
+          ),
+        )}
+
+      {section(
+        'components',
+        '5. Components to set up',
+        <GoabTable width="100%" testId="blueprint-components">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Component</th>
+              <th>Service</th>
+              <th>Purpose</th>
+              <th>Where and how</th>
+              <th>Depends on</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(blueprint.components ?? []).map((c) => (
+              <tr key={`${c.service}-${c.name}`}>
+                <td>{c.order}</td>
+                <td>
+                  <strong>{c.name}</strong>
+                  <div>{c.type}</div>
+                </td>
+                <td>{c.service}</td>
+                <td>
+                  {c.purpose}
+                  <SubList title="Open decisions" items={c.openDecisions} />
+                </td>
+                <td>
+                  <div>{c.setup.where}</div>
+                  <div>{c.setup.how}</div>
+                  <a href={c.setup.docs} rel="noopener noreferrer" target="_blank">
+                    Docs
+                  </a>
+                </td>
+                <td>{c.dependsOn.join(', ') || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </GoabTable>,
+      )}
+
       {section(
         'notes',
-        '4. Specialist consultation notes',
+        '6. Specialist consultation notes',
         blueprint.specialistNotes.length === 0 ? (
           <p>No recommended services.</p>
         ) : (
@@ -247,7 +318,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'workflows',
-        '5. Core workflows',
+        '7. Core workflows',
         blueprint.workflows.map((w) => (
           <div key={w.name}>
             <h4>{w.name}</h4>
@@ -263,7 +334,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'governance',
-        '6. Data & governance',
+        '8. Data & governance',
         <>
           <SubList title="Data entities" items={d.dataEntities} />
           <SubList title="Access control" items={d.accessControl} />
@@ -276,7 +347,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
       {section(
         'delivery',
-        '7. Delivery plan & other considerations',
+        '9. Delivery plan & other considerations',
         <>
           {dl.phases.map((phase) => (
             <SubList key={phase.name} title={phase.name} items={phase.items} />

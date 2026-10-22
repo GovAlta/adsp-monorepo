@@ -53,9 +53,9 @@ describe('BUILT_IN_PATTERNS', () => {
     });
 
     it('has service mappings with reasons', () => {
-      expect(
-        pattern.serviceMappings.length > 0 && pattern.serviceMappings.every((m) => m.service && m.reason),
-      ).toBe(true);
+      expect(pattern.serviceMappings.length > 0 && pattern.serviceMappings.every((m) => m.service && m.reason)).toBe(
+        true,
+      );
     });
 
     it('maps only to known specialist services', () => {
@@ -68,6 +68,31 @@ describe('BUILT_IN_PATTERNS', () => {
 
     it('defines assumptions and known unknowns as arrays', () => {
       expect([Array.isArray(pattern.assumptions), Array.isArray(pattern.knownUnknowns)]).toEqual([true, true]);
+    });
+  });
+});
+
+describe('unsupportedCapabilities', () => {
+  const COVERED_IDS = ['case-management', 'grant-applications', 'registration-enrollment', 'appointment-booking'];
+
+  it('is defined only on the patterns known to have a gap', () => {
+    const idsWithGaps = BUILT_IN_PATTERNS.filter((p) => p.unsupportedCapabilities?.length).map((p) => p.id);
+
+    expect(idsWithGaps.sort()).toEqual([...COVERED_IDS].sort());
+  });
+
+  describe.each(COVERED_IDS)('%s', (id) => {
+    const pattern = BUILT_IN_PATTERNS.find((p) => p.id === id);
+
+    it('has items with a requirement, reason and suggested approach', () => {
+      expect(pattern.unsupportedCapabilities.every((c) => c.requirement && c.reason && c.suggestedApproach)).toBe(true);
+    });
+
+    it('does not duplicate one of the pattern own service mappings', () => {
+      const serviceNames = pattern.serviceMappings.map((m) => m.service.toLowerCase());
+      expect(pattern.unsupportedCapabilities.some((c) => serviceNames.includes(c.requirement.toLowerCase()))).toBe(
+        false,
+      );
     });
   });
 });

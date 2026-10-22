@@ -146,7 +146,7 @@ paths:
   /planner/v1/solutions/{id}/blueprint:
     post:
       tags: [Solution]
-      summary: Generates the complete project blueprint (architecture, ADSP service mapping, specialist notes, workflows, data and governance, delivery).
+      summary: Generates the complete project blueprint (architecture, ADSP service mapping, components to set up, specialist notes, workflows, data and governance, delivery).
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
       requestBody:

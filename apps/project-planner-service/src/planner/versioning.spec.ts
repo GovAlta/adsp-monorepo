@@ -9,7 +9,6 @@ const emptyState: SolutionState = {
   patternMatches: [],
   hypotheses: [],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
 };
 
@@ -49,9 +48,7 @@ describe('versioning', () => {
     });
 
     it('records a hash for confidence', () => {
-      const hashes = sectionHashes(
-        solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }),
-      );
+      const hashes = sectionHashes(solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }));
 
       expect(Object.keys(hashes)).toEqual(['Confidence']);
     });
@@ -85,7 +82,15 @@ describe('versioning', () => {
         solution({
           ...emptyState,
           conversation: [{ role: 'user', content: 'Hi', at: 'x' }],
-          discovery: { messages: [], confidence: 0, threshold: 50, factors: [], ready: false, mode: 'rules', updatedOn: 'x' },
+          discovery: {
+            messages: [],
+            confidence: 0,
+            threshold: 50,
+            factors: [],
+            ready: false,
+            mode: 'rules',
+            updatedOn: 'x',
+          },
         }),
       );
 
@@ -130,6 +135,52 @@ describe('versioning', () => {
 
       expect(padded['Problem statement']).toBe(trimmed['Problem statement']);
     });
+
+    it('does not hash notCoveredByAdsp when it is undefined, so a blueprint that predates the feature does not bump', () => {
+      const hashes = sectionHashes(
+        solution({ ...emptyState, blueprint: { generatedOn: 'x', mode: 'rules' } as SolutionState['blueprint'] }),
+      );
+
+      expect(hashes['Not covered by ADSP']).toBeUndefined();
+    });
+
+    it('hashes an empty notCoveredByAdsp array so a regenerate with everything covered is still recorded', () => {
+      const hashes = sectionHashes(
+        solution({
+          ...emptyState,
+          blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: [] } as SolutionState['blueprint'],
+        }),
+      );
+
+      expect(hashes['Not covered by ADSP']).toBeDefined();
+    });
+
+    it('changes the hash when notCoveredByAdsp content changes', () => {
+      const withItems = (items: SolutionState['blueprint']['notCoveredByAdsp']) =>
+        sectionHashes(
+          solution({
+            ...emptyState,
+            blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: items } as SolutionState['blueprint'],
+          }),
+        )['Not covered by ADSP'];
+
+      expect(withItems([{ requirement: 'Fee', reason: 'x', suggestedApproach: 'y' }])).not.toBe(withItems([]));
+    });
+
+    it('records a hash for the components to set up', () => {
+      const hashes = sectionHashes(
+        solution({
+          ...emptyState,
+          blueprint: {
+            generatedOn: 'x',
+            mode: 'rules',
+            components: [{ order: 1, service: 'form-service', type: 'Form definition', name: 'Application' }],
+          } as SolutionState['blueprint'],
+        }),
+      );
+
+      expect(Object.keys(hashes)).toEqual(['Components to set up']);
+    });
   });
 
   describe('changedSections', () => {
@@ -148,6 +199,17 @@ describe('versioning', () => {
     it('reports a newly-filled section as changed', () => {
       expect(changedSections({}, { 'Problem statement': 'abc' })).toEqual(['Problem statement']);
     });
+
+    it('lists changed sections in plan order, whatever order the stored hashes come back in', () => {
+      const previous = { Delivery: 'a', 'Components to set up': 'b', 'Service mapping': 'c' };
+      const current = { Delivery: 'x', 'Components to set up': 'y', 'Service mapping': 'z' };
+
+      expect(changedSections(previous, current)).toEqual(['Service mapping', 'Components to set up', 'Delivery']);
+    });
+
+    it('lists a section no longer in the plan last', () => {
+      expect(changedSections({ 'Old section': 'a', Delivery: 'b' }, { Delivery: 'c' })).toEqual(['Delivery', 'Old section']);
+    });
   });
 
   describe('classifyBump', () => {
@@ -165,6 +227,10 @@ describe('versioning', () => {
 
     it('is major when any blueprint section changed', () => {
       expect(classifyBump(['Problem statement', 'Service mapping'])).toBe('major');
+    });
+
+    it('is major when the components to set up changed', () => {
+      expect(classifyBump(['Components to set up'])).toBe('major');
     });
   });
 
