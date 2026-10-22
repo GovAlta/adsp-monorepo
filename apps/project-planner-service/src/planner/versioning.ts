@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { Solution, SpecialistNote } from './types';
+import { BlueprintComponent, Solution, SpecialistNote } from './types';
 
 export type VersionBump = 'major' | 'minor' | 'none';
 
@@ -9,6 +9,17 @@ const omitConsultedOn = (note: SpecialistNote): Omit<SpecialistNote, 'consultedO
   const { consultedOn: _consultedOn, ...rest } = note;
   return rest;
 };
+
+const omitReview = (component: BlueprintComponent): Omit<BlueprintComponent, 'review'> => {
+  const { review: _review, ...rest } = component;
+  return rest;
+};
+
+// Only reviewed components, so a blueprint where nothing is reviewed yet does not bump.
+const reviewedComponents = (s: VersionableSolution) =>
+  s.state.blueprint?.components
+    ?.filter(({ review }) => review && review !== 'not-reviewed')
+    .map(({ order, name, review }) => ({ order, name, review }));
 
 const MINOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown> = {
   Title: (s) => s.name,
@@ -20,6 +31,7 @@ const MINOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown>
   'Questions and answers': (s) => s.state.questions,
   'Next steps': (s) => s.state.nextSteps,
   Confidence: (s) => s.state.confidence,
+  'Component review': reviewedComponents,
 };
 
 const MAJOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown> = {
@@ -30,7 +42,7 @@ const MAJOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown>
     const items = s.state.blueprint?.notCoveredByAdsp;
     return items === undefined ? undefined : { items };
   },
-  'Components to set up': (s) => s.state.blueprint?.components,
+  'Components to set up': (s) => s.state.blueprint?.components?.map(omitReview),
   'Specialist notes': (s) => s.state.blueprint?.specialistNotes?.map(omitConsultedOn),
   Workflows: (s) => s.state.blueprint?.workflows,
   'Data & governance': (s) => s.state.blueprint?.dataGovernance,

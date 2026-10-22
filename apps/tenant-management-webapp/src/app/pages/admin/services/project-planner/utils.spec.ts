@@ -260,6 +260,14 @@ describe('utils', () => {
       expect(md).toContain('**Open questions**');
     });
 
+    it('indents service capabilities under two-digit numbers so the list keeps its numbering', () => {
+      const md = solutionToMarkdown(
+        solution({ blueprint: { ...blueprint, serviceMapping: [{ ...blueprint.serviceMapping[0], order: 10 }] } }),
+      );
+
+      expect(md).toContain('10. **form-service** — Forms. _Why:_ why _Depends on:_ x\n    - Drafts');
+    });
+
     it('does not double the period when an ai-generated service role already ends with one', () => {
       const md = solutionToMarkdown(
         solution({
@@ -375,9 +383,7 @@ describe('utils', () => {
       );
 
       expect(md).toContain(
-        '## 5. Components to set up\n\n' +
-          '_Work through these components in order with the user. For each one, walk them through the Where and How steps and ask them to decide every open decision. The user approves each component before it is set up._\n\n' +
-          '1. **Permit application** (Form definition, form-service) — Collects applications _Depends on:_ Applicant role\n' +
+        '1. **Permit application** (Form definition, form-service): Not reviewed. Collects applications _Depends on:_ Applicant role\n' +
           '   - Where: Tenant admin > Form\n' +
           '   - How: Create the definition\n' +
           '   - Docs: https://docs/form\n' +
@@ -394,6 +400,47 @@ describe('utils', () => {
         '## 8. Data & governance',
         '## 9. Delivery plan & other considerations',
       ]);
+    });
+
+    it('tells the harness to get approval before it creates any component', () => {
+      const md = solutionToMarkdown(solution({ blueprint: { ...blueprint, components: [component] } }));
+
+      expect(md).toContain(
+        '## 5. Components to set up\n\n' +
+          '_Work through these components in order with the user. Rejected components have been removed from this list. Do not create anything without the user\'s approval._\n\n' +
+          '- **Approved:** check whether it already exists in the tenant; if it does, move on. If you can create it (ADSP configuration), walk the user through creating it one step at a time and get their approval before each step. If you cannot (Keycloak, OpenShift, or anything you lack permission for), walk the user through doing it themselves, one step or command at a time, and wait for them to confirm each step before the next.\n' +
+          '- **Not reviewed:** before you start, list these by number and ask the user which are needed. Set up the needed ones the same way as approved components and skip the rest.\n' +
+          '- **Dependencies:** if a component depends on one that is not reviewed, ask about that one first. If a dependency is not in this list, the user rejected it; raise it with them before continuing.\n' +
+          '- For every component you set up, walk the user through the Where and How steps and ask them to decide every open decision.\n\n' +
+          '1. **Permit application**',
+      );
+    });
+
+    it('shows the review status of each component and leaves rejected ones out', () => {
+      const md = solutionToMarkdown(
+        solution({
+          blueprint: {
+            ...blueprint,
+            components: [
+              { ...component, review: 'approved' },
+              { ...component, order: 2, name: 'Reviewer role', review: 'rejected' },
+              { ...component, order: 3, name: 'Staff role', review: 'not-reviewed' },
+            ],
+          },
+        }),
+      );
+
+      expect(md).toContain('1. **Permit application** (Form definition, form-service): Approved. Collects applications');
+      expect(md).toContain('3. **Staff role** (Form definition, form-service): Not reviewed. Collects applications');
+      expect(md).not.toContain('Reviewer role');
+    });
+
+    it('indents component details under two-digit numbers so the list keeps its numbering', () => {
+      const md = solutionToMarkdown(solution({ blueprint: { ...blueprint, components: [{ ...component, order: 10 }] } }));
+
+      expect(md).toContain('10. **Permit application**');
+      expect(md).toContain('\n    - Where: Tenant admin > Form\n');
+      expect(md).toContain('\n    - Open decision: Allow drafts?');
     });
 
     it('renders an empty components section for a blueprint saved before components existed', () => {

@@ -160,6 +160,26 @@ paths:
       responses:
         200: { description: The solution with state.blueprint populated. }
         400: { description: The solution has no analysis yet. }
+  /planner/v1/solutions/{id}/components/{order}/review:
+    put:
+      tags: [Solution]
+      summary: Records the user's review of a blueprint component. Rejected components are left out of the export.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: order, in: path, required: true, schema: { type: integer, minimum: 1 }, description: The component's order in the blueprint. }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [review]
+              properties:
+                review: { type: string, enum: [not-reviewed, approved, rejected] }
+      responses:
+        200: { description: The solution with the component's review updated. }
+        400: { description: Invalid order or review value. }
+        404: { description: Solution or component not found. }
   /planner/v1/specialists/{service}/chat:
     post:
       tags: [Specialist]

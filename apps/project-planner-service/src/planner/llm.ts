@@ -428,6 +428,7 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       'Use only the ADSP services listed. Be specific to this problem, practical and concise; write for a mixed business and technical audience. ' +
       'Reply with a single JSON object only, no commentary.';
     const hypothesis = state.hypotheses[0];
+    const currentComponents = (state.blueprint?.components || []).filter((c) => c.target === 'adsp');
     const user = [
       `Problem statement:\n"""${state.problemStatement}"""`,
       state.discovery?.messages.length
@@ -456,6 +457,11 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
               (n) =>
                 `- ${n.service} (${n.fit}): ${n.summary.slice(0, 700)} Constraints: ${n.constraints.slice(0, 3).join('; ')}. Risks: ${n.risks.slice(0, 3).join('; ')}`,
             )
+            .join('\n')}`
+        : '',
+      currentComponents.length
+        ? `Current components (reviews follow a component by its service and name, so keep the exact service and name of any that still serves the same purpose):\n${currentComponents
+            .map((c) => `- ${c.service}: ${c.name}`)
             .join('\n')}`
         : '',
       'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": []}, ' +

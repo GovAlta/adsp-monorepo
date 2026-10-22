@@ -231,6 +231,8 @@ export interface BlueprintWorkflow {
   steps: string[];
 }
 
+export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected';
+
 export interface BlueprintComponent {
   order: number;
   service: string;
@@ -241,6 +243,7 @@ export interface BlueprintComponent {
   openDecisions: string[];
   target: 'adsp' | 'keycloak' | 'openshift';
   setup: { where: string; docs: string; schemaKey?: string; how: string };
+  review?: ComponentReview;
 }
 
 export interface SolutionBlueprint {

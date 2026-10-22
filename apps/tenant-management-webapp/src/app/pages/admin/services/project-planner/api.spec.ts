@@ -123,6 +123,13 @@ describe('usePlannerApi', () => {
         '/solutions/s1/questions/q1',
         { answer: 'Yes' },
       ],
+      [
+        'reviews a component',
+        (api) => api.reviewComponent('s1', 2, 'approved'),
+        'put',
+        '/solutions/s1/components/2/review',
+        { review: 'approved' },
+      ],
       ['runs discovery', (api) => api.discovery('s1', discovery), 'post', '/solutions/s1/discovery', discovery],
       [
         'runs discovery with an empty body by default',

@@ -217,6 +217,9 @@ export interface BlueprintWorkflow {
 // adsp: tenant configuration; keycloak and openshift: set up by the team outside ADSP.
 export type ComponentTarget = 'adsp' | 'keycloak' | 'openshift'; // clean-code-ignore: RULE-19 — types only; no runtime code to test.
 
+// The user's call on whether the solution needs a component; rejected components are left out of the export.
+export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected';
+
 // A concrete thing to create or configure so the solution can run.
 export interface BlueprintComponent {
   order: number;
@@ -228,6 +231,7 @@ export interface BlueprintComponent {
   openDecisions: string[];
   target: ComponentTarget;
   setup: { where: string; docs: string; schemaKey?: string; how: string };
+  review?: ComponentReview;
 }
 
 // The complete plan behind a proposed solution.
