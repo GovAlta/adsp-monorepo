@@ -9,8 +9,8 @@ import {
 import { randomUUID } from 'crypto';
 import * as schedule from 'node-schedule';
 import type { Logger } from 'winston';
-import { AUDIT_SERVICE_NAMESPACE, CatalogService, RetentionService } from '../model';
-import { AuditEvent, EnrichedEvent } from '../types';
+import { CatalogService, RetentionService } from '../model';
+import { AUDIT_SERVICE_NAMESPACE, AuditEvent, EnrichedEvent } from '../types';
 import { enrichEvent, getActionDefinition } from '../utils/event-preparation';
 import { ActionValidator } from '../utils/event-validation';
 
