@@ -189,7 +189,7 @@ describe('audit application authorization', () => {
     expect(registration.metrics).toBe('http://collector.example.test:4318');
   });
 
-  it('does not schedule destructive retention without explicit opt-in', () => {
+  it('does not schedule retention when explicitly disabled', () => {
     expect(scheduleRetentionJob).not.toHaveBeenCalled();
   });
 

@@ -20,7 +20,7 @@ export const environment = envalid.cleanEnv(
     DB_POOL_MAX: envalid.num({ default: 5 }),
     RETENTION_MIN_DAYS: envalid.num({ default: 1 }),
     RETENTION_MAX_DAYS: envalid.num({ default: 3650 }),
-    RETENTION_ENABLED: envalid.bool({ default: false }),
+    RETENTION_ENABLED: envalid.bool({ default: true }),
     RETENTION_SCHEDULE: envalid.str({ default: '0 2 * * *' }),
     RETENTION_BATCH_SIZE: envalid.num({ default: 1000 }),
     RETENTION_MAX_BATCHES: envalid.num({ default: 10 }),

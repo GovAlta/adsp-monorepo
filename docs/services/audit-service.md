@@ -10,7 +10,7 @@ The action catalog registers the classification of audit actions. Registering an
 generate audit records. The write endpoint validates and enriches events, then submits them through
 the write buffer to PostgreSQL. History endpoints read committed rows from the same database.
 Action catalogs and retention settings remain in Configuration Service, not the audit database.
-SIEM forwarding is a separate capability. Retention execution is an opt-in scheduled job.
+SIEM forwarding is a separate capability. Scheduled retention is enabled by default.
 
 ## Source layout
 
@@ -387,12 +387,13 @@ unconfirmed saves; failed replay saves use the same failure counter with `operat
 
 ## Scheduled retention
 
-Retention is disabled by default. Configure these environment variables (or the `audit-service`
-ConfigMap in OpenShift) and restart the service to enable it:
+Retention is enabled by default and runs daily at 02:00 UTC. Set `RETENTION_ENABLED=false` to
+disable it. Configure these environment variables (or the `audit-service` ConfigMap in OpenShift)
+and restart the service to apply changes:
 
 | Variable                | Default     | Meaning                                         |
 | ----------------------- | ----------- | ----------------------------------------------- |
-| `RETENTION_ENABLED`     | `false`     | Explicit opt-in to deletion.                    |
+| `RETENTION_ENABLED`     | `true`      | Set to `false` to disable scheduled deletion.    |
 | `RETENTION_SCHEDULE`    | `0 2 * * *` | Cron schedule, at 02:00 UTC by default.         |
 | `RETENTION_BATCH_SIZE`  | `1000`      | Maximum audit rows deleted in one statement.    |
 | `RETENTION_MAX_BATCHES` | `10`        | Maximum batches per tenant per scheduled sweep. |
