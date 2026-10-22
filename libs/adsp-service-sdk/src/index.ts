@@ -15,8 +15,8 @@ export {
 } from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole, authorize } from './access';
 export type { TokenProvider, User } from './access';
-export { auditDefinitions } from './audit';
-export type { AuditAction, AuditActionDefinition } from './audit';
+export { auditDefinitions, AuditCategories, AuditSeverities, BuiltInRetentionClasses } from './audit';
+export type { AuditAction, AuditActionDefinition, AuditCategory, AuditSeverity } from './audit';
 export type { GoAErrorExtra } from './utils';
 export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';

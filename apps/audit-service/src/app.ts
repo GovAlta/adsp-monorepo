@@ -12,7 +12,6 @@ import { environment } from './environments/environment';
 import {
   AuditServiceRoles,
   CatalogService,
-  configurationSchema,
   createAuditConfigurationConverter,
   combineAuditConfiguration,
   createAuditRouter,
@@ -30,6 +29,9 @@ import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
 import { SELF_AUDIT_DEFINITIONS } from './audit/model';
 import { SelfAuditor } from './audit/utils/self-audit';
 import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
+import { createConfigurationSchema } from './audit/configuration';
+import { RETENTION_ACTION, RETENTION_DEFINITION, RetentionJob, scheduleRetentionJob } from './audit/jobs/retention';
+import { PostgresRetentionRepository } from './postgres/retention';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
@@ -39,6 +41,8 @@ export interface AuditApplication extends express.Application {
 }
 
 export const initializeApp = async (): Promise<AuditApplication> => {
+  const retentionBounds = { minDays: environment.RETENTION_MIN_DAYS, maxDays: environment.RETENTION_MAX_DAYS };
+  const configurationSchema = createConfigurationSchema(retentionBounds);
   const app = express();
 
   app.use(compression());
@@ -102,6 +106,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
                 actions: {
                   ...SELF_AUDIT_DEFINITIONS,
                   ...auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),
+                  [RETENTION_ACTION]: RETENTION_DEFINITION,
                 },
               },
             },
@@ -128,7 +133,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   const repository = new PostgresEventRepository(knex, logger);
   const buffer = new AuditWriteBuffer(repository, logger, {}, meter, auditMetrics);
   const catalogs = new CatalogService(configurationService, logger);
-  const retention = new RetentionService(configurationService, logger);
+  const retention = new RetentionService(configurationService, logger, retentionBounds);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -201,13 +206,28 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
+  const retentionJob = environment.RETENTION_ENABLED
+    ? scheduleRetentionJob(
+        new RetentionJob(new PostgresRetentionRepository(knex), catalogs, retention, serviceId, logger, {
+          batchSize: environment.RETENTION_BATCH_SIZE,
+          maxBatches: environment.RETENTION_MAX_BATCHES,
+        }),
+        environment.RETENTION_SCHEDULE,
+        logger,
+      )
+    : undefined;
+
   let shutdown: Promise<void>;
+  const drain = async () => {
+    await retentionJob?.stop();
+    await buffer.close();
+  };
   return Object.assign(app, {
-    drain: () => buffer.close(),
+    drain,
     shutdown: () => {
       shutdown ??= (async () => {
         try {
-          await buffer.close();
+          await drain();
         } finally {
           try {
             await knex.destroy();

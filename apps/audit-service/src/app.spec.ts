@@ -23,7 +23,17 @@ jest.mock('./environments/environment', () => ({
     LOG_LEVEL: 'error',
     TRUSTED_PROXY: false,
     OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.example.test:4318',
+    RETENTION_MIN_DAYS: 1,
+    RETENTION_MAX_DAYS: 3650,
+    RETENTION_ENABLED: false,
+    RETENTION_BATCH_SIZE: 1000,
+    RETENTION_MAX_BATCHES: 10,
+    RETENTION_SCHEDULE: '0 2 * * *',
   },
+}));
+jest.mock('./audit/jobs/retention', () => ({
+  ...jest.requireActual('./audit/jobs/retention'),
+  scheduleRetentionJob: jest.fn(),
 }));
 
 import { adspId, ConfigurationService, initializePlatform, User } from '@abgov/adsp-service-sdk';
@@ -37,6 +47,8 @@ import { AuditServiceRoles } from './audit';
 import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
 import { AuditStorageUnavailableError, AuditStoreError } from './audit/buffer';
 import { randomUUID } from 'crypto';
+import { scheduleRetentionJob } from './audit/jobs/retention';
+import { environment } from './environments/environment';
 
 describe('audit application authorization', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -177,6 +189,28 @@ describe('audit application authorization', () => {
     expect(registration.metrics).toBe('http://collector.example.test:4318');
   });
 
+  it('does not schedule retention when explicitly disabled', () => {
+    expect(scheduleRetentionJob).not.toHaveBeenCalled();
+  });
+
+  it('starts enabled retention and drains it before closing database connections', async () => {
+    await app.shutdown();
+    jest.replaceProperty(environment, 'RETENTION_ENABLED', true);
+    jest.replaceProperty(environment, 'RETENTION_BATCH_SIZE', 100);
+    jest.replaceProperty(environment, 'RETENTION_MAX_BATCHES', 3);
+    jest.replaceProperty(environment, 'RETENTION_SCHEDULE', '0 2 * * *');
+    const stop = jest.fn().mockResolvedValue(undefined);
+    jest.mocked(scheduleRetentionJob).mockReturnValue({ stop });
+    app = await initializeApp();
+    const { knex } = await jest.mocked(createDatabase).mock.results.at(-1).value;
+    jest.mocked(knex.destroy).mockClear();
+
+    await app.shutdown();
+
+    expect(scheduleRetentionJob).toHaveBeenCalledWith(expect.anything(), '0 2 * * *', expect.anything());
+    expect(stop.mock.invocationCallOrder[0]).toBeLessThan(jest.mocked(knex.destroy).mock.invocationCallOrder[0]);
+  });
+
   it('registers the service replay action catalog through the SDK', () => {
     const registration = jest.mocked(initializePlatform).mock.calls[0][0];
 
@@ -189,7 +223,14 @@ describe('audit application authorization', () => {
     });
     const { actions } = registered[0].configuration as { actions: Record<string, unknown> };
     expect(Object.keys(actions).sort()).toEqual(
-      ['events.list', 'events.list-all', 'events.read', 'failed-event.replay', 'failed-events.list'].sort(),
+      [
+        'events.list',
+        'events.list-all',
+        'events.read',
+        'failed-event.replay',
+        'failed-events.list',
+        'retention.run',
+      ].sort(),
     );
     expect(actions['failed-event.replay']).toEqual({
       version: 1,

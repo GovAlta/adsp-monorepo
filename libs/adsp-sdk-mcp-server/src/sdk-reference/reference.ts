@@ -360,8 +360,8 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     example:
       "auditDefinitions({\n" +
       "  UPDATE_CASE: {\n" +
-      "    name: 'case.update', version: 1, category: 'administrative',\n" +
-      "    severity: 'info', retentionClass: 'compliance',\n" +
+      "    name: 'case.update', version: 1, category: AuditCategories.Administrative,\n" +
+      "    severity: AuditSeverities.Info, retentionClass: BuiltInRetentionClasses.Compliance,\n" +
       "  },\n" +
       "});",
     seeAlso: ['AuditAction', 'AuditActionDefinition', 'ServiceRegistration'],
@@ -382,13 +382,65 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     details:
       'interface AuditActionDefinition {\n' +
       '  version: number;\n' +
-      "  category: 'administrative' | 'runtime' | 'security' | 'data-access';\n" +
-      "  severity: 'info' | 'warning' | 'critical';\n" +
+      '  category: AuditCategory;\n' +
+      '  severity: AuditSeverity;\n' +
       '  retentionClass: string; description?: string; resourceType?: string;\n' +
       '  captureChangeSet?: boolean; forwardToSiem?: boolean;\n' +
       '  metadataSchema?: Record<string, unknown>;\n' +
       '}',
-    seeAlso: ['AuditAction', 'auditDefinitions'],
+    seeAlso: ['AuditAction', 'auditDefinitions', 'AuditCategory', 'AuditSeverity', 'BuiltInRetentionClasses'],
+  },
+  {
+    name: 'AuditCategories',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Shared audit action categories used by TypeScript types and configuration validation.',
+    details:
+      "const AuditCategories = { Administrative: 'administrative', Runtime: 'runtime', " +
+      "Security: 'security', DataAccess: 'data-access' } as const;",
+    example: 'category: AuditCategories.Administrative',
+    seeAlso: ['AuditCategory', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditCategory',
+    kind: 'type',
+    module: 'audit',
+    summary: 'String union of supported audit action categories, derived from AuditCategories.',
+    details:
+      'type AuditCategory = (typeof AuditCategories)[keyof typeof AuditCategories];\n\n' +
+      "Equivalent to 'administrative' | 'runtime' | 'security' | 'data-access'.",
+    seeAlso: ['AuditCategories', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditSeverities',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Shared audit action severity values used by TypeScript types and configuration validation.',
+    details: "const AuditSeverities = { Info: 'info', Warning: 'warning', Critical: 'critical' } as const;",
+    example: 'severity: AuditSeverities.Info',
+    seeAlso: ['AuditSeverity', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditSeverity',
+    kind: 'type',
+    module: 'audit',
+    summary: 'String union of supported audit action severities, derived from AuditSeverities.',
+    details:
+      'type AuditSeverity = (typeof AuditSeverities)[keyof typeof AuditSeverities];\n\n' +
+      "Equivalent to 'info' | 'warning' | 'critical'.",
+    seeAlso: ['AuditSeverities', 'AuditActionDefinition'],
+  },
+  {
+    name: 'BuiltInRetentionClasses',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Names of built-in audit retention classes; custom class names remain supported.',
+    details:
+      "const BuiltInRetentionClasses = { Standard: 'standard', Security: 'security', Compliance: 'compliance' } as const;\n\n" +
+      'These constants define names, not retention periods. AuditActionDefinition.retentionClass remains a string ' +
+      'so an application can use a custom class such as case-history with a configured retention period.',
+    example: 'retentionClass: BuiltInRetentionClasses.Compliance',
+    seeAlso: ['AuditActionDefinition', 'auditDefinitions'],
   },
 
   // event

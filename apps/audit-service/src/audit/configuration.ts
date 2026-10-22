@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, AuditCategories, AuditSeverities } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import type { Logger } from 'winston';
 
@@ -23,6 +23,19 @@ export interface ApplicationRetentionSettings {
 }
 
 export type AuditConfiguration = ActionCatalog | RetentionSettings | ApplicationRetentionSettings;
+
+export interface RetentionBounds {
+  minDays: number;
+  maxDays: number;
+}
+
+export const DEFAULT_RETENTION_BOUNDS: RetentionBounds = { minDays: 1, maxDays: 3650 };
+
+export function assertRetentionBounds({ minDays, maxDays }: RetentionBounds): void {
+  if (!Number.isSafeInteger(minDays) || !Number.isSafeInteger(maxDays) || minDays < 1 || maxDays < minDays) {
+    throw new Error('Retention bounds must be positive integer days with minimum <= maximum.');
+  }
+}
 
 const applicationSchema = {
   type: 'string',
@@ -54,8 +67,8 @@ export const actionCatalogSchema = {
         type: 'object',
         properties: {
           version: { type: 'integer', minimum: 1 },
-          category: { type: 'string', enum: ['administrative', 'runtime', 'security', 'data-access'] },
-          severity: { type: 'string', enum: ['info', 'warning', 'critical'] },
+          category: { type: 'string', enum: Object.values(AuditCategories) },
+          severity: { type: 'string', enum: Object.values(AuditSeverities) },
           retentionClass: retentionClassSchema,
           description: { type: 'string', minLength: 1, pattern: '\\S' },
           resourceType: { type: 'string', minLength: 1 },
@@ -90,14 +103,40 @@ const applicationRetentionSettingsSchema = {
   additionalProperties: false,
 };
 
-export const configurationSchema = {
+const structuralConfigurationSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   oneOf: [actionCatalogSchema, retentionSettingsSchema, applicationRetentionSettingsSchema],
 };
 
+export function createConfigurationSchema(bounds: RetentionBounds = DEFAULT_RETENTION_BOUNDS) {
+  assertRetentionBounds(bounds);
+  const boundedClasses = {
+    ...classesSchema,
+    additionalProperties: {
+      ...classesSchema.additionalProperties,
+      properties: { days: { type: 'integer', minimum: bounds.minDays, maximum: bounds.maxDays } },
+    },
+  };
+  return {
+    ...structuralConfigurationSchema,
+    oneOf: [
+      actionCatalogSchema,
+      { ...retentionSettingsSchema, properties: { ...retentionSettingsSchema.properties, classes: boundedClasses } },
+      {
+        ...applicationRetentionSettingsSchema,
+        properties: { ...applicationRetentionSettingsSchema.properties, classes: boundedClasses },
+      },
+    ],
+  };
+}
+
+export const configurationSchema = createConfigurationSchema();
+
 export function createAuditConfigurationConverter(logger: Logger): (value: unknown) => AuditConfiguration | null {
   const validation = new AjvValidationService(logger);
-  validation.setSchema('audit-configuration', configurationSchema);
+  // The SDK converts thrown converter errors into missing configuration. Check deployment-specific
+  // bounds in RetentionService instead, so an old out-of-range period cannot become a default.
+  validation.setSchema('audit-configuration', structuralConfigurationSchema);
 
   function assertConfiguration(value: unknown): asserts value is AuditConfiguration {
     validation.validate('audit configuration', 'audit-configuration', value);

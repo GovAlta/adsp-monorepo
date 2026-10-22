@@ -63,6 +63,28 @@ describe('write-time retention', () => {
     });
   });
 
+  it.each([0, 3651, 1.5])('refuses an out-of-range configured period %i instead of using defaults', async (days) => {
+    configuration.getServiceConfiguration.mockResolvedValueOnce({
+      kind: 'retentionSettings',
+      classes: { standard: { days } },
+    });
+
+    await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
+  });
+
+  it('applies platform bounds to application-specific custom classes', async () => {
+    const bounded = new RetentionService(configuration, logger, { minDays: 30, maxDays: 730 });
+    configuration.getServiceConfiguration.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      kind: 'applicationRetentionSettings',
+      application: 'case-service',
+      classes: { 'case-history': { days: 731 } },
+    });
+
+    await expect(bounded.getClasses('case-service', tenantId)).rejects.toThrow('temporarily unavailable');
+  });
+
   it.each([
     [{ kind: 'actionCatalog', application: 'case-service', actions: {} }, null],
     [null, { kind: 'retentionSettings', classes: {} }],
