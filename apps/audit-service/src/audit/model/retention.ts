@@ -2,7 +2,13 @@ import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
-import { AuditConfiguration, RetentionSettings } from '../configuration';
+import {
+  assertRetentionBounds,
+  AuditConfiguration,
+  DEFAULT_RETENTION_BOUNDS,
+  RetentionBounds,
+  RetentionSettings,
+} from '../configuration';
 
 export const DEFAULT_RETENTION_CLASSES: RetentionSettings['classes'] = {
   standard: { days: 90 },
@@ -15,7 +21,10 @@ export class RetentionService {
   constructor(
     private readonly configuration: ConfigurationService,
     private readonly logger: Logger,
-  ) {}
+    private readonly bounds: RetentionBounds = DEFAULT_RETENTION_BOUNDS,
+  ) {
+    assertRetentionBounds(bounds);
+  }
 
   async getClasses(namespace: string, tenantId: AdspId): Promise<RetentionSettings['classes']> {
     try {
@@ -38,11 +47,19 @@ export class RetentionService {
       ) {
         throw new Error('Application retention settings do not match their configuration name.');
       }
-      return {
+      const classes = {
         ...DEFAULT_RETENTION_CLASSES,
         ...(settings?.kind === 'retentionSettings' ? settings.classes : {}),
         ...(application?.kind === 'applicationRetentionSettings' ? application.classes : {}),
       };
+      for (const [name, { days }] of Object.entries(classes)) {
+        if (!Number.isSafeInteger(days) || days < this.bounds.minDays || days > this.bounds.maxDays) {
+          throw new Error(
+            `Retention class '${name}' must be between ${this.bounds.minDays} and ${this.bounds.maxDays} days.`,
+          );
+        }
+      }
+      return classes;
     } catch (err) {
       this.logger.warn(`Unable to resolve retention settings for ${namespace}: ${err}`, {
         context: 'AuditRetention',

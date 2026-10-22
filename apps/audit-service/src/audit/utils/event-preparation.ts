@@ -12,7 +12,10 @@ export interface WriteContext {
   receivedAt: Date;
 }
 
-export function getActionDefinition(event: AuditEvent, catalog: ActionCatalog | null): AuditActionDefinition {
+export function getActionDefinition(
+  event: Pick<AuditEvent, 'action'>,
+  catalog: ActionCatalog | null,
+): AuditActionDefinition {
   const name = event.action.replace(/\.(succeeded|failed)$/, '');
   if (!catalog || !Object.prototype.hasOwnProperty.call(catalog.actions, name)) {
     throw new EventRejectedError('unknown_action', `Action '${event.action}' is not registered.`);

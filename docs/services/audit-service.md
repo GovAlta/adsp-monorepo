@@ -10,7 +10,7 @@ The action catalog registers the classification of audit actions. Registering an
 generate audit records. The write endpoint validates and enriches events, then submits them through
 the write buffer to PostgreSQL. History endpoints read committed rows from the same database.
 Action catalogs and retention settings remain in Configuration Service, not the audit database.
-SIEM forwarding and retention execution are separate capabilities.
+SIEM forwarding is a separate capability. Retention execution is an opt-in scheduled job.
 
 ## Source layout
 
@@ -18,6 +18,7 @@ The `apps/audit-service/src/audit` module follows the Calendar Service layout:
 
 - `model/`: catalog loading and retention configuration resolution.
 - `buffer/`: write scheduling, durability handling and the database adapter contract.
+- `jobs/`: scheduled retention and its tenant-scoped run audit.
 - `router/`: HTTP routes, write handlers, and OpenAPI definitions.
 - `types/`: event payloads and the submission contract.
 - `utils/`: event/request validation and write authorization.
@@ -93,6 +94,26 @@ At write time the service resolves configured periods over the design defaults: 
 security and compliance 365 days. Application settings in `audit-service:retention-<application>`
 override `audit-service:retention`, which overrides those defaults. Expiry is calculated from
 `occurred_at` in UTC days. Missing custom classes fail writes with a retryable 503.
+
+### Retention periods and forward-only changes
+
+`RETENTION_MIN_DAYS` and `RETENTION_MAX_DAYS` configure platform-wide, inclusive bounds
+(defaults **1** and **3650** days, pending PO confirmation). Both must be positive integers,
+with minimum no greater than maximum. These bounds apply to tenant and Core retention settings,
+application overrides, and custom classes. The fixed default periods remain 90/365/365 days.
+If narrower bounds exclude a default, configure an in-range replacement for that class.
+
+The service registers these bounds in the Configuration Service namespace schema, so out-of-range
+period updates are rejected there. Restart the service after changing the platform environment
+settings and verify that the updated namespace definition has registered. All replicas must use
+the same bounds. The write path also validates resolved periods, refusing old positive periods
+outside new bounds with 503 rather than silently substituting defaults. Existing SDK handling of
+configuration transport/structural conversion failures remains as documented below.
+
+Changes are **forward only**: after the active configuration/cache refreshes, newly enriched
+events use the new period, but stored `retention_until` values are never recalculated. Buffered
+events already enriched keep their original expiry too. Cleanup uses only stored expiry, not the
+current period or a TimescaleDB chunk boundary.
 
 ### Registering through the SDK
 
@@ -355,6 +376,61 @@ needs separate configuration.
 
 Open-event counts come from PostgreSQL. The write buffer counts confirmed parked events and
 unconfirmed saves; failed replay saves use the same failure counter with `operation=replay`.
+
+## Scheduled retention
+
+Retention is disabled by default. Configure these environment variables (or the `audit-service`
+ConfigMap in OpenShift) and restart the service to enable it:
+
+| Variable                | Default     | Meaning                                         |
+| ----------------------- | ----------- | ----------------------------------------------- |
+| `RETENTION_ENABLED`     | `false`     | Explicit opt-in to deletion.                    |
+| `RETENTION_SCHEDULE`    | `0 2 * * *` | Cron schedule, at 02:00 UTC by default.         |
+| `RETENTION_BATCH_SIZE`  | `1000`      | Maximum audit rows deleted in one statement.    |
+| `RETENTION_MAX_BATCHES` | `10`        | Maximum batches per tenant per scheduled sweep. |
+| `RETENTION_MIN_DAYS`    | `1`         | Minimum configured retention period.            |
+| `RETENTION_MAX_DAYS`    | `3650`      | Maximum configured retention period.            |
+
+Each tick enumerates tenants with records in `audit_events` (including tenants no longer listed
+by Tenant Service) and performs a separate bounded run for each. Every delete filters by that
+tenant and `retention_until < cutoff`, where cutoff is captured at the start of the sweep.
+Rows at exactly the cutoff and future rows are retained. No table-wide delete or `drop_chunks`
+is used. A `(tenant_id, retention_until, id)` index supports the bounded ordered selection.
+The per-tenant cap leaves remaining expired rows for the next sweep.
+
+A database-wide PostgreSQL transaction advisory lock excludes concurrent cleanup across all
+tenants and replicas. A lock loser skips rather than queues; a local running guard also prevents
+overlapping timer invocations. The lock is held on the same connection as deletion and released
+on commit, rollback or disconnect. No distributed guarantee is attributed to SDK `LimitToOne`.
+Shutdown cancels future ticks, stops between tenants, and awaits the active run before closing storage.
+
+Each executed tenant run, including a zero-deletion run, inserts `retention.run.succeeded` or
+`retention.run.failed` in that tenant's `audit-service` namespace. The system actor and writer are
+the service ID. The registered action uses the compliance class; metadata contains `deletedCount`,
+completed `batches`, `cutoff`, and a sanitized `error` on failure. Tenants without any audit records
+and ticks skipped for a busy lock do not create synthetic audit records.
+
+The job resolves its registered action and retention before deleting. Deletion batches use savepoints
+within one bounded tenant transaction. A failed batch rolls back to its savepoint, and earlier
+successful batches commit **with a failure audit containing their count**. If that audit cannot be
+inserted, or the process/connection dies before commit, the entire tenant transaction rolls back.
+Database/configuration failures that prevent a run from starting, or prevent a failure record from
+being committed, are reported through logs and `instrumentJob` telemetry; no durable failure event
+can be guaranteed while the database itself is unavailable.
+
+**Single-account MVP:** migrations, normal requests and retention reuse the existing `DB_USER` /
+`DB_PASSWORD`. That account needs SELECT, INSERT and DELETE on `audit_events`; migration ownership
+already supplies them. No new role or credential is created. Separate `audit_retention` credentials
+and the acceptance criterion preventing business-role UPDATE/DELETE are explicitly deferred;
+the service does not claim database-enforced append-only isolation in this mode.
+
+The existing `ON DELETE CASCADE` on `audit_failed_events.replayed_as` is intentionally preserved.
+Deleting an expired event also deletes any linked replayed failure rows; unreplayed failures are
+untouched. `deletedCount` counts audit events, not cascaded failure rows.
+
+For local integration verification only, set `AUDIT_RETENTION_TEST_DATABASE_URL` to a disposable
+PostgreSQL database on `localhost` or `127.0.0.1` named `audit_retention_test`, then run the audit-service
+tests. The suite refuses other hosts/database names and deletes its fixture rows. Never point it at Dev/UAT.
 
 ## Self-auditing
 
