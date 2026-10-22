@@ -1,27 +1,38 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ServiceContainer } from '../../styled-components';
-import { GoabContainer, GoabFormItem, GoabInput, GoabText } from '@abgov/react-components';
+import {
+  GoabBlock,
+  GoabButton,
+  GoabContainer,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabInput,
+  GoabText,
+} from '@abgov/react-components';
 import { AdspGoACalendar } from '@abgov/adsp-components-react';
 import { CalendarClient, DateRange } from '@abgov/adsp-components-core';
-import { useSelector } from 'react-redux';
-import { directorySelector, getAccessToken } from '../../../state';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  AppDispatch,
+  calendarsBusySelector,
+  calendarsSelector,
+  directorySelector,
+  getAccessToken,
+  loadCalendars,
+} from '../../../state';
 import styled from 'styled-components';
-import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
-import { GoabSpacer } from '@abgov/react-components-ds1';
+import { GoabDropdownOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabSpacer } from '@abgov/react-components';
 
 const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 interface ADSPGoACalendarExampleProps {
   tenantName: string;
 }
-
-const CalendarWrapper = styled.div`
-  flex: 1 1 100%;
-  min-width: 0;
-`;
-
-const DateFlexItem = styled.div`
-  display: flex;
-  flex-direction: row;
+const Card = styled.div`
+  background-color: var(--goa-color-greyscale-150);
+  padding: var(--goa-space-l);
+  border-radius: var(--goa-space-s);
 `;
 
 const toDateInputValue = (date?: Date) =>
@@ -33,14 +44,25 @@ const fromDateInputValue = (value: string) => (value ? new Date(`${value}T00:00:
 export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExampleProps) => {
   const directory = useSelector(directorySelector);
   const calendarServiceUrl = directory[CALENDAR_SERVICE_ID];
+  const dispatch = useDispatch<AppDispatch>();
+  const calendars = useSelector(calendarsSelector);
+  const { loading } = useSelector(calendarsBusySelector);
   const [calendarName, setCalendarName] = useState('');
+  const [loadRequest, setLoadRequest] = useState<{ id: number; calendar: string; range: DateRange }>();
+  useEffect(() => {
+    if (calendarServiceUrl) {
+      dispatch(loadCalendars({ tenantName }));
+    }
+  }, [dispatch, calendarServiceUrl, tenantName]);
 
+  //Set default one year
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const end = new Date();
     const start = new Date(end);
     start.setDate(start.getDate() - 365);
     return { start, end };
   });
+
   // Stable across renders so AdspGoACalendar doesn't reload events on every render.
   const client = useMemo(
     () =>
@@ -50,6 +72,13 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
     [calendarServiceUrl, tenantName],
   );
 
+  const onLoad = () => {
+    if (!client || !calendarName || !dateRange?.start || !dateRange?.end) {
+      return;
+    }
+    setLoadRequest((current) => ({ id: (current?.id ?? 0) + 1, calendar: calendarName, range: dateRange }));
+  };
+
   return (
     <ServiceContainer>
       <GoabContainer
@@ -58,55 +87,80 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
         testId={'calendarServiceContainer'}
         title={'ADSP FullCalendar'}
       >
-        <GoabText size="body-m" mb="xs">
-          Enter the name of a calendar to see its events and Alberta statutory holidays, rendered with AdspGoACalendar.
-        </GoabText>
-
-        <GoabFormItem label="Calendar name" labelSize="compact" mb="xs">
-          <GoabInput
-            name="calendar-name"
-            value={calendarName}
-            size="compact"
-            width="50%"
-            testId="calendar-name-input"
-            onChange={(detail) => setCalendarName(detail.value)}
-          />
-        </GoabFormItem>
-        {!calendarServiceUrl && (
-          <GoabText size="body-s" mt="m">
-            Calendar service is not available in the directory for this environment.
+        <Card>
+          <GoabText size="body-m" mb="xs">
+            Select a calendar to see its events and Alberta statutory holidays, rendered with AdspGoACalendar.
           </GoabText>
-        )}
-        <GoabSpacer vSpacing="s"></GoabSpacer>
-        <DateFlexItem>
-          <GoabFormItem label="Start date" labelSize="compact" mb="l" mr="s">
-            <GoabInput
-              size="compact"
-              type="date"
-              name="example-start-date"
-              value={toDateInputValue(dateRange.start)}
-              disabled={false}
-              onChange={(detail: GoabInputOnChangeDetail) =>
-                setDateRange((current) => ({ ...current, start: fromDateInputValue(detail.value) }))
-              }
-            />
-          </GoabFormItem>
-          <GoabFormItem label="End date" labelSize="compact" mb="l">
-            <GoabInput
-              size="compact"
-              type="date"
-              name="example-end-date"
-              value={toDateInputValue(dateRange.end)}
-              disabled={false}
-              onChange={(detail: GoabInputOnChangeDetail) =>
-                setDateRange((current) => ({ ...current, end: fromDateInputValue(detail.value) }))
-              }
-            />
-          </GoabFormItem>
-        </DateFlexItem>
 
-        {client && calendarName && (
-          <AdspGoACalendar client={client} calendar={calendarName} initialDateRange={dateRange} testId="goa-calendar" />
+          <GoabFormItem label="Calendar name" labelSize="compact" mb="xs">
+            <GoabDropdown
+              name="calendar-name"
+              value={calendarName}
+              size="compact"
+              width="45ch"
+              disabled={loading}
+              testId="calendar-name-dropdown"
+              onChange={(detail: GoabDropdownOnChangeDetail) => setCalendarName(detail.value)}
+            >
+              {calendars.map(({ name, displayName }) => (
+                <GoabDropdownItem key={name} value={name} label={displayName || name} />
+              ))}
+            </GoabDropdown>
+          </GoabFormItem>
+          {!calendarServiceUrl && (
+            <GoabText size="body-s" mt="m">
+              Calendar service is not available in the directory for this environment.
+            </GoabText>
+          )}
+          <GoabSpacer vSpacing="s"></GoabSpacer>
+          <GoabBlock direction="row" alignment="start">
+            <GoabFormItem label="Start date" labelSize="compact" mr="s">
+              <GoabInput
+                size="compact"
+                type="date"
+                width="20ch"
+                name="example-start-date"
+                value={toDateInputValue(dateRange?.start)}
+                disabled={false}
+                onChange={(detail: GoabInputOnChangeDetail) =>
+                  setDateRange((current) => ({ ...current, start: fromDateInputValue(detail.value) }))
+                }
+              />
+            </GoabFormItem>
+            <GoabFormItem label="End date" labelSize="compact" mb="l">
+              <GoabInput
+                size="compact"
+                type="date"
+                width="20ch"
+                name="example-end-date"
+                value={toDateInputValue(dateRange?.end)}
+                disabled={false}
+                onChange={(detail: GoabInputOnChangeDetail) =>
+                  setDateRange((current) => ({ ...current, end: fromDateInputValue(detail.value) }))
+                }
+              />
+            </GoabFormItem>
+            <GoabFormItem mt="xl">
+              <GoabButton
+                size="compact"
+                testId="calendar-load-button"
+                disabled={!client || !calendarName || !dateRange?.start || !dateRange?.end}
+                onClick={onLoad}
+              >
+                Load
+              </GoabButton>
+            </GoabFormItem>
+          </GoabBlock>
+        </Card>
+        <GoabSpacer vSpacing="m"></GoabSpacer>
+        {client && loadRequest && (
+          <AdspGoACalendar
+            key={loadRequest.id}
+            client={client}
+            calendar={loadRequest.calendar}
+            initialDateRange={loadRequest.range}
+            testId="goa-calendar"
+          />
         )}
       </GoabContainer>
     </ServiceContainer>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 // FullCalendar's core relies on the Temporal API; polyfill it for environments without native support.
 import 'temporal-polyfill/global';
 import FullCalendar from '@fullcalendar/react';
@@ -52,11 +52,8 @@ export interface AdspGoACalendarProps {
 
   themeOverrides?: AdspComponentThemeOverrides<'calendar'>;
 
-  /** The initial date range we want to populate the events */
+  /** The date range to open the calendar on; events load for the range FullCalendar then displays. */
   initialDateRange?: DateRange;
-
-  /** Called when the toolbar's "Add event" button is clicked. */
-  onAddEvent?: () => void;
 
   /**
    * The test id for calendar component
@@ -70,30 +67,21 @@ export const AdspGoACalendar = ({
   defaultView = 'month',
   initialDateRange,
   themeOverrides,
-  onAddEvent,
   testId,
 }: AdspGoACalendarProps) => {
   const themeStyle = useAdspThemeStyle('calendar', themeOverrides);
-  // Before FullCalendar reports its own visible range via datesSet, fetch the past year so events load immediately.
-  const [range, setRange] = useState<DateRange>(initialDateRange ?? {});
+
+  // The first fetch waits for FullCalendar to report its visible range via datesSet, so it loads once.
+  const [range, setRange] = useState<DateRange>();
   const calendarRef = useRef<CalendarRef>(null);
   const [currentView, setCurrentView] = useState(FULL_CALENDAR_VIEW[defaultView]);
-
-  useEffect(() => {
-    if (!initialDateRange) {
-      const end = new Date();
-      const start = new Date(end);
-      start.setDate(start.getDate() - 365);
-      setRange({ start, end });
-    }
-  }, [initialDateRange]);
 
   const { calendarEvents } = useCalendarEvents(client, calendar, range);
   // FullCalendar calls this on every render of the view, including when the range hasn't actually changed; only
   // update state when it has, so the client isn't asked to reload the same range repeatedly.
   const handleDatesSet = useCallback((info: { start: Date; end: Date; view: { type: string } }) => {
     setRange((current) =>
-      current.start?.getTime() === info.start.getTime() && current.end?.getTime() === info.end.getTime()
+      current?.start?.getTime() === info.start.getTime() && current?.end?.getTime() === info.end.getTime()
         ? current
         : { start: info.start, end: info.end },
     );
@@ -149,26 +137,22 @@ export const AdspGoACalendar = ({
         </GoabButton>
       ),
       next: (
-        <GoabButton size="compact" type="secondary" onClick={() => getApi()?.next()}>
+        <GoabButton size="compact" type="secondary" onClick={() => getApi()?.next()} mr="s">
           Next
         </GoabButton>
       ),
       today: (
-        <GoabButton size="compact" type="secondary" onClick={() => getApi()?.today()} mr="s">
+        <GoabButton size="compact" type="secondary" onClick={() => getApi()?.today()}>
           Today
         </GoabButton>
       ),
-      addEvent: (
-        <GoabButton size="compact" testId={testId ? `${testId}-add-event` : undefined} onClick={() => onAddEvent?.()}>
-          Add event
-        </GoabButton>
-      ),
+
       dayGridMonth: viewButton('dayGridMonth'),
       timeGridWeek: viewButton('timeGridWeek'),
       timeGridDay: viewButton('timeGridDay'),
       listWeek: viewButton('listWeek'),
     };
-  }, [currentView, onAddEvent, testId]);
+  }, [currentView]);
 
   return (
     <div className="adsp-calendar" style={themeStyle} data-testid={testId}>
@@ -176,13 +160,13 @@ export const AdspGoACalendar = ({
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, classicThemePlugin]}
         initialView={FULL_CALENDAR_VIEW[defaultView]}
+        initialDate={initialDateRange?.start}
         headerToolbar={{
-          left: 'addEvent prev,today,next',
+          left: 'prev,next,today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
         }}
         toolbarElements={toolbarElements}
-        height="auto"
         events={events}
         datesSet={handleDatesSet}
       />

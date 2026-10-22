@@ -8,20 +8,24 @@ export interface UseCalendarEventsResult {
 }
 
 // The client must be stable across renders (create it once or memoize it), otherwise events reload on every render.
+// Nothing is fetched while range is undefined.
 export function useCalendarEvents(
   client: ICalendarClient,
   calendar: string,
-  range: DateRange,
+  range: DateRange | undefined,
 ): UseCalendarEventsResult {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvents | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Date objects change identity on every render, so depend on their time values instead.
-  const start = range.start?.getTime();
-  const end = range.end?.getTime();
+  const start = range?.start?.getTime();
+  const end = range?.end?.getTime();
+  const hasRange = range !== undefined;
 
   useEffect(() => {
+    if (!client || !hasRange) return;
+
     let current = true;
     setLoading(true);
     setError(null);
@@ -51,7 +55,7 @@ export function useCalendarEvents(
     return () => {
       current = false;
     };
-  }, [client, calendar, start, end]);
+  }, [client, calendar, hasRange, start, end]);
 
   return { calendarEvents, loading, error };
 }
