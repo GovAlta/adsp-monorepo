@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, AuditCategories, AuditSeverities } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import type { Logger } from 'winston';
 
@@ -67,8 +67,8 @@ export const actionCatalogSchema = {
         type: 'object',
         properties: {
           version: { type: 'integer', minimum: 1 },
-          category: { type: 'string', enum: ['administrative', 'runtime', 'security', 'data-access'] },
-          severity: { type: 'string', enum: ['info', 'warning', 'critical'] },
+          category: { type: 'string', enum: Object.values(AuditCategories) },
+          severity: { type: 'string', enum: Object.values(AuditSeverities) },
           retentionClass: retentionClassSchema,
           description: { type: 'string', minLength: 1, pattern: '\\S' },
           resourceType: { type: 'string', minLength: 1 },

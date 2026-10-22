@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, AuditCategories, AuditSeverities } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import { createLogger, transports } from 'winston';
 import {
@@ -40,6 +40,24 @@ describe('audit configuration schema', () => {
     };
 
     expect(() => validate({ ...catalog, actions: { 'case.update': action } })).not.toThrow();
+  });
+
+  it.each(Object.values(AuditCategories))('accepts SDK category %s', (category) => {
+    expect(() =>
+      validate({
+        ...catalog,
+        actions: { 'case.update': { ...definition, category } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each(Object.values(AuditSeverities))('accepts SDK severity %s', (severity) => {
+    expect(() =>
+      validate({
+        ...catalog,
+        actions: { 'case.update': { ...definition, severity } },
+      }),
+    ).not.toThrow();
   });
 
   describe('combined audit configuration', () => {

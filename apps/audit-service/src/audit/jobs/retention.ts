@@ -1,4 +1,11 @@
-import { AdspId, AuditActionDefinition, instrumentJob } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditActionDefinition,
+  AuditCategories,
+  AuditSeverities,
+  BuiltInRetentionClasses,
+  instrumentJob,
+} from '@abgov/adsp-service-sdk';
 import { randomUUID } from 'crypto';
 import * as schedule from 'node-schedule';
 import type { Logger } from 'winston';
@@ -10,9 +17,9 @@ import { ActionValidator } from '../utils/event-validation';
 export const RETENTION_ACTION = 'retention.run';
 export const RETENTION_DEFINITION: AuditActionDefinition = {
   version: 1,
-  category: 'administrative',
-  severity: 'info',
-  retentionClass: 'compliance',
+  category: AuditCategories.Administrative,
+  severity: AuditSeverities.Info,
+  retentionClass: BuiltInRetentionClasses.Compliance,
   metadataSchema: {
     type: 'object',
     properties: {

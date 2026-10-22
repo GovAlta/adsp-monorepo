@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { AdspId, BuiltInRetentionClasses, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
@@ -11,9 +11,9 @@ import {
 } from '../configuration';
 
 export const DEFAULT_RETENTION_CLASSES: RetentionSettings['classes'] = {
-  standard: { days: 90 },
-  security: { days: 365 },
-  compliance: { days: 365 },
+  [BuiltInRetentionClasses.Standard]: { days: 90 },
+  [BuiltInRetentionClasses.Security]: { days: 365 },
+  [BuiltInRetentionClasses.Compliance]: { days: 365 },
 };
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 

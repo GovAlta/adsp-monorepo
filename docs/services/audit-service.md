@@ -118,19 +118,27 @@ current period or a TimescaleDB chunk boundary.
 ### Registering through the SDK
 
 `auditDefinitions()` turns application constants into a map keyed by action name and rejects
-duplicate names at startup:
+duplicate names at startup. Category and severity types and configuration validation use the
+SDK's shared constants; custom retention class names remain supported.
 
 ```typescript
-import { adspId, AuditAction, auditDefinitions } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AuditAction,
+  AuditCategories,
+  AuditSeverities,
+  BuiltInRetentionClasses,
+  auditDefinitions,
+} from '@abgov/adsp-service-sdk';
 
 const serviceId = adspId`urn:ads:case-team:case-service`;
 const ACTIONS = {
   UPDATE_CASE: {
     name: 'case.update',
     version: 1,
-    category: 'administrative',
-    severity: 'info',
-    retentionClass: 'compliance',
+    category: AuditCategories.Administrative,
+    severity: AuditSeverities.Info,
+    retentionClass: BuiltInRetentionClasses.Compliance,
   },
 } satisfies Record<string, AuditAction>;
 
