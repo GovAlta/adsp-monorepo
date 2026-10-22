@@ -43,8 +43,10 @@ import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './speciali
 import {
   AnalysisMode,
   BusinessConcept,
+  BlueprintComponent,
   BusinessPattern,
   CONCEPT_TYPES,
+  ComponentReview,
   Hypothesis,
   PatternMatch,
   PlannerConfiguration,
@@ -232,6 +234,22 @@ const getSolution =
   };
 
 const loaded = (req: Request): Solution => req[SOLUTION_KEY];
+
+// The user rejected these, so the harness never sees them; the saved solution keeps them.
+const withoutRejectedComponents = (state: SolutionState): SolutionState =>
+  state.blueprint?.components
+    ? {
+        ...state,
+        blueprint: { ...state.blueprint, components: state.blueprint.components.filter((c) => c.review !== 'rejected') },
+      }
+    : state;
+
+// Regenerating renumbers the components, so a review follows its component by service and name.
+const withPreviousReviews = (components: BlueprintComponent[], previous: BlueprintComponent[] = []): BlueprintComponent[] =>
+  components.map((component) => {
+    const review = previous.find((p) => p.service === component.service && p.name === component.name)?.review;
+    return review ? { ...component, review } : component;
+  });
 
 interface AnalysisResult {
   mode: AnalysisMode;
@@ -855,6 +873,33 @@ export function createPlannerRouter({
     },
   );
 
+  router.put(
+    '/solutions/:id/components/:order/review',
+    requirePlannerUser,
+    validateId,
+    createValidationHandler(
+      param('order').isInt({ min: 1 }),
+      body('review').isIn(['not-reviewed', 'approved', 'rejected']),
+    ),
+    getSolution(solutionRepository),
+    async (req, res, next) => {
+      try {
+        const solution = loaded(req);
+        const blueprint = solution.state.blueprint;
+        const order = Number(req.params.order);
+        if (!blueprint?.components?.some((c) => c.order === order)) {
+          throw new NotFoundError('component', req.params.order);
+        }
+        const review: ComponentReview = req.body.review;
+        const components = blueprint.components.map((c) => (c.order === order ? { ...c, review } : c));
+        const state = { ...solution.state, blueprint: { ...blueprint, components } };
+        res.send(await persist(req, { ...solution, state }, 'component-review'));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   router.get(
     '/solutions/:id/export',
     requirePlannerUser,
@@ -906,7 +951,7 @@ export function createPlannerRouter({
           initial: isInitial,
           blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
           versionHistory,
-          state: solution.state,
+          state: withoutRejectedComponents(solution.state),
         });
       } catch (err) {
         next(err);
@@ -1058,11 +1103,14 @@ export function createPlannerRouter({
         const details: BlueprintServiceDetail[] = generated ? generated.services : [];
         const mode: AnalysisMode = generated ? 'ai' : 'rules';
         const model = generated?.model;
-        const components = buildComponents(solution.state, {
-          drafts: generated?.components,
-          catalogKeys: catalog.keys,
-          integrations: core.architecture.integrations,
-        });
+        const components = withPreviousReviews(
+          buildComponents(solution.state, {
+            drafts: generated?.components,
+            catalogKeys: catalog.keys,
+            integrations: core.architecture.integrations,
+          }),
+          solution.state.blueprint?.components,
+        );
 
         const blueprint = assembleBlueprint(
           solution.state,

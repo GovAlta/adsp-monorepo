@@ -1,16 +1,19 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import {
+  GoabAccordion,
   GoabBadge,
   GoabButton,
   GoabCallout,
   GoabCircularProgress,
   GoabContainer,
-  GoabDetails,
+  GoabDropdown,
+  GoabDropdownItem,
   GoabTable,
 } from '@abgov/react-components';
 import { PlannerApi } from './api';
-import { AnalysisMode, Solution } from './model';
+import { AnalysisMode, ComponentReview, Solution } from './model';
 import { useBusy } from './useBusy';
+import { REVIEW_LABELS } from './utils';
 
 interface BlueprintViewerProps {
   solution: Solution;
@@ -37,6 +40,8 @@ const SubList: FunctionComponent<{ title: string; items?: string[] }> = ({ title
 
 const formatDate = (value: string) => new Date(value).toLocaleString();
 
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
 export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
   solution,
   api,
@@ -51,6 +56,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
   const generate = (refreshConsultations: boolean) =>
     run(async () => onSolutionChange(await api.blueprint(solution.id, { mode, refreshConsultations })));
+  const review = (order: number, value: ComponentReview) =>
+    run(async () => onSolutionChange(await api.reviewComponent(solution.id, order, value)));
 
   if (!hypotheses.length) {
     return (
@@ -109,11 +116,19 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
   const stale = !!analysis && new Date(analysis.analyzedOn) > new Date(blueprint.generatedOn);
   const { overview: o, architecture: a, dataGovernance: d, delivery: dl } = blueprint;
+  const components = blueprint.components ?? [];
+  const toReview = components.filter((c) => (c.review ?? 'not-reviewed') === 'not-reviewed').length;
 
-  const section = (id: string, heading: string, children: ReactNode) => (
-    <GoabDetails heading={heading} open={allOpen} maxWidth="100%" testId={`blueprint-section-${id}`}>
+  const section = (id: string, heading: string, children: ReactNode, headingContent?: ReactNode) => (
+    <GoabAccordion
+      heading={heading}
+      open={allOpen}
+      maxWidth="100%"
+      headingContent={headingContent}
+      testId={`blueprint-section-${id}`}
+    >
       {children}
-    </GoabDetails>
+    </GoabAccordion>
   );
 
   return (
@@ -260,11 +275,11 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
               <th>Service</th>
               <th>Purpose</th>
               <th>Where and how</th>
-              <th>Depends on</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            {(blueprint.components ?? []).map((c) => (
+            {components.map((c) => (
               <tr key={`${c.service}-${c.name}`}>
                 <td>{c.order}</td>
                 <td>
@@ -279,15 +294,38 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
                 <td>
                   <div>{c.setup.where}</div>
                   <div>{c.setup.how}</div>
+                  {c.dependsOn.length > 0 && <div>Depends on: {c.dependsOn.join(', ')}</div>}
                   <a href={c.setup.docs} rel="noopener noreferrer" target="_blank">
                     Docs
                   </a>
                 </td>
-                <td>{c.dependsOn.join(', ') || '—'}</td>
+                <td>
+                  <GoabDropdown
+                    name={`component-review-${c.order}`}
+                    value={c.review ?? 'not-reviewed'}
+                    size="compact"
+                    width="9rem"
+                    ariaLabel={`Review status for ${c.name}`}
+                    disabled={working}
+                    testId={`component-review-${c.order}`}
+                    onChange={(detail) => review(c.order, detail.value as ComponentReview)}
+                  >
+                    {Object.entries(REVIEW_LABELS).map(([value, label]) => (
+                      <GoabDropdownItem key={value} value={value} label={label} />
+                    ))}
+                  </GoabDropdown>
+                </td>
               </tr>
             ))}
           </tbody>
         </GoabTable>,
+        toReview > 0 && (
+          <GoabBadge
+            type="important"
+            content={`${plural(toReview, 'component')} to review`}
+            testId="blueprint-components-to-review"
+          />
+        ),
       )}
 
       {section(
