@@ -9,9 +9,13 @@ jest.mock('fs', () => ({
 }));
 jest.mock('./postgres', () => ({
   ...jest.requireActual('./postgres'),
-  createDatabase: jest.fn().mockResolvedValue({
-    knex: { destroy: jest.fn().mockResolvedValue(undefined) },
-    isConnected: jest.fn().mockResolvedValue(true),
+  createDatabase: jest.fn().mockImplementation(async () => {
+    const destroy = jest.fn().mockResolvedValue(undefined);
+    return {
+      knex: { destroy },
+      isConnected: jest.fn().mockResolvedValue(true),
+      close: destroy,
+    };
   }),
 }));
 jest.mock('./environments/environment', () => ({
@@ -49,6 +53,13 @@ import { AuditStorageUnavailableError, AuditStoreError } from './audit/buffer';
 import { randomUUID } from 'crypto';
 import { scheduleRetentionJob } from './audit/jobs/retention';
 import { environment } from './environments/environment';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { parse } from 'yaml';
+import { PROCESS_SHUTDOWN_TIMEOUT_MS, TRAFFIC_WITHDRAWAL_MS } from './shutdown';
+import { MAX_BUFFERED_BYTES, SHUTDOWN_TIMEOUT_MS } from './audit/buffer/write-buffer';
+import { HISTORY_QUERY_TIMEOUT_MS, STATEMENT_TIMEOUT_MS } from './postgres/operation';
+import { HEALTH_CHECK_TIMEOUT_MS } from './postgres/health';
 
 describe('audit application authorization', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -577,11 +588,169 @@ describe('audit application authorization', () => {
     expect(response.body).toMatchObject({ db: false, ready: false });
   });
 
+  it('keeps liveness independent of the database and platform health', async () => {
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    const platform = await jest.mocked(initializePlatform).mock.results[0].value;
+    database.isConnected.mockResolvedValue(false);
+
+    const response = await request(app).get('/health/live').expect(200);
+
+    expect(response.text).toBe('');
+    expect(database.isConnected).not.toHaveBeenCalled();
+    expect(platform.healthCheck).not.toHaveBeenCalled();
+  });
+
+  it.each([true, false])('returns only readiness status when database connectivity is %s', async (connected) => {
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    database.isConnected.mockResolvedValue(connected);
+
+    const response = await request(app).get('/health/ready');
+
+    expect(response.status).toBe(connected ? 200 : 503);
+    expect(response.text).toBe('');
+  });
+
+  it('recovers readiness without a write or restart after an unsuccessful storage operation', async () => {
+    configureAction();
+    jest
+      .mocked(PostgresEventRepository.prototype.insert)
+      .mockRejectedValue(new AuditStoreError('Unavailable', 'permanent'));
+    jest
+      .mocked(PostgresEventRepository.prototype.park)
+      .mockRejectedValue(new AuditStoreError('Unavailable', 'permanent'));
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    database.isConnected.mockResolvedValue(false);
+    await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [eventInput()] })
+      .expect(503);
+    await request(app).get('/health/ready').expect(503);
+
+    database.isConnected.mockResolvedValue(true);
+
+    await request(app).get('/health/ready').expect(200);
+  });
+
+  it('withdraws readiness while continuing to accept writes before draining', async () => {
+    configureAction();
+    app.beginShutdown();
+
+    await request(app).get('/health/ready').expect(503);
+    await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: [eventInput()] })
+      .expect(202);
+
+    expect(PostgresEventRepository.prototype.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not check the database once shutdown starts', async () => {
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    app.beginShutdown();
+
+    await request(app).get('/health/ready').expect(503);
+
+    expect(database.isConnected).not.toHaveBeenCalled();
+  });
+
+  it('keeps liveness healthy during shutdown', async () => {
+    await app.drain();
+
+    await request(app).get('/health/live').expect(200);
+  });
+
+  it('does not report ready if shutdown begins during a database check', async () => {
+    const database = await jest.mocked(createDatabase).mock.results[0].value;
+    database.isConnected.mockImplementationOnce(async () => {
+      app.beginShutdown();
+      return true;
+    });
+
+    await request(app).get('/health/ready').expect(503);
+  });
+
   it('reports the self-audit failure count in health', async () => {
     const response = await request(app).get('/health');
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ db: true, ready: true, selfAuditFailures: 0 });
+  });
+
+  describe('audit deployment contract', () => {
+    const root = join(__dirname, '..', '..', '..');
+    const template = parse(readFileSync(join(root, '.openshift', 'managed', 'audit-service.yml'), 'utf8'));
+    const configuration = parse(readFileSync(join(root, '.openshift', 'configuration', 'audit-service.yml'), 'utf8'));
+    const service = template.objects.find(({ kind }: { kind: string }) => kind === 'Service');
+    const route = template.objects.find(({ kind }: { kind: string }) => kind === 'Route');
+
+    it.each(['api', 'job'])('wires distinct bounded probes and shutdown headroom for the %s workload', (component) => {
+      const deployment = template.objects.find(
+        (object: { kind: string; metadata: { labels: { component: string } } }) =>
+          object.kind === 'Deployment' && object.metadata.labels.component === component,
+      );
+      const pod = deployment.spec.template.spec;
+      const container = pod.containers[0];
+
+      expect(container.livenessProbe.httpGet.path).toBe('/health/live');
+      expect(container.readinessProbe.httpGet.path).toBe('/health/ready');
+      expect(container.startupProbe.httpGet.path).toBe('/health/live');
+      expect(container.readinessProbe.timeoutSeconds * 1000).toBeGreaterThan(HEALTH_CHECK_TIMEOUT_MS);
+      expect(pod.terminationGracePeriodSeconds * 1000).toBeGreaterThan(PROCESS_SHUTDOWN_TIMEOUT_MS);
+      expect(PROCESS_SHUTDOWN_TIMEOUT_MS).toBeGreaterThan(TRAFFIC_WITHDRAWAL_MS + SHUTDOWN_TIMEOUT_MS);
+    });
+
+    it('keeps retention on one separately scheduled pod using the existing database identity', () => {
+      const job = template.objects.find(
+        (object: { kind: string; metadata: { labels: { component: string } } }) =>
+          object.kind === 'Deployment' && object.metadata.labels.component === 'job',
+      );
+
+      expect(job.spec.replicas).toBe(1);
+      expect(job.spec.strategy).toEqual({ type: 'Recreate' });
+      expect(job.spec.template.spec.containers[0].env).toEqual(
+        expect.arrayContaining([
+          { name: 'RETENTION_ENABLED', value: 'true' },
+          {
+            name: 'DB_USER',
+            valueFrom: { secretKeyRef: { name: '${APP_NAME}-postgres', key: 'database-user' } },
+          },
+        ]),
+      );
+      expect(service.spec.selector.component).toBe('api');
+    });
+
+    it('disables retention in all three serving replicas even if an existing ConfigMap still enables it', () => {
+      const api = template.objects.find(
+        (object: { kind: string; metadata: { labels: { component: string } } }) =>
+          object.kind === 'Deployment' && object.metadata.labels.component === 'api',
+      );
+
+      expect(api.spec.replicas).toBe(3);
+      expect(api.spec.template.spec.containers[0].env).toContainEqual({ name: 'RETENTION_ENABLED', value: 'false' });
+      expect(configuration.items[0].data.RETENTION_ENABLED).toBe('false');
+    });
+
+    it('budgets memory for the byte cap, object overhead, working set and transient allocations', () => {
+      const api = template.objects.find(
+        (object: { kind: string; metadata: { labels: { component: string } } }) =>
+          object.kind === 'Deployment' && object.metadata.labels.component === 'api',
+      );
+      const plannedMiB = 200 + (4 * MAX_BUFFERED_BYTES) / (1024 * 1024) + 128 + 56;
+
+      expect(api.spec.template.spec.containers[0].resources.limits.memory).toBe(`${plannedMiB}Mi`);
+    });
+
+    it('allows 60-second history reads without relaxing the write timeout', () => {
+      expect(route.metadata.annotations['haproxy.router.openshift.io/timeout']).toBe('120s');
+      expect(HISTORY_QUERY_TIMEOUT_MS).toBe(60_000);
+      expect(STATEMENT_TIMEOUT_MS).toBe(4_000);
+    });
+
+    it('keeps the existing OTLP metrics export configured', () => {
+      expect(configuration.items[0].data.OTEL_EXPORTER_OTLP_ENDPOINT).toBe('http://otel-collector:4318');
+    });
   });
 
   it('stops accepting writes and reports unavailable readiness while draining', async () => {

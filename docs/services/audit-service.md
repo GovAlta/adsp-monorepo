@@ -10,7 +10,8 @@ The action catalog registers the classification of audit actions. Registering an
 generate audit records. The write endpoint validates and enriches events, then submits them through
 the write buffer to PostgreSQL. History endpoints read committed rows from the same database.
 Action catalogs and retention settings remain in Configuration Service, not the audit database.
-SIEM forwarding is a separate capability. Scheduled retention is enabled by default.
+SIEM forwarding is a separate capability. Scheduled retention runs in a separate job Deployment,
+not in the serving API replicas.
 
 ## Source layout
 
@@ -327,11 +328,74 @@ after the current bounded statement settles. Connection acquisition retains the 
 operation settles, the buffer refuses additional writes rather than accumulating abandoned work.
 
 `close()` refuses new submissions and drains within a configurable 25-second default budget,
-reserving the final 5 seconds for failed-event storage. SIGTERM and SIGINT stop new connections,
-drain queued writes and in-flight HTTP requests, then close the database pool and telemetry.
-A 29-second process deadline exits with failure if shutdown cannot finish.
+reserving the final 5 seconds for failed-event storage. SIGTERM and SIGINT first mark readiness
+unavailable, leaving the listener and write buffer open for a 10-second traffic-withdrawal window.
+The service then closes the listener and idle connections, drains queued writes and in-flight
+HTTP requests, and closes the database pools and telemetry. A 45-second process deadline exits
+with failure if shutdown cannot finish. OpenShift allows 60 seconds before forced termination.
 `GET /health` includes `db` and `ready`; it returns 503 when the database or buffer is unavailable
-or the buffer is draining.
+or shutdown has started. This legacy diagnostic endpoint is not used by platform probes.
+
+## Operational readiness
+
+The deployment intentionally differs from platform templates that use `/` for both probes:
+
+| Endpoint        | Meaning                                                                                                                             |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `/health/live`  | Returns 200 while the HTTP process is responsive. Never checks PostgreSQL or platform dependencies.                                 |
+| `/health/ready` | Returns 200 when PostgreSQL is reachable and the buffer can accept writes; otherwise 503. Shutdown immediately makes it return 503. |
+
+Both endpoints are unauthenticated and return empty bodies, with no connection, tenant or error
+details. Readiness uses a separate pool with at most one connection, 250 ms acquisition/query
+timeouts and a 750 ms overall deadline. Concurrent probes share one check; timed-out and failed
+connections are discarded. This avoids queuing probes behind 60-second history reads in the
+application pool. Each API/job pod may therefore use **DB_POOL_MAX + 1** connections.
+
+A successful database check can restore readiness without a new write or a restart; historical
+write failures do not permanently remove a recovered pod from service. An outstanding cancelled
+storage operation still prevents readiness. A full buffer uses per-request backpressure rather
+than removing the entire pod and shifting its load to other replicas.
+
+Readiness is checked every 5 seconds with a 1-second timeout and one failure to withdraw the pod.
+Liveness runs every 60 seconds with a 2-second timeout and three failures before restart.
+A startup probe allows up to five minutes for initialization/migrations before liveness starts.
+The 10-second shutdown withdrawal window covers two readiness intervals before refusing new work;
+actual ingress propagation remains an environment-dependent deployment concern.
+
+### Resource and shutdown budgets
+
+Both workloads request 100m CPU / 256Mi memory and limit usage to 500m CPU / 512Mi memory.
+The API buffer has simultaneous caps of 5,000 events and 32 MiB serialized payload.
+The memory planning calculation is:
+
+`200 MiB working-set allowance + (4 * 32 MiB) object/string expansion + 128 MiB transient/GC allowance + 56 MiB headroom = 512 MiB`.
+
+These are conservative sizing allowances, **not measured peak RSS or a guarantee for arbitrary
+concurrent requests**. The byte cap is not a heap cap. Check actual memory usage with representative
+payloads before treating sizing as production capacity evidence; do not raise the buffer cap
+without revisiting this budget. The job uses the same image/runtime allowance.
+
+The shutdown budget is `10s withdrawal + 25s flush + 10s cleanup = 45s process deadline`,
+with an additional 15 seconds in `terminationGracePeriodSeconds: 60`. Flush configuration must
+remain below 30 seconds so withdrawal and cleanup retain time. Long-running reads can be
+interrupted by this shutdown deadline; only durably committed events are acknowledged.
+
+### History query and route timeouts
+
+Audit history list/detail queries have a separate 60-second database query timeout, with
+cancellation on timeout. Writes, failed-event administration and retention keep their existing
+4-second statement limits. Pool acquisition remains bounded at 30 seconds. The Route sets
+`haproxy.router.openshift.io/timeout: 120s` to allow acquisition, history reads and response overhead
+without inheriting the router's 30-second default. Client-side deadlines must also allow the
+intended read duration; the route annotation alone cannot override client or database limits.
+
+### Verification boundary
+
+Automated checks cover probe behavior, bounded database checks, readiness recovery, shutdown
+ordering, distinct query budgets and the deployment configuration. Live database-outage/recovery
+and rolling-deployment-under-write-load exercises are deferred for this delivery. They are not
+claimed as completed acceptance evidence. Platform metric visibility and a real long query
+through the deployed Route also require verification in the target environment.
 
 ## Failed-event administration
 
@@ -377,6 +441,15 @@ The integration suite runs migrations and deletes test rows; never use a shared 
 `OTEL_EXPORTER_OTLP_ENDPOINT` sets where metrics are sent, for example
 `http://otel-collector:4318`. Leaving it empty disables metric export.
 
+Both API and job pods inherit this setting from the Audit Service ConfigMap. Metrics use the
+existing platform pipeline: service OTLP export -> Collector -> Prometheus scrape of the
+Collector's `:8889` endpoint. A separate unauthenticated `/metrics` route on Audit Service is
+not required by this platform integration. The SDK exports every 60 seconds and Prometheus
+scrapes every 30 seconds; allow at least two minutes after startup/activity before checking.
+In the target environment, verify `audit_failed_events_available` is present and equals 1,
+and query `audit_failed_events_open`. An absent series is not a successful zero result.
+Check the Collector target is up and inspect exporter/Collector errors if metrics are missing.
+
 The rules in `.openshift/observability/observability-stack.yml` alert when **at least one
 failed event is still open**, or when the count cannot be read. An unavailable count is
 unknown, not zero. Detection follows the monitoring update cycle; email or message delivery
@@ -387,13 +460,21 @@ unconfirmed saves; failed replay saves use the same failure counter with `operat
 
 ## Scheduled retention
 
-Retention is enabled by default and runs daily at 02:00 UTC. Set `RETENTION_ENABLED=false` to
-disable it. Configure these environment variables (or the `audit-service` ConfigMap in OpenShift)
-and restart the service to apply changes:
+Retention runs daily at 02:00 UTC in the separate `audit-service-job` Deployment. It has one
+replica and a `Recreate` update strategy to avoid overlapping schedulers during updates.
+It uses the same image, platform identity and database Secret as the API, but has `component: job`
+and is excluded from the API Service/Route. Do not autoscale this workload. API scaling does not
+change the number of schedulers.
+
+`RETENTION_ENABLED` defaults to false. The API Deployment explicitly sets it to false even if
+an older ConfigMap still enables it; the job Deployment explicitly sets it to true.
+To suspend retention in OpenShift, scale the job Deployment to zero or change its explicit
+environment setting; changing only the shared ConfigMap will not override that setting.
+Configure schedule/batch settings in the shared ConfigMap and restart the job to apply them:
 
 | Variable                | Default     | Meaning                                         |
 | ----------------------- | ----------- | ----------------------------------------------- |
-| `RETENTION_ENABLED`     | `true`      | Set to `false` to disable scheduled deletion.    |
+| `RETENTION_ENABLED`     | `false`     | Explicitly enabled only on the job Deployment.  |
 | `RETENTION_SCHEDULE`    | `0 2 * * *` | Cron schedule, at 02:00 UTC by default.         |
 | `RETENTION_BATCH_SIZE`  | `1000`      | Maximum audit rows deleted in one statement.    |
 | `RETENTION_MAX_BATCHES` | `10`        | Maximum batches per tenant per scheduled sweep. |
@@ -412,6 +493,13 @@ tenants and replicas. A lock loser skips rather than queues; a local running gua
 overlapping timer invocations. The lock is held on the same connection as deletion and released
 on commit, rollback or disconnect. No distributed guarantee is attributed to SDK `LimitToOne`.
 Shutdown cancels future ticks, stops between tenants, and awaits the active run before closing storage.
+The lock is a concurrency safeguard, not a once-per-schedule execution ledger. The separate
+single-replica scheduler prevents API replicas from independently starting scheduled sweeps.
+During the first rollout of this separation, disable retention on all old API replicas and
+wait for them to drain **before starting the job Deployment**. The existing `deploy-app` action
+promotes the API and then the `-job` Deployment. Keep that ordering for manual deployments too;
+updating only the API image leaves the retention image unchanged.
+The in-process schedule does not catch up a tick missed while the job is stopped or updating.
 
 Each executed tenant run, including a zero-deletion run, inserts `retention.run.succeeded` or
 `retention.run.failed` in that tenant's `audit-service` namespace. The system actor and writer are

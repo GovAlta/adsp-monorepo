@@ -11,7 +11,7 @@ export const WRITE_BATCH_WINDOW_MS = 200;
 export const MAX_BUFFERED_EVENTS = 5000;
 export const MAX_BUFFERED_BYTES = 32 * 1024 * 1024;
 export const SHUTDOWN_TIMEOUT_MS = 25000;
-const TERMINATION_GRACE_MS = 30000;
+const MAX_FLUSH_TIMEOUT_MS = 30000;
 const BUFFER_STATE = {
   ACCEPTING: 'accepting',
   DRAINING: 'draining',
@@ -96,11 +96,15 @@ export class AuditWriteBuffer implements EventSubmitter {
   }
 
   get isReady(): boolean {
-    return this.state === BUFFER_STATE.ACCEPTING && this.writer.isAvailable && !this.writer.hasUnfinishedCancellation;
+    return this.canAcceptWrites && this.writer.isAvailable;
+  }
+
+  get canAcceptWrites(): boolean {
+    return this.state === BUFFER_STATE.ACCEPTING && !this.writer.hasUnfinishedCancellation;
   }
 
   async submit(events: EnrichedEvent[]): Promise<Map<string, EventOutcome>> {
-    if (this.state !== BUFFER_STATE.ACCEPTING || this.writer.hasUnfinishedCancellation) {
+    if (!this.canAcceptWrites) {
       this.refuse('Audit storage is draining or has an unfinished cancelled write.');
     }
     if (this.depth + events.length > this.options.maxEvents) this.refuse('Audit buffer is at capacity.');
@@ -165,10 +169,10 @@ export class AuditWriteBuffer implements EventSubmitter {
       maxBytes < 1 ||
       !Number.isSafeInteger(shutdownTimeoutMs) ||
       shutdownTimeoutMs <= PARK_TIMEOUT_MS ||
-      shutdownTimeoutMs >= TERMINATION_GRACE_MS
+      shutdownTimeoutMs >= MAX_FLUSH_TIMEOUT_MS
     ) {
       throw new Error(
-        'Invalid audit buffer limits; shutdown must reserve parking time within the 30-second grace period.',
+        'Invalid audit buffer limits; flush must reserve parking time and finish within its 30-second budget.',
       );
     }
   }

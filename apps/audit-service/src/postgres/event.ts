@@ -8,7 +8,7 @@ import {
   FailedAuditEvent,
 } from '../audit/buffer';
 import { EnrichedEvent, EventCriteria, EventCursor, EventReader, StoredEvent } from '../audit/types';
-import { databaseError, STATEMENT_TIMEOUT_MS } from './operation';
+import { databaseError, HISTORY_QUERY_TIMEOUT_MS, STATEMENT_TIMEOUT_MS } from './operation';
 
 export async function insertAuditEvents(
   transaction: Knex.Transaction,
@@ -73,7 +73,7 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
         .orderBy('occurred_at', 'desc')
         .orderBy('id', 'desc')
         .limit(top)
-        .timeout(STATEMENT_TIMEOUT_MS, { cancel: true }),
+        .timeout(HISTORY_QUERY_TIMEOUT_MS, { cancel: true }),
     );
   }
 
@@ -82,7 +82,7 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
       this.knex<StoredEvent>('audit_events')
         .where({ tenant_id: tenantId, namespace, id })
         .first()
-        .timeout(STATEMENT_TIMEOUT_MS, { cancel: true }),
+        .timeout(HISTORY_QUERY_TIMEOUT_MS, { cancel: true }),
     );
     return row ?? null;
   }

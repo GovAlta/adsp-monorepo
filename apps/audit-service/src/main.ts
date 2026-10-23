@@ -1,6 +1,7 @@
 import { createLogger } from '@core-services/core-common';
 import { initializeApp } from './app';
 import { environment } from './environments/environment';
+import { PROCESS_SHUTDOWN_TIMEOUT_MS, shutdownServer } from './shutdown';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
@@ -19,14 +20,10 @@ initializeApp()
       const deadline = setTimeout(() => {
         logger.error('Audit shutdown deadline exceeded; unacknowledged requests must be retried.');
         process.exit(1);
-      }, 29000);
+      }, PROCESS_SHUTDOWN_TIMEOUT_MS);
       deadline.unref();
       try {
-        const closed = new Promise<void>((resolve, reject) =>
-          server.close((error) => (error ? reject(error) : resolve())),
-        );
-        await Promise.all([closed, app.drain()]);
-        await app.shutdown();
+        await shutdownServer(server, app);
         clearTimeout(deadline);
         process.exit(0);
       } catch (error) {
