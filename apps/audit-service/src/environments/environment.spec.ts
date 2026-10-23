@@ -19,8 +19,8 @@ describe('retention environment settings', () => {
     process.env = originalEnv;
   });
 
-  it('enables retention when the setting is absent', () => {
-    expect(loadEnvironment().RETENTION_ENABLED).toBe(true);
+  it('keeps scheduled retention off serving replicas unless explicitly enabled', () => {
+    expect(loadEnvironment().RETENTION_ENABLED).toBe(false);
   });
 
   it.each([

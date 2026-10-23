@@ -43,3 +43,10 @@ export class AuditStorageUnavailableError extends InvalidOperationError {
     Object.setPrototypeOf(this, AuditStorageUnavailableError.prototype);
   }
 }
+
+export class AuditBatchTooLargeError extends InvalidOperationError {
+  constructor(message: string) {
+    super(message, { statusCode: HttpStatusCodes.REQUEST_TOO_LONG });
+    Object.setPrototypeOf(this, AuditBatchTooLargeError.prototype);
+  }
+}

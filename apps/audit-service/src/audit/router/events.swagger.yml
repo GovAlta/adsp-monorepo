@@ -71,6 +71,11 @@ paths:
         always derived from the verified caller, path, clock and resolved action/policy;
         additional event fields are not copied into trusted row columns.
 
+        Each pod buffers at most 1,000 events and 8 MiB of serialized enriched events,
+        including retained original input. A batch that cannot fit in an empty buffer
+        returns 413 without storing any events; split it into smaller requests.
+        Temporary buffer pressure returns 503 with Retry-After instead.
+
         Configuration uses the SDK's existing error handling: HTTP and conversion
         failures can resolve to null. Such failures cannot reliably be distinguished
         from missing documents and may produce unknown-action rejections, partial
@@ -139,9 +144,9 @@ paths:
             namespace is not the caller's: a non-Core caller can write only to its own service's namespace and
             tenant. A token whose `azp` is not a service URN is also refused.
         '413':
-          description: Request body exceeds 20 MiB. Split the batch.
+          description: Request body exceeds 20 MiB, or the enriched batch exceeds the 8 MiB buffer capacity. Split the batch; retrying it unchanged will not help.
         '503':
-          description: Configuration, retention policy or durable storage is unavailable; retry without re-registering actions.
+          description: Configuration, retention policy or durable storage is unavailable, or the buffer is temporarily full; retry without re-registering actions.
           headers:
             Retry-After:
               description: Minimum suggested retry delay in seconds.
