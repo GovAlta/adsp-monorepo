@@ -1,6 +1,7 @@
 import { AuditStoreError } from '../audit/buffer';
 
 export const STATEMENT_TIMEOUT_MS = 4_000;
+export const HISTORY_QUERY_TIMEOUT_MS = 60_000;
 
 const TRANSIENT_SQLSTATE_CLASSES = {
   connectionException: '08',
