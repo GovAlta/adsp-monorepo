@@ -109,10 +109,9 @@ components:
     FailedEventsTenant:
       in: query
       name: tenantId
-      description: Tenant URN. Required for Core administrators; tenant callers cannot select another tenant.
+      description: Tenant URN, for example urn:ads:platform:tenant-service:v2:/tenants/case-team. Required for Core administrators; leave empty as a tenant caller, who cannot select another tenant.
       schema:
         type: string
-      example: urn:ads:platform:tenant-service:v2:/tenants/case-team
   responses:
     FailedEventsUnavailable:
       description: Database, action configuration or transactional self-auditing is unavailable; retry.

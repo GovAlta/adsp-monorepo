@@ -198,7 +198,9 @@ describe('SolutionWorkplace', () => {
     expect(goa(container, 'download-json')).not.toBeNull();
     expect(container.querySelectorAll('[testid="discovery-response"]')).toHaveLength(1);
     expect(container.textContent).not.toContain('Refine by conversation');
-    expect(goa(container, 'optional-experts').getAttribute('heading')).toContain('Chat/Consult with Specialist (optional');
+    expect(goa(container, 'optional-experts').getAttribute('heading')).toContain(
+      'Chat/Consult with Specialist (optional',
+    );
     expect(container.textContent).not.toContain('5. Consult a specialist');
 
     fireEvent.click(goa(container, 'guided-step-2-toggle'));
@@ -481,6 +483,69 @@ describe('SolutionWorkplace', () => {
     await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Staff'));
   });
 
+  it('downloads JSON and the markdown report', async () => {
+    const { container } = await setup(undefined, {
+      exportSolution: jest.fn().mockResolvedValue({ id: 'solution-1' }),
+    });
+
+    click(container, 'download-json');
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.json',
+        JSON.stringify({ id: 'solution-1' }, null, 2),
+        'application/json',
+      ),
+    );
+
+    click(container, 'download-report');
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.md',
+        expect.stringContaining('# Permit intake'),
+        'text/markdown',
+      ),
+    );
+  });
+
+  it.each(['download-json', 'download-report'])(
+    'takes the new version from the %s export but keeps the saved state, which still has rejected components',
+    async (button) => {
+      const solution = analyzed({ discovery: readyDiscovery });
+      const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
+      const { container } = await setup(solution, { exportSolution: jest.fn().mockResolvedValue(exported) });
+
+      click(container, button);
+
+      await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v1.1'));
+      expect(container.textContent).toContain('Looks like permitting.');
+    },
+  );
+
+  it('confirms before deleting then goes back', async () => {
+    const { container } = await setup(undefined, { deleteSolution: jest.fn().mockResolvedValue(undefined) });
+
+    click(container, 'delete-solution');
+    expect(goa(container, 'delete-solution-modal').getAttribute('open')).toBe('true');
+    click(container, 'delete-cancel');
+    expect(goa(container, 'delete-solution-modal').getAttribute('open')).not.toBe('true');
+    expect(api.deleteSolution).not.toHaveBeenCalled();
+
+    click(container, 'delete-solution');
+    click(container, 'delete-confirm');
+
+    await waitFor(() => expect(api.deleteSolution).toHaveBeenCalledWith('solution-1'));
+    await waitFor(() => expect(onBack).toHaveBeenCalled());
+  });
+
+  it('stays on the page when deleting fails', async () => {
+    const { container } = await setup(undefined, { deleteSolution: jest.fn().mockRejectedValue(new Error('x')) });
+
+    click(container, 'delete-solution');
+    click(container, 'delete-confirm');
+
+    await waitFor(() => expect(api.deleteSolution).toHaveBeenCalled());
+    expect(onBack).not.toHaveBeenCalled();
+  });
   it('exports Markdown and JSON through the existing export API', async () => {
     const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue(withPlan()) });
     click(container, 'download-report');

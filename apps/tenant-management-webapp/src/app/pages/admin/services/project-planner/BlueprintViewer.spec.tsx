@@ -186,9 +186,9 @@ describe('BlueprintViewer', () => {
         onSolutionChange={jest.fn()}
       />,
     );
-    const details = container.querySelectorAll('goa-details');
-    expect(details).toHaveLength(8);
-    details.forEach((d) => expect(d.getAttribute('open')).not.toBe('true'));
+    const sections = container.querySelectorAll('goa-accordion');
+    expect(sections).toHaveLength(8);
+    sections.forEach((s) => expect(s.getAttribute('open')).not.toBe('true'));
     expect(getByText('Permit platform')).toBeTruthy();
     expect(getByText('[UI] -> [API]').getAttribute('aria-label')).toBe('Architecture diagram');
     expect(getByText('React, Forms')).toBeTruthy();
@@ -204,7 +204,7 @@ describe('BlueprintViewer', () => {
     const { container } = render(
       <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
     );
-    expect([...container.querySelectorAll('goa-details')].map((d) => d.getAttribute('heading'))).toEqual([
+    expect([...container.querySelectorAll('goa-accordion')].map((s) => s.getAttribute('heading'))).toEqual([
       '1. Project blueprint',
       '2. Technical architecture',
       '3. ADSP service mapping',
@@ -227,7 +227,7 @@ describe('BlueprintViewer', () => {
         onSolutionChange={jest.fn()}
       />,
     );
-    container.querySelectorAll('goa-details').forEach((d) => expect(d.getAttribute('open')).toBe('true'));
+    container.querySelectorAll('goa-accordion').forEach((s) => expect(s.getAttribute('open')).toBe('true'));
   });
 
   it('does not render a not-covered section when notCoveredByAdsp is undefined', () => {
@@ -292,10 +292,12 @@ describe('BlueprintViewer', () => {
       setup: { where: 'Tenant admin > Form', docs: 'https://docs/form', how: 'Create the definition' },
     };
 
-    const renderWith = (components?: BlueprintComponent[]) =>
+    const renderWith = (components?: BlueprintComponent[], api = createMockApi(), onSolutionChange = jest.fn()) =>
       render(
-        <BlueprintViewer solution={makeSolution({ blueprint: { ...blueprint, components } })} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+        <BlueprintViewer solution={makeSolution({ blueprint: { ...blueprint, components } })} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
       );
+
+    const second: BlueprintComponent = { ...component, order: 2, name: 'Applicant role', target: 'keycloak' };
 
     it('lists each component with where and how to set it up', () => {
       const { container, getByText } = renderWith([component]);
@@ -305,7 +307,7 @@ describe('BlueprintViewer', () => {
       expect(getByText('Collects applications')).toBeTruthy();
       expect(getByText('Tenant admin > Form')).toBeTruthy();
       expect(getByText('Create the definition')).toBeTruthy();
-      expect(getByText('Applicant role')).toBeTruthy();
+      expect(getByText('Depends on: Applicant role')).toBeTruthy();
       expect(getByText('Allow drafts?')).toBeTruthy();
     });
 
@@ -316,9 +318,57 @@ describe('BlueprintViewer', () => {
       expect(link.getAttribute('target')).toBe('_blank');
     });
 
+    it('shows what a component depends on with its where and how so the table keeps its status column in view', () => {
+      const { container, getByText } = renderWith([component]);
+      const headers = [...goa(container, 'blueprint-components').querySelectorAll('th')].map((th) => th.textContent);
+      expect(headers).not.toContain('Depends on');
+      expect(getByText('Depends on: Applicant role').closest('td').textContent).toContain('Tenant admin > Form');
+    });
+
+    it('leaves out the depends-on line for a component with no dependencies', () => {
+      const { container } = renderWith([{ ...component, dependsOn: [] }]);
+      expect(goa(container, 'blueprint-components').textContent).not.toContain('Depends on');
+    });
+
     it('shows an empty list for a blueprint saved before components existed', () => {
       const { container } = renderWith(undefined);
       expect(goa(container, 'blueprint-components').querySelectorAll('tbody tr')).toHaveLength(0);
+    });
+
+    it('shows each component as not reviewed until the user reviews it', () => {
+      const { container } = renderWith([component, { ...second, review: 'rejected' }]);
+      expect(goa(container, 'component-review-1').getAttribute('value')).toBe('not-reviewed');
+      expect(goa(container, 'component-review-2').getAttribute('value')).toBe('rejected');
+    });
+
+    it('saves the review the user picks', async () => {
+      const result = makeSolution({ blueprint: { ...blueprint, components: [{ ...component, review: 'approved' }] } });
+      const api = createMockApi({ reviewComponent: jest.fn().mockResolvedValue(result) });
+      const onSolutionChange = jest.fn();
+      const { container } = renderWith([component], api, onSolutionChange);
+
+      fireEvent(goa(container, 'component-review-1'), new CustomEvent('_change', { detail: { value: 'approved' } }));
+
+      await waitFor(() => expect(onSolutionChange).toHaveBeenCalledWith(result));
+      expect(api.reviewComponent).toHaveBeenCalledWith('solution-1', 1, 'approved');
+    });
+
+    it('counts the components still to be reviewed', () => {
+      const { container } = renderWith([component, second, { ...second, order: 3, name: 'Staff role', review: 'approved' }]);
+      expect(goa(container, 'blueprint-components-to-review').getAttribute('content')).toBe('2 components to review');
+    });
+
+    it('uses the singular when one component is left to review', () => {
+      const { container } = renderWith([component, { ...second, review: 'rejected' }]);
+      expect(goa(container, 'blueprint-components-to-review').getAttribute('content')).toBe('1 component to review');
+    });
+
+    it('drops the review badge once every component is reviewed', () => {
+      const { container } = renderWith([
+        { ...component, review: 'approved' },
+        { ...second, review: 'rejected' },
+      ]);
+      expect(goa(container, 'blueprint-components-to-review')).toBeNull();
     });
 
     it('has no accessibility violations', async () => {

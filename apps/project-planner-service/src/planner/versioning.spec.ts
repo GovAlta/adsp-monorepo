@@ -1,5 +1,5 @@
 import { changedSections, classifyBump, nextVersion, sectionHashes } from './versioning';
-import { SolutionState, SpecialistNote } from './types';
+import { ComponentReview, SolutionState, SpecialistNote } from './types';
 
 const emptyState: SolutionState = {
   problemStatement: '',
@@ -181,6 +181,36 @@ describe('versioning', () => {
 
       expect(Object.keys(hashes)).toEqual(['Components to set up']);
     });
+
+    describe('component review', () => {
+      const withReview = (review?: ComponentReview) =>
+        sectionHashes(
+          solution({
+            ...emptyState,
+            blueprint: {
+              generatedOn: 'x',
+              mode: 'rules',
+              components: [{ order: 1, service: 'form-service', type: 'Form definition', name: 'Application', review }],
+            } as SolutionState['blueprint'],
+          }),
+        );
+
+      it('does not change the components hash when only the review changes', () => {
+        expect(withReview('approved')['Components to set up']).toBe(withReview()['Components to set up']);
+      });
+
+      it('records a component review hash once a component is approved or rejected', () => {
+        expect(withReview('approved')['Component review']).toBeDefined();
+        expect(withReview('approved')['Component review']).not.toBe(withReview('rejected')['Component review']);
+      });
+
+      it.each([
+        ['missing', undefined],
+        ['not reviewed', 'not-reviewed' as const],
+      ])('does not hash the component review while every review is %s', (_name, review) => {
+        expect(withReview(review)['Component review']).toBeUndefined();
+      });
+    });
   });
 
   describe('changedSections', () => {
@@ -231,6 +261,10 @@ describe('versioning', () => {
 
     it('is major when the components to set up changed', () => {
       expect(classifyBump(['Components to set up'])).toBe('major');
+    });
+
+    it('is minor when only the component review changed', () => {
+      expect(classifyBump(['Component review'])).toBe('minor');
     });
   });
 
