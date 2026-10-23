@@ -16,7 +16,7 @@ import BlueprintViewer from './BlueprintViewer';
 import ConfidenceBar from './ConfidenceBar';
 import DiscoveryPanel from './DiscoveryPanel';
 import { AnalysisModeToggle } from './ModeLayoutToggle';
-import ProblemStatement from './ProblemStatement';
+import ProblemStatement, { PROBLEM_STATEMENT_MAX_LENGTH } from './ProblemStatement';
 import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
 import { AnalysisMode, OpenQuestion, Solution, SpecialistDefinition } from './model';
@@ -65,7 +65,7 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, child
       <GoabContainer accent="thin" testId={testId} mb="m">
         <h2
           id={headingId}
-          style={{ fontSize: 'calc(var(--goa-font-size-7) * 0.88)', fontWeight: 600, lineHeight: 1.25, margin: 0 }}
+          style={{ fontSize: 'calc(var(--goa-font-size-7) * 0.80)', fontWeight: 600, lineHeight: 1, margin: 0 }}
         >
           <button
             type="button"
@@ -92,7 +92,7 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, child
           </button>
         </h2>
         {expanded && (
-          <div id={panelId} role="region" aria-labelledby={headingId} style={{ fontSize: '88%', paddingTop: '1rem' }}>
+          <div id={panelId} role="region" aria-labelledby={headingId} style={{ fontSize: '80%', paddingTop: '5px' }}>
             {children}
           </div>
         )}
@@ -118,6 +118,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const [showAllAnswers, setShowAllAnswers] = useState(false);
   const [blueprintGenerationFailed, setBlueprintGenerationFailed] = useState(false);
   const [busy, runBusy] = useBusy();
+  const [headerBusy, setHeaderBusy] = useState(false);
+  const [discoveryBusy, setDiscoveryBusy] = useState(false);
+  const [blueprintBusy, setBlueprintBusy] = useState(false);
   const busyRef = useRef(false);
   const automaticActions = useRef(new Set<string>());
   const savedMode = useRef<AnalysisMode>();
@@ -322,6 +325,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const step = getGuidedStep(solution);
   const analysis = solution.state.analysis;
   const blueprint = solution.state.blueprint;
+  const anyBusy = busy || headerBusy || discoveryBusy || blueprintBusy;
   const progressSteps = [
     { id: 1 as const, label: 'Problem statement', complete: !!analysis },
     { id: 2 as const, label: 'Discovery conversation', complete: step >= 3 },
@@ -332,6 +336,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     stepRefs[id].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const problemChanged = problemDraft !== solution.state.problemStatement;
+  const problemTooLong = problemDraft.length > PROBLEM_STATEMENT_MAX_LENGTH;
   const answerChanged = solution.state.questions.some(
     (question) => answerDrafts[question.id] !== undefined && answerDrafts[question.id] !== (question.answer || ''),
   );
@@ -348,12 +353,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const handleContinue = () =>
     run(async () => {
       const hasBlueprint = !!solution.state.blueprint;
-      const updated =
-        problemDraft === solution.state.problemStatement
-          ? solution
-          : await api.updateSolution(solution.id, { problemStatement: problemDraft });
-      if (updated !== solution) {
-        updateSolution(updated);
+      if (problemDraft !== solution.state.problemStatement) {
+        await api.updateSolution(solution.id, { problemStatement: problemDraft });
       }
       const analyzed = await api.analyze(solution.id, { mode });
       setMode(analyzed.state.analysis?.mode ?? mode);
@@ -395,7 +396,21 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const visibleAnswerQuestions = answerQuestions.slice(0, showAllAnswers ? undefined : 3);
 
   return (
-    <div ref={contentRef} data-testid="solution-workplace">
+    <div ref={contentRef} data-testid="solution-workplace" style={{ position: 'relative' }}>
+      {anyBusy && (
+        <div
+          aria-hidden="true"
+          data-testid="workplace-busy-overlay"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 5,
+            background: 'rgba(255, 255, 255, 0.35)',
+            backdropFilter: 'blur(1px)',
+            cursor: 'wait',
+          }}
+        />
+      )}
       <div
         style={{
           height: stepperHeight,
@@ -411,6 +426,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         solution={solution}
         api={api}
         onSolutionChange={updateSolution}
+        disabled={busy || discoveryBusy || blueprintBusy}
+        onBusyChange={setHeaderBusy}
         onBack={
           onBack &&
           (() => {
@@ -420,7 +437,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         }
       />
 
-      {analysis && <ConfidenceBar confidence={solution.state.confidence} />}
+      {analysis && <ConfidenceBar confidence={solution.state.confidence} analyzing={busy} />}
       <ol aria-label="Project planning steps" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
         <li ref={step1Ref} style={{ scrollMarginTop: headerOffset }}>
           <GuidedStep heading="1. Problem statement" testId="guided-step-1">
@@ -455,8 +472,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
               </div>
               <GoabButton
                 type="primary"
+                size="compact"
                 testId="problem-continue"
-                disabled={busy || !problemDraft.trim()}
+                disabled={anyBusy || !problemDraft.trim() || problemTooLong}
                 onClick={handleContinue}
                 mt="s"
               >
@@ -486,7 +504,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <GoabButton
                     type="tertiary"
                     testId="problem-back-to-questions"
-                    disabled={busy}
+                    disabled={anyBusy || problemTooLong}
                     onClick={backToQuestions}
                     ml="s"
                   >
@@ -511,6 +529,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   mode={mode}
                   onSolutionChange={onDiscoverySolutionChange}
                   specialists={specialists}
+                  disabled={busy || headerBusy || blueprintBusy}
+                  onBusyChange={setDiscoveryBusy}
                 />
               )}
             </section>
@@ -556,7 +576,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       <GoabButton
                         type="secondary"
                         testId="project-blueprint-generate"
-                        disabled={busy}
+                        disabled={anyBusy}
                         onClick={generateInitialBlueprint}
                       >
                         {busy ? 'Generating…' : blueprint ? 'Regenerate blueprint' : 'Generate blueprint'}
@@ -564,7 +584,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       <GoabButton
                         type="tertiary"
                         testId="refresh-specialist-consultations"
-                        disabled={busy}
+                        disabled={anyBusy}
                         onClick={refreshSpecialists}
                       >
                         {busy ? 'Generating…' : 'Regenerate with fresh specialist consultations'}
@@ -574,9 +594,10 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       solution={solution}
                       api={api}
                       mode={mode}
-                      busy={busy}
+                      busy={busy || headerBusy || discoveryBusy}
                       onSolutionChange={updateSolution}
                       showControls={false}
+                      onBusyChange={setBlueprintBusy}
                     />
                   </GoabContainer>
                   {answerQuestions.length > 0 && (
@@ -601,7 +622,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                                   width="100%"
                                   ariaLabel={question.question}
                                   testId={`plan-answer-${question.id}`}
-                                  disabled={busy}
+                                  disabled={anyBusy}
                                   placeholder="Add or correct this answer"
                                   onChange={(detail) =>
                                     setAnswerDrafts((drafts) => ({ ...drafts, [question.id]: detail.value }))
@@ -622,7 +643,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                                   type="secondary"
                                   size="compact"
                                   testId={`save-plan-answer-${question.id}`}
-                                  disabled={busy}
+                                  disabled={anyBusy}
                                   onClick={() => saveAnswer(question, false)}
                                 >
                                   Save
@@ -632,7 +653,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                                   type="tertiary"
                                   size="compact"
                                   testId={`accept-plan-answer-${question.id}`}
-                                  disabled={busy}
+                                  disabled={anyBusy}
                                   onClick={() => saveAnswer(question, true)}
                                 >
                                   Accept answer

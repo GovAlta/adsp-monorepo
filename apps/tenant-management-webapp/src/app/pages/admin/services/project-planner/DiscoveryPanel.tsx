@@ -10,7 +10,7 @@ import {
 } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
-import { AnalysisMode, DiscoveryOptions, Solution, SpecialistDefinition } from './model';
+import { AnalysisMode, DiscoveryOptions, OpenQuestion, Solution, SpecialistDefinition } from './model';
 import { countChatsByService, SpecialistChat } from './SpecialistChat';
 import { useBusy } from './useBusy';
 
@@ -43,12 +43,29 @@ const SpecialistChatPanel = styled.div`
   }
 `;
 
+const QuestionList = styled.ol`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+`;
+
+const QuestionRow = styled.li`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+`;
+
 interface DiscoveryPanelProps {
   solution: Solution;
   api: PlannerApi;
   mode: AnalysisMode;
   onSolutionChange: (solution: Solution) => void;
   specialists?: SpecialistDefinition[];
+  // Set while another section (problem statement, header, blueprint) is busy, to block this one too.
+  disabled?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }
 
 const serviceName = (service: string, specialists: SpecialistDefinition[]) =>
@@ -60,22 +77,40 @@ const countBadge = (count: number, label: string, testId: string) => (
   <GoabBadge type={count > 0 ? 'important' : 'information'} content={plural(count, label)} testId={testId} />
 );
 
+const OPEN_QUESTIONS_LIMIT = 5;
+const SUMMARY_LENGTH = 300;
+
+const isLong = (answer?: string): boolean => (answer || '').length > SUMMARY_LENGTH;
+
+type QuestionRowMode = 'closed' | 'answering' | 'viewing';
+
 export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   solution,
   api,
   mode,
   onSolutionChange,
   specialists = [],
+  disabled = false,
+  onBusyChange,
 }) => {
   const [draft, setDraft] = useState('');
+  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
+  const [rowMode, setRowMode] = useState<Record<string, QuestionRowMode>>({});
+  const [showAllOpen, setShowAllOpen] = useState(false);
   const [selectedSpecialistService, setSelectedSpecialistService] = useState<string>();
   const [chatCounts, setChatCounts] = useState<Record<string, number>>({});
   const [chatCountsError, setChatCountsError] = useState(false);
   const [busy, run] = useBusy();
+  const blocked = busy || disabled;
   const discovery = solution.state.discovery;
   const ready = !!discovery?.ready;
   const message = draft.trim();
-  const openQuestions = solution.state.questions.filter((question) => question.status === 'open');
+  const allQuestions = solution.state.questions;
+  const openQuestions = allQuestions.filter((question) => question.status === 'open');
+  const visibleOpenIds = new Set(
+    (showAllOpen ? openQuestions : openQuestions.slice(0, OPEN_QUESTIONS_LIMIT)).map((question) => question.id),
+  );
+  const hiddenOpenCount = openQuestions.length - visibleOpenIds.size;
   const messages = [...(discovery?.messages || []), ...(solution.state.conversation || [])].sort(
     (first, second) => new Date(first.at).getTime() - new Date(second.at).getTime(),
   );
@@ -110,6 +145,10 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
     };
   }, [api, solution.id]);
 
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
+
   const refreshChatCounts = async () => {
     try {
       setChatCounts(countChatsByService(await api.listChats({ solutionId: solution.id })));
@@ -128,6 +167,23 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       onSolutionChange(result);
     });
 
+  const startAnswering = (question: OpenQuestion) => {
+    setAnswerDrafts((drafts) => ({ ...drafts, [question.id]: drafts[question.id] ?? question.answer ?? '' }));
+    setRowMode((modes) => ({ ...modes, [question.id]: 'answering' }));
+  };
+
+  const cancelAnswering = (questionId: string) => setRowMode((modes) => ({ ...modes, [questionId]: 'closed' }));
+
+  const toggleShowAnswer = (questionId: string) =>
+    setRowMode((modes) => ({ ...modes, [questionId]: modes[questionId] === 'viewing' ? 'closed' : 'viewing' }));
+
+  const saveAnswer = (questionId: string) =>
+    run(async () => {
+      const result = await api.answerQuestion(solution.id, questionId, (answerDrafts[questionId] || '').trim());
+      setRowMode((modes) => ({ ...modes, [questionId]: 'closed' }));
+      onSolutionChange(result);
+    });
+
   return (
     <div data-testid="discovery-panel">
       {discovery?.warning && (
@@ -137,6 +193,10 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       )}
       <p>
         Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.
+      </p>
+      <p style={{ fontSize: '85%', margin: '0 0 1rem' }} data-testid="discovery-mode-hint">
+        Using {mode === 'ai' ? 'AI analysis' : 'rule-based analysis'}. Change this with the Analysis mode toggle in the
+        Problem statement step above.
       </p>
       <GoabAccordion
         heading="Conversation"
@@ -165,34 +225,158 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       </GoabAccordion>
       <GoabAccordion
         heading="Questions"
-        headingContent={countBadge(openQuestions.length, 'question', 'discovery-questions-count')}
+        headingContent={countBadge(openQuestions.length, 'open question', 'discovery-questions-count')}
         headingSize="small"
         open={false}
         testId="discovery-questions"
       >
-        {openQuestions.length > 0 ? (
-          <ol>
-            {openQuestions.map((question) => (
-              <li key={question.id}>{question.question}</li>
-            ))}
-          </ol>
+        <p>
+          Answer a question directly below it, or use &quot;Anything else?&quot; further down for free-form details.
+        </p>
+        {allQuestions.length > 0 ? (
+          <>
+            <QuestionList>
+              {allQuestions.map((question: OpenQuestion) => {
+                const isOpen = question.status === 'open';
+                if (isOpen && !visibleOpenIds.has(question.id)) {
+                  return null;
+                }
+                const currentMode = rowMode[question.id] || 'closed';
+                return (
+                  <QuestionRow key={question.id} data-testid={`discovery-question-${question.id}`}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>{question.question}</span>
+                        <GoabBadge
+                          type={isOpen ? 'information' : 'success'}
+                          content={isOpen ? 'Open' : 'Answered'}
+                          testId={`discovery-question-status-${question.id}`}
+                        />
+                      </div>
+                      {currentMode === 'answering' ? (
+                        <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <GoabTextArea
+                            name={`question-answer-${question.id}`}
+                            value={answerDrafts[question.id] ?? ''}
+                            rows={2}
+                            width="100%"
+                            maxWidth="100%"
+                            testId={`discovery-question-input-${question.id}`}
+                            ariaLabel={`Answer: ${question.question}`}
+                            disabled={blocked}
+                            onChange={(detail) =>
+                              setAnswerDrafts((drafts) => ({ ...drafts, [question.id]: detail.value }))
+                            }
+                          />
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <GoabButton
+                              type="primary"
+                              size="compact"
+                              testId={`discovery-question-save-${question.id}`}
+                              disabled={blocked || !(answerDrafts[question.id] || '').trim()}
+                              onClick={() => saveAnswer(question.id)}
+                            >
+                              Save
+                            </GoabButton>
+                            <GoabButton
+                              type="tertiary"
+                              size="compact"
+                              testId={`discovery-question-cancel-${question.id}`}
+                              disabled={blocked}
+                              onClick={() => cancelAnswering(question.id)}
+                            >
+                              Cancel
+                            </GoabButton>
+                          </div>
+                        </div>
+                      ) : isOpen ? (
+                        <GoabButton
+                          type="secondary"
+                          size="compact"
+                          testId={`discovery-question-answer-${question.id}`}
+                          mt="s"
+                          disabled={blocked}
+                          onClick={() => startAnswering(question)}
+                        >
+                          Answer
+                        </GoabButton>
+                      ) : (
+                        <div style={{ marginTop: '0.25rem' }}>
+                          {(!isLong(question.answer) || currentMode === 'viewing') && (
+                            <p data-testid={`discovery-question-summary-${question.id}`}>{question.answer}</p>
+                          )}
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {isLong(question.answer) && (
+                              <GoabButton
+                                type="tertiary"
+                                size="compact"
+                                testId={`discovery-question-toggle-${question.id}`}
+                                disabled={blocked}
+                                onClick={() => toggleShowAnswer(question.id)}
+                              >
+                                {currentMode === 'viewing' ? 'Hide answer' : 'Show answer'}
+                              </GoabButton>
+                            )}
+                            <GoabButton
+                              type="tertiary"
+                              size="compact"
+                              testId={`discovery-question-edit-${question.id}`}
+                              disabled={blocked}
+                              onClick={() => startAnswering(question)}
+                            >
+                              Edit
+                            </GoabButton>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </QuestionRow>
+                );
+              })}
+            </QuestionList>
+            {hiddenOpenCount > 0 && (
+              <GoabButton
+                type="tertiary"
+                size="compact"
+                testId="discovery-questions-show-more"
+                mt="s"
+                disabled={blocked}
+                onClick={() => setShowAllOpen(true)}
+              >
+                Show more ({hiddenOpenCount})
+              </GoabButton>
+            )}
+            {showAllOpen && openQuestions.length > OPEN_QUESTIONS_LIMIT && (
+              <GoabButton
+                type="tertiary"
+                size="compact"
+                testId="discovery-questions-show-less"
+                mt="s"
+                disabled={blocked}
+                onClick={() => setShowAllOpen(false)}
+              >
+                Show fewer
+              </GoabButton>
+            )}
+          </>
         ) : (
-          <p>No remaining questions.</p>
+          <p>No questions yet.</p>
         )}
       </GoabAccordion>
       {busy && <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />}
       {ready && <p data-testid="discovery-ready">Your answers are enough to prepare a plan.</p>}
       <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-        <GoabFormItem label="Add details or answer questions">
+        <GoabFormItem label="Anything else?">
           <GoabTextArea
             name="plannerMessage"
             value={draft}
             rows={3}
             width="100%"
+            maxWidth="100%"
             testId="discovery-input"
-            ariaLabel="Add details or answer questions"
-            disabled={busy}
-            placeholder="Answer questions, add details, or correct anything the planner got wrong."
+            ariaLabel="Anything else?"
+            disabled={blocked}
+            placeholder="Add details, ask a question, or correct anything the planner got wrong."
             onChange={(detail) => setDraft(detail.value)}
           />
         </GoabFormItem>
@@ -203,16 +387,18 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
         >
           <GoabButton
             type="primary"
+            size="compact"
             testId="discovery-send"
-            disabled={busy || !message}
+            disabled={blocked || !message}
             onClick={() => send(openQuestions.length ? { message } : undefined)}
           >
             Send &amp; refine
           </GoabButton>
           <GoabButton
             type="tertiary"
+            size="compact"
             testId="discovery-restart"
-            disabled={busy}
+            disabled={blocked}
             onClick={() => send({ restart: true })}
           >
             Start over

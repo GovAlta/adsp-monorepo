@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { GoabBadge, GoabButton, GoabIconButton, GoabInput } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
@@ -44,6 +44,8 @@ interface SolutionHeaderProps {
   onSolutionChange: (solution: Solution) => void;
   onBack?: () => void;
   hideExports?: boolean;
+  disabled?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }
 
 export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
@@ -52,11 +54,18 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
   onSolutionChange,
   onBack,
   hideExports = false,
+  disabled = false,
+  onBusyChange,
 }) => {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(solution.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [working, attempt] = useBusy();
+  const blocked = working || disabled;
+
+  useEffect(() => {
+    onBusyChange?.(working);
+  }, [working, onBusyChange]);
 
   const startRename = () => {
     setName(solution.name);
@@ -113,10 +122,16 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
                 aria-label="Solution name"
                 onChange={(detail) => setName(detail.value)}
               />
-              <GoabButton size="compact" testId="rename-save" disabled={working || !name.trim()} onClick={saveName}>
+              <GoabButton size="compact" testId="rename-save" disabled={blocked || !name.trim()} onClick={saveName}>
                 Save
               </GoabButton>
-              <GoabButton size="compact" type="tertiary" testId="rename-cancel" onClick={() => setRenaming(false)}>
+              <GoabButton
+                size="compact"
+                type="tertiary"
+                testId="rename-cancel"
+                disabled={blocked}
+                onClick={() => setRenaming(false)}
+              >
                 Cancel
               </GoabButton>
             </RenameRow>
@@ -130,6 +145,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
                 title="Edit solution name"
                 ariaLabel="Edit solution name"
                 testId="rename-solution"
+                disabled={blocked}
                 onClick={startRename}
               />
               <GoabBadge type="information" content={solution.status} icon={false} />
@@ -145,7 +161,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
                 title="Download JSON"
                 ariaLabel="Download JSON"
                 testId="download-json"
-                disabled={working}
+                disabled={blocked}
                 onClick={exportJson}
               />
               <GoabIconButton
@@ -153,6 +169,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
                 title="Download report (.md)"
                 ariaLabel="Download report (.md)"
                 testId="download-report"
+                disabled={blocked}
                 onClick={exportReport}
               />
             </>
@@ -163,6 +180,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
             title="Delete solution"
             ariaLabel="Delete solution"
             testId="delete-solution"
+            disabled={blocked}
             onClick={() => setConfirmDelete(true)}
           />
         </Row>

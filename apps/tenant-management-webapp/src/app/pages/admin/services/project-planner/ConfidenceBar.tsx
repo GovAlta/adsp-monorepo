@@ -6,6 +6,7 @@ type Confidence = SolutionConfidence;
 
 interface ConfidenceBarProps {
   confidence?: Confidence;
+  analyzing?: boolean;
 }
 
 const SUCCESS_COLOR = '#006f4c';
@@ -47,7 +48,7 @@ const Bar: FunctionComponent<{
   </div>
 );
 
-export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidence }) => {
+export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidence, analyzing }) => {
   if (!confidence) {
     return (
       <p data-testid="confidence-empty" style={{ margin: 0 }}>
@@ -95,7 +96,7 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
         </GoabDetails>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <strong>Confidence: {score}%</strong>
+        <strong>Confidence: {analyzing ? 'Analyzing…' : `${score}%`}</strong>
         <Bar
           score={score}
           threshold={threshold}
@@ -105,9 +106,15 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
           testId="confidence-progress"
         />
         <GoabBadge
-          type={sufficient ? 'success' : 'important'}
+          type={analyzing ? 'information' : sufficient ? 'success' : 'important'}
           testId="confidence-badge"
-          content={sufficient ? 'Enough detail to prepare a plan' : 'More detail may help improve this plan'}
+          content={
+            analyzing
+              ? 'Analyzing…'
+              : sufficient
+                ? 'Enough detail to prepare a plan'
+                : 'More detail may help improve this plan'
+          }
         />
       </div>
     </div>

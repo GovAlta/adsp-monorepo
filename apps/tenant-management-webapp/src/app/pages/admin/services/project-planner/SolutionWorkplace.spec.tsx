@@ -560,6 +560,30 @@ describe('SolutionWorkplace', () => {
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
   });
 
+  it('shows a busy overlay and blocks the header and problem statement while discovery is working', async () => {
+    const planned = withPlan();
+    let resolveChat: (value: Solution) => void = () => undefined;
+    const chatPromise = new Promise<Solution>((resolve) => {
+      resolveChat = resolve;
+    });
+    const { container } = await setup(planned, { chat: jest.fn().mockReturnValue(chatPromise) });
+
+    expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull();
+    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
+
+    type(container, 'discovery-input', 'Add more detail about the renewal process.');
+    click(container, 'discovery-send');
+
+    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).not.toBeNull());
+    expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true');
+    expect(goa(container, 'delete-solution').getAttribute('disabled')).toBe('true');
+    expect(goa(container, 'problem-continue').getAttribute('disabled')).toBe('true');
+
+    resolveChat(planned);
+    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull());
+    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
+  });
+
   it('passes accessibility checks', async () => {
     const { container } = await setup();
     await expectNoA11yViolations(container);

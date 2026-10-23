@@ -24,6 +24,16 @@ export const ProjectPlanner: FunctionComponent = () => {
   const activeIndex = Math.max(TABS.indexOf(activeTab), 0);
   const changeTab = (index: number) => navigate(`../${TABS[index]}`);
 
+  if (id) {
+    return (
+      <Page>
+        <Main>
+          <SolutionsWorkspace />
+        </Main>
+      </Page>
+    );
+  }
+
   return (
     <Page>
       <Main>

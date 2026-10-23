@@ -110,12 +110,10 @@ export function usePlannerApi(): PlannerApi {
         request<Solution>('put', `/solutions/${id}/components/${order}/review`, { review }),
       discovery: (id, options = {}) => request<Solution>('post', `/solutions/${id}/discovery`, options),
       blueprint: (id, options = {}) => request<Solution>('post', `/solutions/${id}/blueprint`, options),
-      consult: (id, service, options) =>
-        request<ConsultResult>('post', `/solutions/${id}/consult/${service}`, options),
+      consult: (id, service, options) => request<ConsultResult>('post', `/solutions/${id}/consult/${service}`, options),
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
       listSpecialists: async () => (await request<{ results: SpecialistDefinition[] }>('get', '/specialists')).results,
-      specialistChat: (service, body) =>
-        request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
+      specialistChat: (service, body) => request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
       listChats: async (criteria) =>
         (await request<{ results: ChatSummary[] }>('get', `/specialists/chats${chatQuery(criteria)}`)).results,
       getChat: (id) => request<SpecialistChat>('get', `/specialists/chats/${id}`),

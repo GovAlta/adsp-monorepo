@@ -69,6 +69,27 @@ describe('DiscoveryPanel', () => {
     expect(container.querySelector('[testid="discovery-restart"]')).not.toBeNull();
   });
 
+  it('shows which analysis mode discovery actions will use', () => {
+    const { container, rerender } = render(
+      <DiscoveryPanel solution={solution(discovery())} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+
+    expect(container.querySelector('[data-testid="discovery-mode-hint"]')?.textContent).toContain('Using AI analysis');
+
+    rerender(
+      <DiscoveryPanel
+        solution={solution(discovery())}
+        api={createMockApi()}
+        mode="rules"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="discovery-mode-hint"]')?.textContent).toContain(
+      'Using rule-based analysis',
+    );
+  });
+
   it('groups optional questions, conversation, and one shared answer box in the same panel', () => {
     const { container } = render(
       <DiscoveryPanel
@@ -95,12 +116,12 @@ describe('DiscoveryPanel', () => {
     expect(discoveryPanel?.contains(container.querySelector('[testid="discovery-questions"]'))).toBe(true);
     expect(discoveryPanel?.contains(container.querySelector('goa-textarea[testid="discovery-input"]'))).toBe(true);
     expect(discoveryPanel?.contains(container.querySelector('[testid="discovery-conversation"]'))).toBe(true);
-    expect(container.querySelector('goa-form-item')?.getAttribute('label')).toBe('Add details or answer questions');
+    expect(container.querySelector('goa-form-item')?.getAttribute('label')).toBe('Anything else?');
     expect(container.querySelector('goa-textarea[testid="discovery-input"]')?.getAttribute('arialabel')).toBe(
-      'Add details or answer questions',
+      'Anything else?',
     );
     expect(container.querySelector('goa-textarea[testid="discovery-input"]')?.getAttribute('placeholder')).toBe(
-      'Answer questions, add details, or correct anything the planner got wrong.',
+      'Add details, ask a question, or correct anything the planner got wrong.',
     );
     expect(discoveryPanel?.textContent).not.toContain('One reply can cover several questions.');
     expect(container.querySelector('[data-testid="questions-pane"]')).toBeNull();
@@ -131,6 +152,201 @@ describe('DiscoveryPanel', () => {
     );
     expect(api.blueprint).not.toHaveBeenCalled();
     expect(onSolutionChange).toHaveBeenCalledWith(result);
+  });
+
+  it('shows an Answer action for an open question and a summary with Show answer/Edit for an answered one', () => {
+    const longAnswer = 'A'.repeat(350);
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
+          {
+            id: 'q2',
+            question: 'What documents are required?',
+            raisedBy: 'planner',
+            status: 'answered',
+            answer: longAnswer,
+          },
+        ])}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    expect(container.querySelector('[testid="discovery-question-status-q1"]')?.getAttribute('content')).toBe('Open');
+    expect(container.querySelector('[testid="discovery-question-answer-q1"]')?.textContent).toBe('Answer');
+    expect(container.querySelector('[testid="discovery-question-input-q1"]')).toBeNull();
+    expect(container.querySelector('[testid="discovery-question-status-q2"]')?.getAttribute('content')).toBe(
+      'Answered',
+    );
+    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')).toBeNull();
+    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Show answer');
+    expect(container.querySelector('[testid="discovery-question-edit-q2"]')?.textContent).toBe('Edit');
+  });
+
+  it('answers an open question independently through its own Save action', async () => {
+    const result = solution(discovery());
+    const api = createMockApi({ answerQuestion: jest.fn().mockResolvedValue(result) });
+    const onSolutionChange = jest.fn();
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
+        ])}
+        api={api}
+        mode="ai"
+        onSolutionChange={onSolutionChange}
+      />,
+    );
+
+    click(container, 'discovery-question-answer-q1');
+    fireEvent(
+      container.querySelector('goa-textarea[testid="discovery-question-input-q1"]') as Element,
+      new CustomEvent('_change', { detail: { value: 'Staff review each application.' } }),
+    );
+    click(container, 'discovery-question-save-q1');
+
+    await waitFor(() =>
+      expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Staff review each application.'),
+    );
+    expect(api.discovery).not.toHaveBeenCalled();
+    expect(api.chat).not.toHaveBeenCalled();
+    expect(onSolutionChange).toHaveBeenCalledWith(result);
+  });
+
+  it('expands the full answer when Show answer is clicked, and collapses it again', () => {
+    const longAnswer =
+      `${'A photo ID and proof of address, plus a completed application form and a copy of the lease agreement. '.repeat(4)}`.trim();
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          {
+            id: 'q2',
+            question: 'What documents are required?',
+            raisedBy: 'planner',
+            status: 'answered',
+            answer: longAnswer,
+          },
+        ])}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    click(container, 'discovery-question-toggle-q2');
+    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')?.textContent).toBe(longAnswer);
+    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Hide answer');
+
+    click(container, 'discovery-question-toggle-q2');
+    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Show answer');
+    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')).toBeNull();
+  });
+
+  it('hides the Show/Hide answer toggle when the answer already fits without truncating', () => {
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          {
+            id: 'q2',
+            question: 'What documents are required?',
+            raisedBy: 'planner',
+            status: 'answered',
+            answer: 'A photo ID and proof of address.',
+          },
+        ])}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')?.textContent).toBe(
+      'A photo ID and proof of address.',
+    );
+    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')).toBeNull();
+    expect(container.querySelector('[testid="discovery-question-edit-q2"]')).not.toBeNull();
+  });
+
+  it('edits an existing answer, pre-filled with its current text', async () => {
+    const result = solution(discovery());
+    const api = createMockApi({ answerQuestion: jest.fn().mockResolvedValue(result) });
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          {
+            id: 'q2',
+            question: 'What documents are required?',
+            raisedBy: 'planner',
+            status: 'answered',
+            answer: 'A photo ID.',
+          },
+        ])}
+        api={api}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    click(container, 'discovery-question-edit-q2');
+    expect(container.querySelector('goa-textarea[testid="discovery-question-input-q2"]')?.getAttribute('value')).toBe(
+      'A photo ID.',
+    );
+
+    fireEvent(
+      container.querySelector('goa-textarea[testid="discovery-question-input-q2"]') as Element,
+      new CustomEvent('_change', { detail: { value: 'A photo ID and a utility bill.' } }),
+    );
+    click(container, 'discovery-question-save-q2');
+
+    await waitFor(() =>
+      expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q2', 'A photo ID and a utility bill.'),
+    );
+  });
+
+  it('cancels answering without saving', () => {
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
+        ])}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    click(container, 'discovery-question-answer-q1');
+    click(container, 'discovery-question-cancel-q1');
+
+    expect(container.querySelector('[testid="discovery-question-input-q1"]')).toBeNull();
+    expect(container.querySelector('[testid="discovery-question-answer-q1"]')?.textContent).toBe('Answer');
+  });
+
+  it('shows only the top 5 open questions with a Show more action for the rest', () => {
+    const questions: OpenQuestion[] = Array.from({ length: 7 }, (_, i) => ({
+      id: `q${i + 1}`,
+      question: `Question ${i + 1}?`,
+      raisedBy: 'planner',
+      status: 'open',
+    }));
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), questions)}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    expect(container.querySelectorAll('[testid="discovery-questions"] li')).toHaveLength(5);
+    expect(container.querySelector('[testid="discovery-questions-show-more"]')?.textContent).toBe('Show more (2)');
+
+    click(container, 'discovery-questions-show-more');
+
+    expect(container.querySelectorAll('[testid="discovery-questions"] li')).toHaveLength(7);
+    expect(container.querySelector('[testid="discovery-questions-show-less"]')).not.toBeNull();
   });
 
   it('refines through conversation when discovery is ready and there are no open questions', async () => {

@@ -37,6 +37,13 @@ describe('ConfidenceBar', () => {
     expect(goa(container, 'confidence-badge').getAttribute('content')).toBe('More detail may help improve this plan');
   });
 
+  it('shows an analyzing indicator instead of the score while a background analysis is running', () => {
+    const { container, getByText } = render(<ConfidenceBar confidence={confidence} analyzing />);
+    expect(getByText('Confidence: Analyzing…')).toBeTruthy();
+    expect(goa(container, 'confidence-badge').getAttribute('type')).toBe('information');
+    expect(goa(container, 'confidence-badge').getAttribute('content')).toBe('Analyzing…');
+  });
+
   it('renders a plain-language factor breakdown without contradictory notes', () => {
     const { container, getByTestId, getByText, queryByText } = render(<ConfidenceBar confidence={confidence} />);
     expect(goa(container, 'confidence-breakdown').getAttribute('heading')).toBe(
