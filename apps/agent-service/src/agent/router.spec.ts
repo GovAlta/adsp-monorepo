@@ -1,5 +1,5 @@
 import { AgentConfigurations } from './configuration';
-import { onIoConnection } from './router';
+import { getAccessScope, onIoConnection } from './router';
 import { WorkspaceChangeProjector } from './workspace';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
@@ -911,5 +911,45 @@ describe('Agent Router - Structured Output', () => {
       const agentDef = agentConfig['text-agent'];
       expect(agentDef.outputSchema).toBeUndefined();
     });
+  });
+});
+
+describe('getAccessScope', () => {
+  const accessServiceUrl = new URL('https://access.adsp-dev.gov.ab.ca');
+  const agentUserRole = 'urn:ads:platform:agent-service:agent-user';
+
+  function callHandler(user: unknown) {
+    const res = { send: jest.fn() };
+    getAccessScope(accessServiceUrl)({ user } as never, res as never, jest.fn());
+    return res.send.mock.calls[0][0];
+  }
+
+  it("returns the user's environment and realm without any AI involvement", () => {
+    const scope = callHandler({
+      id: 'user-1',
+      roles: [agentUserRole],
+      tenantId: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/tenant-1' },
+      isCore: false,
+      token: { iss: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1', bearer: 'user-token' },
+    });
+
+    expect(scope).toMatchObject({
+      status: 'available',
+      environment: { id: 'dev', label: 'Development', readOnly: true },
+      realm: { id: 'realm-1', kind: 'tenant' },
+      readOnly: true,
+    });
+    expect(JSON.stringify(scope)).not.toContain('user-token');
+  });
+
+  it('explains a missing role instead of returning an error', () => {
+    const scope = callHandler({
+      id: 'user-1',
+      roles: [],
+      isCore: false,
+      token: { iss: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1' },
+    });
+
+    expect(scope).toMatchObject({ status: 'unavailable', reason: 'MISSING_ROLE', missingRoles: [agentUserRole] });
   });
 });

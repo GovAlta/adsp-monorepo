@@ -3,10 +3,11 @@ import { loadAccessAgentMarkdown } from './loadMarkdown';
 import { clientAgent, identityProviderAgent, tokenRoleAgent, architectAgent } from './specialists';
 import { ACCESS_SERVICE_AGENT_IDS, ACCESS_SERVICE_PII_TYPES, isAccessServiceAgentId } from './piiGuardrailConfig';
 import { createAccessServiceSupervisorOptions } from './supervisorOptions';
+import { ACCESS_ENVIRONMENTS } from './discovery/environments';
 import { ACCESS_SERVICE_AGENT_MAX_STEPS } from '../../model/executionLimits';
 
 describe('accessServiceAgent', () => {
-  it('orchestrates the configured read-only agents', () => {
+  it('orchestrates the configured read-only agents and discovery tools', () => {
     expect(accessServiceAgent.name).toBe('Access Service Agent');
     expect(accessServiceAgent.userRoles).toEqual(['urn:ads:platform:agent-service:agent-user']);
     expect(accessServiceAgent.agents).toEqual([
@@ -15,7 +16,7 @@ describe('accessServiceAgent', () => {
       'identityProviderAgent',
       'architectAgent',
     ]);
-    expect(accessServiceAgent.tools).toBeUndefined();
+    expect(accessServiceAgent.tools).toEqual(['listAccessEnvironments', 'listAccessRealms', 'getAccessRealmInfo']);
     expect(accessServiceAgent.mcp).toBeUndefined();
     expect(accessServiceAgent.workspace?.enabled).not.toBe(true);
   });
@@ -24,12 +25,32 @@ describe('accessServiceAgent', () => {
     expect(accessServiceAgent.maxSteps).toBe(ACCESS_SERVICE_AGENT_MAX_STEPS);
   });
 
-  it('uses static repository context and disclaims live access', () => {
+  it('uses static repository context and read-only live discovery', () => {
     expect(accessServiceAgent.instructions).toContain('# Access Service Base Knowledge');
-    expect(accessServiceAgent.instructions).toContain('cannot inspect live Keycloak realms');
+    expect(accessServiceAgent.instructions).toContain('## Live Discovery Tools (read-only)');
+    expect(accessServiceAgent.instructions).toContain('never invent realms, hosts, or realm details');
+    expect(accessServiceAgent.instructions).toContain(
+      'Production can be inspected with these tools but must never be changed',
+    );
+    expect(accessServiceAgent.instructions).not.toContain('cannot inspect live Keycloak realms');
     expect(accessServiceAgent.instructions).toContain('https://access.adsp-dev.gov.ab.ca');
     expect(accessServiceAgent.instructions).toContain('https://access-uat.alberta.ca');
     expect(accessServiceAgent.instructions).toContain('https://access.alberta.ca');
+  });
+
+  it('documents the same environment hosts that the discovery tools use', () => {
+    const baseKnowledge = loadAccessAgentMarkdown('baseKnowledge.md');
+    const documentedHosts = Array.from(baseKnowledge.matchAll(/`(https:\/\/access[^`]*)`/g), ([, host]) => host);
+
+    expect(documentedHosts).toEqual(ACCESS_ENVIRONMENTS.map(({ host }) => host));
+  });
+
+  it('tells every agent that Production must never be changed', () => {
+    for (const agent of [accessServiceAgent, clientAgent, tokenRoleAgent]) {
+      expect(agent.instructions).not.toContain('Production access is prohibited');
+    }
+    expect(clientAgent.instructions).toContain('Production is read-only and must never be changed');
+    expect(tokenRoleAgent.instructions).toContain('Production is read-only and must never be changed');
   });
 
   it('loads each agent instruction from Markdown', () => {

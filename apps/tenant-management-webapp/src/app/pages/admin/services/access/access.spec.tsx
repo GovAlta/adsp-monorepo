@@ -1,6 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 
 import { KeycloakApi } from '@store/config/models';
@@ -11,6 +12,13 @@ jest.mock('@store/agent/actions', () => ({
   clearThread: (threadId: string) => ({ type: 'agent/CLEAR_THREAD', threadId }),
   connectAgent: () => ({ type: 'agent/CONNECT_AGENT' }),
   disconnectAgent: () => ({ type: 'agent/DISCONNECT_AGENT' }),
+  getAccessScope: () => async () => ({
+    status: 'available',
+    message: 'You can inspect the mock-realm realm in Development (read-only).',
+    environment: { id: 'dev', label: 'Development', host: 'https://access.adsp-dev.gov.ab.ca', readOnly: true },
+    realm: { id: 'mock-realm', kind: 'tenant' },
+    readOnly: true,
+  }),
   messageAgent: (threadId: string, context: Record<string, unknown>, content: unknown) => ({
     type: 'agent/MESSAGE_AGENT',
     threadId,
@@ -27,7 +35,12 @@ describe('Access Page', () => {
     url: 'https://foo.bar',
   };
 
-  const mockStore = configureStore([]);
+  const mockStore = configureStore([thunk]);
+
+  // jsdom has no scrollIntoView; the agent chat auto-scrolls after a delay that slow runners can reach.
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+  });
 
   const users = [
     { id: '1', enabled: true, emailVerified: true },
@@ -115,7 +128,7 @@ describe('Access Page', () => {
     });
   });
 
-  it('connects the AI agent from its own tab and disconnects when leaving it', () => {
+  it('connects the AI agent from its own tab and disconnects when leaving it', async () => {
     const store = mockStore({
       config: {
         keycloakApi: mockKeycloak,
@@ -156,6 +169,14 @@ describe('Access Page', () => {
         expect.objectContaining({ type: 'agent/START_THREAD', agent: 'AccessServiceAgent' }),
       ]),
     );
+    await waitFor(() => expect(getByTestId('access-scope-banner').getAttribute('data-status')).toBe('available'));
+    expect(getByTestId('access-scope-realm').textContent).toBe('mock-realm');
+
+    const sidePanel = getByTestId('access-agent-side-panel');
+    expect(sidePanel.contains(getByTestId('access-scope-banner'))).toBe(true);
+    expect(sidePanel.querySelector('#topic-select')).not.toBeNull();
+    expect(sidePanel.querySelector('goa-details[heading="About the AI agent"]')).not.toBeNull();
+    expect(sidePanel.contains(getByTestId('access-service-agent-chat'))).toBe(false);
 
     fireEvent.click(getByTestId('tab-btn-0'));
 
@@ -166,6 +187,58 @@ describe('Access Page', () => {
         { type: 'agent/DISCONNECT_AGENT' },
       ]),
     );
+  });
+
+  it('sends predefined questions in the current conversation instead of starting a new one', async () => {
+    const store = mockStore({
+      config: {
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo' },
+        serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+        featureFlags: { AccessServiceAI: true },
+      },
+      access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
+      user: { jwt: { token: '' } },
+      agent: {
+        connected: true,
+        threads: {},
+        threadMessages: {},
+        messages: {},
+      },
+      session: {
+        realm: 'core',
+        indicator: {
+          show: false,
+          message: 'loading',
+        },
+      },
+    });
+
+    const { getByTestId, getByText, container } = render(
+      <Provider store={store}>
+        <AccessPage />
+      </Provider>,
+    );
+
+    fireEvent.click(getByTestId('access-ai-agent-tab-btn'));
+    await waitFor(() => expect(getByTestId('access-scope-banner').getAttribute('data-status')).toBe('available'));
+    fireEvent.change(container.querySelector('#topic-select'), { target: { value: 'environment-realm' } });
+    fireEvent.click(getByText('My Realms'));
+    fireEvent.click(getByText('Realm Details'));
+
+    const actions = store.getActions();
+    const startedThreads = actions.filter(({ type }) => type === 'agent/START_THREAD');
+    const messages = actions.filter(({ type }) => type === 'agent/MESSAGE_AGENT');
+
+    expect(startedThreads).toHaveLength(1);
+    expect(messages).toHaveLength(2);
+    expect(messages.map(({ threadId }) => threadId)).toEqual([startedThreads[0].threadId, startedThreads[0].threadId]);
+    expect(messages[0]).toMatchObject({
+      context: {
+        agentContext: { context: 'environment-realm', subtopic: 'my-realms', agent: 'AccessServiceAgent' },
+      },
+      content: [{ type: 'text', text: 'Which realms can I inspect in this environment?' }],
+    });
   });
 
   it('hides the AI agent tab by default when AccessServiceAI is not enabled', () => {

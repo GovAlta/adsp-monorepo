@@ -53,18 +53,21 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
       onSolutionChange(await api.updateSolution(solution.id, { name: name.trim() }));
       setRenaming(false);
     });
+  // The export leaves out rejected components, so keep the saved state and take only the new version details.
+  const fetchExport = async () => {
+    const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
+    onSolutionChange({ ...solution, ...data, state: solution.state });
+    return data;
+  };
   const exportJson = () =>
     attempt(async () => {
-      const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
-      onSolutionChange({ ...solution, ...data });
+      const data = await fetchExport();
       download(`planner-${safeName(solution)}.json`, JSON.stringify(data, null, 2), 'application/json');
     });
   const exportReport = () =>
     attempt(async () => {
-      const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
-      const updated = { ...solution, ...data };
-      onSolutionChange(updated);
-      download(`planner-${safeName(solution)}.md`, solutionToMarkdown(updated), 'text/markdown');
+      const data = await fetchExport();
+      download(`planner-${safeName(solution)}.md`, solutionToMarkdown({ ...solution, ...data }), 'text/markdown');
     });
   const remove = () =>
     attempt(async () => {
