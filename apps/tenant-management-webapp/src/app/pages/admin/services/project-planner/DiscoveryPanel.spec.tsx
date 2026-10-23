@@ -63,9 +63,7 @@ describe('DiscoveryPanel', () => {
     );
 
     expect(container.textContent).toContain('Who are the users? What steps do they take?');
-    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('heading')).toBe(
-      'Optional questions (1)',
-    );
+    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('heading')).toBe('Questions');
     expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('secondarytext')).toBeNull();
     expect(container.querySelector('[testid="discovery-force"]')).toBeNull();
     expect(container.querySelector('[testid="discovery-restart"]')).not.toBeNull();
@@ -85,9 +83,7 @@ describe('DiscoveryPanel', () => {
     );
 
     expect(container.querySelector('[testid="discovery-questions"]')).not.toBeNull();
-    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('heading')).toBe(
-      'Optional questions (2)',
-    );
+    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('heading')).toBe('Questions');
     expect(container.querySelectorAll('[testid="discovery-questions"] li')).toHaveLength(2);
     expect(container.querySelector('[testid="discovery-questions"]')?.hasAttribute('open')).toBe(false);
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
@@ -151,7 +147,7 @@ describe('DiscoveryPanel', () => {
     expect(api.discovery).not.toHaveBeenCalled();
   });
 
-  it('shows existing discovery and refinement messages in an expanded conversation panel', () => {
+  it('shows existing discovery and refinement messages in a collapsed conversation panel', () => {
     const existing = solution(discovery());
     existing.state.conversation = [
       { role: 'user', content: 'There is also a committee vote.', at: '2026-03-01T10:01:00.000Z' },
@@ -162,8 +158,8 @@ describe('DiscoveryPanel', () => {
     );
 
     const conversation = container.querySelector('[testid="discovery-conversation"]');
-    expect(conversation?.getAttribute('heading')).toBe('Conversation (3 messages)');
-    expect(conversation?.hasAttribute('open')).toBe(true);
+    expect(conversation?.getAttribute('heading')).toBe('Conversation');
+    expect(conversation?.hasAttribute('open')).toBe(false);
     expect(conversation?.querySelectorAll('[testid^="discovery-message-"]')).toHaveLength(3);
     expect(conversation?.textContent).toContain('Who are the users? What steps do they take?');
     expect(conversation?.textContent).toContain('There is also a committee vote.');
@@ -229,7 +225,7 @@ describe('DiscoveryPanel', () => {
     );
 
     const expertAccordion = container.querySelector('[testid="optional-experts"]');
-    expect(expertAccordion?.getAttribute('heading')).toContain('Chat/Consult with Specialist (optional — 2 available)');
+    expect(expertAccordion?.getAttribute('heading')).toBe('Chat/Consult with Specialist');
     expect(expertAccordion?.hasAttribute('open')).toBe(false);
     expect(expertAccordion?.querySelector('[testid="specialist-service-form-service"]')?.textContent).toContain(
       'Form (recommended)',

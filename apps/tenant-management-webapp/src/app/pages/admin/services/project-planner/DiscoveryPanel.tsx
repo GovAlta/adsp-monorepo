@@ -1,10 +1,10 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import {
   GoabAccordion,
+  GoabBadge,
   GoabButton,
   GoabCallout,
   GoabCircularProgress,
-  GoabContainer,
   GoabFormItem,
   GoabTextArea,
 } from '@abgov/react-components';
@@ -53,6 +53,12 @@ interface DiscoveryPanelProps {
 
 const serviceName = (service: string, specialists: SpecialistDefinition[]) =>
   specialists.find((specialist) => specialist.service === service)?.displayName.replace(/ service$/i, '') || service;
+
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+const countBadge = (count: number, label: string, testId: string) => (
+  <GoabBadge type={count > 0 ? 'important' : 'information'} content={plural(count, label)} testId={testId} />
+);
 
 export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   solution,
@@ -132,13 +138,14 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       <p>
         Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.
       </p>
-      {messages.length > 0 && (
-        <GoabAccordion
-          heading={`Conversation (${messages.length} messages)`}
-          headingSize="small"
-          open
-          testId="discovery-conversation"
-        >
+      <GoabAccordion
+        heading="Conversation"
+        headingContent={countBadge(messages.length, 'message', 'discovery-conversation-count')}
+        headingSize="small"
+        open={false}
+        testId="discovery-conversation"
+      >
+        {messages.length > 0 ? (
           <section aria-label="Conversation with the planner">
             {messages.map((m, i) => (
               <GoabCallout
@@ -152,22 +159,27 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
               </GoabCallout>
             ))}
           </section>
-        </GoabAccordion>
-      )}
-      {openQuestions.length > 0 && (
-        <GoabAccordion
-          heading={`Optional questions (${openQuestions.length})`}
-          headingSize="small"
-          open={false}
-          testId="discovery-questions"
-        >
+        ) : (
+          <p>No messages yet.</p>
+        )}
+      </GoabAccordion>
+      <GoabAccordion
+        heading="Questions"
+        headingContent={countBadge(openQuestions.length, 'question', 'discovery-questions-count')}
+        headingSize="small"
+        open={false}
+        testId="discovery-questions"
+      >
+        {openQuestions.length > 0 ? (
           <ol>
             {openQuestions.map((question) => (
               <li key={question.id}>{question.question}</li>
             ))}
           </ol>
-        </GoabAccordion>
-      )}
+        ) : (
+          <p>No remaining questions.</p>
+        )}
+      </GoabAccordion>
       {busy && <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />}
       {ready && <p data-testid="discovery-ready">Your answers are enough to prepare a plan.</p>}
       <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
@@ -209,7 +221,8 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       </div>
       <div style={{ marginTop: '1.5rem' }}>
         <GoabAccordion
-          heading={`Chat/Consult with Specialist (optional${specialists.length ? ` — ${specialists.length} available` : ''})`}
+          heading="Chat/Consult with Specialist"
+          headingContent={countBadge(specialists.length, 'specialist', 'optional-experts-count')}
           open={false}
           testId="optional-experts"
         >

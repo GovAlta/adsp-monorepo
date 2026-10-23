@@ -17,9 +17,15 @@ import ConfidenceBar from './ConfidenceBar';
 import DiscoveryPanel from './DiscoveryPanel';
 import { AnalysisModeToggle } from './ModeLayoutToggle';
 import ProblemStatement from './ProblemStatement';
+import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
 import { AnalysisMode, OpenQuestion, Solution, SpecialistDefinition } from './model';
 import { useBusy } from './useBusy';
+
+const STEPPER_WIDTH_PX = 32;
+const STEPPER_GAP_PX = 16;
+const STEPPER_MIN_LEFT_PX = 8;
+const STEPPER_BOTTOM_MARGIN_PX = 24;
 
 interface SolutionWorkplaceProps {
   solutionId: string;
@@ -55,38 +61,43 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, child
   const panelId = `${testId}-content`;
 
   return (
-    <section data-testid={testId} style={{ borderBottom: '1px solid #dcdcdc', padding: '1rem 0' }}>
-      <h2 id={headingId} style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1.25, margin: 0 }}>
-        <button
-          type="button"
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          onClick={() => setExpanded((open) => !open)}
-          style={{
-            alignItems: 'center',
-            background: 'none',
-            border: 0,
-            color: 'inherit',
-            cursor: 'pointer',
-            display: 'flex',
-            font: 'inherit',
-            gap: '0.75rem',
-            padding: 0,
-            textAlign: 'left',
-            width: '100%',
-          }}
-          data-testid={`${testId}-toggle`}
+    <div style={{ '--goa-container-padding': '20px 10px' } as React.CSSProperties}>
+      <GoabContainer accent="thin" testId={testId} mb="m">
+        <h2
+          id={headingId}
+          style={{ fontSize: 'calc(var(--goa-font-size-7) * 0.88)', fontWeight: 600, lineHeight: 1.25, margin: 0 }}
         >
-          <GoabIcon type={expanded ? 'chevron-down' : 'chevron-forward'} size="small" role="presentation" />
-          <span>{heading}</span>
-        </button>
-      </h2>
-      {expanded && (
-        <div id={panelId} role="region" aria-labelledby={headingId} style={{ paddingTop: '1rem' }}>
-          {children}
-        </div>
-      )}
-    </section>
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            onClick={() => setExpanded((open) => !open)}
+            style={{
+              alignItems: 'center',
+              background: 'none',
+              border: 0,
+              color: 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              font: 'inherit',
+              gap: '0.75rem',
+              padding: 0,
+              textAlign: 'left',
+              width: '100%',
+            }}
+            data-testid={`${testId}-toggle`}
+          >
+            <GoabIcon type={expanded ? 'chevron-down' : 'chevron-forward'} size="small" role="presentation" />
+            <span>{heading}</span>
+          </button>
+        </h2>
+        {expanded && (
+          <div id={panelId} role="region" aria-labelledby={headingId} style={{ fontSize: '88%', paddingTop: '1rem' }}>
+            {children}
+          </div>
+        )}
+      </GoabContainer>
+    </div>
   );
 };
 
@@ -113,6 +124,16 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const userSelectedMode = useRef(false);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
+  const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
+  const [stepperLeft, setStepperLeft] = useState<number>();
+  const [stepperTop, setStepperTop] = useState<number>();
+  const [stepperHeight, setStepperHeight] = useState<number>();
+  const [headerOffset, setHeaderOffset] = useState(0);
+  const [bottomSpacerHeight, setBottomSpacerHeight] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const step1Ref = useRef<HTMLLIElement>(null);
+  const step2Ref = useRef<HTMLLIElement>(null);
+  const step3Ref = useRef<HTMLLIElement>(null);
 
   const updateSolution = useCallback(
     (updated: Solution) => {
@@ -208,6 +229,92 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     }
   }, [api, busy, mode, run, solution, updateSolution]);
 
+  const solutionLoaded = !!solution;
+  useEffect(() => {
+    const updatePosition = () => {
+      if (!contentRef.current || !step1Ref.current) {
+        return;
+      }
+      const contentLeft = contentRef.current.getBoundingClientRect().left;
+      const top = step1Ref.current.getBoundingClientRect().top;
+      setStepperLeft(Math.max(contentLeft - STEPPER_WIDTH_PX - STEPPER_GAP_PX, STEPPER_MIN_LEFT_PX));
+      setStepperTop(top);
+      setStepperHeight(window.innerHeight - top - STEPPER_BOTTOM_MARGIN_PX);
+    };
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    return () => window.removeEventListener('resize', updatePosition);
+  }, [solutionLoaded]);
+
+  useEffect(() => {
+    const header = document.querySelector('[data-testid="app-fixed-header"]');
+    if (!header) {
+      return;
+    }
+    const updateHeaderOffset = () => setHeaderOffset(header.getBoundingClientRect().height);
+    updateHeaderOffset();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const resizeObserver = new ResizeObserver(updateHeaderOffset);
+    resizeObserver.observe(header);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const updateBottomSpacer = () => {
+      if (!step3Ref.current) {
+        return;
+      }
+      const step3Top = step3Ref.current.getBoundingClientRect().top + window.scrollY;
+      setBottomSpacerHeight((previousSpacer) => {
+        const documentHeightWithoutSpacer = document.documentElement.scrollHeight - previousSpacer;
+        const contentAfterStep3Top = documentHeightWithoutSpacer - step3Top;
+        return Math.max(0, window.innerHeight - contentAfterStep3Top);
+      });
+    };
+    updateBottomSpacer();
+    window.addEventListener('resize', updateBottomSpacer);
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(updateBottomSpacer);
+      resizeObserver.observe(document.body);
+    }
+    return () => {
+      window.removeEventListener('resize', updateBottomSpacer);
+      resizeObserver?.disconnect();
+    };
+  }, [solution]);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+    const sections: Array<[1 | 2 | 3, HTMLLIElement | null]> = [
+      [1, step1Ref.current],
+      [2, step2Ref.current],
+      [3, step3Ref.current],
+    ];
+    const visibleRatios = new Map<1 | 2 | 3, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = sections.find(([, element]) => element === entry.target)?.[0];
+          if (id) {
+            visibleRatios.set(id, entry.intersectionRatio);
+          }
+        });
+        const [mostVisible] = [...visibleRatios.entries()].sort((a, b) => b[1] - a[1]);
+        if (mostVisible && mostVisible[1] > 0) {
+          setActiveStep(mostVisible[0]);
+        }
+      },
+      { rootMargin: '0px 0px -70% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    sections.forEach(([, element]) => element && observer.observe(element));
+    return () => observer.disconnect();
+  }, [solution]);
+
   if (!solution) {
     return <GoabCircularProgress visible message="Loading solution..." size="small" />;
   }
@@ -215,6 +322,15 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const step = getGuidedStep(solution);
   const analysis = solution.state.analysis;
   const blueprint = solution.state.blueprint;
+  const progressSteps = [
+    { id: 1 as const, label: 'Problem statement', complete: !!analysis },
+    { id: 2 as const, label: 'Discovery conversation', complete: step >= 3 },
+    { id: 3 as const, label: 'Proposed solution', complete: !!blueprint },
+  ];
+  const stepRefs = { 1: step1Ref, 2: step2Ref, 3: step3Ref } as const;
+  const scrollToStep = (id: 1 | 2 | 3) => {
+    stepRefs[id].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const problemChanged = problemDraft !== solution.state.problemStatement;
   const answerChanged = solution.state.questions.some(
     (question) => answerDrafts[question.id] !== undefined && answerDrafts[question.id] !== (question.answer || ''),
@@ -279,7 +395,18 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const visibleAnswerQuestions = answerQuestions.slice(0, showAllAnswers ? undefined : 3);
 
   return (
-    <div data-testid="solution-workplace">
+    <div ref={contentRef} data-testid="solution-workplace">
+      <div
+        style={{
+          height: stepperHeight,
+          left: stepperLeft,
+          position: 'fixed',
+          top: stepperTop,
+          zIndex: 10,
+        }}
+      >
+        <ProgressStepper steps={progressSteps} activeId={activeStep} onSelect={scrollToStep} />
+      </div>
       <SolutionHeader
         solution={solution}
         api={api}
@@ -294,9 +421,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       />
 
       {analysis && <ConfidenceBar confidence={solution.state.confidence} />}
-      <p>Describe the problem, answer the planner’s questions, and review the proposed solution.</p>
       <ol aria-label="Project planning steps" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-        <li>
+        <li ref={step1Ref} style={{ scrollMarginTop: headerOffset }}>
           <GuidedStep heading="1. Problem statement" testId="guided-step-1">
             <section aria-label="Problem statement">
               <ProblemStatement
@@ -371,7 +497,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
             </section>
           </GuidedStep>
         </li>
-        <li>
+        <li ref={step2Ref} style={{ scrollMarginTop: headerOffset }}>
           <GuidedStep heading="2. Discovery conversation" testId="guided-step-2">
             <section aria-label="Discovery conversation">
               {!analysis ? (
@@ -390,13 +516,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
             </section>
           </GuidedStep>
         </li>
-        <li>
+        <li ref={step3Ref} style={{ scrollMarginTop: headerOffset }}>
           <GuidedStep
-            heading={
-              blueprint
-                ? `3. Proposed solution: ${blueprint.overview.title}`
-                : `3. Proposed solution${step !== 3 ? ' (after discovery)' : ''}`
-            }
+            heading={`3. Proposed solution${blueprint ? '' : step !== 3 ? ' (after discovery)' : ''}`}
             testId="guided-step-3"
           >
             <section aria-label="Proposed solution">
@@ -423,7 +545,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <GoabDetails heading="Next steps" maxWidth="100%" mb="s">
                     <NextSteps solution={solution} />
                   </GoabDetails>
-                  <GoabContainer accent="thick" mb="m" testId="project-blueprint">
+                  <GoabContainer accent="thin" mb="m" testId="project-blueprint">
                     <h3>Project blueprint</h3>
                     <p>Explore the recommended services, architecture, workflows, and delivery plan.</p>
                     <div
@@ -534,7 +656,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   )}
                 </>
               ) : step === 3 ? (
-                <GoabContainer accent="thick" mb="m" testId="project-blueprint">
+                <GoabContainer accent="thin" mb="m" testId="project-blueprint">
                   <h3>Project blueprint</h3>
                   <p>Explore the recommended services, architecture, workflows, and delivery plan.</p>
                   {blueprintGenerationFailed ? (
@@ -563,6 +685,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
           </GuidedStep>
         </li>
       </ol>
+      <div aria-hidden="true" style={{ minHeight: bottomSpacerHeight }} />
     </div>
   );
 };

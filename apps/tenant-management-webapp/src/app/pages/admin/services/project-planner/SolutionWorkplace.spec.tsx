@@ -177,9 +177,9 @@ describe('SolutionWorkplace', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     for (const [step, heading] of [
-      ['guided-step-1', '1. Problem statement'],
-      ['guided-step-2', '2. Discovery conversation'],
-      ['guided-step-3', '3. Proposed solution: Permit intake plan'],
+      ['guided-step-1', 'Problem statement'],
+      ['guided-step-2', 'Discovery conversation'],
+      ['guided-step-3', 'Proposed solution'],
     ]) {
       const toggle = goa(container, `${step}-toggle`);
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
@@ -245,7 +245,7 @@ describe('SolutionWorkplace', () => {
       listSpecialists: jest.fn().mockResolvedValue([...specialists, otherSpecialist]),
     });
 
-    expect(container.querySelector('[testid="optional-experts"]')?.getAttribute('heading')).toContain('2 available');
+    expect(goa(container, 'optional-experts-count').getAttribute('content')).toBe('2 specialists');
     expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
     expect(container.querySelector('[testid="specialist-service-status-service"]')).not.toBeNull();
     expect(container.querySelector('[testid="optional-experts"]')?.hasAttribute('open')).toBe(false);
@@ -290,8 +290,8 @@ describe('SolutionWorkplace', () => {
       discovery: jest.fn().mockResolvedValue(discovered),
     });
 
-    expect(goa(container, 'guided-step-1-toggle').textContent).toContain('1. Problem statement');
-    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('2. Discovery conversation');
+    expect(goa(container, 'guided-step-1-toggle').textContent).toContain('Problem statement');
+    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery conversation');
     expect(goa(container, 'problem-continue').textContent).toContain('Save & analyze');
     expect(container.querySelectorAll('[testid="problem-continue"]')).toHaveLength(1);
     expect(container.textContent).toContain('Save and analyze the problem to start discovery');
@@ -382,7 +382,7 @@ describe('SolutionWorkplace', () => {
     });
     const { container } = await setup(lowConfidence);
     expect(goa(container, 'discovery-force')).toBeNull();
-    expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Optional questions (1)');
+    expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Questions');
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
     expect(container.textContent).not.toContain('Questions are complete');

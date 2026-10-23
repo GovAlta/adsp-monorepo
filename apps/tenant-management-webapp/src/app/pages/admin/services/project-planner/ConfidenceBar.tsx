@@ -60,14 +60,47 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
   const sufficient = score >= threshold;
 
   return (
-    <div data-testid="confidence-bar">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+    <div
+      data-testid="confidence-bar"
+      style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}
+    >
+      <div style={{ flex: 1, minWidth: 220 }}>
+        <GoabDetails heading="How well the planner understands your request" testId="confidence-breakdown" mt="none">
+          <div
+            role="list"
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              display: 'grid',
+              gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem',
+              gap: '4px 12px',
+              alignItems: 'center',
+            }}
+          >
+            {factors.map((factor) => (
+              <div role="listitem" key={factor.id} style={{ display: 'contents' }}>
+                <span data-testid={`confidence-factor-${factor.id}`}>{factor.label}</span>
+                <Bar
+                  score={factor.score}
+                  color={factor.score >= threshold ? SUCCESS_COLOR : WARNING_COLOR}
+                  height={6}
+                  label={factor.label}
+                  testId={`confidence-factor-bar-${factor.id}`}
+                />
+                <span>{factor.score}%</span>
+              </div>
+            ))}
+          </div>
+        </GoabDetails>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <strong>Confidence: {score}%</strong>
         <Bar
           score={score}
           threshold={threshold}
           color={sufficient ? SUCCESS_COLOR : WARNING_COLOR}
-          height={14}
+          height={10}
           label="Confidence"
           testId="confidence-progress"
         />
@@ -77,34 +110,6 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
           content={sufficient ? 'Enough detail to prepare a plan' : 'More detail may help improve this plan'}
         />
       </div>
-      <GoabDetails heading="How well the planner understands your request" testId="confidence-breakdown" mt="m">
-        <div
-          role="list"
-          style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-            display: 'grid',
-            gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem',
-            gap: '8px 12px',
-            alignItems: 'center',
-          }}
-        >
-          {factors.map((factor) => (
-            <div role="listitem" key={factor.id} style={{ display: 'contents' }}>
-              <span data-testid={`confidence-factor-${factor.id}`}>{factor.label}</span>
-              <Bar
-                score={factor.score}
-                color={factor.score >= threshold ? SUCCESS_COLOR : WARNING_COLOR}
-                height={8}
-                label={factor.label}
-                testId={`confidence-factor-bar-${factor.id}`}
-              />
-              <span>{factor.score}%</span>
-            </div>
-          ))}
-        </div>
-      </GoabDetails>
     </div>
   );
 };
