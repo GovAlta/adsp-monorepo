@@ -264,7 +264,7 @@ Resource type and metadata are validated against the resolved action.
 Metadata and change sets each have a 16 KiB UTF-8 JSON limit; the whole body has a
 20 MiB limit. A non-capturing action drops change sets from the trusted row.
 
-Malformed batch envelopes return 400, oversized bodies return 413, and malformed
+Malformed batch envelopes return 400, oversized bodies or enriched batches return 413, and malformed
 individual events produce individual rejections. Classification, identity and
 retention columns are server-set, never copied from caller-supplied row fields.
 
@@ -307,10 +307,14 @@ The router submits enriched events through
 Results use the service-generated `id`, never client `event_id`, to keep concurrent requests
 and tenants separate. Inputs must remain unchanged until the promise settles.
 
-The buffer batches at 200 events or 200 ms, with default limits of 5,000 retained events and
-32 MiB of serialized payload per pod. Capacity is reserved for the whole request before enqueueing;
-over-capacity requests return 503 without storing any of their events. The byte limit is not a
-measurement of process memory.
+The buffer batches at 200 events or 200 ms, with limits of 1,000 retained events and
+8 MiB of serialized enriched payload (including original input) per pod. Capacity is reserved
+for the whole request before enqueueing. A batch that cannot fit even in an empty buffer returns
+413 without storing any of its events; split it into smaller requests rather than retrying unchanged.
+A batch that fits on its own but exceeds the currently available capacity returns 503 with
+`Retry-After: 1`. The HTTP envelope still accepts up to 500 events and 20 MiB of input, but
+enrichment/original-input retention can make a valid request too large for the smaller buffer.
+The byte limit is not a measurement of process memory.
 
 Transient failures retry after 200 ms, 1 s and 3 s; constraint failures are retried individually.
 `accepted` requires a committed audit row. `storage_failed` requires the original event to be
@@ -364,16 +368,20 @@ actual ingress propagation remains an environment-dependent deployment concern.
 
 ### Resource and shutdown budgets
 
-Both workloads request 100m CPU / 256Mi memory and limit usage to 500m CPU / 512Mi memory.
-The API buffer has simultaneous caps of 5,000 events and 32 MiB serialized payload.
-The memory planning calculation is:
+Both workloads keep the original per-pod resources: requests of 20m CPU / 50Mi memory and
+limits of 100m CPU / 200Mi memory. The buffer is reduced instead of increasing these resources,
+with simultaneous caps of 1,000 events and 8 MiB serialized payload. Smaller buffers absorb
+shorter bursts and apply backpressure earlier; the 200-event / 200-ms write batching is unchanged.
 
-`200 MiB working-set allowance + (4 * 32 MiB) object/string expansion + 128 MiB transient/GC allowance + 56 MiB headroom = 512 MiB`.
+Allowing four times the serialized cap for retained objects/strings reserves 32 MiB for the
+buffer, leaving 168 MiB of the 200 MiB limit for the runtime, request parsing and transient/GC
+allocations. This is a planning envelope, not a measurement that the runtime fits in 168 MiB.
 
-These are conservative sizing allowances, **not measured peak RSS or a guarantee for arbitrary
-concurrent requests**. The byte cap is not a heap cap. Check actual memory usage with representative
-payloads before treating sizing as production capacity evidence; do not raise the buffer cap
-without revisiting this budget. The job uses the same image/runtime allowance.
+These are sizing allowances, **not measured peak RSS or a guarantee for arbitrary concurrent
+requests**. Request parsing/enrichment happens before buffer admission, and the unchanged 20 MiB
+HTTP body limit is separate from the buffer cap. Observe actual memory usage with representative
+payloads before treating sizing as production capacity evidence. The job uses the same per-pod
+limits, but the additional job pod still increases the total workload resource allocation.
 
 The shutdown budget is `10s withdrawal + 25s flush + 10s cleanup = 45s process deadline`,
 with an additional 15 seconds in `terminationGracePeriodSeconds: 60`. Flush configuration must

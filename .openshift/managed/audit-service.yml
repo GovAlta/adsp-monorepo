@@ -150,13 +150,13 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 500m
-                  # Budget: 200Mi working set + 4 * 32Mi buffer + 128Mi transient/GC + 56Mi headroom.
-                  # The 32Mi serialized cap is not a heap measurement; see docs/services/audit-service.md.
-                  memory: 512Mi
-                requests:
                   cpu: 100m
-                  memory: 256Mi
+                  # Keep the original limit: 4 * 8Mi buffer allowance leaves 168Mi for runtime/requests/GC.
+                  # This is a planning budget, not measured peak RSS; see docs/services/audit-service.md.
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               # Deliberate deviation from platform defaults: DB loss must NEVER fail liveness.
@@ -287,11 +287,11 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 500m
-                  memory: 512Mi
-                requests:
                   cpu: 100m
-                  memory: 256Mi
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
               # Same probe split as the API; the Service's component=api selector excludes this pod.
               startupProbe:
                 httpGet:

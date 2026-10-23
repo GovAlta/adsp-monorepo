@@ -57,7 +57,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parse } from 'yaml';
 import { PROCESS_SHUTDOWN_TIMEOUT_MS, TRAFFIC_WITHDRAWAL_MS } from './shutdown';
-import { MAX_BUFFERED_BYTES, SHUTDOWN_TIMEOUT_MS } from './audit/buffer/write-buffer';
+import { MAX_BUFFERED_BYTES, MAX_BUFFERED_EVENTS, SHUTDOWN_TIMEOUT_MS } from './audit/buffer/write-buffer';
 import { HISTORY_QUERY_TIMEOUT_MS, STATEMENT_TIMEOUT_MS } from './postgres/operation';
 import { HEALTH_CHECK_TIMEOUT_MS } from './postgres/health';
 
@@ -462,6 +462,33 @@ describe('audit application authorization', () => {
     expect(response.body).toEqual({ accepted: 0, duplicates: 1, rejected: [] });
   });
 
+  it('requires an oversized valid batch to be split rather than retried unchanged', async () => {
+    configureAction();
+    const events = Array.from({ length: 500 }, () => ({
+      ...eventInput(),
+      metadata: { reason: 'x'.repeat(9000) },
+    }));
+
+    const oversized = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events });
+
+    expect(oversized.status).toBe(413);
+    expect(oversized.headers['retry-after']).toBeUndefined();
+    expect(oversized.text).toContain('Split the batch');
+    expect(PostgresEventRepository.prototype.insert).not.toHaveBeenCalled();
+
+    configureAction();
+    const smaller = await request(app)
+      .post('/audit/v1/case-service/events')
+      .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+      .send({ events: events.slice(0, 100) });
+
+    expect(smaller.status).toBe(202);
+    expect(smaller.body).toEqual({ accepted: 100, duplicates: 0, rejected: [] });
+  });
+
   it('reads stored history with the API shape after its action catalog is removed', async () => {
     configureAction();
     const input = eventInput();
@@ -732,14 +759,21 @@ describe('audit application authorization', () => {
       expect(configuration.items[0].data.RETENTION_ENABLED).toBe('false');
     });
 
-    it('budgets memory for the byte cap, object overhead, working set and transient allocations', () => {
-      const api = template.objects.find(
+    it.each(['api', 'job'])('retains the original per-pod resources for the %s workload', (component) => {
+      const deployment = template.objects.find(
         (object: { kind: string; metadata: { labels: { component: string } } }) =>
-          object.kind === 'Deployment' && object.metadata.labels.component === 'api',
+          object.kind === 'Deployment' && object.metadata.labels.component === component,
       );
-      const plannedMiB = 200 + (4 * MAX_BUFFERED_BYTES) / (1024 * 1024) + 128 + 56;
 
-      expect(api.spec.template.spec.containers[0].resources.limits.memory).toBe(`${plannedMiB}Mi`);
+      expect(deployment.spec.template.spec.containers[0].resources).toEqual({
+        limits: { cpu: '100m', memory: '200Mi' },
+        requests: { cpu: '20m', memory: '50Mi' },
+      });
+    });
+
+    it('reduces both the event and serialized-byte caps instead of raising pod resources', () => {
+      expect(MAX_BUFFERED_EVENTS).toBe(1000);
+      expect(MAX_BUFFERED_BYTES).toBe(8 * 1024 * 1024);
     });
 
     it('allows 60-second history reads without relaxing the write timeout', () => {
