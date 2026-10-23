@@ -199,31 +199,6 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
         Problem statement step above.
       </p>
       <GoabAccordion
-        heading="Conversation"
-        headingContent={countBadge(messages.length, 'message', 'discovery-conversation-count')}
-        headingSize="small"
-        open={false}
-        testId="discovery-conversation"
-      >
-        {messages.length > 0 ? (
-          <section aria-label="Conversation with the planner">
-            {messages.map((m, i) => (
-              <GoabCallout
-                key={`${m.at}-${i}`}
-                type={m.role === 'user' ? 'important' : 'information'}
-                heading={m.role === 'user' ? 'You' : 'Planner'}
-                testId={`discovery-message-${i}`}
-                mb="s"
-              >
-                <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
-              </GoabCallout>
-            ))}
-          </section>
-        ) : (
-          <p>No messages yet.</p>
-        )}
-      </GoabAccordion>
-      <GoabAccordion
         heading="Questions"
         headingContent={countBadge(openQuestions.length, 'open question', 'discovery-questions-count')}
         headingSize="small"
@@ -363,48 +338,78 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
           <p>No questions yet.</p>
         )}
       </GoabAccordion>
-      {busy && <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />}
-      {ready && <p data-testid="discovery-ready">Your answers are enough to prepare a plan.</p>}
-      <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-        <GoabFormItem label="Anything else?">
-          <GoabTextArea
-            name="plannerMessage"
-            value={draft}
-            rows={3}
-            width="100%"
-            maxWidth="100%"
-            testId="discovery-input"
-            ariaLabel="Anything else?"
-            disabled={blocked}
-            placeholder="Add details, ask a question, or correct anything the planner got wrong."
-            onChange={(detail) => setDraft(detail.value)}
-          />
-        </GoabFormItem>
-        <div
-          role="group"
-          aria-label="Discovery actions"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
-        >
-          <GoabButton
-            type="primary"
-            size="compact"
-            testId="discovery-send"
-            disabled={blocked || !message}
-            onClick={() => send(openQuestions.length ? { message } : undefined)}
+      <GoabAccordion
+        heading="Conversation"
+        headingContent={countBadge(messages.length, 'message', 'discovery-conversation-count')}
+        headingSize="small"
+        open={true}
+        testId="discovery-conversation"
+      >
+        {messages.length > 0 ? (
+          <section aria-label="Conversation with the planner">
+            {messages.map((m, i) => (
+              <GoabCallout
+                key={`${m.at}-${i}`}
+                type={m.role === 'user' ? 'important' : 'information'}
+                heading={m.role === 'user' ? 'You' : 'Planner'}
+                testId={`discovery-message-${i}`}
+                mb="s"
+              >
+                <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+              </GoabCallout>
+            ))}
+          </section>
+        ) : (
+          <p>No messages yet.</p>
+        )}
+        {busy && (
+          <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />
+        )}
+        {ready && <p data-testid="discovery-ready">Your answers are enough to prepare a plan.</p>}
+        <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+          <GoabFormItem
+            label="Anything else?"
+            helpText="You can answer any of the open questions here too — just say which one you mean."
           >
-            Send &amp; refine
-          </GoabButton>
-          <GoabButton
-            type="tertiary"
-            size="compact"
-            testId="discovery-restart"
-            disabled={blocked}
-            onClick={() => send({ restart: true })}
+            <GoabTextArea
+              name="plannerMessage"
+              value={draft}
+              rows={3}
+              width="100%"
+              maxWidth="100%"
+              testId="discovery-input"
+              ariaLabel="Anything else?"
+              disabled={blocked}
+              placeholder="Add details, ask a question, or correct anything the planner got wrong."
+              onChange={(detail) => setDraft(detail.value)}
+            />
+          </GoabFormItem>
+          <div
+            role="group"
+            aria-label="Discovery actions"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
           >
-            Start over
-          </GoabButton>
+            <GoabButton
+              type="primary"
+              size="compact"
+              testId="discovery-send"
+              disabled={blocked || !message}
+              onClick={() => send(openQuestions.length ? { message } : undefined)}
+            >
+              Send &amp; refine
+            </GoabButton>
+            <GoabButton
+              type="tertiary"
+              size="compact"
+              testId="discovery-restart"
+              disabled={blocked}
+              onClick={() => send({ restart: true })}
+            >
+              Start over
+            </GoabButton>
+          </div>
         </div>
-      </div>
+      </GoabAccordion>
       <div style={{ marginTop: '1.5rem' }}>
         <GoabAccordion
           heading="Chat/Consult with Specialist"

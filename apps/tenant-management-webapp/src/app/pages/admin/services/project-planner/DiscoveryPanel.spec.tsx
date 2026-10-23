@@ -363,7 +363,7 @@ describe('DiscoveryPanel', () => {
     expect(api.discovery).not.toHaveBeenCalled();
   });
 
-  it('shows existing discovery and refinement messages in a collapsed conversation panel', () => {
+  it('shows existing discovery and refinement messages in an expanded conversation panel', () => {
     const existing = solution(discovery());
     existing.state.conversation = [
       { role: 'user', content: 'There is also a committee vote.', at: '2026-03-01T10:01:00.000Z' },
@@ -375,7 +375,7 @@ describe('DiscoveryPanel', () => {
 
     const conversation = container.querySelector('[testid="discovery-conversation"]');
     expect(conversation?.getAttribute('heading')).toBe('Conversation');
-    expect(conversation?.hasAttribute('open')).toBe(false);
+    expect(conversation?.hasAttribute('open')).toBe(true);
     expect(conversation?.querySelectorAll('[testid^="discovery-message-"]')).toHaveLength(3);
     expect(conversation?.textContent).toContain('Who are the users? What steps do they take?');
     expect(conversation?.textContent).toContain('There is also a committee vote.');
