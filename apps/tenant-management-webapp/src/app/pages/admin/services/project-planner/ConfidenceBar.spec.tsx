@@ -16,9 +16,9 @@ describe('ConfidenceBar', () => {
     ],
   };
 
-  it('shows not assessed text without confidence', () => {
+  it('shows plain guidance without confidence', () => {
     const { getByTestId } = render(<ConfidenceBar />);
-    expect(getByTestId('confidence-empty').textContent).toContain('not assessed yet');
+    expect(getByTestId('confidence-empty').textContent).toContain('after you continue');
   });
 
   it('renders progress bar and sufficient badge', () => {
@@ -28,22 +28,23 @@ describe('ConfidenceBar', () => {
     expect(bar.getAttribute('aria-valuenow')).toBe('62');
     expect(getByText('Confidence: 62%')).toBeTruthy();
     expect(goa(container, 'confidence-badge').getAttribute('type')).toBe('success');
-    expect(goa(container, 'confidence-badge').getAttribute('content')).toBe('Sufficient to propose a solution');
+    expect(goa(container, 'confidence-badge').getAttribute('content')).toBe('Enough detail to prepare a plan');
   });
 
   it('renders important badge below threshold', () => {
     const { container } = render(<ConfidenceBar confidence={{ ...confidence, score: 30 }} />);
     expect(goa(container, 'confidence-badge').getAttribute('type')).toBe('important');
-    expect(goa(container, 'confidence-badge').getAttribute('content')).toBe('Below 50% — more detail needed');
+    expect(goa(container, 'confidence-badge').getAttribute('content')).toBe('More detail may help improve this plan');
   });
 
-  it('renders factor breakdown with notes', () => {
+  it('renders a plain-language factor breakdown without contradictory notes', () => {
     const { container, getByTestId, getByText, queryByText } = render(<ConfidenceBar confidence={confidence} />);
-    expect(goa(container, 'confidence-breakdown').getAttribute('heading')).toBe('Confidence breakdown');
+    expect(goa(container, 'confidence-breakdown').getAttribute('heading')).toBe(
+      'How well the planner understands your request',
+    );
     expect(getByTestId('confidence-factor-bar-users').getAttribute('aria-valuenow')).toBe('80');
-    expect(getByText('Clear')).toBeTruthy();
     expect(getByText('20%')).toBeTruthy();
-    expect(queryByText('Data note')).toBeNull();
+    expect(queryByText('Not described yet.')).toBeNull();
   });
 
   it('has no accessibility violations', async () => {

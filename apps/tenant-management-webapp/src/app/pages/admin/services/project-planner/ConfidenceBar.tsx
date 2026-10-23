@@ -51,7 +51,7 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
   if (!confidence) {
     return (
       <p data-testid="confidence-empty" style={{ margin: 0 }}>
-        Confidence: not assessed yet — analyze the problem to see how well it is understood.
+        The planner will show how well it understands the request after you continue.
       </p>
     );
   }
@@ -74,10 +74,10 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
         <GoabBadge
           type={sufficient ? 'success' : 'important'}
           testId="confidence-badge"
-          content={sufficient ? 'Sufficient to propose a solution' : `Below ${threshold}% — more detail needed`}
+          content={sufficient ? 'Enough detail to prepare a plan' : 'More detail may help improve this plan'}
         />
       </div>
-      <GoabDetails heading="Confidence breakdown" testId="confidence-breakdown" mt="m">
+      <GoabDetails heading="How well the planner understands your request" testId="confidence-breakdown" mt="m">
         <div
           role="list"
           style={{
@@ -85,7 +85,7 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
             padding: 0,
             margin: 0,
             display: 'grid',
-            gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem minmax(0, 2fr)',
+            gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem',
             gap: '8px 12px',
             alignItems: 'center',
           }}
@@ -101,7 +101,6 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
                 testId={`confidence-factor-bar-${factor.id}`}
               />
               <span>{factor.score}%</span>
-              <span>{factor.note || ''}</span>
             </div>
           ))}
         </div>

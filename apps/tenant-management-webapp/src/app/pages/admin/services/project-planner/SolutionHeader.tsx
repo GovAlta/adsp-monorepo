@@ -36,9 +36,16 @@ interface SolutionHeaderProps {
   api: PlannerApi;
   onSolutionChange: (solution: Solution) => void;
   onBack?: () => void;
+  hideExports?: boolean;
 }
 
-export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solution, api, onSolutionChange, onBack }) => {
+export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
+  solution,
+  api,
+  onSolutionChange,
+  onBack,
+  hideExports = false,
+}) => {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(solution.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -121,22 +128,26 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({ solutio
             <GoabBadge type="information" content={`v${solution.version}`} icon={false} testId="solution-version" />
           </Row>
         )}
-        <Row role="group" aria-label="Export and delete">
-          <GoabIconButton
-            icon="download"
-            title="Download JSON"
-            ariaLabel="Download JSON"
-            testId="download-json"
-            disabled={working}
-            onClick={exportJson}
-          />
-          <GoabIconButton
-            icon="document-text"
-            title="Download report (.md)"
-            ariaLabel="Download report (.md)"
-            testId="download-report"
-            onClick={exportReport}
-          />
+        <Row role="group" aria-label={hideExports ? 'Delete solution' : 'Export and delete'}>
+          {!hideExports && (
+            <>
+              <GoabIconButton
+                icon="download"
+                title="Download JSON"
+                ariaLabel="Download JSON"
+                testId="download-json"
+                disabled={working}
+                onClick={exportJson}
+              />
+              <GoabIconButton
+                icon="document-text"
+                title="Download report (.md)"
+                ariaLabel="Download report (.md)"
+                testId="download-report"
+                onClick={exportReport}
+              />
+            </>
+          )}
           <GoabIconButton
             icon="trash"
             variant="destructive"
